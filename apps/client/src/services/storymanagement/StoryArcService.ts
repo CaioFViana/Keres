@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryArcInsert, StoryArcSelect } from '../../db/schema';
 import { chapters, characterScenes, itemJourneys, scenes, storyArcs } from '../../db/schema';
@@ -105,6 +105,8 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
       await assertStoryIsWritable(db, current.storyId);
       const next = { ...current, ...changes };
       const diff = getChangedFields(current, next);
+      delete diff.version;
+      delete diff.updatedAt;
       if (Object.keys(diff).length === 0) return current;
       const result = await db
         .update(storyArcs)
@@ -112,7 +114,14 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         .where(eq(storyArcs.id, arcId))
         .returning()
         .get();
-      await logOperation(currentUserId, current.storyId, 'update', arcId, diff);
+      // Log the post-bump row diff (includes `version`) so push can derive OCC baseVersion.
+      await logOperation(
+        currentUserId,
+        current.storyId,
+        'update',
+        arcId,
+        getChangedFields(current, result),
+      );
       return result;
     },
 
@@ -130,13 +139,29 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
           .set({ arcId: fallback.id, updatedAt: new Date() })
           .where(and(eq(chapters.storyId, current.storyId), eq(chapters.arcId, arcId)));
       }
-      await db
+      // Bump version and log the *resulting* version so push can derive the OCC base
+      // (`version - 1`), matching Character/Plot/Board deletes. Without it the server
+      // returns `validation` ("data is not valid") and the delete never syncs.
+      const [deleted] = await db
         .update(storyArcs)
-        .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
-        .where(eq(storyArcs.id, arcId));
-      await logOperation(currentUserId, current.storyId, 'delete', arcId, {
-        isDeleted: true,
-        deletedAt: new Date(),
+        .set({
+          isDeleted: true,
+          deletedAt: new Date(),
+          updatedAt: new Date(),
+          version: sql`${storyArcs.version} + 1`,
+        })
+        .where(eq(storyArcs.id, arcId))
+        .returning({
+          id: storyArcs.id,
+          storyId: storyArcs.storyId,
+          isDeleted: storyArcs.isDeleted,
+          version: storyArcs.version,
+        });
+      if (!deleted) return;
+      await logOperation(currentUserId, deleted.storyId, 'delete', arcId, {
+        id: deleted.id,
+        isDeleted: deleted.isDeleted,
+        version: deleted.version,
       });
     },
 

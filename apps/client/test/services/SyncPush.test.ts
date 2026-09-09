@@ -139,12 +139,28 @@ describe('operation mapping', () => {
 
   it.each([
     operation('missing-version', 'update', { payload: JSON.stringify({ name: 'Invalid' }) }),
+    operation('missing-delete-version', 'delete', {
+      entityType: 'StoryArc',
+      entityId: 'arc-1',
+      payload: JSON.stringify({ id: 'arc-1', isDeleted: true }),
+    }),
     operation('missing-id', 'create', { entityId: '' }),
     operation('bad-reorder', 'reorder', { entityType: 'Character' }),
     operation('unknown', 'rename' as never),
   ])('skips an operation the server cannot safely accept', (value) => {
     expect(build(value)).toBeNull();
     expect(console.warn).toHaveBeenCalled();
+  });
+
+  it('maps a StoryArc delete with version so OCC baseVersion is present', () => {
+    const deletion = build(
+      operation('arc-delete', 'delete', {
+        entityType: 'StoryArc',
+        entityId: 'arc-1',
+        payload: JSON.stringify({ id: 'arc-1', isDeleted: true, version: 2 }),
+      }),
+    );
+    expect(deletion).toMatchObject({ type: 'delete', entity: 'StoryArc', version: 1 });
   });
 });
 

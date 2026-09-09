@@ -73,9 +73,12 @@ export class SyncPush {
     const payloadData = JSON.parse(op.payload);
     const baseVersion = deriveBaseVersion(payloadData);
 
-    if (op.operationType === 'update' && typeof baseVersion !== 'number') {
+    if (
+      (op.operationType === 'update' || op.operationType === 'delete') &&
+      typeof baseVersion !== 'number'
+    ) {
       console.warn(
-        `Skipping update ${op.entityType} ${op.entityId}: payload has no version, server would 422 the whole batch.`,
+        `Skipping ${op.operationType} ${op.entityType} ${op.entityId}: payload has no version, server would reject it as validation.`,
       );
       return null;
     }

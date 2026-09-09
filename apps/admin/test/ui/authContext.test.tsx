@@ -56,7 +56,6 @@ beforeEach(() => {
   mocks.logout.mockResolvedValue(undefined);
   mocks.probeAdminAccess.mockResolvedValue(undefined);
   mocks.clearServerSession.mockResolvedValue(undefined);
-  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 });
 
 describe('admin authentication context', () => {

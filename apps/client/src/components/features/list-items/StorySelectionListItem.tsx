@@ -31,9 +31,10 @@ const StorySelectionListItem: React.FC<StorySelectionListItemProps> = ({
 
   const typeIcon = story.type === 'branching' ? 'git-branch-outline' : 'book-outline';
   const typeLabel = story.type === 'branching' ? t('branching') : t('linear');
-  const metaParts = [story.genre?.trim() || null, story.serverId ? serverName || story.serverId : null].filter(
-    Boolean,
-  ) as string[];
+  const metaParts = [
+    story.genre?.trim() || null,
+    story.serverId ? serverName || story.serverId : null,
+  ].filter(Boolean) as string[];
 
   return (
     <Pressable

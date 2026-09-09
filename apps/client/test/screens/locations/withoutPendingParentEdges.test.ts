@@ -5,7 +5,8 @@ import { withoutPendingParentEdges } from '../../../src/screens/locations/useLoc
 import type { LocationRelationSelect } from '../../../src/db/schema';
 
 const edge = (
-  partial: Partial<LocationRelationSelect> & Pick<LocationRelationSelect, 'id' | 'locationAId' | 'locationBId'>,
+  partial: Partial<LocationRelationSelect> &
+    Pick<LocationRelationSelect, 'id' | 'locationAId' | 'locationBId'>,
 ): LocationRelationSelect => ({
   storyId: 'story-1',
   relationType: 'contains',

@@ -39,13 +39,16 @@ export interface ChoiceViewContentProps {
   calendar: unknown;
   navigation: { goBack(): void };
   canvasRef: RefObject<StoryGraphCanvasHandle | null>;
-  selectedStory: {
-    id?: string;
-    name?: string | null;
-    title?: string | null;
-    normalizeSceneTiming?: boolean;
-  } | null | undefined;
-  plots: Array<{ id: string; name: string }>;
+  selectedStory:
+    | {
+        id?: string;
+        name?: string | null;
+        title?: string | null;
+        normalizeSceneTiming?: boolean;
+      }
+    | null
+    | undefined;
+  plots: { id: string; name: string }[];
   selectedPlotIds: string[];
   setSelectedPlotIds(ids: string[]): void;
   layout: StoryGraphLayout;

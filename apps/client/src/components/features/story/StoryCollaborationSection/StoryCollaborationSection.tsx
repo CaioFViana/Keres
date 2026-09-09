@@ -38,9 +38,7 @@ export default function StoryCollaborationSection({
   const hasCollaborators =
     collaboration.collaborators !== null && collaboration.collaborators.length > 0;
   const unlinkBlocked =
-    collaboration.serverActionLoading ||
-    collaboration.collaborators === null ||
-    hasCollaborators;
+    collaboration.serverActionLoading || collaboration.collaborators === null || hasCollaborators;
 
   return (
     <View style={styles.card}>
@@ -104,7 +102,9 @@ export default function StoryCollaborationSection({
 
           {collaboration.addableFriendOptions.length > 0 ? (
             <View style={[styles.addForm, isCompact && styles.addFormStacked]}>
-              <View style={[styles.addField, isCompact ? styles.addFieldFull : styles.addFieldFriend]}>
+              <View
+                style={[styles.addField, isCompact ? styles.addFieldFull : styles.addFieldFriend]}
+              >
                 <SingleSelectPill
                   options={collaboration.addableFriendOptions}
                   value={collaboration.selectedFriendId}
@@ -114,7 +114,10 @@ export default function StoryCollaborationSection({
                 />
               </View>
               <View
-                style={[styles.addField, isCompact ? styles.addFieldFull : styles.addFieldPermission]}
+                style={[
+                  styles.addField,
+                  isCompact ? styles.addFieldFull : styles.addFieldPermission,
+                ]}
               >
                 <SingleSelectPill
                   options={permissionTypeOptions}

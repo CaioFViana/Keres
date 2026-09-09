@@ -360,10 +360,8 @@ export function useLocationFormAssociations({
         currentLocationId
           ? {
               ...relation,
-              locationAId:
-                relation.locationAId === '' ? currentLocationId : relation.locationAId,
-              locationBId:
-                relation.locationBId === '' ? currentLocationId : relation.locationBId,
+              locationAId: relation.locationAId === '' ? currentLocationId : relation.locationAId,
+              locationBId: relation.locationBId === '' ? currentLocationId : relation.locationBId,
             }
           : relation,
       ),

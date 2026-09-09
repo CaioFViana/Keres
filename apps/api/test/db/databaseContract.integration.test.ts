@@ -53,7 +53,6 @@ describe('database compatibility contract', () => {
     expect(db.query).toBeTruthy();
   });
 
-
   it('normalizes omitted optional values to NULL', async () => {
     await db.insert(users).values({
       id: 'nullable-user',

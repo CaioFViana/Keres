@@ -49,10 +49,7 @@ export type CharacterDetailContentProps = {
   t: TFunction;
   characterTags: TagSelect[];
   styles: { subTitle: StyleProp<TextStyle> };
-  commentField: (
-    field: string,
-    value: string,
-  ) => Omit<CommentableDetailFieldProps, 'label'>;
+  commentField: (field: string, value: string) => Omit<CommentableDetailFieldProps, 'label'>;
   characterId: string;
   openGalleryMediaViewer: (galleryId: string) => void;
   canEdit: boolean;

@@ -20,7 +20,14 @@ import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
 import React from 'react';
-import { Text, TouchableOpacity, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import type {
   CharacterSelect,
   ChoiceSelect,
@@ -54,10 +61,9 @@ export interface SceneDetailContentProps {
   chapter: { name: string; index: number } | null | undefined;
   sceneTags: TagSelect[];
   commentField(field: string, value: string): Omit<CommentableDetailFieldProps, 'label'>;
-  dateForScene(scene: SceneSelect):
-    | { date: string; gapRange?: unknown; durationEnd?: unknown }
-    | null
-    | undefined;
+  dateForScene(
+    scene: SceneSelect,
+  ): { date: string; gapRange?: unknown; durationEnd?: unknown } | null | undefined;
   calendar: unknown;
   locationCopy: { entity: string };
   location: (LocationSelect & { description?: string | null }) | null | undefined;

@@ -125,11 +125,7 @@ const LocationMapScreen = () => {
         const savedChangedSinceDraft =
           JSON.stringify(row.content) !== JSON.stringify(keep.savedContent);
         showNotification(
-          t(
-            savedChangedSinceDraft
-              ? 'canvas_draft_conflicts_with_saved'
-              : 'canvas_draft_restored',
-          ),
+          t(savedChangedSinceDraft ? 'canvas_draft_conflicts_with_saved' : 'canvas_draft_restored'),
           savedChangedSinceDraft ? 'warning' : 'info',
         );
       } else {

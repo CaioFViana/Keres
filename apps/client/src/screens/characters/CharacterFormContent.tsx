@@ -349,9 +349,7 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
         storyId={selectedStory?.id || ''}
         fields={customFields}
         values={customValues}
-        onChange={(fieldId, value) =>
-          setCustomValues((prev) => ({ ...prev, [fieldId]: value }))
-        }
+        onChange={(fieldId, value) => setCustomValues((prev) => ({ ...prev, [fieldId]: value }))}
       />
 
       <View style={styles.tagSection}>

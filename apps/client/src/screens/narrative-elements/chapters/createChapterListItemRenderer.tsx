@@ -43,7 +43,7 @@ export type ChapterListItemRendererProps = {
   handleToggleFavorite: (chapterId: string, isFavorite: boolean) => void | Promise<void>;
   handleToggleSceneFavorite: (sceneId: string, isFavorite: boolean) => void | Promise<void>;
   handleViewDetails: (chapterId: string) => void;
-  scenesWithFavoriteState: Array<SceneSelect & { isFavorite?: boolean }>;
+  scenesWithFavoriteState: (SceneSelect & { isFavorite?: boolean })[];
   searchQuery: string;
   selectedStory: { type?: 'linear' | 'branching' | null } | null | undefined;
   sortDirection: 'asc' | 'desc' | string;
@@ -82,9 +82,7 @@ export const createChapterListItemRenderer = (props: ChapterListItemRendererProp
     );
     const queryScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
     const choiceMatchedSceneIds = new Set(
-      choices
-        .filter((choice) => matchesChoiceQuery(choice, query))
-        .map((choice) => choice.sceneId),
+      choices.filter((choice) => matchesChoiceQuery(choice, query)).map((choice) => choice.sceneId),
     );
     const chapterHasMatchingTag = (tagsByChapterId.get(item.id) ?? []).some((tag) =>
       activeTagIds.includes(tag.id),

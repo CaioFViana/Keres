@@ -90,9 +90,7 @@ export function MainDashboardContent({
 
   return (
     <DetailContainer title={story?.title || t('no_story_selected')} width="reading">
-      {!!story?.id && (
-        <SyncConflictBanner count={conflictCount} onPress={onOpenConflictSheet} />
-      )}
+      {!!story?.id && <SyncConflictBanner count={conflictCount} onPress={onOpenConflictSheet} />}
 
       {!!story && (
         <ScreenSection title={t('story_details_section')}>

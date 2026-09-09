@@ -105,9 +105,7 @@ const BoardCanvasScreen = () => {
         setBoard(null);
         return;
       }
-      const keep = storyId
-        ? await useBoardDraftStore.getState().hydrate(storyId, boardId)
-        : null;
+      const keep = storyId ? await useBoardDraftStore.getState().hydrate(storyId, boardId) : null;
       setBoard(row);
       if (keep && keep.boardId === boardId && keep.storyId === storyId) {
         setContent(keep.content);
@@ -115,11 +113,7 @@ const BoardCanvasScreen = () => {
         const savedChangedSinceDraft =
           JSON.stringify(row.content) !== JSON.stringify(keep.savedContent);
         showNotification(
-          t(
-            savedChangedSinceDraft
-              ? 'canvas_draft_conflicts_with_saved'
-              : 'canvas_draft_restored',
-          ),
+          t(savedChangedSinceDraft ? 'canvas_draft_conflicts_with_saved' : 'canvas_draft_restored'),
           savedChangedSinceDraft ? 'warning' : 'info',
         );
       } else {

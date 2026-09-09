@@ -64,11 +64,7 @@ export function useChapterFormState({
             const existingValues =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialChapterId);
             const fromDb = Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value]));
-            const draft = await readEntityFormSecondaryDraft(
-              storyId,
-              'Chapter',
-              initialChapterId,
-            );
+            const draft = await readEntityFormSecondaryDraft(storyId, 'Chapter', initialChapterId);
             setCustomValues(
               draft && Object.keys(draft.customValues).length > 0
                 ? { ...fromDb, ...draft.customValues }

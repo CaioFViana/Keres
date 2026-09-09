@@ -1,6 +1,6 @@
 import type { CreateStoryCalendarDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateStoryCalendarDataSchema, PartialStoryCalendarSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { storyCalendars } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -26,15 +26,15 @@ export class StoryCalendarSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateStoryCalendarDataType = this.createSchema.parse(update.data);
 
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: StoryCalendar with ID ${update.id} already exists.`);
     }
 
-    await db.insert(storyCalendars).values({
+    await database.insert(storyCalendars).values({
       id: update.id!,
       storyId,
       ...validatedData,

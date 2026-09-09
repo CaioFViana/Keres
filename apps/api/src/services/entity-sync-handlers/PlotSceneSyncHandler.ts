@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreatePlotSceneDataSchema, PartialPlotSceneSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { plots, plotScenes, scenes, stories } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -23,15 +23,15 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
       deletedAtColumnName: 'deletedAt',
     });
   }
-  private async validate(storyId: string, plotId: string, sceneId: string) {
+  private async validate(storyId: string, plotId: string, sceneId: string, database: CompatibleDb = db) {
     const [story, plot, scene] = await Promise.all([
-      db.query.stories.findFirst({
+      database.query.stories.findFirst({
         where: and(eq(stories.id, storyId), eq(stories.isDeleted, false)),
       }),
-      db.query.plots.findFirst({
+      database.query.plots.findFirst({
         where: and(eq(plots.id, plotId), eq(plots.storyId, storyId), eq(plots.isDeleted, false)),
       }),
-      db.query.scenes.findFirst({
+      database.query.scenes.findFirst({
         where: and(
           eq(scenes.id, sceneId),
           eq(scenes.storyId, storyId),
@@ -49,10 +49,10 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
         'Plot and scene must belong to the active story.',
       );
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const data: CreatePlotSceneDataType = this.createSchema.parse(update.data);
-    await this.validate(storyId, data.plotId, data.sceneId);
-    const duplicate = await db.query.plotScenes.findFirst({
+    await this.validate(storyId, data.plotId, data.sceneId, database);
+    const duplicate = await database.query.plotScenes.findFirst({
       where: and(
         eq(plotScenes.storyId, storyId),
         eq(plotScenes.plotId, data.plotId),
@@ -60,9 +60,9 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
         eq(plotScenes.isDeleted, false),
       ),
     });
-    if (duplicate || (await this.findById(update.id!)))
+    if (duplicate || (await this.findById(update.id!, database)))
       throw new Error('Conflict: this scene is already part of the plot.');
-    await db.insert(plotScenes).values({
+    await database.insert(plotScenes).values({
       id: update.id!,
       storyId,
       plotId: data.plotId,
@@ -80,22 +80,23 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const changes = this.updateSchema.parse(update.changes);
     await this.validate(
       storyId,
       changes.plotId ?? current.plotId,
-      changes.sceneId ?? current.sceneId,
-    );
-    await super.update(userId, storyId, update, current);
+      changes.sceneId ?? current.sceneId, database);
+    await super.update(userId, storyId, update, current, database);
   }
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
     current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await this.validate(storyId, current.plotId, current.sceneId);
-    await super.delete(userId, storyId, update, current);
+    await this.validate(storyId, current.plotId, current.sceneId, database);
+    await super.delete(userId, storyId, update, current, database);
   }
 }

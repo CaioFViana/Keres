@@ -1,7 +1,7 @@
 import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { favorites } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -34,13 +34,13 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const data = this.createSchema.parse(update.data);
     if (data.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only create their own favorites.');
     }
     const now = this.parseOperationTime(update.operationTime);
-    await db.insert(favorites).values({
+    await database.insert(favorites).values({
       id: update.id!,
       storyId,
       entityId: data.entityId,
@@ -59,6 +59,7 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only update their own favorites.');
@@ -68,7 +69,7 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     delete changes.storyId;
     delete changes.entityId;
     delete changes.entityType;
-    await super.update(userId, storyId, { ...update, changes }, currentEntity);
+    await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
   }
 
   async delete(
@@ -76,10 +77,11 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only remove their own favorites.');
     }
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

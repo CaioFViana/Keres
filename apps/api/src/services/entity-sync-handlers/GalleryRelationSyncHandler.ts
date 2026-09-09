@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateGalleryRelationDataSchema, PartialGalleryRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import {
   characters,
   galleries,
@@ -45,8 +45,9 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     galleryId: string,
     ownerId: string,
     ownerType: GalleryOwnerEntity,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    const galleryExists = await db.query.galleries.findFirst({
+    const galleryExists = await database.query.galleries.findFirst({
       where: and(
         eq(galleries.id, galleryId),
         eq(galleries.storyId, storyId),
@@ -66,7 +67,7 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     let ownerExists = false;
     switch (ownerType) {
       case 'Character': {
-        const character = await db.query.characters.findFirst({
+        const character = await database.query.characters.findFirst({
           where: and(
             eq(characters.id, ownerId),
             eq(characters.storyId, storyId),
@@ -77,7 +78,7 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
         break;
       }
       case 'Location': {
-        const location = await db.query.locations.findFirst({
+        const location = await database.query.locations.findFirst({
           where: and(
             eq(locations.id, ownerId),
             eq(locations.storyId, storyId),
@@ -88,14 +89,14 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
         break;
       }
       case 'Note': {
-        const note = await db.query.notes.findFirst({
+        const note = await database.query.notes.findFirst({
           where: and(eq(notes.id, ownerId), eq(notes.storyId, storyId), eq(notes.isDeleted, false)),
         });
         ownerExists = !!note;
         break;
       }
       case 'Scene': {
-        const scene = await db.query.scenes.findFirst({
+        const scene = await database.query.scenes.findFirst({
           where: and(
             eq(scenes.id, ownerId),
             eq(scenes.storyId, storyId),
@@ -106,14 +107,14 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
         break;
       }
       case 'Item': {
-        const item = await db.query.items.findFirst({
+        const item = await database.query.items.findFirst({
           where: and(eq(items.id, ownerId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
         });
         ownerExists = !!item;
         break;
       }
       case 'WorldRule': {
-        const worldRule = await db.query.worldRules.findFirst({
+        const worldRule = await database.query.worldRules.findFirst({
           where: and(
             eq(worldRules.id, ownerId),
             eq(worldRules.storyId, storyId),
@@ -143,8 +144,9 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     galleryId: string,
     ownerId: string,
     ownerType: string,
+    database: CompatibleDb = db,
   ) {
-    return db.query.galleryRelations.findFirst({
+    return database.query.galleryRelations.findFirst({
       where: and(
         eq(galleryRelations.storyId, storyId),
         eq(galleryRelations.galleryId, galleryId),
@@ -155,10 +157,10 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateGalleryRelationDataType = this.createSchema.parse(update.data);
 
-    const current = await this.findById(update.id!);
+    const current = await this.findById(update.id!, database);
     if (current) {
       throw new Error(`Conflict: GalleryRelation with ID ${update.id} already exists.`);
     }
@@ -167,22 +169,20 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
       storyId,
       validatedData.galleryId,
       validatedData.ownerId,
-      validatedData.ownerType,
-    );
+      validatedData.ownerType, database);
 
     const duplicate = await this.findActiveDuplicate(
       storyId,
       validatedData.galleryId,
       validatedData.ownerId,
-      validatedData.ownerType,
-    );
+      validatedData.ownerType, database);
     if (duplicate) {
       throw new Error(
         `Conflict: Gallery ${validatedData.galleryId} is already linked to ${validatedData.ownerType} ${validatedData.ownerId} in story ${storyId}.`,
       );
     }
 
-    await db.insert(galleryRelations).values({
+    await database.insert(galleryRelations).values({
       id: update.id!,
       storyId: storyId,
       galleryId: validatedData.galleryId,
@@ -201,6 +201,7 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -214,14 +215,13 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
       const newOwnerId = validatedChanges.ownerId ?? currentEntity.ownerId;
       const newOwnerType = validatedChanges.ownerType ?? currentEntity.ownerType;
 
-      await this.validateRelation(storyId, newGalleryId, newOwnerId, newOwnerType);
+      await this.validateRelation(storyId, newGalleryId, newOwnerId, newOwnerType, database);
 
       const duplicate = await this.findActiveDuplicate(
         storyId,
         newGalleryId,
         newOwnerId,
-        newOwnerType,
-      );
+        newOwnerType, database);
       if (duplicate && duplicate.id !== update.id) {
         throw new Error(
           `Conflict: Gallery ${newGalleryId} is already linked to ${newOwnerType} ${newOwnerId} in story ${storyId}.`,
@@ -229,6 +229,6 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
       }
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 }

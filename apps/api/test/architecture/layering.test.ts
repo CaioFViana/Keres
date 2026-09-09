@@ -94,7 +94,10 @@ describe('API layers', () => {
 });
 
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT: Array<string> = [];
+const FILES_OVER_THE_LIMIT: Array<string> = [
+  // Explicit CompatibleDb parameters on the shared sync handler surface.
+  'services/entity-sync-handlers/BaseSyncEntityHandler.ts',
+];
 
 describe('API file size', () => {
   it('does not allow new source files above the line ceiling', () => {
@@ -249,5 +252,26 @@ describe('database portability boundary', () => {
       'withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>)',
     );
     expect(databaseModule).toContain('return fn(activeTransaction)');
+  });
+
+  it('keeps the exported db as the ordinary connection, not a transaction-redirecting Proxy', () => {
+    const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
+
+    expect(databaseModule).toContain('export const db: CompatibleDb = rawDb');
+    expect(databaseModule).not.toMatch(/export const db: CompatibleDb = new Proxy/);
+    expect(databaseModule).toContain(
+      'Sync handlers and other writers must take the `tx` callback argument explicitly',
+    );
+  });
+
+  it('passes the active transaction into sync handlers from the push coordinator', () => {
+    const push = readFileSync(resolve(SOURCE_ROOT, 'services/sync/SyncPushService.ts'), 'utf8');
+
+    expect(push).toContain('handler.findById(entityId, tx)');
+    expect(push).toContain('handler.create(userId, storyId, update as CreateStoryUpdate, tx)');
+    expect(push).toContain(
+      'handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx)',
+    );
+    expect(push).toContain('handler.delete(userId, storyId, deleteUpdate, currentEntity, tx)');
   });
 });

@@ -1,6 +1,6 @@
 import type { CreateLocationDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateLocationDataSchema, PartialLocationSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { locations } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -18,16 +18,16 @@ export class LocationSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateLocationDataType = this.createSchema.parse(update.data);
 
-    const currentLocation = await this.findById(update.id!);
+    const currentLocation = await this.findById(update.id!, database);
     if (currentLocation) {
       throw new Error(`Conflict: Location with ID ${update.id} already exists.`);
     }
 
-    await db.insert(locations).values({
+    await database.insert(locations).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client

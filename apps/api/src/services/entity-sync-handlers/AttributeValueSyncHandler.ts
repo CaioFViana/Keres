@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateAttributeValueDataSchema, PartialAttributeValueSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { attributeValues } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -25,10 +25,10 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateAttributeValueDataType = this.createSchema.parse(update.data);
 
-    const existingValue = await db.query.attributeValues.findFirst({
+    const existingValue = await database.query.attributeValues.findFirst({
       where: and(
         eq(attributeValues.entityId, validatedData.entityId),
         eq(attributeValues.fieldId, validatedData.fieldId),
@@ -42,7 +42,7 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(attributeValues).values({
+    await database.insert(attributeValues).values({
       id: update.id!,
       storyId,
       entityType: validatedData.entityType,
@@ -62,8 +62,9 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -71,7 +72,8 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

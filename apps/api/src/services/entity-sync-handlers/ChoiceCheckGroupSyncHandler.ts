@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateChoiceCheckGroupDataSchema, PartialChoiceCheckGroupSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { choiceCheckGroups, choices } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -25,8 +25,8 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async validateRelatedEntities(storyId: string, choiceId: string): Promise<void> {
-    const choiceExists = await db.query.choices.findFirst({
+  private async validateRelatedEntities(storyId: string, choiceId: string, database: CompatibleDb = db): Promise<void> {
+    const choiceExists = await database.query.choices.findFirst({
       where: and(
         eq(choices.id, choiceId),
         eq(choices.storyId, storyId),
@@ -41,17 +41,17 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData = this.createSchema.parse(update.data);
 
-    await this.validateRelatedEntities(storyId, validatedData.choiceId);
+    await this.validateRelatedEntities(storyId, validatedData.choiceId, database);
 
-    const currentGroup = await this.findById(update.id!);
+    const currentGroup = await this.findById(update.id!, database);
     if (currentGroup) {
       throw new Error(`Conflict: ChoiceCheckGroup with ID ${update.id} already exists.`);
     }
 
-    await db.insert(choiceCheckGroups).values({
+    await database.insert(choiceCheckGroups).values({
       id: update.id!,
       storyId: storyId,
       choiceId: validatedData.choiceId,
@@ -70,16 +70,17 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.choiceId !== undefined) {
       const newChoiceId: ChoiceCheckGroupType['choiceId'] =
         validatedChanges.choiceId ?? currentEntity.choiceId;
-      await this.validateRelatedEntities(storyId, newChoiceId);
+      await this.validateRelatedEntities(storyId, newChoiceId, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -87,7 +88,8 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

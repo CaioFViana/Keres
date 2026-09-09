@@ -13,8 +13,8 @@ import {
 } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, count, eq, inArray, sql } from 'drizzle-orm';
-import type { z } from 'zod'; // Import Zod
-import { db } from '../../db';
+import type { z } from 'zod';
+import { db, type CompatibleDb } from '../../db';
 import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
 import { syncValuesMatch } from './syncValueComparison';
 
@@ -96,20 +96,27 @@ export class SyncConflictError extends Error {
 
 export interface SyncEntityHandler {
   entityName: string;
-  findById(id: string): Promise<SyncEntityRow | undefined>;
-  findByIdOrThrow(id: string): Promise<SyncEntityRow>;
-  create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void>;
+  findById(id: string, database?: CompatibleDb): Promise<SyncEntityRow | undefined>;
+  findByIdOrThrow(id: string, database?: CompatibleDb): Promise<SyncEntityRow>;
+  create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database?: CompatibleDb,
+  ): Promise<void>;
   update(
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncEntityRow,
+    database?: CompatibleDb,
   ): Promise<void>;
   delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncEntityRow,
+    database?: CompatibleDb,
   ): Promise<void>;
   checkOwnership(entity: SyncEntityRow, userId: string): boolean;
   checkBelongsToStory(entity: SyncEntityRow, storyId: string): boolean;
@@ -118,7 +125,7 @@ export interface SyncEntityHandler {
   /** A resent create: does the sanitised payload describe the same row that already exists? */
   createPayloadMatches(existing: SyncPayload, incomingData: SyncPayload): boolean;
   /** Counts non-deleted rows of this entity in the given stories. Used by TierEnforcementService. */
-  countForStoryIds(storyIds: string[]): Promise<number>;
+  countForStoryIds(storyIds: string[], database?: CompatibleDb): Promise<number>;
   allowsReaderWrite(context: SyncOperationPolicyContext): boolean;
   assertOperationAllowed(context: SyncOperationPolicyContext): void;
   assertEntityMutationAllowed(context: SyncEntityMutationPolicyContext): void;
@@ -128,7 +135,10 @@ export interface SyncEntityHandler {
   ): DeleteStoryUpdate;
   tierLimitScope: 'story' | 'entity' | 'none';
   /** Deleted rows (tombstones), optionally restricted to one story. Used by AdminRecoveryService. */
-  findDeleted(storyId?: string): Promise<
+  findDeleted(
+    storyId?: string,
+    database?: CompatibleDb,
+  ): Promise<
     Array<{
       id: string;
       storyId: string | null;
@@ -194,8 +204,11 @@ export abstract class BaseSyncEntityHandler<
 
   // The runtime table registry cannot infer a row type for a concrete handler. The public
   // `SyncEntityHandler` contract above narrows this value before protocol coordination uses it.
-  async findById(id: string): Promise<SyncStoredEntityFor<CreateType> | undefined> {
-    const results = await db
+  async findById(
+    id: string,
+    database: CompatibleDb = db,
+  ): Promise<SyncStoredEntityFor<CreateType> | undefined> {
+    const results = await database
       .select()
       .from(this.table)
       .where(eq(this.column(this.idColumnName), id))
@@ -203,15 +216,21 @@ export abstract class BaseSyncEntityHandler<
     return results.at(0) as SyncStoredEntityFor<CreateType> | undefined;
   }
 
-  async findByIdOrThrow(id: string): Promise<SyncStoredEntityFor<CreateType>> {
-    const entity = await this.findById(id);
+  async findByIdOrThrow(
+    id: string,
+    database: CompatibleDb = db,
+  ): Promise<SyncStoredEntityFor<CreateType>> {
+    const entity = await this.findById(id, database);
     if (!entity) {
       throw new Error(`${this.entityName} ${id} not found.`);
     }
     return entity;
   }
 
-  async countForStoryIds(storyIds: string[]): Promise<number> {
+  async countForStoryIds(
+    storyIds: string[],
+    database: CompatibleDb = db,
+  ): Promise<number> {
     if (!this.storyIdColumnName || storyIds.length === 0) {
       return 0;
     }
@@ -219,14 +238,17 @@ export abstract class BaseSyncEntityHandler<
     if (this.isDeletedColumnName) {
       conditions.push(eq(this.column(this.isDeletedColumnName), false));
     }
-    const [row] = await db
+    const [row] = await database
       .select({ count: count() })
       .from(this.table)
       .where(and(...conditions));
     return row?.count ?? 0;
   }
 
-  async findDeleted(storyId?: string): Promise<
+  async findDeleted(
+    storyId?: string,
+    database: CompatibleDb = db,
+  ): Promise<
     Array<{
       id: string;
       storyId: string | null;
@@ -243,7 +265,7 @@ export abstract class BaseSyncEntityHandler<
     if (storyId && this.storyIdColumnName) {
       conditions.push(eq(this.column(this.storyIdColumnName), storyId));
     }
-    const rows = await db
+    const rows = await database
       .select()
       .from(this.table)
       .where(and(...conditions));
@@ -267,13 +289,19 @@ export abstract class BaseSyncEntityHandler<
     });
   }
 
-  abstract create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void>;
+  abstract create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database?: CompatibleDb,
+  ): Promise<void>;
 
   async update(
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<CreateType>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // `isDeleted`/`deletedAt` are handled outside validation because they are not an ordinary field edit:
     // they are the *restoration* of a deleted entity. Extracting them before validating avoids depending on
@@ -335,7 +363,7 @@ export abstract class BaseSyncEntityHandler<
     // matches once the winner has committed a new version, and `.returning()` coming back empty
     // is how we tell "genuinely raced" apart from "row just doesn't exist" (already ruled out by
     // `currentEntity` being loaded above).
-    const [updated] = await db
+    const [updated] = await database
       .update(this.table)
       .set(changes)
       .where(
@@ -363,6 +391,7 @@ export abstract class BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<CreateType>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (!this.isDeletedColumnName || !this.deletedAtColumnName) {
       throw new Error(
@@ -381,7 +410,7 @@ export abstract class BaseSyncEntityHandler<
     // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
-    const [deleted] = await db
+    const [deleted] = await database
       .update(this.table)
       .set({
         [this.isDeletedColumnName]: true,

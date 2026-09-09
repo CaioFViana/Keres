@@ -1,6 +1,6 @@
 import type { CreateStoryArcDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateStoryArcDataSchema, PartialStoryArcSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { storyArcs } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -18,20 +18,20 @@ export class StoryArcSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(_userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(_userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const data: CreateStoryArcDataType = this.createSchema.parse(update.data);
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: StoryArc with ID ${update.id} already exists.`);
     }
 
-    const siblings = await db.query.storyArcs.findMany({
+    const siblings = await database.query.storyArcs.findMany({
       where: (table, { and, eq }) => and(eq(table.storyId, storyId), eq(table.isDeleted, false)),
     });
     const sortOrder = data.sortOrder ?? siblings.length;
     const isDefault = siblings.length === 0 ? true : data.isDefault;
 
-    await db.insert(storyArcs).values({
+    await database.insert(storyArcs).values({
       id: update.id!,
       storyId,
       title: data.title,

@@ -37,7 +37,7 @@ describe('withTransaction', () => {
     expect(await db.query.users.findFirst({ where: eq(users.id, 'inner-user') })).toBeUndefined();
   });
 
-  it('keeps an explicit nested db.transaction as a savepoint', async () => {
+  it('keeps an explicit nested tx.transaction as a savepoint', async () => {
     await withTransaction(async (tx) => {
       await tx.insert(users).values({
         id: 'outer-user',
@@ -47,7 +47,7 @@ describe('withTransaction', () => {
       });
 
       await expect(
-        db.transaction(async (savepoint) => {
+        tx.transaction(async (savepoint) => {
           await savepoint.insert(users).values({
             id: 'savepoint-user',
             username: 'savepoint-user',
@@ -74,7 +74,7 @@ describe('withTransaction', () => {
           tag: 'write-user',
           password: 'secret',
         });
-        expect(await db.query.users.findFirst({ where: eq(users.id, 'write-user') })).toBeDefined();
+        expect(await tx.query.users.findFirst({ where: eq(users.id, 'write-user') })).toBeDefined();
         throw new Error('abort write transaction');
       }),
     ).rejects.toThrow('abort write transaction');

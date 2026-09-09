@@ -14,7 +14,7 @@ import {
   sortEntityPair,
 } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import {
   chapters,
   characters,
@@ -50,11 +50,11 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async validateRelatedEntity(storyId: string, ref: EntityRef): Promise<void> {
+  private async validateRelatedEntity(storyId: string, ref: EntityRef, database: CompatibleDb = db): Promise<void> {
     let exists: unknown;
     switch (ref.type) {
       case 'Character':
-        exists = await db.query.characters.findFirst({
+        exists = await database.query.characters.findFirst({
           where: and(
             eq(characters.id, ref.id),
             eq(characters.storyId, storyId),
@@ -63,7 +63,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         });
         break;
       case 'Location':
-        exists = await db.query.locations.findFirst({
+        exists = await database.query.locations.findFirst({
           where: and(
             eq(locations.id, ref.id),
             eq(locations.storyId, storyId),
@@ -72,7 +72,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         });
         break;
       case 'Chapter':
-        exists = await db.query.chapters.findFirst({
+        exists = await database.query.chapters.findFirst({
           where: and(
             eq(chapters.id, ref.id),
             eq(chapters.storyId, storyId),
@@ -81,7 +81,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         });
         break;
       case 'Scene':
-        exists = await db.query.scenes.findFirst({
+        exists = await database.query.scenes.findFirst({
           where: and(
             eq(scenes.id, ref.id),
             eq(scenes.storyId, storyId),
@@ -90,12 +90,12 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         });
         break;
       case 'Item':
-        exists = await db.query.items.findFirst({
+        exists = await database.query.items.findFirst({
           where: and(eq(items.id, ref.id), eq(items.storyId, storyId), eq(items.isDeleted, false)),
         });
         break;
       case 'ItemJourney':
-        exists = await db.query.itemJourneys.findFirst({
+        exists = await database.query.itemJourneys.findFirst({
           where: and(
             eq(itemJourneys.id, ref.id),
             eq(itemJourneys.storyId, storyId),
@@ -104,7 +104,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         });
         break;
       case 'WorldRule':
-        exists = await db.query.worldRules.findFirst({
+        exists = await database.query.worldRules.findFirst({
           where: and(
             eq(worldRules.id, ref.id),
             eq(worldRules.storyId, storyId),
@@ -113,7 +113,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
         });
         break;
       case 'Choice':
-        exists = await db.query.choices.findFirst({
+        exists = await database.query.choices.findFirst({
           where: and(
             eq(choices.id, ref.id),
             eq(choices.storyId, storyId),
@@ -132,8 +132,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  private async findExistingPair(storyId: string, a: EntityRef, b: EntityRef, excludeId?: string) {
-    const existing = await db.query.seeAlsoRelations.findFirst({
+  private async findExistingPair(storyId: string, a: EntityRef, b: EntityRef, excludeId?: string, database: CompatibleDb = db) {
+    const existing = await database.query.seeAlsoRelations.findFirst({
       where: and(
         eq(seeAlsoRelations.storyId, storyId),
         eq(seeAlsoRelations.isDeleted, false),
@@ -159,7 +159,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     return undefined;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateSeeAlsoRelationDataType = this.createSchema.parse(update.data);
 
     const refA: EntityRef = { type: validatedData.entityAType, id: validatedData.entityAId };
@@ -170,17 +170,17 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     }
 
     const [entityA, entityB] = sortEntityRefs(refA, refB);
-    await this.validateRelatedEntity(storyId, entityA);
-    await this.validateRelatedEntity(storyId, entityB);
+    await this.validateRelatedEntity(storyId, entityA, database);
+    await this.validateRelatedEntity(storyId, entityB, database);
 
-    const existing = await this.findExistingPair(storyId, entityA, entityB);
+    const existing = await this.findExistingPair(storyId, entityA, entityB, undefined, database);
     if (existing) {
       throw new Error(
         `Conflict: SeeAlsoRelation between ${entityA.type}:${entityA.id} and ${entityB.type}:${entityB.id} already exists and is not deleted.`,
       );
     }
 
-    await db.insert(seeAlsoRelations).values({
+    await database.insert(seeAlsoRelations).values({
       id: update.id!,
       storyId,
       entityAType: entityA.type,
@@ -200,6 +200,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -216,7 +217,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -224,7 +225,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

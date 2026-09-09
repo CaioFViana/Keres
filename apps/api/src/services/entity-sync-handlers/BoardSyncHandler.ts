@@ -1,6 +1,6 @@
 import type { CreateBoardDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateBoardDataSchema, PartialBoardSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { boards } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -24,15 +24,15 @@ export class BoardSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateBoardDataType = this.createSchema.parse(update.data);
 
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: Board with ID ${update.id} already exists.`);
     }
 
-    await db.insert(boards).values({
+    await database.insert(boards).values({
       id: update.id!,
       storyId,
       ...validatedData,

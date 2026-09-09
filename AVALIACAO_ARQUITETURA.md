@@ -25,7 +25,7 @@ Não há indicação de necessidade de reescrever a arquitetura.
 | Separação do monorepo | 9,5 | Papéis claros; desktop fino; site independente |
 | Contratos compartilhados | 9,0 | Barrel, docs e cobertura de solvers/theme alinhados |
 | Sincronização | 9,2 | DI + notifier único; operation log aceita `tx` explícito |
-| Persistência dual | 8,5 | Contrato documentado, chaves proibidas checadas, testes SQLite verdes |
+| Persistência dual | 9,0 | Contrato documentado; evidência operacional atual em PostgreSQL e SQLite (9/9) |
 | Camadas do cliente | 9,2 | Todos os formulários multi-etapa no padrão Scene (resources/state/associations/actions) |
 | Camadas da API | 9,2 | Rotas sem `throw new Error`; `AppError` na borda HTTP |
 | Testes de arquitetura | 9,5 | Fronteiras executáveis e allowlists que só encolhem |
@@ -54,8 +54,8 @@ Não há indicação de necessidade de reescrever a arquitetura.
 | Ponto | Situação atual |
 | --- | --- |
 | D01–D03, D05, D09–D11, D13 | Corrigidos (avaliações anteriores) |
-| D04 | Limitação tipada residual mitigada: documentação + checks de chaves proibidas/obrigatórias + contrato SQLite |
-| D06 | Consumidores críticos de sync/recovery preferem `tx` explícito |
+| D04 | Limitação tipada residual mitigada: documentação + checks + contrato revalidado em PostgreSQL e SQLite (9/9) |
+| D06 | Resolvido: handlers + push/recovery com `tx` explícito; `db` sem Proxy ALS |
 | D07 | Medição atual registrada; pisos elevados onde a margem permitiu |
 | D08 | Limpeza nos arquivos tocados nesta sessão |
 | D12 | Contrato + Character/Location estruturalmente alinhados; demais formulários multi-etapa mantêm o coordenador |
@@ -110,11 +110,36 @@ As rotas que ainda faziam `set.status = N; return { message }` foram migradas pa
 
 Únicos `set.status` restantes nas rotas: **201** (create) e **302** (redirect S3). O teste de arquitetura `assigns set.status in routes only for non-error outcomes` impede regressão.
 
+## Continuação — evidência do contrato de banco nos dois motores (9 de setembro de 2026)
+
+Infraestrutura: `docker-compose.test.yml` (Postgres 16 em `:45432`, healthy).
+
+| Suite | PostgreSQL | SQLite |
+| --- | --- | --- |
+| `databaseContract.integration.test.ts` | 7 passed | 7 passed |
+| `transactionContext.integration.test.ts` | 4 passed | 4 passed |
+| `migrationParity.integration.test.ts` | 2 skipped (só SQLite) | 2 passed |
+| `migrationJournals.test.ts` (unit) | 8 passed | — |
+| `architecture/layering.test.ts` (portabilidade) | 15 passed | — |
+
+**Totais desta passagem:** Postgres integração 11 passed + 2 skipped; SQLite integração 13 passed; journals + layering 23 passed.
+
+Isso fecha o residual de “PostgreSQL só histórico”: o contrato comum, o contexto transacional e as regras de portabilidade estão revalidados no commit de trabalho atual. A interseção tipada do Drizzle permanece ergonomia (não prova estática completa); a prova operacional são estes testes.
+
+## Continuação — transações explícitas sem Proxy ALS (9 de setembro de 2026)
+
+O `db` exportado deixou de ser um Proxy que redirecionava silenciosamente para a transação ativa via AsyncLocalStorage.
+
+- Handlers de sync recebem `database: CompatibleDb` (default `db`) em `findById` / `create` / `update` / `delete`.
+- `SyncPushService` e `AdminRecoveryService` passam o `tx` do `withTransaction`.
+- ALS permanece **somente** para aninhar `withTransaction` / `withWriteTransaction` (mesma sessão).
+- Savepoints usam `tx.transaction(...)`, não `db.transaction`.
+- Guards de arquitetura: `export const db = rawDb` (sem Proxy de redirecionamento) e push passa `tx` aos handlers.
+
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
-1. **Interseção tipada Drizzle** continua sendo ergonomia, não prova completa de portabilidade; a prova operacional são os testes de contrato nos dois motores (SQLite revalidado; PostgreSQL histórico).
-2. **ALS** permanece como compatibilidade para handlers legados.
-3. Formulários **sem** gravação multi-etapa (Tag, Stat, Plot, Story, etc.) não foram alvo da extração Scene — ficam para quando forem tocados, se a orquestração crescer.
+1. **Interseção tipada Drizzle** continua sendo ergonomia de call-site, não prova estática completa de portabilidade — mitigada pelos testes de contrato/arquitetura acima.
+2. Formulários **sem** gravação multi-etapa (Tag, Stat, Plot, Story, etc.) não foram alvo da extração Scene — ficam para quando forem tocados, se a orquestração crescer.
 
 ## Validação desta sessão
 
@@ -123,10 +148,13 @@ As rotas que ainda faziam `set.status = N; return { message }` foram migradas pa
 - Cliente: SyncPush, importBoundaries, EntityFormSaveCoordinator, multiStepFormPartialSave.policy, useEntityRelations, Character/Location form actions, SyncEngineTransfer, layering — **aprovados**
 - Cliente (continuação): layering + actions dos seis formulários extraídos — **7 suítes / 42 testes aprovados**
 - API: layering (incl. AppError + contrato DB), errors, transactionContext SQLite, databaseContract SQLite — **aprovados**
+- API (erros HTTP): layering + smoke/admin — **5 suítes / 62 testes aprovados**
+- API (banco, 9/9): contrato + transações em **PostgreSQL (11 passed)** e **SQLite (13 passed)**; journals + layering **23 passed**
+- API (ALS/tx explícito): layering **17 passed**; contrato+tx SQLite/Postgres **11+11 passed**; `simpleSyncHandlers` SQLite **9 passed**
 - Shared: boundaries + `test:coverage` (670 testes) — **aprovados**; medição ~96,2% linhas / 96,0% funções / 80,2% branches com solvers/theme incluídos
 - `bun run coverage:update` — ratchet aplicado (ex.: cliente 40,8% linhas; sync core functions 93,8%)
 
 ### Limites
 
-- Suíte completa do cliente/API e integração PostgreSQL não foram reexecutadas por completo nesta sessão.
+- A suíte completa de integração da API (todos os `*.integration.test.ts`) e a suíte completa do cliente não foram reexecutadas por completo nesta sessão — apenas o recorte de contrato/transação/migrations e os focos acima.
 - A nota permanece qualitativa e não certifica ausência de bugs em todo o produto.

@@ -180,10 +180,9 @@ export const databaseMigrationTarget = usingSqlite
 const rawDb = exposeCompatibleDb(databaseMigrationTarget.connection);
 
 /**
- * Makes a transaction implicitly visible to every call to the `db` exported below made during `fn` -
- * direct or indirect, at any call depth - without having to pass a `tx` parameter through any of the
- * synchronization handlers. They keep importing and calling `db` exactly as before; it is the Proxy
- * just below that resolves to the transaction active in this `AsyncLocalStorage` when there is one.
+ * Joins nested `withTransaction` / `withWriteTransaction` calls onto the same session.
+ * Sync handlers and other writers must take the `tx` callback argument explicitly — the exported
+ * `db` is the ordinary connection and does not silently redirect into the active transaction.
  */
 const transactionContext = new AsyncLocalStorage<CompatibleDb>();
 
@@ -191,6 +190,7 @@ const transactionContext = new AsyncLocalStorage<CompatibleDb>();
  * Starts a transaction intended to write. Callers express the semantic requirement, while this
  * boundary chooses the driver-specific locking mode. SQLite acquires its write lock immediately;
  * PostgreSQL keeps its ordinary transaction and uses the narrower advisory/row locks where needed.
+ * Nested calls receive the same `tx` as the outer transaction.
  */
 export function withWriteTransaction<T>(
   work: (tx: CompatibleDb) => Promise<T>,
@@ -217,10 +217,8 @@ export function withWriteTransaction<T>(
 }
 
 /**
- * Like `db.transaction(callback)`, but the `callback` runs with the transaction hidden in the async
- * context instead of received as a parameter. Nested calls join the active transaction, so an outer
- * rollback always covers work performed by inner services. Code that needs an independent savepoint
- * must call `db.transaction(...)`: through the Proxy below it resolves to the active transaction.
+ * Opens a transaction and delivers it as `tx`. Nested `withTransaction` / `withWriteTransaction`
+ * calls join this session. Independent savepoints must use `tx.transaction(...)`, not `db.transaction`.
  */
 export function withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>): Promise<T> {
   const activeTransaction = transactionContext.getStore();
@@ -230,18 +228,5 @@ export function withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>): Promis
   return rawDb.transaction((tx) => transactionContext.run(tx, () => fn(tx)));
 }
 
-/**
- * A Proxy over the ordinary connection: every property/method accessed resolves to the active
- * transaction (if a `withTransaction` is in progress in this async chain) or falls back to the
- * ordinary connection, without callers needing to know the difference or change a line. Methods are
- * rebound (`.bind`) to the resolved target because `proxy.method(...)` would bind `this` to the proxy
- * rather than to the object the method actually came from - without this, drizzle's internal methods
- * would break trying to read state from `this` in the wrong place.
- */
-export const db: CompatibleDb = new Proxy<CompatibleDb>(rawDb, {
-  get(target, prop) {
-    const active = transactionContext.getStore() ?? target;
-    const value = Reflect.get(active, prop, active);
-    return typeof value === 'function' ? value.bind(active) : value;
-  },
-});
+/** Ordinary connection. Transactional work must use the `tx` from `withTransaction` / `withWriteTransaction`. */
+export const db: CompatibleDb = rawDb;

@@ -2,7 +2,7 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStatDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateStatDataSchema, MAX_PRIMARY_STATS, PartialStatSchema } from '@keres/shared';
 import { and, count, eq, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { stats } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -25,8 +25,12 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
    * UI one: an old (or tampered-with) client must not be able to push the 13th primary through
    * synchronization.
    */
-  private async assertPrimaryLimit(storyId: string, excludeId?: string): Promise<void> {
-    const [row] = await db
+  private async assertPrimaryLimit(
+    storyId: string,
+    excludeId?: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
+    const [row] = await database
       .select({ total: count() })
       .from(stats)
       .where(
@@ -46,16 +50,16 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateStatDataType = this.createSchema.parse(update.data);
 
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: Stat with ID ${update.id} already exists.`);
     }
-    if (validatedData.isPrimary) await this.assertPrimaryLimit(storyId);
+    if (validatedData.isPrimary) await this.assertPrimaryLimit(storyId, undefined, database);
 
-    await db.insert(stats).values({
+    await database.insert(stats).values({
       id: update.id!,
       storyId,
       name: validatedData.name,
@@ -74,14 +78,15 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // It only costs a count when the secondary is being promoted.
     if (validatedChanges.isPrimary === true && currentEntity.isPrimary === false) {
-      await this.assertPrimaryLimit(storyId, update.id!);
+      await this.assertPrimaryLimit(storyId, update.id!, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 }

@@ -182,9 +182,7 @@ export class SyncPushService {
         // Writing the entity and recording it in the operation log run in the same transaction: without
         // that, a failure between the two steps (say, the process dying) left the entity changed but
         // invisible to other clients, and a resend of the same operation by the very client that originated
-        // it hit a false `version_conflict` against its own work. The callback receives the transaction
-        // explicitly for local queries. Calls inside legacy handlers still resolve `db` to this same
-        // transaction through the compatibility context.
+        // it hit a false `version_conflict` against its own work. Handlers receive this `tx` explicitly.
         await withTransaction(async (tx) => {
           // Creation handlers historically own their insert timestamps, and several of them do not
           // call BaseSyncEntityHandler.parseOperationTime(). Validate at the protocol boundary as
@@ -193,7 +191,7 @@ export class SyncPushService {
 
           // A read inside the transaction: the create-vs-alreadyApplied / not_found decision has to see the
           // same row the write is going to touch.
-          currentEntity = await handler.findById(entityId);
+          currentEntity = await handler.findById(entityId, tx);
 
           if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
             throw new SyncConflictError(
@@ -244,7 +242,7 @@ export class SyncPushService {
               } else if (handler.tierLimitScope === 'entity') {
                 await tierEnforcementService.assertCanCreateEntity(userId, storyId);
               }
-              await handler.create(userId, storyId, update as CreateStoryUpdate);
+              await handler.create(userId, storyId, update as CreateStoryUpdate, tx);
             }
           } else if (update.type === 'update' || update.type === 'reorder') {
             if (!currentEntity) {
@@ -253,7 +251,7 @@ export class SyncPushService {
                 `${update.entity} with ID ${entityId} does not exist on the server.`,
               );
             }
-            await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+            await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
           } else if (update.type === 'delete') {
             if (!currentEntity) {
               // Deleting something the server does not have is the desired outcome, not an error.
@@ -263,7 +261,7 @@ export class SyncPushService {
                 { ...policyContext, currentEntity },
                 update as DeleteStoryUpdate,
               );
-              await handler.delete(userId, storyId, deleteUpdate, currentEntity);
+              await handler.delete(userId, storyId, deleteUpdate, currentEntity, tx);
             }
           }
 
@@ -271,7 +269,7 @@ export class SyncPushService {
 
           // The entity's version *after* the operation, read back so the client knows which base its next
           // edits rest on.
-          const entityAfter = await handler.findById(entityId).catch(() => undefined);
+          const entityAfter = await handler.findById(entityId, tx).catch(() => undefined);
           const logged = await this.appendOperationLog(
             {
               storyId,

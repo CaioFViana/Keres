@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateTagRelationDataSchema, PartialTagRelationSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import {
   chapters,
   characters,
@@ -42,9 +42,10 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     tagId: string,
     relationId: string,
     relationType: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // Validate Tag existence
-    const tagExists = await db.query.tags.findFirst({
+    const tagExists = await database.query.tags.findFirst({
       where: and(eq(tags.id, tagId), eq(tags.storyId, storyId), eq(tags.isDeleted, false)),
     });
     if (!tagExists) {
@@ -58,7 +59,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     let relationExists = false;
     switch (relationType) {
       case 'Character':
-        const character = await db.query.characters.findFirst({
+        const character = await database.query.characters.findFirst({
           where: and(
             eq(characters.id, relationId),
             eq(characters.storyId, storyId),
@@ -68,7 +69,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!character;
         break;
       case 'Location':
-        const location = await db.query.locations.findFirst({
+        const location = await database.query.locations.findFirst({
           where: and(
             eq(locations.id, relationId),
             eq(locations.storyId, storyId),
@@ -78,7 +79,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!location;
         break;
       case 'Scene':
-        const scene = await db.query.scenes.findFirst({
+        const scene = await database.query.scenes.findFirst({
           where: and(
             eq(scenes.id, relationId),
             eq(scenes.storyId, storyId),
@@ -88,7 +89,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!scene;
         break;
       case 'Note':
-        const note = await db.query.notes.findFirst({
+        const note = await database.query.notes.findFirst({
           where: and(
             eq(notes.id, relationId),
             eq(notes.storyId, storyId),
@@ -98,7 +99,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!note;
         break;
       case 'Gallery':
-        const gallery = await db.query.galleries.findFirst({
+        const gallery = await database.query.galleries.findFirst({
           where: and(
             eq(galleries.id, relationId),
             eq(galleries.storyId, storyId),
@@ -108,7 +109,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!gallery;
         break;
       case 'WorldRule':
-        const worldRule = await db.query.worldRules.findFirst({
+        const worldRule = await database.query.worldRules.findFirst({
           where: and(
             eq(worldRules.id, relationId),
             eq(worldRules.storyId, storyId),
@@ -118,7 +119,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!worldRule;
         break;
       case 'Choice':
-        const choice = await db.query.choices.findFirst({
+        const choice = await database.query.choices.findFirst({
           where: and(
             eq(choices.id, relationId),
             eq(choices.storyId, storyId),
@@ -128,7 +129,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!choice;
         break;
       case 'Item':
-        const item = await db.query.items.findFirst({
+        const item = await database.query.items.findFirst({
           where: and(
             eq(items.id, relationId),
             eq(items.storyId, storyId),
@@ -138,7 +139,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
         relationExists = !!item;
         break;
       case 'Chapter':
-        const chapter = await db.query.chapters.findFirst({
+        const chapter = await database.query.chapters.findFirst({
           where: and(
             eq(chapters.id, relationId),
             eq(chapters.storyId, storyId),
@@ -159,18 +160,17 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateTagRelationDataType = this.createSchema.parse(update.data);
 
     await this.validateRelation(
       storyId,
       validatedData.tagId,
       validatedData.relationId,
-      validatedData.relationType,
-    );
+      validatedData.relationType, database);
 
     // Check for existing tag relation with the same tagId, relationId, and relationType within the same story
-    const existingTagRelation = await db.query.tagRelations.findFirst({
+    const existingTagRelation = await database.query.tagRelations.findFirst({
       where: and(
         eq(tagRelations.storyId, storyId),
         eq(tagRelations.tagId, validatedData.tagId),
@@ -186,7 +186,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(tagRelations).values({
+    await database.insert(tagRelations).values({
       id: update.id!,
       storyId: storyId,
       tagId: validatedData.tagId,
@@ -205,6 +205,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -218,10 +219,10 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
       validatedChanges.relationId !== undefined ||
       validatedChanges.relationType !== undefined
     ) {
-      await this.validateRelation(storyId, newTagId, newRelationId, newRelationType);
+      await this.validateRelation(storyId, newTagId, newRelationId, newRelationType, database);
 
       // Check for uniqueness of the new relation (if key fields were changed)
-      const existingTagRelation = await db.query.tagRelations.findFirst({
+      const existingTagRelation = await database.query.tagRelations.findFirst({
         where: and(
           eq(tagRelations.storyId, storyId),
           eq(tagRelations.tagId, newTagId),
@@ -239,7 +240,7 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
       }
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -247,7 +248,8 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

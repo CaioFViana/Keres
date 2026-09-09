@@ -12,7 +12,7 @@ import {
   PartialGallerySchema,
 } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { galleries } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
@@ -60,11 +60,11 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
    * later. Without this, whoever knows the MD5 of somebody else's blob creates a Gallery here and
    * downloads the file through the media route.
    */
-  private async assertHashBindableToStory(storyId: string, hash: string): Promise<void> {
+  private async assertHashBindableToStory(storyId: string, hash: string, database: CompatibleDb = db): Promise<void> {
     const blobExists = await mediaStorageService.has(hash);
     if (!blobExists) return;
 
-    const referencedHere = await db.query.galleries.findFirst({
+    const referencedHere = await database.query.galleries.findFirst({
       where: and(eq(galleries.storyId, storyId), eq(galleries.hash, hash)),
       columns: { id: true },
     });
@@ -76,19 +76,19 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateGalleryDataType = this.createSchema.parse(update.data);
 
-    const currentGallery = await this.findById(update.id!);
+    const currentGallery = await this.findById(update.id!, database);
     if (currentGallery) {
       throw new Error(`Conflict: Gallery with ID ${update.id} already exists.`);
     }
 
     this.assertSupportedMedia(validatedData.mimeType, validatedData.mediaType);
-    await this.assertHashBindableToStory(storyId, validatedData.hash);
+    await this.assertHashBindableToStory(storyId, validatedData.hash, database);
 
-    await db.insert(galleries).values({
+    await database.insert(galleries).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client
@@ -105,6 +105,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -116,7 +117,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     }
 
     if (validatedChanges.hash && validatedChanges.hash !== currentEntity.hash) {
-      await this.assertHashBindableToStory(storyId, validatedChanges.hash);
+      await this.assertHashBindableToStory(storyId, validatedChanges.hash, database);
     }
 
     // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
@@ -124,7 +125,7 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     // used server time instead of the client's `operationTime` - a concurrent edit landed here
     // with no error and no conflict reported, just silently dropped (same bug already found
     // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -132,8 +133,9 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
     // The row becomes a tombstone above, but the hash may be used by another Gallery (in the same story
     // or another, since storage is deduplicated globally) - the blob only becomes ownerless when no live
     // reference is left.

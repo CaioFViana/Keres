@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateItemDataSchema, PartialItemSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { characters, items } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -28,9 +28,10 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
   private async validateCharacterOwner(
     storyId: string,
     characterOwnerId: string | null,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (characterOwnerId) {
-      const characterExists = await db.query.characters.findFirst({
+      const characterExists = await database.query.characters.findFirst({
         where: and(
           eq(characters.id, characterOwnerId),
           eq(characters.storyId, storyId),
@@ -46,14 +47,14 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateItemDataType = this.createSchema.parse(update.data);
 
     // Validate characterOwnerId if present
-    await this.validateCharacterOwner(storyId, validatedData.characterOwnerId);
+    await this.validateCharacterOwner(storyId, validatedData.characterOwnerId, database);
 
     // Check for existing item with the same name within the same story
-    const existingItem = await db.query.items.findFirst({
+    const existingItem = await database.query.items.findFirst({
       where: and(
         eq(items.storyId, storyId),
         eq(items.name, validatedData.name),
@@ -67,7 +68,7 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(items).values({
+    await database.insert(items).values({
       id: update.id!,
       storyId: storyId,
       characterOwnerId: validatedData.characterOwnerId,
@@ -90,17 +91,18 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // Validate characterOwnerId if it's being updated
     if (validatedChanges.characterOwnerId !== undefined) {
-      await this.validateCharacterOwner(storyId, validatedChanges.characterOwnerId);
+      await this.validateCharacterOwner(storyId, validatedChanges.characterOwnerId, database);
     }
 
     // If the name is being updated, check for uniqueness within the story
     if (validatedChanges.name && validatedChanges.name !== currentEntity.name) {
-      const existingItem = await db.query.items.findFirst({
+      const existingItem = await database.query.items.findFirst({
         where: and(
           eq(items.storyId, storyId),
           eq(items.name, validatedChanges.name),
@@ -116,7 +118,7 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
       }
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -124,7 +126,8 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

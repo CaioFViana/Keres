@@ -2,7 +2,7 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateModeDataType, CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateModeDataSchema, PartialModeSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { characters, modes } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -20,8 +20,8 @@ export class ModeSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async assertCharacterExists(storyId: string, characterId: string): Promise<void> {
-    const character = await db.query.characters.findFirst({
+  private async assertCharacterExists(storyId: string, characterId: string, database: CompatibleDb = db): Promise<void> {
+    const character = await database.query.characters.findFirst({
       where: and(
         eq(characters.id, characterId),
         eq(characters.storyId, storyId),
@@ -36,17 +36,17 @@ export class ModeSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     const validatedData: CreateModeDataType = this.createSchema.parse(update.data);
 
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: Mode with ID ${update.id} already exists.`);
     }
 
-    await this.assertCharacterExists(storyId, validatedData.characterId);
+    await this.assertCharacterExists(storyId, validatedData.characterId, database);
 
-    await db.insert(modes).values({
+    await database.insert(modes).values({
       id: update.id!,
       storyId,
       characterId: validatedData.characterId,
@@ -66,13 +66,14 @@ export class ModeSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.characterId !== undefined) {
-      await this.assertCharacterExists(storyId, validatedChanges.characterId);
+      await this.assertCharacterExists(storyId, validatedChanges.characterId, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 }

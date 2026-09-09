@@ -15,7 +15,7 @@ import {
 import { ownerOnlyFieldsIn } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { chapters, galleries, stats, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
 import {
@@ -102,7 +102,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     return entity.id === storyId;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: z.infer<typeof CreateStoryDataSchema> = this.createSchema.parse(
       update.data,
@@ -115,7 +115,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       throw new Error(`Operation time ${update.operationTime} cannot be in the future.`);
     }
 
-    await db.insert(stories).values({
+    await database.insert(stories).values({
       id: update.id!,
       userId: userId, // Set by server
       createdAt: clientOperationTime, // Set from operationTime
@@ -133,6 +133,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate | StoryReorderingStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (update.type === 'reorder' && update.entity === 'Story') {
       const validatedReorderUpdate: StoryReorderingStoryUpdate =
@@ -146,7 +147,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       );
 
       if (validatedReorderUpdate.reorderTarget === 'Stat') {
-        await db.transaction(async (tx) => {
+        await database.transaction(async (tx) => {
           const existingStats = await tx.query.stats.findMany({
             where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
             columns: { id: true, version: true },
@@ -180,7 +181,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
             'Validation Error: Attribute reorders require a schema entity type.',
           );
         }
-        const existingFields = await db.query.storySchemaFields.findMany({
+        const existingFields = await database.query.storySchemaFields.findMany({
           where: and(
             eq(storySchemaFields.storyId, validatedReorderUpdate.id!),
             eq(storySchemaFields.entityType, validatedReorderUpdate.schemaEntityType),
@@ -194,7 +195,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
         );
         if (problem) throw new SyncConflictError('validation', problem);
 
-        await db.transaction(async (tx) => {
+        await database.transaction(async (tx) => {
           await Promise.all(
             validatedReorderUpdate.reorderItems.map((item) => {
               const field = existingFields.find((candidate) => candidate.id === item.id)!;
@@ -227,7 +228,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       const reorderedType: ChapterType =
         validatedReorderUpdate.reorderTarget === 'Event' ? 'event' : 'chapter';
 
-      await db.transaction(async (tx) => {
+      await database.transaction(async (tx) => {
         // 1. Validate reorderItems against the containers of this kind in the story
         const existingChapters = await tx.query.chapters.findMany({
           where: and(
@@ -282,7 +283,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     } else {
       // If it's not a story reorder update, delegate to the base class's update method
       this.updateSchema.parse((update as UpdateStoryUpdate).changes);
-      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, database);
     }
   }
 
@@ -291,13 +292,14 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
 
     // The tombstone above is only the story's - it does not propagate to its Galleries (each entity
     // synchronizes its own tombstone independently), so without this sweep every hash that story ever
     // referenced would be orphaned on disk forever as soon as the story disappeared from everyone's view.
-    const referencedHashes = await db
+    const referencedHashes = await database
       .selectDistinct({ hash: galleries.hash })
       .from(galleries)
       .where(eq(galleries.storyId, update.id!));

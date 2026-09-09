@@ -7,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateChoiceDataSchema, PartialChoiceSchema } from '@keres/shared'; // Added DeleteStoryUpdate
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { choices, scenes, stories } from '../../db/schema'; // Import stories
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -29,8 +29,9 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     sceneId: string,
     nextSceneId: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    const sceneExists = await db.query.scenes.findFirst({
+    const sceneExists = await database.query.scenes.findFirst({
       where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
     });
 
@@ -41,7 +42,7 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    const nextSceneExists = await db.query.scenes.findFirst({
+    const nextSceneExists = await database.query.scenes.findFirst({
       where: and(
         eq(scenes.id, nextSceneId),
         eq(scenes.storyId, storyId),
@@ -58,8 +59,8 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
   }
 
   // Private helper to check if the story is linear
-  private async _isStoryLinear(storyId: string): Promise<boolean> {
-    const story = await db.query.stories.findFirst({
+  private async _isStoryLinear(storyId: string, database: CompatibleDb = db): Promise<boolean> {
+    const story = await database.query.stories.findFirst({
       where: eq(stories.id, storyId),
       columns: {
         type: true,
@@ -68,10 +69,10 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     return story?.type === 'linear';
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
     // Linear stories never have Choice rows - they're deleted on conversion to linear, and
     // only (re)created by converting to branching. See StoryService.convertStoryType.
-    if (await this._isStoryLinear(storyId)) {
+    if (await this._isStoryLinear(storyId, database)) {
       throw new Error(
         'Cannot create choices directly in a linear story. Convert the story to branching first.',
       );
@@ -80,14 +81,14 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     // Validate incoming data against the create schema
     const validatedData: CreateChoiceDataType = this.createSchema.parse(update.data);
 
-    const currentChoice = await this.findById(update.id!);
+    const currentChoice = await this.findById(update.id!, database);
     if (currentChoice) {
       throw new Error(`Conflict: Choice with ID ${update.id} already exists.`);
     }
 
-    await this.validateRelatedEntities(storyId, validatedData.sceneId, validatedData.nextSceneId);
+    await this.validateRelatedEntities(storyId, validatedData.sceneId, validatedData.nextSceneId, database);
 
-    await db.insert(choices).values({
+    await database.insert(choices).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client
@@ -104,9 +105,10 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // If story is linear, prevent direct updates of choices
-    if (await this._isStoryLinear(storyId)) {
+    if (await this._isStoryLinear(storyId, database)) {
       throw new Error(
         'Cannot update choices directly in a linear story. Convert the story to branching first.',
       );
@@ -121,14 +123,14 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
         ? validatedChanges.nextSceneId
         : currentEntity.nextSceneId;
 
-    await this.validateRelatedEntities(storyId, newSceneId, newNextSceneId);
+    await this.validateRelatedEntities(storyId, newSceneId, newNextSceneId, database);
 
     // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
     // that reimplementation had no `checkVersionConflict`, no `deleted_on_server` check, and
     // used server time instead of the client's `operationTime` - a concurrent edit landed here
     // with no error and no conflict reported, just silently dropped (same bug already found
     // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
@@ -136,14 +138,15 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     update: DeleteStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // If story is linear, prevent direct deletion of choices
-    if (await this._isStoryLinear(storyId)) {
+    if (await this._isStoryLinear(storyId, database)) {
       throw new Error(
         'Cannot delete choices directly in a linear story. Convert the story to branching first.',
       );
     }
 
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

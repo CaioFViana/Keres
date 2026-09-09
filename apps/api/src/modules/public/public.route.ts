@@ -1,8 +1,8 @@
-import { Elysia, t } from 'elysia';
 import { APP_RELEASE } from '@keres/shared';
+import { Elysia, t } from 'elysia';
 import { jwtShowcase } from '../../config/jwt';
-import { publicationStorageService } from '../../services/PublicationStorageService';
 import { packService } from '../../services/PackService';
+import { publicationStorageService } from '../../services/PublicationStorageService';
 import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
@@ -196,7 +196,7 @@ export const publicRoutes = new Elysia()
       )
       .post(
         '/stories/:storyId/unlock',
-        async ({ params, body, jwtShowcase: showcaseJwt, server, request, set }) => {
+        async ({ params, body, jwtShowcase: showcaseJwt, server, request }) => {
           const clientIp = server?.requestIP(request)?.address ?? 'unknown';
           if (!unlockLimiter.registerAttempt(`${params.storyId}:${clientIp}`)) {
             throw new AppError(429, 'Too many attempts. Try again later.');

@@ -44,10 +44,10 @@ export const CURRENT_STORY_FORMAT_VERSION = 10;
  *
  * **3** - Branching and linear are compatible with each other's features, so older clients can acuse
  * not accepting something it should.
- * 
+ *
  * **4** - Arc added, that alone is worth raising, but minimum is also raised as some internal code
  * for API/Syncing changed way too much. fully reworked. Just this once and to be safe, Version 4
- * 
+ *
  */
 export const SYNC_PROTOCOL_VERSION = 4;
 

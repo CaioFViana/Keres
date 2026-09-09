@@ -72,6 +72,25 @@ describe('API layers', () => {
 
     expect(offenders).toEqual([...ROUTES_THAT_STILL_THROW_PLAIN_ERROR].sort());
   });
+
+  it('assigns set.status in routes only for non-error outcomes (201 create, 302 redirect)', () => {
+    // Deliberate HTTP failures must throw AppError so onError owns status + message. The only
+    // remaining set.status uses are successful Created responses and S3 download redirects.
+    const allowedStatuses = new Set([201, 302]);
+    const offenders = routeFiles
+      .flatMap((path) => {
+        const source = readFileSync(path, 'utf8');
+        return Array.from(source.matchAll(/set\.status\s*=\s*(\d+)/g), (match) => ({
+          route: relativeOf(path),
+          status: Number(match[1]),
+        }));
+      })
+      .filter((entry) => !allowedStatuses.has(entry.status))
+      .map((entry) => `${entry.route}:${entry.status}`)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
 });
 
 const LINE_LIMIT = 600;

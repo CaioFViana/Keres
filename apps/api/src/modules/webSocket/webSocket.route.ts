@@ -1,7 +1,8 @@
 import { Elysia } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
-import { eventManager } from '../../utils/EventManager'; // Import eventManager
+import { eventManager } from '../../utils/EventManager';
+import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import {
   RealtimeSessionService,
@@ -25,10 +26,9 @@ export const emitUserEvent = (userId: string, event: RealtimeEvent) =>
   realtimeSessions.emitUserEvent(userId, event);
 
 export const wsRoutes = new Elysia().decorate('user', null as JWTPayload | null).ws('/events', {
-  beforeHandle({ query, set }) {
+  beforeHandle({ query }) {
     if (!realtimeSessions.hasValidTicket(query.ticket)) {
-      set.status = 401;
-      return 'Unauthorized WebSocket ticket.';
+      throw new AppError(401, 'Unauthorized WebSocket ticket.');
     }
   },
   async open(ws) {

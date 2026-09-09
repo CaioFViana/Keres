@@ -8,6 +8,7 @@ import {
   tierService,
 } from '../../services/TierService';
 import { requireAdmin } from '../../utils/adminAuth';
+import { AppError } from '../../utils/errors';
 
 export const adminTierRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -26,12 +27,11 @@ export const adminTierRoutes = new Elysia()
 
   .get(
     '/:id',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       await requireAdmin(user);
       const found = await tierService.getById(params.id);
       if (!found) {
-        set.status = 404;
-        return { message: 'Tier not found' };
+        throw new AppError(404, 'Tier not found');
       }
       return found;
     },
@@ -48,8 +48,7 @@ export const adminTierRoutes = new Elysia()
 
       const parsed = TierCreateInputSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid tier data' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid tier data');
       }
 
       try {
@@ -58,8 +57,7 @@ export const adminTierRoutes = new Elysia()
         return created;
       } catch (error) {
         if (error instanceof TierNameAlreadyTakenError) {
-          set.status = 409;
-          return { message: error.message };
+          throw new AppError(409, error.message);
         }
         throw error;
       }
@@ -83,25 +81,22 @@ export const adminTierRoutes = new Elysia()
 
   .put(
     '/:id',
-    async ({ params, body, user, set }) => {
+    async ({ params, body, user }) => {
       await requireAdmin(user);
 
       const parsed = PartialTierSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid tier data' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid tier data');
       }
 
       try {
         return await tierService.update(params.id, parsed.data);
       } catch (error) {
         if (error instanceof TierNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         if (error instanceof TierNameAlreadyTakenError) {
-          set.status = 409;
-          return { message: error.message };
+          throw new AppError(409, error.message);
         }
         throw error;
       }
@@ -125,19 +120,17 @@ export const adminTierRoutes = new Elysia()
 
   .delete(
     '/:id',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       await requireAdmin(user);
 
       try {
         return await tierService.softDelete(params.id);
       } catch (error) {
         if (error instanceof TierNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         if (error instanceof TierInUseError) {
-          set.status = 409;
-          return { message: error.message };
+          throw new AppError(409, error.message);
         }
         throw error;
       }

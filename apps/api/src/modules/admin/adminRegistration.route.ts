@@ -3,6 +3,7 @@ import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { requireAdmin } from '../../utils/adminAuth';
+import { AppError } from '../../utils/errors';
 
 export const adminRegistrationRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -24,13 +25,12 @@ export const adminRegistrationRoutes = new Elysia()
 
   .put(
     '/',
-    async ({ body, user, set }) => {
+    async ({ body, user }) => {
       await requireAdmin(user);
 
       const parsed = UpdateRegistrationSettingsSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid registration settings' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid registration settings');
       }
 
       return registrationSettingsService.update(parsed.data);

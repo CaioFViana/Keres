@@ -199,16 +199,14 @@ export const publicRoutes = new Elysia()
         async ({ params, body, jwtShowcase: showcaseJwt, server, request, set }) => {
           const clientIp = server?.requestIP(request)?.address ?? 'unknown';
           if (!unlockLimiter.registerAttempt(`${params.storyId}:${clientIp}`)) {
-            set.status = 429;
-            return { message: 'Too many attempts. Try again later.' };
+            throw new AppError(429, 'Too many attempts. Try again later.');
           }
 
           // A single answer for "the story does not exist" and "wrong password". Telling them apart would turn
           // this endpoint into an existence oracle, undoing the silence GET /stories/:storyId deliberately
           // keeps.
           if (!(await showcaseService.verifyPassword(params.storyId, body.password))) {
-            set.status = 401;
-            return { message: UNLOCK_FAILURE };
+            throw new AppError(401, UNLOCK_FAILURE);
           }
 
           unlockLimiter.clearAttempts(`${params.storyId}:${clientIp}`);

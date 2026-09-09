@@ -8,6 +8,7 @@ import { jwtRefresh } from '../../config/jwt';
 import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { userService } from '../../services/UserService';
+import { AppError } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 import type { JWTPayload } from '../../index';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
@@ -50,10 +51,9 @@ export const authRoutes = new Elysia()
   .use(jwtRefresh)
   .post(
     '/ws-ticket',
-    ({ user, set }) => {
+    ({ user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
       return { ticket: createWebSocketTicket(user), expiresInSeconds: 30 };
     },
@@ -73,13 +73,12 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/login',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie }) => {
       // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       if (!loginAttemptLimiter.registerAttempt(username)) {
-        set.status = 401;
-        return { message: 'Invalid credentials' };
+        throw new AppError(401, 'Invalid credentials');
       }
 
       // isDeleted excluded here (not just checked after the fact) so a soft-deleted account
@@ -88,15 +87,13 @@ export const authRoutes = new Elysia()
       const user = await userService.findLiveByUsername(username);
 
       if (!user) {
-        set.status = 401;
-        return { message: 'Invalid credentials' };
+        throw new AppError(401, 'Invalid credentials');
       }
 
       const isPasswordValid = await comparePassword(password, user.password);
 
       if (!isPasswordValid) {
-        set.status = 401;
-        return { message: 'Invalid credentials' };
+        throw new AppError(401, 'Invalid credentials');
       }
 
       loginAttemptLimiter.clearAttempts(username);
@@ -142,7 +139,7 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/register',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie }) => {
       // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
@@ -150,13 +147,11 @@ export const authRoutes = new Elysia()
       // that would go stale as soon as the user ceiling was reached in automatic management mode.
       const isOpen = await registrationSettingsService.isOpenForRegistration();
       if (!isOpen) {
-        set.status = 403;
-        return { message: 'Registration is currently closed.' };
+        throw new AppError(403, 'Registration is currently closed.');
       }
 
       if (await userService.isUsernameTaken(username)) {
-        set.status = 409;
-        return { message: 'User already exists' };
+        throw new AppError(409, 'User already exists');
       }
 
       const hashedPassword = await hashPassword(password);
@@ -176,8 +171,7 @@ export const authRoutes = new Elysia()
       });
 
       if (newUser === 'taken') {
-        set.status = 409;
-        return { message: 'User already exists' };
+        throw new AppError(409, 'User already exists');
       }
 
       // Shown only now, in plain text - after this only each one's hash exists (see RecoveryCodeService).
@@ -242,11 +236,10 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/forgot-password',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie }) => {
       const parsedBody = ForgotPasswordSchema.safeParse(body);
       if (!parsedBody.success) {
-        set.status = 400;
-        return { message: parsedBody.error.issues[0]?.message || 'Invalid request' };
+        throw new AppError(400, parsedBody.error.issues[0]?.message || 'Invalid request');
       }
       const { username, recoveryCode, newPassword } = parsedBody.data;
 
@@ -255,8 +248,7 @@ export const authRoutes = new Elysia()
         user = await recoveryCodeService.redeemCode(username, recoveryCode, newPassword);
       } catch (error) {
         if (error instanceof InvalidRecoveryCodeError) {
-          set.status = 401;
-          return { message: error.message };
+          throw new AppError(401, error.message);
         }
         throw error;
       }
@@ -306,7 +298,7 @@ export const authRoutes = new Elysia()
   )
   .post(
     '/refresh',
-    async ({ jwt, jwtRefresh, body, set, cookie }) => {
+    async ({ jwt, jwtRefresh, body, cookie }) => {
       // Destructure jwtRefresh and cookie
       let refreshToken: string | undefined = body.refreshToken;
 
@@ -315,15 +307,13 @@ export const authRoutes = new Elysia()
       }
 
       if (!refreshToken) {
-        set.status = 401;
-        return { message: 'Refresh token not found' };
+        throw new AppError(401, 'Refresh token not found');
       }
 
       const payload = await jwtRefresh.verify(refreshToken); // Use jwtRefresh to verify
 
       if (!payload || !payload.userId || !payload.username) {
-        set.status = 401;
-        return { message: 'Invalid or expired refresh token' };
+        throw new AppError(401, 'Invalid or expired refresh token');
       }
 
       // The refresh JWT alone only proves this token was validly issued at some point in the
@@ -331,8 +321,7 @@ export const authRoutes = new Elysia()
       // Without re-checking the DB here, a deleted/banned user keeps minting fresh access
       // tokens off their still-valid refresh token indefinitely (there is no revocation list).
       if (!(await userService.isLiveUser(payload.userId))) {
-        set.status = 401;
-        return { message: 'Invalid or expired refresh token' };
+        throw new AppError(401, 'Invalid or expired refresh token');
       }
 
       // Sign a new access token with the payload from the refresh token
@@ -415,15 +404,13 @@ export const authRoutes = new Elysia()
   )
   .get(
     '/me',
-    async ({ user, set }) => {
+    async ({ user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
       const found = await userService.getUserById(user.userId);
       if (!found || found.id !== user.userId) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
       return { userId: found.id, username: found.username, tag: found.tag };
     },

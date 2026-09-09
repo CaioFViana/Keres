@@ -12,19 +12,19 @@ import {
   UsernameAlreadyTakenError,
 } from '../../services/AdminUserService';
 import { requireAdmin } from '../../utils/adminAuth';
+import { AppError } from '../../utils/errors';
 
 export const adminUserRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
 
   .get(
     '/',
-    async ({ query, user, set }) => {
+    async ({ query, user }) => {
       await requireAdmin(user);
 
       const parsed = AdminUserListQuerySchema.safeParse(query);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid query' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid query');
       }
 
       return adminUserService.list(parsed.data);
@@ -51,13 +51,12 @@ export const adminUserRoutes = new Elysia()
 
   .get(
     '/:id',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       await requireAdmin(user);
 
       const found = await adminUserService.getById(params.id);
       if (!found) {
-        set.status = 404;
-        return { message: 'User not found' };
+        throw new AppError(404, 'User not found');
       }
       return found;
     },
@@ -74,8 +73,7 @@ export const adminUserRoutes = new Elysia()
 
       const parsed = AdminCreateUserSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid user data' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid user data');
       }
 
       try {
@@ -84,8 +82,7 @@ export const adminUserRoutes = new Elysia()
         return created;
       } catch (error) {
         if (error instanceof UsernameAlreadyTakenError) {
-          set.status = 409;
-          return { message: error.message };
+          throw new AppError(409, error.message);
         }
         throw error;
       }
@@ -128,13 +125,12 @@ export const adminUserRoutes = new Elysia()
 
   .put(
     '/:id',
-    async ({ params, body, user, set }) => {
+    async ({ params, body, user }) => {
       await requireAdmin(user);
 
       const parsed = AdminUpdateUserSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid user data' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid user data');
       }
 
       try {
@@ -142,12 +138,10 @@ export const adminUserRoutes = new Elysia()
         return updated;
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         if (error instanceof RootAdminProtectedError) {
-          set.status = 409;
-          return { message: error.message };
+          throw new AppError(409, error.message);
         }
         throw error;
       }
@@ -193,19 +187,17 @@ export const adminUserRoutes = new Elysia()
 
   .delete(
     '/:id',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       await requireAdmin(user);
 
       try {
         return await adminUserService.softDelete(params.id);
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         if (error instanceof RootAdminProtectedError) {
-          set.status = 409;
-          return { message: error.message };
+          throw new AppError(409, error.message);
         }
         throw error;
       }
@@ -218,15 +210,14 @@ export const adminUserRoutes = new Elysia()
 
   .post(
     '/:id/restore',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       await requireAdmin(user);
 
       try {
         return await adminUserService.restore(params.id);
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         throw error;
       }
@@ -243,7 +234,7 @@ export const adminUserRoutes = new Elysia()
 
   .post(
     '/:id/regenerate-recovery-codes',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       await requireAdmin(user);
 
       try {
@@ -251,8 +242,7 @@ export const adminUserRoutes = new Elysia()
         return { recoveryCodes };
       } catch (error) {
         if (error instanceof AdminUserNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         throw error;
       }

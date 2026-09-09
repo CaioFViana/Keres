@@ -30,7 +30,7 @@ Não há indicação de necessidade de reescrever a arquitetura.
 | Camadas da API | 9,2 | Rotas sem `throw new Error`; `AppError` na borda HTTP |
 | Testes de arquitetura | 9,5 | Fronteiras executáveis e allowlists que só encolhem |
 | Cobertura | 8,5 | Medição em 9/9; pisos ratcheted; shared inclui solvers/theme |
-| Consistência de erros/composição | 9,0 | Notifier e AppError nas fronteiras críticas |
+| Consistência de erros/composição | 9,5 | AppError em todas as rejeições HTTP das rotas; set.status só em 201/302 |
 
 ## Pendências
 
@@ -99,12 +99,22 @@ Após P01–P10, a orquestração dos seis formulários restantes foi alinhada a
 
 Invariantes preservados: hidratação só pelo `initial*Id`; `retainPersisted*Id` no `onEntityPersisted`; `preserveDraftOnEntityCreation: true`; sucesso/eventos/navegação só após o coordenador. O teste de arquitetura `extracted multi-step form responsibilities` cobre os seis.
 
+## Continuação — erros HTTP uniformizados (9 de setembro de 2026)
+
+As rotas que ainda faziam `set.status = N; return { message }` foram migradas para `throw new AppError(N, message)`:
+
+- `user.route.ts`, `auth.route.ts`
+- rotas admin (`adminUser`, `adminTier`, `adminRecovery`, `adminRegistration`, `adminApiLog`)
+- `public.route.ts` (unlock 429/401)
+- `webSocket.route.ts` (ticket inválido)
+
+Únicos `set.status` restantes nas rotas: **201** (create) e **302** (redirect S3). O teste de arquitetura `assigns set.status in routes only for non-error outcomes` impede regressão.
+
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
-1. **Algumas rotas** ainda usam `set.status` + `return { message }` (sem throw); o guard cobre `throw new Error`, não esse padrão de early-return.
-2. **Interseção tipada Drizzle** continua sendo ergonomia, não prova completa de portabilidade; a prova operacional são os testes de contrato nos dois motores (SQLite revalidado; PostgreSQL histórico).
-3. **ALS** permanece como compatibilidade para handlers legados.
-4. Formulários **sem** gravação multi-etapa (Tag, Stat, Plot, Story, etc.) não foram alvo desta extração — ficam para quando forem tocados, se a orquestração crescer.
+1. **Interseção tipada Drizzle** continua sendo ergonomia, não prova completa de portabilidade; a prova operacional são os testes de contrato nos dois motores (SQLite revalidado; PostgreSQL histórico).
+2. **ALS** permanece como compatibilidade para handlers legados.
+3. Formulários **sem** gravação multi-etapa (Tag, Stat, Plot, Story, etc.) não foram alvo da extração Scene — ficam para quando forem tocados, se a orquestração crescer.
 
 ## Validação desta sessão
 

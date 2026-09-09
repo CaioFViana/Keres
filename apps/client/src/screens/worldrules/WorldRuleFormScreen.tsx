@@ -1,289 +1,138 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
-import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import CustomAttributeFields, {
-  getDefaultCustomAttributeValues,
-  validateRequiredCustomAttributes,
-} from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
+import CustomAttributeFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import NoteManager from '@/src/components/features/notes/NoteManager'; // Import NoteManager
-import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import {
   WORLD_PIECE_SECTIONS,
   type WorldPieceSection,
-  type WorldRule,
 } from '@keres/shared/entities/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useNavigation, useRoute } from '@react-navigation/native'; // Import StackActions
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { useEntityRelations } from '../../hooks/useEntityRelations';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
-import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
-import { saveEntityWithSecondaryData } from '../../services/storymanagement/EntityFormSaveCoordinator';
-import { createWorldRuleService } from '../../services/storymanagement/WorldRuleService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { entityEventEmitter } from '../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../vocabulary/useVocabularyEntityCopy';
+import { useWorldRuleFormActions } from './useWorldRuleFormActions';
+import { useWorldRuleFormAssociations } from './useWorldRuleFormAssociations';
+import { useWorldRuleFormResources } from './useWorldRuleFormResources';
+import { useWorldRuleFormState } from './useWorldRuleFormState';
 
 type WorldRuleFormScreenRouteProp = RouteProp<WorldRulesStackParamList, 'WorldRuleForm'>;
+type WorldRuleFormScreenNavigationProp = NativeStackNavigationProp<
+  WorldRulesStackParamList,
+  'WorldRuleForm'
+>;
+
+const styles = StyleSheet.create({
+  tagSection: {
+    marginTop: 20,
+    marginBottom: 0,
+  },
+  noteSection: {
+    marginTop: 20,
+    marginBottom: -10,
+  },
+});
 
 const WorldRuleFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<WorldRuleFormScreenNavigationProp>();
   const route = useRoute<WorldRuleFormScreenRouteProp>();
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('WorldRule');
   const { userId } = useUserSettingsStore();
-  const { worldRuleId: initialWorldRuleId } = route.params || {}; // Renamed to initialWorldRuleId
+  const { worldRuleId: initialWorldRuleId } = route.params || {};
   const { selectedStory } = useStoryStore();
-
   const commonInputStyles = getCommonInputStyles(colors);
-  const drizzleDb = useDrizzle();
-  const confirmDelete = useConfirmDelete();
+  const customFields = useStorySchemaFields(selectedStory?.id, 'WorldRule');
 
-  const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
-  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
+  const { drizzleDb, worldRuleServiceRef } = useWorldRuleFormResources();
 
-  useEffect(() => {
-    if (drizzleDb && !worldRuleServiceRef.current) {
-      worldRuleServiceRef.current = createWorldRuleService(drizzleDb);
-    }
-  }, [drizzleDb]);
-
-  const [currentWorldRuleId, setCurrentWorldRuleId] = useState<string | undefined>(
+  const worldRuleFormState = useWorldRuleFormState({
     initialWorldRuleId,
-  ); // State to manage worldRuleId
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState<string | null>(null);
-  const [section, setSection] = useState<WorldPieceSection>('rule');
-  const [type, setType] = useState<string | null>(null);
-  const [category, setCategory] = useState<string | null>(null);
-  const [behavior, setBehavior] = useState<string | null>(null);
-  const [usability, setUsability] = useState<string | null>(null);
-  const [danger, setDanger] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [extraNotes, setExtraNotes] = useState<string | null>(null);
+    storyId: selectedStory?.id,
+    drizzleDb,
+    worldRuleServiceRef,
+    customFields,
+  });
+  const {
+    currentWorldRuleId,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    section,
+    setSection,
+    type,
+    setType,
+    category,
+    setCategory,
+    behavior,
+    setBehavior,
+    usability,
+    setUsability,
+    danger,
+    setDanger,
+    isFavorite,
+    setIsFavorite,
+    extraNotes,
+    setExtraNotes,
+    customValues,
+    setCustomValues,
+    loading,
+    isEditing,
+  } = worldRuleFormState;
 
   const {
     availableTags,
     selectedTagIds,
-    setSelectedTagIds,
     allNotes,
-    noteRelations: worldRuleNoteRelations,
+    worldRuleNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({
-    entityType: 'WorldRule',
-    entityId: currentWorldRuleId,
-    preserveDraftOnEntityCreation: true,
+    handleTagSelectionChange,
+  } = useWorldRuleFormAssociations({
+    currentWorldRuleId,
   });
 
-  const customFields = useStorySchemaFields(selectedStory?.id, 'WorldRule');
-  const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
-  const customDefaultsAppliedRef = useRef(false);
+  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useWorldRuleFormActions({
+    state: worldRuleFormState,
+    customFields,
+    drizzleDb,
+    worldRuleServiceRef,
+    navigation,
+    storyId: selectedStory?.id,
+    userId,
+    persistTagRelations,
+    persistNoteRelations,
+  });
 
-  const [loading, setLoading] = useState(true);
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
-
-  const isEditing = !!currentWorldRuleId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useScreenHeader({
     target: 'parent',
     title: formTitle,
-  });
-
-  useEffect(() => {
-    const loadWorldRule = async () => {
-      if (!worldRuleServiceRef.current || !selectedStory?.id) {
-        console.warn('WorldRule service or selected story not available.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        if (initialWorldRuleId) {
-          const fetchedWorldRule = await worldRuleServiceRef.current.getById(initialWorldRuleId);
-          if (fetchedWorldRule) {
-            setTitle(fetchedWorldRule.title);
-            setDescription(fetchedWorldRule.description);
-            setSection(fetchedWorldRule.section as WorldPieceSection);
-            setType(fetchedWorldRule.type);
-            setCategory(fetchedWorldRule.category);
-            setBehavior(fetchedWorldRule.behavior);
-            setUsability(fetchedWorldRule.usability);
-            setDanger(fetchedWorldRule.danger);
-            setIsFavorite(fetchedWorldRule.isFavorite);
-            setExtraNotes(fetchedWorldRule.extraNotes);
-
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialWorldRuleId,
-            );
-            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
-          } else {
-            console.warn('World rule not found:', initialWorldRuleId);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load world rule:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadWorldRule();
-  }, [drizzleDb, initialWorldRuleId, selectedStory?.id, t]);
-
-  useEffect(() => {
-    if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {
-      setCustomValues(getDefaultCustomAttributeValues(customFields));
-      customDefaultsAppliedRef.current = true;
-    }
-  }, [isEditing, customFields]);
-
-  const handleSave = () =>
-    runSave(async () => {
-      if (!title.trim()) {
-        AppAlert.alert(t('error'), copy.required);
-        return;
-      }
-      const missingRequiredField = validateRequiredCustomAttributes(customFields, customValues);
-      if (missingRequiredField) {
-        AppAlert.alert(t('error'), t('custom_attribute_required', { field: missingRequiredField }));
-        return;
-      }
-      if (!userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      if (!selectedStory?.id) {
-        AppAlert.alert(t('error'), t('no_story_selected'));
-        return;
-      }
-
-      try {
-        const worldRuleData: Omit<
-          WorldRule,
-          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-        > = {
-          title: title.trim(),
-          description: description,
-          section,
-          type,
-          category,
-          behavior,
-          usability,
-          danger,
-          isFavorite: isFavorite,
-          extraNotes: extraNotes,
-        };
-        const { entityId: savedWorldRuleId, created } = await saveEntityWithSecondaryData({
-          currentEntityId: currentWorldRuleId,
-          createEntity: () =>
-            worldRuleServiceRef.current!.createWorldRule(userId, {
-              ...worldRuleData,
-              storyId: selectedStory.id,
-            }),
-          updateEntity: (worldRuleId) =>
-            worldRuleServiceRef.current!.updateWorldRule(userId, worldRuleId, worldRuleData),
-          onEntityPersisted: setCurrentWorldRuleId,
-          persistSecondaryData: async (worldRuleId) => {
-            await persistTagRelations(worldRuleId);
-            await persistNoteRelations(worldRuleId);
-            await seeAlsoManagerRef.current?.persistPending(worldRuleId);
-            await createAttributeValueService(drizzleDb).saveValuesForEntity(
-              userId,
-              selectedStory.id,
-              'WorldRule',
-              worldRuleId,
-              customValues,
-            );
-          },
-        });
-
-        entityEventEmitter.emit('worldrule_changed', selectedStory.id, savedWorldRuleId);
-        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
-
-        if (created) {
-          navigation.dispatch(
-            StackActions.replace('WorldRuleForm', { worldRuleId: savedWorldRuleId }),
-          );
-        } else {
-          navigation.goBack();
-        }
-      } catch (err) {
-        console.error('Failed to save world rule:', err);
-        AppAlert.alert(t('error'), copy.failedToSave);
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!currentWorldRuleId || !worldRuleServiceRef.current) {
-      return;
-    }
-
-    confirmDelete({
-      titleKey: 'delete_world_rule_title',
-      title: copy.deleteLabel,
-      messageKey: 'delete_world_rule_message',
-      message: copy.deleteMessage,
-      successMessage: copy.deleted,
-      failureKey: 'failed_to_delete_world_rule',
-      failureMessage: copy.failedToDelete,
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await worldRuleServiceRef.current!.deleteWorldRule(userId, currentWorldRuleId);
-        entityEventEmitter.emit('worldrule_changed', selectedStory?.id, currentWorldRuleId);
-        navigation.goBack();
-      },
-    });
-  };
-
-  const handleTagSelectionChange = useCallback(
-    (newSelection: string[]) => {
-      setSelectedTagIds(newSelection);
-    },
-    [setSelectedTagIds],
-  );
-
-  const styles = StyleSheet.create({
-    tagSection: {
-      marginTop: 20,
-      marginBottom: 0,
-    },
-    noteSection: {
-      // Renamed from tagSection for clarity.
-      marginTop: 20,
-      marginBottom: -10,
-    },
   });
 
   if (loading) {

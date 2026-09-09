@@ -1,5 +1,4 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -11,39 +10,35 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ChoiceCheckGroupEditor from '@/src/components/features/choices/ChoiceCheckGroupEditor';
 import EffectListEditor from '@/src/components/features/effects/EffectListEditor';
 import NoteManager from '@/src/components/features/notes/NoteManager';
-import type { SeeAlsoManagerHandle } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import type { Choice } from '@keres/shared/entities/Choice';
 import type { RouteProp } from '@react-navigation/native';
-import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { useChoiceChecks } from '../../../hooks/useChoiceChecks';
-import { useConfirmDelete } from '../../../hooks/useConfirmDelete';
-import { useEntityEffects } from '../../../hooks/useEntityEffects';
-import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
-import { saveEntityWithSecondaryData } from '../../../services/storymanagement/EntityFormSaveCoordinator';
-import { useItemStore } from '../../../state/itemStore';
-import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
-import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import { getCommonInputStyles } from '../../../theme/commonStyles';
-import { AppAlert } from '../../../utils/AppAlert';
-import { entityEventEmitter } from '../../../utils/EventEmitter';
+import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
+import { useChoiceFormActions } from './useChoiceFormActions';
+import { useChoiceFormAssociations } from './useChoiceFormAssociations';
+import { useChoiceFormResources } from './useChoiceFormResources';
+import { useChoiceFormState } from './useChoiceFormState';
 
 type ChoiceFormScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'ChoiceForm'>;
 type ChoiceFormScreenNavigationProp = NativeStackNavigationProp<
   NarrativeElementsStackParamList,
   'ChoiceForm'
 >;
+
+const styles = StyleSheet.create({
+  noteSection: { marginTop: 20, marginBottom: -10 },
+  tagSection: { marginTop: 20, marginBottom: 0 },
+});
 
 const ChoiceFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -56,66 +51,39 @@ const ChoiceFormScreen = () => {
   const sceneCopy = useVocabularyEntityCopy('Scene');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
-  const {
-    scenes,
-    fetchScenes,
-    setDbAndStoryId: setSceneDbAndStoryId,
-    initializeService: initializeSceneService,
-  } = useSceneStore();
-  const {
-    items,
-    fetchItems,
-    setDbAndStoryId: setItemDbAndStoryId,
-    initializeService: initializeItemService,
-  } = useItemStore();
-
   const commonInputStyles = getCommonInputStyles(colors);
-  const drizzleDb = useDrizzle();
-
-  const confirmDelete = useConfirmDelete();
-
-  const choiceServiceRef = useRef<ReturnType<typeof createChoiceService> | null>(null);
-  const seeAlsoManagerRef = useRef<SeeAlsoManagerHandle>(null);
-
   const isBranching = selectedStory?.type === 'branching';
 
-  useEffect(() => {
-    if (drizzleDb) {
-      if (!choiceServiceRef.current) {
-        choiceServiceRef.current = createChoiceService(drizzleDb);
-      }
-    }
-  }, [drizzleDb]);
+  const { choiceServiceRef, scenes, items } = useChoiceFormResources(selectedStory?.id);
 
-  useEffect(() => {
-    if (drizzleDb && selectedStory?.id) {
-      setSceneDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeSceneService();
-      fetchScenes();
+  const choiceFormState = useChoiceFormState({
+    initialChoiceId,
+    initialSceneId,
+    storyId: selectedStory?.id,
+    choiceServiceRef,
+  });
+  const {
+    currentChoiceId,
+    sceneId,
+    setSceneId,
+    nextSceneId,
+    setNextSceneId,
+    text,
+    setText,
+    notes,
+    setNotes,
+    loading,
+    isEditing,
+  } = choiceFormState;
 
-      setItemDbAndStoryId(drizzleDb, selectedStory.id);
-      initializeItemService();
-      fetchItems();
-    }
-  }, [
-    drizzleDb,
+  const { checks, effects, relations } = useChoiceFormAssociations(
+    currentChoiceId,
     selectedStory?.id,
-    setSceneDbAndStoryId,
-    initializeSceneService,
-    fetchScenes,
-    setItemDbAndStoryId,
-    initializeItemService,
-    fetchItems,
-  ]);
-
-  const [currentChoiceId, setCurrentChoiceId] = useState<string | undefined>(initialChoiceId);
-  const [sceneId, setSceneId] = useState<string | null>(initialSceneId ?? null);
-  const [nextSceneId, setNextSceneId] = useState<string | null>(null);
-  const [text, setText] = useState(''); // Changed from description
-  const [notes, setNotes] = useState<string | null>(null);
+    isBranching,
+  );
   const {
     checkGroups,
-    checks,
+    checks: choiceChecks,
     handleAddCheckGroup,
     handleUpdateCheckGroupCombinator,
     handleDeleteCheckGroup,
@@ -123,15 +91,14 @@ const ChoiceFormScreen = () => {
     handleUpdateCheck,
     handleDeleteCheck,
     handleChangeCheckType,
-  } = useChoiceChecks(currentChoiceId, selectedStory?.id, isBranching);
+  } = checks;
   const {
     effects: choiceEffects,
     handleAddEffect,
     handleUpdateEffect,
     handleChangeEffectType,
     handleDeleteEffect,
-  } = useEntityEffects('Choice', currentChoiceId, selectedStory?.id, isBranching);
-
+  } = effects;
   const {
     availableTags,
     selectedTagIds,
@@ -142,137 +109,24 @@ const ChoiceFormScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
-  } = useEntityRelations({
-    entityType: 'Choice',
-    entityId: currentChoiceId,
-    preserveDraftOnEntityCreation: true,
+  } = relations;
+
+  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useChoiceFormActions({
+    state: choiceFormState,
+    choiceServiceRef,
+    navigation,
+    storyId: selectedStory?.id,
+    userId,
+    persistTagRelations,
+    persistNoteRelations,
   });
 
-  const [loading, setLoading] = useState(true);
-  const { pending: saving, run: runSave } = useAsyncOperation();
-  const [deleting, setDeleting] = useState(false);
-
-  const isEditing = !!currentChoiceId;
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
   useScreenHeader({
     target: 'parent',
     title: formTitle,
   });
-
-  useEffect(() => {
-    const loadChoice = async () => {
-      if (!choiceServiceRef.current || !selectedStory?.id) {
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        if (initialChoiceId) {
-          const fetchedChoice = await choiceServiceRef.current.getById(initialChoiceId);
-          if (fetchedChoice) {
-            setSceneId(fetchedChoice.sceneId);
-            setNextSceneId(fetchedChoice.nextSceneId);
-            setText(fetchedChoice.text); // Use text
-            setNotes(fetchedChoice.notes);
-          } else {
-            console.warn('Choice not found:', initialChoiceId);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load choice:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadChoice();
-  }, [initialChoiceId, selectedStory?.id, t]);
-
-  const handleSave = () =>
-    runSave(async () => {
-      if (!text.trim()) {
-        AppAlert.alert(t('error'), t('text_required')); // Use text_required
-        return;
-      }
-      if (!sceneId) {
-        AppAlert.alert(t('error'), sceneCopy.required);
-        return;
-      }
-      if (!nextSceneId) {
-        AppAlert.alert(t('error'), t('next_scene_required'));
-        return;
-      }
-      if (!userId || !selectedStory?.id) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-
-      try {
-        const choiceData: Omit<
-          Choice,
-          'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'
-        > = {
-          sceneId: sceneId,
-          nextSceneId: nextSceneId,
-          text: text.trim(), // Use text
-          notes: notes && notes.trim() ? notes.trim() : null,
-        };
-
-        const { entityId: savedChoiceId, created } = await saveEntityWithSecondaryData({
-          currentEntityId: currentChoiceId,
-          createEntity: () =>
-            choiceServiceRef.current!.createChoice(userId, {
-              ...choiceData,
-              storyId: selectedStory.id,
-            }),
-          updateEntity: (choiceId) =>
-            choiceServiceRef.current!.updateChoice(userId, choiceId, choiceData),
-          onEntityPersisted: setCurrentChoiceId,
-          persistSecondaryData: async (choiceId) => {
-            await persistTagRelations(choiceId);
-            await persistNoteRelations(choiceId);
-            await seeAlsoManagerRef.current?.persistPending(choiceId);
-          },
-        });
-        entityEventEmitter.emit('choice_changed', selectedStory.id, savedChoiceId);
-        AppAlert.alert(t('success'), created ? copy.created : copy.updated);
-
-        if (created) {
-          navigation.dispatch(StackActions.replace('ChoiceForm', { choiceId: savedChoiceId }));
-        } else {
-          navigation.goBack();
-        }
-      } catch (err) {
-        console.error('Failed to save choice:', err);
-        AppAlert.alert(t('error'), copy.failedToSave);
-      }
-    });
-
-  const handleDelete = () => {
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!currentChoiceId || !choiceServiceRef.current) {
-      return;
-    }
-
-    confirmDelete({
-      titleKey: 'delete_choice_title',
-      title: copy.deleteLabel,
-      messageKey: 'delete_choice_message',
-      message: copy.deleteMessage,
-      successMessage: copy.deleted,
-      failureKey: 'failed_to_delete_choice',
-      failureMessage: copy.failedToDelete,
-      onLoadingChange: setDeleting,
-      onConfirm: async () => {
-        await choiceServiceRef.current!.deleteChoice(userId, currentChoiceId);
-        entityEventEmitter.emit('choice_changed', selectedStory?.id, currentChoiceId);
-        navigation.goBack();
-      },
-    });
-  };
 
   const sceneOptions = useMemo(
     () => scenes.map((scene) => ({ label: scene.name, value: scene.id })),
@@ -324,11 +178,6 @@ const ChoiceFormScreen = () => {
     ],
     [t],
   );
-
-  const styles = StyleSheet.create({
-    noteSection: { marginTop: 20, marginBottom: -10 },
-    tagSection: { marginTop: 20, marginBottom: 0 },
-  });
 
   if (loading) {
     return <ScreenLoading />;
@@ -420,7 +269,7 @@ const ChoiceFormScreen = () => {
       {currentChoiceId && selectedStory?.id && isBranching && (
         <ChoiceCheckGroupEditor
           checkGroups={checkGroups}
-          checks={checks}
+          checks={choiceChecks}
           combinatorOptions={combinatorOptions}
           checkTypeOptions={checkTypeOptions}
           checkModeOptions={checkModeOptions}

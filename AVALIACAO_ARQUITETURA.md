@@ -12,9 +12,9 @@ Avaliação qualitativa da estrutura do monorepo e dos fluxos de sincronização
 
 ### Veredito
 
-**A arquitetura do Keres é boa e madura: aproximadamente 8,9/10 em manutenção e legibilidade** (antes 8,6/10 na auditoria ampla do mesmo dia e 8,7/10 na consolidação pós-D13).
+**A arquitetura do Keres é boa e madura: aproximadamente 9,0/10 em manutenção e legibilidade** (antes 8,9/10 após P01–P10, 8,6/10 na auditoria ampla e 8,7/10 na consolidação pós-D13).
 
-A alta deve-se ao fechamento das pendências estruturais abertas: contrato de banco reforçado, sync desacoplado do store, formulários Character/Location no padrão Scene, erros HTTP uniformizados, shared alinhado, política de gravação parcial documentada e testada, e pisos de cobertura atualizados com medição.
+A evolução recente deve-se ao fechamento das pendências P01–P10 e, em seguida, à extração de **todos** os formulários multi-etapa restantes (WorldRule, Item, Note, Chapter, Choice, ItemJourney) no padrão Scene/Character/Location.
 
 Não há indicação de necessidade de reescrever a arquitetura.
 
@@ -26,7 +26,7 @@ Não há indicação de necessidade de reescrever a arquitetura.
 | Contratos compartilhados | 9,0 | Barrel, docs e cobertura de solvers/theme alinhados |
 | Sincronização | 9,2 | DI + notifier único; operation log aceita `tx` explícito |
 | Persistência dual | 8,5 | Contrato documentado, chaves proibidas checadas, testes SQLite verdes |
-| Camadas do cliente | 8,8 | Scene, Character e Location no mesmo padrão de orquestração |
+| Camadas do cliente | 9,2 | Todos os formulários multi-etapa no padrão Scene (resources/state/associations/actions) |
 | Camadas da API | 9,2 | Rotas sem `throw new Error`; `AppError` na borda HTTP |
 | Testes de arquitetura | 9,5 | Fronteiras executáveis e allowlists que só encolhem |
 | Cobertura | 8,5 | Medição em 9/9; pisos ratcheted; shared inclui solvers/theme |
@@ -59,7 +59,7 @@ Não há indicação de necessidade de reescrever a arquitetura.
 | D07 | Medição atual registrada; pisos elevados onde a margem permitiu |
 | D08 | Limpeza nos arquivos tocados nesta sessão |
 | D12 | Contrato + Character/Location estruturalmente alinhados; demais formulários multi-etapa mantêm o coordenador |
-| D14 | Resolvido para Character e Location |
+| D14 | Resolvido para Character, Location e os seis formulários multi-etapa restantes |
 | D15 | Resolvido |
 | D16 | Resolvido para throws HTTP nas rotas |
 | D17 | Resolvido |
@@ -84,18 +84,34 @@ Não há indicação de necessidade de reescrever a arquitetura.
 - Dual-DB com adaptadores e contrato testado
 - CI com lockfile congelado e pisos de cobertura com ratchet
 
+## Continuação — formulários multi-etapa (9 de setembro de 2026)
+
+Após P01–P10, a orquestração dos seis formulários restantes foi alinhada ao padrão Scene:
+
+| Formulário | Hooks | Teste de actions |
+| --- | --- | --- |
+| WorldRule | resources/state/associations/actions | `useWorldRuleFormActions.test.ts` |
+| Item | idem | `useItemFormActions.test.ts` |
+| Note | idem | `useNoteFormActions.test.ts` |
+| Chapter | idem | `useChapterFormActions.test.ts` |
+| Choice | idem | `useChoiceFormActions.test.ts` |
+| ItemJourney | idem | `useItemJourneyFormActions.test.ts` |
+
+Invariantes preservados: hidratação só pelo `initial*Id`; `retainPersisted*Id` no `onEntityPersisted`; `preserveDraftOnEntityCreation: true`; sucesso/eventos/navegação só após o coordenador. O teste de arquitetura `extracted multi-step form responsibilities` cobre os seis.
+
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
-1. **Outros formulários multi-etapa** (WorldRule, Item, Note, Chapter, Choice, ItemJourney) ainda podem extrair orquestração no padrão Scene quando forem tocados — o contrato de persistência já é compartilhado.
-2. **Algumas rotas** ainda usam `set.status` + `return { message }` (sem throw); o guard cobre `throw new Error`, não esse padrão de early-return.
-3. **Interseção tipada Drizzle** continua sendo ergonomia, não prova completa de portabilidade; a prova operacional são os testes de contrato nos dois motores (SQLite revalidado aqui; PostgreSQL histórico).
-4. **ALS** permanece como compatibilidade para handlers legados.
+1. **Algumas rotas** ainda usam `set.status` + `return { message }` (sem throw); o guard cobre `throw new Error`, não esse padrão de early-return.
+2. **Interseção tipada Drizzle** continua sendo ergonomia, não prova completa de portabilidade; a prova operacional são os testes de contrato nos dois motores (SQLite revalidado; PostgreSQL histórico).
+3. **ALS** permanece como compatibilidade para handlers legados.
+4. Formulários **sem** gravação multi-etapa (Tag, Stat, Plot, Story, etc.) não foram alvo desta extração — ficam para quando forem tocados, se a orquestração crescer.
 
 ## Validação desta sessão
 
 ### Testes executados
 
 - Cliente: SyncPush, importBoundaries, EntityFormSaveCoordinator, multiStepFormPartialSave.policy, useEntityRelations, Character/Location form actions, SyncEngineTransfer, layering — **aprovados**
+- Cliente (continuação): layering + actions dos seis formulários extraídos — **7 suítes / 42 testes aprovados**
 - API: layering (incl. AppError + contrato DB), errors, transactionContext SQLite, databaseContract SQLite — **aprovados**
 - Shared: boundaries + `test:coverage` (670 testes) — **aprovados**; medição ~96,2% linhas / 96,0% funções / 80,2% branches com solvers/theme incluídos
 - `bun run coverage:update` — ratchet aplicado (ex.: cliente 40,8% linhas; sync core functions 93,8%)

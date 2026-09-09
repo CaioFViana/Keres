@@ -190,23 +190,91 @@ describe('location form responsibilities', () => {
   });
 });
 
-describe('multi-step form persistence', () => {
+describe('extracted multi-step form responsibilities', () => {
   const forms = [
-    'screens/worldrules/WorldRuleFormScreen.tsx',
-    'screens/items/ItemFormScreen.tsx',
-    'screens/notes/NoteFormScreen.tsx',
-    'screens/narrative-elements/chapters/ChapterFormScreen.tsx',
-    'screens/narrative-elements/choices/ChoiceFormScreen.tsx',
-    'screens/itemJourneys/ItemJourneyFormScreen.tsx',
-  ];
+    {
+      label: 'WorldRule',
+      dir: 'screens/worldrules',
+      screen: 'WorldRuleFormScreen.tsx',
+      prefix: 'WorldRule',
+      idName: 'WorldRuleId',
+      createService: 'createWorldRuleService',
+    },
+    {
+      label: 'Item',
+      dir: 'screens/items',
+      screen: 'ItemFormScreen.tsx',
+      prefix: 'Item',
+      idName: 'ItemId',
+      createService: 'createItemService',
+    },
+    {
+      label: 'Note',
+      dir: 'screens/notes',
+      screen: 'NoteFormScreen.tsx',
+      prefix: 'Note',
+      idName: 'NoteId',
+      createService: 'createNoteService',
+    },
+    {
+      label: 'Chapter',
+      dir: 'screens/narrative-elements/chapters',
+      screen: 'ChapterFormScreen.tsx',
+      prefix: 'Chapter',
+      idName: 'ChapterId',
+      createService: 'createChapterService',
+    },
+    {
+      label: 'Choice',
+      dir: 'screens/narrative-elements/choices',
+      screen: 'ChoiceFormScreen.tsx',
+      prefix: 'Choice',
+      idName: 'ChoiceId',
+      createService: 'createChoiceService',
+    },
+    {
+      label: 'ItemJourney',
+      dir: 'screens/itemJourneys',
+      screen: 'ItemJourneyFormScreen.tsx',
+      prefix: 'ItemJourney',
+      idName: 'ItemJourneyId',
+      createService: 'createItemJourneyService',
+    },
+  ] as const;
 
-  it.each(forms)('%s retains identity and preserves creation drafts', (relativePath) => {
-    const form = readFileSync(resolve(SOURCE_ROOT, relativePath), 'utf8');
+  it.each(forms)(
+    '$label keeps service setup and persistence coordination outside the screen',
+    ({ dir, screen, prefix, idName, createService }) => {
+      const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
+      const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
+      const actions = readFileSync(
+        resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`),
+        'utf8',
+      );
+      const associations = readFileSync(
+        resolve(SOURCE_ROOT, dir, `use${prefix}FormAssociations.ts`),
+        'utf8',
+      );
 
-    expect(form).toContain('saveEntityWithSecondaryData');
-    expect(form).toContain('preserveDraftOnEntityCreation: true');
-    expect(form).not.toMatch(/getById\(current(?:Character|Location|WorldRule|Item|Note|Chapter|Choice|ItemJourney)Id/);
-  });
+      expect(screenSource).toContain(`use${prefix}FormResources`);
+      expect(screenSource).toContain(`use${prefix}FormState`);
+      expect(screenSource).toContain(`use${prefix}FormActions`);
+      expect(screenSource).toContain(`use${prefix}FormAssociations`);
+      expect(screenSource).not.toMatch(new RegExp(createService));
+      expect(screenSource).not.toMatch(
+        /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
+      );
+      expect(screenSource).not.toMatch(
+        /useEntityRelations|useConfirmDelete|useAsyncOperation/,
+      );
+      expect(state).toContain(`initial${idName}`);
+      expect(state).toContain(`retainPersisted${idName}`);
+      expect(state).not.toMatch(new RegExp(`getById\\(current${idName}`));
+      expect(actions).toContain('saveEntityWithSecondaryData');
+      expect(actions).toContain(`retainPersisted${idName}`);
+      expect(associations).toContain('preserveDraftOnEntityCreation: true');
+    },
+  );
 });
 
 /**

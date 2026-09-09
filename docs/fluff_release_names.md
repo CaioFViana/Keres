@@ -60,3 +60,4 @@ So I shouldnt be daunted by the storm. I need to go ahead. Like a rainbow after 
 _"Locked in place by the eternal serpent, the young main exists surrounded by the zodiac. Never ending, never starting, always present, always cycling."_
 
 The very last feature that i heared from friends was support for crossovers and series/overarching stories. So the final release is upon me. Keres 1.8, Arc support, Aion.
+The bulk of the release was the refactoring of the code to catch bugs and issues before they happened, as well as remove some bad practices. Make it work, clean the mess after.

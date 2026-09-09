@@ -277,6 +277,97 @@ describe('extracted multi-step form responsibilities', () => {
   );
 });
 
+describe('extracted simple form responsibilities', () => {
+  const forms = [
+    {
+      label: 'Story',
+      dir: 'screens/enterstack',
+      screen: 'StoryFormScreen.tsx',
+      prefix: 'Story',
+      idParam: 'initialStoryId',
+      createService: 'createStoryService',
+    },
+    {
+      label: 'Pack',
+      dir: 'screens/packs',
+      screen: 'PackFormScreen.tsx',
+      prefix: 'Pack',
+      idParam: 'initialPackId',
+      createService: 'createPackService',
+    },
+    {
+      label: 'Friendship',
+      dir: 'screens/enterstack',
+      screen: 'FriendshipFormScreen.tsx',
+      prefix: 'Friendship',
+      idParam: null,
+      createService: 'createFriendshipService',
+    },
+    {
+      label: 'StorySchemaField',
+      dir: 'screens/storyschema',
+      screen: 'StorySchemaFieldFormScreen.tsx',
+      prefix: 'StorySchemaField',
+      idParam: 'initialFieldId',
+      createService: 'createStorySchemaFieldService',
+    },
+    {
+      label: 'Plot',
+      dir: 'screens/plots',
+      screen: 'PlotFormScreen.tsx',
+      prefix: 'Plot',
+      idParam: 'plotId',
+      createService: 'createPlotService',
+    },
+    {
+      label: 'Tag',
+      dir: 'screens/tags',
+      screen: 'TagFormScreen.tsx',
+      prefix: 'Tag',
+      idParam: 'tagId',
+      createService: 'createTagService',
+    },
+    {
+      label: 'Stat',
+      dir: 'screens/stats',
+      screen: 'StatFormScreen.tsx',
+      prefix: 'Stat',
+      idParam: 'statId',
+      createService: 'createStatService',
+    },
+    {
+      label: 'Route',
+      dir: 'screens/routes',
+      screen: 'RouteFormScreen.tsx',
+      prefix: 'Route',
+      idParam: 'routeId',
+      createService: 'createRouteService',
+    },
+  ] as const;
+
+  it.each(forms)(
+    '$label keeps service setup and persistence coordination outside the screen',
+    ({ dir, screen, prefix, idParam, createService }) => {
+      const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
+      const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
+      const actions = readFileSync(
+        resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`),
+        'utf8',
+      );
+
+      expect(screenSource).toContain(`use${prefix}FormResources`);
+      expect(screenSource).toContain(`use${prefix}FormState`);
+      expect(screenSource).toContain(`use${prefix}FormActions`);
+      expect(screenSource).not.toMatch(new RegExp(createService));
+      expect(screenSource).not.toMatch(/AppAlert|entityEventEmitter|useConfirmDelete|useAsyncOperation/);
+      if (idParam) {
+        expect(state).toContain(idParam);
+      }
+      expect(actions.length).toBeGreaterThan(0);
+    },
+  );
+});
+
 /**
  * A per-file size ceiling.
  *

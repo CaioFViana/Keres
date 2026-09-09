@@ -12,9 +12,9 @@ Avaliação qualitativa da estrutura do monorepo e dos fluxos de sincronização
 
 ### Veredito
 
-**A arquitetura do Keres é boa e madura: aproximadamente 9,0/10 em manutenção e legibilidade** (antes 8,9/10 após P01–P10, 8,6/10 na auditoria ampla e 8,7/10 na consolidação pós-D13).
+**A arquitetura do Keres é boa e madura: aproximadamente 9,1/10 em manutenção e legibilidade** (antes 9,0/10 após multi-etapa + ALS, 8,9 após P01–P10).
 
-A evolução recente deve-se ao fechamento das pendências P01–P10 e, em seguida, à extração de **todos** os formulários multi-etapa restantes (WorldRule, Item, Note, Chapter, Choice, ItemJourney) no padrão Scene/Character/Location.
+A evolução recente cobre P01–P10, formulários multi-etapa no padrão Scene, erros HTTP, contrato de banco nos dois motores, tx explícito sem Proxy ALS, e a extração dos formulários simples restantes (Story, Pack, Friendship, SchemaField, Plot, Tag, Stat, Route).
 
 Não há indicação de necessidade de reescrever a arquitetura.
 
@@ -26,7 +26,7 @@ Não há indicação de necessidade de reescrever a arquitetura.
 | Contratos compartilhados | 9,0 | Barrel, docs e cobertura de solvers/theme alinhados |
 | Sincronização | 9,2 | DI + notifier único; operation log aceita `tx` explícito |
 | Persistência dual | 9,0 | Contrato documentado; evidência operacional atual em PostgreSQL e SQLite (9/9) |
-| Camadas do cliente | 9,2 | Todos os formulários multi-etapa no padrão Scene (resources/state/associations/actions) |
+| Camadas do cliente | 9,4 | Formulários multi-etapa e simples no padrão Scene (resources/state[/associations]/actions) |
 | Camadas da API | 9,2 | Rotas sem `throw new Error`; `AppError` na borda HTTP |
 | Testes de arquitetura | 9,5 | Fronteiras executáveis e allowlists que só encolhem |
 | Cobertura | 8,5 | Medição em 9/9; pisos ratcheted; shared inclui solvers/theme |
@@ -136,10 +136,25 @@ O `db` exportado deixou de ser um Proxy que redirecionava silenciosamente para a
 - Savepoints usam `tx.transaction(...)`, não `db.transaction`.
 - Guards de arquitetura: `export const db = rawDb` (sem Proxy de redirecionamento) e push passa `tx` aos handlers.
 
+## Continuação — formulários simples (9 de setembro de 2026)
+
+Extraídos no padrão resources / state / actions (sem associations, salvo onde já existia lógica pós-criação como Plot↔Scene):
+
+| Formulário | Pasta |
+| --- | --- |
+| Story, Friendship | `screens/enterstack/` |
+| Pack | `screens/packs/` |
+| StorySchemaField | `screens/storyschema/` |
+| Plot | `screens/plots/` |
+| Tag | `screens/tags/` |
+| Stat | `screens/stats/` |
+| Route | `screens/routes/` |
+
+Guarda de arquitetura: `extracted simple form responsibilities`. Validação: **9 suítes / 67 testes** (layering + actions).
+
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
-1. **Interseção tipada Drizzle** continua sendo ergonomia de call-site, não prova estática completa de portabilidade — mitigada pelos testes de contrato/arquitetura acima.
-2. Formulários **sem** gravação multi-etapa (Tag, Stat, Plot, Story, etc.) não foram alvo da extração Scene — ficam para quando forem tocados, se a orquestração crescer.
+1. **Interseção tipada Drizzle** continua sendo ergonomia de call-site, não prova estática completa de portabilidade — mitigada pelos testes de contrato/arquitetura e pela evidência operacional nos dois motores.
 
 ## Validação desta sessão
 

@@ -5,23 +5,20 @@ import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import type { PackSelectionType } from '@keres/shared';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import { useDrizzle } from '../../db';
-import type { StorySelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { createPackService } from '../../services/storymanagement/PackService';
-import { createStoryService } from '../../services/storymanagement/StoryService';
-import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
+import { usePackFormActions } from './usePackFormActions';
+import { usePackFormResources } from './usePackFormResources';
+import { usePackFormState } from './usePackFormState';
 
 /**
  * Making a pack out of a story, or re-extracting one.
@@ -34,155 +31,49 @@ import { AppAlert } from '../../utils/AppAlert';
  * treatment. They are the author's own words and are never translated.
  */
 
-const ALL_OFF: PackSelectionType = {
-  customAttributes: false,
-  suggestions: false,
-  suggestionsIncludeUsed: false,
-  stats: false,
-  tags: false,
-};
-
 const PackFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<{ goBack: () => void }>();
   const route = useRoute<{ key: string; name: string; params?: { packId?: string } }>();
-  const packId = route.params?.packId;
-  const drizzleDb = useDrizzle();
-  const showNotification = useNotificationStore((state) => state.showNotification);
+  const initialPackId = route.params?.packId;
   const { userId } = useUserSettingsStore();
   const commonInputStyles = getCommonInputStyles(colors);
 
-  useScreenHeader({ target: 'parent', title: packId ? t('packs_reextract') : t('packs_create') });
+  useScreenHeader({
+    target: 'parent',
+    title: initialPackId ? t('packs_reextract') : t('packs_create'),
+  });
 
-  const [stories, setStories] = useState<StorySelect[]>([]);
-  const [sourceStoryId, setSourceStoryId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [language, setLanguage] = useState('');
-  const [authorName, setAuthorName] = useState('');
-  const [selection, setSelection] = useState<PackSelectionType>(ALL_OFF);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const list = await createStoryService(drizzleDb).getAllStories(userId ?? undefined);
-        setStories(list);
-        if (packId) {
-          const pack = (await createPackService(drizzleDb).listPacks()).find(
-            (entry) => entry.id === packId,
-          );
-          if (pack) {
-            setName(pack.name);
-            setDescription(pack.description ?? '');
-            setLanguage(pack.language ?? '');
-            setAuthorName(pack.authorName ?? '');
-            setSourceStoryId(pack.sourceStoryId);
-          }
-        }
-      } catch (error) {
-        console.error('PackFormScreen: failed to load.', error);
-        showNotification(t('packs_load_failed'), 'error');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [drizzleDb, packId, userId, showNotification, t]);
-
-  /**
-   * Prefills from the story the moment one is chosen, and only while creating: on a re-extraction
-   * the author has already edited these, and overwriting their choice would be surprising.
-   */
-  const chooseStory = useCallback(
-    (storyId: string) => {
-      setSourceStoryId(storyId);
-      if (packId) return;
-      const story = stories.find((entry) => entry.id === storyId);
-      if (!story) return;
-      setLanguage(story.language ?? '');
-      setAuthorName(story.author ?? '');
-      if (!name.trim()) setName(story.title);
-    },
-    [packId, stories, name],
-  );
-
-  const toggle = useCallback(
-    (key: keyof PackSelectionType) => (value: boolean) =>
-      setSelection((current) => ({
-        ...current,
-        [key]: value,
-        // The sub-toggle cannot outlive its parent, or a pack would claim to sweep in used values
-        // while carrying no catalogue at all.
-        ...(key === 'suggestions' && !value ? { suggestionsIncludeUsed: false } : {}),
-      })),
-    [],
-  );
-
-  const nothingSelected = useMemo(
-    () =>
-      !selection.customAttributes && !selection.suggestions && !selection.stats && !selection.tags,
-    [selection],
-  );
-
-  const handleSave = useCallback(async () => {
-    if (!sourceStoryId) {
-      AppAlert.alert(t('error'), t('packs_source_required'));
-      return;
-    }
-    if (!name.trim()) {
-      AppAlert.alert(t('error'), t('packs_name_required'));
-      return;
-    }
-    if (nothingSelected) {
-      AppAlert.alert(t('error'), t('packs_selection_required'));
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const service = createPackService(drizzleDb);
-      if (packId) {
-        await service.reextractPack(packId, selection);
-        await service.updatePackDetails(packId, {
-          name: name.trim(),
-          description: description.trim() || null,
-          language: language.trim() || null,
-          authorName: authorName.trim() || null,
-        });
-      } else {
-        await service.createPack({
-          sourceStoryId,
-          name,
-          description: description.trim() || null,
-          language: language.trim() || null,
-          authorName: authorName.trim() || null,
-          selection,
-        });
-      }
-      navigation.goBack();
-    } catch (error) {
-      console.error('PackFormScreen: failed to save pack.', error);
-      showNotification(t('packs_save_failed'), 'error');
-    } finally {
-      setSaving(false);
-    }
-  }, [
+  const { packServiceRef, stories, storiesLoading } = usePackFormResources(userId);
+  const packFormState = usePackFormState({
+    initialPackId,
+    packServiceRef,
+    stories,
+  });
+  const {
     sourceStoryId,
     name,
-    nothingSelected,
-    packId,
-    selection,
+    setName,
     description,
+    setDescription,
     language,
+    setLanguage,
     authorName,
-    drizzleDb,
+    setAuthorName,
+    selection,
+    chooseStory,
+    toggle,
+    loading,
+    isEditing,
+  } = packFormState;
+
+  const { handleSave, saving } = usePackFormActions({
+    state: packFormState,
+    packServiceRef,
     navigation,
-    showNotification,
-    t,
-  ]);
+  });
 
   const styles = StyleSheet.create({
     switchRow: {
@@ -198,7 +89,7 @@ const PackFormScreen = () => {
     cancelButton: { backgroundColor: colors.secondary },
   });
 
-  if (loading) {
+  if (storiesLoading || loading) {
     return <ScreenLoading />;
   }
 
@@ -228,7 +119,7 @@ const PackFormScreen = () => {
       actions={
         <>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">
-            {packId ? t('packs_reextract') : t('save')}
+            {isEditing ? t('packs_reextract') : t('save')}
           </Button>
           <Button onPress={() => navigation.goBack()} style={styles.cancelButton}>
             {t('cancel')}
@@ -244,7 +135,7 @@ const PackFormScreen = () => {
           placeholder={t('packs_source_placeholder')}
           // Re-extraction is always from the story the pack came from; changing it would make the
           // "same pack, new version" promise a lie.
-          disabled={Boolean(packId)}
+          disabled={isEditing}
         />
       </FormField>
 

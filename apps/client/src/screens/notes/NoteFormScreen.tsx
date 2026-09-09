@@ -9,6 +9,7 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
@@ -25,6 +26,7 @@ import { useNoteFormResources } from './useNoteFormResources';
 import { useNoteFormState } from './useNoteFormState';
 
 type NoteFormScreenRouteProp = RouteProp<NotesStackParamList, 'NoteForm'>;
+type NoteFormScreenNavigationProp = NativeStackNavigationProp<NotesStackParamList, 'NoteForm'>;
 
 const styles = StyleSheet.create({
   tagSection: {
@@ -36,7 +38,7 @@ const styles = StyleSheet.create({
 const NoteFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NoteFormScreenNavigationProp>();
   const route = useRoute<NoteFormScreenRouteProp>();
   const { t } = useTranslation();
   const { userId } = useUserSettingsStore();

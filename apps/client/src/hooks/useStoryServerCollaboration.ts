@@ -134,11 +134,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     if (!targetServer) return;
     setServerActionLoading(true);
     try {
-      const result = await syncEngine.uploadNewStoryToServer(
-        storyId,
-        targetServer,
-        userId,
-      );
+      const result = await syncEngine.uploadNewStoryToServer(storyId, targetServer, userId);
       if (result.success) {
         setServerId(targetServer.id);
         setUploadTargetServerId(null);

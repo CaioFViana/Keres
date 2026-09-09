@@ -48,7 +48,7 @@ export function useChapterFormAssociations({
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
-    [relations.setSelectedTagIds],
+    [relations],
   );
 
   return {

@@ -68,9 +68,8 @@ export function useWorldRuleFormState({
             setIsFavorite(fetchedWorldRule.isFavorite);
             setExtraNotes(fetchedWorldRule.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialWorldRuleId,
-            );
+            const existingValues =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialWorldRuleId);
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('World rule not found:', initialWorldRuleId);

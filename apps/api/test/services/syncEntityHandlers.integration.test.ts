@@ -167,7 +167,10 @@ describe('update', () => {
       entity,
     );
 
-    expect(await handler.findByIdOrThrow(entity.id)).toMatchObject({ name: 'Keres', title: 'A Deusa' });
+    expect(await handler.findByIdOrThrow(entity.id)).toMatchObject({
+      name: 'Keres',
+      title: 'A Deusa',
+    });
   });
 
   /**

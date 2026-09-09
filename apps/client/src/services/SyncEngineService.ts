@@ -17,10 +17,7 @@ import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncE
 import type { ServerService } from './ServerService';
 import type { SyncConflictService } from './SyncConflictService';
 import { applyReorderToLocalDb } from './SyncConflictService';
-import {
-  type ServerStoryPreview,
-  type StoryUploadResult,
-} from './sync/StoryTransfer';
+import { type ServerStoryPreview, type StoryUploadResult } from './sync/StoryTransfer';
 import { SyncScheduler } from './sync/SyncScheduler';
 import type { SyncContext } from './sync/SyncContext';
 import { SyncPull } from './sync/SyncPull';

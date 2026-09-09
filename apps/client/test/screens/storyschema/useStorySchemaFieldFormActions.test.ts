@@ -13,7 +13,9 @@ import { useStorySchemaFieldFormActions } from '../../../src/screens/storyschema
 import type { StorySchemaFieldFormState } from '../../../src/screens/storyschema/useStorySchemaFieldFormState';
 import type { StorySchemaFieldService } from '../../../src/services/storymanagement/StorySchemaFieldService';
 
-const createState = (overrides: Partial<StorySchemaFieldFormState> = {}): StorySchemaFieldFormState =>
+const createState = (
+  overrides: Partial<StorySchemaFieldFormState> = {},
+): StorySchemaFieldFormState =>
   ({
     name: 'Power Level',
     key: 'power_level',
@@ -99,9 +101,7 @@ it('requires a target entity type for ENTITY attributes', async () => {
 });
 
 it('creates a field and navigates back', async () => {
-  const view = await renderActions(
-    createState({ description: '  strong  ', defaultValue: ' 1 ' }),
-  );
+  const view = await renderActions(createState({ description: '  strong  ', defaultValue: ' 1 ' }));
 
   await act(async () => {
     await view.result.current.handleSave();

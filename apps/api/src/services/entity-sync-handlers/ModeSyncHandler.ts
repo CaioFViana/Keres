@@ -20,7 +20,11 @@ export class ModeSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async assertCharacterExists(storyId: string, characterId: string, database: CompatibleDb = db): Promise<void> {
+  private async assertCharacterExists(
+    storyId: string,
+    characterId: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const character = await database.query.characters.findFirst({
       where: and(
         eq(characters.id, characterId),
@@ -36,7 +40,12 @@ export class ModeSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateModeDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

@@ -224,7 +224,10 @@ describe('collaboration sync entity handlers', () => {
       } as UpdateStoryUpdate,
       journey,
     );
-    expect(await journeys.findByIdOrThrow(journeyId)).toMatchObject({ newState: 'consumida', version: 2 });
+    expect(await journeys.findByIdOrThrow(journeyId)).toMatchObject({
+      newState: 'consumida',
+      version: 2,
+    });
 
     const deletionCases: Array<[string, string, SyncEntityHandler, number]> = [
       ['ItemJourney', journeyId, journeys, 2],
@@ -274,7 +277,11 @@ describe('collaboration sync entity handlers', () => {
         current,
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
-    expect(await handler.findByIdOrThrow(linkId)).toMatchObject({ characterId, sceneId, version: 1 });
+    expect(await handler.findByIdOrThrow(linkId)).toMatchObject({
+      characterId,
+      sceneId,
+      version: 1,
+    });
   });
 
   it('never lets one user create, update, or delete another user’s favorite', async () => {
@@ -327,7 +334,10 @@ describe('collaboration sync entity handlers', () => {
     await expect(
       favorites.delete(outsiderId, storyId, remove('Favorite', favoriteId, 1), favorite),
     ).rejects.toMatchObject({ reason: 'unauthorized' });
-    expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({ isDeleted: false, version: 1 });
+    expect(await favorites.findByIdOrThrow(favoriteId)).toMatchObject({
+      isDeleted: false,
+      version: 1,
+    });
   });
 
   it('keeps a favorite attached to its original user, story and entity even if its owner sends those fields', async () => {

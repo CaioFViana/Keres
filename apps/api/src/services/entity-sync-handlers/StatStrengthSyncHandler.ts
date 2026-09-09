@@ -24,7 +24,11 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async assertStatExists(storyId: string, statId: string | null, database: CompatibleDb = db): Promise<void> {
+  private async assertStatExists(
+    storyId: string,
+    statId: string | null,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     if (!statId) return; // The story's default ladder: it references no stat at all.
 
     const stat = await database.query.stats.findFirst({
@@ -70,7 +74,12 @@ export class StatStrengthSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateStatStrengthDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

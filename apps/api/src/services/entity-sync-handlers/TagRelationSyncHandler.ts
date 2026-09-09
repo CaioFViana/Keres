@@ -160,14 +160,21 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateTagRelationDataType = this.createSchema.parse(update.data);
 
     await this.validateRelation(
       storyId,
       validatedData.tagId,
       validatedData.relationId,
-      validatedData.relationType, database);
+      validatedData.relationType,
+      database,
+    );
 
     // Check for existing tag relation with the same tagId, relationId, and relationType within the same story
     const existingTagRelation = await database.query.tagRelations.findFirst({

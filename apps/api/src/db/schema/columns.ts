@@ -69,16 +69,16 @@ export const bigintNumber = asPostgresCompatible<
 >(
   usingSqlite
     ? (name: string) => sqlite.integer(name)
-    : (name: string) => pg.bigint(name, { mode: 'number' })
+    : (name: string) => pg.bigint(name, { mode: 'number' }),
 );
 
 export const boolean = asPostgresCompatible<typeof pg.boolean>(
-  usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'boolean' }) : pg.boolean
+  usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'boolean' }) : pg.boolean,
 );
 
 /** A nullable date/time. */
 export const timestamp = asPostgresCompatible<typeof pg.timestamp>(
-  usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'timestamp_ms' }) : pg.timestamp
+  usingSqlite ? (name: string) => sqlite.integer(name, { mode: 'timestamp_ms' }) : pg.timestamp,
 );
 
 /**
@@ -100,21 +100,23 @@ export const timestampNow = asPostgresCompatible<
           .integer(name, { mode: 'timestamp_ms' })
           .notNull()
           .$defaultFn(() => new Date())
-    : (name: string) => pg.timestamp(name).notNull().defaultNow()
+    : (name: string) => pg.timestamp(name).notNull().defaultNow(),
 );
 
 /** Documento JSON. `jsonb` no Postgres, texto serializado pelo drizzle no SQLite. */
 export const json = asPostgresCompatible<typeof pg.jsonb>(
-  usingSqlite ? (name: string) => sqlite.text(name, { mode: 'json' }) : pg.jsonb
+  usingSqlite ? (name: string) => sqlite.text(name, { mode: 'json' }) : pg.jsonb,
 );
 
 export const index = asPostgresCompatible<typeof pg.index>(usingSqlite ? sqlite.index : pg.index);
 
 export const uniqueIndex = asPostgresCompatible<typeof pg.uniqueIndex>(
-  usingSqlite ? sqlite.uniqueIndex : pg.uniqueIndex
+  usingSqlite ? sqlite.uniqueIndex : pg.uniqueIndex,
 );
 
-export const unique = asPostgresCompatible<typeof pg.unique>(usingSqlite ? sqlite.unique : pg.unique);
+export const unique = asPostgresCompatible<typeof pg.unique>(
+  usingSqlite ? sqlite.unique : pg.unique,
+);
 
 /**
  * Uma tabela sob outro nome, para a mesma tabela aparecer duas vezes numa consulta.

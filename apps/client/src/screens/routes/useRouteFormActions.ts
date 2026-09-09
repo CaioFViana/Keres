@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { createRouteService } from '../../services/storymanagement/RouteService';
+import type { createRouteService } from '../../services/storymanagement/RouteService';
 import { AppAlert } from '../../utils/AppAlert';
 import type { RouteFormState } from './useRouteFormState';
 

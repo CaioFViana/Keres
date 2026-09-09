@@ -33,7 +33,12 @@ export class PlotSyncHandler extends BaseSyncEntityHandler<
       throw new SyncConflictError('validation', 'Plots are only available for linear stories.');
     }
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    _: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data: CreatePlotDataType = this.createSchema.parse(update.data);
     await this.assertLinear(storyId, database);
     if (await this.findById(update.id!, database))

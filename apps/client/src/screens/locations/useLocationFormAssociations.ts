@@ -77,9 +77,8 @@ export function useLocationFormAssociations({
       return;
     }
     try {
-      const fetchedRelations = await locationRelationServiceRef.current.getAllRelationsForStory(
-        storyId,
-      );
+      const fetchedRelations =
+        await locationRelationServiceRef.current.getAllRelationsForStory(storyId);
       setAllLocationRelations(fetchedRelations);
     } catch (err) {
       console.error('Failed to fetch all location relations:', err);
@@ -95,7 +94,7 @@ export function useLocationFormAssociations({
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
-    [relations.setSelectedTagIds],
+    [relations],
   );
 
   const handleSetParent = useCallback(

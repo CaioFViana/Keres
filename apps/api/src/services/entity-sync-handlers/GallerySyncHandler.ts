@@ -60,7 +60,11 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
    * later. Without this, whoever knows the MD5 of somebody else's blob creates a Gallery here and
    * downloads the file through the media route.
    */
-  private async assertHashBindableToStory(storyId: string, hash: string, database: CompatibleDb = db): Promise<void> {
+  private async assertHashBindableToStory(
+    storyId: string,
+    hash: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const blobExists = await mediaStorageService.has(hash);
     if (!blobExists) return;
 
@@ -76,7 +80,12 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateGalleryDataType = this.createSchema.parse(update.data);
 

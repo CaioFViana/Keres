@@ -2,7 +2,7 @@ import { validateRequiredCustomAttributes } from '@/src/components/common/forms/
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
 import type { Note } from '@keres/shared/entities/Note';
 import type { StorySchemaField } from '@keres/shared';
-import type { NavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,7 @@ import type { NoteService } from '../../services/storymanagement/NoteService';
 import { AppAlert } from '../../utils/AppAlert';
 import type { NoteFormState } from './useNoteFormState';
 
-type NoteNavigation = NavigationProp<NotesStackParamList>;
+type NoteNavigation = NativeStackNavigationProp<NotesStackParamList, 'NoteForm'>;
 
 type UseNoteFormActionsOptions = {
   state: NoteFormState;

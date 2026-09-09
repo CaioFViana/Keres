@@ -79,10 +79,11 @@ export function useSceneFormState({
           const scene = await sceneServiceRef.current.getById(initialSceneId);
           if (scene) {
             applyScene(scene);
-            const values = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialSceneId,
+            const values =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialSceneId);
+            setCustomValues(
+              Object.fromEntries(values.map((value) => [value.fieldId, value.value])),
             );
-            setCustomValues(Object.fromEntries(values.map((value) => [value.fieldId, value.value])));
           }
         } else if (initialChapterId) {
           setChapterId(initialChapterId);
@@ -94,13 +95,7 @@ export function useSceneFormState({
       }
     };
     void load();
-  }, [
-    drizzleDb,
-    initialChapterId,
-    initialSceneId,
-    sceneServiceRef,
-    storyId,
-  ]);
+  }, [drizzleDb, initialChapterId, initialSceneId, sceneServiceRef, storyId]);
 
   useEffect(() => {
     if (!isEditing && !customDefaultsAppliedRef.current && customFields.length > 0) {

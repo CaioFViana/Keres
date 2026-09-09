@@ -30,7 +30,12 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateStorySchemaFieldDataType = this.createSchema.parse(update.data);
 
     const existingField = await database.query.storySchemaFields.findFirst({

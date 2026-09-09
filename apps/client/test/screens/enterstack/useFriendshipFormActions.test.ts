@@ -14,8 +14,9 @@ jest.mock('../../../src/services/FriendshipApiService', () => ({
   },
 }));
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string, params?: Record<string, string>) =>
-    params ? `${key}:${JSON.stringify(params)}` : key,
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, string>) =>
+      params ? `${key}:${JSON.stringify(params)}` : key,
   }),
 }));
 
@@ -113,9 +114,7 @@ it('resolves a friend tag against the selected server', async () => {
 });
 
 it('blocks saving when the resolved friend is the current server user', async () => {
-  const view = await renderActions(
-    createState({ resolvedFriendUserId: 'me-on-server' }),
-  );
+  const view = await renderActions(createState({ resolvedFriendUserId: 'me-on-server' }));
 
   await act(async () => {
     await view.result.current.handleSaveFriendship();

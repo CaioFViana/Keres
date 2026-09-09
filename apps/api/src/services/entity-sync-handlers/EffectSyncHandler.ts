@@ -22,7 +22,11 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
 
   // No existence validation for entityId (Scene or Choice) - polymorphic, no database FK, the same
   // pattern as CommentSyncHandler for entityType/entityId.
-  private async validateRelatedEntities(storyId: string, itemId: string | null, database: CompatibleDb = db): Promise<void> {
+  private async validateRelatedEntities(
+    storyId: string,
+    itemId: string | null,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     if (itemId) {
       const itemExists = await database.query.items.findFirst({
         where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
@@ -36,7 +40,12 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(storyId, validatedData.itemId, database);

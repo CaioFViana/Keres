@@ -26,7 +26,12 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateChapterDataType = this.createSchema.parse(update.data);
     if (validatedData.arcId) {

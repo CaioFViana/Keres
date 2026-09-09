@@ -25,7 +25,11 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async validateRelatedEntities(storyId: string, choiceId: string, database: CompatibleDb = db): Promise<void> {
+  private async validateRelatedEntities(
+    storyId: string,
+    choiceId: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const choiceExists = await database.query.choices.findFirst({
       where: and(
         eq(choices.id, choiceId),
@@ -41,7 +45,12 @@ export class ChoiceCheckGroupSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(storyId, validatedData.choiceId, database);

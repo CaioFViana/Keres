@@ -136,7 +136,12 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateNoteRelationDataType = this.createSchema.parse(update.data);
 
     // Validate related entities
@@ -144,7 +149,9 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
       storyId,
       validatedData.noteId,
       validatedData.relationId,
-      validatedData.relationType, database);
+      validatedData.relationType,
+      database,
+    );
 
     // Check for uniqueness of the NoteRelation
     const existingRelation = await database.query.noteRelations.findFirst({

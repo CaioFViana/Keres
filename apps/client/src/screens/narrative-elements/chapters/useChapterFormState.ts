@@ -60,9 +60,8 @@ export function useChapterFormState({
             setIsEvent(fetchedChapter.type === 'event');
             setArcId(fetchedChapter.arcId ?? null);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialChapterId,
-            );
+            const existingValues =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialChapterId);
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Chapter not found:', initialChapterId);

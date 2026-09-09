@@ -70,14 +70,21 @@ export class ChoiceCheckSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(
       storyId,
       validatedData.groupId,
       validatedData.sceneId,
-      validatedData.itemId, database);
+      validatedData.itemId,
+      database,
+    );
 
     const currentCheck = await this.findById(update.id!, database);
     if (currentCheck) {

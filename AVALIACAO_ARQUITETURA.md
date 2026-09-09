@@ -169,7 +169,24 @@ Guarda de arquitetura: `extracted simple form responsibilities`. Validação: **
 - Shared: boundaries + `test:coverage` (670 testes) — **aprovados**; medição ~96,2% linhas / 96,0% funções / 80,2% branches com solvers/theme incluídos
 - `bun run coverage:update` — ratchet aplicado (ex.: cliente 40,8% linhas; sync core functions 93,8%)
 
+## Continuação — suíte completa e cobertura (9 de setembro de 2026)
+
+Corrigidos 3 erros de typecheck do cliente introduzidos pelos refactors (`NoteForm` navigation, `SyncPull` notifier no teste, tipagem do teste de Story). Em seguida:
+
+| Etapa | Resultado |
+| --- | --- |
+| `bun run typecheck` | OK (shared → site) |
+| `bun run test:coverage` | OK |
+| Shared | 65 arquivos / **670** testes |
+| Cliente | **275** suítes / **2510** testes |
+| API unit | 35 arquivos / **217** testes |
+| Admin / desktop / site | 144 / 95 / 35 testes |
+| Integração PostgreSQL | **612** passed, 2 skipped |
+| Integração SQLite | **614** passed |
+| `test:integration:coverage` + merge | OK |
+| `coverage:update` | ratchet (ex.: cliente 43,2% linhas; apiCombined 81,5%; apiSyncHandlers branches 73,7%) |
+
 ### Limites
 
-- A suíte completa de integração da API (todos os `*.integration.test.ts`) e a suíte completa do cliente não foram reexecutadas por completo nesta sessão — apenas o recorte de contrato/transação/migrations e os focos acima.
 - A nota permanece qualitativa e não certifica ausência de bugs em todo o produto.
+- Lint global (`bun run lint`) não foi o foco desta passagem.

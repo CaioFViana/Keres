@@ -135,7 +135,11 @@ export function useStoryFormActions({
 
               return;
             }
-            await packServiceRef.current.createStoryWithPacks(userId, storyData, state.selectedPackIds);
+            await packServiceRef.current.createStoryWithPacks(
+              userId,
+              storyData,
+              state.selectedPackIds,
+            );
           } else {
             await storyServiceRef.current.createStory(userId, storyData);
           }

@@ -211,7 +211,10 @@ describe('choice and inventory sync entity handlers', () => {
       } as UpdateStoryUpdate,
       currentChoice,
     );
-    expect(await choice.findByIdOrThrow(choiceId)).toMatchObject({ text: 'Usar a chave', version: 2 });
+    expect(await choice.findByIdOrThrow(choiceId)).toMatchObject({
+      text: 'Usar a chave',
+      version: 2,
+    });
 
     const deletionCases: Array<[string, string, SyncEntityHandler]> = [
       ['ChoiceCheck', checkId, check],
@@ -491,6 +494,9 @@ describe('choice and inventory sync entity handlers', () => {
         checkCurrent,
       ),
     ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
-    expect(await checks.findByIdOrThrow(checkId)).toMatchObject({ sceneId: firstSceneId, version: 1 });
+    expect(await checks.findByIdOrThrow(checkId)).toMatchObject({
+      sceneId: firstSceneId,
+      version: 1,
+    });
   });
 });

@@ -70,7 +70,10 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     return update;
   }
 
-  protected payloadForLog(parsed: Record<string, unknown>, actingUserId: string): Record<string, unknown> {
+  protected payloadForLog(
+    parsed: Record<string, unknown>,
+    actingUserId: string,
+  ): Record<string, unknown> {
     const payload = super.payloadForLog(parsed, actingUserId);
     delete payload.userId;
     return payload;
@@ -102,7 +105,12 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     return entity.id === storyId;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: z.infer<typeof CreateStoryDataSchema> = this.createSchema.parse(
       update.data,

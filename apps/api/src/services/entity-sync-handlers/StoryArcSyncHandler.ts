@@ -18,7 +18,12 @@ export class StoryArcSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(_userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    _userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data: CreateStoryArcDataType = this.createSchema.parse(update.data);
     const existing = await this.findById(update.id!, database);
     if (existing) {

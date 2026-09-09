@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
-import { createRouteService } from '../../services/storymanagement/RouteService';
+import type { createRouteService } from '../../services/storymanagement/RouteService';
 
 type RouteService = ReturnType<typeof createRouteService>;
 

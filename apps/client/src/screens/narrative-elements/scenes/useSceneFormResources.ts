@@ -10,8 +10,12 @@ import { useLocationStore } from '../../../state/locationStore';
 export function useSceneFormResources(storyId?: string) {
   const drizzleDb = useDrizzle();
   const sceneServiceRef = useRef<ReturnType<typeof createSceneService> | null>(null);
-  const { chapters, fetchChapters, setDbAndStoryId: setChapterDb, initializeService: initChapter } =
-    useChapterStore();
+  const {
+    chapters,
+    fetchChapters,
+    setDbAndStoryId: setChapterDb,
+    initializeService: initChapter,
+  } = useChapterStore();
   const {
     locations,
     fetchLocations,
@@ -24,8 +28,12 @@ export function useSceneFormResources(storyId?: string) {
     setDbAndStoryId: setCharacterDb,
     initializeService: initCharacter,
   } = useCharacterStore();
-  const { items, fetchItems, setDbAndStoryId: setItemDb, initializeService: initItem } =
-    useItemStore();
+  const {
+    items,
+    fetchItems,
+    setDbAndStoryId: setItemDb,
+    initializeService: initItem,
+  } = useItemStore();
 
   useEffect(() => {
     sceneServiceRef.current ??= createSceneService(drizzleDb);

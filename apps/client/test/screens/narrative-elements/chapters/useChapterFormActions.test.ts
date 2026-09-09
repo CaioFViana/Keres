@@ -148,9 +148,7 @@ it('coordinates persistence, notification and replacement after creation', async
 });
 
 it('delegates deletion and completes it with an event and back navigation', async () => {
-  const view = await renderActions(
-    createState({ currentChapterId: 'chapter-1', isEditing: true }),
-  );
+  const view = await renderActions(createState({ currentChapterId: 'chapter-1', isEditing: true }));
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];

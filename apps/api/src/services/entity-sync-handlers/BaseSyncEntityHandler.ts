@@ -41,15 +41,16 @@ export type SyncEntity = Record<string, unknown> & {
   version: number;
 };
 
-export type SyncStoredEntity<T extends Record<string, unknown>> = T & Record<string, unknown> & {
-  id: string;
-  version: number;
-  storyId?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  isDeleted: boolean;
-  deletedAt: Date | null;
-};
+export type SyncStoredEntity<T extends Record<string, unknown>> = T &
+  Record<string, unknown> & {
+    id: string;
+    version: number;
+    storyId?: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    isDeleted: boolean;
+    deletedAt: Date | null;
+  };
 
 export type SyncStoredEntityFor<T extends z.ZodType<Record<string, unknown>>> = SyncStoredEntity<
   z.output<T>
@@ -227,10 +228,7 @@ export abstract class BaseSyncEntityHandler<
     return entity;
   }
 
-  async countForStoryIds(
-    storyIds: string[],
-    database: CompatibleDb = db,
-  ): Promise<number> {
+  async countForStoryIds(storyIds: string[], database: CompatibleDb = db): Promise<number> {
     if (!this.storyIdColumnName || storyIds.length === 0) {
       return 0;
     }
@@ -330,11 +328,7 @@ export abstract class BaseSyncEntityHandler<
       );
     }
 
-    this.checkVersionConflict(
-      update.changes.version,
-      this.readVersion(currentEntity),
-      update.id!,
-    );
+    this.checkVersionConflict(update.changes.version, this.readVersion(currentEntity), update.id!);
 
     // Validate incoming changes against the update schema.
     const validatedChanges: z.infer<UpdateType> = this.updateSchema.parse(incomingChanges);
@@ -347,8 +341,7 @@ export abstract class BaseSyncEntityHandler<
     const changes: Record<string, unknown> = {
       ...validatedChanges, // Use validated changes
       updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
-      [this.versionColumnName]:
-        sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
+      [this.versionColumnName]: sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
     };
 
     if (restoreRequested && this.isDeletedColumnName && this.deletedAtColumnName) {
@@ -415,8 +408,7 @@ export abstract class BaseSyncEntityHandler<
       .set({
         [this.isDeletedColumnName]: true,
         [this.deletedAtColumnName]: clientOperationTime, // Use client's operationTime for deletedAt
-        [this.versionColumnName]:
-          sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
+        [this.versionColumnName]: sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
         updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       })
       .where(
@@ -552,7 +544,10 @@ export abstract class BaseSyncEntityHandler<
     return {};
   }
 
-  createPayloadMatches(existing: Record<string, unknown>, incomingData: Record<string, unknown>): boolean {
+  createPayloadMatches(
+    existing: Record<string, unknown>,
+    incomingData: Record<string, unknown>,
+  ): boolean {
     let parsed: Record<string, unknown>;
     try {
       parsed = this.createSchema.parse(incomingData) as Record<string, unknown>;
@@ -586,7 +581,10 @@ export abstract class BaseSyncEntityHandler<
   }
 
   /** Zod `.partial()` keeps `.default()` active; without this, a name-only patch would reset isFavorite. */
-  protected keepOnlyProvidedKeys(parsed: Record<string, unknown>, provided: Record<string, unknown>): void {
+  protected keepOnlyProvidedKeys(
+    parsed: Record<string, unknown>,
+    provided: Record<string, unknown>,
+  ): void {
     for (const key of Object.keys(parsed)) {
       if (!(key in provided)) delete parsed[key];
     }

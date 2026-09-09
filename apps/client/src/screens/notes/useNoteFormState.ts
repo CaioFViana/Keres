@@ -53,9 +53,8 @@ export function useNoteFormState({
             setIsFavorite(fetchedNote.isFavorite);
             setExtraNotes(fetchedNote.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialNoteId,
-            );
+            const existingValues =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialNoteId);
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Note not found:', initialNoteId);

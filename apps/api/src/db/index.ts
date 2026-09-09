@@ -44,19 +44,13 @@ dotenv.config({ path: '../.env' });
  */
 type PostgresDb = NodePgDatabase<typeof schema>;
 type SqliteDb = LibSQLDatabase<typeof schema>;
-type CommonOperation =
-  | 'select'
-  | 'selectDistinct'
-  | 'insert'
-  | 'update'
-  | 'delete';
+type CommonOperation = 'select' | 'selectDistinct' | 'insert' | 'update' | 'delete';
 
 type CommonRelationalQueries = {
   [TableName in keyof PostgresDb['query'] & keyof SqliteDb['query']]: {
     findFirst: PostgresDb['query'][TableName]['findFirst'] &
       SqliteDb['query'][TableName]['findFirst'];
-    findMany: PostgresDb['query'][TableName]['findMany'] &
-      SqliteDb['query'][TableName]['findMany'];
+    findMany: PostgresDb['query'][TableName]['findMany'] & SqliteDb['query'][TableName]['findMany'];
   };
 };
 
@@ -192,9 +186,7 @@ const transactionContext = new AsyncLocalStorage<CompatibleDb>();
  * PostgreSQL keeps its ordinary transaction and uses the narrower advisory/row locks where needed.
  * Nested calls receive the same `tx` as the outer transaction.
  */
-export function withWriteTransaction<T>(
-  work: (tx: CompatibleDb) => Promise<T>,
-): Promise<T> {
+export function withWriteTransaction<T>(work: (tx: CompatibleDb) => Promise<T>): Promise<T> {
   const activeTransaction = transactionContext.getStore();
   if (activeTransaction) {
     return work(activeTransaction);

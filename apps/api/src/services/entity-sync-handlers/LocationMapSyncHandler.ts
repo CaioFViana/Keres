@@ -24,7 +24,12 @@ export class LocationMapSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateLocationMapDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);

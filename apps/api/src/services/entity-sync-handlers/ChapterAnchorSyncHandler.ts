@@ -55,7 +55,12 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data = this.createSchema.parse(update.data);
 
     await this.assertExists(storyId, 'Container', data.chapterId, 'chapter', database);
@@ -85,7 +90,13 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
 
     await this.assertExists(storyId, 'Container', changes.chapterId, 'chapter', database);
     await this.assertExists(storyId, 'Start scene', changes.startSceneId, 'scene', database);
-    await this.assertExists(storyId, 'End scene', changes.endSceneId ?? undefined, 'scene', database);
+    await this.assertExists(
+      storyId,
+      'End scene',
+      changes.endSceneId ?? undefined,
+      'scene',
+      database,
+    );
 
     await super.update(userId, storyId, update, currentEntity, database);
   }

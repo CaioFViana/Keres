@@ -52,7 +52,7 @@ export function useStoryFormState({
       }
     };
     void loadStory();
-  }, [initialStoryId, storyServiceRef, userId, t, identity.applyStoryIdentity]);
+  }, [initialStoryId, storyServiceRef, userId, t, identity.applyStoryIdentity, identity]);
 
   return {
     initialStoryId,

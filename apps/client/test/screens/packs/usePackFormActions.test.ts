@@ -11,8 +11,9 @@ jest.mock('../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('../../../src/state/notificationStore', () => ({
-  useNotificationStore: (selector: (state: { showNotification: typeof mockShowNotification }) => unknown) =>
-    selector({ showNotification: mockShowNotification }),
+  useNotificationStore: (
+    selector: (state: { showNotification: typeof mockShowNotification }) => unknown,
+  ) => selector({ showNotification: mockShowNotification }),
 }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),

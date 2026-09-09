@@ -19,7 +19,7 @@ export function useWorldRuleFormAssociations({
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
-    [relations.setSelectedTagIds],
+    [relations],
   );
 
   return {

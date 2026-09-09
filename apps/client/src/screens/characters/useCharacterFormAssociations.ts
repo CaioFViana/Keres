@@ -95,7 +95,7 @@ export function useCharacterFormAssociations({
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
-    [relations.setSelectedTagIds],
+    [relations],
   );
 
   const handleSaveRelation = async (relation: CharacterRelation) => {

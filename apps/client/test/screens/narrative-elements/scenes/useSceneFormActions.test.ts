@@ -154,13 +154,9 @@ it('coordinates persistence, notification and replacement after creation', async
   expect(persistTagRelations).toHaveBeenCalledWith('scene-1');
   expect(persistNoteRelations).toHaveBeenCalledWith('scene-1');
   expect(persistCharacterRelations).toHaveBeenCalledWith('scene-1');
-  expect(mockSaveValuesForEntity).toHaveBeenCalledWith(
-    'user-1',
-    'story-1',
-    'Scene',
-    'scene-1',
-    { field: 'value' },
-  );
+  expect(mockSaveValuesForEntity).toHaveBeenCalledWith('user-1', 'story-1', 'Scene', 'scene-1', {
+    field: 'value',
+  });
   expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
   expect(mockAlert).toHaveBeenCalledWith('success', 'created');
   expect(navigation.dispatch).toHaveBeenCalledWith(

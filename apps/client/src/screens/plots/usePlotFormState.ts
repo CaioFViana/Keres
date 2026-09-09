@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
-import { createPlotService } from '../../services/storymanagement/PlotService';
+import type { createPlotService } from '../../services/storymanagement/PlotService';
 
 type PlotService = ReturnType<typeof createPlotService>;
 

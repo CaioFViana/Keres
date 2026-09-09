@@ -6,7 +6,9 @@ import {
 
 const sceneData = { name: 'A chegada' } as SceneFormData;
 
-const createSceneService = (): jest.Mocked<Pick<SceneService, 'getById' | 'createScene' | 'updateScene'>> =>
+const createSceneService = (): jest.Mocked<
+  Pick<SceneService, 'getById' | 'createScene' | 'updateScene'>
+> =>
   ({
     getById: jest.fn(),
     createScene: jest.fn().mockResolvedValue({ id: 'scene-1' }),

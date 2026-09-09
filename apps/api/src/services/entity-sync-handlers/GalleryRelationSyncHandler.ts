@@ -157,7 +157,12 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateGalleryRelationDataType = this.createSchema.parse(update.data);
 
     const current = await this.findById(update.id!, database);
@@ -169,13 +174,17 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
       storyId,
       validatedData.galleryId,
       validatedData.ownerId,
-      validatedData.ownerType, database);
+      validatedData.ownerType,
+      database,
+    );
 
     const duplicate = await this.findActiveDuplicate(
       storyId,
       validatedData.galleryId,
       validatedData.ownerId,
-      validatedData.ownerType, database);
+      validatedData.ownerType,
+      database,
+    );
     if (duplicate) {
       throw new Error(
         `Conflict: Gallery ${validatedData.galleryId} is already linked to ${validatedData.ownerType} ${validatedData.ownerId} in story ${storyId}.`,
@@ -221,7 +230,9 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
         storyId,
         newGalleryId,
         newOwnerId,
-        newOwnerType, database);
+        newOwnerType,
+        database,
+      );
       if (duplicate && duplicate.id !== update.id) {
         throw new Error(
           `Conflict: Gallery ${newGalleryId} is already linked to ${newOwnerType} ${newOwnerId} in story ${storyId}.`,

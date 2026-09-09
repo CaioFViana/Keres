@@ -39,7 +39,10 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  protected payloadForLog(parsed: Record<string, unknown>, actingUserId: string): Record<string, unknown> {
+  protected payloadForLog(
+    parsed: Record<string, unknown>,
+    actingUserId: string,
+  ): Record<string, unknown> {
     return { ...super.payloadForLog(parsed, actingUserId), authorUserId: actingUserId };
   }
 
@@ -52,7 +55,12 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data: CreateCommentDataType = this.createSchema.parse(update.data);
     if (data.authorUserId !== userId) {
       throw new SyncConflictError(

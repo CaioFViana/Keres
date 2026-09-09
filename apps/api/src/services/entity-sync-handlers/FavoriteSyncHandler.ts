@@ -21,7 +21,10 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     return true;
   }
 
-  protected payloadForLog(parsed: Record<string, unknown>, actingUserId: string): Record<string, unknown> {
+  protected payloadForLog(
+    parsed: Record<string, unknown>,
+    actingUserId: string,
+  ): Record<string, unknown> {
     return { ...super.payloadForLog(parsed, actingUserId), userId: actingUserId };
   }
 
@@ -34,7 +37,12 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data = this.createSchema.parse(update.data);
     if (data.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only create their own favorites.');

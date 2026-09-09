@@ -12,10 +12,7 @@ import SuggestionTextInput from '@/src/components/common/inputs/SuggestionTextIn
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
-import {
-  WORLD_PIECE_SECTIONS,
-  type WorldPieceSection,
-} from '@keres/shared/entities/WorldRule';
+import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -116,17 +113,19 @@ const WorldRuleFormScreen = () => {
     currentWorldRuleId,
   });
 
-  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useWorldRuleFormActions({
-    state: worldRuleFormState,
-    customFields,
-    drizzleDb,
-    worldRuleServiceRef,
-    navigation,
-    storyId: selectedStory?.id,
-    userId,
-    persistTagRelations,
-    persistNoteRelations,
-  });
+  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useWorldRuleFormActions(
+    {
+      state: worldRuleFormState,
+      customFields,
+      drizzleDb,
+      worldRuleServiceRef,
+      navigation,
+      storyId: selectedStory?.id,
+      userId,
+      persistTagRelations,
+      persistNoteRelations,
+    },
+  );
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 

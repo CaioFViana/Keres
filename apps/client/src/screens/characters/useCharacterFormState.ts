@@ -75,9 +75,8 @@ export function useCharacterFormState({
             setIsFavorite(fetchedCharacter.isFavorite);
             setExtraNotes(fetchedCharacter.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialCharacterId,
-            );
+            const existingValues =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialCharacterId);
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Character not found:', initialCharacterId);

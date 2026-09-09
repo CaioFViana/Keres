@@ -72,14 +72,8 @@ const StoryFormScreen = () => {
     storyServiceRef,
     userId,
   });
-  const {
-    identity,
-    selectedPackIds,
-    setSelectedPackIds,
-    loading,
-    error,
-    isEditing,
-  } = storyFormState;
+  const { identity, selectedPackIds, setSelectedPackIds, loading, error, isEditing } =
+    storyFormState;
 
   const { deleting, handleDelete, handleSave, saving } = useStoryFormActions({
     state: storyFormState,

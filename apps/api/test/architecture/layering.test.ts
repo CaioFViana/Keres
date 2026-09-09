@@ -202,7 +202,9 @@ describe('database portability boundary', () => {
     expect(databaseModule).toContain("'delete'");
     expect(databaseModule).toMatch(/Not part of this contract: `execute`/);
     expect(databaseModule).not.toMatch(/export type CompatibleDb\s*=\s*NodePgDatabase/);
-    expect(databaseModule).not.toMatch(/CompatibleTransactionConfig|PgTransactionConfig|SQLiteTransactionConfig/);
+    expect(databaseModule).not.toMatch(
+      /CompatibleTransactionConfig|PgTransactionConfig|SQLiteTransactionConfig/,
+    );
     expect(databaseModule).not.toMatch(/\| 'execute'/);
     expect(databaseModule.match(/as unknown as CompatibleDb/g)).toHaveLength(1);
   });
@@ -248,9 +250,7 @@ describe('database portability boundary', () => {
   it('makes the active transaction available to withTransaction callbacks', () => {
     const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
 
-    expect(databaseModule).toContain(
-      'withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>)',
-    );
+    expect(databaseModule).toContain('withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>)');
     expect(databaseModule).toContain('return fn(activeTransaction)');
   });
 

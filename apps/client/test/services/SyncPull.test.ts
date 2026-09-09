@@ -71,6 +71,16 @@ beforeEach(async () => {
       storyId: () => STORY_ID,
       client: jest.fn() as never,
       conflictService: () => ({ recordConflict }) as never,
+      notifier: () =>
+        ({
+          remoteUpdatesReceived: jest.fn(),
+          remoteUpdatesFailed: jest.fn(),
+          conflictsDetected: jest.fn(),
+          pushedUpdates: jest.fn(),
+          pushFailed: jest.fn(),
+          syncFailed: jest.fn(),
+          message: jest.fn(),
+        }) as never,
     },
     rebasePendingOperations: rebase,
   });

@@ -22,7 +22,12 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<
     // Currently no related entities to validate for Note
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateNoteDataType = this.createSchema.parse(update.data);
 

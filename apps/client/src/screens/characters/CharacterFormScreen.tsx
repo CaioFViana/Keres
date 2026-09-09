@@ -123,18 +123,20 @@ const CharacterFormScreen = () => {
     characterRelationServiceRef,
   });
 
-  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useCharacterFormActions({
-    state: characterFormState,
-    customFields,
-    drizzleDb,
-    characterServiceRef,
-    navigation,
-    storyId: selectedStory?.id,
-    userId,
-    persistTagRelations,
-    persistNoteRelations,
-    persistPendingCharacterRelations,
-  });
+  const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useCharacterFormActions(
+    {
+      state: characterFormState,
+      customFields,
+      drizzleDb,
+      characterServiceRef,
+      navigation,
+      storyId: selectedStory?.id,
+      userId,
+      persistTagRelations,
+      persistNoteRelations,
+      persistPendingCharacterRelations,
+    },
+  );
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 

@@ -3,11 +3,11 @@ import type { RefObject } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
-import { createPlotService } from '../../services/storymanagement/PlotService';
-import {
+import type {
   createPlotSceneService,
-  type SavePlotScene,
+  SavePlotScene,
 } from '../../services/storymanagement/PlotSceneService';
+import type { createPlotService } from '../../services/storymanagement/PlotService';
 import { AppAlert } from '../../utils/AppAlert';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 import type { PlotFormState } from './usePlotFormState';

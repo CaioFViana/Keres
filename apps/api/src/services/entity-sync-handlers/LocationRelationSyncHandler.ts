@@ -116,7 +116,12 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
   }
 
   /** For 'contains': the child (locationBId) can only have one live parent at a time. */
-  private async findExistingParentEdge(storyId: string, childId: string, excludeId?: string, database: CompatibleDb = db) {
+  private async findExistingParentEdge(
+    storyId: string,
+    childId: string,
+    excludeId?: string,
+    database: CompatibleDb = db,
+  ) {
     const existing = await database.query.locationRelations.findFirst({
       where: and(
         eq(locationRelations.storyId, storyId),
@@ -153,7 +158,12 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     return undefined;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateLocationRelationDataType = this.createSchema.parse(update.data);
 
     let locationAId = validatedData.locationAId;

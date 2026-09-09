@@ -69,14 +69,21 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateItemJourneyDataType = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(
       storyId,
       validatedData.itemId,
       validatedData.sceneId,
-      validatedData.newCharacterOwnerId, database);
+      validatedData.newCharacterOwnerId,
+      database,
+    );
 
     const currentItemJourney = await this.findById(update.id!, database);
     if (currentItemJourney) {
@@ -119,7 +126,13 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       validatedChanges.sceneId !== undefined ||
       validatedChanges.newCharacterOwnerId !== undefined
     ) {
-      await this.validateRelatedEntities(storyId, newItemId, newSceneId, newCharacterOwnerId, database);
+      await this.validateRelatedEntities(
+        storyId,
+        newItemId,
+        newSceneId,
+        newCharacterOwnerId,
+        database,
+      );
     }
 
     await super.update(userId, storyId, update, currentEntity, database);

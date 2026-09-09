@@ -19,10 +19,7 @@ import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 import type { ChapterFormState } from './useChapterFormState';
 
-type ChapterNavigation = NativeStackNavigationProp<
-  NarrativeElementsStackParamList,
-  'ChapterForm'
->;
+type ChapterNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChapterForm'>;
 
 type UseChapterFormActionsOptions = {
   state: ChapterFormState;

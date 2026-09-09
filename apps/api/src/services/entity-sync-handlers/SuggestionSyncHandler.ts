@@ -25,7 +25,12 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateSuggestionDataType = this.createSchema.parse(update.data);
 
     // Check for existing suggestion with the same type and value within the same story

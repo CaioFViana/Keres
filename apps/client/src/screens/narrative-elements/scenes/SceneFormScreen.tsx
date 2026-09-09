@@ -65,14 +65,8 @@ const SceneFormScreen = () => {
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const { calendars } = useStoryCalendar(selectedStory?.id);
-  const {
-    drizzleDb,
-    sceneServiceRef,
-    chapters,
-    locations,
-    characters,
-    items,
-  } = useSceneFormResources(selectedStory?.id);
+  const { drizzleDb, sceneServiceRef, chapters, locations, characters, items } =
+    useSceneFormResources(selectedStory?.id);
 
   const commonInputStyles = getCommonInputStyles(colors);
   const isBranching = selectedStory?.type === 'branching';

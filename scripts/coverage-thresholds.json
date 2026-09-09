@@ -9,9 +9,9 @@
     "branches": 77.2
   },
   "client": {
-    "lines": 40.8,
-    "functions": 37,
-    "branches": 30.4
+    "lines": 43.2,
+    "functions": 38.3,
+    "branches": 32.4
   },
   "clientSyncCore": {
     "lines": 91.9,
@@ -24,34 +24,34 @@
     "branches": 72.3
   },
   "clientStoryServices": {
-    "lines": 76.8,
-    "functions": 82.9,
-    "branches": 57
+    "lines": 77,
+    "functions": 83,
+    "branches": 57.1
   },
   "apiUnit": {
-    "lines": 22.9,
+    "lines": 23,
     "functions": 29.1,
     "branches": 13.6
   },
   "apiIntegration": {
-    "lines": 71.9,
-    "functions": 72,
-    "branches": 59.7
+    "lines": 72,
+    "functions": 72.1,
+    "branches": 61.3
   },
   "apiCombined": {
-    "lines": 81.2,
+    "lines": 81.5,
     "functions": 79.1,
-    "branches": 70.2
+    "branches": 71.3
   },
   "apiSyncCore": {
     "lines": 97,
     "functions": 97,
-    "branches": 77
+    "branches": 80.3
   },
   "apiSyncHandlers": {
     "lines": 84.7,
     "functions": 92.9,
-    "branches": 70.1
+    "branches": 73.7
   },
   "apiExportImport": {
     "lines": 97,

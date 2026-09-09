@@ -126,7 +126,10 @@ describe('Route sync handlers', () => {
       name: 'Train ending',
       version: 2,
     });
-    expect(await stepHandler.findByIdOrThrow(secondStepId)).toMatchObject({ isDeleted: true, version: 2 });
+    expect(await stepHandler.findByIdOrThrow(secondStepId)).toMatchObject({
+      isDeleted: true,
+      version: 2,
+    });
   });
 
   it('rejects a step whose choice does not leave its scene', async () => {
@@ -198,6 +201,9 @@ describe('Route sync handlers', () => {
       clientVersion: 1,
       serverVersion: 2,
     });
-    expect(await handler.findByIdOrThrow(routeId)).toMatchObject({ name: 'Server edit', version: 2 });
+    expect(await handler.findByIdOrThrow(routeId)).toMatchObject({
+      name: 'Server edit',
+      version: 2,
+    });
   });
 });

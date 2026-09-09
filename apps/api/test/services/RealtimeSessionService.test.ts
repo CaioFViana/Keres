@@ -22,8 +22,7 @@ beforeEach(() => {
         listeners.set(key, callbacks);
       },
       off: (key, callback) => listeners.get(key)?.delete(callback),
-      emit: (key, event) =>
-        listeners.get(key)?.forEach((callback) => callback(event as never)),
+      emit: (key, event) => listeners.get(key)?.forEach((callback) => callback(event as never)),
     },
     canReadStory,
     getReadableStoryIds,
@@ -83,8 +82,7 @@ describe('RealtimeSessionService', () => {
           listeners.set(key, callbacks);
         },
         off: (key, callback) => listeners.get(key)?.delete(callback),
-        emit: (key, event) =>
-          listeners.get(key)?.forEach((callback) => callback(event as never)),
+        emit: (key, event) => listeners.get(key)?.forEach((callback) => callback(event as never)),
       },
       canReadStory,
       getReadableStoryIds,

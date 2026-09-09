@@ -59,9 +59,8 @@ export function useLocationFormState({
             setIsFavorite(fetchedLocation.isFavorite);
             setExtraNotes(fetchedLocation.extraNotes);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialLocationId,
-            );
+            const existingValues =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialLocationId);
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Location not found:', initialLocationId);

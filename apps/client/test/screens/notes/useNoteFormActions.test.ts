@@ -107,13 +107,9 @@ it('coordinates persistence, success messaging and back navigation after creatio
 
   expect(state.retainPersistedNoteId).toHaveBeenCalledWith('note-1');
   expect(persistTagRelations).toHaveBeenCalledWith('note-1');
-  expect(mockSaveValuesForEntity).toHaveBeenCalledWith(
-    'user-1',
-    'story-1',
-    'Note',
-    'note-1',
-    { field: 'value' },
-  );
+  expect(mockSaveValuesForEntity).toHaveBeenCalledWith('user-1', 'story-1', 'Note', 'note-1', {
+    field: 'value',
+  });
   expect(mockAlert).toHaveBeenCalledWith('success', 'note_created_successfully');
   expect(navigation.goBack).toHaveBeenCalled();
 });

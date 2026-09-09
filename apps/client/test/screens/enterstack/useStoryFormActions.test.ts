@@ -10,8 +10,9 @@ jest.mock('../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string, options?: { detail?: string }) =>
-    options?.detail ? `${key}:${options.detail}` : key,
+  useTranslation: () => ({
+    t: (key: string, options?: { detail?: string }) =>
+      options?.detail ? `${key}:${options.detail}` : key,
   }),
 }));
 
@@ -21,29 +22,30 @@ import type { StoryFormState } from '../../../src/screens/enterstack/useStoryFor
 import type { PackService } from '../../../src/services/storymanagement/PackService';
 import type { StoryService } from '../../../src/services/storymanagement/StoryService';
 
-const createIdentity = (overrides: Record<string, unknown> = {}) => ({
-  title: 'Draft',
-  setTitle: jest.fn(),
-  type: 'linear' as const,
-  setType: jest.fn(),
-  description: null,
-  setDescription: jest.fn(),
-  genre: null,
-  setGenre: jest.fn(),
-  language: null,
-  setLanguage: jest.fn(),
-  author: null,
-  setAuthor: jest.fn(),
-  isFavorite: false,
-  setIsFavorite: jest.fn(),
-  favoriteBehavior: 'individual' as const,
-  setFavoriteBehavior: jest.fn(),
-  extraNotes: null,
-  setExtraNotes: jest.fn(),
-  applyStoryIdentity: jest.fn(),
-  storyFieldsFormProps: {},
-  ...overrides,
-});
+const createIdentity = (overrides: Record<string, unknown> = {}) =>
+  ({
+    title: 'Draft',
+    setTitle: jest.fn(),
+    type: 'linear' as const,
+    setType: jest.fn(),
+    description: null,
+    setDescription: jest.fn(),
+    genre: null,
+    setGenre: jest.fn(),
+    language: null,
+    setLanguage: jest.fn(),
+    author: null,
+    setAuthor: jest.fn(),
+    isFavorite: false,
+    setIsFavorite: jest.fn(),
+    favoriteBehavior: 'individual' as const,
+    setFavoriteBehavior: jest.fn(),
+    extraNotes: null,
+    setExtraNotes: jest.fn(),
+    applyStoryIdentity: jest.fn(),
+    storyFieldsFormProps: {} as StoryFormState['identity']['storyFieldsFormProps'],
+    ...overrides,
+  }) as StoryFormState['identity'];
 
 const createState = (overrides: Partial<StoryFormState> = {}): StoryFormState =>
   ({
@@ -140,9 +142,7 @@ it('applies selected packs after conflict checks when creating', async () => {
 });
 
 it('stops creation when selected packs conflict', async () => {
-  (packService.findConflicts as jest.Mock).mockResolvedValue([
-    { kind: 'tag', detail: 'Hero' },
-  ]);
+  (packService.findConflicts as jest.Mock).mockResolvedValue([{ kind: 'tag', detail: 'Hero' }]);
   const state = createState({ selectedPackIds: ['pack-1'] });
   const view = await renderActions(state);
 
@@ -177,7 +177,10 @@ it('deletes an existing story after confirmation', async () => {
   const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
-  const buttons = mockAlert.mock.calls[0][2] as Array<{ text: string; onPress?: () => Promise<void> }>;
+  const buttons = mockAlert.mock.calls[0][2] as Array<{
+    text: string;
+    onPress?: () => Promise<void>;
+  }>;
   const deleteButton = buttons.find((button) => button.text === 'delete');
   await act(async () => {
     await deleteButton?.onPress?.();

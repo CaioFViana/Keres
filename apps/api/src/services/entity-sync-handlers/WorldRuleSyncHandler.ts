@@ -22,7 +22,12 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
     // WorldRule has no direct related entities to validate
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateWorldRuleDataType = this.createSchema.parse(update.data);
 

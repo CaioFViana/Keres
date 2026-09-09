@@ -23,7 +23,12 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
       deletedAtColumnName: 'deletedAt',
     });
   }
-  private async validate(storyId: string, plotId: string, sceneId: string, database: CompatibleDb = db) {
+  private async validate(
+    storyId: string,
+    plotId: string,
+    sceneId: string,
+    database: CompatibleDb = db,
+  ) {
     const [story, plot, scene] = await Promise.all([
       database.query.stories.findFirst({
         where: and(eq(stories.id, storyId), eq(stories.isDeleted, false)),
@@ -49,7 +54,12 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
         'Plot and scene must belong to the active story.',
       );
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    _: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data: CreatePlotSceneDataType = this.createSchema.parse(update.data);
     await this.validate(storyId, data.plotId, data.sceneId, database);
     const duplicate = await database.query.plotScenes.findFirst({
@@ -86,7 +96,9 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
     await this.validate(
       storyId,
       changes.plotId ?? current.plotId,
-      changes.sceneId ?? current.sceneId, database);
+      changes.sceneId ?? current.sceneId,
+      database,
+    );
     await super.update(userId, storyId, update, current, database);
   }
   async delete(

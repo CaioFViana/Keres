@@ -50,22 +50,16 @@ const PlotFormScreen = () => {
   });
   const { name, setName, details, setDetails, loading, isEditing } = plotFormState;
 
-  const {
-    deleting,
-    handleDelete,
-    handleSave,
-    handleSavePlotScene,
-    handleDeletePlotScene,
-    saving,
-  } = usePlotFormActions({
-    state: plotFormState,
-    plotServiceRef,
-    plotSceneServiceRef,
-    navigation,
-    storyId: selectedStory?.id,
-    userId,
-    reloadPlotData,
-  });
+  const { deleting, handleDelete, handleSave, handleSavePlotScene, handleDeletePlotScene, saving } =
+    usePlotFormActions({
+      state: plotFormState,
+      plotServiceRef,
+      plotSceneServiceRef,
+      navigation,
+      storyId: selectedStory?.id,
+      userId,
+      reloadPlotData,
+    });
 
   const commonInputStyles = getCommonInputStyles(colors);
   const styles = useMemo(

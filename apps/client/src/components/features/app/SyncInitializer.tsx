@@ -101,8 +101,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         server = await serverService.refreshServerToken(server);
         await friendshipService.syncFriendshipsWithServer(userId, server); // Call friendship sync
 
-        const serverStoryPreviews =
-          await syncEngine.fetchServerStoryPreviews(server);
+        const serverStoryPreviews = await syncEngine.fetchServerStoryPreviews(server);
 
         const localStoryIds = new Set(localStories.map((s) => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(
@@ -199,7 +198,12 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       const servers = await createServerService(drizzleClient).getAllServers();
       if (disposed) return;
       for (const server of servers) {
-        const realtime = new ServerRealtimeService(drizzleClient, server, server.idUser, syncEngine);
+        const realtime = new ServerRealtimeService(
+          drizzleClient,
+          server,
+          server.idUser,
+          syncEngine,
+        );
         realtimeConnections.set(server.id, realtime);
         realtime.start(server.id === selectedStory?.serverId ? selectedStory.id : undefined);
       }

@@ -50,7 +50,11 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  private async validateRelatedEntity(storyId: string, ref: EntityRef, database: CompatibleDb = db): Promise<void> {
+  private async validateRelatedEntity(
+    storyId: string,
+    ref: EntityRef,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     let exists: unknown;
     switch (ref.type) {
       case 'Character':
@@ -132,7 +136,13 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  private async findExistingPair(storyId: string, a: EntityRef, b: EntityRef, excludeId?: string, database: CompatibleDb = db) {
+  private async findExistingPair(
+    storyId: string,
+    a: EntityRef,
+    b: EntityRef,
+    excludeId?: string,
+    database: CompatibleDb = db,
+  ) {
     const existing = await database.query.seeAlsoRelations.findFirst({
       where: and(
         eq(seeAlsoRelations.storyId, storyId),
@@ -159,7 +169,12 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
     return undefined;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateSeeAlsoRelationDataType = this.createSchema.parse(update.data);
 
     const refA: EntityRef = { type: validatedData.entityAType, id: validatedData.entityAId };

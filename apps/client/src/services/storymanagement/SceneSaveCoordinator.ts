@@ -4,14 +4,7 @@ import { saveEntityWithSecondaryData } from './EntityFormSaveCoordinator';
 
 export type SceneFormData = Omit<
   Scene,
-  | 'id'
-  | 'storyId'
-  | 'createdAt'
-  | 'updatedAt'
-  | 'version'
-  | 'isDeleted'
-  | 'deletedAt'
-  | 'index'
+  'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'
 >;
 
 type SceneRelationsPersistence = (sceneId: string) => Promise<void>;

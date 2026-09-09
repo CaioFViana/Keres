@@ -167,10 +167,7 @@ it('does not emit success after a secondary-write failure, then recovers on retr
 
   const view = await renderActions(state);
   await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith(
-    'error',
-    'vocabulary_failed_to_save_entity:Journey',
-  );
+  expect(mockAlert).toHaveBeenCalledWith('error', 'vocabulary_failed_to_save_entity:Journey');
   expect(mockEmit).not.toHaveBeenCalled();
 
   mockAlert.mockClear();

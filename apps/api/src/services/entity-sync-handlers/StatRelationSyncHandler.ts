@@ -103,7 +103,12 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateStatRelationDataType = this.createSchema.parse(update.data);
 
     const existing = await this.findById(update.id!, database);
@@ -115,7 +120,9 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
       storyId,
       validatedData.characterId,
       validatedData.modeId,
-      validatedData.statId, database);
+      validatedData.statId,
+      database,
+    );
     await this.assertNoDuplicateValue(
       storyId,
       validatedData.characterId,

@@ -25,7 +25,12 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateAttributeValueDataType = this.createSchema.parse(update.data);
 
     const existingValue = await database.query.attributeValues.findFirst({

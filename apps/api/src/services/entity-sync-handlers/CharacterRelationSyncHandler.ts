@@ -68,7 +68,12 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateCharacterRelationDataType = this.createSchema.parse(update.data);
 
     // Sort character IDs to ensure consistent storage and uniqueness checks

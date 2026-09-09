@@ -59,9 +59,8 @@ export function useItemFormState({
             setExtraNotes(fetchedItem.extraNotes);
             setCharacterOwnerId(fetchedItem.characterOwnerId);
 
-            const existingValues = await createAttributeValueService(drizzleDb).getValuesForEntity(
-              initialItemId,
-            );
+            const existingValues =
+              await createAttributeValueService(drizzleDb).getValuesForEntity(initialItemId);
             setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
           } else {
             console.warn('Item not found:', initialItemId);

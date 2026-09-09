@@ -34,19 +34,13 @@ export function useItemFormAssociations({
       initializeCharacterService();
       fetchCharacters();
     }
-  }, [
-    drizzleDb,
-    storyId,
-    setCharacterDbAndStoryId,
-    initializeCharacterService,
-    fetchCharacters,
-  ]);
+  }, [drizzleDb, storyId, setCharacterDbAndStoryId, initializeCharacterService, fetchCharacters]);
 
   const handleTagSelectionChange = useCallback(
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
-    [relations.setSelectedTagIds],
+    [relations],
   );
 
   const characterOptions = useMemo(

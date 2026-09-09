@@ -64,11 +64,21 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateCharacterSceneDataType = this.createSchema.parse(update.data);
 
     // Validate related entities
-    await this.validateRelatedEntities(storyId, validatedData.characterId, validatedData.sceneId, database);
+    await this.validateRelatedEntities(
+      storyId,
+      validatedData.characterId,
+      validatedData.sceneId,
+      database,
+    );
 
     // Check for uniqueness based on characterId and sceneId
     const existingCharacterScene = await database.query.characterScenes.findFirst({

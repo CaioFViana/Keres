@@ -143,7 +143,9 @@ describe('character form responsibilities', () => {
     expect(screen).not.toMatch(
       /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
     );
-    expect(screen).not.toMatch(/useEntityRelations|useStoryStats|useConfirmDelete|useAsyncOperation/);
+    expect(screen).not.toMatch(
+      /useEntityRelations|useStoryStats|useConfirmDelete|useAsyncOperation/,
+    );
     expect(state).toContain('initialCharacterId');
     expect(state).toContain('retainPersistedCharacterId');
     expect(state).not.toMatch(/getById\(currentCharacterId/);
@@ -247,10 +249,7 @@ describe('extracted multi-step form responsibilities', () => {
     ({ dir, screen, prefix, idName, createService }) => {
       const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
       const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
-      const actions = readFileSync(
-        resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`),
-        'utf8',
-      );
+      const actions = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`), 'utf8');
       const associations = readFileSync(
         resolve(SOURCE_ROOT, dir, `use${prefix}FormAssociations.ts`),
         'utf8',
@@ -264,9 +263,7 @@ describe('extracted multi-step form responsibilities', () => {
       expect(screenSource).not.toMatch(
         /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
       );
-      expect(screenSource).not.toMatch(
-        /useEntityRelations|useConfirmDelete|useAsyncOperation/,
-      );
+      expect(screenSource).not.toMatch(/useEntityRelations|useConfirmDelete|useAsyncOperation/);
       expect(state).toContain(`initial${idName}`);
       expect(state).toContain(`retainPersisted${idName}`);
       expect(state).not.toMatch(new RegExp(`getById\\(current${idName}`));
@@ -350,16 +347,15 @@ describe('extracted simple form responsibilities', () => {
     ({ dir, screen, prefix, idParam, createService }) => {
       const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
       const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
-      const actions = readFileSync(
-        resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`),
-        'utf8',
-      );
+      const actions = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`), 'utf8');
 
       expect(screenSource).toContain(`use${prefix}FormResources`);
       expect(screenSource).toContain(`use${prefix}FormState`);
       expect(screenSource).toContain(`use${prefix}FormActions`);
       expect(screenSource).not.toMatch(new RegExp(createService));
-      expect(screenSource).not.toMatch(/AppAlert|entityEventEmitter|useConfirmDelete|useAsyncOperation/);
+      expect(screenSource).not.toMatch(
+        /AppAlert|entityEventEmitter|useConfirmDelete|useAsyncOperation/,
+      );
       if (idParam) {
         expect(state).toContain(idParam);
       }

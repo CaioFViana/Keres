@@ -79,16 +79,30 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
       deletedAt: null,
     });
   }
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: SyncStoredEntityFor<typeof this.createSchema>, database: CompatibleDb = db) {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
+  ) {
     const changes = this.updateSchema.parse(update.changes);
     await this.validate(
       storyId,
       changes.routeId ?? current.routeId,
       changes.sceneId ?? current.sceneId,
-      changes.selectedChoiceId ?? current.selectedChoiceId, database);
+      changes.selectedChoiceId ?? current.selectedChoiceId,
+      database,
+    );
     await super.update(userId, storyId, update, current, database);
   }
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, current: SyncStoredEntityFor<typeof this.createSchema>, database: CompatibleDb = db) {
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
+  ) {
     await super.delete(userId, storyId, update, current, database);
   }
 }

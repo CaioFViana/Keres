@@ -18,7 +18,7 @@ export function useNoteFormAssociations({ currentNoteId }: UseNoteFormAssociatio
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
-    [relations.setSelectedTagIds],
+    [relations],
   );
 
   return {

@@ -69,7 +69,12 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     return story?.type === 'linear';
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Linear stories never have Choice rows - they're deleted on conversion to linear, and
     // only (re)created by converting to branching. See StoryService.convertStoryType.
     if (await this._isStoryLinear(storyId, database)) {
@@ -86,7 +91,12 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
       throw new Error(`Conflict: Choice with ID ${update.id} already exists.`);
     }
 
-    await this.validateRelatedEntities(storyId, validatedData.sceneId, validatedData.nextSceneId, database);
+    await this.validateRelatedEntities(
+      storyId,
+      validatedData.sceneId,
+      validatedData.nextSceneId,
+      database,
+    );
 
     await database.insert(choices).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client

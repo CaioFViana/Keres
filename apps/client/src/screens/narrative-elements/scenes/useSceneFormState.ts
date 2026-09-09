@@ -4,6 +4,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient, SceneSelect } from '../../../db';
 import { createAttributeValueService } from '../../../services/storymanagement/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '../../../services/storymanagement/EntityFormSecondaryDraftStore';
 import type { SceneService } from '../../../services/storymanagement/SceneService';
 import type { StorySchemaField } from '@keres/shared';
 
@@ -81,8 +82,12 @@ export function useSceneFormState({
             applyScene(scene);
             const values =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialSceneId);
+            const fromDb = Object.fromEntries(values.map((value) => [value.fieldId, value.value]));
+            const draft = await readEntityFormSecondaryDraft(storyId, 'Scene', initialSceneId);
             setCustomValues(
-              Object.fromEntries(values.map((value) => [value.fieldId, value.value])),
+              draft && Object.keys(draft.customValues).length > 0
+                ? { ...fromDb, ...draft.customValues }
+                : fromDb,
             );
           }
         } else if (initialChapterId) {

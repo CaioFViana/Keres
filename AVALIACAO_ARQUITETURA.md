@@ -152,9 +152,28 @@ Extraídos no padrão resources / state / actions (sem associations, salvo onde 
 
 Guarda de arquitetura: `extracted simple form responsibilities`. Validação: **9 suítes / 67 testes** (layering + actions).
 
+## Continuação — rascunhos secundários cross-session (9 de setembro de 2026)
+
+Ganho de produto: se o app encerra depois de criar a entidade base e antes de terminar tags/notas/atributos, a intenção secundária deixa de se perder.
+
+- `EntityFormSecondaryDraftStore` (AsyncStorage) por `storyId + entityType + entityId`
+- O coordenador grava o rascunho logo após reter o ID e só apaga após sucesso das etapas secundárias
+- Ao reabrir a entidade: tags e notas pendentes voltam via `useEntityRelations`; atributos customizados mesclam o rascunho sobre o que já está no SQLite
+- Ligado em Character, Location, Item, WorldRule, Note, Chapter, Choice, ItemJourney e Scene
+
+## Continuação — rascunhos duráveis de Board e Location Map (9 de setembro de 2026)
+
+Os canvas já tinham draft em memória para sobreviver à navegação; agora também sobrevivem ao fechar o app:
+
+- `canvasDraftPersistence` (AsyncStorage, debounce 400ms)
+- `boardDraftStore` / `locationMapDraftStore` com `hydrate()` e gravação só enquanto dirty
+- Telas carregam via `hydrate` antes de montar o conteúdo
+- Reset global limpa as chaves duráveis
+
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
 1. **Interseção tipada Drizzle** continua sendo ergonomia de call-site, não prova estática completa de portabilidade — mitigada pelos testes de contrato/arquitetura e pela evidência operacional nos dois motores.
+2. Relações específicas da entidade ainda só em memória na sessão (ex.: filas Character↔Character) — tags/notas/atributos já sobrevivem ao encerrar o app.
 
 ## Validação desta sessão
 

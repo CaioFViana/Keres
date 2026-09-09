@@ -35,6 +35,8 @@ type UseSceneFormActionsOptions = {
   persistTagRelations(sceneId: string): Promise<void>;
   persistNoteRelations(sceneId: string): Promise<void>;
   persistCharacterRelations(sceneId: string): Promise<void>;
+  persistSecondaryDraft?(sceneId: string): Promise<void>;
+  clearSecondaryDraft?(sceneId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the Scene form. */
@@ -49,6 +51,8 @@ export function useSceneFormActions({
   persistTagRelations,
   persistNoteRelations,
   persistCharacterRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseSceneFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Scene');
@@ -127,6 +131,8 @@ export function useSceneFormActions({
           sceneData,
           notFoundMessage: copy.notFound,
           onScenePersisted: state.retainPersistedSceneId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistRelations: async (persistedSceneId) => {
             await persistTagRelations(persistedSceneId);
             await persistNoteRelations(persistedSceneId);

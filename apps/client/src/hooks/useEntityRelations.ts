@@ -9,6 +9,7 @@ import { createNoteRelationService } from '../services/storymanagement/NoteRelat
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';
 import { createTagService } from '../services/storymanagement/TagService';
+import { readEntityFormSecondaryDraft } from '../services/storymanagement/EntityFormSecondaryDraftStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { createULID } from '../utils/entityUtils';
@@ -93,6 +94,12 @@ export function useEntityRelations({
       return;
     }
     try {
+      const draft = await readEntityFormSecondaryDraft(storyId, entityType, hydrationEntityId);
+      if (draft) {
+        // Prefer the durable draft after a partial save across sessions.
+        setSelectedTagIds(draft.selectedTagIds);
+        return;
+      }
       const tags = await services.tagRelation.getTagsForEntity(
         storyId,
         hydrationEntityId,
@@ -131,6 +138,10 @@ export function useEntityRelations({
         entityType as NoteRelationEntities,
       );
       setNoteRelations(relations);
+      const draft = await readEntityFormSecondaryDraft(storyId, entityType, hydrationEntityId);
+      if (draft?.pendingNoteRelations.length) {
+        setPendingNoteRelations(draft.pendingNoteRelations);
+      }
     } catch (err) {
       console.error(`Failed to fetch note relations for ${entityType}:`, err);
     }
@@ -342,6 +353,8 @@ export function useEntityRelations({
     allNotes,
     // A partial save can leave both persisted relations and drafts in the same form.
     noteRelations: [...noteRelations, ...pendingNoteRelations],
+    /** In-memory / restored note drafts only (not yet written for this entity id). */
+    pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,

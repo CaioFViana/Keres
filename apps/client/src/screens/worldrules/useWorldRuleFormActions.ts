@@ -31,6 +31,8 @@ type UseWorldRuleFormActionsOptions = {
   userId?: string | null;
   persistTagRelations(worldRuleId: string): Promise<void>;
   persistNoteRelations(worldRuleId: string): Promise<void>;
+  persistSecondaryDraft?(worldRuleId: string): Promise<void>;
+  clearSecondaryDraft?(worldRuleId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the WorldRule form. */
@@ -44,6 +46,8 @@ export function useWorldRuleFormActions({
   userId,
   persistTagRelations,
   persistNoteRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseWorldRuleFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('WorldRule');
@@ -106,6 +110,8 @@ export function useWorldRuleFormActions({
           updateEntity: (worldRuleId) =>
             worldRuleServiceRef.current!.updateWorldRule(userId, worldRuleId, worldRuleData),
           onEntityPersisted: state.retainPersistedWorldRuleId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (worldRuleId) => {
             await persistTagRelations(worldRuleId);
             await persistNoteRelations(worldRuleId);

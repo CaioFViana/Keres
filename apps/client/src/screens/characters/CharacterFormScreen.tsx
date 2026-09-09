@@ -3,9 +3,10 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
+import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -99,6 +100,7 @@ const CharacterFormScreen = () => {
     selectedTagIds,
     allNotes,
     characterNoteRelations,
+    pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
@@ -123,6 +125,18 @@ const CharacterFormScreen = () => {
     characterRelationServiceRef,
   });
 
+  const getCustomValues = useCallback(
+    () => characterFormState.customValues,
+    [characterFormState.customValues],
+  );
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'Character',
+    selectedTagIds,
+    pendingNoteRelations,
+    getCustomValues,
+  });
+
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useCharacterFormActions(
     {
       state: characterFormState,
@@ -135,6 +149,8 @@ const CharacterFormScreen = () => {
       persistTagRelations,
       persistNoteRelations,
       persistPendingCharacterRelations,
+      persistSecondaryDraft,
+      clearSecondaryDraft,
     },
   );
 

@@ -6,6 +6,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '../../db';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
 import type { WorldRuleService } from '../../services/storymanagement/WorldRuleService';
 
 type UseWorldRuleFormStateOptions = {
@@ -70,7 +71,17 @@ export function useWorldRuleFormState({
 
             const existingValues =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialWorldRuleId);
-            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
+            const fromDb = Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value]));
+            const draft = await readEntityFormSecondaryDraft(
+              storyId,
+              'WorldRule',
+              initialWorldRuleId,
+            );
+            setCustomValues(
+              draft && Object.keys(draft.customValues).length > 0
+                ? { ...fromDb, ...draft.customValues }
+                : fromDb,
+            );
           } else {
             console.warn('World rule not found:', initialWorldRuleId);
           }

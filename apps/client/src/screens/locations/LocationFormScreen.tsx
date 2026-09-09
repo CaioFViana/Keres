@@ -3,10 +3,11 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -86,6 +87,7 @@ const LocationFormScreen = () => {
     selectedTagIds,
     allNotes,
     locationNoteRelations,
+    pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
@@ -107,6 +109,18 @@ const LocationFormScreen = () => {
     locationRelationServiceRef,
   });
 
+  const getCustomValues = useCallback(
+    () => locationFormState.customValues,
+    [locationFormState.customValues],
+  );
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'Location',
+    selectedTagIds,
+    pendingNoteRelations,
+    getCustomValues,
+  });
+
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useLocationFormActions({
     state: locationFormState,
     customFields,
@@ -118,6 +132,8 @@ const LocationFormScreen = () => {
     persistTagRelations,
     persistNoteRelations,
     persistPendingLocationRelations,
+    persistSecondaryDraft,
+    clearSecondaryDraft,
   });
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;

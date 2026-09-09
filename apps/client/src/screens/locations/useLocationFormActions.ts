@@ -32,6 +32,8 @@ type UseLocationFormActionsOptions = {
   persistTagRelations(locationId: string): Promise<void>;
   persistNoteRelations(locationId: string): Promise<void>;
   persistPendingLocationRelations(locationId: string): Promise<void>;
+  persistSecondaryDraft?(locationId: string): Promise<void>;
+  clearSecondaryDraft?(locationId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the Location form. */
@@ -46,6 +48,8 @@ export function useLocationFormActions({
   persistTagRelations,
   persistNoteRelations,
   persistPendingLocationRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseLocationFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Location');
@@ -105,6 +109,8 @@ export function useLocationFormActions({
           updateEntity: (locationId) =>
             locationServiceRef.current!.updateLocation(userId, locationId, locationData),
           onEntityPersisted: state.retainPersistedLocationId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (locationId) => {
             await persistTagRelations(locationId);
             await persistNoteRelations(locationId);

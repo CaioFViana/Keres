@@ -10,10 +10,11 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -76,6 +77,18 @@ const NoteFormScreen = () => {
       currentNoteId: noteFormState.currentNoteId,
     });
 
+  const getCustomValues = useCallback(
+    () => noteFormState.customValues,
+    [noteFormState.customValues],
+  );
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'Note',
+    selectedTagIds,
+    pendingNoteRelations: [],
+    getCustomValues,
+  });
+
   const { deleting, handleDelete, handleSave, saving } = useNoteFormActions({
     state: noteFormState,
     customFields,
@@ -85,6 +98,8 @@ const NoteFormScreen = () => {
     storyId: selectedStory?.id,
     userId,
     persistTagRelations,
+    persistSecondaryDraft,
+    clearSecondaryDraft,
   });
 
   const formTitle = isEditing ? t('edit_note_title') : t('create_note_title');

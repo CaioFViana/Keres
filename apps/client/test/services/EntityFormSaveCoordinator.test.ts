@@ -46,4 +46,46 @@ describe('saveEntityWithSecondaryData', () => {
     expect(updateEntity).toHaveBeenCalledTimes(1);
     expect(updateEntity).toHaveBeenCalledWith('entity-1');
   });
+
+  it('persists a secondary draft after identity and clears it only on success', async () => {
+    const persistSecondaryDraft = jest.fn(async () => undefined);
+    const clearSecondaryDraft = jest.fn(async () => undefined);
+    const order: string[] = [];
+
+    await expect(
+      saveEntityWithSecondaryData({
+        createEntity: async () => {
+          order.push('create');
+          return { id: 'entity-1' };
+        },
+        updateEntity: jest.fn(),
+        onEntityPersisted: () => order.push('retained'),
+        persistSecondaryDraft: async (entityId) => {
+          order.push(`draft:${entityId}`);
+          await persistSecondaryDraft(entityId);
+        },
+        persistSecondaryData: async () => {
+          order.push('secondary');
+          throw new Error('secondary write failed');
+        },
+        clearSecondaryDraft,
+      }),
+    ).rejects.toThrow('secondary write failed');
+
+    expect(order).toEqual(['create', 'retained', 'draft:entity-1', 'secondary']);
+    expect(persistSecondaryDraft).toHaveBeenCalledWith('entity-1');
+    expect(clearSecondaryDraft).not.toHaveBeenCalled();
+
+    await saveEntityWithSecondaryData({
+      currentEntityId: 'entity-1',
+      createEntity: jest.fn(),
+      updateEntity: async () => undefined,
+      onEntityPersisted: () => undefined,
+      persistSecondaryDraft,
+      persistSecondaryData: async () => undefined,
+      clearSecondaryDraft,
+    });
+
+    expect(clearSecondaryDraft).toHaveBeenCalledWith('entity-1');
+  });
 });

@@ -17,10 +17,11 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
 import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
@@ -141,11 +142,24 @@ const SceneFormScreen = () => {
     setSelectedTagIds,
     allNotes,
     noteRelations: sceneNoteRelations,
+    pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
   } = relations;
+
+  const getCustomValues = useCallback(
+    () => sceneFormState.customValues,
+    [sceneFormState.customValues],
+  );
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'Scene',
+    selectedTagIds,
+    pendingNoteRelations,
+    getCustomValues,
+  });
 
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useSceneFormActions({
     state: sceneFormState,
@@ -158,6 +172,8 @@ const SceneFormScreen = () => {
     persistTagRelations,
     persistNoteRelations,
     persistCharacterRelations: persistPendingCharacterSceneRelations,
+    persistSecondaryDraft,
+    clearSecondaryDraft,
   });
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 

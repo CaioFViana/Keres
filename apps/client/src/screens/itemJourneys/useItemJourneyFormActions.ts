@@ -25,6 +25,8 @@ type UseItemJourneyFormActionsOptions = {
   userId?: string | null;
   persistTagRelations(itemJourneyId: string): Promise<void>;
   persistNoteRelations(itemJourneyId: string): Promise<void>;
+  persistSecondaryDraft?(itemJourneyId: string): Promise<void>;
+  clearSecondaryDraft?(itemJourneyId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the ItemJourney form. */
@@ -36,6 +38,8 @@ export function useItemJourneyFormActions({
   userId,
   persistTagRelations,
   persistNoteRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseItemJourneyFormActionsOptions) {
   const { t } = useTranslation();
   const itemCopy = useVocabularyEntityCopy('Item');
@@ -96,6 +100,8 @@ export function useItemJourneyFormActions({
               itemJourneyData,
             ),
           onEntityPersisted: state.retainPersistedItemJourneyId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (itemJourneyId) => {
             await persistTagRelations(itemJourneyId);
             await persistNoteRelations(itemJourneyId);

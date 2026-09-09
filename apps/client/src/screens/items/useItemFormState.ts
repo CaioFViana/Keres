@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '../../db';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
 import type { ItemService } from '../../services/storymanagement/ItemService';
 
 type UseItemFormStateOptions = {
@@ -61,7 +62,13 @@ export function useItemFormState({
 
             const existingValues =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialItemId);
-            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
+            const fromDb = Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value]));
+            const draft = await readEntityFormSecondaryDraft(storyId, 'Item', initialItemId);
+            setCustomValues(
+              draft && Object.keys(draft.customValues).length > 0
+                ? { ...fromDb, ...draft.customValues }
+                : fromDb,
+            );
           } else {
             console.warn('Item not found:', initialItemId);
           }

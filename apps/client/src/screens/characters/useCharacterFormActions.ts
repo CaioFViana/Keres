@@ -32,6 +32,8 @@ type UseCharacterFormActionsOptions = {
   persistTagRelations(characterId: string): Promise<void>;
   persistNoteRelations(characterId: string): Promise<void>;
   persistPendingCharacterRelations(characterId: string): Promise<void>;
+  persistSecondaryDraft?(characterId: string): Promise<void>;
+  clearSecondaryDraft?(characterId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the Character form. */
@@ -46,6 +48,8 @@ export function useCharacterFormActions({
   persistTagRelations,
   persistNoteRelations,
   persistPendingCharacterRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseCharacterFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Character');
@@ -112,6 +116,8 @@ export function useCharacterFormActions({
           updateEntity: (characterId) =>
             characterServiceRef.current!.updateCharacter(userId, characterId, characterData),
           onEntityPersisted: state.retainPersistedCharacterId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (characterId) => {
             await persistTagRelations(characterId);
             await persistNoteRelations(characterId);

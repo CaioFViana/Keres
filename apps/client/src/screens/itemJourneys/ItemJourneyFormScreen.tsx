@@ -14,10 +14,11 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -98,11 +99,21 @@ const ItemJourneyFormScreen = () => {
     setSelectedTagIds,
     allNotes,
     itemJourneyNoteRelations,
+    pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
     persistNoteRelations,
   } = useItemJourneyFormAssociations(currentItemJourneyId);
+
+  const getCustomValues = useCallback(() => ({}), []);
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'ItemJourney',
+    selectedTagIds,
+    pendingNoteRelations,
+    getCustomValues,
+  });
 
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } =
     useItemJourneyFormActions({
@@ -113,6 +124,8 @@ const ItemJourneyFormScreen = () => {
       userId,
       persistTagRelations,
       persistNoteRelations,
+      persistSecondaryDraft,
+      clearSecondaryDraft,
     });
 
   const journey = itemCopy.itemJourney;

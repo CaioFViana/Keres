@@ -31,6 +31,8 @@ type UseChapterFormActionsOptions = {
   userId?: string | null;
   persistTagRelations(chapterId: string): Promise<void>;
   persistNoteRelations(chapterId: string): Promise<void>;
+  persistSecondaryDraft?(chapterId: string): Promise<void>;
+  clearSecondaryDraft?(chapterId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the Chapter form. */
@@ -44,6 +46,8 @@ export function useChapterFormActions({
   userId,
   persistTagRelations,
   persistNoteRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseChapterFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy(state.isEvent ? 'Event' : 'Chapter');
@@ -119,6 +123,8 @@ export function useChapterFormActions({
           updateEntity: (chapterId) =>
             chapterServiceRef.current!.updateChapter(userId, chapterId, chapterData),
           onEntityPersisted: state.retainPersistedChapterId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (chapterId) => {
             await persistTagRelations(chapterId);
             await persistNoteRelations(chapterId);

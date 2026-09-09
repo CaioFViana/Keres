@@ -105,11 +105,9 @@ const BoardCanvasScreen = () => {
         setBoard(null);
         return;
       }
-      const draft = useBoardDraftStore.getState().draft;
-      if (draft && (draft.boardId !== boardId || draft.storyId !== storyId)) {
-        useBoardDraftStore.getState().clear();
-      }
-      const keep = useBoardDraftStore.getState().draft;
+      const keep = storyId
+        ? await useBoardDraftStore.getState().hydrate(storyId, boardId)
+        : null;
       setBoard(row);
       if (keep && keep.boardId === boardId && keep.storyId === storyId) {
         setContent(keep.content);

@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '../../db';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
+import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
 import type { LocationService } from '../../services/storymanagement/LocationService';
 
 type UseLocationFormStateOptions = {
@@ -61,7 +62,17 @@ export function useLocationFormState({
 
             const existingValues =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialLocationId);
-            setCustomValues(Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value])));
+            const fromDb = Object.fromEntries(existingValues.map((v) => [v.fieldId, v.value]));
+            const draft = await readEntityFormSecondaryDraft(
+              storyId,
+              'Location',
+              initialLocationId,
+            );
+            setCustomValues(
+              draft && Object.keys(draft.customValues).length > 0
+                ? { ...fromDb, ...draft.customValues }
+                : fromDb,
+            );
           } else {
             console.warn('Location not found:', initialLocationId);
           }

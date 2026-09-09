@@ -111,11 +111,9 @@ const LocationMapScreen = () => {
         setMap(null);
         return;
       }
-      const draft = useLocationMapDraftStore.getState().draft;
-      if (draft && (draft.mapId !== mapId || draft.storyId !== storyId)) {
-        useLocationMapDraftStore.getState().clear();
-      }
-      const keep = useLocationMapDraftStore.getState().draft;
+      const keep = storyId
+        ? await useLocationMapDraftStore.getState().hydrate(storyId, mapId)
+        : null;
       setMap(row);
       setLocations(loadedLocations.filter((x) => !x.isDeleted));
       setGalleries(loadedGalleries.filter((x) => !x.isDeleted));

@@ -16,10 +16,11 @@ import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/enti
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -104,6 +105,7 @@ const WorldRuleFormScreen = () => {
     selectedTagIds,
     allNotes,
     worldRuleNoteRelations,
+    pendingNoteRelations,
     persistTagRelations,
     saveNoteRelation,
     deleteNoteRelation,
@@ -111,6 +113,18 @@ const WorldRuleFormScreen = () => {
     handleTagSelectionChange,
   } = useWorldRuleFormAssociations({
     currentWorldRuleId,
+  });
+
+  const getCustomValues = useCallback(
+    () => worldRuleFormState.customValues,
+    [worldRuleFormState.customValues],
+  );
+  const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
+    storyId: selectedStory?.id,
+    entityType: 'WorldRule',
+    selectedTagIds,
+    pendingNoteRelations,
+    getCustomValues,
   });
 
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useWorldRuleFormActions(
@@ -124,6 +138,8 @@ const WorldRuleFormScreen = () => {
       userId,
       persistTagRelations,
       persistNoteRelations,
+      persistSecondaryDraft,
+      clearSecondaryDraft,
     },
   );
 

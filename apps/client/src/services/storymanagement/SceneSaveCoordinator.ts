@@ -19,6 +19,8 @@ export async function saveSceneWithRelations({
   onScenePersisted,
   persistRelations,
   persistCustomAttributes,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: {
   sceneService: Pick<SceneService, 'getById' | 'createScene' | 'updateScene'>;
   userId: string;
@@ -29,6 +31,8 @@ export async function saveSceneWithRelations({
   onScenePersisted: (sceneId: string) => void;
   persistRelations: SceneRelationsPersistence;
   persistCustomAttributes: SceneRelationsPersistence;
+  persistSecondaryDraft?: (sceneId: string) => Promise<void>;
+  clearSecondaryDraft?: (sceneId: string) => Promise<void>;
 }): Promise<{ sceneId: string; created: boolean }> {
   const result = await saveEntityWithSecondaryData({
     currentEntityId: currentSceneId,
@@ -39,6 +43,8 @@ export async function saveSceneWithRelations({
       return sceneService.updateScene(userId, sceneId, sceneData);
     },
     onEntityPersisted: onScenePersisted,
+    persistSecondaryDraft,
+    clearSecondaryDraft,
     persistSecondaryData: async (sceneId) => {
       await persistRelations(sceneId);
       await persistCustomAttributes(sceneId);

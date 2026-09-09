@@ -31,6 +31,8 @@ type UseItemFormActionsOptions = {
   userId?: string | null;
   persistTagRelations(itemId: string): Promise<void>;
   persistNoteRelations(itemId: string): Promise<void>;
+  persistSecondaryDraft?(itemId: string): Promise<void>;
+  clearSecondaryDraft?(itemId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the Item form. */
@@ -44,6 +46,8 @@ export function useItemFormActions({
   userId,
   persistTagRelations,
   persistNoteRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseItemFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Item');
@@ -102,6 +106,8 @@ export function useItemFormActions({
             }),
           updateEntity: (itemId) => itemServiceRef.current!.updateItem(userId, itemId, itemData),
           onEntityPersisted: state.retainPersistedItemId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (itemId) => {
             await persistTagRelations(itemId);
             await persistNoteRelations(itemId);

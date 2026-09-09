@@ -26,6 +26,8 @@ type UseNoteFormActionsOptions = {
   storyId?: string;
   userId?: string | null;
   persistTagRelations(noteId: string): Promise<void>;
+  persistSecondaryDraft?(noteId: string): Promise<void>;
+  clearSecondaryDraft?(noteId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback and navigation for the Note form. */
@@ -38,6 +40,8 @@ export function useNoteFormActions({
   storyId,
   userId,
   persistTagRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseNoteFormActionsOptions) {
   const { t } = useTranslation();
   const confirmDelete = useConfirmDelete();
@@ -91,6 +95,8 @@ export function useNoteFormActions({
             }),
           updateEntity: (noteId) => noteServiceRef.current!.updateNote(userId, noteId, noteData),
           onEntityPersisted: state.retainPersistedNoteId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (noteId) => {
             await persistTagRelations(noteId);
             await createAttributeValueService(drizzleDb).saveValuesForEntity(

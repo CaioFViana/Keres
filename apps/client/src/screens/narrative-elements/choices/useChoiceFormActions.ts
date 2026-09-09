@@ -25,6 +25,8 @@ type UseChoiceFormActionsOptions = {
   userId?: string | null;
   persistTagRelations(choiceId: string): Promise<void>;
   persistNoteRelations(choiceId: string): Promise<void>;
+  persistSecondaryDraft?(choiceId: string): Promise<void>;
+  clearSecondaryDraft?(choiceId: string): Promise<void>;
 };
 
 /** Owns validation, persistence, feedback, events and navigation for the Choice form. */
@@ -36,6 +38,8 @@ export function useChoiceFormActions({
   userId,
   persistTagRelations,
   persistNoteRelations,
+  persistSecondaryDraft,
+  clearSecondaryDraft,
 }: UseChoiceFormActionsOptions) {
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Choice');
@@ -93,6 +97,8 @@ export function useChoiceFormActions({
           updateEntity: (choiceId) =>
             choiceServiceRef.current!.updateChoice(userId, choiceId, choiceData),
           onEntityPersisted: state.retainPersistedChoiceId,
+          persistSecondaryDraft,
+          clearSecondaryDraft,
           persistSecondaryData: async (choiceId) => {
             await persistTagRelations(choiceId);
             await persistNoteRelations(choiceId);

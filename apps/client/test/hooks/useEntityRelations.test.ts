@@ -28,10 +28,21 @@ jest.mock('../../src/services/storymanagement/NoteRelationService', () => ({
   __esModule: true,
   createNoteRelationService: jest.fn(),
 }));
+jest.mock('../../src/services/storymanagement/EntityFormSecondaryDraftStore', () => ({
+  __esModule: true,
+  readEntityFormSecondaryDraft: jest.fn(async () => null),
+  patchEntityFormSecondaryDraft: jest.fn(async () => undefined),
+  writeEntityFormSecondaryDraft: jest.fn(async () => undefined),
+  clearEntityFormSecondaryDraft: jest.fn(async () => undefined),
+}));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '../../src/db';
 import { useEntityRelations } from '../../src/hooks/useEntityRelations';
+import {
+  patchEntityFormSecondaryDraft,
+  readEntityFormSecondaryDraft,
+} from '../../src/services/storymanagement/EntityFormSecondaryDraftStore';
 import { createNoteRelationService } from '../../src/services/storymanagement/NoteRelationService';
 import { createNoteService } from '../../src/services/storymanagement/NoteService';
 import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
@@ -121,6 +132,8 @@ beforeEach(() => {
       return saved;
     },
   );
+  (readEntityFormSecondaryDraft as jest.Mock).mockResolvedValue(null);
+  (patchEntityFormSecondaryDraft as jest.Mock).mockResolvedValue(undefined);
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -554,5 +567,55 @@ describe('creation form after a partial save', () => {
     expect(noteRelationService.saveNoteRelation).toHaveBeenCalledTimes(1);
     await act(async () => view.result.current.deleteNoteRelation('r1'));
     expect(view.result.current.noteRelations).toEqual([]);
+  });
+});
+
+describe('durable secondary draft restore', () => {
+  it('restores pending notes once and does not reapply a deleted draft on refresh', async () => {
+    storedRelations = [];
+    const pendingDraft = {
+      id: 'pending-draft-1',
+      storyId: STORY_ID,
+      noteId: 'n1',
+      relationId: ENTITY_ID,
+      relationType: ENTITY_TYPE,
+    };
+    (readEntityFormSecondaryDraft as jest.Mock).mockResolvedValue({
+      selectedTagIds: ['t2'],
+      pendingNoteRelations: [pendingDraft],
+      customValues: {},
+      pendingEntityRelations: [],
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    const { result } = await render();
+    await waitFor(() =>
+      expect(result.current.noteRelations).toEqual([
+        expect.objectContaining({ id: 'pending-draft-1', noteId: 'n1' }),
+      ]),
+    );
+    expect(result.current.selectedTagIds).toEqual(['t2']);
+
+    await act(async () => result.current.deleteNoteRelation('pending-draft-1'));
+    expect(result.current.noteRelations).toEqual([]);
+    expect(patchEntityFormSecondaryDraft).toHaveBeenCalledWith(STORY_ID, ENTITY_TYPE, ENTITY_ID, {
+      pendingNoteRelations: [],
+    });
+
+    (readEntityFormSecondaryDraft as jest.Mock).mockResolvedValue({
+      selectedTagIds: ['t2'],
+      pendingNoteRelations: [pendingDraft],
+      customValues: {},
+      pendingEntityRelations: [],
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    await act(async () => {
+      entityEventEmitter.emit('note_relation_changed', STORY_ID);
+      await result.current.refresh();
+    });
+
+    expect(result.current.noteRelations).toEqual([]);
+    expect(result.current.selectedTagIds).toEqual(['t2']);
   });
 });

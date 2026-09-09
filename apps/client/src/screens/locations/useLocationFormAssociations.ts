@@ -3,6 +3,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LocationRelationSelect, LocationSelect } from '../../db/schema';
 import { useEntityRelations } from '../../hooks/useEntityRelations';
+import {
+  patchEntityFormSecondaryDraft,
+  readEntityFormSecondaryDraft,
+} from '../../services/storymanagement/EntityFormSecondaryDraftStore';
 import type { LocationRelationService } from '../../services/storymanagement/LocationRelationService';
 import type { LocationService } from '../../services/storymanagement/LocationService';
 import { AppAlert } from '../../utils/AppAlert';
@@ -27,20 +31,25 @@ const makePendingLocationRelation = (
 });
 
 type UseLocationFormAssociationsOptions = {
+  /** Route id when opening an existing location — used to restore durable pending relations. */
+  initialLocationId?: string;
   currentLocationId: string | undefined;
   storyId?: string;
   userId?: string | null;
   locationServiceRef: RefObject<LocationService | null>;
   locationRelationServiceRef: RefObject<LocationRelationService | null>;
+  onSecondaryDraftRestored?: () => void;
 };
 
 /** Owns relation, pending-relation and entity-relation wiring used by the Location form. */
 export function useLocationFormAssociations({
+  initialLocationId,
   currentLocationId,
   storyId,
   userId,
   locationServiceRef,
   locationRelationServiceRef,
+  onSecondaryDraftRestored,
 }: UseLocationFormAssociationsOptions) {
   const { t } = useTranslation();
   const [allLocations, setAllLocations] = useState<LocationSelect[]>([]);
@@ -90,11 +99,39 @@ export function useLocationFormAssociations({
     void fetchAllLocationRelationsInStory();
   }, [fetchAllLocationsInStory, fetchAllLocationRelationsInStory]);
 
+  useEffect(() => {
+    if (!storyId || !initialLocationId) return;
+    let cancelled = false;
+    void (async () => {
+      const draft = await readEntityFormSecondaryDraft(storyId, 'Location', initialLocationId);
+      if (cancelled || !draft?.pendingEntityRelations?.length) return;
+      setPendingLocationRelations(draft.pendingEntityRelations as LocationRelationSelect[]);
+      onSecondaryDraftRestored?.();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [storyId, initialLocationId, onSecondaryDraftRestored]);
+
   const handleTagSelectionChange = useCallback(
     (newSelection: string[]) => {
       relations.setSelectedTagIds(newSelection);
     },
     [relations],
+  );
+
+  const syncPendingLocationRelationsToDraft = useCallback(
+    async (nextPending: LocationRelationSelect[]) => {
+      if (!storyId || !currentLocationId) return;
+      try {
+        await patchEntityFormSecondaryDraft(storyId, 'Location', currentLocationId, {
+          pendingEntityRelations: nextPending,
+        });
+      } catch (error) {
+        console.error('Failed to sync pending location relations to secondary draft:', error);
+      }
+    },
+    [storyId, currentLocationId],
   );
 
   const handleSetParent = useCallback(
@@ -211,8 +248,13 @@ export function useLocationFormAssociations({
 
   const handleRemoveLocationRelation = useCallback(
     async (relationId: string) => {
-      if (!currentLocationId) {
-        setPendingLocationRelations((prev) => prev.filter((r) => r.id !== relationId));
+      if (
+        !currentLocationId ||
+        pendingLocationRelations.some((relation) => relation.id === relationId)
+      ) {
+        const nextPending = pendingLocationRelations.filter((r) => r.id !== relationId);
+        setPendingLocationRelations(nextPending);
+        await syncPendingLocationRelationsToDraft(nextPending);
         return;
       }
       if (!locationRelationServiceRef.current || !userId) return;
@@ -226,7 +268,15 @@ export function useLocationFormAssociations({
         );
       }
     },
-    [userId, t, fetchAllLocationRelationsInStory, currentLocationId, locationRelationServiceRef],
+    [
+      userId,
+      t,
+      fetchAllLocationRelationsInStory,
+      currentLocationId,
+      locationRelationServiceRef,
+      pendingLocationRelations,
+      syncPendingLocationRelationsToDraft,
+    ],
   );
 
   /**
@@ -275,7 +325,8 @@ export function useLocationFormAssociations({
     locationNoteRelations: relations.noteRelations,
     handleTagSelectionChange,
     allLocations,
-    allLocationRelations,
+    // Persisted and pending queues stay visible together after identity retention / draft restore.
+    allLocationRelations: [...allLocationRelations, ...pendingLocationRelations],
     pendingLocationRelations,
     handleSetParent,
     handleAddChild,

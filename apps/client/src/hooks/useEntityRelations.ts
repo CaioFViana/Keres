@@ -9,7 +9,11 @@ import { createNoteRelationService } from '../services/storymanagement/NoteRelat
 import { createNoteService } from '../services/storymanagement/NoteService';
 import { createTagRelationService } from '../services/storymanagement/TagRelationService';
 import { createTagService } from '../services/storymanagement/TagService';
-import { readEntityFormSecondaryDraft } from '../services/storymanagement/EntityFormSecondaryDraftStore';
+import {
+  patchEntityFormSecondaryDraft,
+  readEntityFormSecondaryDraft,
+  type EntityFormSecondaryDraft,
+} from '../services/storymanagement/EntityFormSecondaryDraftStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { createULID } from '../utils/entityUtils';
@@ -53,6 +57,59 @@ export function useEntityRelations({
   const preservesCreationDraft = preserveDraftOnEntityCreation && !initialEntityIdRef.current;
   const hydrationEntityId = preserveDraftOnEntityCreation ? initialEntityIdRef.current : entityId;
 
+  // One-shot durable-draft hydration for this mount. Refresh must not reapply a stored copy
+  // over in-session deletes/edits; load once, then the session owns the queues.
+  const durableDraftSessionRef = useRef<{
+    entityKey: string | null;
+    loadPromise: Promise<EntityFormSecondaryDraft | null> | null;
+    draft: EntityFormSecondaryDraft | null | undefined;
+    appliedTags: boolean;
+    appliedNotes: boolean;
+    /** After a durable draft restores tags, keep session edits across refreshes. */
+    sessionOwnsTags: boolean;
+  }>({
+    entityKey: null,
+    loadPromise: null,
+    draft: undefined,
+    appliedTags: false,
+    appliedNotes: false,
+    sessionOwnsTags: false,
+  });
+
+  const resetDurableDraftSession = (entityKey: string | null) => {
+    durableDraftSessionRef.current = {
+      entityKey,
+      loadPromise: null,
+      draft: undefined,
+      appliedTags: false,
+      appliedNotes: false,
+      sessionOwnsTags: false,
+    };
+  };
+
+  const loadDurableDraftOnce = useCallback(async (): Promise<EntityFormSecondaryDraft | null> => {
+    if (!storyId || !hydrationEntityId) return null;
+    const entityKey = `${storyId}:${entityType}:${hydrationEntityId}`;
+    const session = durableDraftSessionRef.current;
+    if (session.entityKey !== entityKey) {
+      resetDurableDraftSession(entityKey);
+    }
+    if (durableDraftSessionRef.current.draft !== undefined) {
+      return durableDraftSessionRef.current.draft;
+    }
+    if (!durableDraftSessionRef.current.loadPromise) {
+      durableDraftSessionRef.current.loadPromise = readEntityFormSecondaryDraft(
+        storyId,
+        entityType,
+        hydrationEntityId,
+      ).then((draft) => {
+        durableDraftSessionRef.current.draft = draft;
+        return draft;
+      });
+    }
+    return durableDraftSessionRef.current.loadPromise;
+  }, [storyId, entityType, hydrationEntityId]);
+
   // Services are cheap factories over a stable db handle, so a memo replaces the
   // ref-plus-init-effect dance the screens were doing.
   const services = useMemo(() => {
@@ -75,6 +132,26 @@ export function useEntityRelations({
   // is held here until `persistNoteRelations` is called with the real id after the save.
   const [pendingNoteRelations, setPendingNoteRelations] = useState<NoteRelation[]>([]);
 
+  const syncPendingNotesToDurableDraft = useCallback(
+    async (nextPending: NoteRelation[]) => {
+      if (!storyId || !entityId) return;
+      try {
+        await patchEntityFormSecondaryDraft(storyId, entityType, entityId, {
+          pendingNoteRelations: nextPending,
+        });
+        if (durableDraftSessionRef.current.draft) {
+          durableDraftSessionRef.current.draft = {
+            ...durableDraftSessionRef.current.draft,
+            pendingNoteRelations: nextPending,
+          };
+        }
+      } catch (error) {
+        console.error('Failed to sync pending note relations to secondary draft:', error);
+      }
+    },
+    [storyId, entityType, entityId],
+  );
+
   const refreshAvailableTags = useCallback(async () => {
     if (!services || !storyId) {
       setAvailableTags([]);
@@ -94,11 +171,18 @@ export function useEntityRelations({
       return;
     }
     try {
-      const draft = await readEntityFormSecondaryDraft(storyId, entityType, hydrationEntityId);
-      if (draft) {
-        // Prefer the durable draft after a partial save across sessions.
-        setSelectedTagIds(draft.selectedTagIds);
+      if (durableDraftSessionRef.current.sessionOwnsTags) {
         return;
+      }
+      if (!durableDraftSessionRef.current.appliedTags) {
+        const draft = await loadDurableDraftOnce();
+        durableDraftSessionRef.current.appliedTags = true;
+        if (draft) {
+          // Prefer the durable draft once after a partial save across sessions.
+          setSelectedTagIds(draft.selectedTagIds);
+          durableDraftSessionRef.current.sessionOwnsTags = true;
+          return;
+        }
       }
       const tags = await services.tagRelation.getTagsForEntity(
         storyId,
@@ -109,7 +193,14 @@ export function useEntityRelations({
     } catch (err) {
       console.error(`Failed to fetch tags for ${entityType}:`, err);
     }
-  }, [services, storyId, hydrationEntityId, entityType, preservesCreationDraft]);
+  }, [
+    services,
+    storyId,
+    hydrationEntityId,
+    entityType,
+    preservesCreationDraft,
+    loadDurableDraftOnce,
+  ]);
 
   const refreshNotes = useCallback(async () => {
     if (!services || !storyId || !withNotes) {
@@ -138,14 +229,25 @@ export function useEntityRelations({
         entityType as NoteRelationEntities,
       );
       setNoteRelations(relations);
-      const draft = await readEntityFormSecondaryDraft(storyId, entityType, hydrationEntityId);
-      if (draft?.pendingNoteRelations.length) {
-        setPendingNoteRelations(draft.pendingNoteRelations);
+      if (!durableDraftSessionRef.current.appliedNotes) {
+        const draft = await loadDurableDraftOnce();
+        durableDraftSessionRef.current.appliedNotes = true;
+        if (draft?.pendingNoteRelations.length) {
+          setPendingNoteRelations(draft.pendingNoteRelations);
+        }
       }
     } catch (err) {
       console.error(`Failed to fetch note relations for ${entityType}:`, err);
     }
-  }, [services, storyId, hydrationEntityId, entityType, withNotes, preservesCreationDraft]);
+  }, [
+    services,
+    storyId,
+    hydrationEntityId,
+    entityType,
+    withNotes,
+    preservesCreationDraft,
+    loadDurableDraftOnce,
+  ]);
 
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -236,9 +338,11 @@ export function useEntityRelations({
     async (relation: SaveNoteRelation) => {
       const pending = pendingNoteRelations.find((item) => item.id === relation.id);
       if (pending) {
-        setPendingNoteRelations((current) =>
-          current.map((item) => (item.id === pending.id ? { ...item, ...relation } : item)),
+        const nextPending = pendingNoteRelations.map((item) =>
+          item.id === pending.id ? { ...item, ...relation } : item,
         );
+        setPendingNoteRelations(nextPending);
+        await syncPendingNotesToDurableDraft(nextPending);
         AppAlert.alert(t('success'), t('note_relation_saved_successfully'));
         return;
       }
@@ -275,13 +379,15 @@ export function useEntityRelations({
         AppAlert.alert(t('error'), t('failed_to_save_note_relation'));
       }
     },
-    [services, storyId, userId, entityId, t, pendingNoteRelations],
+    [services, storyId, userId, entityId, t, pendingNoteRelations, syncPendingNotesToDurableDraft],
   );
 
   const deleteNoteRelation = useCallback(
     async (relationId: string) => {
       if (!entityId || pendingNoteRelations.some((relation) => relation.id === relationId)) {
-        setPendingNoteRelations((prev) => prev.filter((r) => r.id !== relationId));
+        const nextPending = pendingNoteRelations.filter((r) => r.id !== relationId);
+        setPendingNoteRelations(nextPending);
+        await syncPendingNotesToDurableDraft(nextPending);
         AppAlert.alert(t('success'), t('note_relation_deleted_successfully'));
         return;
       }
@@ -303,7 +409,7 @@ export function useEntityRelations({
         AppAlert.alert(t('error'), t('failed_to_delete_note_relation'));
       }
     },
-    [services, storyId, userId, entityId, t, pendingNoteRelations],
+    [services, storyId, userId, entityId, t, pendingNoteRelations, syncPendingNotesToDurableDraft],
   );
 
   /**

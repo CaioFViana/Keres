@@ -3,12 +3,14 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
+import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
+import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -46,6 +48,8 @@ const CharacterFormScreen = () => {
   const copy = useVocabularyEntityCopy('Character');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
+  const showNotification = useNotificationStore((state) => state.showNotification);
+  const draftNoticeShownRef = useRef(false);
   const commonInputStyles = getCommonInputStyles(colors);
   const customFields = useStorySchemaFields(selectedStory?.id, 'Character');
 
@@ -117,6 +121,7 @@ const CharacterFormScreen = () => {
     modeService,
     statRelationService,
   } = useCharacterFormAssociations({
+    initialCharacterId,
     currentCharacterId,
     storyId: selectedStory?.id,
     userId,
@@ -125,9 +130,30 @@ const CharacterFormScreen = () => {
     characterRelationServiceRef,
   });
 
+  useEffect(() => {
+    if (!selectedStory?.id || !initialCharacterId || draftNoticeShownRef.current) return;
+    void readEntityFormSecondaryDraft(selectedStory.id, 'Character', initialCharacterId).then(
+      (draft) => {
+        if (!draft) return;
+        const hasDraft =
+          draft.selectedTagIds.length > 0 ||
+          draft.pendingNoteRelations.length > 0 ||
+          draft.pendingEntityRelations.length > 0 ||
+          Object.keys(draft.customValues).length > 0;
+        if (!hasDraft) return;
+        draftNoticeShownRef.current = true;
+        showNotification(t('entity_secondary_draft_restored'), 'info');
+      },
+    );
+  }, [initialCharacterId, selectedStory?.id, showNotification, t]);
+
   const getCustomValues = useCallback(
     () => characterFormState.customValues,
     [characterFormState.customValues],
+  );
+  const getPendingEntityRelations = useCallback(
+    () => pendingCharacterRelations,
+    [pendingCharacterRelations],
   );
   const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
     storyId: selectedStory?.id,
@@ -135,8 +161,8 @@ const CharacterFormScreen = () => {
     selectedTagIds,
     pendingNoteRelations,
     getCustomValues,
+    getPendingEntityRelations,
   });
-
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useCharacterFormActions(
     {
       state: characterFormState,
@@ -221,7 +247,6 @@ const CharacterFormScreen = () => {
       statData={statData}
       statRelationService={statRelationService}
       characterRelations={characterRelations}
-      pendingCharacterRelations={pendingCharacterRelations}
       allCharacters={allCharacters}
       handleSaveRelation={handleSaveRelation}
       handleDeleteRelation={handleDeleteRelation}

@@ -170,10 +170,15 @@ Os canvas já tinham draft em memória para sobreviver à navegação; agora tam
 - Telas carregam via `hydrate` antes de montar o conteúdo
 - Reset global limpa as chaves duráveis
 
+## Continuação — produto: rascunhos e UX de recuperação (9 de setembro de 2026)
+
+1. **Relações específicas duráveis** — Character↔Character e Location↔Location entram em `pendingEntityRelations` no draft store; restauradas ao reabrir.
+2. **Aviso ao recuperar** — notificação `entity_secondary_draft_restored` / `canvas_draft_restored`.
+3. **Conflito canvas × versão salva** — se o SQLite mudou desde o rascunho (ex.: sync), restaura o draft local e avisa com `canvas_draft_conflicts_with_saved`; Reverter volta à versão guardada.
+
 ## Dívidas residuais conscientes (não reabrem P01–P10)
 
 1. **Interseção tipada Drizzle** continua sendo ergonomia de call-site, não prova estática completa de portabilidade — mitigada pelos testes de contrato/arquitetura e pela evidência operacional nos dois motores.
-2. Relações específicas da entidade ainda só em memória na sessão (ex.: filas Character↔Character) — tags/notas/atributos já sobrevivem ao encerrar o app.
 
 ## Validação desta sessão
 

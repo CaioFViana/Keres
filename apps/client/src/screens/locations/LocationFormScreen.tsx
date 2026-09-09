@@ -3,13 +3,15 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
+import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
+import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -48,6 +50,8 @@ const LocationFormScreen = () => {
   const copy = useVocabularyEntityCopy('Location');
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
+  const showNotification = useNotificationStore((state) => state.showNotification);
+  const draftNoticeShownRef = useRef(false);
   const commonInputStyles = getCommonInputStyles(colors);
   const customFields = useStorySchemaFields(selectedStory?.id, 'Location');
 
@@ -102,6 +106,7 @@ const LocationFormScreen = () => {
     handleRemoveLocationRelation,
     persistPendingLocationRelations,
   } = useLocationFormAssociations({
+    initialLocationId,
     currentLocationId,
     storyId: selectedStory?.id,
     userId,
@@ -109,9 +114,30 @@ const LocationFormScreen = () => {
     locationRelationServiceRef,
   });
 
+  useEffect(() => {
+    if (!selectedStory?.id || !initialLocationId || draftNoticeShownRef.current) return;
+    void readEntityFormSecondaryDraft(selectedStory.id, 'Location', initialLocationId).then(
+      (draft) => {
+        if (!draft) return;
+        const hasDraft =
+          draft.selectedTagIds.length > 0 ||
+          draft.pendingNoteRelations.length > 0 ||
+          draft.pendingEntityRelations.length > 0 ||
+          Object.keys(draft.customValues).length > 0;
+        if (!hasDraft) return;
+        draftNoticeShownRef.current = true;
+        showNotification(t('entity_secondary_draft_restored'), 'info');
+      },
+    );
+  }, [initialLocationId, selectedStory?.id, showNotification, t]);
+
   const getCustomValues = useCallback(
     () => locationFormState.customValues,
     [locationFormState.customValues],
+  );
+  const getPendingEntityRelations = useCallback(
+    () => pendingLocationRelations,
+    [pendingLocationRelations],
   );
   const { persistSecondaryDraft, clearSecondaryDraft } = useEntityFormSecondaryDraft({
     storyId: selectedStory?.id,
@@ -119,6 +145,7 @@ const LocationFormScreen = () => {
     selectedTagIds,
     pendingNoteRelations,
     getCustomValues,
+    getPendingEntityRelations,
   });
 
   const { deleting, handleDelete, handleSave, saving, seeAlsoManagerRef } = useLocationFormActions({
@@ -178,7 +205,6 @@ const LocationFormScreen = () => {
       isFavorite={isFavorite}
       locationNoteRelations={locationNoteRelations}
       name={name}
-      pendingLocationRelations={pendingLocationRelations}
       politics={politics}
       saving={saving}
       saveNoteRelation={saveNoteRelation}

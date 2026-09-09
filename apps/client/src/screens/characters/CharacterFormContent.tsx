@@ -69,7 +69,6 @@ export function CharacterFormContent(props: any) {
     statData,
     statRelationService,
     characterRelations,
-    pendingCharacterRelations,
     allCharacters,
     handleSaveRelation,
     handleDeleteRelation,
@@ -333,7 +332,7 @@ export function CharacterFormContent(props: any) {
       {selectedStory?.id && (
         <View style={styles.noteSection}>
           <CharacterRelationManager
-            characterRelations={currentCharacterId ? characterRelations : pendingCharacterRelations}
+            characterRelations={characterRelations}
             characters={allCharacters}
             onSave={handleSaveRelation}
             onDelete={handleDeleteRelation}

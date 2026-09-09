@@ -48,8 +48,8 @@ describe('saveEntityWithSecondaryData', () => {
   });
 
   it('persists a secondary draft after identity and clears it only on success', async () => {
-    const persistSecondaryDraft = jest.fn(async () => undefined);
-    const clearSecondaryDraft = jest.fn(async () => undefined);
+    const persistSecondaryDraft = jest.fn(async (_entityId: string) => undefined);
+    const clearSecondaryDraft = jest.fn(async (_entityId: string) => undefined);
     const order: string[] = [];
 
     await expect(

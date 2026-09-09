@@ -112,6 +112,16 @@ const BoardCanvasScreen = () => {
       if (keep && keep.boardId === boardId && keep.storyId === storyId) {
         setContent(keep.content);
         setSavedContent(row.content);
+        const savedChangedSinceDraft =
+          JSON.stringify(row.content) !== JSON.stringify(keep.savedContent);
+        showNotification(
+          t(
+            savedChangedSinceDraft
+              ? 'canvas_draft_conflicts_with_saved'
+              : 'canvas_draft_restored',
+          ),
+          savedChangedSinceDraft ? 'warning' : 'info',
+        );
       } else {
         setContent(row.content);
         setSavedContent(row.content);
@@ -123,7 +133,7 @@ const BoardCanvasScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [boardId, db, storyId, t]);
+  }, [boardId, db, showNotification, storyId, t]);
 
   useEffect(() => {
     void load();

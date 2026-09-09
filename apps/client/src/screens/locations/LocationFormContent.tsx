@@ -38,7 +38,6 @@ export const LocationFormContent = (props: any) => {
     isFavorite,
     locationNoteRelations,
     name,
-    pendingLocationRelations,
     politics,
     saving,
     seeAlsoManagerRef,
@@ -189,9 +188,7 @@ export const LocationFormContent = (props: any) => {
           <LocationRelationManager
             currentLocationId={currentLocationId ?? ''}
             allLocations={allLocations}
-            allLocationRelations={
-              currentLocationId ? allLocationRelations : pendingLocationRelations
-            }
+            allLocationRelations={allLocationRelations}
             onSetParent={handleSetParent}
             onAddChild={handleAddChild}
             onAddConnection={handleAddConnection}

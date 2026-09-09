@@ -122,6 +122,16 @@ const LocationMapScreen = () => {
       if (keep && keep.mapId === mapId && keep.storyId === storyId) {
         setContent(keep.content);
         setSavedContent(row.content);
+        const savedChangedSinceDraft =
+          JSON.stringify(row.content) !== JSON.stringify(keep.savedContent);
+        showNotification(
+          t(
+            savedChangedSinceDraft
+              ? 'canvas_draft_conflicts_with_saved'
+              : 'canvas_draft_restored',
+          ),
+          savedChangedSinceDraft ? 'warning' : 'info',
+        );
       } else {
         setContent(row.content);
         setSavedContent(row.content);
@@ -133,7 +143,7 @@ const LocationMapScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [db, mapId, storyId, t]);
+  }, [db, mapId, showNotification, storyId, t]);
   useEffect(() => {
     void load();
   }, [load]);

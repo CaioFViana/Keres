@@ -159,4 +159,14 @@ describe('SyncScheduler', () => {
     finish(false);
     await scheduler.stopAndWait();
   });
+
+  it('resolves stopAndWait after the timeout even when the active cycle never finishes', async () => {
+    performSync.mockImplementation(() => new Promise<boolean>(() => undefined));
+    scheduler.start();
+    await flush();
+
+    const stopped = scheduler.stopAndWait(20);
+    await jest.advanceTimersByTimeAsync(20);
+    await expect(stopped).resolves.toBeUndefined();
+  });
 });

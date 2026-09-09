@@ -11,6 +11,8 @@ type UseEntityFormSecondaryDraftOptions = {
   selectedTagIds: string[];
   pendingNoteRelations: NoteRelation[];
   getCustomValues: () => Record<string, string | null>;
+  /** Character/Location/… pending relation queues. */
+  getPendingEntityRelations?: () => unknown[];
 };
 
 /**
@@ -23,6 +25,7 @@ export function useEntityFormSecondaryDraft({
   selectedTagIds,
   pendingNoteRelations,
   getCustomValues,
+  getPendingEntityRelations,
 }: UseEntityFormSecondaryDraftOptions) {
   const persistSecondaryDraft = useCallback(
     async (entityId: string) => {
@@ -31,9 +34,17 @@ export function useEntityFormSecondaryDraft({
         selectedTagIds,
         pendingNoteRelations,
         customValues: getCustomValues(),
+        pendingEntityRelations: getPendingEntityRelations?.() ?? [],
       });
     },
-    [storyId, entityType, selectedTagIds, pendingNoteRelations, getCustomValues],
+    [
+      storyId,
+      entityType,
+      selectedTagIds,
+      pendingNoteRelations,
+      getCustomValues,
+      getPendingEntityRelations,
+    ],
   );
 
   const clearSecondaryDraft = useCallback(

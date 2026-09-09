@@ -4,6 +4,12 @@ import { isOfflineError } from '../apiClient';
 export const SYNC_INTERVAL_MS = 30_000;
 /** Fast cadence used while the configured server is unreachable. */
 export const OFFLINE_RETRY_MS = 5_000;
+/**
+ * Upper bound for `stopAndWait` / `reset` so a hung HTTP cycle cannot block story
+ * deactivation or context switches indefinitely. Aligns with the default HTTP timeout
+ * plus a small margin for local bookkeeping after the request ends.
+ */
+export const STOP_AND_WAIT_TIMEOUT_MS = 45_000;
 
 interface SyncReadiness {
   storyId: string | null;
@@ -102,10 +108,15 @@ export class SyncScheduler {
     }
   }
 
-  /** Stops accepting work and resolves only after the active cycle has finished. */
-  public async stopAndWait(): Promise<void> {
+  /**
+   * Stops accepting work and resolves after the active cycle finishes, or after
+   * `timeoutMs` so a hung request cannot block context switches forever.
+   * The in-flight cycle may still complete in the background; generation bumping
+   * already prevents it from scheduling further work.
+   */
+  public async stopAndWait(timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS): Promise<void> {
     this.stop();
-    await this.waitForIdle();
+    await this.waitForIdle(timeoutMs);
   }
 
   /** Allows explicit requests again after the owning context has been configured. */
@@ -137,8 +148,16 @@ export class SyncScheduler {
     }
   }
 
-  private async waitForIdle(): Promise<void> {
+  private async waitForIdle(timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS): Promise<void> {
     if (!this.inFlight) return;
-    await new Promise<void>((resolve) => this.idleResolvers.add(resolve));
+    await new Promise<void>((resolve) => {
+      const finish = () => {
+        clearTimeout(timer);
+        this.idleResolvers.delete(finish);
+        resolve();
+      };
+      const timer = setTimeout(finish, timeoutMs);
+      this.idleResolvers.add(finish);
+    });
   }
 }

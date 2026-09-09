@@ -554,29 +554,34 @@ const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT
 
 /** Exported so the test can register the channels without needing the app to be ready. */
 export function registerMediaIpcHandlers() {
-  ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {
+  ipcMain.handle('media:write', async (event, relativePath: string, bytes: Uint8Array) => {
+    assertTrustedRenderer(event);
     const filePath = resolveMediaPath(relativePath);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, bytes);
   });
 
-  ipcMain.handle('media:read', async (_event, relativePath: string) => {
+  ipcMain.handle('media:read', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     const filePath = resolveMediaPath(relativePath);
     return fs.readFile(filePath);
   });
 
-  ipcMain.handle('media:delete-file', async (_event, relativePath: string) => {
+  ipcMain.handle('media:delete-file', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     await fs.rm(resolveMediaPath(relativePath), { force: true });
   });
 
-  ipcMain.handle('media:delete-directory', async (_event, relativePath: string) => {
+  ipcMain.handle('media:delete-directory', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     await fs.rm(resolveMediaPath(relativePath), { recursive: true, force: true });
   });
 
   // Lists every file as a "media/<storyId>/<file>" relative path (matching the layout
   // webMediaRelativePath in MediaFileService.ts writes), for webMediaStore's boot-time
   // existence cache (see hydrate() in apps/client/src/services/webMediaStore.ts).
-  ipcMain.handle('media:list-all', async () => {
+  ipcMain.handle('media:list-all', async (event) => {
+    assertTrustedRenderer(event);
     const results: string[] = [];
     const mediaDir = path.join(MEDIA_ROOT, 'media');
     let storyDirs: string[];
@@ -601,7 +606,8 @@ export function registerMediaIpcHandlers() {
   // Hands the file to the OS (the PDF reader, Word, the browser) instead of opening it inside
   // this window. `openPath` is the local-file counterpart of `openExternal`; `file:` URLs are
   // refused by the outbound-link guard on purpose.
-  ipcMain.handle('media:open', async (_event, relativePath: string) => {
+  ipcMain.handle('media:open', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     const filePath = resolveMediaPath(relativePath);
     const error = await shell.openPath(filePath);
     if (error) {

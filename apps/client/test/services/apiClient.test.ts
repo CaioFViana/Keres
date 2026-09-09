@@ -408,6 +408,37 @@ describe('token refresh on 401', () => {
 
     expect(provider.refreshAccessToken).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps token providers isolated per Axios instance', async () => {
+    updateServerTokenCache(SERVER.id, 'expirado', 'refresh-1');
+    const first = buildInstance([{ status: 401 }, { status: 200, data: { first: true } }]);
+    const second = buildInstance([{ status: 401 }, { status: 200, data: { second: true } }]);
+    const providerA = tokenProvider({
+      refreshAccessToken: jest.fn(async () => ({
+        accessToken: 'access-a',
+        refreshToken: 'refresh-a',
+      })),
+    });
+    const providerB = tokenProvider({
+      refreshAccessToken: jest.fn(async () => ({
+        accessToken: 'access-b',
+        refreshToken: 'refresh-b',
+      })),
+    });
+    first.instance.setTokenProvider(providerA);
+    second.instance.setTokenProvider(providerB);
+
+    await expect(first.instance.get('/stories')).resolves.toMatchObject({ data: { first: true } });
+    expect(providerA.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(providerB.refreshAccessToken).not.toHaveBeenCalled();
+
+    updateServerTokenCache(SERVER.id, 'expirado-again', 'refresh-2');
+    await expect(second.instance.get('/stories')).resolves.toMatchObject({
+      data: { second: true },
+    });
+    expect(providerB.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(providerA.refreshAccessToken).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('clearAllServerAuthState', () => {

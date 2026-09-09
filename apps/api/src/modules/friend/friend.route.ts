@@ -2,6 +2,7 @@ import { UserTargetIdParam } from '@keres/shared/schemas/FriendshipRouteSchemas'
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { friendshipService } from '../../services/FriendshipService';
+import { AppError } from '../../utils/errors';
 
 /** A `friendships` row exactly as `.returning()`/`db.query` sends it back - `createdAt`/
  *  `updatedAt` are raw Date instances here (unlike EnrichedFriendshipResponseSchema below,
@@ -38,10 +39,9 @@ export const friendRoutes = new Elysia()
   // media.route.ts's `requirePermission`, which varies per route (reader vs writer). A single
   // eager derive replaces the identical `if (!user) { 401 }` block that used to open all 8
   // handlers, and lets each of them use `userId` directly instead of re-deriving it from `user`.
-  .derive(({ user, set }) => {
+  .derive(({ user }) => {
     if (!user?.userId) {
-      set.status = 401;
-      throw new Error('Unauthorized: User not authenticated.');
+      throw new AppError(401, 'Unauthorized: User not authenticated.');
     }
     return { userId: user.userId };
   })

@@ -116,10 +116,82 @@ describe('scene form responsibilities', () => {
   });
 });
 
+describe('character form responsibilities', () => {
+  it('keeps service setup and persistence coordination outside the screen', () => {
+    const screen = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/CharacterFormScreen.tsx'),
+      'utf8',
+    );
+    const state = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/useCharacterFormState.ts'),
+      'utf8',
+    );
+    const actions = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/useCharacterFormActions.ts'),
+      'utf8',
+    );
+    const associations = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/useCharacterFormAssociations.ts'),
+      'utf8',
+    );
+
+    expect(screen).toContain('useCharacterFormResources');
+    expect(screen).toContain('useCharacterFormState');
+    expect(screen).toContain('useCharacterFormActions');
+    expect(screen).toContain('useCharacterFormAssociations');
+    expect(screen).not.toMatch(/createCharacterService|createCharacterRelationService/);
+    expect(screen).not.toMatch(
+      /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
+    );
+    expect(screen).not.toMatch(/useEntityRelations|useStoryStats|useConfirmDelete|useAsyncOperation/);
+    expect(state).toContain('initialCharacterId');
+    expect(state).toContain('retainPersistedCharacterId');
+    expect(state).not.toMatch(/getById\(currentCharacterId/);
+    expect(actions).toContain('saveEntityWithSecondaryData');
+    expect(actions).toContain('retainPersistedCharacterId');
+    expect(associations).toContain('preserveDraftOnEntityCreation: true');
+  });
+});
+
+describe('location form responsibilities', () => {
+  it('keeps service setup and persistence coordination outside the screen', () => {
+    const screen = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/LocationFormScreen.tsx'),
+      'utf8',
+    );
+    const state = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/useLocationFormState.ts'),
+      'utf8',
+    );
+    const actions = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/useLocationFormActions.ts'),
+      'utf8',
+    );
+    const associations = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/useLocationFormAssociations.ts'),
+      'utf8',
+    );
+
+    expect(screen).toContain('useLocationFormResources');
+    expect(screen).toContain('useLocationFormState');
+    expect(screen).toContain('useLocationFormActions');
+    expect(screen).toContain('useLocationFormAssociations');
+    expect(screen).not.toMatch(/createLocationService|createLocationRelationService/);
+    expect(screen).not.toMatch(
+      /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
+    );
+    expect(screen).not.toMatch(/useEntityRelations|useConfirmDelete|useAsyncOperation/);
+    expect(state).toContain('initialLocationId');
+    expect(state).toContain('retainPersistedLocationId');
+    expect(state).not.toMatch(/getById\(currentLocationId/);
+    expect(actions).toContain('saveEntityWithSecondaryData');
+    expect(actions).toContain('retainPersistedLocationId');
+    expect(associations).toContain('preserveDraftOnEntityCreation: true');
+  });
+});
+
 describe('multi-step form persistence', () => {
   const forms = [
-    'screens/characters/CharacterFormScreen.tsx',
-    'screens/locations/LocationFormScreen.tsx',
     'screens/worldrules/WorldRuleFormScreen.tsx',
     'screens/items/ItemFormScreen.tsx',
     'screens/notes/NoteFormScreen.tsx',

@@ -12,10 +12,12 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: [
         'entities/**/*.ts',
+        'entity-solvers/**/*.ts',
         'graphs/**/*.ts',
         'metadata/**/*.ts',
         'rules/**/*.ts',
         'schemas/**/*.ts',
+        'theme/**/*.ts',
         'utils/**/*.ts',
         'index.ts',
       ],

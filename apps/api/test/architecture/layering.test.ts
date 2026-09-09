@@ -36,6 +36,13 @@ const sourceRelativeOf = (path: string) => relative(SOURCE_ROOT, path).split('\\
  */
 const ROUTES_THAT_STILL_QUERY: string[] = [];
 
+/**
+ * Routes still throwing a plain `Error` for an HTTP rejection. Deliberate HTTP failures belong on
+ * `AppError` so `onError` can relay status and message without the old `set.status` + `throw new Error`
+ * pairing. The list can only shrink.
+ */
+const ROUTES_THAT_STILL_THROW_PLAIN_ERROR: string[] = [];
+
 describe('API layers', () => {
   it('finds the modules routes', () => {
     expect(routeFiles.length).toBeGreaterThan(10);
@@ -55,6 +62,15 @@ describe('API layers', () => {
       .sort();
 
     expect(offenders).toEqual([...ROUTES_THAT_STILL_QUERY].sort());
+  });
+
+  it('rejects HTTP failures with AppError instead of plain Error', () => {
+    const offenders = routeFiles
+      .filter((path) => /throw\s+new\s+Error\s*\(/.test(readFileSync(path, 'utf8')))
+      .map(relativeOf)
+      .sort();
+
+    expect(offenders).toEqual([...ROUTES_THAT_STILL_THROW_PLAIN_ERROR].sort());
   });
 });
 
@@ -157,6 +173,12 @@ describe('database portability boundary', () => {
 
     expect(databaseModule).toContain('PostgresDb[Operation] & SqliteDb[Operation]');
     expect(databaseModule).toContain('export type CompatibleDb = CommonDatabaseOperations');
+    expect(databaseModule).toContain("'select'");
+    expect(databaseModule).toContain("'selectDistinct'");
+    expect(databaseModule).toContain("'insert'");
+    expect(databaseModule).toContain("'update'");
+    expect(databaseModule).toContain("'delete'");
+    expect(databaseModule).toMatch(/Not part of this contract: `execute`/);
     expect(databaseModule).not.toMatch(/export type CompatibleDb\s*=\s*NodePgDatabase/);
     expect(databaseModule).not.toMatch(/CompatibleTransactionConfig|PgTransactionConfig|SQLiteTransactionConfig/);
     expect(databaseModule).not.toMatch(/\| 'execute'/);

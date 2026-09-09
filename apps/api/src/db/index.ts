@@ -28,9 +28,19 @@ dotenv.config({ path: '../.env' });
 /**
  * Operations guaranteed by Keres' PostgreSQL and libSQL adapters.
  *
- * The application deliberately uses this common Drizzle surface only. Add a new database operation
- * only together with a contract test that runs against both engines; engine-specific calls belong in
- * a dialect adapter, never in a service.
+ * Shared application surface (and nothing else):
+ * - `select` / `selectDistinct` / `insert` / `update` / `delete`
+ * - relational `query.*.findFirst` / `query.*.findMany`
+ * - `transaction`
+ *
+ * Not part of this contract: `execute`, `$with`, `$count`, `$cache`, `all`, `run`,
+ * `refreshMaterializedView`, driver sessions, or transaction config types. Those stay in
+ * `db/` dialect adapters (`sqlOperators.ts`, migrations) or must not be used.
+ *
+ * Add a new shared operation only with (1) signatures from both drivers and (2) a contract
+ * test that runs on PostgreSQL and SQLite. Intersecting native overloads keeps call-site
+ * ergonomics; it is not, by itself, proof that every accepted call is portable — the
+ * contract tests and the forbidden-key checks are the real gate.
  */
 type PostgresDb = NodePgDatabase<typeof schema>;
 type SqliteDb = LibSQLDatabase<typeof schema>;

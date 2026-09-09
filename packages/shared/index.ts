@@ -21,6 +21,7 @@ export * from './entities/Effect';
 export * from './entities/Gallery';
 export * from './entities/GalleryRelation';
 export * from './entities/Favorite';
+export * from './entities/Item';
 export * from './entities/Location';
 export * from './entities/Mode';
 export * from './entities/LocationRelation';

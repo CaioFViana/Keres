@@ -107,6 +107,7 @@ export class SyncEngineService {
       },
       client: () => this.client,
       conflictService: () => this.conflictService,
+      notifier: () => this.dependencies.notifier,
     };
     this.push = new SyncPush(syncContext);
     this.pull = new SyncPull({

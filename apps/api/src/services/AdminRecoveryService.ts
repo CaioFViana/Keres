@@ -154,17 +154,20 @@ export class AdminRecoveryService {
     // the two steps (say, the process dying right after the `update`) left the entity restored but with no
     // entry in the operation log, breaking the audit trail this method exists to maintain (the same
     // reasoning as the push in `SyncService.processAndRecordUpdates`).
-    return withTransaction(async () => {
+    return withTransaction(async (tx) => {
       await handler.update(adminUserId, storyId, update, current);
       const restored = await handler.findById(id);
 
-      await syncService.appendOperationLog({
-        storyId,
-        userId: adminUserId,
-        update,
-        entityId: id,
-        entityVersion: restored?.version,
-      });
+      await syncService.appendOperationLog(
+        {
+          storyId,
+          userId: adminUserId,
+          update,
+          entityId: id,
+          entityVersion: restored?.version,
+        },
+        tx,
+      );
 
       return restored;
     });

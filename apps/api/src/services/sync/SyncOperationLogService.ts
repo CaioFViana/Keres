@@ -1,7 +1,7 @@
 import { encodeReorderOperationPayload, type StoryUpdate } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { operationLog, operationTypeEnum, stories } from '../../db/schema';
 import type { SyncEntityHandler } from '../entity-sync-handlers/BaseSyncEntityHandler';
 
@@ -13,13 +13,16 @@ import type { SyncEntityHandler } from '../entity-sync-handlers/BaseSyncEntityHa
 export class SyncOperationLogService {
   constructor(private readonly entityHandlers: ReadonlyMap<string, SyncEntityHandler>) {}
 
-  async append(args: {
-    storyId: string;
-    userId: string;
-    update: StoryUpdate;
-    entityId: string;
-    entityVersion?: number;
-  }): Promise<{ id: string; operationVersion: number }> {
+  async append(
+    args: {
+      storyId: string;
+      userId: string;
+      update: StoryUpdate;
+      entityId: string;
+      entityVersion?: number;
+    },
+    database: CompatibleDb = db,
+  ): Promise<{ id: string; operationVersion: number }> {
     const { storyId, userId, update, entityId, entityVersion } = args;
     const handler = this.entityHandlers.get(update.entity);
     let payload: Record<string, unknown> = {};
@@ -31,7 +34,7 @@ export class SyncOperationLogService {
       payload = encodeReorderOperationPayload(update);
     }
 
-    const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await db
+    const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await database
       .update(stories)
       .set({ lastOperationVersion: sql`${stories.lastOperationVersion} + 1` })
       .where(eq(stories.id, storyId))
@@ -41,7 +44,7 @@ export class SyncOperationLogService {
     }
 
     const id = ulid();
-    await db.insert(operationLog).values({
+    await database.insert(operationLog).values({
       id,
       storyId,
       userId,

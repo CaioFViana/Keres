@@ -3,6 +3,7 @@ import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
+import { AppError } from '../../utils/errors';
 
 const storyExportImportService = new StoryExportImportService();
 
@@ -11,10 +12,9 @@ export const storyRoutes = new Elysia()
   // Route to export a full story
   .get(
     '/:storyId/export',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       // Validate if the user has at least 'reader' permission for the story
@@ -24,8 +24,7 @@ export const storyRoutes = new Elysia()
         'reader',
       );
       if (!hasReadPermission) {
-        set.status = 404;
-        throw new Error('Story not found or not authorized for export.');
+        throw new AppError(404, 'Story not found or not authorized for export.');
       }
 
       const fullStory = await storyExportImportService.exportStory(params.storyId, user.userId);
@@ -52,10 +51,9 @@ export const storyRoutes = new Elysia()
   // Route to import a full story
   .post(
     '/import',
-    async ({ body, query, user, set }) => {
+    async ({ body, query, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       const newStoryId = await storyExportImportService.importStory(

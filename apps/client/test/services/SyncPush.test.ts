@@ -5,8 +5,8 @@ import { eq } from 'drizzle-orm';
 import type { SyncPushResult } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import type { OperationLogSelect } from '../../src/db/schema';
-import { useNotificationStore } from '../../src/state/notificationStore';
 import { SyncPush } from '../../src/services/sync/SyncPush';
+import type { SyncNotifier } from '../../src/services/sync/SyncNotifier';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -16,7 +16,7 @@ let database: TestDatabase;
 let post: jest.Mock;
 let recordConflict: jest.Mock;
 let push: SyncPush;
-let showNotification: jest.Mock;
+let notifier: jest.Mocked<SyncNotifier>;
 
 const operation = (
   id: string,
@@ -57,14 +57,22 @@ beforeEach(async () => {
   });
   post = jest.fn();
   recordConflict = jest.fn().mockResolvedValue(undefined);
+  notifier = {
+    remoteUpdatesReceived: jest.fn(),
+    remoteUpdatesFailed: jest.fn(),
+    conflictsDetected: jest.fn(),
+    pushedUpdates: jest.fn(),
+    pushFailed: jest.fn(),
+    syncFailed: jest.fn(),
+    message: jest.fn(),
+  };
   push = new SyncPush({
     db: () => database.db,
     storyId: () => STORY_ID,
     client: () => ({ post }) as never,
     conflictService: () => ({ recordConflict }) as never,
+    notifier: () => notifier,
   });
-  showNotification = jest.fn();
-  useNotificationStore.setState({ showNotification });
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
@@ -216,7 +224,8 @@ describe('push result handling', () => {
       isSynced: true,
       serverOperationVersion: 10,
     });
-    expect(showNotification).not.toHaveBeenCalled();
+    expect(notifier.pushedUpdates).not.toHaveBeenCalled();
+    expect(notifier.conflictsDetected).not.toHaveBeenCalled();
   });
 
   it('folds multiple refused operations of one entity into one decision', async () => {
@@ -420,7 +429,7 @@ describe('push result handling', () => {
       [accepted],
     );
 
-    expect(showNotification).toHaveBeenCalledWith(expect.any(String), 'success');
+    expect(notifier.pushedUpdates).toHaveBeenCalled();
   });
 });
 
@@ -526,6 +535,6 @@ describe('push loop', () => {
 
     await push.pushPendingOperations();
 
-    expect(showNotification).toHaveBeenCalledWith(expect.any(String), 'success');
+    expect(notifier.pushedUpdates).toHaveBeenCalled();
   });
 });

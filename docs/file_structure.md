@@ -23,7 +23,7 @@ There is no separate `packages/db`: each app with its own persistence has its ow
 
 ## `packages/shared`
 
-Consumed by `apps/api`, `apps/admin` and `apps/client` through `@keres/shared` (and through deep paths such as `@keres/shared/metadata/entityFields` for specific metadata).
+Consumed by `apps/api`, `apps/admin` (including the Showcase) and `apps/client` through `@keres/shared` (and through deep paths such as `@keres/shared/metadata/entityFields` for specific metadata). `apps/site` does not depend on this package.
 
 - **`entities/`** - TypeScript interfaces that form the system's common vocabulary. Besides the narrative entities (`Story`, `Character`, `Chapter`, `Scene`, `Plot`, `Route`, `Location`, `Item`/`ItemJourney`, `Note`, `Tag`, `WorldRule`, `Gallery`), they include relations (`PlotScene`, `RouteStep`, `CharacterRelation`, `CharacterScene`, `LocationRelation`, `GalleryRelation`, `SeeAlsoRelation`), branching narrative (`Choice`, `ChoiceCheckGroup`, `ChoiceCheck`, `Effect`), cross-cutting features (`Comment`, `Favorite`, `Suggestion`, `StorySchemaField`, `AttributeValue`), stats (`Stat`/`StatStrength`/`StatRelation`, `Mode`), publication (`StoryPublication`, `PublicShowcaseStory`) and user/admin/configuration entities. `Plot`/`PlotScene` work in both story shapes; `Route`/`RouteStep` belong to branching stories.
 - **`schemas/`** - Zod validation for each API resource's request/response, mirroring the entities above.
@@ -35,7 +35,11 @@ Consumed by `apps/api`, `apps/admin` and `apps/client` through `@keres/shared` (
   - `FriendStatus` - `PENDING` / `FRIEND` / `BLACKLISTED`.
   - `entityFields.ts` - `entityFieldMetadata`: the list of searchable fields per entity, used by the Advanced Search modal (`AdvancedSearchModal`).
   - `globalSearchFields.ts` - `globalSearchFieldConfig`: the title field + searchable fields per entity, used by the Global Search (see `screen_flow.md`).
-- **`utils/`** - `attributeKey.ts` (derives a safe key from a custom attribute's display name) and `attributeValueCodec.ts` (encodes/decodes typed custom attribute values into the single text column where they are stored).
+- **`entity-solvers/`** - shared entity handlers and reference resolution used by sync, search and operation-log surfaces (contracts, per-entity handlers, `EntityRegistry`, `EntityReferenceResolver`).
+- **`graphs/`** - pure layout and SVG renderers for story graphs (`storyGraph`, `locationGraph`, `characterRelationGraph`, `storyTimeline`, `statRadar`, `presenceMatrix`, `plotCoverage`, …). Imported by deep path; no barrel (shared constant names would collide).
+- **`rules/`** - domain rules applied on both sides of synchronization (entity pairing, linear-story scenes, reorder indices, sync conflict, story export integrity, story owner fields).
+- **`theme/`** - shared colour contracts (`ThemeColors`) and named palettes consumed by the client and the admin Showcase.
+- **`utils/`** - `attributeKey.ts` (derives a safe key from a custom attribute's display name) and `attributeValueCodec.ts` (encodes/decodes typed custom attribute values into the single text column where they are stored), plus calendar, route, zip, sync-codec and related helpers.
 
 ---
 

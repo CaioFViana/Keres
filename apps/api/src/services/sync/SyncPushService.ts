@@ -272,13 +272,16 @@ export class SyncPushService {
           // The entity's version *after* the operation, read back so the client knows which base its next
           // edits rest on.
           const entityAfter = await handler.findById(entityId).catch(() => undefined);
-          const logged = await this.appendOperationLog({
-            storyId,
-            userId,
-            update,
-            entityId,
-            entityVersion: entityAfter?.version,
-          });
+          const logged = await this.appendOperationLog(
+            {
+              storyId,
+              userId,
+              update,
+              entityId,
+              entityVersion: entityAfter?.version,
+            },
+            tx,
+          );
           writeResult = { logged, entityAfter };
         });
       } catch (error) {

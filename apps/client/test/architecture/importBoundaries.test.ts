@@ -153,6 +153,13 @@ describe('import boundaries', () => {
     expect(composition).toContain('export const syncEngine = createAppSyncEngine()');
     expect(realtime).toContain('private readonly syncEngine: RealtimeSyncEngine');
     expect(realtime).not.toContain("from './sync/appSyncEngine'");
+
+    const push = readFileSync(join(SOURCE_ROOT, 'services/sync/SyncPush.ts'), 'utf8');
+    const transfer = readFileSync(join(SOURCE_ROOT, 'services/sync/StoryTransfer.ts'), 'utf8');
+    expect(push).not.toMatch(/notificationStore|useNotificationStore/);
+    expect(transfer).not.toMatch(/notificationStore|useNotificationStore/);
+    expect(push).toContain('this.context.notifier()');
+    expect(transfer).toContain('notifier: SyncNotifier');
   });
 
   it('has no import cycles', () => {

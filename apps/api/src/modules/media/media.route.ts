@@ -8,6 +8,7 @@ import {
   TierLimitExceededError,
   tierEnforcementService,
 } from '../../services/TierEnforcementService';
+import { AppError } from '../../utils/errors';
 
 const HASH_PATTERN = /^[a-f0-9]{32}$/;
 
@@ -30,30 +31,27 @@ export const mediaRoutes = new Elysia()
    * file of *that* story. Without that second check, storage being globally deduplicated would let a
    * user read someone else's blob just by knowing the hash.
    */
-  .derive(({ user, set }) => ({
+  .derive(({ user }) => ({
     requirePermission: async (storyId: string, level: 'reader' | 'writer') => {
       if (!user?.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
       const allowed = await storyPermissionService.hasPermission(user.userId, storyId, level);
       if (!allowed) {
         // 404 rather than 403, so as not to confirm the existence of somebody else's story.
-        set.status = 404;
-        throw new Error('Story not found or not authorized.');
+        throw new AppError(404, 'Story not found or not authorized.');
       }
     },
   }))
 
   .post(
     '/:storyId/blobs/status',
-    async ({ params, body, set, requirePermission }) => {
+    async ({ params, body, requirePermission }) => {
       await requirePermission(params.storyId, 'reader');
 
       const invalid = body.hashes.filter((hash) => !HASH_PATTERN.test(hash));
       if (invalid.length > 0) {
-        set.status = 400;
-        throw new Error(`Invalid media hash(es): ${invalid.join(', ')}`);
+        throw new AppError(400, `Invalid media hash(es): ${invalid.join(', ')}`);
       }
 
       return mediaStorageService.filterPresent(body.hashes);
@@ -78,33 +76,29 @@ export const mediaRoutes = new Elysia()
 
   .post(
     '/:storyId/blobs/:hash',
-    async ({ params, body, set, requirePermission, user }) => {
+    async ({ params, body, requirePermission, user }) => {
       await requirePermission(params.storyId, 'writer');
 
       if (!HASH_PATTERN.test(params.hash)) {
-        set.status = 400;
-        throw new Error('Invalid media hash.');
+        throw new AppError(400, 'Invalid media hash.');
       }
 
       const file = body.file;
       const mimeType = (body.mimeType || file.type || '').toLowerCase();
 
       if (!isSupportedMediaMimeType(mimeType)) {
-        set.status = 415;
-        throw new Error(`Unsupported media type "${mimeType}".`);
+        throw new AppError(415, `Unsupported media type "${mimeType}".`);
       }
 
       if (file.size > env.MEDIA_MAX_BYTES) {
-        set.status = 413;
-        throw new Error(`Media exceeds the maximum size of ${env.MEDIA_MAX_BYTES} bytes.`);
+        throw new AppError(413, `Media exceeds the maximum size of ${env.MEDIA_MAX_BYTES} bytes.`);
       }
 
       try {
         await tierEnforcementService.assertCanUploadMedia(user!.userId, params.storyId, file.size);
       } catch (error) {
         if (error instanceof TierLimitExceededError) {
-          set.status = 403;
-          throw new Error(error.message);
+          throw new AppError(403, error.message);
         }
         throw error;
       }
@@ -118,8 +112,7 @@ export const mediaRoutes = new Elysia()
         return { hash: stored.hash, sizeBytes: stored.sizeBytes, mimeType };
       } catch (error: unknown) {
         // A hash mismatch is invalid client data, not a server failure.
-        set.status = 400;
-        throw new Error(error instanceof Error ? error.message : 'Failed to store media.');
+        throw new AppError(400, error instanceof Error ? error.message : 'Failed to store media.');
       }
     },
     {
@@ -152,19 +145,16 @@ export const mediaRoutes = new Elysia()
       await requirePermission(params.storyId, 'reader');
 
       if (!HASH_PATTERN.test(params.hash)) {
-        set.status = 400;
-        throw new Error('Invalid media hash.');
+        throw new AppError(400, 'Invalid media hash.');
       }
 
       if (!(await mediaStorageService.isReferencedInStory(params.storyId, params.hash))) {
-        set.status = 404;
-        throw new Error('Media not found in this story.');
+        throw new AppError(404, 'Media not found in this story.');
       }
 
       const blob = await mediaStorageService.read(params.hash);
       if (!blob) {
-        set.status = 404;
-        throw new Error('Media content not available on this server.');
+        throw new AppError(404, 'Media content not available on this server.');
       }
 
       set.headers['content-type'] = blob.mimeType;

@@ -1,6 +1,6 @@
 import type { EffectiveStoryRole, StoryUpdate } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
-import { db } from '../db';
+import { db, type CompatibleDb } from '../db';
 import { stories, storyPermissions } from '../db/schema';
 import type { SyncEntityHandler } from './entity-sync-handlers/BaseSyncEntityHandler';
 import { registerApiSyncHandlers } from './entity-sync-handlers/registerApiSyncHandlers';
@@ -23,8 +23,8 @@ export class SyncService {
     this.entityHandlers = registerApiSyncHandlers();
     this.operationLogService = new SyncOperationLogService(this.entityHandlers);
     this.pullService = new SyncPullService();
-    this.pushService = new SyncPushService(this.entityHandlers, (args) =>
-      this.appendOperationLog(args),
+    this.pushService = new SyncPushService(this.entityHandlers, (args, database) =>
+      this.appendOperationLog(args, database),
     );
   }
 
@@ -39,14 +39,17 @@ export class SyncService {
   }
 
   /** Public for recovery operations; the implementation owns the story-local atomic counter. */
-  async appendOperationLog(args: {
-    storyId: string;
-    userId: string;
-    update: StoryUpdate;
-    entityId: string;
-    entityVersion?: number;
-  }): Promise<{ id: string; operationVersion: number }> {
-    return this.operationLogService.append(args);
+  async appendOperationLog(
+    args: {
+      storyId: string;
+      userId: string;
+      update: StoryUpdate;
+      entityId: string;
+      entityVersion?: number;
+    },
+    database: CompatibleDb = db,
+  ): Promise<{ id: string; operationVersion: number }> {
+    return this.operationLogService.append(args, database);
   }
 
   async getUpdatesForStory(

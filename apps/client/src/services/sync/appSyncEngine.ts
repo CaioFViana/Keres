@@ -12,20 +12,24 @@ import {
 import { registerClientSyncHandlers } from './registerClientSyncHandlers';
 import { createAppSyncNotifier } from './SyncNotifier';
 
-export const createAppSyncEngineDependencies = (): SyncEngineDependencies => ({
-  notifier: createAppSyncNotifier(),
-  events: {
-    emit: (event, ...args) => entityEventEmitter.emit(event, ...args),
-  },
-  tokenProvider: authTokenManager,
-  createClient: (baseURL) => createKeresAxiosInstance(baseURL ? { baseURL } : undefined),
-  createEntityHandlers: registerClientSyncHandlers,
-  createConflictService: createSyncConflictService,
-  createServerService,
-  fetchServerStoryPreviews,
-  downloadAndImportStory,
-  uploadNewStoryToServer,
-});
+export const createAppSyncEngineDependencies = (): SyncEngineDependencies => {
+  const notifier = createAppSyncNotifier();
+  return {
+    notifier,
+    events: {
+      emit: (event, ...args) => entityEventEmitter.emit(event, ...args),
+    },
+    tokenProvider: authTokenManager,
+    createClient: (baseURL) => createKeresAxiosInstance(baseURL ? { baseURL } : undefined),
+    createEntityHandlers: registerClientSyncHandlers,
+    createConflictService: createSyncConflictService,
+    createServerService,
+    fetchServerStoryPreviews,
+    downloadAndImportStory: (db, queriedServerId, storyId, userId, role) =>
+      downloadAndImportStory(db, queriedServerId, storyId, userId, role, notifier),
+    uploadNewStoryToServer,
+  };
+};
 
 /** Application-scoped instance. The service itself has no global ownership policy. */
 export const createAppSyncEngine = (): SyncEngineService =>

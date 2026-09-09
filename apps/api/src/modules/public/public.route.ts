@@ -129,12 +129,11 @@ export const publicRoutes = new Elysia()
       })
       .get(
         '/packs/:packId',
-        async ({ params, set }) => {
+        async ({ params }) => {
           const pack = await packService.getPublicById(params.packId);
           if (!pack) {
             // A private pack answers 404 rather than 403: it is not on offer here, and saying
             // "forbidden" would confirm it exists.
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
           return pack;
@@ -150,10 +149,9 @@ export const publicRoutes = new Elysia()
       )
       .get(
         '/stories/:storyId',
-        async ({ params, headers, jwtShowcase: showcaseJwt, set }) => {
+        async ({ params, headers, jwtShowcase: showcaseJwt }) => {
           const entry = await showcaseService.getEntry(params.storyId);
           if (!entry) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
 
@@ -172,7 +170,6 @@ export const publicRoutes = new Elysia()
 
           const detail = await showcaseService.getStoryDetail(params.storyId);
           if (!detail) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
           return detail;
@@ -233,7 +230,6 @@ export const publicRoutes = new Elysia()
         async ({ params, headers, query, jwtShowcase: showcaseJwt, set }) => {
           const entry = await showcaseService.getEntry(params.storyId);
           if (!entry) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
           if (entry.visibility === 'password') {
@@ -248,7 +244,6 @@ export const publicRoutes = new Elysia()
                 params.storyId,
               ));
             if (!authorized) {
-              set.status = 404;
               throw new AppError(404, 'Not found.');
             }
           }
@@ -258,7 +253,6 @@ export const publicRoutes = new Elysia()
             params.publicationId,
           );
           if (!publication) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
 
@@ -282,7 +276,6 @@ export const publicRoutes = new Elysia()
 
           const body = await publicationStorageService.read(params.storyId, params.publicationId);
           if (!body) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
 
@@ -305,17 +298,15 @@ export const publicRoutes = new Elysia()
       )
       .post(
         '/stories/:storyId/publications/:publicationId/download-url',
-        async ({ params, headers, jwtShowcase: showcaseJwt, set }) => {
+        async ({ params, headers, jwtShowcase: showcaseJwt }) => {
           const entry = await showcaseService.getEntry(params.storyId);
           if (!entry) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
           if (
             entry.visibility === 'password' &&
             !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
           ) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
 
@@ -324,7 +315,6 @@ export const publicRoutes = new Elysia()
             params.publicationId,
           );
           if (!publication) {
-            set.status = 404;
             throw new AppError(404, 'Not found.');
           }
 

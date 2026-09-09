@@ -10,14 +10,47 @@ afterEach(async () => {
 
 describe('database compatibility contract', () => {
   it('does not expose driver-specific helpers in the application contract', () => {
+    // Exclusive Postgres/libSQL surface must stay off CompatibleDb. Intersection of native
+    // overloads is not enough by itself; this Extract check fails compilation if any of these
+    // keys ever become part of the shared contract.
+    type ForbiddenCompatibleKeys =
+      | '$with'
+      | '$count'
+      | '$cache'
+      | 'all'
+      | 'run'
+      | 'execute'
+      | 'session'
+      | 'refreshMaterializedView';
     const excludesDriverSpecificKeys: Extract<
       keyof typeof db,
-      '$with' | '$count' | '$cache' | 'all' | 'run'
+      ForbiddenCompatibleKeys
     > extends never
       ? true
       : false = true;
 
     expect(excludesDriverSpecificKeys).toBe(true);
+  });
+
+  it('exposes only the shared query surface used by application services', () => {
+    type RequiredCompatibleKeys =
+      | 'select'
+      | 'selectDistinct'
+      | 'insert'
+      | 'update'
+      | 'delete'
+      | 'query'
+      | 'transaction';
+    const hasRequiredKeys: RequiredCompatibleKeys extends keyof typeof db ? true : false = true;
+
+    expect(hasRequiredKeys).toBe(true);
+    expect(typeof db.select).toBe('function');
+    expect(typeof db.selectDistinct).toBe('function');
+    expect(typeof db.insert).toBe('function');
+    expect(typeof db.update).toBe('function');
+    expect(typeof db.delete).toBe('function');
+    expect(typeof db.transaction).toBe('function');
+    expect(db.query).toBeTruthy();
   });
 
   it('normalizes omitted optional values to NULL', async () => {

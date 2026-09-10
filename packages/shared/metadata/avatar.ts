@@ -25,8 +25,9 @@ export type AvatarIconName = string;
 export const DEFAULT_AVATAR_ICON = 'person';
 
 /**
- * Fallback colours for whoever has not chosen one. It is the same palette that colours chapters on
- * the Story Map, chosen to work well on both light and dark backgrounds.
+ * Fallback colours for whoever has not chosen one. Medium saturation so the same hex stays
+ * readable on light and dark surfaces (Showcase included). Graph chapter colours live separately
+ * in `theme/graphEntityPalettes` with light/dark variants for MultiSelectPill contrast.
  */
 export const AVATAR_FALLBACK_PALETTE = [
   '#4F8DF7',

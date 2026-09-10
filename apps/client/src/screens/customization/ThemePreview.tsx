@@ -24,7 +24,7 @@ const PREVIEW_LADDER = [
 /** A small, non-persistent sample of the surfaces most affected by a Story theme. */
 const ThemePreview = () => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const [previewOption, setPreviewOption] = useState<string | null>('chapter');
   const [previewEnabled, setPreviewEnabled] = useState(true);
   const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string | null>(null);
@@ -87,7 +87,7 @@ const ThemePreview = () => {
         ],
         [{ id: 'preview-chapter', name: t('theme_preview_option_chapter'), index: 1 }],
       ),
-    [t],
+    [t, isDarkMode],
   );
   const styles = useMemo(
     () =>

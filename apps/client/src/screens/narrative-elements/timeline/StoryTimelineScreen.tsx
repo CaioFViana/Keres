@@ -27,7 +27,7 @@ const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'StoryTimeline'>>();
   const canvas = useRef<StoryTimelineCanvasHandle>(null);
@@ -118,6 +118,15 @@ const StoryTimelineScreen = () => {
     [colors],
   );
 
+  const chapterFilterOptions = useMemo(() => {
+    const colorsByChapter = buildChapterColors(chapters);
+    return chapters.map((chapter) => ({
+      label: chapter.name,
+      value: chapter.id,
+      color: colorsByChapter.get(chapter.id),
+    }));
+  }, [chapters, isDarkMode]);
+
   if (story?.type !== 'linear')
     return (
       <View style={styles.root}>
@@ -130,14 +139,11 @@ const StoryTimelineScreen = () => {
         <ActivityIndicator color={colors.primary} />
       </View>
     );
+
   return (
     <View style={styles.root}>
       <MultiSelectPill
-        options={chapters.map((chapter) => ({
-          label: chapter.name,
-          value: chapter.id,
-          color: buildChapterColors(chapters).get(chapter.id),
-        }))}
+        options={chapterFilterOptions}
         selectedValues={chapterIds}
         onSelectionChange={setChapterIds}
         placeholder={term('Chapter', true)}

@@ -24,7 +24,7 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 const PlotProgressScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const notify = useNotificationStore((state) => state.showNotification);
   const { selectedStory } = useStoryStore();
@@ -40,7 +40,7 @@ const PlotProgressScreen = () => {
   // full ones, and hiding them would give an over-optimistic average.
   const average = plots.length ? relations.length / plots.length : 0;
 
-  const chapterColors = useMemo(() => buildChapterColors(chapters), [chapters]);
+  const chapterColors = useMemo(() => buildChapterColors(chapters), [chapters, isDarkMode]);
 
   const entries = useMemo(
     () =>

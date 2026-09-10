@@ -1,4 +1,4 @@
-import { AVATAR_FALLBACK_PALETTE } from '../metadata/avatar';
+import { getChapterPalette } from '../theme/graphEntityPalettes';
 import type { GraphLayoutDirection } from './graphLayoutDirection';
 import {
   normalizeToPadding,
@@ -68,15 +68,6 @@ const LAYER_STEP = NODE_HEIGHT + LAYER_GAP;
 const LABEL_MAX_LINES = 2;
 /** Characters per line that fit within NODE_WIDTH in the font used on the nodes. */
 const LABEL_MAX_CHARS = 20;
-
-/**
- * Chapter colours chosen to work on a light *and* a dark background.
- *
- * Pulling from the theme would give more integrated colours, but the exported map leaves the app and
- * is seen anywhere; hence medium saturation instead of extreme tones.
- */
-/** The same palette that serves as a fallback for avatars - a single copy, in `@keres/shared`. */
-export const CHAPTER_PALETTE = AVATAR_FALLBACK_PALETTE;
 
 export interface GraphPoint {
   x: number;
@@ -322,8 +313,8 @@ export function buildStoryGraphLayout(
     chapterId: node.scene.chapterId,
     chapterName: node.scene.chapterId ? (chapterById.get(node.scene.chapterId)?.name ?? '') : '',
     chapterColor: node.scene.chapterId
-      ? (chapterColorById.get(node.scene.chapterId) ?? CHAPTER_PALETTE[0])
-      : CHAPTER_PALETTE[0],
+      ? (chapterColorById.get(node.scene.chapterId) ?? getChapterPalette()[0])
+      : getChapterPalette()[0],
     isStart: node.scene.isStart,
     isFinish: node.scene.isFinish,
     layer: node.layer,
@@ -376,13 +367,18 @@ function compareByStoryOrder(a: WorkNode, b: WorkNode): number {
   return a.scene.id.localeCompare(b.scene.id);
 }
 
-export function buildChapterColors(chapters: GraphChapter[]): Map<string, string> {
+/**
+ * Stable chapter → colour map for the active (or provided) palette.
+ * Order is story index, then id; colours cycle when there are more chapters than swatches.
+ */
+export function buildChapterColors(
+  chapters: GraphChapter[],
+  palette: readonly string[] = getChapterPalette(),
+): Map<string, string> {
   const ordered = [...chapters].sort((a, b) => a.index - b.index || a.id.localeCompare(b.id));
+  const colors = palette.length > 0 ? palette : getChapterPalette();
   return new Map(
-    ordered.map((chapter, position) => [
-      chapter.id,
-      CHAPTER_PALETTE[position % CHAPTER_PALETTE.length],
-    ]),
+    ordered.map((chapter, position) => [chapter.id, colors[position % colors.length]]),
   );
 }
 
@@ -397,13 +393,14 @@ function buildLegend(
     counts.set(scene.chapterId, (counts.get(scene.chapterId) ?? 0) + 1);
   }
 
+  const fallback = getChapterPalette()[0];
   return [...chapters]
     .sort((a, b) => a.index - b.index || a.id.localeCompare(b.id))
     .filter((chapter) => (counts.get(chapter.id) ?? 0) > 0)
     .map((chapter) => ({
       id: chapter.id,
       name: chapter.name,
-      color: colors.get(chapter.id) ?? CHAPTER_PALETTE[0],
+      color: colors.get(chapter.id) ?? fallback,
       sceneCount: counts.get(chapter.id) ?? 0,
     }));
 }

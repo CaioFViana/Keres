@@ -65,7 +65,7 @@ interface SceneNodeConnection {
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceView'>>();
@@ -185,7 +185,7 @@ const ChoiceViewScreen = () => {
         chapters,
         isCompact ? 'top-to-bottom' : 'left-to-right',
       ),
-    [scenes, graphChoices, chapters, isCompact],
+    [scenes, graphChoices, chapters, isCompact, isDarkMode],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;

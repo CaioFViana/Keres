@@ -15,7 +15,7 @@ import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { getDistinctSeriesColor } from '@keres/shared';
+import { graphSeriesColor } from '@keres/shared';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
@@ -24,21 +24,7 @@ import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
-/** The same series colours as the presence matrix: the two charts are read side by side. */
-const SERIES_COLORS = [
-  '#0B6E99',
-  '#D64545',
-  '#6D4BC3',
-  '#C87800',
-  '#16803C',
-  '#B23A7A',
-  '#655CDB',
-  '#A55A18',
-  '#007C83',
-  '#A94141',
-  '#4D749E',
-  '#8D6B13',
-];
+/** Same cap as the presence matrix: the two charts are read side by side. */
 const MAX_VISIBLE_SERIES = 12;
 const MATRIX_CONTROL_LABELS = {
   add: 'zoom_in',
@@ -55,7 +41,7 @@ const PlotMatrixScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const navigateToDetail = useNavigateToEntityDetail();
   const notify = useNotificationStore((state) => state.showNotification);
@@ -93,12 +79,8 @@ const PlotMatrixScreen = () => {
 
   const colorOf = useCallback(
     (plotId: string) =>
-      getDistinctSeriesColor(
-        Math.max(0, selectedIds.indexOf(plotId)),
-        selectedIds.length,
-        SERIES_COLORS,
-      ),
-    [selectedIds],
+      graphSeriesColor(Math.max(0, selectedIds.indexOf(plotId)), selectedIds.length),
+    [selectedIds, isDarkMode],
   );
 
   const isCompleteView = plots.length > MAX_VISIBLE_SERIES && selectedIds.length === plots.length;
@@ -128,7 +110,7 @@ const PlotMatrixScreen = () => {
         ),
       }));
     return buildPresenceMatrixLayout(matrixScenes, rows);
-  }, [chapters, colorOf, colors.border, plots, relations, scenes, selectedIds]);
+  }, [chapters, colorOf, colors.border, isDarkMode, plots, relations, scenes, selectedIds]);
 
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
   const selectedPlot = plots.find((plot) => plot.id === selectedPlotId);

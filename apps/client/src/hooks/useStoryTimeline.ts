@@ -61,7 +61,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const { t } = useTranslation();
   const { definition: primaryCalendar, calendars, describeDay } = useStoryCalendar();
   const calendar = calendarOverride ?? primaryCalendar;
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
   const activeArcId = useStoryStore((state) => state.activeArcId);
@@ -182,7 +182,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
           durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
         };
       });
-  }, [calendar, chapterIds, chapters, colors.border, scenes, t]);
+  }, [calendar, chapterIds, chapters, colors.border, isDarkMode, scenes, t]);
   const chapterDurationLabels = useMemo(
     () =>
       new Map(
@@ -301,7 +301,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         },
       ];
     });
-  }, [anchors, calendar, chapters, colors.textSecondary, events, scenes, showEvents, t]);
+  }, [anchors, calendar, chapters, colors.textSecondary, events, isDarkMode, scenes, showEvents, t]);
   const layout = useMemo(
     () =>
       buildStoryTimelineLayout(timelineScenes, {

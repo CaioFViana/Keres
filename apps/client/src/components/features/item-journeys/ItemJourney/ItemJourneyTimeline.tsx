@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ItemSelect } from '../../../../db/schema';
@@ -32,7 +32,7 @@ interface ItemJourneyTimelineProps {
 const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId, storyType }) => {
   const { t } = useTranslation();
   const itemCopy = useVocabularyEntityCopy('Item');
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
   const { dateForScene } = useSceneCalendarDates(storyId);
@@ -41,7 +41,10 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
     item.id,
   );
 
-  const chapterColorById = buildChapterColors(chapters);
+  const chapterColorById = useMemo(
+    () => buildChapterColors(chapters),
+    [chapters, isDarkMode],
+  );
   const sceneById = new Map(scenes.map((scene) => [scene.id, scene]));
   const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const characterById = new Map(characters.map((character) => [character.id, character]));

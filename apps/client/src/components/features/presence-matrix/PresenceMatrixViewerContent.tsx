@@ -28,7 +28,7 @@ const PresenceMatrixViewerContent: React.FC<{
 }> = ({ request, onClose }) => {
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
   const story = useStoryStore((state) => state.selectedStory);
   const notify = useNotificationStore((state) => state.showNotification);
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
@@ -55,11 +55,11 @@ const PresenceMatrixViewerContent: React.FC<{
   const [saving, setSaving] = useState(false);
   const characterColorOf = useCallback(
     (id: string) => seriesColor(Math.max(0, ids.indexOf(id)), ids.length),
-    [ids],
+    [ids, isDarkMode],
   );
   const itemColorOf = useCallback(
     (id: string) => seriesColor(Math.max(0, itemIds.indexOf(id)), itemIds.length),
-    [itemIds],
+    [itemIds, isDarkMode],
   );
   useEffect(() => {
     setIds(request.kind === 'character' && request.characterId ? [request.characterId] : []);
@@ -120,7 +120,7 @@ const PresenceMatrixViewerContent: React.FC<{
         chapterName: byChapter.get(scene.chapterId)?.name ?? '',
         chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
       }));
-  }, [chapters, colors.border, scenes, includeEvents]);
+  }, [chapters, colors.border, scenes, includeEvents, isDarkMode]);
 
   /** Only worth offering when the story has one. */
   const hasEvents = useMemo(() => chapters.some((chapter) => chapter.type === 'event'), [chapters]);

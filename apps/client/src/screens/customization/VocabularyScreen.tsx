@@ -196,7 +196,9 @@ const VocabularyScreen = () => {
         intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 18 },
         languageLabel: { color: colors.text, fontWeight: '700', marginBottom: 6 },
         languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 7 },
-        content: { paddingBottom: 40 },
+        // flexGrow only — `flex: 1` on the scroll content (via common.container) pins height to the
+        // viewport and prevents scrolling past the first few vocabulary cards.
+        content: { flexGrow: 1, paddingBottom: 40 },
         formActions: { marginBottom: 24 },
         footerSpacer: { height: 10 },
         secondaryButton: {
@@ -267,7 +269,7 @@ const VocabularyScreen = () => {
   if (!selectedStory) return <View style={common.container} />;
 
   return (
-    <KeyboardAwareScreen contentContainerStyle={[common.container, styles.content]}>
+    <KeyboardAwareScreen style={common.container} contentContainerStyle={styles.content}>
       <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
       <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
       <SingleSelectPill

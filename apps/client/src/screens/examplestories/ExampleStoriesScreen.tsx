@@ -1,18 +1,12 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { LanguageInstallRow } from '@/src/components/common';
+import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { ExampleStoryEntry, ExampleStoryLanguage } from '../../exampleStories/types';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -22,7 +16,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getLanguageOptions } from '../../utils/i18n';
 
 /**
  * The catalog of example stories packaged with the app.
@@ -39,16 +32,6 @@ import { getLanguageOptions } from '../../utils/i18n';
  * The catalog itself (`exampleStoryRegistry`) is static - no example story is packaged yet (see
  * `exampleStories/content/`), so the empty state is what this screen shows for now.
  */
-
-/** It only shows the language's label, with no need for a new key per story language. */
-function useLanguageLabel() {
-  const { t } = useTranslation();
-  const labelByCode = useMemo(
-    () => new Map(getLanguageOptions(t).map((option) => [option.value, option.label])),
-    [t],
-  );
-  return useCallback((code: string) => labelByCode.get(code) ?? code, [labelByCode]);
-}
 
 /** The preferred language to pre-select in the dropdown: the app's current one, failing that the first */
 function pickPreferredLanguage(entry: ExampleStoryEntry, preferredLanguage: string): string | null {
@@ -178,26 +161,6 @@ const ExampleStoriesScreen = () => {
       color: colors.textSecondary,
       marginTop: 6,
     },
-    installRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 12,
-    },
-    languageSelect: {
-      flex: 1,
-      marginRight: 10,
-    },
-    installButton: {
-      width: 42,
-      height: 42,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-    },
-    installButtonDisabled: {
-      opacity: 0.5,
-    },
   });
 
   const renderItem = useCallback(
@@ -239,45 +202,32 @@ const ExampleStoriesScreen = () => {
             </Text>
           )}
 
-          <View style={styles.installRow}>
-            <View style={styles.languageSelect}>
-              <SingleSelectPill
-                options={languageOptions}
-                value={selectedLanguage}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setChosenLanguageBySlug((prev) => ({ ...prev, [item.slug]: value }));
-                }}
-                disabled={isInstalling}
-              />
-            </View>
-            <TouchableOpacity
-              style={[
-                styles.installButton,
-                (isInstalling || !selectedLanguage) && styles.installButtonDisabled,
-              ]}
-              onPress={() => selectedLanguage && handleInstall(item.slug, selectedLanguage)}
-              disabled={isInstalling || !selectedLanguage}
-              accessibilityLabel={t('example_stories_install')}
-            >
-              {isInstalling ? (
-                <ActivityIndicator size="small" color={colors.onPrimary} />
-              ) : (
-                <Ionicons name="download-outline" size={20} color={colors.onPrimary} />
-              )}
-            </TouchableOpacity>
-          </View>
+          <LanguageInstallRow
+            options={languageOptions}
+            value={selectedLanguage}
+            onValueChange={(value) =>
+              setChosenLanguageBySlug((prev) => ({ ...prev, [item.slug]: value }))
+            }
+            onInstall={() => selectedLanguage && handleInstall(item.slug, selectedLanguage)}
+            installing={isInstalling}
+            installDisabled={!selectedLanguage}
+            accessibilityLabel={t('example_stories_install')}
+          />
         </View>
       );
     },
     [
       chosenLanguageBySlug,
-      colors,
+      colors.textSecondary,
       handleInstall,
       i18n.language,
       installingSlug,
       languageLabel,
-      styles,
+      styles.card,
+      styles.cardAuthor,
+      styles.cardDescription,
+      styles.cardTitle,
+      styles.cardTitleRow,
       t,
     ],
   );

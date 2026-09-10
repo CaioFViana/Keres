@@ -1,7 +1,7 @@
 import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
 import { resolveCompactEntityLabel } from '../compactEntityName';
-import { getEntityDomainHandler } from './EntityRegistry';
 import type { EntityDomainHandler } from './contracts';
+import { getEntityDomainHandler } from './entityHandlerLookup';
 
 const stringValue = (row: Record<string, unknown> | undefined, field: string) => {
   const value = row?.[field];

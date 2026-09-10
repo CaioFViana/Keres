@@ -8,6 +8,7 @@ import type {
   EntityDomainHandler,
   EntityExportReference,
 } from './contracts';
+import { getEntityDomainHandler, setEntityHandlerMap } from './entityHandlerLookup';
 import { sceneEntityHandler } from './SceneEntityHandler';
 import { routeEntityHandler } from './RouteEntityHandler';
 import { routeStepEntityHandler } from './RouteStepEntityHandler';
@@ -48,6 +49,8 @@ import { statRelationEntityHandler } from './StatRelationEntityHandler';
 import { chapterAnchorEntityHandler } from './ChapterAnchorEntityHandler';
 import { storyCalendarEntityHandler } from './StoryCalendarEntityHandler';
 import { storyArcEntityHandler } from './StoryArcEntityHandler';
+
+export { getEntityDomainHandler } from './entityHandlerLookup';
 
 const ENTITY_HANDLERS: ReadonlyMap<OperationLogEntityType, EntityDomainHandler> = new Map([
   [chapterEntityHandler.entityType, chapterEntityHandler],
@@ -94,18 +97,13 @@ const ENTITY_HANDLERS: ReadonlyMap<OperationLogEntityType, EntityDomainHandler> 
   [storyCalendarEntityHandler.entityType, storyCalendarEntityHandler],
 ]);
 
+setEntityHandlerMap(ENTITY_HANDLERS);
+
 export const CONFLICT_RELATION_ENTITY_TYPES = new Set(
   [...ENTITY_HANDLERS.values()]
     .filter((handler) => handler.isConflictRelation)
     .map((handler) => handler.entityType),
 );
-
-/** Factory for entity-owned domain presentation. An unknown external type has no handler. */
-export function getEntityDomainHandler(
-  entityType: OperationLogEntityType,
-): EntityDomainHandler | undefined {
-  return ENTITY_HANDLERS.get(entityType);
-}
 
 export function getEntityReferenceFieldType(field: string): OperationLogEntityType | undefined {
   for (const handler of ENTITY_HANDLERS.values()) {

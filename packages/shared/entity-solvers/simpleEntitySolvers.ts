@@ -1,5 +1,5 @@
 import type { EntityReference, EntitySolverContext } from './contracts';
-import { getEntityDomainHandler } from './entities/EntityRegistry';
+import { getEntityDomainHandler } from './entities/entityHandlerLookup';
 
 /** Delegates simple identity entirely to the entity registry. */
 export async function resolveSimpleEntityReference(

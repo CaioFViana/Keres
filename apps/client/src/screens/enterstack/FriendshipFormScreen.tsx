@@ -3,6 +3,7 @@ import FormField from '@/src/components/common/forms/FormField/FormField';
 import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
@@ -58,7 +59,10 @@ const FriendshipFormScreen = () => {
   });
 
   return (
-    <View style={commonContainerStyles.container}>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.content}
+    >
       <Text style={[styles.title, { color: colors.text }]}>{t('add_new_friendship')}</Text>
 
       <FormField label={t('server')}>
@@ -107,11 +111,14 @@ const FriendshipFormScreen = () => {
       >
         {t('add_friendship')}
       </Button>
-    </View>
+    </KeyboardAwareScreen>
   );
 };
 
 const styles = StyleSheet.create({
+  content: {
+    flexGrow: 1,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',

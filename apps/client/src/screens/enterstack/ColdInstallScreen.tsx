@@ -14,7 +14,7 @@ import { useNotificationStore } from '../../state/notificationStore'; // Import 
 import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles'; // Import common styles
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
@@ -43,8 +43,7 @@ const ColdInstallScreen = () => {
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
 
-  const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
-  const commonInputStyles = getCommonInputStyles(colors); // Get common input styles
+  const commonInputStyles = getCommonInputStyles(colors);
 
   const backPressTimer = useRef<number | null>(null);
 
@@ -145,7 +144,7 @@ const ColdInstallScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <FormContainer style={commonContainerStyles.container}>
+    <FormContainer>
       <Text style={styles.title}>{t('welcome')}</Text>
       <TextInput
         placeholder={t('enter_username')}

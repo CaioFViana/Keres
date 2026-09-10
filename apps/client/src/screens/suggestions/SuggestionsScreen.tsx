@@ -336,7 +336,7 @@ const SuggestionsScreen = () => {
     title: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
     description: { color: colors.textSecondary, marginTop: 5, marginBottom: 16 },
     wideLayout: { flex: 1, flexDirection: 'row', gap: 20 },
-    groups: { maxHeight: 160, marginBottom: 16 },
+    groups: { maxHeight: 160, marginBottom: 16, flexGrow: 0, flexShrink: 0 },
     groupsWrap: { flexDirection: 'row', flexWrap: 'wrap' },
     chip: {
       paddingHorizontal: 12,
@@ -361,10 +361,13 @@ const SuggestionsScreen = () => {
     groupListItemSelected: { backgroundColor: colors.primaryContainer },
     groupListItemText: { color: colors.text },
     groupListItemTextSelected: { color: colors.text, fontWeight: '700' },
-    contentColumn: { flex: 1 },
+    /** Bounded pane so the values ScrollView can scroll instead of growing past the screen. */
+    contentPane: { flex: 1, minHeight: 0 },
     key: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
     inputRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 12 },
     input: { flex: 1, marginBottom: 0, width: undefined },
+    valuesScroll: { flex: 1 },
+    valuesContent: { paddingBottom: 24 },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -378,7 +381,7 @@ const SuggestionsScreen = () => {
     usage: { color: colors.textSecondary, fontSize: 14, marginRight: 4 },
     icon: { padding: 7 },
     empty: { color: colors.textSecondary, textAlign: 'center', marginTop: 28 },
-    copyList: { marginBottom: 12 },
+    copyList: { maxHeight: 280, marginBottom: 12 },
     copyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     copyLabel: { flex: 1, color: colors.text },
     modalContent: { padding: 16, gap: 12 },
@@ -425,7 +428,7 @@ const SuggestionsScreen = () => {
     </ScrollView>
   );
 
-  const content = (
+  const contentHeader = (
     <>
       {selectedGroup && (
         <Text style={styles.key}>
@@ -443,47 +446,79 @@ const SuggestionsScreen = () => {
           <Button onPress={add}>{t('add')}</Button>
         </View>
       )}
-      <ScrollView>
-        {stored.length > 0 && <ScreenSection title={t('suggestion_saved_values')} />}
-        {stored.map((suggestion) => (
-          <TouchableOpacity
-            key={suggestion.id}
-            style={styles.row}
-            onPress={() =>
-              navigation.navigate('SuggestionUsage', {
-                type: selectedType,
-                value: suggestion.value,
-              })
-            }
-          >
-            <Text style={styles.value}>{suggestion.value}</Text>
-            <Text style={styles.usage}>{usageByValue.get(suggestion.value) ?? 0}</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ))}
-        {storyValues.length > 0 && <ScreenSection title={t('suggestion_values_in_story')} />}
-        {storyValues.map(([value, usageCount]) => (
-          <TouchableOpacity
-            key={value}
-            style={styles.row}
-            onPress={() => navigation.navigate('SuggestionUsage', { type: selectedType, value })}
-          >
-            <Text style={styles.storyValue}>{value}</Text>
-            <Text style={styles.usage}>{usageCount}</Text>
-            <View style={styles.icon}>
-              <Ionicons
-                name="link-outline"
-                size={20}
-                color={colors.textSecondary}
-                accessibilityLabel={t('suggestion_value_from_story')}
-              />
-            </View>
-          </TouchableOpacity>
-        ))}
-        {selectedType && stored.length === 0 && storyValues.length === 0 && (
-          <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
-        )}
-      </ScrollView>
+    </>
+  );
+
+  const valuesList = (
+    <ScrollView
+      style={styles.valuesScroll}
+      contentContainerStyle={styles.valuesContent}
+      keyboardShouldPersistTaps="handled"
+    >
+      {stored.length > 0 && <ScreenSection title={t('suggestion_saved_values')} />}
+      {stored.map((suggestion) => (
+        <TouchableOpacity
+          key={suggestion.id}
+          style={styles.row}
+          onPress={() =>
+            navigation.navigate('SuggestionUsage', {
+              type: selectedType,
+              value: suggestion.value,
+            })
+          }
+        >
+          <Text style={styles.value}>{suggestion.value}</Text>
+          <Text style={styles.usage}>{usageByValue.get(suggestion.value) ?? 0}</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      ))}
+      {storyValues.length > 0 && <ScreenSection title={t('suggestion_values_in_story')} />}
+      {storyValues.map(([value, usageCount]) => (
+        <TouchableOpacity
+          key={value}
+          style={styles.row}
+          onPress={() => navigation.navigate('SuggestionUsage', { type: selectedType, value })}
+        >
+          <Text style={styles.storyValue}>{value}</Text>
+          <Text style={styles.usage}>{usageCount}</Text>
+          <View style={styles.icon}>
+            <Ionicons
+              name="link-outline"
+              size={20}
+              color={colors.textSecondary}
+              accessibilityLabel={t('suggestion_value_from_story')}
+            />
+          </View>
+        </TouchableOpacity>
+      ))}
+      {selectedType && stored.length === 0 && storyValues.length === 0 && (
+        <Text style={styles.empty}>{t('no_suggestions_available')}</Text>
+      )}
+    </ScrollView>
+  );
+
+  const contentPane = (
+    <View style={styles.contentPane}>
+      {contentHeader}
+      {valuesList}
+    </View>
+  );
+
+  return (
+    <View style={commonContainerStyles.container}>
+      <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
+      <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
+      {isCompact ? (
+        <>
+          {groupsList}
+          {contentPane}
+        </>
+      ) : (
+        <View style={styles.wideLayout}>
+          {groupsList}
+          {contentPane}
+        </View>
+      )}
       <ResponsiveModal
         visible={creatingList}
         onClose={() => setCreatingList(false)}
@@ -545,24 +580,6 @@ const SuggestionsScreen = () => {
           <Button onPress={copyToSelected}>{t('suggestion_copy_confirm')}</Button>
         </FormActions>
       </ResponsiveModal>
-    </>
-  );
-
-  return (
-    <View style={commonContainerStyles.container}>
-      <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
-      <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
-      {isCompact ? (
-        <>
-          {groupsList}
-          {content}
-        </>
-      ) : (
-        <View style={styles.wideLayout}>
-          {groupsList}
-          <View style={styles.contentColumn}>{content}</View>
-        </View>
-      )}
     </View>
   );
 };

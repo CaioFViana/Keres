@@ -6,13 +6,22 @@ import { useTheme } from '../../../../theme';
 
 interface FormContainerProps {
   children: React.ReactNode;
-  style?: StyleProp<ViewStyle>; // Add style prop
+  /** Applied to the scroll view chrome (`flex: 1`, background), not the scroll content. */
+  style?: StyleProp<ViewStyle>;
 }
 
+/**
+ * Centred auth/onboarding shell. `style` must not land on `contentContainerStyle`: a `flex: 1`
+ * there (e.g. `common.container`) pins content to the viewport and blocks scrolling.
+ */
 const FormContainer: React.FC<FormContainerProps> = ({ children, style }) => {
   const { colors } = useTheme();
 
   const styles = StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
     innerContainer: {
       flexGrow: 1,
       justifyContent: 'center',
@@ -26,10 +35,7 @@ const FormContainer: React.FC<FormContainerProps> = ({ children, style }) => {
   });
 
   return (
-    <KeyboardAwareScreen
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={[styles.innerContainer, style]}
-    >
+    <KeyboardAwareScreen style={[styles.screen, style]} contentContainerStyle={styles.innerContainer}>
       {children}
     </KeyboardAwareScreen>
   );

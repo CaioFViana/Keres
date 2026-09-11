@@ -301,7 +301,17 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         },
       ];
     });
-  }, [anchors, calendar, chapters, colors.textSecondary, events, isDarkMode, scenes, showEvents, t]);
+  }, [
+    anchors,
+    calendar,
+    chapters,
+    colors.textSecondary,
+    events,
+    isDarkMode,
+    scenes,
+    showEvents,
+    t,
+  ]);
   const layout = useMemo(
     () =>
       buildStoryTimelineLayout(timelineScenes, {

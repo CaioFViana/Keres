@@ -41,10 +41,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
     item.id,
   );
 
-  const chapterColorById = useMemo(
-    () => buildChapterColors(chapters),
-    [chapters, isDarkMode],
-  );
+  const chapterColorById = useMemo(() => buildChapterColors(chapters), [chapters, isDarkMode]);
   const sceneById = new Map(scenes.map((scene) => [scene.id, scene]));
   const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const characterById = new Map(characters.map((character) => [character.id, character]));

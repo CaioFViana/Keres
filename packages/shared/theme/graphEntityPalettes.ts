@@ -85,11 +85,15 @@ export function getGraphEntityPaletteScheme(): GraphEntityPaletteScheme {
   return activeScheme;
 }
 
-export function getChapterPalette(scheme: GraphEntityPaletteScheme = activeScheme): readonly string[] {
+export function getChapterPalette(
+  scheme: GraphEntityPaletteScheme = activeScheme,
+): readonly string[] {
   return GRAPH_CHAPTER_PALETTE[scheme];
 }
 
-export function getSeriesPalette(scheme: GraphEntityPaletteScheme = activeScheme): readonly string[] {
+export function getSeriesPalette(
+  scheme: GraphEntityPaletteScheme = activeScheme,
+): readonly string[] {
   return GRAPH_SERIES_PALETTE[scheme];
 }
 

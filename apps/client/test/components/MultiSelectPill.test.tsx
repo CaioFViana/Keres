@@ -274,7 +274,9 @@ describe('MultiSelectPill, pill spacing', () => {
       />,
     );
 
-    const content = StyleSheet.flatten(screen.getByTestId('multiselect-trigger-content').props.style);
+    const content = StyleSheet.flatten(
+      screen.getByTestId('multiselect-trigger-content').props.style,
+    );
     expect(content.gap).toBe(8);
     expect(content.flexWrap).toBe('wrap');
 

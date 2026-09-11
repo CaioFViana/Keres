@@ -62,8 +62,11 @@ export async function buildStandaloneBoardSvg(
     if (!path) continue;
     try {
       const bytes = await mediaFileService.readBytes(path);
-      galleryImages[node.entityId] =
-        `data:${media.mimeType || 'image/jpeg'};base64,${bytesToBase64(bytes)}`;
+      // Thumbnails are always bitmaps even when the gallery row is a video — a video MIME on a
+      // PNG/JPEG data URI makes SVG `<image>` fail to decode in viewers.
+      const mimeType =
+        media.mediaType === 'image' ? media.mimeType || 'image/jpeg' : 'image/jpeg';
+      galleryImages[node.entityId] = `data:${mimeType};base64,${bytesToBase64(bytes)}`;
     } catch (readError) {
       console.log('BoardCanvasScreen: failed to read gallery image for export.', readError);
     }

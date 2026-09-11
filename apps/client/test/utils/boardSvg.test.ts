@@ -282,7 +282,48 @@ it('embeds a gallery image as a data URI when the caller provides it', () => {
   );
 
   expect(svg).toContain('<image href="data:image/png;base64,AAAA"');
+  expect(svg).toContain('clip-path="url(#gallery-clip-01ABCDEF)"');
+  expect(svg).toContain('fill="none" stroke="#cccccc"');
   expect(svg).not.toContain('<circle');
+});
+
+it('draws edges under nodes so arrows do not cover pins', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'A',
+          body: null,
+        },
+        {
+          id: '02GHIJKL',
+          kind: 'note' as const,
+          x: 400,
+          y: 40,
+          title: 'B',
+          body: null,
+        },
+      ],
+      edges: [{ id: 'e1', from: '01ABCDEF', to: '02GHIJKL', directed: true, label: null }],
+    },
+    {
+      ...options,
+      titles: {
+        '01ABCDEF': { title: 'Alpha', typeLabel: 'Note' },
+        '02GHIJKL': { title: 'Beta', typeLabel: 'Note' },
+      },
+    },
+  );
+
+  const edgeIndex = svg.indexOf('<polygon points=');
+  const nodeIndex = svg.indexOf('>Alpha</text>');
+  expect(edgeIndex).toBeGreaterThan(-1);
+  expect(nodeIndex).toBeGreaterThan(-1);
+  expect(edgeIndex).toBeLessThan(nodeIndex);
 });
 
 it('truncates an overly long pin title so it stays inside the card', () => {

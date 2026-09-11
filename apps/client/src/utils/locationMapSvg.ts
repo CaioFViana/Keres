@@ -35,8 +35,42 @@ const PADDING = 40;
 const HEADER = 70;
 /** Width of the contrast halo behind every line, so it stays visible over the image bases. */
 const HALO_WIDTH = 6;
-/** The ionicons viewBox is 512; this scale brings the icon to ~32px, inside the 44px circle. */
-const ICON_SCALE = 1 / 16;
+/** Display size of a map icon inside the node circle (ionicons viewBox is 512×512). */
+const ICON_PIXEL_SIZE = 32;
+const ICON_SCALE = ICON_PIXEL_SIZE / 512;
+
+/** Resolves the shapes for a stored Ionicons glyph name; never silently substitutes another icon. */
+function resolveMapIconShapes(iconName: string): string {
+  const key = (iconName ?? '').trim();
+  if (!key) return '';
+  if (LOCATION_MAP_ICON_PATHS[key]) return LOCATION_MAP_ICON_PATHS[key];
+  // Older picks may have used outline/sharp variants; the map sheet stores the solid name.
+  const solid = key.replace(/-outline$/, '').replace(/-sharp$/, '');
+  return LOCATION_MAP_ICON_PATHS[solid] ?? '';
+}
+
+/**
+ * Draws the node's own icon with fill + transform on every shape.
+ *
+ * Nested `<svg viewBox>` and parent-`<g fill>` both fail in some hosts (inherited fill dropped, or
+ * every nested svg painted as the first). Per-shape attributes stay reliable, and we do not fall
+ * back to the Location default (`map`) — that made every custom pick look identical in the export.
+ */
+function renderMapIcon(iconName: string, cx: number, cy: number, color: string): string {
+  const shapes = resolveMapIconShapes(iconName);
+  if (!shapes) return '';
+  const fill = escapeXml(color);
+  const x = round(cx - ICON_PIXEL_SIZE / 2);
+  const y = round(cy - ICON_PIXEL_SIZE / 2);
+  const transform = `translate(${x} ${y}) scale(${ICON_SCALE})`;
+  return shapes
+    .replace(/\sfill="[^"]*"/g, '')
+    .replace(/\stransform="[^"]*"/g, '')
+    .replace(
+      /<(path|circle|rect|polygon)\b([^>]*?)\s*\/>/g,
+      `<$1$2 fill="${fill}" transform="${transform}"/>`,
+    );
+}
 
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
@@ -177,36 +211,26 @@ export function renderLocationMapSvg(
   const nodeElements = content.nodes.map((node) => {
     const p = shift(node.x, node.y);
     const name = escapeXml(options.nodeNames[node.locationId] ?? node.locationId);
-    const iconPaths = LOCATION_MAP_ICON_PATHS[node.icon] ?? '';
-    const iconScale = ICON_SCALE;
-    const iconSize = 512 * iconScale;
-    const iconX = p.x - iconSize / 2;
-    const iconY = p.y - iconSize / 2;
+    // Match the on-screen layout: label sits under the circle, not over the icon at the centre.
+    const labelY = p.y + NODE_RADIUS + 14;
     return [
       `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(node.color)}" stroke-width="2"/>`,
-      iconPaths
-        ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${iconScale})" fill="${escapeXml(node.color)}">${iconPaths}</g>`
-        : '',
+      renderMapIcon(node.icon, p.x, p.y, node.color),
       // The name is drawn twice: a thick background-coloured stroke first (a halo), then the text,
       // so it stays readable over the image bases - the same treatment the lines got.
-      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
-      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
+      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
   const markerElements = (content.markers ?? []).map((marker) => {
     const p = shift(marker.x, marker.y);
     const name = escapeXml(marker.title);
-    const iconPaths = LOCATION_MAP_ICON_PATHS[marker.icon] ?? '';
-    const iconSize = 512 * ICON_SCALE;
-    const iconX = p.x - iconSize / 2;
-    const iconY = p.y - iconSize / 2;
+    const labelY = p.y + NODE_RADIUS + 14;
     return [
       `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(marker.color)}" stroke-width="2"/>`,
-      iconPaths
-        ? `<g transform="translate(${round(iconX)} ${round(iconY)}) scale(${ICON_SCALE})" fill="${escapeXml(marker.color)}">${iconPaths}</g>`
-        : '',
-      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
-      `<text x="${round(p.x)}" y="${round(p.y + 8)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+      renderMapIcon(marker.icon, p.x, p.y, marker.color),
+      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
+      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
 

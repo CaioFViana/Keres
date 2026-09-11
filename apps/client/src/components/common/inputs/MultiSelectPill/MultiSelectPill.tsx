@@ -226,22 +226,42 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
     },
     pillContainer: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
+      alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: 8,
       padding: 10,
       minHeight: 50,
-      alignItems: 'center',
       borderColor: colors.primary,
       borderWidth: 1,
-      // The spacing between pills belongs to the container, not to each pill. With a margin on each one, the
-      // last still charged its bottom margin: the field grew when the first option was chosen and the pill
-      // sat above the centre, with 8px of slack underneath it.
+    },
+    /*
+     * Pills wrap here; the trailing icon stays outside this box. Putting `flexWrap` and
+     * `marginLeft: 'auto'` on the same row made the icon drop to a second line when a pill
+     * appeared, which grew the field a few pixels (relation map / boards toolbars).
+     */
+    triggerContent: {
+      flex: 1,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      minWidth: 0,
+      // Spacing between pills belongs to this wrap box, not to each pill (a per-pill margin still
+      // charged the last item and made the field grow when the first option was chosen).
       gap: 8,
     },
-    singleValueContainer: {
+    singleValueContent: {
       flexWrap: 'nowrap',
+    },
+    singleValueContainer: {
       borderRadius: 5,
+    },
+    triggerIcon: {
+      width: 24,
+      height: 24,
+      marginLeft: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
     },
     singleValueText: {
       color: colors.text,
@@ -408,35 +428,41 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           triggerStyle,
         ]}
       >
-        {selectionSummary ? (
-          <Text style={styles.selectionSummary}>{selectionSummary}</Text>
-        ) : singleValueAppearance && selectedOptionDetails[0] ? (
-          <Text style={styles.singleValueText} numberOfLines={1}>
-            {selectedOptionDetails[0].label}
-          </Text>
-        ) : selectedOptionDetails.length > 0 ? (
-          selectedOptionDetails.map((option) => {
-            const pillBackgroundColor = option.color || colors.primaryContainer;
-            const pillTextColor = getContrastTextColor(pillBackgroundColor);
-            return (
-              <View
-                key={option.value}
-                testID={`multiselect-pill-${option.value}`}
-                style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
-              >
-                <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
-              </View>
-            );
-          })
-        ) : (
-          <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
-        )}
-        <Ionicons
-          name={singleValueAppearance ? 'chevron-down' : 'add-circle'}
-          size={24}
-          color={colors.primary}
-          style={{ marginLeft: 'auto' }}
-        />
+        <View
+          testID="multiselect-trigger-content"
+          style={[styles.triggerContent, singleValueAppearance && styles.singleValueContent]}
+        >
+          {selectionSummary ? (
+            <Text style={styles.selectionSummary}>{selectionSummary}</Text>
+          ) : singleValueAppearance && selectedOptionDetails[0] ? (
+            <Text style={styles.singleValueText} numberOfLines={1}>
+              {selectedOptionDetails[0].label}
+            </Text>
+          ) : selectedOptionDetails.length > 0 ? (
+            selectedOptionDetails.map((option) => {
+              const pillBackgroundColor = option.color || colors.primaryContainer;
+              const pillTextColor = getContrastTextColor(pillBackgroundColor);
+              return (
+                <View
+                  key={option.value}
+                  testID={`multiselect-pill-${option.value}`}
+                  style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
+                >
+                  <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
+          )}
+        </View>
+        <View testID="multiselect-trigger-icon" style={styles.triggerIcon}>
+          <Ionicons
+            name={singleValueAppearance ? 'chevron-down' : 'add-circle'}
+            size={24}
+            color={colors.primary}
+          />
+        </View>
       </TouchableOpacity>
 
       <ResponsiveModal

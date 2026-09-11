@@ -1,22 +1,22 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
+import { Ionicons } from '@expo/vector-icons';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { CharacterSelect, ItemSelect } from '../../../db/schema';
 import { usePresenceMatrixCatalog } from '../../../hooks/usePresenceMatrixCatalog';
 import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
-import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../../utils/storyTransfer';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
+import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 import { MAX_VISIBLE_SERIES, seriesColor } from './presenceMatrixConstants';
@@ -28,7 +28,7 @@ const PresenceMatrixViewerContent: React.FC<{
 }> = ({ request, onClose }) => {
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const story = useStoryStore((state) => state.selectedStory);
   const notify = useNotificationStore((state) => state.showNotification);
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
@@ -55,11 +55,11 @@ const PresenceMatrixViewerContent: React.FC<{
   const [saving, setSaving] = useState(false);
   const characterColorOf = useCallback(
     (id: string) => seriesColor(Math.max(0, ids.indexOf(id)), ids.length),
-    [ids, isDarkMode],
+    [ids],
   );
   const itemColorOf = useCallback(
     (id: string) => seriesColor(Math.max(0, itemIds.indexOf(id)), itemIds.length),
-    [itemIds, isDarkMode],
+    [itemIds],
   );
   useEffect(() => {
     setIds(request.kind === 'character' && request.characterId ? [request.characterId] : []);
@@ -120,7 +120,7 @@ const PresenceMatrixViewerContent: React.FC<{
         chapterName: byChapter.get(scene.chapterId)?.name ?? '',
         chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
       }));
-  }, [chapters, colors.border, scenes, includeEvents, isDarkMode]);
+  }, [chapters, colors.border, scenes, includeEvents]);
 
   /** Only worth offering when the story has one. */
   const hasEvents = useMemo(() => chapters.some((chapter) => chapter.type === 'event'), [chapters]);

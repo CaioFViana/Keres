@@ -1,12 +1,16 @@
+import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { buildNarrativeProjection } from '@keres/shared';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
 import type { Effect } from '@keres/shared/entities/Effect';
+import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
+import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
+import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { StoryGraphCanvasHandle } from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { useDrizzle } from '../../../db';
 import type {
   ChapterSelect,
@@ -17,10 +21,12 @@ import type {
 } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
+import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
-import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createChoiceCheckGroupService } from '../../../services/storymanagement/ChoiceCheckGroupService';
 import { createChoiceCheckService } from '../../../services/storymanagement/ChoiceCheckService';
+import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createEffectService } from '../../../services/storymanagement/EffectService';
 import { createItemService } from '../../../services/storymanagement/ItemService';
 import { createPlotSceneService } from '../../../services/storymanagement/PlotSceneService';
@@ -28,16 +34,10 @@ import { createPlotService } from '../../../services/storymanagement/PlotService
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
-import { useStoryCalendar } from '../../../hooks/useStoryCalendar';
 import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
-import type { GraphEdge, GraphNode } from '@keres/shared/graphs/storyGraphLayout';
-import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
-import { buildNarrativeProjection } from '@keres/shared';
-import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
-import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 
 /**
@@ -65,7 +65,7 @@ interface SceneNodeConnection {
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceView'>>();
@@ -185,7 +185,7 @@ const ChoiceViewScreen = () => {
         chapters,
         isCompact ? 'top-to-bottom' : 'left-to-right',
       ),
-    [scenes, graphChoices, chapters, isCompact, isDarkMode],
+    [scenes, graphChoices, chapters, isCompact],
   );
 
   const showEdgeLabels = labelsOverride ?? layout.edges.length <= EDGE_LABEL_AUTO_LIMIT;

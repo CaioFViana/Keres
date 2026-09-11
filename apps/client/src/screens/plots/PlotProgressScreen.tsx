@@ -1,5 +1,8 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
+import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,9 +14,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
-import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
@@ -24,7 +24,7 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 const PlotProgressScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const notify = useNotificationStore((state) => state.showNotification);
   const { selectedStory } = useStoryStore();
@@ -40,7 +40,7 @@ const PlotProgressScreen = () => {
   // full ones, and hiding them would give an over-optimistic average.
   const average = plots.length ? relations.length / plots.length : 0;
 
-  const chapterColors = useMemo(() => buildChapterColors(chapters), [chapters, isDarkMode]);
+  const chapterColors = useMemo(() => buildChapterColors(chapters), [chapters]);
 
   const entries = useMemo(
     () =>

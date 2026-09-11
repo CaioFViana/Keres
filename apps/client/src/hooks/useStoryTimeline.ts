@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '@/src/db';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { createChapterAnchorService } from '@/src/services/storymanagement/ChapterAnchorService';
@@ -7,37 +5,39 @@ import { createChapterService } from '@/src/services/storymanagement/ChapterServ
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
-import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import {
   formatChapterUniverseDuration,
   formatSceneGap,
   formatSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
+import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
 import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
-import type {
-  StoryTimelineEventPlacement,
-  StoryTimelineScaleMode,
-  TimelineAnchoredContainer,
-} from '@keres/shared/graphs/storyTimelineLayout';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {
   calendarSecondsPerDay,
   dayNumberForElapsed,
   formatCalendarDate,
   formatGregorianDate,
+  gregorianDayNumber,
   gregorianDayNumberForElapsed,
   gregorianPartsFromDayNumber,
-  gregorianDayNumber,
   isCalendarDateCoordinateInBounds,
   parseCalendarDateCoordinate,
   partsToDayNumber,
 } from '@keres/shared';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
+import type {
+  StoryTimelineEventPlacement,
+  StoryTimelineScaleMode,
+  TimelineAnchoredContainer,
+} from '@keres/shared/graphs/storyTimelineLayout';
 import { buildStoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
-import { useStoryCalendar } from './useStoryCalendar';
 import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
-import { useUserSettingsStore } from '@/src/state/userSettingsStore';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useStoryCalendar } from './useStoryCalendar';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);
@@ -61,7 +61,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const { t } = useTranslation();
   const { definition: primaryCalendar, calendars, describeDay } = useStoryCalendar();
   const calendar = calendarOverride ?? primaryCalendar;
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const db = useDrizzle();
   const story = useStoryStore((state) => state.selectedStory);
   const activeArcId = useStoryStore((state) => state.activeArcId);
@@ -182,7 +182,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
           durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
         };
       });
-  }, [calendar, chapterIds, chapters, colors.border, isDarkMode, scenes, t]);
+  }, [calendar, chapterIds, chapters, colors.border, scenes, t]);
   const chapterDurationLabels = useMemo(
     () =>
       new Map(
@@ -307,7 +307,6 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
     chapters,
     colors.textSecondary,
     events,
-    isDarkMode,
     scenes,
     showEvents,
     t,

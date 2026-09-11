@@ -1,17 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ItemSelect } from '../../../../db/schema';
-import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useItemJourneyTimelineData } from '../../../../hooks/useItemJourneyTimelineData';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useSceneCalendarDates } from '../../../../hooks/useSceneCalendarDates';
+import type { ItemStackParamList } from '../../../../navigation/MainSystemStack';
 import { useTheme } from '../../../../theme';
 import { orderItemJourneysByNarrative } from '../../../../utils/itemJourneyOrder';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useVocabularyEntityCopy } from '../../../../vocabulary/useVocabularyEntityCopy';
 
 interface ItemJourneyTimelineProps {
@@ -32,7 +32,7 @@ interface ItemJourneyTimelineProps {
 const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId, storyType }) => {
   const { t } = useTranslation();
   const itemCopy = useVocabularyEntityCopy('Item');
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<ItemStackParamList>>();
   const navigateToDetail = useNavigateToEntityDetail();
   const { dateForScene } = useSceneCalendarDates(storyId);
@@ -41,7 +41,7 @@ const ItemJourneyTimeline: React.FC<ItemJourneyTimelineProps> = ({ item, storyId
     item.id,
   );
 
-  const chapterColorById = useMemo(() => buildChapterColors(chapters), [chapters, isDarkMode]);
+  const chapterColorById = useMemo(() => buildChapterColors(chapters), [chapters]);
   const sceneById = new Map(scenes.map((scene) => [scene.id, scene]));
   const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const characterById = new Map(characters.map((character) => [character.id, character]));

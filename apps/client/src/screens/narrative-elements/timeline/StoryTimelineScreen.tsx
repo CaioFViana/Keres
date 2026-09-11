@@ -1,19 +1,19 @@
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
+import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
+import { useTheme } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
-import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
-import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
-import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
-import { useTheme } from '@/src/theme';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 
 const TIMELINE_CONTROL_LABELS = {
@@ -27,7 +27,7 @@ const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'StoryTimeline'>>();
   const canvas = useRef<StoryTimelineCanvasHandle>(null);
@@ -125,7 +125,7 @@ const StoryTimelineScreen = () => {
       value: chapter.id,
       color: colorsByChapter.get(chapter.id),
     }));
-  }, [chapters, isDarkMode]);
+  }, [chapters]);
 
   if (story?.type !== 'linear')
     return (

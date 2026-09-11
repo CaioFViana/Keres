@@ -1,10 +1,15 @@
-import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import GraphNodeSheet from '@/src/components/features/graphs/GraphNodeSheet/GraphNodeSheet';
 import type { PresenceMatrixCanvasHandle } from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
 import PresenceMatrixCanvas from '@/src/components/features/presence-matrix/PresenceMatrixCanvas';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { graphSeriesColor } from '@keres/shared';
+import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
+import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
+import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
+import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,13 +20,8 @@ import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { graphSeriesColor } from '@keres/shared';
-import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayout';
-import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
-import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
-import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { deliverSvgMap } from '../../utils/storyTransfer';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 /** Same cap as the presence matrix: the two charts are read side by side. */
@@ -41,7 +41,7 @@ const PlotMatrixScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const navigateToDetail = useNavigateToEntityDetail();
   const notify = useNotificationStore((state) => state.showNotification);
@@ -80,7 +80,7 @@ const PlotMatrixScreen = () => {
   const colorOf = useCallback(
     (plotId: string) =>
       graphSeriesColor(Math.max(0, selectedIds.indexOf(plotId)), selectedIds.length),
-    [selectedIds, isDarkMode],
+    [selectedIds],
   );
 
   const isCompleteView = plots.length > MAX_VISIBLE_SERIES && selectedIds.length === plots.length;
@@ -110,7 +110,7 @@ const PlotMatrixScreen = () => {
         ),
       }));
     return buildPresenceMatrixLayout(matrixScenes, rows);
-  }, [chapters, colorOf, colors.border, isDarkMode, plots, relations, scenes, selectedIds]);
+  }, [chapters, colorOf, colors.border, plots, relations, scenes, selectedIds]);
 
   const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
   const selectedPlot = plots.find((plot) => plot.id === selectedPlotId);

@@ -43,12 +43,15 @@ export function cloneExampleStoryForInstall(
   registerAll(example.suggestions);
   registerAll(example.chapterAnchors);
   registerAll(example.storyCalendars);
+  registerAll(example.storyArcs);
   registerAll(example.storyBoards);
   registerAll(example.storyLocationMaps);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
   registerAll(example.plots);
   registerAll(example.plotScenes);
+  registerAll(example.routes);
+  registerAll(example.routeSteps);
   registerAll(example.galleryItems);
   registerAll(example.galleryRelations);
   registerAll(example.items);
@@ -104,7 +107,11 @@ export function cloneExampleStoryForInstall(
       isDeleted: false,
       deletedAt: null,
     },
-    chapters: example.chapters.map((chapter) => ({ ...cloneEntity(chapter), storyId })),
+    chapters: example.chapters.map((chapter) => ({
+      ...cloneEntity(chapter),
+      storyId,
+      arcId: chapter.arcId ? remapId(chapter.arcId) : null,
+    })),
     scenes: example.scenes.map((scene) => ({
       ...cloneEntity(scene),
       storyId,
@@ -169,6 +176,10 @@ export function cloneExampleStoryForInstall(
       ...cloneEntity(calendar),
       storyId,
     })),
+    storyArcs: example.storyArcs?.map((arc) => ({
+      ...cloneEntity(arc),
+      storyId,
+    })),
     storyBoards: example.storyBoards?.map((board) => ({
       ...cloneEntity(board),
       storyId,
@@ -197,6 +208,14 @@ export function cloneExampleStoryForInstall(
       storyId,
       plotId: remapId(relation.plotId),
       sceneId: remapId(relation.sceneId),
+    })),
+    routes: example.routes?.map((route) => ({ ...cloneEntity(route), storyId })),
+    routeSteps: example.routeSteps?.map((step) => ({
+      ...cloneEntity(step),
+      storyId,
+      routeId: remapId(step.routeId),
+      sceneId: remapId(step.sceneId),
+      selectedChoiceId: remapNullableId(step.selectedChoiceId),
     })),
     galleryItems: example.galleryItems.map((item) => ({ ...cloneEntity(item), storyId })),
     galleryRelations: example.galleryRelations?.map((relation) => ({

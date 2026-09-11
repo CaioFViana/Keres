@@ -1,5 +1,7 @@
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +23,6 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { deliverSvgMap } from '../../utils/storyTransfer';
 import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
@@ -90,14 +91,10 @@ const StatComparisonScreen = () => {
       : undefined,
   });
 
-  useDocumentTitle(t('stat_compare_title'));
-  useFocusEffect(
-    useCallback(() => {
-      navigation
-        .getParent()
-        ?.setOptions({ title: t('stat_compare_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('stat_compare_title'),
+  });
 
   // One theme colour per series: all four are distinguishable in every palette of the app.
   const seriesColors = useMemo(
@@ -147,8 +144,6 @@ const StatComparisonScreen = () => {
     () =>
       StyleSheet.create({
         content: { padding: 16, paddingBottom: 32 },
-        // Each selected series only has to configure its mode. The selection itself sits in a single field
-        // above, so it does not look as if there are empty cards to fill in.
         slotCard: {
           borderColor: colors.border,
           borderWidth: 1,
@@ -166,13 +161,6 @@ const StatComparisonScreen = () => {
         },
         swatch: { width: 12, height: 12, borderRadius: 3 },
         modeLabel: { color: colors.textSecondary, fontSize: 13, marginBottom: -4 },
-        sectionTitle: {
-          color: colors.text,
-          fontSize: 16,
-          fontWeight: 'bold',
-          marginTop: 20,
-          marginBottom: 8,
-        },
         valueHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 6 },
         valueRow: {
           flexDirection: 'row',
@@ -311,7 +299,7 @@ const StatComparisonScreen = () => {
 
       {layout && layout.series.length > 0 ? (
         <>
-          <Text style={styles.sectionTitle}>{t('stats_title')}</Text>
+          <ScreenSection title={t('stats_title')} />
           <View style={styles.valueHeader}>
             <Text style={[styles.valueStatName, { color: colors.textSecondary, fontSize: 12 }]}>
               {t('name')}

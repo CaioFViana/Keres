@@ -1,9 +1,10 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'; // Corrected import
 import React, { useCallback, useEffect, useState } from 'react'; // Import useEffect and useState
 import { useTranslation } from 'react-i18next';
@@ -15,7 +16,6 @@ import type {
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import entityEventEmitter
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 // Redefine OperationLogScreenNavigationProp as CompositeNavigationProp
 export type OperationLogScreenNavigationProp = CompositeNavigationProp<
@@ -27,20 +27,16 @@ const OperationLogScreen: React.FC = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const { t } = useTranslation();
-  useDocumentTitle(t('operation_logs_title'));
+
   const navigation = useNavigation<OperationLogScreenNavigationProp>();
   const { selectedStory } = useStoryStore();
 
   const [shouldRefetch, setShouldRefetch] = useState(false); // New state for refetch trigger
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        title: t('operation_logs_title'),
-        headerRight: undefined,
-      });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('operation_logs_title'),
+  });
 
   const handlePressLogItem = useCallback(
     (logId: string) => {
@@ -72,13 +68,6 @@ const OperationLogScreen: React.FC = () => {
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
-      textAlign: 'center',
-      marginVertical: 10,
-    },
     noStoryContainer: {
       flex: 1,
       justifyContent: 'center',

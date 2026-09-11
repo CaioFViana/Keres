@@ -1,4 +1,4 @@
-import React, { Children, useMemo } from 'react';
+import React, { Children, isValidElement, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
@@ -7,13 +7,12 @@ import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
  * The row of actions that closes a form, a modal or a detail screen.
  *
  * Every one of these used to be a `flexDirection: 'row'` with `space-between` or `space-around`,
- * which sizes each button to its own text. On a phone that reads fine; on a wide window it leaves
- * two small buttons stranded at opposite ends of a very long row, and their widths disagree with
- * each other because "Cancel" is shorter than "Save changes".
+ * which sizes each button to its own text. On a wide window that leaves two small buttons stranded
+ * at opposite ends of a very long row, and their widths disagree because "Cancel" is shorter than
+ * "Save changes".
  *
- * Here they share the row equally once there is room for it. Below the medium breakpoint they keep
- * the old behaviour, because a 50/50 split of a narrow screen makes two buttons that are each too
- * narrow for their label.
+ * Here they share the row equally whenever they stay side by side. Screens with long labels on a
+ * phone opt into `stackOnCompact` instead of a cramped 50/50 split.
  *
  * The children are wrapped rather than cloned: a button's own `style` prop is often already carrying
  * a colour or a test id, and merging a width into it from outside would be the kind of remote action
@@ -40,17 +39,29 @@ interface Props {
   stackOnCompact?: boolean;
 }
 
+function actionChildren(
+  children: React.ReactNode,
+  prefix = '',
+): { child: React.ReactNode; key: string }[] {
+  return Children.toArray(children).flatMap((child, index) => {
+    const key = `${prefix}/${isValidElement(child) ? (child.key ?? index) : index}`;
+    return isValidElement<{ children?: React.ReactNode }>(child) && child.type === React.Fragment
+      ? actionChildren(child.props.children, key)
+      : [{ child, key }];
+  });
+}
+
 const FormActions: React.FC<Props> = ({ children, style, natural, stackOnCompact }) => {
   const { isCompact } = useResponsiveLayout();
-  const share = !natural && !isCompact;
   const stacked = Boolean(stackOnCompact && isCompact);
+  const share = !natural && !stacked;
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         row: {
           flexDirection: stacked ? 'column' : 'row',
-          alignItems: stacked ? 'stretch' : 'center',
+          alignItems: 'stretch',
           justifyContent: share ? 'center' : 'space-around',
           gap: 12,
           marginTop: 20,
@@ -61,17 +72,26 @@ const FormActions: React.FC<Props> = ({ children, style, natural, stackOnCompact
          * intrinsic width, and the button inside has exactly that.
          */
         share: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
+        /*
+         * Force the control to the slot width. `TouchableOpacity` does not always stretch from a
+         * column parent alone on native, which left Cancel/Confirm at content width on phones.
+         */
+        fill: { width: '100%' },
       }),
     [share, stacked],
   );
 
   return (
-    <View style={[styles.row, style]}>
-      {Children.map(children, (child) =>
-        child == null || child === false ? null : (
-          <View style={share ? styles.share : undefined}>{child}</View>
-        ),
-      )}
+    <View testID="form-actions" style={[styles.row, style]}>
+      {actionChildren(children).map(({ child, key }, index) => (
+        <View
+          key={key}
+          testID={`form-action-slot-${index}`}
+          style={share ? styles.share : undefined}
+        >
+          <View style={share || stacked ? styles.fill : undefined}>{child}</View>
+        </View>
+      ))}
     </View>
   );
 };

@@ -3,19 +3,19 @@ import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { adminApiLogService } from '../../services/AdminApiLogService';
 import { requireAdmin } from '../../utils/adminAuth';
+import { AppError } from '../../utils/errors';
 
 export const adminApiLogRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
 
   .get(
     '/',
-    async ({ query, user, set }) => {
+    async ({ query, user }) => {
       await requireAdmin(user);
 
       const parsed = AdminApiLogQuerySchema.safeParse(query);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid query' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid query');
       }
 
       return adminApiLogService.browseApiLogs(parsed.data);

@@ -19,8 +19,8 @@ import { reviveDates } from './reviveDates';
  *
  * It lives in `@keres/shared` because both sides have to produce the *same* file: the app exports
  * from the device (bytes from local disk) and the API publishes to the Showcase (bytes from media
- * storage). Only the resolver changes; the format cannot, or a package downloaded from the site
- * would not import back into the app.
+ * storage). Only the resolver changes; the format cannot, or a package downloaded from the
+ * Showcase would not import back into the app.
  *
  * No compression (`STORE`): the gallery is mostly image/video/audio, formats that already arrive
  * compressed - running DEFLATE over them would only burn CPU without shrinking anything.

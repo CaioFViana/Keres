@@ -1,11 +1,17 @@
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
-import { ISO_DATE_PATTERN, OperationLogEntityType, suggestionDisplayValue } from '@keres/shared';
+import {
+  ISO_DATE_PATTERN,
+  OperationLogEntityType,
+  resolveEntityReferenceFieldType,
+  suggestionDisplayValue,
+} from '@keres/shared';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -19,36 +25,11 @@ import { createOperationLogService } from '../../services/OperationLogService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 /** "extraNotes" -> "Extra Notes" - fallback for payload keys `entityFieldMetadata` doesn't cover. */
 function humanizeFieldName(key: string): string {
   return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
 }
-
-/**
- * Payload fields that are another entity's ID, and which entity. It does not come from
- * `entityFieldMetadata` (which only marks `type: 'id'`, without saying which entity) - it is the mapping
- * that was missing in order to reuse `EntityService.getEntityIdentifier` (the same name resolver
- * that `TagRelation`/`NoteRelation`/etc already use) on any payload field.
- */
-const REFERENCE_FIELD_ENTITY_TYPES: Record<string, OperationLogEntityType> = {
-  characterId: OperationLogEntityType.Character,
-  character1Id: OperationLogEntityType.Character,
-  character2Id: OperationLogEntityType.Character,
-  characterOwnerId: OperationLogEntityType.Character,
-  newCharacterOwnerId: OperationLogEntityType.Character,
-  sceneId: OperationLogEntityType.Scene,
-  nextSceneId: OperationLogEntityType.Scene,
-  itemId: OperationLogEntityType.Item,
-  locationId: OperationLogEntityType.Location,
-  chapterId: OperationLogEntityType.Chapter,
-  tagId: OperationLogEntityType.Tag,
-  noteId: OperationLogEntityType.Note,
-  worldRuleId: OperationLogEntityType.WorldRule,
-  galleryId: OperationLogEntityType.Gallery,
-  choiceId: OperationLogEntityType.Choice,
-};
 
 const getOperationIcon = (operationType: string): keyof typeof Ionicons.glyphMap => {
   switch (operationType) {
@@ -69,17 +50,12 @@ type OperationLogDetailScreenRouteProp = RouteProp<
   OperationLogStackParamList,
   'OperationLogDetail'
 >;
-type OperationLogDetailScreenNavigationProp = NativeStackNavigationProp<
-  OperationLogStackParamList,
-  'OperationLogDetail'
->;
 
 const OperationLogDetailScreen: React.FC = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { colors } = useTheme();
   const { t } = useTranslation();
-  useDocumentTitle(t('operation_log_detail_title'));
-  const navigation = useNavigation<OperationLogDetailScreenNavigationProp>();
+
   const route = useRoute<OperationLogDetailScreenRouteProp>();
   const { logId } = route.params;
   const { userId } = useUserSettingsStore();
@@ -139,14 +115,10 @@ const OperationLogDetailScreen: React.FC = () => {
     };
   }, [operationLog, fetchOperationLogDetails]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        title: t('operation_log_detail_title'),
-        headerRight: undefined,
-      });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('operation_log_detail_title'),
+  });
 
   const { entityName: mainEntityName, loading: mainEntityLoading } = useEntityName(
     operationLog?.entityType as OperationLogEntityType,
@@ -205,12 +177,6 @@ const OperationLogDetailScreen: React.FC = () => {
     },
     metaText: {
       fontSize: 14,
-      color: colors.text,
-    },
-    sectionTitle: {
-      marginBottom: 10,
-      fontSize: 16,
-      fontWeight: 'bold',
       color: colors.text,
     },
     changeCard: {
@@ -348,7 +314,7 @@ const OperationLogDetailScreen: React.FC = () => {
 
         {payload && (
           <View>
-            <Text style={styles.sectionTitle}>{t('operation_log_changes_title')}</Text>
+            <ScreenSection title={t('operation_log_changes_title')} />
             {operationLog.operationType === 'reorder' ? (
               <View style={styles.changeCard}>
                 {payload.reorderItems.map((item: { id: string; newIndex: number }) => (
@@ -381,7 +347,7 @@ const OperationLogDetailScreen: React.FC = () => {
                   (f) => f.name === key,
                 );
                 const label = fieldMeta ? t(fieldMeta.label) : humanizeFieldName(key);
-                const referenceEntityType = REFERENCE_FIELD_ENTITY_TYPES[key];
+                const referenceEntityType = resolveEntityReferenceFieldType(key);
 
                 return (
                   <View key={key} style={styles.changeCard}>

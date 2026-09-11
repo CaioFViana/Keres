@@ -265,7 +265,7 @@ describe('MultiSelectPill, pill spacing', () => {
       minHeight?: number;
     };
 
-  it('separates the pills through the container, with no margin on each one', async () => {
+  it('separates the pills through the wrap box, with no margin on each one', async () => {
     const screen = await render(
       <MultiSelectPill
         options={options}
@@ -274,11 +274,32 @@ describe('MultiSelectPill, pill spacing', () => {
       />,
     );
 
-    expect(triggerStyleOf(screen).gap).toBe(8);
+    const content = StyleSheet.flatten(
+      screen.getByTestId('multiselect-trigger-content').props.style,
+    );
+    expect(content.gap).toBe(8);
+    expect(content.flexWrap).toBe('wrap');
 
     const pill = StyleSheet.flatten(screen.getByTestId('multiselect-pill-atena').props.style);
     expect(pill.marginBottom).toBeUndefined();
     expect(pill.marginRight).toBeUndefined();
+  });
+
+  it('keeps the trailing icon outside the wrapping content', async () => {
+    const screen = await render(
+      <MultiSelectPill
+        options={options}
+        selectedValues={['atena']}
+        onSelectionChange={jest.fn()}
+      />,
+    );
+
+    const trigger = StyleSheet.flatten(screen.getByTestId('multiselect-trigger').props.style);
+    const icon = StyleSheet.flatten(screen.getByTestId('multiselect-trigger-icon').props.style);
+    expect(trigger.flexWrap).toBeUndefined();
+    expect(trigger.alignItems).toBe('center');
+    expect(icon.width).toBe(24);
+    expect(icon.height).toBe(24);
   });
 
   it('keeps the same minimum height with and without a selection', async () => {

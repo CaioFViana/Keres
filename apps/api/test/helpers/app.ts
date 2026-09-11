@@ -1,4 +1,8 @@
-import { SYNC_PROTOCOL_HEADER, SYNC_PROTOCOL_VERSION } from '@keres/shared';
+import {
+  CURRENT_STORY_FORMAT_VERSION,
+  SYNC_PROTOCOL_HEADER,
+  SYNC_PROTOCOL_VERSION,
+} from '@keres/shared';
 import { ulid } from 'ulid';
 import { createApp } from '../../src/index';
 
@@ -133,3 +137,75 @@ export async function registerUser(
 
 /** ULID novo, para os testes que precisam gerar ids de entidade do lado do cliente. */
 export const newId = () => ulid();
+
+/**
+ * Creates the same initial server state as a first upload from the local app. Tests must not use
+ * the retired `POST /stories/` endpoint as a shortcut: a real Story reaches a server as a complete
+ * export and preserves its locally generated ids.
+ */
+export async function uploadTestStory(
+  token: string,
+  title = 'A Queda',
+  type: 'linear' | 'branching' = 'linear',
+) {
+  const storyId = ulid();
+  const arcId = ulid();
+  const now = new Date().toISOString();
+  const packageData = {
+    story: {
+      id: storyId,
+      userId: ulid(),
+      title,
+      type,
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    },
+    chapters: [],
+    scenes: [],
+    choices: [],
+    characters: [],
+    locations: [],
+    worldRules: [],
+    notes: [],
+    noteRelations: [],
+    tags: [],
+    tagRelations: [],
+    suggestions: [],
+    characterRelations: [],
+    characterScenes: [],
+    galleryItems: [],
+    itemJourneys: [],
+    storyArcs: [
+      {
+        id: arcId,
+        storyId,
+        title: 'Arc',
+        description: null,
+        sortOrder: 0,
+        color: null,
+        icon: null,
+        themeOverride: null,
+        isDefault: true,
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    ],
+    serverLastOperationVersion: 0,
+    formatVersion: CURRENT_STORY_FORMAT_VERSION,
+  };
+  const { status, data } = await request<{ storyId: string }>('POST', '/stories/import', {
+    token,
+    body: packageData,
+    query: { storyId },
+  });
+  if (status !== 200) {
+    throw new Error(`Could not upload test story (${status}): ${JSON.stringify(data)}`);
+  }
+  return { id: data.storyId, title, type };
+}

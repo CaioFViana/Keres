@@ -1,6 +1,7 @@
-import { inArray } from 'drizzle-orm';
+import type { OperationLogEntityType } from '@keres/shared';
+import { getEntityDomainHandler } from '@keres/shared';
+import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
-import type { SyncableEntityName } from './entityTableRegistry';
 import { getEntityTable } from './entityTableRegistry';
 
 export interface EntityRef {
@@ -19,34 +20,20 @@ export interface EntityNameBatchResolver {
    * Resolving them one by one would become dozens of sequential round-trips to SQLite; this does at most
    * one query per distinct entity type touched by the whole batch.
    */
-  resolveMany(refs: EntityRef[]): Promise<Map<string, string>>;
+  resolveMany(
+    refs: EntityRef[],
+    options?: { includeDeleted?: boolean },
+  ): Promise<Map<string, string>>;
 }
 
 const nameKey = (entityType: string, entityId: string) => `${entityType}:${entityId}`;
 
-/** The column that carries the display name of each simple type a relation can point at. */
-const NAME_COLUMN_BY_ENTITY: Partial<Record<SyncableEntityName, string>> = {
-  Board: 'name',
-  LocationMap: 'name',
-  Character: 'name',
-  Location: 'name',
-  Item: 'name',
-  Tag: 'name',
-  Scene: 'name',
-  Chapter: 'name',
-  Route: 'name',
-  Note: 'title',
-  WorldRule: 'title',
-  Story: 'title',
-  Choice: 'text',
-  Stat: 'name',
-  Mode: 'name',
-  StatStrength: 'label',
-};
-
 export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameBatchResolver {
   return {
-    async resolveMany(refs: EntityRef[]): Promise<Map<string, string>> {
+    async resolveMany(
+      refs: EntityRef[],
+      options: { includeDeleted?: boolean } = {},
+    ): Promise<Map<string, string>> {
       const idsByType = new Map<string, Set<string>>();
       for (const ref of refs) {
         if (!ref.entityType || !ref.entityId) continue;
@@ -62,32 +49,27 @@ export function createEntityNameBatchResolver(db: AppDrizzleClient): EntityNameB
         if (!table) continue;
         const idList = Array.from(ids);
 
-        // Gallery has no single name column - `title` is optional and falls back to the file's
-        // name, just as the rest of the app already does in `EntityService.getEntityName`.
-        if (entityType === 'Gallery') {
-          const rows = await db
-            .select({
-              id: (table as any).id,
-              title: (table as any).title,
-              fileName: (table as any).fileName,
-            })
-            .from(table)
-            .where(inArray((table as any).id, idList));
-          for (const row of rows) {
-            result.set(nameKey(entityType, row.id), row.title || row.fileName || row.id);
-          }
-          continue;
+        const displayName = getEntityDomainHandler(
+          entityType as OperationLogEntityType,
+        )?.displayName;
+        if (!displayName) continue;
+
+        const selection: Record<string, any> = { id: (table as any).id };
+        for (const field of displayName.fields) {
+          selection[field] = (table as any)[field];
         }
 
-        const nameColumn = NAME_COLUMN_BY_ENTITY[entityType as SyncableEntityName];
-        if (!nameColumn) continue;
-
+        const conditions = [inArray((table as any).id, idList)];
+        if (options.includeDeleted === false && 'isDeleted' in table) {
+          conditions.push(eq((table as any).isDeleted, false));
+        }
         const rows = await db
-          .select({ id: (table as any).id, name: (table as any)[nameColumn] })
+          .select(selection)
           .from(table)
-          .where(inArray((table as any).id, idList));
+          .where(and(...conditions));
         for (const row of rows) {
-          result.set(nameKey(entityType, row.id), row.name || row.id);
+          const name = displayName.getName(row as Record<string, unknown>);
+          result.set(nameKey(entityType, row.id as string), name ?? (row.id as string));
         }
       }
 

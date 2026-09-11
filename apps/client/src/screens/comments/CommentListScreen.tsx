@@ -1,4 +1,4 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail
 import type { CommentSelect } from '../../db/schema';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 
 /**
@@ -21,16 +20,13 @@ const CommentListScreen: React.FC = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const navigation = useNavigation();
   const navigateToDetail = useNavigateToEntityDetail();
   const { selectedStory } = useStoryStore();
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({ title: t('comments_title'), headerRight: undefined });
-      setDocumentTitle(t('comments_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('comments_title'),
+  });
 
   const handlePressComment = useCallback(
     (comment: CommentSelect) => {

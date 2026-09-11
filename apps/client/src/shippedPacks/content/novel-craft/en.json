@@ -382,6 +382,11 @@
             "singular": "Narrative Choice",
             "plural": "Narrative Choices",
             "grammaticalGender": "neutral"
+          },
+          "Arc": {
+            "singular": "Book",
+            "plural": "Books",
+            "grammaticalGender": "neutral"
           }
         }
       }

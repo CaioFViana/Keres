@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateAttributeValueDataType,
   CreateStoryUpdate,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateAttributeValueDataSchema, PartialAttributeValueSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { attributeValues } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -17,24 +18,22 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
   entityName = 'AttributeValue';
 
   constructor() {
-    super(
-      'attributeValues',
-      'id',
-      'version',
-      CreateAttributeValueDataSchema,
-      PartialAttributeValueSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateAttributeValueDataSchema, PartialAttributeValueSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateAttributeValueDataType = this.createSchema.parse(update.data);
 
-    const existingValue = await db.query.attributeValues.findFirst({
+    const existingValue = await database.query.attributeValues.findFirst({
       where: and(
         eq(attributeValues.entityId, validatedData.entityId),
         eq(attributeValues.fieldId, validatedData.fieldId),
@@ -48,7 +47,7 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(attributeValues).values({
+    await database.insert(attributeValues).values({
       id: update.id!,
       storyId,
       entityType: validatedData.entityType,
@@ -67,17 +66,19 @@ export class AttributeValueSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

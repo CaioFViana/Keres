@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -34,7 +34,6 @@ import type {
 import { useItemStore } from '../../state/itemStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createCharacterService } from '../../services/storymanagement/CharacterService';
 import { createChoiceService } from '../../services/storymanagement/ChoiceService';
@@ -61,29 +60,12 @@ const ItemListScreen = () => {
   const navigation = useNavigation<ItemsScreenNavigationProp>();
   const { openItemList } = useOpenPresenceMatrixViewer();
 
-  const {
-    items,
-    loading,
-    isInitialLoading,
-    error,
-    storyId,
-    searchQuery,
-    activeSort,
-    sortDirection,
-    favoriteFilterState,
-    advancedSearchCriteria,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFavoriteFilterChange,
-    setAdvancedSearchCriteria,
-    toggleFavorite,
-  } = useEntityListScreen({
-    useStore: useItemStore,
-    collectionKey: 'items',
-    changeEvent: 'item_changed',
-  });
+  const { listProps, items, isInitialLoading, error, storyId, toggleFavorite } =
+    useEntityListScreen({
+      useStore: useItemStore,
+      collectionKey: 'items',
+      changeEvent: 'item_changed',
+    });
 
   const { canEdit } = useStoryRole(storyId);
   const [journeys, setJourneys] = useState<ItemJourneySelect[]>([]);
@@ -288,48 +270,31 @@ const ItemListScreen = () => {
     [t],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    headerRightContainer: { flexDirection: 'row', alignItems: 'center', marginRight: 15, gap: 15 },
-  });
+  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(term('Item', true));
-      navigation.getParent()?.setOptions({
-        title: term('Item', true),
-        headerRight:
-          selectedStory?.type === 'linear' || canEdit
-            ? () => (
-                <View style={styles.headerRightContainer}>
-                  {selectedStory?.type === 'linear' && (
-                    <TouchableOpacity
-                      onPress={openItemList}
-                      accessibilityLabel={t('presence_matrix_item_title')}
-                    >
-                      <Ionicons name="map-outline" size={26} color={colors.text} />
-                    </TouchableOpacity>
-                  )}
-                  {canEdit && (
-                    <TouchableOpacity onPress={() => navigation.navigate('ItemForm', {})}>
-                      <Ionicons name="add" size={30} color={colors.text} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )
-            : undefined,
-      });
-    }, [
-      navigation,
-      colors.text,
-      t,
-      styles.headerRightContainer,
-      canEdit,
-      openItemList,
-      selectedStory?.type,
-      term,
-    ]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: term('Item', true),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'map-outline',
+        label: t('presence_matrix_item_title'),
+        onPress: openItemList,
+        visible: !!(
+          (selectedStory?.type === 'linear' || canEdit) &&
+          selectedStory?.type === 'linear'
+        ),
+      },
+      {
+        id: 'action-1',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('ItemForm', {}),
+        visible: !!((selectedStory?.type === 'linear' || canEdit) && canEdit),
+      },
+    ],
+  });
 
   if (isInitialLoading) {
     return (
@@ -344,28 +309,17 @@ const ItemListScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
+        {...listProps}
         data={itemsWithTags}
         renderItem={memoizedItemListItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
-        currentSearchTerm={searchQuery}
         filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
         onFilterChange={setActiveTagIds}
         selectedFilterValues={activeTagIds}
         sortOptions={memoizedSortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
         entityName="Item"
         storyId={storyId || ''}
-        onAdvancedSearch={setAdvancedSearchCriteria}
-        currentAdvancedSearchCriteria={advancedSearchCriteria}
-        isLoading={loading}
       />
     </View>
   );

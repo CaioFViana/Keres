@@ -15,6 +15,7 @@ const DEFAULT_TERM_KEYS: Record<StoryVocabularyEntityType, { singular: string; p
   Item: { singular: 'item', plural: 'items' },
   WorldRule: { singular: 'world_piece', plural: 'world_pieces' },
   Choice: { singular: 'choice', plural: 'choices' },
+  Arc: { singular: 'arc', plural: 'arcs' },
 };
 
 export function localeFamily(language: string | undefined): 'pt' | 'en' {

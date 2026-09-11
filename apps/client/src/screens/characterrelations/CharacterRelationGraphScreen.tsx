@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -23,7 +24,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
@@ -115,14 +115,10 @@ const CharacterRelationGraphScreen = () => {
     return () => entityEventEmitter.off('story_data_changed', handleRemoteChange);
   }, [storyId, loadGraph]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('character_relation_map_title'));
-      navigation
-        .getParent()
-        ?.setOptions({ title: t('character_relation_map_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('character_relation_map_title'),
+  });
 
   const filtered = useMemo(
     () => filterCharacterRelationGraph(characters, relations, selectedIds),

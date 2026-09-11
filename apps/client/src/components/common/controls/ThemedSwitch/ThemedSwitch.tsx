@@ -11,6 +11,7 @@ interface ThemedSwitchProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
@@ -22,6 +23,7 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
   disabled = false,
   style,
   testID,
+  accessibilityLabel,
 }) => {
   const { colors } = useTheme();
   const thumbPosition = useRef(new Animated.Value(value ? 1 : 0)).current;
@@ -64,6 +66,7 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
     <AnimatedTouchableOpacity
       activeOpacity={0.8}
       accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: value, disabled }}
       disabled={disabled}
       testID={testID}

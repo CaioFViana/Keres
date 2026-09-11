@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { packService } from '../../services/PackService';
+import { AppError } from '../../utils/errors';
 
 /**
  * Sharing packs.
@@ -39,10 +40,9 @@ export const packRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
   // Every route here needs an authenticated user, as in `friend.route.ts`: a single eager derive
   // instead of the same 401 block opening four handlers.
-  .derive(({ user, set }) => {
+  .derive(({ user }) => {
     if (!user?.userId) {
-      set.status = 401;
-      throw new Error('Unauthorized: User not authenticated.');
+      throw new AppError(401, 'Unauthorized: User not authenticated.');
     }
     return { userId: user.userId };
   })

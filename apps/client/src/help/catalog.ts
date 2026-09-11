@@ -25,6 +25,7 @@ export const helpSections: HelpSection[] = [
       'story-type',
       'story-settings',
       'appearance',
+      'arcs',
       'calendars',
       'story-dashboard',
       'story-analysis',

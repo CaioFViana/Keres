@@ -6,7 +6,7 @@ import { setDocumentTitle } from '../../../utils/documentTitle';
  * cold-install wizard, which sets no title of its own).
  *
  * Every screen that has a title to show updates it from its navigation focus effect, either
- * directly or through `useDocumentTitle` (see `apps/client/src/utils/documentTitle.ts`). This
+ * through `useScreenHeader`, or `useDocumentTitle` for the installation and document-only flows. This
  * component does NOT try to derive titles from React Navigation's
  * `getCurrentOptions()`/`'options'` event.
  *

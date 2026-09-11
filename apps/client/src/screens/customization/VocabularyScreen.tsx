@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Button, SingleSelectPill, TextInput } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -10,14 +11,13 @@ import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { AppAlert } from '@/src/utils/AppAlert';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import {
   STORY_VOCABULARY_ENTITY_TYPES,
   type GrammaticalGender,
   type StoryVocabulary,
   type StoryVocabularyEntityType,
 } from '@keres/shared/entities/Story';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +42,7 @@ const EMPTY_TERMS: DraftTerms = {
   Item: { singular: '', plural: '', grammaticalGender: 'masculine' },
   WorldRule: { singular: '', plural: '', grammaticalGender: 'feminine' },
   Choice: { singular: '', plural: '', grammaticalGender: 'feminine' },
+  Arc: { singular: '', plural: '', grammaticalGender: 'masculine' },
 };
 
 function languageFamily(language: string | undefined): 'pt' | 'en' {
@@ -89,11 +90,10 @@ const VocabularyTermCard = memo(
             marginTop: 14,
           },
           title: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 10 },
-          labels: { flexDirection: 'row', gap: 10, marginBottom: 5 },
-          label: { color: colors.textSecondary, fontSize: 12, flex: 1 },
-          fields: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-          word: { flex: 1 },
+          fields: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+          column: { flex: 1, minWidth: 0 },
           gender: { width: 136 },
+          label: { color: colors.textSecondary, fontSize: 12, marginBottom: 5 },
           empty: { color: colors.textSecondary, fontSize: 12, marginTop: 7 },
         }),
       [colors],
@@ -102,30 +102,28 @@ const VocabularyTermCard = memo(
     return (
       <View style={styles.card}>
         <Text style={styles.title}>{t(`vocabulary_term_${type}`)}</Text>
-        <View style={styles.labels}>
-          <Text style={styles.label}>{t('vocabulary_singular')}</Text>
-          <Text style={styles.label}>{t('vocabulary_plural')}</Text>
-          {language === 'pt' && (
-            <Text style={[styles.label, { flex: 0, width: 136 }]}>{t('vocabulary_gender')}</Text>
-          )}
-        </View>
         <View style={styles.fields}>
-          <TextInput
-            style={styles.word}
-            testID={`vocabulary-${type}-singular`}
-            value={term.singular}
-            onChangeText={(value) => onChange(type, 'singular', value)}
-            editable={editable}
-          />
-          <TextInput
-            style={styles.word}
-            testID={`vocabulary-${type}-plural`}
-            value={term.plural}
-            onChangeText={(value) => onChange(type, 'plural', value)}
-            editable={editable}
-          />
+          <View style={styles.column}>
+            <Text style={styles.label}>{t('vocabulary_singular')}</Text>
+            <TextInput
+              testID={`vocabulary-${type}-singular`}
+              value={term.singular}
+              onChangeText={(value) => onChange(type, 'singular', value)}
+              editable={editable}
+            />
+          </View>
+          <View style={styles.column}>
+            <Text style={styles.label}>{t('vocabulary_plural')}</Text>
+            <TextInput
+              testID={`vocabulary-${type}-plural`}
+              value={term.plural}
+              onChangeText={(value) => onChange(type, 'plural', value)}
+              editable={editable}
+            />
+          </View>
           {language === 'pt' && (
             <View style={styles.gender}>
+              <Text style={styles.label}>{t('vocabulary_gender')}</Text>
               <SingleSelectPill
                 value={term.grammaticalGender}
                 onValueChange={(value) =>
@@ -137,6 +135,7 @@ const VocabularyTermCard = memo(
                   { value: 'neutral', label: t('vocabulary_gender_neutral') },
                 ]}
                 disabled={!editable}
+                style={{ marginBottom: 0 }}
               />
             </View>
           )}
@@ -174,12 +173,10 @@ const VocabularyScreen = () => {
   const loadedDraftRef = useRef<string | null>(null);
   const vocabularySignature = JSON.stringify(selectedStoryVocabulary);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title: t('vocabulary_title'), headerRight: undefined });
-      setDocumentTitle(t('vocabulary_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('vocabulary_title'),
+  });
 
   useEffect(() => {
     if (!selectedStoryId) {
@@ -199,7 +196,9 @@ const VocabularyScreen = () => {
         intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 18 },
         languageLabel: { color: colors.text, fontWeight: '700', marginBottom: 6 },
         languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 7 },
-        content: { paddingBottom: 40 },
+        // flexGrow only — `flex: 1` on the scroll content (via common.container) pins height to the
+        // viewport and prevents scrolling past the first few vocabulary cards.
+        content: { flexGrow: 1, paddingBottom: 40 },
         formActions: { marginBottom: 24 },
         footerSpacer: { height: 10 },
         secondaryButton: {
@@ -270,7 +269,7 @@ const VocabularyScreen = () => {
   if (!selectedStory) return <View style={common.container} />;
 
   return (
-    <KeyboardAwareScreen contentContainerStyle={[common.container, styles.content]}>
+    <KeyboardAwareScreen style={common.container} contentContainerStyle={styles.content}>
       <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
       <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
       <SingleSelectPill

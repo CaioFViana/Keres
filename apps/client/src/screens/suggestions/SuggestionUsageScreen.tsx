@@ -1,10 +1,11 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -100,49 +101,43 @@ const SuggestionUsageScreen = () => {
     load();
   }, [load]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('suggestion_value_details'),
-        headerRight: () => (
-          <View style={styles(colors).headerActions}>
-            {canEdit && userId && (
-              <TouchableOpacity
-                onPress={() => {
-                  setNewValue(value);
-                  setRenameUsages(false);
-                  setRenaming(true);
-                }}
-                accessibilityLabel={t('rename')}
-              >
-                <Ionicons name="pencil-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            {storedId && canEdit && userId && (
-              <TouchableOpacity
-                onPress={() => {
-                  AppAlert.alert(t('remove'), t('suggestion_remove_saved_message'), [
-                    { text: t('cancel'), style: 'cancel' },
-                    {
-                      text: t('remove'),
-                      style: 'destructive',
-                      onPress: async () => {
-                        await service.deleteSuggestion(userId, storedId);
-                        navigation.goBack();
-                      },
-                    },
-                  ]);
-                }}
-                accessibilityLabel={t('suggestion_remove_saved')}
-              >
-                <Ionicons name="trash-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ),
-      });
-    }, [canEdit, colors, navigation, service, storedId, t, userId, value]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('suggestion_value_details'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'pencil-outline',
+        label: t('rename'),
+        onPress: () => {
+          setNewValue(value);
+          setRenameUsages(false);
+          setRenaming(true);
+        },
+        visible: !!(canEdit && userId),
+      },
+      {
+        id: 'action-1',
+        icon: 'trash-outline',
+        label: t('suggestion_remove_saved'),
+        onPress: () => {
+          if (!storedId || !canEdit || !userId) return;
+          AppAlert.alert(t('remove'), t('suggestion_remove_saved_message'), [
+            { text: t('cancel'), style: 'cancel' },
+            {
+              text: t('remove'),
+              style: 'destructive',
+              onPress: async () => {
+                await service.deleteSuggestion(userId, storedId);
+                navigation.goBack();
+              },
+            },
+          ]);
+        },
+        visible: !!(storedId && canEdit && userId),
+      },
+    ],
+  });
 
   const sections = useMemo<UsageSection[]>(() => {
     const grouped = new Map<string, SuggestionUsage[]>();
@@ -348,13 +343,11 @@ const styles = (colors: any) =>
     empty: { color: colors.textSecondary, padding: 24, textAlign: 'center' },
     relationLinks: { flexDirection: 'row', gap: 10, marginTop: 6 },
     relationLink: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-    headerActions: { alignItems: 'center', flexDirection: 'row', gap: 16, marginRight: 15 },
     modal: { gap: 12, padding: 16 },
     modalTitle: { color: colors.text, fontSize: 18, fontWeight: '700' },
     checkbox: { alignItems: 'center', flexDirection: 'row', gap: 8 },
     checkboxText: { color: colors.text, flex: 1 },
     warning: { color: colors.error, fontSize: 13, lineHeight: 18 },
-    modalActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
   });
 
 export default SuggestionUsageScreen;

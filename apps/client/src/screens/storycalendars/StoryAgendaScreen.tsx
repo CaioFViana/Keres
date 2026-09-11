@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import {
   calendarMoonPhases,
@@ -12,7 +13,7 @@ import {
   gregorianPartsFromDayNumber,
   partsToDayNumber,
 } from '@keres/shared';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,7 +26,6 @@ import type { CustomizationStackParamList } from '@/src/navigation/MainSystemSta
 import { useStoryStore } from '@/src/state/storyStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { CustomCalendarDateLookup, GregorianCalendarDateLookup } from './AgendaDateLookup';
 
@@ -87,14 +87,10 @@ const StoryAgendaScreen = () => {
     [dateDisplayFormat, definition],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      // The drawer owns the header, so the title has to be set on the parent - see
-      // `StorySettingsScreen` for what happens when it is not.
-      navigation.getParent()?.setOptions({ title: t('agenda_title'), headerRight: undefined });
-      setDocumentTitle(t('agenda_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('agenda_title'),
+  });
 
   // Opens on the month holding the first thing that happens, not on year one. A calendar without
   // an epoch is still browseable; begin it at its own year one rather than hiding its viewer.

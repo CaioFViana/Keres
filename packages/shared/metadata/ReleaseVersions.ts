@@ -23,7 +23,7 @@
  * migration in `storyExportMigrations.ts`. An older Keres refuses a package from a newer format
  * rather than guessing at it.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 9;
+export const CURRENT_STORY_FORMAT_VERSION = 10;
 
 /**
  * Version of the synchronization protocol: what client and server exchange, and the rules each end
@@ -44,8 +44,12 @@ export const CURRENT_STORY_FORMAT_VERSION = 9;
  *
  * **3** - Branching and linear are compatible with each other's features, so older clients can acuse
  * not accepting something it should.
+ *
+ * **4** - Arc added, that alone is worth raising, but minimum is also raised as some internal code
+ * for API/Syncing changed way too much. fully reworked. Just this once and to be safe, Version 4
+ *
  */
-export const SYNC_PROTOCOL_VERSION = 3;
+export const SYNC_PROTOCOL_VERSION = 4;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -54,6 +58,6 @@ export const SYNC_PROTOCOL_VERSION = 3;
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
  *
- * Raised to **2** with the lines above.
+ * Raised to **4** with the lines above.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 3;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 4;

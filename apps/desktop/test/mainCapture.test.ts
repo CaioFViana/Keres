@@ -32,13 +32,16 @@ const fileMocks = vi.hoisted(() => ({
 function paintedImage(painted = true) {
   const bitmap = Buffer.alloc(4 * 80);
   if (painted) bitmap.writeUInt32LE(1, 4);
-  return {
+  const image = {
     captureValue: painted,
     crop: vi.fn(() => ({ toBitmap: vi.fn(() => bitmap) })),
     getSize: vi.fn(() => ({ width: 1440, height: 900 })),
     isEmpty: vi.fn(() => false),
+    resize: vi.fn(),
     toPNG: vi.fn(() => Buffer.from('png')),
   };
+  image.resize.mockReturnValue(image);
+  return image;
 }
 
 const electronMocks = vi.hoisted(() => {
@@ -137,6 +140,11 @@ describe('screen capture lifecycle', () => {
     expect(win.setContentSize).toHaveBeenCalledWith(1440, 900);
     expect(win.loadURL).toHaveBeenCalledWith('app://app/?showcase=characters');
     expect(win.webContents.sendInputEvent).toHaveBeenCalledTimes(2);
+    expect(electronMocks.image.resize).toHaveBeenCalledWith({
+      width: 1440,
+      height: 900,
+      quality: 'best',
+    });
     expect(fileMocks.writeFile).toHaveBeenCalledWith(
       expect.stringMatching(/captures[\\/]characters\.png$/),
       Buffer.from('png'),

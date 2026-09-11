@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateSceneDataType,
   CreateStoryUpdate,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateSceneDataSchema, PartialSceneSchema } from '@keres/shared';
 import { and, eq, not, sql } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { chapters, locations, scenes, stories, storyCalendars } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -17,7 +18,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Scene';
 
   constructor() {
-    super('scenes', 'id', 'version', CreateSceneDataSchema, PartialSceneSchema, {
+    super('id', 'version', CreateSceneDataSchema, PartialSceneSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
@@ -35,9 +36,10 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     chapterId: string | null | undefined,
     locationId: string | null | undefined,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (chapterId) {
-      const chapter = await db.query.chapters.findFirst({
+      const chapter = await database.query.chapters.findFirst({
         where: and(
           eq(chapters.id, chapterId),
           eq(chapters.storyId, storyId),
@@ -54,7 +56,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
 
     if (!locationId) return;
 
-    const location = await db.query.locations.findFirst({
+    const location = await database.query.locations.findFirst({
       where: and(
         eq(locations.id, locationId),
         eq(locations.storyId, storyId),
@@ -69,9 +71,13 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  private async validateOverrideCalendar(storyId: string, calendarId: string | null | undefined) {
+  private async validateOverrideCalendar(
+    storyId: string,
+    calendarId: string | null | undefined,
+    database: CompatibleDb = db,
+  ) {
     if (!calendarId) return;
-    const calendar = await db.query.storyCalendars.findFirst({
+    const calendar = await database.query.storyCalendars.findFirst({
       where: and(
         eq(storyCalendars.id, calendarId),
         eq(storyCalendars.storyId, storyId),
@@ -86,8 +92,8 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  private async _isStoryLinear(storyId: string): Promise<boolean> {
-    const story = await db.query.stories.findFirst({
+  private async _isStoryLinear(storyId: string, database: CompatibleDb = db): Promise<boolean> {
+    const story = await database.query.stories.findFirst({
       where: eq(stories.id, storyId),
       columns: {
         type: true,
@@ -101,10 +107,11 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     sceneId: string,
     isStart: boolean | undefined,
     isFinish: boolean | undefined,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (isStart === true) {
       // Unset isStart for all other scenes in the same story
-      await db
+      await database
         .update(scenes)
         .set({ isStart: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
         .where(
@@ -114,7 +121,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
 
     if (isFinish === true) {
       // Unset isFinish for all other scenes in the same story
-      await db
+      await database
         .update(scenes)
         .set({ isFinish: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
         .where(
@@ -123,28 +130,43 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateSceneDataType = this.createSchema.parse(update.data);
 
-    const currentScene = await this.findById(update.id!);
+    const currentScene = await this.findById(update.id!, database);
     if (currentScene) {
       throw new Error(`Conflict: Scene with ID ${update.id} already exists.`);
     }
 
-    await this.validateRelatedEntities(storyId, validatedData.chapterId, validatedData.locationId);
-    await this.validateOverrideCalendar(storyId, validatedData.calendarDateOverrideCalendarId);
+    await this.validateRelatedEntities(
+      storyId,
+      validatedData.chapterId,
+      validatedData.locationId,
+      database,
+    );
+    await this.validateOverrideCalendar(
+      storyId,
+      validatedData.calendarDateOverrideCalendarId,
+      database,
+    );
 
-    const isLinear = await this._isStoryLinear(storyId);
+    const isLinear = await this._isStoryLinear(storyId, database);
     if (isLinear && (validatedData.isStart || validatedData.isFinish)) {
       await this._handleIsStartFinishFlags(
         storyId,
         update.id!,
         validatedData.isStart,
         validatedData.isFinish,
+        database,
       );
     }
 
-    await db.insert(scenes).values({
+    await database.insert(scenes).values({
       id: update.id!,
       storyId: storyId,
       ...validatedData,
@@ -160,7 +182,8 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -172,13 +195,17 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
           ? validatedChanges.chapterId
           : currentEntity.chapterId;
       const newLocationId = validatedChanges.locationId ?? currentEntity.locationId;
-      await this.validateRelatedEntities(storyId, newChapterId, newLocationId);
+      await this.validateRelatedEntities(storyId, newChapterId, newLocationId, database);
     }
     if (validatedChanges.calendarDateOverrideCalendarId !== undefined) {
-      await this.validateOverrideCalendar(storyId, validatedChanges.calendarDateOverrideCalendarId);
+      await this.validateOverrideCalendar(
+        storyId,
+        validatedChanges.calendarDateOverrideCalendarId,
+        database,
+      );
     }
 
-    const isLinear = await this._isStoryLinear(storyId);
+    const isLinear = await this._isStoryLinear(storyId, database);
     if (
       isLinear &&
       (validatedChanges.isStart !== undefined || validatedChanges.isFinish !== undefined)
@@ -188,6 +215,7 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
         update.id!,
         validatedChanges.isStart,
         validatedChanges.isFinish,
+        database,
       );
     }
 
@@ -199,17 +227,18 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     // As a bonus, throwing on conflict now also rolls back the isStart/isFinish flag-flip above
     // via the same transaction, instead of leaving other scenes' flags cleared while this
     // scene's own edit silently failed to apply.
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // The client is now responsible for creating operations to re-index other scenes.
     // The API's role is simply to mark this specific scene as deleted.
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

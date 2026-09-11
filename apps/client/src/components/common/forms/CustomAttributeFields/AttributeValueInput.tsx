@@ -15,7 +15,7 @@ import {
   getEntityAppearance,
 } from '@keres/shared';
 import React, { useMemo } from 'react';
-import { customAttributeSuggestionType } from '../../../../services/storymanagement/SuggestionService';
+import { CUSTOM_FIELD_METADATA_PREFIX } from '../../../../utils/customAttributeFieldMetadata';
 import { useTheme } from '../../../../theme';
 import { getCommonInputStyles } from '../../../../theme/commonStyles';
 
@@ -121,7 +121,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
           <SuggestionTextInput
             value={value}
             onChangeText={onChange}
-            type={customAttributeSuggestionType(suggestionFieldId)}
+            type={`${CUSTOM_FIELD_METADATA_PREFIX}${suggestionFieldId}`}
             storyId={storyId}
             placeholder={placeholder}
             style={style}
@@ -144,7 +144,7 @@ const AttributeValueInput: React.FC<AttributeValueInputProps> = ({
         <SuggestionListInput
           values={items}
           onChange={(next) => onChange(encodeAttributeValue(AttributeType.SUGGESTION_LIST, next))}
-          type={suggestionFieldId ? customAttributeSuggestionType(suggestionFieldId) : ''}
+          type={suggestionFieldId ? `${CUSTOM_FIELD_METADATA_PREFIX}${suggestionFieldId}` : ''}
           storyId={storyId ?? ''}
           placeholder={placeholder}
           style={style}

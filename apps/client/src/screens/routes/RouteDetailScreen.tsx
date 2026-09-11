@@ -1,16 +1,18 @@
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -18,8 +20,7 @@ import { useStoryRoutes } from '../../hooks/useStoryRoutes';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
+import { commonDetailStyleDefs } from '../../theme/commonStyles';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteDetail'>;
 type ScreenRoute = RouteProp<PlotsStackParamList, 'RouteDetail'>;
@@ -54,49 +55,40 @@ export default function RouteDetailScreen() {
       }),
     [colors],
   );
-  const container = getCommonContainerStyles(colors);
-  useFocusEffect(
-    useCallback(() => {
-      const title = route?.name ?? t('route_details_title');
-      setDocumentTitle(title);
-      navigation.getParent()?.setOptions({
-        title,
-        headerRight: () =>
-          route ? (
-            <View style={{ flexDirection: 'row', gap: 16, marginRight: 15 }}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('RouteReader', { routeId })}
-                accessibilityLabel={t('route_reader')}
-              >
-                <Ionicons name="book-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('RouteTimeline', { routeId })}
-                accessibilityLabel={t('route_timeline')}
-              >
-                <Ionicons name="git-branch-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-              {canEdit ? (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('RouteSteps', { routeId })}
-                  accessibilityLabel={t('edit_route_steps')}
-                >
-                  <Ionicons name="list-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
-              ) : null}
-              {canEdit ? (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('RouteForm', { routeId })}
-                  accessibilityLabel={t('edit_route')}
-                >
-                  <Ionicons name="pencil-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          ) : null,
-      });
-    }, [canEdit, colors.text, navigation, route, routeId, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: route?.name ?? t('route_details_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'book-outline',
+        label: t('route_reader'),
+        onPress: () => navigation.navigate('RouteReader', { routeId }),
+        visible: !!route,
+      },
+      {
+        id: 'action-1',
+        icon: 'git-branch-outline',
+        label: t('route_timeline'),
+        onPress: () => navigation.navigate('RouteTimeline', { routeId }),
+        visible: !!route,
+      },
+      {
+        id: 'action-2',
+        icon: 'list-outline',
+        label: t('edit_route_steps'),
+        onPress: () => navigation.navigate('RouteSteps', { routeId }),
+        visible: !!(route && canEdit),
+      },
+      {
+        id: 'action-3',
+        icon: 'pencil-outline',
+        label: t('edit_route'),
+        onPress: () => navigation.navigate('RouteForm', { routeId }),
+        visible: !!(route && canEdit),
+      },
+    ],
+  });
   if (loading) return <ScreenLoading padded message={t('loading_routes')} />;
   if (!route)
     return (
@@ -107,8 +99,7 @@ export default function RouteDetailScreen() {
   const execution = executionValidationOf(routeId);
   const unavailableIssue = execution.issues.find((issue) => issue.kind === 'choice_unavailable');
   return (
-    <ScrollView style={container.container} contentContainerStyle={{ paddingBottom: 28 }}>
-      <Text style={styles.mainTitle}>{route.name}</Text>
+    <DetailContainer title={route.name}>
       <Text style={styles.count}>{t('route_step_count', { count: steps.length })}</Text>
       {issues.length ? (
         <Text style={styles.invalid}>
@@ -123,7 +114,7 @@ export default function RouteDetailScreen() {
         </Text>
       ) : null}
       <DetailField label={t('route_details')} value={route.details || t('common_na')} />
-      <Text style={styles.sectionTitle}>{t('route_steps')}</Text>
+      <ScreenSection title={t('route_steps')} />
       {steps.length ? (
         steps.map((step) => {
           const scene = sceneById(step.sceneId);
@@ -166,6 +157,6 @@ export default function RouteDetailScreen() {
       >
         {t('route_timeline')}
       </Button>
-    </ScrollView>
+    </DetailContainer>
   );
 }

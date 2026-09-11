@@ -75,17 +75,14 @@ export const syncRoute = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
   .post(
     '/:storyId',
-    async ({ params, body, user, set, headers }) => {
+    async ({ params, body, user, headers }) => {
       assertProtocolCompatible(headers);
-      // Destructure 'user' and 'set'
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       if (!syncAttemptLimiter.registerAttempt(user.userId)) {
-        set.status = 429;
-        throw new Error('Too many sync requests. Try again shortly.');
+        throw new AppError(429, 'Too many sync requests. Try again shortly.');
       }
 
       const { storyId } = params;
@@ -158,17 +155,14 @@ export const syncRoute = new Elysia()
   )
   .get(
     '/:storyId/pull',
-    async ({ params, query, user, set, headers }) => {
+    async ({ params, query, user, headers }) => {
       assertProtocolCompatible(headers);
-      // Destructure 'user' and 'set'
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       if (!syncAttemptLimiter.registerAttempt(user.userId)) {
-        set.status = 429;
-        throw new Error('Too many sync requests. Try again shortly.');
+        throw new AppError(429, 'Too many sync requests. Try again shortly.');
       }
 
       const { storyId } = params;
@@ -223,11 +217,10 @@ export const syncRoute = new Elysia()
   )
   .get(
     '/pullpreviews',
-    async ({ user, set, headers }) => {
+    async ({ user, headers }) => {
       assertProtocolCompatible(headers);
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       const storyPreviews = await syncService.getStoriesWithLastOperationVersionForUser(

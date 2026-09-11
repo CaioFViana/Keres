@@ -65,6 +65,7 @@ jest.mock('../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
 }));
+jest.mock('../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => undefined }));
 jest.mock('../../src/utils/documentTitle', () => ({
   __esModule: true,
   useDocumentTitle: () => undefined,

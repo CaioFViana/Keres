@@ -403,6 +403,25 @@ describe('buildConflictSummaries - entity display name fallbacks', () => {
     expect(summary.title).not.toBe('gallery-1');
   });
 
+  it('uses the entity-owned Effect display name rather than a hard-coded field list', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Effect',
+          entityId: 'effect-1',
+          localValues: { triggerName: 'door_open', effectType: 'triggerSet' },
+          contestedFields: [],
+        }),
+      ],
+      noSnapshots,
+      new Map(),
+      t,
+    );
+
+    expect(summary.title).toBe('door_open');
+    expect(summary.title).not.toBe('effect-1');
+  });
+
   it('still falls back to the raw id when nothing identifying is available at all', () => {
     const [summary] = buildConflictSummaries(
       [conflict({ entityType: 'Chapter', entityId: 'chapter-1', contestedFields: [] })],

@@ -20,6 +20,7 @@ export const FEATURE_GROUPS = [
       'timing',
       'locations',
       'locationMap',
+      'locationMapCanvas',
       'items',
       'itemJourneys',
       'worldRules',
@@ -27,6 +28,7 @@ export const FEATURE_GROUPS = [
       'tags',
       'gallery',
       'favorites',
+      'boards',
     ],
   },
   {
@@ -88,16 +90,19 @@ export const PLATFORMS = [
  */
 export const SHOWCASE_SCREENS = [
   { id: 'narrative-elements', width: 1440, height: 900 },
-  { id: 'story-map', width: 1440, height: 900 },
-  { id: 'story-timeline', width: 1440, height: 900 },
-  { id: 'plot-matrix', width: 1440, height: 900 },
-  { id: 'plot-coverage', width: 1440, height: 620 },
+  { id: 'dashboard', width: 1440, height: 900 },
   { id: 'character-list', width: 1440, height: 900 },
+  { id: 'character-detail', width: 1440, height: 900 },
   { id: 'relation-map', width: 1440, height: 900 },
+  { id: 'story-map', width: 1440, height: 900 },
+  { id: 'board-canvas', width: 1440, height: 900 },
+  { id: 'story-timeline', width: 1440, height: 900 },
   // O mapa de locais é uma faixa baixa: fotografado na janela cheia, sobrava meia página em
   // branco embaixo do desenho.
   { id: 'location-map', width: 1440, height: 560 },
-  { id: 'dashboard', width: 1440, height: 900 },
+  { id: 'location-map-canvas', width: 1440, height: 900 },
+  { id: 'plot-coverage', width: 1440, height: 620 },
+  { id: 'plot-matrix', width: 1440, height: 900 },
 ] as const;
 
 export type ShowcaseScreenId = (typeof SHOWCASE_SCREENS)[number]['id'];

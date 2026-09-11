@@ -118,6 +118,23 @@ describe('EntityNameBatchResolver', () => {
 
     expect(names.has('Character:ghost')).toBe(false);
   });
+
+  it('can exclude soft-deleted entities for live content lookups', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'deleted-character',
+      storyId: STORY_ID,
+      name: 'Memória',
+      ...base,
+      isDeleted: true,
+    });
+
+    const names = await createEntityNameBatchResolver(database.db).resolveMany(
+      [{ entityType: 'Character', entityId: 'deleted-character' }],
+      { includeDeleted: false },
+    );
+
+    expect(names.has('Character:deleted-character')).toBe(false);
+  });
 });
 
 /**

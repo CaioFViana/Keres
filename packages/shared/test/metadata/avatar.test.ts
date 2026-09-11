@@ -16,7 +16,7 @@ describe('avatar icon options', () => {
     expect(AVATAR_ICON_OPTIONS).toContain(DEFAULT_AVATAR_ICON);
   });
 
-  // The names become both a font glyph (the app) and an .svg file name (the site).
+  // The names become both a font glyph (the app) and an .svg file name (the Showcase).
   it('uses names that are safe as file names', () => {
     for (const icon of AVATAR_ICON_OPTIONS) {
       expect(icon).toMatch(/^[a-z][a-z-]*[a-z]$/);
@@ -31,7 +31,7 @@ describe('avatarColorFromSeed', () => {
     }
   });
 
-  // The same user has to get the same colour in the app and on the site, with nothing stored in the database.
+  // The same user has to get the same colour in the app and on the Showcase, with nothing stored in the database.
   it('gives the same seed the same color every time', () => {
     expect(avatarColorFromSeed('ana')).toBe(avatarColorFromSeed('ana'));
     expect(avatarColorFromSeed('ana')).not.toBe(avatarColorFromSeed('ana '));

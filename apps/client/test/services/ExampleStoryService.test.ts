@@ -62,6 +62,18 @@ it('ships every public-domain example as a complete showcase of applicable featu
         ),
       ).toEqual([]);
       expect(story.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
+      expect(story.storyArcs).toHaveLength(1);
+      expect(story.storyArcs[0]).toMatchObject({ storyId: story.story.id, isDefault: true });
+      expect(story.chapters.every((chapter: any) => chapter.arcId === story.storyArcs[0].id)).toBe(
+        true,
+      );
+      if (story.story.type === 'branching') {
+        expect(story.routes.length).toBeGreaterThan(0);
+        expect(story.routeSteps.length).toBeGreaterThan(0);
+      } else {
+        expect(story.routes).toEqual([]);
+        expect(story.routeSteps).toEqual([]);
+      }
       expect(story.chapters.length).toBeGreaterThanOrEqual(3);
       expect(story.scenes.length).toBeGreaterThanOrEqual(12);
       expect(

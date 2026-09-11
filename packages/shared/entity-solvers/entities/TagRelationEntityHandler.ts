@@ -1,0 +1,79 @@
+import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
+import type { EntitySolverContext } from '../contracts';
+import { resolveEntityReference } from '../EntityReferenceResolver';
+import type { EntityDomainHandler } from './contracts';
+
+const stringValue = (row: Record<string, unknown>, field: string) => {
+  const value = row[field];
+  return typeof value === 'string' && value.trim() ? value : undefined;
+};
+
+const resolveName = async (context: EntitySolverContext, entityId: string) => {
+  const row = await context.read(OperationLogEntityType.TagRelation, entityId);
+  if (!row) return undefined;
+  const [tag, target] = await Promise.all([
+    resolveEntityReference(context, OperationLogEntityType.Tag, stringValue(row, 'tagId') ?? ''),
+    resolveEntityReference(
+      context,
+      stringValue(row, 'relationType') as OperationLogEntityType,
+      stringValue(row, 'relationId') ?? '',
+    ),
+  ]);
+  return context.translate('tag_attributed_to_entity', {
+    tagname: tag.name ?? context.translate('unknown_tag'),
+    entityname: target.name ?? context.translate('unknown_entity'),
+    entitytype: target.type ?? context.translate('unknown_entity_type'),
+  });
+};
+
+/** Presentation metadata for a Tag attributed to another entity. */
+export const tagRelationEntityHandler: EntityDomainHandler = {
+  entityType: OperationLogEntityType.TagRelation,
+  exportCollection: 'tagRelations',
+  exportReferences: [
+    { field: 'tagId', targetEntityType: OperationLogEntityType.Tag, required: true },
+  ],
+  conflictLabelKey: 'tag_relation',
+  isConflictRelation: true,
+  conflictReferences: [{ kind: 'dynamic', idField: 'relationId', typeField: 'relationType' }],
+  referenceFields: { tagId: OperationLogEntityType.Tag },
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('tag_relation'),
+      detail: `${context.nameOf(OperationLogEntityType.Tag, row.tagId)} - ${context.nameOf(
+        typeof row.relationType === 'string' ? row.relationType : undefined,
+        row.relationId,
+      )}`,
+    };
+  },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.TagRelation, entityId);
+    if (!row) return undefined;
+    const targetType = stringValue(row, 'relationType') ?? '?';
+    const [tag, target] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Tag,
+        stringValue(row, 'tagId') ?? '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        targetType as OperationLogEntityType,
+        stringValue(row, 'relationId') ?? '',
+      ),
+    ]);
+    return `#${tag} → ${targetType}:${target}`;
+  },
+  async resolveReference(context, entityId) {
+    return {
+      name: await resolveName(context, entityId),
+      type: context.translate('tag_relation'),
+    };
+  },
+  async resolveOperationLogName(context, entityId) {
+    const name = await resolveName(context, entityId);
+    const type = context.translate('tag_relation');
+    return name ? `${type} - ${name}` : type;
+  },
+};

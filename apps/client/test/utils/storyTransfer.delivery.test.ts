@@ -35,6 +35,7 @@ const shareMock = Sharing.shareAsync as jest.Mock;
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const USER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAX';
+const CHAPTER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAW';
 const REQUIRED_COLLECTIONS = [
   'chapters',
   'scenes',
@@ -163,6 +164,54 @@ describe('story transfer picker', () => {
       copyToCacheDirectory: true,
       multiple: false,
     });
+  });
+
+  it('migrates a V9 JSON package to a default Arc before importing it locally', async () => {
+    const timestamp = '2026-09-04T12:00:00.000Z';
+    const legacyPackage = validExport({
+      formatVersion: 9,
+      story: {
+        id: STORY_ID,
+        userId: USER_ID,
+        title: 'A Queda',
+        type: 'linear',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+      chapters: [
+        {
+          id: CHAPTER_ID,
+          storyId: STORY_ID,
+          name: 'Abertura',
+          index: 1,
+          summary: null,
+          isFavorite: false,
+          extraNotes: null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          version: 1,
+          isDeleted: false,
+          deletedAt: null,
+        },
+      ],
+    });
+    getDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [
+        {
+          name: 'backup-v9.json',
+          file: { text: jest.fn().mockResolvedValue(JSON.stringify(legacyPackage)) },
+        },
+      ],
+    });
+
+    const picked = await pickStoryExportFile();
+
+    expect(picked?.story.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
+    expect(picked?.story.storyArcs).toMatchObject([
+      { storyId: STORY_ID, title: 'Arc', isDefault: true },
+    ]);
+    expect(picked?.story.chapters[0].arcId).toBe(picked?.story.storyArcs?.[0].id);
   });
 
   it('keeps the import error useful for unreadable and malformed JSON files', async () => {

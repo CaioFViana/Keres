@@ -97,7 +97,6 @@ beforeEach(() => {
   mocks.listDeleted.mockResolvedValue([]);
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
-  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal(
     'confirm',
     vi.fn(() => true),

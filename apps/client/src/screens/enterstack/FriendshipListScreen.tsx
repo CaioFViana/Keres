@@ -1,7 +1,8 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +21,6 @@ import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 type FriendshipListScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -37,7 +37,7 @@ const FriendshipListScreen = () => {
   useBackButtonHandler();
   const { colors } = useTheme();
   const { t } = useTranslation();
-  useDocumentTitle(t('manage_friendships'));
+
   const drizzleClient = useDrizzle();
   // Stable references: recreating these every render would change their identity, which sits
   // in fetchFriendshipsAndServers' dependency array and would re-subscribe/re-run on every render.
@@ -98,23 +98,13 @@ const FriendshipListScreen = () => {
     navigation.navigate('FriendshipForm');
   }, [navigation]);
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('manage_friendships'),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-            <TouchableOpacity
-              onPress={handleAddFriendship}
-              accessibilityLabel={t('add_new_friendship')}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-        ),
-      });
-    }, [colors.text, handleAddFriendship, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('manage_friendships'),
+    actions: [
+      { id: 'action-0', icon: 'add', label: t('add_new_friendship'), onPress: handleAddFriendship },
+    ],
+  });
 
   const runFriendshipAction = useFriendshipActionHandler(
     useCallback((serverId: string) => serversMap.get(serverId), [serversMap]),

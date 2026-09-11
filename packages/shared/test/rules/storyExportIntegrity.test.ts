@@ -3,6 +3,7 @@ import {
   assertStoryExportIntegrity,
   findStoryExportIntegrityErrors,
   findStoryExportIntegrityViolations,
+  pruneDanglingStoryExportRows,
   StoryIntegrityError,
 } from '../../rules/storyExportIntegrity';
 
@@ -25,8 +26,18 @@ const buildExport = (overrides: Record<string, unknown> = {}) => ({
     { id: 'loc-b', storyId: 'story-1', name: 'B' },
   ],
   scenes: [
-    { id: 'scene-1', storyId: 'story-1', chapterId: 'chapter-1', locationId: 'loc-a' },
-    { id: 'scene-2', storyId: 'story-1', chapterId: 'chapter-1', locationId: 'loc-b' },
+    {
+      id: 'scene-1',
+      storyId: 'story-1',
+      chapterId: 'chapter-1',
+      locationId: 'loc-a',
+    },
+    {
+      id: 'scene-2',
+      storyId: 'story-1',
+      chapterId: 'chapter-1',
+      locationId: 'loc-b',
+    },
   ],
   characterRelations: [],
   characterScenes: [],
@@ -51,8 +62,66 @@ const relation = (
 });
 
 describe('story export integrity', () => {
+  it('prunes required dangling references until cascaded rows are stable', () => {
+    const pruned = pruneDanglingStoryExportRows(
+      buildExport({
+        characterScenes: [
+          {
+            id: 'presence-live',
+            storyId: 'story-1',
+            characterId: 'char-a',
+            sceneId: 'scene-1',
+          },
+          {
+            id: 'presence-dead',
+            storyId: 'story-1',
+            characterId: 'gone',
+            sceneId: 'scene-1',
+          },
+        ],
+        choices: [
+          {
+            id: 'choice-dead',
+            storyId: 'story-1',
+            sceneId: 'missing',
+            nextSceneId: 'scene-1',
+          },
+        ],
+        choiceCheckGroups: [{ id: 'group-dead', storyId: 'story-1', choiceId: 'choice-dead' }],
+        choiceChecks: [{ id: 'check-dead', storyId: 'story-1', groupId: 'group-dead' }],
+      }),
+    );
+    expect(pruned.characterScenes).toEqual([expect.objectContaining({ id: 'presence-live' })]);
+    expect((pruned as any).choices).toEqual([]);
+    expect((pruned as any).choiceCheckGroups).toEqual([]);
+    expect((pruned as any).choiceChecks).toEqual([]);
+  });
   it('accepts a story whose rows agree with one another', () => {
     expect(findStoryExportIntegrityViolations(buildExport())).toEqual([]);
+  });
+
+  it('refuses a chapter assigned to an Arc the package does not carry', () => {
+    const violations = findStoryExportIntegrityErrors(
+      buildExport({
+        storyArcs: [{ id: 'arc-a', storyId: 'story-1' }],
+        chapters: [
+          {
+            id: 'chapter-1',
+            storyId: 'story-1',
+            name: 'One',
+            arcId: 'arc-missing',
+          },
+        ],
+      }),
+    );
+
+    expect(violations).toMatchObject([
+      {
+        kind: 'dangling_reference',
+        collection: 'chapters',
+        ids: ['chapter-1'],
+      },
+    ]);
   });
 
   it('refuses the same pair of characters related twice', () => {
@@ -108,11 +177,16 @@ describe('story export integrity', () => {
 
   it('refuses a character related to itself', () => {
     const violations = findStoryExportIntegrityErrors(
-      buildExport({ characterRelations: [relation('rel-1', 'char-a', 'char-a', 'Trust')] }),
+      buildExport({
+        characterRelations: [relation('rel-1', 'char-a', 'char-a', 'Trust')],
+      }),
     );
 
     expect(violations).toHaveLength(1);
-    expect(violations[0]).toMatchObject({ kind: 'self_relation', ids: ['rel-1'] });
+    expect(violations[0]).toMatchObject({
+      kind: 'self_relation',
+      ids: ['rel-1'],
+    });
   });
 
   /** Two places can both contain and connect to one another; they cannot contain one another twice. */
@@ -150,7 +224,9 @@ describe('story export integrity', () => {
 
   it('refuses a reference to an entity the file does not carry', () => {
     const violations = findStoryExportIntegrityErrors(
-      buildExport({ characterRelations: [relation('rel-1', 'char-a', 'char-missing', 'Trust')] }),
+      buildExport({
+        characterRelations: [relation('rel-1', 'char-a', 'char-missing', 'Trust')],
+      }),
     );
 
     expect(violations).toHaveLength(1);
@@ -169,7 +245,10 @@ describe('story export integrity', () => {
     );
 
     expect(violations).toHaveLength(1);
-    expect(violations[0]).toMatchObject({ kind: 'duplicate_id', ids: ['char-a'] });
+    expect(violations[0]).toMatchObject({
+      kind: 'duplicate_id',
+      ids: ['char-a'],
+    });
   });
 
   it('refuses a row belonging to another story', () => {
@@ -180,7 +259,10 @@ describe('story export integrity', () => {
     );
 
     expect(violations).toHaveLength(1);
-    expect(violations[0]).toMatchObject({ kind: 'foreign_story', ids: ['tag-1'] });
+    expect(violations[0]).toMatchObject({
+      kind: 'foreign_story',
+      ids: ['tag-1'],
+    });
   });
 
   /**
@@ -190,8 +272,18 @@ describe('story export integrity', () => {
   it('reports a duplicate with no constraint behind it as a warning, not an error', () => {
     const story = buildExport({
       characterScenes: [
-        { id: 'cs-1', storyId: 'story-1', characterId: 'char-a', sceneId: 'scene-1' },
-        { id: 'cs-2', storyId: 'story-1', characterId: 'char-a', sceneId: 'scene-1' },
+        {
+          id: 'cs-1',
+          storyId: 'story-1',
+          characterId: 'char-a',
+          sceneId: 'scene-1',
+        },
+        {
+          id: 'cs-2',
+          storyId: 'story-1',
+          characterId: 'char-a',
+          sceneId: 'scene-1',
+        },
       ],
     });
 

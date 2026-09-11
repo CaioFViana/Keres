@@ -1,13 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import GalleryAddLinkModal from '@/src/components/features/gallery/GalleryAddLinkModal';
@@ -31,7 +31,6 @@ import { useGalleryStore } from '../../state/galleryStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 
 export type GalleryScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'GalleryStack'>,
@@ -53,21 +52,10 @@ const GalleryListScreen = () => {
   const [linkModalVisible, setLinkModalVisible] = useState(false);
 
   const {
+    listProps,
     items: galleries,
-    loading,
     error,
     storyId,
-    searchQuery,
-    activeSort,
-    sortDirection,
-    favoriteFilterState,
-    activeFilterTags,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFavoriteFilterChange,
-    handleFilterTagsChange,
     toggleFavorite,
     refetch,
   } = useEntityListScreen({
@@ -168,29 +156,20 @@ const GalleryListScreen = () => {
     });
   }, [importFromPicker, t]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('gallery_title'));
-      navigation.getParent()?.setOptions({
-        title: t('gallery_title'),
-        headerRight: canEdit
-          ? () => (
-              <TouchableOpacity
-                onPress={handleAddMedia}
-                style={{ marginRight: 15 }}
-                disabled={importing}
-              >
-                {importing ? (
-                  <ActivityIndicator size="small" color={colors.text} />
-                ) : (
-                  <Ionicons name="add" size={30} color={colors.text} />
-                )}
-              </TouchableOpacity>
-            )
-          : undefined,
-      });
-    }, [navigation, colors.text, t, handleAddMedia, importing, canEdit]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('gallery_title'),
+    actions: [
+      {
+        id: 'add',
+        icon: 'add',
+        label: t('add'),
+        onPress: handleAddMedia,
+        visible: canEdit,
+        busy: importing,
+      },
+    ],
+  });
 
   const handleViewDetails = useCallback(
     (galleryId: string) => {
@@ -257,29 +236,18 @@ const GalleryListScreen = () => {
         }}
       />
       <GenericFilterSortList
+        {...listProps}
         key={`gallery-columns-${numColumns}`}
         data={galleries}
         renderItem={renderGalleryItem}
         keyExtractor={(item) => item.id}
         numColumns={numColumns}
         columnWrapperStyle={styles.columnWrapper}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('search_media')}
-        currentSearchTerm={searchQuery}
         filterOptions={mediaTypeOptions}
-        onFilterChange={handleFilterTagsChange}
-        selectedFilterValues={activeFilterTags}
         sortOptions={sortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
         entityName="Gallery"
         storyId={storyId || ''}
-        isLoading={loading}
       />
     </View>
   );

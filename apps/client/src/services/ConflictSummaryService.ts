@@ -1,4 +1,12 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import {
+  CONFLICT_RELATION_ENTITY_TYPES,
+  entityFieldMetadata,
+  getEntityConflictLabelKey,
+  getEntityRowReferences,
+  getSimpleDisplayName,
+  resolveEntityReferenceFieldType,
+  summarizeEntityConflictRelation,
+} from '@keres/shared';
 import type { TFunction } from 'i18next';
 import type { EntityRef } from './EntityNameBatchResolver';
 import type { PendingConflict } from './SyncConflictService';
@@ -21,120 +29,8 @@ function fieldLabel(entityType: string, field: string, t: TFunction): string {
   return meta ? t(meta.label) : humanizeFieldName(field);
 }
 
-/**
- * Content fields (not those of the 8 relations above) that are IDs of another entity - the same
- * mapping `OperationLogDetailScreen.tsx`'s `REFERENCE_FIELD_ENTITY_TYPES` uses to
- * resolve `EntityService.getEntityIdentifier`. Without this, a genuine conflict on `Scene.chapterId`
- * or `Choice.nextSceneId` showed the raw ID in the field-by-field comparison instead of the name.
- */
-const CONTENT_REFERENCE_FIELDS: Record<string, string> = {
-  characterId: 'Character',
-  character1Id: 'Character',
-  character2Id: 'Character',
-  characterOwnerId: 'Character',
-  newCharacterOwnerId: 'Character',
-  sceneId: 'Scene',
-  nextSceneId: 'Scene',
-  itemId: 'Item',
-  locationId: 'Location',
-  chapterId: 'Chapter',
-  tagId: 'Tag',
-  noteId: 'Note',
-  worldRuleId: 'WorldRule',
-  galleryId: 'Gallery',
-  choiceId: 'Choice',
-};
-
-/**
- * The entity's name in the synchronization protocol mapped to the already existing translation key.
- * Moved from `SyncConflictModal.tsx` - both the conflict list and the diff drill-in
- * need the same label.
- */
-export const ENTITY_LABEL_KEYS: Record<string, string> = {
-  Board: 'board',
-  Chapter: 'chapter',
-  Character: 'character',
-  CharacterRelation: 'character_relation',
-  CharacterScene: 'character_scene_relation',
-  Choice: 'choice',
-  Item: 'item',
-  ItemJourney: 'item_journey',
-  Location: 'location',
-  Note: 'note',
-  NoteRelation: 'note_relation',
-  Scene: 'scene',
-  Story: 'story',
-  Tag: 'tag',
-  TagRelation: 'tag_relation',
-  WorldRule: 'world_rule',
-  Stat: 'stat',
-  StatStrength: 'stat_strength',
-  StatRelation: 'stat_relation',
-  Mode: 'mode',
-};
-
-type RelationFieldTarget =
-  /** It always points at the same entity type (e.g. `CharacterScene.characterId` is always a Character). */
-  | { kind: 'fixed'; field: string; entityType: string }
-  /**
-   * A polymorphic pair: the target's type comes from another field's value at runtime
-   * (e.g. `GalleryRelation.ownerId` + `ownerType`).
-   */
-  | { kind: 'dynamic'; idField: string; typeField: string };
-
-/**
- * Which fields of each relation are IDs, and which entity type each one points at - used
- * both to assemble the batch of references to resolve (`collectEntityRefs`) and to assemble
- * each conflict's readable sentence (`buildRelationSummary`). Field names here are those of the
- * synchronization payload (localValues/serverValues of a `PendingConflict`), which are also
- * the local table's column names for every relation.
- */
-const RELATION_FIELD_TARGETS: Record<string, RelationFieldTarget[]> = {
-  CharacterRelation: [
-    { kind: 'fixed', field: 'character1Id', entityType: 'Character' },
-    { kind: 'fixed', field: 'character2Id', entityType: 'Character' },
-  ],
-  TagRelation: [
-    { kind: 'fixed', field: 'tagId', entityType: 'Tag' },
-    { kind: 'dynamic', idField: 'relationId', typeField: 'relationType' },
-  ],
-  NoteRelation: [
-    { kind: 'fixed', field: 'noteId', entityType: 'Note' },
-    { kind: 'dynamic', idField: 'relationId', typeField: 'relationType' },
-  ],
-  LocationRelation: [
-    { kind: 'fixed', field: 'locationAId', entityType: 'Location' },
-    { kind: 'fixed', field: 'locationBId', entityType: 'Location' },
-  ],
-  GalleryRelation: [
-    { kind: 'fixed', field: 'galleryId', entityType: 'Gallery' },
-    { kind: 'dynamic', idField: 'ownerId', typeField: 'ownerType' },
-  ],
-  CharacterScene: [
-    { kind: 'fixed', field: 'characterId', entityType: 'Character' },
-    { kind: 'fixed', field: 'sceneId', entityType: 'Scene' },
-  ],
-  ItemJourney: [
-    { kind: 'fixed', field: 'itemId', entityType: 'Item' },
-    { kind: 'fixed', field: 'sceneId', entityType: 'Scene' },
-    { kind: 'fixed', field: 'newCharacterOwnerId', entityType: 'Character' },
-  ],
-  SeeAlsoRelation: [
-    { kind: 'dynamic', idField: 'entityAId', typeField: 'entityAType' },
-    { kind: 'dynamic', idField: 'entityBId', typeField: 'entityBType' },
-  ],
-  StatRelation: [
-    { kind: 'fixed', field: 'characterId', entityType: 'Character' },
-    { kind: 'fixed', field: 'statId', entityType: 'Stat' },
-    { kind: 'fixed', field: 'modeId', entityType: 'Mode' },
-  ],
-};
-
-/**
- * The 8 entity types that are relations/joins: always resolved into a readable line,
- * never into a field-by-field diff table (the original problem that motivated this change).
- */
-export const RELATION_ENTITY_TYPES = new Set(Object.keys(RELATION_FIELD_TARGETS));
+/** Compatibility export for existing callers; the membership is declared by entity handlers. */
+export const RELATION_ENTITY_TYPES: ReadonlySet<string> = CONFLICT_RELATION_ENTITY_TYPES;
 
 export interface ConflictDiffField {
   field: string;
@@ -248,33 +144,16 @@ export function collectEntityRefs(
 ): EntityRef[] {
   const refs: EntityRef[] = [];
   for (const conflict of conflicts) {
-    const targets = RELATION_FIELD_TARGETS[conflict.entityType];
-    if (targets) {
+    if (RELATION_ENTITY_TYPES.has(conflict.entityType as any)) {
       const merged = mergedValuesOf(conflict, snapshots);
-      for (const target of targets) {
-        if (target.kind === 'fixed') {
-          const entityId = merged[target.field];
-          if (typeof entityId === 'string' && entityId) {
-            refs.push({ entityType: target.entityType, entityId });
-          }
-        } else {
-          const entityId = merged[target.idField];
-          const entityType = merged[target.typeField];
-          if (
-            typeof entityId === 'string' &&
-            entityId &&
-            typeof entityType === 'string' &&
-            entityType
-          ) {
-            refs.push({ entityType, entityId });
-          }
-        }
+      for (const target of getEntityRowReferences(conflict.entityType, merged)) {
+        refs.push({ entityType: target.entityType, entityId: target.id });
       }
       continue;
     }
 
     for (const field of conflict.contestedFields) {
-      const entityType = CONTENT_REFERENCE_FIELDS[field];
+      const entityType = resolveEntityReferenceFieldType(field);
       if (!entityType) continue;
       const entityId = conflict.localValues[field] ?? conflict.serverValues?.[field];
       if (typeof entityId === 'string' && entityId) {
@@ -303,70 +182,17 @@ function buildRelationSummary(
 ): { title: string; detail: string } {
   const merged = mergedValuesOf(conflict, snapshots);
   const unknown = t('unknown_entity');
-
-  switch (conflict.entityType) {
-    case 'CharacterRelation': {
-      const a = nameOf(names, 'Character', merged.character1Id, unknown);
-      const b = nameOf(names, 'Character', merged.character2Id, unknown);
-      return {
-        title: t('character_relation'),
-        detail: merged.relationType ? `${a} - ${b} (${merged.relationType})` : `${a} - ${b}`,
-      };
+  return (
+    summarizeEntityConflictRelation(conflict.entityType, merged, {
+      unknown,
+      nameOf: (entityType, entityId) =>
+        nameOf(names, entityType, typeof entityId === 'string' ? entityId : undefined, unknown),
+      translate: (key, values) => t(key, values),
+    }) ?? {
+      title: t(getEntityConflictLabelKey(conflict.entityType)),
+      detail: conflict.entityId,
     }
-    case 'TagRelation': {
-      const tag = nameOf(names, 'Tag', merged.tagId, unknown);
-      const target = nameOf(names, merged.relationType, merged.relationId, unknown);
-      return { title: t('tag_relation'), detail: `${tag} - ${target}` };
-    }
-    case 'NoteRelation': {
-      const note = nameOf(names, 'Note', merged.noteId, unknown);
-      const target = nameOf(names, merged.relationType, merged.relationId, unknown);
-      return { title: t('note_relation'), detail: `${note} - ${target}` };
-    }
-    case 'LocationRelation': {
-      const a = nameOf(names, 'Location', merged.locationAId, unknown);
-      const b = nameOf(names, 'Location', merged.locationBId, unknown);
-      const detail =
-        merged.relationType === 'contains'
-          ? t('location_contains_location', { parentName: a, childName: b })
-          : t('location_connected_to_location', { locationAName: a, locationBName: b });
-      return { title: t('location_relation'), detail };
-    }
-    case 'GalleryRelation': {
-      const gallery = nameOf(names, 'Gallery', merged.galleryId, unknown);
-      const owner = nameOf(names, merged.ownerType, merged.ownerId, unknown);
-      return { title: t('gallery_relation'), detail: `${gallery} - ${owner}` };
-    }
-    case 'CharacterScene': {
-      const character = nameOf(names, 'Character', merged.characterId, unknown);
-      const scene = nameOf(names, 'Scene', merged.sceneId, unknown);
-      return { title: t('character_scene_relation'), detail: `${character} - ${scene}` };
-    }
-    case 'ItemJourney': {
-      const item = nameOf(names, 'Item', merged.itemId, unknown);
-      const scene = nameOf(names, 'Scene', merged.sceneId, unknown);
-      return { title: t('item_journey'), detail: `${item} ${t('showed_in_scene')} ${scene}` };
-    }
-    case 'SeeAlsoRelation': {
-      const a = nameOf(names, merged.entityAType, merged.entityAId, unknown);
-      const b = nameOf(names, merged.entityBType, merged.entityBId, unknown);
-      return { title: t('see_also_relation'), detail: `${a} - ${b}` };
-    }
-    case 'StatRelation': {
-      const character = nameOf(names, 'Character', merged.characterId, unknown);
-      const stat = nameOf(names, 'Stat', merged.statId, unknown);
-      const owner = merged.modeId
-        ? `${character} · ${nameOf(names, 'Mode', merged.modeId, unknown)}`
-        : character;
-      const value = merged.value ?? unknown;
-      return { title: t('stat_relation'), detail: `${owner} - ${stat}: ${value}` };
-    }
-    default:
-      return {
-        title: t(ENTITY_LABEL_KEYS[conflict.entityType] || conflict.entityType),
-        detail: conflict.entityId,
-      };
-  }
+  );
 }
 
 /**
@@ -389,7 +215,7 @@ export function buildConflictSummaries(
   t: TFunction,
 ): ConflictSummary[] {
   return conflicts.map((conflict) => {
-    const entityLabel = t(ENTITY_LABEL_KEYS[conflict.entityType] || conflict.entityType, {
+    const entityLabel = t(getEntityConflictLabelKey(conflict.entityType), {
       defaultValue: conflict.entityType,
     });
 
@@ -413,20 +239,15 @@ export function buildConflictSummaries(
       conflict.entityType === 'Board' && conflict.contestedFields.includes('content');
     const canQuickResolve = isBinaryContentConflict(conflict) || offerBoardClone;
     const emptyLabel = t('conflict_empty_value');
-    // `name`/`title` covers most entities, but not all: Choice has neither of the
-    // two (the identifying field is `text`), and Gallery has an optional `title`, falling back to the file
-    // name (the same rule `EntityNameBatchResolver.ts` already uses). And neither of the two can
-    // come from `localValues`/`serverValues` alone: a `deleted_on_server` conflict does not carry the
-    // name on either side (see `mergedValuesOf`) - that is why the local row's snapshot
-    // enters as a third level, before falling back to the raw ID.
+    // The entity handler owns its display field and fallback (Choice.text, Gallery.fileName,
+    // Effect.triggerName, etc.). A deleted_on_server conflict may carry none of them in either
+    // payload, so the local row snapshot remains the final input before falling back to the raw ID.
     const mergedContent = mergedValuesOf(conflict, snapshots);
-    const entityName = formatValue(
-      mergedContent.name ?? mergedContent.title ?? mergedContent.text ?? mergedContent.fileName,
-      conflict.entityId,
-    );
+    const entityName =
+      getSimpleDisplayName(conflict.entityType, mergedContent) ?? conflict.entityId;
 
     const displayValue = (field: string, value: unknown): string => {
-      const targetType = CONTENT_REFERENCE_FIELDS[field];
+      const targetType = resolveEntityReferenceFieldType(field);
       if (targetType && typeof value === 'string' && value) {
         return names.get(`${targetType}:${value}`) || formatValue(value, emptyLabel);
       }

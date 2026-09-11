@@ -7,19 +7,19 @@ import {
   UnknownEntityTypeError,
 } from '../../services/AdminRecoveryService';
 import { requireAdmin } from '../../utils/adminAuth';
+import { AppError } from '../../utils/errors';
 
 export const adminRecoveryRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
 
   .get(
     '/deleted',
-    async ({ query, user, set }) => {
+    async ({ query, user }) => {
       await requireAdmin(user);
 
       const parsed = AdminDeletedItemsQuerySchema.safeParse(query);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid query' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid query');
       }
 
       return adminRecoveryService.listDeleted(parsed.data);
@@ -45,19 +45,17 @@ export const adminRecoveryRoutes = new Elysia()
 
   .post(
     '/:entityType/:id/restore',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       const adminUserId = await requireAdmin(user);
 
       try {
         return await adminRecoveryService.restore(params.entityType, params.id, adminUserId);
       } catch (error) {
         if (error instanceof UnknownEntityTypeError) {
-          set.status = 400;
-          return { message: error.message };
+          throw new AppError(400, error.message);
         }
         if (error instanceof RecoveryEntityNotFoundError) {
-          set.status = 404;
-          return { message: error.message };
+          throw new AppError(404, error.message);
         }
         throw error;
       }
@@ -76,13 +74,12 @@ export const adminRecoveryRoutes = new Elysia()
 
   .get(
     '/operation-log',
-    async ({ query, user, set }) => {
+    async ({ query, user }) => {
       await requireAdmin(user);
 
       const parsed = AdminOperationLogQuerySchema.safeParse(query);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid query' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid query');
       }
 
       return adminRecoveryService.browseOperationLog(parsed.data);

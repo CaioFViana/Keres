@@ -1,25 +1,22 @@
-import Button from '@/src/components/common/controls/Button/Button'; // Custom Button
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
+import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'; // Import ActivityIndicator
-import { useDrizzle } from '../../db';
-import type { ServerSelect } from '../../db/schemas/servers';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
-import { friendshipApiService } from '../../services/FriendshipApiService'; // Import friendshipApiService
-import { createFriendshipService } from '../../services/FriendshipService';
-import { createServerService } from '../../services/ServerService'; // Import ServerService
-import { userApiService } from '../../services/UserApiService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
+import { useFriendshipFormActions } from './useFriendshipFormActions';
+import { useFriendshipFormResources } from './useFriendshipFormResources';
+import { useFriendshipFormState } from './useFriendshipFormState';
 
 type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -27,11 +24,8 @@ type FriendshipFormScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 /**
- * Add-only: sending a friend request. All status transitions (accept/decline/cancel/unfriend/
- * blacklist/unblacklist) go through `FriendshipListScreen`/`FriendDetailScreen`'s proper
- * API-backed actions instead - this screen used to also expose a raw status `Picker` in an
- * "edit" mode that wrote `friendships.status` directly to the local DB, bypassing every one of
- * those API calls and letting local/server state silently diverge.
+ * Add-only: sending a friend request. Status transitions go through
+ * FriendshipListScreen / FriendDetailScreen API-backed actions.
  */
 const FriendshipFormScreen = () => {
   const navigation = useNavigation<FriendshipFormScreenNavigationProp>();
@@ -39,168 +33,50 @@ const FriendshipFormScreen = () => {
 
   const { colors } = useTheme();
   const { t } = useTranslation();
-  useDocumentTitle(t('add_new_friendship'));
-  const drizzleClient = useDrizzle();
-  // Stable references: recreating these every render would change their identity, which sits
-  // in the effect/callback dependency arrays below and would otherwise re-trigger them forever.
-  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
-  const serverService = useRef(createServerService(drizzleClient)).current;
+  useScreenHeader({ target: 'parent', title: t('add_new_friendship') });
   const { userId: currentUserId } = useUserSettingsStore();
-
-  const [friendTag, setFriendTag] = useState('');
-  const [resolvedFriendUserId, setResolvedFriendUserId] = useState<string | null>(null);
-  const [selectedServerId, setSelectedServerId] = useState('');
-  const [servers, setServers] = useState<ServerSelect[]>([]);
-  const [friendUsername, setFriendUsername] = useState<string | null>(null); // New state for friend's username
-  const [isCheckingFriend, setIsCheckingFriend] = useState(false); // New state for loading indicator
-  const [friendFound, setFriendFound] = useState<boolean | null>(null); // New state to indicate if friend was found
-
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
 
-  useEffect(() => {
-    const fetchServers = async () => {
-      try {
-        const fetchedServers = await serverService.getAllServers();
-        setServers(fetchedServers);
-        if (fetchedServers.length === 1) {
-          setSelectedServerId(fetchedServers[0].id); // Only one server: pick it automatically
-        }
-      } catch (error) {
-        console.error('Error fetching servers for friendship form:', error);
-        AppAlert.alert(t('error'), t('failed_to_load_form_data'));
-      }
-    };
-    fetchServers();
-  }, [serverService, t]);
-
-  const selectedServer = servers.find((s) => s.id === selectedServerId);
-
-  const handleCheckFriendTag = useCallback(async () => {
-    if (!friendTag || friendTag.trim().length < 3) {
-      AppAlert.alert(t('error'), t('invalid_friend_id_format'));
-      setFriendUsername(null);
-      setFriendFound(null);
-      return;
-    }
-
-    if (!selectedServer) {
-      AppAlert.alert(t('error'), t('selected_server_invalid'));
-      return;
-    }
-
-    setIsCheckingFriend(true);
-    setFriendFound(null); // Reset
-    setFriendUsername(null); // Reset
-    setResolvedFriendUserId(null);
-    try {
-      const userDetails = await userApiService.getUserByTag(selectedServer, friendTag.trim());
-      if (userDetails) {
-        setFriendUsername(userDetails.username);
-        setResolvedFriendUserId(userDetails.id);
-        setFriendFound(true);
-        AppAlert.alert(
-          t('success'),
-          t('user_found_with_username', { username: userDetails.username }),
-        );
-      } else {
-        setFriendFound(false);
-        AppAlert.alert(t('error'), t('user_not_found_on_server'));
-      }
-    } catch (error) {
-      console.error('Error checking friend tag:', error);
-      AppAlert.alert(t('error'), t('failed_to_check_user_id'));
-      setFriendFound(false);
-    } finally {
-      setIsCheckingFriend(false);
-    }
-  }, [friendTag, selectedServer, t]);
-
-  const handleSaveFriendship = useCallback(async () => {
-    if (!currentUserId) {
-      AppAlert.alert(t('error'), t('not_logged_in'));
-      return;
-    }
-    if (!resolvedFriendUserId || !selectedServerId) {
-      AppAlert.alert(t('error'), t('all_fields_required'));
-      return;
-    }
-    if (friendFound === false) {
-      // Prevent saving if friend tag is explicitly not found
-      AppAlert.alert(t('error'), t('friend_not_found_on_server'));
-      return;
-    }
-    if (!friendUsername) {
-      // Ensure username is available after check
-      AppAlert.alert(t('error'), t('please_check_friend_id'));
-      return;
-    }
-    if (!selectedServer || !selectedServer.idUser) {
-      AppAlert.alert(t('error'), t('selected_server_invalid'));
-      return;
-    }
-
-    try {
-      const currentUserServerId = selectedServer.idUser; // The current user's ID on the selected server
-
-      // Compare per-server IDs, not the local app-installation currentUserId (a
-      // different ID namespace entirely) - otherwise this check can never fire.
-      if (resolvedFriendUserId === currentUserServerId) {
-        AppAlert.alert(t('error'), t('cannot_friend_self'));
-        return;
-      }
-
-      // Call the server first: if it rejects the request (already friends, blocked,
-      // wrong server, etc.) we must not leave an orphaned local PENDING row behind.
-      await friendshipApiService.sendFriendRequest(selectedServer, resolvedFriendUserId);
-
-      await friendshipService.addFriendship({
-        senderId: currentUserServerId, // Use the current user's ID on the selected server
-        receiverId: resolvedFriendUserId, // The friend's ID on the selected server (resolved from their tag)
-        serverId: selectedServerId,
-        status: FriendStatus.PENDING, // New friendships always start as PENDING
-        friendUsername: friendUsername, // Use the fetched username
-      });
-
-      AppAlert.alert(t('success'), t('friendship_added_successfully'));
-      navigation.goBack();
-    } catch (error) {
-      console.error('Error saving friendship:', error);
-      AppAlert.alert(t('error'), t('failed_to_save_friendship'));
-    }
-  }, [
-    currentUserId,
-    resolvedFriendUserId,
+  const { friendshipServiceRef, serverServiceRef } = useFriendshipFormResources();
+  const friendshipFormState = useFriendshipFormState({ serverServiceRef });
+  const {
+    friendTag,
     selectedServerId,
-    selectedServer,
-    friendshipService,
-    navigation,
-    t,
+    servers,
     friendUsername,
+    isCheckingFriend,
     friendFound,
-  ]);
+    handleServerChange,
+    handleFriendTagChange,
+  } = friendshipFormState;
+
+  const { handleCheckFriendTag, handleSaveFriendship } = useFriendshipFormActions({
+    state: friendshipFormState,
+    friendshipServiceRef,
+    navigation,
+    currentUserId,
+  });
 
   return (
-    <View style={commonContainerStyles.container}>
+    <KeyboardAwareScreen
+      style={commonContainerStyles.container}
+      contentContainerStyle={styles.content}
+    >
       <Text style={[styles.title, { color: colors.text }]}>{t('add_new_friendship')}</Text>
 
-      <Text style={[styles.label, { color: colors.text }]}>{t('server')}</Text>
-      <SingleSelectPill
-        options={servers.map((server) => ({
-          label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
-          value: server.id,
-        }))}
-        value={selectedServerId || null}
-        onValueChange={(itemValue) => {
-          setSelectedServerId(itemValue || '');
-          // Changing the server invalidates any tag already checked against the previous one.
-          setFriendUsername(null);
-          setFriendFound(null);
-          setResolvedFriendUserId(null);
-        }}
-        placeholder={servers.length === 0 ? t('no_servers_available') : t('select_server')}
-        multiple={false}
-      />
+      <FormField label={t('server')}>
+        <SingleSelectPill
+          options={servers.map((server) => ({
+            label: server.tag ? `@${server.tag} — ${server.name}` : server.name,
+            value: server.id,
+          }))}
+          value={selectedServerId || null}
+          onValueChange={handleServerChange}
+          placeholder={servers.length === 0 ? t('no_servers_available') : t('select_server')}
+          multiple={false}
+        />
+      </FormField>
 
       <Text style={[styles.label, { color: colors.text }]}>{t('friend_id')}</Text>
       <View style={styles.inputWithButton}>
@@ -208,12 +84,7 @@ const FriendshipFormScreen = () => {
           style={[commonInputStyles.input, styles.friendIdInput]}
           placeholder={t('enter_friend_id')}
           value={friendTag}
-          onChangeText={(text) => {
-            setFriendTag(text);
-            setFriendUsername(null); // Reset username and found status on change
-            setFriendFound(null);
-            setResolvedFriendUserId(null);
-          }}
+          onChangeText={handleFriendTagChange}
           autoCapitalize="none"
         />
         <Button
@@ -236,15 +107,18 @@ const FriendshipFormScreen = () => {
 
       <Button
         onPress={handleSaveFriendship}
-        disabled={isCheckingFriend || friendFound === false || !friendUsername} // Disable button while checking, if friend not found, or if username not verified
+        disabled={isCheckingFriend || friendFound === false || !friendUsername}
       >
         {t('add_friendship')}
       </Button>
-    </View>
+    </KeyboardAwareScreen>
   );
 };
 
 const styles = StyleSheet.create({
+  content: {
+    flexGrow: 1,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',

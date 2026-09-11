@@ -248,6 +248,11 @@
             "singular": "Ramificação",
             "plural": "Ramificações",
             "grammaticalGender": "feminine"
+          },
+          "Arc": {
+            "singular": "Volume",
+            "plural": "Volumes",
+            "grammaticalGender": "masculine"
           }
         }
       }

@@ -1,4 +1,5 @@
-import React from 'react';
+import { getOnColorForFill } from '@keres/shared';
+import React, { useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -24,25 +25,32 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  const styles = StyleSheet.create({
-    button: {
+  const styles = useMemo(() => {
+    const base = {
       backgroundColor: colors.primary,
       paddingVertical: 12,
       paddingHorizontal: 20,
       borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       ...(Platform.OS === 'web' ? { outlineWidth: 0, outlineColor: 'transparent' } : {}),
-    },
-    disabledButton: {
-      opacity: 0.6,
-    },
-    buttonText: {
-      color: colors.onPrimary,
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  });
+    };
+    const flattened = StyleSheet.flatten([base, style]);
+    const background =
+      typeof flattened?.backgroundColor === 'string' ? flattened.backgroundColor : colors.primary;
+
+    return StyleSheet.create({
+      button: base,
+      disabledButton: {
+        opacity: 0.6,
+      },
+      buttonText: {
+        color: getOnColorForFill(colors, background),
+        fontSize: 16,
+        fontWeight: 'bold',
+      },
+    });
+  }, [colors, style]);
 
   return (
     <TouchableOpacity

@@ -54,7 +54,6 @@ describe('core narrative entity write lifecycles', () => {
       chapterId: 'chapter-1',
       locationId: 'location-1',
       name: 'Chegada',
-      index: 1,
     });
     const updated = await service.updateScene(TEST_USER_ID, scene.id, {
       name: 'Chegada ao porto',

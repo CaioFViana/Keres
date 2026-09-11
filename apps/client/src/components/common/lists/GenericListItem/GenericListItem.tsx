@@ -19,6 +19,8 @@ interface GenericListItemProps {
   rightActions?: React.ReactNode;
   /** Items of a parent structure use less separation without losing the same behaviour. */
   density?: 'default' | 'nested';
+  /** Used by the desktop showcase capturer to expand a row without guessing at DOM text. */
+  accessibilityLabel?: string;
 }
 
 const MeasurementContext = React.createContext(false);
@@ -31,6 +33,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
   onPress,
   rightActions,
   density = 'default',
+  accessibilityLabel,
 }) => {
   const { colors } = useTheme();
   const isMeasuring = React.useContext(MeasurementContext);
@@ -164,7 +167,13 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
   return (
     <View style={[styles.container, density === 'nested' && styles.nestedContainer]}>
       <Animated.View style={[styles.header, animatedHeaderStyle]}>
-        <Pressable onPress={onPress} style={styles.headerToggle} />
+        <Pressable
+          onPress={onPress}
+          style={styles.headerToggle}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityState={{ expanded: isOpen }}
+        />
         {leadingIcon && (
           <View style={styles.leadingIcon} pointerEvents="none">
             {leadingIcon}

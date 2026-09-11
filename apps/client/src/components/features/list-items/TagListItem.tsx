@@ -1,4 +1,5 @@
 import React from 'react';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { StyleSheet, Text, View } from 'react-native';
 import type { TagSelect } from '../../../db/schemas/tags';
 import { useTheme } from '../../../theme';
@@ -15,7 +16,8 @@ interface TagListItemProps {
 const TagListItem: React.FC<TagListItemProps> = ({ tag, onViewDetails, onToggleFavorite }) => {
   const { colors } = useTheme();
 
-  const extraNotesSummary = truncate(tag.extraNotes || '', 150);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Tag, tag);
+  const extraNotesSummary = truncate(preview?.primaryDetail, 150);
 
   const styles = StyleSheet.create({
     tagInfo: {

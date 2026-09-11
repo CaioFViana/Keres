@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import React from 'react';
 import { Text, View } from 'react-native';
 import type { ChapterSelect, TagSelect } from '../../../db/schema';
@@ -34,7 +35,9 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
   const { colors } = useTheme();
   const [expandedSceneIds, setExpandedSceneIds] = React.useState<ReadonlySet<string>>(new Set());
 
-  const summaryText = truncate(chapter.summary, 150);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Chapter, chapter);
+  const summaryText = truncate(preview?.primaryDetail, 150);
+  const notesText = truncate(preview?.secondaryDetail, 150);
 
   const styles = createReferenceListItemStyles(colors);
 
@@ -80,7 +83,7 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
   const renderExpandedContent = (chap: ChapterSelect) => (
     <View>
       {summaryText && <Text style={styles.summaryText}>{summaryText}</Text>}
-      {chap.extraNotes && <Text style={styles.notesText}>{truncate(chap.extraNotes, 150)}</Text>}
+      {notesText && <Text style={styles.notesText}>{notesText}</Text>}
       {tags.length > 0 && <TagList tags={tags} />}
       {renderScenes?.({
         expandedSceneIds,
@@ -96,6 +99,12 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
     </View>
   );
 
+  const rowLabel = isUnchapteredGroup(chapter.id)
+    ? chapter.name
+    : chapter.type === 'event'
+      ? chapter.name
+      : `${chapter.index}. ${chapter.name}`;
+
   return (
     <GenericExpandedListItemWithActions
       item={chapter}
@@ -107,6 +116,7 @@ const ChapterListItem: React.FC<ChapterListItemProps> = ({
       renderHeaderContent={renderHeaderContent}
       renderExpandedContent={renderExpandedContent}
       initialExpanded={initialExpanded}
+      accessibilityLabel={rowLabel}
     />
   );
 };

@@ -4,9 +4,9 @@ import avatarIconNames from './avatarIcons.json';
  * A user's avatar: the icons they can choose and the colour shown while they have chosen none.
  *
  * It lives here, rather than in the app, because three places have to agree about it: the app
- * (where the person chooses), the API (which stores `avatarColor`/`avatarIcon`) and the public site
- * (which draws the same avatar for whoever published a story). With the list duplicated, a new icon
- * picked in the app would become an empty square on the site.
+ * (where the person chooses), the API (which stores `avatarColor`/`avatarIcon`) and the Showcase
+ * under `apps/admin` (which draws the same avatar for whoever published a story). With the list
+ * duplicated, a new icon picked in the app would become an empty square on the Showcase.
  */
 
 /**
@@ -14,8 +14,8 @@ import avatarIconNames from './avatarIcons.json';
  * "simple and light" system, and the app uses only Ionicons everywhere else.
  *
  * The names are Ionicons' own: they work both as a font glyph (app) and as an `.svg` file name
- * (site). The list lives in a `.json` next door because the site's build has to read it outside
- * TypeScript - the Vite plugin runs in Node, which does not load this package's `.ts` files.
+ * (Showcase). The list lives in a `.json` next door because the Showcase build has to read it
+ * outside TypeScript - the Vite plugin runs in Node, which does not load this package's `.ts` files.
  */
 export const AVATAR_ICON_OPTIONS: readonly string[] = avatarIconNames;
 
@@ -25,8 +25,9 @@ export type AvatarIconName = string;
 export const DEFAULT_AVATAR_ICON = 'person';
 
 /**
- * Fallback colours for whoever has not chosen one. It is the same palette that colours chapters on
- * the Story Map, chosen to work well on both light and dark backgrounds.
+ * Fallback colours for whoever has not chosen one. Medium saturation so the same hex stays
+ * readable on light and dark surfaces (Showcase included). Graph chapter colours live separately
+ * in `theme/graphEntityPalettes` with light/dark variants for MultiSelectPill contrast.
  */
 export const AVATAR_FALLBACK_PALETTE = [
   '#4F8DF7',
@@ -44,8 +45,8 @@ export const AVATAR_FALLBACK_PALETTE = [
 /**
  * A stable colour from a string (an id or a username).
  *
- * Deterministic on purpose: the same person always gets the same colour, in the app and on the site,
- * with nothing written to the database.
+ * Deterministic on purpose: the same person always gets the same colour, in the app and on the
+ * Showcase, with nothing written to the database.
  */
 export function avatarColorFromSeed(seed: string): string {
   let hash = 0;

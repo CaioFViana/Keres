@@ -171,12 +171,15 @@ describe('installing a shipped pack', () => {
   });
 
   it('reports a slug that does not exist instead of throwing', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(await createShippedPackService(db).installShippedPack('nope', 'en')).toEqual({
       status: 'not_found',
     });
     expect(await createShippedPackService(db).installShippedPack('comic', 'fr')).toEqual({
       status: 'not_found',
     });
+    expect(errorSpy).toHaveBeenCalledTimes(2);
+    errorSpy.mockRestore();
   });
 });
 

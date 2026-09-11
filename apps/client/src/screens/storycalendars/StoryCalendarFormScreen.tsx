@@ -1,15 +1,17 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import type { CalendarDefinitionType } from '@keres/shared';
 import { calendarDaysPerYear, CalendarDefinitionSchema } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import CalendarAnchorsModal from '@/src/components/features/calendars/CalendarAnchorsModal';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { CalendarRowField } from '@/src/components/features/calendars/CalendarRowList';
 import CalendarRowList from '@/src/components/features/calendars/CalendarRowList';
@@ -22,8 +24,7 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
-import { commonFormStyleDefs, getCommonInputStyles } from '@/src/theme/commonStyles';
-import { setDocumentTitle } from '@/src/utils/documentTitle';
+import { getCommonInputStyles } from '@/src/theme/commonStyles';
 
 /**
  * Describing a calendar.
@@ -65,15 +66,10 @@ const StoryCalendarFormScreen = () => {
   const [savedDefinition, setSavedDefinition] = useState<CalendarDefinitionType | null>(null);
   const [reviewingCalendarChange, setReviewingCalendarChange] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      const title = t(calendarId ? 'calendar_edit_title' : 'calendar_new_title');
-      // The drawer owns the header, so the title has to be set on the parent - see
-      // `StorySettingsScreen` for what happens when it is not.
-      navigation.getParent()?.setOptions({ title, headerRight: undefined });
-      setDocumentTitle(title);
-    }, [calendarId, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t(calendarId ? 'calendar_edit_title' : 'calendar_new_title'),
+  });
 
   useEffect(() => {
     if (!calendarId) return;
@@ -130,17 +126,21 @@ const StoryCalendarFormScreen = () => {
     label: string,
   ) => (
     <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        value={String(definition[key])}
-        editable={canEdit}
-        onChangeText={(text) => {
-          if (text && !/^\d+$/.test(text)) return;
-          patch({ [key]: Math.max(1, Number(text) || 1) } as Partial<CalendarDefinitionType>);
-        }}
-        keyboardType="number-pad"
-        style={[inputStyles.input, { marginBottom: 0 }]}
-      />
+      <FormField label={label}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={String(definition[key])}
+            editable={canEdit}
+            onChangeText={(text) => {
+              if (text && !/^\d+$/.test(text)) return;
+              patch({ [key]: Math.max(1, Number(text) || 1) } as Partial<CalendarDefinitionType>);
+            }}
+            keyboardType="number-pad"
+            style={[inputStyles.input, { marginBottom: 0 }]}
+          />
+        )}
+      </FormField>
     </View>
   );
 
@@ -148,7 +148,6 @@ const StoryCalendarFormScreen = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        ...commonFormStyleDefs(colors, 40),
         row: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
         summary: {
           fontSize: 13,
@@ -163,7 +162,6 @@ const StoryCalendarFormScreen = () => {
           borderTopColor: colors.border,
         },
         disclosureText: { fontSize: 15, fontWeight: '700', color: colors.primary },
-        buttons: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 26 },
         error: { fontSize: 13, color: colors.error, marginTop: 10, lineHeight: 19 },
       }),
     [colors],
@@ -223,25 +221,48 @@ const StoryCalendarFormScreen = () => {
   }, [calendarId, parsed, persist, savedDefinition]);
 
   return (
-    <KeyboardAwareScreen contentContainerStyle={styles.scrollViewContent}>
-      <Text style={styles.label}>{t('calendar_name')}</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        editable={canEdit}
-        placeholder={t('calendar_name_placeholder')}
-        style={inputStyles.input}
-      />
+    <EntityFormContainer
+      actions={
+        canEdit ? (
+          <>
+            <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
+            <Button
+              onPress={save}
+              disabled={saving || !parsed.success || !name.trim()}
+              testID="confirm-calendar-save"
+            >
+              {t('save')}
+            </Button>
+          </>
+        ) : undefined
+      }
+    >
+      <FormField label={t('calendar_name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={name}
+            onChangeText={setName}
+            editable={canEdit}
+            placeholder={t('calendar_name_placeholder')}
+            style={inputStyles.input}
+          />
+        )}
+      </FormField>
 
-      <Text style={styles.label}>{t('description')}</Text>
-      <TextInput
-        value={description}
-        onChangeText={setDescription}
-        editable={canEdit}
-        placeholder={t('calendar_description_placeholder')}
-        multiline
-        style={[inputStyles.multiline, { minHeight: 70 }]}
-      />
+      <FormField label={t('description')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={description}
+            onChangeText={setDescription}
+            editable={canEdit}
+            placeholder={t('calendar_description_placeholder')}
+            multiline
+            style={[inputStyles.multiline, { minHeight: 70 }]}
+          />
+        )}
+      </FormField>
 
       <CalendarRowList
         title={t('calendar_months')}
@@ -260,22 +281,26 @@ const StoryCalendarFormScreen = () => {
       <View style={[styles.row, { marginTop: 18 }]}>
         {numberField('daysPerWeek', t('calendar_days_per_week'))}
       </View>
-      <Text style={styles.label}>{t('calendar_weekday_names')}</Text>
-      <TextInput
-        value={weekdayText}
-        editable={canEdit}
-        onChangeText={(text) => {
-          setWeekdayText(text);
-          // Split on save-as-you-type so the schema can complain about the count immediately.
-          const names = text
-            .split(',')
-            .map((part) => part.trim())
-            .filter(Boolean);
-          patch({ weekdayNames: names });
-        }}
-        placeholder={t('calendar_weekday_names_placeholder')}
-        style={inputStyles.input}
-      />
+      <FormField label={t('calendar_weekday_names')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={weekdayText}
+            editable={canEdit}
+            onChangeText={(text) => {
+              setWeekdayText(text);
+              // Split on save-as-you-type so the schema can complain about the count immediately.
+              const names = text
+                .split(',')
+                .map((part) => part.trim())
+                .filter(Boolean);
+              patch({ weekdayNames: names });
+            }}
+            placeholder={t('calendar_weekday_names_placeholder')}
+            style={inputStyles.input}
+          />
+        )}
+      </FormField>
 
       <TouchableOpacity style={styles.disclosure} onPress={() => setShowAdvanced((on) => !on)}>
         <Text style={styles.disclosureText}>
@@ -285,13 +310,13 @@ const StoryCalendarFormScreen = () => {
 
       {showAdvanced && (
         <View>
-          <Text style={styles.label}>{t('calendar_clock')}</Text>
-          <Text style={styles.summary}>{t('calendar_clock_hint')}</Text>
-          <View style={styles.row}>
-            {numberField('hoursPerDay', t('calendar_hours_per_day'))}
-            {numberField('minutesPerHour', t('calendar_minutes_per_hour'))}
-            {numberField('secondsPerMinute', t('calendar_seconds_per_minute'))}
-          </View>
+          <ScreenSection title={t('calendar_clock')} description={t('calendar_clock_hint')}>
+            <View style={styles.row}>
+              {numberField('hoursPerDay', t('calendar_hours_per_day'))}
+              {numberField('minutesPerHour', t('calendar_minutes_per_hour'))}
+              {numberField('secondsPerMinute', t('calendar_seconds_per_minute'))}
+            </View>
+          </ScreenSection>
 
           <CalendarRowList
             title={t('calendar_eras')}
@@ -408,18 +433,6 @@ const StoryCalendarFormScreen = () => {
 
       {problem ? <Text style={styles.error}>{problem}</Text> : null}
 
-      {canEdit && (
-        <FormActions>
-          <Button onPress={() => navigation.goBack()}>{t('cancel')}</Button>
-          <Button
-            onPress={save}
-            disabled={saving || !parsed.success || !name.trim()}
-            testID="confirm-calendar-save"
-          >
-            {t('save')}
-          </Button>
-        </FormActions>
-      )}
       {calendarId && savedDefinition && parsed.success && (
         <CalendarAnchorsModal
           visible={reviewingCalendarChange}
@@ -434,7 +447,7 @@ const StoryCalendarFormScreen = () => {
           confirming={saving}
         />
       )}
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

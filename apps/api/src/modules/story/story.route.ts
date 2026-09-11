@@ -1,110 +1,20 @@
 import { FullStoryExportSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { ulid } from 'ulid';
-import { db } from '../../db';
-import { stories, storyTypeEnum } from '../../db/schema';
 import type { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
-import {
-  TierLimitExceededError,
-  tierEnforcementService,
-} from '../../services/TierEnforcementService';
 import { AppError } from '../../utils/errors';
-
-// Convert the enumValues array to an object for t.Enum()
-const storyTypeEnumObject = storyTypeEnum.enumValues.reduce(
-  (acc, val) => {
-    acc[val] = val;
-    return acc;
-  },
-  {} as Record<string, (typeof storyTypeEnum.enumValues)[number]>,
-);
 
 const storyExportImportService = new StoryExportImportService();
 
-/** Every column of a `stories` row, as `.returning()` sends it back after POST /. */
-const StoryResponseSchema = t.Object({
-  id: t.String(),
-  userId: t.String(),
-  title: t.String(),
-  type: t.String(),
-  description: t.Nullable(t.String()),
-  genre: t.Nullable(t.String()),
-  language: t.Nullable(t.String()),
-  author: t.Nullable(t.String()),
-  isFavorite: t.Boolean(),
-  favoriteBehavior: t.String(),
-  extraNotes: t.Nullable(t.String()),
-  theme: t.Nullable(t.String()),
-  normalizeSceneTiming: t.Boolean(),
-  allowReaderComments: t.Boolean(),
-  createdAt: t.Date(),
-  updatedAt: t.Date(),
-  version: t.Number(),
-  isDeleted: t.Boolean(),
-  deletedAt: t.Nullable(t.Date()),
-  lastOperationVersion: t.Number(),
-});
-
 export const storyRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
-  // Route to create a new story
-  .post(
-    '/',
-    async ({ body, user, set }) => {
-      if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
-      }
-
-      const { title, type } = body;
-
-      try {
-        await tierEnforcementService.assertCanCreateStory(user.userId);
-      } catch (error) {
-        if (error instanceof TierLimitExceededError) {
-          throw new AppError(403, error.message);
-        }
-        throw error;
-      }
-
-      const [newStory] = await db
-        .insert(stories)
-        .values({
-          id: ulid(),
-          userId: user.userId,
-          title,
-          type,
-        })
-        .returning();
-
-      if (!newStory) {
-        throw new AppError(500, 'Failed to create story.');
-      }
-
-      return newStory;
-    },
-    {
-      body: t.Object({
-        title: t.String(),
-        type: t.Enum(storyTypeEnumObject), // Use the converted object here
-      }),
-      response: StoryResponseSchema,
-      detail: {
-        summary: 'Create a new story',
-        description: 'Creates a new story associated with the authenticated user.',
-        tags: ['Story'],
-      },
-    },
-  )
   // Route to export a full story
   .get(
     '/:storyId/export',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       // Validate if the user has at least 'reader' permission for the story
@@ -114,8 +24,7 @@ export const storyRoutes = new Elysia()
         'reader',
       );
       if (!hasReadPermission) {
-        set.status = 404;
-        throw new Error('Story not found or not authorized for export.');
+        throw new AppError(404, 'Story not found or not authorized for export.');
       }
 
       const fullStory = await storyExportImportService.exportStory(params.storyId, user.userId);
@@ -142,10 +51,9 @@ export const storyRoutes = new Elysia()
   // Route to import a full story
   .post(
     '/import',
-    async ({ body, query, user, set }) => {
+    async ({ body, query, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
       const newStoryId = await storyExportImportService.importStory(

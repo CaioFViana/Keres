@@ -64,7 +64,13 @@ jest.mock('../../src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => ({ showNotification: mockShowNotification }),
 }));
-const mockDraftState = { draft: null as unknown, remember: jest.fn(), clear: jest.fn() };
+const mockDraftState = {
+  draft: null as unknown,
+  remember: jest.fn(),
+  hydrate: jest.fn(async () => null),
+  clear: jest.fn(),
+  reset: jest.fn(),
+};
 jest.mock('../../src/state/locationMapDraftStore', () => ({
   __esModule: true,
   useLocationMapDraftStore: { getState: () => mockDraftState },

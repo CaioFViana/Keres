@@ -1,14 +1,15 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { ChapterReorderingStoryUpdateSchema, reorderIndicesProblem } from '@keres/shared';
+import { ChapterReorderingStoryUpdateSchema, completeReorderProblem } from '@keres/shared';
 import type { CreateChapterDataType } from '@keres/shared/';
 import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
 import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
-import { db } from '../../db';
-import { chapters, scenes } from '../../db/schema'; // Import scenes table
+import { db, type CompatibleDb } from '../../db';
+import { chapters, scenes, storyArcs } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChapterSyncHandler extends BaseSyncEntityHandler<
@@ -18,30 +19,43 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Chapter';
 
   constructor() {
-    super(
-      'chapters', // Pass table name as string
-      'id',
-      'version',
-      CreateChapterDataSchema,
-      PartialChapterSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateChapterDataSchema, PartialChapterSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateChapterDataType = this.createSchema.parse(update.data);
+    if (validatedData.arcId) {
+      const arc = await database.query.storyArcs.findFirst({
+        where: and(
+          eq(storyArcs.id, validatedData.arcId),
+          eq(storyArcs.storyId, storyId),
+          eq(storyArcs.isDeleted, false),
+        ),
+      });
+      if (!arc) {
+        throw new SyncConflictError(
+          'validation',
+          `Arc with ID ${validatedData.arcId} does not belong to story ${storyId}.`,
+        );
+      }
+    }
 
-    const currentChapter = await this.findById(update.id!);
+    const currentChapter = await this.findById(update.id!, database);
     if (currentChapter) {
       throw new Error(`Conflict: Chapter with ID ${update.id} already exists.`);
     }
 
-    await db.insert(chapters).values({
+    await database.insert(chapters).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client
@@ -58,7 +72,8 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate | ChapterReorderingStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (update.type === 'reorder' && update.entity === 'Chapter') {
       // Refined check
@@ -68,11 +83,11 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
       // Perform version check for the Chapter itself
       this.checkVersionConflict(
         validatedReorderUpdate.version!,
-        currentEntity[this.versionColumnName],
+        currentEntity.version,
         validatedReorderUpdate.id!,
       );
 
-      await db.transaction(async (tx) => {
+      await database.transaction(async (tx) => {
         // 1. Validate reorderItems against actual scenes in the chapter
         const existingScenes = await tx.query.scenes.findMany({
           where: and(
@@ -87,24 +102,9 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
           },
         });
 
-        const existingSceneIds = new Set(existingScenes.map((s) => s.id));
-        const reorderSceneIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
-
-        // Ensure all reorder items correspond to existing scenes in this chapter
-        if (
-          reorderSceneIds.size !== existingSceneIds.size ||
-          ![...reorderSceneIds].every((id) => existingSceneIds.has(id))
-        ) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Reorder items do not match current scenes in chapter or contain invalid scene IDs.',
-          );
-        }
-
-        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
-        // `buildReorderItems` from it, and this handler enforces the same thing.
-        const problem = reorderIndicesProblem(
-          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        const problem = completeReorderProblem(
+          existingScenes.map((scene) => scene.id),
+          validatedReorderUpdate.reorderItems,
         );
         if (problem) {
           throw new SyncConflictError('validation', problem);
@@ -141,7 +141,7 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
       });
     } else {
       // If it's not a reorder update, delegate to the base class's update method
-      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, database);
     }
   }
 }

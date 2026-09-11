@@ -39,6 +39,7 @@ import migration_35 from './0034_crazy_amphibian';
 import migration_36 from './0035_same_miek';
 import migration_37 from './0036_organic_komodo';
 import migration_38 from './0037_closed_silver_fox';
+import migration_39 from './0038_good_jocasta';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -79,6 +80,7 @@ const migrations = [
   { id: 36, name: '0035_same_miek', run: migration_36 },
   { id: 37, name: '0036_organic_komodo', run: migration_37 },
   { id: 38, name: '0037_closed_silver_fox', run: migration_38 },
+  { id: 39, name: '0038_good_jocasta', run: migration_39 },
 ];
 
 export default migrations;

@@ -38,7 +38,7 @@ const TriStateToggleButton: React.FC<TriStateToggleButtonProps> = ({
     } else if (value === false) {
       return {
         iconName: 'close-circle' as const,
-        iconColor: colors.onPrimary,
+        iconColor: colors.onError,
         backgroundColor: colors.error,
       };
     } else {

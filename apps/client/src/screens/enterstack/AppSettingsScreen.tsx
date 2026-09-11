@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -17,14 +18,13 @@ import { servers } from '../../db/schema';
 import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { mediaFileService } from '../../services/MediaFileService';
-import { SyncEngineService } from '../../services/SyncEngineService'; // Import SyncEngineService
+import { syncEngine } from '../../services/sync/appSyncEngine';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
@@ -33,7 +33,7 @@ type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerPar
 const SettingsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  useDocumentTitle(t('settings_title'));
+  useScreenHeader({ target: 'self', title: t('settings_title') });
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -116,7 +116,7 @@ const SettingsScreen = () => {
               // Clearing the user first prevents SyncInitializer effects from rebuilding a
               // WebSocket while the remaining asynchronous cleanup is still in progress.
               resetSettings();
-              await Promise.all([realtimeShutdown, SyncEngineService.getInstance().reset()]);
+              await Promise.all([realtimeShutdown, syncEngine.reset()]);
               await authTokenManager.clearAllAuth(serverIds);
               setAuthDb(null);
               await mediaFileService.deleteAllMedia();
@@ -280,11 +280,6 @@ const styles = StyleSheet.create({
   },
   settings: {
     flexShrink: 0,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
   },
   settingItem: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '../../src/db';
 import { apiLogs, stories } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 
 let admin: TestUser;
@@ -12,11 +12,7 @@ beforeEach(async () => {
   await truncateAll();
   admin = await registerUser('root');
   await promoteToAdmin(admin.userId);
-  const created = await request('POST', '/stories/', {
-    token: admin.token,
-    body: { title: 'Auditada', type: 'linear' },
-  });
-  storyId = created.data.id;
+  storyId = (await uploadTestStory(admin.token, 'Auditada')).id;
 });
 
 describe('admin recovery', () => {

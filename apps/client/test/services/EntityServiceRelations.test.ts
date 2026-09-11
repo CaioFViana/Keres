@@ -5,6 +5,7 @@ import { AttributeType, OperationLogEntityType } from '@keres/shared';
 import type { TFunction } from 'i18next';
 import * as schema from '../../src/db/schema';
 import { EntityService } from '../../src/services/EntityService';
+import { resolveRelationEntityName } from '../../src/services/EntityIdentifierResolver';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -316,6 +317,32 @@ describe('EntityService.getEntityIdentifier', () => {
     });
 
     await expect(identifierOf('Board', 'board-1')).resolves.toBe('Mapa da cidade');
+  });
+
+  it('keeps the relation type when its row is gone', async () => {
+    await expect(
+      resolveRelationEntityName(
+        database.db,
+        OperationLogEntityType.CharacterRelation,
+        'gone',
+        STORY_ID,
+        t,
+      ),
+    ).resolves.toEqual({ name: undefined, type: 'character_relation' });
+  });
+
+  it('resolves a story arc by its title', async () => {
+    await database.db.insert(schema.storyArcs).values({
+      id: 'arc-1',
+      storyId: STORY_ID,
+      title: 'Livro I',
+      description: null,
+      sortOrder: 0,
+      isDefault: true,
+      ...base,
+    });
+
+    await expect(identifierOf('StoryArc', 'arc-1')).resolves.toBe('Livro I');
   });
 
   it('resolves a character relation by both participants', async () => {

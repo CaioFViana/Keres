@@ -27,6 +27,7 @@ import {
   SYNC_INTERVAL_MS,
   SyncEngineService,
 } from '../../src/services/SyncEngineService';
+import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -195,7 +196,7 @@ const readStory = () =>
  * that `startSync` uses to choose between the normal cadence and the fast-retry one.
  */
 async function runOneCycle(): Promise<boolean> {
-  return (engine as any).performSync();
+  return (engine as any).performSync(new AbortController().signal);
 }
 
 beforeEach(async () => {
@@ -221,15 +222,14 @@ beforeEach(async () => {
   mockShowNotification.mockClear();
   mockSyncStoryMedia.mockClear();
 
-  engine = SyncEngineService.getInstance();
-  engine.setDbInstance(database.db);
+  engine = createAppSyncEngine();
+  await engine.bindDatabase(database.db);
   await seedServer();
-  await engine.configure(STORY_ID, { ...SERVER, idUser: 'server-user' } as never);
+  await engine.activateStory(STORY_ID, { ...SERVER, idUser: 'server-user' } as never);
 });
 
 afterEach(async () => {
-  engine.stopSync();
-  await engine.configure(undefined, null);
+  await engine.deactivateStory();
   delete (axios.defaults as any).adapter;
   database.close();
   jest.restoreAllMocks();
@@ -1073,7 +1073,7 @@ describe('when the server cannot be reached', () => {
 
 describe('guards before a cycle runs', () => {
   it('does nothing without a story', async () => {
-    await engine.configure(undefined, { ...SERVER, idUser: 'server-user' } as never);
+    await engine.deactivateStory();
 
     await expect(runOneCycle()).resolves.toBe(false);
     expect(seen).toEqual([]);
@@ -1103,6 +1103,16 @@ describe('guards before a cycle runs', () => {
 });
 
 describe('engine control surface', () => {
+  it('exposes explicit context lifecycle transitions', async () => {
+    expect(engine.lifecycle).toBe('active');
+
+    engine.stopSync();
+    expect(engine.lifecycle).toBe('active');
+
+    await engine.deactivateStory();
+    expect(engine.lifecycle).toBe('idle');
+  });
+
   it('forwards an explicit sync request to the scheduler', () => {
     const request = jest.spyOn((engine as any).scheduler, 'request');
 
@@ -1111,15 +1121,90 @@ describe('engine control surface', () => {
     expect(request).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the active context stable until an in-flight cycle finishes', async () => {
+    let finishCycle!: () => void;
+    const contextsSeen: string[] = [];
+    jest.spyOn(engine as any, 'performSync').mockImplementation(async () => {
+      contextsSeen.push((engine as any).storyId);
+      await new Promise<void>((resolve) => {
+        finishCycle = resolve;
+      });
+      contextsSeen.push((engine as any).storyId);
+      return false;
+    });
+
+    engine.startSync();
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    let transitionFinished = false;
+    const transition = engine
+      .activateStory('story-2', {
+        ...SERVER,
+        id: 'server-2',
+        idUser: 'server-user',
+        url: 'http://servidor-2',
+      } as never)
+      .then(() => {
+        transitionFinished = true;
+      });
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+
+    expect(transitionFinished).toBe(false);
+    expect((engine as any).storyId).toBe(STORY_ID);
+
+    finishCycle();
+    await transition;
+
+    expect(contextsSeen).toEqual([STORY_ID, STORY_ID]);
+    expect((engine as any).storyId).toBe('story-2');
+    expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
+  });
+
+  it('rejects a context transition when stopAndWait times out and keeps the live story', async () => {
+    const stopAndWait = jest
+      .spyOn((engine as any).scheduler, 'stopAndWait')
+      .mockResolvedValue('timed_out');
+    const resume = jest.spyOn((engine as any).scheduler, 'resume');
+    const previousBaseUrl = (engine as any).client.defaults.baseURL;
+
+    const outcome = await engine.deactivateStory().then(
+      () => 'applied',
+      (error: Error) => error.message,
+    );
+
+    expect(outcome).toMatch(/context transition timed out/);
+    expect((engine as any).storyId).toBe(STORY_ID);
+    expect((engine as any).client.defaults.baseURL).toBe(previousBaseUrl);
+    expect(resume).toHaveBeenCalled();
+
+    // Restore before afterEach's deactivateStory(), which needs a normal idle stop.
+    stopAndWait.mockResolvedValue('idle');
+  });
+
+  it('does not let an abandoned cycle deactivate a different active story', () => {
+    (engine as any).storyId = 'story-2';
+    (engine as any).activeServer = {
+      ...SERVER,
+      id: 'server-2',
+      url: 'http://servidor-2',
+    };
+    (engine as any).client.defaults.baseURL = 'http://servidor-2/api';
+
+    (engine as any).deactivateStoryFromActiveCycle(STORY_ID);
+
+    expect((engine as any).storyId).toBe('story-2');
+    expect((engine as any).client.defaults.baseURL).toBe('http://servidor-2/api');
+  });
+
   it('reset clears every connection-bound dependency so a later story cannot inherit it', async () => {
-    const resetScheduler = jest
-      .spyOn((engine as any).scheduler, 'reset')
-      .mockResolvedValue(undefined);
+    const stopScheduler = jest
+      .spyOn((engine as any).scheduler, 'stopAndWait')
+      .mockResolvedValue('idle');
     const resetMedia = jest.spyOn((engine as any).media, 'reset');
 
     await engine.reset();
 
-    expect(resetScheduler).toHaveBeenCalledTimes(1);
+    expect(stopScheduler).toHaveBeenCalledTimes(1);
     expect(resetMedia).toHaveBeenCalledTimes(1);
     expect((engine as any).storyId).toBeNull();
     expect((engine as any).activeServer).toBeNull();
@@ -1251,10 +1336,8 @@ describe('remote-operation safety boundaries', () => {
   });
 
   it('refuses conflict handling before a database is bound', () => {
-    // The singleton constructor is intentionally private; this prototype-only instance reaches the
-    // getter in the same unconfigured state without weakening that production boundary.
-    const unconfigured = Object.create(SyncEngineService.prototype) as SyncEngineService;
-    expect(() => (unconfigured as any).conflictService).toThrow(/before setDbInstance/i);
+    const unconfigured = createAppSyncEngine();
+    expect(() => (unconfigured as any).conflictService).toThrow(/before bindDatabase/i);
   });
 
   it('keeps the pull cursor behind a handler failure and reports one actionable error', async () => {

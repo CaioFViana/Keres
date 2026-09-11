@@ -10,12 +10,13 @@ import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 let database: TestDatabase;
 
-const seedChapter = (id: string, index: number) =>
+const seedChapter = (id: string, index: number, type: 'chapter' | 'event' = 'chapter') =>
   database.db.insert(schema.chapters).values({
     id,
     storyId: TEST_STORY_ID,
     name: `Capítulo ${index}`,
     index,
+    type,
     ...entityBase,
     deletedAt: null,
   });
@@ -61,6 +62,22 @@ afterEach(() => {
 });
 
 describe('SceneService index handling', () => {
+  it('assigns a new scene to the end of its chapter', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+
+    const created = await service.createScene(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      chapterId: 'chapter-1',
+      locationId: 'location-1',
+      name: 'Cena nova',
+    });
+
+    expect(created.index).toBe(3);
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2', `${created.id}:3`]);
+  });
+
   it('closes the gap left in the chapter when a scene is deleted', async () => {
     const service = createSceneService(database.db);
     await seedScene('a', 'chapter-1', 1);
@@ -144,6 +161,19 @@ describe('SceneService index handling', () => {
     );
     expect(logged.map((operation) => operation.entityId).sort()).toEqual(['b', 'c']);
   });
+
+  it('rejects an incomplete scene reorder before writing an operation the server would reject', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+
+    await expect(
+      service.reorderScenes(TEST_USER_ID, TEST_STORY_ID, 'chapter-1', [{ id: 'a', newIndex: 1 }]),
+    ).rejects.toThrow('exactly once');
+
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2']);
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+  });
 });
 
 describe('StoryIndexService', () => {
@@ -208,5 +238,22 @@ describe('StoryIndexService', () => {
 
     expect(changed).toEqual({ chapters: 0, scenes: 0 });
     expect(await database.db.query.operationLogs.findMany()).toHaveLength(0);
+  });
+
+  it('keeps event numbering separate from the chapter spine when normalizing', async () => {
+    await seedChapter('event-1', 4, 'event');
+
+    expect(
+      await createStoryIndexService(database.db).findIndexProblems(TEST_STORY_ID),
+    ).toContainEqual({ scope: 'chapters', kind: 'start', chapterType: 'event' });
+
+    await expect(
+      createStoryIndexService(database.db).normalizeIndexes(TEST_USER_ID, TEST_STORY_ID),
+    ).resolves.toEqual({ chapters: 1, scenes: 0 });
+
+    const rows = await database.db.query.chapters.findMany();
+    expect(rows.find((chapter) => chapter.id === 'event-1')?.index).toBe(1);
+    expect(rows.find((chapter) => chapter.id === 'chapter-1')?.index).toBe(1);
+    expect(rows.find((chapter) => chapter.id === 'chapter-2')?.index).toBe(2);
   });
 });

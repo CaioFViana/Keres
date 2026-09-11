@@ -85,21 +85,8 @@ const graph = new Map(sourceFiles.map((path) => [path, valueImportsOf(path)]));
  * drawing layer - its place is in a screen or a hook, with the data arriving by prop.
  */
 const COMPONENTS_THAT_STILL_FETCH = [
-  'components/common/forms/CustomAttributeFields/AttributeValueInput.tsx',
-  'components/common/forms/CustomAttributeFields/CustomAttributeDetailFields.tsx',
-  'components/common/inputs/SuggestionListInput/SuggestionListInput.tsx',
-  'components/common/inputs/SuggestionTextInput/SuggestionTextInput.tsx',
+  // App bootstrap: wires auth, sync and the local database before any screen mounts.
   'components/features/app/SyncInitializer.tsx',
-  'components/features/comments/CommentList/CommentList.tsx',
-  'components/features/comments/CommentThreadModal/CommentThreadModal.tsx',
-  'components/features/favorites/FavoritedByList/FavoritedByList.tsx',
-  'components/features/item-journeys/ItemJourney/ItemJourneyTimeline.tsx',
-  'components/features/list-items/CommentListItem.tsx',
-  'components/features/operation-log/OperationLogList/OperationLogList.tsx',
-  'components/features/presence-matrix/PresenceMatrixViewerContent.tsx',
-  'components/features/scenes/SceneReorderModal/SceneReorderModal.tsx',
-  'components/features/sync/ConflictFieldDiffSheet/ConflictFieldDiffSheet.tsx',
-  'components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet.tsx',
 ];
 
 /**
@@ -112,11 +99,12 @@ const ENTITY_DETAIL_SCREEN =
 
 /** Shared lifecycle owners that refresh visible data from local entity events. */
 const SHARED_REFRESH_LIFECYCLE_OWNERS = [
-  'components/common/forms/CustomAttributeFields/CustomAttributeDetailFields.tsx',
   'components/features/app/SyncInitializer.tsx',
-  'components/features/comments/CommentList/CommentList.tsx',
-  'components/features/favorites/FavoritedByList/FavoritedByList.tsx',
-  'components/features/operation-log/OperationLogList/OperationLogList.tsx',
+  'hooks/useAppearsInArcs.ts',
+  'hooks/useCustomAttributeValues.ts',
+  'hooks/useFavoriters.ts',
+  'hooks/useOperationLogs.ts',
+  'hooks/useStoryComments.ts',
   'hooks/useChapterNames.ts',
   'hooks/useEntityComments.ts',
   'hooks/useSeeAlsoRelations.ts',
@@ -144,6 +132,35 @@ const PRESENTATIONAL_SEEDS = [
 ];
 
 describe('import boundaries', () => {
+  it('keeps sync engine policy in the application composition root', () => {
+    const engine = readFileSync(join(SOURCE_ROOT, 'services/SyncEngineService.ts'), 'utf8');
+    const composition = readFileSync(join(SOURCE_ROOT, 'services/sync/appSyncEngine.ts'), 'utf8');
+    const realtime = readFileSync(join(SOURCE_ROOT, 'services/ServerRealtimeService.ts'), 'utf8');
+
+    expect(engine).toContain(
+      'public constructor(private readonly dependencies: SyncEngineDependencies)',
+    );
+    expect(engine).toContain('public activateStory(');
+    expect(engine).toContain('public deactivateStory(');
+    expect(engine).toContain('private transitionContext(');
+    expect(engine).toContain('await this.scheduler.stopAndWait()');
+    expect(engine).toContain('public get lifecycle()');
+    expect(engine).not.toMatch(/static\s+(?:instance|getInstance)/);
+    expect(engine).not.toMatch(/entityEventEmitter|authTokenManager|createAppSyncNotifier/);
+
+    expect(composition).toContain('new SyncEngineService(createAppSyncEngineDependencies())');
+    expect(composition).toContain('export const syncEngine = createAppSyncEngine()');
+    expect(realtime).toContain('private readonly syncEngine: RealtimeSyncEngine');
+    expect(realtime).not.toContain("from './sync/appSyncEngine'");
+
+    const push = readFileSync(join(SOURCE_ROOT, 'services/sync/SyncPush.ts'), 'utf8');
+    const transfer = readFileSync(join(SOURCE_ROOT, 'services/sync/StoryTransfer.ts'), 'utf8');
+    expect(push).not.toMatch(/notificationStore|useNotificationStore/);
+    expect(transfer).not.toMatch(/notificationStore|useNotificationStore/);
+    expect(push).toContain('this.context.notifier()');
+    expect(transfer).toContain('notifier: SyncNotifier');
+  });
+
   it('has no import cycles', () => {
     const state = new Map<string, 'visiting' | 'done'>();
     const cycles: string[] = [];

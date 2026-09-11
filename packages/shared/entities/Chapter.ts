@@ -6,6 +6,8 @@ export interface Chapter {
   summary: string | null;
   isFavorite: boolean;
   extraNotes: string | null;
+  /** The Arc this container belongs to; null until a default arc is assigned. */
+  arcId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   version: number;

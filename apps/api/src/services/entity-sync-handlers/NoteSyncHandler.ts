@@ -1,6 +1,6 @@
 import type { CreateNoteDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateNoteDataSchema, PartialNoteSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { notes } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -11,36 +11,34 @@ export class NoteSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Note';
 
   constructor() {
-    super(
-      'notes', // Pass table name as string
-      'id',
-      'version',
-      CreateNoteDataSchema,
-      PartialNoteSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateNoteDataSchema, PartialNoteSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(): Promise<void> {
     // Currently no related entities to validate for Note
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateNoteDataType = this.createSchema.parse(update.data);
 
-    const currentNote = await this.findById(update.id!);
+    const currentNote = await this.findById(update.id!, database);
     if (currentNote) {
       throw new Error(`Conflict: Note with ID ${update.id} already exists.`);
     }
 
     await this.validateRelatedEntities();
 
-    await db.insert(notes).values({
+    await database.insert(notes).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client

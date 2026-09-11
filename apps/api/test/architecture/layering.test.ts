@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -13,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 
 const MODULES_ROOT = resolve(__dirname, '../../src/modules');
 const SOURCE_ROOT = resolve(__dirname, '../../src');
+const STORY_PACKAGE_ROOT = resolve(SOURCE_ROOT, 'services/story-packages');
 
 function listFiles(directory: string, suffix: string): string[] {
   return readdirSync(directory).flatMap((entry) => {
@@ -32,7 +34,14 @@ const sourceRelativeOf = (path: string) => relative(SOURCE_ROOT, path).split('\\
  * `toEqual` refuses both a new route here and a name left behind after its query moved down into a
  * service.
  */
-const ROUTES_THAT_STILL_QUERY = ['auth/auth.route.ts', 'media/media.route.ts'];
+const ROUTES_THAT_STILL_QUERY: string[] = [];
+
+/**
+ * Routes still throwing a plain `Error` for an HTTP rejection. Deliberate HTTP failures belong on
+ * `AppError` so `onError` can relay status and message without the old `set.status` + `throw new Error`
+ * pairing. The list can only shrink.
+ */
+const ROUTES_THAT_STILL_THROW_PLAIN_ERROR: string[] = [];
 
 describe('API layers', () => {
   it('finds the modules routes', () => {
@@ -54,10 +63,41 @@ describe('API layers', () => {
 
     expect(offenders).toEqual([...ROUTES_THAT_STILL_QUERY].sort());
   });
+
+  it('rejects HTTP failures with AppError instead of plain Error', () => {
+    const offenders = routeFiles
+      .filter((path) => /throw\s+new\s+Error\s*\(/.test(readFileSync(path, 'utf8')))
+      .map(relativeOf)
+      .sort();
+
+    expect(offenders).toEqual([...ROUTES_THAT_STILL_THROW_PLAIN_ERROR].sort());
+  });
+
+  it('assigns set.status in routes only for non-error outcomes (201 create, 302 redirect)', () => {
+    // Deliberate HTTP failures must throw AppError so onError owns status + message. The only
+    // remaining set.status uses are successful Created responses and S3 download redirects.
+    const allowedStatuses = new Set([201, 302]);
+    const offenders = routeFiles
+      .flatMap((path) => {
+        const source = readFileSync(path, 'utf8');
+        return Array.from(source.matchAll(/set\.status\s*=\s*(\d+)/g), (match) => ({
+          route: relativeOf(path),
+          status: Number(match[1]),
+        }));
+      })
+      .filter((entry) => !allowedStatuses.has(entry.status))
+      .map((entry) => `${entry.route}:${entry.status}`)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
 });
 
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT = ['services/StoryExportImportService.ts', 'services/SyncService.ts'];
+const FILES_OVER_THE_LIMIT: Array<string> = [
+  // Explicit CompatibleDb parameters on the shared sync handler surface.
+  'services/entity-sync-handlers/BaseSyncEntityHandler.ts',
+];
 
 describe('API file size', () => {
   it('does not allow new source files above the line ceiling', () => {
@@ -67,5 +107,176 @@ describe('API file size', () => {
       .sort();
 
     expect(oversized).toEqual([...FILES_OVER_THE_LIMIT].sort());
+  });
+});
+
+describe('story package persistence boundary', () => {
+  it('keeps generic collection SQL out of import phases', () => {
+    const importPhaseFiles = listFiles(STORY_PACKAGE_ROOT, '.ts').filter((path) =>
+      /DatabaseStoryPackage.+Import\.ts$/.test(path),
+    );
+    const directWriters = importPhaseFiles
+      .filter((path) => readFileSync(path, 'utf8').includes('.insert('))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(directWriters).toEqual([]);
+  });
+});
+
+describe('recovery entity labels', () => {
+  it('keeps relationship-specific labels in shared entity handlers', () => {
+    const recoveryDisplayNames = readFileSync(
+      resolve(SOURCE_ROOT, 'services/AdminRecoveryDisplayNames.ts'),
+      'utf8',
+    );
+
+    expect(recoveryDisplayNames).not.toMatch(/\bswitch\s*\(/);
+  });
+});
+
+describe('sync protocol type boundaries', () => {
+  it('keeps the shared handler contract free of explicit any', () => {
+    const source = readFileSync(
+      resolve(SOURCE_ROOT, 'services/entity-sync-handlers/BaseSyncEntityHandler.ts'),
+      'utf8',
+    );
+    const start = source.indexOf('export type SyncEntity =');
+    const end = source.indexOf('export abstract class BaseSyncEntityHandler');
+    const contract = source.slice(start, end);
+
+    expect(contract).not.toMatch(/:\s*any\b|\bas\s+any\b|Record<string,\s*any>/);
+  });
+
+  it('does not allow explicit any in protocol coordinators', () => {
+    const coordinators = [
+      'services/sync/SyncOperationLogService.ts',
+      'services/sync/SyncPullService.ts',
+      'services/sync/SyncPushService.ts',
+    ];
+    const explicitAny = /:\s*any\b|\bas\s+any\b|Record<string,\s*any>/;
+
+    const offenders = coordinators.filter((file) =>
+      explicitAny.test(readFileSync(resolve(SOURCE_ROOT, file), 'utf8')),
+    );
+
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('API explicit any boundary', () => {
+  it('does not allow explicit any in application source', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => {
+        const source = ts.createSourceFile(
+          file,
+          readFileSync(file, 'utf8'),
+          ts.ScriptTarget.Latest,
+          true,
+        );
+        let found = false;
+        const visit = (node: ts.Node): void => {
+          if (node.kind === ts.SyntaxKind.AnyKeyword) found = true;
+          if (!found) ts.forEachChild(node, visit);
+        };
+        visit(source);
+        return found;
+      })
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('database portability boundary', () => {
+  it('exports only the database operations covered by the shared contract', () => {
+    const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
+
+    expect(databaseModule).toContain('PostgresDb[Operation] & SqliteDb[Operation]');
+    expect(databaseModule).toContain('export type CompatibleDb = CommonDatabaseOperations');
+    expect(databaseModule).toContain('keresCompatibleDbBrand');
+    expect(databaseModule).toContain('function exposeCompatibleDb');
+    expect(databaseModule).toContain('intersection ≠');
+    expect(databaseModule).toContain('portability proof');
+    expect(databaseModule).toContain('Do not widen the app by intersecting more Drizzle');
+    expect(databaseModule).toContain("'select'");
+    expect(databaseModule).toContain("'selectDistinct'");
+    expect(databaseModule).toContain("'insert'");
+    expect(databaseModule).toContain("'update'");
+    expect(databaseModule).toContain("'delete'");
+    expect(databaseModule).toMatch(/Not part of this contract: `execute`/);
+    expect(databaseModule).not.toMatch(/export type CompatibleDb\s*=\s*NodePgDatabase/);
+    expect(databaseModule).not.toMatch(
+      /CompatibleTransactionConfig|PgTransactionConfig|SQLiteTransactionConfig/,
+    );
+    expect(databaseModule).not.toMatch(/\| 'execute'/);
+    expect(databaseModule.match(/as unknown as CompatibleDb/g)).toHaveLength(1);
+  });
+
+  it('keeps dialect-specific builders and raw execution inside database infrastructure', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !sourceRelativeOf(file).startsWith('db/'))
+      .filter((file) => /drizzle-orm\/(?:pg-core|sqlite-core)/.test(readFileSync(file, 'utf8')))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+
+    const rawExecutionOffenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !sourceRelativeOf(file).startsWith('db/'))
+      .filter((file) => /\b(?:db|tx)\.execute\s*\(/.test(readFileSync(file, 'utf8')))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(rawExecutionOffenders).toEqual([]);
+  });
+
+  it('keeps native driver access inside database infrastructure', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !sourceRelativeOf(file).startsWith('db/'))
+      .filter((file) => /drizzle-orm\/(?:node-postgres|libsql)/.test(readFileSync(file, 'utf8')))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('reserves the native migration target for the migration adapter', () => {
+    const offenders = listFiles(SOURCE_ROOT, '.ts')
+      .filter((file) => !['db/index.ts', 'db/migrate.ts'].includes(sourceRelativeOf(file)))
+      .filter((file) => readFileSync(file, 'utf8').includes('databaseMigrationTarget'))
+      .map(sourceRelativeOf)
+      .sort();
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('makes the active transaction available to withTransaction callbacks', () => {
+    const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
+
+    expect(databaseModule).toContain('withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>)');
+    expect(databaseModule).toContain('return fn(activeTransaction)');
+  });
+
+  it('keeps the exported db as the ordinary connection, not a transaction-redirecting Proxy', () => {
+    const databaseModule = readFileSync(resolve(SOURCE_ROOT, 'db/index.ts'), 'utf8');
+
+    expect(databaseModule).toContain('export const db: CompatibleDb = rawDb');
+    expect(databaseModule).not.toMatch(/export const db: CompatibleDb = new Proxy/);
+    expect(databaseModule).toContain(
+      'Sync handlers and other writers must take the `tx` callback argument explicitly',
+    );
+  });
+
+  it('passes the active transaction into sync handlers from the push coordinator', () => {
+    const push = readFileSync(resolve(SOURCE_ROOT, 'services/sync/SyncPushService.ts'), 'utf8');
+
+    expect(push).toContain('handler.findById(entityId, tx)');
+    expect(push).toContain('handler.create(userId, storyId, update as CreateStoryUpdate, tx)');
+    expect(push).toContain(
+      'handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx)',
+    );
+    expect(push).toContain('handler.delete(userId, storyId, deleteUpdate, currentEntity, tx)');
   });
 });

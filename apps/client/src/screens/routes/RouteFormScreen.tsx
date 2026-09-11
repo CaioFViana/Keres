@@ -1,28 +1,24 @@
+import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
-import { createRouteService } from '../../services/storymanagement/RouteService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import {
-  commonFormStyleDefs,
-  getCommonContainerStyles,
-  getCommonInputStyles,
-} from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getCommonInputStyles } from '../../theme/commonStyles';
+import { useRouteFormActions } from './useRouteFormActions';
+import { useRouteFormResources } from './useRouteFormResources';
+import { useRouteFormState } from './useRouteFormState';
 
 type Navigation = NativeStackNavigationProp<PlotsStackParamList, 'RouteForm'>;
 type FormRoute = RouteProp<PlotsStackParamList, 'RouteForm'>;
@@ -31,127 +27,81 @@ export default function RouteFormScreen() {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const db = useDrizzle();
   const navigation = useNavigation<Navigation>();
   const screenRoute = useRoute<FormRoute>();
   const routeId = screenRoute.params?.routeId;
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
-  const confirmDelete = useConfirmDelete();
-  const [name, setName] = useState('');
-  const [details, setDetails] = useState('');
-  const [loading, setLoading] = useState(Boolean(routeId));
-  const service = useCallback(() => createRouteService(db), [db]);
-  const container = getCommonContainerStyles(colors);
+
+  const { routeServiceRef } = useRouteFormResources();
+  const routeFormState = useRouteFormState({
+    routeId,
+    routeServiceRef,
+  });
+  const { name, setName, details, setDetails, loading, isEditing } = routeFormState;
+  const { deleting, handleDelete, handleSave, saving } = useRouteFormActions({
+    state: routeFormState,
+    routeServiceRef,
+    navigation,
+    storyId: selectedStory?.id,
+    userId,
+  });
+
   const input = getCommonInputStyles(colors);
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        ...commonFormStyleDefs(colors),
-        description: { color: colors.textSecondary, marginBottom: 20 },
-      }),
-    [colors],
-  );
-  useFocusEffect(
-    useCallback(() => {
-      const title = routeId ? t('edit_route') : t('create_route');
-      setDocumentTitle(title);
-      navigation.getParent()?.setOptions({ title, headerRight: () => <View /> });
-    }, [navigation, routeId, t]),
-  );
-  useEffect(() => {
-    if (!routeId) {
-      setLoading(false);
-      return;
-    }
-    service()
-      .getById(routeId)
-      .then((route) => {
-        if (route) {
-          setName(route.name);
-          setDetails(route.details ?? '');
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [routeId, service]);
-  const save = async () => {
-    if (!selectedStory?.id || !userId || !name.trim()) {
-      AppAlert.alert(
-        t('error'),
-        !name.trim() ? t('route_name_required') : t('user_not_identified'),
-      );
-      return;
-    }
-    setLoading(true);
-    try {
-      const saved = await service().save(userId, {
-        id: routeId,
-        storyId: selectedStory.id,
-        name,
-        details: details.trim() || null,
-      });
-      if (routeId) navigation.goBack();
-      else navigation.replace('RouteDetail', { routeId: saved.id });
-    } catch {
-      AppAlert.alert(t('error'), t('failed_to_save_route'));
-    } finally {
-      setLoading(false);
-    }
-  };
-  const remove = () => {
-    if (!routeId || !userId) return;
-    confirmDelete({
-      titleKey: 'delete_route_title',
-      messageKey: 'delete_route_message',
-      successKey: 'route_deleted_successfully',
-      failureKey: 'failed_to_delete_route',
-      onLoadingChange: setLoading,
-      onConfirm: async () => {
-        await service().delete(userId, routeId);
-        navigation.navigate('Routes');
-      },
-    });
-  };
-  if (loading)
-    return (
-      <View style={[container.container, styles.centered]}>
-        <Text style={{ color: colors.text }}>{t('loading')}...</Text>
-      </View>
-    );
+  useScreenHeader({
+    target: 'parent',
+    title: isEditing ? t('edit_route') : t('create_route'),
+  });
+
+  if (loading) return <ScreenLoading />;
   return (
-    <KeyboardAwareScreen
-      style={container.container}
-      contentContainerStyle={styles.scrollViewContent}
+    <EntityFormContainer
+      title={isEditing ? t('edit_route') : t('create_route')}
+      description={t('route_form_description')}
     >
-      <Text style={styles.title}>{routeId ? t('edit_route') : t('create_route')}</Text>
-      <Text style={styles.description}>{t('route_form_description')}</Text>
-      <Text style={styles.label}>{t('route_name')}</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder={t('route_name_placeholder')}
-        style={input.input}
-      />
-      <Text style={styles.label}>{t('route_details')}</Text>
-      <TextInput
-        value={details}
-        onChangeText={setDetails}
-        placeholder={t('route_details_placeholder')}
-        style={input.multiline}
-        multiline
-      />
-      {routeId ? (
+      <FormField label={t('route_name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('route_name_placeholder')}
+            style={input.input}
+          />
+        )}
+      </FormField>
+      <FormField label={t('route_details')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={details}
+            onChangeText={setDetails}
+            placeholder={t('route_details_placeholder')}
+            style={input.multiline}
+            multiline
+          />
+        )}
+      </FormField>
+      {isEditing ? (
         <FormActions stackOnCompact>
-          <Button onPress={save}>{t('save_changes')}</Button>
-          <Button onPress={remove} style={{ backgroundColor: colors.error }}>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {t('save_changes')}
+          </Button>
+          <Button
+            onPress={handleDelete}
+            style={{ backgroundColor: colors.error }}
+            disabled={saving || deleting}
+          >
             {t('delete_route_title')}
           </Button>
         </FormActions>
       ) : (
         <FormActions stackOnCompact>
-          <Button onPress={save}>{t('create_route')}</Button>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {t('create_route')}
+          </Button>
         </FormActions>
       )}
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 }

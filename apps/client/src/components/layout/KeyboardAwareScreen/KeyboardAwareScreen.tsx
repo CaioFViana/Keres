@@ -33,6 +33,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   keyboardVerticalOffset = 64,
 }) => {
   const bottomPadding = useFormScrollBottomPadding();
+  const requestedBottomPadding = StyleSheet.flatten(contentContainerStyle)?.paddingBottom;
   const scrollRef = React.useRef<ScrollView>(null);
   const scrollOffset = React.useRef(0);
   const keyboardTop = React.useRef<number | null>(null);
@@ -103,7 +104,15 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
         <ScrollView
           ref={scrollRef}
           style={[styles.flex, style]}
-          contentContainerStyle={[{ paddingBottom: bottomPadding }, contentContainerStyle]}
+          contentContainerStyle={[
+            contentContainerStyle,
+            {
+              paddingBottom: Math.max(
+                bottomPadding,
+                typeof requestedBottomPadding === 'number' ? requestedBottomPadding : 0,
+              ),
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           onScroll={(event) => {

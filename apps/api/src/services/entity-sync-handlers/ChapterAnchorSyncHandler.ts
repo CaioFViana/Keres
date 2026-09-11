@@ -1,7 +1,8 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateChapterAnchorDataSchema, PartialChapterAnchorSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { chapterAnchors, chapters, scenes } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -19,18 +20,11 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
   entityName = 'ChapterAnchor';
 
   constructor() {
-    super(
-      'chapterAnchors',
-      'id',
-      'version',
-      CreateChapterAnchorDataSchema,
-      PartialChapterAnchorSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateChapterAnchorDataSchema, PartialChapterAnchorSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async assertExists(
@@ -38,18 +32,19 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
     label: string,
     id: string | undefined,
     kind: 'chapter' | 'scene',
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (!id) return;
     const found =
       kind === 'chapter'
-        ? await db.query.chapters.findFirst({
+        ? await database.query.chapters.findFirst({
             where: and(
               eq(chapters.id, id),
               eq(chapters.storyId, storyId),
               eq(chapters.isDeleted, false),
             ),
           })
-        : await db.query.scenes.findFirst({
+        : await database.query.scenes.findFirst({
             where: and(eq(scenes.id, id), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
           });
     if (!found) {
@@ -60,14 +55,19 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data = this.createSchema.parse(update.data);
 
-    await this.assertExists(storyId, 'Container', data.chapterId, 'chapter');
-    await this.assertExists(storyId, 'Start scene', data.startSceneId, 'scene');
-    await this.assertExists(storyId, 'End scene', data.endSceneId ?? undefined, 'scene');
+    await this.assertExists(storyId, 'Container', data.chapterId, 'chapter', database);
+    await this.assertExists(storyId, 'Start scene', data.startSceneId, 'scene', database);
+    await this.assertExists(storyId, 'End scene', data.endSceneId ?? undefined, 'scene', database);
 
-    await db.insert(chapterAnchors).values({
+    await database.insert(chapterAnchors).values({
       id: update.id!,
       storyId,
       ...data,
@@ -83,14 +83,21 @@ export class ChapterAnchorSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const changes = this.updateSchema.parse(update.changes);
 
-    await this.assertExists(storyId, 'Container', changes.chapterId, 'chapter');
-    await this.assertExists(storyId, 'Start scene', changes.startSceneId, 'scene');
-    await this.assertExists(storyId, 'End scene', changes.endSceneId ?? undefined, 'scene');
+    await this.assertExists(storyId, 'Container', changes.chapterId, 'chapter', database);
+    await this.assertExists(storyId, 'Start scene', changes.startSceneId, 'scene', database);
+    await this.assertExists(
+      storyId,
+      'End scene',
+      changes.endSceneId ?? undefined,
+      'scene',
+      database,
+    );
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 }

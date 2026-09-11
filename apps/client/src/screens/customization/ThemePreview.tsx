@@ -2,12 +2,12 @@ import { Button, DetailField, SingleSelectPill, ThemedSwitch } from '@/src/compo
 import StoryGraphCanvas from '@/src/components/features/graphs/StoryGraph/StoryGraphCanvas';
 import { StatLadderBar } from '@/src/components/features/stats/StatLadderBar/StatLadderBar';
 import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/StatRadarChart';
+import { useTheme } from '@/src/theme';
 import { buildStatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
 import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '@/src/theme';
 
 // Kept as constants because the translation audit correctly treats literal `label` fields as i18n keys.
 const PREVIEW_TIER_ONE = 'I';

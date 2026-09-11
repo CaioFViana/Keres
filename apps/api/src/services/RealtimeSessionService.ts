@@ -14,12 +14,12 @@ export type RealtimeEvent =
   | { type: 'story.published'; storyId: string };
 
 type EventBus = {
-  on: (key: string, callback: (event: any) => void) => void;
-  off: (key: string, callback: (event: any) => void) => void;
+  on: (key: string, callback: (event: never) => void) => void;
+  off: (key: string, callback: (event: never) => void) => void;
   emit: (key: string, event: RealtimeEvent) => void;
 };
 
-type RealtimeSocket = {
+export type RealtimeSocket = {
   send: (message: string) => void;
   close?: () => void;
   storyCallbacks?: Map<string, (event: { maxOperationVersion?: number }) => void>;

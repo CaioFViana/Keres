@@ -13,14 +13,10 @@ import {
   formatCalendarDate,
   joinSuggestionListForDisplay,
 } from '@keres/shared';
+import { useCustomAttributeValues } from '@/src/hooks/useCustomAttributeValues';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
-import { useEntityInitialLoad } from '@/src/hooks/useEntityRefreshLifecycle';
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDrizzle } from '../../../../db';
-import { createAttributeValueService } from '../../../../services/storymanagement/AttributeValueService';
-import { EntityService } from '../../../../services/EntityService';
-import { entityEventEmitter } from '../../../../utils/EventEmitter';
 import { useEntityComments } from '../../../../hooks/useEntityComments';
 import { useNavigateToEntityDetail } from '../../../../hooks/useNavigateToEntityDetail';
 import { useStorySchemaFields } from '../../../../hooks/useStorySchemaFields';
@@ -94,11 +90,9 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
   const { t, i18n } = useTranslation();
   const use24HourTime = useUserSettingsStore((state) => state.use24HourTime);
   const navigateToDetail = useNavigateToEntityDetail();
-  const drizzleDb = useDrizzle();
   const fields = useStorySchemaFields(storyId, entityType);
   const { definition: calendar } = useStoryCalendar(storyId);
-  const [values, setValues] = useState<Record<string, string | null>>({});
-  const [resolvedEntityNames, setResolvedEntityNames] = useState<Record<string, string>>({});
+  const { values, resolvedEntityNames } = useCustomAttributeValues(storyId, entityId, fields);
   const {
     commentsByField,
     canComment,
@@ -108,53 +102,6 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
     deleteComment,
     updateComment,
   } = useEntityComments(storyId, entityType as CommentEntityType, entityId);
-
-  const fetchValues = useCallback(async () => {
-    try {
-      const service = createAttributeValueService(drizzleDb);
-      const rows = await service.getValuesForEntity(entityId);
-      const loadedValues = Object.fromEntries(rows.map((row) => [row.fieldId, row.value]));
-      setValues(loadedValues);
-
-      const names = await Promise.all(
-        fields
-          .filter(
-            (field) =>
-              field.type === AttributeType.ENTITY &&
-              field.targetEntityType &&
-              loadedValues[field.id],
-          )
-          .map(async (field) => {
-            const name = await EntityService.getEntityIdentifier(
-              drizzleDb,
-              field.targetEntityType!,
-              loadedValues[field.id]!,
-              storyId,
-              t,
-            );
-            return [field.id, name] as const;
-          }),
-      );
-      setResolvedEntityNames(
-        Object.fromEntries(
-          names.filter((entry): entry is readonly [string, string] => entry[1] !== undefined),
-        ),
-      );
-    } catch (error) {
-      console.error('Failed to load attribute values:', error);
-      setValues({});
-      setResolvedEntityNames({});
-    }
-  }, [drizzleDb, entityId, fields, storyId, t]);
-
-  useEntityInitialLoad(fetchValues);
-
-  useEffect(() => {
-    entityEventEmitter.on('attribute_value_changed', fetchValues);
-    return () => {
-      entityEventEmitter.off('attribute_value_changed', fetchValues);
-    };
-  }, [fetchValues]);
 
   if (fields.length === 0) {
     return null;

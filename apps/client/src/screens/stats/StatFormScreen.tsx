@@ -1,25 +1,24 @@
-import { type RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '../../components/common/feedback/ScreenState/ScreenState';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
-import KeyboardAwareScreen from '../../components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
-import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
-import { useStoryStats } from '../../hooks/useStoryStats';
 import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
-import { createStatService } from '../../services/storymanagement/StatService';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
+import { getCommonInputStyles } from '../../theme/commonStyles';
+import { useStatFormActions } from './useStatFormActions';
+import { useStatFormResources } from './useStatFormResources';
+import { useStatFormState } from './useStatFormState';
 
 type StatFormNavigationProp = NativeStackNavigationProp<CustomizationStackParamList, 'StatForm'>;
 
@@ -30,37 +29,32 @@ const StatFormScreen = () => {
   const navigation = useNavigation<StatFormNavigationProp>();
   const route = useRoute<RouteProp<CustomizationStackParamList, 'StatForm'>>();
   const statId = route.params?.statId;
-  const isEditing = !!statId;
-  const drizzleDb = useDrizzle();
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
-  const data = useStoryStats(storyId);
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
-  const [name, setName] = useState('');
-  const [isPrimary, setIsPrimary] = useState(true);
-  const [loading, setLoading] = useState(isEditing);
-  const [saving, setSaving] = useState(false);
+  const { statServiceRef, data } = useStatFormResources(storyId);
+  const statFormState = useStatFormState({
+    statId,
+    stats: data.stats,
+  });
+  const { name, setName, isPrimary, setIsPrimary, loading, isEditing } = statFormState;
+  const { handleSave, saving } = useStatFormActions({
+    state: statFormState,
+    statServiceRef,
+    navigation,
+    storyId,
+    userId,
+    statsCount: data.stats.length,
+  });
 
   const title = isEditing ? t('stat_form_edit') : t('stat_form_new');
-  useDocumentTitle(title);
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({ title, headerRight: undefined });
-    }, [navigation, title]),
-  );
 
-  useEffect(() => {
-    if (!statId) return;
-    const stat = data.stats.find((row) => row.id === statId);
-    if (!stat) return;
-    setName(stat.name);
-    setIsPrimary(stat.isPrimary);
-    setLoading(false);
-  }, [data.stats, statId]);
+  useScreenHeader({
+    target: 'parent',
+    title: title,
+  });
 
-  const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const styles = useMemo(
     () =>
@@ -86,67 +80,21 @@ const StatFormScreen = () => {
     [colors],
   );
 
-  const handleSave = useCallback(async () => {
-    if (!name.trim()) {
-      AppAlert.alert(t('error'), t('stat_name_required'));
-      return;
-    }
-    if (!userId) {
-      AppAlert.alert(t('error'), t('user_not_identified'));
-      return;
-    }
-    if (!storyId) {
-      AppAlert.alert(t('error'), t('no_story_selected'));
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const service = createStatService(drizzleDb);
-      if (isEditing) {
-        await service.updateStat(userId, statId!, { name: name.trim(), isPrimary });
-      } else {
-        await service.createStat(userId, {
-          storyId,
-          name: name.trim(),
-          isPrimary,
-          order: data.stats.length,
-        });
-      }
-      navigation.goBack();
-    } catch (error: any) {
-      console.error('Failed to save stat:', error);
-      AppAlert.alert(t('error'), error?.message || t('stat_save_failed'));
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    data.stats.length,
-    drizzleDb,
-    isEditing,
-    isPrimary,
-    name,
-    navigation,
-    statId,
-    storyId,
-    t,
-    userId,
-  ]);
-
   if (loading) return <ScreenLoading padded message={t('loading')} />;
 
   return (
-    <KeyboardAwareScreen
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ padding: 20, paddingBottom: scrollBottomPadding, flexGrow: 1 }}
-    >
-      <Text style={styles.label}>{t('name')}</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder={t('stat_name_placeholder')}
-        style={commonInputStyles.input}
-      />
+    <EntityFormContainer>
+      <FormField label={t('name')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('stat_name_placeholder')}
+            style={commonInputStyles.input}
+          />
+        )}
+      </FormField>
 
       <View style={[styles.switchRow, { marginTop: 20 }]}>
         <View style={{ flex: 1, marginRight: 12 }}>
@@ -172,7 +120,7 @@ const StatFormScreen = () => {
       <Button onPress={handleSave} disabled={saving}>
         {saving ? t('saving') : t('save')}
       </Button>
-    </KeyboardAwareScreen>
+    </EntityFormContainer>
   );
 };
 

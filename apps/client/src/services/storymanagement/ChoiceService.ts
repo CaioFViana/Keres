@@ -1,10 +1,10 @@
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChoiceInsert, ChoiceSelect } from '../../db/schemas/choices';
 import { choices } from '../../db/schemas/choices';
 import { scenes } from '../../db/schemas/scenes';
+import { stories } from '../../db/schemas/stories';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -15,6 +15,7 @@ import {
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
+import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 
 // Choices have no favourite flag; the parameter is accepted for signature parity with
 // the other entity services and ignored by the implementation.
@@ -29,6 +30,7 @@ export interface ChoiceService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<ChoiceSelect[]>;
+  getChoiceCount(storyId?: string): Promise<number>;
   getById(choiceId: string): Promise<ChoiceSelect | undefined>;
   createChoice(currentUserId: string, choiceData: Create<ChoiceInsert>): Promise<ChoiceSelect>;
   updateChoice(
@@ -49,6 +51,23 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
   const serverService = createServerService(db);
 
   return {
+    async getChoiceCount(storyId?: string): Promise<number> {
+      const conditions = [
+        eq(stories.isDeleted, false),
+        eq(scenes.isDeleted, false),
+        eq(choices.isDeleted, false),
+      ];
+      if (storyId) conditions.push(eq(stories.id, storyId));
+      const result = await db
+        .select({ count: count() })
+        .from(choices)
+        .innerJoin(scenes, eq(choices.sceneId, scenes.id))
+        .innerJoin(stories, eq(scenes.storyId, stories.id))
+        .where(and(...conditions))
+        .get();
+      return result?.count ?? 0;
+    },
+
     async getChoicesByStoryId(
       storyId,
       searchTerm,
@@ -85,31 +104,13 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
           conditions.push(eq(choices.nextSceneId, nextSceneId) as SQL<boolean>);
         }
 
-        // `entityFieldMetadata` does not describe Choice (only the entities with advanced search on screen).
-        // Without the `?? []` any unrecognised criterion took the whole query down with "cannot read property
-        // 'find' of undefined", instead of simply being ignored.
-        const choiceMetadata = entityFieldMetadata['Choice'] ?? [];
-        for (const key in otherCriteria) {
-          if (Object.prototype.hasOwnProperty.call(otherCriteria, key)) {
-            const value = otherCriteria[key];
-            const fieldMeta = choiceMetadata.find((meta) => meta.name === key);
+        conditions.push(...buildNativeAdvancedSearchConditions('Choice', choices, otherCriteria));
 
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (key === 'choiceSearch') {
-                conditions.push(
-                  sql`(${choices.text} LIKE ${`%${value}%`} COLLATE NOCASE OR ${choices.notes} LIKE ${`%${value}%`} COLLATE NOCASE)` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${choices[key as keyof ChoiceSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'number') {
-                conditions.push(
-                  eq(choices[key as keyof ChoiceSelect], Number(value)) as SQL<boolean>,
-                );
-              }
-            }
-          }
+        const choiceSearch = otherCriteria.choiceSearch;
+        if (choiceSearch !== undefined && choiceSearch !== null && choiceSearch !== '') {
+          conditions.push(
+            sql`(${choices.text} LIKE ${`%${choiceSearch}%`} COLLATE NOCASE OR ${choices.notes} LIKE ${`%${choiceSearch}%`} COLLATE NOCASE)` as SQL<boolean>,
+          );
         }
       }
 

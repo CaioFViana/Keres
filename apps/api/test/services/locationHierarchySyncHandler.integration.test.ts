@@ -82,7 +82,7 @@ describe('location hierarchy sync handler', () => {
         relationType: 'contains',
       }),
     );
-    expect(await handler.findById(palaceContainsHall)).toMatchObject({
+    expect(await handler.findByIdOrThrow(palaceContainsHall)).toMatchObject({
       locationAId: palaceId,
       locationBId: hallId,
       relationType: 'contains',
@@ -124,7 +124,7 @@ describe('location hierarchy sync handler', () => {
         relationType: 'contains',
       }),
     );
-    const current = await handler.findById(id);
+    const current = await handler.findByIdOrThrow(id);
     await handler.update(
       userId,
       storyId,
@@ -141,7 +141,7 @@ describe('location hierarchy sync handler', () => {
       } as UpdateStoryUpdate,
       current,
     );
-    const updated = await handler.findById(id);
+    const updated = await handler.findByIdOrThrow(id);
     expect(updated).toMatchObject({
       relationType: 'connected_to',
       locationAId: [hallId, olympusId].sort()[0],
@@ -220,7 +220,7 @@ describe('location hierarchy sync handler', () => {
         relationType: 'contains',
       }),
     );
-    const current = await handler.findById(hallContainsOlympus);
+    const current = await handler.findByIdOrThrow(hallContainsOlympus);
     await expect(
       handler.update(
         userId,

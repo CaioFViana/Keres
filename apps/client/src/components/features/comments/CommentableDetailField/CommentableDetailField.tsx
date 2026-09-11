@@ -6,7 +6,7 @@ import type { CommentSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
 
-interface CommentableDetailFieldProps {
+export interface CommentableDetailFieldProps {
   storyId: string;
   label: string;
   value: string;

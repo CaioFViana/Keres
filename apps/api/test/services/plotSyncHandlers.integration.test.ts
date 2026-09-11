@@ -84,7 +84,7 @@ describe('PlotSceneSyncHandler', () => {
       id,
       data: { plotId, sceneId, note: 'The plot advances.' },
     } as CreateStoryUpdate);
-    const created = await handler.findById(id);
+    const created = await handler.findByIdOrThrow(id);
 
     await handler.update(
       userId,
@@ -97,7 +97,7 @@ describe('PlotSceneSyncHandler', () => {
       } as UpdateStoryUpdate,
       created,
     );
-    const updated = await handler.findById(id);
+    const updated = await handler.findByIdOrThrow(id);
     await handler.delete(
       userId,
       storyId,
@@ -105,7 +105,7 @@ describe('PlotSceneSyncHandler', () => {
       updated,
     );
 
-    expect(await handler.findById(id)).toMatchObject({
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({
       note: 'The plot turns.',
       version: 3,
       isDeleted: true,
@@ -156,7 +156,7 @@ describe('PlotSceneSyncHandler', () => {
       id,
       data: { plotId, sceneId, note: 'Antes' },
     } as CreateStoryUpdate);
-    const current = await handler.findById(id);
+    const current = await handler.findByIdOrThrow(id);
     await db
       .update(scenes)
       .set({ isDeleted: true, deletedAt: new Date() })
@@ -217,7 +217,7 @@ describe('plot story constraints', () => {
 
   it('rejects update and deletion of an existing plot after conversion to branching', async () => {
     const handler = new PlotSyncHandler();
-    const current = await handler.findById(plotId);
+    const current = await handler.findByIdOrThrow(plotId);
     await db.update(stories).set({ type: 'branching' }).where(eq(stories.id, storyId));
 
     await expect(

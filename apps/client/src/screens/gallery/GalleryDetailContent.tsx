@@ -1,3 +1,4 @@
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { galleryHasFile, type MediaType } from '@keres/shared';
@@ -314,13 +315,6 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       textAlign: 'right',
       marginLeft: 10,
     },
-    sectionTitle: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: colors.text,
-      marginTop: 20,
-      marginBottom: 8,
-    },
     input: {
       width: '100%',
       marginBottom: 10,
@@ -329,10 +323,6 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
       height: 100,
       textAlignVertical: 'top',
       paddingTop: 10,
-    },
-    actions: {
-      marginTop: 25,
-      gap: 10,
     },
     deleteButton: {
       backgroundColor: colors.error,
@@ -473,7 +463,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
               </Text>
             </View>
 
-            <Text style={styles.sectionTitle}>{t('title')}</Text>
+            <ScreenSection title={t('title')} />
             <TextInput
               style={styles.input}
               value={title}
@@ -482,7 +472,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
               editable={canEdit}
             />
 
-            <Text style={styles.sectionTitle}>{t('extra_notes')}</Text>
+            <ScreenSection title={t('extra_notes')} />
             <TextInput
               style={[styles.input, styles.notesInput]}
               value={extraNotes}
@@ -492,7 +482,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
               editable={canEdit}
             />
 
-            <Text style={styles.sectionTitle}>{t('media_linked_entities')}</Text>
+            <ScreenSection title={t('media_linked_entities')} />
             <MultiSelectPill
               groups={ownerGroups}
               selectedValues={selectedOwners}

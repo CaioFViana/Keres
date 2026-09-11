@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +20,6 @@ import { createPackService } from '../../services/storymanagement/PackService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 /**
  * Packs shared on a server.
@@ -37,7 +37,7 @@ const PackBrowseScreen = () => {
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
-  useDocumentTitle(t('packs_browse_title'));
+  useScreenHeader({ target: 'parent', title: t('packs_browse_title') });
 
   const [servers, setServers] = useState<ServerSelect[]>([]);
   const [serverId, setServerId] = useState<string | null>(null);
@@ -133,7 +133,6 @@ const PackBrowseScreen = () => {
       backgroundColor: colors.primary,
     },
     downloadText: { color: colors.onPrimary, fontWeight: 'bold', marginLeft: 6 },
-    held: { color: colors.textSecondary, fontSize: 13, alignSelf: 'center' },
   });
 
   const renderPack = ({ item }: { item: RemotePack }) => (

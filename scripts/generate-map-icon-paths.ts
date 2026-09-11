@@ -12,16 +12,18 @@ const entries: string[] = [];
 for (const name of names) {
   try {
     const svg = readFileSync(join(svgDir, `${name}.svg`), 'utf8');
-    const paths = [...svg.matchAll(/<path\b[^>]*\/>/g)]
+    // Keep every filled shape (paths and the occasional circle, e.g. `location`), not only `<path>`.
+    const shapes = [...svg.matchAll(/<(?:path|circle|rect|polygon)\b[^>]*\/>/g)]
       .map((match) =>
         match[0]
           // Outline icons draw with `stroke="currentColor"` and no fill; the exported map fills
           // the icon with the node's colour, so the stroke becomes the fill.
-          .replace('fill="none"', 'fill="currentColor"')
-          .replace('stroke="currentColor"', 'stroke="none"'),
+          .replace(/\sfill="none"/g, '')
+          .replace(/\sstroke="currentColor"/g, '')
+          .replace(/\sclass="[^"]*"/g, ''),
       )
       .join('');
-    entries.push(`  '${name}': '${paths.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}',`);
+    entries.push(`  '${name}': '${shapes.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}',`);
   } catch {
     entries.push(`  '${name}': '',`);
   }

@@ -1,7 +1,8 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateEffectDataSchema, PartialEffectSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { effects, items } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -12,7 +13,7 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Effect';
 
   constructor() {
-    super('effects', 'id', 'version', CreateEffectDataSchema, PartialEffectSchema, {
+    super('id', 'version', CreateEffectDataSchema, PartialEffectSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
@@ -21,9 +22,13 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
 
   // No existence validation for entityId (Scene or Choice) - polymorphic, no database FK, the same
   // pattern as CommentSyncHandler for entityType/entityId.
-  private async validateRelatedEntities(storyId: string, itemId: string | null): Promise<void> {
+  private async validateRelatedEntities(
+    storyId: string,
+    itemId: string | null,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     if (itemId) {
-      const itemExists = await db.query.items.findFirst({
+      const itemExists = await database.query.items.findFirst({
         where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
       });
       if (!itemExists) {
@@ -35,17 +40,22 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData = this.createSchema.parse(update.data);
 
-    await this.validateRelatedEntities(storyId, validatedData.itemId);
+    await this.validateRelatedEntities(storyId, validatedData.itemId, database);
 
-    const currentEffect = await this.findById(update.id!);
+    const currentEffect = await this.findById(update.id!, database);
     if (currentEffect) {
       throw new Error(`Conflict: Effect with ID ${update.id} already exists.`);
     }
 
-    await db.insert(effects).values({
+    await database.insert(effects).values({
       id: update.id!,
       storyId: storyId,
       entityType: validatedData.entityType,
@@ -65,23 +75,25 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     if (validatedChanges.itemId !== undefined) {
-      await this.validateRelatedEntities(storyId, validatedChanges.itemId);
+      await this.validateRelatedEntities(storyId, validatedChanges.itemId, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

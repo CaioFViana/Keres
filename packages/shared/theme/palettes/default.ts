@@ -21,7 +21,10 @@ const lightColors: ThemeColors = {
   border: '#E0E0E0',
   notification: '#FFC107',
   accent: '#00C853', // A shade of green for accent
-  star: '#FFD700',
+  onAccent: '#1A1A1A',
+  onNotification: '#1A1A1A',
+  // Darker gold than #FFD700 so star icons stay ≥3:1 on white/card backgrounds.
+  star: '#8A6500',
   shadow: '#000000', // Added shadow for light theme
 };
 
@@ -46,6 +49,8 @@ const darkColors: ThemeColors = {
   border: '#333333',
   notification: '#FFC107',
   accent: '#69F0AE', // A lighter shade of green for accent in dark mode
+  onAccent: '#1A1A1A',
+  onNotification: '#1A1A1A',
   star: '#FFD700',
   shadow: 'rgba(255, 255, 255, 0.2)', // Added shadow for dark theme (slightly transparent white)
 };

@@ -20,6 +20,7 @@ export const chapters = table('chapters', {
   summary: text('summary'),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),
+  arcId: text('arc_id'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

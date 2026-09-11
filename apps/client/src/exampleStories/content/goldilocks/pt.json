@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "Cachinhos Dourados ouve por onde não deve ir, vai exatamente por ali, e encontra uma casa cujos donos nunca tiveram motivo para trancar nada.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "00J5X5JJRZV6K6PNMAN6BDXDQN"
     },
     {
       "id": "0TBWYBX1BWPRKDWFFYAVZQ4BMK",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "Cada objeto da casa pertence a exatamente um dos ursos. Cachinhos experimenta os três tamanhos de cada um, e quebra o menor deles.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "00J5X5JJRZV6K6PNMAN6BDXDQN"
     },
     {
       "id": "23Y64W775R0BMJPE0M41S6H0AJ",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "Os ursos encontram os vestígios na ordem em que Cachinhos os deixou, cômodo por cômodo, até que a última coisa que encontram é ela.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "00J5X5JJRZV6K6PNMAN6BDXDQN"
     }
   ],
   "scenes": [
@@ -2212,7 +2215,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "6ZVGMD560WVB2V67079KD7CFAE",
@@ -3110,5 +3113,23 @@
   "storyBoards": [],
   "storyLocationMaps": [],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "00J5X5JJRZV6K6PNMAN6BDXDQN",
+      "storyId": "01KYXBHD0K6DRY76ZD6ZWKKM1K",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

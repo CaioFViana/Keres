@@ -290,82 +290,95 @@ describe('media channels', () => {
   const RELATIVE = 'media/story-1/abc123.png';
   const BYTES = new Uint8Array([1, 2, 3]);
 
+  it.each([
+    'media:write',
+    'media:read',
+    'media:delete-file',
+    'media:delete-directory',
+    'media:list-all',
+    'media:open',
+  ])('rejects %s coming from an untrusted origin', async (channel) => {
+    await expect(invoke(channel, untrustedEvent, RELATIVE, BYTES)).rejects.toThrow(
+      'Unauthorized IPC sender.',
+    );
+  });
+
   it('writes a file, creating the story directory on the way', async () => {
-    await invoke('media:write', null, RELATIVE, BYTES);
+    await invoke('media:write', trustedEvent, RELATIVE, BYTES);
 
     const written = await fs.readFile(path.join(MEDIA_ROOT, 'media', 'story-1', 'abc123.png'));
     expect(Array.from(written)).toEqual([1, 2, 3]);
   });
 
   it('reads back exactly what it wrote', async () => {
-    await invoke('media:write', null, RELATIVE, BYTES);
+    await invoke('media:write', trustedEvent, RELATIVE, BYTES);
 
-    const read = (await invoke('media:read', null, RELATIVE)) as Buffer;
+    const read = (await invoke('media:read', trustedEvent, RELATIVE)) as Buffer;
     expect(Array.from(read)).toEqual([1, 2, 3]);
   });
 
   it('overwrites an existing file instead of failing', async () => {
-    await invoke('media:write', null, RELATIVE, BYTES);
-    await invoke('media:write', null, RELATIVE, new Uint8Array([9]));
+    await invoke('media:write', trustedEvent, RELATIVE, BYTES);
+    await invoke('media:write', trustedEvent, RELATIVE, new Uint8Array([9]));
 
-    expect(Array.from((await invoke('media:read', null, RELATIVE)) as Buffer)).toEqual([9]);
+    expect(Array.from((await invoke('media:read', trustedEvent, RELATIVE)) as Buffer)).toEqual([9]);
   });
 
   it('fails to read a file that does not exist', async () => {
-    await expect(invoke('media:read', null, 'media/story-1/sumiu.png')).rejects.toThrow();
+    await expect(invoke('media:read', trustedEvent, 'media/story-1/sumiu.png')).rejects.toThrow();
   });
 
   it('deletes a file and stays quiet when it is already gone', async () => {
-    await invoke('media:write', null, RELATIVE, BYTES);
+    await invoke('media:write', trustedEvent, RELATIVE, BYTES);
 
-    await invoke('media:delete-file', null, RELATIVE);
-    await expect(invoke('media:delete-file', null, RELATIVE)).resolves.toBeUndefined();
-    await expect(invoke('media:read', null, RELATIVE)).rejects.toThrow();
+    await invoke('media:delete-file', trustedEvent, RELATIVE);
+    await expect(invoke('media:delete-file', trustedEvent, RELATIVE)).resolves.toBeUndefined();
+    await expect(invoke('media:read', trustedEvent, RELATIVE)).rejects.toThrow();
   });
 
   it('deletes a whole story directory', async () => {
-    await invoke('media:write', null, 'media/story-1/a.png', BYTES);
-    await invoke('media:write', null, 'media/story-1/b.png', BYTES);
+    await invoke('media:write', trustedEvent, 'media/story-1/a.png', BYTES);
+    await invoke('media:write', trustedEvent, 'media/story-1/b.png', BYTES);
 
-    await invoke('media:delete-directory', null, 'media/story-1');
+    await invoke('media:delete-directory', trustedEvent, 'media/story-1');
 
-    await expect(invoke('media:list-all', null)).resolves.toEqual([]);
+    await expect(invoke('media:list-all', trustedEvent)).resolves.toEqual([]);
   });
 
   it('lists every file as the relative path the client cache expects', async () => {
-    await invoke('media:write', null, 'media/story-1/a.png', BYTES);
-    await invoke('media:write', null, 'media/story-2/b.png', BYTES);
+    await invoke('media:write', trustedEvent, 'media/story-1/a.png', BYTES);
+    await invoke('media:write', trustedEvent, 'media/story-2/b.png', BYTES);
 
-    const listed = (await invoke('media:list-all', null)) as string[];
+    const listed = (await invoke('media:list-all', trustedEvent)) as string[];
 
     expect(listed.sort()).toEqual(['media/story-1/a.png', 'media/story-2/b.png']);
   });
 
   it('lists only files directly inside each story directory', async () => {
-    await invoke('media:write', null, 'media/story-1/a.png', BYTES);
+    await invoke('media:write', trustedEvent, 'media/story-1/a.png', BYTES);
     await fs.mkdir(path.join(MEDIA_ROOT, 'media', 'story-1', 'nested'));
     await fs.writeFile(path.join(MEDIA_ROOT, 'media', 'story-1', 'nested', 'ignored.png'), BYTES);
 
-    await expect(invoke('media:list-all', null)).resolves.toEqual(['media/story-1/a.png']);
+    await expect(invoke('media:list-all', trustedEvent)).resolves.toEqual(['media/story-1/a.png']);
   });
 
   it('returns an empty list when no media was ever written', async () => {
-    await expect(invoke('media:list-all', null)).resolves.toEqual([]);
+    await expect(invoke('media:list-all', trustedEvent)).resolves.toEqual([]);
   });
 
   it('asks the OS to open a stored file at the resolved path', async () => {
-    await invoke('media:write', null, RELATIVE, BYTES);
+    await invoke('media:write', trustedEvent, RELATIVE, BYTES);
     electronMocks.openPath.mockResolvedValueOnce('');
 
-    await expect(invoke('media:open', null, RELATIVE)).resolves.toBeUndefined();
+    await expect(invoke('media:open', trustedEvent, RELATIVE)).resolves.toBeUndefined();
     expect(electronMocks.openPath).toHaveBeenCalledWith(path.join(MEDIA_ROOT, RELATIVE));
   });
 
   it('surfaces an OS failure instead of pretending the file opened', async () => {
-    await invoke('media:write', null, RELATIVE, BYTES);
+    await invoke('media:write', trustedEvent, RELATIVE, BYTES);
     electronMocks.openPath.mockResolvedValueOnce('Failed to open');
 
-    await expect(invoke('media:open', null, RELATIVE)).rejects.toThrow('Failed to open');
+    await expect(invoke('media:open', trustedEvent, RELATIVE)).rejects.toThrow('Failed to open');
   });
 
   it.each([
@@ -375,13 +388,13 @@ describe('media channels', () => {
     ['media:delete-directory', ['..']],
     ['media:open', ['../escapou.png']],
   ])('refuses %s outside the media root', async (channel, args) => {
-    await expect(invoke(channel, null, ...(args as any[]))).rejects.toThrow(
+    await expect(invoke(channel, trustedEvent, ...(args as any[]))).rejects.toThrow(
       /outside media storage/,
     );
   });
 
   it('does not create anything outside the root when a traversal is refused', async () => {
-    await expect(invoke('media:write', null, '../escapou.png', BYTES)).rejects.toThrow();
+    await expect(invoke('media:write', trustedEvent, '../escapou.png', BYTES)).rejects.toThrow();
 
     await expect(fs.access(path.join(USER_DATA, 'escapou.png'))).rejects.toThrow();
   });

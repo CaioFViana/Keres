@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { showcaseSettings, storyPublications } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { registerUser, request, type TestUser } from '../helpers/app';
+import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -40,11 +40,7 @@ async function enableShowcase(enabled = true): Promise<void> {
 }
 
 async function createStory(token: string, title = 'A Queda') {
-  const { data } = await request('POST', '/stories/', {
-    token,
-    body: { title, type: 'linear' },
-  });
-  return data;
+  return uploadTestStory(token, title);
 }
 
 /** The server refuses to publish out of sync, so the test needs the real counter. */

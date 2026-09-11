@@ -1,6 +1,7 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,10 +41,10 @@ import { createLocationRelationService } from '../../services/storymanagement/Lo
 import { createLocationService } from '../../services/storymanagement/LocationService';
 import { useLocationMapDraftStore } from '../../state/locationMapDraftStore';
 import { useNotificationStore } from '../../state/notificationStore';
+import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
@@ -59,6 +60,7 @@ const LocationMapScreen = () => {
   const { showNotification } = useNotificationStore();
   const navigateToEntity = useNavigateToEntityDetail();
   const canvasRef = useRef<LocationMapCanvasHandle>(null);
+  const showcaseRequest = readShowcaseRequest();
   const [map, setMap] = useState<LocationMapSelect | null>(null);
   const [content, setContent] = useState<LocationMapContentType>({ images: [], nodes: [] });
   const [savedContent, setSavedContent] = useState<LocationMapContentType>({
@@ -109,11 +111,9 @@ const LocationMapScreen = () => {
         setMap(null);
         return;
       }
-      const draft = useLocationMapDraftStore.getState().draft;
-      if (draft && (draft.mapId !== mapId || draft.storyId !== storyId)) {
-        useLocationMapDraftStore.getState().clear();
-      }
-      const keep = useLocationMapDraftStore.getState().draft;
+      const keep = storyId
+        ? await useLocationMapDraftStore.getState().hydrate(storyId, mapId)
+        : null;
       setMap(row);
       setLocations(loadedLocations.filter((x) => !x.isDeleted));
       setGalleries(loadedGalleries.filter((x) => !x.isDeleted));
@@ -122,6 +122,12 @@ const LocationMapScreen = () => {
       if (keep && keep.mapId === mapId && keep.storyId === storyId) {
         setContent(keep.content);
         setSavedContent(row.content);
+        const savedChangedSinceDraft =
+          JSON.stringify(row.content) !== JSON.stringify(keep.savedContent);
+        showNotification(
+          t(savedChangedSinceDraft ? 'canvas_draft_conflicts_with_saved' : 'canvas_draft_restored'),
+          savedChangedSinceDraft ? 'warning' : 'info',
+        );
       } else {
         setContent(row.content);
         setSavedContent(row.content);
@@ -133,7 +139,7 @@ const LocationMapScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [db, mapId, storyId, t]);
+  }, [db, mapId, showNotification, storyId, t]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -146,6 +152,16 @@ const LocationMapScreen = () => {
       savedContent,
     });
   }, [map, mapId, content, savedContent, storyId]);
+  // A location map mounts once before its asynchronous document arrives. On a normal opening that
+  // leaves the camera at the editing origin; for the website capture, frame the installed example
+  // after its pins are present so the screenshot actually documents the canvas.
+  useEffect(() => {
+    const isLocationMapShowcase =
+      showcaseRequest?.stack === 'LocationsStack' && showcaseRequest.screen === 'LocationMapList';
+    if (!isLocationMapShowcase || loading || !map || content.nodes.length === 0) return;
+    const frame = requestAnimationFrame(() => canvasRef.current?.fitToScreen());
+    return () => cancelAnimationFrame(frame);
+  }, [content.nodes.length, loading, map, showcaseRequest]);
   const save = useCallback(async () => {
     if (!userId || !map) return;
     try {
@@ -164,49 +180,36 @@ const LocationMapScreen = () => {
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(map?.name ?? t('location_map_list_title'));
-      navigation.getParent()?.setOptions({
-        title: map?.name ?? t('location_map_list_title'),
-        headerRight: canEdit
-          ? () => (
-              <LocationMapHeaderActions
-                dirty={dirty}
-                saving={saving}
-                onRevert={revert}
-                onSave={() => void save()}
-                layoutEditing={layoutEditing}
-                connectionMode={connectionMode}
-                onToggleLayout={() => {
-                  setLayoutEditing((current) => !current);
-                  setConnectionMode(false);
-                  setOpenedNodeId(null);
-                  setOpenedMarkerId(null);
-                }}
-                onToggleConnectionMode={() => {
-                  setConnectionMode((current) => !current);
-                  setLayoutEditing(false);
-                  setOpenedNodeId(null);
-                  setOpenedMarkerId(null);
-                }}
-              />
-            )
-          : undefined,
-      });
-    }, [
-      canEdit,
-      connectionMode,
-      dirty,
-      layoutEditing,
-      map?.name,
-      navigation,
-      revert,
-      save,
-      saving,
-      t,
-    ]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: map?.name ?? t('location_map_list_title'),
+    renderActions: useCallback(
+      () =>
+        canEdit ? (
+          <LocationMapHeaderActions
+            dirty={dirty}
+            saving={saving}
+            onRevert={revert}
+            onSave={() => void save()}
+            layoutEditing={layoutEditing}
+            connectionMode={connectionMode}
+            onToggleLayout={() => {
+              setLayoutEditing((current) => !current);
+              setConnectionMode(false);
+              setOpenedNodeId(null);
+              setOpenedMarkerId(null);
+            }}
+            onToggleConnectionMode={() => {
+              setConnectionMode((current) => !current);
+              setLayoutEditing(false);
+              setOpenedNodeId(null);
+              setOpenedMarkerId(null);
+            }}
+          />
+        ) : null,
+      [canEdit, connectionMode, dirty, layoutEditing, revert, save, saving],
+    ),
+  });
   const galleryMediaById = useMemo(() => {
     const next: Record<
       string,

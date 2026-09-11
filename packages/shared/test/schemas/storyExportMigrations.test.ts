@@ -11,6 +11,22 @@ const EMPTY_V7_COLLECTIONS = { chapterAnchors: [] };
 const EMPTY_V8_COLLECTIONS = { storyCalendars: [] };
 /** V8 -> V9 materialises authored routes, which older packages could not express. */
 const EMPTY_V9_COLLECTIONS = { routes: [], routeSteps: [] };
+const defaultArc = (storyId: string) => [
+  {
+    id: `arc:${storyId}:default`,
+    storyId,
+    title: 'Arc',
+    description: null,
+    sortOrder: 0,
+    color: null,
+    icon: null,
+    themeOverride: null,
+    isDefault: true,
+    version: 1,
+    isDeleted: false,
+    deletedAt: null,
+  },
+];
 
 describe('migrateStoryExport', () => {
   it('migrates a V1 export to the current format without changing the source object', () => {
@@ -73,6 +89,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V7_COLLECTIONS,
       ...EMPTY_V8_COLLECTIONS,
       ...EMPTY_V9_COLLECTIONS,
+      storyArcs: defaultArc('story-2'),
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -101,6 +118,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V7_COLLECTIONS,
       ...EMPTY_V8_COLLECTIONS,
       ...EMPTY_V9_COLLECTIONS,
+      storyArcs: defaultArc('story-3b'),
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -149,6 +167,7 @@ describe('migrateStoryExport', () => {
       ...EMPTY_V7_COLLECTIONS,
       ...EMPTY_V8_COLLECTIONS,
       ...EMPTY_V9_COLLECTIONS,
+      storyArcs: defaultArc('story-4'),
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
   });
@@ -171,8 +190,45 @@ describe('migrateStoryExport', () => {
       ...v8Export,
       story: { ...v8Export.story, vocabulary: null },
       ...EMPTY_V9_COLLECTIONS,
+      storyArcs: defaultArc('story-8'),
       formatVersion: CURRENT_STORY_FORMAT_VERSION,
     });
+  });
+
+  it('migrates a V9 package to one default Arc and assigns its unassigned containers', () => {
+    const v9Export = {
+      formatVersion: 9,
+      story: {
+        id: 'story-9',
+        createdAt: '2025-01-01T00:00:00.000Z',
+        updatedAt: '2025-01-02T00:00:00.000Z',
+      },
+      chapters: [
+        { id: 'chapter-9', storyId: 'story-9', arcId: null },
+        { id: 'event-9', storyId: 'story-9' },
+      ],
+    };
+
+    const migrated = migrateStoryExport(v9Export);
+
+    expect(migrated).toMatchObject({
+      formatVersion: 10,
+      storyArcs: [
+        {
+          ...defaultArc('story-9')[0],
+          createdAt: v9Export.story.createdAt,
+          updatedAt: v9Export.story.updatedAt,
+        },
+      ],
+      chapters: [
+        { id: 'chapter-9', arcId: 'arc:story-9:default' },
+        { id: 'event-9', arcId: 'arc:story-9:default' },
+      ],
+    });
+    expect(v9Export.chapters).toEqual([
+      { id: 'chapter-9', storyId: 'story-9', arcId: null },
+      { id: 'event-9', storyId: 'story-9' },
+    ]);
   });
 
   it('rejects an export produced by a newer format', () => {

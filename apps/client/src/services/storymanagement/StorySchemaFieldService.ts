@@ -1,8 +1,8 @@
-import type { StorySchemaEntityType } from '@keres/shared';
+import { completeReorderProblem, type StorySchemaEntityType } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StorySchemaFieldInsert, StorySchemaFieldSelect } from '../../db/schema';
-import { attributeValues, storySchemaFields, stories } from '../../db/schema';
+import { storySchemaFields, stories } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { createULID, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -12,8 +12,11 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { createAttributeValueService } from './AttributeValueService';
+import { countActiveStoryEntities } from './storyEntityCount';
 
 export interface StorySchemaFieldService {
+  getCustomAttributeCount(storyId?: string): Promise<number>;
   getFieldsByStoryAndEntityType(
     storyId: string,
     entityType: StorySchemaEntityType,
@@ -42,6 +45,10 @@ export interface StorySchemaFieldService {
 export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchemaFieldService => {
   const serverService = createServerService(db);
   return {
+    async getCustomAttributeCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, storySchemaFields, storyId);
+    },
+
     async getFieldsByStoryAndEntityType(storyId, entityType): Promise<StorySchemaFieldSelect[]> {
       return db
         .select()
@@ -174,16 +181,12 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         .all();
       const fieldsById = new Map(fields.map((field) => [field.id, field]));
 
-      const orderValues = newOrder.map(({ order }) => order).sort((a, b) => a - b);
-      const hasSequentialOrder = orderValues.every((order, index) => order === index);
-      if (
-        newOrder.length !== fields.length ||
-        new Set(newOrder.map(({ id }) => id)).size !== fields.length ||
-        newOrder.some(({ id }) => !fieldsById.has(id)) ||
-        !hasSequentialOrder
-      ) {
-        throw new Error('Attribute reorder must contain every field of the selected entity type.');
-      }
+      const reorderItems = newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 }));
+      const problem = completeReorderProblem(
+        fields.map((field) => field.id),
+        reorderItems,
+      );
+      if (problem) throw new Error(`Attribute reorder is invalid. ${problem}`);
 
       const changedFields = newOrder.filter(({ id, order }) => fieldsById.get(id)?.order !== order);
       if (changedFields.length === 0) return;
@@ -208,7 +211,7 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         .returning({ version: stories.version });
 
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems: newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 })),
+        reorderItems,
         reorderTarget: 'StorySchemaField',
         schemaEntityType: entityType,
         version: story?.version,
@@ -274,49 +277,13 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         },
       );
 
-      // A cascade: an orphaned AttributeValue (a fieldId pointing at a field that no longer exists)
-      // has no type/label to render itself - unlike other relations in the app, which are left
-      // orphaned inertly without a problem when the owning entity is deleted. Each value needs its
-      // OWN operation recorded (not a direct SQL mutation) so that other devices' pull
-      // genuinely learns of the deletion - see the comment in
-      // StorySchemaFieldSyncHandler.delete() about why the cascade cannot live on the
-      // server alone.
-      const liveValues = await db
-        .select({ id: attributeValues.id, version: attributeValues.version })
-        .from(attributeValues)
-        .where(and(eq(attributeValues.fieldId, fieldId), eq(attributeValues.isDeleted, false)))
-        .all();
-
-      for (const value of liveValues) {
-        const [updatedValue] = await db
-          .update(attributeValues)
-          .set({
-            isDeleted: true,
-            deletedAt: now,
-            updatedAt: now,
-            version: sql`${attributeValues.version} + 1`,
-          })
-          .where(eq(attributeValues.id, value.id))
-          .returning({ id: attributeValues.id, version: attributeValues.version });
-
-        if (!updatedValue) {
-          continue;
-        }
-
-        await recordLocalOperation(
-          db,
-          field.storyId,
-          userIdToLog,
-          'delete',
-          'AttributeValue',
-          value.id,
-          {
-            id: value.id,
-            isDeleted: true,
-            version: updatedValue.version,
-          },
-        );
-      }
+      // Values cannot outlive their field: their deletion and per-row sync operations belong to
+      // AttributeValueService, which owns that entity's lifecycle.
+      await createAttributeValueService(db).deleteValuesForField(
+        currentUserId,
+        field.storyId,
+        fieldId,
+      );
 
       entityEventEmitter.emit('story_schema_field_changed', field.storyId, field.entityType);
     },

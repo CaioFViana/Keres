@@ -1,6 +1,6 @@
 import type { CreateStoryUpdate, CreateWorldRuleDataType } from '@keres/shared';
 import { CreateWorldRuleDataSchema, PartialWorldRuleSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { worldRules } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -11,36 +11,34 @@ export class WorldRuleSyncHandler extends BaseSyncEntityHandler<
   entityName = 'WorldRule';
 
   constructor() {
-    super(
-      'worldRules', // Pass table name as string
-      'id',
-      'version',
-      CreateWorldRuleDataSchema,
-      PartialWorldRuleSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateWorldRuleDataSchema, PartialWorldRuleSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(): Promise<void> {
     // WorldRule has no direct related entities to validate
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CreateWorldRuleDataType = this.createSchema.parse(update.data);
 
-    const currentWorldRule = await this.findById(update.id!);
+    const currentWorldRule = await this.findById(update.id!, database);
     if (currentWorldRule) {
       throw new Error(`Conflict: WorldRule with ID ${update.id} already exists.`);
     }
 
     await this.validateRelatedEntities();
 
-    await db.insert(worldRules).values({
+    await database.insert(worldRules).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client

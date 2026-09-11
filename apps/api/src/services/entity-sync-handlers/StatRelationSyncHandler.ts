@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStatRelationDataType,
   CreateStoryUpdate,
@@ -5,7 +6,7 @@ import type {
 } from '@keres/shared';
 import { CreateStatRelationDataSchema, PartialStatRelationSchema } from '@keres/shared';
 import { and, eq, isNull, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { characters, modes, statRelations, stats } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -16,18 +17,11 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StatRelation';
 
   constructor() {
-    super(
-      'statRelations',
-      'id',
-      'version',
-      CreateStatRelationDataSchema,
-      PartialStatRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStatRelationDataSchema, PartialStatRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateReferences(
@@ -35,8 +29,9 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     characterId: string,
     modeId: string | null,
     statId: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    const character = await db.query.characters.findFirst({
+    const character = await database.query.characters.findFirst({
       where: and(
         eq(characters.id, characterId),
         eq(characters.storyId, storyId),
@@ -50,7 +45,7 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    const stat = await db.query.stats.findFirst({
+    const stat = await database.query.stats.findFirst({
       where: and(eq(stats.id, statId), eq(stats.storyId, storyId), eq(stats.isDeleted, false)),
     });
     if (!stat) {
@@ -61,7 +56,7 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     }
 
     if (modeId) {
-      const mode = await db.query.modes.findFirst({
+      const mode = await database.query.modes.findFirst({
         where: and(eq(modes.id, modeId), eq(modes.storyId, storyId), eq(modes.isDeleted, false)),
       });
       if (!mode) {
@@ -87,8 +82,9 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     modeId: string | null,
     statId: string,
     excludeId?: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    const duplicate = await db.query.statRelations.findFirst({
+    const duplicate = await database.query.statRelations.findFirst({
       where: and(
         eq(statRelations.storyId, storyId),
         eq(statRelations.characterId, characterId),
@@ -107,10 +103,15 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateStatRelationDataType = this.createSchema.parse(update.data);
 
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: StatRelation with ID ${update.id} already exists.`);
     }
@@ -120,15 +121,18 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
       validatedData.characterId,
       validatedData.modeId,
       validatedData.statId,
+      database,
     );
     await this.assertNoDuplicateValue(
       storyId,
       validatedData.characterId,
       validatedData.modeId,
       validatedData.statId,
+      undefined,
+      database,
     );
 
-    await db.insert(statRelations).values({
+    await database.insert(statRelations).values({
       id: update.id!,
       storyId,
       characterId: validatedData.characterId,
@@ -147,7 +151,8 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
     const touchesKey =
@@ -161,10 +166,10 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
         validatedChanges.modeId !== undefined ? validatedChanges.modeId : currentEntity.modeId;
       const statId = validatedChanges.statId ?? currentEntity.statId;
 
-      await this.validateReferences(storyId, characterId, modeId, statId);
-      await this.assertNoDuplicateValue(storyId, characterId, modeId, statId, update.id!);
+      await this.validateReferences(storyId, characterId, modeId, statId, database);
+      await this.assertNoDuplicateValue(storyId, characterId, modeId, statId, update.id!, database);
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 }

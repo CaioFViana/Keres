@@ -103,6 +103,10 @@
           "title": "Mapa de locais",
           "body": "Um grafo de lugares dentro de lugares e das ligações entre eles."
         },
+        "locationMapCanvas": {
+          "title": "Canvas de mapa de locais",
+          "body": "Disponha locais e marcadores sobre um mapa visual, mantendo à vista os caminhos e relações de contenção."
+        },
         "items": {
           "title": "Itens",
           "body": "Objetos importantes, o estado inicial e quem os possui."
@@ -130,6 +134,10 @@
         "favorites": {
           "title": "Favoritos",
           "body": "Destaque o que importa agora e filtre listas por isso."
+        },
+        "boards": {
+          "title": "Boards",
+          "body": "Pince personagens, cenas, itens e notas num canvas livre, e desenhe as ligações que ajudam a planejar."
         }
       }
     },
@@ -339,7 +347,7 @@
     "items": {
       "narrative-elements": {
         "title": "Capítulos e cenas",
-        "body": "A lista onde você passa a maior parte do tempo: os capítulos em ordem, as cenas dentro deles e o que ainda falta em cada uma."
+        "body": "A lista onde você passa a maior parte do tempo: abra um capítulo ali mesmo para ver as cenas debaixo dele, ainda em ordem."
       },
       "story-map": {
         "title": "Mapa da história",
@@ -361,6 +369,10 @@
         "title": "Seu elenco",
         "body": "Busque, filtre e ordene o elenco; abra um nome ali mesmo para ver o papel, a descrição e os laços, sem sair da lista."
       },
+      "character-detail": {
+        "title": "A ficha de um personagem",
+        "body": "A tela de detalhe do dia a dia: biografia, traços e nomes no texto que ligam a outras pessoas do universo quando os auto-links estão ligados."
+      },
       "relation-map": {
         "title": "Quem conhece quem",
         "body": "O elenco como uma teia de laços - e os grupinhos que a sua história formou sem você perceber."
@@ -368,6 +380,14 @@
       "location-map": {
         "title": "O mapa do seu mundo",
         "body": "Que lugares ficam dentro de outros lugares, e como se vai de um ao outro."
+      },
+      "location-map-canvas": {
+        "title": "Mapeie seus locais",
+        "body": "Coloque os locais da história e marcadores livres num canvas visual, com os caminhos e contenções reais à vista."
+      },
+      "board-canvas": {
+        "title": "Faça conexões num board",
+        "body": "Reúna personagens, cenas, objetos e notas de escrita num canvas feito para pensar a história."
       },
       "dashboard": {
         "title": "Como a história está",

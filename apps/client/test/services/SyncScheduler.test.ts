@@ -14,7 +14,7 @@ const flush = async () => {
 
 describe('SyncScheduler', () => {
   let ready: { storyId: string | null; hasServer: boolean; hasDatabase: boolean };
-  let performSync: jest.Mock<Promise<boolean>, []>;
+  let performSync: jest.Mock<Promise<boolean>, [AbortSignal]>;
   let scheduler: SyncScheduler;
 
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('SyncScheduler', () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
     ready = { storyId: 'story-1', hasServer: true, hasDatabase: true };
-    performSync = jest.fn().mockResolvedValue(false);
+    performSync = jest.fn(async (_signal: AbortSignal) => false);
     scheduler = new SyncScheduler({ readiness: () => ready, performSync });
   });
 
@@ -136,5 +136,70 @@ describe('SyncScheduler', () => {
     finish(false);
     await reset;
     expect(resetFinished).toBe(true);
+  });
+
+  it('rejects new requests while waiting for the active cycle to stop', async () => {
+    let finish!: (offline: boolean) => void;
+    performSync.mockImplementation(() => new Promise<boolean>((resolve) => (finish = resolve)));
+    scheduler.start();
+    await flush();
+
+    const stopped = scheduler.stopAndWait();
+    scheduler.request();
+    finish(false);
+    await stopped;
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+
+    scheduler.resume();
+    scheduler.request();
+    await flush();
+    expect(performSync).toHaveBeenCalledTimes(2);
+    finish(false);
+    await scheduler.stopAndWait();
+  });
+
+  it('resolves stopAndWait after the timeout even when the active cycle never finishes', async () => {
+    performSync.mockImplementation(() => new Promise<boolean>(() => undefined));
+    scheduler.start();
+    await flush();
+
+    const stopped = scheduler.stopAndWait(20);
+    await jest.advanceTimersByTimeAsync(20);
+    await expect(stopped).resolves.toBe('timed_out');
+  });
+
+  it('aborts the active cycle signal when stop runs', async () => {
+    let seenSignal: AbortSignal | undefined;
+    performSync.mockImplementation(
+      (signal) =>
+        new Promise<boolean>((resolve) => {
+          seenSignal = signal;
+          signal.addEventListener('abort', () => resolve(false));
+        }),
+    );
+    scheduler.start();
+    await flush();
+
+    expect(seenSignal?.aborted).toBe(false);
+    scheduler.stop();
+    expect(seenSignal?.aborted).toBe(true);
+    await flush();
+  });
+
+  it('does not coalesce queued work onto a cycle that was stopped', async () => {
+    let finish!: (offline: boolean) => void;
+    performSync.mockImplementation(() => new Promise<boolean>((resolve) => (finish = resolve)));
+    scheduler.start();
+    await flush();
+
+    const stopped = scheduler.stopAndWait();
+    scheduler.request();
+    finish(false);
+    await expect(stopped).resolves.toBe('idle');
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
   });
 });

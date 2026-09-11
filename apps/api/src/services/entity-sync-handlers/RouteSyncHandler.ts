@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateRouteDataType,
   CreateStoryUpdate,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateRouteDataSchema, PartialRouteSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { routes, stories } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -16,25 +17,25 @@ export class RouteSyncHandler extends BaseSyncEntityHandler<
 > {
   entityName = 'Route';
   constructor() {
-    super('routes', 'id', 'version', CreateRouteDataSchema, PartialRouteSchema, {
+    super('id', 'version', CreateRouteDataSchema, PartialRouteSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
     });
   }
-  private async assertBranching(storyId: string) {
-    const story = await db.query.stories.findFirst({
+  private async assertBranching(storyId: string, database: CompatibleDb = db) {
+    const story = await database.query.stories.findFirst({
       where: and(eq(stories.id, storyId), eq(stories.isDeleted, false)),
     });
     if (!story || story.type !== 'branching')
       throw new SyncConflictError('validation', 'Routes are only available for branching stories.');
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate) {
+  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
     const data: CreateRouteDataType = this.createSchema.parse(update.data);
-    await this.assertBranching(storyId);
-    if (await this.findById(update.id!))
+    await this.assertBranching(storyId, database);
+    if (await this.findById(update.id!, database))
       throw new Error(`Conflict: Route with ID ${update.id} already exists.`);
-    await db.insert(routes).values({
+    await database.insert(routes).values({
       id: update.id!,
       storyId,
       name: data.name,
@@ -46,12 +47,24 @@ export class RouteSyncHandler extends BaseSyncEntityHandler<
       deletedAt: null,
     });
   }
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: any) {
-    await this.assertBranching(storyId);
-    await super.update(userId, storyId, update, current);
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
+  ) {
+    await this.assertBranching(storyId, database);
+    await super.update(userId, storyId, update, current, database);
   }
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, current: any) {
-    await this.assertBranching(storyId);
-    await super.delete(userId, storyId, update, current);
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
+  ) {
+    await this.assertBranching(storyId, database);
+    await super.delete(userId, storyId, update, current, database);
   }
 }

@@ -78,12 +78,46 @@ it('draws every node as a coloured circle with its name', () => {
   expect(svg).toContain('>Cidade</text>');
 });
 
-it('draws each node icon as an ionicons path filled with the node colour', () => {
+it('places the node name under the circle so the icon stays visible', () => {
+  const svg = renderLocationMapSvg(
+    {
+      images: [],
+      nodes: [
+        { id: '02GHJKMN', locationId: 'location-1', x: 100, y: 100, icon: 'pin', color: '#8BC34A' },
+      ],
+    },
+    options,
+  );
+
+  // Centre at (62, 132) after normalisation; label at centreY + radius(22) + 14 = 168.
+  expect(svg).toContain('<circle cx="62" cy="132"');
+  expect(svg).toContain('y="168"');
+  expect(svg).not.toMatch(/cy="132"[\s\S]*y="140"/);
+});
+
+it('draws each node icon with an explicit fill and transform on the path', () => {
   const svg = renderLocationMapSvg(content, options);
 
-  expect(svg).toContain('<g transform="translate(');
-  expect(svg).toContain('fill="#8BC34A">');
+  expect(svg).toContain('fill="#8BC34A"');
+  expect(svg).toContain('transform="translate(');
   expect(svg).toContain('<path d="M336 96a80 80 0 1 0-96 78.39');
+});
+
+it('keeps each node on its own selected icon instead of the Location default', () => {
+  const svg = renderLocationMapSvg(
+    {
+      images: [],
+      nodes: [
+        { id: '01ABCDEF', locationId: 'location-1', x: 0, y: 0, icon: 'home', color: '#111111' },
+        { id: '02GHJKMN', locationId: 'location-2', x: 120, y: 0, icon: 'skull', color: '#222222' },
+      ],
+    },
+    options,
+  );
+
+  expect(svg).toContain('M261.56 101.28'); // home
+  expect(svg).toContain('M402 76.94'); // skull
+  expect(svg).not.toContain('M48.17 113.34'); // map (Location default) must not replace custom picks
 });
 
 it('draws a contrast halo behind every line', () => {
@@ -153,8 +187,8 @@ it('draws the default map icon as a path', () => {
   };
   const svg = renderLocationMapSvg(withMapIcon, options);
 
-  expect(svg).toContain('<g transform="translate(');
-  expect(svg).toContain('fill="#8BC34A"><path');
+  expect(svg).toContain('M48.17 113.34');
+  expect(svg).toContain('fill="#8BC34A"');
 });
 
 it('draws free markers with their own labels', () => {

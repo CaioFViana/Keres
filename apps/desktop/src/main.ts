@@ -270,7 +270,11 @@ export async function captureScreens(win: BrowserWindow, planPath: string): Prom
         console.log(`[capture][debug] ${shot.name}: ${JSON.stringify(texto)}`);
       }
       const target = path.join(plan.outputDirectory, `${shot.name}.png`);
-      await fs.writeFile(target, image.toPNG());
+      // `capturePage()` returns physical pixels, which changes with the operating system's display
+      // scaling. The showcase is a fixed CSS viewport, so normalize the file to that viewport too:
+      // otherwise the page declares 1440×900 while a 125%-scaled Windows capture writes 1803×1128.
+      const normalized = image.resize({ width: shot.width, height: shot.height, quality: 'best' });
+      await fs.writeFile(target, normalized.toPNG());
       console.log(`[capture] ${shot.name}.png  ${shot.width}x${shot.height}`);
     }
     app.exit(0);
@@ -308,12 +312,19 @@ export async function pressControl(
   const point = await win.webContents.executeJavaScript(`
     (() => {
       const rotulo = ${JSON.stringify(label)};
+      const isVisible = (no) => {
+        const r = no.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return false;
+        const style = window.getComputedStyle(no);
+        return style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity) > 0;
+      };
       // Accessibility label first; then visible text, which is how a list item (a character, a scene)
-      // is found without inventing identifiers just for the photo.
+      // is found without inventing identifiers just for the photo. Skip opacity-0 measurement
+      // clones that GenericListItem keeps in the DOM for expand animation.
       const alvo =
-        document.querySelector('[aria-label="' + rotulo + '"]') ??
+        Array.from(document.querySelectorAll('[aria-label="' + rotulo + '"]')).find(isVisible) ??
         Array.from(document.querySelectorAll('div,span,a,button')).find(
-          (no) => no.textContent?.trim() === rotulo && no.getBoundingClientRect().height > 0,
+          (no) => no.textContent?.trim() === rotulo && isVisible(no),
         );
       if (!alvo) return null;
       const r = alvo.getBoundingClientRect();
@@ -550,29 +561,34 @@ const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT
 
 /** Exported so the test can register the channels without needing the app to be ready. */
 export function registerMediaIpcHandlers() {
-  ipcMain.handle('media:write', async (_event, relativePath: string, bytes: Uint8Array) => {
+  ipcMain.handle('media:write', async (event, relativePath: string, bytes: Uint8Array) => {
+    assertTrustedRenderer(event);
     const filePath = resolveMediaPath(relativePath);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, bytes);
   });
 
-  ipcMain.handle('media:read', async (_event, relativePath: string) => {
+  ipcMain.handle('media:read', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     const filePath = resolveMediaPath(relativePath);
     return fs.readFile(filePath);
   });
 
-  ipcMain.handle('media:delete-file', async (_event, relativePath: string) => {
+  ipcMain.handle('media:delete-file', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     await fs.rm(resolveMediaPath(relativePath), { force: true });
   });
 
-  ipcMain.handle('media:delete-directory', async (_event, relativePath: string) => {
+  ipcMain.handle('media:delete-directory', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     await fs.rm(resolveMediaPath(relativePath), { recursive: true, force: true });
   });
 
   // Lists every file as a "media/<storyId>/<file>" relative path (matching the layout
   // webMediaRelativePath in MediaFileService.ts writes), for webMediaStore's boot-time
   // existence cache (see hydrate() in apps/client/src/services/webMediaStore.ts).
-  ipcMain.handle('media:list-all', async () => {
+  ipcMain.handle('media:list-all', async (event) => {
+    assertTrustedRenderer(event);
     const results: string[] = [];
     const mediaDir = path.join(MEDIA_ROOT, 'media');
     let storyDirs: string[];
@@ -597,7 +613,8 @@ export function registerMediaIpcHandlers() {
   // Hands the file to the OS (the PDF reader, Word, the browser) instead of opening it inside
   // this window. `openPath` is the local-file counterpart of `openExternal`; `file:` URLs are
   // refused by the outbound-link guard on purpose.
-  ipcMain.handle('media:open', async (_event, relativePath: string) => {
+  ipcMain.handle('media:open', async (event, relativePath: string) => {
+    assertTrustedRenderer(event);
     const filePath = resolveMediaPath(relativePath);
     const error = await shell.openPath(filePath);
     if (error) {

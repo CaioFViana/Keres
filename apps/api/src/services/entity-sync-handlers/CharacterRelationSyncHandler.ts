@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateCharacterRelationDataType,
   CreateStoryUpdate,
@@ -10,7 +11,7 @@ import {
   sortIdPair,
 } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { characterRelations, characters } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -21,30 +22,24 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'CharacterRelation';
 
   constructor() {
-    super(
-      'characterRelations',
-      'id',
-      'version',
-      CreateCharacterRelationDataSchema,
-      PartialCharacterRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateCharacterRelationDataSchema, PartialCharacterRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(
     storyId: string,
     character1Id: string,
     character2Id: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (character1Id === character2Id) {
       throw new Error('Validation Error: character1Id and character2Id cannot be identical.');
     }
 
-    const char1Exists = await db.query.characters.findFirst({
+    const char1Exists = await database.query.characters.findFirst({
       where: and(
         eq(characters.id, character1Id),
         eq(characters.storyId, storyId),
@@ -58,7 +53,7 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    const char2Exists = await db.query.characters.findFirst({
+    const char2Exists = await database.query.characters.findFirst({
       where: and(
         eq(characters.id, character2Id),
         eq(characters.storyId, storyId),
@@ -73,7 +68,12 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateCharacterRelationDataType = this.createSchema.parse(update.data);
 
     // Sort character IDs to ensure consistent storage and uniqueness checks
@@ -83,10 +83,10 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     );
 
     // Validate related entities
-    await this.validateRelatedEntities(storyId, sortedChar1Id, sortedChar2Id);
+    await this.validateRelatedEntities(storyId, sortedChar1Id, sortedChar2Id, database);
 
     // Check for uniqueness of the relation (considering sorted IDs)
-    const existingRelation = await db.query.characterRelations.findFirst({
+    const existingRelation = await database.query.characterRelations.findFirst({
       where: and(
         eq(characterRelations.storyId, storyId),
         eq(characterRelations.character1Id, sortedChar1Id),
@@ -101,7 +101,7 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(characterRelations).values({
+    await database.insert(characterRelations).values({
       id: update.id!,
       storyId: storyId,
       character1Id: sortedChar1Id,
@@ -119,7 +119,8 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -129,14 +130,14 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     // If character IDs are being updated, sort them and re-validate
     if (validatedChanges.character1Id || validatedChanges.character2Id) {
       [newChar1Id, newChar2Id] = sortIdPair(newChar1Id, newChar2Id);
-      await this.validateRelatedEntities(storyId, newChar1Id, newChar2Id);
+      await this.validateRelatedEntities(storyId, newChar1Id, newChar2Id, database);
 
       // After sorting, update the validatedChanges to reflect the sorted IDs
       validatedChanges.character1Id = newChar1Id;
       validatedChanges.character2Id = newChar2Id;
 
       // Check for uniqueness of the new relation (if character IDs were changed)
-      const existingRelation = await db.query.characterRelations.findFirst({
+      const existingRelation = await database.query.characterRelations.findFirst({
         where: and(
           eq(characterRelations.storyId, storyId),
           eq(characterRelations.character1Id, newChar1Id),
@@ -154,16 +155,17 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
       }
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // The base handler's delete should work correctly with the 'id' column
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

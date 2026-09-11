@@ -43,6 +43,12 @@ const page: HelpPage = {
           note: 'Ajuda a revisar o ritmo geral.',
         },
         {
+          key: 'arcId',
+          label: 'Arco',
+          whatToWrite: 'Escolha o arco, volume ou fase ao qual este capítulo pertence.',
+          note: 'As cenas do capítulo herdam esse arco.',
+        },
+        {
           key: 'order',
           label: 'Ordem',
           whatToWrite: 'A posição de leitura desejada.',

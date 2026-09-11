@@ -12,9 +12,7 @@ import { MAX_SYNC_BATCH_SIZE } from '@keres/shared';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import * as schema from '../../db/schema';
 import type { OperationLogSelect } from '../../db/schema';
-import { useNotificationStore } from '../../state/notificationStore';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import i18n from '../../utils/i18n';
 import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
 import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
 import type { SyncContext } from './SyncContext';
@@ -25,7 +23,7 @@ export class SyncPush {
   public constructor(private readonly context: SyncContext) {}
 
   public async pushPendingOperations(): Promise<{ offline: boolean }> {
-    const { showNotification } = useNotificationStore.getState();
+    const notifier = this.context.notifier();
     let totalApplied = 0;
     let totalConflicts = 0;
 
@@ -46,6 +44,7 @@ export class SyncPush {
       const pushResponse = await this.context.client().post<SyncPushResult>(
         `/sync/${this.context.storyId()}`,
         prepared.map((entry) => entry.update),
+        { signal: this.context.abortSignal() },
       );
       const summary = await this.applyPushResult(
         pushResponse.data,
@@ -62,10 +61,10 @@ export class SyncPush {
     }
 
     if (totalApplied > 0) {
-      showNotification(i18n.t('sync_pushed_updates', { count: totalApplied }), 'success');
+      notifier.pushedUpdates(totalApplied);
     }
     if (totalConflicts > 0) {
-      showNotification(i18n.t('sync_conflicts_detected', { count: totalConflicts }), 'warning');
+      notifier.conflictsDetected(totalConflicts);
     }
     return { offline: false };
   }
@@ -74,9 +73,12 @@ export class SyncPush {
     const payloadData = JSON.parse(op.payload);
     const baseVersion = deriveBaseVersion(payloadData);
 
-    if (op.operationType === 'update' && typeof baseVersion !== 'number') {
+    if (
+      (op.operationType === 'update' || op.operationType === 'delete') &&
+      typeof baseVersion !== 'number'
+    ) {
       console.warn(
-        `Skipping update ${op.entityType} ${op.entityId}: payload has no version, server would 422 the whole batch.`,
+        `Skipping ${op.operationType} ${op.entityType} ${op.entityId}: payload has no version, server would reject it as validation.`,
       );
       return null;
     }
@@ -230,7 +232,7 @@ export class SyncPush {
     pushedOperations: OperationLogSelect[],
     options: { silent?: boolean } = {},
   ): Promise<{ applied: number; conflicts: number }> {
-    const { showNotification } = useNotificationStore.getState();
+    const notifier = this.context.notifier();
 
     if (!Array.isArray(result?.applied) && !Array.isArray(result?.conflicts)) {
       // A server predating this change: there is no per-operation result to inspect. We keep the old
@@ -377,11 +379,11 @@ export class SyncPush {
         `Successfully pushed ${appliedCount} operations for story ${this.context.storyId()}.`,
       );
       if (!options.silent) {
-        showNotification(i18n.t('sync_pushed_updates', { count: appliedCount }), 'success');
+        notifier.pushedUpdates(appliedCount);
       }
     }
     if (realConflictCount > 0 && !options.silent) {
-      showNotification(i18n.t('sync_conflicts_detected', { count: realConflictCount }), 'warning');
+      notifier.conflictsDetected(realConflictCount);
     }
     return { applied: appliedCount, conflicts: realConflictCount };
   }

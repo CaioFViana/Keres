@@ -1,9 +1,15 @@
-import { isOfflineError } from '../apiClient';
+import { isAbortError, isOfflineError } from '../apiClient';
 
 /** Normal cadence while the server is responding. */
 export const SYNC_INTERVAL_MS = 30_000;
 /** Fast cadence used while the configured server is unreachable. */
 export const OFFLINE_RETRY_MS = 5_000;
+/**
+ * Upper bound for `stopAndWait` / `reset` so a hung HTTP cycle cannot block story
+ * deactivation or context switches indefinitely. Aligns with the default HTTP timeout
+ * plus a small margin for local bookkeeping after the request ends.
+ */
+export const STOP_AND_WAIT_TIMEOUT_MS = 45_000;
 
 interface SyncReadiness {
   storyId: string | null;
@@ -13,7 +19,8 @@ interface SyncReadiness {
 
 interface SyncSchedulerOptions {
   readiness: () => SyncReadiness;
-  performSync: () => Promise<boolean>;
+  /** Receives the cycle AbortSignal; aborted when `stop` / `stopAndWait` runs. */
+  performSync: (signal: AbortSignal) => Promise<boolean>;
 }
 
 /** Owns cycle scheduling and guarantees that timer and on-demand cycles never overlap. */
@@ -22,12 +29,17 @@ export class SyncScheduler {
   private running = false;
   private inFlight = false;
   private queued = false;
-  private activeOperations = 0;
   private idleResolvers = new Set<() => void>();
   private generation = 0;
+  private suspended = false;
   private intervalTimeMs = SYNC_INTERVAL_MS;
+  private cycleAbort: AbortController | null = null;
 
   public constructor(private readonly options: SyncSchedulerOptions) {}
+
+  public get isRunning(): boolean {
+    return this.running;
+  }
 
   public start(intervalTimeMs?: number): void {
     if (this.running) {
@@ -37,21 +49,22 @@ export class SyncScheduler {
 
     const readiness = this.options.readiness();
     if (!readiness.storyId) {
-      console.log('Cannot start sync: storyId is not set. Call configure() first.');
+      console.log('Cannot start sync: storyId is not set. Activate a story first.');
       return;
     }
     if (!readiness.hasServer) {
       console.log(
-        'Cannot start sync: server URL is not set. Call configure() with a valid serverUrl.',
+        'Cannot start sync: server URL is not set. Activate a story with a valid server.',
       );
       return;
     }
     if (!readiness.hasDatabase) {
-      console.log('Cannot start sync: Drizzle client (db) is not set. Call setDbInstance() first.');
+      console.log('Cannot start sync: Drizzle client (db) is not bound.');
       return;
     }
 
     this.intervalTimeMs = intervalTimeMs || this.intervalTimeMs;
+    this.suspended = false;
     this.running = true;
     this.generation += 1;
     const generation = this.generation;
@@ -61,7 +74,9 @@ export class SyncScheduler {
       try {
         wasOffline = await this.runExclusive();
       } catch (error) {
-        if (isOfflineError(error)) {
+        if (isAbortError(error)) {
+          console.log('SyncEngineService: sync cycle aborted.');
+        } else if (isOfflineError(error)) {
           console.log('SyncEngineService: sync cycle skipped, server unreachable.');
           wasOffline = true;
         } else {
@@ -77,6 +92,7 @@ export class SyncScheduler {
   }
 
   public request(): void {
+    if (this.suspended) return;
     const readiness = this.options.readiness();
     if (!readiness.storyId || !readiness.hasDatabase || !readiness.hasServer) return;
     void this.runExclusive().catch((error) => {
@@ -85,8 +101,11 @@ export class SyncScheduler {
   }
 
   public stop(): void {
+    this.suspended = true;
     this.running = false;
     this.generation += 1;
+    this.queued = false;
+    this.cycleAbort?.abort();
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -94,46 +113,74 @@ export class SyncScheduler {
     }
   }
 
-  public async reset(): Promise<void> {
+  /**
+   * Stops accepting work and resolves after the active cycle finishes, or after
+   * `timeoutMs` so a hung request cannot block context switches forever.
+   *
+   * Returns `'timed_out'` when the cycle is still running: the caller must keep that
+   * cycle bound to its original story/server so a later context change cannot mix work.
+   * Generation bumping already prevents it from scheduling further work.
+   */
+  public async stopAndWait(
+    timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS,
+  ): Promise<'idle' | 'timed_out'> {
     this.stop();
-    this.queued = false;
-    await this.waitForIdle();
-    this.inFlight = false;
+    return this.waitForIdle(timeoutMs);
+  }
+
+  /** Allows explicit requests again after the owning context has been configured. */
+  public resume(): void {
+    this.suspended = false;
+  }
+
+  public async reset(): Promise<void> {
+    await this.stopAndWait();
   }
 
   private async runExclusive(): Promise<boolean> {
     if (this.inFlight) {
-      this.queued = true;
+      // A stopped/suspended scheduler must not coalesce follow-up work onto the abandoned cycle.
+      if (!this.suspended) this.queued = true;
       return false;
     }
     this.inFlight = true;
+    const generation = this.generation;
+    const abort = new AbortController();
+    this.cycleAbort = abort;
     try {
       let wasOffline = false;
       do {
         this.queued = false;
-        wasOffline = await this.performTracked();
-      } while (this.queued);
+        if (abort.signal.aborted || this.suspended || this.generation !== generation) {
+          break;
+        }
+        wasOffline = await this.options.performSync(abort.signal);
+      } while (this.queued && this.generation === generation && !this.suspended);
       return wasOffline;
     } finally {
+      if (this.cycleAbort === abort) this.cycleAbort = null;
       this.inFlight = false;
+      for (const resolve of this.idleResolvers) resolve();
+      this.idleResolvers.clear();
     }
   }
 
-  private async performTracked(): Promise<boolean> {
-    this.activeOperations += 1;
-    try {
-      return await this.options.performSync();
-    } finally {
-      this.activeOperations -= 1;
-      if (this.activeOperations === 0) {
-        for (const resolve of this.idleResolvers) resolve();
-        this.idleResolvers.clear();
-      }
-    }
-  }
-
-  private async waitForIdle(): Promise<void> {
-    if (this.activeOperations === 0) return;
-    await new Promise<void>((resolve) => this.idleResolvers.add(resolve));
+  private async waitForIdle(
+    timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS,
+  ): Promise<'idle' | 'timed_out'> {
+    if (!this.inFlight) return 'idle';
+    return new Promise<'idle' | 'timed_out'>((resolve) => {
+      let settled = false;
+      const finish = (result: 'idle' | 'timed_out') => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        this.idleResolvers.delete(onIdle);
+        resolve(result);
+      };
+      const onIdle = () => finish('idle');
+      const timer = setTimeout(() => finish('timed_out'), timeoutMs);
+      this.idleResolvers.add(onIdle);
+    });
   }
 }

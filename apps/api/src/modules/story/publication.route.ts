@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia';
 import type { PublicationLabelMode, ShowcaseVisibility } from '@keres/shared';
 import type { JWTPayload } from '../../index';
 import { storyPublicationService } from '../../services/StoryPublicationService';
+import { AppError } from '../../utils/errors';
 
 /** A `story_publications` row as its owner sees it. */
 const PublicationResponseSchema = t.Object({
@@ -26,10 +27,9 @@ export const publicationRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
   // Same case as `friend.route.ts`: every route here requires exactly the same thing, an authenticated
   // user. Story ownership is checked in the service, which is what knows how to read `stories.userId`.
-  .derive(({ user, set }) => {
+  .derive(({ user }) => {
     if (!user?.userId) {
-      set.status = 401;
-      throw new Error('Unauthorized: User not authenticated.');
+      throw new AppError(401, 'Unauthorized: User not authenticated.');
     }
     return { userId: user.userId };
   })

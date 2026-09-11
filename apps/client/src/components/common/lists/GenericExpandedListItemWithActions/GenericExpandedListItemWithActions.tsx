@@ -21,6 +21,7 @@ interface GenericExpandedListItemWithActionsProps<T extends { id: string; isFavo
   entityType?: string;
   /** Overrides the entity type appearance when the item has a more specific subtype. */
   entityAppearance?: EntityAppearance;
+  accessibilityLabel?: string;
 }
 
 const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?: boolean }>({
@@ -35,6 +36,7 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
   density = 'default',
   entityType,
   entityAppearance,
+  accessibilityLabel,
 }: GenericExpandedListItemWithActionsProps<T>) => {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(initialExpanded);
   const isOpen = controlledIsExpanded ?? uncontrolledIsOpen;
@@ -81,6 +83,7 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
       onPress={toggleOpen}
       rightActions={rightActions}
       density={density}
+      accessibilityLabel={accessibilityLabel}
     />
   );
 };

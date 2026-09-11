@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
@@ -8,25 +9,78 @@ import type { ChapterType } from '@keres/shared';
 import {
   CreateStoryDataSchema,
   PartialStorySchema,
-  reorderIndicesProblem,
+  completeReorderProblem,
   StoryReorderingStoryUpdateSchema,
 } from '@keres/shared';
+import { ownerOnlyFieldsIn } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import { db } from '../../db';
-import { chapters, galleries, stories, storySchemaFields } from '../../db/schema';
+import { db, type CompatibleDb } from '../../db';
+import { chapters, galleries, stats, stories, storySchemaFields } from '../../db/schema';
 import { mediaStorageService } from '../MediaStorageService';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import {
+  BaseSyncEntityHandler,
+  SyncConflictError,
+  type SyncEntityRow,
+  type SyncEntityMutationPolicyContext,
+  type SyncOperationPolicyContext,
+} from './BaseSyncEntityHandler';
 
+/**
+ * Sync handler for the story root. Besides persisting the Story row and its reorder operations, it
+ * owns the root-only policy: a sync endpoint may only target its own story and identity/policy
+ * changes or deletion require the story owner.
+ */
 export class StorySyncHandler extends BaseSyncEntityHandler<
   typeof CreateStoryDataSchema,
   typeof PartialStorySchema
 > {
   entityName = 'Story';
+  tierLimitScope = 'story' as const;
+
+  assertOperationAllowed(context: SyncOperationPolicyContext): void {
+    const { role, storyId, update } = context;
+    if (update.type === 'create' && update.id !== storyId) {
+      throw new SyncConflictError(
+        'unauthorized',
+        'Cannot create a different story through this sync endpoint.',
+      );
+    }
+    if (update.type === 'delete' && role !== 'owner') {
+      throw new SyncConflictError('unauthorized', 'Only the story owner can delete the story.');
+    }
+    if (update.type === 'update' && role !== 'owner') {
+      const attempted = ownerOnlyFieldsIn(update.changes as Record<string, unknown> | undefined);
+      if (attempted.length > 0 || update.changes?.isDeleted === false) {
+        throw new SyncConflictError(
+          'unauthorized',
+          'Only the story owner can change story identity or policy.',
+        );
+      }
+    }
+  }
+
+  prepareDelete(
+    context: SyncEntityMutationPolicyContext,
+    update: DeleteStoryUpdate,
+  ): DeleteStoryUpdate {
+    if (context.role === 'owner' && (update.version === undefined || update.version === null)) {
+      return { ...update, version: context.currentEntity.version };
+    }
+    return update;
+  }
+
+  protected payloadForLog(
+    parsed: Record<string, unknown>,
+    actingUserId: string,
+  ): Record<string, unknown> {
+    const payload = super.payloadForLog(parsed, actingUserId);
+    delete payload.userId;
+    return payload;
+  }
 
   constructor() {
     super(
-      'stories', // Pass table name as string
       'id',
       'version',
       CreateStoryDataSchema, // Pass create schema
@@ -47,11 +101,16 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
    * delete story B just by knowing its ULID. "Belonging to the story" for the Story itself can only mean
    * "being that story".
    */
-  checkBelongsToStory(entity: any, storyId: string): boolean {
-    return entity[this.idColumnName] === storyId;
+  checkBelongsToStory(entity: SyncEntityRow, storyId: string): boolean {
+    return entity.id === storyId;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: z.infer<typeof CreateStoryDataSchema> = this.createSchema.parse(
       update.data,
@@ -64,7 +123,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       throw new Error(`Operation time ${update.operationTime} cannot be in the future.`);
     }
 
-    await db.insert(stories).values({
+    await database.insert(stories).values({
       id: update.id!,
       userId: userId, // Set by server
       createdAt: clientOperationTime, // Set from operationTime
@@ -81,7 +140,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate | StoryReorderingStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (update.type === 'reorder' && update.entity === 'Story') {
       const validatedReorderUpdate: StoryReorderingStoryUpdate =
@@ -90,9 +150,37 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       // Perform version check for the Story itself
       this.checkVersionConflict(
         validatedReorderUpdate.version!,
-        currentEntity[this.versionColumnName],
+        currentEntity.version,
         validatedReorderUpdate.id!,
       );
+
+      if (validatedReorderUpdate.reorderTarget === 'Stat') {
+        await database.transaction(async (tx) => {
+          const existingStats = await tx.query.stats.findMany({
+            where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
+            columns: { id: true, version: true },
+          });
+          const problem = completeReorderProblem(
+            existingStats.map((stat) => stat.id),
+            validatedReorderUpdate.reorderItems,
+          );
+          if (problem) throw new SyncConflictError('validation', problem);
+          await Promise.all(
+            validatedReorderUpdate.reorderItems.map((item) => {
+              const stat = existingStats.find((candidate) => candidate.id === item.id)!;
+              return tx
+                .update(stats)
+                .set({ order: item.newIndex - 1, updatedAt: new Date(), version: stat.version + 1 })
+                .where(eq(stats.id, item.id));
+            }),
+          );
+          await tx
+            .update(stories)
+            .set({ updatedAt: new Date(), version: currentEntity.version + 1 })
+            .where(eq(stories.id, validatedReorderUpdate.id!));
+        });
+        return;
+      }
 
       if (validatedReorderUpdate.reorderTarget === 'StorySchemaField') {
         if (!validatedReorderUpdate.schemaEntityType) {
@@ -101,7 +189,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
             'Validation Error: Attribute reorders require a schema entity type.',
           );
         }
-        const existingFields = await db.query.storySchemaFields.findMany({
+        const existingFields = await database.query.storySchemaFields.findMany({
           where: and(
             eq(storySchemaFields.storyId, validatedReorderUpdate.id!),
             eq(storySchemaFields.entityType, validatedReorderUpdate.schemaEntityType),
@@ -109,22 +197,13 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           ),
           columns: { id: true, version: true },
         });
-        const fieldIds = new Set(existingFields.map((field) => field.id));
-        const reorderIds = new Set(validatedReorderUpdate.reorderItems.map((item) => item.id));
-        const indices = validatedReorderUpdate.reorderItems.map((item) => item.newIndex);
-        if (
-          reorderIds.size !== fieldIds.size ||
-          ![...reorderIds].every((id) => fieldIds.has(id)) ||
-          Math.min(...indices) !== 1 ||
-          Math.max(...indices) !== indices.length
-        ) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Attribute reorder items must match the selected type.',
-          );
-        }
+        const problem = completeReorderProblem(
+          existingFields.map((field) => field.id),
+          validatedReorderUpdate.reorderItems,
+        );
+        if (problem) throw new SyncConflictError('validation', problem);
 
-        await db.transaction(async (tx) => {
+        await database.transaction(async (tx) => {
           await Promise.all(
             validatedReorderUpdate.reorderItems.map((item) => {
               const field = existingFields.find((candidate) => candidate.id === item.id)!;
@@ -157,7 +236,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       const reorderedType: ChapterType =
         validatedReorderUpdate.reorderTarget === 'Event' ? 'event' : 'chapter';
 
-      await db.transaction(async (tx) => {
+      await database.transaction(async (tx) => {
         // 1. Validate reorderItems against the containers of this kind in the story
         const existingChapters = await tx.query.chapters.findMany({
           where: and(
@@ -172,26 +251,9 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           },
         });
 
-        const existingChapterIds = new Set(existingChapters.map((c) => c.id));
-        const reorderChapterIds = new Set(
-          validatedReorderUpdate.reorderItems.map((item) => item.id),
-        );
-
-        // Ensure all reorder items correspond to existing chapters in this story
-        if (
-          reorderChapterIds.size !== existingChapterIds.size ||
-          ![...reorderChapterIds].every((id) => existingChapterIds.has(id))
-        ) {
-          throw new SyncConflictError(
-            'validation',
-            `Validation Error: Reorder items do not match the current ${reorderedType}s in the story or contain invalid IDs.`,
-          );
-        }
-
-        // The rule (contiguous 1..N, no repeats) lives in `@keres/shared`: the client builds the list with
-        // `buildReorderItems` from it, and this handler enforces the same thing.
-        const problem = reorderIndicesProblem(
-          validatedReorderUpdate.reorderItems.map((item) => item.newIndex),
+        const problem = completeReorderProblem(
+          existingChapters.map((chapter) => chapter.id),
+          validatedReorderUpdate.reorderItems,
         );
         if (problem) {
           throw new SyncConflictError('validation', problem);
@@ -229,7 +291,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     } else {
       // If it's not a story reorder update, delegate to the base class's update method
       this.updateSchema.parse((update as UpdateStoryUpdate).changes);
-      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity);
+      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, database);
     }
   }
 
@@ -237,14 +299,15 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
 
     // The tombstone above is only the story's - it does not propagate to its Galleries (each entity
     // synchronizes its own tombstone independently), so without this sweep every hash that story ever
     // referenced would be orphaned on disk forever as soon as the story disappeared from everyone's view.
-    const referencedHashes = await db
+    const referencedHashes = await database
       .selectDistinct({ hash: galleries.hash })
       .from(galleries)
       .where(eq(galleries.storyId, update.id!));

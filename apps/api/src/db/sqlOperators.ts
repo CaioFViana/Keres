@@ -1,6 +1,7 @@
 import { ilike, like, sql, type SQL } from 'drizzle-orm';
 import type { AnyColumn } from 'drizzle-orm';
 import { usingSqlite } from './dialect';
+import { stories } from './schema';
 
 /**
  * Operators whose SQL changes from one engine to the other.
@@ -34,13 +35,13 @@ export function insensitiveLike(column: AnyColumn, pattern: string): SQL {
  * (A→B and B→A) contend for the same key and never read "does not exist" at the same time - the
  * uniqueness constraint alone only catches the exact duplicate (A→B twice).
  *
- * On SQLite there is no advisory lock, and none is needed: the transaction is opened in `immediate`
- * mode (see `writeTransactionConfig`), which takes the whole database's write lock right at the start.
+ * On SQLite there is no advisory lock, and none is needed: `withWriteTransaction` opens the
+ * transaction in `immediate` mode, which takes the whole database's write lock right at the start.
  * It is a coarser serialisation - it applies to every writer, not only to this pair - and for a
  * single-process server that is acceptable.
  */
 export async function lockUserPair(
-  tx: { execute: (query: SQL) => Promise<unknown> },
+  tx: object,
   firstUserId: string,
   secondUserId: string,
 ): Promise<void> {
@@ -48,18 +49,26 @@ export async function lockUserPair(
     return;
   }
   const [lockKeyA, lockKeyB] = [firstUserId, secondUserId].sort();
-  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${lockKeyA}), hashtext(${lockKeyB}))`);
+  await executePostgresStatement(
+    tx,
+    sql`select pg_advisory_xact_lock(hashtext(${lockKeyA}), hashtext(${lockKeyB}))`,
+  );
 }
 
 /**
- * Configuration for a transaction that is going to write and must not compete with another.
- *
- * Empty on Postgres, where serialisation comes from the advisory lock above. On SQLite it asks for
- * `immediate`, which acquires the write lock on opening rather than at the first `INSERT` - without
- * that, two transactions that read before writing can reach the write together and one of them dies
- * with "database is locked".
+ * Locks one story while legacy public-favourite operation history is materialised. SQLite already
+ * serialises the surrounding write transaction and therefore needs no statement of its own.
  */
-export const writeTransactionConfig = (usingSqlite ? { behavior: 'immediate' } : {}) as Record<
-  string,
-  never
->;
+export async function lockStoryForUpdate(tx: object, storyId: string): Promise<void> {
+  if (usingSqlite) return;
+  await executePostgresStatement(
+    tx,
+    sql`select ${stories.id} from ${stories} where ${stories.id} = ${storyId} for update`,
+  );
+}
+
+/** Raw PostgreSQL execution is deliberately confined to this dialect adapter. */
+async function executePostgresStatement(tx: object, query: SQL): Promise<void> {
+  const executor = tx as { execute(statement: SQL): Promise<unknown> };
+  await executor.execute(query);
+}

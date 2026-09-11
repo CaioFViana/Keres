@@ -1,6 +1,6 @@
 // apps/api/src/utils/EventManager.ts
 
-type EventCallback = (payload: any) => void;
+type EventCallback = (payload: never) => void;
 
 class EventManager {
   private listeners: Map<string, EventCallback[]> = new Map();
@@ -22,10 +22,10 @@ class EventManager {
     }
   }
 
-  emit(eventName: string, payload: any) {
+  emit(eventName: string, payload: unknown) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
-      eventListeners.forEach((callback) => callback(payload));
+      eventListeners.forEach((callback) => callback(payload as never));
     }
   }
 }

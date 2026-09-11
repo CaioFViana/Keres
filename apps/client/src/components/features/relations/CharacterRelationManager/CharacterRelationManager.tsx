@@ -52,10 +52,15 @@ const CharacterRelationManager: React.FC<CharacterRelationManagerProps> = ({
     [navigateToDetail],
   );
 
-  // Filter relations relevant to the current character
-  const filteredRelations = characterRelations.filter(
-    (rel) => rel.character1Id === currentCharacterId || rel.character2Id === currentCharacterId,
-  );
+  // Filter relations relevant to the current character. Empty sides are provisional
+  // placeholders only while creating; after identity retention the form normalizes them
+  // for display before they reach this manager.
+  const filteredRelations = characterRelations.filter((rel) => {
+    if (!currentCharacterId) {
+      return rel.character1Id === '' || rel.character2Id === '';
+    }
+    return rel.character1Id === currentCharacterId || rel.character2Id === currentCharacterId;
+  });
 
   // Characters already related to this one - excluded from the "add" picker so a second
   // relation for the same pair can't be created (the modal only excludes self otherwise).

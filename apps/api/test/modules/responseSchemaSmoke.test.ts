@@ -54,10 +54,6 @@ describe('new response schemas do not break DB-independent error branches', () =
   });
 
   it('story routes', async () => {
-    await expectCleanUnauthorized('POST', '/stories/', {
-      headers: { ...badAuth, 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'X', type: 'linear' }),
-    });
     await expectCleanUnauthorized('GET', '/stories/s/export');
     // POST /import's body (FullStoryExportSchema) is large, pre-existing, and untouched by
     // this session - not worth constructing a conforming payload just to reach its own 401

@@ -3,7 +3,7 @@
  */
 import { AttributeType } from '@keres/shared';
 import * as schema from '../../src/db/schema';
-import { createStoryService } from '../../src/services/storymanagement/StoryService';
+import { createStoryContentMetricsService } from '../../src/services/storymanagement/StoryContentMetricsService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -47,9 +47,11 @@ it('counts only live stories and entities in the requested story', async () => {
     },
   ]);
 
-  const service = createStoryService(database.db);
-  expect(await service.getStoryCounts()).toEqual({ totalStories: 2, branchingStories: 1 });
-  expect(await service.getCharacterCount(TEST_STORY_ID)).toBe(1);
+  const service = createStoryContentMetricsService(database.db);
+  expect(await service.getCatalogCounts()).toEqual({ totalStories: 2, branchingStories: 1 });
+  await expect(service.getContentCounts(TEST_STORY_ID)).resolves.toMatchObject({
+    characterCount: 1,
+  });
 });
 
 it('keeps every dashboard count scoped to live entities and identifies real branching forks', async () => {
@@ -184,40 +186,36 @@ it('keeps every dashboard count scoped to live entities and identifies real bran
     ...entityBase,
   });
 
-  const service = createStoryService(database.db);
-  await expect(
-    Promise.all([
-      service.getChoiceCount(TEST_STORY_ID),
-      service.getLocationCount(TEST_STORY_ID),
-      service.getChapterCount(TEST_STORY_ID),
-      service.getSceneCount(TEST_STORY_ID),
-      service.getNoteCount(TEST_STORY_ID),
-      service.getWorldRuleCount(TEST_STORY_ID),
-      service.getItemCount(TEST_STORY_ID),
-      service.getGalleryCount(TEST_STORY_ID),
-      service.getTagCount(TEST_STORY_ID),
-      service.getCustomAttributeCount(TEST_STORY_ID),
-    ]),
-  ).resolves.toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
-  await expect(
-    Promise.all([
-      service.getChoiceCount(),
-      service.getLocationCount(),
-      service.getChapterCount(),
-      service.getSceneCount(),
-      service.getNoteCount(),
-      service.getWorldRuleCount(),
-      service.getItemCount(),
-      service.getGalleryCount(),
-      service.getTagCount(),
-      service.getCustomAttributeCount(),
-    ]),
-  ).resolves.toEqual([3, 1, 1, 4, 1, 1, 1, 1, 1, 1]);
-  await expect(
-    Promise.all([
-      service.getBranchingStoryForkCount(),
-      service.getBranchingStoryForkCount(forkStoryId),
-      service.getBranchingStoryForkCount(TEST_STORY_ID),
-    ]),
-  ).resolves.toEqual([1, 1, 0]);
+  const service = createStoryContentMetricsService(database.db);
+  await expect(service.getContentCounts(TEST_STORY_ID)).resolves.toEqual({
+    characterCount: 0,
+    choiceCount: 1,
+    locationCount: 1,
+    chapterCount: 1,
+    sceneCount: 1,
+    noteCount: 1,
+    worldRuleCount: 1,
+    itemCount: 1,
+    galleryCount: 1,
+    tagCount: 1,
+    customAttributeCount: 1,
+    branchingStoryForkCount: 0,
+  });
+  await expect(service.getContentCounts()).resolves.toEqual({
+    characterCount: 0,
+    choiceCount: 3,
+    locationCount: 1,
+    chapterCount: 1,
+    sceneCount: 4,
+    noteCount: 1,
+    worldRuleCount: 1,
+    itemCount: 1,
+    galleryCount: 1,
+    tagCount: 1,
+    customAttributeCount: 1,
+    branchingStoryForkCount: 1,
+  });
+  await expect(service.getContentCounts(forkStoryId)).resolves.toMatchObject({
+    branchingStoryForkCount: 1,
+  });
 });

@@ -33,3 +33,5 @@ coverage/
 coverage-integration/
 coverage-combined/
 coverage-sync/
+
+.tmp*

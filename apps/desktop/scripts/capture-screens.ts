@@ -39,25 +39,44 @@ const ONLY = process.env.KERES_CAPTURE_ONLY;
  * itself when it opens.
  */
 const FIT = { en: 'Fit to screen', pt: 'Ajustar à tela' };
+/**
+ * Two screens per example story on purpose: a single-story showcase looked like an app for
+ * one tale. Goldilocks previously had none; Cinderella had four.
+ */
 const SCREENS: Screen[] = [
-  { name: 'narrative-elements', stack: 'NarrativeElementsStack', story: 'cinderella' },
-  // The click opens the item within the list itself - that is how the app shows a character without
-  // changing screens. The name is the same in both languages, so it serves both captures.
+  // Goldilocks — expand a chapter so scenes appear under it (same in-list expand as characters).
+  {
+    name: 'narrative-elements',
+    stack: 'NarrativeElementsStack',
+    story: 'goldilocks',
+    // Chapter row title is `${index}. ${name}`; match the bare name so icon glyphs in the
+    // parent node do not break the capturer's exact textContent lookup.
+    press: { en: '1. Lost in the Woods', pt: '1. Perdida na Mata' },
+    pressWaitMs: 1800,
+  },
+  {
+    name: 'dashboard',
+    stack: 'MainDashboard',
+    story: 'goldilocks',
+    press: { en: 'Story Overview', pt: 'Visão Geral da História' },
+    pressWaitMs: 2500,
+  },
+  // Princess Kaguya — large cast.
   {
     name: 'character-list',
     stack: 'CharactersStack',
     story: 'princess-kaguya',
     press: { en: 'Kaguya-hime', pt: 'Kaguya-hime' },
   },
-  // The dashboard opens with the summary collapsed; without the click the photo would be a nearly
-  // empty page.
   {
-    name: 'dashboard',
-    stack: 'MainDashboard',
-    story: 'cinderella',
-    press: { en: 'Story Overview', pt: 'Visão Geral da História' },
-    pressWaitMs: 2500,
+    name: 'relation-map',
+    stack: 'CharactersStack',
+    screen: 'CharacterRelationView',
+    story: 'princess-kaguya',
+    settleMs: 3500,
+    press: FIT,
   },
+  // Alice — branching graph + board with editorial notes.
   {
     name: 'story-map',
     stack: 'NarrativeElementsStack',
@@ -65,8 +84,14 @@ const SCREENS: Screen[] = [
     story: 'alice-in-wonderland',
     settleMs: 2500,
   },
-  // No "fit to screen" here: on this screen fitting pushes the scene-name column out of frame. The
-  // opening view already shows the whole timeline.
+  {
+    name: 'board-canvas',
+    stack: 'BoardsStack',
+    story: 'alice-in-wonderland',
+    press: { en: 'Decision threads', pt: 'Fios de decisão' },
+    pressWaitMs: 2500,
+  },
+  // Little Mermaid — time and place graphs.
   {
     name: 'story-timeline',
     stack: 'NarrativeElementsStack',
@@ -74,6 +99,36 @@ const SCREENS: Screen[] = [
     story: 'little-mermaid',
     settleMs: 2500,
   },
+  {
+    name: 'location-map',
+    stack: 'LocationsStack',
+    screen: 'LocationView',
+    story: 'little-mermaid',
+    settleMs: 3500,
+    press: FIT,
+    viewport: { width: 1440, height: 560 },
+  },
+  // Beauty and the Beast — canvas map + character detail with auto-links
+  // (`The Beast` / `A Fera` fields mention `Beauty` / `Bela` by full name).
+  {
+    name: 'location-map-canvas',
+    stack: 'LocationsStack',
+    screen: 'LocationMapList',
+    story: 'beauty-and-the-beast',
+    settleMs: 1200,
+    press: { en: 'Castle map', pt: 'Mapa do castelo' },
+    pressWaitMs: 2500,
+  },
+  {
+    name: 'character-detail',
+    stack: 'CharactersStack',
+    screen: 'CharacterDetail',
+    story: 'beauty-and-the-beast',
+    focus: { en: 'The Beast', pt: 'A Fera' },
+    // Mention matcher loads entity names after the story is selected; wait past that + detail mount.
+    settleMs: 4500,
+  },
+  // Cinderella — plot tools.
   {
     name: 'plot-coverage',
     stack: 'PlotsStack',
@@ -87,23 +142,6 @@ const SCREENS: Screen[] = [
     screen: 'PlotMatrix',
     story: 'cinderella',
     settleMs: 2500,
-  },
-  {
-    name: 'location-map',
-    stack: 'LocationsStack',
-    screen: 'LocationView',
-    story: 'little-mermaid',
-    settleMs: 3500,
-    press: FIT,
-    viewport: { width: 1440, height: 560 },
-  },
-  {
-    name: 'relation-map',
-    stack: 'CharactersStack',
-    screen: 'CharacterRelationView',
-    story: 'princess-kaguya',
-    settleMs: 3500,
-    press: FIT,
   },
 ];
 
@@ -133,6 +171,8 @@ interface Screen {
   story: string;
   settleMs?: number;
   press?: Record<string, string>;
+  /** Language-specific entity display name resolved after install (see `focus` query param). */
+  focus?: Record<string, string>;
   pressWaitMs?: number;
   viewport?: { width: number; height: number };
 }
@@ -163,6 +203,8 @@ function buildPlan() {
           lang: language,
         });
         if (screen.screen) query.set('screen', screen.screen);
+        const focusName = screen.focus?.[language];
+        if (focusName) query.set('focus', focusName);
         shots.push({
           name: `${screen.name}.${language}.${theme}`,
           query: query.toString(),
@@ -182,7 +224,7 @@ async function main() {
   const skipBuild = process.argv.includes('--skip-build');
   if (!skipBuild) {
     await run('bun', ['run', 'capture:setup'], { cwd: clientRoot });
-    await run('bun', ['run', 'build:main'   ], { cwd: desktopRoot });
+    await run('bun', ['run', 'build:main'], { cwd: desktopRoot });
   }
 
   const plan = buildPlan();

@@ -1,0 +1,91 @@
+import { OperationLogEntityType } from '../../metadata/OperationLogEntityType';
+import { resolveCompactEntityLabel } from '../compactEntityName';
+import { searchField } from './advancedSearch';
+import type { EntityDomainHandler } from './contracts';
+import { displayField } from './displayName';
+
+const nameOf = (row: Record<string, unknown> | undefined) => {
+  const value = row?.name;
+  return typeof value === 'string' && value.trim() ? value : undefined;
+};
+
+/** Presentation metadata for an Item state change recorded at a Scene. */
+export const itemJourneyEntityHandler: EntityDomainHandler = {
+  entityType: OperationLogEntityType.ItemJourney,
+  exportCollection: 'itemJourneys',
+  exportReferences: [
+    { field: 'itemId', targetEntityType: OperationLogEntityType.Item, required: true },
+    { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
+    {
+      field: 'newCharacterOwnerId',
+      targetEntityType: OperationLogEntityType.Character,
+      required: false,
+    },
+  ],
+  displayName: displayField('newState'),
+  conflictLabelKey: 'item_journey',
+  isConflictRelation: true,
+  help: {
+    source: 'item-journeys',
+    fields: ['itemId', 'sceneId', 'newCharacterOwnerId', 'newState', 'extraNotes'],
+  },
+  referenceFields: {
+    itemId: OperationLogEntityType.Item,
+    sceneId: OperationLogEntityType.Scene,
+    newCharacterOwnerId: OperationLogEntityType.Character,
+  },
+  advancedSearch: [
+    searchField('itemId', 'item', 'id'),
+    searchField('sceneId', 'scene', 'id'),
+    searchField('newCharacterOwnerId', 'new_character_owner', 'id'),
+    searchField('newState', 'new_state', 'string', {
+      isSuggestion: true,
+      suggestionsSource: 'item_state',
+    }),
+    searchField('extraNotes', 'field_extraNotes'),
+  ],
+  summarizeConflictRelation(row, context) {
+    return {
+      title: context.translate('item_journey'),
+      detail: `${context.nameOf(OperationLogEntityType.Item, row.itemId)} ${context.translate(
+        'showed_in_scene',
+      )} ${context.nameOf(OperationLogEntityType.Scene, row.sceneId)}`,
+    };
+  },
+  async resolveCompactName(context, entityId) {
+    const row = await context.read(OperationLogEntityType.ItemJourney, entityId);
+    if (!row) return undefined;
+    const [item, scene] = await Promise.all([
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Item,
+        typeof row.itemId === 'string' ? row.itemId : '',
+      ),
+      resolveCompactEntityLabel(
+        context,
+        OperationLogEntityType.Scene,
+        typeof row.sceneId === 'string' ? row.sceneId : '',
+      ),
+    ]);
+    return `${item} @ ${scene}`;
+  },
+  async resolveReference(context, entityId) {
+    const row = await context.read(OperationLogEntityType.ItemJourney, entityId);
+    if (!row) return { name: undefined, type: context.translate('item_journey') };
+    const [item, scene] = await Promise.all([
+      context.read(OperationLogEntityType.Item, typeof row.itemId === 'string' ? row.itemId : ''),
+      context.read(
+        OperationLogEntityType.Scene,
+        typeof row.sceneId === 'string' ? row.sceneId : '',
+      ),
+    ]);
+    return {
+      name: `${nameOf(item) ?? (await context.unknownNoun(OperationLogEntityType.Item))} ${context.translate('showed_in_scene')} ${nameOf(scene) ?? (await context.unknownNoun(OperationLogEntityType.Scene))}`,
+      type: context.translate('item_journey'),
+    };
+  },
+  async resolveOperationLogName(context, entityId) {
+    const reference = await itemJourneyEntityHandler.resolveReference!(context, entityId);
+    return reference.name ? `${reference.type} - ${reference.name}` : reference.type;
+  },
+};

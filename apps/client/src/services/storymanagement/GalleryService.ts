@@ -13,6 +13,8 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { createGalleryRelationService } from './GalleryRelationService';
+import { countActiveStoryEntities } from './storyEntityCount';
 import {
   decorateFavorite,
   normalizeFavoriteCreate,
@@ -67,6 +69,7 @@ export interface NewGalleryMedia {
 }
 
 export interface GalleryService {
+  getGalleryCount(storyId?: string): Promise<number>;
   getGalleriesByStoryId(storyId: string, filters?: GalleryFilters): Promise<GallerySelect[]>;
   getById(galleryId: string): Promise<GallerySelect | undefined>;
   /** This story's media with these bytes, if it already exists. The basis of dedupe on import. */
@@ -111,6 +114,10 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
   const serverService = createServerService(db);
 
   return {
+    async getGalleryCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, galleries, storyId);
+    },
+
     async getGalleriesByStoryId(storyId, filters = {}): Promise<GallerySelect[]> {
       const { searchTerm, mediaTypes, favoriteFilterState, sortBy, sortDirection } = filters;
 
@@ -346,50 +353,12 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         throw new Error(`Failed to delete gallery ${galleryId} or gallery not found.`);
       }
 
-      // The links to the entities go along with it: a link pointing at a deleted media file is not
-      // displayable, and leaving it active would make the server refuse future operations on it because the
-      // media no longer exists.
-      const orphanLinks = await db.query.galleryRelations.findMany({
-        where: and(
-          eq(galleryRelations.galleryId, galleryId),
-          eq(galleryRelations.isDeleted, false),
-        ),
-      });
-
-      for (const link of orphanLinks) {
-        const [updatedLink] = await db
-          .update(galleryRelations)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${galleryRelations.version} + 1`,
-          })
-          .where(eq(galleryRelations.id, link.id))
-          .returning();
-
-        if (updatedLink) {
-          const linkUserId = await getUserIdForOperation(
-            db,
-            serverService,
-            updatedLink.storyId,
-            currentUserId,
-          );
-          await recordLocalOperation(
-            db,
-            updatedLink.storyId,
-            linkUserId,
-            'delete',
-            'GalleryRelation',
-            updatedLink.id,
-            {
-              id: updatedLink.id,
-              isDeleted: true,
-              version: updatedLink.version,
-            },
-          );
-        }
-      }
+      // The links go with their gallery; GalleryRelationService owns their tombstones and sync logs.
+      await createGalleryRelationService(db).unlinkAllForGallery(
+        currentUserId,
+        toDelete.storyId,
+        galleryId,
+      );
 
       const userIdToLog = await getUserIdForOperation(
         db,

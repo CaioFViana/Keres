@@ -1,3 +1,5 @@
+import FormField from '@/src/components/common/forms/FormField/FormField';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -11,7 +13,7 @@ import {
   applySimulationEffects,
   type StorySimulationState,
 } from '@keres/shared';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +32,6 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { AppAlert } from '../../utils/AppAlert';
 import { useDrizzle } from '../../db';
 
@@ -207,7 +208,6 @@ export default function StoryNavigatorScreen() {
       StyleSheet.create({
         ...commonScreenStyleDefs(colors),
         content: { padding: 16, paddingBottom: 30 },
-        label: { color: colors.textSecondary, fontSize: 13, marginBottom: 5 },
         card: {
           borderWidth: 1,
           borderColor: colors.border,
@@ -235,14 +235,10 @@ export default function StoryNavigatorScreen() {
       }),
     [colors],
   );
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('story_navigator_title'));
-      navigation
-        .getParent()
-        ?.setOptions({ title: t('story_navigator_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('story_navigator_title'),
+  });
   if (selectedStory?.type !== 'branching')
     return (
       <ScreenError message={t('navigator_branching_only')} onGoBack={() => navigation.goBack()} />
@@ -250,16 +246,17 @@ export default function StoryNavigatorScreen() {
   if (loading) return <ScreenLoading message={t('loading_story_navigator')} />;
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>{t('navigator_start_scene')}</Text>
-      <SingleSelectPill
-        options={scenes.map((scene) => ({ value: scene.id, label: scene.name }))}
-        value={startSceneId}
-        onValueChange={(id) => {
-          setStartSceneId(id);
-          reset(id);
-        }}
-        placeholder={t('route_select_start_scene')}
-      />
+      <FormField label={t('navigator_start_scene')}>
+        <SingleSelectPill
+          options={scenes.map((scene) => ({ value: scene.id, label: scene.name }))}
+          value={startSceneId}
+          onValueChange={(id) => {
+            setStartSceneId(id);
+            reset(id);
+          }}
+          placeholder={t('route_select_start_scene')}
+        />
+      </FormField>
       {current ? (
         <View style={styles.card}>
           <TouchableOpacity

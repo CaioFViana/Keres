@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateLocationRelationDataType,
   CreateStoryUpdate,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateLocationRelationDataSchema, PartialLocationRelationSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { locationRelations, locations } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -23,18 +24,11 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
   entityName = 'LocationRelation';
 
   constructor() {
-    super(
-      'locationRelations',
-      'id',
-      'version',
-      CreateLocationRelationDataSchema,
-      PartialLocationRelationSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateLocationRelationDataSchema, PartialLocationRelationSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private sortLocationIds(id1: string, id2: string): [string, string] {
@@ -45,12 +39,13 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     locationAId: string,
     locationBId: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (locationAId === locationBId) {
       throw new Error('Validation Error: locationAId and locationBId cannot be identical.');
     }
 
-    const locationAExists = await db.query.locations.findFirst({
+    const locationAExists = await database.query.locations.findFirst({
       where: and(
         eq(locations.id, locationAId),
         eq(locations.storyId, storyId),
@@ -64,7 +59,7 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    const locationBExists = await db.query.locations.findFirst({
+    const locationBExists = await database.query.locations.findFirst({
       where: and(
         eq(locations.id, locationBId),
         eq(locations.storyId, storyId),
@@ -88,6 +83,7 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     storyId: string,
     childId: string,
     newParentId: string,
+    database: CompatibleDb = db,
   ): Promise<void> {
     let currentId: string | null = newParentId;
     let steps = 0;
@@ -106,7 +102,7 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
       }
 
       const parentEdge: { locationAId: string } | undefined =
-        await db.query.locationRelations.findFirst({
+        await database.query.locationRelations.findFirst({
           where: and(
             eq(locationRelations.storyId, storyId),
             eq(locationRelations.locationBId, currentId),
@@ -120,8 +116,13 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
   }
 
   /** For 'contains': the child (locationBId) can only have one live parent at a time. */
-  private async findExistingParentEdge(storyId: string, childId: string, excludeId?: string) {
-    const existing = await db.query.locationRelations.findFirst({
+  private async findExistingParentEdge(
+    storyId: string,
+    childId: string,
+    excludeId?: string,
+    database: CompatibleDb = db,
+  ) {
+    const existing = await database.query.locationRelations.findFirst({
       where: and(
         eq(locationRelations.storyId, storyId),
         eq(locationRelations.locationBId, childId),
@@ -140,8 +141,9 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     sortedAId: string,
     sortedBId: string,
     excludeId?: string,
+    database: CompatibleDb = db,
   ) {
-    const existing = await db.query.locationRelations.findFirst({
+    const existing = await database.query.locationRelations.findFirst({
       where: and(
         eq(locationRelations.storyId, storyId),
         eq(locationRelations.locationAId, sortedAId),
@@ -156,7 +158,12 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     return undefined;
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateLocationRelationDataType = this.createSchema.parse(update.data);
 
     let locationAId = validatedData.locationAId;
@@ -164,12 +171,14 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
 
     if (validatedData.relationType === 'connected_to') {
       [locationAId, locationBId] = this.sortLocationIds(locationAId, locationBId);
-      await this.validateRelatedEntities(storyId, locationAId, locationBId);
+      await this.validateRelatedEntities(storyId, locationAId, locationBId, database);
 
       const existingConnection = await this.findExistingConnection(
         storyId,
         locationAId,
         locationBId,
+        undefined,
+        database,
       );
       if (existingConnection) {
         throw new Error(
@@ -178,17 +187,22 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
       }
     } else {
       // 'contains': locationAId is the parent, locationBId is the child - order matters, do not sort.
-      await this.validateRelatedEntities(storyId, locationAId, locationBId);
+      await this.validateRelatedEntities(storyId, locationAId, locationBId, database);
 
-      const existingParentEdge = await this.findExistingParentEdge(storyId, locationBId);
+      const existingParentEdge = await this.findExistingParentEdge(
+        storyId,
+        locationBId,
+        undefined,
+        database,
+      );
       if (existingParentEdge) {
         throw new Error(`Conflict: Location ${locationBId} already has a parent Location.`);
       }
 
-      await this.validateNoCycle(storyId, locationBId, locationAId);
+      await this.validateNoCycle(storyId, locationBId, locationAId, database);
     }
 
-    await db.insert(locationRelations).values({
+    await database.insert(locationRelations).values({
       id: update.id!,
       storyId,
       locationAId,
@@ -206,7 +220,8 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -223,13 +238,14 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     if (idsChanged) {
       if (newRelationType === 'connected_to') {
         [newLocationAId, newLocationBId] = this.sortLocationIds(newLocationAId, newLocationBId);
-        await this.validateRelatedEntities(storyId, newLocationAId, newLocationBId);
+        await this.validateRelatedEntities(storyId, newLocationAId, newLocationBId, database);
 
         const existingConnection = await this.findExistingConnection(
           storyId,
           newLocationAId,
           newLocationBId,
           update.id,
+          database,
         );
         if (existingConnection) {
           throw new Error(
@@ -237,18 +253,19 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
           );
         }
       } else {
-        await this.validateRelatedEntities(storyId, newLocationAId, newLocationBId);
+        await this.validateRelatedEntities(storyId, newLocationAId, newLocationBId, database);
 
         const existingParentEdge = await this.findExistingParentEdge(
           storyId,
           newLocationBId,
           update.id,
+          database,
         );
         if (existingParentEdge) {
           throw new Error(`Conflict: Location ${newLocationBId} already has a parent Location.`);
         }
 
-        await this.validateNoCycle(storyId, newLocationBId, newLocationAId);
+        await this.validateNoCycle(storyId, newLocationBId, newLocationAId, database);
       }
 
       validatedChanges.locationAId = newLocationAId;
@@ -262,6 +279,7 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
       storyId,
       { ...update, changes: { ...validatedChanges, version: update.changes.version } },
       currentEntity,
+      database,
     );
   }
 
@@ -269,8 +287,9 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

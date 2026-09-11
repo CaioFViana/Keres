@@ -93,28 +93,30 @@ const LocationRelationManager: React.FC<LocationRelationManagerProps> = ({
     [allLocationRelations],
   );
 
+  // Empty sides are provisional placeholders only while this form has no id yet.
+  // After identity retention the parent form normalizes '' → currentLocationId for display.
+  const isCurrentSide = useCallback(
+    (sideId: string) => (currentLocationId ? sideId === currentLocationId : sideId === ''),
+    [currentLocationId],
+  );
+
   const parentRelation = useMemo(
-    () =>
-      liveRelations.find(
-        (r) => r.relationType === 'contains' && r.locationBId === currentLocationId,
-      ),
-    [liveRelations, currentLocationId],
+    () => liveRelations.find((r) => r.relationType === 'contains' && isCurrentSide(r.locationBId)),
+    [liveRelations, isCurrentSide],
   );
   const childRelations = useMemo(
     () =>
-      liveRelations.filter(
-        (r) => r.relationType === 'contains' && r.locationAId === currentLocationId,
-      ),
-    [liveRelations, currentLocationId],
+      liveRelations.filter((r) => r.relationType === 'contains' && isCurrentSide(r.locationAId)),
+    [liveRelations, isCurrentSide],
   );
   const connectionRelations = useMemo(
     () =>
       liveRelations.filter(
         (r) =>
           r.relationType === 'connected_to' &&
-          (r.locationAId === currentLocationId || r.locationBId === currentLocationId),
+          (isCurrentSide(r.locationAId) || isCurrentSide(r.locationBId)),
       ),
-    [liveRelations, currentLocationId],
+    [liveRelations, isCurrentSide],
   );
 
   const ancestorIds = useMemo(

@@ -203,6 +203,11 @@
             "singular": "Player Choice",
             "plural": "Player Choices",
             "grammaticalGender": "neutral"
+          },
+          "Arc": {
+            "singular": "Campaign",
+            "plural": "Campaigns",
+            "grammaticalGender": "neutral"
           }
         }
       }

@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import { AttributeType } from '@keres/shared';
+import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { createAttributeValueService } from '../../src/services/storymanagement/AttributeValueService';
 import { createCharacterRelationService } from '../../src/services/storymanagement/CharacterRelationService';
@@ -10,6 +11,7 @@ import { createLocationRelationService } from '../../src/services/storymanagemen
 import { createNoteRelationService } from '../../src/services/storymanagement/NoteRelationService';
 import { createSeeAlsoRelationService } from '../../src/services/storymanagement/SeeAlsoRelationService';
 import { createStorySchemaFieldService } from '../../src/services/storymanagement/StorySchemaFieldService';
+import { createStatService } from '../../src/services/storymanagement/StatService';
 import { createSuggestionService } from '../../src/services/storymanagement/SuggestionService';
 import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -199,6 +201,105 @@ describe('SuggestionService', () => {
     ).toEqual(['A']);
   });
 
+  it('renames native usages through the services that own each entity', async () => {
+    const service = createSuggestionService(database.db);
+    await database.db.insert(schema.characters).values([
+      { id: 'char-1', storyId: STORY_ID, name: 'Ada', ...base },
+      { id: 'char-2', storyId: STORY_ID, name: 'Bia', ...base },
+    ]);
+    await database.db.insert(schema.items).values({
+      id: 'item-1',
+      storyId: STORY_ID,
+      name: 'Chave',
+      category: 'Ferramenta',
+      initialState: 'Guardada',
+      ...base,
+    });
+    await database.db.insert(schema.scenes).values({
+      id: 'scene-1',
+      storyId: STORY_ID,
+      chapterId: null,
+      locationId: null,
+      name: 'Entrada',
+      index: 1,
+      isStart: true,
+      isFinish: false,
+      ...base,
+    });
+    await database.db.insert(schema.itemJourneys).values({
+      id: 'journey-1',
+      storyId: STORY_ID,
+      itemId: 'item-1',
+      sceneId: 'scene-1',
+      newCharacterOwnerId: null,
+      newState: 'Aberta',
+      ...base,
+    });
+    await database.db.insert(schema.characterRelations).values({
+      id: 'relation-1',
+      storyId: STORY_ID,
+      character1Id: 'char-1',
+      character2Id: 'char-2',
+      relationType: 'Aliada',
+      ...base,
+    });
+
+    await expect(
+      service.renameSuggestionValue(
+        USER_ID,
+        STORY_ID,
+        'item_category',
+        'Ferramenta',
+        'Artefato',
+        true,
+      ),
+    ).resolves.toEqual({ updatedUsages: 1, merged: false });
+    await service.renameSuggestionValue(
+      USER_ID,
+      STORY_ID,
+      'characterRelation_type',
+      'Aliada',
+      'Rival',
+      true,
+    );
+    await service.renameSuggestionValue(USER_ID, STORY_ID, 'item_state', 'Aberta', 'Fechada', true);
+
+    expect(
+      (await database.db.query.items.findFirst({ where: (row, { eq }) => eq(row.id, 'item-1') }))
+        ?.category,
+    ).toBe('Artefato');
+    expect(
+      (
+        await database.db.query.characterRelations.findFirst({
+          where: (row, { eq }) => eq(row.id, 'relation-1'),
+        })
+      )?.relationType,
+    ).toBe('Rival');
+    expect(
+      (
+        await database.db.query.itemJourneys.findFirst({
+          where: (row, { eq }) => eq(row.id, 'journey-1'),
+        })
+      )?.newState,
+    ).toBe('Fechada');
+
+    const updates = await database.db
+      .select({
+        entityType: schema.operationLogs.entityType,
+        entityId: schema.operationLogs.entityId,
+      })
+      .from(schema.operationLogs)
+      .where(eq(schema.operationLogs.operationType, 'update'))
+      .all();
+    expect(updates).toEqual(
+      expect.arrayContaining([
+        { entityType: 'Item', entityId: 'item-1' },
+        { entityType: 'CharacterRelation', entityId: 'relation-1' },
+        { entityType: 'ItemJourney', entityId: 'journey-1' },
+      ]),
+    );
+  });
+
   it('renames an individual entry inside a custom suggestion list', async () => {
     const service = createSuggestionService(database.db);
     await database.db.insert(schema.characters).values({
@@ -372,6 +473,46 @@ describe('StorySchemaFieldService', () => {
       reorderItems: [
         { id: second.id, newIndex: 1 },
         { id: first.id, newIndex: 2 },
+      ],
+    });
+  });
+});
+
+describe('StatService', () => {
+  it('reorders all stats through one story-level sync operation', async () => {
+    const service = createStatService(database.db);
+    const courage = await service.createStat(USER_ID, {
+      storyId: STORY_ID,
+      name: 'Courage',
+      order: 0,
+    });
+    const wisdom = await service.createStat(USER_ID, {
+      storyId: STORY_ID,
+      name: 'Wisdom',
+      order: 1,
+    });
+
+    await service.reorderStats(USER_ID, STORY_ID, [
+      { id: wisdom.id, order: 0 },
+      { id: courage.id, order: 1 },
+    ]);
+
+    expect(
+      (await service.getStatsByStoryId(STORY_ID)).map(({ id, order }) => ({ id, order })),
+    ).toEqual([
+      { id: wisdom.id, order: 0 },
+      { id: courage.id, order: 1 },
+    ]);
+    const operations = await database.db.select().from(schema.operationLogs).all();
+    const reorders = operations.filter(
+      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
+    );
+    expect(reorders).toHaveLength(1);
+    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
+      reorderTarget: 'Stat',
+      reorderItems: [
+        { id: wisdom.id, newIndex: 1 },
+        { id: courage.id, newIndex: 2 },
       ],
     });
   });

@@ -3,7 +3,6 @@ import { and, eq, lte } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import type { ServerSelect } from '../../db/schema';
-import { useNotificationStore } from '../../state/notificationStore';
 import i18n from '../../utils/i18n';
 import { createKeresAxiosInstance } from '../apiClient';
 import { authTokenManager } from '../AuthTokenManager';
@@ -11,6 +10,7 @@ import { createServerService } from '../ServerService';
 import { createCommentService } from '../storymanagement/CommentService';
 import { createFavoriteService } from '../storymanagement/FavoriteService';
 import { createStoryService } from '../storymanagement/StoryService';
+import type { SyncNotifier } from './SyncNotifier';
 
 export interface ServerStoryPreview {
   storyId: string;
@@ -52,18 +52,18 @@ export async function downloadAndImportStory(
   storyId: string,
   userId: string,
   role: EffectiveStoryRole,
+  notifier: SyncNotifier,
 ): Promise<void> {
-  const { showNotification } = useNotificationStore.getState();
   if (!db) {
-    showNotification(`Failed to download story '${storyId}': Database not set.`, 'error');
+    notifier.message(`Failed to download story '${storyId}': Database not set.`, 'error');
     return;
   }
   if (!queriedServerId) {
-    showNotification(`Failed to download story '${storyId}': Server ID not set.`, 'error');
+    notifier.message(`Failed to download story '${storyId}': Server ID not set.`, 'error');
     return;
   }
   if (!userId) {
-    showNotification(`Failed to download story '${storyId}': User ID not set.`, 'error');
+    notifier.message(`Failed to download story '${storyId}': User ID not set.`, 'error');
     return;
   }
 
@@ -71,7 +71,7 @@ export async function downloadAndImportStory(
   try {
     server = await createServerService(db).getServerById(queriedServerId);
     if (!server?.url) {
-      showNotification(
+      notifier.message(
         `Failed to download story '${storyId}': Server URL not found for ID ${queriedServerId}.`,
         'error',
       );
@@ -79,7 +79,7 @@ export async function downloadAndImportStory(
     }
   } catch (error) {
     console.error('Error fetching server details by ID:', error);
-    showNotification(
+    notifier.message(
       `Failed to download story '${storyId}': Error retrieving server details.`,
       'error',
     );
@@ -96,10 +96,10 @@ export async function downloadAndImportStory(
     const fullStoryData = response.data;
     storyTitle = fullStoryData?.story?.title || storyId;
     await createStoryService(db).importFullStory(userId, fullStoryData, queriedServerId, role);
-    showNotification(i18n.t('story_downloaded_and_imported', { title: storyTitle }), 'success');
+    notifier.message(i18n.t('story_downloaded_and_imported', { title: storyTitle }), 'success');
   } catch (error) {
     console.log(`Error downloading or importing story ${storyId} from ${server.url}:`, error);
-    showNotification(i18n.t('failed_to_download_story_named', { title: storyTitle }), 'error');
+    notifier.message(i18n.t('failed_to_download_story_named', { title: storyTitle }), 'error');
   }
 }
 

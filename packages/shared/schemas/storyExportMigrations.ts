@@ -142,6 +142,79 @@ const migrateV8ToV9: StoryExportMigration = {
   }),
 };
 
+/**
+ * V9 -> V10: Story Arcs and the Arc assignment of every chapter/event.
+ *
+ * Arcs were introduced after V9 had already been written to disk and to servers.  A legacy story
+ * therefore needs one stable destination before its containers can be assigned. The generated id
+ * is deterministic and collision-free within the package, so re-reading the same backup produces
+ * the same Arc graph before the client imports it.
+ */
+const migrateV9ToV10: StoryExportMigration = {
+  fromVersion: 9,
+  migrate: (data) => {
+    const storyId = typeof data?.story?.id === 'string' ? data.story.id : undefined;
+    if (!storyId) return data;
+
+    const suppliedArcs = Array.isArray(data?.storyArcs) ? data.storyArcs : [];
+    const occupiedIds = new Set<string>([storyId]);
+    for (const value of Object.values(data ?? {})) {
+      if (!Array.isArray(value)) continue;
+      for (const row of value) {
+        if (typeof row?.id === 'string') occupiedIds.add(row.id);
+      }
+    }
+
+    const defaultArcId = () => {
+      const base = `arc:${storyId}:default`;
+      let candidate = base;
+      let suffix = 1;
+      while (occupiedIds.has(candidate)) candidate = `${base}:${suffix++}`;
+      return candidate;
+    };
+
+    let storyArcs = suppliedArcs.map((arc: any) => ({ ...arc }));
+    if (!storyArcs.length) {
+      storyArcs = [
+        {
+          id: defaultArcId(),
+          storyId,
+          title: 'Arc',
+          description: null,
+          sortOrder: 0,
+          color: null,
+          icon: null,
+          themeOverride: null,
+          isDefault: true,
+          ...(data.story.createdAt === undefined ? {} : { createdAt: data.story.createdAt }),
+          ...(data.story.updatedAt === undefined ? {} : { updatedAt: data.story.updatedAt }),
+          version: 1,
+          isDeleted: false,
+          deletedAt: null,
+        },
+      ];
+    } else if (!storyArcs.some((arc: any) => arc?.isDefault === true)) {
+      storyArcs[0] = { ...storyArcs[0], isDefault: true };
+    }
+
+    const fallbackArcId =
+      storyArcs.find((arc: any) => arc?.isDefault === true)?.id ?? storyArcs[0].id;
+    const chapters = Array.isArray(data?.chapters)
+      ? data.chapters.map((chapter: any) =>
+          chapter?.arcId === null || chapter?.arcId === undefined
+            ? { ...chapter, arcId: fallbackArcId }
+            : chapter,
+        )
+      : data?.chapters;
+
+    return {
+      ...data,
+      storyArcs,
+      ...(Array.isArray(data?.chapters) ? { chapters } : {}),
+    };
+  },
+};
+
 const migrations: StoryExportMigration[] = [
   migrateV1ToV2,
   migrateV2ToV3,
@@ -151,6 +224,7 @@ const migrations: StoryExportMigration[] = [
   migrateV6ToV7,
   migrateV7ToV8,
   migrateV8ToV9,
+  migrateV9ToV10,
 ];
 
 /**

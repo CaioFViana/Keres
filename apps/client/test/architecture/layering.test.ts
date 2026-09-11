@@ -96,6 +96,274 @@ describe('client layers', () => {
   });
 });
 
+describe('scene form responsibilities', () => {
+  it('keeps store initialization and persistence coordination outside the screen', () => {
+    const screen = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/narrative-elements/scenes/SceneFormScreen.tsx'),
+      'utf8',
+    );
+
+    expect(screen).toContain('useSceneFormResources');
+    expect(screen).toContain('useSceneFormState');
+    expect(screen).toContain('useSceneFormActions');
+    expect(screen).toContain('useSceneFormAssociations');
+    expect(screen).not.toMatch(/state\/(chapter|character|item|location)Store/);
+    expect(screen).not.toMatch(/createSceneService|setDbAndStoryId|initializeService/);
+    expect(screen).not.toMatch(
+      /saveSceneWithRelations|createAttributeValueService|AppAlert|entityEventEmitter/,
+    );
+    expect(screen).not.toMatch(/useEntityEffects|useEntityRelations|useSceneCharacterPresence/);
+  });
+});
+
+describe('character form responsibilities', () => {
+  it('keeps service setup and persistence coordination outside the screen', () => {
+    const screen = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/CharacterFormScreen.tsx'),
+      'utf8',
+    );
+    const state = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/useCharacterFormState.ts'),
+      'utf8',
+    );
+    const actions = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/useCharacterFormActions.ts'),
+      'utf8',
+    );
+    const associations = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/characters/useCharacterFormAssociations.ts'),
+      'utf8',
+    );
+
+    expect(screen).toContain('useCharacterFormResources');
+    expect(screen).toContain('useCharacterFormState');
+    expect(screen).toContain('useCharacterFormActions');
+    expect(screen).toContain('useCharacterFormAssociations');
+    expect(screen).not.toMatch(/createCharacterService|createCharacterRelationService/);
+    expect(screen).not.toMatch(
+      /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
+    );
+    expect(screen).not.toMatch(
+      /useEntityRelations|useStoryStats|useConfirmDelete|useAsyncOperation/,
+    );
+    expect(state).toContain('initialCharacterId');
+    expect(state).toContain('retainPersistedCharacterId');
+    expect(state).not.toMatch(/getById\(currentCharacterId/);
+    expect(actions).toContain('saveEntityWithSecondaryData');
+    expect(actions).toContain('retainPersistedCharacterId');
+    expect(associations).toContain('preserveDraftOnEntityCreation: true');
+  });
+});
+
+describe('location form responsibilities', () => {
+  it('keeps service setup and persistence coordination outside the screen', () => {
+    const screen = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/LocationFormScreen.tsx'),
+      'utf8',
+    );
+    const state = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/useLocationFormState.ts'),
+      'utf8',
+    );
+    const actions = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/useLocationFormActions.ts'),
+      'utf8',
+    );
+    const associations = readFileSync(
+      resolve(SOURCE_ROOT, 'screens/locations/useLocationFormAssociations.ts'),
+      'utf8',
+    );
+
+    expect(screen).toContain('useLocationFormResources');
+    expect(screen).toContain('useLocationFormState');
+    expect(screen).toContain('useLocationFormActions');
+    expect(screen).toContain('useLocationFormAssociations');
+    expect(screen).not.toMatch(/createLocationService|createLocationRelationService/);
+    expect(screen).not.toMatch(
+      /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
+    );
+    expect(screen).not.toMatch(/useEntityRelations|useConfirmDelete|useAsyncOperation/);
+    expect(state).toContain('initialLocationId');
+    expect(state).toContain('retainPersistedLocationId');
+    expect(state).not.toMatch(/getById\(currentLocationId/);
+    expect(actions).toContain('saveEntityWithSecondaryData');
+    expect(actions).toContain('retainPersistedLocationId');
+    expect(associations).toContain('preserveDraftOnEntityCreation: true');
+  });
+});
+
+describe('extracted multi-step form responsibilities', () => {
+  const forms = [
+    {
+      label: 'WorldRule',
+      dir: 'screens/worldrules',
+      screen: 'WorldRuleFormScreen.tsx',
+      prefix: 'WorldRule',
+      idName: 'WorldRuleId',
+      createService: 'createWorldRuleService',
+    },
+    {
+      label: 'Item',
+      dir: 'screens/items',
+      screen: 'ItemFormScreen.tsx',
+      prefix: 'Item',
+      idName: 'ItemId',
+      createService: 'createItemService',
+    },
+    {
+      label: 'Note',
+      dir: 'screens/notes',
+      screen: 'NoteFormScreen.tsx',
+      prefix: 'Note',
+      idName: 'NoteId',
+      createService: 'createNoteService',
+    },
+    {
+      label: 'Chapter',
+      dir: 'screens/narrative-elements/chapters',
+      screen: 'ChapterFormScreen.tsx',
+      prefix: 'Chapter',
+      idName: 'ChapterId',
+      createService: 'createChapterService',
+    },
+    {
+      label: 'Choice',
+      dir: 'screens/narrative-elements/choices',
+      screen: 'ChoiceFormScreen.tsx',
+      prefix: 'Choice',
+      idName: 'ChoiceId',
+      createService: 'createChoiceService',
+    },
+    {
+      label: 'ItemJourney',
+      dir: 'screens/itemJourneys',
+      screen: 'ItemJourneyFormScreen.tsx',
+      prefix: 'ItemJourney',
+      idName: 'ItemJourneyId',
+      createService: 'createItemJourneyService',
+    },
+  ] as const;
+
+  it.each(forms)(
+    '$label keeps service setup and persistence coordination outside the screen',
+    ({ dir, screen, prefix, idName, createService }) => {
+      const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
+      const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
+      const actions = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`), 'utf8');
+      const associations = readFileSync(
+        resolve(SOURCE_ROOT, dir, `use${prefix}FormAssociations.ts`),
+        'utf8',
+      );
+
+      expect(screenSource).toContain(`use${prefix}FormResources`);
+      expect(screenSource).toContain(`use${prefix}FormState`);
+      expect(screenSource).toContain(`use${prefix}FormActions`);
+      expect(screenSource).toContain(`use${prefix}FormAssociations`);
+      expect(screenSource).not.toMatch(new RegExp(createService));
+      expect(screenSource).not.toMatch(
+        /saveEntityWithSecondaryData|createAttributeValueService|AppAlert|entityEventEmitter/,
+      );
+      expect(screenSource).not.toMatch(/useEntityRelations|useConfirmDelete|useAsyncOperation/);
+      expect(state).toContain(`initial${idName}`);
+      expect(state).toContain(`retainPersisted${idName}`);
+      expect(state).not.toMatch(new RegExp(`getById\\(current${idName}`));
+      expect(actions).toContain('saveEntityWithSecondaryData');
+      expect(actions).toContain(`retainPersisted${idName}`);
+      expect(associations).toContain('preserveDraftOnEntityCreation: true');
+    },
+  );
+});
+
+describe('extracted simple form responsibilities', () => {
+  const forms = [
+    {
+      label: 'Story',
+      dir: 'screens/enterstack',
+      screen: 'StoryFormScreen.tsx',
+      prefix: 'Story',
+      idParam: 'initialStoryId',
+      createService: 'createStoryService',
+    },
+    {
+      label: 'Pack',
+      dir: 'screens/packs',
+      screen: 'PackFormScreen.tsx',
+      prefix: 'Pack',
+      idParam: 'initialPackId',
+      createService: 'createPackService',
+    },
+    {
+      label: 'Friendship',
+      dir: 'screens/enterstack',
+      screen: 'FriendshipFormScreen.tsx',
+      prefix: 'Friendship',
+      idParam: null,
+      createService: 'createFriendshipService',
+    },
+    {
+      label: 'StorySchemaField',
+      dir: 'screens/storyschema',
+      screen: 'StorySchemaFieldFormScreen.tsx',
+      prefix: 'StorySchemaField',
+      idParam: 'initialFieldId',
+      createService: 'createStorySchemaFieldService',
+    },
+    {
+      label: 'Plot',
+      dir: 'screens/plots',
+      screen: 'PlotFormScreen.tsx',
+      prefix: 'Plot',
+      idParam: 'plotId',
+      createService: 'createPlotService',
+    },
+    {
+      label: 'Tag',
+      dir: 'screens/tags',
+      screen: 'TagFormScreen.tsx',
+      prefix: 'Tag',
+      idParam: 'tagId',
+      createService: 'createTagService',
+    },
+    {
+      label: 'Stat',
+      dir: 'screens/stats',
+      screen: 'StatFormScreen.tsx',
+      prefix: 'Stat',
+      idParam: 'statId',
+      createService: 'createStatService',
+    },
+    {
+      label: 'Route',
+      dir: 'screens/routes',
+      screen: 'RouteFormScreen.tsx',
+      prefix: 'Route',
+      idParam: 'routeId',
+      createService: 'createRouteService',
+    },
+  ] as const;
+
+  it.each(forms)(
+    '$label keeps service setup and persistence coordination outside the screen',
+    ({ dir, screen, prefix, idParam, createService }) => {
+      const screenSource = readFileSync(resolve(SOURCE_ROOT, dir, screen), 'utf8');
+      const state = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormState.ts`), 'utf8');
+      const actions = readFileSync(resolve(SOURCE_ROOT, dir, `use${prefix}FormActions.ts`), 'utf8');
+
+      expect(screenSource).toContain(`use${prefix}FormResources`);
+      expect(screenSource).toContain(`use${prefix}FormState`);
+      expect(screenSource).toContain(`use${prefix}FormActions`);
+      expect(screenSource).not.toMatch(new RegExp(createService));
+      expect(screenSource).not.toMatch(
+        /AppAlert|entityEventEmitter|useConfirmDelete|useAsyncOperation/,
+      );
+      if (idParam) {
+        expect(state).toContain(idParam);
+      }
+      expect(actions.length).toBeGreaterThan(0);
+    },
+  );
+});
+
 /**
  * A per-file size ceiling.
  *
@@ -105,24 +373,7 @@ describe('client layers', () => {
  * and a name that stays listed after having been broken up.
  */
 const LINE_LIMIT = 600;
-const FILES_OVER_THE_LIMIT = [
-  'components/features/presence-matrix/PresenceMatrixViewerContent.tsx',
-  'navigation/MainSystemStack.tsx',
-  'screens/characters/CharacterDetailScreen.tsx',
-  'screens/characters/CharacterFormScreen.tsx',
-  'screens/enterstack/ServerRegistrationScreen.tsx',
-  'screens/locations/LocationDetailsScreen.tsx',
-  'screens/locations/LocationFormScreen.tsx',
-  'screens/mainstorystack/StorySettingsScreen.tsx',
-  'screens/narrative-elements/chapters/NarrativeElementsListScreen.tsx',
-  'screens/narrative-elements/choices/ChoiceFormScreen.tsx',
-  'screens/narrative-elements/choices/ChoiceViewScreen.tsx',
-  'screens/narrative-elements/scenes/SceneDetailScreen.tsx',
-  'screens/narrative-elements/scenes/SceneFormScreen.tsx',
-  'services/storymanagement/StoryService.ts',
-  'services/storymanagement/SuggestionService.ts',
-  'utils/storyAnalysisChecks.ts',
-];
+const FILES_OVER_THE_LIMIT: Array<string> = [];
 
 /** Counts only meaningful source lines, leaving comments and visual spacing out of the ceiling. */
 function codeLineCount(content: string): number {

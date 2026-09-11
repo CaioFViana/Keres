@@ -12,6 +12,7 @@ export interface EntityRelationListItem {
   details?: React.ReactNode;
   onPress?: () => void;
   trailing?: React.ReactNode;
+  testID?: string;
 }
 
 interface Props {
@@ -61,11 +62,16 @@ const EntityRelationList: React.FC<Props> = ({ items, emptyText }) => {
         );
         const rowStyle = [styles.row, index === items.length - 1 && styles.last];
         return item.onPress ? (
-          <TouchableOpacity key={item.id} style={rowStyle} onPress={item.onPress}>
+          <TouchableOpacity
+            key={item.id}
+            style={rowStyle}
+            onPress={item.onPress}
+            testID={item.testID}
+          >
             {content}
           </TouchableOpacity>
         ) : (
-          <View key={item.id} style={rowStyle}>
+          <View key={item.id} style={rowStyle} testID={item.testID}>
             {content}
           </View>
         );

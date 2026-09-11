@@ -40,7 +40,8 @@
       "index": 1,
       "summary": "The youngest of six sisters wants the surface before she is allowed it, and once she has seen it she is told what wanting it will cost.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5KGCBMDG1EF1ZBDBF34R4QMZ3R"
     },
     {
       "id": "5D461WEBAZSWYPMCAJ53D8HKNC",
@@ -54,7 +55,8 @@
       "index": 2,
       "summary": "The Sea Witch states her terms in full and keeps them exactly. What she leaves out is not a lie - it is simply not asked.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5KGCBMDG1EF1ZBDBF34R4QMZ3R"
     },
     {
       "id": "0T8G49MXY19NWBZ7GTFGBFADZS",
@@ -68,7 +70,8 @@
       "index": 3,
       "summary": "The prince marries the woman he believes saved him, and the little mermaid is offered one way out that requires her to take a life.",
       "isFavorite": false,
-      "extraNotes": null
+      "extraNotes": null,
+      "arcId": "5KGCBMDG1EF1ZBDBF34R4QMZ3R"
     }
   ],
   "scenes": [
@@ -2245,7 +2248,7 @@
     }
   ],
   "exampleCatalogEnriched": true,
-  "formatVersion": 9,
+  "formatVersion": 10,
   "stats": [
     {
       "id": "2JJF4PBQY4WHGDMB4TRCBEZ75D",
@@ -3200,5 +3203,23 @@
     }
   ],
   "routes": [],
-  "routeSteps": []
+  "routeSteps": [],
+  "storyArcs": [
+    {
+      "id": "5KGCBMDG1EF1ZBDBF34R4QMZ3R",
+      "storyId": "01KYXBHD0ME7CZXCJDMH2Q8586",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Arc",
+      "description": null,
+      "sortOrder": 0,
+      "color": null,
+      "icon": null,
+      "themeOverride": null,
+      "isDefault": true
+    }
+  ]
 }

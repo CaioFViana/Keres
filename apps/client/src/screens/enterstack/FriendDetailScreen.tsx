@@ -1,3 +1,5 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
@@ -11,12 +13,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityInitialLoad } from '../../hooks/useEntityRefreshLifecycle';
-import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
 import { useFriendshipActionHandler } from '../../hooks/useFriendshipActionHandler';
 import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import type { FriendshipWithServer } from '../../services/FriendshipService';
@@ -24,9 +25,7 @@ import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
 type FriendDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -48,7 +47,7 @@ const statusLabelKey = (status: string) => {
 const FriendDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  useDocumentTitle(t('friend_detail_title'));
+  useScreenHeader({ target: 'parent', title: t('friend_detail_title') });
   const { colors } = useTheme();
   const navigation = useNavigation<FriendDetailScreenNavigationProp>();
   const route = useRoute<FriendDetailScreenRouteProp>();
@@ -60,8 +59,6 @@ const FriendDetailScreen = () => {
   const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
   const serverService = useRef(createServerService(drizzleClient)).current;
   const { showNotification } = useNotificationStore();
-  const commonContainerStyles = getCommonContainerStyles(colors);
-  const scrollBottomPadding = useFormScrollBottomPadding();
 
   const [friendship, setFriendship] = useState<FriendshipWithServer | null>(null);
   const [server, setServer] = useState<ServerSelect | null>(null);
@@ -211,10 +208,7 @@ const FriendDetailScreen = () => {
     (friendship.blockedById === null || friendship.blockedById === currentUsersServerId);
 
   return (
-    <ScrollView
-      style={commonContainerStyles.container}
-      contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
-    >
+    <DetailContainer>
       <View style={styles.avatarContainer}>
         <Avatar
           color={friendship.otherUserAvatarColor}
@@ -300,7 +294,7 @@ const FriendDetailScreen = () => {
           <Text style={styles.serverInfo}>{t('blocked_by_other_user')}</Text>
         )}
       </View>
-    </ScrollView>
+    </DetailContainer>
   );
 };
 

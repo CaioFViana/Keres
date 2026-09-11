@@ -75,7 +75,7 @@ beforeEach(async () => {
 
 describe('reordering the scenes of a chapter', () => {
   it('writes the new indices and bumps every version involved', async () => {
-    const chapter = await chapterHandler.findById(chapterId);
+    const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
     await chapterHandler.update(
       userId,
@@ -91,11 +91,11 @@ describe('reordering the scenes of a chapter', () => {
     const after = await indexesOf(scenes, sceneIds);
     expect(after.map((row) => row?.index)).toEqual([3, 1, 2]);
     expect(after.every((row) => row?.version === 2)).toBe(true);
-    expect((await chapterHandler.findById(chapterId)).version).toBe(chapter.version + 1);
+    expect((await chapterHandler.findByIdOrThrow(chapterId)).version).toBe(chapter.version + 1);
   });
 
   it('refuses a batch that does not cover exactly the scenes of the chapter', async () => {
-    const chapter = await chapterHandler.findById(chapterId);
+    const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
     await expect(
       chapterHandler.update(
@@ -113,7 +113,7 @@ describe('reordering the scenes of a chapter', () => {
   });
 
   it('refuses repeated indices', async () => {
-    const chapter = await chapterHandler.findById(chapterId);
+    const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
     await expect(
       chapterHandler.update(
@@ -130,7 +130,7 @@ describe('reordering the scenes of a chapter', () => {
   });
 
   it('refuses indices with a gap or not starting at one', async () => {
-    const chapter = await chapterHandler.findById(chapterId);
+    const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
     await expect(
       chapterHandler.update(
@@ -147,7 +147,7 @@ describe('reordering the scenes of a chapter', () => {
   });
 
   it('refuses a reorder built on a stale chapter version', async () => {
-    const chapter = await chapterHandler.findById(chapterId);
+    const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
     await expect(
       chapterHandler.update(
@@ -164,7 +164,7 @@ describe('reordering the scenes of a chapter', () => {
   });
 
   it('still delegates a plain field update to the base handler', async () => {
-    const chapter = await chapterHandler.findById(chapterId);
+    const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
     await chapterHandler.update(
       userId,
@@ -179,7 +179,7 @@ describe('reordering the scenes of a chapter', () => {
       chapter,
     );
 
-    const updated = await chapterHandler.findById(chapterId);
+    const updated = await chapterHandler.findByIdOrThrow(chapterId);
     expect(updated.name).toBe('Um, revisado');
     expect(updated.version).toBe(chapter.version + 1);
   });
@@ -187,7 +187,7 @@ describe('reordering the scenes of a chapter', () => {
 
 describe('reordering the chapters of a story', () => {
   it('writes the new indices and bumps every version involved', async () => {
-    const story = await storyHandler.findById(storyId);
+    const story = await storyHandler.findByIdOrThrow(storyId);
 
     await storyHandler.update(
       userId,
@@ -205,7 +205,7 @@ describe('reordering the chapters of a story', () => {
   });
 
   it('refuses a batch that does not cover exactly the chapters of the story', async () => {
-    const story = await storyHandler.findById(storyId);
+    const story = await storyHandler.findByIdOrThrow(storyId);
 
     await expect(
       storyHandler.update(
@@ -220,7 +220,7 @@ describe('reordering the chapters of a story', () => {
   });
 
   it('refuses repeated indices', async () => {
-    const story = await storyHandler.findById(storyId);
+    const story = await storyHandler.findByIdOrThrow(storyId);
 
     await expect(
       storyHandler.update(
@@ -236,7 +236,7 @@ describe('reordering the chapters of a story', () => {
   });
 
   it('refuses indices with a gap or not starting at one', async () => {
-    const story = await storyHandler.findById(storyId);
+    const story = await storyHandler.findByIdOrThrow(storyId);
 
     await expect(
       storyHandler.update(
@@ -252,7 +252,7 @@ describe('reordering the chapters of a story', () => {
   });
 
   it('leaves the chapters untouched when the reorder fails', async () => {
-    const story = await storyHandler.findById(storyId);
+    const story = await storyHandler.findByIdOrThrow(storyId);
     await expect(
       storyHandler.update(
         userId,

@@ -71,6 +71,17 @@ beforeEach(async () => {
       storyId: () => STORY_ID,
       client: jest.fn() as never,
       conflictService: () => ({ recordConflict }) as never,
+      abortSignal: () => new AbortController().signal,
+      notifier: () =>
+        ({
+          remoteUpdatesReceived: jest.fn(),
+          remoteUpdatesFailed: jest.fn(),
+          conflictsDetected: jest.fn(),
+          pushedUpdates: jest.fn(),
+          pushFailed: jest.fn(),
+          syncFailed: jest.fn(),
+          message: jest.fn(),
+        }) as never,
     },
     rebasePendingOperations: rebase,
   });
@@ -169,6 +180,27 @@ describe('remote operation log', () => {
     });
     expect(stored).toMatchObject({ isSynced: true, serverOperationVersion: 4 });
     expect(JSON.parse(stored!.payload)).toEqual(expected);
+  });
+
+  it('keeps the target of a story-level stat reorder in the local operation log', async () => {
+    await pull.recordRemoteOperationLocally(
+      update({
+        type: 'reorder',
+        entity: 'Story',
+        id: STORY_ID,
+        reorderTarget: 'Stat',
+        reorderItems: [{ id: 'stat-1', newIndex: 1 }],
+      } as never),
+    );
+
+    const stored = await database.db.query.operationLogs.findFirst({
+      where: eq(schema.operationLogs.id, 'remote-op'),
+    });
+    expect(JSON.parse(stored!.payload)).toEqual({
+      reorderItems: [{ id: 'stat-1', newIndex: 1 }],
+      reorderTarget: 'Stat',
+      schemaEntityType: undefined,
+    });
   });
 
   it('supplies safe local metadata when an older server omits operation metadata', async () => {

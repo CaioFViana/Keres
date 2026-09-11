@@ -12,7 +12,7 @@ import {
   userService,
 } from '../../services/UserService';
 import { friendshipService } from '../../services/FriendshipService';
-import { isUniqueViolation } from '../../utils/errors';
+import { AppError, isUniqueViolation } from '../../utils/errors';
 
 const userResponseSchema = t.Object({
   id: t.String(),
@@ -27,11 +27,10 @@ export const userRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
   .get(
     '/details/:userId',
-    async ({ params, set, user }) => {
+    async ({ params, user }) => {
       // Ensure the request is authenticated
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
 
       const { userId } = params;
@@ -39,15 +38,13 @@ export const userRoutes = new Elysia()
       // Basic validation for userId format (assuming ULID)
       if (!userId || typeof userId !== 'string' || userId.length !== 26) {
         // ULID length is 26
-        set.status = 400;
-        return { message: 'Invalid userId format' };
+        throw new AppError(400, 'Invalid userId format');
       }
 
       const foundUser = await userService.getUserById(userId);
 
       if (!foundUser) {
-        set.status = 404;
-        return { message: 'User not found' };
+        throw new AppError(404, 'User not found');
       }
 
       return foundUser;
@@ -75,17 +72,15 @@ export const userRoutes = new Elysia()
   )
   .get(
     '/by-tag/:tag',
-    async ({ params, set, user }) => {
+    async ({ params, user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
 
       const foundUser = await userService.getUserByTag(params.tag);
 
       if (!foundUser) {
-        set.status = 404;
-        return { message: 'User not found' };
+        throw new AppError(404, 'User not found');
       }
 
       return foundUser;
@@ -110,16 +105,14 @@ export const userRoutes = new Elysia()
   )
   .put(
     '/tag',
-    async ({ body, set, user }) => {
+    async ({ body, user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
 
       const parsed = UpdateUserTagSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid tag' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid tag');
       }
 
       try {
@@ -130,8 +123,7 @@ export const userRoutes = new Elysia()
         // TagAlreadyTakenError covers the common case; a unique-violation can still slip
         // through under a concurrent race, so treat both the same way.
         if (error instanceof TagAlreadyTakenError || isUniqueViolation(error)) {
-          set.status = 409;
-          return { message: 'Tag is already taken.' };
+          throw new AppError(409, 'Tag is already taken.');
         }
         throw error;
       }
@@ -156,16 +148,14 @@ export const userRoutes = new Elysia()
   )
   .put(
     '/profile',
-    async ({ body, set, user }) => {
+    async ({ body, user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
 
       const parsed = UpdateUserProfileSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid profile data' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid profile data');
       }
 
       const updated = await userService.updateUserProfile(user.userId, parsed.data);
@@ -194,16 +184,14 @@ export const userRoutes = new Elysia()
   )
   .put(
     '/password',
-    async ({ body, set, user }) => {
+    async ({ body, user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
 
       const parsed = UpdateUserPasswordSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid password data' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid password data');
       }
 
       try {
@@ -215,8 +203,7 @@ export const userRoutes = new Elysia()
         return { message: 'Password updated successfully.' };
       } catch (error) {
         if (error instanceof InvalidCurrentPasswordError) {
-          set.status = 401;
-          return { message: error.message };
+          throw new AppError(401, error.message);
         }
         throw error;
       }
@@ -242,16 +229,14 @@ export const userRoutes = new Elysia()
   )
   .put(
     '/recovery-codes',
-    async ({ body, set, user }) => {
+    async ({ body, user }) => {
       if (!user) {
-        set.status = 401;
-        return { message: 'Unauthorized' };
+        throw new AppError(401, 'Unauthorized');
       }
 
       const parsed = RegenerateRecoveryCodesSchema.safeParse(body);
       if (!parsed.success) {
-        set.status = 400;
-        return { message: parsed.error.issues[0]?.message || 'Invalid request' };
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid request');
       }
 
       try {
@@ -262,8 +247,7 @@ export const userRoutes = new Elysia()
         return { recoveryCodes };
       } catch (error) {
         if (error instanceof InvalidCurrentPasswordError) {
-          set.status = 401;
-          return { message: error.message };
+          throw new AppError(401, error.message);
         }
         throw error;
       }

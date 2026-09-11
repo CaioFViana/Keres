@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateItemJourneyDataType,
   CreateStoryUpdate,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateItemJourneyDataSchema, PartialItemJourneySchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { characters, itemJourneys, items, scenes } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -17,7 +18,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
   entityName = 'ItemJourney';
 
   constructor() {
-    super('itemJourneys', 'id', 'version', CreateItemJourneyDataSchema, PartialItemJourneySchema, {
+    super('id', 'version', CreateItemJourneyDataSchema, PartialItemJourneySchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
@@ -29,8 +30,9 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
     itemId: string,
     sceneId: string,
     newCharacterOwnerId: string | null,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    const itemExists = await db.query.items.findFirst({
+    const itemExists = await database.query.items.findFirst({
       where: and(eq(items.id, itemId), eq(items.storyId, storyId), eq(items.isDeleted, false)),
     });
     if (!itemExists) {
@@ -40,7 +42,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    const sceneExists = await db.query.scenes.findFirst({
+    const sceneExists = await database.query.scenes.findFirst({
       where: and(eq(scenes.id, sceneId), eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
     });
     if (!sceneExists) {
@@ -51,7 +53,7 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
     }
 
     if (newCharacterOwnerId) {
-      const characterExists = await db.query.characters.findFirst({
+      const characterExists = await database.query.characters.findFirst({
         where: and(
           eq(characters.id, newCharacterOwnerId),
           eq(characters.storyId, storyId),
@@ -67,7 +69,12 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateItemJourneyDataType = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(
@@ -75,14 +82,15 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       validatedData.itemId,
       validatedData.sceneId,
       validatedData.newCharacterOwnerId,
+      database,
     );
 
-    const currentItemJourney = await this.findById(update.id!);
+    const currentItemJourney = await this.findById(update.id!, database);
     if (currentItemJourney) {
       throw new Error(`Conflict: ItemJourney with ID ${update.id} already exists.`);
     }
 
-    await db.insert(itemJourneys).values({
+    await database.insert(itemJourneys).values({
       id: update.id!,
       storyId: storyId,
       itemId: validatedData.itemId,
@@ -102,7 +110,8 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -117,18 +126,25 @@ export class ItemJourneySyncHandler extends BaseSyncEntityHandler<
       validatedChanges.sceneId !== undefined ||
       validatedChanges.newCharacterOwnerId !== undefined
     ) {
-      await this.validateRelatedEntities(storyId, newItemId, newSceneId, newCharacterOwnerId);
+      await this.validateRelatedEntities(
+        storyId,
+        newItemId,
+        newSceneId,
+        newCharacterOwnerId,
+        database,
+      );
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
@@ -22,7 +23,6 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -43,7 +43,7 @@ const PackListScreen = () => {
   const navigation = useNavigation<{ navigate: (screen: string, params?: unknown) => void }>();
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
-  useDocumentTitle(t('packs_title'));
+  useScreenHeader({ target: 'parent', title: t('packs_title') });
 
   const [packs, setPacks] = useState<PackSummary[]>([]);
   const [loading, setLoading] = useState(true);

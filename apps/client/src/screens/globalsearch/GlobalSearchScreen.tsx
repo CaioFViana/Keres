@@ -1,7 +1,9 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { getOnColorForFill } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,7 +25,6 @@ import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { debounce } from '../../utils/debounce';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
@@ -119,15 +120,10 @@ const GlobalSearchScreen = () => {
     };
   }, [committedQuery, storyId, userId, globalSearchService]);
 
-  useFocusEffect(
-    useCallback(() => {
-      // GlobalSearch is a direct Drawer.Screen (no nested Stack in between, unlike the entity
-      // list/detail/form screens), so `navigation` here already IS the Drawer's own nav object -
-      // `.getParent()` would target the Root Stack above it instead, one level too far up.
-      navigation.setOptions({ title: t('global_search_title'), headerRight: undefined });
-      setDocumentTitle(t('global_search_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'self',
+    title: t('global_search_title'),
+  });
 
   const sections = useMemo<ResultSection[]>(() => {
     const byEntityType = new Map<GlobalSearchEntityType, GlobalSearchResult[]>();
@@ -174,6 +170,7 @@ const GlobalSearchScreen = () => {
       : favoriteFilterState === 'not-favorite'
         ? colors.notification
         : colors.primary;
+  const favoriteFilterIconColor = getOnColorForFill(colors, favoriteFilterColor);
 
   const handleResultPress = useCallback(
     (result: GlobalSearchResult) => {
@@ -201,7 +198,7 @@ const GlobalSearchScreen = () => {
             onPress={handleFavoriteFilterToggle}
             style={[styles(colors).favoriteFilterButton, { backgroundColor: favoriteFilterColor }]}
           >
-            <Ionicons name={favoriteFilterIcon} size={24} color={colors.text} />
+            <Ionicons name={favoriteFilterIcon} size={24} color={favoriteFilterIconColor} />
           </TouchableOpacity>
         </View>
       </View>

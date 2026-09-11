@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createClient } from '@libsql/client';
 import * as dotenv from 'dotenv';
-import { drizzle as drizzleLibsql } from 'drizzle-orm/libsql';
+import { drizzle as drizzleLibsql, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -22,13 +22,81 @@ dotenv.config({ path: '../.env' });
  * `withTransaction` below, which is the backbone of synchronization. libSQL speaks SQLite through an
  * async API, so none of that had to change.
  *
- * The exported type is Postgres's in both cases, for the same reason as `schema/columns.ts`: the
- * column builders were chosen so the inferred types are identical, so whoever queries cannot tell one
- * from the other.
+ * ## Application contract vs driver types
+ *
+ * Services import `CompatibleDb` / `db` — never `NodePgDatabase` or `LibSQLDatabase`. That keeps
+ * engine work localized to this module.
+ *
+ * To add another engine later (not in scope): create the connection, cover dialect gaps in
+ * `sqlOperators.ts` / `withWriteTransaction` / migrations, pass it through `exposeCompatibleDb`,
+ * and extend the dual-engine contract tests. Do not widen the app by intersecting more Drizzle
+ * driver generics into call sites outside `db/`.
+ *
+ * The exported contract contains only operations exercised against both drivers. Driver-specific
+ * capabilities stay behind this module.
  */
-type Db = NodePgDatabase<typeof schema>;
+/**
+ * Operations guaranteed by Keres' PostgreSQL and libSQL adapters.
+ *
+ * Shared application surface (and nothing else):
+ * - `select` / `selectDistinct` / `insert` / `update` / `delete`
+ * - relational `query.*.findFirst` / `query.*.findMany`
+ * - `transaction`
+ *
+ * Not part of this contract: `execute`, `$with`, `$count`, `$cache`, `all`, `run`,
+ * `refreshMaterializedView`, driver sessions, or transaction config types. Those stay in
+ * `db/` dialect adapters (`sqlOperators.ts`, migrations) or must not be used.
+ *
+ * Add a new shared operation only with (1) signatures from both drivers and (2) a contract
+ * test that runs on PostgreSQL and SQLite.
+ *
+ * Policy (closed): intersecting native overloads keeps call-site ergonomics; intersection ≠
+ * portability proof. The contract tests and the forbidden-key checks are the real gate.
+ */
+type PostgresDb = NodePgDatabase<typeof schema>;
+type SqliteDb = LibSQLDatabase<typeof schema>;
+type CommonOperation = 'select' | 'selectDistinct' | 'insert' | 'update' | 'delete';
 
-function createPostgresDb(): Db {
+type CommonRelationalQueries = {
+  [TableName in keyof PostgresDb['query'] & keyof SqliteDb['query']]: {
+    findFirst: PostgresDb['query'][TableName]['findFirst'] &
+      SqliteDb['query'][TableName]['findFirst'];
+    findMany: PostgresDb['query'][TableName]['findMany'] & SqliteDb['query'][TableName]['findMany'];
+  };
+};
+
+/**
+ * Both native adapters must contribute their signatures to the application surface. An
+ * intersection is intentional here: it keeps the overloads accepted by each Drizzle driver while
+ * preventing PostgreSQL alone from defining what "compatible" means.
+ */
+type CommonDatabaseOperations = {
+  query: CommonRelationalQueries;
+} & {
+  [Operation in CommonOperation]: PostgresDb[Operation] & SqliteDb[Operation];
+};
+
+declare const keresCompatibleDbBrand: unique symbol;
+
+/**
+ * Branded application database handle. A raw `NodePgDatabase` / `LibSQLDatabase` is not
+ * assignable without `exposeCompatibleDb`, so services cannot bypass the portability boundary.
+ */
+export type CompatibleDb = CommonDatabaseOperations & {
+  transaction<T>(work: (tx: CompatibleDb) => Promise<T>): Promise<T>;
+  readonly [keresCompatibleDbBrand]: true;
+};
+
+/**
+ * The schemas use equivalent runtime modes for every shared column (Date, boolean, JSON and number).
+ * Drizzle models the two drivers with unrelated generic types, so this is the one deliberate bridge
+ * from a native adapter (or its transaction) onto the application's compatible surface.
+ */
+function exposeCompatibleDb(database: unknown): CompatibleDb {
+  return database as unknown as CompatibleDb;
+}
+
+function createPostgresDb(): PostgresDb {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     // Explicit instead of relying on `pg`'s defaults, since this pool is shared by the whole
@@ -106,7 +174,7 @@ function sanitiseClient<T extends object>(client: T): T {
   });
 }
 
-function createSqliteDb(): Db {
+function createSqliteDb(): SqliteDb {
   const client = sanitiseClient(createClient({ url: process.env.DATABASE_URL! }));
   // Without foreign keys SQLite silently accepts a row pointing at an id that does not exist - Postgres
   // never did, and the schema counts on that. It is off by default.
@@ -114,43 +182,61 @@ function createSqliteDb(): Db {
   // It suits 2-5 clients: readers do not block one another; the file survives a process reboot without
   // losing the journal. Multi-instance production is still Postgres.
   void client.execute('PRAGMA journal_mode = WAL');
-  return drizzleLibsql(client, { schema, logger: false }) as unknown as Db;
+  return drizzleLibsql(client, { schema, logger: false });
 }
 
-const rawDb: Db = usingSqlite ? createSqliteDb() : createPostgresDb();
+export const databaseMigrationTarget = usingSqlite
+  ? ({ dialect: 'sqlite', connection: createSqliteDb() } as const)
+  : ({ dialect: 'postgres', connection: createPostgresDb() } as const);
+
+const rawDb = exposeCompatibleDb(databaseMigrationTarget.connection);
 
 /**
- * Makes a transaction implicitly visible to every call to the `db` exported below made during `fn` -
- * direct or indirect, at any call depth - without having to pass a `tx` parameter through any of the
- * synchronization handlers. They keep importing and calling `db` exactly as before; it is the Proxy
- * just below that resolves to the transaction active in this `AsyncLocalStorage` when there is one.
+ * Joins nested `withTransaction` / `withWriteTransaction` calls onto the same session.
+ * Sync handlers and other writers must take the `tx` callback argument explicitly — the exported
+ * `db` is the ordinary connection and does not silently redirect into the active transaction.
  */
-const transactionContext = new AsyncLocalStorage<Db>();
+const transactionContext = new AsyncLocalStorage<CompatibleDb>();
 
 /**
- * Like `db.transaction(callback)`, but the `callback` runs with the transaction hidden in the async
- * context instead of received as a parameter. It always opens a fresh transaction from the ordinary
- * connection - it is not itself nesting-aware; what nests correctly (as a savepoint) is
- * `db.transaction(...)` called through the Proxy below while a transaction is already active in this
- * context, which is the real use case today (entity handlers that already call `db.transaction` on
- * their own, now running inside `SyncService`'s `withTransaction`).
+ * Starts a transaction intended to write. Callers express the semantic requirement, while this
+ * boundary chooses the driver-specific locking mode. SQLite acquires its write lock immediately;
+ * PostgreSQL keeps its ordinary transaction and uses the narrower advisory/row locks where needed.
+ * Nested calls receive the same `tx` as the outer transaction.
  */
-export function withTransaction<T>(fn: () => Promise<T>): Promise<T> {
-  return rawDb.transaction((tx) => transactionContext.run(tx as unknown as Db, fn));
+export function withWriteTransaction<T>(work: (tx: CompatibleDb) => Promise<T>): Promise<T> {
+  const activeTransaction = transactionContext.getStore();
+  if (activeTransaction) {
+    return work(activeTransaction);
+  }
+
+  if (databaseMigrationTarget.dialect === 'sqlite') {
+    return databaseMigrationTarget.connection.transaction(
+      (nativeTx) => {
+        const tx = exposeCompatibleDb(nativeTx);
+        return transactionContext.run(tx, () => work(tx));
+      },
+      { behavior: 'immediate' },
+    );
+  }
+
+  return databaseMigrationTarget.connection.transaction((nativeTx) => {
+    const tx = exposeCompatibleDb(nativeTx);
+    return transactionContext.run(tx, () => work(tx));
+  });
 }
 
 /**
- * A Proxy over the ordinary connection: every property/method accessed resolves to the active
- * transaction (if a `withTransaction` is in progress in this async chain) or falls back to the
- * ordinary connection, without callers needing to know the difference or change a line. Methods are
- * rebound (`.bind`) to the resolved target because `proxy.method(...)` would bind `this` to the proxy
- * rather than to the object the method actually came from - without this, drizzle's internal methods
- * would break trying to read state from `this` in the wrong place.
+ * Opens a transaction and delivers it as `tx`. Nested `withTransaction` / `withWriteTransaction`
+ * calls join this session. Independent savepoints must use `tx.transaction(...)`, not `db.transaction`.
  */
-export const db: Db = new Proxy(rawDb, {
-  get(target, prop) {
-    const active = transactionContext.getStore() ?? target;
-    const value = (active as unknown as Record<string | symbol, unknown>)[prop];
-    return typeof value === 'function' ? value.bind(active) : value;
-  },
-}) as Db;
+export function withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>): Promise<T> {
+  const activeTransaction = transactionContext.getStore();
+  if (activeTransaction) {
+    return fn(activeTransaction);
+  }
+  return rawDb.transaction((tx) => transactionContext.run(tx, () => fn(tx)));
+}
+
+/** Ordinary connection. Transactional work must use the `tx` from `withTransaction` / `withWriteTransaction`. */
+export const db: CompatibleDb = rawDb;

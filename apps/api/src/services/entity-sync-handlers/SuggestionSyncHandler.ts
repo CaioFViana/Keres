@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStoryUpdate,
   CreateSuggestionDataType,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateSuggestionDataSchema, PartialSuggestionSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { suggestions } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -17,18 +18,23 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Suggestion';
 
   constructor() {
-    super('suggestions', 'id', 'version', CreateSuggestionDataSchema, PartialSuggestionSchema, {
+    super('id', 'version', CreateSuggestionDataSchema, PartialSuggestionSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateSuggestionDataType = this.createSchema.parse(update.data);
 
     // Check for existing suggestion with the same type and value within the same story
-    const existingSuggestion = await db.query.suggestions.findFirst({
+    const existingSuggestion = await database.query.suggestions.findFirst({
       where: and(
         eq(suggestions.storyId, storyId),
         eq(suggestions.type, validatedData.type),
@@ -43,7 +49,7 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(suggestions).values({
+    await database.insert(suggestions).values({
       id: update.id!,
       storyId: storyId,
       type: validatedData.type,
@@ -60,7 +66,8 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
@@ -72,7 +79,7 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
       const newType = validatedChanges.type || currentEntity.type;
       const newValue = validatedChanges.value || currentEntity.value;
 
-      const existingSuggestion = await db.query.suggestions.findFirst({
+      const existingSuggestion = await database.query.suggestions.findFirst({
         where: and(
           eq(suggestions.storyId, storyId),
           eq(suggestions.type, newType),
@@ -89,15 +96,16 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
       }
     }
 
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

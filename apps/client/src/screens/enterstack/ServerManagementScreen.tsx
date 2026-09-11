@@ -1,7 +1,8 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,6 @@ import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 
 interface ServerWithStatus extends ServerSelect {
   pingStatus: 'idle' | 'pending' | 'online' | 'offline';
@@ -38,7 +38,7 @@ type ServerManagementScreenNavigationProp = NativeStackNavigationProp<
 const ServerManagementScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  useDocumentTitle(t('manage_servers'));
+
   const { colors } = useTheme();
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);
@@ -227,23 +227,18 @@ const ServerManagementScreen = () => {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.getParent()?.setOptions({
-        title: t('manage_servers'),
-        headerRight: () => (
-          <View style={{ flexDirection: 'row', marginRight: 15, gap: 15 }}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('ServerRegistration', {})}
-              accessibilityLabel={t('register_new_server')}
-            >
-              <Ionicons name="add" size={30} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-        ),
-      });
-    }, [colors.text, navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('manage_servers'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'add',
+        label: t('register_new_server'),
+        onPress: () => navigation.navigate('ServerRegistration', {}),
+      },
+    ],
+  });
 
   const renderServerItem = ({ item }: { item: ServerWithStatus }) => (
     <View
@@ -366,19 +361,10 @@ const ServerManagementScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   serverItem: {
     flexDirection: 'row',

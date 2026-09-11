@@ -13,6 +13,14 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       /**
        * Type imports written as such. Without this, a type imported as a value keeps the whole
        * module in the runtime graph - that is how ten client components dragged drizzle and
@@ -30,6 +38,12 @@ export default [
           disallowTypeAnnotations: false,
         },
       ],
+    },
+  },
+  {
+    files: ['src/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': ['error', { fixToUnknown: true }],
     },
   },
 ];

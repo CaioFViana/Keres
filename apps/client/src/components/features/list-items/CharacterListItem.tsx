@@ -1,4 +1,5 @@
 import React from 'react';
+import { OperationLogEntityType, summarizeEntityPreview } from '@keres/shared';
 import { Text, View } from 'react-native';
 import type { CharacterWithTags } from '../../../services/storymanagement/CharacterService';
 import { useTheme } from '../../../theme';
@@ -28,7 +29,8 @@ const CharacterListItem: React.FC<CharacterListItemProps> = ({
   const { colors } = useTheme();
   const [relationsExpanded, setRelationsExpanded] = React.useState(false);
 
-  const descriptionSummary = truncate(character.description, 150);
+  const preview = summarizeEntityPreview(OperationLogEntityType.Character, character);
+  const descriptionSummary = truncate(preview?.primaryDetail, 150);
 
   const styles = createSimpleEntityListItemStyles(colors);
 

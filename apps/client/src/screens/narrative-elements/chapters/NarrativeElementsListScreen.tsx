@@ -1,20 +1,18 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { commonScreenStyleDefs } from '../../../theme/commonStyles';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import ChapterReorderModal from '@/src/components/features/chapters/ChapterReorderModal/ChapterReorderModal'; // Import the modal
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import ChapterListItem from '@/src/components/features/list-items/ChapterListItem';
-import ChapterScenesList from '@/src/components/features/chapters/ChapterScenesList';
 import SceneReorderModal from '@/src/components/features/scenes/SceneReorderModal/SceneReorderModal';
 import { useDrizzle } from '../../../db';
 import type { ChapterType } from '@keres/shared';
@@ -30,9 +28,9 @@ import type {
 import { useChapterStore } from '../../../state/chapterStore';
 import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
+import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { setDocumentTitle } from '../../../utils/documentTitle';
 import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
@@ -40,35 +38,18 @@ import { createChapterService } from '../../../services/storymanagement/ChapterS
 import { createTagService } from '../../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../../services/storymanagement/TagRelationService';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
+import {
+  createChapterListItemRenderer,
+  type AdvancedNarrativeMatches,
+  matchesChoiceQuery,
+  matchesSceneQuery,
+  scenesShownForChapter,
+} from './createChapterListItemRenderer';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
   NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChapterDetail'>
 >;
-
-const matchesSceneQuery = (scene: SceneSelect, query: string) =>
-  [scene.name, scene.summary, scene.extraNotes].some((value) =>
-    value?.toLocaleLowerCase().includes(query),
-  );
-
-const matchesChoiceQuery = (choice: ChoiceSelect, query: string) =>
-  [choice.text, choice.notes].some((value) => value?.toLocaleLowerCase().includes(query));
-
-const sceneBelongsToGroup = (scene: SceneSelect, groupId: string) =>
-  isUnchapteredGroup(groupId) ? !scene.chapterId : scene.chapterId === groupId;
-
-const scenesShownForChapter = (chapterId: string, allScenes: SceneSelect[], query: string) => {
-  const chapterScenes = allScenes.filter((scene) => sceneBelongsToGroup(scene, chapterId));
-  if (!query) return chapterScenes;
-  const matchingScenes = chapterScenes.filter((scene) => matchesSceneQuery(scene, query));
-  return matchingScenes.length > 0 ? matchingScenes : chapterScenes;
-};
-
-type AdvancedNarrativeMatches = {
-  chapterIds: ReadonlySet<string>;
-  sceneIds: ReadonlySet<string>;
-  choiceSourceSceneIds: ReadonlySet<string>;
-};
 
 const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: string) =>
   Object.fromEntries(
@@ -84,9 +65,11 @@ const NarrativeElementsListScreen = () => {
   const { colors } = useTheme();
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
+  const activeArcId = useStoryStore((state) => state.activeArcId);
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
 
   const {
+    listProps,
     loading,
     error,
     storyId,
@@ -95,12 +78,6 @@ const NarrativeElementsListScreen = () => {
     sortDirection,
     favoriteFilterState,
     advancedSearchCriteria,
-    handleSearch,
-    handleSearchSubmit,
-    handleSortChange,
-    handleSortDirectionChange,
-    handleFavoriteFilterChange,
-    setAdvancedSearchCriteria,
     toggleFavorite,
   } = useEntityListScreen({
     useStore: useChapterStore,
@@ -338,6 +315,7 @@ const NarrativeElementsListScreen = () => {
   const visibleChapters = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
     const filtered = outlineChapters.filter((chapter) => {
+      if (!chapterBelongsToArc(chapter, activeArcId)) return false;
       const chapterScenes = scenesWithFavoriteState.filter(
         (scene) => scene.chapterId === chapter.id,
       );
@@ -429,6 +407,7 @@ const NarrativeElementsListScreen = () => {
         type: 'chapter',
         summary: null,
         extraNotes: null,
+        arcId: null,
         isFavorite: false,
         createdAt: new Date(0),
         updatedAt: new Date(0),
@@ -444,6 +423,7 @@ const NarrativeElementsListScreen = () => {
     advancedMatches,
     choices,
     favoriteFilterState,
+    activeArcId,
     outlineChapters,
     scenesWithFavoriteState,
     searchQuery,
@@ -455,81 +435,33 @@ const NarrativeElementsListScreen = () => {
     storyId,
   ]);
 
-  const memoizedChapterListItem = useCallback(
-    ({ item }: { item: ChapterSelect }) => {
-      const query = searchQuery.trim().toLocaleLowerCase();
-      const allChapterScenes = scenesWithFavoriteState.filter((scene) =>
-        sceneBelongsToGroup(scene, item.id),
-      );
-      const queryScenes = scenesShownForChapter(item.id, scenesWithFavoriteState, query);
-      const choiceMatchedSceneIds = new Set(
-        choices
-          .filter((choice) => matchesChoiceQuery(choice, query))
-          .map((choice) => choice.sceneId),
-      );
-      const chapterHasMatchingTag = (tagsByChapterId.get(item.id) ?? []).some((tag) =>
-        activeTagIds.includes(tag.id),
-      );
-      const filteredByTag =
-        activeTagIds.length > 0 && !chapterHasMatchingTag
-          ? queryScenes.filter((scene) =>
-              (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
-            )
-          : queryScenes;
-      const filteredByFavorite =
-        favoriteFilterState === 'favorite' && !item.isFavorite
-          ? filteredByTag.filter((scene) => scene.isFavorite)
-          : filteredByTag;
-      const chapterScenes = advancedMatches
-        ? filteredByFavorite.filter(
-            (scene) =>
-              advancedMatches.sceneIds.has(scene.id) &&
-              advancedMatches.choiceSourceSceneIds.has(scene.id),
-          )
-        : query &&
-            choiceMatchedSceneIds.size > 0 &&
-            !queryScenes.some((scene) => matchesSceneQuery(scene, query))
-          ? filteredByFavorite.filter((scene) => choiceMatchedSceneIds.has(scene.id))
-          : filteredByFavorite;
-      const hasSceneMatch = query
-        ? scenesWithFavoriteState.some(
-            (scene) => sceneBelongsToGroup(scene, item.id) && matchesSceneQuery(scene, query),
-          ) || choiceMatchedSceneIds.size > 0
-        : chapterScenes.length !== allChapterScenes.length;
-
-      return (
-        <ChapterListItem
-          chapter={item}
-          onViewDetails={handleViewDetails}
-          onToggleFavorite={handleToggleFavorite}
-          initialExpanded={hasSceneMatch}
-          tags={tagsByChapterId.get(item.id)}
-          renderScenes={({ expandedSceneIds, onSceneExpandedChange }) => (
-            <ChapterScenesList
-              storyType={selectedStory?.type}
-              scenes={chapterScenes}
-              allChapterScenes={allChapterScenes}
-              choices={choices}
-              canEdit={canEdit}
-              onOpenScene={handleOpenScene}
-              onToggleFavorite={handleToggleSceneFavorite}
-              onAddScene={() => handleAddScene(item.id)}
-              onReorderScenes={() => setReorderChapterId(item.id)}
-              unchaptered={isUnchapteredGroup(item.id)}
-              sortBy={activeSort}
-              sortDirection={sortDirection}
-              expandedSceneIds={expandedSceneIds}
-              onSceneExpandedChange={onSceneExpandedChange}
-              tagsBySceneId={tagsBySceneId}
-            />
-          )}
-        />
-      );
-    },
+  const memoizedChapterListItem = useMemo(
+    () =>
+      createChapterListItemRenderer({
+        activeSort,
+        activeTagIds,
+        advancedMatches,
+        canEdit,
+        choices,
+        favoriteFilterState,
+        handleAddScene,
+        handleOpenScene,
+        handleToggleFavorite,
+        handleToggleSceneFavorite,
+        handleViewDetails,
+        scenesWithFavoriteState,
+        searchQuery,
+        selectedStory,
+        setReorderChapterId,
+        sortDirection,
+        tagsByChapterId,
+        tagsBySceneId,
+      }),
     [
-      canEdit,
-      advancedMatches,
+      activeSort,
       activeTagIds,
+      advancedMatches,
+      canEdit,
       choices,
       favoriteFilterState,
       handleAddScene,
@@ -537,11 +469,10 @@ const NarrativeElementsListScreen = () => {
       handleToggleFavorite,
       handleToggleSceneFavorite,
       handleViewDetails,
-      activeSort,
-      sortDirection,
       scenesWithFavoriteState,
-      selectedStory,
       searchQuery,
+      selectedStory,
+      sortDirection,
       tagsByChapterId,
       tagsBySceneId,
     ],
@@ -614,71 +545,42 @@ const NarrativeElementsListScreen = () => {
     [outlineChapters, reorderingType],
   );
 
-  const styles = StyleSheet.create({
-    ...commonScreenStyleDefs(colors),
-    headerRightContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginRight: 15,
-      gap: 15,
-    },
-    headerButton: {},
-  });
+  const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('narrative_elements_title'));
-      navigation.getParent()?.setOptions({
-        title: t('narrative_elements_title'),
-        headerRight: () => (
-          <View style={styles.headerRightContainer}>
-            {selectedStory && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ChoiceView')}
-                style={styles.headerButton}
-                accessibilityLabel={
-                  selectedStory.type === 'linear' ? t('story_flow_title') : t('story_map_title')
-                }
-              >
-                <Ionicons name="git-network-outline" size={26} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            {selectedStory?.type === 'linear' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('StoryTimeline')}
-                style={styles.headerButton}
-                accessibilityLabel={t('story_timeline_title')}
-              >
-                <Ionicons name="bar-chart-outline" size={26} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            {canEdit && (
-              <TouchableOpacity onPress={handleReorderPress} style={styles.headerButton}>
-                <Ionicons name="swap-vertical" size={26} color={colors.text} />
-              </TouchableOpacity>
-            )}
-            {canEdit && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ChapterForm', { chapterId: undefined })}
-                style={styles.headerButton}
-              >
-                <Ionicons name="add" size={30} color={colors.text} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ),
-      });
-    }, [
-      navigation,
-      colors.text,
-      t,
-      handleReorderPress,
-      styles.headerButton,
-      styles.headerRightContainer,
-      canEdit,
-      selectedStory,
-    ]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('narrative_elements_title'),
+    actions: [
+      {
+        id: 'action-0',
+        icon: 'git-network-outline',
+        label: selectedStory?.type === 'linear' ? t('story_flow_title') : t('story_map_title'),
+        onPress: () => navigation.navigate('ChoiceView'),
+        visible: !!selectedStory,
+      },
+      {
+        id: 'action-1',
+        icon: 'bar-chart-outline',
+        label: t('story_timeline_title'),
+        onPress: () => navigation.navigate('StoryTimeline'),
+        visible: !!(selectedStory?.type === 'linear'),
+      },
+      {
+        id: 'action-2',
+        icon: 'swap-vertical',
+        label: t('reorder_chapters_title'),
+        onPress: handleReorderPress,
+        visible: !!canEdit,
+      },
+      {
+        id: 'action-3',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('ChapterForm', { chapterId: undefined }),
+        visible: !!canEdit,
+      },
+    ],
+  });
 
   // The chapter store is still queried for advanced filters. The outline itself is the stable
   // source for this composite Chapter + Scene screen, so a debounced scene-name search must not
@@ -698,32 +600,21 @@ const NarrativeElementsListScreen = () => {
   return (
     <View style={styles.container}>
       <GenericFilterSortList
+        {...listProps}
         data={visibleChapters}
         renderItem={memoizedChapterListItem}
         keyExtractor={(item) => item.id}
-        onSearch={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
         searchPlaceholder={t('chapter_outline_search_placeholder', {
           chapters: term('Chapter', true),
           scenes: term('Scene', true),
         })}
-        currentSearchTerm={searchQuery}
         filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
         onFilterChange={setActiveTagIds}
         selectedFilterValues={activeTagIds}
         sortOptions={memoizedSortOptions}
-        onSortChange={handleSortChange}
-        onSortDirectionChange={handleSortDirectionChange}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        onFavoriteFilterChange={handleFavoriteFilterChange}
-        currentFavoriteFilterState={favoriteFilterState}
         entityName="Chapter"
         storyId={storyId || ''}
-        onAdvancedSearch={setAdvancedSearchCriteria}
-        currentAdvancedSearchCriteria={advancedSearchCriteria}
         advancedSearchScopes={advancedSearchScopes}
-        isLoading={loading}
         resultsMeta={t(
           visibleSceneCount === 1
             ? 'chapter_outline_scene_count_one'

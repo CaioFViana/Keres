@@ -744,6 +744,32 @@ describe('story-level reorder conflicts', () => {
       .insert(schema.storySchemaFields)
       .values([field('field-a', 'A', 1), field('field-b', 'B', 0)]);
 
+  const seedStats = async () =>
+    database.db.insert(schema.stats).values([
+      {
+        id: 'stat-a',
+        storyId: STORY_ID,
+        name: 'Courage',
+        isPrimary: true,
+        order: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'stat-b',
+        storyId: STORY_ID,
+        name: 'Wisdom',
+        isPrimary: true,
+        order: 0,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+
   const seedStoryReorderConflict = async (
     serverItems: { id: string; newIndex: number }[],
     payloadExtras: Record<string, unknown> = {},
@@ -853,6 +879,28 @@ describe('story-level reorder conflicts', () => {
     const [pending] = await service.getPendingConflicts();
     await service.resolveKeepServer(pending.id);
 
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+  });
+
+  it('writes stat order zero-based without touching the chapters', async () => {
+    await seedChapters();
+    await seedStats();
+    await seedStoryReorderConflict(
+      [
+        { id: 'stat-a', newIndex: 1 },
+        { id: 'stat-b', newIndex: 2 },
+      ],
+      { reorderTarget: 'Stat' },
+    );
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServer(pending.id);
+
+    const rows = await database.db.query.stats.findMany();
+    expect(Object.fromEntries(rows.map((row) => [row.id, row.order]))).toEqual({
+      'stat-a': 0,
+      'stat-b': 1,
+    });
     expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
   });
 

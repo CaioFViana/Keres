@@ -3,6 +3,23 @@ export interface ReorderItem {
   newIndex: number;
 }
 
+export type ContiguousIndexProblem = 'duplicate' | 'start' | 'gap';
+
+/**
+ * Inspects persisted display indices rather than a reorder request. It lets maintenance tools and
+ * story analysis describe the same corrupt 1..N sequence before either asks the sync protocol to
+ * repair it.
+ */
+export function inspectContiguousOneBasedIndexes(
+  indexes: readonly number[],
+): ContiguousIndexProblem | null {
+  if (indexes.length === 0) return null;
+  const sorted = [...indexes].sort((a, b) => a - b);
+  if (new Set(sorted).size !== sorted.length) return 'duplicate';
+  if (sorted[0] !== 1) return 'start';
+  return sorted.every((value, position) => value === position + 1) ? null : 'gap';
+}
+
 /**
  * The final order of a dragged list, in the format synchronization expects: `newIndex`
  * **contiguous 1..N**.
@@ -35,4 +52,25 @@ export function reorderIndicesProblem(indices: readonly number[]): string | null
     return 'Validation Error: New indices must be sequential starting from 1 without gaps.';
   }
   return null;
+}
+
+/**
+ * Verifies the complete semantic contract of a persisted reorder: it must name every live row
+ * exactly once and give those rows a contiguous wire index. Hosts load the live IDs themselves;
+ * this pure rule keeps their client and API checks identical without coupling it to a database.
+ */
+export function completeReorderProblem(
+  expectedIds: Iterable<string>,
+  reorderItems: readonly ReorderItem[],
+): string | null {
+  const expected = new Set(expectedIds);
+  const received = new Set(reorderItems.map((item) => item.id));
+  if (
+    reorderItems.length !== expected.size ||
+    received.size !== expected.size ||
+    ![...received].every((id) => expected.has(id))
+  ) {
+    return 'Validation Error: Reorder items must contain every expected ID exactly once.';
+  }
+  return reorderIndicesProblem(reorderItems.map((item) => item.newIndex));
 }

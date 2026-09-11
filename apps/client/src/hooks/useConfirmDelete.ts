@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppAlert } from '../utils/AppAlert';
 
@@ -32,6 +32,7 @@ export interface ConfirmDeleteOptions {
  */
 export function useConfirmDelete() {
   const { t } = useTranslation();
+  const deleting = useRef(false);
 
   return useCallback(
     ({
@@ -55,6 +56,8 @@ export function useConfirmDelete() {
             text: t('delete'),
             style: 'destructive',
             onPress: async () => {
+              if (deleting.current) return;
+              deleting.current = true;
               try {
                 onLoadingChange?.(true);
                 await onConfirm();
@@ -65,6 +68,7 @@ export function useConfirmDelete() {
                 console.error(`Delete failed (${titleKey}):`, err);
                 AppAlert.alert(t('error'), failureMessage ?? t(failureKey));
               } finally {
+                deleting.current = false;
                 onLoadingChange?.(false);
               }
             },

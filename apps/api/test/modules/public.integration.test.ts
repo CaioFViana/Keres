@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { showcaseSettings } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { registerUser, request, type TestUser } from '../helpers/app';
+import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -19,10 +19,7 @@ async function enableShowcase(enabled = true): Promise<void> {
 }
 
 async function publishedStory(token: string, title = 'A Queda') {
-  const { data: story } = await request('POST', '/stories/', {
-    token,
-    body: { title, type: 'linear' },
-  });
+  const story = await uploadTestStory(token, title);
   const stored = await db.query.stories.findFirst({
     where: (stories, { eq }) => eq(stories.id, story.id),
   });
@@ -69,7 +66,7 @@ describe('GET /public/stories', () => {
   });
 
   it('omits stories that were never published', async () => {
-    await request('POST', '/stories/', { token: ana.token, body: { title: 'X', type: 'linear' } });
+    await uploadTestStory(ana.token, 'X');
     const { data } = await request('GET', '/public/stories');
     expect(data).toEqual([]);
   });

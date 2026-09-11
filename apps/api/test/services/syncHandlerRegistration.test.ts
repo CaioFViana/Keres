@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OperationLogEntityType } from '@keres/shared';
+import { getStorySyncEntityTypes } from '@keres/shared';
 import { SyncService } from '../../src/services/SyncService';
 
 /**
@@ -9,12 +9,7 @@ import { SyncService } from '../../src/services/SyncService';
  */
 describe('SyncService handler registry', () => {
   it('registers a handler for every story-synchronized operation-log entity', () => {
-    const expected = Object.values(OperationLogEntityType)
-      .filter(
-        (entity) =>
-          entity !== OperationLogEntityType.User && entity !== OperationLogEntityType.OperationLog,
-      )
-      .sort();
+    const expected = [...getStorySyncEntityTypes()].sort();
     const registered = [...new SyncService().getEntityHandlers().keys()].sort();
 
     expect(registered).toEqual(expected);

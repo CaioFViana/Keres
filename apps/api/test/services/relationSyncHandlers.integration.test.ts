@@ -125,7 +125,7 @@ describe('relation sync entity handlers', () => {
         relationType: 'siblings',
       }),
     );
-    const created = await handler.findById(id);
+    const created = await handler.findByIdOrThrow(id);
 
     expect(created).toMatchObject({
       character1Id: [characterA, characterB].sort()[0],
@@ -143,10 +143,10 @@ describe('relation sync entity handlers', () => {
       } as UpdateStoryUpdate,
       created,
     );
-    const updated = await handler.findById(id);
+    const updated = await handler.findByIdOrThrow(id);
     expect(updated).toMatchObject({ relationType: 'rivals', version: 2 });
     await handler.delete(userId, storyId, remove('CharacterRelation', id, 2), updated);
-    expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 3 });
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 3 });
   });
 
   it.each([
@@ -176,11 +176,11 @@ describe('relation sync entity handlers', () => {
       const handler = build() as any;
       const id = newId();
       await handler.create(userId, storyId, create(entity, id, data()));
-      const created = await handler.findById(id);
+      const created = await handler.findByIdOrThrow(id);
 
       expect(created).toMatchObject({ id, storyId, version: 1, isDeleted: false });
       await handler.delete(userId, storyId, remove(entity, id, 1), created);
-      expect(await handler.findById(id)).toMatchObject({ isDeleted: true, version: 2 });
+      expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 2 });
     },
   );
 
@@ -217,7 +217,7 @@ describe('relation sync entity handlers', () => {
         relationType: 'rivals',
       }),
     );
-    const second = await handler.findById(secondId);
+    const second = await handler.findByIdOrThrow(secondId);
 
     const retarget = handler.update(
       userId,
@@ -232,7 +232,7 @@ describe('relation sync entity handlers', () => {
     );
 
     await expect(retarget).rejects.toThrow(/already exists/i);
-    expect((await handler.findById(secondId)).relationType).toBe('rivals');
+    expect((await handler.findByIdOrThrow(secondId)).relationType).toBe('rivals');
   });
 
   it('a TagRelation retarget that collides with a different existing relation is rejected', async () => {
@@ -249,7 +249,7 @@ describe('relation sync entity handlers', () => {
       storyId,
       create('TagRelation', secondId, { tagId, relationId: characterB, relationType: 'Character' }),
     );
-    const second = await handler.findById(secondId);
+    const second = await handler.findByIdOrThrow(secondId);
 
     const retarget = handler.update(
       userId,
@@ -264,6 +264,6 @@ describe('relation sync entity handlers', () => {
     );
 
     await expect(retarget).rejects.toThrow(/already exists/i);
-    expect((await handler.findById(secondId)).relationId).toBe(characterB);
+    expect((await handler.findByIdOrThrow(secondId)).relationId).toBe(characterB);
   });
 });

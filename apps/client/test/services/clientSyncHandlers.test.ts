@@ -27,6 +27,7 @@ import { RouteStepClientSyncHandler } from '../../src/services/entity-sync-handl
 import { SceneClientSyncHandler } from '../../src/services/entity-sync-handlers/SceneClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
 import { StoryCalendarClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryCalendarClientSyncHandler';
+import { StoryArcClientSyncHandler } from '../../src/services/entity-sync-handlers/StoryArcClientSyncHandler';
 import {
   ModeClientSyncHandler,
   StatClientSyncHandler,
@@ -35,6 +36,7 @@ import {
 } from '../../src/services/entity-sync-handlers/StatClientSyncHandler';
 import { SuggestionClientSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionClientSyncHandler';
 import { TagClientSyncHandler } from '../../src/services/entity-sync-handlers/TagClientSyncHandler';
+import { TagRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/TagRelationClientSyncHandler';
 import { WorldRuleClientSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleClientSyncHandler';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -133,6 +135,29 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { name: 'Calendário solar' },
+  },
+  {
+    name: 'StoryArc',
+    build: () => new StoryArcClientSyncHandler(),
+    table: schema.storyArcs,
+    labelColumn: 'title' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      title: 'Livro I',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { title: 'Livro II' },
   },
   {
     name: 'AttributeValue',
@@ -342,6 +367,25 @@ const HANDLERS = [
       deletedAt: null,
     }),
     change: { name: 'Antagonistas' },
+  },
+  {
+    name: 'TagRelation',
+    build: () => new TagRelationClientSyncHandler(),
+    table: schema.tagRelations,
+    labelColumn: 'relationId' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      tagId: `tag-${id}`,
+      relationId: `character-${id}`,
+      relationType: 'Character',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { relationId: 'character-revised' },
   },
   {
     name: 'Scene',

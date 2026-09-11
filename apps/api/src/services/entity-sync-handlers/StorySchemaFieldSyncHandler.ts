@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
@@ -11,7 +12,7 @@ import {
 } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { storySchemaFields } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -22,24 +23,22 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
   entityName = 'StorySchemaField';
 
   constructor() {
-    super(
-      'storySchemaFields',
-      'id',
-      'version',
-      CreateStorySchemaFieldDataSchema,
-      PartialStorySchemaFieldSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStorySchemaFieldDataSchema, PartialStorySchemaFieldSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateStorySchemaFieldDataType = this.createSchema.parse(update.data);
 
-    const existingField = await db.query.storySchemaFields.findFirst({
+    const existingField = await database.query.storySchemaFields.findFirst({
       where: and(
         eq(storySchemaFields.storyId, storyId),
         eq(storySchemaFields.entityType, validatedData.entityType),
@@ -58,7 +57,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
       throw new Error('Entity attributes require a target entity type.');
     }
 
-    await db.insert(storySchemaFields).values({
+    await database.insert(storySchemaFields).values({
       id: update.id!,
       storyId,
       entityType: validatedData.entityType,
@@ -82,7 +81,8 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     // entityType and key are immutable after creation: AttributeValue references the field by fieldId (not
     // by key), so nothing would technically break, but changing the entity type or the key underneath
@@ -95,17 +95,18 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     delete changes.type;
     delete changes.targetEntityType;
 
-    await super.update(userId, storyId, { ...update, changes }, currentEntity);
+    await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const alreadyDeleted = !!currentEntity.isDeleted;
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
 
     if (alreadyDeleted) {
       // An idempotent resend of the same deletion - the key mutation already ran the first time.
@@ -122,7 +123,7 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     // devices would never learn about the cascade through a pull - the client has to send explicit
     // AttributeValue deletions in the same batch, each following the normal path
     // (AttributeValueSyncHandler.delete), for it to synchronize correctly.
-    await db
+    await database
       .update(storySchemaFields)
       .set({ key: sql`${storySchemaFields.key} || '__deleted_' || ${ulid()}` })
       .where(eq(storySchemaFields.id, update.id!));

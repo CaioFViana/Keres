@@ -1,19 +1,19 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { StoryTimelineCanvasHandle } from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineCanvas from '@/src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineSheets from '@/src/components/features/story-timeline/StoryTimelineSheets';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryTimeline } from '@/src/hooks/useStoryTimeline';
 import { useTheme } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
-import { setDocumentTitle } from '../../../utils/documentTitle';
+import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 
 const TIMELINE_CONTROL_LABELS = {
@@ -59,14 +59,10 @@ const StoryTimelineScreen = () => {
     exportTimeline,
   } = timeline;
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('story_timeline_title'));
-      navigation
-        .getParent()
-        ?.setOptions({ title: t('story_timeline_title'), headerRight: undefined });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('story_timeline_title'),
+  });
   useEffect(() => {
     canvas.current?.fitToScreen();
   }, [eventPlacement, scaleMode]);
@@ -122,6 +118,15 @@ const StoryTimelineScreen = () => {
     [colors],
   );
 
+  const chapterFilterOptions = useMemo(() => {
+    const colorsByChapter = buildChapterColors(chapters);
+    return chapters.map((chapter) => ({
+      label: chapter.name,
+      value: chapter.id,
+      color: colorsByChapter.get(chapter.id),
+    }));
+  }, [chapters]);
+
   if (story?.type !== 'linear')
     return (
       <View style={styles.root}>
@@ -134,14 +139,11 @@ const StoryTimelineScreen = () => {
         <ActivityIndicator color={colors.primary} />
       </View>
     );
+
   return (
     <View style={styles.root}>
       <MultiSelectPill
-        options={chapters.map((chapter) => ({
-          label: chapter.name,
-          value: chapter.id,
-          color: buildChapterColors(chapters).get(chapter.id),
-        }))}
+        options={chapterFilterOptions}
         selectedValues={chapterIds}
         onSelectionChange={setChapterIds}
         placeholder={term('Chapter', true)}

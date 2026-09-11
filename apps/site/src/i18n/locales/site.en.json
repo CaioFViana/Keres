@@ -103,6 +103,10 @@
           "title": "Location map",
           "body": "A graph of places inside places and the links between them."
         },
+        "locationMapCanvas": {
+          "title": "Location map canvas",
+          "body": "Arrange places and markers over a visual map, then keep the routes and containment relations at hand."
+        },
         "items": {
           "title": "Items",
           "body": "Important objects, their initial state, and who holds them."
@@ -130,6 +134,10 @@
         "favorites": {
           "title": "Favorites",
           "body": "Highlight what matters now and filter lists by it."
+        },
+        "boards": {
+          "title": "Boards",
+          "body": "Pin characters, scenes, items and notes on a free canvas, then draw the connections that help you plan."
         }
       }
     },
@@ -339,7 +347,7 @@
     "items": {
       "narrative-elements": {
         "title": "Chapters and scenes",
-        "body": "The list you spend most of your time in: chapters in order, the scenes inside them, and what each scene still needs."
+        "body": "The list you spend most of your time in: open a chapter where it sits to see its scenes underneath, still in order."
       },
       "story-map": {
         "title": "Story map",
@@ -361,6 +369,10 @@
         "title": "Your cast",
         "body": "Search, filter and sort the cast; open a name where it sits to see the role, the description and the ties, without leaving the list."
       },
+      "character-detail": {
+        "title": "A character record",
+        "body": "The everyday detail screen: biography, traits, and names in the text that link to other people in the universe when auto-links are on."
+      },
       "relation-map": {
         "title": "Who knows whom",
         "body": "The cast as a web of ties - and the little groups your story formed without you noticing."
@@ -368,6 +380,14 @@
       "location-map": {
         "title": "Your world's map",
         "body": "Which places sit inside other places, and how someone gets from one to another."
+      },
+      "location-map-canvas": {
+        "title": "Map your locations",
+        "body": "Place story locations and free markers on a visual canvas, while keeping their real routes and containment visible."
+      },
+      "board-canvas": {
+        "title": "Make connections on a board",
+        "body": "Put characters, scenes, objects and writing notes together in a canvas made for thinking through a story."
       },
       "dashboard": {
         "title": "Where the story stands",

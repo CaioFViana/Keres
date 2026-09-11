@@ -1,75 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
 
-async function createStory(token: string, title = 'A Queda', type = 'linear') {
-  const { status, data } = await request('POST', '/stories/', { token, body: { title, type } });
-  if (status !== 200) {
-    throw new Error(`Falha ao criar história (${status}): ${JSON.stringify(data)}`);
-  }
-  return data;
-}
+const createStory = (token: string, title = 'A Queda', type: 'linear' | 'branching' = 'linear') =>
+  uploadTestStory(token, title, type);
 
 beforeEach(async () => {
   await truncateAll();
   ana = await registerUser('ana');
-});
-
-describe('POST /stories/', () => {
-  it('creates a story owned by the authenticated user', async () => {
-    const { status, data } = await request('POST', '/stories/', {
-      token: ana.token,
-      body: { title: 'A Queda', type: 'linear' },
-    });
-
-    expect(status).toBe(200);
-    expect(data).toMatchObject({
-      title: 'A Queda',
-      type: 'linear',
-      userId: ana.userId,
-      isDeleted: false,
-    });
-    expect(data.id).toMatch(/^[0-9A-Z]{26}$/);
-  });
-
-  it('ignores any owner the client tries to claim', async () => {
-    const bia = await registerUser('bia');
-
-    const { data } = await request('POST', '/stories/', {
-      token: ana.token,
-      body: { title: 'A Queda', type: 'linear', userId: bia.userId },
-    });
-
-    expect(data.userId).toBe(ana.userId);
-  });
-
-  it('rejects a story type that does not exist', async () => {
-    const { status } = await request('POST', '/stories/', {
-      token: ana.token,
-      body: { title: 'A Queda', type: 'circular' },
-    });
-
-    expect(status).toBe(422);
-  });
-
-  it('rejects a body with no title', async () => {
-    const { status } = await request('POST', '/stories/', {
-      token: ana.token,
-      body: { type: 'linear' },
-    });
-
-    expect(status).toBe(422);
-  });
-
-  it('requires a session', async () => {
-    const { status } = await request('POST', '/stories/', {
-      body: { title: 'A Queda', type: 'linear' },
-    });
-
-    expect(status).toBe(401);
-  });
 });
 
 describe('GET /stories/:storyId/export', () => {
@@ -113,6 +53,15 @@ describe('GET /stories/:storyId/export', () => {
 });
 
 describe('POST /stories/import', () => {
+  it('does not expose direct server-side Story creation', async () => {
+    const { status } = await request('POST', '/stories/', {
+      token: ana.token,
+      body: { title: 'Should not create', type: 'linear' },
+    });
+
+    expect(status).toBe(404);
+  });
+
   it('imports an exported story back as a new one', async () => {
     const story = await createStory(ana.token, 'Original');
     const { data: exported } = await request('GET', `/stories/${story.id}/export`, {
@@ -174,7 +123,17 @@ describe('POST /stories/import', () => {
       token: ana.token,
     });
     const localId = newId();
-    const localPackage = { ...exported, story: { ...exported.story, id: localId } };
+    const localPackage = {
+      ...exported,
+      story: { ...exported.story, id: localId },
+      // This exported graph is being repurposed as a different local story, so its Arc must
+      // belong to that story and have its own global entity id too.
+      storyArcs: exported.storyArcs.map((arc: { storyId: string }) => ({
+        ...arc,
+        id: newId(),
+        storyId: localId,
+      })),
+    };
     const bia = await registerUser('bia');
 
     const { status, data } = await request('POST', '/stories/import', {

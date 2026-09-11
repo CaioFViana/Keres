@@ -100,12 +100,13 @@ beforeEach(() => {
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.login.mockResolvedValue({ userId: 'admin-1', username: 'admin' });
-  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 });
 
 afterEach(() => {
   clearToken();
   vi.unstubAllGlobals();
+  // `unstubAllGlobals` clears per-test stubs (confirm/alert); keep the suite-wide act flag.
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 });
 
 describe('admin routes', () => {
@@ -146,6 +147,10 @@ describe('admin routes', () => {
     expect(mocks.listTiers).toHaveBeenCalled();
     expect(mocks.getSettings).toHaveBeenCalledOnce();
     expect(mocks.listLogs).toHaveBeenCalled();
-    await Promise.all(views.map((view) => view.unmount()));
+    // Sequential unmount: each helper wraps `root.unmount()` in `act()`, and React 19
+    // rejects overlapping act() calls when several roots tear down in parallel.
+    for (const view of views) {
+      await view.unmount();
+    }
   });
 });

@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateRouteStepDataType,
   CreateStoryUpdate,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateRouteStepDataSchema, PartialRouteStepSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { choices, routeSteps, routes, scenes } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
@@ -16,7 +17,7 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
 > {
   entityName = 'RouteStep';
   constructor() {
-    super('routeSteps', 'id', 'version', CreateRouteStepDataSchema, PartialRouteStepSchema, {
+    super('id', 'version', CreateRouteStepDataSchema, PartialRouteStepSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
@@ -27,16 +28,17 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
     routeId: string,
     sceneId: string,
     choiceId: string | null,
+    database: CompatibleDb = db,
   ) {
     const [route, scene, choice] = await Promise.all([
-      db.query.routes.findFirst({
+      database.query.routes.findFirst({
         where: and(
           eq(routes.id, routeId),
           eq(routes.storyId, storyId),
           eq(routes.isDeleted, false),
         ),
       }),
-      db.query.scenes.findFirst({
+      database.query.scenes.findFirst({
         where: and(
           eq(scenes.id, sceneId),
           eq(scenes.storyId, storyId),
@@ -44,7 +46,7 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
         ),
       }),
       choiceId
-        ? db.query.choices.findFirst({
+        ? database.query.choices.findFirst({
             where: and(
               eq(choices.id, choiceId),
               eq(choices.storyId, storyId),
@@ -61,12 +63,12 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
     if (choice && choice.sceneId !== sceneId)
       throw new SyncConflictError('validation', 'A RouteStep choice must leave the step scene.');
   }
-  async create(_: string, storyId: string, update: CreateStoryUpdate) {
+  async create(_: string, storyId: string, update: CreateStoryUpdate, database: CompatibleDb = db) {
     const data: CreateRouteStepDataType = this.createSchema.parse(update.data);
-    await this.validate(storyId, data.routeId, data.sceneId, data.selectedChoiceId);
-    if (await this.findById(update.id!))
+    await this.validate(storyId, data.routeId, data.sceneId, data.selectedChoiceId, database);
+    if (await this.findById(update.id!, database))
       throw new Error(`Conflict: RouteStep with ID ${update.id} already exists.`);
-    await db.insert(routeSteps).values({
+    await database.insert(routeSteps).values({
       id: update.id!,
       storyId,
       ...data,
@@ -77,17 +79,30 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
       deletedAt: null,
     });
   }
-  async update(userId: string, storyId: string, update: UpdateStoryUpdate, current: any) {
+  async update(
+    userId: string,
+    storyId: string,
+    update: UpdateStoryUpdate,
+    current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
+  ) {
     const changes = this.updateSchema.parse(update.changes);
     await this.validate(
       storyId,
       changes.routeId ?? current.routeId,
       changes.sceneId ?? current.sceneId,
       changes.selectedChoiceId ?? current.selectedChoiceId,
+      database,
     );
-    await super.update(userId, storyId, update, current);
+    await super.update(userId, storyId, update, current, database);
   }
-  async delete(userId: string, storyId: string, update: DeleteStoryUpdate, current: any) {
-    await super.delete(userId, storyId, update, current);
+  async delete(
+    userId: string,
+    storyId: string,
+    update: DeleteStoryUpdate,
+    current: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
+  ) {
+    await super.delete(userId, storyId, update, current, database);
   }
 }

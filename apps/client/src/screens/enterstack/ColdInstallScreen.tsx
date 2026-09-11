@@ -9,12 +9,12 @@ import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { setAuthDb } from '../../services/AuthTokenManager';
 import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
-import { SyncEngineService } from '../../services/SyncEngineService';
+import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useNotificationStore } from '../../state/notificationStore'; // Import useNotificationStore
 import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/commonStyles'; // Import common styles
+import { getCommonInputStyles } from '../../theme/commonStyles';
 import { useDocumentTitle } from '../../utils/documentTitle';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
@@ -43,8 +43,7 @@ const ColdInstallScreen = () => {
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
 
-  const commonContainerStyles = getCommonContainerStyles(colors); // Get common container styles
-  const commonInputStyles = getCommonInputStyles(colors); // Get common input styles
+  const commonInputStyles = getCommonInputStyles(colors);
 
   const backPressTimer = useRef<number | null>(null);
 
@@ -94,7 +93,7 @@ const ColdInstallScreen = () => {
     // erased. Reattach them as soon as the fresh schema exists, before server registration
     // can attempt to persist tokens or start its first synchronization.
     setAuthDb(drizzleDb);
-    SyncEngineService.getInstance().setDbInstance(drizzleDb);
+    await syncEngine.bindDatabase(drizzleDb);
 
     // Create initial client settings in SQLite
     await createClientSettings(drizzleDb, {
@@ -145,7 +144,7 @@ const ColdInstallScreen = () => {
   const languageOptions = getLanguageOptions(t);
 
   return (
-    <FormContainer style={commonContainerStyles.container}>
+    <FormContainer>
       <Text style={styles.title}>{t('welcome')}</Text>
       <TextInput
         placeholder={t('enter_username')}

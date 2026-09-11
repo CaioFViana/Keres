@@ -1,3 +1,5 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import {
   ScreenError,
   ScreenLoading,
@@ -17,7 +19,6 @@ import { useStoryListStore } from '../../state/storyListStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
-import { useDocumentTitle } from '../../utils/documentTitle';
 import { createULID } from '../../utils/entityUtils';
 import { buildStoryZipBytes } from '../../utils/storyMediaBundle';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -32,7 +33,7 @@ import {
 
 const ImportExportScreen = () => {
   const { t } = useTranslation();
-  useDocumentTitle(t('import_export_title'));
+  useScreenHeader({ target: 'self', title: t('import_export_title') });
   const { colors } = useTheme();
   useBackButtonHandler();
   const drizzleDb = useDrizzle();
@@ -226,12 +227,6 @@ const ImportExportScreen = () => {
       padding: 20,
       paddingBottom: 60,
     },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 6,
-    },
     sectionDescription: {
       fontSize: 14,
       color: colors.textSecondary,
@@ -303,7 +298,7 @@ const ImportExportScreen = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.sectionTitle}>{t('import_story_title')}</Text>
+      <ScreenSection title={t('import_story_title')} />
       <Text style={styles.sectionDescription}>{t('import_story_description')}</Text>
 
       <TouchableOpacity style={styles.importButton} onPress={handleImport} disabled={importing}>
@@ -315,7 +310,7 @@ const ImportExportScreen = () => {
 
       <View style={styles.divider} />
 
-      <Text style={styles.sectionTitle}>{t('export_story_title')}</Text>
+      <ScreenSection title={t('export_story_title')} />
       <Text style={styles.sectionDescription}>{t('export_story_description')}</Text>
 
       {stories.length === 0 ? (

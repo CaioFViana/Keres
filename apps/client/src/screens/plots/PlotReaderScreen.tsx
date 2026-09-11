@@ -1,9 +1,10 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -14,7 +15,6 @@ import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 const ALL_SCENES = '__all__';
@@ -84,15 +84,10 @@ const PlotReaderScreen = () => {
     [colors, scrollBottomPadding],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      setDocumentTitle(t('plot_reader_title'));
-      navigation.getParent()?.setOptions({
-        title: t('plot_reader_title'),
-        headerRight: undefined,
-      });
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'parent',
+    title: t('plot_reader_title'),
+  });
 
   if (selectedStory?.type !== 'linear') {
     return <ScreenError message={t('plots_linear_only')} onGoBack={() => navigation.goBack()} />;

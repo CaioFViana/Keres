@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -42,11 +42,7 @@ beforeEach(async () => {
   ana = await registerUser('ana');
   bia = await registerUser('bia');
   await befriend(ana, bia);
-  const { data } = await request('POST', '/stories/', {
-    token: ana.token,
-    body: { title: 'A Queda', type: 'linear' },
-  });
-  storyId = data.id;
+  storyId = (await uploadTestStory(ana.token)).id;
 });
 
 describe('POST /story-permissions/', () => {
@@ -118,10 +114,7 @@ describe('POST /story-permissions/', () => {
   });
 
   it('refuses a grant on a story the caller does not own', async () => {
-    const { data: outra } = await request('POST', '/stories/', {
-      token: bia.token,
-      body: { title: 'Outra', type: 'linear' },
-    });
+    const outra = await uploadTestStory(bia.token, 'Outra');
 
     const { status } = await grant(ana.token, bia.userId, 'reader', outra.id);
 

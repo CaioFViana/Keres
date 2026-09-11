@@ -30,11 +30,7 @@ describe('GET /api/kerescheck', () => {
     const app = await createApp();
 
     const response = await app.handle(
-      new Request('http://localhost/api/stories/', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ title: 'Unauthenticated story', type: 'linear' }),
-      }),
+      new Request('http://localhost/api/stories/publications/mine'),
     );
 
     expect(response.status).toBe(401);

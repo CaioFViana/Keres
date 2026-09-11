@@ -6,7 +6,11 @@ import type { AttributeValueInsert, AttributeValueSelect } from '../../db/schema
 import { attributeValues, storySchemaFields } from '../../db/schema';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface AttributeValueService {
@@ -29,6 +33,8 @@ export interface AttributeValueService {
     entityId: string,
     values: Record<string, string | null>,
   ): Promise<void>;
+  /** Soft-deletes every live value of a removed custom field, with one sync operation per value. */
+  deleteValuesForField(currentUserId: string, storyId: string, fieldId: string): Promise<number>;
 }
 
 export const createAttributeValueService = (db: AppDrizzleClient): AttributeValueService => {
@@ -143,6 +149,45 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
       if (changed) {
         entityEventEmitter.emit('attribute_value_changed', storyId, entityId);
       }
+    },
+
+    async deleteValuesForField(currentUserId, storyId, fieldId): Promise<number> {
+      await assertStoryIsWritable(db, storyId);
+      const values = await db
+        .select({ id: attributeValues.id, entityId: attributeValues.entityId })
+        .from(attributeValues)
+        .where(
+          and(
+            eq(attributeValues.storyId, storyId),
+            eq(attributeValues.fieldId, fieldId),
+            eq(attributeValues.isDeleted, false),
+          ),
+        )
+        .all();
+      if (values.length === 0) return 0;
+
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const now = new Date();
+      for (const value of values) {
+        const [updated] = await db
+          .update(attributeValues)
+          .set({
+            isDeleted: true,
+            deletedAt: now,
+            updatedAt: now,
+            version: sql`${attributeValues.version} + 1`,
+          })
+          .where(eq(attributeValues.id, value.id))
+          .returning({ id: attributeValues.id, version: attributeValues.version });
+        if (!updated) continue;
+        await recordLocalOperation(db, storyId, userIdToLog, 'delete', 'AttributeValue', value.id, {
+          id: value.id,
+          isDeleted: true,
+          version: updated.version,
+        });
+        entityEventEmitter.emit('attribute_value_changed', storyId, value.entityId);
+      }
+      return values.length;
     },
   };
 };

@@ -42,6 +42,16 @@ export function isOfflineError(error: unknown): boolean {
   );
 }
 
+/** True when a request or sync cycle was cancelled via AbortSignal. */
+export function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const name = (error as { name?: string }).name;
+  const code = (error as AxiosError).code;
+  return name === 'AbortError' || name === 'CanceledError' || code === 'ERR_CANCELED';
+}
+
 // Define the structure for how the API client obtains and manages tokens
 export interface TokenProvider {
   getAccessToken(): string | null;
@@ -66,21 +76,23 @@ export interface KeresAxiosInstance extends AxiosInstance {
  */
 type RetriableRequestConfig = InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean };
 
-// There is only ever one token refresh strategy for the whole app, so this can
-// safely stay a single shared instance (it's stateless - it takes a serverId
-// per call rather than holding "current" state).
-let tokenProvider: TokenProvider | null = null;
-
 // Single source of truth for credentials, keyed by serverId. This is what makes it
 // safe to have many concurrent Axios instances (SyncEngineService's client, ad-hoc
 // tempClients, refresh clients, the shared default apiClient) all interacting with
 // different servers at the same time: a token refresh for server A can never leak
 // into a request meant for server B, because each instance only ever looks up the
 // token for the serverId it was explicitly configured with (see applyInterceptors).
+//
+// Token *providers* stay per Axios instance: configuring one client must not change
+// how another refreshes or clears auth. The credential cache and refresh queues remain
+// shared by serverId so concurrent clients talking to the same server still coordinate.
 const serverTokenCache = new Map<
   string,
   { jwtToken: string | null; refreshToken: string | null }
 >();
+
+/** Default HTTP timeout so a hung server cannot block story deactivation / context switches forever. */
+export const DEFAULT_HTTP_TIMEOUT_MS = 30_000;
 
 export function updateServerTokenCache(
   serverId: string,
@@ -156,13 +168,18 @@ function processQueue(state: RefreshState, error: AxiosError | null, token: stri
 }
 
 // Function to apply interceptors to an Axios instance. Each instance gets its own
-// `currentServerId` closure so it always knows which server it is acting on behalf
-// of, independent of what any other instance is doing concurrently.
+// `currentServerId` and `tokenProvider` closures so it always knows which server it
+// is acting on behalf of, independent of what any other instance is doing concurrently.
 function applyInterceptors(instance: KeresAxiosInstance): void {
   let currentServer: ServerSelect | null = null;
+  let tokenProvider: TokenProvider | null = null;
 
   instance.setActiveServer = (server: ServerSelect | null) => {
     currentServer = server;
+  };
+
+  instance.setTokenProvider = (provider: TokenProvider | null) => {
+    tokenProvider = provider;
   };
 
   /**
@@ -396,8 +413,10 @@ function applyInterceptors(instance: KeresAxiosInstance): void {
 }
 
 // Global API client instance
-const apiClient: KeresAxiosInstance = createAxios() as KeresAxiosInstance;
-applyInterceptors(apiClient); // Apply interceptors (and setActiveServer) to the global instance
+const apiClient: KeresAxiosInstance = createAxios({
+  timeout: DEFAULT_HTTP_TIMEOUT_MS,
+}) as KeresAxiosInstance;
+applyInterceptors(apiClient); // Apply interceptors (and setActiveServer / setTokenProvider) to the global instance
 
 // Method to dynamically set the base URL for the global instance
 apiClient.setBaseUrl = (url: string) => {
@@ -407,29 +426,23 @@ apiClient.setBaseUrl = (url: string) => {
   }
 };
 
-apiClient.setTokenProvider = (provider: TokenProvider | null) => {
-  tokenProvider = provider;
-};
-
 // Function to create a new Axios instance with interceptors
 export function createKeresAxiosInstance(config?: AxiosRequestConfig): KeresAxiosInstance {
   const instance = createAxios({
+    timeout: DEFAULT_HTTP_TIMEOUT_MS,
     ...config,
     baseURL: config?.baseURL ? apiBaseUrl(config.baseURL) : config?.baseURL,
   }) as KeresAxiosInstance;
-  applyInterceptors(instance); // Also sets instance.setActiveServer, scoped to this instance
+  applyInterceptors(instance); // Also sets instance.setActiveServer / setTokenProvider, scoped to this instance
   instance.setBaseUrl = (url: string) => {
     instance.defaults.baseURL = apiBaseUrl(url);
-  };
-  instance.setTokenProvider = (provider: TokenProvider | null) => {
-    tokenProvider = provider;
   };
   return instance;
 }
 
 // Function to create a new Axios instance WITHOUT interceptors
 export function createPlainAxiosInstance(config?: AxiosRequestConfig): AxiosInstance {
-  return createAxios(config);
+  return createAxios({ timeout: DEFAULT_HTTP_TIMEOUT_MS, ...config });
 }
 
 export default apiClient;

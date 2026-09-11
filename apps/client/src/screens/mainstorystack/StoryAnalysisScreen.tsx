@@ -1,3 +1,4 @@
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -25,7 +26,6 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { setDocumentTitle } from '../../utils/documentTitle';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
@@ -124,12 +124,10 @@ const StoryAnalysisScreen = () => {
     }, [loadCheapReport]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({ title: t('story_analysis_title'), headerRight: undefined });
-      setDocumentTitle(t('story_analysis_title'));
-    }, [navigation, t]),
-  );
+  useScreenHeader({
+    target: 'self',
+    title: t('story_analysis_title'),
+  });
 
   /**
    * Renumbers chapters and scenes to 1..N. It sits behind an explicit tap and does not run when the

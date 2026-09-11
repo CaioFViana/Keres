@@ -1,6 +1,7 @@
 import type { AppDrizzleClient } from '../../db';
 import type { KeresAxiosInstance } from '../apiClient';
 import type { SyncConflictService } from '../SyncConflictService';
+import type { SyncNotifier } from './SyncNotifier';
 
 /** Mutable sync state exposed through getters so modules always see the current configuration. */
 export interface SyncContext {
@@ -8,4 +9,7 @@ export interface SyncContext {
   storyId: () => string;
   client: () => KeresAxiosInstance;
   conflictService: () => SyncConflictService;
+  notifier: () => SyncNotifier;
+  /** Aborted when the scheduler stops the active cycle (context switch / stopAndWait). */
+  abortSignal: () => AbortSignal;
 }

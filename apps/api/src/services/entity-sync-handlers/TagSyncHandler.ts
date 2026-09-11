@@ -1,3 +1,4 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStoryUpdate,
   CreateTagDataType,
@@ -6,7 +7,7 @@ import type {
 } from '@keres/shared';
 import { CreateTagDataSchema, PartialTagSchema } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { tags } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -17,18 +18,23 @@ export class TagSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Tag';
 
   constructor() {
-    super('tags', 'id', 'version', CreateTagDataSchema, PartialTagSchema, {
+    super('id', 'version', CreateTagDataSchema, PartialTagSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateTagDataType = this.createSchema.parse(update.data);
 
     // Check for existing tag with the same name within the same story
-    const existingTag = await db.query.tags.findFirst({
+    const existingTag = await database.query.tags.findFirst({
       where: and(
         eq(tags.storyId, storyId),
         eq(tags.name, validatedData.name),
@@ -42,7 +48,7 @@ export class TagSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    await db.insert(tags).values({
+    await database.insert(tags).values({
       id: update.id!,
       storyId: storyId,
       name: validatedData.name,
@@ -61,13 +67,14 @@ export class TagSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     const validatedChanges = this.updateSchema.parse(update.changes);
 
     // If the name is being updated, check for uniqueness within the story
     if (validatedChanges.name && validatedChanges.name !== currentEntity.name) {
-      const existingTag = await db.query.tags.findFirst({
+      const existingTag = await database.query.tags.findFirst({
         where: and(
           eq(tags.storyId, storyId),
           eq(tags.name, validatedChanges.name),
@@ -84,15 +91,16 @@ export class TagSyncHandler extends BaseSyncEntityHandler<
     }
 
     // If color, isFavorite, or extraNotes are changed, ensure they are passed to the super.update
-    await super.update(userId, storyId, update, currentEntity);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

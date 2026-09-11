@@ -1,17 +1,35 @@
+import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { CreateFavoriteDataSchema, PartialFavoriteSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { favorites } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
+/**
+ * Sync handler for per-user favourites. Favourites are personal metadata: readers may synchronize
+ * their own rows and the entity does not consume a story-content quota, while all mutations remain
+ * restricted to the row's owner.
+ */
 export class FavoriteSyncHandler extends BaseSyncEntityHandler<
   typeof CreateFavoriteDataSchema,
   typeof PartialFavoriteSchema
 > {
   entityName = 'Favorite';
+  tierLimitScope = 'none' as const;
+
+  allowsReaderWrite(): boolean {
+    return true;
+  }
+
+  protected payloadForLog(
+    parsed: Record<string, unknown>,
+    actingUserId: string,
+  ): Record<string, unknown> {
+    return { ...super.payloadForLog(parsed, actingUserId), userId: actingUserId };
+  }
 
   constructor() {
-    super('favorites', 'id', 'version', CreateFavoriteDataSchema, PartialFavoriteSchema, {
+    super('id', 'version', CreateFavoriteDataSchema, PartialFavoriteSchema, {
       storyIdColumnName: 'storyId',
       userIdColumnName: 'userId',
       isDeletedColumnName: 'isDeleted',
@@ -19,13 +37,18 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const data = this.createSchema.parse(update.data);
     if (data.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only create their own favorites.');
     }
     const now = this.parseOperationTime(update.operationTime);
-    await db.insert(favorites).values({
+    await database.insert(favorites).values({
       id: update.id!,
       storyId,
       entityId: data.entityId,
@@ -43,7 +66,8 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     userId: string,
     storyId: string,
     update: UpdateStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only update their own favorites.');
@@ -53,18 +77,19 @@ export class FavoriteSyncHandler extends BaseSyncEntityHandler<
     delete changes.storyId;
     delete changes.entityId;
     delete changes.entityType;
-    await super.update(userId, storyId, { ...update, changes }, currentEntity);
+    await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
   }
 
   async delete(
     userId: string,
     storyId: string,
     update: DeleteStoryUpdate,
-    currentEntity: any,
+    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
+    database: CompatibleDb = db,
   ): Promise<void> {
     if (currentEntity.userId !== userId) {
       throw new SyncConflictError('unauthorized', 'A user can only remove their own favorites.');
     }
-    await super.delete(userId, storyId, update, currentEntity);
+    await super.delete(userId, storyId, update, currentEntity, database);
   }
 }

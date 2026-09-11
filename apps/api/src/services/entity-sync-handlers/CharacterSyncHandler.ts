@@ -1,7 +1,7 @@
 import type { CreateStoryUpdate } from '@keres/shared';
 import { CreateCharacterDataSchema, PartialCharacterSchema } from '@keres/shared';
 import type { z } from 'zod';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { characters } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -14,30 +14,28 @@ export class CharacterSyncHandler extends BaseSyncEntityHandler<
   entityName = 'Character';
 
   constructor() {
-    super(
-      'characters', // Pass table name as string
-      'id',
-      'version',
-      CreateCharacterDataSchema,
-      PartialCharacterSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateCharacterDataSchema, PartialCharacterSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     // Validate incoming data against the create schema
     const validatedData: CharacterCreateType = this.createSchema.parse(update.data);
 
-    const currentCharacter = await this.findById(update.id!);
+    const currentCharacter = await this.findById(update.id!, database);
     if (currentCharacter) {
       throw new Error(`Conflict: Character with ID ${update.id} already exists.`);
     }
 
-    await db.insert(characters).values({
+    await database.insert(characters).values({
       id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
       storyId: storyId, // Ensure storyId is set from the context
       ...validatedData, // Spread the validated data from the client

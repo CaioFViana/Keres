@@ -1,16 +1,11 @@
-import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { LanguageInstallRow } from '@/src/components/common';
+import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import {
@@ -20,8 +15,6 @@ import {
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
-import { useDocumentTitle } from '../../utils/documentTitle';
-import { getLanguageOptions } from '../../utils/i18n';
 
 /**
  * The catalogue of packs Keres ships with.
@@ -58,7 +51,7 @@ const ShippedPacksScreen = () => {
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
   const showNotification = useNotificationStore((state) => state.showNotification);
-  useDocumentTitle(t('shipped_packs_title'));
+  useScreenHeader({ target: 'parent', title: t('shipped_packs_title') });
 
   const [groups, setGroups] = useState<ShippedPackGroup[]>([]);
   const [installingSlug, setInstallingSlug] = useState<string | null>(null);
@@ -125,17 +118,6 @@ const ShippedPacksScreen = () => {
       borderColor: colors.border,
     },
     chipText: { fontSize: 12, color: colors.textSecondary },
-    installRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-    languageSelect: { flex: 1, marginRight: 10 },
-    installButton: {
-      width: 42,
-      height: 42,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.primary,
-    },
-    installButtonDisabled: { opacity: 0.5 },
   });
 
   const renderItem = useCallback(
@@ -180,46 +162,37 @@ const ShippedPacksScreen = () => {
             ))}
           </View>
 
-          <View style={styles.installRow}>
-            <View style={styles.languageSelect}>
-              <SingleSelectPill
-                options={item.languages.map((language) => ({
-                  label: languageLabel(language.language),
-                  value: language.language,
-                }))}
-                value={selectedLanguage}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setChosenLanguageBySlug((previous) => ({ ...previous, [item.slug]: value }));
-                }}
-                disabled={isInstalling}
-              />
-            </View>
-            <TouchableOpacity
-              style={[styles.installButton, isInstalling && styles.installButtonDisabled]}
-              onPress={() => handleInstall(item.slug, selectedLanguage)}
-              disabled={isInstalling}
-              accessibilityLabel={t('shipped_packs_install')}
-              testID={`install-${item.slug}`}
-            >
-              {isInstalling ? (
-                <ActivityIndicator size="small" color={colors.onPrimary} />
-              ) : (
-                <Ionicons name="download-outline" size={20} color={colors.onPrimary} />
-              )}
-            </TouchableOpacity>
-          </View>
+          <LanguageInstallRow
+            options={item.languages.map((language) => ({
+              label: languageLabel(language.language),
+              value: language.language,
+            }))}
+            value={selectedLanguage}
+            onValueChange={(value) =>
+              setChosenLanguageBySlug((previous) => ({ ...previous, [item.slug]: value }))
+            }
+            onInstall={() => handleInstall(item.slug, selectedLanguage)}
+            installing={isInstalling}
+            accessibilityLabel={t('shipped_packs_install')}
+            testID={`install-${item.slug}`}
+          />
         </View>
       );
     },
     [
       chosenLanguageBySlug,
-      colors,
+      colors.primary,
       handleInstall,
       i18n.language,
       installingSlug,
       languageLabel,
-      styles,
+      styles.card,
+      styles.cardDescription,
+      styles.cardTitle,
+      styles.cardTitleRow,
+      styles.chip,
+      styles.chipText,
+      styles.contents,
       t,
     ],
   );
@@ -239,15 +212,5 @@ const ShippedPacksScreen = () => {
     </View>
   );
 };
-
-/** Only the language's label, with no need for a key per pack language. */
-function useLanguageLabel() {
-  const { t } = useTranslation();
-  const labelByCode = useMemo(
-    () => new Map(getLanguageOptions(t).map((option) => [option.value, option.label])),
-    [t],
-  );
-  return useCallback((code: string) => labelByCode.get(code) ?? code, [labelByCode]);
-}
 
 export default ShippedPacksScreen;

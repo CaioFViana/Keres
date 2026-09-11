@@ -1,122 +1,110 @@
-import { getSimpleDisplayName } from '@keres/shared';
+import {
+  getEntityRowReferences,
+  OperationLogEntityType,
+  resolveCompactEntityName,
+  type EntitySolverContext,
+} from '@keres/shared';
 import { inArray } from 'drizzle-orm';
 import { db } from '../db';
-import {
-  attributeValues,
-  chapters,
-  characterRelations,
-  characters,
-  characterScenes,
-  choiceCheckGroups,
-  choiceChecks,
-  choices,
-  comments,
-  effects,
-  favorites,
-  galleries,
-  galleryRelations,
-  itemJourneys,
-  items,
-  locationRelations,
-  locations,
-  modes,
-  noteRelations,
-  notes,
-  routes,
-  scenes,
-  seeAlsoRelations,
-  stories,
-  statRelations,
-  statStrengths,
-  stats,
-  storySchemaFields,
-  suggestions,
-  tagRelations,
-  tags,
-  users,
-  worldRules,
-} from '../db/schema';
+import { stories, users } from '../db/schema';
+import { getApiEntityTable } from './entity-solvers/ApiEntityTableRegistry';
 
-type NameMap = Map<string, string>;
+type EntityRow = Record<string, unknown>;
+type EntityRows = Map<string, EntityRow>;
+type NameMap = Map<string, string | null>;
 
-const nameKey = (entityType: string, id: string) => `${entityType}:${id}`;
+const rowKey = (entityType: string, id: string) => `${entityType}:${id}`;
 
-function asId(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 ? value : null;
+function asEntityType(entityType: string): OperationLogEntityType | undefined {
+  return Object.values(OperationLogEntityType).includes(entityType as OperationLogEntityType)
+    ? (entityType as OperationLogEntityType)
+    : undefined;
 }
 
-function asText(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-}
+/**
+ * Persistence-only graph hydration for a recovery page. Reference ownership comes from the shared
+ * entity handlers, so adding an entity never requires another relation switch in the Admin API.
+ */
+async function hydrateReferencedRows(seedRows: EntityRows): Promise<EntityRows> {
+  const rows = new Map(seedRows);
+  const pending = [...rows.entries()].flatMap(([key, row]) => {
+    const separator = key.indexOf(':');
+    return separator < 0 ? [] : getEntityRowReferences(key.slice(0, separator), row);
+  });
 
-function labelOrId(map: NameMap, entityType: string, id: string | null): string {
-  if (!id) return '?';
-  return map.get(nameKey(entityType, id)) ?? id.slice(0, 8);
-}
+  while (pending.length > 0) {
+    const refsByType = new Map<string, Set<string>>();
+    for (const ref of pending.splice(0)) {
+      const entityType = asEntityType(ref.entityType);
+      if (!entityType || !ref.id || rows.has(rowKey(entityType, ref.id))) continue;
+      const ids = refsByType.get(entityType) ?? new Set<string>();
+      ids.add(ref.id);
+      refsByType.set(entityType, ids);
+    }
 
-/** Tables that expose a single primary display column (Gallery handled separately). */
-const SIMPLE_TABLES: Partial<Record<string, { table: any; column: string }>> = {
-  Character: { table: characters, column: 'name' },
-  Location: { table: locations, column: 'name' },
-  Item: { table: items, column: 'name' },
-  Tag: { table: tags, column: 'name' },
-  Scene: { table: scenes, column: 'name' },
-  Chapter: { table: chapters, column: 'name' },
-  Route: { table: routes, column: 'name' },
-  Note: { table: notes, column: 'title' },
-  WorldRule: { table: worldRules, column: 'title' },
-  Story: { table: stories, column: 'title' },
-  Choice: { table: choices, column: 'text' },
-  StorySchemaField: { table: storySchemaFields, column: 'name' },
-  Stat: { table: stats, column: 'name' },
-  Mode: { table: modes, column: 'name' },
-};
-
-async function resolveSimpleNames(
-  refs: Array<{ entityType: string; id: string }>,
-): Promise<NameMap> {
-  const idsByType = new Map<string, Set<string>>();
-  for (const ref of refs) {
-    if (!ref.entityType || !ref.id) continue;
-    const set = idsByType.get(ref.entityType) ?? new Set<string>();
-    set.add(ref.id);
-    idsByType.set(ref.entityType, set);
+    await Promise.all(
+      [...refsByType].map(async ([entityType, ids]) => {
+        const table = getApiEntityTable(entityType);
+        if (!table) return;
+        const fetchedRows = await db
+          .select()
+          .from(table)
+          .where(inArray(table.id, [...ids]));
+        for (const fetched of fetchedRows as Array<{ id: string }>) {
+          const key = rowKey(entityType, fetched.id);
+          const row = fetched as unknown as EntityRow;
+          if (rows.has(key)) continue;
+          rows.set(key, row);
+          pending.push(...getEntityRowReferences(entityType, row));
+        }
+      }),
+    );
   }
 
-  const result: NameMap = new Map();
+  return rows;
+}
 
+function recoverySolverContext(rows: EntityRows, storyId: string): EntitySolverContext {
+  const fallbackNoun = (type: OperationLogEntityType | 'Event') => String(type);
+  return {
+    storyId,
+    read: async (entityType, id) => rows.get(rowKey(entityType, id)),
+    // Compact labels are deliberately untranslated. These methods keep the context compatible
+    // with all shared handlers while allowing a host to opt into richer translated solvers later.
+    translate: (key) => key,
+    noun: async (type) => fallbackNoun(type),
+    fromNoun: async (type) => fallbackNoun(type),
+    unknownNoun: async (type) => fallbackNoun(type),
+  };
+}
+
+async function resolveNames(
+  rows: EntityRows,
+  sources: Array<{ entityType: string; id: string; storyId: string; fallbackName?: string | null }>,
+): Promise<NameMap> {
+  const names = new Map<string, string | null>();
   await Promise.all(
-    [...idsByType.entries()].map(async ([entityType, ids]) => {
-      const idList = [...ids];
-      if (entityType === 'Gallery') {
-        const rows = await db
-          .select({ id: galleries.id, title: galleries.title, fileName: galleries.fileName })
-          .from(galleries)
-          .where(inArray(galleries.id, idList));
-        for (const row of rows) {
-          const name = getSimpleDisplayName('Gallery', row as Record<string, unknown>);
-          if (name) result.set(nameKey('Gallery', row.id), name);
-        }
-        return;
-      }
-
-      const config = SIMPLE_TABLES[entityType];
-      if (!config) return;
-      const rows = await db
-        .select({ id: config.table.id, name: config.table[config.column] })
-        .from(config.table)
-        .where(inArray(config.table.id, idList));
-      for (const row of rows) {
-        if (typeof row.name === 'string' && row.name.trim()) {
-          result.set(nameKey(entityType, row.id), row.name.trim());
-        }
-      }
+    sources.map(async ({ entityType, id, storyId, fallbackName }) => {
+      const type = asEntityType(entityType);
+      const name = type
+        ? await resolveCompactEntityName(recoverySolverContext(rows, storyId), type, id)
+        : undefined;
+      names.set(rowKey(entityType, id), name ?? fallbackName ?? null);
     }),
   );
+  return names;
+}
 
-  return result;
+async function loadStoryTitles(storyIds: Iterable<string>): Promise<Map<string, string>> {
+  const ids = [...new Set([...storyIds].filter(Boolean))];
+  if (ids.length === 0) return new Map();
+  const rows = await db
+    .select({ id: stories.id, title: stories.title })
+    .from(stories)
+    .where(inArray(stories.id, ids));
+  return new Map(
+    rows.flatMap((row) => (row.title?.trim() ? [[row.id, row.title.trim()] as const] : [])),
+  );
 }
 
 export interface EnrichableDeletedRow {
@@ -124,351 +112,39 @@ export interface EnrichableDeletedRow {
   id: string;
   storyId: string | null;
   name: string | null;
-  row: Record<string, unknown>;
+  row: EntityRow;
 }
 
-/**
- * Fills composite labels for relation-like tombstones and returns a storyId → title map.
- * Lookups intentionally include soft-deleted targets (recovery context).
- */
+/** Resolves compact handler-owned labels for deleted rows without leaking database concerns into shared. */
 export async function enrichDeletedDisplayNames(
   items: EnrichableDeletedRow[],
-): Promise<{ names: Map<string, string | null>; storyTitles: Map<string, string> }> {
-  const refs: Array<{ entityType: string; id: string }> = [];
-  const groupIdsForChecks = new Set<string>();
-  const fieldIds = new Set<string>();
-  const storyIds = new Set<string>();
-
-  for (const item of items) {
-    if (item.storyId) storyIds.add(item.storyId);
-    if (item.entityType === 'Story') storyIds.add(item.id);
-
-    const r = item.row;
-    switch (item.entityType) {
-      case 'CharacterRelation':
-        for (const id of [asId(r.character1Id), asId(r.character2Id)]) {
-          if (id) refs.push({ entityType: 'Character', id });
-        }
-        break;
-      case 'LocationRelation':
-        for (const id of [asId(r.locationAId), asId(r.locationBId)]) {
-          if (id) refs.push({ entityType: 'Location', id });
-        }
-        break;
-      case 'CharacterScene':
-        if (asId(r.characterId))
-          refs.push({ entityType: 'Character', id: r.characterId as string });
-        if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
-        break;
-      case 'ItemJourney':
-        if (asId(r.itemId)) refs.push({ entityType: 'Item', id: r.itemId as string });
-        if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
-        break;
-      case 'RouteStep':
-        if (asId(r.routeId)) refs.push({ entityType: 'Route', id: r.routeId as string });
-        if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
-        break;
-      case 'TagRelation':
-        if (asId(r.tagId)) refs.push({ entityType: 'Tag', id: r.tagId as string });
-        if (asId(r.relationId) && asText(r.relationType)) {
-          refs.push({ entityType: r.relationType as string, id: r.relationId as string });
-        }
-        break;
-      case 'NoteRelation':
-        if (asId(r.noteId)) refs.push({ entityType: 'Note', id: r.noteId as string });
-        if (asId(r.relationId) && asText(r.relationType)) {
-          refs.push({ entityType: r.relationType as string, id: r.relationId as string });
-        }
-        break;
-      case 'GalleryRelation':
-        if (asId(r.galleryId)) refs.push({ entityType: 'Gallery', id: r.galleryId as string });
-        if (asId(r.ownerId) && asText(r.ownerType)) {
-          refs.push({ entityType: r.ownerType as string, id: r.ownerId as string });
-        }
-        break;
-      case 'SeeAlsoRelation':
-        if (asId(r.entityAId) && asText(r.entityAType)) {
-          refs.push({ entityType: r.entityAType as string, id: r.entityAId as string });
-        }
-        if (asId(r.entityBId) && asText(r.entityBType)) {
-          refs.push({ entityType: r.entityBType as string, id: r.entityBId as string });
-        }
-        break;
-      case 'Favorite':
-        if (asId(r.entityId) && asText(r.entityType)) {
-          refs.push({ entityType: r.entityType as string, id: r.entityId as string });
-        }
-        break;
-      case 'Effect':
-        if (asId(r.itemId)) refs.push({ entityType: 'Item', id: r.itemId as string });
-        break;
-      case 'ChoiceCheckGroup':
-        if (asId(r.choiceId)) {
-          refs.push({ entityType: 'Choice', id: r.choiceId as string });
-        }
-        break;
-      case 'ChoiceCheck':
-        if (asId(r.groupId)) groupIdsForChecks.add(r.groupId as string);
-        if (asId(r.itemId)) refs.push({ entityType: 'Item', id: r.itemId as string });
-        if (asId(r.sceneId)) refs.push({ entityType: 'Scene', id: r.sceneId as string });
-        break;
-      case 'Mode':
-        if (asId(r.characterId))
-          refs.push({ entityType: 'Character', id: r.characterId as string });
-        break;
-      case 'StatStrength':
-        if (asId(r.statId)) refs.push({ entityType: 'Stat', id: r.statId as string });
-        break;
-      case 'StatRelation':
-        if (asId(r.characterId))
-          refs.push({ entityType: 'Character', id: r.characterId as string });
-        if (asId(r.statId)) refs.push({ entityType: 'Stat', id: r.statId as string });
-        if (asId(r.modeId)) refs.push({ entityType: 'Mode', id: r.modeId as string });
-        break;
-      case 'AttributeValue':
-        if (asId(r.fieldId)) fieldIds.add(r.fieldId as string);
-        if (asId(r.entityId) && asText(r.entityType)) {
-          refs.push({ entityType: r.entityType as string, id: r.entityId as string });
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  const groups =
-    groupIdsForChecks.size > 0
-      ? await db
-          .select({ id: choiceCheckGroups.id, choiceId: choiceCheckGroups.choiceId })
-          .from(choiceCheckGroups)
-          .where(inArray(choiceCheckGroups.id, [...groupIdsForChecks]))
-      : [];
-  for (const g of groups) {
-    refs.push({ entityType: 'Choice', id: g.choiceId });
-  }
-
-  const [nameMap, storyRows, fieldRows] = await Promise.all([
-    resolveSimpleNames(refs),
-    storyIds.size > 0
-      ? db
-          .select({ id: stories.id, title: stories.title })
-          .from(stories)
-          .where(inArray(stories.id, [...storyIds]))
-      : Promise.resolve([] as Array<{ id: string; title: string }>),
-    fieldIds.size > 0
-      ? db
-          .select({ id: storySchemaFields.id, name: storySchemaFields.name })
-          .from(storySchemaFields)
-          .where(inArray(storySchemaFields.id, [...fieldIds]))
-      : Promise.resolve([] as Array<{ id: string; name: string }>),
-  ]);
-
-  const storyTitles = new Map<string, string>();
-  for (const row of storyRows) {
-    if (row.title?.trim()) storyTitles.set(row.id, row.title.trim());
-  }
-
-  const fieldNames = new Map<string, string>();
-  for (const row of fieldRows) {
-    if (row.name?.trim()) fieldNames.set(row.id, row.name.trim());
-  }
-
-  const groupChoiceLabel = new Map<string, string>();
-  for (const g of groups) {
-    groupChoiceLabel.set(g.id, labelOrId(nameMap, 'Choice', g.choiceId));
-  }
-
-  const names = new Map<string, string | null>();
-
-  for (const item of items) {
-    const key = nameKey(item.entityType, item.id);
-    const r = item.row;
-    let composed: string | null = item.name;
-
-    switch (item.entityType) {
-      case 'CharacterRelation': {
-        const a = labelOrId(nameMap, 'Character', asId(r.character1Id));
-        const b = labelOrId(nameMap, 'Character', asId(r.character2Id));
-        const type = asText(r.relationType);
-        composed = type ? `${a} ↔ ${b} · ${type}` : `${a} ↔ ${b}`;
-        break;
-      }
-      case 'LocationRelation': {
-        const a = labelOrId(nameMap, 'Location', asId(r.locationAId));
-        const b = labelOrId(nameMap, 'Location', asId(r.locationBId));
-        const type = asText(r.relationType);
-        composed = type ? `${a} → ${b} · ${type}` : `${a} → ${b}`;
-        break;
-      }
-      case 'CharacterScene': {
-        composed = `${labelOrId(nameMap, 'Character', asId(r.characterId))} @ ${labelOrId(nameMap, 'Scene', asId(r.sceneId))}`;
-        break;
-      }
-      case 'ItemJourney': {
-        composed = `${labelOrId(nameMap, 'Item', asId(r.itemId))} @ ${labelOrId(nameMap, 'Scene', asId(r.sceneId))}`;
-        break;
-      }
-      case 'RouteStep': {
-        composed = `${labelOrId(nameMap, 'Route', asId(r.routeId))} @ ${labelOrId(nameMap, 'Scene', asId(r.sceneId))}`;
-        break;
-      }
-      case 'TagRelation': {
-        const tag = labelOrId(nameMap, 'Tag', asId(r.tagId));
-        const targetType = asText(r.relationType) ?? '?';
-        const target = labelOrId(nameMap, targetType, asId(r.relationId));
-        composed = `#${tag} → ${targetType}:${target}`;
-        break;
-      }
-      case 'NoteRelation': {
-        const note = labelOrId(nameMap, 'Note', asId(r.noteId));
-        const targetType = asText(r.relationType) ?? '?';
-        const target = labelOrId(nameMap, targetType, asId(r.relationId));
-        composed = `${note} → ${targetType}:${target}`;
-        break;
-      }
-      case 'GalleryRelation': {
-        const gallery = labelOrId(nameMap, 'Gallery', asId(r.galleryId));
-        const ownerType = asText(r.ownerType) ?? '?';
-        const owner = labelOrId(nameMap, ownerType, asId(r.ownerId));
-        composed = `${gallery} → ${ownerType}:${owner}`;
-        break;
-      }
-      case 'SeeAlsoRelation': {
-        const aType = asText(r.entityAType) ?? '?';
-        const bType = asText(r.entityBType) ?? '?';
-        composed = `${labelOrId(nameMap, aType, asId(r.entityAId))} ↔ ${labelOrId(nameMap, bType, asId(r.entityBId))}`;
-        break;
-      }
-      case 'Favorite': {
-        const targetType = asText(r.entityType) ?? '?';
-        composed = `★ ${targetType}:${labelOrId(nameMap, targetType, asId(r.entityId))}`;
-        break;
-      }
-      case 'Effect': {
-        const effectType = asText(r.effectType) ?? 'effect';
-        const itemName = asId(r.itemId) ? labelOrId(nameMap, 'Item', asId(r.itemId)) : null;
-        const trigger = asText(r.triggerName);
-        composed = itemName
-          ? `${effectType}: ${itemName}`
-          : trigger
-            ? `${effectType}: ${trigger}`
-            : effectType;
-        break;
-      }
-      case 'ChoiceCheckGroup': {
-        composed = `checks · ${labelOrId(nameMap, 'Choice', asId(r.choiceId))}`;
-        break;
-      }
-      case 'ChoiceCheck': {
-        const groupId = asId(r.groupId);
-        const choiceLabel = groupId ? groupChoiceLabel.get(groupId) : null;
-        const mode = asText(r.mode);
-        const type = asText(r.type);
-        composed = [choiceLabel, mode, type].filter(Boolean).join(' · ') || item.name;
-        break;
-      }
-      case 'Mode': {
-        const character = labelOrId(nameMap, 'Character', asId(r.characterId));
-        composed = item.name ? `${character} · ${item.name}` : character;
-        break;
-      }
-      case 'StatStrength': {
-        const statId = asId(r.statId);
-        const ladder = statId ? labelOrId(nameMap, 'Stat', statId) : '*';
-        const label = asText(r.label) ?? '?';
-        composed = `${ladder} · ${label} ≥ ${r.minValue ?? '?'}`;
-        break;
-      }
-      case 'StatRelation': {
-        const character = labelOrId(nameMap, 'Character', asId(r.characterId));
-        const stat = labelOrId(nameMap, 'Stat', asId(r.statId));
-        const modeId = asId(r.modeId);
-        const owner = modeId ? `${character} · ${labelOrId(nameMap, 'Mode', modeId)}` : character;
-        composed = `${owner} · ${stat} = ${r.value ?? '?'}`;
-        break;
-      }
-      case 'AttributeValue': {
-        const fieldId = asId(r.fieldId);
-        const fieldName = fieldId ? fieldNames.get(fieldId) : null;
-        const value = asText(r.value) ?? '(empty)';
-        composed = fieldName ? `${fieldName}=${value}` : value;
-        break;
-      }
-      default:
-        break;
-    }
-
-    names.set(key, composed);
-  }
-
-  return { names, storyTitles };
-}
-
-const ENTITY_TABLES: Partial<Record<string, any>> = {
-  Character: characters,
-  Location: locations,
-  Item: items,
-  Tag: tags,
-  Scene: scenes,
-  Chapter: chapters,
-  Note: notes,
-  WorldRule: worldRules,
-  Story: stories,
-  Choice: choices,
-  StorySchemaField: storySchemaFields,
-  Stat: stats,
-  StatStrength: statStrengths,
-  StatRelation: statRelations,
-  Mode: modes,
-  Suggestion: suggestions,
-  Gallery: galleries,
-  Comment: comments,
-  Effect: effects,
-  Favorite: favorites,
-  AttributeValue: attributeValues,
-  CharacterRelation: characterRelations,
-  LocationRelation: locationRelations,
-  CharacterScene: characterScenes,
-  ItemJourney: itemJourneys,
-  TagRelation: tagRelations,
-  NoteRelation: noteRelations,
-  GalleryRelation: galleryRelations,
-  SeeAlsoRelation: seeAlsoRelations,
-  ChoiceCheckGroup: choiceCheckGroups,
-  ChoiceCheck: choiceChecks,
-};
-
-function payloadAsRow(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return {};
-  return payload as Record<string, unknown>;
-}
-
-async function loadEntityRows(
-  refs: Array<{ entityType: string; id: string }>,
-): Promise<Map<string, Record<string, unknown>>> {
-  const idsByType = new Map<string, Set<string>>();
-  for (const ref of refs) {
-    if (!ref.entityType || !ref.id) continue;
-    const set = idsByType.get(ref.entityType) ?? new Set<string>();
-    set.add(ref.id);
-    idsByType.set(ref.entityType, set);
-  }
-
-  const result = new Map<string, Record<string, unknown>>();
-  await Promise.all(
-    [...idsByType.entries()].map(async ([entityType, ids]) => {
-      const table = ENTITY_TABLES[entityType];
-      if (!table) return;
-      const rows = await db
-        .select()
-        .from(table)
-        .where(inArray(table.id, [...ids]));
-      for (const row of rows as Array<{ id: string }>) {
-        result.set(nameKey(entityType, row.id), row as unknown as Record<string, unknown>);
-      }
-    }),
+): Promise<{ names: NameMap; storyTitles: Map<string, string> }> {
+  const seedRows = new Map(items.map((item) => [rowKey(item.entityType, item.id), item.row]));
+  const rows = await hydrateReferencedRows(seedRows);
+  const storyIds = items.flatMap((item) =>
+    item.entityType === OperationLogEntityType.Story
+      ? [item.id]
+      : item.storyId
+        ? [item.storyId]
+        : [],
   );
-  return result;
+  return {
+    names: await resolveNames(
+      rows,
+      items.map((item) => ({
+        entityType: item.entityType,
+        id: item.id,
+        storyId: item.storyId ?? '',
+        fallbackName: item.name,
+      })),
+    ),
+    storyTitles: await loadStoryTitles(storyIds),
+  };
+}
+
+function payloadAsRow(payload: unknown): EntityRow {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return {};
+  return payload as EntityRow;
 }
 
 export interface OperationLogNameSource {
@@ -486,51 +162,75 @@ export interface OperationLogNameEnrichment {
   username: string | null;
 }
 
+async function loadRootRows(entries: OperationLogNameSource[]): Promise<EntityRows> {
+  const idsByType = new Map<string, Set<string>>();
+  for (const entry of entries) {
+    const entityType = asEntityType(entry.entityType);
+    if (!entityType) continue;
+    const ids = idsByType.get(entityType) ?? new Set<string>();
+    ids.add(entry.entityId);
+    idsByType.set(entityType, ids);
+  }
+  const rows: EntityRows = new Map();
+  await Promise.all(
+    [...idsByType].map(async ([entityType, ids]) => {
+      const table = getApiEntityTable(entityType);
+      if (!table) return;
+      const fetchedRows = await db
+        .select()
+        .from(table)
+        .where(inArray(table.id, [...ids]));
+      for (const row of fetchedRows as Array<{ id: string }>) {
+        rows.set(rowKey(entityType, row.id), row as unknown as EntityRow);
+      }
+    }),
+  );
+  return rows;
+}
+
 /**
- * Same display-name pipeline as deleted-items, using the log payload plus the current
- * (possibly tombstoned) entity row so deletes still resolve.
+ * Resolves audit labels from current rows plus the log payload. The payload wins so a deletion
+ * remains understandable even if its referenced row is no longer present in the database.
  */
 export async function enrichOperationLogNames(
   entries: OperationLogNameSource[],
 ): Promise<Map<string, OperationLogNameEnrichment>> {
-  const refs = entries.map((e) => ({ entityType: e.entityType, id: e.entityId }));
-  const [dbRows, usernames] = await Promise.all([
-    loadEntityRows(refs),
-    (async () => {
-      const ids = [...new Set(entries.map((e) => e.userId).filter(Boolean))];
-      const map = new Map<string, string>();
-      if (ids.length === 0) return map;
-      const rows = await db
-        .select({ id: users.id, username: users.username })
-        .from(users)
-        .where(inArray(users.id, ids));
-      for (const row of rows) map.set(row.id, row.username);
-      return map;
+  const rootRows = await loadRootRows(entries);
+  for (const entry of entries) {
+    const key = rowKey(entry.entityType, entry.entityId);
+    rootRows.set(key, { ...(rootRows.get(key) ?? {}), ...payloadAsRow(entry.payload) });
+  }
+  const rows = await hydrateReferencedRows(rootRows);
+  const [names, storyTitles, userRows] = await Promise.all([
+    resolveNames(
+      rows,
+      entries.map((entry) => ({
+        entityType: entry.entityType,
+        id: entry.entityId,
+        storyId: entry.storyId,
+      })),
+    ),
+    loadStoryTitles(entries.map((entry) => entry.storyId)),
+    (() => {
+      const ids = [...new Set(entries.map((entry) => entry.userId).filter(Boolean))];
+      return ids.length === 0
+        ? Promise.resolve([] as Array<{ id: string; username: string }>)
+        : db
+            .select({ id: users.id, username: users.username })
+            .from(users)
+            .where(inArray(users.id, ids));
     })(),
   ]);
+  const usernames = new Map(userRows.map((row) => [row.id, row.username]));
 
-  const enrichable: EnrichableDeletedRow[] = entries.map((entry) => {
-    const key = nameKey(entry.entityType, entry.entityId);
-    const row = { ...(dbRows.get(key) ?? {}), ...payloadAsRow(entry.payload) };
-    return {
-      entityType: entry.entityType,
-      id: entry.entityId,
-      storyId: entry.storyId,
-      name: getSimpleDisplayName(entry.entityType, row),
-      row,
-    };
-  });
-
-  const { names, storyTitles } = await enrichDeletedDisplayNames(enrichable);
-  const result = new Map<string, OperationLogNameEnrichment>();
-  for (const entry of entries) {
-    const key = nameKey(entry.entityType, entry.entityId);
-    result.set(entry.id, {
-      entityName:
-        names.get(key) ?? getSimpleDisplayName(entry.entityType, payloadAsRow(entry.payload)),
-      storyTitle: storyTitles.get(entry.storyId) ?? null,
-      username: usernames.get(entry.userId) ?? null,
-    });
-  }
-  return result;
+  return new Map(
+    entries.map((entry) => [
+      entry.id,
+      {
+        entityName: names.get(rowKey(entry.entityType, entry.entityId)) ?? null,
+        storyTitle: storyTitles.get(entry.storyId) ?? null,
+        username: usernames.get(entry.userId) ?? null,
+      },
+    ]),
+  );
 }

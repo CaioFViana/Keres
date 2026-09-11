@@ -56,6 +56,29 @@ describe('getEntityName', () => {
     expect(name).toBe('story - A Queda');
   });
 
+  it('names a story arc by its title', async () => {
+    await seedStory();
+    await database.db.insert(schema.storyArcs).values({
+      id: 'arc-1',
+      storyId: STORY_ID,
+      title: 'Livro I',
+      description: null,
+      sortOrder: 0,
+      isDefault: true,
+      ...base,
+    });
+
+    const name = await EntityService.getEntityName(
+      database.db,
+      OperationLogEntityType.StoryArc,
+      'arc-1',
+      STORY_ID,
+      t,
+    );
+
+    expect(name).toBe('arc - Livro I');
+  });
+
   it('names a character by its name', async () => {
     await seedStory();
     await database.db
@@ -337,6 +360,12 @@ describe('getEntityIdentifier', () => {
   it('rejects an entity type it does not know, instead of guessing', async () => {
     await expect(
       EntityService.getEntityIdentifier(database.db, 'Dragao', 'e-1', STORY_ID, t),
+    ).rejects.toThrow(/Invalid entityTypeString/);
+  });
+
+  it('keeps the legacy facade closed to unrelated operation-log types', async () => {
+    await expect(
+      EntityService.getEntityIdentifier(database.db, 'StoryCalendar', 'calendar-1', STORY_ID, t),
     ).rejects.toThrow(/Invalid entityTypeString/);
   });
 });

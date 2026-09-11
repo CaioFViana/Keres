@@ -8,6 +8,7 @@ export const ENTITY_APPEARANCE = {
   Chapter: { icon: 'bookmarks', light: '#C62828', dark: '#F44336' },
   ChapterAnchor: { icon: 'pin', light: '#6A1B9A', dark: '#AB47BC' },
   StoryCalendar: { icon: 'calendar', light: '#1565C0', dark: '#64B5F6' },
+  StoryArc: { icon: 'library', light: '#6A1B9A', dark: '#CE93D8' },
   Event: { icon: 'flag', light: '#3949AB', dark: '#5C6BC0' },
   Scene: { icon: 'easel', light: '#7B1FA2', dark: '#BA68C8' },
   Location: { icon: 'map', light: '#558B2F', dark: '#8BC34A' },

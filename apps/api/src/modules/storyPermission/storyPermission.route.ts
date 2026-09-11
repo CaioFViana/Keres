@@ -45,10 +45,9 @@ export const storyPermissionRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null) // Decorate 'user' property
   .post(
     '/',
-    async ({ body, user, set }) => {
+    async ({ body, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
       return withOwnershipCheck(() =>
         storyPermissionService.upsertStoryPermission(
@@ -72,10 +71,9 @@ export const storyPermissionRoutes = new Elysia()
   )
   .delete(
     '/story/:storyId/user/:targetUserId', // New path for delete
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
       return withOwnershipCheck(() =>
         storyPermissionService.deleteStoryPermission(
@@ -98,10 +96,9 @@ export const storyPermissionRoutes = new Elysia()
   )
   .get(
     '/story/:storyId',
-    async ({ params, user, set }) => {
+    async ({ params, user }) => {
       if (!user || !user.userId) {
-        set.status = 401;
-        throw new Error('Unauthorized: User not authenticated.');
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
       return withOwnershipCheck(() =>
         storyPermissionService.getStoryPermissionsForStory(user.userId, params.storyId),

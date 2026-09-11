@@ -1,6 +1,6 @@
 import type { CreateLocationMapDataType, CreateStoryUpdate } from '@keres/shared';
 import { CreateLocationMapDataSchema, PartialLocationMapSchema } from '@keres/shared';
-import { db } from '../../db';
+import { db, type CompatibleDb } from '../../db';
 import { locationMaps } from '../../db/schema';
 import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
 
@@ -17,22 +17,27 @@ export class LocationMapSyncHandler extends BaseSyncEntityHandler<
   entityName = 'LocationMap';
 
   constructor() {
-    super('locationMaps', 'id', 'version', CreateLocationMapDataSchema, PartialLocationMapSchema, {
+    super('id', 'version', CreateLocationMapDataSchema, PartialLocationMapSchema, {
       storyIdColumnName: 'storyId',
       isDeletedColumnName: 'isDeleted',
       deletedAtColumnName: 'deletedAt',
     });
   }
 
-  async create(userId: string, storyId: string, update: CreateStoryUpdate): Promise<void> {
+  async create(
+    userId: string,
+    storyId: string,
+    update: CreateStoryUpdate,
+    database: CompatibleDb = db,
+  ): Promise<void> {
     const validatedData: CreateLocationMapDataType = this.createSchema.parse(update.data);
 
-    const existing = await this.findById(update.id!);
+    const existing = await this.findById(update.id!, database);
     if (existing) {
       throw new Error(`Conflict: LocationMap with ID ${update.id} already exists.`);
     }
 
-    await db.insert(locationMaps).values({
+    await database.insert(locationMaps).values({
       id: update.id!,
       storyId,
       ...validatedData,

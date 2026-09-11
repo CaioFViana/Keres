@@ -1,5 +1,4 @@
-import type { Scene } from '@keres/shared';
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
+import { completeReorderProblem, type Scene } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
@@ -14,6 +13,8 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { buildAdvancedSearchConditions } from './advancedSearchConditions';
+import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -34,8 +35,12 @@ export interface SceneService {
     favoriteFilterState?: FavoriteFilterState,
     advancedSearchCriteria?: { [key: string]: any },
   ): Promise<SceneSelect[]>;
+  getSceneCount(storyId?: string): Promise<number>;
   getById(sceneId: string): Promise<SceneSelect | undefined>;
-  createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect>;
+  createScene(
+    currentUserId: string,
+    sceneData: Omit<Create<SceneInsert>, 'index'>,
+  ): Promise<SceneSelect>;
   updateScene(
     currentUserId: string,
     sceneId: string,
@@ -141,6 +146,10 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
   };
 
   return {
+    async getSceneCount(storyId?: string): Promise<number> {
+      return countActiveStoryEntities(db, scenes, storyId);
+    },
+
     async getScenesByStoryId(
       storyId,
       searchTerm,
@@ -166,41 +175,14 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         conditions.push(eq(scenes.isFavorite, false) as SQL<boolean>);
       }
 
-      if (advancedSearchCriteria && Object.keys(advancedSearchCriteria).length > 0) {
-        // Scene is not described in `entityFieldMetadata`; without the `?? []` an unknown criterion takes the
-        // query down instead of being ignored.
-        const sceneMetadata = entityFieldMetadata['Scene'] ?? [];
-        for (const key in advancedSearchCriteria) {
-          if (Object.prototype.hasOwnProperty.call(advancedSearchCriteria, key)) {
-            const value = advancedSearchCriteria[key];
-            const fieldMeta = sceneMetadata.find((meta) => meta.name === key);
-
-            if (value !== undefined && value !== '' && fieldMeta) {
-              if (fieldMeta.type === 'string') {
-                conditions.push(
-                  sql`${scenes[key as keyof SceneSelect]} LIKE ${`%${value}%`} COLLATE NOCASE` as SQL<boolean>,
-                );
-              } else if (fieldMeta.type === 'boolean') {
-                conditions.push(eq(scenes[key as keyof SceneSelect], value) as SQL<boolean>);
-              } else if (fieldMeta.type === 'number') {
-                conditions.push(
-                  eq(scenes[key as keyof SceneSelect], Number(value)) as SQL<boolean>,
-                );
-              }
-            } else if (value !== undefined && value !== '') {
-              const customCondition = await buildCustomAttributeSearchCondition(
-                db,
-                scenes.id,
-                key,
-                value,
-              );
-              if (customCondition) {
-                conditions.push(customCondition);
-              }
-            }
-          }
-        }
-      }
+      conditions.push(
+        ...(await buildAdvancedSearchConditions(
+          'Scene',
+          scenes,
+          advancedSearchCriteria,
+          (field, value) => buildCustomAttributeSearchCondition(db, scenes.id, field, value),
+        )),
+      );
 
       const finalConditions = conditions.filter(Boolean) as SQL<boolean>[];
 
@@ -243,9 +225,15 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       return decorateFavorite(db, 'Scene', scene);
     },
 
-    async createScene(currentUserId: string, sceneData: Create<SceneInsert>): Promise<SceneSelect> {
+    async createScene(
+      currentUserId: string,
+      sceneData: Omit<Create<SceneInsert>, 'index'>,
+    ): Promise<SceneSelect> {
       await assertStoryIsWritable(db, sceneData.storyId);
-      let newScene = prepareNewEntityData<SceneInsert>(sceneData);
+      let newScene = prepareNewEntityData<SceneInsert>({
+        ...sceneData,
+        index: await nextIndexInChapter(sceneData.storyId, sceneData.chapterId ?? null),
+      });
       const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
       newScene = favorite.data;
       const result = await db.insert(scenes).values(newScene).returning().get();
@@ -440,19 +428,28 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       newOrder: { id: string; newIndex: number }[],
     ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
+      const current = await db
+        .select({ id: scenes.id, index: scenes.index })
+        .from(scenes)
+        .where(
+          and(
+            eq(scenes.storyId, storyId),
+            eq(scenes.chapterId, chapterId),
+            eq(scenes.isDeleted, false),
+          ),
+        )
+        .all();
+      const problem = completeReorderProblem(
+        current.map((scene) => scene.id),
+        newOrder,
+      );
+      if (problem) throw new Error(`Scene reorder is invalid. ${problem}`);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const currentById = new Map(current.map((scene) => [scene.id, scene]));
 
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
-          const originalScene = await tx.query.scenes.findFirst({
-            where: and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)),
-          });
-          if (!originalScene) {
-            console.warn(
-              `Scene with ID ${scene.id} not found in chapter ${chapterId} during reorder.`,
-            );
-            continue;
-          }
+          const originalScene = currentById.get(scene.id)!;
 
           if (originalScene.index !== scene.newIndex) {
             await tx

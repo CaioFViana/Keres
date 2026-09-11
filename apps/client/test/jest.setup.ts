@@ -9,6 +9,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // collapsible controls deterministic and prevents animation updates from leaking outside `act`.
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 
+// Entity secondary-draft persistence and several stores touch AsyncStorage; native module is null in Jest.
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 /**
  * i18next prints a sponsorship banner whenever it initializes. It has no diagnostic value in
  * this suite, while other `console.info` calls remain visible to preserve useful test output.

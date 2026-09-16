@@ -20,11 +20,6 @@ interface Props {
   layoutEditing: boolean;
   connectionMode?: boolean;
   scale: number;
-  /** Surface translation for the world-coordinate canvas. */
-  positionOffsetX?: number;
-  positionOffsetY?: number;
-  /** Baked viewport scale so the native surface can stay in screen pixels. */
-  positionScale?: number;
   onSelect: (nodeId: string) => void;
   onMove: (nodeId: string, x: number, y: number) => void;
   onDragStart: (nodeId: string) => void;
@@ -48,9 +43,6 @@ const LocationMapNodeView: React.FC<Props> = ({
   layoutEditing,
   connectionMode = false,
   scale,
-  positionOffsetX = 0,
-  positionOffsetY = 0,
-  positionScale = 1,
   onSelect,
   onMove,
   onDragStart,
@@ -64,7 +56,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   onConnectionCancel,
 }) => {
   const { colors } = useTheme();
-  const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
+  const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
   const pressedAt = useRef(0);
   const destinationHoldHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,8 +65,8 @@ const LocationMapNodeView: React.FC<Props> = ({
   nodeId.current = node.id;
   const destinationMapId = useRef(node.destinationMapId);
   destinationMapId.current = node.destinationMapId;
-  const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
-  position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  const position = useRef({ x: node.x, y: node.y });
+  position.current = { x: node.x, y: node.y };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
@@ -224,19 +216,16 @@ const LocationMapNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current)
-    origin.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  if (!dragging.current) origin.current = { x: node.x, y: node.y };
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: (node.x + positionOffsetX - LOCATION_MAP_NODE_SIZE / 2) * positionScale,
-          top: (node.y + positionOffsetY - LOCATION_MAP_NODE_SIZE / 2) * positionScale,
+          left: node.x - LOCATION_MAP_NODE_SIZE / 2,
+          top: node.y - LOCATION_MAP_NODE_SIZE / 2,
           width: LOCATION_MAP_NODE_SIZE,
-          transform: [{ scale: positionScale }],
-          transformOrigin: 'top left' as const,
           alignItems: 'center',
           zIndex: node.zIndex ?? 0,
           ...(Platform.OS === 'web'
@@ -316,17 +305,7 @@ const LocationMapNodeView: React.FC<Props> = ({
           zIndex: 4,
         },
       }),
-    [
-      colors,
-      node.color,
-      node.x,
-      node.y,
-      node.zIndex,
-      positionOffsetX,
-      positionOffsetY,
-      positionScale,
-      selected,
-    ],
+    [colors, node.color, node.x, node.y, node.zIndex, selected],
   );
 
   return (

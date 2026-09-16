@@ -1,6 +1,8 @@
 /**
- * Pure geometry for a freeform, virtualized canvas. World values may be large, but values handed
- * to a native SVG/View are always rebased against a nearby local origin.
+ * Pure geometry for a freeform, virtualized canvas. Children are world-addressed (their layout
+ * position never changes under a gesture) while the camera lives only in the container transform;
+ * the only viewport-sized surface is the edges overlay, which re-covers the camera with
+ * hysteresis and never moves anything on screen when it does.
  */
 export interface SpatialPoint {
   x: number;
@@ -22,12 +24,21 @@ export const MAX_SPATIAL_WORLD_COORDINATE = 100_000;
 /** No one document may stretch farther than this in either axis. */
 export const MAX_SPATIAL_DOCUMENT_SPAN = 200_000;
 /**
- * GPU/layout safety for the interactive surface. One dimension at 8192 already matches common
- * texture limits and is enough to OOM a phone when allocated as an ARGB backing store.
+ * GPU/layout safety for the interactive surface. Android's `SvgView` renders into an ARGB_8888
+ * bitmap of the whole view, so one 4096-pixel side alone is 67MB in a single allocation - enough
+ * to OOM a phone. 2048 (16MB worst case) stays under the texture limit of even old GPUs while
+ * still covering a phone viewport plus overscan.
  */
-export const MAX_SPATIAL_NATIVE_SURFACE = 4096;
-/** Prefetch at least one viewport of world in each direction before rebasing the local origin. */
+export const MAX_SPATIAL_NATIVE_SURFACE = 2048;
+/** Prefetch at least one viewport of world in each direction around the visible rect. */
 export const SPATIAL_OVERSCAN_SCREENS = 1;
+/**
+ * Fraction of the overlay that must remain between the visible rect and the overlay edge before
+ * the overlay re-syncs. The re-sync itself moves nothing on screen (it only re-covers the same
+ * camera with a viewport-sized surface), but hysteresis keeps it from firing on every gesture
+ * event and re-rendering the edge layer mid-pan.
+ */
+export const SPATIAL_OVERLAY_SYNC_MARGIN = 0.25;
 
 export function spatialRectIntersects(left: SpatialRect, right: SpatialRect): boolean {
   return (
@@ -152,8 +163,30 @@ export function spatialRenderWindow(
 }
 
 /**
- * Pixel size of the local plane: the device viewport plus overscan, never the document bounds
- * and never a GPU-sized square.
+ * True when the visible world rect has drifted too close to the edge of the viewport-sized
+ * overlay window, so the overlay (edges surface, culling window) must re-cover the camera. The
+ * overlay re-sync moves nothing on screen: nodes are world-addressed and the camera lives only in
+ * the container transform, so this only decides how often the edge layer re-renders mid-gesture.
+ */
+export function spatialOverlayNeedsSync(
+  visible: SpatialRect,
+  overlay: SpatialRect,
+  marginFraction = SPATIAL_OVERLAY_SYNC_MARGIN,
+): boolean {
+  if (overlay.width <= 0 || overlay.height <= 0) return true;
+  const marginX = overlay.width * marginFraction;
+  const marginY = overlay.height * marginFraction;
+  return (
+    visible.x < overlay.x + marginX ||
+    visible.y < overlay.y + marginY ||
+    visible.x + visible.width > overlay.x + overlay.width - marginX ||
+    visible.y + visible.height > overlay.y + overlay.height - marginY
+  );
+}
+
+/**
+ * Pixel size of the viewport-sized overlay plane: the device viewport plus overscan, never the
+ * document bounds and never a GPU-sized square.
  */
 export function spatialNativeSurface(
   viewportWidth: number,

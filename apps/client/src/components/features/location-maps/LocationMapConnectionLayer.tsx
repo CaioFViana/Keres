@@ -33,7 +33,6 @@ interface Props {
   connectionDrag: { fromNodeId: string; x: number; y: number } | null;
   originX: number;
   originY: number;
-  contentScale: number;
   renderWindow: SpatialRect;
   background: string;
   primary: string;
@@ -189,7 +188,6 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   connectionDrag,
   originX,
   originY,
-  contentScale,
   renderWindow,
   background,
   primary,
@@ -355,10 +353,13 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   );
 
   return (
-    <Svg width={width} height={height} pointerEvents="none" style={[styles.canvas, { zIndex: 1 }]}>
-      <G
-        transform={`translate(${-originX * contentScale} ${-originY * contentScale}) scale(${contentScale})`}
-      >
+    <Svg
+      width={width}
+      height={height}
+      pointerEvents="none"
+      style={[styles.canvas, { left: originX, top: originY, zIndex: 1 }]}
+    >
+      <G transform={`translate(${-originX} ${-originY})`}>
         {visibleConnections.map((connection) => (
           <ConnectionPathView key={connection.id} path={connection} background={background} />
         ))}

@@ -1,6 +1,7 @@
 import React, { useMemo, useRef } from 'react';
-import { Image, PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
 import { useTheme } from '../../../theme';
 
@@ -12,11 +13,6 @@ interface Props {
   selected: boolean;
   layoutEditing: boolean;
   scale: number;
-  /** Surface translation for the world-coordinate canvas. */
-  positionOffsetX?: number;
-  positionOffsetY?: number;
-  /** Baked viewport scale so the native surface can stay in screen pixels. */
-  positionScale?: number;
   /** When locked, dragging on the image pans the canvas instead of moving the image. */
   locked: boolean;
   onSelect: (imageId: string) => void;
@@ -44,9 +40,6 @@ const LocationMapImageView: React.FC<Props> = ({
   selected,
   layoutEditing,
   scale,
-  positionOffsetX = 0,
-  positionOffsetY = 0,
-  positionScale = 1,
   locked,
   onSelect,
   onMove,
@@ -59,12 +52,12 @@ const LocationMapImageView: React.FC<Props> = ({
   onRemove,
 }) => {
   const { colors } = useTheme();
-  const origin = useRef({ x: image.x + positionOffsetX, y: image.y + positionOffsetY });
+  const origin = useRef({ x: image.x, y: image.y });
   const dragging = useRef(false);
   const imageId = useRef(image.id);
   imageId.current = image.id;
-  const position = useRef({ x: image.x + positionOffsetX, y: image.y + positionOffsetY });
-  position.current = { x: image.x + positionOffsetX, y: image.y + positionOffsetY };
+  const position = useRef({ x: image.x, y: image.y });
+  position.current = { x: image.x, y: image.y };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const lockedRef = useRef(locked);
@@ -156,8 +149,7 @@ const LocationMapImageView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current)
-    origin.current = { x: image.x + positionOffsetX, y: image.y + positionOffsetY };
+  if (!dragging.current) origin.current = { x: image.x, y: image.y };
 
   const sizeRef = useRef({ width: image.width, height: image.height });
   sizeRef.current = { width: image.width, height: image.height };
@@ -191,12 +183,10 @@ const LocationMapImageView: React.FC<Props> = ({
       StyleSheet.create({
         image: {
           position: 'absolute',
-          left: (image.x + positionOffsetX) * positionScale,
-          top: (image.y + positionOffsetY) * positionScale,
+          left: image.x,
+          top: image.y,
           width: image.width,
           height: image.height,
-          transform: [{ scale: positionScale }],
-          transformOrigin: 'top left' as const,
           backgroundColor: colors.surface,
           borderWidth: selected ? 2.5 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -232,23 +222,13 @@ const LocationMapImageView: React.FC<Props> = ({
           zIndex: 3,
         },
       }),
-    [
-      colors,
-      image.height,
-      image.width,
-      image.x,
-      image.y,
-      positionOffsetX,
-      positionOffsetY,
-      positionScale,
-      selected,
-    ],
+    [colors, image.height, image.width, image.x, image.y, selected],
   );
 
   return (
     <View style={styles.image} {...pan.panHandlers}>
       {uri ? (
-        <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="stretch" />
+        <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="fill" />
       ) : null}
       {layoutEditing && selected && (
         <>

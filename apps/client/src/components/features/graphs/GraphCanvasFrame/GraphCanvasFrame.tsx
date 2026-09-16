@@ -1,41 +1,33 @@
 import React, { useMemo } from 'react';
 import { Animated, Platform, View } from 'react-native';
-import type { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
+import type { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
 import { useTheme } from '../../../../theme';
 
-type PanZoomCanvasResult = ReturnType<typeof usePanZoomCanvas>;
+type CanvasViewportResult = ReturnType<typeof useCanvasViewport>;
 
 interface GraphCanvasFrameProps {
-  width: number;
-  height: number;
   children: React.ReactNode;
-  containerRef: PanZoomCanvasResult['containerRef'];
-  handleLayout: PanZoomCanvasResult['handleLayout'];
-  panHandlers: PanZoomCanvasResult['panHandlers'];
-  animatedTransform: PanZoomCanvasResult['animatedTransform'];
-  /**
-   * Boards draw pins as views on top of an SVG. When a pin is dragged into the empty margin of a
-   * centred drawing, the line must still paint. Other graphs stay clipped to the drawing box.
-   */
-  contentOverflow?: 'hidden' | 'visible';
+  containerRef: CanvasViewportResult['containerRef'];
+  handleLayout: CanvasViewportResult['handleLayout'];
+  panHandlers: CanvasViewportResult['panHandlers'];
+  animatedTransform: CanvasViewportResult['animatedTransform'];
 }
 
 /**
- * `StoryGraphCanvas`, `CharacterRelationGraphCanvas` and `LocationGraphCanvas` repeated, byte for
- * byte, the same `usePanZoomCanvas` scaffolding (`View`/`Animated.View` with `transformOrigin` and
- * `transform`) - pure structure, with no domain logic at all. Only that part comes out here; the
- * rendering inside (SVG edges, node style/colour/badge) stays in each canvas,
- * which is already genuinely different between the three.
+ * The shared pan/zoom scaffolding of every canvas: an outer viewport that owns the gestures and
+ * clips to the screen, and an inner plane that carries the camera transform.
+ *
+ * Children are world-addressed (`left`/`top` in drawing coordinates) and the inner plane is
+ * viewport-sized with visible overflow, so panning and zooming only ever rewrite the container
+ * transform - never a child's layout position, and never a document-sized native surface. The
+ * only viewport-sized surfaces are the edges overlays each canvas draws for itself.
  */
 const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
-  width,
-  height,
   containerRef,
   handleLayout,
   panHandlers,
   animatedTransform,
   children,
-  contentOverflow = 'hidden',
 }) => {
   const { colors } = useTheme();
 
@@ -53,13 +45,15 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
         position: 'absolute' as const,
         top: 0,
         left: 0,
+        right: 0,
+        bottom: 0,
         transformOrigin: 'top left' as const,
-        overflow: contentOverflow,
+        overflow: 'visible' as const,
         // Empty space belongs to the container's pan; pins/nodes still receive the hit.
         pointerEvents: 'box-none' as const,
       },
     }),
-    [colors, contentOverflow],
+    [colors],
   );
 
   return (
@@ -74,7 +68,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
           }
         : {})}
     >
-      <Animated.View style={[styles.content, { width, height, transform: animatedTransform }]}>
+      <Animated.View style={[styles.content, { transform: animatedTransform }]}>
         {children}
       </Animated.View>
     </View>

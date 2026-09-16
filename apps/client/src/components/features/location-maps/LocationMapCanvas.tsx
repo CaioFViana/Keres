@@ -2,10 +2,7 @@ import { spatialRectIntersects, type LocationMapContentType } from '@keres/share
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import {
-  type FreeformCanvasHandle,
-  useFreeformCanvasViewport,
-} from '@/src/hooks/useFreeformCanvasViewport';
+import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,
@@ -19,7 +16,7 @@ import LocationMapConnectionLayer, {
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
-export type LocationMapCanvasHandle = FreeformCanvasHandle;
+export type LocationMapCanvasHandle = CanvasViewportHandle;
 export type { LocationMapConnection, LocationMapContains } from './LocationMapConnectionLayer';
 
 interface Props {
@@ -96,7 +93,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
-    const dragLocalOriginRef = useRef({ x: 0, y: 0 });
     const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
 
     const publishPendingDrag = useCallback(() => {
@@ -150,21 +146,21 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       };
     }, [activeDrag, content]);
     const worldBounds = locationMapCanvasBounds(layoutContent);
-    const viewport = useFreeformCanvasViewport(ref, {
-      bounds: {
+    const viewport = useCanvasViewport(
+      ref,
+      {
         x: worldBounds.originX,
         y: worldBounds.originY,
         width: worldBounds.width,
         height: worldBounds.height,
       },
-      onAutoPan: adjustDraggedItemForAutoPan,
-    });
+      { clampMode: 'none', onAutoPan: adjustDraggedItemForAutoPan },
+    );
     const {
       setChildDragging,
       width,
       height,
-      localOrigin,
-      bakedScale,
+      svgOrigin,
       renderWindow,
       scale,
       worldToScreen,
@@ -188,12 +184,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               );
         if (!point) return;
         const position = {
-          x: clampCanvasWorldCoordinate(
-            x + dragLocalOriginRef.current.x + dragAutoPanOffsetRef.current.x,
-          ),
-          y: clampCanvasWorldCoordinate(
-            y + dragLocalOriginRef.current.y + dragAutoPanOffsetRef.current.y,
-          ),
+          x: clampCanvasWorldCoordinate(x + dragAutoPanOffsetRef.current.x),
+          y: clampCanvasWorldCoordinate(y + dragAutoPanOffsetRef.current.y),
         };
         pendingDragRef.current = { kind, id, ...position };
         updateAutoPan(
@@ -223,10 +215,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [],
     );
     const handleDragStart = useCallback(() => {
-      dragLocalOriginRef.current = localOrigin;
       dragAutoPanOffsetRef.current = { x: 0, y: 0 };
       setChildDragging(true);
-    }, [localOrigin, setChildDragging]);
+    }, [setChildDragging]);
     const handleDragEnd = useCallback(
       (kind: ActiveDrag['kind'], id: string) => {
         stopAutoPan();
@@ -318,9 +309,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
 
     return (
       <GraphCanvasFrame
-        width={width}
-        height={height}
-        contentOverflow="hidden"
         containerRef={containerRef}
         handleLayout={handleLayout}
         panHandlers={panHandlers}
@@ -335,9 +323,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               selected={selectedImageId === image.id}
               layoutEditing={layoutEditing}
               scale={scale}
-              positionOffsetX={-localOrigin.x}
-              positionOffsetY={-localOrigin.y}
-              positionScale={bakedScale}
               locked={image.locked}
               onSelect={onSelectImage}
               onMove={(id, x, y) => updateDrag('image', id, x, y)}
@@ -358,9 +343,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           connections={connections}
           contains={contains}
           connectionDrag={connectionDrag}
-          originX={localOrigin.x}
-          originY={localOrigin.y}
-          contentScale={bakedScale}
+          originX={svgOrigin.x}
+          originY={svgOrigin.y}
           renderWindow={renderWindow}
           background={colors.background}
           primary={colors.primary}
@@ -379,9 +363,6 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               layoutEditing={layoutEditing}
               connectionMode={connectionMode}
               scale={scale}
-              positionOffsetX={-localOrigin.x}
-              positionOffsetY={-localOrigin.y}
-              positionScale={bakedScale}
               onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
               onMove={(id, x, y) => updateDrag(kind, id, x, y)}
               onDragStart={handleDragStart}

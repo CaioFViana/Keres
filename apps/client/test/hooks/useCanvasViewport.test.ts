@@ -1,16 +1,23 @@
 /**
  * @jest-environment node
  */
-import { renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { createRef } from 'react';
 import { PanResponder } from 'react-native';
-import { usePanZoomCanvas, type PanZoomCanvasHandle } from '../../src/hooks/usePanZoomCanvas';
+import { MAX_SPATIAL_NATIVE_SURFACE, spatialRenderWindow } from '@keres/shared';
+import {
+  useCanvasViewport,
+  type CanvasViewportBounds,
+  type CanvasViewportHandle,
+  type CanvasViewportOptions,
+} from '../../src/hooks/useCanvasViewport';
 
 const LAYOUT = { width: 1000, height: 800 };
 const VIEWPORT = { x: 0, y: 0, width: 400, height: 300 };
+const BOUNDS = { x: 0, y: 0, width: 800, height: 600 };
 
 /** Valor atual de cada `Animated.Value` do transform devolvido pelo hook. */
-function transformOf(current: ReturnType<typeof usePanZoomCanvas>) {
+function transformOf(current: ReturnType<typeof useCanvasViewport>) {
   const [{ translateX }, { translateY }, { scale }] = current.animatedTransform as any[];
   return {
     x: (translateX as any)._value as number,
@@ -23,15 +30,21 @@ function transformOf(current: ReturnType<typeof usePanZoomCanvas>) {
  * Mounts the hook and simulates the `onLayout`, which is the moment the window gains a size -
  * before that the hook has no way to frame anything.
  */
-async function renderCanvas(layout = LAYOUT, viewport = VIEWPORT, options = {}) {
-  const ref = createRef<PanZoomCanvasHandle>();
-  const view = await renderHook(() => usePanZoomCanvas(ref, layout, options));
+async function renderCanvas(
+  layout: CanvasViewportBounds = LAYOUT,
+  viewport = VIEWPORT,
+  options: CanvasViewportOptions = {},
+) {
+  const ref = createRef<CanvasViewportHandle>();
+  const view = await renderHook(() => useCanvasViewport(ref, layout, options));
 
   (view.result.current.containerRef as any).current = {
     measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) =>
       callback(viewport.x, viewport.y, viewport.width, viewport.height),
   };
-  view.result.current.handleLayout();
+  await act(async () => {
+    view.result.current.handleLayout();
+  });
 
   return { ...view, ref };
 }
@@ -100,41 +113,51 @@ describe('fitting on layout', () => {
 
     result.current.containerRef.current!.measureInWindow = ((callback: any) =>
       callback(0, 0, 900, 900)) as never;
-    result.current.handleLayout();
+    await act(async () => {
+      result.current.handleLayout();
+    });
 
     expect(transformOf(result.current)).toEqual(fitted);
   });
 
-  it('keeps the world stationary when the canvas grows above or to the left', async () => {
-    const ref = createRef<PanZoomCanvasHandle>();
-    let layout = { ...LAYOUT, originX: 0, originY: 0 };
+  it('leaves the camera untouched when the document frame shifts under it', async () => {
+    // Boards recompute their bounds - including a negative origin - on every drag. Children are
+    // world-addressed, so a frame shift moves nothing on screen and the camera must not
+    // compensate for it. (The previous viewport translated the pan here because children were
+    // positioned against the document frame; that coupling was the teleport mechanism.)
+    const ref = createRef<CanvasViewportHandle>();
+    let bounds = { ...BOUNDS };
     const view = await renderHook(() =>
-      usePanZoomCanvas(ref, layout, { freePan: true, refitOnLayoutChange: false }),
+      useCanvasViewport(ref, bounds, { clampMode: 'none', refitOnLayoutChange: false }),
     );
     (view.result.current.containerRef as any).current = {
       measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) =>
         callback(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height),
     };
-    view.result.current.handleLayout();
+    await act(async () => {
+      view.result.current.handleLayout();
+    });
     const before = transformOf(view.result.current);
+    const overlayBefore = view.result.current.renderWindow;
 
-    layout = { width: 1240, height: 1040, originX: -240, originY: -240 };
+    bounds = { x: -240, y: -240, width: 1240, height: 1040 };
     await view.rerender(undefined as never);
-    const after = transformOf(view.result.current);
 
-    // World point (0, 0) has moved 240 canvas units in each axis. The pan moves by the inverse
-    // amount, so its visible position stays exactly where the drag left it.
-    expect(after.x + after.scale * 240).toBeCloseTo(before.x, 4);
-    expect(after.y + after.scale * 240).toBeCloseTo(before.y, 4);
+    expect(transformOf(view.result.current)).toEqual(before);
+    expect(view.result.current.renderWindow).toBe(overlayBefore);
   });
 });
 
 describe('the handle exposed to the screen', () => {
   it('re-fits on demand', async () => {
     const { result, ref } = await renderCanvas();
-    ref.current!.zoomBy(2);
+    await act(async () => {
+      ref.current!.zoomBy(2);
+    });
 
-    ref.current!.fitToScreen();
+    await act(async () => {
+      ref.current!.fitToScreen();
+    });
 
     expect(transformOf(result.current).scale).toBeCloseTo(0.375 * 0.94, 4);
   });
@@ -143,7 +166,9 @@ describe('the handle exposed to the screen', () => {
     const { result, ref } = await renderCanvas();
     const before = transformOf(result.current);
 
-    ref.current!.zoomBy(2);
+    await act(async () => {
+      ref.current!.zoomBy(2);
+    });
 
     expect(transformOf(result.current).scale).toBeCloseTo(before.scale * 2, 4);
   });
@@ -152,7 +177,9 @@ describe('the handle exposed to the screen', () => {
     const { result, ref } = await renderCanvas();
     const before = transformOf(result.current);
 
-    ref.current!.zoomBy(0.5);
+    await act(async () => {
+      ref.current!.zoomBy(0.5);
+    });
 
     expect(transformOf(result.current).scale).toBeCloseTo(before.scale * 0.5, 4);
   });
@@ -160,7 +187,9 @@ describe('the handle exposed to the screen', () => {
   it('never zooms past the maximum', async () => {
     const { result, ref } = await renderCanvas(LAYOUT, VIEWPORT, { maxScale: 2 });
 
-    ref.current!.zoomBy(100);
+    await act(async () => {
+      ref.current!.zoomBy(100);
+    });
 
     expect(transformOf(result.current).scale).toBe(2);
   });
@@ -168,9 +197,20 @@ describe('the handle exposed to the screen', () => {
   it('never zooms below the minimum', async () => {
     const { result, ref } = await renderCanvas(LAYOUT, VIEWPORT, { minScale: 0.15 });
 
-    ref.current!.zoomBy(0.001);
+    await act(async () => {
+      ref.current!.zoomBy(0.001);
+    });
 
     expect(transformOf(result.current).scale).toBe(0.15);
+  });
+
+  it('exposes the world point currently at the centre of the viewport', async () => {
+    const { result, ref } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+
+    const center = ref.current?.viewportWorldCenter();
+    expect(center?.x).toBeCloseTo(BOUNDS.x + BOUNDS.width / 2, 1);
+    expect(center?.y).toBeCloseTo(BOUNDS.y + BOUNDS.height / 2, 1);
+    expect(result.current.scale).toBeGreaterThan(0);
   });
 });
 
@@ -184,7 +224,9 @@ describe('keeping the drawing reachable', () => {
       maxScale: 1,
     });
 
-    ref.current!.zoomBy(0.5);
+    await act(async () => {
+      ref.current!.zoomBy(0.5);
+    });
 
     const { x, y, scale } = transformOf(result.current);
     expect(x).toBeCloseTo((VIEWPORT.width - 100 * scale) / 2, 3);
@@ -194,7 +236,9 @@ describe('keeping the drawing reachable', () => {
   it('never leaves a gap on the left or top of a drawing larger than the viewport', async () => {
     const { result, ref } = await renderCanvas();
 
-    ref.current!.zoomBy(4);
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
 
     const { x, y } = transformOf(result.current);
     expect(x).toBeLessThanOrEqual(0);
@@ -204,7 +248,9 @@ describe('keeping the drawing reachable', () => {
   it('never leaves a gap on the right or bottom either', async () => {
     const { result, ref } = await renderCanvas();
 
-    ref.current!.zoomBy(4);
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
 
     const { x, y, scale } = transformOf(result.current);
     expect(x).toBeGreaterThanOrEqual(VIEWPORT.width - LAYOUT.width * scale);
@@ -328,13 +374,17 @@ describe('panning', () => {
     const create = jest.spyOn(PanResponder, 'create');
     const { result, ref } = await renderCanvas();
     const config = create.mock.calls.at(-1)![0] as any;
-    ref.current!.zoomBy(zoom);
+    await act(async () => {
+      ref.current!.zoomBy(zoom);
+    });
     const before = transformOf(result.current);
 
-    config.onPanResponderGrant();
-    for (const step of steps) {
-      config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, step);
-    }
+    await act(async () => {
+      config.onPanResponderGrant();
+      for (const step of steps) {
+        config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, step);
+      }
+    });
     jest.restoreAllMocks();
     return { before, after: transformOf(result.current) };
   };
@@ -350,13 +400,15 @@ describe('panning', () => {
     const create = jest.spyOn(PanResponder, 'create');
     const { result } = await renderCanvas({ width: 100, height: 100 }, VIEWPORT, {
       maxScale: 1,
-      freePan: true,
+      clampMode: 'free',
     });
     const config = create.mock.calls.at(-1)![0] as any;
     const before = transformOf(result.current);
 
-    config.onPanResponderGrant();
-    config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: 40, dy: 25 });
+    await act(async () => {
+      config.onPanResponderGrant();
+      config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: 40, dy: 25 });
+    });
     jest.restoreAllMocks();
 
     const after = transformOf(result.current);
@@ -399,19 +451,25 @@ describe('tapping', () => {
     const create = jest.spyOn(PanResponder, 'create');
     const { ref, result } = await renderCanvas(LAYOUT, VIEWPORT, { onTap });
     const config = create.mock.calls.at(-1)![0] as any;
-    if (zoom !== 1) ref.current!.zoomBy(zoom);
-
-    config.onPanResponderGrant({ nativeEvent: { touches: [{}] } });
-    for (const step of steps) {
-      config.onPanResponderMove(
-        { nativeEvent: { touches: Array.from({ length: step.touches ?? 1 }, () => ({})) } },
-        step,
-      );
+    if (zoom !== 1) {
+      await act(async () => {
+        ref.current!.zoomBy(zoom);
+      });
     }
-    config.onPanResponderRelease(
-      { nativeEvent: { pageX: release.pageX, pageY: release.pageY } },
-      { dx: release.dx, dy: release.dy },
-    );
+
+    await act(async () => {
+      config.onPanResponderGrant({ nativeEvent: { touches: [{}] } });
+      for (const step of steps) {
+        config.onPanResponderMove(
+          { nativeEvent: { touches: Array.from({ length: step.touches ?? 1 }, () => ({})) } },
+          step,
+        );
+      }
+      config.onPanResponderRelease(
+        { nativeEvent: { pageX: release.pageX, pageY: release.pageY } },
+        { dx: release.dx, dy: release.dy },
+      );
+    });
     jest.restoreAllMocks();
     return { onTap, transform: transformOf(result.current) };
   };
@@ -461,5 +519,118 @@ describe('tapping', () => {
     });
 
     expect(onTap).not.toHaveBeenCalled();
+  });
+});
+
+describe('the viewport-sized overlay', () => {
+  it('allocates a native surface from the device viewport, not a world-sized square', async () => {
+    const { result } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+
+    expect(result.current.width).toBe(1200);
+    expect(result.current.height).toBe(900);
+    expect(result.current.width).toBeLessThanOrEqual(MAX_SPATIAL_NATIVE_SURFACE);
+    expect(result.current.height).toBeLessThanOrEqual(MAX_SPATIAL_NATIVE_SURFACE);
+  });
+
+  it('keeps the native surface bounded even when the document is enormous', async () => {
+    const { result } = await renderCanvas(
+      { x: -50_000, y: -50_000, width: 100_000, height: 100_000 },
+      VIEWPORT,
+      { clampMode: 'none' },
+    );
+
+    expect(result.current.width).toBe(1200);
+    expect(result.current.height).toBe(900);
+  });
+
+  it('commits no React state while a pan stays comfortably inside the overlay', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result, ref } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+    const config = create.mock.calls.at(-1)![0] as any;
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
+    const renderBefore = result.current;
+    const overlayBefore = result.current.renderWindow;
+
+    await act(async () => {
+      config.onPanResponderGrant();
+      config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: -10, dy: -8 });
+      config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: -20, dy: -15 });
+    });
+    jest.restoreAllMocks();
+
+    // The camera moved (the Animated values are fresh), but no overlay re-sync fired, so React
+    // never re-rendered: there is no second channel that could land a frame late and teleport
+    // the drawing on Android.
+    expect(transformOf(result.current).x).toBeLessThan(0);
+    expect(result.current).toBe(renderBefore);
+    expect(result.current.renderWindow).toBe(overlayBefore);
+  });
+
+  it('re-syncs the overlay atomically once a pan drifts past the margin', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result, ref } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+    const config = create.mock.calls.at(-1)![0] as any;
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
+
+    await act(async () => {
+      config.onPanResponderGrant();
+      config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: -1200, dy: 0 });
+    });
+    jest.restoreAllMocks();
+
+    // One commit, internally consistent: the culling window is exactly the surface the new
+    // origin covers at the live scale, so the edges layer recenters without moving anything.
+    const { svgOrigin, width, height, renderWindow } = result.current;
+    const { scale } = transformOf(result.current);
+    expect(renderWindow).toEqual(spatialRenderWindow(svgOrigin, width, height, scale));
+    expect(width).toBe(1200);
+    expect(height).toBe(900);
+  });
+
+  it('keeps the live pinch scale out of React state until the gesture ends', async () => {
+    const create = jest.spyOn(PanResponder, 'create');
+    const { result } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+    const config = create.mock.calls.at(-1)![0] as any;
+    const fittedScale = result.current.scale;
+
+    await act(async () => {
+      config.onPanResponderGrant({ nativeEvent: { touches: [{}, {}] } });
+      config.onPanResponderMove(
+        {
+          nativeEvent: {
+            touches: [
+              { pageX: 100, pageY: 150 },
+              { pageX: 200, pageY: 150 },
+            ],
+          },
+        },
+        { dx: 0, dy: 0 },
+      );
+      config.onPanResponderMove(
+        {
+          nativeEvent: {
+            touches: [
+              { pageX: 50, pageY: 150 },
+              { pageX: 250, pageY: 150 },
+            ],
+          },
+        },
+        { dx: 0, dy: 0 },
+      );
+    });
+
+    expect(transformOf(result.current).scale).toBeCloseTo(fittedScale * 2, 4);
+    expect(result.current.scale).toBe(fittedScale);
+
+    await act(async () => {
+      config.onPanResponderRelease({ nativeEvent: {} }, { dx: 0, dy: 0 });
+    });
+    jest.restoreAllMocks();
+
+    expect(result.current.scale).toBeCloseTo(fittedScale * 2, 4);
   });
 });

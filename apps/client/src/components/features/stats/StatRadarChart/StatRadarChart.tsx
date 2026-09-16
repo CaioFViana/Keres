@@ -6,7 +6,7 @@ import { useTheme } from '../../../../theme';
 
 /**
  * The stats radar. Unlike the app's graph canvases, it has no pan/zoom: the drawing fits entirely on
- * screen by construction, so `usePanZoomCanvas` does not apply here.
+ * screen by construction, so `useCanvasViewport` does not apply here.
  *
  * All the geometry arrives ready from `buildStatRadarLayout` - this component only paints.
  */

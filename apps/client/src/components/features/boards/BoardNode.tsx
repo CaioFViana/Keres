@@ -1,15 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardNodeType } from '@keres/shared';
+import { Image } from 'expo-image';
 import React, { useMemo, useRef } from 'react';
-import {
-  Image,
-  PanResponder,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
@@ -35,11 +28,6 @@ interface Props {
   layoutEditing: boolean;
   connectionMode: boolean;
   scale: number;
-  /** Surface translation for the world-coordinate canvas. */
-  positionOffsetX?: number;
-  positionOffsetY?: number;
-  /** Baked viewport scale so the native surface can stay in screen pixels. */
-  positionScale?: number;
   /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
   galleryMedia?: BoardGalleryMedia | null;
   summary?: BoardEntitySummary | null;
@@ -68,9 +56,6 @@ const BoardNodeView: React.FC<Props> = ({
   layoutEditing,
   connectionMode,
   scale,
-  positionOffsetX = 0,
-  positionOffsetY = 0,
-  positionScale = 1,
   galleryMedia,
   summary,
   onSelect,
@@ -91,14 +76,14 @@ const BoardNodeView: React.FC<Props> = ({
    * The responder is created once. Recreating it on every parent render (each `onMove`) drops the
    * mouse on the web as soon as the pin leaves the original hit box.
    */
-  const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
+  const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
   const nodeRef = useRef(node);
   nodeRef.current = node;
   const nodeId = useRef(node.id);
   nodeId.current = node.id;
-  const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
-  position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  const position = useRef({ x: node.x, y: node.y });
+  position.current = { x: node.x, y: node.y };
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
@@ -210,8 +195,7 @@ const BoardNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current)
-    origin.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  if (!dragging.current) origin.current = { x: node.x, y: node.y };
 
   const hasGalleryImage =
     node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia);
@@ -263,12 +247,10 @@ const BoardNodeView: React.FC<Props> = ({
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: (node.x + positionOffsetX) * positionScale,
-          top: (node.y + positionOffsetY) * positionScale,
+          left: node.x,
+          top: node.y,
           width: size.width,
           height: size.height,
-          transform: [{ scale: positionScale }],
-          transformOrigin: 'top left' as const,
           borderRadius: 10,
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -359,17 +341,7 @@ const BoardNodeView: React.FC<Props> = ({
           zIndex: 2,
         },
       }),
-    [
-      colors,
-      ghost,
-      hasGalleryImage,
-      node,
-      positionOffsetX,
-      positionOffsetY,
-      positionScale,
-      selected,
-      size,
-    ],
+    [colors, ghost, hasGalleryImage, node, selected, size],
   );
 
   const cardAppearance =
@@ -425,7 +397,7 @@ const BoardNodeView: React.FC<Props> = ({
           <Image
             source={resolvedGalleryUri ? { uri: resolvedGalleryUri } : undefined}
             style={styles.galleryImage}
-            resizeMode="cover"
+            contentFit="cover"
           />
           <View style={styles.galleryInfo} pointerEvents="none">
             <View style={styles.row}>

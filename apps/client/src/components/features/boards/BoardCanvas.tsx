@@ -7,10 +7,7 @@ import {
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import {
-  type FreeformCanvasHandle,
-  useFreeformCanvasViewport,
-} from '@/src/hooks/useFreeformCanvasViewport';
+import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
@@ -23,7 +20,7 @@ import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type { BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import BoardNodeView from './BoardNode';
 
-export type BoardCanvasHandle = FreeformCanvasHandle;
+export type BoardCanvasHandle = CanvasViewportHandle;
 
 export interface BoardPinTitle {
   title: string;
@@ -123,7 +120,6 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
-    const dragLocalOriginRef = useRef({ x: 0, y: 0 });
     const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
     const edgeCacheRef = useRef(new Map<string, BoardEdgeGeometry>());
 
@@ -162,21 +158,21 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       [activeDrag, content.nodes],
     );
     const worldBounds = boardCanvasBounds(layoutNodes, undefined, undefined, galleryMediaById);
-    const viewport = useFreeformCanvasViewport(ref, {
-      bounds: {
+    const viewport = useCanvasViewport(
+      ref,
+      {
         x: worldBounds.originX,
         y: worldBounds.originY,
         width: worldBounds.width,
         height: worldBounds.height,
       },
-      onAutoPan: adjustDraggedNodeForAutoPan,
-    });
+      { clampMode: 'none', onAutoPan: adjustDraggedNodeForAutoPan },
+    );
     const {
       setChildDragging,
       width,
       height,
-      localOrigin,
-      bakedScale,
+      svgOrigin,
       renderWindow,
       scale,
       worldToScreen,
@@ -203,12 +199,8 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         const node = content.nodes.find((candidate) => candidate.id === nodeId);
         if (!node) return;
         const position = {
-          x: clampCanvasWorldCoordinate(
-            x + dragLocalOriginRef.current.x + dragAutoPanOffsetRef.current.x,
-          ),
-          y: clampCanvasWorldCoordinate(
-            y + dragLocalOriginRef.current.y + dragAutoPanOffsetRef.current.y,
-          ),
+          x: clampCanvasWorldCoordinate(x + dragAutoPanOffsetRef.current.x),
+          y: clampCanvasWorldCoordinate(y + dragAutoPanOffsetRef.current.y),
         };
         pendingDragRef.current = { id: nodeId, ...position };
         const size = boardNodeSize(
@@ -238,10 +230,9 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       [],
     );
     const handleNodeDragStart = useCallback(() => {
-      dragLocalOriginRef.current = localOrigin;
       dragAutoPanOffsetRef.current = { x: 0, y: 0 };
       setChildDragging(true);
-    }, [localOrigin, setChildDragging]);
+    }, [setChildDragging]);
     const handleNodeDragEnd = useCallback(
       (nodeId: string) => {
         stopAutoPan();
@@ -373,9 +364,6 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
 
     return (
       <GraphCanvasFrame
-        width={width}
-        height={height}
-        contentOverflow="hidden"
         containerRef={containerRef}
         handleLayout={handleLayout}
         panHandlers={panHandlers}
@@ -385,11 +373,9 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           width={width}
           height={height}
           pointerEvents="none"
-          style={{ position: 'absolute', left: 0, top: 0 }}
+          style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
         >
-          <G
-            transform={`translate(${-localOrigin.x * bakedScale} ${-localOrigin.y * bakedScale}) scale(${bakedScale})`}
-          >
+          <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
             {visibleEdges.map((edge) => (
               <BoardEdgeView
                 key={edge.id}
@@ -424,9 +410,6 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               layoutEditing={layoutEditing}
               connectionMode={connectionMode}
               scale={scale}
-              positionOffsetX={-localOrigin.x}
-              positionOffsetY={-localOrigin.y}
-              positionScale={bakedScale}
               galleryMedia={
                 node.kind === 'entity' && node.entityType === 'Gallery'
                   ? galleryMediaById?.[node.entityId]

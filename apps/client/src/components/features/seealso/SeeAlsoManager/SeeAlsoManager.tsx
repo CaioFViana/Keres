@@ -26,7 +26,7 @@ interface SeeAlsoManagerProps {
 
 /**
  * An escape hatch for the form to call after the main save, when `entityId` has gone from empty
- * to the real id - the same reason as `PanZoomCanvasHandle`: the component owns the hook
+ * to the real id - the same reason as `CanvasViewportHandle`: the component owns the hook
  * (`useSeeAlsoRelations`) that holds the pending selection, so only it can trigger the replay.
  */
 export interface SeeAlsoManagerHandle {

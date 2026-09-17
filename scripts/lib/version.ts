@@ -33,6 +33,19 @@ export function assertSemver(version: string | undefined): asserts version is st
   }
 }
 
+/**
+ * What a version tag may carry: a release (`1.2.3`) or a development build (`1.2.3-dev1`).
+ * Only CI tag-stamping accepts the suffix - the files committed to the repository stay plain
+ * MAJOR.MINOR.PATCH, enforced by `assertSemver` in `version:set` and `release-check`.
+ */
+export function assertTagVersion(version: string | undefined): asserts version is string {
+  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version ?? '')) {
+    throw new Error(
+      `Version must use MAJOR.MINOR.PATCH with an optional -prerelease suffix, got ${JSON.stringify(version)}.`,
+    );
+  }
+}
+
 function writeJson(filePath: string, json: unknown): void {
   writeFileSync(filePath, `${JSON.stringify(json, null, 2)}\n`);
 }
@@ -42,7 +55,7 @@ export function readJson<T>(relativePath: string): T {
 }
 
 export function setPackageVersions(version: string): void {
-  assertSemver(version);
+  assertTagVersion(version);
   for (const relativePath of VERSIONED_JSON_FILES) {
     const filePath = join(repoRoot, relativePath);
     const json = JSON.parse(readFileSync(filePath, 'utf8')) as { version?: string };
@@ -73,7 +86,7 @@ export function readReleaseVersion(): string | undefined {
 }
 
 export function setAppRelease(version: string, name: string): void {
-  assertSemver(version);
+  assertTagVersion(version);
   if (!name?.trim()) {
     throw new Error('Release name cannot be empty.');
   }

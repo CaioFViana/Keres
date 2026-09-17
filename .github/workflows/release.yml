@@ -2,10 +2,14 @@ name: Release
 
 # Tagged releases only - a normal push to any branch never triggers this. Cut a release with:
 #   git tag v1.2.3 && git push origin v1.2.3
+# Development tags (`v1.2.3-dev1`) are excluded here - `dev-build.yml` compiles those into
+# run artifacts without creating a release. (`tags` and `tags-ignore` cannot be combined, so
+# the exclusion is a `!` pattern: order matters, the negative match must come last.)
 on:
   push:
     tags:
       - 'v*.*.*'
+      - '!v*.*.*-dev*'
 
 # If someone pushes two tags close together, don't let their release-creation steps race each
 # other (each would try to attach artifacts to a GitHub Release keyed by the same tag ref).

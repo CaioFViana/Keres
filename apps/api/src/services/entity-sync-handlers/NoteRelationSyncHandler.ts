@@ -12,6 +12,7 @@ import { db, type CompatibleDb } from '../../db';
 import {
   chapters,
   characters,
+  choices,
   locations,
   noteRelations,
   notes,
@@ -126,6 +127,21 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           throw new SyncConflictError(
             'referenced_entity_deleted',
             `Validation Error: Chapter with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
+          );
+        }
+        break;
+      case 'Choice':
+        const choiceExists = await database.query.choices.findFirst({
+          where: and(
+            eq(choices.id, relationId),
+            eq(choices.storyId, storyId),
+            eq(choices.isDeleted, false),
+          ),
+        });
+        if (!choiceExists) {
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
+            `Validation Error: Choice with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
           );
         }
         break;

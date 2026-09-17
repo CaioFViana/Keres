@@ -11,6 +11,7 @@ import {
   RootAdminProtectedError,
   UsernameAlreadyTakenError,
 } from '../../services/AdminUserService';
+import { TierNotFoundError } from '../../services/TierService';
 import { requireAdmin } from '../../utils/adminAuth';
 import { AppError } from '../../utils/errors';
 
@@ -84,6 +85,9 @@ export const adminUserRoutes = new Elysia()
         if (error instanceof UsernameAlreadyTakenError) {
           throw new AppError(409, error.message);
         }
+        if (error instanceof TierNotFoundError) {
+          throw new AppError(404, error.message);
+        }
         throw error;
       }
     },
@@ -117,6 +121,7 @@ export const adminUserRoutes = new Elysia()
           recoveryCodes: t.Array(t.String()),
         }),
         400: t.Object({ message: t.String() }),
+        404: t.Object({ message: t.String() }),
         409: t.Object({ message: t.String() }),
       },
       detail: { summary: 'Create a user', tags: ['Admin'], security: [{ bearerAuth: [] }] },
@@ -142,6 +147,9 @@ export const adminUserRoutes = new Elysia()
         }
         if (error instanceof RootAdminProtectedError) {
           throw new AppError(409, error.message);
+        }
+        if (error instanceof TierNotFoundError) {
+          throw new AppError(404, error.message);
         }
         throw error;
       }

@@ -93,4 +93,54 @@ describe('useRouteChronology', () => {
 
     expect(view.result.current.dateForRow(0)).toBeNull();
   });
+
+  it('resolves scene date overrides against the story calendar and names unknown chapters', async () => {
+    const definition = {
+      secondsPerMinute: 60,
+      minutesPerHour: 60,
+      hoursPerDay: 24,
+      daysPerWeek: 7,
+      weekdayNames: ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'],
+      unitNames: {},
+      months: [{ name: 'First', days: 30 }],
+      eras: [],
+      moons: [],
+      seasons: [],
+    } as never;
+    mockSelectedStory.mockReturnValue({ id: 'story', timelineEpochDay: 0 });
+    mockStoryCalendar.mockReturnValue({
+      definition,
+      calendars: [{ id: 'cal-2', definition }],
+    });
+    const dated = {
+      ...(firstScene as unknown as Record<string, unknown>),
+      calendarDateOverride: '1-01-05T00:00',
+      calendarDateOverrideCalendarId: 'cal-2',
+    } as never;
+    const gregorian = {
+      ...(secondScene as unknown as Record<string, unknown>),
+      calendarDateOverride: '1-01-01T12:00',
+      calendarDateOverrideCalendarId: null,
+    } as never;
+    const outOfBounds = {
+      ...(secondScene as unknown as Record<string, unknown>),
+      id: 'scene-c',
+      calendarDateOverride: '1-13-01T00:00',
+      calendarDateOverrideCalendarId: 'cal-2',
+    } as never;
+    mockStoryRoutes.mockReturnValue({
+      routes: [{ id: 'route', storyId: 'story' }],
+      scenes: [dated, gregorian, outOfBounds],
+      stepsOf: jest.fn(() => steps),
+      validationOf: jest.fn(() => []),
+      sceneById: jest.fn(),
+      chapterNameOf: jest.fn(() => undefined),
+    });
+    const view = await renderHook(() => useRouteChronology('route'));
+
+    expect(view.result.current.layout.rows.map((row) => row.id)).toEqual(['visit-a', 'visit-b']);
+    expect(view.result.current.dateForRow(0)).toMatch(/·/);
+    expect(view.result.current.sceneForStep('visit-b')).toBeUndefined();
+    expect(view.result.current.sceneForStep('missing')).toBeUndefined();
+  });
 });

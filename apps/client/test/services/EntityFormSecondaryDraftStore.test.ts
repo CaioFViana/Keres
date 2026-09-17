@@ -131,6 +131,37 @@ describe('EntityFormSecondaryDraftStore', () => {
     expect(draft?.pendingNoteRelations).toHaveLength(1);
   });
 
+  it('ignores a corrupt stored draft instead of throwing into the form', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await AsyncStorage.setItem(
+      'keres:entity-secondary-draft:story-1:Character:char-1',
+      'not-json{{{',
+    );
+
+    expect(await readEntityFormSecondaryDraft('story-1', 'Character', 'char-1')).toBeNull();
+    expect(console.error).toHaveBeenCalledWith(
+      'Corrupt entity secondary draft ignored:',
+      expect.anything(),
+    );
+  });
+
+  it('surfaces a patch write failure instead of swallowing it', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await writeEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+      selectedTagIds: ['tag-a'],
+      pendingNoteRelations: [],
+      customValues: {},
+      pendingEntityRelations: [],
+    });
+    jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('quota exceeded'));
+
+    await expect(
+      patchEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+        selectedTagIds: ['tag-b'],
+      }),
+    ).rejects.toThrow('quota exceeded');
+  });
+
   it('serializes concurrent patches so later writes cannot clobber earlier ones', async () => {
     await writeEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
       selectedTagIds: [],

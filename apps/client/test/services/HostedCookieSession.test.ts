@@ -115,3 +115,10 @@ it('ignores a missing session', async () => {
   await expect(restoreHostedCookieSession(db)).resolves.toBeNull();
   expect(mockCreateServer).not.toHaveBeenCalled();
 });
+
+it('ignores a session check that never answers', async () => {
+  const db = {} as never;
+  jest.spyOn(axios, 'get').mockRejectedValueOnce(new Error('offline'));
+  await expect(restoreHostedCookieSession(db)).resolves.toBeNull();
+  expect(mockCreateServer).not.toHaveBeenCalled();
+});

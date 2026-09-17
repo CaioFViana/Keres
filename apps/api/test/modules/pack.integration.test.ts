@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { showcaseSettings } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
+import { packService } from '../../src/services/PackService';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -105,6 +106,17 @@ describe('sharing a pack', () => {
     expect(data).toHaveLength(1);
     expect(data[0]).toMatchObject({ name: 'One' });
     expect(data[0].content).toBeUndefined();
+  });
+
+  it('defaults the version and visibility when the caller omits them', async () => {
+    // The route fills both before calling, so only a direct call reaches the service defaults.
+    const entry = await packService.upload(ana.userId, {
+      id: newId(),
+      name: 'Sem versao',
+      content: validContent(),
+    });
+
+    expect(entry).toMatchObject({ version: 1, visibility: 'private' });
   });
 
   it('refuses a payload that is not a pack', async () => {

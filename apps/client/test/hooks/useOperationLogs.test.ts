@@ -30,6 +30,7 @@ jest.mock('../../src/hooks/useEntityRefreshLifecycle', () => {
 });
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '../../src/db';
 import { useOperationLogs } from '../../src/hooks/useOperationLogs';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
@@ -78,5 +79,65 @@ describe('useOperationLogs', () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     await act(async () => entityEventEmitter.emit('operation_log_updated', 'story-1'));
     await waitFor(() => expect(view.result.current.error).toBe('failed_to_load_operation_logs'));
+  });
+
+  it('resolves world piece sections for world-rule logs and refetches on demand', async () => {
+    const { OperationLogEntityType } = jest.requireActual(
+      '@keres/shared',
+    ) as typeof import('@keres/shared');
+    const all = jest.fn().mockResolvedValue([{ id: 'wp-1', section: 'Lore' }]);
+    const where = jest.fn(() => ({ all }));
+    const from = jest.fn(() => ({ where }));
+    mockDb.select.mockReturnValue({ from });
+    mockService.getRecentOperationLogs.mockResolvedValue([
+      { id: 'log-1', entityType: OperationLogEntityType.WorldRule, entityId: 'wp-1' },
+    ]);
+    const view = await renderHook(() =>
+      useOperationLogs({ storyId: 'story-1', limit: 5, shouldRefetch: true }),
+    );
+    await waitFor(() => expect(view.result.current.worldPieceSections).toEqual({ 'wp-1': 'Lore' }));
+    expect(mockService.getRecentOperationLogs).toHaveBeenCalled();
+    view.unmount();
+  });
+
+  it('clears world piece sections when the lookup fails and ignores other stories', async () => {
+    const { OperationLogEntityType } = jest.requireActual(
+      '@keres/shared',
+    ) as typeof import('@keres/shared');
+    const all = jest.fn().mockRejectedValue(new Error('offline'));
+    mockDb.select.mockReturnValue({ from: () => ({ where: () => ({ all }) }) });
+    mockService.getRecentOperationLogs.mockResolvedValue([
+      { id: 'log-1', entityType: OperationLogEntityType.WorldRule, entityId: 'wp-1' },
+    ]);
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const view = await renderHook(() => useOperationLogs({ storyId: 'story-1', limit: 5 }));
+    await waitFor(() =>
+      expect(console.warn).toHaveBeenCalledWith(
+        'Could not resolve World Piece appearances for operation logs.',
+        expect.any(Error),
+      ),
+    );
+    expect(view.result.current.worldPieceSections).toEqual({});
+
+    const calls = mockService.getRecentOperationLogs.mock.calls.length;
+    await act(async () => entityEventEmitter.emit('operation_log_updated', 'other-story'));
+    expect(mockService.getRecentOperationLogs).toHaveBeenCalledTimes(calls);
+    await act(async () => view.result.current.loadMore());
+    expect(mockService.getRecentOperationLogs).toHaveBeenCalledTimes(calls);
+  });
+
+  it('fetches nothing without a database and scopes reads to guests without a user', async () => {
+    (useDrizzle as jest.Mock).mockReturnValue(null);
+    const nodb = await renderHook(() => useOperationLogs({ storyId: 'story-1', limit: 5 }));
+    await act(async () => {});
+    expect(nodb.result.current.logs).toEqual([]);
+    expect(mockService.getRecentOperationLogs).not.toHaveBeenCalled();
+    (useDrizzle as jest.Mock).mockReturnValue(mockDb);
+
+    mockSettings.userId = null as never;
+    await renderHook(() => useOperationLogs({ storyId: 'story-1', paginated: true, pageSize: 1 }));
+    await waitFor(() => expect(mockService.getPaginatedOperationLogs).toHaveBeenCalled());
+    expect(mockService.getPaginatedOperationLogs).toHaveBeenCalledWith('story-1', 1, 1, undefined);
+    mockSettings.userId = 'user-1';
   });
 });

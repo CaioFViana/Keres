@@ -86,6 +86,14 @@ describe('the language dropdown', () => {
     await unmount();
   });
 
+  it('shows English when the current language is one it does not offer', async () => {
+    await i18n.changeLanguage('es');
+    const { container, unmount } = await render(<LanguageSelect storageKey={ADMIN_LANGUAGE_KEY} />);
+
+    expect(container.querySelector('select')?.value).toBe('en');
+    await unmount();
+  });
+
   // Panel and site keep the choice under separate keys, as is already the case for the theme.
   it('keeps the panel and the site choices apart', async () => {
     const { container, unmount } = await render(

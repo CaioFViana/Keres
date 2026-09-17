@@ -363,12 +363,14 @@ describe('gesture decisions', () => {
 
     expect(config.onPanResponderTerminationRequest()).toBe(false);
   });
+
+  it('resets the gesture tracking when the responder is terminated', async () => {
+    const config = await configOf();
+
+    expect(() => config.onPanResponderTerminate()).not.toThrow();
+  });
 });
 
-/**
- * The drag only has an effect with the drawing bigger than the window - while it fits entirely, the
- * `clamp` deliberately keeps it centred. That is why each case zooms in first.
- */
 describe('panning', () => {
   const moveWith = async (steps: { dx: number; dy: number }[], zoom = 4) => {
     const create = jest.spyOn(PanResponder, 'create');
@@ -661,5 +663,157 @@ describe('the viewport-sized overlay', () => {
     jest.restoreAllMocks();
 
     expect(result.current.scale).toBeCloseTo(fittedScale * 2, 4);
+  });
+});
+
+describe('reframing and coordinate helpers', () => {
+  it('re-fits when the drawing changes size and the option asks for it', async () => {
+    const ref = createRef<CanvasViewportHandle>();
+    const view = await renderHook(
+      ({ bounds }: { bounds: CanvasViewportBounds }) =>
+        useCanvasViewport(ref, bounds, { refitOnLayoutChange: true }),
+      { initialProps: { bounds: { ...LAYOUT } } },
+    );
+    (view.result.current.containerRef as any).current = {
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) =>
+        callback(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height),
+    };
+    await act(async () => {
+      view.result.current.handleLayout();
+    });
+    const fitted = transformOf(view.result.current).scale;
+
+    // A new object, not a mutation: the hook compares by reference to notice the change.
+    await view.rerender({ bounds: { ...LAYOUT, width: 100, height: 80 } });
+    await act(async () => {
+      view.result.current.handleLayout();
+    });
+
+    expect(transformOf(view.result.current).scale).toBeGreaterThan(fitted);
+  });
+
+  it('converts between screen and world coordinates and exposes the live scale', async () => {
+    const { result } = await renderCanvas();
+
+    const world = { x: 100, y: 50 };
+    const screen = result.current.worldToScreen(world);
+    expect(result.current.screenToWorld(screen)).toEqual(
+      expect.objectContaining({ x: expect.closeTo(100, 5), y: expect.closeTo(50, 5) }),
+    );
+    expect(result.current.scale).toBeCloseTo(transformOf(result.current).scale, 5);
+  });
+});
+
+/**
+ * The drag only has an effect with the drawing bigger than the window - while it fits entirely, the
+ * `clamp` deliberately keeps it centred. That is why each case zooms in first.
+ */
+
+describe('auto-pan at the edges', () => {
+  let frames: Array<(timestamp: number) => void>;
+  let realRaf: unknown;
+  let realCancel: unknown;
+
+  beforeEach(() => {
+    frames = [];
+    realRaf = (globalThis as { requestAnimationFrame?: unknown }).requestAnimationFrame;
+    realCancel = (globalThis as { cancelAnimationFrame?: unknown }).cancelAnimationFrame;
+    (globalThis as any).requestAnimationFrame = (callback: (timestamp: number) => void) => {
+      frames.push(callback);
+      return frames.length;
+    };
+    (globalThis as any).cancelAnimationFrame = (handle: number) => {
+      frames[handle - 1] = () => {};
+    };
+  });
+
+  afterEach(() => {
+    (globalThis as any).requestAnimationFrame = realRaf;
+    (globalThis as any).cancelAnimationFrame = realCancel;
+  });
+
+  const runFrames = async (count: number) => {
+    for (let index = 0; index < count; index += 1) {
+      const pending = frames.splice(0);
+      await act(async () => {
+        pending.forEach((callback, slot) => callback(1000 + index * 16 + slot));
+      });
+    }
+  };
+
+  it('drifts the camera while the pointer holds the edge, and stops in the middle', async () => {
+    const { ref, result } = await renderCanvas();
+    // The fitted drawing is clamp-locked at the centre: zoom in so the camera can move.
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
+    const before = result.current.getTransform();
+
+    await act(async () => {
+      result.current.updateAutoPan({ x: 399, y: 150 });
+    });
+    expect(frames).toHaveLength(1);
+    await runFrames(3);
+
+    // The pointer pushes the edge outward, so the drawing slides the other way.
+    expect(result.current.getTransform().x).toBeLessThan(before.x);
+
+    await act(async () => {
+      result.current.updateAutoPan({ x: 200, y: 150 });
+    });
+    const settled = result.current.getTransform();
+    await runFrames(2);
+    expect(result.current.getTransform()).toEqual(settled);
+  });
+
+  it('pans from any edge and reports the drift to the drag handler', async () => {
+    const moved: Array<{ x: number; y: number }> = [];
+    const ref = createRef<CanvasViewportHandle>();
+    const view = await renderHook(() =>
+      useCanvasViewport(ref, LAYOUT, {
+        onAutoPan: (delta) => {
+          moved.push(delta);
+        },
+      }),
+    );
+    (view.result.current.containerRef as any).current = {
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) =>
+        callback(VIEWPORT.x, VIEWPORT.y, VIEWPORT.width, VIEWPORT.height),
+    };
+    await act(async () => {
+      view.result.current.handleLayout();
+    });
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
+
+    await act(async () => {
+      view.result.current.updateAutoPan({ x: 10, y: 10 });
+    });
+    await runFrames(2);
+
+    expect(moved.length).toBeGreaterThan(0);
+    // The handler reports the camera drift in world coordinates: the drawing slides toward
+    // the bottom-right, so the camera moves toward the top-left.
+    expect(moved[0]?.x).toBeLessThan(0);
+    expect(moved[0]?.y).toBeLessThan(0);
+  });
+
+  it('stops panning when the child drag ends', async () => {
+    const { ref, result } = await renderCanvas();
+    await act(async () => {
+      ref.current!.zoomBy(4);
+    });
+    await act(async () => {
+      result.current.updateAutoPan({ x: 399, y: 150 });
+    });
+    expect(frames).toHaveLength(1);
+
+    await act(async () => {
+      result.current.setChildDragging(false);
+    });
+    const settled = result.current.getTransform();
+    await runFrames(2);
+    expect(result.current.getTransform()).toEqual(settled);
   });
 });

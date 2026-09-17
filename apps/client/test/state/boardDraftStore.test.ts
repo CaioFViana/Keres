@@ -81,3 +81,50 @@ it('does not keep a durable draft when content matches savedContent', async () =
   await jest.advanceTimersByTimeAsync(400);
   expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
 });
+
+it('returns the in-memory drawing when hydrating the same board', async () => {
+  useBoardDraftStore.getState().remember({
+    boardId: 'board-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+
+  const restored = await useBoardDraftStore.getState().hydrate('story-1', 'board-1');
+
+  expect(restored?.boardId).toBe('board-1');
+  expect(restored?.content.nodes).toHaveLength(1);
+});
+
+it('drops another board drawing when hydrating, and reports nothing durable', async () => {
+  useBoardDraftStore.getState().remember({
+    boardId: 'board-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+
+  // No durable copy was flushed, so the other board's drawing is dropped and nothing comes back.
+  await expect(useBoardDraftStore.getState().hydrate('story-1', 'board-2')).resolves.toBeNull();
+  expect(useBoardDraftStore.getState().draft).toBeNull();
+  expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
+});
+
+it('clears the drawing and its durable copy together', async () => {
+  jest.useFakeTimers();
+  useBoardDraftStore.getState().remember({
+    boardId: 'board-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+  await jest.advanceTimersByTimeAsync(400);
+  expect(await readCanvasDraft('board', 'story-1', 'board-1')).not.toBeNull();
+
+  useBoardDraftStore.getState().clear();
+
+  expect(useBoardDraftStore.getState().draft).toBeNull();
+  expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
+  // Clearing nothing is a no-op, not an error.
+  useBoardDraftStore.getState().clear();
+});

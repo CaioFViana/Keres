@@ -138,4 +138,149 @@ describe('useStoryServerCollaboration', () => {
     const linked = await renderHook(() => useStoryServerCollaboration('story-1'));
     await waitFor(() => expect(linked.result.current.isOwnerOnServer).toBeNull());
   });
+
+  it('unlinks a story whose server vanished and warns the writer', async () => {
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-gone' };
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith('warning', 'server_not_found_for_story'),
+    );
+    expect(mockStoryService.updateStory).toHaveBeenCalledWith('user-1', 'story-1', {
+      serverId: null,
+    });
+    expect(view.result.current.serverId).toBeNull();
+  });
+
+  it('treats a forbidden collaborator list as a non-owner, other failures as unknown', async () => {
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    mockApi.getCollaborators.mockRejectedValue({ response: { status: 403 } });
+    const forbidden = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(forbidden.result.current.isOwnerOnServer).toBe(false));
+    expect(forbidden.result.current.collaborators).toBeNull();
+
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockApi.getCollaborators.mockRejectedValue(new Error('boom'));
+    mockFriendshipService.getAllFriendships.mockRejectedValue(new Error('boom'));
+    const broken = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to check story ownership/collaborators on server:',
+        expect.any(Error),
+      ),
+    );
+    expect(broken.result.current.isOwnerOnServer).toBeNull();
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('reports every upload outcome distinctly instead of a single failure', async () => {
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() =>
+      expect(view.result.current.uploadServerOptions).toEqual([
+        { label: 'Main', value: 'server-1' },
+      ]),
+    );
+    await act(async () => view.result.current.setUploadTargetServerId('server-1'));
+
+    mockUpload.mockResolvedValue({ success: false, reason: 'already_exists' });
+    await act(async () => view.result.current.handleSendToServer());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_already_exists');
+
+    mockUpload.mockResolvedValue({ success: false, reason: 'other' });
+    await act(async () => view.result.current.handleSendToServer());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_failed');
+
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockUpload.mockRejectedValue(new Error('boom'));
+    await act(async () => view.result.current.handleSendToServer());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'send_to_server_failed');
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('reports collaborator failures instead of failing silently', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    mockApi.grantCollaborator.mockRejectedValue(new Error('boom'));
+    mockApi.updateCollaboratorPermission.mockRejectedValue(new Error('boom'));
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+
+    await act(async () => view.result.current.setSelectedFriendId('friend-2'));
+    await act(async () => view.result.current.handleAddCollaborator());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'add_collaborator_failed');
+
+    await act(async () =>
+      view.result.current.handleUpdateCollaboratorPermission(collaborator, 'writer'),
+    );
+    expect(mockAlert).toHaveBeenCalledWith('error', 'update_collaborator_permission_failed');
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('removes a collaborator only after confirmation, and reports a failure', async () => {
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+
+    await act(async () => view.result.current.handleRemoveCollaborator(collaborator));
+    expect(mockApi.removeCollaborator).not.toHaveBeenCalled();
+    const buttons = mockAlert.mock.calls[0]?.[2] as Array<{ onPress?: () => Promise<void> }>;
+    await act(async () => buttons[1]?.onPress?.());
+
+    expect(mockApi.removeCollaborator).toHaveBeenCalledWith(server, 'story-1', 'friend-1');
+    expect(view.result.current.collaborators).toEqual([]);
+
+    // A failure keeps the list and tells the writer.
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockApi.getCollaborators.mockResolvedValue([collaborator]);
+    mockApi.removeCollaborator.mockRejectedValueOnce(new Error('boom'));
+    const retry = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(retry.result.current.collaborators).toEqual([collaborator]));
+    await act(async () => retry.result.current.handleRemoveCollaborator(collaborator));
+    const retryButtons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+      onPress?: () => Promise<void>;
+    }>;
+    await act(async () => retryButtons[1]?.onPress?.());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'remove_collaborator_failed');
+    expect(retry.result.current.collaborators).toEqual([collaborator]);
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('unlinks from the server only after confirmation, and distinguishes offline', async () => {
+    const { isOfflineError } = jest.requireMock('../../src/services/apiClient') as {
+      isOfflineError: jest.Mock;
+    };
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+
+    await act(async () => view.result.current.handleUnlinkFromServer());
+    expect(mockStoryService.unlinkFromServer).not.toHaveBeenCalled();
+    const buttons = mockAlert.mock.calls[0]?.[2] as Array<{ onPress?: () => Promise<void> }>;
+    await act(async () => buttons[1]?.onPress?.());
+
+    expect(mockStoryService.unlinkFromServer).toHaveBeenCalledWith('user-1', 'story-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', 'unlink_from_server_success');
+    expect(view.result.current.serverId).toBeNull();
+
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockStoryService.unlinkFromServer.mockRejectedValueOnce(new Error('boom'));
+    const retry = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await act(async () => retry.result.current.handleUnlinkFromServer());
+    const retryButtons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+      onPress?: () => Promise<void>;
+    }>;
+    isOfflineError.mockReturnValueOnce(false);
+    await act(async () => retryButtons[1]?.onPress?.());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'unlink_from_server_failed');
+
+    mockStoryService.unlinkFromServer.mockRejectedValueOnce(new Error('offline'));
+    isOfflineError.mockReturnValueOnce(true);
+    await act(async () => retry.result.current.handleUnlinkFromServer());
+    const offlineButtons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+      onPress?: () => Promise<void>;
+    }>;
+    await act(async () => offlineButtons[1]?.onPress?.());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'unlink_from_server_offline');
+    (console.error as jest.Mock).mockRestore();
+  });
 });

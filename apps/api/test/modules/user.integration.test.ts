@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
-import { truncateAll } from '../helpers/database';
+import { hardDeleteUser, truncateAll } from '../helpers/database';
 
 let ana: TestUser;
 
@@ -123,6 +123,17 @@ describe('PUT /user/tag', () => {
 
     expect(status).toBe(401);
   });
+
+  it('fails when the account behind the token no longer exists', async () => {
+    await hardDeleteUser(ana.userId);
+
+    const { status } = await request('PUT', '/user/tag', {
+      token: ana.token,
+      body: { tag: 'fantasma' },
+    });
+
+    expect(status).toBe(500);
+  });
 });
 
 describe('PUT /user/profile', () => {
@@ -155,6 +166,43 @@ describe('PUT /user/profile', () => {
     const { status } = await request('PUT', '/user/profile', { body: { bio: 'oi' } });
 
     expect(status).toBe(401);
+  });
+
+  it('rejects a profile the schema does not accept', async () => {
+    const { status } = await request('PUT', '/user/profile', {
+      token: ana.token,
+      body: { bio: 'x'.repeat(201) },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('notifies friends on both sides of the relation', async () => {
+    const bia = await registerUser('bia');
+    const caio = await registerUser('caio');
+    await request('POST', `/friend/request/${bia.userId}`, { token: ana.token });
+    await request('PUT', `/friend/accept/${ana.userId}`, { token: bia.token });
+    await request('POST', `/friend/request/${ana.userId}`, { token: caio.token });
+    await request('PUT', `/friend/accept/${caio.userId}`, { token: ana.token });
+
+    const { status, data } = await request('PUT', '/user/profile', {
+      token: ana.token,
+      body: { bio: 'Escritora' },
+    });
+
+    expect(status).toBe(200);
+    expect(data.bio).toBe('Escritora');
+  });
+
+  it('fails when the account behind the token no longer exists', async () => {
+    await hardDeleteUser(ana.userId);
+
+    const { status } = await request('PUT', '/user/profile', {
+      token: ana.token,
+      body: { bio: 'fantasma' },
+    });
+
+    expect(status).toBe(500);
   });
 });
 
@@ -209,6 +257,79 @@ describe('PUT /user/password', () => {
   it('requires a session', async () => {
     const { status } = await request('PUT', '/user/password', {
       body: { currentPassword: ana.password, newPassword: 'nova-senha-123' },
+    });
+
+    expect(status).toBe(401);
+  });
+
+  it('rejects a new password the schema does not accept', async () => {
+    const { status } = await request('PUT', '/user/password', {
+      token: ana.token,
+      body: { currentPassword: ana.password, newPassword: 'curta' },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('fails when the account behind the token no longer exists', async () => {
+    await hardDeleteUser(ana.userId);
+
+    const { status } = await request('PUT', '/user/password', {
+      token: ana.token,
+      body: { currentPassword: ana.password, newPassword: 'nova-senha-123' },
+    });
+
+    expect(status).toBe(500);
+  });
+});
+
+describe('PUT /user/recovery-codes', () => {
+  it('returns a fresh batch of codes when the current password is right', async () => {
+    const { status, data } = await request('PUT', '/user/recovery-codes', {
+      token: ana.token,
+      body: { currentPassword: ana.password },
+    });
+
+    expect(status).toBe(200);
+    expect(Array.isArray(data.recoveryCodes)).toBe(true);
+    expect(data.recoveryCodes.length).toBeGreaterThan(0);
+    for (const code of data.recoveryCodes) {
+      expect(typeof code).toBe('string');
+    }
+  });
+
+  it('refuses to regenerate the codes without the current password', async () => {
+    const { status } = await request('PUT', '/user/recovery-codes', {
+      token: ana.token,
+      body: { currentPassword: 'chute' },
+    });
+
+    expect(status).toBe(401);
+  });
+
+  it('rejects a request without the current password', async () => {
+    const { status } = await request('PUT', '/user/recovery-codes', {
+      token: ana.token,
+      body: {},
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('fails when the account behind the token no longer exists', async () => {
+    await hardDeleteUser(ana.userId);
+
+    const { status } = await request('PUT', '/user/recovery-codes', {
+      token: ana.token,
+      body: { currentPassword: ana.password },
+    });
+
+    expect(status).toBe(500);
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('PUT', '/user/recovery-codes', {
+      body: { currentPassword: ana.password },
     });
 
     expect(status).toBe(401);

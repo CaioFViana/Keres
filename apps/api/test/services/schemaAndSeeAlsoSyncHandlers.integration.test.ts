@@ -191,6 +191,10 @@ describe('schema and see-also sync entity handlers', () => {
     });
   });
 
+  // NOTE: an ENTITY field without targetEntityType is rejected by the schema's own
+  // superRefine at parse time (see the shared CreateStorySchemaFieldDataSchema tests), so the
+  // handler-level throw below it is unreachable defense-in-depth, not a testable branch.
+
   it('normalizes and tombstones a see-also link between valid story entities', async () => {
     const handler = new SeeAlsoRelationSyncHandler();
     const id = newId();

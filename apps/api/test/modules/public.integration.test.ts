@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { db } from '../../src/db';
-import { showcaseSettings } from '../../src/db/schema';
+import { showcaseSettings, storyPublications } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import { showcaseService } from '../../src/services/ShowcaseService';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -102,6 +104,16 @@ describe('GET /public/stories', () => {
     const { status } = await request('GET', '/public/stories');
     expect(status).toBe(404);
   });
+
+  it('skips a listing entry whose versions are all gone', async () => {
+    const { story } = await publishedStory(ana.token);
+    await db.delete(storyPublications).where(eq(storyPublications.storyId, story.id));
+
+    const { status, data } = await request('GET', '/public/stories');
+
+    expect(status).toBe(200);
+    expect(data).toEqual([]);
+  });
 });
 
 describe('GET /public/stories/:storyId', () => {
@@ -118,6 +130,20 @@ describe('GET /public/stories/:storyId', () => {
   it('404s for a story that does not exist', async () => {
     const { status } = await request('GET', '/public/stories/01ARZ3NDEKTSV4RRFFQ69G5FAV');
     expect(status).toBe(404);
+  });
+
+  it('404s the detail of a listing entry whose versions are all gone', async () => {
+    const { story } = await publishedStory(ana.token);
+    await db.delete(storyPublications).where(eq(storyPublications.storyId, story.id));
+
+    const { status } = await request('GET', `/public/stories/${story.id}`);
+
+    expect(status).toBe(404);
+  });
+
+  it('answers null for the detail of a story that was never listed', async () => {
+    // The route checks the entry before calling, so only a direct call reaches this branch.
+    await expect(showcaseService.getStoryDetail(newId())).resolves.toBeNull();
   });
 
   it('reveals nothing at all about a password-protected story', async () => {
@@ -271,5 +297,65 @@ describe('GET /public/stories/:storyId/publications/:publicationId/download', ()
     // E esse link realmente abre o download.
     const download = await request('GET', closedLink.data.url);
     expect(download.status).toBe(200);
+  });
+
+  it('404s a download for a story that was never published', async () => {
+    const story = await uploadTestStory(ana.token);
+
+    const { status } = await request(
+      'GET',
+      `/public/stories/${story.id}/publications/${newId()}/download`,
+    );
+
+    expect(status).toBe(404);
+  });
+
+  it('falls back to a generic filename when the title has nothing sluggable', async () => {
+    const { story, publication } = await publishedStory(ana.token, '!!!');
+
+    const { status, headers } = await request(
+      'GET',
+      `/public/stories/${story.id}/publications/${publication.id}/download`,
+    );
+
+    expect(status).toBe(200);
+    expect(headers.get('content-disposition')).toContain('story-');
+  });
+
+  it('404s a download link for a story that was never published', async () => {
+    const story = await uploadTestStory(ana.token);
+
+    const { status } = await request(
+      'POST',
+      `/public/stories/${story.id}/publications/${newId()}/download-url`,
+    );
+
+    expect(status).toBe(404);
+  });
+
+  it('404s a download link for a version that was never published', async () => {
+    const { story } = await publishedStory(ana.token);
+
+    const { status } = await request(
+      'POST',
+      `/public/stories/${story.id}/publications/${newId()}/download-url`,
+    );
+
+    expect(status).toBe(404);
+  });
+
+  it('404s a download link for a protected story without its token', async () => {
+    const { story, publication } = await publishedStory(ana.token);
+    await request('PUT', `/stories/${story.id}/showcase`, {
+      token: ana.token,
+      body: { visibility: 'password', password: 'hunter2' },
+    });
+
+    const { status } = await request(
+      'POST',
+      `/public/stories/${story.id}/publications/${publication.id}/download-url`,
+    );
+
+    expect(status).toBe(404);
   });
 });

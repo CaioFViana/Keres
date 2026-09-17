@@ -3,9 +3,9 @@ import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { showcaseSettings, storyPublications } from '../../src/db/schema';
+import { showcaseSettings, stories, storyPublications } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -137,6 +137,15 @@ describe('POST /stories/:storyId/publications', () => {
     expect(status).toBe(403);
   });
 
+  it('answers 404 publishing a story that was deleted', async () => {
+    const story = await createStory(ana.token);
+    await db.update(stories).set({ isDeleted: true }).where(eq(stories.id, story.id));
+
+    const { status } = await publish(ana.token, story.id);
+
+    expect(status).toBe(404);
+  });
+
   it('keeps only the newest five versions', async () => {
     const story = await createStory(ana.token);
 
@@ -246,6 +255,16 @@ describe('DELETE /stories/:storyId/publications', () => {
       token: bia.token,
     });
     expect(status).toBe(403);
+  });
+
+  it('answers 404 deleting a version that was never published', async () => {
+    const story = await createStory(ana.token);
+
+    const { status } = await request('DELETE', `/stories/${story.id}/publications/${newId()}`, {
+      token: ana.token,
+    });
+
+    expect(status).toBe(404);
   });
 });
 

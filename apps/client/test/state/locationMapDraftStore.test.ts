@@ -1,0 +1,125 @@
+/**
+ * @jest-environment node
+ */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { readCanvasDraft } from '../../src/services/canvasDraftPersistence';
+import { useLocationMapDraftStore } from '../../src/state/locationMapDraftStore';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
+/**
+ * The location-map draft store: same contract as the board draft store, one deliberate
+ * difference - `reset` stays memory-only because the board reset already clears every canvas
+ * draft key. The behaviors pinned here are the durable round-trip (an unsaved drawing survives
+ * process death until it matches the saved map), the in-memory fast path on hydrate, and the
+ * drop of another map's drawing when navigating between maps.
+ */
+
+const empty = { images: [], nodes: [] };
+const dirty = {
+  images: [],
+  nodes: [{ id: 'harbor', label: 'Harbor', x: 10, y: 10 }],
+};
+
+beforeEach(async () => {
+  jest.useRealTimers();
+  await AsyncStorage.clear();
+  useLocationMapDraftStore.getState().reset();
+});
+
+it('keeps the unsaved drawing for the same map', () => {
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+
+  expect(useLocationMapDraftStore.getState().draft?.mapId).toBe('map-1');
+  expect(useLocationMapDraftStore.getState().draft?.content.nodes).toHaveLength(1);
+});
+
+it('hydrates a durable draft after memory was cleared', async () => {
+  jest.useFakeTimers();
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+  await jest.advanceTimersByTimeAsync(400);
+  useLocationMapDraftStore.setState({ draft: null });
+
+  const restored = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-1');
+
+  expect(restored?.content.nodes).toHaveLength(1);
+  expect(useLocationMapDraftStore.getState().draft?.mapId).toBe('map-1');
+});
+
+it('returns the in-memory drawing when hydrating the same map', async () => {
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+
+  const restored = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-1');
+
+  expect(restored?.mapId).toBe('map-1');
+});
+
+it('drops another map drawing when hydrating, and reports nothing durable', async () => {
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+
+  await expect(useLocationMapDraftStore.getState().hydrate('story-1', 'map-2')).resolves.toBeNull();
+  expect(useLocationMapDraftStore.getState().draft).toBeNull();
+  expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+});
+
+it('does not keep a durable draft when content matches savedContent', async () => {
+  jest.useFakeTimers();
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: dirty,
+  });
+  await jest.advanceTimersByTimeAsync(400);
+
+  expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+});
+
+it('clears the drawing and its durable copy together, and resets memory-only', async () => {
+  jest.useFakeTimers();
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+  await jest.advanceTimersByTimeAsync(400);
+
+  useLocationMapDraftStore.getState().clear();
+  expect(useLocationMapDraftStore.getState().draft).toBeNull();
+  expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+
+  // `reset` drops memory only: the board reset owns the durable keys.
+  useLocationMapDraftStore.getState().remember({
+    mapId: 'map-1',
+    storyId: 'story-1',
+    content: dirty,
+    savedContent: empty,
+  });
+  await jest.advanceTimersByTimeAsync(400);
+  useLocationMapDraftStore.getState().reset();
+  expect(useLocationMapDraftStore.getState().draft).toBeNull();
+  expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).not.toBeNull();
+});

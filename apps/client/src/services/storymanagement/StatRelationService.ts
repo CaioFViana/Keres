@@ -56,12 +56,13 @@ function enqueue<T>(key: string, task: () => Promise<T>): Promise<T> {
   const previous = pendingWrites.get(key) ?? Promise.resolve();
   // A `catch` in the chain: a failed write must not take the next one in the queue down.
   const next = previous.then(task, task);
-  pendingWrites.set(
-    key,
-    next.catch(() => undefined),
-  );
-  void next.finally(() => {
-    if (pendingWrites.get(key) === next) pendingWrites.delete(key);
+  const tracked = next.catch(() => undefined);
+  pendingWrites.set(key, tracked);
+  // On the caught promise, not on `next`: `finally` returns a new promise, and hanging it off the
+  // rejecting `next` would leave an unhandled rejection behind. Compared against the stored promise
+  // for the same reason - `next` itself is never in the map, so the entry would never be deleted.
+  void tracked.finally(() => {
+    if (pendingWrites.get(key) === tracked) pendingWrites.delete(key);
   });
   return next;
 }

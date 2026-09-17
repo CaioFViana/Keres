@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { env } from '../../src/config/env';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
 
@@ -56,6 +57,31 @@ describe('requireAdmin gate', () => {
   });
 });
 
+describe('admin query validation', () => {
+  it('answers 400 for a recovery query the schema does not accept', async () => {
+    const deleted = await request('GET', '/admin/api/recovery/deleted', {
+      token: admin.token,
+      query: { search: 'x'.repeat(101) },
+    });
+    const log = await request('GET', '/admin/api/recovery/operation-log', {
+      token: admin.token,
+      query: { operationType: 'Nope' },
+    });
+
+    expect(deleted.status).toBe(400);
+    expect(log.status).toBe(400);
+  });
+
+  it('answers 400 for registration settings the schema does not accept', async () => {
+    const { status } = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { maxUsers: -5 },
+    });
+
+    expect(status).toBe(400);
+  });
+});
+
 describe('GET /admin/api/users', () => {
   it('lists the accounts in a paginated envelope', async () => {
     const { status, data } = await request('GET', '/admin/api/users', { token: admin.token });
@@ -87,6 +113,33 @@ describe('GET /admin/api/users', () => {
     });
 
     expect(data.items.map((item: any) => item.username)).toEqual(['root']);
+  });
+
+  it('filters by tier', async () => {
+    const { data: tier } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro' },
+    });
+    await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { tierId: tier.id },
+    });
+
+    const { data } = await request('GET', '/admin/api/users', {
+      token: admin.token,
+      query: { tierId: tier.id },
+    });
+
+    expect(data.items.map((item: any) => item.username)).toEqual(['ana']);
+  });
+
+  it('answers 400 for a tier filter that is not a ULID', async () => {
+    const { status } = await request('GET', '/admin/api/users', {
+      token: admin.token,
+      query: { tierId: 'nope' },
+    });
+
+    expect(status).toBe(400);
   });
 });
 
@@ -231,6 +284,130 @@ describe('admin user lifecycle', () => {
   });
 });
 
+describe('admin user error paths', () => {
+  it('answers 400 creating an account with a tier that is not a ULID', async () => {
+    const { status } = await request('POST', '/admin/api/users', {
+      token: admin.token,
+      body: { username: 'bia', password: 'senha-de-teste-123', tierId: 'nope' },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('answers 400 updating an account with a tier that is not a ULID', async () => {
+    const { status } = await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { tierId: 'nope' },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('answers 404 creating or updating an account with a tier that does not exist', async () => {
+    const ghost = newId();
+
+    const created = await request('POST', '/admin/api/users', {
+      token: admin.token,
+      body: { username: 'bia', password: 'senha-de-teste-123', tierId: ghost },
+    });
+    const updated = await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { tierId: ghost },
+    });
+
+    expect(created.status).toBe(404);
+    expect(updated.status).toBe(404);
+  });
+
+  it('assigns an existing tier on create and on update, and clears it back to null', async () => {
+    const { data: tier } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro' },
+    });
+
+    const created = await request('POST', '/admin/api/users', {
+      token: admin.token,
+      body: { username: 'bia', password: 'senha-de-teste-123', tierId: tier.id },
+    });
+    expect(created.status).toBe(201);
+    expect(created.data.tierId).toBe(tier.id);
+
+    const updated = await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { tierId: tier.id },
+    });
+    expect(updated.status).toBe(200);
+    expect(updated.data.tierId).toBe(tier.id);
+
+    const cleared = await request('PUT', `/admin/api/users/${comum.userId}`, {
+      token: admin.token,
+      body: { tierId: null },
+    });
+    expect(cleared.status).toBe(200);
+    expect(cleared.data.tierId).toBeNull();
+  });
+
+  it('answers 404 updating, deleting, restoring or re-keying an account that does not exist', async () => {
+    const missing = newId();
+
+    const updated = await request('PUT', `/admin/api/users/${missing}`, {
+      token: admin.token,
+      body: { bio: 'x' },
+    });
+    const deleted = await request('DELETE', `/admin/api/users/${missing}`, {
+      token: admin.token,
+    });
+    const restored = await request('POST', `/admin/api/users/${missing}/restore`, {
+      token: admin.token,
+    });
+    const rekeyed = await request('POST', `/admin/api/users/${missing}/regenerate-recovery-codes`, {
+      token: admin.token,
+    });
+
+    expect(updated.status).toBe(404);
+    expect(deleted.status).toBe(404);
+    expect(restored.status).toBe(404);
+    expect(rekeyed.status).toBe(404);
+  });
+
+  it('refuses to demote or delete the root account reconciled from the environment', async () => {
+    // The service reads ROOT_ADMIN_USERNAME live per call, so pointing it at the promoted
+    // 'root' account names a root to protect; restored afterwards so no other test observes it.
+    const previous = env.ROOT_ADMIN_USERNAME;
+    (env as unknown as Record<string, unknown>).ROOT_ADMIN_USERNAME = 'root';
+    try {
+      const demoted = await request('PUT', `/admin/api/users/${admin.userId}`, {
+        token: admin.token,
+        body: { isAdmin: false },
+      });
+      const deleted = await request('DELETE', `/admin/api/users/${admin.userId}`, {
+        token: admin.token,
+      });
+
+      expect(demoted.status).toBe(409);
+      expect(deleted.status).toBe(409);
+    } finally {
+      (env as unknown as Record<string, unknown>).ROOT_ADMIN_USERNAME = previous;
+    }
+  });
+
+  it('still allows editing the root account profile fields', async () => {
+    const previous = env.ROOT_ADMIN_USERNAME;
+    (env as unknown as Record<string, unknown>).ROOT_ADMIN_USERNAME = 'root';
+    try {
+      const { status, data } = await request('PUT', `/admin/api/users/${admin.userId}`, {
+        token: admin.token,
+        body: { bio: 'Keeper of the stories', tag: 'rooty' },
+      });
+
+      expect(status).toBe(200);
+      expect(data).toMatchObject({ bio: 'Keeper of the stories', tag: 'rooty' });
+    } finally {
+      (env as unknown as Record<string, unknown>).ROOT_ADMIN_USERNAME = previous;
+    }
+  });
+});
+
 describe('tiers', () => {
   it('creates a tier and lists it', async () => {
     const created = await request('POST', '/admin/api/tiers', {
@@ -264,6 +441,21 @@ describe('tiers', () => {
     const { status } = await request('GET', '/admin/api/tiers/nao-existe', { token: admin.token });
 
     expect(status).toBe(404);
+  });
+
+  it('answers 404 updating or deleting a tier that does not exist', async () => {
+    const missing = newId();
+
+    const updated = await request('PUT', `/admin/api/tiers/${missing}`, {
+      token: admin.token,
+      body: { name: 'Fantasma' },
+    });
+    const deleted = await request('DELETE', `/admin/api/tiers/${missing}`, {
+      token: admin.token,
+    });
+
+    expect(updated.status).toBe(404);
+    expect(deleted.status).toBe(404);
   });
 
   it('reads and updates a tier without losing its configured limits', async () => {
@@ -398,5 +590,29 @@ describe('registration settings', () => {
     });
 
     expect(status).toBe(200);
+  });
+
+  it('refuses a default tier that does not exist', async () => {
+    const { status } = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { defaultTierId: newId() },
+    });
+
+    expect(status).toBe(404);
+  });
+
+  it('accepts an existing tier as the default for new accounts', async () => {
+    const { data: tier } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Pro' },
+    });
+
+    const { status, data } = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { defaultTierId: tier.id },
+    });
+
+    expect(status).toBe(200);
+    expect(data.defaultTierId).toBe(tier.id);
   });
 });

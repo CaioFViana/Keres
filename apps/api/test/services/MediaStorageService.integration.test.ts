@@ -163,4 +163,15 @@ describe('MediaStorageService integration', () => {
     ).toBeUndefined();
     expect(await service.cleanupTemporaryFiles()).toBe(2);
   });
+
+  it('reports zero cleanups on a backend with no temporary files', async () => {
+    const service = new MediaStorageService({
+      has: vi.fn(),
+      put: vi.fn(),
+      get: vi.fn(),
+      delete: vi.fn(),
+    } as any);
+
+    await expect(service.cleanupTemporaryFiles()).resolves.toBe(0);
+  });
 });

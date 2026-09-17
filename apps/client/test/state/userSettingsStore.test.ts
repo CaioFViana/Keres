@@ -125,6 +125,28 @@ describe('setDateDisplayFormat', () => {
   });
 });
 
+describe('setUse24HourTime', () => {
+  it('persists the clock choice before updating what the screens read', async () => {
+    await store().setUse24HourTime(db, true);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      use24HourTime: true,
+    });
+    expect(store().use24HourTime).toBe(true);
+  });
+});
+
+describe('setSuggestLiteraryDevices', () => {
+  it('persists the toggle before updating what the screens read', async () => {
+    await store().setSuggestLiteraryDevices(db, false);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      suggestLiteraryDevices: false,
+    });
+    expect(store().suggestLiteraryDevices).toBe(false);
+  });
+});
+
 describe('active server', () => {
   it('remembers the server the user signed into', () => {
     store().setActiveServer(server);

@@ -515,6 +515,35 @@ describe('buildConflictSummaries - diff field labels and id resolution', () => {
    * Regression: a content field that is another entity's ID (e.g. `Scene.chapterId`) showed
    * the raw ID in the field-by-field comparison - only the 8 relations had names resolved.
    */
+  it('shows empties as the empty label and objects as JSON instead of [object Object]', () => {
+    const [summary] = buildConflictSummaries(
+      [
+        conflict({
+          entityType: 'Character',
+          localValues: { motivation: '', extraNotes: { draft: true } },
+          serverValues: { motivation: 'Redenção', extraNotes: null },
+          contestedFields: ['motivation', 'extraNotes'],
+        }),
+      ],
+      noSnapshots,
+      new Map(),
+      t,
+    );
+
+    expect(summary.diffFields).toEqual([
+      expect.objectContaining({
+        field: 'motivation',
+        localDisplay: 'conflict_empty_value',
+        serverDisplay: 'Redenção',
+      }),
+      expect.objectContaining({
+        field: 'extraNotes',
+        localDisplay: '{"draft":true}',
+        serverDisplay: 'conflict_empty_value',
+      }),
+    ]);
+  });
+
   it('resolves an id-type content field to a name instead of showing the raw id', () => {
     const names = new Map([['Chapter:chapter-a', 'Capítulo 1']]);
     const [summary] = buildConflictSummaries(

@@ -751,15 +751,44 @@ The infrastructure is already in place; new suites should reuse it rather than i
       check had just accepted. `Comment`/`Favorite`/`SeeAlsoRelation` gained the missing-id
       guards every sibling already had.
 - [ ] **Phase 1A.2** — API sync handlers + `SyncService` + `BaseSyncEntityHandler` at ≥97% lines /
-      **≥90% branches**. *Partly done:* scope at 89.4% lines / 80.3% branches (integration).
-      `SyncService` at 100% lines, `BaseSyncEntityHandler` defensive paths + delete race covered
-      (2 dead-defensive branches documented: `count ?? 0`, invalid-row throw; 1 dead `userId`
-      check removed), `StoryArcSyncHandler` from 18% to full. Remaining worst files:
-      `Gallery`, `RouteStep`, `Choice`, `NoteRelation`, `Scene`, `GalleryRelation`, `Story`.
+      **≥90% branches**. *Partly done:* scope at 99.0% lines / 96.7% branches (unit∪integration
+      union, above target; verification pending). Gap tests written for the 429 gate, the absent
+      protocol header, valid `operationTime`, id-less updates, FK re-points and branching-scene
+      updates; post-run agent tests cover the rest. Dead-defensive documented, not tested:
+      `BaseSyncEntityHandler` invalid-row throw + `count ?? 0`, reorder safeguards (`Chapter`,
+      `Story`), Zod-guarded switch defaults (`GalleryRelation`, `SeeAlsoRelation`),
+      schema-refined throws (`SeeAlsoRelation` self-link, `StorySchemaField` ENTITY target),
+      `SyncPush` story-tier check (auth and `findById` read the same row), unknown-op fallthroughs
+      (route Zod + PG enums), JSON-null `payload ?? {}` (drizzle NOT NULL), `ChoiceCheckGroup`
+      `?? current` (Zod rejects null first), registry-duplicate throw. Race-only, not tested:
+      registration/`updateUserTag`/admin-create `taken` paths, tag-race 409 side, legacy-row 404.
+      Fixed: the missing `NoteRelation`/`Choice` case (schema allowed it, handler threw) + tests.
 - [ ] **Phase 1B** — client story services (40 files) at 95% lines / 80% branches.
 - [ ] **Phase 1B** — API export/import, permissions, tier at 95% lines / 80% branches.
+      *Partly done (verification pending):* direct-phase gap tests written for every remaining
+      fixed-reference throw (core second-ends, interactions dangling ends, narrative anchors and
+      character links, final comment fields and stat-value ends) plus lenient phase behavior
+      (ghost arc kept, chapterless scene accepted); ghost-target grant fixed to the real 403
+      (the service 404 needs a deletion winning the race — FKs forbid it otherwise) and the
+      grant-race compensation test kept. Dead-defensive: `Importer` non-tier rethrow,
+      `CollectionRepo` missing-table throw, `SceneWriter` `?? 0` (same-set lookup), `Exporter`
+      missing-table throw, `TierEnforcement` ghost-tier fallthroughs (FKs forbid dangling ids).
 - [ ] **Phase 2** — client auth/network/media/friendship services at 90%.
 - [ ] **Phase 2** — API routes, account, admin, media, publication at 95%.
+      *Partly done (verification pending):* gap tests written for deleted-account 500s/401s,
+      recovery codes/lockout/double-spend, cookie refresh, validation 400s, ghost-entity 404s,
+      blank-search/entity-less showcase entries, pack service defaults, singleton races,
+      S3-shaped storage paths, enrichment edge cases and the remaining 404/409/413/415/429 paths;
+      post-run agent tests cover the rest. Dead-defensive: ULID re-check behind Elysia params,
+      FK-guaranteed `|| ''` fallbacks, `getFriendshipById` (no callers), `storageKeyFor` invalid
+      hash (input is computed), `pack` unknown-error text (Zod only throws Errors), showcase
+      `??` row fallbacks, recovery noun/translate stubs (compact path never calls them),
+      no-table `!table` guards (exhaustive registry), api-log FK retry (FKs removed). Race-only:
+      register `taken`, singleton `??` losers, rename-collision success. Fixed findings:
+      ghost-tier references now 404 via `TierNotFoundError` (admin create/update user +
+      registration settings, with tests) instead of FK-500s; the websocket route got a
+      testable seam (permission forwarding + ticket/open/message/close flows covered with a
+      real DB and fake sockets, only the 4 framework-glue arrows left to a real connection).
 - [ ] **Phase 3** — client hooks at 90%.
 - [ ] **Phase 3** — client stores at 90%.
 - [ ] **Phase 3** — client navigation at 90%.

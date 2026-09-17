@@ -83,3 +83,69 @@ it('uses the cached friendship name when the logged user belongs to the story se
   expect(db.query.friendships.findFirst).toHaveBeenCalled();
   expect(friendshipApiService.getUserDetails).not.toHaveBeenCalled();
 });
+
+it('reports unknown users for empty ids and missing databases', async () => {
+  const empty = await renderHook(() => useUserDisplayName('', 'story-1'));
+  await waitFor(() => expect(empty.result.current).toBe('user_not_found'));
+
+  (useDrizzle as jest.Mock).mockReturnValue(null);
+  const nodb = await renderHook(() => useUserDisplayName('stranger', 'story-1'));
+  await waitFor(() => expect(nodb.result.current).toBe('user_not_found'));
+});
+
+it('identifies the story server owner without a friendship row', async () => {
+  storyService.getStoryById.mockResolvedValue({ serverId: 'server-1' });
+  db.query.servers.findFirst.mockResolvedValue({
+    id: 'server-1',
+    idUser: 'owner',
+    userName: 'Owner',
+  });
+  const { result } = await renderHook(() => useUserDisplayName('owner', 'story-1'));
+
+  await waitFor(() => expect(result.current).toBe('Owner you_suffix'));
+
+  expect(db.query.friendships.findFirst).not.toHaveBeenCalled();
+});
+
+it('falls back to any registered server and finally to unknown', async () => {
+  storyService.getStoryById.mockResolvedValue(undefined);
+  db.query.servers.findFirst.mockResolvedValue({ idUser: 'stranger', userName: 'Sam' });
+  const found = await renderHook(() => useUserDisplayName('stranger', 'story-1'));
+  await waitFor(() => expect(found.result.current).toBe('Sam'));
+
+  db.query.servers.findFirst.mockResolvedValue(undefined);
+  const missing = await renderHook(() => useUserDisplayName('ghost', undefined));
+  await waitFor(() => expect(missing.result.current).toBe('user_not_found'));
+});
+
+it('resolves non-friend collaborators against the story server and caches the profile', async () => {
+  storyService.getStoryById.mockResolvedValue({ serverId: 'server-9' });
+  const storyServer = { id: 'server-9', idUser: 'owner', userName: 'Owner' };
+  db.query.servers.findFirst.mockResolvedValue(storyServer);
+  (friendshipApiService.getUserDetails as jest.Mock).mockResolvedValue({ username: 'Remote' });
+
+  const first = await renderHook(() => useUserDisplayName('collaborator', 'story-1'));
+  await waitFor(() => expect(first.result.current).toBe('Remote'));
+  const second = await renderHook(() => useUserDisplayName('collaborator', 'story-1'));
+  await waitFor(() => expect(second.result.current).toBe('Remote'));
+
+  expect(friendshipApiService.getUserDetails).toHaveBeenCalledTimes(1);
+  expect(friendshipApiService.getUserDetails).toHaveBeenCalledWith(storyServer, 'collaborator');
+});
+
+it('treats remote failures and empty profiles as offline and keeps local fallbacks', async () => {
+  storyService.getStoryById.mockResolvedValue({ serverId: 'server-8' });
+  db.query.servers.findFirst
+    .mockResolvedValueOnce({ id: 'server-8', idUser: 'owner', userName: 'Owner' })
+    .mockResolvedValueOnce(undefined);
+  (friendshipApiService.getUserDetails as jest.Mock).mockRejectedValueOnce(new Error('offline'));
+  const offline = await renderHook(() => useUserDisplayName('traveler', 'story-1'));
+  await waitFor(() => expect(offline.result.current).toBe('user_not_found'));
+
+  db.query.servers.findFirst
+    .mockResolvedValueOnce({ id: 'server-8', idUser: 'owner', userName: 'Owner' })
+    .mockResolvedValueOnce({ idUser: 'quiet', userName: 'Quiet Sam' });
+  (friendshipApiService.getUserDetails as jest.Mock).mockResolvedValueOnce({ username: undefined });
+  const quiet = await renderHook(() => useUserDisplayName('quiet', 'story-1'));
+  await waitFor(() => expect(quiet.result.current).toBe('Quiet Sam'));
+});

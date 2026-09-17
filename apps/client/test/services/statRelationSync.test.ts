@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { asc } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { createStatRelationService } from '../../src/services/storymanagement/StatRelationService';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -204,5 +204,48 @@ describe('repairing duplicates that already exist on the device', () => {
     const rows = await database.db.query.statRelations.findMany();
     expect(rows.filter((row) => !row.isDeleted)).toEqual([]);
     expect((await operations()).filter((row) => row.operationType === 'delete')).toHaveLength(2);
+  });
+});
+
+describe('a failed write does not poison the queue', () => {
+  it('rejects the read-only clear and lets the next write through', async () => {
+    await set(5);
+    await database.db
+      .update(schema.stories)
+      .set({ serverId: 'server-1', myRole: 'reader' })
+      .where(eq(schema.stories.id, STORY_ID));
+
+    // `clearValue` checks writability inside the queued task, so this rejection travels through
+    // the queue - and the `catch` in the chain keeps it from taking the next write down.
+    await expect(clear()).rejects.toThrow();
+
+    await database.db
+      .update(schema.stories)
+      .set({ serverId: null, myRole: null })
+      .where(eq(schema.stories.id, STORY_ID));
+    await clear();
+
+    expect(await service().getValuesByCharacterId(CHARACTER_ID)).toEqual([]);
+  });
+});
+
+describe('reading stat values back', () => {
+  it('lists the live values of a story and of a character', async () => {
+    await set(5);
+    await clear();
+
+    // The tombstone stays in the table but out of both reads.
+    expect(await service().getValuesByStoryId(STORY_ID)).toEqual([]);
+    expect(await service().getValuesByCharacterId(CHARACTER_ID)).toEqual([]);
+
+    await set(7);
+
+    expect(await service().getValuesByStoryId(STORY_ID)).toEqual([
+      expect.objectContaining({ characterId: CHARACTER_ID, statId: STAT_ID, value: 7 }),
+    ]);
+    expect(await service().getValuesByCharacterId(CHARACTER_ID)).toEqual([
+      expect.objectContaining({ characterId: CHARACTER_ID, statId: STAT_ID, value: 7 }),
+    ]);
+    expect(await service().getValuesByCharacterId('nobody')).toEqual([]);
   });
 });

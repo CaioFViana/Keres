@@ -2,6 +2,7 @@ import { UpdateRegistrationSettingsSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
+import { TierNotFoundError } from '../../services/TierService';
 import { requireAdmin } from '../../utils/adminAuth';
 import { AppError } from '../../utils/errors';
 
@@ -33,7 +34,14 @@ export const adminRegistrationRoutes = new Elysia()
         throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid registration settings');
       }
 
-      return registrationSettingsService.update(parsed.data);
+      try {
+        return await registrationSettingsService.update(parsed.data);
+      } catch (error) {
+        if (error instanceof TierNotFoundError) {
+          throw new AppError(404, error.message);
+        }
+        throw error;
+      }
     },
     {
       // Loose on purpose - UpdateRegistrationSettingsSchema.safeParse above stays the real

@@ -619,3 +619,90 @@ describe('durable secondary draft restore', () => {
     expect(result.current.selectedTagIds).toEqual(['t2']);
   });
 });
+
+describe('uncovered failure paths', () => {
+  it('loads nothing without a database and refuses deletes without services', async () => {
+    (useDrizzle as jest.Mock).mockReturnValue(null);
+    const { result } = await renderHook(() =>
+      useEntityRelations({ entityType: ENTITY_TYPE, entityId: ENTITY_ID } as never),
+    );
+    await act(async () => {});
+
+    expect(result.current.availableTags).toEqual([]);
+    expect(result.current.selectedTagIds).toEqual([]);
+    expect(result.current.allNotes).toEqual([]);
+    expect(result.current.noteRelations).toEqual([]);
+
+    await act(async () => {
+      await result.current.deleteNoteRelation('r1');
+    });
+    expect(alert).toHaveBeenCalledWith('error', 'service_not_initialized');
+  });
+
+  it('logs tag, note, and relation refresh failures without crashing', async () => {
+    tagRelationService.getTagsForEntity.mockRejectedValueOnce(new Error('down'));
+    noteService.getNotesByStoryId.mockRejectedValueOnce(new Error('down'));
+    noteRelationService.getRelationsForEntity.mockRejectedValueOnce(new Error('down'));
+    await render();
+
+    await waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        `Failed to fetch tags for ${ENTITY_TYPE}:`,
+        expect.any(Error),
+      ),
+    );
+    await waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to fetch notes for story:',
+        expect.any(Error),
+      ),
+    );
+    await waitFor(() =>
+      expect(console.error).toHaveBeenCalledWith(
+        `Failed to fetch note relations for ${ENTITY_TYPE}:`,
+        expect.any(Error),
+      ),
+    );
+  });
+
+  it('rolls back pending edits and deletes when the durable draft sync fails', async () => {
+    storedRelations = [];
+    const pendingDraft = {
+      id: 'pending-draft-1',
+      storyId: STORY_ID,
+      noteId: 'n1',
+      relationId: ENTITY_ID,
+      relationType: ENTITY_TYPE,
+    };
+    (readEntityFormSecondaryDraft as jest.Mock).mockResolvedValue({
+      selectedTagIds: ['t2'],
+      pendingNoteRelations: [pendingDraft],
+      customValues: {},
+      pendingEntityRelations: [],
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    (patchEntityFormSecondaryDraft as jest.Mock).mockRejectedValue(new Error('disk full'));
+    const { result } = await render();
+    await waitFor(() =>
+      expect(result.current.noteRelations).toEqual([
+        expect.objectContaining({ id: 'pending-draft-1', noteId: 'n1' }),
+      ]),
+    );
+
+    await act(async () => {
+      await result.current.saveNoteRelation({ id: 'pending-draft-1', noteId: 'n2' } as never);
+    });
+    expect(result.current.noteRelations).toEqual([
+      expect.objectContaining({ id: 'pending-draft-1', noteId: 'n1' }),
+    ]);
+    expect(alert).toHaveBeenCalledWith('error', 'failed_to_save_note_relation');
+
+    await act(async () => {
+      await result.current.deleteNoteRelation('pending-draft-1');
+    });
+    expect(result.current.noteRelations).toEqual([
+      expect.objectContaining({ id: 'pending-draft-1', noteId: 'n1' }),
+    ]);
+    expect(alert).toHaveBeenCalledWith('error', 'failed_to_delete_note_relation');
+  });
+});

@@ -5,9 +5,10 @@ import { ulid } from 'ulid';
 import { hashPassword } from '../config/bcrypt';
 import { env } from '../config/env';
 import { db } from '../db';
-import { users } from '../db/schema';
+import { tiers, users } from '../db/schema';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { recoveryCodeService } from './RecoveryCodeService';
+import { TierNotFoundError } from './TierService';
 
 export class UsernameAlreadyTakenError extends Error {
   constructor() {
@@ -78,6 +79,17 @@ export class AdminUserService {
     return !!env.ROOT_ADMIN_USERNAME && username === env.ROOT_ADMIN_USERNAME;
   }
 
+  /**
+   * A well-formed but dangling tier id would otherwise fail on the foreign key at write
+   * time and surface as a 500 - checked up front so the caller gets a 404 instead.
+   */
+  private async assertTierExists(tierId: string): Promise<void> {
+    const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, tierId) });
+    if (!tier) {
+      throw new TierNotFoundError();
+    }
+  }
+
   async list(query: AdminUserListQuery) {
     const conditions = [];
     if (query.search) {
@@ -123,6 +135,9 @@ export class AdminUserService {
     });
     if (existingUsername) {
       throw new UsernameAlreadyTakenError();
+    }
+    if (input.tierId) {
+      await this.assertTierExists(input.tierId);
     }
 
     const hashedPassword = await hashPassword(input.password);
@@ -199,6 +214,9 @@ export class AdminUserService {
     }
     if (this.isRootUsername(existing.username) && patch.isAdmin === false) {
       throw new RootAdminProtectedError();
+    }
+    if (patch.tierId) {
+      await this.assertTierExists(patch.tierId);
     }
 
     const [updated] = await db

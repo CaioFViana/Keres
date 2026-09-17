@@ -116,4 +116,11 @@ describe('BoardService', () => {
     expect(await service().getBoardsForStory(TEST_STORY_ID)).toEqual([]);
     expect(await service().getById(created.id)).toMatchObject({ isDeleted: true });
   });
+
+  it('warns and stays quiet when deleting a board that does not exist', async () => {
+    await service().deleteBoard(TEST_USER_ID, 'missing');
+
+    expect(console.warn).toHaveBeenCalledWith('Attempted to delete non-existent board missing.');
+    expect(await operations()).toEqual([]);
+  });
 });

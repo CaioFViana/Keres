@@ -277,3 +277,47 @@ describe('clearAllAuth', () => {
     expect(mockUserSettings.clearActiveServer).toHaveBeenCalled();
   });
 });
+
+describe('legacy TokenProvider getters', () => {
+  it('reads the active server pair and url from the vault, or null without one', async () => {
+    expect(authTokenManager.getAccessToken()).toBeNull();
+    expect(authTokenManager.getRefreshToken()).toBeNull();
+    expect(authTokenManager.getServerUrl()).toBeNull();
+
+    mockUserSettings.activeServer = { id: SERVER.id, url: SERVER.url };
+    await tokenVault.set(SERVER.id, TOKENS);
+    // `peek` reads the memory cache, `get` re-reads the store: point the store at the pair.
+    secureStore.getItemAsync.mockResolvedValue(JSON.stringify(TOKENS));
+
+    expect(authTokenManager.getAccessToken()).toBe('access-1');
+    expect(authTokenManager.getRefreshToken()).toBe('refresh-1');
+    expect(authTokenManager.getServerUrl()).toBe('http://servidor');
+    expect(await authTokenManager.getTokens(SERVER.id)).toEqual(TOKENS);
+  });
+});
+
+describe('storage failures', () => {
+  it('rethrows a vault write failure after logging it', async () => {
+    secureStore.setItemAsync.mockRejectedValueOnce(new Error('cofre indisponível'));
+
+    await expect(
+      authTokenManager.updateTokens(SERVER.id, 'access-novo', 'refresh-novo'),
+    ).rejects.toThrow('cofre indisponível');
+    expect(console.log).toHaveBeenCalledWith(
+      'Failed to update tokens in secure storage/cache:',
+      expect.any(Error),
+    );
+  });
+});
+
+describe('refreshAccessToken without its server lookup', () => {
+  it('gives up when the lookup was never injected', async () => {
+    // `clearAllAuth` is the only path that un-injects the lookup (a full sign-out resets it).
+    await authTokenManager.clearAllAuth([]);
+
+    const result = await authTokenManager.refreshAccessToken(SERVER.id, 'refresh-1');
+
+    expect(result).toBeNull();
+    expect(seen).toEqual([]);
+  });
+});

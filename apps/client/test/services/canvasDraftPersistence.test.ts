@@ -48,4 +48,57 @@ describe('canvasDraftPersistence', () => {
     expect(await readCanvasDraft('board', 's', 'b')).toBeNull();
     expect(await readCanvasDraft('location-map', 's', 'm')).toBeNull();
   });
+
+  it('an immediate write and a clear both cancel the pending debounced one', async () => {
+    jest.useFakeTimers();
+    scheduleWriteCanvasDraft('board', 's', 'b', { version: 1 });
+
+    await writeCanvasDraftNow('board', 's', 'b', { version: 2 });
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(await readCanvasDraft('board', 's', 'b')).toEqual({ version: 2 });
+
+    scheduleWriteCanvasDraft('board', 's', 'b', { version: 3 });
+    await clearCanvasDraft('board', 's', 'b');
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(await readCanvasDraft('board', 's', 'b')).toBeNull();
+  });
+
+  it('reports storage failures and keeps the canvas usable', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('disk gone'));
+      expect(await readCanvasDraft('board', 's', 'b')).toBeNull();
+
+      jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('disk gone'));
+      await writeCanvasDraftNow('board', 's', 'b', { version: 1 });
+
+      jest.spyOn(AsyncStorage, 'removeItem').mockRejectedValueOnce(new Error('disk gone'));
+      await clearCanvasDraft('board', 's', 'b');
+
+      jest.spyOn(AsyncStorage, 'getAllKeys').mockRejectedValueOnce(new Error('disk gone'));
+      await clearAllCanvasDrafts();
+
+      expect(console.error).toHaveBeenCalledTimes(4);
+    } finally {
+      jest.restoreAllMocks();
+    }
+  });
+
+  it('reports a debounced write failure without throwing into the timer', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('disk gone'));
+      scheduleWriteCanvasDraft('board', 's', 'b', { version: 1 });
+
+      await jest.advanceTimersByTimeAsync(1000);
+
+      expect(console.error).toHaveBeenCalledWith(
+        'Failed to write board canvas draft:',
+        expect.any(Error),
+      );
+    } finally {
+      jest.restoreAllMocks();
+    }
+  });
 });

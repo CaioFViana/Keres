@@ -139,4 +139,27 @@ describe('RealtimeSessionService', () => {
     expect(canReadStory).not.toHaveBeenCalled();
     expect(listeners.get('storyUpdate:story-1')).toBeUndefined();
   });
+
+  it('treats a missing ticket as invalid and closes a socket that opens without one', async () => {
+    expect(service.hasValidTicket(undefined)).toBe(false);
+
+    const socket = { send: vi.fn(), close: vi.fn() };
+    await service.openEvents(socket, undefined);
+
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(getReadableStoryIds).not.toHaveBeenCalled();
+  });
+
+  it('closes sockets that never subscribed without touching the bus', () => {
+    const pristine = { send: vi.fn() };
+    service.closeEvents(pristine);
+
+    expect(logInfo).not.toHaveBeenCalled();
+
+    const identified = { send: vi.fn(), realtimeUserId: 'user-1' };
+    service.closeEvents(identified);
+
+    expect(logInfo).toHaveBeenCalledWith('User left realtime channel', { userId: 'user-1' });
+    expect(listeners.get('userUpdate:user-1')).toBeUndefined();
+  });
 });

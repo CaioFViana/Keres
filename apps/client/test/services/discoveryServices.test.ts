@@ -120,4 +120,233 @@ describe('discovery services', () => {
       ]),
     );
   });
+
+  it('refuses to analyze a story that does not exist', async () => {
+    await expect(
+      createStoryAnalysisService(database.db).analyzeStoryFull('missing'),
+    ).rejects.toThrow('not found for analysis');
+  });
+});
+
+describe('global search attributes and scene context', () => {
+  it('shows a plain custom attribute in the snippet verbatim', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'sage',
+      storyId: TEST_STORY_ID,
+      name: 'Sage',
+      ...entityBase,
+    });
+    await database.db.insert(schema.storySchemaFields).values({
+      id: 'title-field',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      name: 'Title',
+      key: 'title',
+      type: AttributeType.TEXT,
+      isRequired: false,
+      order: 0,
+      ...entityBase,
+    });
+    await database.db.insert(schema.attributeValues).values({
+      id: 'sage-title',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      entityId: 'sage',
+      fieldId: 'title-field',
+      value: 'Keeper of the Harbor',
+      ...entityBase,
+    });
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    expect(matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'sage',
+          title: 'Sage',
+          snippet: expect.stringContaining('Title: Keeper of the Harbor'),
+        }),
+      ]),
+    );
+  });
+
+  it('keeps the native match when the same entity also matches through an attribute', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'sage',
+      storyId: TEST_STORY_ID,
+      name: 'Harbor Sage',
+      ...entityBase,
+    });
+    await database.db.insert(schema.storySchemaFields).values({
+      id: 'title-field',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      name: 'Title',
+      key: 'title',
+      type: AttributeType.TEXT,
+      isRequired: false,
+      order: 0,
+      ...entityBase,
+    });
+    await database.db.insert(schema.attributeValues).values({
+      id: 'sage-title',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      entityId: 'sage',
+      fieldId: 'title-field',
+      value: 'Keeper of the Harbor',
+      ...entityBase,
+    });
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    const sage = matches.filter((match) => match.id === 'sage');
+    expect(sage).toHaveLength(1);
+    expect(sage[0]?.snippet).toContain('name: Harbor Sage');
+  });
+
+  it('searches entity attributes by the referenced title, never by the stored id', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'sage',
+      storyId: TEST_STORY_ID,
+      name: 'Sage',
+      ...entityBase,
+    });
+    await database.db.insert(schema.locations).values({
+      id: 'harbor',
+      storyId: TEST_STORY_ID,
+      name: 'Old Harbor',
+      ...entityBase,
+    });
+    await database.db.insert(schema.storySchemaFields).values({
+      id: 'home-field',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      name: 'Homeland',
+      key: 'homeland',
+      type: AttributeType.ENTITY,
+      targetEntityType: 'Location',
+      isRequired: false,
+      order: 0,
+      ...entityBase,
+    });
+    await database.db.insert(schema.attributeValues).values({
+      id: 'sage-home',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      entityId: 'sage',
+      fieldId: 'home-field',
+      value: 'harbor',
+      ...entityBase,
+    });
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    expect(matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entityType: 'Character',
+          id: 'sage',
+          title: 'Sage',
+          snippet: expect.stringContaining('Homeland: Old Harbor'),
+        }),
+      ]),
+    );
+    // The raw ULID in the value column is not searchable text.
+    expect(
+      await createGlobalSearchService(database.db).searchAllEntities(
+        TEST_STORY_ID,
+        'sage-home',
+        TEST_USER_ID,
+      ),
+    ).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: 'sage' })]));
+  });
+
+  it('pins every scene result to its chapter position', async () => {
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: TEST_STORY_ID,
+      name: 'The Crossing',
+      index: 2,
+      ...entityBase,
+    });
+    await database.db.insert(schema.scenes).values({
+      id: 'scene-1',
+      storyId: TEST_STORY_ID,
+      chapterId: 'chapter-1',
+      name: 'Harbor arrival',
+      index: 1,
+      ...entityBase,
+    });
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    expect(matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entityType: 'Scene',
+          id: 'scene-1',
+          context: '2. The Crossing',
+        }),
+      ]),
+    );
+  });
+
+  it('decorates favoritable matches and leaves the rest without a favorite state', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'sage',
+      storyId: TEST_STORY_ID,
+      name: 'Harbor Sage',
+      isFavorite: false,
+      ...entityBase,
+    });
+    // The seeded story uses individual favorites: the marker lives in the favorites table.
+    await database.db.insert(schema.favorites).values({
+      id: 'fav-sage',
+      storyId: TEST_STORY_ID,
+      entityId: 'sage',
+      entityType: 'Character',
+      userId: TEST_USER_ID,
+      ...entityBase,
+    });
+    await database.db.insert(schema.modes).values({
+      id: 'mode-1',
+      storyId: TEST_STORY_ID,
+      characterId: 'sage',
+      name: 'Harbor watch',
+      ...entityBase,
+    });
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    expect(
+      matches.find((match) => match.entityType === 'Character' && match.id === 'sage')?.isFavorite,
+    ).toBe(true);
+    // A Mode has no screen of its own: the result carries the owning character's id.
+    expect(matches).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ entityType: 'Mode', id: 'sage', isFavorite: null }),
+      ]),
+    );
+  });
 });

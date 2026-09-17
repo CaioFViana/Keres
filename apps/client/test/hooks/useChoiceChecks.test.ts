@@ -37,7 +37,9 @@ jest.mock('../../src/utils/AppAlert', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useDrizzle } from '../../src/db';
 import { useChoiceChecks } from '../../src/hooks/useChoiceChecks';
+import { useUserSettingsStore } from '../../src/state/userSettingsStore';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
 beforeEach(() => {
@@ -122,5 +124,93 @@ describe('useChoiceChecks', () => {
     const failing = await renderHook(() => useChoiceChecks('choice', 'story', true));
     await waitFor(() => expect(mockGroupService.getChoiceCheckGroupsByChoiceId).toHaveBeenCalled());
     expect(failing.result.current).toMatchObject({ checkGroups: [], checks: [] });
+  });
+
+  it('clears state without services or ids', async () => {
+    (useDrizzle as jest.Mock).mockReturnValue(null);
+    const nodb = await renderHook(() => useChoiceChecks('choice', 'story', true));
+    await act(async () => {});
+    expect(nodb.result.current).toMatchObject({ checkGroups: [], checks: [] });
+    expect(mockGroupService.getChoiceCheckGroupsByChoiceId).not.toHaveBeenCalled();
+
+    const noids = await renderHook(() => useChoiceChecks(undefined, undefined, true));
+    expect(noids.result.current).toMatchObject({ checkGroups: [], checks: [] });
+    (useDrizzle as jest.Mock).mockReturnValue(mockDb);
+  });
+
+  it('updates combinators and single checks, and deletes one check at a time', async () => {
+    mockGroupService.updateChoiceCheckGroup.mockResolvedValue({
+      id: 'group-1',
+      order: 0,
+      combinator: 'OR',
+    });
+    const view = await renderHook(() => useChoiceChecks('choice', 'story', true));
+    await waitFor(() => expect(view.result.current.checks).toHaveLength(1));
+
+    await act(async () => view.result.current.handleUpdateCheckGroupCombinator('group-1', 'OR'));
+    expect(view.result.current.checkGroups).toEqual([
+      expect.objectContaining({ id: 'group-1', combinator: 'OR' }),
+    ]);
+
+    await act(async () => view.result.current.handleUpdateCheck('check-1', { minVisits: 3 }));
+    expect(mockCheckService.updateChoiceCheck).toHaveBeenCalledWith('user', 'check-1', {
+      minVisits: 3,
+    });
+
+    await act(async () => view.result.current.handleDeleteCheck('check-1'));
+    expect(mockCheckService.deleteChoiceCheck).toHaveBeenCalledWith('user', 'check-1');
+    expect(view.result.current.checks).toEqual([]);
+  });
+
+  it('reports every mutation failure with an alert', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const view = await renderHook(() => useChoiceChecks('choice', 'story', true));
+    await waitFor(() => expect(view.result.current.checks).toHaveLength(1));
+
+    mockGroupService.createChoiceCheckGroup.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => view.result.current.handleAddCheckGroup());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_check_group');
+
+    mockGroupService.updateChoiceCheckGroup.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => view.result.current.handleUpdateCheckGroupCombinator('group-1', 'OR'));
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_check_group');
+
+    mockGroupService.deleteChoiceCheckGroup.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => view.result.current.handleDeleteCheckGroup('group-1'));
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_check_group');
+
+    mockCheckService.createChoiceCheck.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => view.result.current.handleAddCheck('group-1'));
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_check');
+
+    mockCheckService.updateChoiceCheck.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => view.result.current.handleUpdateCheck('check-1', { minVisits: 3 }));
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_check');
+
+    mockCheckService.deleteChoiceCheck.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => view.result.current.handleDeleteCheck('check-1'));
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_check');
+  });
+
+  it('ignores every mutation without a local user', async () => {
+    (useUserSettingsStore as jest.Mock).mockReturnValue({ userId: null });
+    const view = await renderHook(() => useChoiceChecks('choice', 'story', true));
+    await waitFor(() => expect(view.result.current.checks).toHaveLength(1));
+
+    await act(async () => {
+      await view.result.current.handleAddCheckGroup();
+      await view.result.current.handleUpdateCheckGroupCombinator('group-1', 'OR');
+      await view.result.current.handleDeleteCheckGroup('group-1');
+      await view.result.current.handleAddCheck('group-1');
+      await view.result.current.handleUpdateCheck('check-1', { minVisits: 3 });
+      await view.result.current.handleDeleteCheck('check-1');
+    });
+    expect(mockGroupService.createChoiceCheckGroup).not.toHaveBeenCalled();
+    expect(mockGroupService.updateChoiceCheckGroup).not.toHaveBeenCalled();
+    expect(mockGroupService.deleteChoiceCheckGroup).not.toHaveBeenCalled();
+    expect(mockCheckService.createChoiceCheck).not.toHaveBeenCalled();
+    expect(mockCheckService.updateChoiceCheck).not.toHaveBeenCalled();
+    expect(mockCheckService.deleteChoiceCheck).not.toHaveBeenCalled();
+    (useUserSettingsStore as jest.Mock).mockReturnValue({ userId: 'user' });
   });
 });

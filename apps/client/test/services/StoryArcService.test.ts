@@ -4,7 +4,7 @@
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { createStoryArcService } from '../../src/services/storymanagement/StoryArcService';
-import { seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
+import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 let database: TestDatabase;
@@ -115,5 +115,171 @@ describe('StoryArcService', () => {
       isDeleted: true,
       version: 2,
     });
+  });
+
+  it('refuses to delete the default arc, which chapters fall back to', async () => {
+    const created = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Default',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+    });
+
+    await expect(service().deleteArc(TEST_USER_ID, created.id)).rejects.toThrow(
+      'default arc cannot be deleted',
+    );
+  });
+
+  it('repoints the deleted arc chapters at the default arc', async () => {
+    const fallback = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Default',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+    });
+    const doomed = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Side quest',
+      description: null,
+      sortOrder: 1,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: false,
+    });
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: TEST_STORY_ID,
+      name: 'Chapter one',
+      index: 1,
+      arcId: doomed.id,
+      ...entityBase,
+      deletedAt: null,
+    });
+
+    await service().deleteArc(TEST_USER_ID, doomed.id);
+
+    const chapter = await database.db.query.chapters.findFirst({
+      where: eq(schema.chapters.id, 'chapter-1'),
+    });
+    expect(chapter?.arcId).toBe(fallback.id);
+  });
+
+  it('lists the arcs a character, location or item appears in', async () => {
+    const first = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'First',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+    });
+    const second = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Second',
+      description: null,
+      sortOrder: 1,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: false,
+    });
+    await database.db.insert(schema.chapters).values([
+      {
+        id: 'chapter-1',
+        storyId: TEST_STORY_ID,
+        name: 'One',
+        index: 1,
+        arcId: first.id,
+        ...entityBase,
+        deletedAt: null,
+      },
+      {
+        id: 'chapter-2',
+        storyId: TEST_STORY_ID,
+        name: 'Two',
+        index: 2,
+        arcId: second.id,
+        ...entityBase,
+        deletedAt: null,
+      },
+    ]);
+    await database.db.insert(schema.scenes).values([
+      {
+        id: 'scene-1',
+        storyId: TEST_STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'harbor',
+        name: 'Arrival',
+        index: 1,
+        ...entityBase,
+        deletedAt: null,
+      },
+      {
+        id: 'scene-2',
+        storyId: TEST_STORY_ID,
+        chapterId: 'chapter-2',
+        locationId: 'forest',
+        name: 'Departure',
+        index: 1,
+        ...entityBase,
+        deletedAt: null,
+      },
+    ]);
+    await database.db.insert(schema.characters).values({
+      id: 'ada',
+      storyId: TEST_STORY_ID,
+      name: 'Ada',
+      ...entityBase,
+    });
+    await database.db.insert(schema.characterScenes).values({
+      id: 'cs-1',
+      storyId: TEST_STORY_ID,
+      characterId: 'ada',
+      sceneId: 'scene-1',
+      ...entityBase,
+      deletedAt: null,
+    });
+    await database.db.insert(schema.items).values({
+      id: 'compass',
+      storyId: TEST_STORY_ID,
+      name: 'Compass',
+      ...entityBase,
+      deletedAt: null,
+    });
+    await database.db.insert(schema.itemJourneys).values({
+      id: 'journey-1',
+      storyId: TEST_STORY_ID,
+      itemId: 'compass',
+      sceneId: 'scene-2',
+      newState: 'lost',
+      ...entityBase,
+      deletedAt: null,
+    });
+
+    // Each walk crosses tombstone guards on every joined table: one deleted scene anywhere in
+    // the chain removes the arc from the answer.
+    expect(
+      (await service().listArcsForCharacter(TEST_STORY_ID, 'ada')).map((arc) => arc.id),
+    ).toEqual([first.id]);
+    expect(
+      (await service().listArcsForLocation(TEST_STORY_ID, 'harbor')).map((arc) => arc.id),
+    ).toEqual([first.id]);
+    expect(
+      (await service().listArcsForItem(TEST_STORY_ID, 'compass')).map((arc) => arc.id),
+    ).toEqual([second.id]);
+    expect(await service().listArcsForCharacter(TEST_STORY_ID, 'nobody')).toEqual([]);
+    expect(await service().listArcsForLocation(TEST_STORY_ID, 'nowhere')).toEqual([]);
+    expect(await service().listArcsForItem(TEST_STORY_ID, 'nothing')).toEqual([]);
   });
 });

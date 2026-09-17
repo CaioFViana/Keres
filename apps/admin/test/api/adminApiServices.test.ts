@@ -16,6 +16,7 @@ import { AdminUserApiService } from '../../src/api/AdminUserApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';
 import { RecoveryApiService } from '../../src/api/RecoveryApiService';
 import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettingsApiService';
+import { ShowcaseSettingsApiService } from '../../src/api/ShowcaseSettingsApiService';
 import { TierApiService } from '../../src/api/TierApiService';
 
 /**
@@ -143,6 +144,29 @@ describe('RegistrationSettingsApiService', () => {
 
     expect(mocks.put).toHaveBeenCalledWith('/admin/registration-settings', {
       allowRegistration: true,
+    });
+  });
+});
+
+describe('ShowcaseSettingsApiService', () => {
+  it('reads the settings from the singleton resource', async () => {
+    mocks.get.mockResolvedValue({
+      data: { id: 'singleton', isShowcaseEnabled: true, isHostedClientEnabled: true },
+    });
+
+    await expect(ShowcaseSettingsApiService.get()).resolves.toEqual({
+      id: 'singleton',
+      isShowcaseEnabled: true,
+      isHostedClientEnabled: true,
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/showcase-settings');
+  });
+
+  it('updates with PUT, sending only the toggled flags', async () => {
+    await ShowcaseSettingsApiService.update({ isShowcaseEnabled: true });
+
+    expect(mocks.put).toHaveBeenCalledWith('/admin/showcase-settings', {
+      isShowcaseEnabled: true,
     });
   });
 });

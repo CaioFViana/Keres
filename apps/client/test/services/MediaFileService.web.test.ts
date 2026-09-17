@@ -15,19 +15,26 @@ jest.mock('../../src/services/webMediaStore', () => ({
   deleteDirectory: jest.fn(),
   deleteFile: jest.fn(),
   existsSync: jest.fn(),
+  md5Hex: jest.fn(),
   readBytes: jest.fn(),
   writeBytes: jest.fn(),
 }));
 
-import { mediaFileService } from '../../src/services/MediaFileService';
+import * as VideoThumbnails from 'expo-video-thumbnails';
+import { mediaFileService, UnsupportedMediaError } from '../../src/services/MediaFileService';
 import * as webMediaStore from '../../src/services/webMediaStore';
 
 const store = webMediaStore as jest.Mocked<typeof webMediaStore>;
 
+const flush = () => new Promise((resolve) => setImmediate(resolve));
+
 beforeEach(() => {
   jest.clearAllMocks();
   delete (globalThis as { window?: Window }).window;
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
+
+afterEach(() => jest.restoreAllMocks());
 
 it('uses desktop-media paths and delegates web file operations through the Electron bridge store', async () => {
   store.existsSync.mockReturnValue(true);
@@ -61,4 +68,88 @@ it('uses desktop-media paths and delegates web file operations through the Elect
   expect(store.deleteFile).toHaveBeenCalledWith('media/story/hash.png');
   expect(store.deleteDirectory).toHaveBeenCalledWith('media/story');
   expect(store.deleteDirectory).toHaveBeenCalledWith('media');
+});
+
+it('imports a picked blob once, skips the rewrite when the hash is already stored', async () => {
+  store.md5Hex.mockReturnValue('web-hash');
+  store.existsSync.mockReturnValue(false);
+  const file = new File(['hello'], 'map.png', { type: 'image/png' });
+
+  const imported = await mediaFileService.importAsset('story', {
+    name: 'map.png',
+    uri: 'blob:picked',
+    mimeType: 'image/png',
+    size: 5,
+    file,
+  } as any);
+
+  expect(imported).toMatchObject({
+    mediaType: 'image',
+    mimeType: 'image/png',
+    hash: 'web-hash',
+    localPath: 'desktop-media:media/story/web-hash.png',
+  });
+  expect(store.writeBytes).toHaveBeenCalledTimes(1);
+
+  store.existsSync.mockReturnValue(true);
+  await mediaFileService.importAsset('story', {
+    name: 'map.png',
+    uri: 'blob:picked',
+    mimeType: 'image/png',
+    size: 5,
+    file,
+  } as any);
+  // Same bytes by definition of the addressing: no rewrite.
+  expect(store.writeBytes).toHaveBeenCalledTimes(1);
+});
+
+it('refuses a web import without blob data or without a recognizable type', async () => {
+  store.md5Hex.mockReturnValue('web-hash');
+
+  await expect(
+    mediaFileService.importAsset('story', {
+      name: 'map.png',
+      uri: 'blob:picked',
+      mimeType: 'image/png',
+    } as any),
+  ).rejects.toThrow('No file data available');
+  await expect(
+    mediaFileService.importAsset('story', {
+      name: 'notes.sav',
+      uri: 'blob:picked',
+      file: new File(['x'], 'notes.sav'),
+    } as any),
+  ).rejects.toBeInstanceOf(UnsupportedMediaError);
+});
+
+it('attempts a video thumbnail on web import and logs cleanup failures instead of throwing', async () => {
+  store.md5Hex.mockReturnValue('web-hash');
+  store.existsSync.mockReturnValue(true);
+  (VideoThumbnails.getThumbnailAsync as jest.Mock).mockRejectedValue(new Error('no codec'));
+  store.deleteFile.mockRejectedValue(new Error('locked'));
+  store.deleteDirectory.mockRejectedValue(new Error('locked'));
+
+  const imported = await mediaFileService.importAsset('story', {
+    name: 'intro.mp4',
+    uri: 'blob:picked',
+    mimeType: 'video/mp4',
+    file: new File(['x'], 'intro.mp4', { type: 'video/mp4' }),
+  } as any);
+
+  expect(imported.thumbnailPath).toBeUndefined();
+  mediaFileService.deleteLocal('desktop-media:media/story/web-hash.mp4');
+  mediaFileService.deleteLocal('file://not-web');
+  mediaFileService.deleteStoryMedia('story');
+  await flush();
+
+  expect(console.warn).toHaveBeenCalledWith(
+    'Could not delete local media file:',
+    expect.any(String),
+    expect.any(Error),
+  );
+  expect(console.warn).toHaveBeenCalledWith(
+    'Could not delete media directory for story:',
+    'story',
+    expect.any(Error),
+  );
 });

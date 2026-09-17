@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   clientConfig: undefined as unknown,
   send: vi.fn(),
+  getSignedUrl: vi.fn(),
 }));
 
 vi.mock('../../../src/config/env', () => ({
@@ -35,6 +36,9 @@ vi.mock('@aws-sdk/client-s3', () => ({
   DeleteObjectCommand: class {
     constructor(public input: unknown) {}
   },
+}));
+vi.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: (...args: Array<unknown>) => mocks.getSignedUrl(...args),
 }));
 
 import { S3BlobStorage } from '../../../src/services/media-storage/S3BlobStorage';
@@ -107,5 +111,20 @@ describe('S3BlobStorage', () => {
 
     await expect(storage.get('empty.png')).resolves.toBeNull();
     await expect(storage.get('broken.png')).rejects.toThrow('S3 unavailable');
+  });
+
+  it('signs a download URL for the prefixed key', async () => {
+    const storage = new S3BlobStorage();
+    mocks.getSignedUrl.mockResolvedValue('https://cdn.test/uploads/a.png?sig=1');
+
+    await expect(storage.presignGet('a.png', 60)).resolves.toBe(
+      'https://cdn.test/uploads/a.png?sig=1',
+    );
+
+    expect(mocks.getSignedUrl.mock.calls[0][1].input).toEqual({
+      Bucket: 'keres-media',
+      Key: 'uploads/a.png',
+    });
+    expect(mocks.getSignedUrl.mock.calls[0][2]).toEqual({ expiresIn: 60 });
   });
 });

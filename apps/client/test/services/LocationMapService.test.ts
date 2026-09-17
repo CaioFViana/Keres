@@ -106,4 +106,27 @@ describe('LocationMapService', () => {
     const maps = await service().getMapsForStory(TEST_STORY_ID);
     expect(maps).toHaveLength(0);
   });
+
+  it('reads one map by id, including a tombstoned one', async () => {
+    const created = await service().createMap(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      name: 'Continente',
+      description: null,
+      content: { images: [], nodes: [] },
+    });
+
+    // Unlike the list, `getById` does not filter tombstones: the caller decides.
+    expect(await service().getById(created.id)).toMatchObject({ name: 'Continente' });
+    await service().deleteMap(TEST_USER_ID, created.id);
+    expect(await service().getById(created.id)).toMatchObject({ isDeleted: true });
+    expect(await service().getById('missing')).toBeUndefined();
+  });
+
+  it('warns and stays quiet when deleting a map that does not exist', async () => {
+    await service().deleteMap(TEST_USER_ID, 'missing');
+
+    expect(console.warn).toHaveBeenCalledWith(
+      'Attempted to delete non-existent location map missing.',
+    );
+  });
 });

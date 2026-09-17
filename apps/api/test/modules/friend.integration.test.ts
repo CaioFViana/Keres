@@ -264,6 +264,15 @@ describe('blacklisting', () => {
     expect(await statusOf(ana, bia.userId)).toBe('blacklisted');
   });
 
+  it('replaces a pending request with a block', async () => {
+    await sendRequest(ana, bia);
+
+    const { status } = await blacklist(ana, bia);
+
+    expect(status).toBe(200);
+    expect(await statusOf(ana, bia.userId)).toBe('blacklisted');
+  });
+
   it('is idempotent', async () => {
     await blacklist(ana, bia);
 

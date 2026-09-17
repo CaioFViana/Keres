@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '../../src/db';
-import { notes, stories, users } from '../../src/db/schema';
+import { choices, notes, stories, users } from '../../src/db/schema';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
@@ -30,6 +30,7 @@ beforeEach(async () => {
   const characterId = newId();
   const sceneId = newId();
   const worldRuleId = newId();
+  const choiceId = newId();
   noteId = newId();
   entities = {
     Character: characterId,
@@ -37,6 +38,7 @@ beforeEach(async () => {
     Chapter: chapterId,
     Scene: sceneId,
     WorldRule: worldRuleId,
+    Choice: choiceId,
   };
   await db
     .insert(users)
@@ -114,10 +116,25 @@ beforeEach(async () => {
     storyId,
     create('Note', noteId, { title: 'Profecia', body: null, isFavorite: false, extraNotes: null }),
   );
+  // Straight to the table: the Choice handler refuses linear stories, and the relation
+  // validator only cares that the row exists - not how it got there.
+  await db.insert(choices).values({
+    id: choiceId,
+    storyId,
+    sceneId,
+    nextSceneId: sceneId,
+    text: 'Entrar',
+    notes: null,
+    createdAt: now,
+    updatedAt: now,
+    version: 1,
+    isDeleted: false,
+    deletedAt: null,
+  });
 });
 
 describe('note relation sync handler', () => {
-  it.each(['Character', 'Location', 'WorldRule', 'Scene', 'Chapter'] as const)(
+  it.each(['Character', 'Location', 'WorldRule', 'Scene', 'Chapter', 'Choice'] as const)(
     'validates a note relation to a %s',
     async (relationType) => {
       const handler = new NoteRelationSyncHandler();
@@ -135,6 +152,22 @@ describe('note relation sync handler', () => {
       });
     },
   );
+
+  it('rejects a relation to a choice that does not exist', async () => {
+    const handler = new NoteRelationSyncHandler();
+
+    await expect(
+      handler.create(
+        userId,
+        storyId,
+        create('NoteRelation', newId(), {
+          noteId,
+          relationId: newId(),
+          relationType: 'Choice',
+        }),
+      ),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
 
   it('does not allow changing the linked entity of an existing relation', async () => {
     const handler = new NoteRelationSyncHandler();

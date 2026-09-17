@@ -109,6 +109,57 @@ describe('admin authentication context', () => {
     await view.unmount();
   });
 
+  it('refuses to be read outside its provider', async () => {
+    // React logs the render error before the test sees it; silence that, not the throw.
+    const consoleError = console.error;
+    console.error = () => {};
+    try {
+      await expect(render(<AuthProbe />)).rejects.toThrow(
+        'useAuth must be used within AuthProvider',
+      );
+    } finally {
+      console.error = consoleError;
+    }
+  });
+
+  it('leaves a bootstrap that outlives its screen alone', async () => {
+    mocks.getToken.mockReturnValue('persisted-token');
+    let resolveProbe!: () => void;
+    mocks.probeAdminAccess.mockReturnValue(
+      new Promise<void>((resolve) => (resolveProbe = resolve)),
+    );
+    const view = await render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+    await view.unmount();
+
+    resolveProbe();
+    await flush();
+
+    expect(mocks.logout).not.toHaveBeenCalled();
+  });
+
+  it('ignores a bootstrap failure that outlives its screen', async () => {
+    mocks.getToken.mockReturnValue('persisted-token');
+    let rejectProbe!: (reason: unknown) => void;
+    mocks.probeAdminAccess.mockReturnValue(
+      new Promise<void>((_resolve, reject) => (rejectProbe = reject)),
+    );
+    const view = await render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+    await view.unmount();
+
+    rejectProbe(new Error('Unauthorized'));
+    await flush();
+
+    expect(mocks.logout).not.toHaveBeenCalled();
+  });
+
   it('reacts to the session-cleared event from the api client', async () => {
     mocks.getToken.mockReturnValue(null);
     const view = await render(

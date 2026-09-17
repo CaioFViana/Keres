@@ -22,6 +22,7 @@ jest.mock('../../src/services/MediaFileService', () => ({
     localPathFor: jest.fn(),
     destinationFor: jest.fn(),
     thumbnailPathFor: jest.fn(),
+    generateVideoThumbnail: jest.fn(),
     readBytes: jest.fn(),
     writeDownloaded: jest.fn(),
   },
@@ -99,6 +100,7 @@ beforeEach(() => {
     (storyId: string, hash: string) => `/media/${storyId}/${hash}.thumb`,
   );
   mockMediaFileService.readBytes.mockResolvedValue(new Uint8Array([1, 2, 3]));
+  mockMediaFileService.generateVideoThumbnail.mockResolvedValue('/media/story-1/thumb.jpg');
   mockMediaFileService.writeDownloaded.mockImplementation(
     async (storyId: string, hash: string) => `/media/${storyId}/${hash}`,
   );
@@ -260,6 +262,25 @@ describe('uploading', () => {
     expect(summary.uploaded).toBe(5);
   });
 
+  it('uploads a genuine Blob on web, where the native file reference does not exist', async () => {
+    setPlatform('web');
+    mockGalleryService.getPendingUploads.mockResolvedValue([media('a')]);
+    mockMediaFileService.exists.mockReturnValue(true);
+    const post = jest
+      .fn()
+      .mockResolvedValueOnce({ data: { present: [], missing: ['hash-a'] } })
+      .mockResolvedValueOnce({ data: {} });
+    const client = fakeClient({ post });
+
+    const summary = await service().syncStoryMedia(client, SERVER, STORY_ID);
+
+    expect(post.mock.calls[1][0]).toBe(`/media/${STORY_ID}/blobs/hash-a`);
+    const form = post.mock.calls[1][1] as FormData;
+    expect(form).toBeInstanceOf(FormData);
+    expect(form.get('file')).toBeInstanceOf(Blob);
+    expect(summary.uploaded).toBe(1);
+  });
+
   it('sends each hash once, even when two entries share the same content', async () => {
     mockGalleryService.getPendingUploads.mockResolvedValue([
       media('a'),
@@ -354,6 +375,59 @@ describe('downloading', () => {
 
     expect(mockDownloadFileAsync).not.toHaveBeenCalled();
     expect(summary.downloaded).toBe(0);
+  });
+
+  it('extracts a thumbnail for a downloaded video exactly once', async () => {
+    mockGalleryService.getPendingDownloads.mockResolvedValue([
+      media('v', { localPath: null, mediaType: 'video', mimeType: 'video/mp4' }),
+    ]);
+
+    await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
+
+    expect(mockMediaFileService.generateVideoThumbnail).toHaveBeenCalledWith(
+      STORY_ID,
+      'hash-v',
+      '/media/baixado',
+    );
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith(
+      'v',
+      expect.objectContaining({ thumbnailPath: '/media/story-1/thumb.jpg' }),
+    );
+  });
+
+  it('reuses a thumbnail that already exists instead of extracting it again', async () => {
+    mockGalleryService.getPendingDownloads.mockResolvedValue([
+      media('v', {
+        localPath: null,
+        mediaType: 'video',
+        mimeType: 'video/mp4',
+        thumbnailPath: '/media/old-thumb.jpg',
+      }),
+    ]);
+    // The video bytes are missing but the thumbnail survived: only the thumbnail check passes.
+    mockMediaFileService.exists.mockImplementation(
+      (path: string) => path === '/media/old-thumb.jpg',
+    );
+
+    await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
+
+    expect(mockMediaFileService.generateVideoThumbnail).not.toHaveBeenCalled();
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith(
+      'v',
+      expect.objectContaining({ thumbnailPath: '/media/old-thumb.jpg' }),
+    );
+  });
+
+  it('leaves non-video media without a thumbnail', async () => {
+    mockGalleryService.getPendingDownloads.mockResolvedValue([media('a', { localPath: null })]);
+
+    await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
+
+    expect(mockMediaFileService.generateVideoThumbnail).not.toHaveBeenCalled();
+    expect(mockGalleryService.setLocalFileState).toHaveBeenCalledWith(
+      'a',
+      expect.objectContaining({ thumbnailPath: undefined }),
+    );
   });
 });
 

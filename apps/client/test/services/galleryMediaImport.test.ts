@@ -65,3 +65,15 @@ it('creates new media, reuses duplicates, restores a missing local file, and cou
     thumbnailPath: null,
   });
 });
+
+it('logs an unexpected import failure and counts the asset as rejected', async () => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
+  const galleryService = { getByHash: jest.fn(), createGallery: jest.fn() } as any;
+  mockMediaFileService.importAsset.mockRejectedValueOnce(new Error('disk gone'));
+
+  const result = await importPickedMediaAssets(galleryService, 'story', 'user', [{} as any]);
+
+  expect(result).toEqual({ added: 0, duplicates: 0, rejected: 1, galleryIds: [] });
+  expect(console.log).toHaveBeenCalledWith('Failed to import media asset:', expect.any(Error));
+  (console.log as jest.Mock).mockRestore();
+});

@@ -187,4 +187,20 @@ describe('PlotSceneService', () => {
     expect(await service.getByPlotId(TEST_STORY_ID, plot.id)).toHaveLength(0);
     expect(await database.db.select().from(schema.scenes).all()).toHaveLength(2);
   });
+
+  it('lists the plot threads running through one scene', async () => {
+    const service = createPlotSceneService(database.db);
+    const plot = await createPlot();
+    await service.save(TEST_USER_ID, {
+      id: 'relation-1',
+      storyId: TEST_STORY_ID,
+      plotId: plot.id,
+      sceneId: 'scene-1',
+      note: 'Abre a trama.',
+    });
+
+    // The scene-side read feeds the matrix column; the plot-side read feeds the row.
+    expect(await service.getBySceneId(TEST_STORY_ID, 'scene-1')).toHaveLength(1);
+    expect(await service.getBySceneId(TEST_STORY_ID, 'scene-2')).toHaveLength(0);
+  });
 });

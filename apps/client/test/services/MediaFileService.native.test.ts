@@ -192,6 +192,84 @@ describe('MediaFileService on native storage', () => {
     ]);
   });
 
+  it('addresses media by content hash and checks presence without throwing', async () => {
+    const path = 'file://documents/media/story/image-hash.png';
+    fsMock.files.set(path, { exists: true, bytes: new Uint8Array([1]) });
+
+    expect(mediaFileService.localPathFor('story', 'image-hash', 'image/png')).toBe(path);
+    expect(mediaFileService.thumbnailPathFor('story', 'image-hash')).toBe(
+      'file://documents/media/story/image-hash_thumb.jpg',
+    );
+    // The same hash from the picker and from the server must land on the same file.
+    expect(mediaFileService.destinationFor('story', 'image-hash', 'image/png').uri).toBe(path);
+
+    expect(mediaFileService.exists(path)).toBe(true);
+    expect(mediaFileService.exists('file://documents/media/story/absent.png')).toBe(false);
+    expect(mediaFileService.exists(null)).toBe(false);
+    // A path written by an earlier installation may not even be valid today: absence, not a crash.
+    expect(mediaFileService.exists(Object.create(null) as unknown as string)).toBe(false);
+    await expect(mediaFileService.readBytes(path)).resolves.toEqual(new Uint8Array([1]));
+  });
+
+  it('refuses an asset without a name to guess from and one without a hash', async () => {
+    await expect(
+      mediaFileService.importAsset('story', { name: '', uri: 'file://picked/nameless' } as any),
+    ).rejects.toBeInstanceOf(UnsupportedMediaError);
+
+    fsMock.files.set('file://picked/hashless.png', { exists: true, size: 10 });
+    await expect(
+      mediaFileService.importAsset('story', {
+        name: 'hashless.png',
+        uri: 'file://picked/hashless.png',
+        mimeType: 'image/png',
+      } as any),
+    ).rejects.toThrow('Could not compute a content hash');
+  });
+
+  it('replaces a stale thumbnail and survives a thumbnail failure', async () => {
+    const thumb = 'file://documents/media/story/video-hash_thumb.jpg';
+    fsMock.files.set(thumb, { exists: true });
+    (VideoThumbnails.getThumbnailAsync as jest.Mock).mockResolvedValue({
+      uri: 'file://cache/frame.jpg',
+    });
+
+    await expect(
+      mediaFileService.generateVideoThumbnail(
+        'story',
+        'video-hash',
+        'file://documents/media/story/video-hash.mp4',
+      ),
+    ).resolves.toBe(thumb);
+    expect(fsMock.calls.deletedFiles).toContain(thumb);
+
+    (VideoThumbnails.getThumbnailAsync as jest.Mock).mockRejectedValue(new Error('no codec'));
+    await expect(
+      mediaFileService.generateVideoThumbnail('story', 'video-hash', 'file://picked/intro.mp4'),
+    ).resolves.toBeUndefined();
+    expect(console.warn).toHaveBeenCalledWith(
+      'Could not generate video thumbnail:',
+      expect.any(Error),
+    );
+  });
+
+  it('never lets a filesystem cleanup failure escape', async () => {
+    mediaFileService.deleteLocal(null);
+    mediaFileService.deleteLocal(Object.create(null) as unknown as string);
+    (LegacyFileSystem.deleteAsync as jest.Mock).mockRejectedValueOnce(new Error('locked'));
+
+    await mediaFileService.deleteAllMedia();
+
+    expect(console.warn).toHaveBeenCalledWith(
+      'Could not delete local media file:',
+      expect.anything(),
+      expect.any(Error),
+    );
+    expect(console.warn).toHaveBeenCalledWith(
+      'Could not remove every local media file during app reset:',
+      expect.any(Error),
+    );
+  });
+
   it('overwrites downloaded bytes and performs all native cleanup operations safely', async () => {
     const path = 'file://documents/media/story/download-hash.mp3';
     fsMock.files.set(path, { exists: true, bytes: new Uint8Array([1, 2]) });

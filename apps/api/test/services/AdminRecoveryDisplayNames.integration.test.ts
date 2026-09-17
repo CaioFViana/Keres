@@ -365,6 +365,56 @@ describe('enrichDeletedDisplayNames', () => {
       ),
     ).toBe(`★ Nonexistent:${ids.characterA.slice(0, 8)}`);
   });
+
+  it('leaves tombstones of unknown types unlabeled', async () => {
+    expect(await label(deleted('Bogus', newId(), { name: 'X' }, null))).toBeNull();
+    expect(await label(deleted('Bogus', newId(), { name: 'X' }, 'nome antigo'))).toBe(
+      'nome antigo',
+    );
+  });
+
+  it('skips story titles for tombstones without a story and blank titles', async () => {
+    const anchorId = newId();
+    const { storyTitles } = await enrichDeletedDisplayNames([
+      { entityType: 'ChapterAnchor', id: anchorId, storyId: null, name: null, row: {} },
+    ]);
+    expect(storyTitles.size).toBe(0);
+
+    const blankStoryId = newId();
+    await db.insert(stories).values({
+      id: blankStoryId,
+      userId: ids.user,
+      title: '   ',
+      type: 'linear',
+      version: 1,
+    } as never);
+    const blank = await enrichDeletedDisplayNames([
+      { entityType: 'Chapter', id: newId(), storyId: blankStoryId, name: 'C', row: {} },
+    ]);
+    expect(blank.storyTitles.size).toBe(0);
+  });
+
+  it('does not refetch rows the batch already carries', async () => {
+    const sceneId = newId();
+    const { names } = await enrichDeletedDisplayNames([
+      {
+        entityType: 'CharacterScene',
+        id: sceneId,
+        storyId: ids.story,
+        name: null,
+        row: { characterId: ids.characterA, sceneId: ids.scene },
+      },
+      {
+        entityType: 'Character',
+        id: ids.characterA,
+        storyId: ids.story,
+        name: 'Lia',
+        row: { name: 'Lia' },
+      },
+    ]);
+
+    expect(names.get(`CharacterScene:${sceneId}`)).toBe('Lia @ A chegada');
+  });
 });
 
 describe('enrichOperationLogNames', () => {
@@ -427,5 +477,41 @@ describe('enrichOperationLogNames', () => {
 
   it('returns nothing for an empty batch', async () => {
     expect((await enrichOperationLogNames([])).size).toBe(0);
+  });
+
+  it('labels unknown types as unknown and tolerates empty attribution', async () => {
+    const logId = newId();
+    const result = await enrichOperationLogNames([
+      {
+        id: logId,
+        entityType: 'Bogus',
+        entityId: ids.characterA,
+        storyId: '',
+        userId: '',
+        payload: null,
+      },
+    ]);
+
+    expect(result.get(logId)).toEqual({ entityName: null, storyTitle: null, username: null });
+  });
+
+  it('treats a scalar payload as no payload', async () => {
+    const logId = newId();
+    const result = await enrichOperationLogNames([
+      {
+        id: logId,
+        entityType: 'Character',
+        entityId: ids.characterA,
+        storyId: ids.story,
+        userId: ids.user,
+        payload: 'boom',
+      },
+    ]);
+
+    expect(result.get(logId)).toEqual({
+      entityName: 'Lia',
+      storyTitle: 'A Queda',
+      username: 'ana',
+    });
   });
 });

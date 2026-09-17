@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { galleries } from '../../src/db/schema';
+import { galleries, tiers, users } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
@@ -193,6 +194,64 @@ describe('POST /media/:storyId/blobs/:hash', () => {
     const { status } = await request('POST', `/media/${storyId}/blobs/${PNG_HASH}`, { body: form });
 
     expect(status).toBe(401);
+  });
+
+  it('trusts the file type when the client sends no mimeType field', async () => {
+    const form = new FormData();
+    form.append('file', new File([Buffer.from(PNG_BYTES)], 'retrato.png', { type: 'image/png' }));
+
+    const { status, data } = await request('POST', `/media/${storyId}/blobs/${PNG_HASH}`, {
+      token: ana.token,
+      body: form,
+    });
+
+    expect(status).toBe(200);
+    expect(data.mimeType).toBe('image/png');
+  });
+
+  it('rejects an upload that declares no type at all', async () => {
+    const form = new FormData();
+    form.append('file', new File([Buffer.from(PNG_BYTES)], 'retrato.png'));
+
+    const { status } = await request('POST', `/media/${storyId}/blobs/${PNG_HASH}`, {
+      token: ana.token,
+      body: form,
+    });
+
+    expect(status).toBe(415);
+  });
+
+  it('refuses an upload past the per-file ceiling', async () => {
+    const huge = new Uint8Array(52_428_801);
+    const form = new FormData();
+    form.append('file', new File([huge], 'grande.png', { type: 'image/png' }));
+    form.append('mimeType', 'image/png');
+
+    const { status } = await request('POST', `/media/${storyId}/blobs/${md5(huge)}`, {
+      token: ana.token,
+      body: form,
+    });
+
+    expect(status).toBe(413);
+  });
+
+  it('refuses an upload once the story storage ceiling is reached', async () => {
+    const tierId = newId();
+    await db.insert(tiers).values({
+      id: tierId,
+      name: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: 1,
+      maxStorageBytesTotal: null,
+    } as never);
+    await db.update(users).set({ tierId }).where(eq(users.id, ana.userId));
+
+    const { status } = await upload(ana.token, PNG_HASH, PNG_BYTES);
+
+    expect(status).toBe(403);
   });
 });
 

@@ -96,6 +96,18 @@ describe('AttributeValueService', () => {
     ]);
   });
 
+  it('writes nothing for an empty field set or an unchanged value', async () => {
+    const service = createAttributeValueService(database.db);
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', {});
+
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', { rank: '7' });
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', { rank: '7' });
+
+    // One create, no update: resubmitting the same value must not churn the log.
+    const logged = await database.db.query.operationLogs.findMany();
+    expect(logged.map((operation) => operation.operationType)).toEqual(['create']);
+  });
+
   it('does not create a row or an operation for a wholly empty submission', async () => {
     const service = createAttributeValueService(database.db);
 
@@ -199,6 +211,35 @@ describe('SuggestionService', () => {
     expect(
       (await service.getStoredSuggestions('character_gender', STORY_ID)).map((row) => row.value),
     ).toEqual(['A']);
+  });
+
+  it('names both characters in a relation-type usage', async () => {
+    const service = createSuggestionService(database.db);
+    await database.db.insert(schema.characters).values([
+      { id: 'ada', storyId: STORY_ID, name: 'Ada', ...base },
+      { id: 'grace', storyId: STORY_ID, name: 'Grace', ...base },
+    ]);
+    await database.db.insert(schema.characterRelations).values({
+      id: 'ada-grace',
+      storyId: STORY_ID,
+      character1Id: 'ada',
+      character2Id: 'grace',
+      relationType: 'mentor',
+      ...base,
+    });
+
+    // A relation has no title of its own: the usage names both endpoints instead.
+    expect(await service.getSuggestionUsages('characterRelation_type', STORY_ID, 'mentor')).toEqual(
+      [
+        expect.objectContaining({
+          entityType: 'CharacterRelation',
+          id: 'ada-grace',
+          title: 'Ada ↔ Grace',
+          characterIds: ['ada', 'grace'],
+          characterNames: ['Ada', 'Grace'],
+        }),
+      ],
+    );
   });
 
   it('renames native usages through the services that own each entity', async () => {
@@ -535,6 +576,17 @@ describe('SeeAlsoRelationService', () => {
     ]);
     await expect(service.addSeeAlsoLink(USER_ID, STORY_ID, ada, ada)).rejects.toThrow('cannot be');
   });
+
+  it('reports a missing or removed link on removal instead of throwing', async () => {
+    const service = createSeeAlsoRelationService(database.db);
+    const ada = { entityType: 'Character' as const, entityId: 'ada' };
+    const atlas = { entityType: 'Location' as const, entityId: 'atlas' };
+    const relation = await service.addSeeAlsoLink(USER_ID, STORY_ID, ada, atlas);
+
+    expect(await service.removeSeeAlsoLink(USER_ID, relation.id)).toBe(true);
+    expect(await service.removeSeeAlsoLink(USER_ID, relation.id)).toBe(false);
+    expect(await service.removeSeeAlsoLink(USER_ID, 'missing')).toBe(false);
+  });
 });
 
 describe('GalleryRelationService', () => {
@@ -574,6 +626,29 @@ describe('TagRelationService', () => {
       (await service.getTagsForEntity(STORY_ID, 'char-1', 'Character')).map((tag) => tag.id).sort(),
     ).toEqual(['tag-a', 'tag-b']);
     expect(await database.db.select().from(schema.tagRelations).all()).toHaveLength(2);
+  });
+
+  it('lists the live relations of a tag and stays quiet on duplicate or missing operations', async () => {
+    const service = createTagRelationService(database.db);
+    await database.db
+      .insert(schema.tags)
+      .values({ id: 'tag-a', storyId: STORY_ID, name: 'A', ...base });
+
+    await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+    // A second add of the same live link is a no-op, not a duplicate row or operation.
+    await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+    expect(await database.db.select().from(schema.tagRelations).all()).toHaveLength(1);
+
+    expect(
+      (await service.getRelationsForTag(STORY_ID, 'tag-a')).map((row) => row.relationId),
+    ).toEqual(['char-1']);
+
+    // Removing a link that was never there warns instead of logging a phantom operation.
+    await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-2', 'Character', 'tag-a');
+    expect(await database.db.query.operationLogs.findMany()).toHaveLength(1);
+
+    await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+    expect(await service.getRelationsForTag(STORY_ID, 'tag-a')).toEqual([]);
   });
 });
 

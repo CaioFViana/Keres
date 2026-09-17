@@ -376,6 +376,18 @@ describe('POST /sync/:storyId', () => {
     ]);
   });
 
+  it('applies an operation carrying a valid past timestamp', async () => {
+    const { data } = await push(ana.token, storyId, [
+      {
+        ...createCharacter(newId(), 'Do passado'),
+        operationTime: new Date(Date.now() - 60_000).toISOString(),
+      },
+    ]);
+
+    expect(data.conflicts).toEqual([]);
+    expect(data.applied).toHaveLength(1);
+  });
+
   it('rejects an invalid operation timestamp before a handler can persist an invalid date', async () => {
     const { status } = await push(ana.token, storyId, [
       { ...createCharacter(newId(), 'Tempo inválido'), operationTime: 'not-a-date' },
@@ -552,6 +564,29 @@ describe('GET /sync/:storyId/pull', () => {
     expect(update.changes).not.toHaveProperty('storyId');
     expect(deletion).toMatchObject({ type: 'delete', version: 3, operationId: expect.any(String) });
     expect(deletion.data).toBeUndefined();
+  });
+
+  it('falls back to the log position for rows written before entity versions existed', async () => {
+    const firstId = newId();
+    const secondId = newId();
+    await push(ana.token, storyId, [createCharacter(firstId, 'Keres')]);
+    const { data: second } = await push(ana.token, storyId, [createCharacter(secondId, 'Nyx')]);
+    await db
+      .update(operationLog)
+      .set({ entityVersion: null })
+      .where(eq(operationLog.id, second.applied[0].operationId));
+
+    const { data } = await pull(ana.token, storyId, 0);
+    const updates = data.updates.filter(
+      (entry: { entity: string; id: string }) => entry.entity === 'Character',
+    );
+
+    expect(updates.find((entry: { id: string }) => entry.id === firstId)).toMatchObject({
+      version: 1,
+    });
+    expect(updates.find((entry: { id: string }) => entry.id === secondId)).toMatchObject({
+      version: 2,
+    });
   });
 
   it('publishes legacy favorites exactly once when a story becomes public', async () => {
@@ -1168,5 +1203,22 @@ describe('sync authorization hardening', () => {
     expect(deletion.data.conflicts).toEqual([
       expect.objectContaining({ entity: 'Comment', entityId: commentId, reason: 'unauthorized' }),
     ]);
+  });
+});
+
+describe('sync rate limiting', () => {
+  it('refuses push and pull with 429 once the per-user window is exhausted', async () => {
+    // 120 attempts per minute per user, shared by push and pull: burn the window on
+    // the cheapest call (an empty pull), then watch both doors close on the same key.
+    for (let i = 0; i < 120; i += 1) {
+      const { status } = await pull(ana.token, storyId, 0);
+      expect(status).not.toBe(429);
+    }
+
+    const overflowPush = await push(ana.token, storyId, []);
+    expect(overflowPush.status).toBe(429);
+
+    const overflowPull = await pull(ana.token, storyId, 0);
+    expect(overflowPull.status).toBe(429);
   });
 });

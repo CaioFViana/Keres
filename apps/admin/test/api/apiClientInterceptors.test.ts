@@ -131,6 +131,12 @@ describe('response interceptor', () => {
     await expect(apiClient.get('/admin/users')).rejects.toThrow('Network Error');
   });
 
+  it('never rejects with an empty message', async () => {
+    respondWithNetworkFailure('');
+
+    await expect(apiClient.get('/admin/users')).rejects.toThrow('Unexpected error.');
+  });
+
   it('always rejects with a real Error, never the raw axios object', async () => {
     respondWith({ status: 500, data: { message: 'Boom.' } });
 

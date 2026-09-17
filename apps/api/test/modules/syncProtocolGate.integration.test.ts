@@ -4,7 +4,7 @@ import {
   SYNC_PROTOCOL_VERSION,
 } from '@keres/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newId, registerUser, request, type TestUser } from '../helpers/app';
+import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 /**
@@ -66,6 +66,20 @@ describe('a client that cannot be served', () => {
   it('is refused when it announces nothing at all', async () => {
     const { status } = await pull(null);
     expect(status).toBe(426);
+  });
+
+  it('names the missing protocol when the header is absent entirely', async () => {
+    // The `request` helper always sends the header (empty at best), so a truly absent
+    // header needs a raw request - the same `app.handle` path the health suites use.
+    const app = await getApp();
+    const response = await app.handle(
+      new Request(`http://localhost/api/sync/${storyId}/pull?lastOperationVersion=0`, {
+        headers: { authorization: `Bearer ${ana.token}` },
+      }),
+    );
+
+    expect(response.status).toBe(426);
+    expect(JSON.stringify(await response.json())).toContain('(none)');
   });
 
   it('is refused when it is older than the oldest supported', async () => {

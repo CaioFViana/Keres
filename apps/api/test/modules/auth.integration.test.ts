@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { softDeleteUser, truncateAll } from '../helpers/database';
+import { hardDeleteUser, softDeleteUser, truncateAll } from '../helpers/database';
 import { newId, registerUser, request } from '../helpers/app';
 
 beforeEach(truncateAll);
@@ -177,6 +177,19 @@ describe('POST /auth/refresh', () => {
     expect(data.message).toBe('Refresh token not found');
   });
 
+  it('reads the refresh token from the session cookie when the body has none', async () => {
+    const user = await registerUser('ana');
+
+    const { status, data } = await request('POST', '/auth/refresh', {
+      body: {},
+      headers: { cookie: `refresh_token=${user.refreshToken}` },
+    });
+
+    expect(status).toBe(200);
+    expect(data.username).toBe('ana');
+    expect(typeof data.accessToken).toBe('string');
+  });
+
   it('rejects a malformed refresh token', async () => {
     const { status, data } = await request('POST', '/auth/refresh', {
       body: { refreshToken: 'nao-e-um-jwt' },
@@ -306,6 +319,64 @@ describe('POST /auth/forgot-password', () => {
     expect(status).toBe(401);
     expect(data.message).toBe('Invalid username or recovery code.');
   });
+
+  it('rejects a request whose fields fail validation', async () => {
+    await registerUser('ana');
+
+    const { status } = await request('POST', '/auth/forgot-password', {
+      body: { username: 'ana', recoveryCode: 'AAAAA-BBBBB', newPassword: 'curta' },
+    });
+
+    expect(status).toBe(400);
+  });
+
+  it('locks out further attempts after 5 failures, even with the right code on the 6th', async () => {
+    // Same singleton-limiter reasoning as the login lockout test: a unique username keeps
+    // this count isolated from every other test in the file.
+    const user = await registerUser();
+    const { data: batch } = await request('PUT', '/user/recovery-codes', {
+      token: user.token,
+      body: { currentPassword: user.password },
+    });
+    const realCode: string = batch.recoveryCodes[0];
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { status } = await request('POST', '/auth/forgot-password', {
+        body: {
+          username: user.username,
+          recoveryCode: 'XXXXX-XXXXX',
+          newPassword: 'nova-senha-123',
+        },
+      });
+      expect(status).toBe(401);
+    }
+
+    const { status } = await request('POST', '/auth/forgot-password', {
+      body: { username: user.username, recoveryCode: realCode, newPassword: 'nova-senha-123' },
+    });
+
+    expect(status).toBe(401);
+  });
+
+  it('lets only one of two concurrent redemptions of the same code through', async () => {
+    const user = await registerUser();
+    const { data: batch } = await request('PUT', '/user/recovery-codes', {
+      token: user.token,
+      body: { currentPassword: user.password },
+    });
+    const redeem = () =>
+      request('POST', '/auth/forgot-password', {
+        body: {
+          username: user.username,
+          recoveryCode: batch.recoveryCodes[0],
+          newPassword: 'nova-senha-123',
+        },
+      });
+
+    const [first, second] = await Promise.all([redeem(), redeem()]);
+
+    expect([first.status, second.status].sort()).toEqual([200, 401]);
+  });
 });
 
 describe('authentication guard', () => {
@@ -358,6 +429,15 @@ describe('GET /auth/me', () => {
 
   it('rejects a missing session', async () => {
     const { status } = await request('GET', '/auth/me');
+
+    expect(status).toBe(401);
+  });
+
+  it('rejects a token whose account no longer exists', async () => {
+    const user = await registerUser('ana');
+    await hardDeleteUser(user.userId);
+
+    const { status } = await request('GET', '/auth/me', { token: user.token });
 
     expect(status).toBe(401);
   });

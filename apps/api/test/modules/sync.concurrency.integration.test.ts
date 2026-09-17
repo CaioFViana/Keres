@@ -283,6 +283,24 @@ describe('SyncService defensive protocol paths', () => {
     ]);
   });
 
+  it('treats an update without an id as a lookup for nothing rather than crashing', async () => {
+    const isolatedService = new SyncService();
+
+    const result = await isolatedService.processAndRecordUpdates(ana.userId, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        changes: { name: 'Sem id', version: 1 },
+        clientOperationId: 'local-sem-id',
+      } as never,
+    ]);
+
+    expect(result.applied).toEqual([]);
+    expect(result.conflicts).toEqual([
+      expect.objectContaining({ entityId: '', reason: 'not_found' }),
+    ]);
+  });
+
   it('contains handler validation failures as conflicts instead of aborting unrelated sync work', async () => {
     const isolatedService = new SyncService();
     const invalidId = newId();

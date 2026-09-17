@@ -716,4 +716,47 @@ describe('packs from a server', () => {
       await createPackService(database.db).getPackForUpload('01ARZ3NDEKTSV4RRFFQ69G5FZZ'),
     ).toBeNull();
   });
+
+  it('tolerates a corrupt payload instead of breaking the listing or the upload', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    await seedStructure();
+    const service = createPackService(database.db);
+    const packId = await service.createPack({
+      sourceStoryId: TEST_STORY_ID,
+      name: 'Corrupt',
+      selection: { ...ALL_OFF, tags: true },
+    });
+    await database.db
+      .update(schema.packs)
+      .set({ content: 'not-json{{{' })
+      .where(eq(schema.packs.id, packId));
+
+    // The listing shows the pack with empty counts; the upload refuses it quietly.
+    const [listed] = await service.listPacks();
+    expect(listed).toMatchObject({ id: packId, name: 'Corrupt' });
+    expect(listed?.counts).toMatchObject({ tags: 0, stats: 0, suggestions: 0 });
+    expect(await service.getPackForUpload(packId)).toBeNull();
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('renames a pack without touching its payload', async () => {
+    await seedStructure();
+    const service = createPackService(database.db);
+    const packId = await service.createPack({
+      sourceStoryId: TEST_STORY_ID,
+      name: 'Before',
+      selection: { ...ALL_OFF, tags: true },
+    });
+    const before = await database.db.query.packs.findFirst({
+      where: eq(schema.packs.id, packId),
+    });
+
+    await service.updatePackDetails(packId, { name: 'After', description: 'new blurb' });
+
+    const after = await database.db.query.packs.findFirst({
+      where: eq(schema.packs.id, packId),
+    });
+    expect(after).toMatchObject({ name: 'After', description: 'new blurb' });
+    expect(after?.content).toBe(before?.content);
+  });
 });

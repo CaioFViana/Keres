@@ -12,6 +12,7 @@ import {
   ServerUrlAlreadyRegisteredError,
 } from '../../src/services/ServerService';
 import { mediaFileService } from '../../src/services/MediaFileService';
+import { useStoryStore } from '../../src/state/storyStore';
 import { entityBase, seedLocalStory, TEST_NOW, TEST_STORY_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -20,6 +21,7 @@ let database: TestDatabase;
 beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database, { serverId: 'server', myRole: 'owner' });
+  useStoryStore.getState().setSelectedStory(null);
 });
 
 afterEach(() => database.close());
@@ -238,4 +240,36 @@ it('blocks removing a server with a live owner story, but purges that story afte
     await database.db.query.stories.findFirst({ where: eq(schema.stories.id, TEST_STORY_ID) }),
   ).toBeUndefined();
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith(TEST_STORY_ID);
+});
+
+it('deselects the open story when removing its server purges it', async () => {
+  await database.db.insert(schema.servers).values({
+    id: 'server',
+    idUser: 'local-user',
+    userName: 'Caio',
+    tag: 'caio',
+    name: 'Principal',
+    url: 'https://principal.test',
+    ...entityBase,
+  });
+  await database.db.insert(schema.stories).values({
+    id: 'writer-story',
+    userId: 'local-user',
+    title: 'Compartilhada',
+    type: 'linear',
+    favoriteBehavior: 'individual',
+    serverId: 'server',
+    myRole: 'writer',
+    ...entityBase,
+  });
+  // The owner row blocks the removal, so tombstone it first: only purged stories deselect.
+  await database.db
+    .update(schema.stories)
+    .set({ isDeleted: true, deletedAt: TEST_NOW })
+    .where(eq(schema.stories.id, TEST_STORY_ID));
+  useStoryStore.getState().setSelectedStory({ id: 'writer-story' } as never);
+
+  await createServerService(database.db).deleteServer('server');
+
+  expect(useStoryStore.getState().selectedStory).toBeNull();
 });

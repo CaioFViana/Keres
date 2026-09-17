@@ -131,6 +131,28 @@ describe('getAllFriendships', () => {
       ]),
     );
   });
+
+  it('returns an empty list when no friendships are stored', async () => {
+    await expect(service.getAllFriendships()).resolves.toEqual([]);
+  });
+
+  it('nulls the profile fields a cached user never set', async () => {
+    await seedUser('user-plain');
+    await seedFriendship('plain', { senderId: 'user-plain' });
+
+    const rows = await service.getAllFriendships();
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        id: 'plain',
+        otherUserId: 'user-plain',
+        otherUserTag: null,
+        otherUserAvatarColor: null,
+        otherUserAvatarIcon: null,
+        otherUserBio: null,
+      }),
+    ]);
+  });
 });
 
 describe('remote friendship actions', () => {

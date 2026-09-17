@@ -8,6 +8,7 @@ import {
   spatialBounds,
   spatialNativeSurface,
   spatialOverlayNeedsSync,
+  spatialOverlayScaleDrifted,
   spatialRectIntersects,
   spatialRenderWindow,
   spatialScreenToWorld,
@@ -106,6 +107,21 @@ describe('spatial canvas geometry', () => {
         { x: 0, y: 0, width: 0, height: 0 },
       ),
     ).toBe(true);
+  });
+
+  it('tolerates a pinch inside the scale drift, since the bitmap barely grows', () => {
+    expect(spatialOverlayScaleDrifted(1.1, 1)).toBe(false);
+    expect(spatialOverlayScaleDrifted(0.9, 1)).toBe(false);
+  });
+
+  it('re-syncs once a pinch drifts the scale past the threshold', () => {
+    expect(spatialOverlayScaleDrifted(1.3, 1)).toBe(true);
+    expect(spatialOverlayScaleDrifted(0.7, 1)).toBe(true);
+  });
+
+  it('re-syncs an overlay whose sync scale is missing or invalid', () => {
+    expect(spatialOverlayScaleDrifted(1, 0)).toBe(true);
+    expect(spatialOverlayScaleDrifted(0, 1)).toBe(true);
   });
 });
 

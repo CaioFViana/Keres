@@ -369,32 +369,34 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         panHandlers={panHandlers}
         animatedTransform={animatedTransform}
       >
-        <Svg
-          width={width}
-          height={height}
-          pointerEvents="none"
-          style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
-        >
-          <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
-            {visibleEdges.map((edge) => (
-              <BoardEdgeView
-                key={edge.id}
-                edge={edge}
-                stroke={colors.text}
-                labelBackground={colors.background}
-              />
-            ))}
-            {connectionPath && (
-              <Path
-                d={connectionPath}
-                fill="none"
-                stroke={colors.primary}
-                strokeDasharray="6 4"
-                strokeWidth={2}
-              />
-            )}
-          </G>
-        </Svg>
+        {width > 0 && height > 0 && (
+          <Svg
+            width={renderWindow.width}
+            height={renderWindow.height}
+            pointerEvents="none"
+            style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
+          >
+            <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
+              {visibleEdges.map((edge) => (
+                <BoardEdgeView
+                  key={edge.id}
+                  edge={edge}
+                  stroke={colors.text}
+                  labelBackground={colors.background}
+                />
+              ))}
+              {connectionPath && (
+                <Path
+                  d={connectionPath}
+                  fill="none"
+                  stroke={colors.primary}
+                  strokeDasharray="6 4"
+                  strokeWidth={2}
+                />
+              )}
+            </G>
+          </Svg>
+        )}
         {stackedNodes.map((node) => {
           const meta = titles[node.id];
           return (

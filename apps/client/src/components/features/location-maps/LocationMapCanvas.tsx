@@ -336,19 +336,19 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             />
           ))}
         </View>
-        <LocationMapConnectionLayer
-          width={width}
-          height={height}
-          content={layoutContent}
-          connections={connections}
-          contains={contains}
-          connectionDrag={connectionDrag}
-          originX={svgOrigin.x}
-          originY={svgOrigin.y}
-          renderWindow={renderWindow}
-          background={colors.background}
-          primary={colors.primary}
-        />
+        {width > 0 && height > 0 && (
+          <LocationMapConnectionLayer
+            content={layoutContent}
+            connections={connections}
+            contains={contains}
+            connectionDrag={connectionDrag}
+            originX={svgOrigin.x}
+            originY={svgOrigin.y}
+            renderWindow={renderWindow}
+            background={colors.background}
+            primary={colors.primary}
+          />
+        )}
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
           {visiblePoints.map(({ kind, point }) => (
             <LocationMapNodeView

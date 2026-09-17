@@ -11,6 +11,10 @@ module.exports = {
   // looking for tests in there too.
   testMatch: ['<rootDir>/test/**/*.test.ts', '<rootDir>/test/**/*.test.tsx'],
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
+  // Mirrors the `@/*` path alias in tsconfig.json so tests can import components that use it.
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

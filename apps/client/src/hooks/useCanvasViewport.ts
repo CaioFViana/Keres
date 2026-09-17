@@ -5,6 +5,7 @@ import { Animated, PanResponder } from 'react-native';
 import {
   spatialNativeSurface,
   spatialOverlayNeedsSync,
+  spatialOverlayScaleDrifted,
   spatialRenderWindow,
   type SpatialPoint,
   type SpatialRect,
@@ -78,6 +79,8 @@ interface OverlayState {
   height: number;
   /** World-space window the overlay covers; canvases cull and clip against it. */
   renderWindow: SpatialRect;
+  /** Camera scale the overlay was synced at; a pinch drifting past it re-syncs. */
+  scale: number;
 }
 
 /**
@@ -130,6 +133,7 @@ export function useCanvasViewport(
     origin: { x: bounds?.x ?? 0, y: bounds?.y ?? 0 },
     width: 0,
     height: 0,
+    scale: 0,
     renderWindow: bounds
       ? {
           x: bounds.x ?? 0,
@@ -197,6 +201,7 @@ export function useCanvasViewport(
         !force &&
         current.width === surface.width &&
         current.height === surface.height &&
+        !spatialOverlayScaleDrifted(scale, current.scale) &&
         !spatialOverlayNeedsSync(visibleWorldRect(), currentWindow)
       ) {
         return;
@@ -210,6 +215,7 @@ export function useCanvasViewport(
         origin,
         width: surface.width,
         height: surface.height,
+        scale,
         renderWindow: spatialRenderWindow(origin, surface.width, surface.height, scale),
       };
       overlayRef.current = next;
@@ -528,7 +534,11 @@ export function useCanvasViewport(
       if (!dragging) stopAutoPan();
     },
     getTransform: () => ({ ...transform.current }),
-    /** Viewport-sized overlay surface: the edges Svg size, never the document bounds. */
+    /**
+     * Viewport-sized overlay surface in screen pixels: the native bitmap budget (capped for the
+     * GPU), never the document bounds. The edges Svg itself is world-sized from `renderWindow` -
+     * handing it these screen pixels would clip every edge outside a scale-1.0 bitmap.
+     */
     width: overlay.width,
     height: overlay.height,
     /** World coordinates of the overlay's top-left corner. */

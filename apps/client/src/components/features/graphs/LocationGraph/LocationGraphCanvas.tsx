@@ -94,25 +94,27 @@ const LocationGraphCanvas = forwardRef<LocationGraphCanvasHandle, LocationGraphC
         panHandlers={panHandlers}
         animatedTransform={animatedTransform}
       >
-        <Svg
-          width={width}
-          height={height}
-          style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
-        >
-          <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
-            {layout.edges.map((edge) => (
-              <Path
-                key={edge.id}
-                d={edge.path}
-                fill="none"
-                stroke={edge.relationType === 'contains' ? colors.primary : colors.textSecondary}
-                strokeWidth={edge.relationType === 'contains' ? 1.8 : 1.4}
-                strokeOpacity={edge.relationType === 'contains' ? 0.9 : 0.65}
-                strokeDasharray={edge.relationType === 'connected_to' ? '6,4' : undefined}
-              />
-            ))}
-          </G>
-        </Svg>
+        {width > 0 && height > 0 && (
+          <Svg
+            width={renderWindow.width}
+            height={renderWindow.height}
+            style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
+          >
+            <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
+              {layout.edges.map((edge) => (
+                <Path
+                  key={edge.id}
+                  d={edge.path}
+                  fill="none"
+                  stroke={edge.relationType === 'contains' ? colors.primary : colors.textSecondary}
+                  strokeWidth={edge.relationType === 'contains' ? 1.8 : 1.4}
+                  strokeOpacity={edge.relationType === 'contains' ? 0.9 : 0.65}
+                  strokeDasharray={edge.relationType === 'connected_to' ? '6,4' : undefined}
+                />
+              ))}
+            </G>
+          </Svg>
+        )}
 
         {visibleNodes.map((node) => {
           const isSelected = node.id === selectedNodeId;

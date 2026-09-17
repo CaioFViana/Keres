@@ -25,8 +25,6 @@ export interface LocationMapContains {
 }
 
 interface Props {
-  width: number;
-  height: number;
   content: LocationMapContentType;
   connections: LocationMapConnection[];
   contains: LocationMapContains[];
@@ -180,8 +178,6 @@ function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number
 }
 
 const LocationMapConnectionLayer: React.FC<Props> = ({
-  width,
-  height,
   content,
   connections,
   contains,
@@ -354,8 +350,8 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
 
   return (
     <Svg
-      width={width}
-      height={height}
+      width={renderWindow.width}
+      height={renderWindow.height}
       pointerEvents="none"
       style={[styles.canvas, { left: originX, top: originY, zIndex: 1 }]}
     >

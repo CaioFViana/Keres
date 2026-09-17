@@ -95,54 +95,56 @@ const CharacterRelationGraphCanvas = forwardRef<
       panHandlers={panHandlers}
       animatedTransform={animatedTransform}
     >
-      <Svg
-        width={width}
-        height={height}
-        style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
-      >
-        <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
-          {layout.edges.map((edge) => (
-            <Path
-              key={edge.id}
-              d={edge.path}
-              fill="none"
-              stroke={colors.border}
-              strokeWidth={1.6}
-              strokeOpacity={0.85}
-            />
-          ))}
+      {width > 0 && height > 0 && (
+        <Svg
+          width={renderWindow.width}
+          height={renderWindow.height}
+          style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
+        >
+          <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
+            {layout.edges.map((edge) => (
+              <Path
+                key={edge.id}
+                d={edge.path}
+                fill="none"
+                stroke={colors.border}
+                strokeWidth={1.6}
+                strokeOpacity={0.85}
+              />
+            ))}
 
-          {showEdgeLabels &&
-            layout.edges.map((edge) => {
-              const label = edge.label.trim();
-              if (!label) return null;
-              const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
-              const width = clipped.length * 6.2 + 10;
-              return (
-                <React.Fragment key={`label-${edge.id}`}>
-                  <SvgRect
-                    x={edge.labelPosition.x - width / 2}
-                    y={edge.labelPosition.y - 8}
-                    width={width}
-                    height={16}
-                    rx={4}
-                    fill={colors.background}
-                    fillOpacity={0.92}
-                  />
-                  <SvgText
-                    x={edge.labelPosition.x}
-                    y={edge.labelPosition.y + 4}
-                    fontSize={10}
-                    textAnchor="middle"
-                    fill={colors.textSecondary}
-                  >
-                    {clipped}
-                  </SvgText>
-                </React.Fragment>
-              );
-            })}
-        </G>
-      </Svg>
+            {showEdgeLabels &&
+              layout.edges.map((edge) => {
+                const label = edge.label.trim();
+                if (!label) return null;
+                const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
+                const width = clipped.length * 6.2 + 10;
+                return (
+                  <React.Fragment key={`label-${edge.id}`}>
+                    <SvgRect
+                      x={edge.labelPosition.x - width / 2}
+                      y={edge.labelPosition.y - 8}
+                      width={width}
+                      height={16}
+                      rx={4}
+                      fill={colors.background}
+                      fillOpacity={0.92}
+                    />
+                    <SvgText
+                      x={edge.labelPosition.x}
+                      y={edge.labelPosition.y + 4}
+                      fontSize={10}
+                      textAnchor="middle"
+                      fill={colors.textSecondary}
+                    >
+                      {clipped}
+                    </SvgText>
+                  </React.Fragment>
+                );
+              })}
+          </G>
+        </Svg>
+      )}
 
       {visibleNodes.map((node) => {
         const isSelected = node.id === selectedNodeId;

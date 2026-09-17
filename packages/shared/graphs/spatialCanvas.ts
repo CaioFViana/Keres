@@ -39,6 +39,13 @@ export const SPATIAL_OVERSCAN_SCREENS = 1;
  * event and re-rendering the edge layer mid-pan.
  */
 export const SPATIAL_OVERLAY_SYNC_MARGIN = 0.25;
+/**
+ * How far the live camera scale may drift from the scale the overlay was synced at before the
+ * overlay re-covers the camera. The edges SVG is sized in world units (the render window), so its
+ * native bitmap grows with the live scale; without this bound a deep pinch-zoom would inflate the
+ * bitmap past the GPU texture limit the 2048 cap exists to respect.
+ */
+export const SPATIAL_OVERLAY_SYNC_MAX_SCALE_DRIFT = 1.25;
 
 export function spatialRectIntersects(left: SpatialRect, right: SpatialRect): boolean {
   return (
@@ -182,6 +189,20 @@ export function spatialOverlayNeedsSync(
     visible.x + visible.width > overlay.x + overlay.width - marginX ||
     visible.y + visible.height > overlay.y + overlay.height - marginY
   );
+}
+
+/**
+ * True when the live camera scale has drifted too far from the scale the overlay was synced at,
+ * so the overlay must re-cover the camera to keep its native bitmap near the viewport-sized
+ * surface. Panning alone never trips this: only zoom does.
+ */
+export function spatialOverlayScaleDrifted(
+  liveScale: number,
+  syncedScale: number,
+  maxDrift = SPATIAL_OVERLAY_SYNC_MAX_SCALE_DRIFT,
+): boolean {
+  if (!(syncedScale > 0) || !(liveScale > 0)) return true;
+  return liveScale > syncedScale * maxDrift || liveScale < syncedScale / maxDrift;
 }
 
 /**

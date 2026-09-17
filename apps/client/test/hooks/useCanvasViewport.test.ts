@@ -591,6 +591,35 @@ describe('the viewport-sized overlay', () => {
     expect(height).toBe(900);
   });
 
+  it('leaves the overlay alone for a zoom inside the scale drift', async () => {
+    const { result, ref } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+    const overlayBefore = result.current.renderWindow;
+
+    await act(async () => {
+      ref.current!.zoomBy(1.1);
+    });
+
+    expect(result.current.renderWindow).toBe(overlayBefore);
+  });
+
+  it('re-syncs the overlay once a zoom drifts the scale past the threshold', async () => {
+    const { result, ref } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });
+    const overlayBefore = result.current.renderWindow;
+
+    await act(async () => {
+      ref.current!.zoomBy(2);
+    });
+
+    // The edges SVG is sized in world units, so without this re-sync its native bitmap would
+    // double with the zoom and eventually blow past the GPU texture limit.
+    expect(result.current.renderWindow).not.toBe(overlayBefore);
+    const { svgOrigin, width, height, renderWindow } = result.current;
+    const { scale } = transformOf(result.current);
+    expect(renderWindow).toEqual(spatialRenderWindow(svgOrigin, width, height, scale));
+    expect(renderWindow.width * scale).toBeCloseTo(width, 3);
+    expect(renderWindow.height * scale).toBeCloseTo(height, 3);
+  });
+
   it('keeps the live pinch scale out of React state until the gesture ends', async () => {
     const create = jest.spyOn(PanResponder, 'create');
     const { result } = await renderCanvas(BOUNDS, VIEWPORT, { clampMode: 'none' });

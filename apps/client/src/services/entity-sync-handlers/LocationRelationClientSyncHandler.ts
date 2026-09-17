@@ -150,7 +150,9 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
       id: update.id,
       storyId,
       createdAt: new Date(relationData.createdAt),
-      updatedAt: new Date(relationData.updatedAt),
+      // A create without a timestamp still wins recency by "now" above; the row must store the
+      // same fallback instead of crashing on the missing date.
+      updatedAt: relationData.updatedAt ? new Date(relationData.updatedAt) : new Date(),
       deletedAt: relationData.deletedAt ? new Date(relationData.deletedAt) : null,
     });
     console.log(`Applied create for LocationRelation ${update.id} in story ${storyId}`);

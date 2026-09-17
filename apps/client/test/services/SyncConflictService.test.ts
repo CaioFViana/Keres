@@ -5,6 +5,7 @@ import { AttributeType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import {
+  applyReorderToLocalDb,
   createSyncConflictService,
   findContestedFields,
   mergeLocalOperationPayloads,
@@ -1186,5 +1187,375 @@ describe('resolveKeepServerAndCloneBoard', () => {
       content: { nodes: [], edges: [] },
       version: 3,
     });
+  });
+
+  it('refuses to clone when there is no conflict to clone from', async () => {
+    await expect(
+      service.resolveKeepServerAndCloneBoard('nao-existe', 'local-user', 'Copy'),
+    ).rejects.toThrow('Board clone is only available for a Board content conflict.');
+  });
+
+  it('refuses to clone a conflict that is not about a Board', async () => {
+    await seedCharacter();
+    await service.recordConflict(baseConflict());
+    const [pending] = await service.getPendingConflicts();
+
+    await expect(
+      service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Copy'),
+    ).rejects.toThrow('Board clone is only available for a Board content conflict.');
+  });
+
+  /**
+   * The local drawing usually arrives in the conflict's `localValues`, but a conflict recorded from
+   * an older client (or from a delete) may not carry it. The row itself still has the drawing, and
+   * the clone must take it from there rather than saving an empty board.
+   */
+  it('falls back to the stored drawing when the conflict carries no content', async () => {
+    await database.db.insert(schema.boards).values({
+      id: 'board-1',
+      storyId: STORY_ID,
+      name: 'Royal family',
+      description: null,
+      content: {
+        nodes: [{ id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null }],
+        edges: [],
+      },
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+      isDeleted: false,
+    });
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'Board',
+        entityId: 'board-1',
+        localValues: { name: 'Royal family' },
+        serverValues: { name: 'Royal family', content: { nodes: [], edges: [] }, version: 3 },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Royal family (copy)');
+
+    const rows = await database.db.query.boards.findMany({
+      where: eq(schema.boards.storyId, STORY_ID),
+    });
+    const copy = rows.find((row) => row.id !== 'board-1');
+    expect(copy).toMatchObject({
+      name: 'Royal family (copy)',
+      content: { nodes: [{ id: '01ABCDEF', title: 'Mine' }], edges: [] },
+    });
+  });
+
+  /**
+   * Neither the conflict nor the database has a drawing: the board row itself is gone (deleted on
+   * another device and the delete already applied here). Cloning must still produce a valid empty
+   * board, not crash on the missing content.
+   */
+  it('clones an empty board when the drawing exists nowhere', async () => {
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'Board',
+        entityId: 'board-missing',
+        localValues: { name: 'Royal family' },
+        serverValues: { name: 'Royal family', content: { nodes: [], edges: [] }, version: 3 },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Royal family (copy)');
+
+    const rows = await database.db.query.boards.findMany({
+      where: eq(schema.boards.storyId, STORY_ID),
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      name: 'Royal family (copy)',
+      content: { nodes: [], edges: [] },
+    });
+  });
+});
+
+/**
+ * A conflict row whose JSON columns no longer parse.
+ *
+ * The columns are written by this same service, so corrupt JSON means the database was touched
+ * from outside (a downgrade, a manual fix, disk corruption). Listing must degrade to the empty
+ * sides, never throw: the review screen is where the user goes to repair sync state, and it
+ * cannot itself be broken by that state.
+ */
+describe('a conflict row with unreadable JSON', () => {
+  it('lists it with empty sides instead of throwing', async () => {
+    await database.db.insert(schema.syncConflicts).values({
+      id: 'conflict-corrupt',
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: ENTITY_ID,
+      reason: 'version_conflict',
+      localOperationType: 'update',
+      localOperationIds: '[oops',
+      localValues: 'not json{{{',
+      serverValues: 'also bad',
+      clientVersion: 1,
+      serverVersion: 3,
+      message: null,
+      status: 'pending',
+      detectedAt: NOW,
+    });
+
+    const [pending] = await service.getPendingConflicts();
+
+    expect(pending).toMatchObject({
+      localValues: {},
+      serverValues: null,
+      localOperationIds: [],
+      contestedFields: [],
+    });
+  });
+});
+
+/**
+ * The two inputs `applyReorderToLocalDb` must ignore.
+ *
+ * An empty item list arrives from a server that accepted the reorder but has nothing to send
+ * back; an unknown entity arrives from a newer server speaking about a collection this build
+ * does not reorder. Both resolve through `resolveKeepServer` without writing anything.
+ */
+describe('reorder updates with nothing to apply', () => {
+  it('ignores an empty item list', async () => {
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: STORY_ID,
+      name: 'Capítulo 1',
+      index: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+
+    await expect(
+      applyReorderToLocalDb(database.db, { entity: 'Chapter', reorderItems: [] } as never, NOW),
+    ).resolves.toBeUndefined();
+
+    const chapter = await database.db.query.chapters.findFirst();
+    expect(chapter).toMatchObject({ index: 1, version: 1 });
+  });
+
+  it('ignores a reorder for an entity this build does not reorder', async () => {
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: STORY_ID,
+      name: 'Capítulo 1',
+      index: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+
+    await expect(
+      applyReorderToLocalDb(
+        database.db,
+        { entity: 'Scene', reorderItems: [{ id: 'x', newIndex: 9 }] } as never,
+        NOW,
+      ),
+    ).resolves.toBeUndefined();
+
+    const chapter = await database.db.query.chapters.findFirst();
+    expect(chapter).toMatchObject({ index: 1, version: 1 });
+  });
+});
+
+/**
+ * What a folded conflict keeps from the first recording.
+ *
+ * The second push only brings fresher information; when it carries no server side at all (a
+ * bare refusal with no versions), the values already stored stay. Overwriting them with null
+ * would blank the comparison the screen shows.
+ */
+describe('folding a conflict that brings no server side', () => {
+  it('keeps the stored server values and versions', async () => {
+    await service.recordConflict(
+      baseConflict({
+        serverValues: { name: 'Nome do servidor' },
+        clientVersion: 1,
+        serverVersion: 3,
+      }),
+    );
+
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: ENTITY_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'update',
+      localOperationIds: [],
+      localValues: { name: 'Mais novo' },
+    });
+
+    const pending = await service.getPendingConflicts();
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({
+      reason: 'concurrent_edit',
+      localValues: { name: 'Mais novo' },
+      serverValues: { name: 'Nome do servidor' },
+      clientVersion: 1,
+      serverVersion: 3,
+    });
+  });
+
+  it('stores a missing client version as null', async () => {
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: ENTITY_ID,
+      reason: 'version_conflict',
+      localOperationType: 'update',
+      localOperationIds: [],
+      localValues: { name: 'Meu nome' },
+      serverValues: { name: 'Nome do servidor' },
+      serverVersion: 3,
+    });
+
+    expect((await service.getPendingConflicts())[0].clientVersion).toBeNull();
+  });
+});
+
+/**
+ * Falling back through the version chain.
+ *
+ * The server does not always send its version: on a bare refusal `serverVersion` is null and
+ * the only version available may be the one embedded in `serverValues` - or none at all, in
+ * which case the entity restarts at 1. Each fallback writes a different local version, and
+ * writing the wrong one either conflicts again immediately or silently forks the history.
+ */
+describe('resolving without a server version', () => {
+  it('restarts at version 1 when the server has neither the entity nor a version', async () => {
+    await seedCharacter();
+    await service.recordConflict(
+      baseConflict({ reason: 'not_found', serverValues: null, serverVersion: null }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ isDeleted: true, version: 1 });
+  });
+
+  it('takes the version embedded in the server values when no top-level version came', async () => {
+    await seedCharacter({ name: 'Meu nome' });
+    await service.recordConflict(
+      baseConflict({
+        serverValues: { name: 'Nome do servidor', version: 5 },
+        serverVersion: null,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ name: 'Nome do servidor', version: 5 });
+  });
+
+  it('restarts at version 1 when no version came from anywhere', async () => {
+    await seedCharacter({ name: 'Meu nome' });
+    await service.recordConflict(
+      baseConflict({ serverValues: { name: 'Nome do servidor' }, serverVersion: null }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ name: 'Nome do servidor', version: 1 });
+  });
+
+  it('rebases a reorder onto zero when the server sent no version', async () => {
+    const opId = await seedOperation('op-reorder', {
+      operationType: 'reorder',
+      entityType: 'Chapter',
+      entityId: 'chapter-1',
+      payload: JSON.stringify({ reorderItems: [{ id: 'scene-a', newIndex: 1 }], version: 1 }),
+    });
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Chapter',
+      entityId: 'chapter-1',
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: [opId],
+      localValues: { reorderItems: [{ id: 'scene-a', newIndex: 1 }] },
+      serverValues: { reorderItems: [{ id: 'scene-a', newIndex: 1 }] },
+      clientVersion: 1,
+      serverVersion: null,
+    });
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepLocal(pending.id);
+
+    const op = await readOperation(opId);
+    expect(op!.conflictState).toBeNull();
+    expect(JSON.parse(op!.payload).version).toBe(1);
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+});
+
+/**
+ * Keeping a create for an entity this client does not store.
+ *
+ * The update path for an unknown entity is covered above; the create path additionally reads
+ * back the local row to rebuild the payload, and that read finds no table. The resent create
+ * then carries only the conflict's own values - still a valid attempt, still versioned from
+ * zero.
+ */
+describe('keeping a create for an unknown entity', () => {
+  it('resends the conflict values as a create without reading any table', async () => {
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'SomethingFromTheFuture',
+        entityId: 'x-1',
+        localOperationType: 'create',
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepLocal(pending.id);
+
+    const [queued] = await pushableOperations();
+    expect(queued.operationType).toBe('create');
+    expect(JSON.parse(queued.payload)).toMatchObject({
+      name: 'Meu nome',
+      isDeleted: false,
+      version: 1,
+    });
+    const [row] = await database.db.query.syncConflicts.findMany();
+    expect(row).toMatchObject({ status: 'resolved', resolution: 'keep_local' });
+  });
+});
+
+/**
+ * Rebasing onto a story row that is gone.
+ *
+ * The story can be deleted locally while its conflicts are still pending (delete the story on
+ * this device, then open the review sheet from a stale notification). The rebased operation
+ * cannot take the user or the next version from a row that is not there, so it falls back to
+ * the local user and version 1 rather than failing the resolution.
+ */
+describe('keeping local when the story row is gone', () => {
+  it('records the rebased operation as the local user at version 1', async () => {
+    await seedCharacter();
+    await service.recordConflict(baseConflict());
+    await database.db.delete(schema.stories).where(eq(schema.stories.id, STORY_ID));
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepLocal(pending.id);
+
+    const [queued] = await pushableOperations();
+    expect(queued).toMatchObject({ userId: 'local_user', operationVersion: 1 });
+    expect(await service.getPendingConflicts()).toEqual([]);
   });
 });

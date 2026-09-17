@@ -4,6 +4,7 @@ import { db } from '../../src/db';
 import { stories, users } from '../../src/db/schema';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
+import { StoryArcSyncHandler } from '../../src/services/entity-sync-handlers/StoryArcSyncHandler';
 import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyncHandler';
 import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
 import { PlotSyncHandler } from '../../src/services/entity-sync-handlers/PlotSyncHandler';
@@ -105,6 +106,14 @@ const cases: Array<
     { name: 'Revised plot' },
     'name',
     'Revised plot',
+  ],
+  [
+    'StoryArc',
+    () => new StoryArcSyncHandler(),
+    { title: 'Ato I' },
+    { title: 'Ato II' },
+    'title',
+    'Ato II',
   ],
 ];
 
@@ -218,4 +227,79 @@ describe('simple sync entity handlers', () => {
       expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true, version: 3 });
     },
   );
+});
+
+describe('StoryArc ordering and defaults', () => {
+  const create = (id: string, data: Record<string, unknown>) =>
+    new StoryArcSyncHandler().create(userId, storyId, {
+      type: 'create',
+      entity: 'StoryArc',
+      id,
+      data,
+    } as CreateStoryUpdate);
+
+  it('makes the first arc of a story the default, ordered at zero', async () => {
+    const handler = new StoryArcSyncHandler();
+    const id = newId();
+
+    await create(id, { title: 'Ato I' });
+
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({
+      title: 'Ato I',
+      sortOrder: 0,
+      isDefault: true,
+    });
+  });
+
+  it('appends later arcs after the live ones, never as default', async () => {
+    const handler = new StoryArcSyncHandler();
+    const firstId = newId();
+    const secondId = newId();
+    await create(firstId, { title: 'Ato I' });
+
+    await create(secondId, { title: 'Ato II' });
+
+    expect(await handler.findByIdOrThrow(secondId)).toMatchObject({
+      sortOrder: 1,
+      isDefault: false,
+    });
+  });
+
+  it('honours an explicit position instead of appending', async () => {
+    const handler = new StoryArcSyncHandler();
+    const id = newId();
+
+    await create(id, { title: 'Prólogo', sortOrder: 5 });
+
+    expect((await handler.findByIdOrThrow(id)).sortOrder).toBe(5);
+  });
+
+  it('stores the presentation fields the client sent', async () => {
+    const handler = new StoryArcSyncHandler();
+    const id = newId();
+
+    await create(id, {
+      title: 'Ato I',
+      description: 'O começo',
+      color: '#ff0000',
+      icon: 'swords',
+      themeOverride: 'dark',
+    });
+
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({
+      description: 'O começo',
+      color: '#ff0000',
+      icon: 'swords',
+      themeOverride: 'dark',
+    });
+  });
+
+  it('refuses a second arc with an id that is already taken', async () => {
+    const id = newId();
+    await create(id, { title: 'Ato I' });
+
+    await expect(create(id, { title: 'Outro' })).rejects.toThrow(
+      `Conflict: StoryArc with ID ${id} already exists.`,
+    );
+  });
 });

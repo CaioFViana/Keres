@@ -64,6 +64,104 @@ describe('collaboration sync handlers', () => {
     );
   });
 
+  it('refuses comment work before a database is set', async () => {
+    const handler = new CommentClientSyncHandler();
+
+    await expect(handler.applyCreate(STORY_ID, createUpdate('Comment', 'c-1', {}))).rejects.toThrow(
+      /database not set/,
+    );
+  });
+
+  it('ignores comment operations addressed to another entity type', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'c-1', {}));
+    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'c-1', {}));
+    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'c-1'));
+
+    expect(await database.db.select().from(schema.comments).all()).toEqual([]);
+  });
+
+  it('refuses comment operations with no id or no changes', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Comment', data: {} } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'Comment',
+      changes: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Comment', id: 'c-1' } as never);
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Comment' } as never);
+
+    expect(await database.db.select().from(schema.comments).all()).toEqual([]);
+  });
+
+  it('stores a tombstone comment with its deletion date revived', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Comment', 'comment-9', {
+        entityType: 'Character',
+        entityId: 'character-1',
+        fieldKey: 'name',
+        authorUserId: 'author-1',
+        commentText: 'x',
+        criticality: 1,
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: true,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('comment-9');
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
+
+  it('revives the ISO dates a comment change carries', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Comment', 'comment-1', {
+        entityType: 'Character',
+        entityId: 'character-1',
+        fieldKey: 'name',
+        authorUserId: 'author-1',
+        commentText: 'old',
+        criticality: 1,
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Comment', 'comment-1', {
+        commentText: 'new',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('comment-1');
+    expect(row).toMatchObject({ commentText: 'new' });
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+  });
+
   it('syncs a user favorite idempotently without altering a separate favorite', async () => {
     const handler = new FavoriteClientSyncHandler();
     handler.setDb(database.db);
@@ -99,6 +197,123 @@ describe('collaboration sync handlers', () => {
     );
   });
 
+  it('refuses favorite work before a database is set', async () => {
+    const handler = new FavoriteClientSyncHandler();
+
+    await expect(
+      handler.applyCreate(STORY_ID, createUpdate('Favorite', 'f-1', {})),
+    ).rejects.toThrow(/database not set/);
+  });
+
+  it('ignores favorite operations addressed to another entity type', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'f-1', {}));
+    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'f-1', {}));
+    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'f-1'));
+
+    expect(await database.db.select().from(schema.favorites).all()).toEqual([]);
+  });
+
+  it('refuses favorite operations with no id or no changes', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Favorite', data: {} } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'Favorite',
+      changes: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Favorite', id: 'f-1' } as never);
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Favorite' } as never);
+
+    expect(await database.db.select().from(schema.favorites).all()).toEqual([]);
+  });
+
+  it('applies a favorite change and revives the ISO dates it carries', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Favorite', 'favorite-1', {
+        entityId: 'character-1',
+        entityType: 'Character',
+        userId: 'reader-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Favorite', 'favorite-1', {
+        entityId: 'character-2',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('favorite-1');
+    expect(row).toMatchObject({ entityId: 'character-2' });
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('applies a favorite change that carries no dates', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Favorite', 'favorite-1', {
+        entityId: 'character-1',
+        entityType: 'Character',
+        userId: 'reader-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Favorite', 'favorite-1', { entityId: 'character-2' }),
+    );
+
+    expect(await handler.getById('favorite-1')).toMatchObject({ entityId: 'character-2' });
+  });
+
+  it('stores a tombstone favorite with its deletion date revived', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Favorite', 'favorite-9', {
+        entityId: 'character-1',
+        entityType: 'Character',
+        userId: 'reader-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: true,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('favorite-9');
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
+
   it('uses the story context and unique relation key to make see-also pulls repeatable', async () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
@@ -129,6 +344,133 @@ describe('collaboration sync handlers', () => {
     expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([
       expect.objectContaining({ id: 'see-1', storyId: STORY_ID, entityBId: 'location-2' }),
     ]);
+  });
+
+  it('refuses see-also work before a database is set', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+
+    await expect(
+      handler.applyCreate(STORY_ID, createUpdate('SeeAlsoRelation', 'see-1', {})),
+    ).rejects.toThrow(/database not set/);
+  });
+
+  it('ignores see-also operations addressed to another entity type', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'see-1', {}));
+    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'see-1', {}));
+    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'see-1'));
+
+    expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([]);
+  });
+
+  it('refuses see-also operations with no id or no changes', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, {
+      type: 'create',
+      entity: 'SeeAlsoRelation',
+      data: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'SeeAlsoRelation',
+      changes: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'SeeAlsoRelation',
+      id: 'see-1',
+    } as never);
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'SeeAlsoRelation' } as never);
+
+    expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([]);
+  });
+
+  it('soft-deletes a see-also link, keeping the row so the tombstone survives', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('SeeAlsoRelation', 'see-1', {
+        entityAType: 'Character',
+        entityAId: 'character-1',
+        entityBType: 'Location',
+        entityBId: 'location-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyDelete(STORY_ID, deleteUpdate('SeeAlsoRelation', 'see-1'));
+
+    const row = await handler.getById('see-1');
+    expect(row).toMatchObject({ isDeleted: true });
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('stores a tombstone see-also link with its deletion date revived', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('SeeAlsoRelation', 'see-9', {
+        entityAType: 'Character',
+        entityAId: 'character-1',
+        entityBType: 'Location',
+        entityBId: 'location-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: true,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('see-9');
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
+
+  it('revives the ISO dates a see-also change carries', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('SeeAlsoRelation', 'see-1', {
+        entityAType: 'Character',
+        entityAId: 'character-1',
+        entityBType: 'Location',
+        entityBId: 'location-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('SeeAlsoRelation', 'see-1', {
+        entityBId: 'location-2',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('see-1');
+    expect(row).toMatchObject({ entityBId: 'location-2' });
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
+    expect(row?.deletedAt).toBeInstanceOf(Date);
   });
 
   it('applies gallery ownership changes and ignores another entity type', async () => {

@@ -202,4 +202,106 @@ describe('SyncScheduler', () => {
 
     expect(performSync).toHaveBeenCalledTimes(1);
   });
+
+  it('ignores a second start while running', async () => {
+    scheduler.start();
+    await flush();
+    expect(scheduler.isRunning).toBe(true);
+
+    scheduler.start();
+    await flush();
+
+    expect(console.log).toHaveBeenCalledWith('Sync engine already running.');
+    expect(performSync).toHaveBeenCalledTimes(1);
+
+    scheduler.stop();
+    expect(scheduler.isRunning).toBe(false);
+  });
+
+  /**
+   * An aborted cycle is neither a failure nor an offline signal: the stop was requested, so the
+   * chain continues on the healthy cadence instead of switching to the fast retry one.
+   */
+  it('treats an aborted cycle as neither failure nor offline', async () => {
+    const aborted = new Error('aborted');
+    aborted.name = 'AbortError';
+    performSync.mockRejectedValueOnce(aborted).mockResolvedValue(false);
+    scheduler.start();
+    await flush();
+    performSync.mockClear();
+
+    expect(console.log).toHaveBeenCalledWith('SyncEngineService: sync cycle aborted.');
+    jest.advanceTimersByTime(SYNC_INTERVAL_MS);
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs an on-demand request whose cycle throws', async () => {
+    performSync.mockRejectedValueOnce(new Error('boom'));
+
+    scheduler.request();
+    await flush();
+
+    expect(console.log).toHaveBeenCalledWith(
+      'SyncEngineService: on-demand sync failed.',
+      expect.any(Error),
+    );
+  });
+
+  it('resolves stopAndWait immediately when no cycle is active', async () => {
+    await expect(scheduler.stopAndWait(50)).resolves.toBe('idle');
+  });
+
+  /**
+   * A request queued while a cycle runs is dropped when the scheduler stops before the follow-up
+   * starts: the stop owns the state now, and rerunning the sync right after it would push against
+   * a story that may already be deactivated.
+   */
+  it('drops queued work when the scheduler stops before the follow-up starts', async () => {
+    let finishFirst!: (offline: boolean) => void;
+    performSync.mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => (finishFirst = resolve)),
+    );
+    scheduler.start();
+    await flush();
+
+    scheduler.request();
+    scheduler.stop();
+    finishFirst(false);
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * The coalescing guard: a stop landing between the readiness check and the cycle must not queue
+   * follow-up work onto the abandoned cycle. The window is a synchronous prefix in production, so
+   * the test forces the interleaving with a readiness that stops the scheduler - without the
+   * guard, the abandoned cycle would rerun the sync once more.
+   */
+  it('does not queue a request when a stop lands inside the readiness check', async () => {
+    let finishFirst!: (offline: boolean) => void;
+    performSync.mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => (finishFirst = resolve)),
+    );
+    let stopInsideReadiness = false;
+    const racing = new SyncScheduler({
+      readiness: () => {
+        if (stopInsideReadiness) racing.stop();
+        return ready;
+      },
+      performSync,
+    });
+    racing.start();
+    await flush();
+
+    stopInsideReadiness = true;
+    racing.request();
+    finishFirst(false);
+    await flush();
+
+    expect(performSync).toHaveBeenCalledTimes(1);
+    racing.stop();
+  });
 });

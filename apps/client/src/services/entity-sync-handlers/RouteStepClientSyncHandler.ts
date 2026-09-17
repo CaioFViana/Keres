@@ -39,6 +39,7 @@ export class RouteStepClientSyncHandler implements ClientSyncEntityHandler {
       .set({
         ...changes,
         updatedAt: new Date(),
+        createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
       })
       .where(eq(schema.routeSteps.id, update.id));

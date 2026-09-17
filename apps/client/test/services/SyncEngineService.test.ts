@@ -65,6 +65,12 @@ let offlineOn: 'pull' | 'push' | null;
 let serverFailureOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
 let echoPushApplied: boolean;
+/** When set, the adapter throws a raw string instead of an Error, to exercise message fallbacks. */
+let throwStringOn: 'pull' | 'push' | null;
+/** When true, a push POST fails as if the request had been cancelled mid-flight. */
+let abortPush: boolean;
+/** When set and closed, pull responses wait until the gate opens. */
+let pullGate: { opened: boolean; waiters: (() => void)[] } | null;
 
 /**
  * Axios resolves the adapter at request time and falls back to `axios.defaults.adapter` when the
@@ -100,6 +106,22 @@ function installAdapter() {
       error.request = {};
       error.response = { status: 500, data: { message: 'server error' }, config, headers: {} };
       throw error;
+    }
+    if (
+      (isPull && throwStringOn === 'pull') ||
+      (!isPull && method === 'POST' && throwStringOn === 'push')
+    ) {
+      throw 'boom' as unknown as Error;
+    }
+    if (!isPull && method === 'POST' && abortPush) {
+      const error: any = new Error('canceled');
+      error.name = 'AbortError';
+      error.code = 'ERR_CANCELED';
+      error.config = config;
+      throw error;
+    }
+    if (isPull && pullGate && !pullGate.opened) {
+      await new Promise<void>((resolve) => pullGate!.waiters.push(resolve));
     }
 
     let data = isPull
@@ -214,6 +236,9 @@ beforeEach(async () => {
   pullPages = null;
   pullPageIndex = 0;
   echoPushApplied = false;
+  throwStringOn = null;
+  abortPush = false;
+  pullGate = null;
   installAdapter();
 
   jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -1356,5 +1381,775 @@ describe('remote-operation safety boundaries', () => {
 
     expect((await readStory())?.lastServerSyncedLog).toBe(0);
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+});
+
+describe('lifecycle and activation guards', () => {
+  it('reports unbound before a database is attached', () => {
+    expect(createAppSyncEngine().lifecycle).toBe('unbound');
+  });
+
+  it('reports running while the scheduler chain is active', async () => {
+    jest.useFakeTimers();
+    try {
+      jest.spyOn(engine as any, 'performSync').mockResolvedValue(false);
+      engine.startSync();
+      expect(engine.lifecycle).toBe('running');
+    } finally {
+      engine.stopSync();
+      jest.useRealTimers();
+    }
+  });
+
+  it('binding the same database twice resolves without redoing the transition', async () => {
+    await expect(engine.bindDatabase(database.db)).resolves.toBeUndefined();
+    expect(engine.lifecycle).toBe('active');
+  });
+
+  it('refuses activation without a story', () => {
+    expect(() => engine.activateStory('', { ...SERVER, idUser: 'server-user' } as never)).toThrow(
+      'a story is required for activation',
+    );
+  });
+
+  it('refuses activation without a server URL', () => {
+    expect(() =>
+      engine.activateStory('story-x', { ...SERVER, idUser: 'server-user', url: '' } as never),
+    ).toThrow('a server URL is required for activation');
+  });
+
+  it('refuses activation before a database is bound', async () => {
+    const fresh = createAppSyncEngine();
+    await expect(
+      fresh.activateStory(STORY_ID, { ...SERVER, idUser: 'server-user' } as never),
+    ).rejects.toThrow('bind the database before activating a story');
+  });
+
+  it('forwards a bare sync request to the scheduler', () => {
+    const request = jest.spyOn((engine as any).scheduler, 'request');
+    engine.requestSync();
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  it('delegates server story previews to the transfer module', async () => {
+    const previews = [{ id: 'story-remote', title: 'Remota' }];
+    (pullResponse as any).storyPreviews = previews;
+    await expect(
+      engine.fetchServerStoryPreviews({ ...SERVER, idUser: 'server-user' } as never),
+    ).resolves.toEqual(previews);
+  });
+
+  it('runs media reconciliation against the live context outside a cycle', async () => {
+    await expect((engine as any).media.sync()).resolves.toBe(false);
+    expect(mockSyncStoryMedia).toHaveBeenCalled();
+  });
+
+  it('resolves the cycle database, story and client outside a cycle', () => {
+    expect((engine as any).resolveCycleDb()).toBe(database.db);
+    expect((engine as any).resolveCycleStoryId()).toBe(STORY_ID);
+    expect((engine as any).resolveCycleClient()).toBe((engine as any).client);
+  });
+
+  it('refuses to resolve sync dependencies before configuration', () => {
+    const fresh = createAppSyncEngine();
+    expect(() => (fresh as any).resolveCycleDb()).toThrow('Sync database is not configured.');
+    expect(() => (fresh as any).resolveCycleStoryId()).toThrow('Sync story is not configured.');
+  });
+
+  it('refuses the abort signal outside an active cycle', () => {
+    expect(() => (engine as any).push.context.abortSignal()).toThrow(
+      'Sync abort signal is not available outside an active cycle.',
+    );
+  });
+});
+
+describe('pull response fallbacks', () => {
+  it('treats a story that never synced as reader until the pull reports a role', async () => {
+    await seedStory({ myRole: null });
+    delete (pullResponse as any).role;
+
+    await runOneCycle();
+
+    expect((await readStory())?.myRole).toBe('reader');
+  });
+
+  it('tolerates a pull page with no updates list', async () => {
+    await seedStory();
+    delete (pullResponse as any).updates;
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+  });
+
+  it('treats a remote operation without a version as version zero', async () => {
+    await seedStory();
+    const update = { ...remoteCreate('char-noversion', 'Sem versão', 0) };
+    delete (update as any).operationVersion;
+    pullResponse = {
+      updates: [update],
+      publicFavorites: [],
+      serverMaxOperationVersion: 0,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const row = await database.db.query.characters.findFirst({
+      where: eq(schema.characters.id, 'char-noversion'),
+    });
+    expect(row?.name).toBe('Sem versão');
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+  });
+});
+
+describe('direct apply paths', () => {
+  it('applies a remote update directly when nothing local is pending', async () => {
+    await seedStory();
+    await database.db.insert(schema.characters).values({
+      id: 'char-direct',
+      storyId: STORY_ID,
+      name: 'Antes',
+      ...base,
+    });
+    pullResponse = {
+      updates: [
+        {
+          type: 'update',
+          entity: 'Character',
+          id: 'char-direct',
+          operationVersion: 2,
+          operationId: 'srv-2',
+          version: 2,
+          changes: { name: 'Depois', version: 2 },
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const row = await database.db.query.characters.findFirst({
+      where: eq(schema.characters.id, 'char-direct'),
+    });
+    expect(row?.name).toBe('Depois');
+    expect((await readStory())?.lastServerSyncedLog).toBe(2);
+  });
+
+  it('applies a remote delete directly when nothing local is pending', async () => {
+    await seedStory();
+    await database.db.insert(schema.characters).values({
+      id: 'char-gone',
+      storyId: STORY_ID,
+      name: 'Finado',
+      ...base,
+    });
+    pullResponse = {
+      updates: [
+        {
+          type: 'delete',
+          entity: 'Character',
+          id: 'char-gone',
+          operationVersion: 3,
+          operationId: 'srv-3',
+          version: 2,
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 3,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const row = await database.db.query.characters.findFirst({
+      where: eq(schema.characters.id, 'char-gone'),
+    });
+    expect(row?.isDeleted).toBe(true);
+    expect((await readStory())?.lastServerSyncedLog).toBe(3);
+  });
+
+  it('records but does not apply an update type it does not know', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        {
+          type: 'rename',
+          entity: 'Character',
+          id: 'char-x',
+          operationVersion: 1,
+          operationId: 'srv-1',
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 1,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(
+      await database.db.query.characters.findFirst({
+        where: eq(schema.characters.id, 'char-x'),
+      }),
+    ).toBeUndefined();
+    const logged = await database.db.query.operationLogs.findMany({
+      where: eq(schema.operationLogs.entityId, 'char-x'),
+    });
+    expect(logged).toHaveLength(1);
+    expect((await readStory())?.lastServerSyncedLog).toBe(1);
+  });
+
+  it('blocks the pull when a reorder arrives with an empty item list', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        {
+          type: 'reorder',
+          entity: 'Chapter',
+          id: 'chapter-1',
+          operationVersion: 1,
+          operationId: 'srv-1',
+          operationTime: NOW.toISOString(),
+          reorderItems: [],
+        },
+        remoteCreate('char-after', 'Depois', 2),
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(
+      await database.db.query.characters.findFirst({
+        where: eq(schema.characters.id, 'char-after'),
+      }),
+    ).toBeUndefined();
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('applies a remote scene reorder to the local chapters', async () => {
+    await seedStory();
+    await database.db.insert(schema.scenes).values([
+      { id: 'scene-1', storyId: STORY_ID, chapterId: 'chapter-1', name: 'A', index: 0, ...base },
+      { id: 'scene-2', storyId: STORY_ID, chapterId: 'chapter-1', name: 'B', index: 1, ...base },
+    ]);
+    pullResponse = {
+      updates: [
+        {
+          type: 'reorder',
+          entity: 'Chapter',
+          id: 'chapter-1',
+          operationVersion: 4,
+          operationId: 'srv-4',
+          operationTime: NOW.toISOString(),
+          reorderItems: [
+            { id: 'scene-1', newIndex: 1 },
+            { id: 'scene-2', newIndex: 0 },
+          ],
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 4,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const first = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-1'),
+    });
+    const second = await database.db.query.scenes.findFirst({
+      where: eq(schema.scenes.id, 'scene-2'),
+    });
+    expect(first?.index).toBe(1);
+    expect(second?.index).toBe(0);
+    expect((await readStory())?.lastServerSyncedLog).toBe(4);
+  });
+});
+
+describe('echoes and malformed updates', () => {
+  it('skips re-applying its own echoed operation', async () => {
+    await seedStory();
+    await seedPendingOperation({
+      entityType: 'Character',
+      entityId: 'char-echo',
+      operationType: 'update',
+      payload: JSON.stringify({ id: 'char-echo', storyId: STORY_ID, name: 'Eco', version: 2 }),
+      isSynced: true,
+      serverOperationVersion: 5,
+    });
+    pullResponse = {
+      updates: [
+        {
+          type: 'update',
+          entity: 'Character',
+          id: 'char-echo',
+          operationVersion: 5,
+          operationId: 'srv-5',
+          version: 2,
+          changes: { name: 'Eco', version: 2 },
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 5,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const logged = await database.db.query.operationLogs.findMany({
+      where: eq(schema.operationLogs.serverOperationVersion, 5),
+    });
+    expect(logged).toHaveLength(1);
+    expect(
+      await database.db.query.characters.findFirst({
+        where: eq(schema.characters.id, 'char-echo'),
+      }),
+    ).toBeUndefined();
+    expect((await readStory())?.lastServerSyncedLog).toBe(5);
+  });
+
+  it('contains a remote update that arrives without an id', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        {
+          type: 'update',
+          entity: 'Character',
+          operationVersion: 1,
+          operationId: 'srv-1',
+          version: 2,
+          changes: { name: 'Sem dono', version: 2 },
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 1,
+      role: 'owner',
+    };
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+});
+
+describe('pull failure containment', () => {
+  it('stops the batch at the first failure instead of skipping it', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        remoteCreate('char-broken', 'Quebrado', 1),
+        remoteCreate('char-skipped', 'Pulado', 2),
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+    (engine as any).entityHandlers.set('Character', {
+      getById: jest.fn().mockResolvedValue(undefined),
+      applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
+    });
+
+    await runOneCycle();
+
+    expect(
+      await database.db.query.characters.findFirst({
+        where: eq(schema.characters.id, 'char-skipped'),
+      }),
+    ).toBeUndefined();
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+  });
+
+  it('reports each failing entity only once per cycle', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        remoteCreate('char-broken-1', 'Quebrado 1', 1),
+        remoteCreate('char-broken-2', 'Quebrado 2', 2),
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+    (engine as any).entityHandlers.set('Character', {
+      getById: jest.fn().mockResolvedValue(undefined),
+      applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
+    });
+
+    await runOneCycle();
+
+    expect(mockShowNotification).toHaveBeenCalledTimes(1);
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('Character'),
+      'error',
+    );
+  });
+
+  it('keeps applying entities it has no refresh event for', async () => {
+    await seedStory();
+    const applyCreate = jest.fn().mockResolvedValue(undefined);
+    (engine as any).entityHandlers.set('CustomWidget', {
+      getById: jest.fn().mockResolvedValue(undefined),
+      applyCreate,
+    });
+    pullResponse = {
+      updates: [
+        {
+          type: 'create',
+          entity: 'CustomWidget',
+          id: 'widget-1',
+          operationVersion: 1,
+          operationId: 'srv-1',
+          data: { id: 'widget-1' },
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 1,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(applyCreate).toHaveBeenCalledWith(STORY_ID, expect.objectContaining({ id: 'widget-1' }));
+    expect((await readStory())?.lastServerSyncedLog).toBe(1);
+  });
+
+  it('fails the cycle loudly when the pull itself throws a non-Error', async () => {
+    await seedStory();
+    throwStringOn = 'pull';
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+});
+
+describe('favorites over the updates channel', () => {
+  const favoriteData = {
+    id: 'fav-1',
+    storyId: STORY_ID,
+    entityId: 'char-1',
+    entityType: 'Character',
+    userId: 'other-user',
+    createdAt: NOW.toISOString(),
+    updatedAt: NOW.toISOString(),
+    version: 1,
+    isDeleted: false,
+    deletedAt: null,
+  };
+  const favoriteCreate = (overrides: Record<string, any> = {}) => ({
+    type: 'create',
+    entity: 'Favorite',
+    id: 'fav-1',
+    operationVersion: 3,
+    operationId: 'srv-3',
+    data: { ...favoriteData, ...overrides },
+  });
+
+  it('advances the public-favorite cursor and announces the favorite to its target', async () => {
+    await seedStory();
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    pullResponse = {
+      updates: [favoriteCreate()],
+      publicFavorites: [],
+      serverMaxOperationVersion: 3,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(
+      await database.db.query.favorites.findFirst({
+        where: eq(schema.favorites.id, 'fav-1'),
+      }),
+    ).toBeDefined();
+    expect((await readStory())?.lastPublicFavoriteLog).toBe(3);
+    expect(emit).toHaveBeenCalledWith(
+      'favorite_changed',
+      STORY_ID,
+      'Character',
+      'char-1',
+      'other-user',
+    );
+    expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'char-1');
+  });
+
+  it('emits no target event for a favorite whose type has none', async () => {
+    await seedStory();
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    pullResponse = {
+      updates: [favoriteCreate({ entityType: 'Choice', entityId: 'choice-1' })],
+      publicFavorites: [],
+      serverMaxOperationVersion: 3,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(emit).toHaveBeenCalledWith(
+      'favorite_changed',
+      STORY_ID,
+      'Choice',
+      'choice-1',
+      'other-user',
+    );
+    expect(emit).not.toHaveBeenCalledWith('choice_changed', STORY_ID, 'choice-1');
+  });
+
+  it('closes a favorite delete without re-reading the removed row', async () => {
+    await seedStory();
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    pullResponse = {
+      updates: [
+        {
+          type: 'delete',
+          entity: 'Favorite',
+          id: 'fav-ghost',
+          operationVersion: 2,
+          operationId: 'srv-2',
+          version: 1,
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(emit).not.toHaveBeenCalledWith(
+      'favorite_changed',
+      STORY_ID,
+      expect.anything(),
+      'fav-ghost',
+      expect.anything(),
+    );
+    expect((await readStory())?.lastServerSyncedLog).toBe(2);
+  });
+
+  it('holds the public-favorite cursor when a favorite fails to apply', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [favoriteCreate()],
+      publicFavorites: [],
+      serverMaxOperationVersion: 3,
+      role: 'owner',
+    };
+    (engine as any).entityHandlers.set('Favorite', {
+      getById: jest.fn().mockResolvedValue(undefined),
+      applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
+    });
+
+    await runOneCycle();
+
+    expect((await readStory())?.lastPublicFavoriteLog).toBe(0);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+
+  it('keeps the existing cursor when an old favorite operation fails', async () => {
+    await seedStory({ lastPublicFavoriteLog: 5 });
+    const update = favoriteCreate();
+    delete (update as any).operationVersion;
+    pullResponse = {
+      updates: [update],
+      publicFavorites: [],
+      serverMaxOperationVersion: 5,
+      role: 'owner',
+    };
+    (engine as any).entityHandlers.set('Favorite', {
+      getById: jest.fn().mockResolvedValue(undefined),
+      applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
+    });
+
+    await runOneCycle();
+
+    expect((await readStory())?.lastPublicFavoriteLog).toBe(5);
+  });
+
+  it('throws a clear error when public favorites arrive with no Favorite handler', async () => {
+    await seedStory();
+    (engine as any).entityHandlers.delete('Favorite');
+    pullResponse = {
+      updates: [],
+      publicFavorites: [{ ...favoriteData }],
+      serverMaxOperationVersion: 0,
+      role: 'owner',
+    };
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+
+  it('imports a public favorite whose target type has no event', async () => {
+    await seedStory();
+    const emit = jest.spyOn(entityEventEmitter, 'emit');
+    pullResponse = {
+      updates: [],
+      publicFavorites: [{ ...favoriteData, entityType: 'Choice', entityId: 'choice-1' }],
+      serverMaxOperationVersion: 0,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(emit).toHaveBeenCalledWith(
+      'favorite_changed',
+      STORY_ID,
+      'Choice',
+      'choice-1',
+      'other-user',
+    );
+    expect(emit).not.toHaveBeenCalledWith('choice_changed', STORY_ID, 'choice-1');
+  });
+});
+
+describe('push outcomes', () => {
+  it('stops immediately when the cycle signal is already aborted', async () => {
+    await seedStory();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect((engine as any).performSync(controller.signal)).resolves.toBe(false);
+    expect(seen).toHaveLength(0);
+  });
+
+  it('aborts the cycle when the push is cancelled', async () => {
+    await seedStory();
+    await seedPendingOperation();
+    abortPush = true;
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('names an unparsable push failure instead of crashing on its message', async () => {
+    await seedStory();
+    await seedPendingOperation();
+    throwStringOn = 'push';
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+});
+
+describe('cycle binding', () => {
+  it('leaves a newer binding alone when an abandoned cycle finishes', async () => {
+    await seedStory();
+    pullGate = { opened: false, waiters: [] };
+    const cycle = runOneCycle();
+    while (!seen.some((request) => request.url.includes('/pull'))) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    const usurper = { tampered: true };
+    (engine as any).cycleBinding = usurper as never;
+    pullGate.opened = true;
+    pullGate.waiters.splice(0).forEach((release) => release());
+
+    await expect(cycle).resolves.toBe(false);
+    expect((engine as any).cycleBinding).toBe(usurper);
+  });
+
+  it('skips the server timestamp when no server record is bound', async () => {
+    await seedStory();
+    (engine as any).activeServer = null;
+
+    await expect(runOneCycle()).resolves.toBe(false);
+    const server = await database.db.query.servers.findFirst({
+      where: eq(schema.servers.id, SERVER.id),
+    });
+    expect(server?.lastSyncDate).toBeNull();
+  });
+});
+
+describe('pull-side auto-merge', () => {
+  it('rebases a pending edit silently when the server touched a different field', async () => {
+    await seedStory();
+    await database.db.insert(schema.characters).values({
+      id: 'char-merge',
+      storyId: STORY_ID,
+      name: 'Local',
+      ...base,
+    });
+    await seedPendingOperation({
+      entityType: 'Character',
+      entityId: 'char-merge',
+      operationType: 'update',
+      payload: JSON.stringify({
+        id: 'char-merge',
+        storyId: STORY_ID,
+        name: 'Local',
+        version: 2,
+      }),
+    });
+    pullResponse = {
+      updates: [
+        {
+          type: 'update',
+          entity: 'Character',
+          id: 'char-merge',
+          operationVersion: 1,
+          operationId: 'srv-1',
+          version: 2,
+          changes: { description: 'Remota', version: 2 },
+        },
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 1,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    expect(await database.db.query.syncConflicts.findMany()).toHaveLength(0);
+    const row = await database.db.query.characters.findFirst({
+      where: eq(schema.characters.id, 'char-merge'),
+    });
+    expect(row?.description).toBe('Remota');
+    const stillPending = await database.db.query.operationLogs.findMany({
+      where: eq(schema.operationLogs.isSynced, false),
+    });
+    expect(stillPending.length).toBeGreaterThan(0);
+  });
+
+  it('records one conflict per entity and keeps the rest of the story moving', async () => {
+    await seedStory();
+    for (const id of ['char-a', 'char-b']) {
+      await database.db.insert(schema.characters).values({
+        id,
+        storyId: STORY_ID,
+        name: 'Local',
+        ...base,
+      });
+      await seedPendingOperation({
+        entityType: 'Character',
+        entityId: id,
+        operationType: 'update',
+        payload: JSON.stringify({ id, storyId: STORY_ID, name: 'Local', version: 2 }),
+      });
+    }
+    pullResponse = {
+      updates: ['char-a', 'char-b'].map((id, index) => ({
+        type: 'update',
+        entity: 'Character',
+        id,
+        operationVersion: index + 1,
+        operationId: `srv-${index + 1}`,
+        version: 2,
+        changes: { name: `Remote${index}`, version: 2 },
+      })),
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    const conflicts = await database.db.query.syncConflicts.findMany();
+    expect(conflicts).toHaveLength(2);
+    expect((await readStory())?.lastServerSyncedLog).toBe(2);
   });
 });

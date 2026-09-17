@@ -160,6 +160,31 @@ describe('echo and create handling', () => {
       expect.objectContaining({ changes: expect.objectContaining({ version: 12 }) }),
     );
   });
+
+  it('creates without a lookup when the remote create carries no id', async () => {
+    const create = update({ type: 'create', id: undefined, data: { name: 'Created' } } as never);
+
+    await pull.applyRemoteCreate(create, handler);
+
+    expect(handler.getById).not.toHaveBeenCalled();
+    expect(handler.applyCreate).toHaveBeenCalledWith(STORY_ID, create);
+  });
+
+  it('restarts the version at zero when a repeated create carries none', async () => {
+    handler.getById.mockResolvedValue({ id: 'character-1' });
+    const create = update({
+      type: 'create',
+      data: { name: 'Created' },
+      version: undefined,
+    } as never);
+
+    await pull.applyRemoteCreate(create, handler);
+
+    expect(handler.applyUpdate).toHaveBeenCalledWith(
+      STORY_ID,
+      expect.objectContaining({ changes: expect.objectContaining({ version: 0 }) }),
+    );
+  });
 });
 
 describe('remote operation log', () => {
@@ -256,6 +281,40 @@ describe('reconciliation decisions', () => {
     expect(recordConflict).toHaveBeenCalledWith(
       expect.objectContaining({ reason: 'edited_on_server', localOperationType: 'delete' }),
     );
+  });
+
+  it('records null versions when neither side sent one', async () => {
+    const result = await pull.reconcileRemoteUpdate(
+      update({ type: 'delete', version: undefined } as never),
+      [pending('update', { name: 'Local name' })],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: true });
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({ clientVersion: null, serverVersion: null }),
+    );
+  });
+
+  /**
+   * Forward compatibility: a newer server may send an operation type this build has never heard
+   * of. With no remote values to compare, there is nothing disputed - the local edits stay and
+   * are rebased onto the new version, instead of being escalated into a conflict nobody can
+   * resolve.
+   */
+  it('preserves local edits when the remote operation type is unknown', async () => {
+    const local = pending();
+
+    const result = await pull.reconcileRemoteUpdate(
+      update({ type: 'teleport' } as never),
+      [local],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: false });
+    expect(handler.applyUpdate).not.toHaveBeenCalled();
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(rebase).toHaveBeenCalledWith([local], 4);
   });
 
   it('applies disjoint server fields and rebases the local operation without a prompt', async () => {

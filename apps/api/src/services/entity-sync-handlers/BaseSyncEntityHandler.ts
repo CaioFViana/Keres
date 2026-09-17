@@ -555,8 +555,8 @@ export abstract class BaseSyncEntityHandler<
       return false;
     }
     for (const [key, value] of Object.entries(parsed)) {
+      // `userId`/`authorUserId` are in the immutable set, so they skip here too.
       if (SYNC_CLIENT_IMMUTABLE_FIELD_SET.has(key)) continue;
-      if (key === 'userId' || key === 'authorUserId') continue;
       if (value === undefined) continue;
       if (!syncValuesMatch(existing?.[key], value)) {
         return false;

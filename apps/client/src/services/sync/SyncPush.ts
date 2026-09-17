@@ -332,12 +332,9 @@ export class SyncPush {
           (field) => first.changedFields!.includes(field),
         );
         if (contestedFields.length === 0) {
-          const mergeableValues: Record<string, any> = {};
-          for (const [field, value] of Object.entries(first.serverEntity)) {
-            if (!contestedFields.includes(field)) {
-              mergeableValues[field] = value;
-            }
-          }
+          // Every field merges: the contested set is empty by the check above, so there is
+          // nothing to exclude.
+          const mergeableValues: Record<string, any> = { ...first.serverEntity };
           const table = getEntityTable(first.entity);
           if (table) {
             const columns = toEntityColumns(first.entity, mergeableValues);

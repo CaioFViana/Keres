@@ -165,9 +165,7 @@ export class SyncScheduler {
     }
   }
 
-  private async waitForIdle(
-    timeoutMs: number = STOP_AND_WAIT_TIMEOUT_MS,
-  ): Promise<'idle' | 'timed_out'> {
+  private async waitForIdle(timeoutMs: number): Promise<'idle' | 'timed_out'> {
     if (!this.inFlight) return 'idle';
     return new Promise<'idle' | 'timed_out'>((resolve) => {
       let settled = false;

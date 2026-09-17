@@ -448,6 +448,244 @@ describe('push result handling', () => {
 
     expect(notifier.pushedUpdates).toHaveBeenCalled();
   });
+
+  it('defaults the server version to zero on a legacy response without one', async () => {
+    const local = operation('legacy-bare', 'update');
+    await seedOperation(local);
+
+    const result = await push.applyPushResult({} as SyncPushResult, [local]);
+
+    expect(result).toEqual({ applied: 1, conflicts: 0 });
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 0,
+    });
+  });
+
+  it('handles a response that omits the applied list', async () => {
+    const local = operation('refused-only', 'update', {
+      payload: JSON.stringify({ name: 'Mine', version: 2 }),
+    });
+
+    const result = await push.applyPushResult(
+      {
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'character-1',
+            type: 'update',
+            reason: 'validation',
+            message: 'bad',
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 1 });
+    expect(recordConflict).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles a response that omits the conflict list', async () => {
+    const local = operation('applied-only', 'update');
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [{ clientOperationId: local.id, operationVersion: 8 }],
+      } as unknown as SyncPushResult,
+      [local],
+      { silent: true },
+    );
+
+    expect(result).toEqual({ applied: 1, conflicts: 0 });
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 8,
+    });
+  });
+
+  /**
+   * The folded decision keeps the strongest operation type: a refused create resends as a create,
+   * not an update. Recording it as an update would send the entity back through the wrong path -
+   * and the server would refuse it again as `not_found`.
+   */
+  it('folds a refused create as a create', async () => {
+    const create = operation('create-refused', 'create', {
+      payload: JSON.stringify({ name: 'New', version: 1 }),
+    });
+
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'character-1',
+            type: 'create',
+            reason: 'validation',
+            message: 'bad create',
+          },
+        ],
+      } as never,
+      [create],
+    );
+
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationType: 'create',
+        localOperationIds: ['create-refused'],
+      }),
+    );
+  });
+
+  it('records empty local values when the refused operation is gone and sent nothing', async () => {
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'missing',
+            type: 'create',
+            reason: 'validation',
+            message: 'invalid',
+          },
+        ],
+      } as never,
+      [],
+    );
+
+    expect(recordConflict).toHaveBeenCalledWith(expect.objectContaining({ localValues: {} }));
+  });
+
+  /**
+   * The other side of the silent merge: both sides changed the same field to different values, so
+   * there is a genuine decision to take. Auto-merging here would overwrite one side's edit without
+   * ever asking.
+   */
+  it('records a conflict when the same field changed on both sides', async () => {
+    const local = operation('disputed', 'update', {
+      payload: JSON.stringify({ name: 'Mine', version: 3 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'character-1',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: ['name'],
+            serverEntity: { name: 'Theirs' },
+            serverVersion: 5,
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 1 });
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationType: 'update',
+        serverValues: { name: 'Theirs' },
+      }),
+    );
+  });
+
+  /**
+   * A silent merge for an entity this build does not store: there is no table to write the merged
+   * values to, but the pending operation still has to be rebased onto the server's version -
+   * otherwise it conflicts again on the next push.
+   */
+  it('rebases without writing when the merged entity has no local table', async () => {
+    const local = operation('future', 'update', {
+      entityType: 'SomethingFromTheFuture',
+      entityId: 'x-1',
+      payload: JSON.stringify({ name: 'A', version: 3 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'SomethingFromTheFuture',
+            entityId: 'x-1',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: ['name'],
+            serverEntity: { name: 'A' },
+            serverVersion: 5,
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
+      6,
+    );
+  });
+
+  /**
+   * A silent merge whose server side carries nothing this build stores (only fields from a newer
+   * schema). Writing an empty column set would be a no-op at best; the merge must skip the write
+   * and still rebase the operation.
+   */
+  it('skips the write when the merged values map to no local column', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'character-1',
+      storyId: STORY_ID,
+      name: 'Original',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+    const local = operation('future-fields', 'update', {
+      payload: JSON.stringify({ name: 'A', version: 3 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'character-1',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: [],
+            serverEntity: { someFutureField: 1 },
+            serverVersion: 5,
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(await database.db.query.characters.findFirst()).toMatchObject({
+      name: 'Original',
+      version: 1,
+    });
+    expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
+      6,
+    );
+  });
 });
 
 describe('push loop', () => {
@@ -554,5 +792,66 @@ describe('push loop', () => {
     await push.pushPendingOperations();
 
     expect(notifier.pushedUpdates).toHaveBeenCalled();
+  });
+
+  /**
+   * A queue longer than one batch: the loop keeps pushing while each round makes progress, and
+   * only stops when the queue is empty. A writer returning from a week offline can easily have
+   * more than 200 pending operations.
+   */
+  it('drains a queue longer than one batch across several rounds', async () => {
+    const ops = Array.from({ length: 201 }, (_, index) =>
+      operation(`bulk-${index}`, 'update', {
+        operationVersion: index + 1,
+        entityId: `character-${index}`,
+      }),
+    );
+    await database.db.insert(schema.operationLogs).values(ops);
+    post.mockImplementation(async (_url: string, body: { clientOperationId: string }[]) => ({
+      data: {
+        applied: body.map((entry) => ({
+          clientOperationId: entry.clientOperationId,
+          operationVersion: 1,
+        })),
+        conflicts: [],
+      },
+    }));
+
+    await push.pushPendingOperations();
+
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(
+      (await database.db.query.operationLogs.findMany()).every((entry) => entry.isSynced),
+    ).toBe(true);
+    expect(notifier.pushedUpdates).toHaveBeenCalledWith(201);
+  });
+
+  /**
+   * A refused operation surfaces exactly one notification for the whole push, after the loop ends -
+   * not one per batch, and not from inside the silent result handling.
+   */
+  it('reports refused operations once after the loop ends', async () => {
+    await seedOperation(operation('refused', 'update'));
+    post.mockResolvedValue({
+      data: {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'character-1',
+            type: 'update',
+            reason: 'validation',
+            message: 'bad',
+          },
+        ],
+      },
+    });
+
+    await push.pushPendingOperations();
+
+    expect(recordConflict).toHaveBeenCalledTimes(1);
+    expect(notifier.conflictsDetected).toHaveBeenCalledTimes(1);
+    expect(notifier.conflictsDetected).toHaveBeenCalledWith(1);
+    expect(notifier.pushedUpdates).not.toHaveBeenCalled();
   });
 });

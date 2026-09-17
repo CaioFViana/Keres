@@ -752,6 +752,16 @@ describe('GET /sync/pullpreviews', () => {
     ]);
   });
 
+  it('omits a shared story the owner deleted, even though the permission row survives', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+    await db.update(stories).set({ isDeleted: true }).where(eq(stories.id, storyId));
+
+    const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
+
+    expect(data.storyPreviews).toEqual([]);
+  });
+
   /**
    * `lastOperationVersion` used to come from `stories.version` (the Story row's own
    * optimistic-concurrency counter, bumped only when the Story row itself changes) instead of

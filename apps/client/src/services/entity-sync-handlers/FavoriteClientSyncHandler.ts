@@ -22,6 +22,7 @@ export class FavoriteClientSyncHandler implements ClientSyncEntityHandler {
   }
 
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
+    if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as Favorite;
     await this.db
       .insert(favorites)
@@ -38,6 +39,7 @@ export class FavoriteClientSyncHandler implements ClientSyncEntityHandler {
   }
 
   async applyUpdate(_storyId: string, update: UpdateStoryUpdate): Promise<void> {
+    if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<Favorite>;
     await this.db
       .update(favorites)
@@ -52,6 +54,7 @@ export class FavoriteClientSyncHandler implements ClientSyncEntityHandler {
   }
 
   async applyDelete(_storyId: string, update: DeleteStoryUpdate): Promise<void> {
+    if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(favorites)
       .set({

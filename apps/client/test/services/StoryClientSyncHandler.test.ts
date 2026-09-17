@@ -142,4 +142,45 @@ describe('StoryClientSyncHandler', () => {
       ),
     ).rejects.toThrow(/Drizzle client \(db\) not set/);
   });
+
+  it('ignores an update or delete addressed to another entity type', async () => {
+    const handler = new StoryClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+
+    await handler.applyUpdate(STORY_ID, updateUpdate('Character', STORY_ID, { title: 'x' }));
+    await handler.applyDelete(STORY_ID, deleteUpdate('Character', STORY_ID));
+
+    expect(await handler.getById(STORY_ID)).toMatchObject({
+      title: 'A Queda',
+      isDeleted: false,
+    });
+  });
+
+  it('refuses a delete with no id instead of tombstoning blindly', async () => {
+    const handler = new StoryClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(STORY_ID, createUpdate('Story', STORY_ID, remoteStory()));
+
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Story' } as DeleteStoryUpdate);
+
+    expect(await handler.getById(STORY_ID)).toMatchObject({ isDeleted: false });
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Missing ID'));
+  });
+
+  it('defaults the bookkeeping fields an old server omits on a tombstone create', async () => {
+    const handler = new StoryClientSyncHandler();
+    handler.setDb(database.db);
+    const { version: _version, isDeleted: _deleted, ...rest } = remoteStory();
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Story', STORY_ID, { ...rest, deletedAt: CREATED_AT }),
+    );
+
+    const row = await handler.getById(STORY_ID);
+    expect(row).toMatchObject({ version: 1, isDeleted: false });
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
 });

@@ -1,14 +1,18 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateCharacterDataSchema, PartialCharacterSchema } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { characters, stories, tags, users } from '../../src/db/schema';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import {
+  BaseSyncEntityHandler,
   SyncConflictError,
   type SyncEntityHandler,
 } from '../../src/services/entity-sync-handlers/BaseSyncEntityHandler';
+import { FavoriteSyncHandler } from '../../src/services/entity-sync-handlers/FavoriteSyncHandler';
 import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
+import { StorySyncHandler } from '../../src/services/entity-sync-handlers/StorySyncHandler';
 import { TagSyncHandler } from '../../src/services/entity-sync-handlers/TagSyncHandler';
 import { WorldRuleSyncHandler } from '../../src/services/entity-sync-handlers/WorldRuleSyncHandler';
 import { newId } from '../helpers/app';
@@ -593,5 +597,171 @@ describe('other entities inherit the same contract', () => {
       'Keres',
     );
     expect((await db.select().from(tags).where(eq(tags.id, sharedId)))[0].name).toBe('Vilões');
+  });
+});
+
+/**
+ * A handler over the characters table with a configurable column mapping, to exercise the base
+ * class paths that no concrete handler reaches: every shipped handler declares soft-delete
+ * columns, so the "entity without tombstones" branches only run here.
+ */
+class ColumnProbeHandler extends BaseSyncEntityHandler<
+  typeof CreateCharacterDataSchema,
+  typeof PartialCharacterSchema
+> {
+  override entityName = 'Character';
+
+  constructor(options?: {
+    storyIdColumnName?: string;
+    userIdColumnName?: string;
+    isDeletedColumnName?: string;
+    deletedAtColumnName?: string;
+  }) {
+    super('id', 'version', CreateCharacterDataSchema, PartialCharacterSchema, options);
+  }
+
+  async create(): Promise<void> {
+    throw new Error('not implemented');
+  }
+}
+
+describe('base handler defensive paths', () => {
+  it('throws a plain error when the entity has no registered table', async () => {
+    const probe = new ColumnProbeHandler();
+    probe.entityName = 'SomethingFromTheFuture';
+
+    await expect(probe.findById(newId())).rejects.toThrow(
+      "No table registered for sync entity 'SomethingFromTheFuture'.",
+    );
+  });
+
+  it('throws when the entity to load is not there', async () => {
+    await expect(handler.findByIdOrThrow('nao-existe')).rejects.toThrow(
+      'Character nao-existe not found.',
+    );
+  });
+
+  it('counts every row when the entity has no soft-delete column to filter on', async () => {
+    const id = newId();
+    await createCharacter(id);
+    await db.update(characters).set({ isDeleted: true }).where(eq(characters.id, id));
+    const probe = new ColumnProbeHandler({ storyIdColumnName: 'storyId' });
+
+    expect(await probe.countForStoryIds([STORY_ID])).toBe(1);
+  });
+
+  it('reports no tombstones for an entity that cannot soft-delete', async () => {
+    const probe = new ColumnProbeHandler({ storyIdColumnName: 'storyId' });
+
+    expect(await probe.findDeleted(STORY_ID)).toEqual([]);
+  });
+
+  it('refuses to delete an entity that cannot soft-delete', async () => {
+    const probe = new ColumnProbeHandler({ storyIdColumnName: 'storyId' });
+    const row = await createCharacter();
+
+    await expect(probe.delete(USER_ID, STORY_ID, deleteUpdate(row.id, 1), row)).rejects.toThrow(
+      /Delete not supported for entity Character/,
+    );
+  });
+
+  it('reports a null deletion date when the entity tracks none', async () => {
+    const probe = new ColumnProbeHandler({
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+    });
+    const row = await createCharacter();
+    await db.update(characters).set({ isDeleted: true }).where(eq(characters.id, row.id));
+
+    expect(await probe.findDeleted(STORY_ID)).toEqual([
+      expect.objectContaining({ id: row.id, deletedAt: null }),
+    ]);
+  });
+
+  it('reports a null deletion date for a legacy tombstone that has none stored', async () => {
+    const row = await createCharacter();
+    await db
+      .update(characters)
+      .set({ isDeleted: true, deletedAt: null })
+      .where(eq(characters.id, row.id));
+
+    expect(await handler.findDeleted(STORY_ID)).toEqual([
+      expect.objectContaining({ id: row.id, deletedAt: null }),
+    ]);
+  });
+
+  it('throws when the loaded row carries no numeric version', async () => {
+    const row = await createCharacter();
+
+    await expect(
+      handler.update(USER_ID, STORY_ID, updateUpdate(row.id, { name: 'x', version: 1 }), {
+        ...row,
+        version: 'corrupt',
+      } as never),
+    ).rejects.toThrow('Invalid persisted version for Character.');
+  });
+
+  it('sanitizes an unknown operation type into an empty log payload', () => {
+    expect(
+      handler.sanitizePayloadForLog(
+        { type: 'teleport', entity: 'Character', id: 'c-1' } as never,
+        USER_ID,
+      ),
+    ).toEqual({});
+  });
+
+  it('ignores identity and absent fields when comparing a resent create', async () => {
+    const favoriteHandler = new FavoriteSyncHandler();
+    const entityId = newId();
+
+    expect(
+      favoriteHandler.createPayloadMatches(
+        { entityId, entityType: 'Character', userId: newId() },
+        { entityId, entityType: 'Character', userId: newId() },
+      ),
+    ).toBe(true);
+
+    const row = await createCharacter();
+    expect(handler.createPayloadMatches(row, { name: 'Keres', title: undefined })).toBe(true);
+  });
+});
+
+describe('base handler ownership and story checks', () => {
+  it('compares the owner column when the entity has one', async () => {
+    const storyHandler = new StorySyncHandler();
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, STORY_ID) });
+
+    expect(storyHandler.checkOwnership(story as never, USER_ID)).toBe(true);
+    expect(storyHandler.checkOwnership(story as never, 'outro-usuario')).toBe(false);
+  });
+
+  it('treats a top-level entity as belonging to any story', () => {
+    const probe = new ColumnProbeHandler();
+
+    expect(probe.checkBelongsToStory({ id: 'x' } as never, 'qualquer-historia')).toBe(true);
+  });
+
+  it('only lets a story belong to itself, never to a story id from the URL', async () => {
+    const storyHandler = new StorySyncHandler();
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, STORY_ID) });
+
+    expect(storyHandler.checkBelongsToStory(story as never, STORY_ID)).toBe(true);
+    expect(storyHandler.checkBelongsToStory(story as never, 'historia-alheia')).toBe(false);
+  });
+});
+
+describe('base handler delete race', () => {
+  /**
+   * Mirrors the update race the base already guards: two deletes read version 1, one commits,
+   * and the loser's `WHERE version = 1` matches nothing. An empty `returning()` is a conflict -
+   * the row changed under us - not a silent success.
+   */
+  it('reports a version conflict when the row moved between the read and the delete', async () => {
+    const row = await createCharacter();
+    await db.update(characters).set({ version: 2 }).where(eq(characters.id, row.id));
+
+    await expect(
+      handler.delete(USER_ID, STORY_ID, deleteUpdate(row.id, 1), row),
+    ).rejects.toMatchObject({ reason: 'version_conflict' });
   });
 });

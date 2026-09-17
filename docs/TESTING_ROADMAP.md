@@ -731,15 +731,31 @@ The infrastructure is already in place; new suites should reuse it rather than i
       `coverage-update.ts` (the API scopes use the unit/integration LCOV union).
 - [ ] **Phase 1A.1** — every reachable cell of the conflict matrix tested. *Partly done:* all five
       resolutions now assert the value they record, `SyncConflictService.ts` is at 100% lines /
-      85.6% branches, and the story-level reorder branches (chapters and `StorySchemaField`) are
-      covered. The reason × resolution × operation-type matrix of §5.1 is still open.
+      100% branches (73 tests, incl. version-fallback chain, folded-conflict preservation,
+      corrupt-row degradation and clone-board fallbacks), and the story-level reorder branches
+      (chapters and `StorySchemaField`) are covered. The reason × resolution × operation-type
+      matrix of §5.1 is still open.
 - [x] **Phase 1B (chapters)** — `ChapterService.ts` from 56% to **96.3% lines / 87.5% branches**,
       including the renumbering invariants named in §5.3. Done ahead of the rest of 1B because the
       Events feature edits exactly that code — see `docs/events_feature_plan.md` §12.
-- [ ] **Phase 1A.2** — pull, push and scheduler at ≥97% lines / **≥90% branches**.
-- [ ] **Phase 1A.2** — client sync handlers (30 files) at ≥97% lines / **≥90% branches**.
+- [x] **Phase 1A.2** — pull, push and scheduler at ≥97% lines / **≥90% branches**. *Done:*
+      `SyncPull.ts` and `SyncPush.ts` at 100% lines / 100% branches; `SyncScheduler.ts` at 98.9% /
+      93.8%, the 3 remaining branches being provably defensive-dead (the re-check `break`, the
+      `cycleAbort` identity guard, the double-`finish` guard). Two vacuous conditions removed
+      (`SyncPush` merge filter, `waitForIdle` unused default).
+- [x] **Phase 1A.2** — client sync handlers (30 files) at ≥97% lines / **≥90% branches**.
+      *Done:* every handler at 100% lines / 100% branches (the data-driven loop grew 6 universal
+      cases × 32 handlers; `GalleryRelation` joined the loop). Three real defects fixed on the
+      way: `Route`/`RouteStep` stored a raw string for `createdAt`, `Favorite` accepted
+      wrong-entity operations, and `LocationRelation` crashed inserting a create the recency
+      check had just accepted. `Comment`/`Favorite`/`SeeAlsoRelation` gained the missing-id
+      guards every sibling already had.
 - [ ] **Phase 1A.2** — API sync handlers + `SyncService` + `BaseSyncEntityHandler` at ≥97% lines /
-      **≥90% branches**.
+      **≥90% branches**. *Partly done:* scope at 89.4% lines / 80.3% branches (integration).
+      `SyncService` at 100% lines, `BaseSyncEntityHandler` defensive paths + delete race covered
+      (2 dead-defensive branches documented: `count ?? 0`, invalid-row throw; 1 dead `userId`
+      check removed), `StoryArcSyncHandler` from 18% to full. Remaining worst files:
+      `Gallery`, `RouteStep`, `Choice`, `NoteRelation`, `Scene`, `GalleryRelation`, `Story`.
 - [ ] **Phase 1B** — client story services (40 files) at 95% lines / 80% branches.
 - [ ] **Phase 1B** — API export/import, permissions, tier at 95% lines / 80% branches.
 - [ ] **Phase 2** — client auth/network/media/friendship services at 90%.

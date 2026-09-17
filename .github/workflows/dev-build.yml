@@ -199,7 +199,14 @@ jobs:
           java-version: '17'
       # Belt-and-suspenders: GitHub's ubuntu-latest runners ship an Android SDK already, but
       # pin/verify it explicitly rather than relying on whatever happens to be preinstalled.
+      # packages must stay empty: the action default (tools platform-tools) installs the
+      # obsolete tools package, which Google removed from the repository - sdkmanager exits 1
+      # with a Failed to find package tools warning. The runner already ships platform-tools
+      # and the platforms/build-tools Gradle needs; the action still ensures cmdline-tools
+      # exist and accepts the SDK licenses.
       - uses: android-actions/setup-android@v4
+        with:
+          packages: ''
       - run: bun install --frozen-lockfile
       - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       # `android/` is gitignored (generated, not source) - this recreates it fresh from

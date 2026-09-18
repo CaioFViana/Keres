@@ -5,11 +5,21 @@ import {
   type SpatialPoint,
   type SpatialRect,
 } from '@keres/shared';
+import {
+  DashPathEffect,
+  Path,
+  Text as SkiaText,
+} from '@shopify/react-native-skia';
+import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo, useRef } from 'react';
-import { StyleSheet } from 'react-native';
-import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
+import type { SharedValue } from 'react-native-reanimated';
+import type { CanvasCameraTransform } from '../../../hooks/useCanvasViewport';
 import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import SkiaEdgeCanvas from '../graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import { measureEdgeLabelWidth } from '../graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { useEdgeFont } from '../graphs/SkiaEdgeCanvas/useEdgeFont';
+import { polygonPointsToPath } from '../graphs/SkiaEdgeCanvas/polygonPointsToPath';
 
 export interface LocationMapConnection {
   locationAId: string;
@@ -29,8 +39,8 @@ interface Props {
   connections: LocationMapConnection[];
   contains: LocationMapContains[];
   connectionDrag: { fromNodeId: string; x: number; y: number } | null;
-  originX: number;
-  originY: number;
+  /** Live camera from the viewport hook; the overlay tracks gestures with no React commit. */
+  camera: SharedValue<CanvasCameraTransform>;
   renderWindow: SpatialRect;
   background: string;
   primary: string;
@@ -38,7 +48,6 @@ interface Props {
 
 const NODE_RADIUS = LOCATION_MAP_NODE_SIZE / 2;
 const LINE_END_MARGIN = 3;
-const CONTAINS_DASH = '6 4';
 const HALO_WIDTH = 6;
 
 type WorldNode = LocationMapContentType['nodes'][number];
@@ -62,21 +71,17 @@ type MarkerConnectionPath = ConnectionPath & {
 const ConnectionPathView = React.memo(function ConnectionPathView({
   path,
   background,
+  font,
 }: {
   path: ConnectionPath;
   background: string;
+  font: SkFont | null;
 }) {
   return (
     <>
-      <Path
-        d={path.path}
-        fill="none"
-        stroke={background}
-        strokeWidth={HALO_WIDTH}
-        strokeOpacity={0.9}
-      />
-      <Path d={path.path} fill="none" stroke={path.color} strokeWidth={2} strokeOpacity={0.85} />
-      <RelationLabel relation={path} background={background} />
+      <Path path={path.path} style="stroke" color={background} strokeWidth={HALO_WIDTH} opacity={0.9} />
+      <Path path={path.path} style="stroke" color={path.color} strokeWidth={2} opacity={0.85} />
+      <RelationLabel relation={path} background={background} font={font} />
     </>
   );
 });
@@ -84,30 +89,27 @@ const ConnectionPathView = React.memo(function ConnectionPathView({
 const ContainsArrowView = React.memo(function ContainsArrowView({
   arrow,
   background,
+  font,
 }: {
   arrow: ContainsArrow;
   background: string;
+  font: SkFont | null;
 }) {
   return (
     <>
       <Path
-        d={arrow.path}
-        fill="none"
-        stroke={background}
+        path={arrow.path}
+        style="stroke"
+        color={background}
         strokeWidth={HALO_WIDTH}
-        strokeOpacity={0.9}
+        opacity={0.9}
       />
-      <Path
-        d={arrow.path}
-        fill="none"
-        stroke={arrow.color}
-        strokeWidth={2}
-        strokeDasharray={CONTAINS_DASH}
-        strokeOpacity={0.85}
-      />
-      <Polygon points={arrow.arrowHalo} fill={background} />
-      <Polygon points={arrow.arrow} fill={arrow.color} />
-      <RelationLabel relation={arrow} background={background} />
+      <Path path={arrow.path} style="stroke" color={arrow.color} strokeWidth={2} opacity={0.85}>
+        <DashPathEffect intervals={[6, 4]} />
+      </Path>
+      <Path path={polygonPointsToPath(arrow.arrowHalo)} color={background} />
+      <Path path={polygonPointsToPath(arrow.arrow)} color={arrow.color} />
+      <RelationLabel relation={arrow} background={background} font={font} />
     </>
   );
 });
@@ -115,54 +117,59 @@ const ContainsArrowView = React.memo(function ContainsArrowView({
 const MarkerConnectionView = React.memo(function MarkerConnectionView({
   connection,
   background,
+  font,
 }: {
   connection: MarkerConnectionPath;
   background: string;
+  font: SkFont | null;
 }) {
   return (
     <>
-      <Path d={connection.path} fill="none" stroke={background} strokeWidth={HALO_WIDTH} />
+      <Path path={connection.path} style="stroke" color={background} strokeWidth={HALO_WIDTH} />
       <Path
-        d={connection.path}
-        fill="none"
-        stroke={connection.color}
+        path={connection.path}
+        style="stroke"
+        color={connection.color}
         strokeWidth={connection.directed ? 2 : 1.6}
       />
       {connection.directed && connection.arrow && connection.arrowHalo && (
         <>
-          <Polygon points={connection.arrowHalo} fill={background} />
-          <Polygon points={connection.arrow} fill={connection.color} />
+          <Path path={polygonPointsToPath(connection.arrowHalo)} color={background} />
+          <Path path={polygonPointsToPath(connection.arrow)} color={connection.color} />
         </>
       )}
-      <RelationLabel relation={connection} background={background} />
+      <RelationLabel relation={connection} background={background} font={font} />
     </>
   );
 });
 
-function RelationLabel({ relation, background }: { relation: ConnectionPath; background: string }) {
-  if (!relation.label) return null;
+function RelationLabel({
+  relation,
+  background,
+  font,
+}: {
+  relation: ConnectionPath;
+  background: string;
+  font: SkFont | null;
+}) {
+  // Without a font (web: `matchFamilyStyle` is unimplemented) the edge still draws,
+  // only its label is skipped.
+  if (!relation.label || !font) return null;
+  // Skia has no `textAnchor`: center by measured width instead. Both place the baseline at
+  // the same y.
+  const x = relation.x - measureEdgeLabelWidth(font, relation.label, 11) / 2;
   return (
     <>
-      <SvgText
-        x={relation.x}
+      <SkiaText
+        x={x}
         y={relation.y - 6}
-        fill={background}
-        stroke={background}
+        font={font}
+        text={relation.label}
+        color={background}
+        style="stroke"
         strokeWidth={4}
-        fontSize={11}
-        textAnchor="middle"
-      >
-        {relation.label}
-      </SvgText>
-      <SvgText
-        x={relation.x}
-        y={relation.y - 6}
-        fill={relation.color}
-        fontSize={11}
-        textAnchor="middle"
-      >
-        {relation.label}
-      </SvgText>
+      />
+      <SkiaText x={x} y={relation.y - 6} font={font} text={relation.label} color={relation.color} />
     </>
   );
 }
@@ -182,12 +189,14 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   connections,
   contains,
   connectionDrag,
-  originX,
-  originY,
+  camera,
   renderWindow,
   background,
   primary,
 }) => {
+  // System font on native, bundled Roboto on web; null while unavailable, where labels
+  // are skipped.
+  const edgeFont = useEdgeFont(11);
   const connectionCacheRef = useRef(
     new Map<
       string,
@@ -349,43 +358,34 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   );
 
   return (
-    <Svg
-      width={renderWindow.width}
-      height={renderWindow.height}
-      pointerEvents="none"
-      style={[styles.canvas, { left: originX, top: originY, zIndex: 1 }]}
-    >
-      <G transform={`translate(${-originX} ${-originY})`}>
-        {visibleConnections.map((connection) => (
-          <ConnectionPathView key={connection.id} path={connection} background={background} />
-        ))}
-        {visibleContains.map((arrow) => (
-          <ContainsArrowView key={arrow.id} arrow={arrow} background={background} />
-        ))}
-        {connectionPath && (
-          <Path
-            d={connectionPath}
-            fill="none"
-            stroke={primary}
-            strokeDasharray="6 4"
-            strokeWidth={2}
-          />
-        )}
-        {visibleMarkerConnections.map((connection) => (
-          <MarkerConnectionView
-            key={connection.id}
-            connection={connection}
-            background={background}
-          />
-        ))}
-      </G>
-    </Svg>
+    <SkiaEdgeCanvas camera={camera}>
+      {visibleConnections.map((connection) => (
+        <ConnectionPathView
+          key={connection.id}
+          path={connection}
+          background={background}
+          font={edgeFont}
+        />
+      ))}
+      {visibleContains.map((arrow) => (
+        <ContainsArrowView key={arrow.id} arrow={arrow} background={background} font={edgeFont} />
+      ))}
+      {connectionPath && (
+        <Path path={connectionPath} style="stroke" color={primary} strokeWidth={2}>
+          <DashPathEffect intervals={[6, 4]} />
+        </Path>
+      )}
+      {visibleMarkerConnections.map((connection) => (
+        <MarkerConnectionView
+          key={connection.id}
+          connection={connection}
+          background={background}
+          font={edgeFont}
+        />
+      ))}
+    </SkiaEdgeCanvas>
   );
 };
-
-const styles = StyleSheet.create({
-  canvas: { overflow: 'visible', position: 'absolute', left: 0, top: 0 },
-});
 
 export default LocationMapConnectionLayer;
 

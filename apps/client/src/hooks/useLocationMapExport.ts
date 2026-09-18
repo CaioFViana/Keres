@@ -8,7 +8,8 @@ import type {
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import type { LocationMapSelect } from '../db/schema';
 import type { NotificationType } from '../state/notificationStore';
-import { buildLocationMapFileName, deliverSvgMap } from '../utils/storyTransfer';
+import { useUserSettingsStore } from '../state/userSettingsStore';
+import { buildLocationMapFileName, deliverMapExport } from '../utils/storyTransfer';
 import { buildStandaloneLocationMapSvg } from '../utils/storyMapSvgExport';
 
 type GalleryMediaById = Record<
@@ -68,7 +69,11 @@ export function useLocationMapExport({
         connections,
         contains,
       });
-      const result = await deliverSvgMap(svg, buildLocationMapFileName(map.name));
+      const result = await deliverMapExport(
+        svg,
+        buildLocationMapFileName(map.name),
+        useUserSettingsStore.getState().exportFormat,
+      );
       if (result.delivered) {
         showNotification(
           t('location_map_export_success', { fileName: result.fileName }),

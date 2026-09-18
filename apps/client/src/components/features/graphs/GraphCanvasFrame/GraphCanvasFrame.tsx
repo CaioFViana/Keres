@@ -11,7 +11,37 @@ interface GraphCanvasFrameProps {
   handleLayout: CanvasViewportResult['handleLayout'];
   panHandlers: CanvasViewportResult['panHandlers'];
   animatedTransform: CanvasViewportResult['animatedTransform'];
+  /**
+   * Content painted below the overlay (the location map's image bases: images < edges <
+   * nodes). A second animated plane goes here when its content needs the camera; reuse
+   * `graphCanvasPlaneStyle` so it matches the main plane exactly.
+   */
+  underlay?: React.ReactNode;
+  /**
+   * Viewport-sized overlay (the `SkiaEdgeCanvas`), rendered before the plane so nodes keep
+   * painting above the edges. It must not carry an RN transform: the camera lives in its own
+   * Skia `Group`, and a second transform here would double-apply it.
+   */
+  overlay?: React.ReactNode;
 }
+
+/**
+ * The inner camera plane geometry, shared with `underlay` planes so all planes agree. Kept
+ * deliberately free of `pointerEvents`: as a style key it is ignored on native and dropped as
+ * invalid CSS on web, which leaves the full-size plane swallowing every hit aimed below it.
+ * Every plane renders `pointerEvents="box-none"` as a real View prop instead - the prop carries
+ * native semantics and react-native-web's `box-none` polyfill, so empty space falls through to
+ * the layers below while pins/nodes still receive the hit.
+ */
+export const graphCanvasPlaneStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  transformOrigin: 'top left',
+  overflow: 'visible',
+} as const;
 
 /**
  * The shared pan/zoom scaffolding of every canvas: an outer viewport that owns the gestures and
@@ -28,6 +58,8 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   panHandlers,
   animatedTransform,
   children,
+  underlay,
+  overlay,
 }) => {
   const { colors } = useTheme();
 
@@ -41,17 +73,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
           ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
           : {}),
       },
-      content: {
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        transformOrigin: 'top left' as const,
-        overflow: 'visible' as const,
-        // Empty space belongs to the container's pan; pins/nodes still receive the hit.
-        pointerEvents: 'box-none' as const,
-      },
+      content: graphCanvasPlaneStyle,
     }),
     [colors],
   );
@@ -68,7 +90,12 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
           }
         : {})}
     >
-      <Animated.View style={[styles.content, { transform: animatedTransform }]}>
+      {underlay}
+      {overlay}
+      <Animated.View
+        style={[styles.content, { transform: animatedTransform }]}
+        pointerEvents="box-none"
+      >
         {children}
       </Animated.View>
     </View>

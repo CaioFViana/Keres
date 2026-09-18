@@ -28,6 +28,7 @@ const SETTINGS = {
   use24HourTime: true,
   dateDisplayFormat: 'dmy' as const,
   showContextualHelp: false,
+  exportFormat: 'png' as const,
 };
 
 beforeEach(() => {
@@ -51,6 +52,7 @@ describe('initializeSettings', () => {
     expect(store()).toMatchObject({ userId: 'local-user-1', username: 'ana', language: 'pt-BR' });
     expect(store().showContextualHelp).toBe(false);
     expect(store().dateDisplayFormat).toBe('dmy');
+    expect(store().exportFormat).toBe('png');
     expect(settings).toEqual(SETTINGS);
   });
 
@@ -191,6 +193,24 @@ describe('setShowContextualHelp', () => {
   });
 });
 
+describe('setExportFormat', () => {
+  it('persists the map export format before updating the UI state', async () => {
+    await store().setExportFormat(db, 'png');
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      exportFormat: 'png',
+    });
+    expect(store().exportFormat).toBe('png');
+  });
+
+  it('keeps the current format when persistence fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().setExportFormat(db, 'png')).rejects.toThrow();
+    expect(store().exportFormat).toBe('svg');
+  });
+});
+
 describe('resetSettings', () => {
   it('wipes everything, including the active server', async () => {
     mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
@@ -204,6 +224,7 @@ describe('resetSettings', () => {
       username: null,
       language: null,
       showContextualHelp: true,
+      exportFormat: 'svg',
       activeServer: null,
     });
   });

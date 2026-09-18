@@ -49,7 +49,7 @@ import {
 } from '../../utils/boardPinAppearance';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
-import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { buildBoardMapFileName, deliverMapExport } from '../../utils/storyTransfer';
 import { buildStandaloneBoardSvg } from '../../utils/storyMapSvgExport';
 
 const BoardCanvasScreen = () => {
@@ -337,9 +337,10 @@ const BoardCanvasScreen = () => {
         galleryMediaById,
         summaries: summariesByNode,
       });
-      const result = await deliverSvgMap(
+      const result = await deliverMapExport(
         svg,
         buildBoardMapFileName(selectedStory.title, board?.name ?? 'board'),
+        useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
         showNotification(t('board_export_success', { fileName: result.fileName }), 'success');

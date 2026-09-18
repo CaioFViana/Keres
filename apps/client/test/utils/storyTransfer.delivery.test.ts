@@ -20,11 +20,12 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { extractStoryZip } from '../../src/utils/storyMediaBundle';
 import {
+  deliverMapExport,
   deliverStoryExport,
   deliverStoryZipExport,
   deliverSvgMap,
   pickStoryExportFile,
-  StoryImportError,
+  type StoryImportError,
 } from '../../src/utils/storyTransfer';
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
@@ -67,6 +68,78 @@ function validExport(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   Platform.OS = 'web';
+});
+
+describe('map export format', () => {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" font-family="Helvetica, Arial, sans-serif"></svg>';
+
+  // The RN preset's global `URL` polyfill needs a native module; the browser download path
+  // only works once the page-level APIs are stubbed, like the delivery tests below do.
+  function stubBrowserDownload() {
+    const anchor = document.createElement('a');
+    const click = jest.spyOn(anchor, 'click').mockImplementation(() => {});
+    const createElement = jest.spyOn(document, 'createElement').mockReturnValue(anchor);
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: jest.fn(() => 'blob:map'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: jest.fn() });
+    return { anchor, click, createElement };
+  }
+
+  it('delivers the string untouched in svg mode', async () => {
+    const { anchor, click, createElement } = stubBrowserDownload();
+    const rasterize = jest.fn();
+
+    await expect(
+      deliverMapExport(svg, 'a-queda-mapa-2026-08-11.svg', 'svg', rasterize),
+    ).resolves.toEqual({ delivered: true, fileName: 'a-queda-mapa-2026-08-11.svg' });
+    expect(rasterize).not.toHaveBeenCalled();
+    expect(anchor.download).toBe('a-queda-mapa-2026-08-11.svg');
+    expect(click).toHaveBeenCalledTimes(1);
+    createElement.mockRestore();
+    click.mockRestore();
+  });
+
+  it('rasterizes the same string at capped size in png mode', async () => {
+    const { anchor, click, createElement } = stubBrowserDownload();
+    const bytes = Uint8Array.from([137, 80, 78, 71]);
+    const rasterize = jest.fn(
+      async (_svg: string, _width: number, _height: number): Promise<Uint8Array> => bytes,
+    );
+
+    await expect(
+      deliverMapExport(
+        svg.replace('width="800"', 'width="8000"'),
+        'a-queda-mapa-2026-08-11.svg',
+        'png',
+        rasterize,
+      ),
+    ).resolves.toEqual({ delivered: true, fileName: 'a-queda-mapa-2026-08-11.png' });
+
+    // The raster copy carries the sanitized string at the capped resolution; the file name
+    // swaps its suffix.
+    expect(rasterize).toHaveBeenCalledTimes(1);
+    const [rasterSvg, width, height] = rasterize.mock.calls[0];
+    expect(rasterSvg).toContain('font-family="sans-serif"');
+    expect(rasterSvg).not.toContain('Arial');
+    expect(width).toBe(4096);
+    expect(height).toBe(Math.round(520 * (4096 / 8000)));
+    expect(anchor.download).toBe('a-queda-mapa-2026-08-11.png');
+    expect(click).toHaveBeenCalledTimes(1);
+    createElement.mockRestore();
+    click.mockRestore();
+  });
+
+  it('refuses to rasterize an svg without root dimensions', async () => {
+    const rasterize = jest.fn();
+
+    await expect(deliverMapExport('<svg />', 'a-queda.svg', 'png', rasterize)).rejects.toThrow(
+      'no root dimensions',
+    );
+    expect(rasterize).not.toHaveBeenCalled();
+  });
 });
 
 describe('story transfer delivery', () => {

@@ -1,5 +1,5 @@
 const mockBuildSvg = jest.fn();
-const mockDeliverSvg = jest.fn();
+const mockDeliver = jest.fn();
 
 jest.mock('../../src/utils/storyMapSvgExport', () => ({
   __esModule: true,
@@ -8,7 +8,7 @@ jest.mock('../../src/utils/storyMapSvgExport', () => ({
 jest.mock('../../src/utils/storyTransfer', () => ({
   __esModule: true,
   buildLocationMapFileName: jest.fn((name: string) => `${name}.svg`),
-  deliverSvgMap: (...args: unknown[]) => mockDeliverSvg(...args),
+  deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -26,7 +26,7 @@ const colors = {
 beforeEach(() => {
   jest.clearAllMocks();
   mockBuildSvg.mockResolvedValue('<svg />');
-  mockDeliverSvg.mockResolvedValue({ delivered: true, fileName: 'Atlas.svg' });
+  mockDeliver.mockResolvedValue({ delivered: true, fileName: 'Atlas.svg' });
 });
 
 describe('useLocationMapExport', () => {
@@ -54,7 +54,7 @@ describe('useLocationMapExport', () => {
       {},
       expect.objectContaining({ title: 'Atlas', nodeNames: { a: 'Alpha' } }),
     );
-    expect(mockDeliverSvg).toHaveBeenCalledWith('<svg />', 'Atlas.svg');
+    expect(mockDeliver).toHaveBeenCalledWith('<svg />', 'Atlas.svg', 'svg');
     expect(showNotification).toHaveBeenCalledWith('location_map_export_success', 'success');
     expect(setExporting).toHaveBeenNthCalledWith(1, true);
     expect(setExporting).toHaveBeenLastCalledWith(false);
@@ -64,7 +64,7 @@ describe('useLocationMapExport', () => {
     const setExporting = jest.fn();
     const showNotification = jest.fn();
     const t = (key: string) => key;
-    mockDeliverSvg.mockResolvedValueOnce({
+    mockDeliver.mockResolvedValueOnce({
       delivered: false,
       fileName: 'Atlas.svg',
       uri: '/tmp/Atlas.svg',

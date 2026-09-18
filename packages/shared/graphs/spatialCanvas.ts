@@ -24,10 +24,12 @@ export const MAX_SPATIAL_WORLD_COORDINATE = 100_000;
 /** No one document may stretch farther than this in either axis. */
 export const MAX_SPATIAL_DOCUMENT_SPAN = 200_000;
 /**
- * GPU/layout safety for the interactive surface. Android's `SvgView` renders into an ARGB_8888
- * bitmap of the whole view, so one 4096-pixel side alone is 67MB in a single allocation - enough
- * to OOM a phone. 2048 (16MB worst case) stays under the texture limit of even old GPUs while
- * still covering a phone viewport plus overscan.
+ * Bounds the overlay surface (viewport plus overscan) that the cull window is derived from.
+ * Historically this also sized the edges `<Svg>`, which is why it reads like a bitmap budget:
+ * Android's `SvgView` renders into an ARGB_8888 bitmap of the whole view, so one 4096-pixel
+ * side alone is 67MB in a single allocation - enough to OOM a phone. The edges now draw in a
+ * viewport-sized Skia overlay instead (see `SkiaEdgeCanvas`), but the cap stays: it keeps the
+ * cull window - and any drawing still sized by it - near the viewport on every GPU.
  */
 export const MAX_SPATIAL_NATIVE_SURFACE = 2048;
 /** Prefetch at least one viewport of world in each direction around the visible rect. */

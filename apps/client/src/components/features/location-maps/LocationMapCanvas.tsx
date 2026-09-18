@@ -1,7 +1,9 @@
 import { spatialRectIntersects, type LocationMapContentType } from '@keres/shared';
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import { Animated, StyleSheet, View } from 'react-native';
+import GraphCanvasFrame, {
+  graphCanvasPlaneStyle,
+} from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import {
   locationMapCanvasBounds,
@@ -9,6 +11,7 @@ import {
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
 import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
+import SkiaOverlayErrorBoundary from '../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,
   type LocationMapContains,
@@ -160,7 +163,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       setChildDragging,
       width,
       height,
-      svgOrigin,
+      cameraTransform,
       renderWindow,
       scale,
       worldToScreen,
@@ -307,12 +310,12 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [activeDrag?.id, layoutContent.markers, layoutContent.nodes, renderWindow],
     );
 
-    return (
-      <GraphCanvasFrame
-        containerRef={containerRef}
-        handleLayout={handleLayout}
-        panHandlers={panHandlers}
-        animatedTransform={animatedTransform}
+    // Paint order stays images < edges < nodes: the image bases ride their own camera
+    // plane below the overlay, the pins stay on the main plane above it.
+    const underlay = (
+      <Animated.View
+        style={[graphCanvasPlaneStyle, { transform: animatedTransform }]}
+        pointerEvents="box-none"
       >
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
           {visibleImages.map((image) => (
@@ -336,19 +339,33 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             />
           ))}
         </View>
-        {width > 0 && height > 0 && (
+      </Animated.View>
+    );
+    const overlay =
+      width > 0 && height > 0 ? (
+        <SkiaOverlayErrorBoundary canvas="location-map">
           <LocationMapConnectionLayer
             content={layoutContent}
             connections={connections}
             contains={contains}
             connectionDrag={connectionDrag}
-            originX={svgOrigin.x}
-            originY={svgOrigin.y}
+            camera={cameraTransform}
             renderWindow={renderWindow}
             background={colors.background}
             primary={colors.primary}
           />
-        )}
+        </SkiaOverlayErrorBoundary>
+      ) : null;
+
+    return (
+      <GraphCanvasFrame
+        containerRef={containerRef}
+        handleLayout={handleLayout}
+        panHandlers={panHandlers}
+        animatedTransform={animatedTransform}
+        underlay={underlay}
+        overlay={overlay}
+      >
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
           {visiblePoints.map(({ kind, point }) => (
             <LocationMapNodeView

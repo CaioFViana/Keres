@@ -20,7 +20,8 @@ import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { deliverMapExport } from '../../utils/storyTransfer';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
@@ -133,7 +134,11 @@ const PlotMatrixScreen = () => {
         border: colors.border,
         showRowCoverage: true,
       });
-      const result = await deliverSvgMap(svg, `${selectedStory.title}-tramas.svg`);
+      const result = await deliverMapExport(
+        svg,
+        `${selectedStory.title}-tramas.svg`,
+        useUserSettingsStore.getState().exportFormat,
+      );
       notify(
         result.delivered
           ? t('plot_matrix_export_success', { fileName: result.fileName })

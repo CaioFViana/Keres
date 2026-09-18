@@ -12,9 +12,17 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import type { ExtractedZipMedia } from './storyMediaBundle';
 import { extractStoryZip } from './storyMediaBundle';
 import { StoryImportError } from './StoryImportError';
+import {
+  fitRasterSize,
+  parseSvgRootSize,
+  rasterizeMapSvg,
+  sanitizeSvgForRaster,
+  withPngExtension,
+} from './svgRaster';
 
 export { StoryImportError };
 
@@ -173,6 +181,34 @@ export function deliverStoryZipExport(
 /** Delivers a map's image (story or relations) as an `.svg`. */
 export function deliverSvgMap(svg: string, fileName: string): Promise<ExportDeliveryResult> {
   return deliverFile(svg, fileName, 'image/svg+xml', 'public.svg-image');
+}
+
+/**
+ * Delivers a map, graph, board or timeline drawing in the device's export format: the SVG
+ * string as a file, or PNG bytes rasterized from that same string. One source of truth feeds
+ * both formats, so they can never disagree. The rasterizer is injectable so tests never need
+ * the hidden canvas.
+ */
+export async function deliverMapExport(
+  svg: string,
+  fileName: string,
+  format: MapExportFormat,
+  rasterize: (
+    svg: string,
+    width: number,
+    height: number,
+  ) => Promise<Uint8Array> = rasterizeMapSvg,
+): Promise<ExportDeliveryResult> {
+  if (format === 'svg') {
+    return deliverSvgMap(svg, fileName);
+  }
+  const size = parseSvgRootSize(svg);
+  if (!size) {
+    throw new Error('map export: the SVG has no root dimensions to rasterize');
+  }
+  const pixels = fitRasterSize(size.width, size.height);
+  const bytes = await rasterize(sanitizeSvgForRaster(svg), pixels.width, pixels.height);
+  return deliverFile(bytes, withPngExtension(fileName), 'image/png', 'public.png');
 }
 
 /** A browser download through a temporary link — there is no share sheet on the web. */

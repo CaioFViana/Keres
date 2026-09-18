@@ -7,10 +7,26 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 // Reanimated schedules native-frame updates in the real runtime. Its Jest implementation keeps
 // collapsible controls deterministic and prevents animation updates from leaking outside `act`.
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+jest.mock('react-native-reanimated', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const ReanimatedMock = require('react-native-reanimated/mock');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const React = require('react');
+  return {
+    ...ReanimatedMock,
+    // The stock mock rebuilds the shared object on every render; the real hook keeps one object
+    // per component instance, which the viewport camera mirror relies on.
+    useSharedValue: (initial: unknown) => {
+      const ref = React.useRef(null);
+      if (ref.current === null) ref.current = { value: initial };
+      return ref.current;
+    },
+  };
+});
 
 // Entity secondary-draft persistence and several stores touch AsyncStorage; native module is null in Jest.
 jest.mock('@react-native-async-storage/async-storage', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
@@ -24,3 +40,57 @@ console.info = (...args: Parameters<typeof console.info>) => {
   }
   originalConsoleInfo(...args);
 };
+
+// Skia draws on the GPU with no host tree; tests assert the declarative scene instead, so each
+// drawing maps to a host placeholder that keeps its props (paths, paints, camera) queryable.
+jest.mock('@shopify/react-native-skia', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const React = require('react');
+  const host = (type: string) => {
+    // React 19 hands `ref` to function components as a prop; forwarding it to the host
+    // element would let the renderer overwrite test-driven ref holders, so it stays out.
+    const SkiaHost = (props: { children?: React.ReactNode }) => {
+      const { ref: _ignored, ...rest } = (props ?? {}) as Record<string, unknown>;
+      return React.createElement(type, rest, (rest as { children?: React.ReactNode }).children);
+    };
+    SkiaHost.displayName = type;
+    return SkiaHost;
+  };
+  // The raster host reads snapshots off this holder; tests drive it per case.
+  const canvasHolder: { current: unknown } = { current: null };
+  return {
+    __esModule: true,
+    Canvas: host('SkiaCanvas'),
+    Group: host('SkiaGroup'),
+    Path: host('SkiaPath'),
+    DashPathEffect: host('SkiaDashPathEffect'),
+    Text: host('SkiaText'),
+    RoundedRect: host('SkiaRoundedRect'),
+    ImageSVG: host('SkiaImageSVG'),
+    useCanvasRef: () => canvasHolder,
+    Skia: {
+      SVG: {
+        MakeFromString: (text: string) =>
+          text.includes('<svg') ? { __mockSvg: text } : null,
+      },
+    },
+    // Deterministic measuring so label-centering math stays assertable: six units per
+    // glyph, through the same glyph calls the canvases use (`measureText` is
+    // unimplemented on web).
+    matchFont: () => ({
+      getGlyphIDs: (text: string) => [...text].map((_, index) => index),
+      getGlyphWidths: (ids: number[]) => ids.map(() => 6),
+    }),
+    // The web font hook feeds this a URI; tests drive per-source behavior via spyOn.
+    useFont: () => ({
+      getGlyphIDs: (text: string) => [...text].map((_, index) => index),
+      getGlyphWidths: (ids: number[]) => ids.map(() => 6),
+    }),
+    __skiaTest: {
+      canvasHolder,
+      reset() {
+        canvasHolder.current = null;
+      },
+    },
+  };
+});

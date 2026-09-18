@@ -621,6 +621,20 @@ Named gaps worth a line each:
 
 ---
 
+## 10b. Skia port (2026-09) — covered outside the phases above
+
+The five pan/zoom canvases moved from `react-native-svg` to `@shopify/react-native-skia`
+(see `.agents/plans/2026-09-17-skia-port.md`), each with a focused suite that supersedes the
+`c31d4cfa` SVG assertions: `LocationGraphCanvas`, `CharacterRelationGraphCanvas`,
+`StoryGraphCanvas`, `BoardCanvasEdges` (rewritten), `LocationMapConnectionLayer` (rewritten),
+plus `SkiaEdgeCanvas` behavior asserted through each of them, `polygonPointsToPath`,
+`svgRaster`, `SvgRasterHost`, `deliverMapExport` (in `storyTransfer.delivery`), and the
+`exportFormat` setting (`userSettingsStore`, migration `0039`). The next coverage re-run moves
+these files out of the unmeasured bucket; until then the Phase 2–4 numbers above undercount
+the client.
+
+---
+
 ## 11. Permanently excluded — and why
 
 100% is the north star; these are the things it will never include. Each exclusion is a decision to

@@ -37,7 +37,8 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import { buildStoryMapFileName, deliverMapExport } from '../../../utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 
 /**
@@ -339,7 +340,11 @@ const ChoiceViewScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(svg, buildStoryMapFileName(selectedStory.title));
+      const result = await deliverMapExport(
+        svg,
+        buildStoryMapFileName(selectedStory.title),
+        useUserSettingsStore.getState().exportFormat,
+      );
       if (result.delivered) {
         showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
       } else {

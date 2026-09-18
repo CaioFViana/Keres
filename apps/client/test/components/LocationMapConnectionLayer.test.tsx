@@ -1,4 +1,5 @@
 import { render, type RenderResult } from '@testing-library/react-native';
+import * as SkiaMock from '@shopify/react-native-skia';
 import type { LocationMapContentType } from '@keres/shared';
 import { clipSpatialSegment } from '@keres/shared';
 import { pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
@@ -18,6 +19,7 @@ const NODES = [
 ] as const;
 const CONTENT = { images: [], nodes: [...NODES] } as unknown as LocationMapContentType;
 const WINDOW = { x: -50, y: -80, width: 1000, height: 800 };
+const CAMERA = { value: [{ translateX: 0 }, { translateY: 0 }, { scale: 1 }] } as never;
 
 const MARGIN = LOCATION_MAP_NODE_SIZE / 2 + 3;
 
@@ -36,18 +38,16 @@ function expectedLine(from: (typeof NODES)[number], to: (typeof NODES)[number]):
   return `M ${segment.from.x} ${segment.from.y} L ${segment.to.x} ${segment.to.y}`;
 }
 
-/** Connection lines only: an arrowhead's path never contains a line-to. */
+/** Connection lines only: arrowheads cross the port as filled paths. */
 function linePathsOf(root: Root) {
   return root
-    .queryAll((node) => node.type === 'RNSVGPath')
-    .map((candidate) => candidate.props.d as string)
-    .filter((d) => d.includes(' L '));
+    .queryAll((node) => node.type === 'SkiaPath' && node.props.style === 'stroke')
+    .map((candidate) => candidate.props.path as string)
+    .filter((path) => path.includes(' L '));
 }
 
 function labelTextsOf(root: Root) {
-  return root
-    .queryAll((node) => node.type === 'RNSVGTSpan')
-    .map((candidate) => candidate.props.content as string);
+  return root.queryAll((node) => node.type === 'SkiaText').map((candidate) => candidate.props.text);
 }
 
 async function renderLayer(extra: Record<string, unknown> = {}) {
@@ -57,8 +57,7 @@ async function renderLayer(extra: Record<string, unknown> = {}) {
       connections={[{ locationAId: 'loc-a', locationBId: 'loc-b', label: 'trail' }]}
       contains={[{ parentLocationId: 'loc-a', childLocationId: 'loc-c', label: null }]}
       connectionDrag={null}
-      originX={WINDOW.x}
-      originY={WINDOW.y}
+      camera={CAMERA}
       renderWindow={WINDOW}
       background="#000"
       primary="#fff"
@@ -69,21 +68,29 @@ async function renderLayer(extra: Record<string, unknown> = {}) {
 }
 
 describe('location map connection layer', () => {
-  it('sizes the overlay in world units from the render window', async () => {
-    const root = await renderLayer();
-    const [svg] = root.queryAll((node) => node.type === 'RNSVGSvgView');
+  afterEach(() => jest.restoreAllMocks());
 
-    expect(svg.props.width).toBe(WINDOW.width);
-    expect(svg.props.height).toBe(WINDOW.height);
-    expect(StyleSheet.flatten(svg.props.style)).toMatchObject({
+  it('keeps the canvas viewport-sized, never world-sized', async () => {
+    const root = await renderLayer();
+    const [canvas] = root.queryAll((node) => node.type === 'SkiaCanvas');
+
+    expect(StyleSheet.flatten(canvas.props.style)).toMatchObject({
       position: 'absolute',
-      left: WINDOW.x,
-      top: WINDOW.y,
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
     });
-    // The inner group compensates the overlay origin, so world paths land back on the drawing.
-    const [group] = root.queryAll((node) => node.type === 'RNSVGGroup' && node.props.matrix);
-    expect(group.props.matrix[4]).toBe(-WINDOW.x);
-    expect(group.props.matrix[5]).toBe(-WINDOW.y);
+    expect(canvas.props.width).toBeUndefined();
+    expect(canvas.props.height).toBeUndefined();
+    expect(canvas.props.pointerEvents).toBe('none');
+  });
+
+  it('forwards the live camera to the overlay group', async () => {
+    const root = await renderLayer();
+    const [group] = root.queryAll((node) => node.type === 'SkiaGroup');
+
+    expect(group.props.transform).toBe(CAMERA);
   });
 
   it('draws connections and contains arrows at their world positions', async () => {
@@ -95,17 +102,47 @@ describe('location map connection layer', () => {
     expect(drawn).toContain(expectedLine(NODES[0], NODES[1]));
     expect(drawn).toContain(expectedLine(NODES[0], NODES[2]));
 
-    // The contains arrowhead sits on the clipped tip, pointing along the line.
-    const arrows = root
-      .queryAll((node) => node.type === 'RNSVGPath')
-      .map((candidate) => candidate.props.d as string)
-      .filter((d) => !d.includes(' L '));
-    expect(arrows.length).toBeGreaterThan(0);
+    // The contains arrowhead (halo plus head) sits on the clipped tip.
+    const heads = root
+      .queryAll((node) => node.type === 'SkiaPath')
+      .filter((path) => path.props.style !== 'stroke');
+    expect(heads).toHaveLength(2);
     const tip = boundary(NODES[2], NODES[0]);
-    const [tipX, tipY] = arrows[0].slice(1).split(' ').slice(0, 2).map(Number);
-    // Recomputed from the clipped tip, so it agrees with the geometry up to float noise.
-    expect(tipX).toBeCloseTo(tip.x, 8);
-    expect(tipY).toBeCloseTo(tip.y, 8);
+    for (const head of heads) {
+      const [tipX, tipY] = (head.props.path as string)
+        .slice(2)
+        .split(' ')[0]
+        .split(',')
+        .map(Number);
+      expect(tipX).toBeCloseTo(tip.x, 8);
+      expect(tipY).toBeCloseTo(tip.y, 8);
+    }
+    // The contains line keeps its historical dash rhythm.
+    const dashes = root.queryAll((node) => node.type === 'SkiaDashPathEffect');
+    expect(dashes).toHaveLength(1);
+    expect(dashes[0].props.intervals).toEqual([6, 4]);
+  });
+
+  it('draws directed marker connections with arrowheads and labels', async () => {
+    const root = await renderLayer({
+      content: {
+        ...CONTENT,
+        markers: [{ id: 'm1', x: 300, y: 200, color: '#ff00ff' }],
+        markerConnections: [
+          { id: 'mc1', fromId: 'n1', toId: 'm1', directed: true, label: 'mk' },
+        ],
+      },
+      connections: [],
+      contains: [],
+    });
+
+    const drawn = linePathsOf(root);
+    expect(drawn).toHaveLength(2);
+    const heads = root
+      .queryAll((node) => node.type === 'SkiaPath')
+      .filter((path) => path.props.style !== 'stroke');
+    expect(heads).toHaveLength(2);
+    expect(labelTextsOf(root)).toEqual(['mk', 'mk']);
   });
 
   it('renders the visible label and clips a connection that leaves the window', async () => {
@@ -133,5 +170,18 @@ describe('location map connection layer', () => {
 
     expect(linePathsOf(root)).toHaveLength(0);
     expect(labelTextsOf(root)).not.toContain('far');
+  });
+
+  it('draws edges without labels when the system font is unavailable', async () => {
+    // Web: `matchFamilyStyle` is unimplemented and throws; the layer must survive with
+    // edges only, never a black screen.
+    jest.spyOn(SkiaMock, 'matchFont').mockImplementation(() => {
+      throw new Error('Not implemented on React Native Web');
+    });
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const root = await renderLayer();
+
+    expect(labelTextsOf(root)).toHaveLength(0);
+    expect(linePathsOf(root)).toContain(expectedLine(NODES[0], NODES[1]));
   });
 });

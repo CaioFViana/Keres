@@ -15,7 +15,8 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { deliverSvgMap } from '../../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import { deliverMapExport } from '../../../utils/storyTransfer';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
@@ -214,7 +215,11 @@ const PresenceMatrixViewerContent: React.FC<{
         border: colors.border,
         showRowCoverage: request.kind === 'character',
       });
-      const r = await deliverSvgMap(svg, `${story.title}-presenca.svg`);
+      const r = await deliverMapExport(
+        svg,
+        `${story.title}-presenca.svg`,
+        useUserSettingsStore.getState().exportFormat,
+      );
       notify(
         r.delivered
           ? t('presence_matrix_export_success', { fileName: r.fileName })

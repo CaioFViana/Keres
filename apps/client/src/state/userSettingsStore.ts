@@ -1,4 +1,7 @@
-import type { ClientSettings } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import type {
+  ClientSettings,
+  MapExportFormat,
+} from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
 import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { create } from 'zustand';
 import type { AppDrizzleClient } from '../db';
@@ -14,6 +17,7 @@ interface UserSettingsState {
   dateDisplayFormat: GregorianDateDisplayFormat;
   showContextualHelp: boolean;
   suggestLiteraryDevices: boolean;
+  exportFormat: MapExportFormat;
   activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
@@ -28,6 +32,7 @@ interface UserSettingsState {
     db: AppDrizzleClient,
     suggestLiteraryDevices: boolean,
   ) => Promise<void>;
+  setExportFormat: (db: AppDrizzleClient, exportFormat: MapExportFormat) => Promise<void>;
   setActiveServer: (server: ServerSelect | null) => void;
   clearActiveServer: () => void;
   resetSettings: () => void;
@@ -41,6 +46,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   dateDisplayFormat: 'iso',
   showContextualHelp: true,
   suggestLiteraryDevices: true,
+  exportFormat: 'svg',
   activeServer: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
@@ -54,6 +60,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
         dateDisplayFormat: settings.dateDisplayFormat ?? 'iso',
         showContextualHelp: settings.showContextualHelp,
         suggestLiteraryDevices: settings.suggestLiteraryDevices,
+        exportFormat: settings.exportFormat ?? 'svg',
       }); // Set userId
     }
     return settings; // Return the settings object
@@ -92,6 +99,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ suggestLiteraryDevices });
   },
 
+  setExportFormat: async (db: AppDrizzleClient, exportFormat: MapExportFormat) => {
+    await updateClientSettings(db, { exportFormat });
+    set({ exportFormat });
+  },
+
   setActiveServer: (server: ServerSelect | null) => {
     set({ activeServer: server });
   },
@@ -109,6 +121,7 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
       dateDisplayFormat: 'iso',
       showContextualHelp: true,
       suggestLiteraryDevices: true,
+      exportFormat: 'svg',
       activeServer: null,
     }); // Reset all settings including activeServer
   },

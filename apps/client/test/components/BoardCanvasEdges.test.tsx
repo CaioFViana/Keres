@@ -1,11 +1,13 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
+import * as SkiaMock from '@shopify/react-native-skia';
 import type { BoardContentType } from '@keres/shared';
-import { spatialNativeSurface } from '@keres/shared';
 import React, { createRef } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
 import BoardCanvas, {
   type BoardCanvasHandle,
 } from '../../src/components/features/boards/BoardCanvas';
+import SkiaEdgeCanvas from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import { boardEdgeGeometry } from '../../src/utils/boardEdges';
 
 jest.mock('../../src/theme', () => ({
@@ -63,13 +65,13 @@ beforeEach(() => {
 
 afterEach(() => jest.restoreAllMocks());
 
-async function renderBoard() {
+async function renderBoard(content: BoardContentType = CONTENT) {
   const ref = createRef<BoardCanvasHandle>();
   const create = jest.spyOn(PanResponder, 'create');
   const view = await render(
     <BoardCanvas
       ref={ref}
-      content={CONTENT}
+      content={content}
       titles={{
         a: { title: 'A', typeLabel: 'note' },
         b: { title: 'B', typeLabel: 'note' },
@@ -99,15 +101,16 @@ async function fireLayout(root: Root) {
   });
 }
 
-function overlayOf(root: Root) {
-  const [svg] = root.queryAll((node) => node.type === 'RNSVGSvgView');
-  const style = StyleSheet.flatten(svg.props.style);
-  return {
-    left: style.left as number,
-    top: style.top as number,
-    width: svg.props.width as number,
-    height: svg.props.height as number,
-  };
+function canvasOf(root: Root) {
+  const canvases = root.queryAll((node) => node.type === 'SkiaCanvas');
+  expect(canvases).toHaveLength(1);
+  return canvases[0];
+}
+
+function groupOf(root: Root) {
+  const groups = root.queryAll((node) => node.type === 'SkiaGroup');
+  expect(groups).toHaveLength(1);
+  return groups[0];
 }
 
 /** The live camera, read off the single host view that carries the transform. */
@@ -129,25 +132,21 @@ function transformOf(root: Root) {
   return { x: valueOf(translateX), y: valueOf(translateY), scale: valueOf(scale) };
 }
 
-/** Edge lines only: an arrowhead's path never contains a line-to. */
-function edgeLinesOf(root: Root) {
-  return root
-    .queryAll((node) => node.type === 'RNSVGPath')
-    .map((candidate) => candidate.props.d as string)
-    .filter((d) => d.includes(' L '));
+function expectMirror(root: Root) {
+  const camera = transformOf(root);
+  expect(groupOf(root).props.transform.value).toEqual([
+    { translateX: camera.x },
+    { translateY: camera.y },
+    { scale: camera.scale },
+  ]);
 }
 
-function drawnPointsOf(root: Root) {
+/** Edge lines only: arrowheads cross the port as filled paths. */
+function edgeLinesOf(root: Root) {
   return root
-    .queryAll((node) => node.type === 'RNSVGPath')
-    .flatMap((candidate) => {
-      const numbers = (candidate.props.d as string).match(/-?\d+\.?\d*(?:e-?\d+)?/g) ?? [];
-      const points: { x: number; y: number }[] = [];
-      for (let index = 0; index + 1 < numbers.length; index += 2) {
-        points.push({ x: Number(numbers[index]), y: Number(numbers[index + 1]) });
-      }
-      return points;
-    });
+    .queryAll((node) => node.type === 'SkiaPath' && node.props.style === 'stroke')
+    .map((candidate) => candidate.props.path as string)
+    .filter((path) => path.includes(' L '));
 }
 
 describe('board edges overlay', () => {
@@ -155,12 +154,12 @@ describe('board edges overlay', () => {
     const { root } = await renderBoard();
     await fireLayout(root);
 
-    // The regression only bites below scale 1: the overlay used to be sized in screen pixels,
-    // which covers a shrinking fraction of the world as the camera zooms out.
+    // The crash scenario is a fitted drawing at scale < 1: the old world-sized overlay asked
+    // for surface/scale pixels per side here.
     expect(transformOf(root).scale).toBeLessThan(1);
   });
 
-  it('draws the edge in world coordinates, sized so the native bitmap covers the render window', async () => {
+  it('draws the edge in world coordinates on a viewport-bounded canvas', async () => {
     const { root } = await renderBoard();
     await fireLayout(root);
 
@@ -169,23 +168,94 @@ describe('board edges overlay', () => {
       `M ${geometry.start.x} ${geometry.start.y} L ${geometry.end.x} ${geometry.end.y}`,
     ]);
 
-    // World-sized overlay: the bitmap it rasterizes to stays the viewport-sized surface.
-    const overlay = overlayOf(root);
-    const { scale } = transformOf(root);
-    const surface = spatialNativeSurface(VIEWPORT.width, VIEWPORT.height);
-    expect(overlay.width * scale).toBeCloseTo(surface.width, 3);
-    expect(overlay.height * scale).toBeCloseTo(surface.height, 3);
+    // Absolute-fill of the frame: bounded by the viewport on every platform, with no width
+    // or height the render window could inflate.
+    const canvas = canvasOf(root);
+    expect(StyleSheet.flatten(canvas.props.style)).toMatchObject({
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+    });
+    expect(canvas.props.width).toBeUndefined();
+    expect(canvas.props.height).toBeUndefined();
+    expect(canvas.props.pointerEvents).toBe('none');
+    expectMirror(root);
+  });
 
-    // Every drawn point lands inside the overlay: outside it the native SVG view clips, which
-    // is exactly how the arrows used to disappear.
-    const drawn = drawnPointsOf(root);
-    expect(drawn.length).toBeGreaterThan(0);
-    for (const point of drawn) {
-      expect(point.x).toBeGreaterThanOrEqual(overlay.left);
-      expect(point.x).toBeLessThanOrEqual(overlay.left + overlay.width);
-      expect(point.y).toBeGreaterThanOrEqual(overlay.top);
-      expect(point.y).toBeLessThanOrEqual(overlay.top + overlay.height);
-    }
+  it('paints the overlay before the plane, outside the animated transform', async () => {
+    const { root } = await renderBoard();
+    await fireLayout(root);
+
+    const frame = root.queryAll((node) => typeof node.props.onLayout === 'function')[0];
+    const [first, second] = React.Children.toArray(frame.props.children);
+    // The overlay slot holds the contained Skia canvas: the boundary renders its child
+    // inline, so order and placement are unchanged.
+    expect((first as any)?.type).toBe(SkiaOverlayErrorBoundary);
+    expect((first as any)?.props?.children?.type).toBe(SkiaEdgeCanvas);
+    expect(second).toBeTruthy();
+    const planeKids = React.Children.toArray((second as any)?.props?.children);
+    expect(planeKids.some((kid) => (kid as any)?.type === SkiaEdgeCanvas)).toBe(false);
+  });
+
+  it('fills the arrowhead and halos the label', async () => {
+    const labeled = {
+      nodes: [...NODES],
+      edges: [{ ...EDGE, label: 'hi' }],
+    } as unknown as BoardContentType;
+    const { root } = await renderBoard(labeled);
+    await fireLayout(root);
+
+    // The arrowhead is a filled path converted from the same points (closed with Z).
+    const heads = root
+      .queryAll((node) => node.type === 'SkiaPath')
+      .filter((path) => path.props.style !== 'stroke');
+    expect(heads).toHaveLength(1);
+    expect(heads[0].props.path).toMatch(/^M .* L .* Z$/);
+    expect(heads[0].props.color).toBe('#fff');
+
+    // Halo stroke under fill, centered on the label point by measured width.
+    const geometry = boardEdgeGeometry(
+      labeled.nodes[0],
+      labeled.nodes[1],
+      labeled.edges[0] as never,
+    );
+    const texts = root.queryAll((node) => node.type === 'SkiaText');
+    expect(texts).toHaveLength(2);
+    const [halo, fill] = texts;
+    expect(halo.props).toMatchObject({
+      text: 'hi',
+      x: geometry.labelX - (2 * 6) / 2,
+      y: geometry.labelY,
+      color: '#000',
+      style: 'stroke',
+      strokeWidth: 4,
+    });
+    expect(fill.props).toMatchObject({
+      text: 'hi',
+      x: geometry.labelX - (2 * 6) / 2,
+      y: geometry.labelY,
+      color: '#fff',
+    });
+  });
+
+  it('draws edges without labels when the system font is unavailable', async () => {
+    // Web: `matchFamilyStyle` is unimplemented and throws; the canvas must survive with
+    // edges only, never a black screen.
+    jest.spyOn(SkiaMock, 'matchFont').mockImplementation(() => {
+      throw new Error('Not implemented on React Native Web');
+    });
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const labeled = {
+      nodes: [...NODES],
+      edges: [{ ...EDGE, label: 'hi' }],
+    } as unknown as BoardContentType;
+    const { root } = await renderBoard(labeled);
+    await fireLayout(root);
+
+    expect(root.queryAll((node) => node.type === 'SkiaText')).toHaveLength(0);
+    expect(edgeLinesOf(root)).toHaveLength(1);
   });
 
   it('keeps the edge world-stable while zoom re-covers the camera', async () => {
@@ -199,13 +269,10 @@ describe('board edges overlay', () => {
     });
 
     // The camera moved (scale doubled) but the edge is fully visible, so its world path is
-    // untouched: pan/zoom only ever rewrite the container transform.
+    // untouched: pan/zoom only ever rewrite the container transform and its mirror.
     expect(transformOf(root).scale).toBeCloseTo(scaleBefore * 2, 4);
     expect(edgeLinesOf(root)).toEqual([before]);
-    const overlay = overlayOf(root);
-    const surface = spatialNativeSurface(VIEWPORT.width, VIEWPORT.height);
-    expect(overlay.width * scaleBefore * 2).toBeCloseTo(surface.width, 3);
-    expect(overlay.height * scaleBefore * 2).toBeCloseTo(surface.height, 3);
+    expectMirror(root);
   });
 
   it('moves the camera without touching the drawing on a small pan', async () => {
@@ -213,26 +280,24 @@ describe('board edges overlay', () => {
     await fireLayout(root);
     const centerBefore = ref.current!.viewportWorldCenter();
     const [pathBefore] = edgeLinesOf(root);
-    const overlayBefore = overlayOf(root);
 
     await act(async () => {
       config.onPanResponderGrant();
       config.onPanResponderMove({ nativeEvent: { touches: [{}] } }, { dx: -60, dy: 0 });
     });
 
-    // Inside the hysteresis margin no overlay re-sync fires: the drawing must not teleport.
+    // Inside the hysteresis margin no re-sync fires, so the world path is untouched; the
+    // overlay tracks the move through the live camera mirror instead of a re-render.
     const centerAfter = ref.current!.viewportWorldCenter();
     expect(centerAfter.x).toBeGreaterThan(centerBefore.x);
     expect(edgeLinesOf(root)).toEqual([pathBefore]);
-    expect(overlayOf(root)).toEqual(overlayBefore);
+    expectMirror(root);
   });
 
   it('culls the edge once a pan carries it out of the render window', async () => {
     const { config, root } = await renderBoard();
     await fireLayout(root);
     expect(edgeLinesOf(root)).toHaveLength(1);
-    // A pan never changes the scale; read it while the plane is easily found.
-    const { scale } = transformOf(root);
 
     await act(async () => {
       config.onPanResponderGrant();
@@ -242,9 +307,6 @@ describe('board edges overlay', () => {
     // The overlay re-covered the new camera and the edge, now fully outside, is culled
     // instead of drawn at a stale position.
     expect(edgeLinesOf(root)).toHaveLength(0);
-    const overlay = overlayOf(root);
-    const surface = spatialNativeSurface(VIEWPORT.width, VIEWPORT.height);
-    expect(overlay.width * scale).toBeCloseTo(surface.width, 3);
-    expect(overlay.height * scale).toBeCloseTo(surface.height, 3);
+    expectMirror(root);
   });
 });

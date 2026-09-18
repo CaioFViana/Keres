@@ -2,6 +2,8 @@ import type React from 'react';
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { View } from 'react-native';
 import { Animated, PanResponder } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import {
   spatialNativeSurface,
   spatialOverlayNeedsSync,
@@ -16,6 +18,17 @@ export interface CanvasViewportHandle {
   zoomBy(factor: number): void;
   viewportWorldCenter(): SpatialPoint;
 }
+
+/**
+ * The live camera as a transform triple - translate, then scale, top-left origin - matching
+ * `animatedTransform` entry for entry, so a Skia `Group` fed with this reproduces the container
+ * mapping bit for bit.
+ */
+export type CanvasCameraTransform = [
+  { translateX: number },
+  { translateY: number },
+  { scale: number },
+];
 
 /** World-space frame of the drawing: bounds for a freeform canvas, layout size for a graph. */
 export interface CanvasViewportBounds {
@@ -126,6 +139,14 @@ export function useCanvasViewport(
   const animatedScale = useRef(new Animated.Value(1)).current;
   const animatedX = useRef(new Animated.Value(0)).current;
   const animatedY = useRef(new Animated.Value(0)).current;
+  /**
+   * The live camera mirrored to a shared value. The Skia edge overlay is a sibling of the
+   * animated plane (sizing it inside the scaled plane would need world-unit layout and rebuild
+   * the giant bitmap on the GPU), so it cannot inherit the camera - it reads this mirror on the
+   * UI thread instead, tracking gestures with no React commit and no desync from the nodes.
+   */
+  const cameraTransform: SharedValue<CanvasCameraTransform> =
+    useSharedValue<CanvasCameraTransform>([{ translateX: 0 }, { translateY: 0 }, { scale: 1 }]);
   /** Live scale mirrored to state only outside gestures, for drag math and child props. */
   const [scaleState, setScaleState] = useState(1);
 
@@ -164,7 +185,12 @@ export function useCanvasViewport(
     animatedScale.setValue(transform.current.scale);
     animatedX.setValue(transform.current.x);
     animatedY.setValue(transform.current.y);
-  }, [animatedScale, animatedX, animatedY]);
+    cameraTransform.value = [
+      { translateX: transform.current.x },
+      { translateY: transform.current.y },
+      { scale: transform.current.scale },
+    ];
+  }, [animatedScale, animatedX, animatedY, cameraTransform]);
 
   const cameraTopLeft = useCallback((): SpatialPoint => {
     const scale = transform.current.scale === 0 ? 1 : transform.current.scale;
@@ -529,6 +555,8 @@ export function useCanvasViewport(
       { translateY: animatedY },
       { scale: animatedScale },
     ],
+    /** Live camera for the Skia edge overlay; written in `publish`, never via React state. */
+    cameraTransform,
     setChildDragging: (dragging: boolean) => {
       childDragging.current = dragging;
       if (!dragging) stopAutoPan();

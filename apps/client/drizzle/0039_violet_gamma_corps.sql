@@ -1,0 +1,1 @@
+ALTER TABLE `client_settings` ADD `export_format` text DEFAULT 'svg' NOT NULL;

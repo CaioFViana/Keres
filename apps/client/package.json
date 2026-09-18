@@ -1,6 +1,6 @@
 {
   "name": "@keres/client",
-  "main": "expo-router/entry",
+  "main": "./index.js",
   "version": "1.8.0",
   "license": "MPL-2.0",
   "scripts": {
@@ -20,14 +20,16 @@
     "capture:setup": "bun scripts/generate-indexes.js && expo export -p web"
   },
   "dependencies": {
-    "@keres/shared": "workspace:*",
     "@expo/vector-icons": "^15.0.3",
+    "@keres/shared": "workspace:*",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/drawer": "^7.5.0",
     "@react-navigation/native": "^7.1.8",
+    "@shopify/react-native-skia": "2.2.12",
     "axios": "^1.13.2",
     "drizzle-orm": "^0.44.7",
     "expo": "~54.0.32",
+    "expo-asset": "~12.0.13",
     "expo-audio": "~1.1.1",
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.23",

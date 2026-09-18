@@ -1,5 +1,8 @@
 import type { GregorianDateDisplayFormat } from '../utils/attributeDateValue';
 
+/** File format for map, graph, board and timeline exports on this device. */
+export type MapExportFormat = 'svg' | 'png';
+
 export interface ClientSettings {
   id: string; // ULID for unique identification
   localUsername: string; // Local display name for the client
@@ -13,6 +16,8 @@ export interface ClientSettings {
   showContextualHelp: boolean;
   /** When on, the menu offers the list of literary devices. */
   suggestLiteraryDevices: boolean;
+  /** File format for map, graph, board and timeline exports on this device. */
+  exportFormat: MapExportFormat;
   createdAt: Date;
   updatedAt: Date;
   version: number; // For synchronization and conflict resolution

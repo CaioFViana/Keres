@@ -31,7 +31,8 @@ import type {
 import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
-import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { buildLocationGraphMapFileName, deliverMapExport } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
@@ -240,7 +241,11 @@ const LocationGraphScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(svg, buildLocationGraphMapFileName(selectedStory.title));
+      const result = await deliverMapExport(
+        svg,
+        buildLocationGraphMapFileName(selectedStory.title),
+        useUserSettingsStore.getState().exportFormat,
+      );
       if (result.delivered) {
         showNotification(
           t('location_graph_export_success', { fileName: result.fileName }),

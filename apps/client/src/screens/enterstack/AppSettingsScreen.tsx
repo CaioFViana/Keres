@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
+import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
 import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
@@ -48,12 +49,14 @@ const SettingsScreen = () => {
     dateDisplayFormat,
     showContextualHelp,
     suggestLiteraryDevices,
+    exportFormat,
     setUsername,
     setLanguage,
     setUse24HourTime,
     setDateDisplayFormat,
     setShowContextualHelp,
     setSuggestLiteraryDevices,
+    setExportFormat,
     resetSettings,
   } = useUserSettingsStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
@@ -80,6 +83,12 @@ const SettingsScreen = () => {
   const handleDateDisplayFormatChange = (value: string | null) => {
     if (value === 'iso' || value === 'dmy' || value === 'mdy') {
       setDateDisplayFormat(drizzleClient, value as GregorianDateDisplayFormat);
+    }
+  };
+
+  const handleExportFormatChange = (value: string | null) => {
+    if (value === 'svg' || value === 'png') {
+      setExportFormat(drizzleClient, value as MapExportFormat);
     }
   };
 
@@ -216,6 +225,28 @@ const SettingsScreen = () => {
               value={dateDisplayFormat}
               onValueChange={handleDateDisplayFormatChange}
               placeholder={t('date_display_format')}
+            />
+          </View>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('export_format')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {t('export_format_hint')}
+            </Text>
+          </View>
+          <View style={styles.dateFormatSelectWrapper}>
+            <SingleSelectPill
+              options={[
+                { label: t('export_format_svg'), value: 'svg' },
+                { label: t('export_format_png'), value: 'png' },
+              ]}
+              value={exportFormat}
+              onValueChange={handleExportFormatChange}
+              placeholder={t('export_format')}
             />
           </View>
         </View>

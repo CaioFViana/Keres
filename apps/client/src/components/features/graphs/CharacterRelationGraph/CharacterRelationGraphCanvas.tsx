@@ -1,7 +1,11 @@
+import { Path, RoundedRect, Text as SkiaText } from '@shopify/react-native-skia';
 import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { G, Path, Rect as SvgRect, Text as SvgText } from 'react-native-svg';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
+import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '../SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { measureEdgeLabelWidth } from '../SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { useEdgeFont } from '../SkiaEdgeCanvas/useEdgeFont';
 import type { CanvasViewportHandle } from '../../../../hooks/useCanvasViewport';
 import { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
 import { useTheme } from '../../../../theme';
@@ -40,11 +44,15 @@ const CharacterRelationGraphCanvas = forwardRef<
     handleLayout,
     panHandlers,
     animatedTransform,
+    cameraTransform,
     width,
     height,
-    svgOrigin,
     renderWindow,
   } = useCanvasViewport(ref, layout, { clampMode: 'free' });
+  // System font, like the `SvgText` labels before: the app bundles no font files.
+  // System font on native, bundled Roboto on web; null while unavailable, where labels
+  // are skipped.
+  const edgeFont = useEdgeFont(10);
   const visibleNodes = useMemo(
     () =>
       layout.nodes.filter((node) =>
@@ -88,64 +96,64 @@ const CharacterRelationGraphCanvas = forwardRef<
     [colors],
   );
 
+  const overlay =
+    width > 0 && height > 0 ? (
+      <SkiaOverlayErrorBoundary canvas="character-relation">
+        <SkiaEdgeCanvas camera={cameraTransform}>
+          {layout.edges.map((edge) => (
+            <Path
+              key={edge.id}
+              path={edge.path}
+              style="stroke"
+              color={colors.border}
+              strokeWidth={1.6}
+              opacity={0.85}
+            />
+          ))}
+
+        {showEdgeLabels &&
+          edgeFont &&
+          layout.edges.map((edge) => {
+            const label = edge.label.trim();
+            if (!label) return null;
+            const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
+            const width = clipped.length * 6.2 + 10;
+            // Skia has no `textAnchor`: center by measured width instead. Both place the
+            // baseline at the same y.
+            const textWidth = measureEdgeLabelWidth(edgeFont, clipped, 10);
+            return (
+              <React.Fragment key={`label-${edge.id}`}>
+                <RoundedRect
+                  x={edge.labelPosition.x - width / 2}
+                  y={edge.labelPosition.y - 8}
+                  width={width}
+                  height={16}
+                  r={4}
+                  color={colors.background}
+                  opacity={0.92}
+                />
+                <SkiaText
+                  x={edge.labelPosition.x - textWidth / 2}
+                  y={edge.labelPosition.y + 4}
+                  font={edgeFont}
+                  text={clipped}
+                  color={colors.textSecondary}
+                />
+              </React.Fragment>
+            );
+          })}
+        </SkiaEdgeCanvas>
+      </SkiaOverlayErrorBoundary>
+    ) : null;
+
   return (
     <GraphCanvasFrame
       containerRef={containerRef}
       handleLayout={handleLayout}
       panHandlers={panHandlers}
       animatedTransform={animatedTransform}
+      overlay={overlay}
     >
-      {width > 0 && height > 0 && (
-        <Svg
-          width={renderWindow.width}
-          height={renderWindow.height}
-          style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
-        >
-          <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
-            {layout.edges.map((edge) => (
-              <Path
-                key={edge.id}
-                d={edge.path}
-                fill="none"
-                stroke={colors.border}
-                strokeWidth={1.6}
-                strokeOpacity={0.85}
-              />
-            ))}
-
-            {showEdgeLabels &&
-              layout.edges.map((edge) => {
-                const label = edge.label.trim();
-                if (!label) return null;
-                const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
-                const width = clipped.length * 6.2 + 10;
-                return (
-                  <React.Fragment key={`label-${edge.id}`}>
-                    <SvgRect
-                      x={edge.labelPosition.x - width / 2}
-                      y={edge.labelPosition.y - 8}
-                      width={width}
-                      height={16}
-                      rx={4}
-                      fill={colors.background}
-                      fillOpacity={0.92}
-                    />
-                    <SvgText
-                      x={edge.labelPosition.x}
-                      y={edge.labelPosition.y + 4}
-                      fontSize={10}
-                      textAnchor="middle"
-                      fill={colors.textSecondary}
-                    >
-                      {clipped}
-                    </SvgText>
-                  </React.Fragment>
-                );
-              })}
-          </G>
-        </Svg>
-      )}
-
       {visibleNodes.map((node) => {
         const isSelected = node.id === selectedNodeId;
         const isHighlighted = highlightedNodeIds?.includes(node.id) ?? false;

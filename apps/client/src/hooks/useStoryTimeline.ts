@@ -13,7 +13,7 @@ import {
   formatSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
-import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
+import { buildStoryTimelineFileName, deliverMapExport } from '@/src/utils/storyTransfer';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {
   calendarSecondsPerDay,
@@ -377,7 +377,11 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
           border: colors.border,
         },
       });
-      const result = await deliverSvgMap(svg, buildStoryTimelineFileName(story.title));
+      const result = await deliverMapExport(
+        svg,
+        buildStoryTimelineFileName(story.title),
+        useUserSettingsStore.getState().exportFormat,
+      );
       notify(
         result.delivered
           ? t('story_timeline_export_success', { fileName: result.fileName })

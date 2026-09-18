@@ -14,7 +14,8 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { deliverMapExport } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 /**
@@ -119,7 +120,11 @@ const PlotProgressScreen = () => {
         border: colors.border,
         primary: colors.primary,
       });
-      const result = await deliverSvgMap(svg, `${selectedStory.title}-cobertura.svg`);
+      const result = await deliverMapExport(
+        svg,
+        `${selectedStory.title}-cobertura.svg`,
+        useUserSettingsStore.getState().exportFormat,
+      );
       notify(
         result.delivered
           ? t('plot_coverage_export_success', { fileName: result.fileName })

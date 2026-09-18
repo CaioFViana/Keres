@@ -18,6 +18,10 @@ export const clientSettings = sqliteTable('client_settings', {
   suggestLiteraryDevices: integer('suggest_literary_devices', { mode: 'boolean' })
     .notNull()
     .default(true),
+  /** File format for map, graph, board and timeline exports on this device. */
+  exportFormat: text('export_format', { enum: ['svg', 'png'] })
+    .notNull()
+    .default('svg'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

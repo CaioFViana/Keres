@@ -28,7 +28,11 @@ import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGr
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
-import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import {
+  buildCharacterRelationMapFileName,
+  deliverMapExport,
+} from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 
@@ -208,9 +212,10 @@ const CharacterRelationGraphScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(
+      const result = await deliverMapExport(
         svg,
         buildCharacterRelationMapFileName(selectedStory.title),
+        useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
         showNotification(

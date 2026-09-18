@@ -5,8 +5,18 @@ import {
   type BoardNodeType,
 } from '@keres/shared';
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
+import {
+  DashPathEffect,
+  Path,
+  Text as SkiaText,
+} from '@shopify/react-native-skia';
+import type { SkFont } from '@shopify/react-native-skia';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
 import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
@@ -55,39 +65,39 @@ const BoardEdgeView = React.memo(function BoardEdgeView({
   edge,
   stroke,
   labelBackground,
+  font,
 }: {
   edge: BoardEdgeGeometry;
   stroke: string;
   labelBackground: string;
+  font: SkFont | null;
 }) {
+  // Skia has no `textAnchor`: center by measured width instead. Both place the baseline at
+  // the same y. Without a font (web: `matchFamilyStyle` is unimplemented) the edge still
+  // draws, only its label is skipped.
+  const labelX =
+    edge.label && font ? edge.labelX - measureEdgeLabelWidth(font, edge.label, 11) / 2 : 0;
   return (
     <>
-      <Path d={edge.path} fill="none" stroke={stroke} strokeWidth={edge.directed ? 2 : 1.6} />
-      {edge.directed && <Polygon points={edge.arrow.points} fill={stroke} />}
-      {!!edge.label && (
+      <Path
+        path={edge.path}
+        style="stroke"
+        color={stroke}
+        strokeWidth={edge.directed ? 2 : 1.6}
+      />
+      {edge.directed && <Path path={polygonPointsToPath(edge.arrow.points)} color={stroke} />}
+      {!!edge.label && font && (
         <>
-          <SvgText
-            x={edge.labelX}
+          <SkiaText
+            x={labelX}
             y={edge.labelY}
-            fill={labelBackground}
-            stroke={labelBackground}
+            font={font}
+            text={edge.label}
+            color={labelBackground}
+            style="stroke"
             strokeWidth={4}
-            fontSize={11}
-            fontWeight="600"
-            textAnchor="middle"
-          >
-            {edge.label}
-          </SvgText>
-          <SvgText
-            x={edge.labelX}
-            y={edge.labelY}
-            fill={stroke}
-            fontSize={11}
-            fontWeight="600"
-            textAnchor="middle"
-          >
-            {edge.label}
-          </SvgText>
+          />
+          <SkiaText x={labelX} y={edge.labelY} font={font} text={edge.label} color={stroke} />
         </>
       )}
     </>
@@ -168,11 +178,14 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       },
       { clampMode: 'none', onAutoPan: adjustDraggedNodeForAutoPan },
     );
+    // System font on native, bundled Roboto on web; null while unavailable, where the
+    // label below is skipped.
+    const edgeFont = useEdgeFont(11, true);
     const {
       setChildDragging,
       width,
       height,
-      svgOrigin,
+      cameraTransform,
       renderWindow,
       scale,
       worldToScreen,
@@ -362,41 +375,36 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         : null;
     }, [connectionDrag, nodeCenter, nodesById, renderWindow]);
 
+    const overlay =
+      width > 0 && height > 0 ? (
+        <SkiaOverlayErrorBoundary canvas="board">
+          <SkiaEdgeCanvas camera={cameraTransform}>
+            {visibleEdges.map((edge) => (
+              <BoardEdgeView
+                key={edge.id}
+                edge={edge}
+                stroke={colors.text}
+                labelBackground={colors.background}
+                font={edgeFont}
+              />
+            ))}
+            {connectionPath && (
+              <Path path={connectionPath} style="stroke" color={colors.primary} strokeWidth={2}>
+                <DashPathEffect intervals={[6, 4]} />
+              </Path>
+            )}
+          </SkiaEdgeCanvas>
+        </SkiaOverlayErrorBoundary>
+      ) : null;
+
     return (
       <GraphCanvasFrame
         containerRef={containerRef}
         handleLayout={handleLayout}
         panHandlers={panHandlers}
         animatedTransform={animatedTransform}
+        overlay={overlay}
       >
-        {width > 0 && height > 0 && (
-          <Svg
-            width={renderWindow.width}
-            height={renderWindow.height}
-            pointerEvents="none"
-            style={{ position: 'absolute', left: svgOrigin.x, top: svgOrigin.y }}
-          >
-            <G transform={`translate(${-svgOrigin.x} ${-svgOrigin.y})`}>
-              {visibleEdges.map((edge) => (
-                <BoardEdgeView
-                  key={edge.id}
-                  edge={edge}
-                  stroke={colors.text}
-                  labelBackground={colors.background}
-                />
-              ))}
-              {connectionPath && (
-                <Path
-                  d={connectionPath}
-                  fill="none"
-                  stroke={colors.primary}
-                  strokeDasharray="6 4"
-                  strokeWidth={2}
-                />
-              )}
-            </G>
-          </Svg>
-        )}
         {stackedNodes.map((node) => {
           const meta = titles[node.id];
           return (

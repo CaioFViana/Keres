@@ -4,7 +4,7 @@ const mockStoryState: any = {
   selectedStory: { id: 'story-1', title: 'Story', timelineEpochDay: 0, timelineEpochSeconds: 0 },
   activeArcId: null,
 };
-const mockSettings = { dateDisplayFormat: 'DD/MM/YYYY' };
+const mockSettings = { dateDisplayFormat: 'DD/MM/YYYY', exportFormat: 'svg' };
 const mockNotify = jest.fn();
 const mockChapterService = { getAllByStoryId: jest.fn() };
 const mockSceneService = { getAllByStoryId: jest.fn() };
@@ -23,7 +23,9 @@ jest.mock('../../src/state/storyStore', () => ({
 }));
 jest.mock('../../src/state/userSettingsStore', () => ({
   __esModule: true,
-  useUserSettingsStore: jest.fn((selector) => selector(mockSettings)),
+  useUserSettingsStore: Object.assign(jest.fn((selector) => selector(mockSettings)), {
+    getState: () => mockSettings,
+  }),
 }));
 jest.mock('../../src/state/notificationStore', () => ({
   __esModule: true,
@@ -65,7 +67,7 @@ jest.mock('../../src/utils/storyArcFilter', () => ({
 jest.mock('../../src/utils/storyTransfer', () => ({
   __esModule: true,
   buildStoryTimelineFileName: jest.fn(() => 'Story.svg'),
-  deliverSvgMap: (...args: unknown[]) => mockDeliver(...args),
+  deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
 jest.mock('@keres/shared/graphs/storyTimelineLayout', () => ({
   __esModule: true,
@@ -141,7 +143,7 @@ describe('useStoryTimeline', () => {
     });
     await act(async () => view.result.current.exportTimeline());
     expect(mockRender).toHaveBeenCalled();
-    expect(mockDeliver).toHaveBeenCalledWith('<svg />', 'Story.svg');
+    expect(mockDeliver).toHaveBeenCalledWith('<svg />', 'Story.svg', 'svg');
     expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_success', 'success');
   });
 

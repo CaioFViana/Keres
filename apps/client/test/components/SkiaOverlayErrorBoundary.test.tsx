@@ -3,7 +3,10 @@ import React from 'react';
 import { View } from 'react-native';
 import SkiaOverlayErrorBoundary from '../../src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 
-function markersOf(view: { container: { queryAll: (predicate: (node: any) => boolean) => unknown[] } }, testID: string) {
+function markersOf(
+  view: { container: { queryAll: (predicate: (node: any) => boolean) => unknown[] } },
+  testID: string,
+) {
   return view.container.queryAll((node) => node.props?.testID === testID);
 }
 

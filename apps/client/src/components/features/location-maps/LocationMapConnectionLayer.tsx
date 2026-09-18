@@ -5,11 +5,7 @@ import {
   type SpatialPoint,
   type SpatialRect,
 } from '@keres/shared';
-import {
-  DashPathEffect,
-  Path,
-  Text as SkiaText,
-} from '@shopify/react-native-skia';
+import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo, useRef } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
@@ -79,7 +75,13 @@ const ConnectionPathView = React.memo(function ConnectionPathView({
 }) {
   return (
     <>
-      <Path path={path.path} style="stroke" color={background} strokeWidth={HALO_WIDTH} opacity={0.9} />
+      <Path
+        path={path.path}
+        style="stroke"
+        color={background}
+        strokeWidth={HALO_WIDTH}
+        opacity={0.9}
+      />
       <Path path={path.path} style="stroke" color={path.color} strokeWidth={2} opacity={0.85} />
       <RelationLabel relation={path} background={background} font={font} />
     </>

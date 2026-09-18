@@ -22,7 +22,10 @@ const SvgRasterHost: React.FC = () => {
   // unbound `Skia` API would only throw, and this host sits at the app root with no
   // boundary above it.
   const ready = useCanvasKitReady();
-  const svgDom = useMemo(() => (job && ready ? Skia.SVG.MakeFromString(job.svg) : null), [job, ready]);
+  const svgDom = useMemo(
+    () => (job && ready ? Skia.SVG.MakeFromString(job.svg) : null),
+    [job, ready],
+  );
 
   useEffect(() => {
     if (!job || !ready) return;

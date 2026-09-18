@@ -48,9 +48,9 @@ describe('fitRasterSize', () => {
 
 describe('sanitizeSvgForRaster', () => {
   it('collapses the fallback list to the generic family', () => {
-    expect(
-      sanitizeSvgForRaster('<svg font-family="Helvetica, Arial, sans-serif">'),
-    ).toBe('<svg font-family="sans-serif">');
+    expect(sanitizeSvgForRaster('<svg font-family="Helvetica, Arial, sans-serif">')).toBe(
+      '<svg font-family="sans-serif">',
+    );
   });
 
   it('leaves strings without the list untouched', () => {

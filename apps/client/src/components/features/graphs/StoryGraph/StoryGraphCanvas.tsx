@@ -1,9 +1,4 @@
-import {
-  DashPathEffect,
-  Path,
-  RoundedRect,
-  Text as SkiaText,
-} from '@shopify/react-native-skia';
+import { DashPathEffect, Path, RoundedRect, Text as SkiaText } from '@shopify/react-native-skia';
 import React, { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
@@ -114,58 +109,58 @@ const StoryGraphCanvas = forwardRef<StoryGraphCanvasHandle, StoryGraphCanvasProp
           <SkiaEdgeCanvas camera={cameraTransform}>
             {layout.edges.map((edge) => {
               const isReturn = edge.kind === 'backward' || edge.kind === 'self';
-            const opacity = isReturn ? 0.9 : 0.7;
-            return (
-              <React.Fragment key={edge.id}>
-                <Path
-                  path={edge.path}
-                  style="stroke"
-                  color={edge.color}
-                  strokeWidth={1.8}
-                  opacity={opacity}
-                >
-                  {isReturn && <DashPathEffect intervals={[7, 5]} />}
-                </Path>
-                <Path
-                  path={polygonPointsToPath(edge.arrowPoints)}
-                  color={edge.color}
-                  opacity={opacity}
-                />
-              </React.Fragment>
-            );
-          })}
-
-          {showEdgeLabels &&
-            edgeFont &&
-            layout.edges.map((edge) => {
-              const label = edge.label.trim();
-              if (!label) return null;
-              const clipped = label.length > 26 ? `${label.slice(0, 25)}…` : label;
-              const width = clipped.length * 6.4 + 10;
-              // Skia has no `textAnchor`: center by measured width instead. Both place the
-              // baseline at the same y.
-              const textWidth = measureEdgeLabelWidth(edgeFont, clipped, 10);
+              const opacity = isReturn ? 0.9 : 0.7;
               return (
-                <React.Fragment key={`label-${edge.id}`}>
-                  <RoundedRect
-                    x={edge.labelPosition.x - width / 2}
-                    y={edge.labelPosition.y - 8}
-                    width={width}
-                    height={16}
-                    r={4}
-                    color={colors.background}
-                    opacity={0.92}
-                  />
-                  <SkiaText
-                    x={edge.labelPosition.x - textWidth / 2}
-                    y={edge.labelPosition.y + 4}
-                    font={edgeFont}
-                    text={clipped}
-                    color={colors.textSecondary}
+                <React.Fragment key={edge.id}>
+                  <Path
+                    path={edge.path}
+                    style="stroke"
+                    color={edge.color}
+                    strokeWidth={1.8}
+                    opacity={opacity}
+                  >
+                    {isReturn && <DashPathEffect intervals={[7, 5]} />}
+                  </Path>
+                  <Path
+                    path={polygonPointsToPath(edge.arrowPoints)}
+                    color={edge.color}
+                    opacity={opacity}
                   />
                 </React.Fragment>
               );
             })}
+
+            {showEdgeLabels &&
+              edgeFont &&
+              layout.edges.map((edge) => {
+                const label = edge.label.trim();
+                if (!label) return null;
+                const clipped = label.length > 26 ? `${label.slice(0, 25)}…` : label;
+                const width = clipped.length * 6.4 + 10;
+                // Skia has no `textAnchor`: center by measured width instead. Both place the
+                // baseline at the same y.
+                const textWidth = measureEdgeLabelWidth(edgeFont, clipped, 10);
+                return (
+                  <React.Fragment key={`label-${edge.id}`}>
+                    <RoundedRect
+                      x={edge.labelPosition.x - width / 2}
+                      y={edge.labelPosition.y - 8}
+                      width={width}
+                      height={16}
+                      r={4}
+                      color={colors.background}
+                      opacity={0.92}
+                    />
+                    <SkiaText
+                      x={edge.labelPosition.x - textWidth / 2}
+                      y={edge.labelPosition.y + 4}
+                      font={edgeFont}
+                      text={clipped}
+                      color={colors.textSecondary}
+                    />
+                  </React.Fragment>
+                );
+              })}
           </SkiaEdgeCanvas>
         </SkiaOverlayErrorBoundary>
       ) : null;

@@ -19,10 +19,7 @@ export function useCanvasKitReady(): boolean {
         if (!cancelled) setReady(true);
       },
       (error: unknown) => {
-        console.error(
-          '[SkiaEdgeCanvas] CanvasKit failed to load; edge lines stay hidden.',
-          error,
-        );
+        console.error('[SkiaEdgeCanvas] CanvasKit failed to load; edge lines stay hidden.', error);
       },
     );
     return () => {

@@ -42,10 +42,7 @@ export function fitRasterSize(
  * generic family resolves to the platform font.
  */
 export function sanitizeSvgForRaster(svg: string): string {
-  return svg.replaceAll(
-    'font-family="Helvetica, Arial, sans-serif"',
-    'font-family="sans-serif"',
-  );
+  return svg.replaceAll('font-family="Helvetica, Arial, sans-serif"', 'font-family="sans-serif"');
 }
 
 /** Swaps a `.svg` file name for its `.png` sibling; appends when there is no suffix. */

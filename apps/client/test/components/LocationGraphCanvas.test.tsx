@@ -103,12 +103,7 @@ afterEach(() => jest.restoreAllMocks());
 async function renderGraph() {
   const ref = createRef<LocationGraphCanvasHandle>();
   const view = await render(
-    <LocationGraphCanvas
-      ref={ref}
-      layout={LAYOUT}
-      selectedNodeId={null}
-      onSelectNode={noop}
-    />,
+    <LocationGraphCanvas ref={ref} layout={LAYOUT} selectedNodeId={null} onSelectNode={noop} />,
   );
   return { ref, root: view.container };
 }
@@ -220,8 +215,7 @@ describe('location graph skia overlay', () => {
     const dashes = root.queryAll((node) => node.type === 'SkiaDashPathEffect');
     expect(dashes).toHaveLength(1);
     expect(dashes[0].props.intervals).toEqual([6, 4]);
-    const dashKids = (path: any) =>
-      React.Children.toArray(path.props.children).filter(Boolean);
+    const dashKids = (path: any) => React.Children.toArray(path.props.children).filter(Boolean);
     expect(dashKids(contains)).toHaveLength(0);
     const connectedDashes = dashKids(connected);
     expect(connectedDashes).toHaveLength(1);

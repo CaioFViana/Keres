@@ -111,37 +111,37 @@ const CharacterRelationGraphCanvas = forwardRef<
             />
           ))}
 
-        {showEdgeLabels &&
-          edgeFont &&
-          layout.edges.map((edge) => {
-            const label = edge.label.trim();
-            if (!label) return null;
-            const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
-            const width = clipped.length * 6.2 + 10;
-            // Skia has no `textAnchor`: center by measured width instead. Both place the
-            // baseline at the same y.
-            const textWidth = measureEdgeLabelWidth(edgeFont, clipped, 10);
-            return (
-              <React.Fragment key={`label-${edge.id}`}>
-                <RoundedRect
-                  x={edge.labelPosition.x - width / 2}
-                  y={edge.labelPosition.y - 8}
-                  width={width}
-                  height={16}
-                  r={4}
-                  color={colors.background}
-                  opacity={0.92}
-                />
-                <SkiaText
-                  x={edge.labelPosition.x - textWidth / 2}
-                  y={edge.labelPosition.y + 4}
-                  font={edgeFont}
-                  text={clipped}
-                  color={colors.textSecondary}
-                />
-              </React.Fragment>
-            );
-          })}
+          {showEdgeLabels &&
+            edgeFont &&
+            layout.edges.map((edge) => {
+              const label = edge.label.trim();
+              if (!label) return null;
+              const clipped = label.length > 22 ? `${label.slice(0, 21)}…` : label;
+              const width = clipped.length * 6.2 + 10;
+              // Skia has no `textAnchor`: center by measured width instead. Both place the
+              // baseline at the same y.
+              const textWidth = measureEdgeLabelWidth(edgeFont, clipped, 10);
+              return (
+                <React.Fragment key={`label-${edge.id}`}>
+                  <RoundedRect
+                    x={edge.labelPosition.x - width / 2}
+                    y={edge.labelPosition.y - 8}
+                    width={width}
+                    height={16}
+                    r={4}
+                    color={colors.background}
+                    opacity={0.92}
+                  />
+                  <SkiaText
+                    x={edge.labelPosition.x - textWidth / 2}
+                    y={edge.labelPosition.y + 4}
+                    font={edgeFont}
+                    text={clipped}
+                    color={colors.textSecondary}
+                  />
+                </React.Fragment>
+              );
+            })}
         </SkiaEdgeCanvas>
       </SkiaOverlayErrorBoundary>
     ) : null;

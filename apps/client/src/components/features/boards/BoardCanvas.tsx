@@ -5,11 +5,7 @@ import {
   type BoardNodeType,
 } from '@keres/shared';
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  DashPathEffect,
-  Path,
-  Text as SkiaText,
-} from '@shopify/react-native-skia';
+import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
@@ -79,12 +75,7 @@ const BoardEdgeView = React.memo(function BoardEdgeView({
     edge.label && font ? edge.labelX - measureEdgeLabelWidth(font, edge.label, 11) / 2 : 0;
   return (
     <>
-      <Path
-        path={edge.path}
-        style="stroke"
-        color={stroke}
-        strokeWidth={edge.directed ? 2 : 1.6}
-      />
+      <Path path={edge.path} style="stroke" color={stroke} strokeWidth={edge.directed ? 2 : 1.6} />
       {edge.directed && <Path path={polygonPointsToPath(edge.arrow.points)} color={stroke} />}
       {!!edge.label && font && (
         <>

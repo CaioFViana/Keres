@@ -128,9 +128,7 @@ describe('location map connection layer', () => {
       content: {
         ...CONTENT,
         markers: [{ id: 'm1', x: 300, y: 200, color: '#ff00ff' }],
-        markerConnections: [
-          { id: 'mc1', fromId: 'n1', toId: 'm1', directed: true, label: 'mk' },
-        ],
+        markerConnections: [{ id: 'mc1', fromId: 'n1', toId: 'm1', directed: true, label: 'mk' }],
       },
       connections: [],
       contains: [],

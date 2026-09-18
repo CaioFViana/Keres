@@ -70,8 +70,7 @@ jest.mock('@shopify/react-native-skia', () => {
     useCanvasRef: () => canvasHolder,
     Skia: {
       SVG: {
-        MakeFromString: (text: string) =>
-          text.includes('<svg') ? { __mockSvg: text } : null,
+        MakeFromString: (text: string) => (text.includes('<svg') ? { __mockSvg: text } : null),
       },
     },
     // Deterministic measuring so label-centering math stays assertable: six units per

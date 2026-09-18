@@ -16,7 +16,10 @@ function Probe({ size, medium }: { size: number; medium?: boolean }) {
   return React.createElement(View, { testID: font ? 'loaded' : 'pending' });
 }
 
-function markersOf(view: { container: { queryAll: (predicate: (node: any) => boolean) => unknown[] } }, testID: string) {
+function markersOf(
+  view: { container: { queryAll: (predicate: (node: any) => boolean) => unknown[] } },
+  testID: string,
+) {
   return view.container.queryAll((node) => node.props?.testID === testID);
 }
 
@@ -36,7 +39,9 @@ describe('useEdgeFont.web', () => {
     const view = await render(React.createElement(Probe, { size: 11, medium: true }));
     expect(Asset.loadAsync).toHaveBeenCalledWith(mediumTtf);
     await act(async () => {
-      resolveLoad([{ localUri: 'http://x/Roboto-Medium.ttf', uri: 'http://x/Roboto-Medium.ttf' }] as never);
+      resolveLoad([
+        { localUri: 'http://x/Roboto-Medium.ttf', uri: 'http://x/Roboto-Medium.ttf' },
+      ] as never);
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
@@ -55,7 +60,9 @@ describe('useEdgeFont.web', () => {
     const view = await render(React.createElement(Probe, { size: 10 }));
     expect(Asset.loadAsync).toHaveBeenCalledWith(regularTtf);
     await act(async () => {
-      resolveLoad([{ localUri: 'http://x/Roboto-Regular.ttf', uri: 'http://x/Roboto-Regular.ttf' }] as never);
+      resolveLoad([
+        { localUri: 'http://x/Roboto-Regular.ttf', uri: 'http://x/Roboto-Regular.ttf' },
+      ] as never);
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
@@ -79,9 +86,6 @@ describe('useEdgeFont.web', () => {
     });
 
     expect(markersOf(view, 'pending')).toHaveLength(1);
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('bundled font'),
-      expect.any(Error),
-    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('bundled font'), expect.any(Error));
   });
 });

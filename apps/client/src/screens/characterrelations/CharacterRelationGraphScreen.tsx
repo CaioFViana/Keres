@@ -29,10 +29,7 @@ import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characte
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import {
-  buildCharacterRelationMapFileName,
-  deliverMapExport,
-} from '../../utils/storyTransfer';
+import { buildCharacterRelationMapFileName, deliverMapExport } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 

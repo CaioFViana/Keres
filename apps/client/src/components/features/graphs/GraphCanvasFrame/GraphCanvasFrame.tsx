@@ -63,7 +63,10 @@ export function suppressNativeDragOnContainer(
 ): (() => void) | undefined {
   if (platformOS !== 'web') return undefined;
   const node = containerRef.current as unknown as {
-    addEventListener?: (type: string, listener: (event: { preventDefault: () => void }) => void) => void;
+    addEventListener?: (
+      type: string,
+      listener: (event: { preventDefault: () => void }) => void,
+    ) => void;
     removeEventListener?: (
       type: string,
       listener: (event: { preventDefault: () => void }) => void,
@@ -104,10 +107,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   // Native HTML5 drag would hijack image gestures (a ghost follows the cursor while the
   // responder system starves), and react-native-web drops the `onDragStart` prop, so the
   // suppression is a real DOM listener: `dragstart` bubbles here from any descendant image.
-  useEffect(
-    () => suppressNativeDragOnContainer(containerRef, Platform.OS),
-    [containerRef],
-  );
+  useEffect(() => suppressNativeDragOnContainer(containerRef, Platform.OS), [containerRef]);
 
   return (
     <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>

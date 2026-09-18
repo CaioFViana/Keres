@@ -145,8 +145,9 @@ export function useCanvasViewport(
    * the giant bitmap on the GPU), so it cannot inherit the camera - it reads this mirror on the
    * UI thread instead, tracking gestures with no React commit and no desync from the nodes.
    */
-  const cameraTransform: SharedValue<CanvasCameraTransform> =
-    useSharedValue<CanvasCameraTransform>([{ translateX: 0 }, { translateY: 0 }, { scale: 1 }]);
+  const cameraTransform: SharedValue<CanvasCameraTransform> = useSharedValue<CanvasCameraTransform>(
+    [{ translateX: 0 }, { translateY: 0 }, { scale: 1 }],
+  );
   /** Live scale mirrored to state only outside gestures, for drag math and child props. */
   const [scaleState, setScaleState] = useState(1);
 

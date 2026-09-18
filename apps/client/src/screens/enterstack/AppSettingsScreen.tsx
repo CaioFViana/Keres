@@ -231,9 +231,7 @@ const SettingsScreen = () => {
 
         <View style={styles.settingItem}>
           <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('export_format')}
-            </Text>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('export_format')}</Text>
             <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
               {t('export_format_hint')}
             </Text>

@@ -212,8 +212,7 @@ describe('story graph skia overlay', () => {
     const dashes = root.queryAll((node) => node.type === 'SkiaDashPathEffect');
     expect(dashes).toHaveLength(1);
     expect(dashes[0].props.intervals).toEqual([7, 5]);
-    const dashKids = (path: any) =>
-      React.Children.toArray(path.props.children).filter(Boolean);
+    const dashKids = (path: any) => React.Children.toArray(path.props.children).filter(Boolean);
     expect(dashKids(forward)).toHaveLength(0);
     expect(dashKids(backward)).toHaveLength(1);
 

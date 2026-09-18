@@ -193,11 +193,7 @@ export async function deliverMapExport(
   svg: string,
   fileName: string,
   format: MapExportFormat,
-  rasterize: (
-    svg: string,
-    width: number,
-    height: number,
-  ) => Promise<Uint8Array> = rasterizeMapSvg,
+  rasterize: (svg: string, width: number, height: number) => Promise<Uint8Array> = rasterizeMapSvg,
 ): Promise<ExportDeliveryResult> {
   if (format === 'svg') {
     return deliverSvgMap(svg, fileName);

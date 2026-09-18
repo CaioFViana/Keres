@@ -17,8 +17,7 @@ let loadPromise: Promise<void> | null = null;
  * A failed load resets, so the next caller retries.
  */
 export function ensureCanvasKit(): Promise<void> {
-  if ((globalThis as { CanvasKit?: unknown }).CanvasKit !== undefined)
-    return Promise.resolve();
+  if ((globalThis as { CanvasKit?: unknown }).CanvasKit !== undefined) return Promise.resolve();
   if (!loadPromise) {
     loadPromise = (async () => {
       const [asset] = await Asset.loadAsync(wasmAssetId);

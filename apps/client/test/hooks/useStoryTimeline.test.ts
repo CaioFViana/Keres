@@ -23,9 +23,12 @@ jest.mock('../../src/state/storyStore', () => ({
 }));
 jest.mock('../../src/state/userSettingsStore', () => ({
   __esModule: true,
-  useUserSettingsStore: Object.assign(jest.fn((selector) => selector(mockSettings)), {
-    getState: () => mockSettings,
-  }),
+  useUserSettingsStore: Object.assign(
+    jest.fn((selector) => selector(mockSettings)),
+    {
+      getState: () => mockSettings,
+    },
+  ),
 }));
 jest.mock('../../src/state/notificationStore', () => ({
   __esModule: true,

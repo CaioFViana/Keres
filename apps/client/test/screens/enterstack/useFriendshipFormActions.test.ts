@@ -156,3 +156,124 @@ it('does not write locally when the API rejects the friend request', async () =>
   expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_friendship');
   expect(navigation.goBack).not.toHaveBeenCalled();
 });
+
+it('requires a selected server before lookup', async () => {
+  const state = createState({ selectedServer: undefined });
+  const view = await renderActions(state);
+
+  await act(async () => {
+    await view.result.current.handleCheckFriendTag();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'selected_server_invalid');
+  expect(mockGetUserByTag).not.toHaveBeenCalled();
+});
+
+it('marks the friend as not found when the server has no such tag', async () => {
+  mockGetUserByTag.mockResolvedValue(null);
+  const state = createState();
+  const view = await renderActions(state);
+
+  await act(async () => {
+    await view.result.current.handleCheckFriendTag();
+  });
+
+  expect(state.setFriendFound).toHaveBeenCalledWith(false);
+  expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_found_on_server');
+});
+
+it('reports lookup failures', async () => {
+  mockGetUserByTag.mockRejectedValue(new Error('boom'));
+  const state = createState();
+  const view = await renderActions(state);
+
+  await act(async () => {
+    await view.result.current.handleCheckFriendTag();
+  });
+
+  expect(state.setFriendFound).toHaveBeenCalledWith(false);
+  expect(state.setIsCheckingFriend).toHaveBeenCalledWith(false);
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_check_user_id');
+});
+
+it('blocks saving without a logged-in user', async () => {
+  const view = await renderHook(() =>
+    useFriendshipFormActions({
+      state: createState(),
+      friendshipServiceRef: { current: friendshipService },
+      navigation: navigation as never,
+      currentUserId: null,
+    }),
+  );
+
+  await act(async () => {
+    await view.result.current.handleSaveFriendship();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'not_logged_in');
+  expect(mockSendFriendRequest).not.toHaveBeenCalled();
+});
+
+it('blocks saving before the friend tag is resolved', async () => {
+  const view = await renderActions(createState({ resolvedFriendUserId: null }));
+
+  await act(async () => {
+    await view.result.current.handleSaveFriendship();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'all_fields_required');
+  expect(mockSendFriendRequest).not.toHaveBeenCalled();
+});
+
+it('blocks saving a friend that was not found', async () => {
+  const view = await renderActions(createState({ friendFound: false, friendUsername: 'Ghost' }));
+
+  await act(async () => {
+    await view.result.current.handleSaveFriendship();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'friend_not_found_on_server');
+  expect(mockSendFriendRequest).not.toHaveBeenCalled();
+});
+
+it('blocks saving before the friend tag is checked', async () => {
+  const view = await renderActions(createState({ friendUsername: null }));
+
+  await act(async () => {
+    await view.result.current.handleSaveFriendship();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'please_check_friend_id');
+  expect(mockSendFriendRequest).not.toHaveBeenCalled();
+});
+
+it('blocks saving when the selected server has no account', async () => {
+  const view = await renderActions(
+    createState({ selectedServer: { ...selectedServer!, idUser: null } }),
+  );
+
+  await act(async () => {
+    await view.result.current.handleSaveFriendship();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'selected_server_invalid');
+  expect(mockSendFriendRequest).not.toHaveBeenCalled();
+});
+
+it('blocks saving without a friendship service', async () => {
+  const view = await renderHook(() =>
+    useFriendshipFormActions({
+      state: createState(),
+      friendshipServiceRef: { current: null },
+      navigation: navigation as never,
+      currentUserId: 'local-user',
+    }),
+  );
+
+  await act(async () => {
+    await view.result.current.handleSaveFriendship();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_friendship');
+  expect(mockSendFriendRequest).not.toHaveBeenCalled();
+});

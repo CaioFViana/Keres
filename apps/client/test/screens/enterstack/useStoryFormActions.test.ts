@@ -202,3 +202,108 @@ it('does not show success after a save failure', async () => {
   expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_story');
   expect(navigation.goBack).not.toHaveBeenCalled();
 });
+
+it('ignores saves without edit permission', async () => {
+  const view = await renderActions(createState(), { canEdit: false });
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(storyService.createStory).not.toHaveBeenCalled();
+  expect(mockAlert).not.toHaveBeenCalled();
+  expect(navigation.goBack).not.toHaveBeenCalled();
+});
+
+it('blocks saving without a user or a story service', async () => {
+  const noUser = await renderActions(createState(), { userId: null });
+
+  await act(async () => noUser.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_identified');
+  expect(storyService.createStory).not.toHaveBeenCalled();
+
+  const noService = await renderHook(() =>
+    useStoryFormActions({
+      state: createState(),
+      storyServiceRef: { current: null },
+      packServiceRef: { current: packService },
+      navigation: navigation as never,
+      userId: 'user-1',
+      canEdit: true,
+      canManageStoryPolicy: true,
+    }),
+  );
+
+  await act(async () => noService.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_story');
+});
+
+it('blocks pack creation without a pack service', async () => {
+  const noPacks = await renderHook(() =>
+    useStoryFormActions({
+      state: createState({ selectedPackIds: ['pack-1'] }),
+      storyServiceRef: { current: storyService },
+      packServiceRef: { current: null },
+      navigation: navigation as never,
+      userId: 'user-1',
+      canEdit: true,
+      canManageStoryPolicy: true,
+    }),
+  );
+
+  await act(async () => noPacks.result.current.handleSave());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_story');
+  expect(storyService.createStory).not.toHaveBeenCalled();
+  expect(navigation.goBack).not.toHaveBeenCalled();
+});
+
+it('omits policy fields from writer updates', async () => {
+  const state = createState({ initialStoryId: 'story-1', isEditing: true });
+  const view = await renderActions(state, { canManageStoryPolicy: false });
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(storyService.updateStory).toHaveBeenCalledWith(
+    'user-1',
+    'story-1',
+    expect.not.objectContaining({ favoriteBehavior: expect.anything() }),
+  );
+  expect(mockAlert).toHaveBeenCalledWith('success', 'story_updated_successfully');
+});
+
+it('ignores deletes without policy permission and reports delete failures', async () => {
+  const writer = await renderActions(createState({ initialStoryId: 'story-1', isEditing: true }), {
+    canManageStoryPolicy: false,
+  });
+
+  await act(async () => writer.result.current.handleDelete());
+
+  expect(mockAlert).not.toHaveBeenCalled();
+
+  const noUser = await renderActions(createState({ initialStoryId: 'story-1', isEditing: true }), {
+    userId: null,
+  });
+
+  await act(async () => noUser.result.current.handleDelete());
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'user_not_identified');
+
+  (storyService.deleteStory as jest.Mock).mockRejectedValue(new Error('write failed'));
+  const state = createState({ initialStoryId: 'story-1', isEditing: true });
+  const view = await renderActions(state);
+
+  await act(async () => view.result.current.handleDelete());
+  const buttons = mockAlert.mock.calls[mockAlert.mock.calls.length - 1][2] as Array<{
+    text: string;
+    onPress?: () => Promise<void>;
+  }>;
+  const deleteButton = buttons.find((button) => button.text === 'delete');
+  await act(async () => {
+    await deleteButton?.onPress?.();
+  });
+
+  expect(state.setError).toHaveBeenCalledWith('failed_to_delete_story');
+  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_story');
+  expect(navigation.goBack).not.toHaveBeenCalled();
+});

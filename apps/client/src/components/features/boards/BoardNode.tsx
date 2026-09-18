@@ -398,6 +398,9 @@ const BoardNodeView: React.FC<Props> = ({
             source={resolvedGalleryUri ? { uri: resolvedGalleryUri } : undefined}
             style={styles.galleryImage}
             contentFit="cover"
+            // Hit-transparent: the pin owns the gesture, and on web a hittable <img>
+            // would arm the native drag instead of the pin's responder.
+            pointerEvents="none"
           />
           <View style={styles.galleryInfo} pointerEvents="none">
             <View style={styles.row}>

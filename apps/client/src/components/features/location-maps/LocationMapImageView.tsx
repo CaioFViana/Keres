@@ -228,7 +228,14 @@ const LocationMapImageView: React.FC<Props> = ({
   return (
     <View style={styles.image} {...pan.panHandlers}>
       {uri ? (
-        <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="fill" />
+        <Image
+          source={{ uri }}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="fill"
+          // Hit-transparent: the image view owns the gesture, and on web a hittable <img>
+          // would arm the native drag instead of the view's responder.
+          pointerEvents="none"
+        />
       ) : null}
       {layoutEditing && selected && (
         <>

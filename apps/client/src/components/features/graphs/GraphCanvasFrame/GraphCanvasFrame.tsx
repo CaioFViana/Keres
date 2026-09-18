@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Animated, Platform, View } from 'react-native';
 import type { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
 import { useTheme } from '../../../../theme';
@@ -52,6 +52,29 @@ export const graphCanvasPlaneStyle = {
  * transform - never a child's layout position, and never a document-sized native surface. The
  * only viewport-sized surfaces are the edges overlays each canvas draws for itself.
  */
+/**
+ * Attaches native-drag suppression to the container's host node on web, returning the detach
+ * cleanup. Anything else - native platforms, a missing ref, or a host node without DOM
+ * listeners (the test renderer) - attaches nothing and returns undefined.
+ */
+export function suppressNativeDragOnContainer(
+  containerRef: { current: unknown },
+  platformOS: typeof Platform.OS,
+): (() => void) | undefined {
+  if (platformOS !== 'web') return undefined;
+  const node = containerRef.current as unknown as {
+    addEventListener?: (type: string, listener: (event: { preventDefault: () => void }) => void) => void;
+    removeEventListener?: (
+      type: string,
+      listener: (event: { preventDefault: () => void }) => void,
+    ) => void;
+  } | null;
+  if (!node?.addEventListener || !node.removeEventListener) return undefined;
+  const suppressNativeDrag = (event: { preventDefault: () => void }) => event.preventDefault();
+  node.addEventListener('dragstart', suppressNativeDrag);
+  return () => node.removeEventListener?.('dragstart', suppressNativeDrag);
+}
+
 const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   containerRef,
   handleLayout,
@@ -78,18 +101,16 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
     [colors],
   );
 
+  // Native HTML5 drag would hijack image gestures (a ghost follows the cursor while the
+  // responder system starves), and react-native-web drops the `onDragStart` prop, so the
+  // suppression is a real DOM listener: `dragstart` bubbles here from any descendant image.
+  useEffect(
+    () => suppressNativeDragOnContainer(containerRef, Platform.OS),
+    [containerRef],
+  );
+
   return (
-    <View
-      ref={containerRef}
-      style={styles.container}
-      onLayout={handleLayout}
-      {...panHandlers}
-      {...(Platform.OS === 'web'
-        ? {
-            onDragStart: (event: { preventDefault?: () => void }) => event.preventDefault?.(),
-          }
-        : {})}
-    >
+    <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
       {underlay}
       {overlay}
       <Animated.View

@@ -11,8 +11,6 @@ export const BOARD_NODE_MAX_HEIGHT = 720;
 /** Gallery pins with a renderable image become a bigger card that includes it. */
 export const BOARD_GALLERY_WIDTH = 220;
 export const BOARD_GALLERY_HEIGHT = 200;
-/** Height of the image area inside a gallery card. */
-export const BOARD_GALLERY_IMAGE_HEIGHT = 128;
 export const BOARD_CANVAS_PADDING = 240;
 export const BOARD_CANVAS_MIN = 720;
 
@@ -48,6 +46,17 @@ export function galleryMediaForNode(
 ): BoardGalleryMedia | null | undefined {
   const entityId = nodeEntityId(node);
   return entityId ? galleryMediaById?.[entityId] : undefined;
+}
+
+/**
+ * The file the UI shows for a gallery pin: the image itself, or a video's extracted frame.
+ * Anything else has no picture - see `galleryHasImage`.
+ */
+export function galleryDisplayPath(media: BoardGalleryMedia | null | undefined): string | null {
+  if (!media) return null;
+  if (media.mediaType === 'image') return media.localPath;
+  if (media.mediaType === 'video') return media.thumbnailPath;
+  return null;
 }
 
 /** Approximate width of a character at 11px - only to size a note's body line. */

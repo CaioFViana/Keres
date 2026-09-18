@@ -15,6 +15,8 @@ import { getCommonCardStyles } from '../../../theme/commonStyles';
 import { useTheme } from '../../../theme';
 import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+import type { BoardGalleryMedia } from '../../../utils/boardLayout';
+import BoardNodeSheetGalleryPreview from './BoardNodeSheetGalleryPreview';
 
 interface Props {
   node: BoardNodeType;
@@ -23,6 +25,8 @@ interface Props {
   ghost: boolean;
   /** Light summary of the entity behind the pin, when it is an entity pin. */
   summary?: BoardEntitySummary | null;
+  /** The gallery's media, when the pin is a Gallery pin - shows the picture preview. */
+  galleryMedia?: BoardGalleryMedia | null;
   content: BoardContentType;
   nodeTitles: Record<string, string>;
   canEdit: boolean;
@@ -39,6 +43,7 @@ const BoardNodeSheet: React.FC<Props> = ({
   typeLabel,
   ghost,
   summary,
+  galleryMedia,
   content,
   nodeTitles,
   canEdit,
@@ -256,6 +261,7 @@ const BoardNodeSheet: React.FC<Props> = ({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <BoardNodeSheetGalleryPreview galleryMedia={galleryMedia} />
         {node.kind === 'note' && canEdit && (
           <>
             <Text style={styles.section}>{t('board_note')}</Text>

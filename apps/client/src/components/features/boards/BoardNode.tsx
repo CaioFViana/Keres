@@ -8,8 +8,8 @@ import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import {
   boardNodeSize,
+  galleryDisplayPath,
   galleryHasImage,
-  BOARD_GALLERY_IMAGE_HEIGHT,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMedia,
 } from '../../../utils/boardLayout';
@@ -199,12 +199,7 @@ const BoardNodeView: React.FC<Props> = ({
 
   const hasGalleryImage =
     node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia);
-  const galleryImagePath =
-    hasGalleryImage && galleryMedia
-      ? galleryMedia.mediaType === 'image'
-        ? galleryMedia.localPath
-        : galleryMedia.thumbnailPath
-      : null;
+  const galleryImagePath = hasGalleryImage ? galleryDisplayPath(galleryMedia) : null;
   const resolvedGalleryUri = useResolvedMediaUri(galleryImagePath);
   const size = boardNodeSize(node, galleryMedia);
   const showSummary =
@@ -266,9 +261,11 @@ const BoardNodeView: React.FC<Props> = ({
             ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
             : {}),
         },
+        // The picture takes whatever the pin's data leaves: resizing a gallery pin grows the
+        // image, and the title block stays a compact footer.
         galleryImage: {
           width: '100%',
-          height: BOARD_GALLERY_IMAGE_HEIGHT,
+          flex: 1,
           backgroundColor: colors.surface,
         },
         galleryInfo: { paddingTop: 8 },

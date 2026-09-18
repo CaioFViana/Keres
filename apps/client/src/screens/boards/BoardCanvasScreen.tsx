@@ -40,7 +40,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
-import { nextStaggeredPosition } from '../../utils/boardLayout';
+import { galleryMediaForNode, nextStaggeredPosition } from '../../utils/boardLayout';
 import {
   boardPinAppearanceType,
   boardPinTypeKey,
@@ -531,6 +531,7 @@ const BoardCanvasScreen = () => {
           typeLabel={titles[selected.id]?.typeLabel ?? ''}
           ghost={!!titles[selected.id]?.ghost}
           summary={selectedSummary}
+          galleryMedia={galleryMediaForNode(selected, galleryMediaById)}
           content={content}
           nodeTitles={nodeTitles}
           canEdit={canEdit}

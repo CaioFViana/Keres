@@ -7,7 +7,6 @@ import {
   wrapNoteBody,
   noteBodyCharsPerLine,
   galleryHasImage,
-  BOARD_GALLERY_IMAGE_HEIGHT,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMediaById,
 } from './boardLayout';
@@ -152,22 +151,30 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
     const imageX = node.x + 12;
     const imageY = node.y + 8;
     const imageWidth = Math.max(0, size.width - 20);
+    // The on-screen picture flexes: resizing the pin grows the image while the title block stays
+    // a compact footer. Mirror that by anchoring the footer at the bottom with the plain card's
+    // row metrics (title +20, type +38, details +56 step 13) and giving the image the rest.
+    const footerHeight = 56 + entityLines.length * 13;
+    const footerTop = node.y + size.height - 8 - footerHeight;
+    const imageHeight = Math.max(0, footerTop - 8 - imageY);
     const clipId = `gallery-clip-${escapeXml(node.id)}`;
     const imageArea = hasGalleryImage
       ? [
-          `<defs><clipPath id="${clipId}"><rect x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${BOARD_GALLERY_IMAGE_HEIGHT}" rx="6"/></clipPath></defs>`,
+          `<defs><clipPath id="${clipId}"><rect x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${round(imageHeight)}" rx="6"/></clipPath></defs>`,
           galleryImage
-            ? `<image href="${galleryImage}" x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${BOARD_GALLERY_IMAGE_HEIGHT}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>`
+            ? `<image href="${galleryImage}" x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${round(imageHeight)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>`
             : [
-                `<rect x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${BOARD_GALLERY_IMAGE_HEIGHT}" rx="6" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`,
-                `<circle cx="${round(imageX + imageWidth / 2 - 20)}" cy="${round(imageY + 46)}" r="9" fill="${options.colors.textSecondary}"/>`,
-                `<path d="M ${round(imageX + imageWidth / 2 + 10)} ${round(imageY + 96)} L ${round(imageX + imageWidth / 2 + 40)} ${round(imageY + 62)} L ${round(imageX + imageWidth / 2 + 70)} ${round(imageY + 96)} Z" fill="${options.colors.textSecondary}"/>`,
+                `<rect x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${round(imageHeight)}" rx="6" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`,
+                `<g clip-path="url(#${clipId})">`,
+                `<circle cx="${round(imageX + imageWidth / 2 - 20)}" cy="${round(imageY + imageHeight * 0.36)}" r="9" fill="${options.colors.textSecondary}"/>`,
+                `<path d="M ${round(imageX + imageWidth / 2 + 10)} ${round(imageY + imageHeight * 0.75)} L ${round(imageX + imageWidth / 2 + 40)} ${round(imageY + imageHeight * 0.48)} L ${round(imageX + imageWidth / 2 + 70)} ${round(imageY + imageHeight * 0.75)} Z" fill="${options.colors.textSecondary}"/>`,
+                '</g>',
               ].join(''),
         ]
       : [];
-    const titleY = hasGalleryImage ? imageY + BOARD_GALLERY_IMAGE_HEIGHT + 24 : node.y + 28;
-    const typeY = hasGalleryImage ? imageY + BOARD_GALLERY_IMAGE_HEIGHT + 42 : node.y + 46;
-    const detailBaseY = hasGalleryImage ? imageY + BOARD_GALLERY_IMAGE_HEIGHT + 60 : node.y + 64;
+    const titleY = hasGalleryImage ? footerTop + 20 : node.y + 28;
+    const typeY = hasGalleryImage ? footerTop + 38 : node.y + 46;
+    const detailBaseY = hasGalleryImage ? footerTop + 56 : node.y + 64;
     return [
       `<rect x="${round(node.x)}" y="${round(node.y)}" width="${size.width}" height="${size.height}" rx="10" fill="${fill}"/>`,
       ...imageArea,

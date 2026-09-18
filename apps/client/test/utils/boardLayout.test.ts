@@ -5,6 +5,7 @@ import {
   boardCanvasBounds,
   boardCanvasSize,
   boardNodeSize,
+  galleryDisplayPath,
   noteSizeFor,
   normalizeBoardCanvas,
   wrapNoteBody,
@@ -101,6 +102,34 @@ it('grows a Gallery pin with an image into a bigger card', () => {
     height: BOARD_NODE_HEIGHT,
   });
   expect(boardNodeSize(gallery)).toEqual({ width: BOARD_NODE_WIDTH, height: BOARD_NODE_HEIGHT });
+});
+
+it("picks the file a gallery pin shows: the image, or a video's frame", () => {
+  const image = {
+    mediaType: 'image',
+    mimeType: 'image/png',
+    localPath: 'file:///a.png',
+    thumbnailPath: null,
+  };
+  const video = {
+    mediaType: 'video',
+    mimeType: 'video/mp4',
+    localPath: 'file:///a.mp4',
+    thumbnailPath: 'file:///a-thumb.jpg',
+  };
+  const withoutImage = {
+    mediaType: 'document',
+    mimeType: 'application/pdf',
+    localPath: null,
+    thumbnailPath: null,
+  };
+
+  expect(galleryDisplayPath(image)).toBe('file:///a.png');
+  expect(galleryDisplayPath(video)).toBe('file:///a-thumb.jpg');
+  expect(galleryDisplayPath({ ...video, thumbnailPath: null })).toBeNull();
+  expect(galleryDisplayPath(withoutImage)).toBeNull();
+  expect(galleryDisplayPath(null)).toBeNull();
+  expect(galleryDisplayPath(undefined)).toBeNull();
 });
 
 it('keeps a note with no body at the standard pin size', () => {

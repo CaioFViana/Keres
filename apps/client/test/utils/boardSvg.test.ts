@@ -419,3 +419,43 @@ it('keeps a Gallery pin without an image at the standard size', () => {
   expect(svg).not.toContain(`width="${BOARD_NOTE_WIDTH}"`);
   expect(svg).not.toContain('<circle');
 });
+
+it("gives a resized Gallery pin's extra space to its picture, not to the footer", () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'entity' as const,
+          x: 40,
+          y: 40,
+          width: 300,
+          height: 400,
+          entityType: 'Gallery' as const,
+          entityId: 'gal-1',
+          labelAtPin: 'Capa',
+        },
+      ],
+      edges: [],
+    },
+    {
+      ...options,
+      galleryMediaById: {
+        'gal-1': {
+          mediaType: 'image',
+          mimeType: 'image/png',
+          localPath: 'file:///a.png',
+          thumbnailPath: null,
+        },
+      },
+      galleryImages: { 'gal-1': 'data:image/png;base64,AAAA' },
+    },
+  );
+
+  // Picture: 400 - 8 top - 8 gap - 56 footer - 8 bottom = 320, starting at y = 248.
+  expect(svg).toContain('<image href="data:image/png;base64,AAAA"');
+  expect(svg).toContain('height="320"');
+  // The title stays a compact footer below the picture (the node is shifted +200 by the canvas
+  // normalization): footer top 576 + 20 = 596, below the picture's bottom edge at 568.
+  expect(svg).toContain('y="596"');
+});

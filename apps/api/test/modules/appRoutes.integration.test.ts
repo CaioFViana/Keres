@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { clientDistPath } from '../../src/config/resourceRoot';
 import { eq } from 'drizzle-orm';
 import { env } from '../../src/config/env';
 import { db } from '../../src/db';
@@ -38,6 +40,17 @@ const rootRequest = async (path: string, headers: Record<string, string> = {}) =
   const app = await getApp();
   const response = await app.handle(new Request(`http://localhost${path}`, { headers }));
   return { status: response.status, headers: response.headers, text: await response.text() };
+};
+
+/**
+ * The client bundle name carries a content hash, so the asset test reads it from the export's
+ * own index.html instead of pinning a filename that every client rebuild invalidates.
+ */
+const resolveRuntimeBundlePath = () => {
+  const html = readFileSync(`${clientDistPath()}/index.html`, 'utf8');
+  const match = html.match(/src="(\/_expo\/[^"]+\.js)"/);
+  if (!match) throw new Error('client dist index.html references no _expo bundle');
+  return match[1];
 };
 
 beforeEach(async () => {
@@ -95,9 +108,7 @@ describe('hosted bottleneck routes', () => {
   });
 
   it('serves client runtime assets with isolation headers and 404s the missing ones', async () => {
-    const { status, headers, text } = await rootRequest(
-      '/_expo/static/js/web/entry-63bbb1ab487af0ffb91fd15ed030d39e.js',
-    );
+    const { status, headers, text } = await rootRequest(resolveRuntimeBundlePath());
 
     expect(status).toBe(200);
     expect(headers.get('cross-origin-embedder-policy')).toBe('require-corp');
@@ -140,7 +151,7 @@ describe('admin user routes', () => {
     expect(data.items.map((item: { id: string }) => item.id)).toEqual([created.id]);
   });
 
-  it('rejects a create whose tier id is malformed, and fails one whose tier is missing', async () => {
+  it('rejects a create whose tier id is malformed, and 404s one whose tier is missing', async () => {
     const malformed = await request('POST', '/admin/api/users', {
       token: admin.token,
       body: { username: 'bia', password: 'senha-de-teste-123', tierId: 'not-a-ulid' },
@@ -151,10 +162,10 @@ describe('admin user routes', () => {
       token: admin.token,
       body: { username: 'bia', password: 'senha-de-teste-123', tierId: newId() },
     });
-    expect(missing.status).toBe(500);
+    expect(missing.status).toBe(404);
   });
 
-  it('rejects an update whose tier id is malformed, and fails one whose tier is missing', async () => {
+  it('rejects an update whose tier id is malformed, and 404s one whose tier is missing', async () => {
     const malformed = await request('PUT', `/admin/api/users/${ana.userId}`, {
       token: admin.token,
       body: { tierId: 'not-a-ulid' },
@@ -165,7 +176,7 @@ describe('admin user routes', () => {
       token: admin.token,
       body: { tierId: newId() },
     });
-    expect(missing.status).toBe(500);
+    expect(missing.status).toBe(404);
   });
 
   it('answers 404 updating, deleting, restoring and reissuing codes for a ghost', async () => {

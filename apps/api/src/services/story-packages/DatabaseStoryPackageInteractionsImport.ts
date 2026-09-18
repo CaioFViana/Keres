@@ -10,6 +10,10 @@ export async function importStoryInteractions(
   context: DatabaseStoryPackageImportContext,
 ): Promise<void> {
   const { fullStory: validatedFullStory, idMap, nextId, now, targetStoryId } = context;
+  // Mapped first, written second: every dangling reference in the phase must throw its Import
+  // Error before any row reaches the database, so a later collection can never inherit a
+  // half-written phase.
+  const pendingInserts: Array<() => Promise<void>> = [];
   // --- ChoiceCheckGroups (Optional, map choice ID) ---
   // After Choices on purpose: choiceId has to already be in the idMap.
   if (validatedFullStory.choiceCheckGroups && validatedFullStory.choiceCheckGroups.length > 0) {
@@ -34,10 +38,12 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.ChoiceCheckGroup,
-      newChoiceCheckGroupsData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.ChoiceCheckGroup,
+        newChoiceCheckGroupsData,
+      ),
     );
   }
 
@@ -86,10 +92,12 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.ChoiceCheck,
-      newChoiceChecksData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.ChoiceCheck,
+        newChoiceChecksData,
+      ),
     );
   }
 
@@ -128,7 +136,9 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(context, OperationLogEntityType.Effect, newEffectsData);
+    pendingInserts.push(() =>
+      insertPortableCollection(context, OperationLogEntityType.Effect, newEffectsData),
+    );
   }
 
   // --- ItemJourneys (Optional, map item ID, scene ID, and optional new owner character ID) ---
@@ -171,10 +181,12 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.ItemJourney,
-      newItemJourneysData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.ItemJourney,
+        newItemJourneysData,
+      ),
     );
   }
 
@@ -209,10 +221,12 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.TagRelation,
-      newTagRelationsData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.TagRelation,
+        newTagRelationsData,
+      ),
     );
   }
 
@@ -248,10 +262,12 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.GalleryRelation,
-      newGalleryRelationsData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.GalleryRelation,
+        newGalleryRelationsData,
+      ),
     );
   }
 
@@ -273,10 +289,12 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.StorySchemaField,
-      newStorySchemaFieldsData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.StorySchemaField,
+        newStorySchemaFieldsData,
+      ),
     );
   }
 
@@ -328,10 +346,16 @@ export async function importStoryInteractions(
         deletedAt: null,
       };
     });
-    await insertPortableCollection(
-      context,
-      OperationLogEntityType.AttributeValue,
-      newAttributeValuesData,
+    pendingInserts.push(() =>
+      insertPortableCollection(
+        context,
+        OperationLogEntityType.AttributeValue,
+        newAttributeValuesData,
+      ),
     );
+  }
+
+  for (const insert of pendingInserts) {
+    await insert();
   }
 }

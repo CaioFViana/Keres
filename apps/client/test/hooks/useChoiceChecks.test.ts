@@ -193,7 +193,7 @@ describe('useChoiceChecks', () => {
   });
 
   it('ignores every mutation without a local user', async () => {
-    (useUserSettingsStore as jest.Mock).mockReturnValue({ userId: null });
+    (useUserSettingsStore as unknown as jest.Mock).mockReturnValue({ userId: null });
     const view = await renderHook(() => useChoiceChecks('choice', 'story', true));
     await waitFor(() => expect(view.result.current.checks).toHaveLength(1));
 
@@ -211,6 +211,6 @@ describe('useChoiceChecks', () => {
     expect(mockCheckService.createChoiceCheck).not.toHaveBeenCalled();
     expect(mockCheckService.updateChoiceCheck).not.toHaveBeenCalled();
     expect(mockCheckService.deleteChoiceCheck).not.toHaveBeenCalled();
-    (useUserSettingsStore as jest.Mock).mockReturnValue({ userId: 'user' });
+    (useUserSettingsStore as unknown as jest.Mock).mockReturnValue({ userId: 'user' });
   });
 });

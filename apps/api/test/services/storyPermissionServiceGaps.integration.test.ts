@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { db } from '../../src/db';
-import { friendships, stories, storyPermissions, users } from '../../src/db/schema';
+import { friendships, stories, users } from '../../src/db/schema';
 import { storyPermissionService } from '../../src/services/StoryPermissionService';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { db } from '../../src/db';
-import { choices, locationRelations, mediaBlobs, stories, users } from '../../src/db/schema';
+import { choices, locationRelations, stories, users } from '../../src/db/schema';
 import { CharacterRelationSyncHandler } from '../../src/services/entity-sync-handlers/CharacterRelationSyncHandler';
 import { CharacterSyncHandler } from '../../src/services/entity-sync-handlers/CharacterSyncHandler';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';

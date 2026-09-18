@@ -121,6 +121,9 @@ export class RealtimeSessionService {
     socket.realtimeUserId = user.userId;
     this.dependencies.eventBus.on(`userUpdate:${user.userId}`, callback);
     this.dependencies.logInfo('User joined realtime channel', { userId: user.userId });
+    // Every open socket owns its subscription registry, even before its first readable story:
+    // a rejected subscribe must read as "not subscribed" instead of "no registry".
+    socket.storyCallbacks = new Map();
     for (const storyId of await this.dependencies.getReadableStoryIds(user.userId)) {
       this.subscribeToStory(socket, user.userId, storyId);
     }

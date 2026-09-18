@@ -20,7 +20,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 const empty = { images: [], nodes: [] };
 const dirty = {
   images: [],
-  nodes: [{ id: 'harbor', label: 'Harbor', x: 10, y: 10 }],
+  nodes: [{ id: 'harbor', locationId: 'loc-harbor', x: 10, y: 10, icon: 'map', color: '#ff0000' }],
 };
 
 beforeEach(async () => {

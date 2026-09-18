@@ -93,11 +93,7 @@ export async function importStoryInteractions(
       };
     });
     pendingInserts.push(() =>
-      insertPortableCollection(
-        context,
-        OperationLogEntityType.ChoiceCheck,
-        newChoiceChecksData,
-      ),
+      insertPortableCollection(context, OperationLogEntityType.ChoiceCheck, newChoiceChecksData),
     );
   }
 
@@ -182,11 +178,7 @@ export async function importStoryInteractions(
       };
     });
     pendingInserts.push(() =>
-      insertPortableCollection(
-        context,
-        OperationLogEntityType.ItemJourney,
-        newItemJourneysData,
-      ),
+      insertPortableCollection(context, OperationLogEntityType.ItemJourney, newItemJourneysData),
     );
   }
 
@@ -222,11 +214,7 @@ export async function importStoryInteractions(
       };
     });
     pendingInserts.push(() =>
-      insertPortableCollection(
-        context,
-        OperationLogEntityType.TagRelation,
-        newTagRelationsData,
-      ),
+      insertPortableCollection(context, OperationLogEntityType.TagRelation, newTagRelationsData),
     );
   }
 

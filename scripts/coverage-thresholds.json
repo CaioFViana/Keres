@@ -9,24 +9,24 @@
     "branches": 77.2
   },
   "client": {
-    "lines": 43.2,
-    "functions": 38.3,
-    "branches": 32.4
+    "lines": 50.3,
+    "functions": 43.3,
+    "branches": 41.4
   },
   "clientSyncCore": {
-    "lines": 91.9,
-    "functions": 93.8,
-    "branches": 81.5
+    "lines": 95.7,
+    "functions": 96.3,
+    "branches": 94.5
   },
   "clientSyncHandlers": {
-    "lines": 84.4,
-    "functions": 95.2,
-    "branches": 72.3
+    "lines": 97,
+    "functions": 97,
+    "branches": 97
   },
   "clientStoryServices": {
-    "lines": 77,
-    "functions": 83,
-    "branches": 57.1
+    "lines": 94.4,
+    "functions": 96,
+    "branches": 80
   },
   "apiUnit": {
     "lines": 23,
@@ -34,24 +34,24 @@
     "branches": 13.6
   },
   "apiIntegration": {
-    "lines": 72,
-    "functions": 72.1,
-    "branches": 61.3
+    "lines": 81.1,
+    "functions": 77.7,
+    "branches": 78.2
   },
   "apiCombined": {
-    "lines": 81.5,
-    "functions": 79.1,
-    "branches": 71.3
+    "lines": 89.1,
+    "functions": 83.2,
+    "branches": 87.3
   },
   "apiSyncCore": {
     "lines": 97,
     "functions": 97,
-    "branches": 80.3
+    "branches": 97
   },
   "apiSyncHandlers": {
-    "lines": 84.7,
-    "functions": 92.9,
-    "branches": 73.7
+    "lines": 96.2,
+    "functions": 97,
+    "branches": 94.5
   },
   "apiExportImport": {
     "lines": 97,
@@ -59,9 +59,9 @@
     "branches": 97
   },
   "admin": {
-    "lines": 72.6,
-    "functions": 62.6,
-    "branches": 56.5
+    "lines": 96.8,
+    "functions": 96.7,
+    "branches": 94
   },
   "desktop": {
     "lines": 95.3,

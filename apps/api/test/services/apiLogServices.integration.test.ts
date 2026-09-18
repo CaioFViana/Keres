@@ -133,18 +133,20 @@ describe('API log services', () => {
   it('never throws back at the logger when persistence fails', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
+    // A NULL message violates the NOT NULL column on both dialects. An unknown level would only
+    // fail on Postgres - on SQLite the enum is plain text (`dbEnum`).
     await expect(
       persistApiLog({
-        level: 'fatal' as never,
-        message: 'Nível inválido',
+        level: 'info',
+        message: null as never,
         meta: { userId },
         timestamp: '2025-01-07T03:04:05.000Z',
       }),
     ).resolves.toBeUndefined();
     await expect(
       persistApiLog({
-        level: 'fatal' as never,
-        message: 'Sem atribuição',
+        level: 'info',
+        message: null as never,
         timestamp: '2025-01-07T03:04:05.000Z',
       }),
     ).resolves.toBeUndefined();

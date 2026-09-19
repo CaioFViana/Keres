@@ -238,6 +238,60 @@ describe('pack bundles', () => {
     expect(new Set(bundle.chapters.map((chapter) => chapter.id)).size).toBe(3);
   });
 
+  it('renumbers chapters 1..N per kind across packs in pack order', () => {
+    const bundle = buildStoryBundleFromPacks(
+      story,
+      [
+        pack({
+          extras: extrasOf({
+            chapters: [
+              { id: 'a-1', name: 'Setup', index: 1, type: 'chapter' },
+              { id: 'a-2', name: 'Confrontation', index: 2, type: 'chapter' },
+              { id: 'a-e1', name: 'War', index: 1, type: 'event' },
+            ],
+            scenes: [
+              { id: 'a-s1', chapterId: 'a-1', locationId: null, index: 1, name: 'A one' },
+              { id: 'a-s2', chapterId: 'a-1', locationId: null, index: 2, name: 'A two' },
+            ],
+          }),
+        }),
+        pack({
+          extras: extrasOf({
+            // Listed out of order on purpose: the pack's own indices decide, not row order.
+            chapters: [
+              { id: 'b-e1', name: 'Siege', index: 2, type: 'event' },
+              { id: 'b-1', name: 'Setup', index: 1, type: 'chapter' },
+              { id: 'b-e0', name: 'Feast', index: 1, type: 'event' },
+            ],
+            scenes: [{ id: 'b-s1', chapterId: 'b-1', locationId: null, index: 1, name: 'B one' }],
+          }),
+        }),
+      ],
+      true,
+    );
+
+    // Packs append in selection order; chapters and events count their own 1..N.
+    expect(bundle.chapters.map((chapter) => [chapter.name, chapter.index, chapter.type])).toEqual([
+      ['Setup', 1, 'chapter'],
+      ['War', 1, 'event'],
+      ['Confrontation', 2, 'chapter'],
+      ['Setup (2)', 3, 'chapter'],
+      ['Feast', 2, 'event'],
+      ['Siege', 3, 'event'],
+    ]);
+    // Scenes are untouched: chapters never merge, so per-chapter indices stay valid, and each
+    // scene stays filed under its own pack's chapter.
+    expect(bundle.scenes.map((scene) => scene.index).sort()).toEqual([1, 1, 2]);
+    const chapterIdByName = new Map(bundle.chapters.map((chapter) => [chapter.name, chapter.id]));
+    expect(bundle.scenes.map((scene) => scene.chapterId).sort()).toEqual(
+      [
+        chapterIdByName.get('Setup'),
+        chapterIdByName.get('Setup'),
+        chapterIdByName.get('Setup (2)'),
+      ].sort(),
+    );
+  });
+
   it('keeps the first vocabulary seed when more than one pack offers one', () => {
     const bundle = buildStoryBundleFromPacks(story, [
       pack({

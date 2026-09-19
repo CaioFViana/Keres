@@ -1,9 +1,9 @@
 {
   "id": "KRS3ACTENP0000000000000000",
   "name": "Three-act skeleton",
-  "description": "Three chapters, seven scenes, a hero and a shadow: the classic three-act skeleton as starter elements.",
+  "description": "Three chapters, seven scenes, a hero, a shadow, and two planning boards: the classic three-act skeleton as starter elements.",
   "authorName": "Keres",
-  "version": 1,
+  "version": 2,
   "content": {
     "formatVersion": 2,
     "storySchemaFields": [],
@@ -71,7 +71,7 @@
           "chapterId": "KRS3ACTENCH001000000000000",
           "locationId": "KRS3ACTENLO001000000000000",
           "name": "Ordinary World",
-          "index": 0,
+          "index": 1,
           "summary": "Show daily life before the story starts.",
           "gap": null,
           "gapType": null,
@@ -94,7 +94,7 @@
           "chapterId": "KRS3ACTENCH001000000000000",
           "locationId": "KRS3ACTENLO001000000000000",
           "name": "Call to Adventure",
-          "index": 1,
+          "index": 2,
           "summary": "Something breaks the routine and demands an answer.",
           "gap": null,
           "gapType": null,
@@ -117,7 +117,7 @@
           "chapterId": "KRS3ACTENCH002000000000000",
           "locationId": "KRS3ACTENLO002000000000000",
           "name": "First Trial",
-          "index": 0,
+          "index": 1,
           "summary": "The hero tries the old way. It almost works.",
           "gap": null,
           "gapType": null,
@@ -140,7 +140,7 @@
           "chapterId": "KRS3ACTENCH002000000000000",
           "locationId": "KRS3ACTENLO002000000000000",
           "name": "Midpoint Turn",
-          "index": 1,
+          "index": 2,
           "summary": "A revelation flips the goal or the cost.",
           "gap": null,
           "gapType": null,
@@ -163,7 +163,7 @@
           "chapterId": "KRS3ACTENCH002000000000000",
           "locationId": "KRS3ACTENLO002000000000000",
           "name": "All Is Lost",
-          "index": 2,
+          "index": 3,
           "summary": "The lowest point. Something precious is gone.",
           "gap": null,
           "gapType": null,
@@ -186,7 +186,7 @@
           "chapterId": "KRS3ACTENCH003000000000000",
           "locationId": "KRS3ACTENLO001000000000000",
           "name": "Climax",
-          "index": 0,
+          "index": 1,
           "summary": "The hero risks everything on what they learned.",
           "gap": null,
           "gapType": null,
@@ -209,7 +209,7 @@
           "chapterId": "KRS3ACTENCH003000000000000",
           "locationId": "KRS3ACTENLO001000000000000",
           "name": "New Normal",
-          "index": 1,
+          "index": 2,
           "summary": "Show the world after. What is different now?",
           "gap": null,
           "gapType": null,
@@ -232,6 +232,8 @@
           "id": "KRS3ACTENCR001000000000000",
           "storyId": "KRS3ACTENP0000000000000000",
           "name": "Protagonist",
+          "description": "The hero of the story. Give them a name, a want, and a wound — then let the three acts test all of it.",
+          "motivation": "What they want most. Underneath it, hide what they actually need: the distance between the two is the arc.",
           "createdAt": "2026-01-01T00:00:00.000Z",
           "updatedAt": "2026-01-01T00:00:00.000Z",
           "version": 1,
@@ -242,6 +244,8 @@
           "id": "KRS3ACTENCR002000000000000",
           "storyId": "KRS3ACTENP0000000000000000",
           "name": "Antagonist",
+          "description": "The shadow opposing the hero. The best villains believe they are right — give yours a reason.",
+          "motivation": "What they want, and why they cannot let the hero have it.",
           "createdAt": "2026-01-01T00:00:00.000Z",
           "updatedAt": "2026-01-01T00:00:00.000Z",
           "version": 1,
@@ -254,10 +258,10 @@
           "id": "KRS3ACTENLO001000000000000",
           "storyId": "KRS3ACTENP0000000000000000",
           "name": "Home",
-          "description": null,
-          "climate": null,
-          "culture": null,
-          "politics": null,
+          "description": "Where the hero starts — and, at the end, the place that proves how far they came. Replace this with wherever your story opens.",
+          "climate": "What is the weather like when the story begins?",
+          "culture": "Who lives here, and what do they believe?",
+          "politics": "Who is in charge — and who disagrees?",
           "isFavorite": false,
           "extraNotes": null,
           "createdAt": "2026-01-01T00:00:00.000Z",
@@ -270,10 +274,10 @@
           "id": "KRS3ACTENLO002000000000000",
           "storyId": "KRS3ACTENP0000000000000000",
           "name": "Far Field",
-          "description": null,
-          "climate": null,
-          "culture": null,
-          "politics": null,
+          "description": "The unfamiliar ground of Act 2: trials happen far from home. Replace this with wherever your confrontation unfolds.",
+          "climate": "How does this place feel different from home?",
+          "culture": "What rules here that home never taught the hero?",
+          "politics": "Who holds power here, and what do they want from the hero?",
           "isFavorite": false,
           "extraNotes": null,
           "createdAt": "2026-01-01T00:00:00.000Z",
@@ -285,7 +289,263 @@
       ],
       "worldRules": [],
       "notes": [],
-      "storyBoards": [],
+      "storyBoards": [
+        {
+          "id": "KRS3ACTENBD001000000000000",
+          "storyId": "KRS3ACTENP0000000000000000",
+          "name": "Three-act map",
+          "description": "The skeleton laid flat: acts, scenes, and turning points. Rearrange it — it is yours now.",
+          "content": {
+            "nodes": [
+              {
+                "id": "CH000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 40,
+                "entityType": "Chapter",
+                "entityId": "KRS3ACTENCH001000000000000",
+                "labelAtPin": "Setup"
+              },
+              {
+                "id": "CH000002",
+                "kind": "entity",
+                "x": 340,
+                "y": 40,
+                "entityType": "Chapter",
+                "entityId": "KRS3ACTENCH002000000000000",
+                "labelAtPin": "Confrontation"
+              },
+              {
+                "id": "CH000003",
+                "kind": "entity",
+                "x": 640,
+                "y": 40,
+                "entityType": "Chapter",
+                "entityId": "KRS3ACTENCH003000000000000",
+                "labelAtPin": "Resolution"
+              },
+              {
+                "id": "SN000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN001000000000000",
+                "labelAtPin": "Ordinary World"
+              },
+              {
+                "id": "SN000002",
+                "kind": "entity",
+                "x": 190,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN002000000000000",
+                "labelAtPin": "Call to Adventure"
+              },
+              {
+                "id": "SN000003",
+                "kind": "entity",
+                "x": 340,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN003000000000000",
+                "labelAtPin": "First Trial"
+              },
+              {
+                "id": "SN000004",
+                "kind": "entity",
+                "x": 490,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN004000000000000",
+                "labelAtPin": "Midpoint Turn"
+              },
+              {
+                "id": "SN000005",
+                "kind": "entity",
+                "x": 640,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN005000000000000",
+                "labelAtPin": "All Is Lost"
+              },
+              {
+                "id": "SN000006",
+                "kind": "entity",
+                "x": 790,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN006000000000000",
+                "labelAtPin": "Climax"
+              },
+              {
+                "id": "SN000007",
+                "kind": "entity",
+                "x": 940,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTENSN007000000000000",
+                "labelAtPin": "New Normal"
+              },
+              {
+                "id": "NT000001",
+                "kind": "note",
+                "x": 40,
+                "y": 560,
+                "title": "Act 1 — Setup",
+                "body": "Introduce the world, the hero, and the lie they believe. End the act with a commitment: the hero steps in and cannot easily step back."
+              },
+              {
+                "id": "NT000002",
+                "kind": "note",
+                "x": 490,
+                "y": 560,
+                "title": "Midpoint",
+                "body": "Halfway through, flip the goal or the cost. From here the hero plays to win — or to survive."
+              },
+              {
+                "id": "NT000003",
+                "kind": "note",
+                "x": 790,
+                "y": 560,
+                "title": "Act 3 — Resolution",
+                "body": "Pay off every setup. The climax tests what the hero learned; the last scene shows what changed."
+              }
+            ],
+            "edges": [
+              {
+                "id": "ED000001",
+                "from": "CH000001",
+                "to": "CH000002",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000002",
+                "from": "CH000002",
+                "to": "CH000003",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000003",
+                "from": "SN000001",
+                "to": "SN000002",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000004",
+                "from": "SN000002",
+                "to": "SN000003",
+                "directed": true,
+                "label": "Act turn"
+              },
+              {
+                "id": "ED000005",
+                "from": "SN000003",
+                "to": "SN000004",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000006",
+                "from": "SN000004",
+                "to": "SN000005",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000007",
+                "from": "SN000005",
+                "to": "SN000006",
+                "directed": true,
+                "label": "Act turn"
+              },
+              {
+                "id": "ED000008",
+                "from": "SN000006",
+                "to": "SN000007",
+                "directed": true,
+                "label": null
+              }
+            ]
+          },
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        },
+        {
+          "id": "KRS3ACTENBD002000000000000",
+          "storyId": "KRS3ACTENP0000000000000000",
+          "name": "Cast & places",
+          "description": "Who wants what, and where it happens. Pin your own people and places beside these two.",
+          "content": {
+            "nodes": [
+              {
+                "id": "CR000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 40,
+                "entityType": "Character",
+                "entityId": "KRS3ACTENCR001000000000000",
+                "labelAtPin": "Protagonist"
+              },
+              {
+                "id": "CR000002",
+                "kind": "entity",
+                "x": 340,
+                "y": 40,
+                "entityType": "Character",
+                "entityId": "KRS3ACTENCR002000000000000",
+                "labelAtPin": "Antagonist"
+              },
+              {
+                "id": "PC000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 300,
+                "entityType": "Location",
+                "entityId": "KRS3ACTENLO001000000000000",
+                "labelAtPin": "Home"
+              },
+              {
+                "id": "PC000002",
+                "kind": "entity",
+                "x": 340,
+                "y": 300,
+                "entityType": "Location",
+                "entityId": "KRS3ACTENLO002000000000000",
+                "labelAtPin": "Far Field"
+              },
+              {
+                "id": "NT000001",
+                "kind": "note",
+                "x": 640,
+                "y": 40,
+                "title": "Want vs. need",
+                "body": "Give the hero a want — what they chase — and a need — what would actually save them. The distance between the two is the arc. Give the shadow a want too: nobody fights for nothing."
+              }
+            ],
+            "edges": [
+              {
+                "id": "ED000001",
+                "from": "CR000001",
+                "to": "CR000002",
+                "directed": true,
+                "label": "opposes"
+              }
+            ]
+          },
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ],
       "storyLocationMaps": [],
       "characterScenes": [
         {

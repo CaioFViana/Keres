@@ -61,6 +61,7 @@ describe('the shipped catalogue', () => {
         scenes: 7,
         characters: 2,
         locations: 2,
+        storyBoards: 2,
       });
     }
   });
@@ -95,6 +96,22 @@ describe('the shipped catalogue', () => {
           content.extras.characters.findIndex((row) => row.id === id);
         const locationIndex = (id: string | null) =>
           id === null ? null : content.extras.locations.findIndex((row) => row.id === id);
+        // Board pins point at rows whose ids differ per language, so the shape compares the
+        // pinned position inside each collection instead - the same trick as the filings above.
+        const pinnedPosition = (entityType: string, entityId: string): number => {
+          switch (entityType) {
+            case 'Chapter':
+              return content.extras.chapters.findIndex((row) => row.id === entityId);
+            case 'Scene':
+              return content.extras.scenes.findIndex((row) => row.id === entityId);
+            case 'Character':
+              return content.extras.characters.findIndex((row) => row.id === entityId);
+            case 'Location':
+              return content.extras.locations.findIndex((row) => row.id === entityId);
+            default:
+              return -1;
+          }
+        };
         return JSON.stringify({
           keys: content.storySchemaFields.map((field) => `${field.entityType}.${field.key}`),
           types: content.storySchemaFields.map((field) => field.type),
@@ -120,6 +137,17 @@ describe('the shipped catalogue', () => {
             links: content.extras.characterScenes.map((link) => [
               characterIndex(link.characterId),
               sceneIndex(link.sceneId),
+            ]),
+            boards: content.extras.storyBoards.map((board) => [
+              board.content.nodes.map((node) => [
+                node.id,
+                node.kind,
+                node.kind === 'entity' ? node.entityType : null,
+                node.kind === 'entity' ? pinnedPosition(node.entityType, node.entityId) : null,
+                node.x,
+                node.y,
+              ]),
+              board.content.edges.map((edge) => [edge.id, edge.from, edge.to, edge.directed]),
             ]),
           },
         });
@@ -161,6 +189,46 @@ describe('the shipped catalogue', () => {
         }
       }
     }
+  });
+
+  it('numbers chapters and scenes 1..N with no holes', () => {
+    // The only numbering the API accepts on reorder - and the one the example stories use. A
+    // shipped skeleton starting its scenes at 0 would install rows the app cannot reorder.
+    // Unfiled scenes are sorted by name live, so their stored index is unconstrained.
+    const expected = (size: number) => Array.from({ length: size }, (_, position) => position + 1);
+    const violations: string[] = [];
+    for (const entry of shippedPackRegistry) {
+      for (const language of entry.languages) {
+        const content = PackContentSchema.parse((language.pack as { content: unknown }).content);
+        const label = `${entry.slug}/${language.language}`;
+        const chaptersByType = new Map<string, number[]>();
+        for (const chapter of content.extras.chapters) {
+          const list = chaptersByType.get(chapter.type) ?? [];
+          list.push(chapter.index);
+          chaptersByType.set(chapter.type, list);
+        }
+        for (const [type, indices] of chaptersByType) {
+          const sorted = [...indices].sort((a, b) => a - b);
+          if (JSON.stringify(sorted) !== JSON.stringify(expected(indices.length))) {
+            violations.push(`${label} ${type} chapters: ${sorted}`);
+          }
+        }
+        const scenesByChapter = new Map<string, number[]>();
+        for (const scene of content.extras.scenes) {
+          if (scene.chapterId === null) continue;
+          const list = scenesByChapter.get(scene.chapterId) ?? [];
+          list.push(scene.index);
+          scenesByChapter.set(scene.chapterId, list);
+        }
+        for (const [chapterId, indices] of scenesByChapter) {
+          const sorted = [...indices].sort((a, b) => a - b);
+          if (JSON.stringify(sorted) !== JSON.stringify(expected(indices.length))) {
+            violations.push(`${label} chapter ${chapterId} scenes: ${sorted}`);
+          }
+        }
+      }
+    }
+    expect(violations).toEqual([]);
   });
 
   it('gives every row an id of its own', () => {
@@ -228,7 +296,7 @@ describe('installing a shipped pack', () => {
       counts: {
         customAttributes: 0,
         hasVocabulary: false,
-        extras: { chapters: 3, scenes: 7, characters: 2, locations: 2 },
+        extras: { chapters: 3, scenes: 7, characters: 2, locations: 2, storyBoards: 2 },
       },
     });
   });
@@ -364,10 +432,35 @@ describe('a story created from a shipped pack', () => {
       where: (table, { eq }) => eq(table.storyId, storyId),
     });
     expect(characters.map((row) => row.name).sort()).toEqual(['Antagonist', 'Protagonist']);
+    expect(characters.every((row) => row.description && row.motivation)).toBe(true);
+    const locations = await db.query.locations.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(locations).toHaveLength(2);
+    expect(locations.every((row) => row.description)).toBe(true);
     const links = await db.query.characterScenes.findMany({
       where: (table, { eq }) => eq(table.storyId, storyId),
     });
     expect(links).toHaveLength(2);
+    const boards = await db.query.boards.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(boards.map((row) => row.name).sort()).toEqual(['Cast & places', 'Three-act map']);
+    const boardByName = new Map(boards.map((row) => [row.name, row]));
+    expect(boardByName.get('Three-act map')?.content.edges).toHaveLength(8);
+    expect(boardByName.get('Cast & places')?.content.edges).toHaveLength(1);
+    // Pins follow the remap: every pinned entity is a row of this story, not a stale pack id.
+    const elementIds = new Set([
+      ...chapters.map((row) => row.id),
+      ...scenes.map((row) => row.id),
+      ...characters.map((row) => row.id),
+      ...locations.map((row) => row.id),
+    ]);
+    for (const board of boards) {
+      for (const node of board.content.nodes) {
+        if (node.kind === 'entity') expect(elementIds.has(node.entityId)).toBe(true);
+      }
+    }
   });
 
   it('creates an empty story from the skeleton when extras stay out', async () => {

@@ -1,9 +1,9 @@
 {
   "id": "KRS3ACTPTP0000000000000000",
   "name": "Esqueleto em três atos",
-  "description": "Três capítulos, sete cenas, um herói e uma sombra: o clássico esqueleto em três atos como elementos iniciais.",
+  "description": "Três capítulos, sete cenas, um herói, uma sombra e dois quadros de planejamento: o clássico esqueleto em três atos como elementos iniciais.",
   "authorName": "Keres",
-  "version": 1,
+  "version": 2,
   "content": {
     "formatVersion": 2,
     "storySchemaFields": [],
@@ -71,7 +71,7 @@
           "chapterId": "KRS3ACTPTCH001000000000000",
           "locationId": "KRS3ACTPTLO001000000000000",
           "name": "Mundo Comum",
-          "index": 0,
+          "index": 1,
           "summary": "Mostre a vida diária antes da história começar.",
           "gap": null,
           "gapType": null,
@@ -94,7 +94,7 @@
           "chapterId": "KRS3ACTPTCH001000000000000",
           "locationId": "KRS3ACTPTLO001000000000000",
           "name": "Chamado à Aventura",
-          "index": 1,
+          "index": 2,
           "summary": "Algo quebra a rotina e exige uma resposta.",
           "gap": null,
           "gapType": null,
@@ -117,7 +117,7 @@
           "chapterId": "KRS3ACTPTCH002000000000000",
           "locationId": "KRS3ACTPTLO002000000000000",
           "name": "Primeira Prova",
-          "index": 0,
+          "index": 1,
           "summary": "O herói tenta do jeito antigo. Quase funciona.",
           "gap": null,
           "gapType": null,
@@ -140,7 +140,7 @@
           "chapterId": "KRS3ACTPTCH002000000000000",
           "locationId": "KRS3ACTPTLO002000000000000",
           "name": "Virada do Meio",
-          "index": 1,
+          "index": 2,
           "summary": "Uma revelação vira o objetivo ou o custo do avesso.",
           "gap": null,
           "gapType": null,
@@ -163,7 +163,7 @@
           "chapterId": "KRS3ACTPTCH002000000000000",
           "locationId": "KRS3ACTPTLO002000000000000",
           "name": "Tudo Está Perdido",
-          "index": 2,
+          "index": 3,
           "summary": "O ponto mais baixo. Algo precioso se foi.",
           "gap": null,
           "gapType": null,
@@ -186,7 +186,7 @@
           "chapterId": "KRS3ACTPTCH003000000000000",
           "locationId": "KRS3ACTPTLO001000000000000",
           "name": "Clímax",
-          "index": 0,
+          "index": 1,
           "summary": "O herói arrisca tudo no que aprendeu.",
           "gap": null,
           "gapType": null,
@@ -209,7 +209,7 @@
           "chapterId": "KRS3ACTPTCH003000000000000",
           "locationId": "KRS3ACTPTLO001000000000000",
           "name": "Novo Normal",
-          "index": 1,
+          "index": 2,
           "summary": "Mostre o mundo depois. O que está diferente agora?",
           "gap": null,
           "gapType": null,
@@ -232,6 +232,8 @@
           "id": "KRS3ACTPTCR001000000000000",
           "storyId": "KRS3ACTPTP0000000000000000",
           "name": "Protagonista",
+          "description": "O herói da história. Dê a ele um nome, um desejo e uma ferida — e deixe os três atos testarem tudo isso.",
+          "motivation": "O que ele mais quer. Por baixo, esconda o que ele realmente precisa: a distância entre os dois é o arco.",
           "createdAt": "2026-01-01T00:00:00.000Z",
           "updatedAt": "2026-01-01T00:00:00.000Z",
           "version": 1,
@@ -242,6 +244,8 @@
           "id": "KRS3ACTPTCR002000000000000",
           "storyId": "KRS3ACTPTP0000000000000000",
           "name": "Antagonista",
+          "description": "A sombra que se opõe ao herói. Os melhores vilões acreditam que estão certos — dê um motivo ao seu.",
+          "motivation": "O que ele quer, e por que não pode deixar o herói conseguir.",
           "createdAt": "2026-01-01T00:00:00.000Z",
           "updatedAt": "2026-01-01T00:00:00.000Z",
           "version": 1,
@@ -254,10 +258,10 @@
           "id": "KRS3ACTPTLO001000000000000",
           "storyId": "KRS3ACTPTP0000000000000000",
           "name": "Lar",
-          "description": null,
-          "climate": null,
-          "culture": null,
-          "politics": null,
+          "description": "Onde o herói começa — e, no fim, o lugar que prova o quanto ele caminhou. Troque pelo lugar onde sua história abre.",
+          "climate": "Como está o tempo quando a história começa?",
+          "culture": "Quem mora aqui, e no que essa gente acredita?",
+          "politics": "Quem manda aqui — e quem discorda?",
           "isFavorite": false,
           "extraNotes": null,
           "createdAt": "2026-01-01T00:00:00.000Z",
@@ -270,10 +274,10 @@
           "id": "KRS3ACTPTLO002000000000000",
           "storyId": "KRS3ACTPTP0000000000000000",
           "name": "Campo Distante",
-          "description": null,
-          "climate": null,
-          "culture": null,
-          "politics": null,
+          "description": "O terreno desconhecido do Ato 2: as provas acontecem longe de casa. Troque pelo lugar onde seu confronto se desenrola.",
+          "climate": "Como este lugar se sente diferente do lar?",
+          "culture": "Que regras valem aqui que o lar nunca ensinou ao herói?",
+          "politics": "Quem tem poder aqui, e o que quer do herói?",
           "isFavorite": false,
           "extraNotes": null,
           "createdAt": "2026-01-01T00:00:00.000Z",
@@ -285,7 +289,263 @@
       ],
       "worldRules": [],
       "notes": [],
-      "storyBoards": [],
+      "storyBoards": [
+        {
+          "id": "KRS3ACTPTBD001000000000000",
+          "storyId": "KRS3ACTPTP0000000000000000",
+          "name": "Mapa dos três atos",
+          "description": "O esqueleto estendido: atos, cenas e viradas. Rearranje — agora é seu.",
+          "content": {
+            "nodes": [
+              {
+                "id": "CH000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 40,
+                "entityType": "Chapter",
+                "entityId": "KRS3ACTPTCH001000000000000",
+                "labelAtPin": "Apresentação"
+              },
+              {
+                "id": "CH000002",
+                "kind": "entity",
+                "x": 340,
+                "y": 40,
+                "entityType": "Chapter",
+                "entityId": "KRS3ACTPTCH002000000000000",
+                "labelAtPin": "Confronto"
+              },
+              {
+                "id": "CH000003",
+                "kind": "entity",
+                "x": 640,
+                "y": 40,
+                "entityType": "Chapter",
+                "entityId": "KRS3ACTPTCH003000000000000",
+                "labelAtPin": "Resolução"
+              },
+              {
+                "id": "SN000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN001000000000000",
+                "labelAtPin": "Mundo Comum"
+              },
+              {
+                "id": "SN000002",
+                "kind": "entity",
+                "x": 190,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN002000000000000",
+                "labelAtPin": "Chamado à Aventura"
+              },
+              {
+                "id": "SN000003",
+                "kind": "entity",
+                "x": 340,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN003000000000000",
+                "labelAtPin": "Primeira Prova"
+              },
+              {
+                "id": "SN000004",
+                "kind": "entity",
+                "x": 490,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN004000000000000",
+                "labelAtPin": "Virada do Meio"
+              },
+              {
+                "id": "SN000005",
+                "kind": "entity",
+                "x": 640,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN005000000000000",
+                "labelAtPin": "Tudo Está Perdido"
+              },
+              {
+                "id": "SN000006",
+                "kind": "entity",
+                "x": 790,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN006000000000000",
+                "labelAtPin": "Clímax"
+              },
+              {
+                "id": "SN000007",
+                "kind": "entity",
+                "x": 940,
+                "y": 300,
+                "entityType": "Scene",
+                "entityId": "KRS3ACTPTSN007000000000000",
+                "labelAtPin": "Novo Normal"
+              },
+              {
+                "id": "NT000001",
+                "kind": "note",
+                "x": 40,
+                "y": 560,
+                "title": "Ato 1 — Apresentação",
+                "body": "Apresente o mundo, o herói e a mentira em que ele acredita. Termine o ato com um compromisso: o herói entra e não pode mais voltar atrás."
+              },
+              {
+                "id": "NT000002",
+                "kind": "note",
+                "x": 490,
+                "y": 560,
+                "title": "Meio",
+                "body": "Na metade, vire o objetivo ou o custo do avesso. Daqui em diante o herói joga para vencer — ou para sobreviver."
+              },
+              {
+                "id": "NT000003",
+                "kind": "note",
+                "x": 790,
+                "y": 560,
+                "title": "Ato 3 — Resolução",
+                "body": "Pague cada preparação. O clímax testa o que o herói aprendeu; a última cena mostra o que mudou."
+              }
+            ],
+            "edges": [
+              {
+                "id": "ED000001",
+                "from": "CH000001",
+                "to": "CH000002",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000002",
+                "from": "CH000002",
+                "to": "CH000003",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000003",
+                "from": "SN000001",
+                "to": "SN000002",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000004",
+                "from": "SN000002",
+                "to": "SN000003",
+                "directed": true,
+                "label": "Virada de ato"
+              },
+              {
+                "id": "ED000005",
+                "from": "SN000003",
+                "to": "SN000004",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000006",
+                "from": "SN000004",
+                "to": "SN000005",
+                "directed": true,
+                "label": null
+              },
+              {
+                "id": "ED000007",
+                "from": "SN000005",
+                "to": "SN000006",
+                "directed": true,
+                "label": "Virada de ato"
+              },
+              {
+                "id": "ED000008",
+                "from": "SN000006",
+                "to": "SN000007",
+                "directed": true,
+                "label": null
+              }
+            ]
+          },
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        },
+        {
+          "id": "KRS3ACTPTBD002000000000000",
+          "storyId": "KRS3ACTPTP0000000000000000",
+          "name": "Elenco e lugares",
+          "description": "Quem quer o quê, e onde acontece. Prenda sua própria gente e seus lugares ao lado destes.",
+          "content": {
+            "nodes": [
+              {
+                "id": "CR000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 40,
+                "entityType": "Character",
+                "entityId": "KRS3ACTPTCR001000000000000",
+                "labelAtPin": "Protagonista"
+              },
+              {
+                "id": "CR000002",
+                "kind": "entity",
+                "x": 340,
+                "y": 40,
+                "entityType": "Character",
+                "entityId": "KRS3ACTPTCR002000000000000",
+                "labelAtPin": "Antagonista"
+              },
+              {
+                "id": "PC000001",
+                "kind": "entity",
+                "x": 40,
+                "y": 300,
+                "entityType": "Location",
+                "entityId": "KRS3ACTPTLO001000000000000",
+                "labelAtPin": "Lar"
+              },
+              {
+                "id": "PC000002",
+                "kind": "entity",
+                "x": 340,
+                "y": 300,
+                "entityType": "Location",
+                "entityId": "KRS3ACTPTLO002000000000000",
+                "labelAtPin": "Campo Distante"
+              },
+              {
+                "id": "NT000001",
+                "kind": "note",
+                "x": 640,
+                "y": 40,
+                "title": "Querer vs. precisar",
+                "body": "Dê ao herói um querer — o que ele persegue — e uma necessidade — o que de fato o salvaria. A distância entre os dois é o arco. Dê um querer à sombra também: ninguém luta por nada."
+              }
+            ],
+            "edges": [
+              {
+                "id": "ED000001",
+                "from": "CR000001",
+                "to": "CR000002",
+                "directed": true,
+                "label": "enfrenta"
+              }
+            ]
+          },
+          "createdAt": "2026-01-01T00:00:00.000Z",
+          "updatedAt": "2026-01-01T00:00:00.000Z",
+          "version": 1,
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ],
       "storyLocationMaps": [],
       "characterScenes": [
         {

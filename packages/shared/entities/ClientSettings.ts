@@ -18,6 +18,10 @@ export interface ClientSettings {
   suggestLiteraryDevices: boolean;
   /** File format for map, graph, board and timeline exports on this device. */
   exportFormat: MapExportFormat;
+  /** When on, first-open guided tours may appear on this device. */
+  showTutorials: boolean;
+  /** Raw JSON `{version, seen[]}` with the tour ids already completed or skipped. */
+  seenTutorials: string;
   createdAt: Date;
   updatedAt: Date;
   version: number; // For synchronization and conflict resolution

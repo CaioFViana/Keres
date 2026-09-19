@@ -1,4 +1,5 @@
 import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
+import GuideHost from '@/src/components/common/feedback/GuideHost/GuideHost';
 import SvgRasterHost from '@/src/components/features/export/SvgRasterHost';
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
@@ -62,6 +63,8 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       {/* AppAlert.alert() precisa poder ser chamado de qualquer tela, então o Modal que o
           renderiza mora aqui, não em cada tela. */}
       <AppAlertHost />
+      {/* Os tours guiados de primeira abertura, no mesmo molde: um Modal único dirigido por store. */}
+      <GuideHost />
       {/* O PNG de qualquer exportação é rasterizado por este canvas oculto, então ele também
           mora aqui, ao lado do AppAlertHost. */}
       <SvgRasterHost />

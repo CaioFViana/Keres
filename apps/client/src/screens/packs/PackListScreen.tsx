@@ -17,6 +17,8 @@ import type { PackVisibility } from '@keres/shared';
 import type { ServerSelect } from '../../db/schema';
 import { packApiService } from '../../services/PackApiService';
 import { createServerService } from '../../services/ServerService';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
 import { packExtrasChips } from '../../utils/packChips';
@@ -39,6 +41,9 @@ import { AppAlert } from '../../utils/AppAlert';
  */
 const PackListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('PackList');
+  const listAnchorRef = useScreenAnchor('Packs', 'list');
+  const actionsAnchorRef = useScreenAnchor('Packs', 'actions');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<{ navigate: (screen: string, params?: unknown) => void }>();
@@ -286,46 +291,50 @@ const PackListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        contentContainerStyle={styles.content}
-        data={packs}
-        keyExtractor={(pack) => pack.id}
-        renderItem={renderPack}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.description}>{t('packs_description')}</Text>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => navigation.navigate('PackForm', {})}
-              testID="create-pack"
-            >
-              <Ionicons name="add" size={20} color={colors.onPrimary} />
-              <Text style={styles.createButtonText}>{t('packs_create')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.createButton, styles.browseButton]}
-              onPress={() => navigation.navigate('PackBrowse')}
-              testID="browse-packs"
-            >
-              <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
-              <Text style={[styles.createButtonText, { color: colors.text }]}>
-                {t('packs_browse_title')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.createButton, styles.browseButton]}
-              onPress={() => navigation.navigate('ShippedPacks')}
-              testID="shipped-packs"
-            >
-              <Ionicons name="gift-outline" size={20} color={colors.text} />
-              <Text style={[styles.createButtonText, { color: colors.text }]}>
-                {t('shipped_packs_title')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        }
-        ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <FlatList
+          contentContainerStyle={styles.content}
+          data={packs}
+          keyExtractor={(pack) => pack.id}
+          renderItem={renderPack}
+          ListHeaderComponent={
+            <>
+              <Text style={styles.description}>{t('packs_description')}</Text>
+              <View ref={actionsAnchorRef} collapsable={false}>
+                <TouchableOpacity
+                  style={styles.createButton}
+                  onPress={() => navigation.navigate('PackForm', {})}
+                  testID="create-pack"
+                >
+                  <Ionicons name="add" size={20} color={colors.onPrimary} />
+                  <Text style={styles.createButtonText}>{t('packs_create')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.createButton, styles.browseButton]}
+                  onPress={() => navigation.navigate('PackBrowse')}
+                  testID="browse-packs"
+                >
+                  <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
+                  <Text style={[styles.createButtonText, { color: colors.text }]}>
+                    {t('packs_browse_title')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.createButton, styles.browseButton]}
+                  onPress={() => navigation.navigate('ShippedPacks')}
+                  testID="shipped-packs"
+                >
+                  <Ionicons name="gift-outline" size={20} color={colors.text} />
+                  <Text style={[styles.createButtonText, { color: colors.text }]}>
+                    {t('shipped_packs_title')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          }
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
+        />
+      </View>
       <SharePackModal
         visible={sharingPack !== null}
         packName={sharingPack?.name ?? ''}

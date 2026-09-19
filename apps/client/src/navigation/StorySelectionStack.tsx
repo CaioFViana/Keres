@@ -257,6 +257,7 @@ const StorySelectionNavigator = () => {
       drawerContent={(props) => (
         <ResizableDrawerContent
           {...props}
+          drawerId="story-selection"
           drawerWidth={drawerWidth}
           maximumWidth={maximumWidth}
           onDrawerWidthChange={setDrawerWidth}

@@ -1,4 +1,5 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import Button from '@/src/components/common/controls/Button/Button';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import StorySelectionListItem from '@/src/components/features/list-items/StorySelectionListItem';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -10,6 +11,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, FlatList, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { createServerService } from '../../services/ServerService';
 import { createStoryContentMetricsService } from '../../services/storymanagement/StoryContentMetricsService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
@@ -37,6 +40,8 @@ type StorySelectionScreenNavigationProp = NativeStackNavigationProp<
 
 const StorySelectionScreen = () => {
   useBackButtonHandler();
+  useScreenTour('StorySelectionMain');
+  const listAnchorRef = useScreenAnchor('StorySelection', 'list');
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
@@ -55,7 +60,7 @@ const StorySelectionScreen = () => {
   const summary = useSummaryStore((state) => state.summary);
   const updateSummary = useSummaryStore((state) => state.updateSummary);
 
-  const { userId } = useUserSettingsStore();
+  const { userId, showTutorials, tutorialProgress, setFirstStoryProgress } = useUserSettingsStore();
 
   const commonContainerStyles = getCommonContainerStyles(colors);
 
@@ -131,6 +136,50 @@ const StorySelectionScreen = () => {
     navigation.navigate('StoryForm', {});
   }, [navigation]);
 
+  const recordTrailChoice = useCallback(
+    (patch: Parameters<typeof setFirstStoryProgress>[1]) => {
+      setFirstStoryProgress(drizzleClient, patch).catch((error: unknown) => {
+        console.warn('[StorySelectionScreen] failed to record the first-story choice.', error);
+      });
+    },
+    [drizzleClient, setFirstStoryProgress],
+  );
+
+  const handleFirstStoryCta = useCallback(() => {
+    // Tapping outside dismisses without choosing ("ask again later"); only "Later" silences the trail.
+    AppAlert.alert(
+      t('first_story_choice_title'),
+      t('first_story_choice_message'),
+      [
+        {
+          text: t('first_story_choice_create'),
+          onPress: () => {
+            navigation.navigate('StoryForm', {});
+            recordTrailChoice({ choice: 'create' });
+          },
+        },
+        {
+          text: t('first_story_choice_example'),
+          onPress: () => {
+            navigation.getParent()?.navigate('ExampleStories');
+            recordTrailChoice({ choice: 'example' });
+          },
+        },
+        {
+          text: t('first_story_choice_later'),
+          style: 'cancel',
+          onPress: () => {
+            recordTrailChoice({ dismissed: true });
+          },
+        },
+      ],
+      { cancelable: true },
+    );
+  }, [navigation, recordTrailChoice, t]);
+
+  const showTrailCta =
+    showTutorials && !tutorialProgress.firstStory?.done && !tutorialProgress.firstStory?.dismissed;
+
   useScreenHeader({
     target: 'parent',
     title: t('story_selection_title'),
@@ -201,28 +250,35 @@ const StorySelectionScreen = () => {
       {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 
       <Text style={styles.title}>{t('your_stories')}</Text>
-      <FlatList
-        data={stories}
-        renderItem={({ item }) => (
-          <StorySelectionListItem
-            story={item}
-            serverName={item.serverId ? serverNamesById[item.serverId] : undefined}
-            onSelectStory={handleSelectStory}
-            onToggleFavorite={toggleFavorite}
-            onEditStory={handleEditStory}
-          />
-        )}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIconWrap}>
-              <Ionicons name="book-outline" size={28} color={colors.onPrimaryContainer} />
+      <View ref={listAnchorRef} collapsable={false} style={styles.list}>
+        <FlatList
+          data={stories}
+          renderItem={({ item }) => (
+            <StorySelectionListItem
+              story={item}
+              serverName={item.serverId ? serverNamesById[item.serverId] : undefined}
+              onSelectStory={handleSelectStory}
+              onToggleFavorite={toggleFavorite}
+              onEditStory={handleEditStory}
+            />
+          )}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconWrap}>
+                <Ionicons name="book-outline" size={28} color={colors.onPrimaryContainer} />
+              </View>
+              <Text style={styles.emptyText}>{t('no_stories_found_create_one')}</Text>
+              {showTrailCta && (
+                <Button onPress={handleFirstStoryCta} style={{ marginTop: 16 }}>
+                  {t('first_story_cta')}
+                </Button>
+              )}
             </View>
-            <Text style={styles.emptyText}>{t('no_stories_found_create_one')}</Text>
-          </View>
-        }
-        style={styles.list}
-      />
+          }
+          style={styles.list}
+        />
+      </View>
     </View>
   );
 };

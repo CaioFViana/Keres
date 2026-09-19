@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { BackHandler } from 'react-native';
+import { useUserSettingsStore } from '../../../src/state/userSettingsStore';
 
 const mockNavigate = jest.fn();
 const mockDispatch = jest.fn();
@@ -9,6 +10,8 @@ const mockShowNotification = jest.fn();
 const mockGetContentCounts = jest.fn();
 const mockAnalyzeStoryCheap = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
+const mockUpdateClientSettings = jest.fn();
 
 let mockSelectedStory: { id: string; title: string } | null = {
   id: 'story-1',
@@ -31,9 +34,18 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('../../../src/services/ClientSettingsService', () => ({
+  __esModule: true,
+  getClientSettings: jest.fn(),
+  updateClientSettings: (...args: unknown[]) => mockUpdateClientSettings(...args),
+}));
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('../../../src/services/storymanagement/StoryContentMetricsService', () => ({
   __esModule: true,
@@ -147,6 +159,43 @@ describe('MainDashboardScreen', () => {
     mockConflicts = [{ id: 'c-1' }, { id: 'c-2' }];
     mockGetContentCounts.mockResolvedValue(fullCounts);
     mockAnalyzeStoryCheap.mockResolvedValue({ findings: [{ id: 'f-1' }, { id: 'f-2' }] });
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<MainDashboardScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('MainDashboard');
+  });
+
+  it('completes the first-story trail on arrival and celebrates once', async () => {
+    useUserSettingsStore.setState({
+      tutorialProgress: {
+        version: 1,
+        seen: [],
+        firstStory: { choice: 'create', done: false, dismissed: false },
+      },
+    });
+    mockUpdateClientSettings.mockImplementation(
+      async (_db: unknown, patch: Record<string, unknown>) => {
+        useUserSettingsStore.setState({
+          tutorialProgress: JSON.parse(patch.seenTutorials as string),
+        });
+        return undefined;
+      },
+    );
+    try {
+      await render(<MainDashboardScreen />);
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith('first_story_success', 'success'),
+      );
+      const [, written] = mockUpdateClientSettings.mock.calls[0];
+      expect(JSON.parse(written.seenTutorials).firstStory.done).toBe(true);
+      // The persisted done flag keeps later focuses quiet.
+      expect(mockShowNotification).toHaveBeenCalledTimes(1);
+    } finally {
+      useUserSettingsStore.getState().resetSettings();
+    }
   });
 
   it('fetches counts and analysis issues into the dashboard content', async () => {

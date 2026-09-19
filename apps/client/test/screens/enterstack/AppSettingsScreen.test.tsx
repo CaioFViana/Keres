@@ -16,6 +16,8 @@ const mockSetDateDisplayFormat = jest.fn();
 const mockSetShowContextualHelp = jest.fn();
 const mockSetSuggestLiteraryDevices = jest.fn();
 const mockSetExportFormat = jest.fn();
+const mockSetShowTutorials = jest.fn();
+const mockResetSeenTutorials = jest.fn();
 const mockResetSettings = jest.fn();
 const mockUserSettings = {
   username: 'Bob',
@@ -25,6 +27,7 @@ const mockUserSettings = {
   showContextualHelp: true,
   suggestLiteraryDevices: false,
   exportFormat: 'svg',
+  showTutorials: true,
   setUsername: (...args: unknown[]) => mockSetUsername(...args),
   setLanguage: (...args: unknown[]) => mockSetLanguage(...args),
   setUse24HourTime: (...args: unknown[]) => mockSetUse24HourTime(...args),
@@ -32,8 +35,11 @@ const mockUserSettings = {
   setShowContextualHelp: (...args: unknown[]) => mockSetShowContextualHelp(...args),
   setSuggestLiteraryDevices: (...args: unknown[]) => mockSetSuggestLiteraryDevices(...args),
   setExportFormat: (...args: unknown[]) => mockSetExportFormat(...args),
+  setShowTutorials: (...args: unknown[]) => mockSetShowTutorials(...args),
+  resetSeenTutorials: (...args: unknown[]) => mockResetSeenTutorials(...args),
   resetSettings: (...args: unknown[]) => mockResetSettings(...args),
 };
+const mockShowNotification = jest.fn();
 const mockSetDarkMode = jest.fn();
 const mockResetTheme = jest.fn();
 const mockThemeState = {
@@ -144,6 +150,13 @@ jest.mock('../../../src/state/themeStore', () => ({
     typeof selector === 'function' ? selector(mockThemeState) : mockThemeState,
 }));
 
+jest.mock('../../../src/state/notificationStore', () => ({
+  useNotificationStore: (selector?: (state: unknown) => unknown) => {
+    const state = { showNotification: (...args: unknown[]) => mockShowNotification(...args) };
+    return typeof selector === 'function' ? selector(state) : state;
+  },
+}));
+
 jest.mock('../../../src/utils/i18n', () => ({
   __esModule: true,
   default: { changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
@@ -221,6 +234,8 @@ describe('AppSettingsScreen', () => {
     expect(view.getByText('use_24_hour_time_on')).toBeTruthy();
     expect(view.getByText('suggest_literary_devices_off')).toBeTruthy();
     expect(view.getByText('show_contextual_help_on')).toBeTruthy();
+    expect(view.getByText('show_tutorials_on')).toBeTruthy();
+    expect(view.getByText('reset_seen_tutorials')).toBeTruthy();
     expect(view.getByText('reset_application')).toBeTruthy();
     expect(view.getByText(/Keres/)).toBeTruthy();
     expect(view.getByTestId('pill-select_language').props.children).toBe('select_language:en');
@@ -249,7 +264,7 @@ describe('AppSettingsScreen', () => {
     const view = await render(<SettingsScreen />);
     await view.findByText('dark_mode');
     const switches = view.getAllByRole('switch');
-    expect(switches).toHaveLength(4);
+    expect(switches).toHaveLength(5);
     await fireEvent.press(switches[0]);
     expect(mockSetDarkMode).toHaveBeenCalledWith(mockDrizzle, true);
     await fireEvent.press(switches[1]);
@@ -258,6 +273,19 @@ describe('AppSettingsScreen', () => {
     expect(mockSetSuggestLiteraryDevices).toHaveBeenCalledWith(mockDrizzle, true);
     await fireEvent.press(switches[3]);
     expect(mockSetShowContextualHelp).toHaveBeenCalledWith(mockDrizzle, false);
+    await fireEvent.press(switches[4]);
+    expect(mockSetShowTutorials).toHaveBeenCalledWith(mockDrizzle, false);
+  });
+
+  it('resets the seen tutorials and confirms', async () => {
+    mockResetSeenTutorials.mockResolvedValue(undefined);
+    const view = await render(<SettingsScreen />);
+    await view.findByText('reset_seen_tutorials');
+
+    await fireEvent.press(view.getByText('reset_seen_tutorials'));
+
+    await waitFor(() => expect(mockResetSeenTutorials).toHaveBeenCalledWith(mockDrizzle));
+    expect(mockShowNotification).toHaveBeenCalledWith('tutorials_reset_success', 'success');
   });
 
   it('changes date and export formats and ignores invalid values', async () => {

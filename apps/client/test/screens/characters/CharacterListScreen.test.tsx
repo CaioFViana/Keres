@@ -12,6 +12,7 @@ const mockGetAllCharactersByStoryId = jest.fn();
 const mockOpenCharacterList = jest.fn();
 const mockUseEntityListScreen = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
 const mockReadShowcaseRequest = jest.fn();
 const mockUseStoryStore = jest.fn();
 
@@ -32,6 +33,9 @@ let mockListProps: {
   renderItem: (info: { item: ListItem }) => React.ReactNode;
   filterOptions: { label: string; value: string }[];
   sortOptions: { label: string; value: string }[];
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
 jest.mock('@react-navigation/native', () => {
@@ -155,6 +159,10 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('../../../src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
@@ -256,6 +264,24 @@ describe('CharacterListScreen', () => {
     mockListState = { ...freshListState(), isInitialLoading: true };
     const loading = await render(<CharactersScreen />);
     expect(loading.getByTestId('screen-loading')).toBeTruthy();
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<CharactersScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('CharactersStack');
+  });
+
+  it('guides the empty list toward creation', async () => {
+    await render(<CharactersScreen />);
+
+    expect(mockListProps?.emptyStateTitle).toBe('characters_empty_title');
+    expect(mockListProps?.emptyStateMessage).toBe('characters_empty_message');
+    expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+      'characters_empty_create',
+    ]);
+    mockListProps?.emptyStateActions?.[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('CharacterForm', { characterId: undefined });
   });
 
   it('shows the error state with a back action', async () => {

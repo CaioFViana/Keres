@@ -22,6 +22,10 @@ export const clientSettings = sqliteTable('client_settings', {
   exportFormat: text('export_format', { enum: ['svg', 'png'] })
     .notNull()
     .default('svg'),
+  /** Master switch for the guided first-open tours on this device. */
+  showTutorials: integer('show_tutorials', { mode: 'boolean' }).notNull().default(true),
+  /** JSON `{version, seen[]}` with the tour ids already completed or skipped (see `tutorialProgress`). */
+  seenTutorials: text('seen_tutorials').notNull().default('{"version":1,"seen":[]}'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '../../../../theme';
+import Button from '@/src/components/common/controls/Button/Button';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import MultiSelectPill, {
@@ -22,6 +23,12 @@ import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Im
 import { getOnColorForFill, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 
 import type { FavoriteFilterState } from '../../../../types/entityFilters';
+
+export interface GuidedEmptyStateAction {
+  label: string;
+  onPress: () => void;
+  testID?: string;
+}
 
 interface GenericFilterSortListProps<T> {
   data: T[];
@@ -45,6 +52,13 @@ interface GenericFilterSortListProps<T> {
   currentSortDirection: 'asc' | 'desc';
   currentSortValue?: string | null;
   emptyListComponent?: React.ReactElement;
+  /**
+   * Guided empty state: a title, a hint and up to two actions ("Create X", ...). An explicit
+   * `emptyListComponent` still wins; without either, the legacy plain text shows.
+   */
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: GuidedEmptyStateAction[];
   // Favorite Filter Props
   onFavoriteFilterChange?: (state: FavoriteFilterState) => void;
   currentFavoriteFilterState?: FavoriteFilterState;
@@ -85,6 +99,9 @@ const GenericFilterSortList = <T,>({
   currentSortDirection,
   currentSortValue,
   emptyListComponent,
+  emptyStateTitle,
+  emptyStateMessage,
+  emptyStateActions,
   onFavoriteFilterChange,
   currentFavoriteFilterState,
   entityName,
@@ -343,7 +360,14 @@ const GenericFilterSortList = <T,>({
         numColumns={numColumns}
         columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
         ListEmptyComponent={
-          emptyListComponent || <Text style={styles(colors).emptyText}>{t('no_items_found')}</Text>
+          emptyListComponent || (
+            <GuidedEmptyState
+              title={emptyStateTitle}
+              message={emptyStateMessage}
+              actions={emptyStateActions}
+              fallbackText={t('no_items_found')}
+            />
+          )
         }
         style={styles(colors).list}
       />
@@ -361,6 +385,35 @@ const GenericFilterSortList = <T,>({
             scopes={advancedSearchScopes}
           />
         )}
+    </View>
+  );
+};
+
+const GuidedEmptyState: React.FC<{
+  title?: string;
+  message?: string;
+  actions?: GuidedEmptyStateAction[];
+  fallbackText: string;
+}> = ({ title, message, actions, fallbackText }) => {
+  const { colors } = useTheme();
+  const visibleActions = (actions ?? []).slice(0, 2);
+  if (!title && !message && visibleActions.length === 0) {
+    return <Text style={styles(colors).emptyText}>{fallbackText}</Text>;
+  }
+  return (
+    <View style={styles(colors).guidedEmpty} testID="guided-empty-state">
+      {title ? <Text style={styles(colors).guidedEmptyTitle}>{title}</Text> : null}
+      {message ? <Text style={styles(colors).guidedEmptyMessage}>{message}</Text> : null}
+      {visibleActions.map((action, index) => (
+        <Button
+          key={action.testID ?? `guided-empty-action-${index}`}
+          onPress={action.onPress}
+          testID={action.testID ?? `guided-empty-action-${index}`}
+          style={styles(colors).guidedEmptyButton}
+        >
+          {action.label}
+        </Button>
+      ))}
     </View>
   );
 };
@@ -421,6 +474,28 @@ const styles = (colors: any) =>
       color: colors.textSecondary,
       textAlign: 'center',
       marginTop: 20,
+    },
+    guidedEmpty: {
+      alignItems: 'center',
+      paddingVertical: 32,
+      paddingHorizontal: 24,
+      gap: 12,
+    },
+    guidedEmptyTitle: {
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    guidedEmptyMessage: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+      textAlign: 'center',
+    },
+    guidedEmptyButton: {
+      marginTop: 4,
+      minWidth: 200,
     },
     advancedSearchButton: {
       padding: 12,

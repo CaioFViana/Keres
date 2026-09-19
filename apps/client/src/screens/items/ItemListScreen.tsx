@@ -23,6 +23,8 @@ import type {
   TagSelect,
 } from '../../db/schema';
 import type { ItemSelect } from '../../db/schemas/items';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
@@ -52,6 +54,8 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 
 const ItemListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('ItemsStack');
+  const listAnchorRef = useScreenAnchor('Items', 'list');
   const { t } = useTranslation();
   const { agree, term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -308,19 +312,25 @@ const ItemListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        {...listProps}
-        data={itemsWithTags}
-        renderItem={memoizedItemListItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
-        filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
-        onFilterChange={setActiveTagIds}
-        selectedFilterValues={activeTagIds}
-        sortOptions={memoizedSortOptions}
-        entityName="Item"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={itemsWithTags}
+          renderItem={memoizedItemListItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
+          filterOptions={allTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color,
+          }))}
+          onFilterChange={setActiveTagIds}
+          selectedFilterValues={activeTagIds}
+          sortOptions={memoizedSortOptions}
+          entityName="Item"
+          storyId={storyId || ''}
+        />
+      </View>
     </View>
   );
 };

@@ -18,6 +18,8 @@ import { useDrizzle } from '../../../db';
 import type { ChapterType } from '@keres/shared';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
 import { AppAlert } from '../../../utils/AppAlert';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
+import { useScreenTour } from '../../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../../hooks/useStoryRole';
@@ -60,6 +62,8 @@ const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: strin
 
 const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('NarrativeElementsStack');
+  const listAnchorRef = useScreenAnchor('NarrativeElements', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -599,29 +603,35 @@ const NarrativeElementsListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        {...listProps}
-        data={visibleChapters}
-        renderItem={memoizedChapterListItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('chapter_outline_search_placeholder', {
-          chapters: term('Chapter', true),
-          scenes: term('Scene', true),
-        })}
-        filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
-        onFilterChange={setActiveTagIds}
-        selectedFilterValues={activeTagIds}
-        sortOptions={memoizedSortOptions}
-        entityName="Chapter"
-        storyId={storyId || ''}
-        advancedSearchScopes={advancedSearchScopes}
-        resultsMeta={t(
-          visibleSceneCount === 1
-            ? 'chapter_outline_scene_count_one'
-            : 'chapter_outline_scene_count_other',
-          { count: visibleSceneCount },
-        )}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={visibleChapters}
+          renderItem={memoizedChapterListItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('chapter_outline_search_placeholder', {
+            chapters: term('Chapter', true),
+            scenes: term('Scene', true),
+          })}
+          filterOptions={allTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color,
+          }))}
+          onFilterChange={setActiveTagIds}
+          selectedFilterValues={activeTagIds}
+          sortOptions={memoizedSortOptions}
+          entityName="Chapter"
+          storyId={storyId || ''}
+          advancedSearchScopes={advancedSearchScopes}
+          resultsMeta={t(
+            visibleSceneCount === 1
+              ? 'chapter_outline_scene_count_one'
+              : 'chapter_outline_scene_count_other',
+            { count: visibleSceneCount },
+          )}
+        />
+      </View>
       <ChapterReorderModal
         isVisible={reorderingType !== null}
         onClose={() => setReorderingType(null)}

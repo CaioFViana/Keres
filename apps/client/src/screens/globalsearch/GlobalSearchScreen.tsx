@@ -17,6 +17,8 @@ import {
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '../../db';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { GlobalSearchResult } from '../../services/storymanagement/GlobalSearchService';
@@ -62,6 +64,8 @@ interface ResultSection {
 
 const GlobalSearchScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('GlobalSearch');
+  const searchAnchorRef = useScreenAnchor('GlobalSearch', 'search');
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -186,7 +190,7 @@ const GlobalSearchScreen = () => {
   return (
     <View style={styles(colors).container}>
       <View style={styles(colors).searchContainer}>
-        <View style={styles(colors).searchRow}>
+        <View ref={searchAnchorRef} collapsable={false} style={styles(colors).searchRow}>
           <TextInput
             placeholder={t('global_search_placeholder')}
             value={query}

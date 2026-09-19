@@ -1,8 +1,15 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
-import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
+import { DrawerContentScrollView } from '@react-navigation/drawer';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { ScrollView } from 'react-native';
 import { PanResponder, Platform, StyleSheet, View } from 'react-native';
+import type { GuideDrawerId } from '../../../../guides/types';
+import {
+  registerGuideDrawer,
+  unregisterGuideDrawer,
+} from '../../../../navigation/drawerGuideRegistry';
 import { useTheme } from '../../../../theme';
+import { AnchoredDrawerItemList } from './AnchoredDrawerItemList';
 
 export const DRAWER_MIN_WIDTH = 280;
 export const DRAWER_DEFAULT_WIDTH = 280;
@@ -30,6 +37,8 @@ interface ResizableDrawerContentProps extends DrawerContentComponentProps {
   maximumWidth: number;
   onDrawerWidthChange: (width: number) => void;
   resizable: boolean;
+  /** Which navigator this drawer belongs to; keys the tour anchors and the guide registry. */
+  drawerId: GuideDrawerId;
 }
 
 const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
@@ -37,15 +46,47 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
   maximumWidth,
   onDrawerWidthChange,
   resizable,
+  drawerId,
   ...drawerProps
 }) => {
   const { colors } = useTheme();
   const currentWidthRef = useRef(drawerWidth);
   const dragStartWidthRef = useRef(drawerWidth);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const containerRef = useRef<View | null>(null);
+  const scrollOffsetRef = useRef(0);
 
   useEffect(() => {
     currentWidthRef.current = drawerWidth;
   }, [drawerWidth]);
+
+  // The guide host lives outside the drawer, so the drawer publishes the handle the tours
+  // drive: navigation for opening, the scroll view for scrolling to a group.
+  useEffect(() => {
+    registerGuideDrawer(drawerId, {
+      navigation: drawerProps.navigation,
+      scrollTo: (y: number) => scrollRef.current?.scrollTo({ y, animated: true }),
+      getScrollOffset: () => scrollOffsetRef.current,
+      // The scroll view starts at the container's top edge, so the container's window Y
+      // is the scroll view's window Y - measured off the View, which types the call.
+      measureScrollWindowY: () =>
+        new Promise((resolve) => {
+          const container = containerRef.current;
+          if (!container) {
+            resolve(null);
+            return;
+          }
+          try {
+            container.measureInWindow((_x, y) => resolve(y));
+          } catch {
+            resolve(null);
+          }
+        }),
+    });
+    return () => {
+      unregisterGuideDrawer(drawerId);
+    };
+  }, [drawerId, drawerProps.navigation]);
 
   const panResponder = useMemo(
     () =>
@@ -104,13 +145,23 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
   });
 
   return (
-    <View style={styles.container}>
+    <View ref={containerRef} style={styles.container}>
       <DrawerContentScrollView
         {...drawerProps}
+        ref={scrollRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
+        scrollEventThrottle={16}
+        onScroll={(event) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
       >
-        <DrawerItemList {...drawerProps} />
+        <AnchoredDrawerItemList
+          state={drawerProps.state}
+          navigation={drawerProps.navigation}
+          descriptors={drawerProps.descriptors}
+          drawerId={drawerId}
+        />
       </DrawerContentScrollView>
       {resizable && (
         <View style={styles.resizeHandle} {...panResponder.panHandlers}>

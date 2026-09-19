@@ -1,5 +1,6 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { StatLadderBar } from '../../src/components/features/stats/StatLadderBar/StatLadderBar';
 import { StatRadarChart } from '../../src/components/features/stats/StatRadarChart/StatRadarChart';
 import type { StatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
@@ -22,27 +23,17 @@ jest.mock('../../src/theme', () => ({
   }),
 }));
 
-// Vector primitives have no host tree in Jest; each one maps to a host
-// placeholder that keeps its props queryable, like the Skia setup does.
-jest.mock('react-native-svg', () => {
-  const ReactActual = require('react');
-  const { Text, View: RNView } = jest.requireActual('react-native');
-  const host = (testID: string, renderText = false) =>
-    function SvgStub(props: Record<string, any>) {
-      const { children, ...rest } = props;
-      return renderText
-        ? ReactActual.createElement(Text, { testID, ...rest }, children)
-        : ReactActual.createElement(RNView, { testID, ...rest }, children);
-    };
-  return {
-    __esModule: true,
-    default: host('svg-root'),
-    Circle: host('svg-circle'),
-    Line: host('svg-line'),
-    Rect: host('svg-rect'),
-    Polygon: host('svg-polygon'),
-    Text: host('svg-text', true),
-  };
+// The Skia drawings come from the global mock in `test/jest.setup.ts` (each drawing maps to a
+// `Skia*` host placeholder); only the CanvasKit gate is driven per case.
+const mockUseCanvasKitReady = jest.fn(() => true);
+jest.mock('../../src/components/features/graphs/SkiaEdgeCanvas/useCanvasKitReady', () => ({
+  useCanvasKitReady: (...args: unknown[]) =>
+    (mockUseCanvasKitReady as (...inner: unknown[]) => boolean)(...args),
+}));
+
+beforeEach(() => {
+  mockUseCanvasKitReady.mockReset();
+  mockUseCanvasKitReady.mockReturnValue(true);
 });
 
 const ladder = [
@@ -63,42 +54,53 @@ describe('StatLadderBar', () => {
       containers[0].props.onLayout({ nativeEvent: { layout: { width } } });
     });
   };
+  const skiaOf = (screen: Awaited<ReturnType<typeof render>>, type: string) =>
+    screen.container.queryAll((node) => node.type === type);
 
   it('waits for its width before drawing anything', async () => {
     const screen = await render(<StatLadderBar ladder={ladder} value={50} />);
 
-    expect(screen.queryByTestId('svg-root')).toBeNull();
+    expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(0);
 
     await measure(screen);
-    expect(screen.getByTestId('svg-root')).toBeTruthy();
+    expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(1);
+  });
+
+  it('waits for CanvasKit before drawing anything', async () => {
+    mockUseCanvasKitReady.mockReturnValue(false);
+    const screen = await render(<StatLadderBar ladder={ladder} value={50} />);
+    await measure(screen);
+
+    expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(0);
   });
 
   it('draws one band per rung plus a dashed overflow band', async () => {
     const screen = await render(<StatLadderBar ladder={ladder} value={50} />);
     await measure(screen);
 
-    const rects = screen.getAllByTestId('svg-rect');
-    expect(rects).toHaveLength(ladder.length + 1);
+    const fills = skiaOf(screen, 'SkiaRect').filter((rect) => rect.props.style !== 'stroke');
+    expect(fills).toHaveLength(ladder.length);
     // Alternating bands keep the rungs from blurring into one bar.
-    expect(rects[0].props.fill).toBe('#eee');
-    expect(rects[1].props.fill).toBe('#dde');
+    expect(fills[0].props.color).toBe('#eee');
+    expect(fills[1].props.color).toBe('#dde');
     // The overflow band is an outline, dashed like the radar's outer ring.
-    expect(rects[rects.length - 1].props).toMatchObject({
-      fill: 'none',
-      strokeDasharray: '3 3',
-    });
+    const outlines = skiaOf(screen, 'SkiaRect').filter((rect) => rect.props.style === 'stroke');
+    const overflow = outlines.filter((rect) => rect.props.color === '#555');
+    expect(overflow).toHaveLength(1);
+    expect(overflow[0].props.strokeWidth).toBe(1);
+    const [dash] = skiaOf(screen, 'SkiaDashPathEffect');
+    expect(dash.props.intervals).toEqual([3, 3]);
+    expect(dash.parent).toBe(overflow[0]);
   });
 
   it('marks the value with a line and a dot', async () => {
     const screen = await render(<StatLadderBar ladder={ladder} value={50} />);
     await measure(screen);
 
-    const dots = screen.getAllByTestId('svg-circle');
+    const dots = skiaOf(screen, 'SkiaCircle');
     expect(dots).toHaveLength(1);
-    expect(dots[0].props).toMatchObject({ r: 6, fill: '#00f' });
-    const valueLines = screen
-      .getAllByTestId('svg-line')
-      .filter((line) => line.props.stroke === '#00f');
+    expect(dots[0].props).toMatchObject({ r: 6, color: '#00f' });
+    const valueLines = skiaOf(screen, 'SkiaLine').filter((line) => line.props.color === '#00f');
     expect(valueLines).toHaveLength(1);
   });
 
@@ -106,15 +108,28 @@ describe('StatLadderBar', () => {
     const screen = await render(<StatLadderBar ladder={ladder} value={5000} />);
     await measure(screen);
 
-    expect(screen.getByTestId('svg-circle').props.r).toBe(7.5);
+    expect(skiaOf(screen, 'SkiaCircle')[0].props.r).toBe(7.5);
   });
 
   it('draws no marker when there is no value', async () => {
     const screen = await render(<StatLadderBar ladder={ladder} value={null} />);
     await measure(screen);
 
-    expect(screen.getByTestId('svg-root')).toBeTruthy();
-    expect(screen.queryAllByTestId('svg-circle')).toHaveLength(0);
+    expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(1);
+    expect(skiaOf(screen, 'SkiaCircle')).toHaveLength(0);
+    expect(
+      skiaOf(screen, 'SkiaLine').filter((line) => line.props.color === '#00f'),
+    ).toHaveLength(0);
+  });
+
+  it('labels the rungs that fit', async () => {
+    const screen = await render(<StatLadderBar ladder={ladder} value={50} />);
+    await measure(screen);
+
+    const texts = skiaOf(screen, 'SkiaText').map((node) => node.props.text);
+    // Both ends always go in: they say where the ladder starts and ends.
+    expect(texts).toContain('F');
+    expect(texts).toContain('A');
   });
 });
 
@@ -150,32 +165,51 @@ describe('StatRadarChart', () => {
       },
     ],
   });
+  const skiaOf = (screen: Awaited<ReturnType<typeof render>>, type: string) =>
+    screen.container.queryAll((node) => node.type === type);
 
   it('explains itself when there are not enough axes', async () => {
     const screen = await render(<StatRadarChart layout={null} emptyMessage="Need more" />);
 
     expect(screen.getByText('Need more')).toBeTruthy();
-    expect(screen.queryByTestId('svg-root')).toBeNull();
+    expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(0);
+  });
+
+  it('waits for CanvasKit before drawing anything', async () => {
+    mockUseCanvasKitReady.mockReturnValue(false);
+    const screen = await render(<StatRadarChart layout={radarLayout()} emptyMessage="Need more" />);
+
+    expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(0);
   });
 
   it('paints rings, axes, series and their vertices', async () => {
     const screen = await render(<StatRadarChart layout={radarLayout()} emptyMessage="Need more" />);
 
-    const polygons = screen.getAllByTestId('svg-polygon');
-    expect(polygons).toHaveLength(3);
-    // The solid rings wash the surface; the overshoot band stays empty and dashed.
-    expect(polygons[0].props.fill).toBe('#eee');
-    expect(polygons[0].props.strokeDasharray).toBeUndefined();
-    expect(polygons[1].props).toMatchObject({ fill: 'none', strokeDasharray: '4 4' });
-    // The series polygon carries its own color.
-    expect(polygons[2].props).toMatchObject({ fill: '#f00', stroke: '#f00' });
+    const [canvas] = skiaOf(screen, 'SkiaCanvas');
+    expect(StyleSheet.flatten(canvas.props.style)).toMatchObject({ width: 300, height: 300 });
 
-    expect(screen.getAllByTestId('svg-line')).toHaveLength(1);
-    const vertices = screen.getAllByTestId('svg-circle');
+    const paths = skiaOf(screen, 'SkiaPath');
+    // Each polygon crosses as a fill plus a stroke path; the dashed overshoot band has no fill.
+    expect(paths).toHaveLength(5);
+    const fills = paths.filter((path) => path.props.style !== 'stroke');
+    expect(fills).toHaveLength(2);
+    expect(fills[0].props).toMatchObject({ color: '#eee', opacity: 0.35 });
+    expect(fills[1].props).toMatchObject({ color: '#f00', opacity: 0.22 });
+    const [dash] = skiaOf(screen, 'SkiaDashPathEffect');
+    expect(dash.props.intervals).toEqual([4, 4]);
+    // The series stroke carries its own color.
+    const seriesStrokes = paths.filter(
+      (path) => path.props.style === 'stroke' && path.props.color === '#f00',
+    );
+    expect(seriesStrokes).toHaveLength(1);
+    expect(seriesStrokes[0].props.strokeWidth).toBe(2);
+
+    expect(skiaOf(screen, 'SkiaLine')).toHaveLength(1);
+    const vertices = skiaOf(screen, 'SkiaCircle');
     expect(vertices).toHaveLength(2);
-    expect(vertices[0].props).toMatchObject({ r: 3.5, fill: '#f00' });
+    expect(vertices[0].props).toMatchObject({ r: 3.5, color: '#f00' });
     expect(vertices[1].props.r).toBe(5);
 
-    expect(screen.getByText('Might')).toBeTruthy();
+    expect(skiaOf(screen, 'SkiaText').map((node) => node.props.text)).toContain('Might');
   });
 });

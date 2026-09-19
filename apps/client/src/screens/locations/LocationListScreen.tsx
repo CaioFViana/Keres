@@ -178,6 +178,19 @@ const LocationsScreen = () => {
         storyId={storyId || ''}
         onAdvancedSearch={setStoreAdvancedSearchCriteria}
         currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+        emptyStateTitle={t('locations_empty_title')}
+        emptyStateMessage={t('locations_empty_message')}
+        emptyStateActions={
+          canEdit
+            ? [
+                {
+                  label: t('locations_empty_create'),
+                  onPress: () => navigation.navigate('LocationForm', { locationId: undefined }),
+                  testID: 'empty-create-location',
+                },
+              ]
+            : []
+        }
       />
     </View>
   );

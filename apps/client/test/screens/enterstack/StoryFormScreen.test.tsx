@@ -13,6 +13,7 @@ const mockListPacks = jest.fn();
 const mockFindConflicts = jest.fn();
 const mockCreateStoryWithPacks = jest.fn();
 const mockStoryRole = { role: null, canEdit: true, canManageStoryPolicy: true, loading: false };
+const mockUseScreenTour = jest.fn();
 const mockUserSettings = { userId: 'user-1' as string | null };
 const mockSetTheme = jest.fn();
 const mockColors = {
@@ -57,6 +58,9 @@ jest.mock('../../../src/theme', () => {
 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
@@ -215,6 +219,15 @@ describe('StoryFormScreen', () => {
 
   afterEach(() => {
     cleanup();
+  });
+
+  it('requests the creation tour, and none while editing', async () => {
+    await render(<StoryFormScreen />);
+    expect(mockUseScreenTour).toHaveBeenCalledWith('StoryForm');
+
+    mockRoute.params = { storyId: 'story-1' };
+    await render(<StoryFormScreen />);
+    expect(mockUseScreenTour).toHaveBeenCalledWith('StoryFormEdit');
   });
 
   it('creates a story with selected packs', async () => {

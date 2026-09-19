@@ -22,6 +22,9 @@ let mockListProps: {
   renderItem: (info: { item: { id: string; name: string } }) => React.ReactNode;
   filterOptions: { label: string; value: string }[];
   sortOptions: { label: string; value: string }[];
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
 jest.mock('@react-navigation/native', () => {
@@ -168,6 +171,18 @@ it('binds the location store through the shared list hook', async () => {
   expect(mockUseEntityListScreen).toHaveBeenCalledWith(
     expect.objectContaining({ collectionKey: 'locations', changeEvent: 'location_changed' }),
   );
+});
+
+it('guides the empty list toward creation', async () => {
+  await render(<LocationsScreen />);
+
+  expect(mockListProps?.emptyStateTitle).toBe('locations_empty_title');
+  expect(mockListProps?.emptyStateMessage).toBe('locations_empty_message');
+  expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+    'locations_empty_create',
+  ]);
+  mockListProps?.emptyStateActions?.[0].onPress();
+  expect(mockNavigate).toHaveBeenCalledWith('LocationForm', { locationId: undefined });
 });
 
 it('shows loading and error states from the list hook', async () => {

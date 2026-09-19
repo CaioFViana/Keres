@@ -10,6 +10,7 @@ const mockGetAllServers = jest.fn();
 const mockUpload = jest.fn();
 const mockAlert = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
 const mockDb = {};
 const mockT = (key: string) => key;
 
@@ -25,6 +26,10 @@ jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
@@ -157,6 +162,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+it('requests its guided tour', async () => {
+  await render(<PackListScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('PackList');
 });
 
 it('renders the header buttons and navigates', async () => {

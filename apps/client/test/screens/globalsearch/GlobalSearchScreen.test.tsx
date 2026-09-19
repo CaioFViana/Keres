@@ -5,6 +5,7 @@ const mockSearchAllEntities = jest.fn();
 const mockNavigateToEntityDetail = jest.fn();
 let mockStory: { id: string } | null = { id: 'story-1' };
 let mockUserId: string | null = 'user-1';
+const mockUseScreenTour = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
   __esModule: true,
@@ -21,6 +22,10 @@ jest.mock('@expo/vector-icons', () => ({
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: () => undefined,
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('@/src/components/common/inputs/TextInput/TextInput', () => ({
   __esModule: true,
@@ -129,6 +134,12 @@ afterEach(() => {
 async function typeQuery(view: { getByTestId: (id: string) => unknown }, query: string) {
   await fireEvent.changeText(view.getByTestId('search-input') as never, query);
 }
+
+it('requests its guided tour', async () => {
+  await render(<GlobalSearchScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('GlobalSearch');
+});
 
 it('prompts for a longer query and skips searching', async () => {
   const view = await render(<GlobalSearchScreen />);

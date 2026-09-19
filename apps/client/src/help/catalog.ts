@@ -8,6 +8,7 @@ export const helpSections: HelpSection[] = [
     pageIds: [
       'what-is-keres',
       'first-story',
+      'guided-tours',
       'how-keres-organizes',
       'getting-around',
       'lists-and-search',

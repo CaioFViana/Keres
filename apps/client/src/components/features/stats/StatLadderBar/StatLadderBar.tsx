@@ -1,9 +1,20 @@
+import {
+  Canvas,
+  Circle,
+  DashPathEffect,
+  Line,
+  Rect,
+  Text as SkiaText,
+} from '@shopify/react-native-skia';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Line, Rect, Text as SvgText } from 'react-native-svg';
-import { useTheme } from '../../../../theme';
 import type { StatTier } from '@keres/shared/graphs/statLadder';
 import { buildStatLadderBar } from '@keres/shared/graphs/statLadderBarLayout';
+import { measureEdgeLabelWidth } from '../../graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import SkiaOverlayErrorBoundary from '../../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { useCanvasKitReady } from '../../graphs/SkiaEdgeCanvas/useCanvasKitReady';
+import { useEdgeFont } from '../../graphs/SkiaEdgeCanvas/useEdgeFont';
+import { useTheme } from '../../../../theme';
 
 /**
  * A stat's tier ruler: where each rung starts and where the character's value lands.
@@ -21,11 +32,14 @@ const LABEL_HEIGHT = 14;
 const TICK_OVERHANG = 3;
 const VALUE_DOT_RADIUS = 6;
 const VALUE_DOT_RADIUS_OVERFLOW = 7.5;
+const LABEL_FONT_SIZE = 10;
 /** Folga acima da faixa para o ponto do valor caber inteiro em vez de ser cortado. */
 const TRACK_TOP = VALUE_DOT_RADIUS_OVERFLOW - TRACK_HEIGHT / 2;
 
 export function StatLadderBar({ ladder, value }: StatLadderBarProps) {
   const { colors } = useTheme();
+  const ready = useCanvasKitReady();
+  const font = useEdgeFont(LABEL_FONT_SIZE);
   const [width, setWidth] = useState(0);
 
   const layout = useMemo(
@@ -43,86 +57,96 @@ export function StatLadderBar({ ladder, value }: StatLadderBarProps) {
 
   return (
     <View style={styles.container} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
-      {layout ? (
-        <Svg width={layout.width} height={height}>
-          {layout.segments.map((segment) => (
+      {/* On web the canvas also waits for the CanvasKit boot; the sized box stays either way. */}
+      {layout && ready ? (
+        <SkiaOverlayErrorBoundary canvas="stat-ladder">
+          <Canvas style={{ width: layout.width, height }}>
+            {layout.segments.map((segment) => (
+              <React.Fragment key={`segment-${segment.index}`}>
+                {/* Faixas alternadas: sem elas os degraus viram uma barra lisa com riscos soltos. */}
+                <Rect
+                  x={segment.x}
+                  y={TRACK_TOP}
+                  width={segment.width}
+                  height={TRACK_HEIGHT}
+                  color={segment.index % 2 === 0 ? colors.surface : colors.primaryContainer}
+                />
+                <Rect
+                  x={segment.x}
+                  y={TRACK_TOP}
+                  width={segment.width}
+                  height={TRACK_HEIGHT}
+                  style="stroke"
+                  color={colors.border}
+                  strokeWidth={StyleSheet.hairlineWidth}
+                />
+              </React.Fragment>
+            ))}
+
+            {/* A faixa além do topo da escada, tracejada como o anel externo do radar: ainda é
+                o último degrau, mas fora da escala que o autor cadastrou. */}
             <Rect
-              key={`segment-${segment.index}`}
-              x={segment.x}
+              x={layout.overflow.x}
               y={TRACK_TOP}
-              width={segment.width}
+              width={layout.overflow.width}
               height={TRACK_HEIGHT}
-              // Faixas alternadas: sem elas os degraus viram uma barra lisa com riscos soltos.
-              fill={segment.index % 2 === 0 ? colors.surface : colors.primaryContainer}
-              stroke={colors.border}
-              strokeWidth={StyleSheet.hairlineWidth}
-            />
-          ))}
-
-          {/* A faixa além do topo da escada, tracejada como o anel externo do radar: ainda é
-              o último degrau, mas fora da escala que o autor cadastrou. */}
-          <Rect
-            x={layout.overflow.x}
-            y={TRACK_TOP}
-            width={layout.overflow.width}
-            height={TRACK_HEIGHT}
-            fill="none"
-            stroke={colors.textSecondary}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-          />
-
-          {/* Traços e rótulos em duas passadas em vez de um Fragment por marca: o
-              react-native-svg nativo percorre os filhos diretos do Svg, e agrupar dentro de um
-              Fragment é justamente o tipo de coisa que funciona na web e falha no aparelho. */}
-          {layout.markers.map((marker, index) => (
-            <Line
-              key={`tick-${index}`}
-              x1={marker.x}
-              y1={TRACK_TOP}
-              x2={marker.x}
-              y2={trackBottom + TICK_OVERHANG}
-              stroke={colors.border}
+              style="stroke"
+              color={colors.textSecondary}
               strokeWidth={1}
-            />
-          ))}
-          {layout.markers.map((marker, index) =>
-            marker.showLabel ? (
-              <SvgText
-                key={`label-${index}`}
-                x={marker.x}
-                y={height - 2}
-                fontSize={10}
-                // The end labels would touch the border if they were centred.
-                textAnchor={
-                  index === 0 ? 'start' : index === layout.markers.length - 1 ? 'end' : 'middle'
-                }
-                fill={colors.textSecondary}
-              >
-                {marker.label}
-              </SvgText>
-            ) : null,
-          )}
+            >
+              <DashPathEffect intervals={[3, 3]} />
+            </Rect>
 
-          {layout.value ? (
-            <Line
-              x1={layout.value.x}
-              y1={TRACK_TOP - 1}
-              x2={layout.value.x}
-              y2={trackBottom + 1}
-              stroke={colors.primary}
-              strokeWidth={2}
-            />
-          ) : null}
-          {layout.value ? (
-            <Circle
-              cx={layout.value.x}
-              cy={valueCenterY}
-              r={layout.value.isOverflow ? VALUE_DOT_RADIUS_OVERFLOW : VALUE_DOT_RADIUS}
-              fill={colors.primary}
-            />
-          ) : null}
-        </Svg>
+            {layout.markers.map((marker, index) => (
+              <Line
+                key={`tick-${index}`}
+                p1={{ x: marker.x, y: TRACK_TOP }}
+                p2={{ x: marker.x, y: trackBottom + TICK_OVERHANG }}
+                color={colors.border}
+                strokeWidth={1}
+              />
+            ))}
+            {font &&
+              layout.markers.map((marker, index) => {
+                if (!marker.showLabel) return null;
+                const textWidth = measureEdgeLabelWidth(font, marker.label, LABEL_FONT_SIZE);
+                // The end labels would touch the border if they were centred.
+                const x =
+                  index === 0
+                    ? marker.x
+                    : index === layout.markers.length - 1
+                      ? marker.x - textWidth
+                      : marker.x - textWidth / 2;
+                return (
+                  <SkiaText
+                    key={`label-${index}`}
+                    x={x}
+                    y={height - 2}
+                    font={font}
+                    text={marker.label}
+                    color={colors.textSecondary}
+                  />
+                );
+              })}
+
+            {layout.value ? (
+              <Line
+                p1={{ x: layout.value.x, y: TRACK_TOP - 1 }}
+                p2={{ x: layout.value.x, y: trackBottom + 1 }}
+                color={colors.primary}
+                strokeWidth={2}
+              />
+            ) : null}
+            {layout.value ? (
+              <Circle
+                cx={layout.value.x}
+                cy={valueCenterY}
+                r={layout.value.isOverflow ? VALUE_DOT_RADIUS_OVERFLOW : VALUE_DOT_RADIUS}
+                color={colors.primary}
+              />
+            ) : null}
+          </Canvas>
+        </SkiaOverlayErrorBoundary>
       ) : null}
     </View>
   );

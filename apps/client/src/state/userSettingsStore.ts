@@ -4,6 +4,14 @@ import { create } from 'zustand';
 import type { AppDrizzleClient } from '../db';
 import type { ServerSelect } from '../db/schema';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
+import type { FirstStoryProgress, TutorialProgress } from '../utils/tutorialProgress';
+import {
+  defaultTutorialProgress,
+  encodeTutorialProgress,
+  parseTutorialProgress,
+  withFirstStoryProgress,
+  withTutorialSeen,
+} from '../utils/tutorialProgress';
 
 interface UserSettingsState {
   userId: string | null; // Add userId to state
@@ -15,6 +23,8 @@ interface UserSettingsState {
   showContextualHelp: boolean;
   suggestLiteraryDevices: boolean;
   exportFormat: MapExportFormat;
+  showTutorials: boolean;
+  tutorialProgress: TutorialProgress;
   activeServer: ServerSelect | null;
   initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
@@ -30,12 +40,22 @@ interface UserSettingsState {
     suggestLiteraryDevices: boolean,
   ) => Promise<void>;
   setExportFormat: (db: AppDrizzleClient, exportFormat: MapExportFormat) => Promise<void>;
+  setShowTutorials: (db: AppDrizzleClient, showTutorials: boolean) => Promise<void>;
+  /** Records a completed or skipped tour; already-seen ids write nothing. */
+  markTutorialSeen: (db: AppDrizzleClient, screenId: string) => Promise<void>;
+  /** Merges an update into the "first story" trail progress. */
+  setFirstStoryProgress: (
+    db: AppDrizzleClient,
+    patch: Partial<FirstStoryProgress>,
+  ) => Promise<void>;
+  /** Clears the seen history and re-enables tours. */
+  resetSeenTutorials: (db: AppDrizzleClient) => Promise<void>;
   setActiveServer: (server: ServerSelect | null) => void;
   clearActiveServer: () => void;
   resetSettings: () => void;
 }
 
-export const useUserSettingsStore = create<UserSettingsState>((set) => ({
+export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
   userId: null, // Initialize userId
   username: null,
   language: null,
@@ -44,6 +64,8 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
   showContextualHelp: true,
   suggestLiteraryDevices: true,
   exportFormat: 'svg',
+  showTutorials: true,
+  tutorialProgress: defaultTutorialProgress(),
   activeServer: null,
 
   initializeSettings: async (db: AppDrizzleClient) => {
@@ -58,6 +80,8 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
         showContextualHelp: settings.showContextualHelp,
         suggestLiteraryDevices: settings.suggestLiteraryDevices,
         exportFormat: settings.exportFormat ?? 'svg',
+        showTutorials: settings.showTutorials ?? true,
+        tutorialProgress: parseTutorialProgress(settings.seenTutorials),
       }); // Set userId
     }
     return settings; // Return the settings object
@@ -101,6 +125,33 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
     set({ exportFormat });
   },
 
+  setShowTutorials: async (db: AppDrizzleClient, showTutorials: boolean) => {
+    await updateClientSettings(db, { showTutorials });
+    set({ showTutorials });
+  },
+
+  markTutorialSeen: async (db: AppDrizzleClient, screenId: string) => {
+    const next = withTutorialSeen(get().tutorialProgress, screenId);
+    if (next === get().tutorialProgress) return;
+    await updateClientSettings(db, { seenTutorials: encodeTutorialProgress(next) });
+    set({ tutorialProgress: next });
+  },
+
+  setFirstStoryProgress: async (db: AppDrizzleClient, patch: Partial<FirstStoryProgress>) => {
+    const next = withFirstStoryProgress(get().tutorialProgress, patch);
+    await updateClientSettings(db, { seenTutorials: encodeTutorialProgress(next) });
+    set({ tutorialProgress: next });
+  },
+
+  resetSeenTutorials: async (db: AppDrizzleClient) => {
+    const cleared = defaultTutorialProgress();
+    await updateClientSettings(db, {
+      showTutorials: true,
+      seenTutorials: encodeTutorialProgress(cleared),
+    });
+    set({ showTutorials: true, tutorialProgress: cleared });
+  },
+
   setActiveServer: (server: ServerSelect | null) => {
     set({ activeServer: server });
   },
@@ -119,6 +170,8 @@ export const useUserSettingsStore = create<UserSettingsState>((set) => ({
       showContextualHelp: true,
       suggestLiteraryDevices: true,
       exportFormat: 'svg',
+      showTutorials: true,
+      tutorialProgress: defaultTutorialProgress(),
       activeServer: null,
     }); // Reset all settings including activeServer
   },

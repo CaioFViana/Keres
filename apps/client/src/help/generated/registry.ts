@@ -61,6 +61,8 @@ import gettingAround_en from '../content/getting-around/en';
 import gettingAround_pt from '../content/getting-around/pt';
 import glossary_en from '../content/glossary/en';
 import glossary_pt from '../content/glossary/pt';
+import guidedTours_en from '../content/guided-tours/en';
+import guidedTours_pt from '../content/guided-tours/pt';
 import howKeresOrganizes_en from '../content/how-keres-organizes/en';
 import howKeresOrganizes_pt from '../content/how-keres-organizes/pt';
 import importExport_en from '../content/import-export/en';
@@ -165,6 +167,7 @@ export type GeneratedHelpPageId =
   | 'gallery'
   | 'getting-around'
   | 'glossary'
+  | 'guided-tours'
   | 'how-keres-organizes'
   | 'import-export'
   | 'item-journeys'
@@ -322,6 +325,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   glossary: {
     en: glossary_en,
     pt: glossary_pt,
+  },
+  'guided-tours': {
+    en: guidedTours_en,
+    pt: guidedTours_pt,
   },
   'how-keres-organizes': {
     en: howKeresOrganizes_en,

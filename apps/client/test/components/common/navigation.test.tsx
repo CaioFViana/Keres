@@ -1,4 +1,4 @@
-import { DrawerActions } from '@react-navigation/native';
+import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { PanResponder, StyleSheet, Text } from 'react-native';
@@ -54,6 +54,16 @@ jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MIcon',
 }));
 
+// The real `useLinkBuilder` reads the linking context, which only exists inside a navigation
+// container; the drawer renders outside one here, so the builder alone is stubbed.
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  return {
+    ...actual,
+    useLinkBuilder: () => ({ buildHref: () => undefined, buildAction: () => undefined }),
+  };
+});
+
 const mockCapturedScrollProps: any[] = [];
 
 jest.mock('@react-navigation/drawer', () => {
@@ -61,11 +71,16 @@ jest.mock('@react-navigation/drawer', () => {
   const native = jest.requireActual('react-native') as typeof import('react-native');
   return {
     __esModule: true,
-    DrawerContentScrollView: (props: any) => {
+    DrawerContentScrollView: react.forwardRef((props: any, ref: any) => {
       mockCapturedScrollProps.push(props);
-      return react.createElement(native.View, { testID: 'drawer-scroll' }, props.children);
-    },
-    DrawerItemList: () => react.createElement(native.Text, { testID: 'drawer-items' }, 'items'),
+      return react.createElement(native.View, { testID: 'drawer-scroll', ref }, props.children);
+    }),
+    DrawerItem: (props: any) =>
+      react.createElement(
+        native.Text,
+        { testID: `drawer-item-${props.route?.name ?? 'unknown'}`, onPress: props.onPress },
+        typeof props.label === 'string' ? props.label : null,
+      ),
   };
 });
 
@@ -146,7 +161,21 @@ describe('useResizableDrawerWidth', () => {
 });
 
 describe('ResizableDrawerContent', () => {
-  const drawerProps = { navigation: {}, state: {}, descriptors: {} } as any;
+  const drawerProps = {
+    navigation: {},
+    state: {
+      key: 'drawer',
+      index: 0,
+      routes: [
+        { key: 'alpha', name: 'Alpha' },
+        { key: 'beta', name: 'Beta' },
+      ],
+    },
+    descriptors: {
+      alpha: { options: { title: 'Alpha' } },
+      beta: { options: { title: 'Beta' } },
+    },
+  } as any;
 
   beforeEach(() => {
     mockCapturedScrollProps.length = 0;
@@ -155,6 +184,7 @@ describe('ResizableDrawerContent', () => {
   it('renders the menu without a handle when fixed', async () => {
     const screen = await render(
       <ResizableDrawerContent
+        drawerId="story-selection"
         drawerWidth={280}
         maximumWidth={500}
         onDrawerWidthChange={() => {}}
@@ -164,7 +194,8 @@ describe('ResizableDrawerContent', () => {
     );
 
     expect(screen.getByTestId('drawer-scroll')).toBeTruthy();
-    expect(screen.getByTestId('drawer-items')).toBeTruthy();
+    expect(screen.getByTestId('drawer-item-Alpha')).toBeTruthy();
+    expect(screen.getByTestId('drawer-item-Beta')).toBeTruthy();
     // PanResponder.create exposes responder props (onStartShouldSetResponder, ...), never the
     // on*PanResponder* config names, so the handle is found through the responder prop.
     expect(
@@ -182,6 +213,7 @@ describe('ResizableDrawerContent', () => {
   it('reserves room for the handle scrollbar when resizable', async () => {
     await render(
       <ResizableDrawerContent
+        drawerId="story-selection"
         drawerWidth={280}
         maximumWidth={500}
         onDrawerWidthChange={() => {}}
@@ -203,6 +235,7 @@ describe('ResizableDrawerContent', () => {
         <ResizableDrawerContent
           drawerWidth={280}
           maximumWidth={500}
+          drawerId="story-selection"
           onDrawerWidthChange={onDrawerWidthChange}
           resizable
           {...drawerProps}
@@ -241,6 +274,7 @@ describe('ResizableDrawerContent', () => {
     try {
       const screen = await render(
         <ResizableDrawerContent
+          drawerId="story-selection"
           drawerWidth={280}
           maximumWidth={500}
           onDrawerWidthChange={onDrawerWidthChange}
@@ -251,6 +285,7 @@ describe('ResizableDrawerContent', () => {
 
       await screen.rerender(
         <ResizableDrawerContent
+          drawerId="story-selection"
           drawerWidth={300}
           maximumWidth={500}
           onDrawerWidthChange={onDrawerWidthChange}
@@ -269,5 +304,72 @@ describe('ResizableDrawerContent', () => {
     } finally {
       createSpy.mockRestore();
     }
+  });
+
+  describe('drawer item presses', () => {
+    const pressProps = (defaultPrevented = false) => {
+      const emit = jest.fn(() => ({ defaultPrevented }));
+      const dispatch = jest.fn();
+      return {
+        emit,
+        dispatch,
+        props: {
+          navigation: { emit, dispatch },
+          state: drawerProps.state,
+          descriptors: drawerProps.descriptors,
+        } as any,
+      };
+    };
+
+    const renderMenu = (props: any) =>
+      render(
+        <ResizableDrawerContent
+          drawerId="story-selection"
+          drawerWidth={280}
+          maximumWidth={500}
+          onDrawerWidthChange={() => {}}
+          resizable={false}
+          {...props}
+        />,
+      );
+
+    it('emits drawerItemPress and navigates to a non-focused entry by default', async () => {
+      const { emit, dispatch, props } = pressProps();
+      const screen = await renderMenu(props);
+
+      await fireEvent.press(screen.getByTestId('drawer-item-Beta'));
+
+      expect(emit).toHaveBeenCalledWith({
+        type: 'drawerItemPress',
+        target: 'beta',
+        canPreventDefault: true,
+      });
+      expect(dispatch).toHaveBeenCalledWith({
+        ...CommonActions.navigate('Beta', undefined),
+        target: 'drawer',
+      });
+    });
+
+    it('closes the drawer when the focused entry is tapped', async () => {
+      const { dispatch, props } = pressProps();
+      const screen = await renderMenu(props);
+
+      await fireEvent.press(screen.getByTestId('drawer-item-Alpha'));
+
+      expect(dispatch).toHaveBeenCalledWith({
+        ...DrawerActions.closeDrawer(),
+        target: 'drawer',
+      });
+    });
+
+    it('honors preventDefault from listeners', async () => {
+      const { emit, dispatch, props } = pressProps(true);
+      const screen = await renderMenu(props);
+
+      await fireEvent.press(screen.getByTestId('drawer-item-Beta'));
+
+      expect(emit).toHaveBeenCalled();
+      expect(dispatch).not.toHaveBeenCalled();
+    });
   });
 });

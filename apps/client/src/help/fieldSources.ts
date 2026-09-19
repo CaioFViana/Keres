@@ -162,6 +162,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'use24HourTime',
       'dateDisplayFormat',
       'showContextualHelp',
+      'showTutorials',
+      'seenTutorials',
       'suggestLiteraryDevices',
       'exportFormat',
       'createdAt',

@@ -225,6 +225,7 @@ describe('ColdInstallScreen', () => {
       dateDisplayFormat: 'iso',
       showContextualHelp: true,
       suggestLiteraryDevices: true,
+      showTutorials: true,
     });
     expect(mockInitializeSettings).toHaveBeenCalledWith(mockDrizzle);
     expect(mockInitializeTheme).toHaveBeenCalledWith(mockDrizzle);

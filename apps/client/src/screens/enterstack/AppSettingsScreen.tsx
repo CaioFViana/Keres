@@ -20,6 +20,7 @@ import type { StorySelectionDrawerParamList } from '../../navigation/StorySelect
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { mediaFileService } from '../../services/MediaFileService';
 import { syncEngine } from '../../services/sync/appSyncEngine';
+import { useNotificationStore } from '../../state/notificationStore';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -50,6 +51,7 @@ const SettingsScreen = () => {
     showContextualHelp,
     suggestLiteraryDevices,
     exportFormat,
+    showTutorials,
     setUsername,
     setLanguage,
     setUse24HourTime,
@@ -57,8 +59,11 @@ const SettingsScreen = () => {
     setShowContextualHelp,
     setSuggestLiteraryDevices,
     setExportFormat,
+    setShowTutorials,
+    resetSeenTutorials,
     resetSettings,
   } = useUserSettingsStore();
+  const { showNotification } = useNotificationStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
 
   const handleUsernameChange = (newUsername: string) => {
@@ -94,6 +99,15 @@ const SettingsScreen = () => {
 
   const handleContextualHelpToggle = (value: boolean) => {
     setShowContextualHelp(drizzleClient, value);
+  };
+
+  const handleShowTutorialsToggle = (value: boolean) => {
+    setShowTutorials(drizzleClient, value);
+  };
+
+  const handleResetSeenTutorials = async () => {
+    await resetSeenTutorials(drizzleClient);
+    showNotification(t('tutorials_reset_success'), 'success');
   };
 
   const handleLiteraryDevicesToggle = (value: boolean) => {
@@ -282,6 +296,24 @@ const SettingsScreen = () => {
             style={styles.contextualHelpSwitch}
           />
         </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('show_tutorials')}</Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {showTutorials ? t('show_tutorials_on') : t('show_tutorials_off')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={showTutorials}
+            onValueChange={handleShowTutorialsToggle}
+            style={styles.contextualHelpSwitch}
+          />
+        </View>
+
+        <Button onPress={handleResetSeenTutorials} style={{ marginTop: 10 }}>
+          {t('reset_seen_tutorials')}
+        </Button>
 
         <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
           {t('reset_application')}

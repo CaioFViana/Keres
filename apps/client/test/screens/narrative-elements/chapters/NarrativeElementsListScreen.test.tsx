@@ -17,6 +17,7 @@ const mockSetSceneDbAndStoryId = jest.fn();
 const mockInitializeSceneService = jest.fn();
 const mockReorderScenes = jest.fn();
 const mockReorderChapters = jest.fn();
+const mockUseScreenTour = jest.fn();
 
 const mockGetAllChapters = jest.fn();
 const mockGetChaptersByStoryId = jest.fn();
@@ -91,6 +92,10 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   }) => {
     mockHeaderArgs = args as never;
   },
+}));
+jest.mock('../../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
 jest.mock('../../../../src/hooks/useEntityListScreen', () => ({
@@ -561,6 +566,13 @@ beforeEach(() => {
 describe('NarrativeElementsListScreen', () => {
   afterEach(() => {
     cleanup();
+  });
+
+  it('requests its guided tour', async () => {
+    mockLoading = false;
+    await render(<NarrativeElementsListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('NarrativeElementsStack');
   });
 
   it('shows loading only while the outline is empty', async () => {

@@ -9,7 +9,8 @@ import { themeDisplayOptions } from '@keres/shared';
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useTheme } from '../../theme';
 import { getLanguageOptions } from '../../utils/i18n';
 
@@ -77,6 +78,7 @@ export function MainDashboardContent({
   onOpenOperationLog,
 }: MainDashboardContentProps) {
   const { colors } = useTheme();
+  const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
   const styles = StyleSheet.create({
     sectionLink: {
       color: colors.primary,
@@ -120,30 +122,32 @@ export function MainDashboardContent({
         </ScreenSection>
       )}
 
-      <SummaryCard
-        title={t('story_overview')}
-        characterCount={characterCount}
-        locationCount={locationCount}
-        chapterCount={chapterCount}
-        sceneCount={sceneCount}
-        choiceCount={choiceCount}
-        noteCount={noteCount}
-        worldRuleCount={worldRuleCount}
-        itemCount={itemCount}
-        galleryCount={galleryCount}
-        tagCount={tagCount}
-        customAttributeCount={customAttributeCount}
-        isBranchingStory={story?.type === 'branching'}
-        branchingStoryForkCount={forkCount}
-        analysisSummary={
-          story?.id && analysisIssueCount !== undefined
-            ? {
-                issueCount: analysisIssueCount,
-                onPress: onOpenAnalysis,
-              }
-            : undefined
-        }
-      />
+      <View ref={overviewAnchorRef} collapsable={false}>
+        <SummaryCard
+          title={t('story_overview')}
+          characterCount={characterCount}
+          locationCount={locationCount}
+          chapterCount={chapterCount}
+          sceneCount={sceneCount}
+          choiceCount={choiceCount}
+          noteCount={noteCount}
+          worldRuleCount={worldRuleCount}
+          itemCount={itemCount}
+          galleryCount={galleryCount}
+          tagCount={tagCount}
+          customAttributeCount={customAttributeCount}
+          isBranchingStory={story?.type === 'branching'}
+          branchingStoryForkCount={forkCount}
+          analysisSummary={
+            story?.id && analysisIssueCount !== undefined
+              ? {
+                  issueCount: analysisIssueCount,
+                  onPress: onOpenAnalysis,
+                }
+              : undefined
+          }
+        />
+      </View>
 
       {!!story?.id && (
         <ScreenSection

@@ -35,4 +35,4 @@ coverage-combined/
 coverage-sync/
 
 .tmp*
-.agents
+.agents/plans/*

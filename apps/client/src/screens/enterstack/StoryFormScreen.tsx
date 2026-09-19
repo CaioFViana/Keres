@@ -14,6 +14,8 @@ import type {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { packHasExtras } from '../../services/storymanagement/PackService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -60,6 +62,10 @@ const StoryFormScreen = () => {
   const navigation = useNavigation<StoryFormScreenNavigationProp>();
   const route = useRoute<StoryFormScreenRouteProp>();
   const { storyId: initialStoryId } = route.params || {};
+  // The creation tour only: editing keeps the form quiet, so edits resolve to an id with no guide.
+  useScreenTour(initialStoryId ? 'StoryFormEdit' : 'StoryForm');
+  const packsAnchorRef = useScreenAnchor('StoryForm', 'packs');
+  const extrasAnchorRef = useScreenAnchor('StoryForm', 'extras');
   useScreenHeader({
     target: 'parent',
     title: initialStoryId ? t('edit_story') : t('create_new_story_screen_title'),
@@ -160,7 +166,7 @@ const StoryFormScreen = () => {
       />
 
       {!isEditing && (
-        <>
+        <View ref={packsAnchorRef} collapsable={false}>
           <Text style={[styles.sectionLabel, { color: colors.text }]}>
             {t('packs_apply_title')}
           </Text>
@@ -178,7 +184,7 @@ const StoryFormScreen = () => {
               {packs.some(
                 (pack) => selectedPackIds.includes(pack.id) && packHasExtras(pack.counts),
               ) && (
-                <>
+                <View ref={extrasAnchorRef} collapsable={false}>
                   <Text style={{ color: colors.textSecondary, marginBottom: 8, marginTop: 8 }}>
                     {t('packs_apply_extras_hint')}
                   </Text>
@@ -203,7 +209,7 @@ const StoryFormScreen = () => {
                         />
                       </View>
                     ))}
-                </>
+                </View>
               )}
             </>
           ) : (
@@ -211,7 +217,7 @@ const StoryFormScreen = () => {
               {t('packs_apply_none')}
             </Text>
           )}
-        </>
+        </View>
       )}
     </EntityFormContainer>
   );

@@ -3,11 +3,14 @@ const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockNavigate = jest.fn();
 const mockReplace = jest.fn();
+const mockParentNavigate = jest.fn();
 const mockNavigation = {
   navigate: (...args: unknown[]) => mockNavigate(...args),
   replace: (...args: unknown[]) => mockReplace(...args),
+  getParent: () => ({ navigate: (...args: unknown[]) => mockParentNavigate(...args) }),
 };
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
 const mockDrizzle = {};
 const mockGetAllServers = jest.fn();
 const mockGetCatalogCounts = jest.fn();
@@ -30,7 +33,17 @@ const mockSummaryState = {
   updateSummary: (...args: unknown[]) => mockUpdateSummary(...args),
 };
 const mockStoryState = { setSelectedStory: (...args: unknown[]) => mockSetSelectedStory(...args) };
-const mockUserSettings = { userId: 'user-1' as string | null };
+const mockSetFirstStoryProgress = jest.fn();
+const mockUserSettings = {
+  userId: 'user-1' as string | null,
+  showTutorials: false,
+  tutorialProgress: { version: 1, seen: [] as string[] } as {
+    version: number;
+    seen: string[];
+    firstStory?: { choice: string | null; done: boolean; dismissed: boolean };
+  },
+  setFirstStoryProgress: (...args: unknown[]) => mockSetFirstStoryProgress(...args),
+};
 const mockNotificationState = { showNotification: (...args: unknown[]) => mockNotify(...args) };
 const mockColors = {
   primary: '#0000ff',
@@ -74,6 +87,9 @@ jest.mock('../../../src/theme', () => {
 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
@@ -217,6 +233,9 @@ describe('StorySelectionScreen', () => {
     mockStoryListState.stories = [story];
     mockSummaryState.summary = { characterCount: 3, sceneCount: 7 };
     mockUserSettings.userId = 'user-1';
+    mockUserSettings.showTutorials = false;
+    mockUserSettings.tutorialProgress = { version: 1, seen: [] };
+    mockSetFirstStoryProgress.mockResolvedValue(undefined);
     mockGetAllServers.mockResolvedValue([{ id: 'srv-1', name: 'Main' }]);
     mockGetCatalogCounts.mockResolvedValue({ characterCount: 3 });
     mockGetContentCounts.mockResolvedValue({ sceneCount: 7 });
@@ -248,6 +267,113 @@ describe('StorySelectionScreen', () => {
         expect.objectContaining({ characterCount: 3, sceneCount: 7 }),
       ),
     );
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<StorySelectionScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('StorySelectionMain');
+  });
+
+  describe('first-story trail', () => {
+    const renderEmpty = async () => {
+      mockStoryListState.stories = [];
+      mockUserSettings.showTutorials = true;
+      const view = await render(<StorySelectionScreen />);
+      await view.findByText('first_story_cta');
+      return view;
+    };
+
+    const choiceButtons = () =>
+      mockAlert.mock.calls[0][2] as { text: string; onPress?: () => void }[];
+
+    it('offers the trail from the empty state', async () => {
+      const view = await renderEmpty();
+
+      await fireEvent.press(view.getByText('first_story_cta'));
+
+      expect(mockAlert).toHaveBeenCalledWith(
+        'first_story_choice_title',
+        'first_story_choice_message',
+        expect.arrayContaining([
+          expect.objectContaining({ text: 'first_story_choice_create' }),
+          expect.objectContaining({ text: 'first_story_choice_example' }),
+          expect.objectContaining({ text: 'first_story_choice_later' }),
+        ]),
+        { cancelable: true },
+      );
+    });
+
+    it('records the create choice and opens the form', async () => {
+      const view = await renderEmpty();
+      await fireEvent.press(view.getByText('first_story_cta'));
+
+      choiceButtons()[0].onPress?.();
+
+      expect(mockNavigate).toHaveBeenCalledWith('StoryForm', {});
+      await waitFor(() =>
+        expect(mockSetFirstStoryProgress).toHaveBeenCalledWith(mockDrizzle, {
+          choice: 'create',
+        }),
+      );
+    });
+
+    it('records the example choice and opens the examples', async () => {
+      const view = await renderEmpty();
+      await fireEvent.press(view.getByText('first_story_cta'));
+
+      choiceButtons()[1].onPress?.();
+
+      expect(mockParentNavigate).toHaveBeenCalledWith('ExampleStories');
+      await waitFor(() =>
+        expect(mockSetFirstStoryProgress).toHaveBeenCalledWith(mockDrizzle, {
+          choice: 'example',
+        }),
+      );
+    });
+
+    it('silences the trail without navigating when dismissed', async () => {
+      const view = await renderEmpty();
+      await fireEvent.press(view.getByText('first_story_cta'));
+
+      choiceButtons()[2].onPress?.();
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockParentNavigate).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(mockSetFirstStoryProgress).toHaveBeenCalledWith(mockDrizzle, {
+          dismissed: true,
+        }),
+      );
+    });
+
+    it('hides the call to action once the trail is done, dismissed or switched off', async () => {
+      mockStoryListState.stories = [];
+      mockUserSettings.showTutorials = true;
+      mockUserSettings.tutorialProgress = {
+        version: 1,
+        seen: [],
+        firstStory: { choice: 'create', done: true, dismissed: false },
+      };
+      const done = await render(<StorySelectionScreen />);
+      await done.findByText('no_stories_found_create_one');
+      expect(done.queryByText('first_story_cta')).toBeNull();
+
+      mockUserSettings.tutorialProgress = {
+        version: 1,
+        seen: [],
+        firstStory: { choice: null, done: false, dismissed: true },
+      };
+      const dismissed = await render(<StorySelectionScreen />);
+      await dismissed.findByText('no_stories_found_create_one');
+      expect(dismissed.queryByText('first_story_cta')).toBeNull();
+
+      mockUserSettings.showTutorials = false;
+      mockUserSettings.tutorialProgress = { version: 1, seen: [] };
+      const off = await render(<StorySelectionScreen />);
+      await off.findByText('no_stories_found_create_one');
+      expect(off.queryByText('first_story_cta')).toBeNull();
+    });
   });
 
   it('shows the empty state without stories or summary', async () => {

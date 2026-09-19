@@ -441,4 +441,74 @@ describe('GenericFilterSortList', () => {
     expect(screen.getByText('row-One')).toBeTruthy();
     expect(screen.getByText('row-Two')).toBeTruthy();
   });
+
+  it('falls back to plain text without a guided empty state', async () => {
+    const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList {...props} data={[] as { id: string; name: string }[]} />,
+    );
+
+    expect(screen.getByText('no_items_found')).toBeTruthy();
+    expect(screen.queryByTestId('guided-empty-state')).toBeNull();
+  });
+
+  it('guides the empty list with a title, a hint and actions', async () => {
+    const first = jest.fn();
+    const second = jest.fn();
+    const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList
+        {...props}
+        data={[] as { id: string; name: string }[]}
+        emptyStateTitle="Empty title"
+        emptyStateMessage="Empty hint"
+        emptyStateActions={[
+          { label: 'Do first', onPress: first, testID: 'empty-first' },
+          { label: 'Do second', onPress: second, testID: 'empty-second' },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('guided-empty-state')).toBeTruthy();
+    expect(screen.getByText('Empty title')).toBeTruthy();
+    expect(screen.getByText('Empty hint')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('empty-first'));
+    expect(first).toHaveBeenCalledTimes(1);
+    await fireEvent.press(screen.getByText('Do second'));
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows at most two empty-state actions', async () => {
+    const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList
+        {...props}
+        data={[] as { id: string; name: string }[]}
+        emptyStateActions={[
+          { label: 'One', onPress: jest.fn(), testID: 'empty-one' },
+          { label: 'Two', onPress: jest.fn(), testID: 'empty-two' },
+          { label: 'Three', onPress: jest.fn(), testID: 'empty-three' },
+        ]}
+      />,
+    );
+
+    expect(screen.getByTestId('empty-one')).toBeTruthy();
+    expect(screen.getByTestId('empty-two')).toBeTruthy();
+    expect(screen.queryByTestId('empty-three')).toBeNull();
+  });
+
+  it('lets an explicit empty component win over the guided one', async () => {
+    const props = baseProps();
+    const screen = await render(
+      <GenericFilterSortList
+        {...props}
+        data={[] as { id: string; name: string }[]}
+        emptyListComponent={<Text>custom empty</Text>}
+        emptyStateTitle="Empty title"
+      />,
+    );
+
+    expect(screen.getByText('custom empty')).toBeTruthy();
+    expect(screen.queryByTestId('guided-empty-state')).toBeNull();
+  });
 });

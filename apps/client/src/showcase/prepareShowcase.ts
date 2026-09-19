@@ -34,6 +34,8 @@ export async function prepareShowcase(
         dateDisplayFormat: 'iso',
         showContextualHelp: true,
         suggestLiteraryDevices: true,
+        // Captures must never show a first-open tour; the welcome screen is skipped the same way.
+        showTutorials: false,
       });
     }
     await useUserSettingsStore.getState().initializeSettings(db);

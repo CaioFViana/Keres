@@ -9,6 +9,7 @@ const mockCreateStoryService = jest.fn();
 const mockDb = {};
 let mockUserId: string | null = 'user-1';
 let mockLanguage = 'en';
+const mockUseScreenTour = jest.fn();
 
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
@@ -24,6 +25,10 @@ jest.mock('@expo/vector-icons', () => ({
     const native = jest.requireActual('react-native') as typeof import('react-native');
     return react.createElement(native.Text, { testID: `icon-${name}` }, name);
   },
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
@@ -140,6 +145,12 @@ it('shows the empty catalog state', async () => {
 
   expect(view.getByText('example_stories_description')).toBeTruthy();
   expect(view.getByText('example_stories_empty')).toBeTruthy();
+});
+
+it('requests its guided tour', async () => {
+  await render(<ExampleStoriesScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('ExampleStories');
 });
 
 it('renders entry previews with the story type icon', async () => {

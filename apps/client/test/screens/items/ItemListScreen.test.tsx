@@ -6,6 +6,7 @@ const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
 const mockOpenItemList = jest.fn();
 const mockUseEntityListScreen = jest.fn();
+const mockUseScreenTour = jest.fn();
 const mockGetJourneys = jest.fn();
 const mockGetScenes = jest.fn();
 const mockGetChapters = jest.fn();
@@ -54,6 +55,10 @@ jest.mock('@/src/hooks/useScreenHeader', () => ({
   useScreenHeader: (config: unknown) => {
     mockHeaderConfig.current = config as never;
   },
+}));
+jest.mock('@/src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList', () => ({
   __esModule: true,
@@ -277,6 +282,12 @@ describe('ItemListScreen', () => {
     mockGetCharacters.mockResolvedValue([]);
     mockGetTagsByStoryId.mockResolvedValue([]);
     mockGetTagsForEntity.mockResolvedValue([]);
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<ItemListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('ItemsStack');
   });
 
   it('binds the item store through the shared list hook', async () => {

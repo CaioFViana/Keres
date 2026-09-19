@@ -153,6 +153,7 @@ const MainSystemNavigator = () => {
         drawerContent={(props) => (
           <ResizableDrawerContent
             {...props}
+            drawerId="main-system"
             drawerWidth={drawerWidth}
             maximumWidth={maximumWidth}
             onDrawerWidthChange={setDrawerWidth}

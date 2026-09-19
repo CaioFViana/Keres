@@ -1,6 +1,8 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { LanguageInstallRow } from '@/src/components/common';
 import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -29,8 +31,8 @@ import { useTheme } from '../../theme';
  * language) - a dropdown does not change shape as the list of languages grows, an `Alert` would become
  * an ever-taller column of buttons.
  *
- * The catalog itself (`exampleStoryRegistry`) is static - no example story is packaged yet (see
- * `exampleStories/content/`), so the empty state is what this screen shows for now.
+ * The catalog itself (`exampleStoryRegistry`) is static - folk and fairy tales packaged under
+ * `exampleStories/content/` (en+pt). The empty state only shows if the registry ever empties.
  */
 
 /** The preferred language to pre-select in the dropdown: the app's current one, failing that the first */
@@ -63,6 +65,8 @@ function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string):
 
 const ExampleStoriesScreen = () => {
   useBackButtonHandler();
+  useScreenTour('ExampleStories');
+  const listAnchorRef = useScreenAnchor('ExampleStories', 'list');
   const { t, i18n } = useTranslation();
   useScreenHeader({ target: 'self', title: t('examples_title') });
   const { colors } = useTheme();
@@ -234,21 +238,23 @@ const ExampleStoriesScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={entries}
-        keyExtractor={(item) => item.slug}
-        renderItem={renderItem}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={
-          <Text style={styles.description}>{t('example_stories_description')}</Text>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="library-outline" size={54} color={colors.textSecondary} />
-            <Text style={styles.emptyText}>{t('example_stories_empty')}</Text>
-          </View>
-        }
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <FlatList
+          data={entries}
+          keyExtractor={(item) => item.slug}
+          renderItem={renderItem}
+          contentContainerStyle={styles.content}
+          ListHeaderComponent={
+            <Text style={styles.description}>{t('example_stories_description')}</Text>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="library-outline" size={54} color={colors.textSecondary} />
+              <Text style={styles.emptyText}>{t('example_stories_empty')}</Text>
+            </View>
+          }
+        />
+      </View>
     </View>
   );
 };

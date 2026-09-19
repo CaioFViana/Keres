@@ -105,6 +105,7 @@ const ColdInstallScreen = () => {
       dateDisplayFormat: 'iso',
       showContextualHelp: true,
       suggestLiteraryDevices: true,
+      showTutorials: true,
     });
 
     // Initialize stores with the newly created settings

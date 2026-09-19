@@ -243,6 +243,15 @@ const StoryAnalysisScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonDetailStyleDefs(colors),
+    emptyIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginBottom: 14,
+    },
     scrollContent: {
       // The common container already applies 20px on every side. Repeating the padding on the scrollable
       // content left the check's card 40px away from the edges, unlike the drawer's other screens.
@@ -427,7 +436,9 @@ const StoryAnalysisScreen = () => {
         {preferencesCard}
         {analysisCard}
         <View style={styles.emptyContainer}>
-          <Ionicons name="checkmark-circle-outline" size={54} color={colors.primary} />
+          <View style={styles.emptyIconWrap} testID="analysis-empty-icon">
+            <Ionicons name="checkmark" size={28} color={colors.onPrimaryContainer} />
+          </View>
           <Text style={styles.emptyText}>{t('analysis_no_issues_found')}</Text>
         </View>
       </ScrollView>

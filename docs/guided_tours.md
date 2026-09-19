@@ -47,6 +47,9 @@ how-to for adding the next one.
   `useGuidePersistence`. A failed write undismisses so the tour can show
   again; the tutorials reset and `resetAllClientStores` clear the session
   record.
+- "Later" (`snoozeTour`) only closes the card: `snoozedGuideId` blocks the
+  reopen while the focus lasts, and `useScreenTour` lifts it on blur, so the
+  tour returns on the next visit without ever being marked seen.
 - The first-story trail is entered from a persistent banner on
   `StorySelectionScreen` (visible with or without stories until done or
   dismissed) and completes on the first dashboard arrival.

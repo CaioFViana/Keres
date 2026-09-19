@@ -169,6 +169,7 @@ const PlotListScreen = () => {
           onSortDirectionChange={setSortDirection}
           currentSortDirection={sortDirection}
           currentSortValue={activeSort}
+          entityName="Plot"
           emptyStateTitle={t('plots_empty_title')}
           emptyStateMessage={t('plots_empty_message')}
           emptyStateActions={

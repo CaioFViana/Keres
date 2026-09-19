@@ -5,6 +5,7 @@ const base = {
   showTutorials: true,
   seen: [] as string[],
   dismissedGuideIds: [] as string[],
+  snoozedGuideId: null as string | null,
   guideId: 'StorySelectionMain',
   hasActiveTour: false,
   isShowcase: false,
@@ -33,5 +34,13 @@ describe('shouldStartTour', () => {
 
   it('stays quiet for tours dismissed this session, before persistence lands', () => {
     expect(shouldStartTour({ ...base, dismissedGuideIds: ['StorySelectionMain'] })).toBe(false);
+  });
+
+  it('stays quiet for the snoozed tour until the next focus', () => {
+    expect(shouldStartTour({ ...base, snoozedGuideId: 'StorySelectionMain' })).toBe(false);
+  });
+
+  it('ignores a snooze set by another tour', () => {
+    expect(shouldStartTour({ ...base, snoozedGuideId: 'OtherTour' })).toBe(true);
   });
 });

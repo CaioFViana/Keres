@@ -15,7 +15,7 @@ const guide = (id: string, stepCount: number): Guide => ({
 const store = () => useGuideStore.getState();
 
 beforeEach(() => {
-  useGuideStore.setState({ activeTour: null, dismissedGuideIds: [] });
+  useGuideStore.setState({ activeTour: null, dismissedGuideIds: [], snoozedGuideId: null });
 });
 
 describe('startTour', () => {
@@ -100,6 +100,38 @@ describe('skipTour / completeTour', () => {
   });
 });
 
+describe('snoozeTour / clearSnooze', () => {
+  it('closes the card without recording a session dismissal', () => {
+    store().startTour(guide('Tour', 3));
+    store().nextStep();
+
+    store().snoozeTour();
+
+    expect(store().activeTour).toBeNull();
+    expect(store().snoozedGuideId).toBe('Tour');
+    expect(store().dismissedGuideIds).toEqual([]);
+  });
+
+  it('clearSnooze allows the tour to open again', () => {
+    store().startTour(guide('Tour', 1));
+    store().snoozeTour();
+
+    store().clearSnooze();
+
+    expect(store().snoozedGuideId).toBeNull();
+  });
+
+  it.each(['skipTour', 'completeTour'] as const)('%s clears a stale snooze', (action) => {
+    store().startTour(guide('Tour', 1));
+    store().snoozeTour();
+    store().startTour(guide('Tour', 1));
+
+    store()[action]();
+
+    expect(store().snoozedGuideId).toBeNull();
+  });
+});
+
 describe('undismissGuide / reset', () => {
   it('undismissGuide drops one id so a failed write can show again', () => {
     store().startTour(guide('Tour', 1));
@@ -118,5 +150,6 @@ describe('undismissGuide / reset', () => {
 
     expect(store().activeTour).toBeNull();
     expect(store().dismissedGuideIds).toEqual([]);
+    expect(store().snoozedGuideId).toBeNull();
   });
 });

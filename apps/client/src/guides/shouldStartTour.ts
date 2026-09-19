@@ -2,6 +2,7 @@ interface ShouldStartTourInput {
   showTutorials: boolean;
   seen: readonly string[];
   dismissedGuideIds: readonly string[];
+  snoozedGuideId: string | null;
   guideId: string;
   hasActiveTour: boolean;
   isShowcase: boolean;
@@ -15,5 +16,6 @@ interface ShouldStartTourInput {
 export function shouldStartTour(input: ShouldStartTourInput): boolean {
   if (!input.showTutorials || input.isShowcase || input.hasActiveTour) return false;
   if (input.dismissedGuideIds.includes(input.guideId)) return false;
+  if (input.snoozedGuideId === input.guideId) return false;
   return !input.seen.includes(input.guideId);
 }

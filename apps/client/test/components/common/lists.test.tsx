@@ -460,6 +460,7 @@ describe('GenericFilterSortList', () => {
       <GenericFilterSortList
         {...props}
         data={[] as { id: string; name: string }[]}
+        entityName="Item"
         emptyStateTitle="Empty title"
         emptyStateMessage="Empty hint"
         emptyStateActions={[
@@ -470,6 +471,12 @@ describe('GenericFilterSortList', () => {
     );
 
     expect(screen.getByTestId('guided-empty-state')).toBeTruthy();
+    expect(screen.getByTestId('guided-empty-icon')).toBeTruthy();
+    const [iconWrap] = screen.container.queryAll(
+      (node) => node.props?.testID === 'guided-empty-icon',
+    );
+    const [icon] = iconWrap.queryAll((node) => node.type === 'Icon');
+    expect(icon.props.name).toBe('cube');
     expect(screen.getByText('Empty title')).toBeTruthy();
     expect(screen.getByText('Empty hint')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('empty-first'));

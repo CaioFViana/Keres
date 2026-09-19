@@ -26,9 +26,10 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  *
  * The card renders first on every step; the spotlight is an enhancement that appears once the
  * step's anchors are measured. Anything unmeasurable - missing anchors, an unmounted drawer,
- * a failed measure - degrades to the card alone, never a stuck screen. "Skip" is always
- * visible, and finishing or skipping records the tour as seen (the write runs in the
- * background; a failed write only means the tour shows again).
+ * a failed measure - degrades to the card alone, never a stuck screen. "Skip" and "later"
+ * are always visible: finishing or skipping records the tour as seen (the write runs in
+ * the background; a failed write only means the tour shows again), while "later" only
+ * closes the card for this focus.
  *
  * The shell below subscribes to the store and nothing else, so the idle host costs one
  * selector; everything UI-bound (theme, i18n, drizzle) lives in the overlay, which only
@@ -49,6 +50,7 @@ const ActiveGuideOverlay: React.FC = () => {
   const prevStep = useGuideStore((state) => state.prevStep);
   const skipTour = useGuideStore((state) => state.skipTour);
   const completeTour = useGuideStore((state) => state.completeTour);
+  const snoozeTour = useGuideStore((state) => state.snoozeTour);
   const recordSeen = useGuidePersistence();
   const [spot, setSpot] = useState<GuideRect | null>(null);
 
@@ -102,6 +104,11 @@ const ActiveGuideOverlay: React.FC = () => {
   const handleFinish = () => {
     completeTour();
     recordSeen(guide.id);
+  };
+
+  const handleSnooze = () => {
+    // "Later" closes the card without recording: the tour opens on the next visit.
+    snoozeTour();
   };
 
   const handleHelp = () => {
@@ -178,9 +185,30 @@ const ActiveGuideOverlay: React.FC = () => {
     },
     buttonRow: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       flexWrap: 'wrap',
       gap: 10,
+    },
+    tertiaryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    primaryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 10,
+    },
+    tertiaryButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 8,
+    },
+    tertiaryButtonText: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: '600',
     },
     button: {
       paddingVertical: 10,
@@ -208,8 +236,10 @@ const ActiveGuideOverlay: React.FC = () => {
       fontWeight: 'bold',
     },
     helpLink: {
-      marginTop: 12,
+      marginTop: 4,
       alignSelf: 'flex-start',
+      paddingVertical: 8,
+      paddingRight: 8,
     },
     helpLinkText: {
       color: colors.primary,
@@ -269,39 +299,50 @@ const ActiveGuideOverlay: React.FC = () => {
             <Text style={styles.title}>{t(step.titleKey)}</Text>
             <Text style={styles.message}>{t(step.bodyKey)}</Text>
             <View style={styles.buttonRow}>
-              <TouchableOpacity
-                testID="guide-skip"
-                style={[styles.button, styles.secondaryButton]}
-                onPress={handleSkip}
-              >
-                <Text style={styles.secondaryButtonText}>{t('guide_skip')}</Text>
-              </TouchableOpacity>
-              {!isFirst && (
+              <View style={styles.tertiaryRow}>
                 <TouchableOpacity
-                  testID="guide-prev"
-                  style={[styles.button, styles.secondaryButton]}
-                  onPress={prevStep}
+                  testID="guide-skip"
+                  style={styles.tertiaryButton}
+                  onPress={handleSkip}
                 >
-                  <Text style={styles.secondaryButtonText}>{t('guide_back')}</Text>
+                  <Text style={styles.tertiaryButtonText}>{t('guide_skip')}</Text>
                 </TouchableOpacity>
-              )}
-              {isLast ? (
                 <TouchableOpacity
-                  testID="guide-finish"
-                  style={[styles.button, styles.primaryButton]}
-                  onPress={handleFinish}
+                  testID="guide-snooze"
+                  style={styles.tertiaryButton}
+                  onPress={handleSnooze}
                 >
-                  <Text style={styles.primaryButtonText}>{t('guide_finish')}</Text>
+                  <Text style={styles.tertiaryButtonText}>{t('tour_snooze')}</Text>
                 </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  testID="guide-next"
-                  style={[styles.button, styles.primaryButton]}
-                  onPress={nextStep}
-                >
-                  <Text style={styles.primaryButtonText}>{t('guide_next')}</Text>
-                </TouchableOpacity>
-              )}
+              </View>
+              <View style={styles.primaryRow}>
+                {!isFirst && (
+                  <TouchableOpacity
+                    testID="guide-prev"
+                    style={[styles.button, styles.secondaryButton]}
+                    onPress={prevStep}
+                  >
+                    <Text style={styles.secondaryButtonText}>{t('guide_back')}</Text>
+                  </TouchableOpacity>
+                )}
+                {isLast ? (
+                  <TouchableOpacity
+                    testID="guide-finish"
+                    style={[styles.button, styles.primaryButton]}
+                    onPress={handleFinish}
+                  >
+                    <Text style={styles.primaryButtonText}>{t('guide_finish')}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    testID="guide-next"
+                    style={[styles.button, styles.primaryButton]}
+                    onPress={nextStep}
+                  >
+                    <Text style={styles.primaryButtonText}>{t('guide_next')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
             {canShowHelp && (
               <TouchableOpacity testID="guide-help" style={styles.helpLink} onPress={handleHelp}>

@@ -15,6 +15,11 @@ interface GuideState {
    * that opened the tour re-fires on dismiss and replays it once.
    */
   dismissedGuideIds: readonly string[];
+  /**
+   * The tour closed with "later": hidden for this focus, shown again on the next one. Unlike
+   * a dismiss, it is never recorded as seen.
+   */
+  snoozedGuideId: string | null;
   startTour: (guide: Guide) => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -22,6 +27,10 @@ interface GuideState {
   skipTour: () => void;
   /** Dismisses from the last step; the host records the tour as seen. */
   completeTour: () => void;
+  /** Closes the card for this focus without recording anything. */
+  snoozeTour: () => void;
+  /** Allows a snoozed tour to open again; the focus hook calls this on blur. */
+  clearSnooze: () => void;
   /** Drops one id from the session record, so a failed persistence write can show again. */
   undismissGuide: (guideId: string) => void;
   /** Clears the session record; the tutorials reset and the app reset both need this. */
@@ -35,6 +44,7 @@ interface GuideState {
 export const useGuideStore = create<GuideState>((set) => ({
   activeTour: null,
   dismissedGuideIds: [],
+  snoozedGuideId: null,
 
   startTour: (guide: Guide) => {
     set((state) => {
@@ -65,6 +75,7 @@ export const useGuideStore = create<GuideState>((set) => ({
     set((state) => ({
       activeTour: null,
       dismissedGuideIds: withDismissed(state, state.activeTour?.guide.id),
+      snoozedGuideId: null,
     }));
   },
 
@@ -72,7 +83,19 @@ export const useGuideStore = create<GuideState>((set) => ({
     set((state) => ({
       activeTour: null,
       dismissedGuideIds: withDismissed(state, state.activeTour?.guide.id),
+      snoozedGuideId: null,
     }));
+  },
+
+  snoozeTour: () => {
+    set((state) => ({
+      activeTour: null,
+      snoozedGuideId: state.activeTour?.guide.id ?? state.snoozedGuideId,
+    }));
+  },
+
+  clearSnooze: () => {
+    set({ snoozedGuideId: null });
   },
 
   undismissGuide: (guideId: string) => {
@@ -82,7 +105,7 @@ export const useGuideStore = create<GuideState>((set) => ({
   },
 
   reset: () => {
-    set({ activeTour: null, dismissedGuideIds: [] });
+    set({ activeTour: null, dismissedGuideIds: [], snoozedGuideId: null });
   },
 }));
 

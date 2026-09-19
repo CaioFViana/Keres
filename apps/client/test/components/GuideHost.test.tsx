@@ -51,7 +51,7 @@ const twoStepGuide: Guide = {
 beforeEach(() => {
   jest.clearAllMocks();
   mockResponsiveLayout.isWide = false;
-  useGuideStore.setState({ activeTour: null });
+  useGuideStore.setState({ activeTour: null, dismissedGuideIds: [], snoozedGuideId: null });
   __resetGuideAnchorsForTests();
   __resetGuideDrawersForTests();
 });
@@ -99,6 +99,18 @@ describe('GuideHost', () => {
 
     expect(screen.queryByTestId('guide-card')).toBeNull();
     expect(mockRecordSeen).toHaveBeenCalledWith('TourScreen');
+  });
+
+  it('snoozing closes the card without recording the tour as seen', async () => {
+    useGuideStore.getState().startTour(twoStepGuide);
+    const screen = await render(<GuideHost />);
+
+    await fireEvent.press(screen.getByTestId('guide-snooze'));
+
+    expect(screen.queryByTestId('guide-card')).toBeNull();
+    expect(mockRecordSeen).not.toHaveBeenCalled();
+    expect(useGuideStore.getState().snoozedGuideId).toBe('TourScreen');
+    expect(useGuideStore.getState().dismissedGuideIds).toEqual([]);
   });
 
   it('finishing dismisses and records the tour as seen', async () => {

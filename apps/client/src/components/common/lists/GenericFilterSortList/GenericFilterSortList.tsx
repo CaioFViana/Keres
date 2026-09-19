@@ -19,8 +19,12 @@ import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
-import { getOnColorForFill, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
+import {
+  entityFieldMetadata,
+  getEntityAppearance,
+  getOnColorForFill,
+  STORY_SCHEMA_ENTITY_TYPES,
+} from '@keres/shared';
 
 import type { FavoriteFilterState } from '../../../../types/entityFilters';
 
@@ -365,6 +369,7 @@ const GenericFilterSortList = <T,>({
               title={emptyStateTitle}
               message={emptyStateMessage}
               actions={emptyStateActions}
+              entityName={entityName}
               fallbackText={t('no_items_found')}
             />
           )
@@ -393,15 +398,24 @@ const GuidedEmptyState: React.FC<{
   title?: string;
   message?: string;
   actions?: GuidedEmptyStateAction[];
+  entityName?: string;
   fallbackText: string;
-}> = ({ title, message, actions, fallbackText }) => {
+}> = ({ title, message, actions, entityName, fallbackText }) => {
   const { colors } = useTheme();
+  const entityIcon = entityName
+    ? (getEntityAppearance(entityName).icon as keyof typeof Ionicons.glyphMap)
+    : null;
   const visibleActions = (actions ?? []).slice(0, 2);
   if (!title && !message && visibleActions.length === 0) {
     return <Text style={styles(colors).emptyText}>{fallbackText}</Text>;
   }
   return (
     <View style={styles(colors).guidedEmpty} testID="guided-empty-state">
+      {entityIcon ? (
+        <View style={styles(colors).guidedEmptyIconWrap} testID="guided-empty-icon">
+          <Ionicons name={entityIcon} size={28} color={colors.onPrimaryContainer} />
+        </View>
+      ) : null}
       {title ? <Text style={styles(colors).guidedEmptyTitle}>{title}</Text> : null}
       {message ? <Text style={styles(colors).guidedEmptyMessage}>{message}</Text> : null}
       {visibleActions.map((action, index) => (
@@ -480,6 +494,15 @@ const styles = (colors: any) =>
       paddingVertical: 32,
       paddingHorizontal: 24,
       gap: 12,
+    },
+    guidedEmptyIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginBottom: 2,
     },
     guidedEmptyTitle: {
       color: colors.text,

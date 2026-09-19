@@ -247,6 +247,7 @@ describe('StoryAnalysisScreen', () => {
     const view = await render(<StoryAnalysisScreen />);
     await waitFor(() => expect(mockAnalyzeStoryCheap).toHaveBeenCalledWith('story-1'));
     await waitFor(() => expect(view.queryByText('analysis_no_issues_found')).not.toBeNull());
+    expect(view.getByTestId('analysis-empty-icon')).toBeTruthy();
     expect(view.getByTestId('analysis-preferences')).toBeTruthy();
     expect(view.getByTestId('run-full-analysis').props.children).toBe(
       'story_analysis_run_button:enabled',

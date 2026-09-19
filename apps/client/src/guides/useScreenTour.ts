@@ -15,6 +15,7 @@ export function useScreenTour(screenId: string): void {
   const seen = useUserSettingsStore((state) => state.tutorialProgress.seen);
   const hasActiveTour = useGuideStore((state) => state.activeTour !== null);
   const dismissedGuideIds = useGuideStore((state) => state.dismissedGuideIds);
+  const snoozedGuideId = useGuideStore((state) => state.snoozedGuideId);
   const startTour = useGuideStore((state) => state.startTour);
 
   useFocusEffect(
@@ -26,6 +27,7 @@ export function useScreenTour(screenId: string): void {
           showTutorials,
           seen,
           dismissedGuideIds,
+          snoozedGuideId,
           guideId: guide.id,
           hasActiveTour,
           isShowcase: readShowcaseRequest() !== null,
@@ -33,6 +35,25 @@ export function useScreenTour(screenId: string): void {
       ) {
         startTour(guide);
       }
-    }, [screenId, showTutorials, seen, dismissedGuideIds, hasActiveTour, startTour]),
+    }, [
+      screenId,
+      showTutorials,
+      seen,
+      dismissedGuideIds,
+      snoozedGuideId,
+      hasActiveTour,
+      startTour,
+    ]),
+  );
+
+  // A snoozed tour ("later") stays hidden while this focus lasts; leaving the screen lifts
+  // the snooze so the tour opens on the next visit. A stable callback keeps this cleanup
+  // blur-only: store updates must not lift the snooze behind the effect above.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        useGuideStore.getState().clearSnooze();
+      };
+    }, []),
   );
 }

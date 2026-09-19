@@ -249,7 +249,7 @@ it('blocks saving before the friend tag is checked', async () => {
 
 it('blocks saving when the selected server has no account', async () => {
   const view = await renderActions(
-    createState({ selectedServer: { ...selectedServer!, idUser: null } }),
+    createState({ selectedServer: { ...selectedServer!, idUser: null as unknown as string } }),
   );
 
   await act(async () => {

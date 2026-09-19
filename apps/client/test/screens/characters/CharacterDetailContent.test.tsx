@@ -388,7 +388,7 @@ function baseProps(overrides = {}) {
   };
 }
 
-type View = { getByTestId: (id: string) => { props: { children: unknown } } };
+type View = { getByTestId: (id: string) => { props: { children?: unknown } } };
 
 function jsonOf(view: View, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

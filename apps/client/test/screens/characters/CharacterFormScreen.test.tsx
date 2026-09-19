@@ -212,7 +212,7 @@ function freshFormState(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function jsonOf(view: { getByTestId: (id: string) => { props: { children: unknown } } }) {
+function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unknown } } }) {
   return JSON.parse(view.getByTestId('form-marker').props.children as string);
 }
 

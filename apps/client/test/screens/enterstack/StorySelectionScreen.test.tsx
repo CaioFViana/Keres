@@ -19,7 +19,7 @@ const mockUpdateStoryFavoriteStatus = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockUpdateSummary = jest.fn();
 const mockSetTheme = jest.fn();
-const mockBackHandler = { current: null as null | (() => boolean) };
+const mockBackHandler = { current: null as null | (() => boolean | null | undefined) };
 const mockStoryListState = {
   stories: [] as unknown[],
   fetchStories: (...args: unknown[]) => mockFetchStories(...args),
@@ -208,7 +208,7 @@ describe('StorySelectionScreen', () => {
     mockBackHandler.current = null;
     jest
       .spyOn(BackHandler, 'addEventListener')
-      .mockImplementation((_event: string, handler: () => boolean) => {
+      .mockImplementation((_event: string, handler: () => boolean | null | undefined) => {
         mockBackHandler.current = handler;
         return { remove: jest.fn() };
       });

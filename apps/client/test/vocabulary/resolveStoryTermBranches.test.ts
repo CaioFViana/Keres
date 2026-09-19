@@ -2,7 +2,6 @@
  * @jest-environment node
  */
 import type { StoryVocabulary } from '@keres/shared/entities/Story';
-import type { TFunction } from 'i18next';
 import {
   agreeStoryTerm,
   defaultGrammaticalGender,
@@ -11,8 +10,6 @@ import {
   localeFamily,
   resolveStoryGender,
 } from '../../src/vocabulary/resolveStoryTerm';
-
-const t = ((key: string) => key) as unknown as TFunction;
 
 describe('localeFamily', () => {
   it.each([

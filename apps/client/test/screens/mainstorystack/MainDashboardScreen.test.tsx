@@ -132,7 +132,7 @@ const fullCounts = {
   branchingStoryForkCount: 2,
 };
 
-function jsonOf(view: { getByTestId: (id: string) => { props: { children: unknown } } }) {
+function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unknown } } }) {
   return JSON.parse(view.getByTestId('dashboard-marker').props.children as string);
 }
 

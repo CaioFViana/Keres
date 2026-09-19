@@ -395,7 +395,7 @@ function makeScene(id: string, locationId: string | null) {
   };
 }
 
-type View = { getByTestId: (id: string) => { props: { children: unknown } } };
+type View = { getByTestId: (id: string) => { props: { children?: unknown } } };
 
 function jsonOf(view: View, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);

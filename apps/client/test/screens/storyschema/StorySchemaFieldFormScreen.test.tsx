@@ -16,7 +16,6 @@ const mockUseFieldFormState = jest.fn();
 const mockUseFieldFormActions = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockServiceRef = { current: null };
-const mockDb = {};
 const mockT = (key: string) => key;
 let mockRouteParams: { entityType: string; fieldId?: string } = { entityType: 'Character' };
 let mockStory: { id: string } | null = { id: 'story-1' };

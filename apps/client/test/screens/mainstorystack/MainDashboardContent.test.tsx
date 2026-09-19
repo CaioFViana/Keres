@@ -187,7 +187,7 @@ function baseProps(overrides = {}) {
   };
 }
 
-function summaryJson(view: { getByTestId: (id: string) => { props: { children: unknown } } }) {
+function summaryJson(view: { getByTestId: (id: string) => { props: { children?: unknown } } }) {
   return JSON.parse(view.getByTestId('summary-card').props.children as string);
 }
 

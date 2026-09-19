@@ -27,7 +27,7 @@ it('hydrates the stat being edited', async () => {
 });
 
 it('hydrates once the stats list arrives', async () => {
-  const view = await renderHook(({ rows }) => useStatFormState({ statId: 'stat-2', stats: rows }), {
+  const view = await renderHook(({ rows }: { rows: StatSelect[] }) => useStatFormState({ statId: 'stat-2', stats: rows }), {
     initialProps: { rows: [] as StatSelect[] },
   });
 

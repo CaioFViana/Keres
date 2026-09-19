@@ -166,7 +166,7 @@ it('falls back to a hardcoded loading label when the translation is empty', asyn
         finishMigration = resolve;
       }),
   );
-  (i18n.t as jest.Mock).mockReturnValueOnce('');
+  (i18n.t as unknown as jest.Mock).mockReturnValueOnce('');
   const screen = await render(<App />);
 
   expect(screen.getByText('Loading...')).toBeTruthy();

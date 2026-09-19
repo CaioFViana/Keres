@@ -125,7 +125,7 @@ const trailingPressOf = (rowId: string) => {
   const calls = mockRelationList.mock.calls;
   const items = calls[calls.length - 1][0].items as {
     id: string;
-    trailing?: { props?: { children?: unknown } };
+    trailing?: { props?: { children?: React.ReactNode } };
   }[];
   const row = items.find((item) => item.id === rowId);
   const buttons = React.Children.toArray(row?.trailing?.props?.children) as {
@@ -208,7 +208,7 @@ describe('AnchorManager', () => {
   it('edits an anchor and saves the draft', async () => {
     const save = jest.fn(async () => {});
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], save }));
-    const view = await render(
+    await render(
       <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
     );
 
@@ -244,7 +244,7 @@ describe('AnchorManager', () => {
       throw new Error('db down');
     });
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], save }));
-    const view = await render(
+    await render(
       <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
     );
 
@@ -266,7 +266,7 @@ describe('AnchorManager', () => {
   it('deletes an anchor after confirmation', async () => {
     const erase = jest.fn(async () => {});
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], remove: erase }));
-    const view = await render(
+    await render(
       <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
     );
 
@@ -297,7 +297,7 @@ describe('AnchorManager', () => {
       throw new Error('db down');
     });
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], remove: erase }));
-    const view = await render(
+    await render(
       <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
     );
 

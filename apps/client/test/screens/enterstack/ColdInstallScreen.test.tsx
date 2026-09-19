@@ -13,7 +13,7 @@ const mockInitializeSettings = jest.fn();
 const mockInitializeTheme = jest.fn();
 const mockUseDocumentTitle = jest.fn();
 const mockChangeLanguage = jest.fn();
-const mockBackHandler = { current: null as null | (() => boolean) };
+const mockBackHandler = { current: null as null | (() => boolean | null | undefined) };
 const mockNotificationState = { showNotification: (...args: unknown[]) => mockNotify(...args) };
 const mockSetTheme = jest.fn();
 const mockColors = {
@@ -162,7 +162,7 @@ describe('ColdInstallScreen', () => {
     mockBackHandler.current = null;
     jest
       .spyOn(BackHandler, 'addEventListener')
-      .mockImplementation((_event: string, handler: () => boolean) => {
+      .mockImplementation((_event: string, handler: () => boolean | null | undefined) => {
         mockBackHandler.current = handler;
         return { remove: jest.fn() };
       });

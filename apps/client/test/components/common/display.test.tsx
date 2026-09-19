@@ -197,7 +197,7 @@ describe('EntityMetadata', () => {
     expect(screen.getByText('version')).toBeTruthy();
     const versionRow = screen.getByText('version').parent!;
     const versionValue = versionRow.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children: unknown };
+      props: { children?: unknown };
     };
     expect(String(versionValue.props.children)).toBe('7');
     expect(
@@ -289,7 +289,7 @@ describe('SummaryCard', () => {
     expect(screen.getByText('Characters')).toBeTruthy();
     const tile = screen.getByText('Characters').parent!;
     const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children: unknown };
+      props: { children?: unknown };
     };
     expect(String(count.props.children)).toBe('3');
     expect(screen.queryByText('notes')).toBeNull();
@@ -322,7 +322,7 @@ describe('SummaryCard', () => {
     expect(screen.getByText('Choices')).toBeTruthy();
     const tile = screen.getByText('Choices').parent!;
     const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children: unknown };
+      props: { children?: unknown };
     };
     expect(String(count.props.children)).toBe('9');
   });

@@ -248,7 +248,7 @@ function makeCharacter(overrides = {}) {
   };
 }
 
-function jsonOf(view: { getByTestId: (id: string) => { props: { children: unknown } } }) {
+function jsonOf(view: { getByTestId: (id: string) => { props: { children?: unknown } } }) {
   return JSON.parse(view.getByTestId('content-marker').props.children as string);
 }
 

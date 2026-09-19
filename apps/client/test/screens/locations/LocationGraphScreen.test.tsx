@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -271,7 +270,7 @@ function makeRelation(id: string, locationAId: string, locationBId: string, rela
 }
 
 type View = {
-  getByTestId: (id: string) => { props: { children: unknown } };
+  getByTestId: (id: string) => { props: { children?: unknown } };
   getByText: (text: string) => unknown;
   getByLabelText: (label: string) => unknown;
 };

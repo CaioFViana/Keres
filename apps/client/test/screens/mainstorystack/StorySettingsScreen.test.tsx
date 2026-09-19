@@ -279,8 +279,8 @@ function makeStory(overrides = {}) {
 }
 
 type View = {
-  getByTestId: (id: string) => { props: { children: unknown } };
-  getAllByTestId: (id: string) => { props: { children: unknown } }[];
+  getByTestId: (id: string) => { props: { children?: unknown } };
+  getAllByTestId: (id: string) => { props: { children?: unknown } }[];
 };
 
 function jsonOf(view: View, testID: string) {

@@ -2,7 +2,10 @@ import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import type { TFunction } from 'i18next';
 import type { ReactNode } from 'react';
 import type { CustomAttributeValues } from '../../../src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import { CharacterFormContent } from '../../../src/screens/characters/CharacterFormContent';
+import {
+  CharacterFormContent,
+  type CharacterFormContentProps,
+} from '../../../src/screens/characters/CharacterFormContent';
 
 jest.mock('../../../src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
@@ -378,7 +381,7 @@ function baseProps(overrides = {}) {
   };
 }
 
-type View = { getByTestId: (id: string) => { props: { children: unknown } } };
+type View = { getByTestId: (id: string) => { props: { children?: unknown } } };
 
 function jsonOf(view: View, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
@@ -391,7 +394,7 @@ describe('CharacterFormContent', () => {
 
   it('renders the title, actions and all text fields', async () => {
     const props = baseProps();
-    const view = await render(<CharacterFormContent {...(props as never)} />);
+    const view = await render(<CharacterFormContent {...(props as unknown as CharacterFormContentProps)} />);
     expect(view.getByTestId('form-title').props.children).toBe('Create character');
     expect(view.getByTestId('form-description').props.children).toBe('Fill the fields');
     expect(view.getByTestId('btn-Save').props.children).toBe('Save:enabled');
@@ -412,7 +415,7 @@ describe('CharacterFormContent', () => {
 
   it('forwards text edits to the setters', async () => {
     const props = baseProps();
-    const view = await render(<CharacterFormContent {...(props as never)} />);
+    const view = await render(<CharacterFormContent {...(props as unknown as CharacterFormContentProps)} />);
     await fireEvent.press(view.getByTestId('input-name_placeholder'));
     expect(props.setName).toHaveBeenCalledWith('typed:name_placeholder');
     await fireEvent.press(view.getByTestId('suggest-character_race'));
@@ -423,16 +426,16 @@ describe('CharacterFormContent', () => {
 
   it('hides the delete button when creating and disables actions while busy', async () => {
     const creating = await render(
-      <CharacterFormContent {...(baseProps({ isEditing: false }) as never)} />,
+      <CharacterFormContent {...(baseProps({ isEditing: false }) as unknown as CharacterFormContentProps)} />,
     );
     expect(creating.queryByTestId('btn-Delete')).toBeNull();
-    const busy = await render(<CharacterFormContent {...(baseProps({ saving: true }) as never)} />);
+    const busy = await render(<CharacterFormContent {...(baseProps({ saving: true }) as unknown as CharacterFormContentProps)} />);
     expect(busy.getByTestId('btn-Save').props.children).toBe('Save:disabled');
   });
 
   it('wires custom attributes, tags, notes and see-also', async () => {
     const props = baseProps();
-    const view = await render(<CharacterFormContent {...(props as never)} />);
+    const view = await render(<CharacterFormContent {...(props as unknown as CharacterFormContentProps)} />);
     expect(jsonOf(view, 'custom-fields')).toMatchObject({ storyId: 'story-1', fields: 0 });
     await fireEvent.press(view.getByTestId('custom-fields-change'));
     expect(props.setCustomValues).toHaveBeenCalledTimes(1);
@@ -460,7 +463,7 @@ describe('CharacterFormContent', () => {
     const deleteMode = jest.fn(async () => {});
     const view = await render(
       <CharacterFormContent
-        {...(baseProps({ modeService: () => ({ createMode, updateMode, deleteMode }) }) as never)}
+        {...(baseProps({ modeService: () => ({ createMode, updateMode, deleteMode }) }) as unknown as CharacterFormContentProps)}
       />,
     );
     expect(jsonOf(view, 'mode-manager')).toEqual({ modes: ['mode-1'], editable: true });
@@ -482,7 +485,7 @@ describe('CharacterFormContent', () => {
     const clearValue = jest.fn(async () => {});
     const view = await render(
       <CharacterFormContent
-        {...(baseProps({ statRelationService: () => ({ setValue, clearValue }) }) as never)}
+        {...(baseProps({ statRelationService: () => ({ setValue, clearValue }) }) as unknown as CharacterFormContentProps)}
       />,
     );
     expect(jsonOf(view, 'stat-editor')).toEqual({ characterId: 'char-1', editable: true });
@@ -505,13 +508,13 @@ describe('CharacterFormContent', () => {
   it('hides the stat editor without the stat system and managers without a story', async () => {
     const noStats = await render(
       <CharacterFormContent
-        {...(baseProps({ selectedStory: { id: 'story-1', statSystem: false } }) as never)}
+        {...(baseProps({ selectedStory: { id: 'story-1', statSystem: false } }) as unknown as CharacterFormContentProps)}
       />,
     );
     expect(noStats.queryByTestId('stat-editor')).toBeNull();
     expect(noStats.getByTestId('mode-manager')).toBeTruthy();
     const noStory = await render(
-      <CharacterFormContent {...(baseProps({ selectedStory: null }) as never)} />,
+      <CharacterFormContent {...(baseProps({ selectedStory: null }) as unknown as CharacterFormContentProps)} />,
     );
     expect(noStory.queryByTestId('mode-manager')).toBeNull();
     expect(noStory.queryByTestId('note-manager')).toBeNull();

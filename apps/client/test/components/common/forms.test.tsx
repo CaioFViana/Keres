@@ -380,7 +380,7 @@ describe('AttributeValueInput', () => {
     const screen = await render(
       <AttributeValueInput
         type={AttributeType.SUGGESTION_LIST}
-        value={encodeAttributeValue(AttributeType.SUGGESTION_LIST, ['x', 'y'])}
+        value={encodeAttributeValue(AttributeType.SUGGESTION_LIST, ['x', 'y']) as string}
         onChange={onChange}
         storyId="s1"
         suggestionFieldId="f1"

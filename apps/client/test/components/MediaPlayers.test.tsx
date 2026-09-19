@@ -322,7 +322,7 @@ describe('ImageZoomViewer', () => {
         { nativeEvent: { touches: [{ pageX: 0, pageY: 0 }] } } as never,
         { dx: 30, dy: 12 } as never,
       );
-      config.onPanResponderTerminate?.();
+      config.onPanResponderTerminate?.({} as never, {} as never);
     });
 
     expect(

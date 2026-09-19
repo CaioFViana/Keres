@@ -92,7 +92,7 @@ jest.mock(
             highlightedNodeIds: string[];
             onSelectNode: (node: { id: string }) => void;
           },
-          ref: unknown,
+          ref: React.Ref<{ zoomBy: unknown; fitToScreen: unknown }>,
         ) => {
           const native = jest.requireActual('react-native') as typeof import('react-native');
           react.useImperativeHandle(ref, () => ({
@@ -265,7 +265,7 @@ const makeRelation = (id: string, character1Id: string, character2Id: string, ty
   char2Name: character2Id,
 });
 
-function graphMarker(view: { getByTestId: (id: string) => { props: { children: unknown } } }) {
+function graphMarker(view: { getByTestId: (id: string) => { props: { children?: unknown } } }) {
   return JSON.parse(view.getByTestId('graph-marker').props.children as string) as {
     nodes: string[];
     edges: number;

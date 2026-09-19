@@ -236,7 +236,7 @@ describe('GalleryGridItem', () => {
 
     const icons = view.container.queryAll((node: any) => node.type === Ionicons);
     const favorite = icons.find((icon: any) => icon.props.name === 'star-outline');
-    await fireEvent.press(favorite);
+    await fireEvent.press(favorite!);
     expect(onToggleFavorite).toHaveBeenCalledWith('gallery-1', true);
   });
 

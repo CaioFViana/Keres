@@ -73,14 +73,14 @@ describe('addLocationMapMarkerConnection', () => {
   it('assigns an id that avoids every existing point', () => {
     const map = appendMarkersToMap(base, [{ title: 'Gate' }]);
     const linked = addLocationMapMarkerConnection(map, {
-      fromId: map.markers[0].id,
+      fromId: map.markers![0].id,
       toId: 'elsewhere',
       directed: true,
       label: null,
     });
 
     expect(linked.markerConnections).toHaveLength(1);
-    expect(linked.markerConnections[0].id).not.toBe(map.markers[0].id);
+    expect(linked.markerConnections![0].id).not.toBe(map.markers![0].id);
   });
 });
 
@@ -117,7 +117,7 @@ describe('staggered placement', () => {
     const map = appendMarkersToMap(appendLocationsToMap(base, ['a']), [{ title: 'Gate' }]);
 
     expect(map.nodes[0].x).toBe(80 + 40);
-    expect(map.markers[0].x).toBeGreaterThan(map.nodes[0].x);
-    expect(map.markers[0]).toMatchObject({ icon: 'pin', note: null, destinationMapId: null });
+    expect(map.markers![0].x).toBeGreaterThan(map.nodes[0].x);
+    expect(map.markers![0]).toMatchObject({ icon: 'pin', note: null, destinationMapId: null });
   });
 });

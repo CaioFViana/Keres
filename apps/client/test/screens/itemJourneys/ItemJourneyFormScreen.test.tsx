@@ -16,7 +16,6 @@ const mockUseFormState = jest.fn();
 const mockUseFormAssociations = jest.fn();
 const mockUseFormActions = jest.fn();
 const mockUseScreenHeader = jest.fn();
-const mockDb = {};
 const mockT = (key: string) => key;
 const mockItemCopy = { itemJourney: 'Journey', entity: 'Item', select: 'Select item' };
 const mockSceneCopy = { entity: 'Scene', select: 'Select scene' };

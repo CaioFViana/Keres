@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { Guide, GuideRect } from '../../../../guides/types';
+import GuideSpotlight from './GuideSpotlight';
 import { measureGuideAnchors, unionGuideRects } from '../../../../guides/anchorRegistry';
 import { useGuidePersistence } from '../../../../hooks/useGuidePersistence';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
@@ -145,12 +146,6 @@ const ActiveGuideOverlay: React.FC = () => {
       position: 'absolute',
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
-    highlight: {
-      position: 'absolute',
-      borderWidth: 2,
-      borderColor: colors.primary,
-      borderRadius: 8,
-    },
     cardWrap: {
       flex: 1,
       justifyContent: 'flex-end',
@@ -254,43 +249,7 @@ const ActiveGuideOverlay: React.FC = () => {
         {/* Eats every touch outside the card; the visuals below it are pointer-transparent. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
         {padded ? (
-          <>
-            <View
-              pointerEvents="none"
-              style={[styles.dim, { top: 0, left: 0, right: 0, height: padded.y }]}
-            />
-            <View
-              pointerEvents="none"
-              style={[styles.dim, { top: padded.y + padded.height, left: 0, right: 0, bottom: 0 }]}
-            />
-            <View
-              pointerEvents="none"
-              style={[
-                styles.dim,
-                { top: padded.y, left: 0, width: padded.x, height: padded.height },
-              ]}
-            />
-            <View
-              pointerEvents="none"
-              style={[
-                styles.dim,
-                {
-                  top: padded.y,
-                  left: padded.x + padded.width,
-                  right: 0,
-                  height: padded.height,
-                },
-              ]}
-            />
-            <View
-              pointerEvents="none"
-              testID="guide-spotlight"
-              style={[
-                styles.highlight,
-                { left: padded.x, top: padded.y, width: padded.width, height: padded.height },
-              ]}
-            />
-          </>
+          <GuideSpotlight rect={padded} borderColor={colors.primary} />
         ) : (
           <View pointerEvents="none" style={[styles.dim, StyleSheet.absoluteFill]} />
         )}

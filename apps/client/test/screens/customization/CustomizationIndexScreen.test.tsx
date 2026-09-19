@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
 const mockNavigate = jest.fn();
+const mockUseScreenTour = jest.fn();
 
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
@@ -39,6 +40,10 @@ jest.mock('../../../src/utils/documentTitle', () => ({
   __esModule: true,
   setDocumentTitle: () => undefined,
 }));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: (key: string) => key }),
@@ -58,6 +63,12 @@ const ROUTES = [
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+it('requests its guided tour', async () => {
+  await render(<CustomizationIndexScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('CustomizationStack');
 });
 
 it('renders one entry per customization area', async () => {

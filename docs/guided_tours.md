@@ -41,5 +41,14 @@ how-to for adding the next one.
 - Persistence is `client_settings.show_tutorials` + `seen_tutorials`
   (`{version, seen[]}`, plus the `firstStory` trail object), mirrored in
   `userSettingsStore`. `AppSettingsScreen` owns the switch and the reset.
+- Dismissing is recorded twice: synchronously in
+  `guideStore.dismissedGuideIds` (otherwise the focus effect re-fires before
+  the database write lands and replays the tour), then durably via
+  `useGuidePersistence`. A failed write undismisses so the tour can show
+  again; the tutorials reset and `resetAllClientStores` clear the session
+  record.
+- The first-story trail is entered from a persistent banner on
+  `StorySelectionScreen` (visible with or without stories until done or
+  dismissed) and completes on the first dashboard arrival.
 - Showcase captures set `showTutorials: false` in `prepareShowcase`, and
   `useScreenTour` also refuses to start under a showcase request.

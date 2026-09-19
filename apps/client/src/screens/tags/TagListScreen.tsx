@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -13,6 +14,8 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TagListItem from '@/src/components/features/list-items/TagListItem';
 import type { TagSelect } from '../../db/schemas/tags';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import type {
@@ -28,6 +31,8 @@ export type TagsScreenNavigationProp = CompositeNavigationProp<
 
 const TagsScreen = () => {
   useBackButtonHandler();
+  useScreenTour('TagsStack');
+  const listAnchorRef = useScreenAnchor('Tags', 'list');
   const { t } = useTranslation();
 
   const navigation = useNavigation<TagsScreenNavigationProp>();
@@ -101,20 +106,22 @@ const TagsScreen = () => {
 
   return (
     <ScreenContainer>
-      <GenericFilterSortList
-        {...listProps}
-        data={tags}
-        renderItem={memoizedTagListItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('search_tags')}
-        filterOptions={[]}
-        onFilterChange={() => {}}
-        selectedFilterValues={[]}
-        sortOptions={memoizedSortOptions}
-        disableTagFilter={true}
-        entityName="Tag"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={tags}
+          renderItem={memoizedTagListItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('search_tags')}
+          filterOptions={[]}
+          onFilterChange={() => {}}
+          selectedFilterValues={[]}
+          sortOptions={memoizedSortOptions}
+          disableTagFilter={true}
+          entityName="Tag"
+          storyId={storyId || ''}
+        />
+      </View>
     </ScreenContainer>
   );
 };

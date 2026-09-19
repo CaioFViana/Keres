@@ -4,6 +4,8 @@ import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import CommentList from '@/src/components/features/comments/CommentList/CommentList';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import type { CommentSelect } from '../../db/schema';
@@ -18,6 +20,8 @@ import type { NavigableEntityType } from '../../utils/entityNavigation';
  */
 const CommentListScreen: React.FC = () => {
   useBackButtonHandler();
+  useScreenTour('CommentsStack');
+  const listAnchorRef = useScreenAnchor('Comments', 'list');
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigateToDetail = useNavigateToEntityDetail();
@@ -50,7 +54,7 @@ const CommentListScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View ref={listAnchorRef} collapsable={false} style={styles.container}>
       <CommentList storyId={selectedStory.id} pageSize={20} onPressItem={handlePressComment} />
     </View>
   );

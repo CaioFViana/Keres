@@ -10,6 +10,7 @@ const mockAnalyzeStoryFull = jest.fn();
 const mockNormalizeIndexes = jest.fn();
 const mockUpdateStory = jest.fn();
 const mockNavigateToEntityDetail = jest.fn();
+const mockUseScreenTour = jest.fn();
 
 let mockSelectedStory: {
   id: string;
@@ -47,6 +48,10 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => mockDrizzleDb }));
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
@@ -228,6 +233,12 @@ describe('StoryAnalysisScreen', () => {
     mockAnalyzeStoryFull.mockResolvedValue({ findings: [] });
     mockNormalizeIndexes.mockResolvedValue({ changed: 3 });
     mockUpdateStory.mockResolvedValue(undefined);
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<StoryAnalysisScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('StoryAnalysis');
   });
 
   it('loads the cheap report on focus and shows the empty state', async () => {

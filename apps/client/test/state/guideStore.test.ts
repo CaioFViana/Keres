@@ -15,7 +15,7 @@ const guide = (id: string, stepCount: number): Guide => ({
 const store = () => useGuideStore.getState();
 
 beforeEach(() => {
-  useGuideStore.setState({ activeTour: null });
+  useGuideStore.setState({ activeTour: null, dismissedGuideIds: [] });
 });
 
 describe('startTour', () => {
@@ -37,6 +37,15 @@ describe('startTour', () => {
     store().startTour(guide('Second', 2));
 
     expect(store().activeTour).toMatchObject({ guide: { id: 'Second' }, stepIndex: 0 });
+  });
+
+  it('keeps the step when the same tour starts twice', () => {
+    store().startTour(guide('Tour', 3));
+    store().nextStep();
+
+    store().startTour(guide('Tour', 3));
+
+    expect(store().activeTour).toMatchObject({ guide: { id: 'Tour' }, stepIndex: 1 });
   });
 });
 
@@ -80,5 +89,34 @@ describe('skipTour / completeTour', () => {
     store()[action]();
 
     expect(store().activeTour).toBeNull();
+  });
+
+  it.each(['skipTour', 'completeTour'] as const)('%s records the session dismissal', (action) => {
+    store().startTour(guide('Tour', 3));
+
+    store()[action]();
+
+    expect(store().dismissedGuideIds).toEqual(['Tour']);
+  });
+});
+
+describe('undismissGuide / reset', () => {
+  it('undismissGuide drops one id so a failed write can show again', () => {
+    store().startTour(guide('Tour', 1));
+    store().skipTour();
+
+    store().undismissGuide('Tour');
+
+    expect(store().dismissedGuideIds).toEqual([]);
+  });
+
+  it('reset clears the active tour and the session record', () => {
+    store().startTour(guide('Tour', 3));
+    store().skipTour();
+
+    store().reset();
+
+    expect(store().activeTour).toBeNull();
+    expect(store().dismissedGuideIds).toEqual([]);
   });
 });

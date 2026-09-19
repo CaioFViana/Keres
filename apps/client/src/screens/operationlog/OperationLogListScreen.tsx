@@ -2,6 +2,8 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import type { DrawerNavigationProp } from '@react-navigation/drawer'; // Use DrawerNavigationProp
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
@@ -25,6 +27,8 @@ export type OperationLogScreenNavigationProp = CompositeNavigationProp<
 
 const OperationLogScreen: React.FC = () => {
   useBackButtonHandler();
+  useScreenTour('OperationLogStack');
+  const listAnchorRef = useScreenAnchor('OperationLog', 'list');
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -88,7 +92,7 @@ const OperationLogScreen: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View ref={listAnchorRef} collapsable={false} style={styles.container}>
       <OperationLogList
         storyId={selectedStory.id}
         paginated={true}

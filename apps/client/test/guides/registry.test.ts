@@ -4,15 +4,26 @@ import { getScreenGuide, screenGuides } from '../../src/guides/registry';
 describe('screenGuides', () => {
   it('registers the pilot tours by route name', () => {
     expect(Object.keys(screenGuides).sort()).toEqual([
+      'BoardsStack',
       'CharactersStack',
+      'CommentsStack',
+      'CustomizationStack',
       'ExampleStories',
+      'GalleryStack',
       'GlobalSearch',
       'ItemsStack',
+      'LocationsStack',
       'MainDashboard',
       'NarrativeElementsStack',
+      'NotesStack',
+      'OperationLogStack',
       'PackList',
+      'PlotsStack',
+      'StoryAnalysis',
       'StoryForm',
       'StorySelectionMain',
+      'TagsStack',
+      'WorldRulesStack',
     ]);
     for (const [screenId, guide] of Object.entries(screenGuides)) {
       expect(guide.id).toBe(screenId);

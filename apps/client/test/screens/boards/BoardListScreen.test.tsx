@@ -12,6 +12,7 @@ const mockCreateBoard = jest.fn();
 const mockUpdateBoard = jest.fn();
 const mockDeleteBoard = jest.fn();
 const mockConfirmDelete = jest.fn();
+const mockUseScreenTour = jest.fn();
 let mockStoryId: string | undefined = 'story-1';
 let mockCanEdit = true;
 
@@ -21,6 +22,11 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
@@ -151,6 +157,12 @@ describe('BoardListScreen', () => {
     mockConfirmDelete.mockImplementation(async ({ onConfirm }: any) => {
       await onConfirm();
     });
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<BoardListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('BoardsStack');
   });
 
   it('shows the load error', async () => {

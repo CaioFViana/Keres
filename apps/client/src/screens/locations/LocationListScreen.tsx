@@ -15,6 +15,8 @@ import {
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -36,6 +38,8 @@ export type LocationsScreenNavigationProp = CompositeNavigationProp<
 
 const LocationsScreen = () => {
   useBackButtonHandler();
+  useScreenTour('LocationsStack');
+  const listAnchorRef = useScreenAnchor('Locations', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -166,32 +170,34 @@ const LocationsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        {...listProps}
-        data={locations}
-        renderItem={memoizedRenderItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
-        filterOptions={memoizedTagFilterOptions}
-        sortOptions={memoizedSortOptions}
-        entityName="Location"
-        storyId={storyId || ''}
-        onAdvancedSearch={setStoreAdvancedSearchCriteria}
-        currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
-        emptyStateTitle={t('locations_empty_title')}
-        emptyStateMessage={t('locations_empty_message')}
-        emptyStateActions={
-          canEdit
-            ? [
-                {
-                  label: t('locations_empty_create'),
-                  onPress: () => navigation.navigate('LocationForm', { locationId: undefined }),
-                  testID: 'empty-create-location',
-                },
-              ]
-            : []
-        }
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={locations}
+          renderItem={memoizedRenderItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
+          filterOptions={memoizedTagFilterOptions}
+          sortOptions={memoizedSortOptions}
+          entityName="Location"
+          storyId={storyId || ''}
+          onAdvancedSearch={setStoreAdvancedSearchCriteria}
+          currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+          emptyStateTitle={t('locations_empty_title')}
+          emptyStateMessage={t('locations_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('locations_empty_create'),
+                    onPress: () => navigation.navigate('LocationForm', { locationId: undefined }),
+                    testID: 'empty-create-location',
+                  },
+                ]
+              : []
+          }
+        />
+      </View>
     </View>
   );
 };

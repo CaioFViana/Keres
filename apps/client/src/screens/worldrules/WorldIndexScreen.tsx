@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/entities/WorldRule';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import type { WorldRulesStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -24,6 +26,8 @@ const SECTION_ICONS: Record<WorldPieceSection, keyof typeof Ionicons.glyphMap> =
 /** World drawer landing page. One common list keeps every section's CRUD and lifecycle identical. */
 const WorldIndexScreen = () => {
   useBackButtonHandler();
+  useScreenTour('WorldRulesStack');
+  const indexAnchorRef = useScreenAnchor('WorldIndex', 'sections');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -60,7 +64,7 @@ const WorldIndexScreen = () => {
   );
 
   return (
-    <View style={styles.root}>
+    <View ref={indexAnchorRef} collapsable={false} style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('world_index_description')}</Text>
         <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('WorldRules')}>

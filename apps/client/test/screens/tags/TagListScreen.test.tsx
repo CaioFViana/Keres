@@ -6,6 +6,7 @@ const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
 const mockUseEntityListScreen = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
 
 interface TagItem {
   id: string;
@@ -44,6 +45,10 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList', () => ({
   __esModule: true,
@@ -145,6 +150,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+it('requests its guided tour', async () => {
+  await render(<TagsScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('TagsStack');
 });
 
 it('binds the tag store through the shared list hook', async () => {

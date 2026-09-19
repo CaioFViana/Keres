@@ -13,6 +13,8 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import BoardCreateModal from '@/src/components/features/boards/BoardCreateModal';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -36,6 +38,8 @@ type Navigation = CompositeNavigationProp<
 
 const BoardListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('BoardsStack');
+  const listAnchorRef = useScreenAnchor('Boards', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const boardAppearance = getEntityAppearance('Board');
@@ -184,59 +188,61 @@ const BoardListScreen = () => {
           accessibilityLabel={t('board_search_placeholder')}
         />
       </View>
-      <FlatList
-        data={filteredBoards}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={styles.empty}>
-            {searchQuery.trim() ? t('board_search_no_results') : t('board_list_empty')}
-          </Text>
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => navigation.navigate('BoardCanvas', { boardId: item.id })}
-          >
-            <Ionicons
-              name={boardAppearance.icon as keyof typeof Ionicons.glyphMap}
-              size={24}
-              color={boardAppearance.color}
-              style={styles.entityIcon}
-            />
-            <View style={styles.rowText}>
-              <Text style={styles.name}>{item.name}</Text>
-              {!!item.description && <Text style={styles.description}>{item.description}</Text>}
-            </View>
-            {canEdit && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => setEditingBoard(item)}
-                accessibilityLabel={t('edit')}
-              >
-                <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-            {canEdit && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => confirmDuplicateBoard(item)}
-                accessibilityLabel={t('duplicate')}
-              >
-                <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
-            {canEdit && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => confirmBoardDelete(item)}
-                accessibilityLabel={t('delete')}
-              >
-                <Ionicons name="trash-outline" size={21} color={colors.error} />
-              </TouchableOpacity>
-            )}
-          </TouchableOpacity>
-        )}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <FlatList
+          data={filteredBoards}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              {searchQuery.trim() ? t('board_search_no_results') : t('board_list_empty')}
+            </Text>
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => navigation.navigate('BoardCanvas', { boardId: item.id })}
+            >
+              <Ionicons
+                name={boardAppearance.icon as keyof typeof Ionicons.glyphMap}
+                size={24}
+                color={boardAppearance.color}
+                style={styles.entityIcon}
+              />
+              <View style={styles.rowText}>
+                <Text style={styles.name}>{item.name}</Text>
+                {!!item.description && <Text style={styles.description}>{item.description}</Text>}
+              </View>
+              {canEdit && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setEditingBoard(item)}
+                  accessibilityLabel={t('edit')}
+                >
+                  <Ionicons name="pencil-outline" size={21} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+              {canEdit && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => confirmDuplicateBoard(item)}
+                  accessibilityLabel={t('duplicate')}
+                >
+                  <Ionicons name="copy-outline" size={21} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+              {canEdit && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => confirmBoardDelete(item)}
+                  accessibilityLabel={t('delete')}
+                >
+                  <Ionicons name="trash-outline" size={21} color={colors.error} />
+                </TouchableOpacity>
+              )}
+            </TouchableOpacity>
+          )}
+        />
+      </View>
       <BoardCreateModal
         visible={createVisible}
         onCancel={() => setCreateVisible(false)}

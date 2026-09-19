@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
 const mockNavigateToDetail = jest.fn();
+const mockUseScreenTour = jest.fn();
 let mockSelectedStory: { id: string } | null = { id: 'story-1' };
 let mockCommentListProps: {
   storyId: string;
@@ -20,6 +21,10 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('../../../src/hooks/useNavigateToEntityDetail', () => ({
   __esModule: true,
@@ -93,4 +98,10 @@ it('shows an explicit empty state without a selected story', async () => {
 
   expect(screen.getByText('no_story_selected')).toBeTruthy();
   expect(screen.queryByTestId('comment-list-stub')).toBeNull();
+});
+
+it('requests its guided tour', async () => {
+  await render(<CommentListScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('CommentsStack');
 });

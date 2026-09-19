@@ -14,6 +14,8 @@ import {
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
 import type { PlotSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -38,6 +40,8 @@ export type PlotsScreenNavigationProp = CompositeNavigationProp<
  */
 const PlotListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('PlotsStack');
+  const listAnchorRef = useScreenAnchor('Plots', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
@@ -154,26 +158,28 @@ const PlotListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        data={visiblePlots}
-        renderItem={renderPlotListItem}
-        keyExtractor={(item) => item.id}
-        onSearch={setSearchQuery}
-        searchPlaceholder={t('search_plots')}
-        currentSearchTerm={searchQuery}
-        filterOptions={[]}
-        onFilterChange={() => {}}
-        selectedFilterValues={[]}
-        sortOptions={sortOptions}
-        onSortChange={setActiveSort}
-        onSortDirectionChange={setSortDirection}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        emptyListComponent={<Text style={styles.emptyText}>{t('no_plots')}</Text>}
-        disableTagFilter
-        disableFavoriteFilter
-        isLoading={loading}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          data={visiblePlots}
+          renderItem={renderPlotListItem}
+          keyExtractor={(item) => item.id}
+          onSearch={setSearchQuery}
+          searchPlaceholder={t('search_plots')}
+          currentSearchTerm={searchQuery}
+          filterOptions={[]}
+          onFilterChange={() => {}}
+          selectedFilterValues={[]}
+          sortOptions={sortOptions}
+          onSortChange={setActiveSort}
+          onSortDirectionChange={setSortDirection}
+          currentSortDirection={sortDirection}
+          currentSortValue={activeSort}
+          emptyListComponent={<Text style={styles.emptyText}>{t('no_plots')}</Text>}
+          disableTagFilter
+          disableFavoriteFilter
+          isLoading={loading}
+        />
+      </View>
     </View>
   );
 };

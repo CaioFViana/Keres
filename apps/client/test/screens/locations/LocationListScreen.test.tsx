@@ -7,6 +7,7 @@ const mockToggleFavorite = jest.fn();
 const mockSetAdvancedSearchCriteria = jest.fn();
 const mockGetTagsByStoryId = jest.fn();
 const mockUseEntityListScreen = jest.fn();
+const mockUseScreenTour = jest.fn();
 let mockListState = {
   listProps: {},
   items: [] as { id: string; name: string }[],
@@ -39,6 +40,10 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList', () => ({
   __esModule: true,
   default: (props: {
@@ -163,6 +168,12 @@ beforeEach(() => {
   mockListProps = null;
   mockUseEntityListScreen.mockImplementation(() => mockListState);
   mockGetTagsByStoryId.mockResolvedValue([]);
+});
+
+it('requests its guided tour', async () => {
+  await render(<LocationsScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('LocationsStack');
 });
 
 it('binds the location store through the shared list hook', async () => {

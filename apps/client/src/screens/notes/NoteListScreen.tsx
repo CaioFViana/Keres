@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -14,6 +15,8 @@ import {
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -33,6 +36,8 @@ export type NotesScreenNavigationProp = CompositeNavigationProp<
 
 const NotesScreen = () => {
   useBackButtonHandler();
+  useScreenTour('NotesStack');
+  const listAnchorRef = useScreenAnchor('Notes', 'list');
   const { t } = useTranslation();
 
   const drizzleDb = useDrizzle();
@@ -143,18 +148,20 @@ const NotesScreen = () => {
 
   return (
     <ScreenContainer>
-      <GenericFilterSortList
-        {...listProps}
-        data={notes}
-        renderItem={memoizedNoteListItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('search_notes')}
-        filterOptions={memoizedTagFilterOptions}
-        sortOptions={memoizedSortOptions}
-        disableTagFilter={false}
-        entityName="Note"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={notes}
+          renderItem={memoizedNoteListItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('search_notes')}
+          filterOptions={memoizedTagFilterOptions}
+          sortOptions={memoizedSortOptions}
+          disableTagFilter={false}
+          entityName="Note"
+          storyId={storyId || ''}
+        />
+      </View>
     </ScreenContainer>
   );
 };

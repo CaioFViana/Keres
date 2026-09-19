@@ -6,6 +6,8 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { useTheme } from '@/src/theme';
 
@@ -29,6 +31,8 @@ interface Entry {
 
 const CustomizationIndexScreen = () => {
   useBackButtonHandler();
+  useScreenTour('CustomizationStack');
+  const indexAnchorRef = useScreenAnchor('Customization', 'index');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation =
@@ -109,7 +113,7 @@ const CustomizationIndexScreen = () => {
   );
 
   return (
-    <View style={styles.root}>
+    <View ref={indexAnchorRef} collapsable={false} style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('customization_intro')}</Text>
         {entries.map((entry) => (

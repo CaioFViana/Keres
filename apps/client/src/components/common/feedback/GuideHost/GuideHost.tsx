@@ -156,6 +156,13 @@ const ActiveGuideOverlay: React.FC = () => {
       backgroundColor: colors.surface,
       borderRadius: 12,
       padding: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      elevation: 6,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
     },
     title: {
       fontSize: 17,

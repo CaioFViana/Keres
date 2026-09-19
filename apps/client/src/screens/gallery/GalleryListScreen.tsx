@@ -15,6 +15,8 @@ import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGa
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '../../db';
 import type { GallerySelect } from '../../db/schemas/galleries';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -39,6 +41,8 @@ export type GalleryScreenNavigationProp = CompositeNavigationProp<
 
 const GalleryListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('GalleryStack');
+  const listAnchorRef = useScreenAnchor('Gallery', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { breakpoint } = useResponsiveLayout();
@@ -235,20 +239,22 @@ const GalleryListScreen = () => {
           void handleAddLink(url, title);
         }}
       />
-      <GenericFilterSortList
-        {...listProps}
-        key={`gallery-columns-${numColumns}`}
-        data={galleries}
-        renderItem={renderGalleryItem}
-        keyExtractor={(item) => item.id}
-        numColumns={numColumns}
-        columnWrapperStyle={styles.columnWrapper}
-        searchPlaceholder={t('search_media')}
-        filterOptions={mediaTypeOptions}
-        sortOptions={sortOptions}
-        entityName="Gallery"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          key={`gallery-columns-${numColumns}`}
+          data={galleries}
+          renderItem={renderGalleryItem}
+          keyExtractor={(item) => item.id}
+          numColumns={numColumns}
+          columnWrapperStyle={styles.columnWrapper}
+          searchPlaceholder={t('search_media')}
+          filterOptions={mediaTypeOptions}
+          sortOptions={sortOptions}
+          entityName="Gallery"
+          storyId={storyId || ''}
+        />
+      </View>
     </View>
   );
 };

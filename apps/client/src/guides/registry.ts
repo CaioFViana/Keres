@@ -14,7 +14,9 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  *
  * Wave 2 (Characters, NarrativeElements, Items, GlobalSearch, PackList) is screen-only on
  * purpose: the dashboard tour already walked the main drawer, and repeating its groups on
- * every screen would be the chain of tips the article warns about.
+ * every screen would be the chain of tips the article warns about. Wave 3 extends the same
+ * screen-only pattern to the rest of the story drawer, so every drawer destination owns a
+ * first-open tour; system entries (ArcContext, Help, Settings, Selection) stay quiet.
  */
 export const screenGuides: Record<string, Guide> = {
   StorySelectionMain: {
@@ -140,6 +142,149 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
+  PlotsStack: {
+    id: 'PlotsStack',
+    drawerId: 'main-system',
+    helpPageId: 'plots',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Plots', 'list')],
+        titleKey: 'tour_plots_start_title',
+        bodyKey: 'tour_plots_start_body',
+      },
+    ],
+  },
+  LocationsStack: {
+    id: 'LocationsStack',
+    drawerId: 'main-system',
+    helpPageId: 'locations',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Locations', 'list')],
+        titleKey: 'tour_locations_start_title',
+        bodyKey: 'tour_locations_start_body',
+      },
+    ],
+  },
+  TagsStack: {
+    id: 'TagsStack',
+    drawerId: 'main-system',
+    helpPageId: 'tags',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Tags', 'list')],
+        titleKey: 'tour_tags_start_title',
+        bodyKey: 'tour_tags_start_body',
+      },
+    ],
+  },
+  WorldRulesStack: {
+    id: 'WorldRulesStack',
+    drawerId: 'main-system',
+    helpPageId: 'world-rules',
+    steps: [
+      {
+        id: 'sections',
+        anchors: [screenAnchorId('WorldIndex', 'sections')],
+        titleKey: 'tour_world_start_title',
+        bodyKey: 'tour_world_start_body',
+      },
+    ],
+  },
+  NotesStack: {
+    id: 'NotesStack',
+    drawerId: 'main-system',
+    helpPageId: 'notes',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Notes', 'list')],
+        titleKey: 'tour_notes_start_title',
+        bodyKey: 'tour_notes_start_body',
+      },
+    ],
+  },
+  GalleryStack: {
+    id: 'GalleryStack',
+    drawerId: 'main-system',
+    helpPageId: 'gallery',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Gallery', 'list')],
+        titleKey: 'tour_gallery_start_title',
+        bodyKey: 'tour_gallery_start_body',
+      },
+    ],
+  },
+  BoardsStack: {
+    id: 'BoardsStack',
+    drawerId: 'main-system',
+    helpPageId: 'boards',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Boards', 'list')],
+        titleKey: 'tour_boards_start_title',
+        bodyKey: 'tour_boards_start_body',
+      },
+    ],
+  },
+  CustomizationStack: {
+    id: 'CustomizationStack',
+    drawerId: 'main-system',
+    helpPageId: 'custom-attributes',
+    steps: [
+      {
+        id: 'index',
+        anchors: [screenAnchorId('Customization', 'index')],
+        titleKey: 'tour_customization_start_title',
+        bodyKey: 'tour_customization_start_body',
+      },
+    ],
+  },
+  CommentsStack: {
+    id: 'CommentsStack',
+    drawerId: 'main-system',
+    helpPageId: 'comments',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Comments', 'list')],
+        titleKey: 'tour_comments_start_title',
+        bodyKey: 'tour_comments_start_body',
+      },
+    ],
+  },
+  OperationLogStack: {
+    id: 'OperationLogStack',
+    drawerId: 'main-system',
+    helpPageId: 'activity-log',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('OperationLog', 'list')],
+        titleKey: 'tour_oplog_start_title',
+        bodyKey: 'tour_oplog_start_body',
+      },
+    ],
+  },
+  StoryAnalysis: {
+    id: 'StoryAnalysis',
+    drawerId: 'main-system',
+    helpPageId: 'story-analysis',
+    steps: [
+      {
+        id: 'report',
+        anchors: [screenAnchorId('StoryAnalysis', 'report')],
+        titleKey: 'tour_analysis_start_title',
+        bodyKey: 'tour_analysis_start_body',
+      },
+    ],
+  },
   PackList: {
     id: 'PackList',
     drawerId: 'story-selection',
@@ -203,7 +348,12 @@ export const screenGuides: Record<string, Guide> = {
       {
         id: 'drawer-system',
         drawerId: 'main-system',
-        anchors: drawerGroup('main-system', ['HelpDrawer', 'StorySettings', 'StorySelection']),
+        anchors: drawerGroup('main-system', [
+          'StoryDevicesDrawer',
+          'HelpDrawer',
+          'StorySettings',
+          'StorySelection',
+        ]),
         titleKey: 'tour_dashboard_group_system_title',
         bodyKey: 'tour_dashboard_group_system_body',
       },

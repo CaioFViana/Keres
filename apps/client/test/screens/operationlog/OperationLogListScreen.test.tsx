@@ -3,7 +3,12 @@ const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockUseStoryStore = jest.fn();
 const mockRenderList = jest.fn();
+const mockUseScreenTour = jest.fn();
 
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('../../../src/hooks/useScreenHeader', () => ({ useScreenHeader: () => {} }));
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
 jest.mock('../../../src/theme', () => ({
@@ -41,6 +46,13 @@ const lastListProps = () => mockRenderList.mock.calls[mockRenderList.mock.calls.
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+it('requests its guided tour', async () => {
+  mockUseStoryStore.mockReturnValue({ selectedStory: { id: 'story-1' } });
+  await render(<OperationLogScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('OperationLogStack');
 });
 
 it('asks for a story instead of rendering the log list', async () => {

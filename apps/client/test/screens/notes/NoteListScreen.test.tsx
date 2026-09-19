@@ -6,6 +6,7 @@ const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
 const mockGetTagsByStoryId = jest.fn();
 const mockUseEntityListScreen = jest.fn();
+const mockUseScreenTour = jest.fn();
 let mockListState = {
   listProps: {},
   items: [] as { id: string; title: string }[],
@@ -33,6 +34,10 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
   };
 });
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('@/src/components/layout/ScreenContainer/ScreenContainer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => {
@@ -154,6 +159,12 @@ describe('NotesScreen', () => {
     mockListProps = null;
     mockUseEntityListScreen.mockImplementation(() => mockListState);
     mockGetTagsByStoryId.mockResolvedValue([]);
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<NotesScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('NotesStack');
   });
 
   it('binds the note store through the shared list hook', async () => {

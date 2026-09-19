@@ -14,6 +14,8 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
@@ -65,6 +67,8 @@ const CATEGORY_TITLE_KEYS: Record<StoryAnalysisCategory, string> = {
 };
 
 const StoryAnalysisScreen = () => {
+  useScreenTour('StoryAnalysis');
+  const reportAnchorRef = useScreenAnchor('StoryAnalysis', 'report');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -416,6 +420,7 @@ const StoryAnalysisScreen = () => {
   if (!report || (report.findings.length === 0 && hasRunFull)) {
     return (
       <ScrollView
+        ref={reportAnchorRef}
         style={commonContainerStyles.container}
         contentContainerStyle={styles.scrollContent}
       >
@@ -431,6 +436,7 @@ const StoryAnalysisScreen = () => {
 
   return (
     <ScrollView
+      ref={reportAnchorRef}
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollContent}
     >

@@ -4,6 +4,7 @@ import { shouldStartTour } from '../../src/guides/shouldStartTour';
 const base = {
   showTutorials: true,
   seen: [] as string[],
+  dismissedGuideIds: [] as string[],
   guideId: 'StorySelectionMain',
   hasActiveTour: false,
   isShowcase: false,
@@ -28,5 +29,9 @@ describe('shouldStartTour', () => {
 
   it('never shows in showcase captures', () => {
     expect(shouldStartTour({ ...base, isShowcase: true })).toBe(false);
+  });
+
+  it('stays quiet for tours dismissed this session, before persistence lands', () => {
+    expect(shouldStartTour({ ...base, dismissedGuideIds: ['StorySelectionMain'] })).toBe(false);
   });
 });

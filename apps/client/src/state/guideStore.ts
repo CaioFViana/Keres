@@ -9,6 +9,12 @@ export interface ActiveTour {
 interface GuideState {
   /** The tour on screen, or `null` when no tour is showing. */
   activeTour: ActiveTour | null;
+  /**
+   * Tours dismissed this session (finished or skipped), recorded synchronously. The persisted
+   * "seen" history only updates after an async database write, so without this the focus effect
+   * that opened the tour re-fires on dismiss and replays it once.
+   */
+  dismissedGuideIds: readonly string[];
   startTour: (guide: Guide) => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -16,6 +22,10 @@ interface GuideState {
   skipTour: () => void;
   /** Dismisses from the last step; the host records the tour as seen. */
   completeTour: () => void;
+  /** Drops one id from the session record, so a failed persistence write can show again. */
+  undismissGuide: (guideId: string) => void;
+  /** Clears the session record; the tutorials reset and the app reset both need this. */
+  reset: () => void;
 }
 
 /**
@@ -24,9 +34,15 @@ interface GuideState {
  */
 export const useGuideStore = create<GuideState>((set) => ({
   activeTour: null,
+  dismissedGuideIds: [],
 
   startTour: (guide: Guide) => {
-    set({ activeTour: guide.steps.length > 0 ? { guide, stepIndex: 0 } : null });
+    set((state) => {
+      if (state.activeTour?.guide.id === guide.id) return state;
+      return {
+        activeTour: guide.steps.length > 0 ? { guide, stepIndex: 0 } : null,
+      };
+    });
   },
 
   nextStep: () => {
@@ -46,10 +62,31 @@ export const useGuideStore = create<GuideState>((set) => ({
   },
 
   skipTour: () => {
-    set({ activeTour: null });
+    set((state) => ({
+      activeTour: null,
+      dismissedGuideIds: withDismissed(state, state.activeTour?.guide.id),
+    }));
   },
 
   completeTour: () => {
-    set({ activeTour: null });
+    set((state) => ({
+      activeTour: null,
+      dismissedGuideIds: withDismissed(state, state.activeTour?.guide.id),
+    }));
+  },
+
+  undismissGuide: (guideId: string) => {
+    set((state) => ({
+      dismissedGuideIds: state.dismissedGuideIds.filter((id) => id !== guideId),
+    }));
+  },
+
+  reset: () => {
+    set({ activeTour: null, dismissedGuideIds: [] });
   },
 }));
+
+function withDismissed(state: GuideState, guideId: string | undefined): readonly string[] {
+  if (!guideId || state.dismissedGuideIds.includes(guideId)) return state.dismissedGuideIds;
+  return [...state.dismissedGuideIds, guideId];
+}

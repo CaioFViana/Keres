@@ -14,6 +14,7 @@ export function useScreenTour(screenId: string): void {
   const showTutorials = useUserSettingsStore((state) => state.showTutorials);
   const seen = useUserSettingsStore((state) => state.tutorialProgress.seen);
   const hasActiveTour = useGuideStore((state) => state.activeTour !== null);
+  const dismissedGuideIds = useGuideStore((state) => state.dismissedGuideIds);
   const startTour = useGuideStore((state) => state.startTour);
 
   useFocusEffect(
@@ -24,6 +25,7 @@ export function useScreenTour(screenId: string): void {
         shouldStartTour({
           showTutorials,
           seen,
+          dismissedGuideIds,
           guideId: guide.id,
           hasActiveTour,
           isShowcase: readShowcaseRequest() !== null,
@@ -31,6 +33,6 @@ export function useScreenTour(screenId: string): void {
       ) {
         startTour(guide);
       }
-    }, [screenId, showTutorials, seen, hasActiveTour, startTour]),
+    }, [screenId, showTutorials, seen, dismissedGuideIds, hasActiveTour, startTour]),
   );
 }

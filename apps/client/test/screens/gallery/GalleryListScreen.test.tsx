@@ -12,6 +12,7 @@ const mockImportPickedMediaAssets = jest.fn();
 const mockPick = jest.fn();
 const mockPickDocuments = jest.fn();
 const mockPromptGalleryAddKind = jest.fn();
+const mockUseScreenTour = jest.fn();
 const mockHeaderConfig: { current: { actions: { onPress: () => void; busy?: boolean }[] } | null } =
   { current: null };
 const mockBreakpoint: { current: string } = { current: 'narrow' };
@@ -142,6 +143,10 @@ jest.mock('@/src/components/features/list-items/GalleryGridItem', () => ({
   },
 }));
 jest.mock('../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
@@ -237,6 +242,12 @@ describe('GalleryListScreen', () => {
     mockHeaderConfig.current = null;
     mockBreakpoint.current = 'narrow';
     mockUseEntityListScreen.mockImplementation(() => mockListState);
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<GalleryListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('GalleryStack');
   });
 
   it('binds the gallery store and sizes columns by breakpoint', async () => {

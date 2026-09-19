@@ -20,6 +20,7 @@ import type { StorySelectionDrawerParamList } from '../../navigation/StorySelect
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { mediaFileService } from '../../services/MediaFileService';
 import { syncEngine } from '../../services/sync/appSyncEngine';
+import { useGuideStore } from '../../state/guideStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
@@ -107,6 +108,7 @@ const SettingsScreen = () => {
 
   const handleResetSeenTutorials = async () => {
     await resetSeenTutorials(drizzleClient);
+    useGuideStore.getState().reset();
     showNotification(t('tutorials_reset_success'), 'success');
   };
 

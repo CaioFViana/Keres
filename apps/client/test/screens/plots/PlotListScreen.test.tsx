@@ -4,6 +4,7 @@ import PlotListScreen from '../../../src/screens/plots/PlotListScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
+const mockUseScreenTour = jest.fn();
 let mockStory: any = null;
 let mockPlotsData: any = null;
 let mockCanEdit = true;
@@ -14,6 +15,11 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
@@ -168,6 +174,12 @@ describe('PlotListScreen', () => {
     mockStory = { id: 'story-1', type: 'linear', title: 'Story' };
     mockCanEdit = true;
     mockPlotsData = plotsData();
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<PlotListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('PlotsStack');
   });
 
   it('asks for a story when none is selected', async () => {

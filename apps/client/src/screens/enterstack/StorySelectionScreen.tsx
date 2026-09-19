@@ -9,7 +9,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, FlatList, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
@@ -177,6 +177,10 @@ const StorySelectionScreen = () => {
     );
   }, [navigation, recordTrailChoice, t]);
 
+  const handleTrailLater = useCallback(() => {
+    recordTrailChoice({ dismissed: true });
+  }, [recordTrailChoice]);
+
   const showTrailCta =
     showTutorials && !tutorialProgress.firstStory?.done && !tutorialProgress.firstStory?.dismissed;
 
@@ -243,6 +247,32 @@ const StorySelectionScreen = () => {
     list: {
       flex: 1,
     },
+    trailBanner: {
+      backgroundColor: colors.primaryContainer,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    trailText: {
+      color: colors.onPrimaryContainer,
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: 12,
+    },
+    trailActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    trailLater: {
+      paddingVertical: 8,
+    },
+    trailLaterText: {
+      color: colors.onPrimaryContainer,
+      fontSize: 14,
+      fontWeight: '600',
+      textDecorationLine: 'underline',
+    },
   });
 
   return (
@@ -250,6 +280,23 @@ const StorySelectionScreen = () => {
       {summary && <SummaryCard {...summary} title={t('global_summary')} />}
 
       <Text style={styles.title}>{t('your_stories')}</Text>
+      {showTrailCta && (
+        <View style={styles.trailBanner} testID="first-story-banner">
+          <Text style={styles.trailText}>{t('first_story_choice_message')}</Text>
+          <View style={styles.trailActions}>
+            <Button onPress={handleFirstStoryCta} testID="first-story-cta">
+              {t('first_story_cta')}
+            </Button>
+            <TouchableOpacity
+              style={styles.trailLater}
+              onPress={handleTrailLater}
+              testID="first-story-later"
+            >
+              <Text style={styles.trailLaterText}>{t('first_story_choice_later')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
       <View ref={listAnchorRef} collapsable={false} style={styles.list}>
         <FlatList
           data={stories}
@@ -269,11 +316,6 @@ const StorySelectionScreen = () => {
                 <Ionicons name="book-outline" size={28} color={colors.onPrimaryContainer} />
               </View>
               <Text style={styles.emptyText}>{t('no_stories_found_create_one')}</Text>
-              {showTrailCta && (
-                <Button onPress={handleFirstStoryCta} style={{ marginTop: 16 }}>
-                  {t('first_story_cta')}
-                </Button>
-              )}
             </View>
           }
           style={styles.list}

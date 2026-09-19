@@ -139,6 +139,7 @@ export function useStoryFormActions({
               userId,
               storyData,
               state.selectedPackIds,
+              state.selectedPackIds.filter((packId) => !state.packsWithoutExtras.includes(packId)),
             );
           } else {
             await storyServiceRef.current.createStory(userId, storyData);

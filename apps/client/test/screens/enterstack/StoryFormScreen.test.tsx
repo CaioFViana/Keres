@@ -99,7 +99,21 @@ jest.mock('../../../src/services/storymanagement/PackService', () => ({
     findConflicts: (...args: unknown[]) => mockFindConflicts(...args),
     createStoryWithPacks: (...args: unknown[]) => mockCreateStoryWithPacks(...args),
   }),
+  // The real module drags the i18n init chain with it; the real predicate is pinned in
+  // `test/services/PackService.test.ts` instead, and only its shape matters here.
+  packHasExtras: (counts?: { extras?: Record<string, number> }) =>
+    !!counts?.extras && Object.values(counts.extras).some((count) => count > 0),
 }));
+
+// The real one runs an Animated interpolation that never settles under RNTL's async render. What
+// this file asserts is which value the screen passes, not the animation.
+jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: (props: Record<string, unknown>) => <View {...props} />,
+  };
+});
 
 type FieldsProps = {
   title: string;
@@ -219,6 +233,82 @@ describe('StoryFormScreen', () => {
     expect(mockCreateStory).not.toHaveBeenCalled();
     expect(mockAlert).toHaveBeenCalledWith('success', 'story_created_successfully');
     expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  it('offers an extras switch for each selected pack that carries a skeleton', async () => {
+    const extras = {
+      chapters: 2,
+      scenes: 3,
+      characters: 0,
+      locations: 0,
+      worldRules: 0,
+      notes: 0,
+      storyBoards: 0,
+      storyLocationMaps: 0,
+    };
+    const noExtras = {
+      chapters: 0,
+      scenes: 0,
+      characters: 0,
+      locations: 0,
+      worldRules: 0,
+      notes: 0,
+      storyBoards: 0,
+      storyLocationMaps: 0,
+    };
+    mockListPacks.mockResolvedValue([
+      { id: 'pack-1', name: 'Heroes', counts: { extras } },
+      { id: 'pack-2', name: 'Schema', counts: { extras: noExtras } },
+    ]);
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    expect(view.queryByText('packs_apply_extras_hint')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('pack-pack-1'));
+    await fireEvent.press(view.getByTestId('pack-pack-2'));
+
+    expect(view.getByText('packs_apply_extras_hint')).toBeTruthy();
+    // The skeleton pack gets a switch, on until asked; the schema-only pack gets nothing.
+    expect(view.getByTestId('pack-install-extras-pack-1').props.value).toBe(true);
+    expect(view.queryByTestId('pack-install-extras-pack-2')).toBeNull();
+  });
+
+  it('installs extras only for the packs left switched on', async () => {
+    mockListPacks.mockResolvedValue([
+      {
+        id: 'pack-1',
+        name: 'Heroes',
+        counts: {
+          extras: {
+            chapters: 1,
+            scenes: 0,
+            characters: 0,
+            locations: 0,
+            worldRules: 0,
+            notes: 0,
+            storyBoards: 0,
+            storyLocationMaps: 0,
+          },
+        },
+      },
+    ]);
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+    await fireEvent.press(view.getByTestId('set-title'));
+    await fireEvent.press(view.getByTestId('pack-pack-1'));
+
+    await fireEvent(view.getByTestId('pack-install-extras-pack-1'), 'valueChange', false);
+    expect(view.getByTestId('pack-install-extras-pack-1').props.value).toBe(false);
+
+    await fireEvent.press(view.getByText('create_story'));
+    await waitFor(() => expect(mockCreateStoryWithPacks).toHaveBeenCalled());
+    expect(mockCreateStoryWithPacks).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ title: 'Epic' }),
+      ['pack-1'],
+      [],
+    );
   });
 
   it('creates a plain story without packs', async () => {

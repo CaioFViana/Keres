@@ -93,7 +93,23 @@ const makePreview = (overrides = {}) => ({
   language: 'en',
   name: 'Fantasy Basics',
   description: 'Core fantasy fields',
-  counts: { customAttributes: 2, suggestions: 1, tags: 0, stats: 4, hasVocabulary: false },
+  counts: {
+    customAttributes: 2,
+    suggestions: 1,
+    tags: 0,
+    stats: 4,
+    hasVocabulary: false,
+    extras: {
+      chapters: 0,
+      scenes: 0,
+      characters: 0,
+      locations: 0,
+      worldRules: 0,
+      notes: 0,
+      storyBoards: 0,
+      storyLocationMaps: 0,
+    },
+  },
   statSystem: true,
   ...overrides,
 });
@@ -126,7 +142,23 @@ it('groups previews by slug with content chips', async () => {
       name: 'Sci-Fi',
       description: null,
       statSystem: false,
-      counts: { customAttributes: 0, suggestions: 0, tags: 0, stats: 0, hasVocabulary: true },
+      counts: {
+        customAttributes: 0,
+        suggestions: 0,
+        tags: 0,
+        stats: 0,
+        hasVocabulary: true,
+        extras: {
+          chapters: 3,
+          scenes: 0,
+          characters: 0,
+          locations: 0,
+          worldRules: 0,
+          notes: 0,
+          storyBoards: 0,
+          storyLocationMaps: 0,
+        },
+      },
     }),
   ]);
   const view = await render(<ShippedPacksScreen />);
@@ -136,6 +168,7 @@ it('groups previews by slug with content chips', async () => {
   expect(view.getByText('Core fantasy fields')).toBeTruthy();
   expect(view.getByText('packs_chip_attributes')).toBeTruthy();
   expect(view.getByText('packs_chip_vocabulary')).toBeTruthy();
+  expect(view.getByText('packs_chip_chapters')).toBeTruthy();
   expect(view.getByText('shipped_packs_chip_stat_system')).toBeTruthy();
   expect(view.getByTestId('install-fantasy')).toBeTruthy();
   expect(view.getByTestId('install-scifi')).toBeTruthy();

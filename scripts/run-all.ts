@@ -18,7 +18,9 @@ import { PACKAGES, run, runInPackage, scriptsOf } from './lib/packages';
  */
 const script = process.argv[2];
 if (!script || script.startsWith('--')) {
-  console.error('Usage: bun scripts/run-all.ts <script> [--only <package>], for example "typecheck".');
+  console.error(
+    'Usage: bun scripts/run-all.ts <script> [--only <package>], for example "typecheck".',
+  );
   process.exit(1);
 }
 

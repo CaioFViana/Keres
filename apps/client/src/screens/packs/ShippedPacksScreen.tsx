@@ -12,6 +12,7 @@ import {
   createShippedPackService,
   type ShippedPackPreview,
 } from '../../services/storymanagement/ShippedPackService';
+import { packExtrasChips } from '../../utils/packChips';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -142,6 +143,7 @@ const ShippedPacksScreen = () => {
         shown.counts.stats > 0 && t('packs_chip_stats', { count: shown.counts.stats }),
         shown.counts.hasVocabulary && t('packs_chip_vocabulary'),
         shown.statSystem && t('shipped_packs_chip_stat_system'),
+        ...packExtrasChips(shown.counts, t),
       ].filter((chip): chip is string => Boolean(chip));
 
       return (

@@ -1,4 +1,5 @@
 import Button from '@/src/components/common/controls/Button/Button';
+import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -14,6 +15,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useStoryRole } from '../../hooks/useStoryRole';
+import { packHasExtras } from '../../services/storymanagement/PackService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -36,6 +38,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
+  extrasRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  extrasLabels: { flex: 1, marginRight: 12 },
+  extrasName: { fontSize: 16, fontWeight: 'bold' },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -72,8 +82,16 @@ const StoryFormScreen = () => {
     storyServiceRef,
     userId,
   });
-  const { identity, selectedPackIds, setSelectedPackIds, loading, error, isEditing } =
-    storyFormState;
+  const {
+    identity,
+    selectedPackIds,
+    setSelectedPackIds,
+    packsWithoutExtras,
+    togglePackExtras,
+    loading,
+    error,
+    isEditing,
+  } = storyFormState;
 
   const { deleting, handleDelete, handleSave, saving } = useStoryFormActions({
     state: storyFormState,
@@ -150,12 +168,44 @@ const StoryFormScreen = () => {
             {t('packs_apply_hint')}
           </Text>
           {packs.length > 0 ? (
-            <MultiSelectPill
-              options={packs.map((pack) => ({ label: pack.name, value: pack.id }))}
-              selectedValues={selectedPackIds}
-              onSelectionChange={setSelectedPackIds}
-              placeholder={t('packs_apply_title')}
-            />
+            <>
+              <MultiSelectPill
+                options={packs.map((pack) => ({ label: pack.name, value: pack.id }))}
+                selectedValues={selectedPackIds}
+                onSelectionChange={setSelectedPackIds}
+                placeholder={t('packs_apply_title')}
+              />
+              {packs.some(
+                (pack) => selectedPackIds.includes(pack.id) && packHasExtras(pack.counts),
+              ) && (
+                <>
+                  <Text style={{ color: colors.textSecondary, marginBottom: 8, marginTop: 8 }}>
+                    {t('packs_apply_extras_hint')}
+                  </Text>
+                  {packs
+                    .filter(
+                      (pack) => selectedPackIds.includes(pack.id) && packHasExtras(pack.counts),
+                    )
+                    .map((pack) => (
+                      <View key={pack.id} style={styles.extrasRow}>
+                        <View style={styles.extrasLabels}>
+                          <Text style={[styles.extrasName, { color: colors.text }]}>
+                            {pack.name}
+                          </Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
+                            {t('packs_apply_extras')}
+                          </Text>
+                        </View>
+                        <ThemedSwitch
+                          value={!packsWithoutExtras.includes(pack.id)}
+                          onValueChange={(value) => togglePackExtras(pack.id, value)}
+                          testID={`pack-install-extras-${pack.id}`}
+                        />
+                      </View>
+                    ))}
+                </>
+              )}
+            </>
           ) : (
             <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
               {t('packs_apply_none')}

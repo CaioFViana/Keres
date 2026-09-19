@@ -8,6 +8,8 @@ import novelCraft_en from '../content/novel-craft/en.json';
 import novelCraft_pt from '../content/novel-craft/pt.json';
 import tabletopStats_en from '../content/tabletop-stats/en.json';
 import tabletopStats_pt from '../content/tabletop-stats/pt.json';
+import threeActSkeleton_en from '../content/three-act-skeleton/en.json';
+import threeActSkeleton_pt from '../content/three-act-skeleton/pt.json';
 
 export const shippedPackRegistry: ShippedPackEntry[] = [
   {
@@ -29,6 +31,13 @@ export const shippedPackRegistry: ShippedPackEntry[] = [
     languages: [
       { language: 'en', pack: tabletopStats_en },
       { language: 'pt', pack: tabletopStats_pt },
+    ],
+  },
+  {
+    slug: 'three-act-skeleton',
+    languages: [
+      { language: 'en', pack: threeActSkeleton_en },
+      { language: 'pt', pack: threeActSkeleton_pt },
     ],
   },
 ];

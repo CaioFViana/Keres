@@ -1,19 +1,19 @@
 /**
  * @jest-environment node
  */
-import { AttributeType } from '@keres/shared';
+import { AttributeType, validatePackContent } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
-import { createPackService } from '../../src/services/storymanagement/PackService';
+import { createPackService, packHasExtras } from '../../src/services/storymanagement/PackService';
 import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 /**
- * A pack is the *shape* of a story, never its content.
+ * A pack is the *shape* of a story plus, when asked, element skeletons as extras.
  *
- * Most of these assertions are about what must NOT come along: an entity, an attribute value, a
- * character's stat. A pack that carried those would be a story, and the feature's whole promise -
- * apply at creation, zero operations, bootstrap to the server whole - rests on it staying small.
+ * Most of these assertions are about what must NOT come along: an attribute value, a character's
+ * stat, gallery bytes. A pack that carried those would be a story, and the feature's whole promise
+ * - apply at creation, zero operations, bootstrap to the server whole - rests on it staying small.
  */
 
 let database: TestDatabase;
@@ -24,6 +24,7 @@ const ALL_OFF = {
   suggestionsIncludeUsed: false,
   stats: false,
   tags: false,
+  extras: false,
 };
 
 beforeEach(async () => {
@@ -78,6 +79,273 @@ async function seedStructure() {
     value: 'Elf',
     ...entityBase,
   });
+}
+
+const CHAR_A = '01ARZ3NDEKTSV4RRFFQ69G5FA1';
+const CHAR_B = '01ARZ3NDEKTSV4RRFFQ69G5FA2';
+const CHAR_GONE = '01ARZ3NDEKTSV4RRFFQ69G5FA3';
+// Character rows validate `storyId` as a ULID, and the shared `story-test` id is not one, so
+// element seeds live under their own story.
+const EXTRAS_STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FA0';
+
+/** Elements plus the dangling references extraction must sanitize or drop. */
+async function seedElements() {
+  const db = database.db;
+  await seedLocalStory(database, { id: EXTRAS_STORY_ID, title: 'Seeded' });
+  const storyId = EXTRAS_STORY_ID;
+  await db.insert(schema.chapters).values([
+    { id: 'ch-1', storyId, name: 'Setup', index: 1, ...entityBase },
+    { id: 'ch-arc', storyId, name: 'Arc-bound', index: 2, arcId: 'arc-9', ...entityBase },
+    { id: 'ch-gone', storyId, name: 'Cut', index: 3, ...entityBase, isDeleted: true },
+  ]);
+  await db.insert(schema.locations).values([
+    { id: 'loc-1', storyId, name: 'Keep', ...entityBase },
+    { id: 'loc-2', storyId, name: 'Harbor', ...entityBase },
+    { id: 'loc-gone', storyId, name: 'Ruins', ...entityBase, isDeleted: true },
+  ]);
+  await db.insert(schema.scenes).values([
+    {
+      id: 'scene-filed',
+      storyId,
+      chapterId: 'ch-1',
+      locationId: 'loc-1',
+      name: 'Arrival',
+      index: 0,
+      isStart: true,
+      isFinish: false,
+      ...entityBase,
+    },
+    {
+      id: 'scene-fragment',
+      storyId,
+      chapterId: null,
+      locationId: null,
+      name: 'Fragment',
+      index: 1,
+      isStart: false,
+      isFinish: false,
+      ...entityBase,
+    },
+    {
+      id: 'scene-orphan',
+      storyId,
+      chapterId: 'ch-gone',
+      locationId: 'loc-gone',
+      name: 'Orphan',
+      index: 2,
+      isStart: false,
+      isFinish: false,
+      ...entityBase,
+    },
+    {
+      id: 'scene-unplaced',
+      storyId,
+      chapterId: 'ch-1',
+      locationId: 'loc-gone',
+      name: 'Wanderer',
+      index: 3,
+      isStart: false,
+      isFinish: false,
+      ...entityBase,
+    },
+  ]);
+  await db.insert(schema.characters).values([
+    { id: CHAR_A, storyId, name: 'Aria', ...entityBase },
+    { id: CHAR_B, storyId, name: 'Bram', ...entityBase },
+    { id: CHAR_GONE, storyId, name: 'Ghost', ...entityBase, isDeleted: true },
+  ]);
+  await db
+    .insert(schema.worldRules)
+    .values([{ id: 'rule-1', storyId, title: 'Iron costs', ...entityBase }]);
+  await db.insert(schema.notes).values([{ id: 'note-1', storyId, title: 'Hook', ...entityBase }]);
+  await db
+    .insert(schema.tags)
+    .values([{ id: 'tag-1', storyId, name: 'seed', color: null, ...entityBase }]);
+  await db.insert(schema.boards).values([
+    {
+      id: 'board-1',
+      storyId,
+      name: 'Cast',
+      content: {
+        nodes: [
+          {
+            id: 'AAAAAAAA',
+            kind: 'entity',
+            x: 0,
+            y: 0,
+            entityType: 'Character',
+            entityId: CHAR_A,
+            labelAtPin: 'Aria',
+          },
+          {
+            id: 'BBBBBBBB',
+            kind: 'entity',
+            x: 10,
+            y: 10,
+            entityType: 'Character',
+            entityId: 'ghost-9',
+            labelAtPin: 'Ghost',
+          },
+        ],
+        edges: [],
+      },
+      ...entityBase,
+    },
+  ]);
+  await db.insert(schema.locationMaps).values([
+    {
+      id: 'map-1',
+      storyId,
+      name: 'Realm',
+      content: {
+        images: [
+          {
+            id: 'AAAAAAAA',
+            galleryId: 'gallery-9',
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            locked: false,
+          },
+        ],
+        nodes: [
+          {
+            id: 'BBBBBBBB',
+            locationId: 'loc-1',
+            x: 0,
+            y: 0,
+            icon: 'pin',
+            color: '#ffffff',
+            destinationMapId: 'map-missing',
+          },
+        ],
+        markers: [
+          {
+            id: 'CCCCCCCC',
+            x: 1,
+            y: 1,
+            title: 'Loot',
+            icon: 'star',
+            color: '#ffffff',
+            destinationMapId: 'map-2',
+          },
+        ],
+        relationTexts: [
+          { sourceLocationId: 'loc-1', destinationLocationId: 'loc-2', text: 'ferry' },
+        ],
+      },
+      ...entityBase,
+    },
+    {
+      id: 'map-2',
+      storyId,
+      name: 'City',
+      content: { images: [], nodes: [] },
+      ...entityBase,
+    },
+  ]);
+  await db.insert(schema.characterScenes).values([
+    { id: 'cs-1', storyId, characterId: CHAR_A, sceneId: 'scene-filed', ...entityBase },
+    { id: 'cs-gone', storyId, characterId: CHAR_GONE, sceneId: 'scene-filed', ...entityBase },
+    { id: 'cs-fragment', storyId, characterId: CHAR_A, sceneId: 'scene-fragment', ...entityBase },
+  ]);
+  await db.insert(schema.characterRelations).values([
+    {
+      id: 'cr-1',
+      storyId,
+      character1Id: CHAR_A,
+      character2Id: CHAR_B,
+      relationType: 'siblings',
+      ...entityBase,
+    },
+    {
+      id: 'cr-gone',
+      storyId,
+      character1Id: CHAR_A,
+      character2Id: CHAR_GONE,
+      relationType: 'haunts',
+      ...entityBase,
+    },
+  ]);
+  await db.insert(schema.locationRelations).values([
+    {
+      id: 'lr-1',
+      storyId,
+      locationAId: 'loc-1',
+      locationBId: 'loc-2',
+      relationType: 'contains',
+      ...entityBase,
+    },
+    {
+      id: 'lr-gone',
+      storyId,
+      locationAId: 'loc-1',
+      locationBId: 'loc-gone',
+      relationType: 'contains',
+      ...entityBase,
+    },
+  ]);
+  await db.insert(schema.noteRelations).values([
+    {
+      id: 'nr-1',
+      storyId,
+      noteId: 'note-1',
+      relationId: CHAR_A,
+      relationType: 'Character',
+      ...entityBase,
+    },
+    {
+      id: 'nr-choice',
+      storyId,
+      noteId: 'note-1',
+      relationId: 'choice-9',
+      relationType: 'Choice',
+      ...entityBase,
+    },
+    {
+      id: 'nr-gone',
+      storyId,
+      noteId: 'note-1',
+      relationId: CHAR_GONE,
+      relationType: 'Character',
+      ...entityBase,
+    },
+  ]);
+  await db.insert(schema.tagRelations).values([
+    {
+      id: 'tr-1',
+      storyId,
+      tagId: 'tag-1',
+      relationId: 'scene-filed',
+      relationType: 'Scene',
+      ...entityBase,
+    },
+    {
+      id: 'tr-tag-gone',
+      storyId,
+      tagId: 'tag-missing',
+      relationId: 'scene-filed',
+      relationType: 'Scene',
+      ...entityBase,
+    },
+    {
+      id: 'tr-item',
+      storyId,
+      tagId: 'tag-1',
+      relationId: 'item-9',
+      relationType: 'Item',
+      ...entityBase,
+    },
+    {
+      id: 'tr-orphan',
+      storyId,
+      tagId: 'tag-1',
+      relationId: 'scene-orphan',
+      relationType: 'Scene',
+      ...entityBase,
+    },
+  ]);
 }
 
 describe('extracting a pack from a story', () => {
@@ -149,11 +417,14 @@ describe('extracting a pack from a story', () => {
       suggestionsIncludeUsed: true,
       stats: true,
       tags: true,
+      extras: false,
     });
 
-    // The pack's shape is fixed by the schema: there is nowhere for a character or a stat value to go.
+    // The pack's shape is fixed by the schema: there is nowhere for a stat value to go,
+    // and extras stay empty unless their toggle is on.
     expect(Object.keys(content).sort()).toEqual(
       [
+        'extras',
         'formatVersion',
         'settings',
         'statStrengths',
@@ -163,6 +434,7 @@ describe('extracting a pack from a story', () => {
         'tags',
       ].sort(),
     );
+    expect(Object.values(content.extras).flat()).toEqual([]);
   });
 
   it('leaves a deleted row behind', async () => {
@@ -214,6 +486,121 @@ describe('extracting a pack from a story', () => {
   });
 });
 
+describe('extracting extras', () => {
+  it('harvests live elements and leaves deleted rows behind', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, {
+      ...ALL_OFF,
+      tags: true,
+      extras: true,
+    });
+
+    expect(content.extras.chapters.map((row) => row.id).sort()).toEqual(['ch-1', 'ch-arc']);
+    expect(content.extras.scenes.map((row) => row.id).sort()).toEqual([
+      'scene-filed',
+      'scene-fragment',
+      'scene-orphan',
+      'scene-unplaced',
+    ]);
+    expect(content.extras.characters.map((row) => row.id).sort()).toEqual([CHAR_A, CHAR_B]);
+    expect(content.extras.locations.map((row) => row.id).sort()).toEqual(['loc-1', 'loc-2']);
+    expect(content.extras.worldRules).toHaveLength(1);
+    expect(content.extras.notes).toHaveLength(1);
+    expect(content.extras.storyBoards).toHaveLength(1);
+    expect(content.extras.storyLocationMaps).toHaveLength(2);
+  });
+
+  it('nulls references to rows outside the harvest instead of carrying them', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, {
+      ...ALL_OFF,
+      extras: true,
+    });
+
+    // Unfiled scenes travel as unfiled, exactly as story export carries them.
+    const byId = Object.fromEntries(content.extras.scenes.map((row) => [row.id, row]));
+    expect(byId['scene-filed']).toMatchObject({ chapterId: 'ch-1', locationId: 'loc-1' });
+    expect(byId['scene-fragment']).toMatchObject({ chapterId: null, locationId: null });
+    expect(byId['scene-orphan']).toMatchObject({ chapterId: null, locationId: null });
+    expect(byId['scene-unplaced']).toMatchObject({ chapterId: 'ch-1', locationId: null });
+    expect(content.extras.chapters.find((row) => row.id === 'ch-arc')?.arcId).toBeNull();
+  });
+
+  it('drops joins whose endpoints do not travel along', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, {
+      ...ALL_OFF,
+      tags: true,
+      extras: true,
+    });
+
+    // cs-fragment and tr-orphan join unfiled scenes, which travel - so they travel too.
+    // Only joins to rows outside every carried collection go.
+    expect(content.extras.characterScenes.map((row) => row.id).sort()).toEqual([
+      'cs-1',
+      'cs-fragment',
+    ]);
+    expect(content.extras.characterRelations.map((row) => row.id)).toEqual(['cr-1']);
+    expect(content.extras.locationRelations.map((row) => row.id)).toEqual(['lr-1']);
+    // A Choice target is not a carried element type, and the ghost character is gone.
+    expect(content.extras.noteRelations.map((row) => row.id)).toEqual(['nr-1']);
+    expect(content.extras.tagRelations.map((row) => row.id).sort()).toEqual(['tr-1', 'tr-orphan']);
+  });
+
+  it('drops tag relations when the tags toggle is off', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, {
+      ...ALL_OFF,
+      extras: true,
+    });
+
+    expect(content.tags).toEqual([]);
+    expect(content.extras.tagRelations).toEqual([]);
+    // Other joins are unaffected by the tags toggle.
+    expect(content.extras.noteRelations.map((row) => row.id)).toEqual(['nr-1']);
+  });
+
+  it('drops map images but keeps ghost pins and sanitizes map destinations', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, {
+      ...ALL_OFF,
+      extras: true,
+    });
+
+    const board = content.extras.storyBoards[0];
+    expect(board?.content.nodes).toHaveLength(2);
+    const pins = (board?.content.nodes ?? []).flatMap((node) =>
+      node.kind === 'entity' ? [node.entityId] : [],
+    );
+    expect(pins.sort()).toEqual([CHAR_A, 'ghost-9']);
+
+    const map = content.extras.storyLocationMaps.find((row) => row.id === 'map-1');
+    expect(map?.content.images).toEqual([]);
+    expect(map?.content.nodes).toHaveLength(1);
+    expect(map?.content.nodes[0]).toMatchObject({ locationId: 'loc-1', destinationMapId: null });
+    expect(map?.content.markers?.[0]).toMatchObject({ destinationMapId: 'map-2' });
+    expect(map?.content.relationTexts).toHaveLength(1);
+  });
+
+  it('harvests nothing extra when the toggle is off', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, ALL_OFF);
+
+    expect(Object.values(content.extras).flat()).toEqual([]);
+  });
+
+  it('harvests content that validates by construction', async () => {
+    await seedElements();
+    const content = await createPackService(database.db).extractFromStory(EXTRAS_STORY_ID, {
+      ...ALL_OFF,
+      tags: true,
+      extras: true,
+    });
+
+    expect(() => validatePackContent(JSON.parse(JSON.stringify(content)))).not.toThrow();
+  });
+});
+
 describe('storing packs', () => {
   it('prefills the language and the author from the source story, and keeps an override', async () => {
     await seedStructure();
@@ -254,6 +641,7 @@ describe('storing packs', () => {
         suggestionsIncludeUsed: false,
         stats: true,
         tags: true,
+        extras: false,
       },
     });
 
@@ -262,10 +650,42 @@ describe('storing packs', () => {
       customAttributes: 1,
       suggestions: 1,
       tags: 1,
+      extras: {
+        chapters: 0,
+        scenes: 0,
+        characters: 0,
+        locations: 0,
+        worldRules: 0,
+        notes: 0,
+        storyBoards: 0,
+        storyLocationMaps: 0,
+      },
       stats: 1,
       hasVocabulary: false,
     });
     expect(pack?.version).toBe(1);
+  });
+
+  it('reports whether a pack carries any skeleton for the install switch', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    await service.createPack({
+      sourceStoryId: EXTRAS_STORY_ID,
+      name: 'Skeleton',
+      selection: { ...ALL_OFF, extras: true },
+    });
+    await service.createPack({
+      sourceStoryId: EXTRAS_STORY_ID,
+      name: 'Schema',
+      selection: { ...ALL_OFF, tags: true },
+    });
+
+    const byName = Object.fromEntries(
+      (await service.listPacks()).map((pack) => [pack.name, pack.counts]),
+    );
+    expect(packHasExtras(byName['Skeleton'])).toBe(true);
+    expect(packHasExtras(byName['Schema'])).toBe(false);
+    expect(packHasExtras(undefined)).toBe(false);
   });
 
   it('re-extracts from the source story and bumps the version', async () => {
@@ -359,6 +779,7 @@ describe('the operation log', () => {
         suggestionsIncludeUsed: true,
         stats: true,
         tags: true,
+        extras: false,
       },
     });
 
@@ -399,9 +820,9 @@ describe('applying packs at story creation', () => {
     lastServerSyncedLog: 0,
   };
 
-  async function packFrom(selection: Partial<typeof ALL_OFF> = {}) {
+  async function packFrom(selection: Partial<typeof ALL_OFF> = {}, sourceStoryId = TEST_STORY_ID) {
     return createPackService(database.db).createPack({
-      sourceStoryId: TEST_STORY_ID,
+      sourceStoryId,
       name: 'Source',
       selection: { ...ALL_OFF, ...selection },
     });
@@ -525,6 +946,178 @@ describe('applying packs at story creation', () => {
 
     expect(await service.findConflicts([packId])).toEqual([]);
   });
+
+  it('creates the skeleton as ordinary elements with fresh ids when extras are on', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    const packId = await packFrom({ tags: true, extras: true }, EXTRAS_STORY_ID);
+
+    const storyId = await service.createStoryWithPacks(PACK_USER_ID, NEW_STORY, [packId], true);
+
+    const chapters = (await database.db.query.chapters.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    expect(chapters.map((row) => row.name).sort()).toEqual(['Arc-bound', 'Setup']);
+    expect(chapters.every((row) => row.id !== 'ch-1' && row.id !== 'ch-arc')).toBe(true);
+    const scenes = (await database.db.query.scenes.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    // Unfiled scenes arrive as unfiled, exactly as story import restores them.
+    expect(scenes.map((row) => row.name).sort()).toEqual([
+      'Arrival',
+      'Fragment',
+      'Orphan',
+      'Wanderer',
+    ]);
+    const characters = (await database.db.query.characters.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    expect(characters.map((row) => row.name).sort()).toEqual(['Aria', 'Bram']);
+    // Relations survive the remap: each link still joins the linked rows, including the one
+    // to the unfiled Fragment.
+    const links = (await database.db.query.characterScenes.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    expect(links).toHaveLength(2);
+    const scenesByName = Object.fromEntries(scenes.map((row) => [row.name, row.id]));
+    const charactersByName = Object.fromEntries(characters.map((row) => [row.name, row.id]));
+    expect(links).toContainEqual(
+      expect.objectContaining({
+        characterId: charactersByName['Aria'],
+        sceneId: scenesByName['Arrival'],
+      }),
+    );
+    expect(links).toContainEqual(
+      expect.objectContaining({
+        characterId: charactersByName['Aria'],
+        sceneId: scenesByName['Fragment'],
+      }),
+    );
+  });
+
+  it('merges two packs skeletons without conflicts, suffixing repeated chapters', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    const first = await packFrom({ extras: true }, EXTRAS_STORY_ID);
+    const second = await packFrom({ extras: true }, EXTRAS_STORY_ID);
+
+    expect(await service.findConflicts([first, second])).toEqual([]);
+
+    const storyId = await service.createStoryWithPacks(
+      PACK_USER_ID,
+      NEW_STORY,
+      [first, second],
+      true,
+    );
+
+    const chapters = (await database.db.query.chapters.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    expect(chapters.map((row) => row.name).sort()).toEqual([
+      'Arc-bound',
+      'Arc-bound (2)',
+      'Setup',
+      'Setup (2)',
+    ]);
+    // Both packs were cut from the same story, so they carried the same row ids: each pack's
+    // skeleton arrives as its own rows rather than colliding on the way in.
+    const scenes = (await database.db.query.scenes.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    expect(scenes).toHaveLength(8);
+    expect(new Set(scenes.map((row) => row.id)).size).toBe(8);
+  });
+
+  it('installs extras only for the packs named, leaving the others schema-only', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    const first = await packFrom({ extras: true }, EXTRAS_STORY_ID);
+    const second = await packFrom({ extras: true }, EXTRAS_STORY_ID);
+
+    const storyId = await service.createStoryWithPacks(
+      PACK_USER_ID,
+      NEW_STORY,
+      [first, second],
+      [first],
+    );
+
+    const chapters = (await database.db.query.chapters.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    // One skeleton, so no suffixes: the second pack contributed structure alone.
+    expect(chapters.map((row) => row.name).sort()).toEqual(['Arc-bound', 'Setup']);
+    const scenes = (await database.db.query.scenes.findMany()).filter(
+      (row) => row.storyId === storyId,
+    );
+    expect(scenes).toHaveLength(4);
+  });
+
+  it('records no operations for the skeleton it creates', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    const packId = await packFrom({ extras: true }, EXTRAS_STORY_ID);
+    const before = await database.db.select().from(schema.operationLogs).all();
+
+    const storyId = await service.createStoryWithPacks(PACK_USER_ID, NEW_STORY, [packId], true);
+
+    const after = await database.db.select().from(schema.operationLogs).all();
+    expect(after).toHaveLength(before.length);
+    expect(after.filter((entry) => entry.storyId === storyId)).toHaveLength(0);
+  });
+
+  it('creates schema only when extras are off', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    const packId = await packFrom({ tags: true, extras: true }, EXTRAS_STORY_ID);
+
+    const storyId = await service.createStoryWithPacks(PACK_USER_ID, NEW_STORY, [packId], false);
+
+    expect(
+      (await database.db.query.chapters.findMany()).filter((row) => row.storyId === storyId),
+    ).toHaveLength(0);
+    expect(
+      (await database.db.query.characters.findMany()).filter((row) => row.storyId === storyId),
+    ).toHaveLength(0);
+    expect(
+      (await database.db.query.tags.findMany()).filter((row) => row.storyId === storyId),
+    ).toHaveLength(1);
+  });
+
+  it('treats a v1 pack row as carrying nothing extra', async () => {
+    await seedElements();
+    const service = createPackService(database.db);
+    const now = new Date();
+    const packId = 'pack-v1-without-extras';
+    await database.db.insert(schema.packs).values({
+      id: packId,
+      name: 'Legacy',
+      description: null,
+      language: null,
+      authorName: null,
+      version: 1,
+      content: JSON.stringify({
+        formatVersion: 1,
+        storySchemaFields: [],
+        suggestions: [],
+        tags: [],
+        stats: [],
+        statStrengths: [],
+        settings: { statSystem: false, statNotation: 'letter' },
+      }),
+      sourceStoryId: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const storyId = await service.createStoryWithPacks(PACK_USER_ID, NEW_STORY, [packId], true);
+
+    expect(
+      (await database.db.query.chapters.findMany()).filter((row) => row.storyId === storyId),
+    ).toHaveLength(0);
+    expect(
+      (await database.db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) }))?.title,
+    ).toBe('Made from a pack');
+  });
 });
 
 /**
@@ -637,6 +1230,21 @@ describe('packs from a server', () => {
       stats: [],
       statStrengths: [],
       settings: { statSystem: false, statNotation: 'letter' as const },
+      extras: {
+        chapters: [],
+        scenes: [],
+        characters: [],
+        locations: [],
+        worldRules: [],
+        notes: [],
+        storyBoards: [],
+        storyLocationMaps: [],
+        characterScenes: [],
+        characterRelations: [],
+        locationRelations: [],
+        noteRelations: [],
+        tagRelations: [],
+      },
     },
   };
 

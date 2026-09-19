@@ -188,7 +188,10 @@ describe('ChangePasswordScreen', () => {
       const view = await render(<ChangePasswordScreen />);
       await view.findByText('save');
       await fireEvent.changeText(view.getByPlaceholderText('current_password_placeholder'), 'old');
-      await fireEvent.changeText(view.getByPlaceholderText('new_password_placeholder'), 'newpass123');
+      await fireEvent.changeText(
+        view.getByPlaceholderText('new_password_placeholder'),
+        'newpass123',
+      );
       await fireEvent.changeText(
         view.getByPlaceholderText('confirm_new_password_placeholder'),
         'newpass123',

@@ -208,9 +208,7 @@ describe('AnchorManager', () => {
   it('edits an anchor and saves the draft', async () => {
     const save = jest.fn(async () => {});
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], save }));
-    await render(
-      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
-    );
+    await render(<AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />);
 
     const [edit] = trailingPressOf('anchor-1');
     await act(async () => {
@@ -244,9 +242,7 @@ describe('AnchorManager', () => {
       throw new Error('db down');
     });
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], save }));
-    await render(
-      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
-    );
+    await render(<AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />);
 
     const [edit] = trailingPressOf('anchor-1');
     await act(async () => {
@@ -266,9 +262,7 @@ describe('AnchorManager', () => {
   it('deletes an anchor after confirmation', async () => {
     const erase = jest.fn(async () => {});
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], remove: erase }));
-    await render(
-      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
-    );
+    await render(<AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />);
 
     const [, remove] = trailingPressOf('anchor-1');
     await act(async () => {
@@ -297,9 +291,7 @@ describe('AnchorManager', () => {
       throw new Error('db down');
     });
     mockUseChapterAnchors.mockReturnValue(hookState({ anchors: [anchor()], remove: erase }));
-    await render(
-      <AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />,
-    );
+    await render(<AnchorManager storyId="story-1" chapterId="ch-1" currentUserId="u1" editable />);
 
     const [, remove] = trailingPressOf('anchor-1');
     await act(async () => {

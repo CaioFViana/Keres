@@ -83,6 +83,7 @@ export * from './schemas/StoryArcSchemas';
 export * from './schemas/BoardSchemas';
 export * from './schemas/LocationMapSchemas';
 export * from './schemas/PackSchemas';
+export * from './schemas/packContentMigrations';
 export * from './schemas/SuggestionSchemas';
 export * from './schemas/TagRelationSchemas';
 export * from './schemas/TagSchemas';

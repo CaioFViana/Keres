@@ -308,7 +308,9 @@ describe('ServerManagementScreen', () => {
 
       mockGetOwnedStories.mockRejectedValueOnce(new Error('db down'));
       await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
+      );
 
       const { ServerHasOwnedStoriesError } = jest.requireMock(
         '../../../src/services/ServerService',
@@ -340,7 +342,9 @@ describe('ServerManagementScreen', () => {
       await act(async () => {
         await del?.onPress?.();
       });
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
+      );
     });
   });
 });

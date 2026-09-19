@@ -554,21 +554,30 @@ describe('import guards', () => {
     expect(await storyCount()).toBe(0);
   });
 
-  it('refuses a scene with no chapter and a chapter with a ghost arc', async () => {
-    // The integrity pre-check pins chapterId as required and every arcId to a packaged arc, so
-    // the phases below never see these shapes - these lock that contract in.
+  it('imports a scene with no chapter as unfiled', async () => {
+    // An unfiled scene is a supported live state, so the integrity pre-check lets it through
+    // and the phases store it as-is.
     const chapterId = newId();
     const locationId = newId();
-    await expect(
-      service.importStory(
-        importerId,
-        buildExport({
-          chapters: [chapter({ id: chapterId })],
-          locations: [location({ id: locationId })],
-          scenes: [scene(chapterId, locationId, { chapterId: null })],
-        }),
-      ),
-    ).rejects.toBeInstanceOf(AppError);
+    const importedId = await service.importStory(
+      importerId,
+      buildExport({
+        chapters: [chapter({ id: chapterId })],
+        locations: [location({ id: locationId })],
+        scenes: [scene(chapterId, locationId, { chapterId: null })],
+      }),
+    );
+
+    const rows = await db.query.scenes.findMany({ where: eq(scenes.storyId, importedId) });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ chapterId: null, isDeleted: false });
+  });
+
+  it('refuses a chapter with a ghost arc', async () => {
+    // The integrity pre-check pins every arcId to a packaged arc, so the phases below never see
+    // this shape - this locks that contract in.
+    const chapterId = newId();
+    const locationId = newId();
     await expect(
       service.importStory(
         importerId,
@@ -750,9 +759,10 @@ describe('import phases validate their own inputs', () => {
   });
 
   it('core keeps a ghost arc id and accepts a chapterless scene at the phase', async () => {
-    // Neither shape survives the integrity pre-check on the importStory path (see 'import
-    // guards'), so both are direct-phase behavior: the arc fallback preserves the id it
-    // cannot remap, and a scene with no chapter lands with a null chapterId.
+    // The ghost arc never survives the integrity pre-check on the importStory path (see 'import
+    // guards'), so the arc fallback is direct-phase behavior only: it preserves the id it cannot
+    // remap. The chapterless scene travels the whole path like any other scene and lands with a
+    // null chapterId.
     const { importStoryCore } = await import(
       '../../src/services/story-packages/DatabaseStoryPackageCoreImport'
     );

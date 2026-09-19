@@ -309,7 +309,9 @@ describe('LocationFormContent', () => {
 
   it('renders the title, actions and all fields', async () => {
     const props = baseProps();
-    const view = await render(<LocationFormContent {...(props as unknown as LocationFormContentProps)} />);
+    const view = await render(
+      <LocationFormContent {...(props as unknown as LocationFormContentProps)} />,
+    );
     expect(view.getByTestId('form-title').props.children).toBe('Create location');
     expect(view.getByTestId('btn-Save').props.children).toBe('Save:enabled');
     expect(view.getByTestId('btn-Delete').props.children).toBe('Delete:enabled');
@@ -335,7 +337,9 @@ describe('LocationFormContent', () => {
 
   it('forwards edits to the setters', async () => {
     const props = baseProps();
-    const view = await render(<LocationFormContent {...(props as unknown as LocationFormContentProps)} />);
+    const view = await render(
+      <LocationFormContent {...(props as unknown as LocationFormContentProps)} />,
+    );
     await fireEvent.press(view.getByTestId('input-climate_placeholder'));
     expect(props.setClimate).toHaveBeenCalledWith('typed:climate_placeholder');
     await fireEvent.press(view.getByTestId('input-politics_placeholder'));
@@ -350,18 +354,24 @@ describe('LocationFormContent', () => {
 
   it('hides the delete button when creating and disables actions while deleting', async () => {
     const creating = await render(
-      <LocationFormContent {...(baseProps({ isEditing: false }) as unknown as LocationFormContentProps)} />,
+      <LocationFormContent
+        {...(baseProps({ isEditing: false }) as unknown as LocationFormContentProps)}
+      />,
     );
     expect(creating.queryByTestId('btn-Delete')).toBeNull();
     const busy = await render(
-      <LocationFormContent {...(baseProps({ deleting: true }) as unknown as LocationFormContentProps)} />,
+      <LocationFormContent
+        {...(baseProps({ deleting: true }) as unknown as LocationFormContentProps)}
+      />,
     );
     expect(busy.getByTestId('btn-Delete').props.children).toBe('Delete:disabled');
   });
 
   it('wires tags with the primary container fallback color', async () => {
     const props = baseProps();
-    const view = await render(<LocationFormContent {...(props as unknown as LocationFormContentProps)} />);
+    const view = await render(
+      <LocationFormContent {...(props as unknown as LocationFormContentProps)} />,
+    );
     expect(jsonOf(view, 'tag-picker')).toMatchObject({
       label: 'location_tags',
       options: [
@@ -376,7 +386,9 @@ describe('LocationFormContent', () => {
 
   it('wires notes, location relations and see-also', async () => {
     const props = baseProps();
-    const view = await render(<LocationFormContent {...(props as unknown as LocationFormContentProps)} />);
+    const view = await render(
+      <LocationFormContent {...(props as unknown as LocationFormContentProps)} />,
+    );
     expect(view.getByTestId('note-manager').props.children).toBe('story-1:loc-1');
     await fireEvent.press(view.getByTestId('note-save'));
     expect(props.saveNoteRelation).toHaveBeenCalledWith({ id: 'nr-1' });
@@ -400,7 +412,9 @@ describe('LocationFormContent', () => {
 
   it('hides the story-gated managers without a story', async () => {
     const view = await render(
-      <LocationFormContent {...(baseProps({ selectedStory: null }) as unknown as LocationFormContentProps)} />,
+      <LocationFormContent
+        {...(baseProps({ selectedStory: null }) as unknown as LocationFormContentProps)}
+      />,
     );
     expect(view.queryByTestId('note-manager')).toBeNull();
     expect(view.queryByTestId('relation-manager')).toBeNull();

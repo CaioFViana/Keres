@@ -54,6 +54,8 @@ const createState = (overrides: Partial<StoryFormState> = {}): StoryFormState =>
     identity: createIdentity(),
     selectedPackIds: [],
     setSelectedPackIds: jest.fn(),
+    packsWithoutExtras: [],
+    togglePackExtras: jest.fn(),
     loading: false,
     error: null,
     setError: jest.fn(),
@@ -136,10 +138,28 @@ it('applies selected packs after conflict checks when creating', async () => {
     'user-1',
     expect.objectContaining({ title: 'Draft' }),
     ['pack-1', 'pack-2'],
+    ['pack-1', 'pack-2'],
   );
   expect(storyService.createStory).not.toHaveBeenCalled();
   expect(mockAlert).toHaveBeenCalledWith('success', 'story_created_successfully');
   expect(navigation.goBack).toHaveBeenCalled();
+});
+
+it('installs extras only for the packs the author left switched on', async () => {
+  const state = createState({
+    selectedPackIds: ['pack-1', 'pack-2'],
+    packsWithoutExtras: ['pack-2'],
+  });
+  const view = await renderActions(state);
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(packService.createStoryWithPacks).toHaveBeenCalledWith(
+    'user-1',
+    expect.objectContaining({ title: 'Draft' }),
+    ['pack-1', 'pack-2'],
+    ['pack-1'],
+  );
 });
 
 it('stops creation when selected packs conflict', async () => {
@@ -277,17 +297,23 @@ it('omits policy fields from writer updates', async () => {
 
 it('ignores deletes without policy permission and reports delete failures', async () => {
   await withSilencedConsole(['error'], async () => {
-    const writer = await renderActions(createState({ initialStoryId: 'story-1', isEditing: true }), {
-      canManageStoryPolicy: false,
-    });
+    const writer = await renderActions(
+      createState({ initialStoryId: 'story-1', isEditing: true }),
+      {
+        canManageStoryPolicy: false,
+      },
+    );
 
     await act(async () => writer.result.current.handleDelete());
 
     expect(mockAlert).not.toHaveBeenCalled();
 
-    const noUser = await renderActions(createState({ initialStoryId: 'story-1', isEditing: true }), {
-      userId: null,
-    });
+    const noUser = await renderActions(
+      createState({ initialStoryId: 'story-1', isEditing: true }),
+      {
+        userId: null,
+      },
+    );
 
     await act(async () => noUser.result.current.handleDelete());
 

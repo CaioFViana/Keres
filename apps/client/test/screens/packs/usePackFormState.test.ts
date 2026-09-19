@@ -60,6 +60,7 @@ it('starts a creation form with every selection off', async () => {
     suggestionsIncludeUsed: false,
     stats: false,
     tags: false,
+    extras: false,
   });
 });
 

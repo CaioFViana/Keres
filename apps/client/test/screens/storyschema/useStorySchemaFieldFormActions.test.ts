@@ -174,7 +174,9 @@ it('clears default value when saving an ENTITY attribute', async () => {
 
 it('surfaces persistence failures without navigating back', async () => {
   await withSilencedConsole(['error'], async () => {
-    (storySchemaFieldService.createField as jest.Mock).mockRejectedValue(new Error('duplicate key'));
+    (storySchemaFieldService.createField as jest.Mock).mockRejectedValue(
+      new Error('duplicate key'),
+    );
     const view = await renderActions();
 
     await act(async () => {

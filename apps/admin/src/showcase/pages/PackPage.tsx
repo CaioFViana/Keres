@@ -89,6 +89,32 @@ export function PackPage() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]);
   }, [content]);
 
+  /**
+   * The skeleton, as named groups. `extras` is absent on rows written before format v2, and the
+   * showcase serves stored JSON unvalidated - so the page reads that one key the tolerant way and
+   * simply shows no section. A present `extras` was validated on the way in and is complete.
+   */
+  const extrasGroups = useMemo(() => {
+    const extras = (content as { extras?: ShowcasePackDetail['content']['extras'] } | null)?.extras;
+    if (!extras) return [];
+    const names = (rows: readonly { name?: unknown; title?: unknown }[]) =>
+      rows.flatMap((row) => {
+        const label = row.name ?? row.title;
+        return typeof label === 'string' && label ? [label] : [];
+      });
+    const groups: { title: string; names: string[] }[] = [
+      { title: 'pack.entity.Chapter', names: names(extras.chapters) },
+      { title: 'pack.entity.Scene', names: names(extras.scenes) },
+      { title: 'pack.entity.Character', names: names(extras.characters) },
+      { title: 'pack.entity.Location', names: names(extras.locations) },
+      { title: 'pack.entity.WorldRule', names: names(extras.worldRules) },
+      { title: 'pack.entity.Note', names: names(extras.notes) },
+      { title: 'pack.entity.Board', names: names(extras.storyBoards) },
+      { title: 'pack.entity.LocationMap', names: names(extras.storyLocationMaps) },
+    ];
+    return groups.filter((group) => group.names.length > 0);
+  }, [content]);
+
   if (error) {
     return (
       <section className="story-page">
@@ -258,6 +284,25 @@ export function PackPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {extrasGroups.length > 0 && (
+          <div className="pack-section">
+            <h3>{t('pack.extras')}</h3>
+            <p className="muted">{t('pack.extrasIntro')}</p>
+            {extrasGroups.map((group) => (
+              <div className="pack-group" key={group.title}>
+                <h4>{t(group.title)}</h4>
+                <div className="chips">
+                  {group.names.map((name, index) => (
+                    <span className="chip" key={`${group.title}-${index}`}>
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>

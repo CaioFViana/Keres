@@ -62,6 +62,16 @@ describe('genreList', () => {
 
 describe('packContentLines', () => {
   const t = (key: string, options?: Record<string, unknown>) => `${key}:${options?.count ?? ''}`;
+  const noExtrasSummary = {
+    chapterCount: 0,
+    sceneCount: 0,
+    characterCount: 0,
+    locationCount: 0,
+    worldRuleCount: 0,
+    noteCount: 0,
+    boardCount: 0,
+    locationMapCount: 0,
+  };
 
   it('mentions only what the pack carries, in field/stat/tag/suggestion order', () => {
     const lines = packContentLines(
@@ -73,6 +83,7 @@ describe('packContentLines', () => {
         hasVocabulary: false,
         statSystem: false,
         statNotation: 'number',
+        ...noExtrasSummary,
       },
       t,
     );
@@ -90,6 +101,7 @@ describe('packContentLines', () => {
         hasVocabulary: false,
         statSystem: false,
         statNotation: 'number',
+        ...noExtrasSummary,
       },
       t,
     );
@@ -107,6 +119,7 @@ describe('packContentLines', () => {
         hasVocabulary: true,
         statSystem: true,
         statNotation: 'letter',
+        ...noExtrasSummary,
       },
       t,
     );

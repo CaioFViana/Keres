@@ -79,5 +79,30 @@ export function packContentLines(
   if (summary.statSystem) {
     lines.push(t(`pack.notation.${summary.statNotation}`));
   }
+  // The skeleton, when the pack carries one: same nonzero-only rule, after the structure.
+  if (summary.chapterCount > 0) {
+    lines.push(plural('pack.chapterCount', summary.chapterCount));
+  }
+  if (summary.sceneCount > 0) {
+    lines.push(plural('pack.sceneCount', summary.sceneCount));
+  }
+  if (summary.characterCount > 0) {
+    lines.push(plural('pack.characterCount', summary.characterCount));
+  }
+  if (summary.locationCount > 0) {
+    lines.push(plural('pack.locationCount', summary.locationCount));
+  }
+  if (summary.worldRuleCount > 0) {
+    lines.push(plural('pack.worldRuleCount', summary.worldRuleCount));
+  }
+  if (summary.noteCount > 0) {
+    lines.push(plural('pack.noteCount', summary.noteCount));
+  }
+  if (summary.boardCount > 0) {
+    lines.push(plural('pack.boardCount', summary.boardCount));
+  }
+  if (summary.locationMapCount > 0) {
+    lines.push(plural('pack.locationMapCount', summary.locationMapCount));
+  }
   return lines;
 }

@@ -41,6 +41,33 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
 
 const owner = { username: 'ana', tag: '1234', avatarColor: '#6200ee', avatarIcon: 'book-outline' };
 
+const noExtrasSummary = {
+  chapterCount: 0,
+  sceneCount: 0,
+  characterCount: 0,
+  locationCount: 0,
+  worldRuleCount: 0,
+  noteCount: 0,
+  boardCount: 0,
+  locationMapCount: 0,
+};
+
+const noExtras: PackContentType['extras'] = {
+  chapters: [],
+  scenes: [],
+  characters: [],
+  locations: [],
+  worldRules: [],
+  notes: [],
+  storyBoards: [],
+  storyLocationMaps: [],
+  characterScenes: [],
+  characterRelations: [],
+  locationRelations: [],
+  noteRelations: [],
+  tagRelations: [],
+};
+
 const card: ShowcasePackCard = {
   id: 'pack-1',
   name: 'Tabletop stats',
@@ -57,6 +84,7 @@ const card: ShowcasePackCard = {
     hasVocabulary: true,
     statSystem: true,
     statNotation: 'letter',
+    ...noExtrasSummary,
   },
   updatedAt: '2026-08-19T10:00:00.000Z',
 };
@@ -192,6 +220,7 @@ const detail: ShowcasePackDetail = {
         },
       },
     },
+    extras: noExtras,
   },
 };
 
@@ -222,6 +251,31 @@ describe('the pack listing', () => {
     expect(text).toContain('1 tag');
     expect(text).toContain('4 suggestions');
     expect(text).toContain('Vocabulary');
+    await unmount();
+  });
+
+  it('says what skeleton a pack carries without opening it', async () => {
+    mocks.fetchPacks.mockResolvedValue([
+      {
+        ...card,
+        summary: {
+          ...card.summary,
+          chapterCount: 3,
+          sceneCount: 1,
+          characterCount: 2,
+          boardCount: 1,
+        },
+      },
+    ]);
+    const { container, unmount } = await renderAt('/packs');
+    await flush();
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('3 chapters');
+    expect(text).toContain('1 scene');
+    expect(text).toContain('2 characters');
+    expect(text).toContain('1 board');
+    expect(text).not.toContain('0 locations');
     await unmount();
   });
 
@@ -309,6 +363,45 @@ describe('the pack page', () => {
     const text = container.textContent ?? '';
     expect(text).toContain('Alignment');
     expect(text).not.toContain('custom:field-1');
+    await unmount();
+  });
+
+  it('names the skeleton the pack carries', async () => {
+    // The page reads names only; the rows are partial on purpose.
+    const skeleton = {
+      ...noExtras,
+      chapters: [{ id: 'ch-1', name: 'Setup' }],
+      scenes: [{ id: 'scene-1', name: 'Arrival' }],
+      characters: [{ id: 'char-1', name: 'Aria' }],
+    } as unknown as PackContentType['extras'];
+    mocks.fetchPack.mockResolvedValue({
+      ...detail,
+      content: { ...detail.content, extras: skeleton },
+    });
+    const { container, unmount } = await renderAt('/pack/pack-1');
+    await flush();
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('Extras');
+    expect(text).toContain('Setup');
+    expect(text).toContain('Arrival');
+    expect(text).toContain('Aria');
+    await unmount();
+  });
+
+  /**
+   * Rows written before format v2 have no `extras` key at all, and the showcase serves stored JSON
+   * unvalidated - the page shows no section instead of breaking.
+   */
+  it('shows no extras section for a pack row without them', async () => {
+    mocks.fetchPack.mockResolvedValue({
+      ...detail,
+      content: { ...detail.content, extras: undefined },
+    });
+    const { container, unmount } = await renderAt('/pack/pack-1');
+    await flush();
+
+    expect(container.textContent).not.toContain('Extras');
     await unmount();
   });
 

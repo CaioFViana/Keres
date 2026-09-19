@@ -19,6 +19,7 @@ import { packApiService } from '../../services/PackApiService';
 import { createServerService } from '../../services/ServerService';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
+import { packExtrasChips } from '../../utils/packChips';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -210,6 +211,7 @@ const PackListScreen = () => {
       pack.counts.tags > 0 && t('packs_chip_tags', { count: pack.counts.tags }),
       pack.counts.stats > 0 && t('packs_chip_stats', { count: pack.counts.stats }),
       pack.counts.hasVocabulary && t('packs_chip_vocabulary'),
+      ...packExtrasChips(pack.counts, t),
     ].filter((chip): chip is string => Boolean(chip));
 
   const renderPack = ({ item }: { item: PackSummary }) => {

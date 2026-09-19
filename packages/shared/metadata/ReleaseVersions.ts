@@ -12,8 +12,9 @@
  * holds the app's identity, which the tool owns; this holds the compatibility numbers, which people
  * own.
  *
- * Each is re-exported from the module that explains what it means - `StoryExportVersion.ts` and
- * `SyncProtocol.ts` - so call sites keep importing from the place that documents them.
+ * Each is re-exported from the module that explains what it means - `StoryExportVersion.ts`,
+ * `SyncProtocol.ts` and `PackSchemas.ts` - so call sites keep importing from the place that
+ * documents them.
  */
 
 /**
@@ -24,6 +25,18 @@
  * rather than guessing at it.
  */
 export const CURRENT_STORY_FORMAT_VERSION = 10;
+
+/**
+ * Version of the pack content payload (`PackContentType`).
+ *
+ * Bump it when a release changes the shape of what a pack carries, and add the matching
+ * migration in `packContentMigrations.ts`. An older Keres refuses a pack from a newer format
+ * rather than guessing at it; the listing merely degrades, it never breaks.
+ *
+ * **2** - `extras`: element skeletons (chapters, scenes, characters, locations, world rules,
+ * notes, boards, location maps, and their join rows) carried alongside the schema.
+ */
+export const CURRENT_PACK_FORMAT_VERSION = 2;
 
 /**
  * Version of the synchronization protocol: what client and server exchange, and the rules each end

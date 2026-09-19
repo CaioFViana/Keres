@@ -151,6 +151,7 @@ const PackFormScreen = () => {
         true,
         !selection.suggestions,
       )}
+      {renderToggle('extras', 'packs_toggle_extras', 'packs_toggle_extras_hint')}
 
       <ScreenSection title={t('packs_details')} />
       <FormField label={t('name')}>

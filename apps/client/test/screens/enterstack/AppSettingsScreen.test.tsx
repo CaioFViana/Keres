@@ -309,7 +309,9 @@ describe('AppSettingsScreen', () => {
       await act(async () => {
         await reset?.onPress?.();
       });
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'reset_application_error'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'reset_application_error'),
+      );
       expect(mockDispatch).not.toHaveBeenCalled();
     });
   });

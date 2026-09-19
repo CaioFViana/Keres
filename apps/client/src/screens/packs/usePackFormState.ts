@@ -12,6 +12,7 @@ const ALL_OFF: PackSelectionType = {
   suggestionsIncludeUsed: false,
   stats: false,
   tags: false,
+  extras: false,
 };
 
 type UsePackFormStateOptions = {
@@ -98,7 +99,11 @@ export function usePackFormState({
 
   const nothingSelected = useMemo(
     () =>
-      !selection.customAttributes && !selection.suggestions && !selection.stats && !selection.tags,
+      !selection.customAttributes &&
+      !selection.suggestions &&
+      !selection.stats &&
+      !selection.tags &&
+      !selection.extras,
     [selection],
   );
 

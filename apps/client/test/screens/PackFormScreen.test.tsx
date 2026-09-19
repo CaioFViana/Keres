@@ -170,6 +170,29 @@ describe('choosing what a pack carries', () => {
 
     expect(screen.getByTestId('pack-toggle-suggestionsIncludeUsed').props.value).toBe(false);
   });
+
+  it('offers the skeleton as its own extras toggle, off until asked', async () => {
+    const screen = await renderScreen();
+
+    expect(screen.getByText('packs_toggle_extras')).toBeTruthy();
+    expect(screen.getByText('packs_toggle_extras_hint')).toBeTruthy();
+    expect(screen.getByTestId('pack-toggle-extras').props.value).toBe(false);
+
+    await press(screen.getByTestId('pack-toggle-extras'), 'valueChange', true);
+
+    expect(screen.getByTestId('pack-toggle-extras').props.value).toBe(true);
+  });
+
+  it('carries the extras answer into the saved selection', async () => {
+    mockRouteParams.value = { packId: 'pack-1' };
+    mockListPacks.mockResolvedValue([{ id: 'pack-1', name: 'Skeleton', sourceStoryId: 'story-1' }]);
+    const screen = await renderScreen();
+
+    await press(screen.getByTestId('pack-toggle-extras'), 'valueChange', true);
+    await press(screen.getByTestId('save-pack'), 'press');
+
+    expect(mockReextract).toHaveBeenCalledWith('pack-1', expect.objectContaining({ extras: true }));
+  });
 });
 
 describe('refusing to save an unusable pack', () => {

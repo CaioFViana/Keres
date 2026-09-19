@@ -39,7 +39,9 @@ function mockDatabase(overrides: Record<string, jest.Mock> = {}) {
 }
 
 const mockValues = jest.fn(async () => undefined);
-const mockFindStory = jest.fn(async (): Promise<{ id: string } | undefined> => ({ id: IMPORTED_STORY_ID }));
+const mockFindStory = jest.fn(
+  async (): Promise<{ id: string } | undefined> => ({ id: IMPORTED_STORY_ID }),
+);
 const mockFindStaleField = jest.fn(async (): Promise<{ id: string } | undefined> => undefined);
 const mockDb = {
   insert: jest.fn(() => ({ values: mockValues })),

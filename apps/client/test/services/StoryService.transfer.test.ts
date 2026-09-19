@@ -197,6 +197,56 @@ it('round-trips portable story data after a permanent local purge and clears sta
 });
 
 /**
+ * An unfiled scene is a supported live state - the writer unfiled it on purpose - so the portable
+ * format carries it instead of dropping it. The exporter used to prune it as dangling, silently
+ * deleting scenes on every export.
+ */
+it('carries scenes filed nowhere through an export and back', async () => {
+  await database.db
+    .insert(schema.chapters)
+    .values([{ id: 'ch-1', storyId: STORY_ID, name: 'Setup', index: 1, ...entityBase }]);
+  await database.db.insert(schema.scenes).values([
+    {
+      id: 'scene-filed',
+      storyId: STORY_ID,
+      chapterId: 'ch-1',
+      locationId: null,
+      name: 'Filed',
+      index: 0,
+      isStart: true,
+      isFinish: false,
+      ...entityBase,
+    },
+    {
+      id: 'scene-loose',
+      storyId: STORY_ID,
+      chapterId: null,
+      locationId: null,
+      name: 'Loose',
+      index: 1,
+      isStart: false,
+      isFinish: false,
+      ...entityBase,
+    },
+  ]);
+
+  const service = createStoryService(database.db);
+  const exported = await service.exportFullStory(STORY_ID);
+  expect(exported.scenes.map((scene) => scene.id).sort()).toEqual(['scene-filed', 'scene-loose']);
+
+  const importedStoryId = await service.importFullStory(LOCAL_USER_ID, exported, null);
+  const scenes = await database.db.query.scenes.findMany({
+    where: (table, { eq }) => eq(table.storyId, importedStoryId),
+  });
+  expect(scenes.map((scene) => scene.name).sort()).toEqual(['Filed', 'Loose']);
+  expect(scenes.find((scene) => scene.name === 'Loose')?.chapterId).toBeNull();
+  const chapters = await database.db.query.chapters.findMany({
+    where: (table, { eq }) => eq(table.storyId, importedStoryId),
+  });
+  expect(scenes.find((scene) => scene.name === 'Filed')?.chapterId).toBe(chapters[0]?.id);
+});
+
+/**
  * The device's export did not carry the choices' conditions and effects: the importer here always knew
  * how to read them and the API always exported them, but whoever generated the package in the app sent
  * the story without the choices' logic - and with no error, because the three fields are optional in

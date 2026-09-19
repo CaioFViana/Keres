@@ -125,6 +125,16 @@ const makePack = (overrides = {}) => ({
     tags: 5,
     stats: 0,
     hasVocabulary: true,
+    extras: {
+      chapters: 0,
+      scenes: 0,
+      characters: 0,
+      locations: 0,
+      worldRules: 0,
+      notes: 0,
+      storyBoards: 0,
+      storyLocationMaps: 0,
+    },
   },
   ...overrides,
 });
@@ -173,7 +183,48 @@ it('renders pack cards with content chips', async () => {
       language: null,
       authorName: null,
       sourceStoryId: null,
-      counts: { customAttributes: 0, suggestions: 0, tags: 0, stats: 0, hasVocabulary: false },
+      counts: {
+        customAttributes: 0,
+        suggestions: 0,
+        tags: 0,
+        stats: 0,
+        hasVocabulary: false,
+        extras: {
+          chapters: 0,
+          scenes: 0,
+          characters: 0,
+          locations: 0,
+          worldRules: 0,
+          notes: 0,
+          storyBoards: 0,
+          storyLocationMaps: 0,
+        },
+      },
+    }),
+    makePack({
+      id: 'pack-3',
+      name: 'Skeleton',
+      description: null,
+      language: null,
+      authorName: null,
+      sourceStoryId: null,
+      counts: {
+        customAttributes: 0,
+        suggestions: 0,
+        tags: 0,
+        stats: 0,
+        hasVocabulary: false,
+        extras: {
+          chapters: 2,
+          scenes: 3,
+          characters: 1,
+          locations: 0,
+          worldRules: 0,
+          notes: 0,
+          storyBoards: 0,
+          storyLocationMaps: 0,
+        },
+      },
     }),
   ]);
   const view = await render(<PackListScreen />);
@@ -182,6 +233,10 @@ it('renders pack cards with content chips', async () => {
   expect(view.getByText('Empty')).toBeTruthy();
   expect(view.getByText('packs_chip_attributes')).toBeTruthy();
   expect(view.getByText('packs_chip_empty')).toBeTruthy();
+  expect(view.getByText('Skeleton')).toBeTruthy();
+  expect(view.getByText('packs_chip_chapters')).toBeTruthy();
+  expect(view.getByText('packs_chip_scenes')).toBeTruthy();
+  expect(view.getByText('packs_chip_characters')).toBeTruthy();
 
   await fireEvent.press(view.getByLabelText('packs_reextract'));
   expect(mockNavigate).toHaveBeenCalledWith('PackForm', { packId: 'pack-1' });

@@ -51,7 +51,9 @@ it('alerts when the server list cannot load', async () => {
   await withSilencedConsole(['error'], async () => {
     const { view } = await renderState(new Error('offline'));
 
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_form_data'));
+    await waitFor(() =>
+      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_form_data'),
+    );
 
     expect(view.result.current.servers).toEqual([]);
   });

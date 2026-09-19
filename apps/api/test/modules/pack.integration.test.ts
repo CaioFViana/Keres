@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { showcaseSettings } from '../../src/db/schema';
+import { packs, showcaseSettings } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
 import { packService } from '../../src/services/PackService';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
@@ -93,7 +93,11 @@ describe('sharing a pack', () => {
       version: 2,
       ownerId: ana.userId,
     });
-    expect(fetched.data.content).toMatchObject({ formatVersion: 1 });
+    // A v1 payload is migrated on the way in: same pieces, current version, empty extras.
+    expect(fetched.data.content).toMatchObject({
+      formatVersion: 2,
+      extras: expect.objectContaining({ chapters: [], tagRelations: [] }),
+    });
   });
 
   /** The columns exist so a listing never has to open a payload; this is what that buys. */
@@ -263,7 +267,10 @@ describe('the public showcase', () => {
     const { status, data } = await getPublic(packId);
 
     expect(status).toBe(200);
-    expect(data.content).toMatchObject({ formatVersion: 1 });
+    expect(data.content).toMatchObject({
+      formatVersion: 2,
+      extras: expect.objectContaining({ chapters: [], tagRelations: [] }),
+    });
   });
 
   /** 404 rather than 403: saying "forbidden" would confirm the pack exists. */
@@ -315,6 +322,74 @@ describe('the public showcase', () => {
       },
     });
     expect(data[0].content).toBeUndefined();
+  });
+
+  /**
+   * Rows written before format v2 hold content without `extras`, and no migration rewrites them in
+   * place - the card reads that shape tolerantly instead. Inserted directly: the upload path would
+   * validate and migrate, which is exactly what a legacy row never went through.
+   */
+  it('still cards a v1 row whose content has no extras key', async () => {
+    await db.insert(packs).values({
+      id: newId(),
+      ownerId: ana.userId,
+      name: 'Legacy',
+      visibility: 'public',
+      // A legacy shape, not a PackContentType - that is the point of the test.
+      content: { ...validContent(), tags: [tag('Undead')] } as never,
+    });
+
+    const { data } = await listPublic();
+
+    expect(data).toHaveLength(1);
+    expect(data[0]).toMatchObject({
+      name: 'Legacy',
+      owner: { username: ana.username },
+      summary: {
+        tagCount: 1,
+        chapterCount: 0,
+        sceneCount: 0,
+        characterCount: 0,
+        locationCount: 0,
+        worldRuleCount: 0,
+        noteCount: 0,
+        boardCount: 0,
+        locationMapCount: 0,
+      },
+    });
+  });
+
+  it('cards the skeleton counts of a v2 row', async () => {
+    // The card reads lengths only, so the rows are stubs - full entities would assert nothing more.
+    await db.insert(packs).values({
+      id: newId(),
+      ownerId: ana.userId,
+      name: 'Skeleton',
+      visibility: 'public',
+      content: {
+        ...validContent(),
+        formatVersion: 2,
+        extras: {
+          chapters: [{ id: 'ch-1' }, { id: 'ch-2' }],
+          scenes: [{ id: 'scene-1' }],
+          characters: [],
+          locations: [],
+          worldRules: [],
+          notes: [],
+          storyBoards: [],
+          storyLocationMaps: [],
+        },
+      } as never,
+    });
+
+    const { data } = await listPublic();
+
+    expect(data).toHaveLength(1);
+    expect(data[0].summary).toMatchObject({
+      chapterCount: 2,
+      sceneCount: 1,
+      characterCount: 0,
+    });
   });
 
   /** An anonymous reader gains nothing from an account id, so it never leaves the server. */

@@ -287,7 +287,9 @@ describe('FriendshipListScreen', () => {
       await focusLast();
       await view.findByText('received_from');
       await fireEvent.press(view.getByTestId('icon-checkmark-circle-outline-24'));
-      const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
+      const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find(
+        (b) => b.text === 'proceed',
+      );
       await act(async () => {
         await proceed?.onPress?.();
       });
@@ -319,7 +321,9 @@ describe('FriendshipListScreen', () => {
       await act(async () => {
         entityEventEmitter.emit('friendship_changed');
       });
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_servers'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_servers'),
+      );
 
       mockGetAllFriendships.mockRejectedValueOnce(new Error('db down'));
       await act(async () => {

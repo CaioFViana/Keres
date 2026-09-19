@@ -292,7 +292,9 @@ describe('StorySelectionScreen', () => {
       const view = await render(<StorySelectionScreen />);
       await view.findByTestId('fav-story-1');
       await fireEvent.press(view.getByTestId('fav-story-1'));
-      await waitFor(() => expect(mockUpdateFavorite).toHaveBeenCalledWith('user-1', 'story-1', true));
+      await waitFor(() =>
+        expect(mockUpdateFavorite).toHaveBeenCalledWith('user-1', 'story-1', true),
+      );
       expect(mockUpdateStoryFavoriteStatus).toHaveBeenCalledWith('story-1', true);
 
       mockUpdateFavorite.mockRejectedValueOnce(new Error('boom'));

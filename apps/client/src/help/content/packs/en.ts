@@ -2,13 +2,14 @@ import type { HelpPage } from '../../types';
 const page: HelpPage = {
   id: 'packs',
   title: 'Packs',
-  summary: 'Reuse a story’s structure — its fields, catalogues, stats and tags — in a new story.',
-  keywords: ['pack', 'template', 'reuse', 'structure', 'starter'],
+  summary:
+    'Reuse a story’s structure — its fields, catalogues, stats and tags — and, when asked, a starter skeleton of its elements.',
+  keywords: ['pack', 'template', 'reuse', 'structure', 'starter', 'extras'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'A pack is the reusable part of a story: the custom attributes you defined, the suggestion catalogues you saved, the stats and their ladders, and the tags. It carries no characters, scenes, locations or any other element — a pack is the shape of a story, never its content.',
+      text: 'A pack is the reusable part of a story: the custom attributes you defined, the suggestion catalogues you saved, the stats and their ladders, and the tags. With the Extras switch on, it also carries a skeleton of the story’s elements — chapters, scenes, characters, locations and the rest — as ordinary starting elements, never the filled-in content: no attribute values, no stat values, no gallery images.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
@@ -23,7 +24,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Choose the story to take the structure from.',
-        'Turn on what should come along: custom attributes, tags, stats, suggestion catalogues.',
+        'Turn on what should come along: custom attributes, tags, stats, suggestion catalogues — and Extras for the starter skeleton.',
         'Give it a name. The language and the author are filled in from that story and can be changed.',
         'Save. The pack is now on this device and can be used by any new story.',
       ],
@@ -40,6 +41,7 @@ const page: HelpPage = {
       items: [
         'Start creating a story as usual.',
         'Under Packs, choose one or more.',
+        'Each chosen pack that carries a skeleton offers its own Extras switch: on brings the starter elements, off installs structure only.',
         'Create the story. Everything the packs carry is already there.',
       ],
     },
@@ -52,6 +54,20 @@ const page: HelpPage = {
     {
       type: 'paragraph',
       text: 'Some things cannot exist twice in one story: two custom attributes with the same identification on the same element, two tags with the same name, two default stat ladders, or more primary stats than the radar allows. If the packs you picked collide, Keres says which one before the story is created, and nothing is created until you change the selection.',
+    },
+    { type: 'heading', level: 2, text: 'Extras' },
+    {
+      type: 'paragraph',
+      text: 'Extras are the starter skeleton: the source story’s chapters, scenes, characters, locations, world rules, notes, boards and maps, with the links between them. They arrive as ordinary elements with their own names, ready to edit — and two packs shipping a chapter with the same name arrive as “Setup” and “Setup (2)” rather than colliding.',
+    },
+    {
+      type: 'paragraph',
+      text: 'Two things stay behind on purpose: values filled into forms and stats stay with the writer; and gallery images never travel, so a pack stays small enough to share as text. Scenes filed in no chapter travel as unfiled, exactly as story export carries them.',
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'An older Keres that does not know extras installs such a pack as structure only, without saying so. Update the app on every device to get the skeleton.',
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {

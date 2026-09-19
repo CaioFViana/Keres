@@ -8,6 +8,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useFriendshipFormState } from '../../../src/screens/enterstack/useFriendshipFormState';
 
 const server = (id: string) => ({ id, name: id }) as never;
@@ -47,11 +48,13 @@ it('leaves the server unselected when several are registered', async () => {
 });
 
 it('alerts when the server list cannot load', async () => {
-  const { view } = await renderState(new Error('offline'));
+  await withSilencedConsole(['error'], async () => {
+    const { view } = await renderState(new Error('offline'));
 
-  await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_form_data'));
+    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_form_data'));
 
-  expect(view.result.current.servers).toEqual([]);
+    expect(view.result.current.servers).toEqual([]);
+  });
 });
 
 it('changing the server clears the previously resolved friend', async () => {

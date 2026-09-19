@@ -125,6 +125,7 @@ jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ServerManagementScreen from '../../../src/screens/enterstack/ServerManagementScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const online = {
   id: 'srv-1',
@@ -185,13 +186,15 @@ describe('ServerManagementScreen', () => {
   });
 
   it('shows the error and empty states', async () => {
-    mockGetAllServers.mockRejectedValueOnce(new Error('db down'));
-    const failed = await render(<ServerManagementScreen />);
-    await failed.findByText('failed_to_load_servers');
+    await withSilencedConsole(['error'], async () => {
+      mockGetAllServers.mockRejectedValueOnce(new Error('db down'));
+      const failed = await render(<ServerManagementScreen />);
+      await failed.findByText('failed_to_load_servers');
 
-    mockGetAllServers.mockResolvedValue([]);
-    const empty = await render(<ServerManagementScreen />);
-    await empty.findByText('no_servers_found');
+      mockGetAllServers.mockResolvedValue([]);
+      const empty = await render(<ServerManagementScreen />);
+      await empty.findByText('no_servers_found');
+    });
   });
 
   it('navigates to profile, password and edit screens', async () => {
@@ -299,43 +302,45 @@ describe('ServerManagementScreen', () => {
   });
 
   it('reports deletion failures', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('Main');
+    await withSilencedConsole(['error'], async () => {
+      const view = await render(<ServerManagementScreen />);
+      await view.findByText('Main');
 
-    mockGetOwnedStories.mockRejectedValueOnce(new Error('db down'));
-    await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'));
+      mockGetOwnedStories.mockRejectedValueOnce(new Error('db down'));
+      await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'));
 
-    const { ServerHasOwnedStoriesError } = jest.requireMock(
-      '../../../src/services/ServerService',
-    ) as { ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error };
-    mockDeleteServer.mockRejectedValueOnce(new ServerHasOwnedStoriesError([{ title: 'Epic' }]));
-    await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith(
-        'delete_server_title',
-        'delete_server_message',
-        expect.any(Array),
-        { cancelable: true },
-      ),
-    );
-    const owned = alertButtons(mockAlert.mock.calls.length - 1).find((b) => b.text === 'delete');
-    await act(async () => {
-      await owned?.onPress?.();
+      const { ServerHasOwnedStoriesError } = jest.requireMock(
+        '../../../src/services/ServerService',
+      ) as { ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error };
+      mockDeleteServer.mockRejectedValueOnce(new ServerHasOwnedStoriesError([{ title: 'Epic' }]));
+      await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith(
+          'delete_server_title',
+          'delete_server_message',
+          expect.any(Array),
+          { cancelable: true },
+        ),
+      );
+      const owned = alertButtons(mockAlert.mock.calls.length - 1).find((b) => b.text === 'delete');
+      await act(async () => {
+        await owned?.onPress?.();
+      });
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith(
+          'cannot_delete_server_owned_stories_title',
+          'cannot_delete_server_owned_stories_message',
+        ),
+      );
+
+      mockDeleteServer.mockRejectedValueOnce(new Error('boom'));
+      await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
+      const del = alertButtons(mockAlert.mock.calls.length - 1).find((b) => b.text === 'delete');
+      await act(async () => {
+        await del?.onPress?.();
+      });
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'));
     });
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith(
-        'cannot_delete_server_owned_stories_title',
-        'cannot_delete_server_owned_stories_message',
-      ),
-    );
-
-    mockDeleteServer.mockRejectedValueOnce(new Error('boom'));
-    await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-    const del = alertButtons(mockAlert.mock.calls.length - 1).find((b) => b.text === 'delete');
-    await act(async () => {
-      await del?.onPress?.();
-    });
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'));
   });
 });

@@ -89,6 +89,7 @@ jest.mock('@keres/shared/graphs/storyTimelineSvg', () => ({
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useStoryCalendar } from '../../src/hooks/useStoryCalendar';
 import { useStoryTimeline } from '../../src/hooks/useStoryTimeline';
+import { withSilencedConsole } from '../helpers/silenceConsole';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -265,12 +266,14 @@ describe('useStoryTimeline', () => {
   });
 
   it('reports export failures and recovers saving state', async () => {
-    const view = await renderHook(() => useStoryTimeline());
-    await waitFor(() => expect(view.result.current.loading).toBe(false));
-    mockDeliver.mockRejectedValueOnce(new Error('share unavailable'));
-    await act(async () => view.result.current.exportTimeline());
-    expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_failed', 'error');
-    expect(view.result.current.saving).toBe(false);
+    await withSilencedConsole(['log'], async () => {
+      const view = await renderHook(() => useStoryTimeline());
+      await waitFor(() => expect(view.result.current.loading).toBe(false));
+      mockDeliver.mockRejectedValueOnce(new Error('share unavailable'));
+      await act(async () => view.result.current.exportTimeline());
+      expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_failed', 'error');
+      expect(view.result.current.saving).toBe(false);
+    });
   });
 
   it('warns when the export has no share target', async () => {

@@ -137,6 +137,7 @@ jest.mock('../../../src/components/common/inputs/IconPickerInput/IconPickerInput
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import MyProfileScreen from '../../../src/screens/enterstack/MyProfileScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'user-on-server' };
 
@@ -186,13 +187,15 @@ describe('MyProfileScreen', () => {
   });
 
   it('maps load failures to specific messages', async () => {
-    mockGetOwnProfile.mockRejectedValueOnce({ isOffline: true });
-    const offline = await render(<MyProfileScreen />);
-    await offline.findByText('server_unreachable');
+    await withSilencedConsole(['error'], async () => {
+      mockGetOwnProfile.mockRejectedValueOnce({ isOffline: true });
+      const offline = await render(<MyProfileScreen />);
+      await offline.findByText('server_unreachable');
 
-    mockGetOwnProfile.mockRejectedValueOnce(new Error('boom'));
-    const failed = await render(<MyProfileScreen />);
-    await failed.findByText('failed_to_load_profile');
+      mockGetOwnProfile.mockRejectedValueOnce(new Error('boom'));
+      const failed = await render(<MyProfileScreen />);
+      await failed.findByText('failed_to_load_profile');
+    });
   });
 
   it('caps the bio at 200 characters', async () => {
@@ -235,17 +238,19 @@ describe('MyProfileScreen', () => {
   });
 
   it('maps save failures to specific messages', async () => {
-    mockUpdateProfile.mockRejectedValueOnce({ isOffline: true });
-    const view = await render(<MyProfileScreen />);
-    await view.findByText('save');
-    await fireEvent.press(view.getByText('save'));
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'server_unreachable'));
-    expect(mockGoBack).not.toHaveBeenCalled();
+    await withSilencedConsole(['error'], async () => {
+      mockUpdateProfile.mockRejectedValueOnce({ isOffline: true });
+      const view = await render(<MyProfileScreen />);
+      await view.findByText('save');
+      await fireEvent.press(view.getByText('save'));
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'server_unreachable'));
+      expect(mockGoBack).not.toHaveBeenCalled();
 
-    mockUpdateProfile.mockRejectedValueOnce(new Error('boom'));
-    await fireEvent.press(view.getByText('save'));
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_update_profile'),
-    );
+      mockUpdateProfile.mockRejectedValueOnce(new Error('boom'));
+      await fireEvent.press(view.getByText('save'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_update_profile'),
+      );
+    });
   });
 });

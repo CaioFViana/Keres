@@ -45,6 +45,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../../helpers/silenceConsole';
 import { useChapterFormActions } from '../../../../src/screens/narrative-elements/chapters/useChapterFormActions';
 import type { ChapterFormState } from '../../../../src/screens/narrative-elements/chapters/useChapterFormState';
 import type { ChapterService } from '../../../../src/services/storymanagement/ChapterService';
@@ -165,28 +166,30 @@ it('delegates deletion and completes it with an event and back navigation', asyn
 });
 
 it('does not emit success after a secondary-write failure, then recovers on retry', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('chapter-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('chapter-1');
-    return { entityId: 'chapter-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('chapter-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('chapter-1');
+      return { entityId: 'chapter-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockEmit).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedChapterId).toHaveBeenCalledWith('chapter-1');
+    expect(mockEmit).toHaveBeenCalledWith('chapter_changed', 'story-1', 'chapter-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedChapterId).toHaveBeenCalledWith('chapter-1');
-  expect(mockEmit).toHaveBeenCalledWith('chapter_changed', 'story-1', 'chapter-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });
 
 it('rejects a save missing a required custom attribute', async () => {

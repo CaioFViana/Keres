@@ -26,6 +26,7 @@ const HARBOR = { ownerId: 'harbor', ownerType: 'Location' as const };
 beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database);
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 

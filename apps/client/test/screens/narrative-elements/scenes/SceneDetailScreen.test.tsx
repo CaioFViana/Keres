@@ -292,6 +292,7 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent'
 });
 
 import SceneDetailScreen from '../../../../src/screens/narrative-elements/scenes/SceneDetailScreen';
+import { withSilencedConsole } from '../../../helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   const el = view.getByTestId(testID);
@@ -369,15 +370,6 @@ beforeEach(() => {
   mockServicesLoaded();
 });
 
-function silenceConsole() {
-  const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-  return () => {
-    error.mockRestore();
-    warn.mockRestore();
-  };
-}
-
 describe('SceneDetailScreen', () => {
   afterEach(() => {
     cleanup();
@@ -430,16 +422,16 @@ describe('SceneDetailScreen', () => {
   });
 
   it('shows an error when loading fails and navigates back', async () => {
-    const restore = silenceConsole();
-    mockGetSceneById.mockRejectedValue(new Error('db down'));
-    const view = await render(<SceneDetailScreen />);
-    await waitFor(() =>
-      expect(view.getByTestId('screen-error').props.children).toBe('failed-Scene'),
-    );
-    expect(mockHeaderArgs?.title).toBe('error');
-    await fireEvent.press(view.getByTestId('screen-error'));
-    expect(mockGoBack).toHaveBeenCalledTimes(1);
-    restore();
+    await withSilencedConsole(['error', 'warn'], async () => {
+      mockGetSceneById.mockRejectedValue(new Error('db down'));
+      const view = await render(<SceneDetailScreen />);
+      await waitFor(() =>
+        expect(view.getByTestId('screen-error').props.children).toBe('failed-Scene'),
+      );
+      expect(mockHeaderArgs?.title).toBe('error');
+      await fireEvent.press(view.getByTestId('screen-error'));
+      expect(mockGoBack).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('shows the not-found state for a missing scene', async () => {
@@ -458,25 +450,25 @@ describe('SceneDetailScreen', () => {
   });
 
   it('tolerates failing auxiliary loads', async () => {
-    const restore = silenceConsole();
-    mockGetChapterById.mockRejectedValue(new Error('no chapter'));
-    mockGetLocationById.mockRejectedValue(new Error('no location'));
-    mockGetPreviousNextScenes.mockRejectedValue(new Error('no neighbors'));
-    mockGetRelationsForScene.mockRejectedValue(new Error('no relations'));
-    mockGetItemsByStoryId.mockRejectedValue(new Error('no items'));
-    mockGetItemJourneysBySceneId.mockRejectedValue(new Error('no journeys'));
-    const view = await render(<SceneDetailScreen />);
-    const content = await view.findByTestId('scene-content');
-    expect(JSON.parse(content.props.children as string)).toMatchObject({
-      scene: 'Opening',
-      chapter: null,
-      location: null,
-      prev: null,
-      next: null,
-      items: [],
-      journeys: 0,
+    await withSilencedConsole(['error', 'warn'], async () => {
+      mockGetChapterById.mockRejectedValue(new Error('no chapter'));
+      mockGetLocationById.mockRejectedValue(new Error('no location'));
+      mockGetPreviousNextScenes.mockRejectedValue(new Error('no neighbors'));
+      mockGetRelationsForScene.mockRejectedValue(new Error('no relations'));
+      mockGetItemsByStoryId.mockRejectedValue(new Error('no items'));
+      mockGetItemJourneysBySceneId.mockRejectedValue(new Error('no journeys'));
+      const view = await render(<SceneDetailScreen />);
+      const content = await view.findByTestId('scene-content');
+      expect(JSON.parse(content.props.children as string)).toMatchObject({
+        scene: 'Opening',
+        chapter: null,
+        location: null,
+        prev: null,
+        next: null,
+        items: [],
+        journeys: 0,
+      });
     });
-    restore();
   });
 
   it('clears chapter and location without ids', async () => {

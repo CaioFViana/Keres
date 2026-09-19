@@ -193,6 +193,7 @@ import type { Story } from '@keres/shared/entities/Story';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import StorySelectionScreen from '../../../src/screens/enterstack/StorySelectionScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const story = {
   id: 'story-1',
@@ -258,12 +259,14 @@ describe('StorySelectionScreen', () => {
   });
 
   it('reports summary failures', async () => {
-    mockGetCatalogCounts.mockRejectedValue(new Error('boom'));
-    const view = await render(<StorySelectionScreen />);
-    await view.findByTestId('story-story-1');
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_summary_data'),
-    );
+    await withSilencedConsole(['error'], async () => {
+      mockGetCatalogCounts.mockRejectedValue(new Error('boom'));
+      const view = await render(<StorySelectionScreen />);
+      await view.findByTestId('story-story-1');
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_summary_data'),
+      );
+    });
   });
 
   it('selects a story and opens the creation form', async () => {
@@ -285,25 +288,29 @@ describe('StorySelectionScreen', () => {
   });
 
   it('toggles story favorites', async () => {
-    const view = await render(<StorySelectionScreen />);
-    await view.findByTestId('fav-story-1');
-    await fireEvent.press(view.getByTestId('fav-story-1'));
-    await waitFor(() => expect(mockUpdateFavorite).toHaveBeenCalledWith('user-1', 'story-1', true));
-    expect(mockUpdateStoryFavoriteStatus).toHaveBeenCalledWith('story-1', true);
+    await withSilencedConsole(['error'], async () => {
+      const view = await render(<StorySelectionScreen />);
+      await view.findByTestId('fav-story-1');
+      await fireEvent.press(view.getByTestId('fav-story-1'));
+      await waitFor(() => expect(mockUpdateFavorite).toHaveBeenCalledWith('user-1', 'story-1', true));
+      expect(mockUpdateStoryFavoriteStatus).toHaveBeenCalledWith('story-1', true);
 
-    mockUpdateFavorite.mockRejectedValueOnce(new Error('boom'));
-    await fireEvent.press(view.getByTestId('fav-story-1'));
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_update_favorite_status'),
-    );
+      mockUpdateFavorite.mockRejectedValueOnce(new Error('boom'));
+      await fireEvent.press(view.getByTestId('fav-story-1'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_update_favorite_status'),
+      );
+    });
   });
 
   it('ignores favorite toggles without a user', async () => {
-    mockUserSettings.userId = null;
-    const view = await render(<StorySelectionScreen />);
-    await view.findByTestId('fav-story-1');
-    await fireEvent.press(view.getByTestId('fav-story-1'));
-    expect(mockUpdateFavorite).not.toHaveBeenCalled();
+    await withSilencedConsole(['error'], async () => {
+      mockUserSettings.userId = null;
+      const view = await render(<StorySelectionScreen />);
+      await view.findByTestId('fav-story-1');
+      await fireEvent.press(view.getByTestId('fav-story-1'));
+      expect(mockUpdateFavorite).not.toHaveBeenCalled();
+    });
   });
 
   it('exits only on a double back press', async () => {

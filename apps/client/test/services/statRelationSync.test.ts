@@ -39,6 +39,8 @@ function baseVersionOf(payload: string): number | undefined {
 
 beforeEach(async () => {
   database = await createTestDatabase();
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
+  jest.spyOn(console, 'warn').mockImplementation(() => undefined);
   await database.db.insert(schema.stories).values({
     id: STORY_ID,
     userId: USER_ID,
@@ -62,6 +64,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   database.close();
+  jest.restoreAllMocks();
 });
 
 const set = (value: number, modeId: string | null = null) =>

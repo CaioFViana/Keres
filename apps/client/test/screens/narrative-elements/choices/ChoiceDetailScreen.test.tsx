@@ -342,6 +342,7 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
 });
 
 import ChoiceDetailScreen from '../../../../src/screens/narrative-elements/choices/ChoiceDetailScreen';
+import { withSilencedConsole } from '../../../helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
@@ -386,15 +387,6 @@ beforeEach(() => {
   mockSubscriptions = [];
   mockServicesLoaded();
 });
-
-function silenceConsole() {
-  const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-  return () => {
-    error.mockRestore();
-    warn.mockRestore();
-  };
-}
 
 describe('ChoiceDetailScreen', () => {
   afterEach(() => {
@@ -522,29 +514,29 @@ describe('ChoiceDetailScreen', () => {
   });
 
   it('tolerates failing check and lookup loads', async () => {
-    const restore = silenceConsole();
-    mockGetCheckGroupsByChoiceId.mockRejectedValue(new Error('no groups'));
-    mockGetAllScenesByStoryId.mockRejectedValue(new Error('no scenes'));
-    const view = await render(<ChoiceDetailScreen />);
-    await view.findByTestId('detail-title');
-    expect(view.getByTestId('field-from-Scene').props.children).toBe('from-Scene=common_na');
-    expect(view.getByTestId('field-checks_title').props.children).toBe(
-      'checks_title=no_check_groups',
-    );
-    restore();
+    await withSilencedConsole(['error', 'warn'], async () => {
+      mockGetCheckGroupsByChoiceId.mockRejectedValue(new Error('no groups'));
+      mockGetAllScenesByStoryId.mockRejectedValue(new Error('no scenes'));
+      const view = await render(<ChoiceDetailScreen />);
+      await view.findByTestId('detail-title');
+      expect(view.getByTestId('field-from-Scene').props.children).toBe('from-Scene=common_na');
+      expect(view.getByTestId('field-checks_title').props.children).toBe(
+        'checks_title=no_check_groups',
+      );
+    });
   });
 
   it('shows an error when loading fails and navigates back', async () => {
-    const restore = silenceConsole();
-    mockGetChoiceById.mockRejectedValue(new Error('db down'));
-    const view = await render(<ChoiceDetailScreen />);
-    await waitFor(() =>
-      expect(view.getByTestId('screen-error').props.children).toBe('failed-Choice'),
-    );
-    expect(mockHeaderArgs?.title).toBe('error');
-    await fireEvent.press(view.getByTestId('screen-error'));
-    expect(mockGoBack).toHaveBeenCalledTimes(1);
-    restore();
+    await withSilencedConsole(['error', 'warn'], async () => {
+      mockGetChoiceById.mockRejectedValue(new Error('db down'));
+      const view = await render(<ChoiceDetailScreen />);
+      await waitFor(() =>
+        expect(view.getByTestId('screen-error').props.children).toBe('failed-Choice'),
+      );
+      expect(mockHeaderArgs?.title).toBe('error');
+      await fireEvent.press(view.getByTestId('screen-error'));
+      expect(mockGoBack).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('shows the not-found state for a missing choice', async () => {

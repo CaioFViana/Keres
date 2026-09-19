@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
@@ -243,10 +244,12 @@ function makeNote(overrides = {}) {
 describe('NoteDetailScreen', () => {
   afterEach(() => {
     cleanup();
+    (console.warn as jest.Mock).mockRestore();
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, 'warn').mockImplementation((() => undefined) as never);
     mockRelatedProps = null;
     mockGalleryProps = null;
     mockHeaderConfig.current = null;
@@ -275,17 +278,19 @@ describe('NoteDetailScreen', () => {
   });
 
   it('shows the not-found and load-failure errors', async () => {
-    mockGetNoteById.mockResolvedValue(null);
-    const missing = await render(<NoteDetailScreen />);
-    await waitFor(() => expect(missing.getByTestId('screen-error')).toBeTruthy());
-    expect(missing.getByTestId('screen-error').props.children).toBe('note_not_found');
-    await fireEvent.press(missing.getByTestId('screen-error'));
-    expect(mockGoBack).toHaveBeenCalled();
+    await withSilencedConsole(['error'], async () => {
+      mockGetNoteById.mockResolvedValue(null);
+      const missing = await render(<NoteDetailScreen />);
+      await waitFor(() => expect(missing.getByTestId('screen-error')).toBeTruthy());
+      expect(missing.getByTestId('screen-error').props.children).toBe('note_not_found');
+      await fireEvent.press(missing.getByTestId('screen-error'));
+      expect(mockGoBack).toHaveBeenCalled();
 
-    mockGetNoteById.mockRejectedValue(new Error('db down'));
-    const failed = await render(<NoteDetailScreen />);
-    await waitFor(() => expect(failed.getByTestId('screen-error')).toBeTruthy());
-    expect(failed.getByTestId('screen-error').props.children).toBe('failed_to_load_note');
+      mockGetNoteById.mockRejectedValue(new Error('db down'));
+      const failed = await render(<NoteDetailScreen />);
+      await waitFor(() => expect(failed.getByTestId('screen-error')).toBeTruthy());
+      expect(failed.getByTestId('screen-error').props.children).toBe('failed_to_load_note');
+    });
   });
 
   it('leaves when the note was deleted', async () => {

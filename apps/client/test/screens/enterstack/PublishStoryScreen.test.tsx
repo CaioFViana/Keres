@@ -147,6 +147,7 @@ import { Linking } from 'react-native';
 import PublishStoryScreen, {
   buildStoryPublicUrl,
 } from '../../../src/screens/enterstack/PublishStoryScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://s.example///' };
 const story = {
@@ -210,9 +211,11 @@ describe('PublishStoryScreen', () => {
   });
 
   it('shows the error screen when loading fails', async () => {
-    mockGetAllServers.mockRejectedValue(new Error('db down'));
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('failed_to_load_stories');
+    await withSilencedConsole(['log'], async () => {
+      mockGetAllServers.mockRejectedValue(new Error('db down'));
+      const view = await render(<PublishStoryScreen />);
+      await view.findByText('failed_to_load_stories');
+    });
   });
 
   it('skips stories whose server is unknown locally', async () => {
@@ -325,32 +328,34 @@ describe('PublishStoryScreen', () => {
   });
 
   it('maps publish failures to notifications', async () => {
-    const view = await render(<PublishStoryScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
-    await view.findByText('publish_create_version');
+    await withSilencedConsole(['log'], async () => {
+      const view = await render(<PublishStoryScreen />);
+      await view.findByText('Epic');
+      await fireEvent.press(view.getByText('Epic'));
+      await view.findByText('publish_create_version');
 
-    mockPublish.mockRejectedValueOnce({ response: { status: 409 } });
-    await fireEvent.press(view.getByText('publish_create_version'));
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('publish_blocked_not_synced', 'error'),
-    );
+      mockPublish.mockRejectedValueOnce({ response: { status: 409 } });
+      await fireEvent.press(view.getByText('publish_create_version'));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('publish_blocked_not_synced', 'error'),
+      );
 
-    mockPublish.mockRejectedValueOnce({ response: { status: 403 } });
-    await fireEvent.press(view.getByText('publish_create_version'));
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('publish_showcase_disabled', 'error'),
-    );
+      mockPublish.mockRejectedValueOnce({ response: { status: 403 } });
+      await fireEvent.press(view.getByText('publish_create_version'));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('publish_showcase_disabled', 'error'),
+      );
 
-    mockPublish.mockRejectedValueOnce({ isOffline: true });
-    await fireEvent.press(view.getByText('publish_create_version'));
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('publish_blocked_offline', 'error'),
-    );
+      mockPublish.mockRejectedValueOnce({ isOffline: true });
+      await fireEvent.press(view.getByText('publish_create_version'));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('publish_blocked_offline', 'error'),
+      );
 
-    mockPublish.mockRejectedValueOnce(new Error('boom'));
-    await fireEvent.press(view.getByText('publish_create_version'));
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('publish_failed', 'error'));
+      mockPublish.mockRejectedValueOnce(new Error('boom'));
+      await fireEvent.press(view.getByText('publish_create_version'));
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('publish_failed', 'error'));
+    });
   });
 
   it('deletes a single version after confirmation', async () => {

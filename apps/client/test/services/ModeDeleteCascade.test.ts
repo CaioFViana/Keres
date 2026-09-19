@@ -20,6 +20,7 @@ let database: TestDatabase;
 
 beforeEach(async () => {
   database = await createTestDatabase();
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   await seedLocalStory(database);
   await database.db.insert(schema.characters).values({
     id: 'ada',
@@ -38,7 +39,10 @@ beforeEach(async () => {
   });
 });
 
-afterEach(() => database.close());
+afterEach(() => {
+  database.close();
+  jest.restoreAllMocks();
+});
 
 describe('ModeService delete cascade', () => {
   it('tombstones the mode values with their own operations, sparing the others', async () => {

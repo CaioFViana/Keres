@@ -44,10 +44,14 @@ const ladderOf = async (statId: string | null = null) =>
 
 beforeEach(async () => {
   database = await createTestDatabase();
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   await seedLocalStory(database);
 });
 
-afterEach(() => database.close());
+afterEach(() => {
+  database.close();
+  jest.restoreAllMocks();
+});
 
 describe('StatStrengthService update and delete', () => {
   it('renames a tier and moves its floor when the floor stays unique', async () => {

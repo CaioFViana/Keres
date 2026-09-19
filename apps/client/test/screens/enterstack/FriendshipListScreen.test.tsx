@@ -123,6 +123,7 @@ import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import FriendshipListScreen from '../../../src/screens/enterstack/FriendshipListScreen';
 import { entityEventEmitter } from '../../../src/utils/EventEmitter';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
 
@@ -280,18 +281,20 @@ describe('FriendshipListScreen', () => {
   });
 
   it('reports action failures', async () => {
-    mockAccept.mockRejectedValue(new Error('boom'));
-    const view = await render(<FriendshipListScreen />);
-    await focusLast();
-    await view.findByText('received_from');
-    await fireEvent.press(view.getByTestId('icon-checkmark-circle-outline-24'));
-    const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
-    await act(async () => {
-      await proceed?.onPress?.();
+    await withSilencedConsole(['error'], async () => {
+      mockAccept.mockRejectedValue(new Error('boom'));
+      const view = await render(<FriendshipListScreen />);
+      await focusLast();
+      await view.findByText('received_from');
+      await fireEvent.press(view.getByTestId('icon-checkmark-circle-outline-24'));
+      const proceed = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'proceed');
+      await act(async () => {
+        await proceed?.onPress?.();
+      });
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('failed_to_accept_request', 'error'),
+      );
     });
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('failed_to_accept_request', 'error'),
-    );
   });
 
   it('reloads when friendships change elsewhere', async () => {
@@ -306,24 +309,26 @@ describe('FriendshipListScreen', () => {
   });
 
   it('shows the empty state and load failures', async () => {
-    mockGetAllFriendships.mockResolvedValue([]);
-    const view = await render(<FriendshipListScreen />);
-    await focusLast();
-    await view.findByText('no_friendships_found');
+    await withSilencedConsole(['error'], async () => {
+      mockGetAllFriendships.mockResolvedValue([]);
+      const view = await render(<FriendshipListScreen />);
+      await focusLast();
+      await view.findByText('no_friendships_found');
 
-    mockGetAllServers.mockRejectedValueOnce(new Error('db down'));
-    await act(async () => {
-      entityEventEmitter.emit('friendship_changed');
-    });
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_servers'));
+      mockGetAllServers.mockRejectedValueOnce(new Error('db down'));
+      await act(async () => {
+        entityEventEmitter.emit('friendship_changed');
+      });
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_servers'));
 
-    mockGetAllFriendships.mockRejectedValueOnce(new Error('db down'));
-    await act(async () => {
-      entityEventEmitter.emit('friendship_changed');
+      mockGetAllFriendships.mockRejectedValueOnce(new Error('db down'));
+      await act(async () => {
+        entityEventEmitter.emit('friendship_changed');
+      });
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_friendships'),
+      );
     });
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_friendships'),
-    );
   });
 
   it('requires a logged-in user', async () => {

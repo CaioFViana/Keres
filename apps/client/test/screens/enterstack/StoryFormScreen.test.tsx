@@ -166,6 +166,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 });
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import StoryFormScreen from '../../../src/screens/enterstack/StoryFormScreen';
 
 const storedStory = {
@@ -245,14 +246,16 @@ describe('StoryFormScreen', () => {
   });
 
   it('shows the error screen when creation fails', async () => {
-    mockCreateStory.mockRejectedValue(new Error('boom'));
-    const view = await render(<StoryFormScreen />);
-    await view.findByText('create_story');
-    await fireEvent.press(view.getByTestId('set-title'));
-    await fireEvent.press(view.getByText('create_story'));
-    await view.findByText('failed_to_save_story');
-    await fireEvent.press(view.getByText('go_back'));
-    expect(mockGoBack).toHaveBeenCalled();
+    await withSilencedConsole(['error'], async () => {
+      mockCreateStory.mockRejectedValue(new Error('boom'));
+      const view = await render(<StoryFormScreen />);
+      await view.findByText('create_story');
+      await fireEvent.press(view.getByTestId('set-title'));
+      await fireEvent.press(view.getByText('create_story'));
+      await view.findByText('failed_to_save_story');
+      await fireEvent.press(view.getByText('go_back'));
+      expect(mockGoBack).toHaveBeenCalled();
+    });
   });
 
   it('edits and deletes an existing story', async () => {

@@ -14,6 +14,7 @@ import { createStorySchemaFieldService } from '../../src/services/storymanagemen
 import { createStatService } from '../../src/services/storymanagement/StatService';
 import { createSuggestionService } from '../../src/services/storymanagement/SuggestionService';
 import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
+import { withSilencedConsole } from '../helpers/silenceConsole';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = 'story-1';
@@ -629,26 +630,28 @@ describe('TagRelationService', () => {
   });
 
   it('lists the live relations of a tag and stays quiet on duplicate or missing operations', async () => {
-    const service = createTagRelationService(database.db);
-    await database.db
-      .insert(schema.tags)
-      .values({ id: 'tag-a', storyId: STORY_ID, name: 'A', ...base });
+    await withSilencedConsole(['warn'], async () => {
+      const service = createTagRelationService(database.db);
+      await database.db
+        .insert(schema.tags)
+        .values({ id: 'tag-a', storyId: STORY_ID, name: 'A', ...base });
 
-    await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
-    // A second add of the same live link is a no-op, not a duplicate row or operation.
-    await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
-    expect(await database.db.select().from(schema.tagRelations).all()).toHaveLength(1);
+      await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+      // A second add of the same live link is a no-op, not a duplicate row or operation.
+      await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+      expect(await database.db.select().from(schema.tagRelations).all()).toHaveLength(1);
 
-    expect(
-      (await service.getRelationsForTag(STORY_ID, 'tag-a')).map((row) => row.relationId),
-    ).toEqual(['char-1']);
+      expect(
+        (await service.getRelationsForTag(STORY_ID, 'tag-a')).map((row) => row.relationId),
+      ).toEqual(['char-1']);
 
-    // Removing a link that was never there warns instead of logging a phantom operation.
-    await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-2', 'Character', 'tag-a');
-    expect(await database.db.query.operationLogs.findMany()).toHaveLength(1);
+      // Removing a link that was never there warns instead of logging a phantom operation.
+      await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-2', 'Character', 'tag-a');
+      expect(await database.db.query.operationLogs.findMany()).toHaveLength(1);
 
-    await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
-    expect(await service.getRelationsForTag(STORY_ID, 'tag-a')).toEqual([]);
+      await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+      expect(await service.getRelationsForTag(STORY_ID, 'tag-a')).toEqual([]);
+    });
   });
 });
 

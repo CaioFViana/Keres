@@ -491,6 +491,7 @@ jest.mock('../../../../src/components/common/controls/Button/Button', () => {
 });
 
 import ChapterDetailScreen from '../../../../src/screens/narrative-elements/chapters/ChapterDetailScreen';
+import { withSilencedConsole } from '../../../helpers/silenceConsole';
 
 function jsonOf(view: RenderResult, testID: string) {
   return JSON.parse(view.getByTestId(testID).props.children as string);
@@ -565,15 +566,6 @@ beforeEach(() => {
   mockSubscriptions = [];
   mockServicesLoaded();
 });
-
-function silenceConsole() {
-  const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-  return () => {
-    error.mockRestore();
-    warn.mockRestore();
-  };
-}
 
 describe('ChapterDetailScreen', () => {
   afterEach(() => {
@@ -674,16 +666,16 @@ describe('ChapterDetailScreen', () => {
   });
 
   it('shows an error when loading fails and navigates back', async () => {
-    const restore = silenceConsole();
-    mockGetChapterById.mockRejectedValue(new Error('db down'));
-    const view = await render(<ChapterDetailScreen />);
-    await waitFor(() =>
-      expect(view.getByTestId('screen-error').props.children).toBe('failed-Chapter'),
-    );
-    expect(mockHeaderArgs?.title).toBe('error');
-    await fireEvent.press(view.getByTestId('screen-error'));
-    expect(mockGoBack).toHaveBeenCalledTimes(1);
-    restore();
+    await withSilencedConsole(['error', 'warn'], async () => {
+      mockGetChapterById.mockRejectedValue(new Error('db down'));
+      const view = await render(<ChapterDetailScreen />);
+      await waitFor(() =>
+        expect(view.getByTestId('screen-error').props.children).toBe('failed-Chapter'),
+      );
+      expect(mockHeaderArgs?.title).toBe('error');
+      await fireEvent.press(view.getByTestId('screen-error'));
+      expect(mockGoBack).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('shows the not-found state for a missing chapter', async () => {
@@ -780,16 +772,18 @@ describe('ChapterDetailScreen', () => {
   });
 
   it('alerts when conversion fails', async () => {
-    const restore = silenceConsole();
-    mockConvertChapterType.mockRejectedValue(new Error('nope'));
-    const view = await render(<ChapterDetailScreen />);
-    await view.findByTestId('detail-title');
-    await act(async () => {
-      (mockHeaderArgs?.actions ?? [])[0].onPress();
+    await withSilencedConsole(['error', 'warn'], async () => {
+      mockConvertChapterType.mockRejectedValue(new Error('nope'));
+      const view = await render(<ChapterDetailScreen />);
+      await view.findByTestId('detail-title');
+      await act(async () => {
+        (mockHeaderArgs?.actions ?? [])[0].onPress();
+      });
+      await fireEvent.press(view.getByTestId('convert-confirm'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'chapter_convert_failed'),
+      );
     });
-    await fireEvent.press(view.getByTestId('convert-confirm'));
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'chapter_convert_failed'));
-    restore();
   });
 
   it('offers chapter conversion for events', async () => {

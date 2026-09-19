@@ -113,6 +113,7 @@ const stores = [
 
 beforeEach(async () => {
   database = await createTestDatabase();
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   await seedLocalStory(database, { favoriteBehavior: 'global' });
   resetAllClientStores();
   useUserSettingsStore.setState({ userId: TEST_USER_ID });
@@ -122,6 +123,7 @@ afterEach(() => {
   resetAllClientStores();
   useUserSettingsStore.setState({ userId: null });
   database.close();
+  jest.restoreAllMocks();
 });
 
 describe.each(stores)('%s store', (collectionKey, store, fetchKey) => {

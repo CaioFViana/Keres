@@ -35,6 +35,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useItemJourneyFormActions } from '../../../src/screens/itemJourneys/useItemJourneyFormActions';
 import type { ItemJourneyFormState } from '../../../src/screens/itemJourneys/useItemJourneyFormState';
 import type { ItemJourneyService } from '../../../src/services/storymanagement/ItemJourneyService';
@@ -153,26 +154,28 @@ it('delegates deletion and completes it with an event and back navigation', asyn
 });
 
 it('does not emit success after a secondary-write failure, then recovers on retry', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('item-journey-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('item-journey-1');
-    return { entityId: 'item-journey-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('item-journey-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('item-journey-1');
+      return { entityId: 'item-journey-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'vocabulary_failed_to_save_entity:Journey');
+    expect(mockEmit).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedItemJourneyId).toHaveBeenCalledWith('item-journey-1');
+    expect(mockEmit).toHaveBeenCalledWith('item_journey_changed', 'story-1', 'item-journey-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'vocabulary_failed_to_save_entity:Journey');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedItemJourneyId).toHaveBeenCalledWith('item-journey-1');
-  expect(mockEmit).toHaveBeenCalledWith('item_journey_changed', 'story-1', 'item-journey-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });

@@ -9,6 +9,7 @@ jest.mock('react-i18next', () => ({
 
 import { AttributeType } from '@keres/shared';
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useStorySchemaFieldFormActions } from '../../../src/screens/storyschema/useStorySchemaFieldFormActions';
 import type { StorySchemaFieldFormState } from '../../../src/screens/storyschema/useStorySchemaFieldFormState';
 import type { StorySchemaFieldService } from '../../../src/services/storymanagement/StorySchemaFieldService';
@@ -172,13 +173,15 @@ it('clears default value when saving an ENTITY attribute', async () => {
 });
 
 it('surfaces persistence failures without navigating back', async () => {
-  (storySchemaFieldService.createField as jest.Mock).mockRejectedValue(new Error('duplicate key'));
-  const view = await renderActions();
+  await withSilencedConsole(['error'], async () => {
+    (storySchemaFieldService.createField as jest.Mock).mockRejectedValue(new Error('duplicate key'));
+    const view = await renderActions();
 
-  await act(async () => {
-    await view.result.current.handleSave();
+    await act(async () => {
+      await view.result.current.handleSave();
+    });
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'duplicate key');
+    expect(navigation.goBack).not.toHaveBeenCalled();
   });
-
-  expect(mockAlert).toHaveBeenCalledWith('error', 'duplicate key');
-  expect(navigation.goBack).not.toHaveBeenCalled();
 });

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import BoardCanvasScreen from '../../../src/screens/boards/BoardCanvasScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 if (!(global as any).requestAnimationFrame) {
   (global as any).requestAnimationFrame = (cb: () => void) => {
@@ -350,9 +351,11 @@ describe('BoardCanvasScreen', () => {
   });
 
   it('shows the load failure', async () => {
-    mockGetBoard.mockRejectedValue(new Error('boom'));
-    const view = await render(<BoardCanvasScreen />);
-    expect(await view.findByText('board_load_failed')).toBeTruthy();
+    await withSilencedConsole(['log'], async () => {
+      mockGetBoard.mockRejectedValue(new Error('boom'));
+      const view = await render(<BoardCanvasScreen />);
+      expect(await view.findByText('board_load_failed')).toBeTruthy();
+    });
   });
 
   it('renders the canvas with tools for editors', async () => {
@@ -441,14 +444,16 @@ describe('BoardCanvasScreen', () => {
   });
 
   it('alerts when saving fails', async () => {
-    mockUpdateBoard.mockRejectedValue(new Error('boom'));
-    const view = await render(<BoardCanvasScreen />);
-    expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    await fireEvent.press(view.getByText('board_add_note'));
-    const Actions = (global as any).__headerActions;
-    const actions = await render(<>{Actions()}</>);
-    await fireEvent.press(actions.getByTestId('header-save'));
-    expect(mockNotify).toHaveBeenCalledWith('board_save_failed', 'error');
+    await withSilencedConsole(['log'], async () => {
+      mockUpdateBoard.mockRejectedValue(new Error('boom'));
+      const view = await render(<BoardCanvasScreen />);
+      expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
+      await fireEvent.press(view.getByText('board_add_note'));
+      const Actions = (global as any).__headerActions;
+      const actions = await render(<>{Actions()}</>);
+      await fireEvent.press(actions.getByTestId('header-save'));
+      expect(mockNotify).toHaveBeenCalledWith('board_save_failed', 'error');
+    });
   });
 
   it('drives canvas controls', async () => {

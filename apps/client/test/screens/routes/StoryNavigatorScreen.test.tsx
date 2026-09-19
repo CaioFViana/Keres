@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import StoryNavigatorScreen from '../../../src/screens/routes/StoryNavigatorScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -279,11 +280,13 @@ describe('StoryNavigatorScreen', () => {
   });
 
   it('alerts when persisting fails', async () => {
-    mockSaveRoute.mockRejectedValue(new Error('boom'));
-    const view = await render(<StoryNavigatorScreen />);
-    await fireEvent.press(view.getByText('navigator_save_as_route'));
-    await fireEvent.press(view.getByTestId('persist-new'));
-    await mockAlert.mock.calls[0][2][1].onPress();
-    expect(mockAlert).toHaveBeenCalledWith('error', 'navigator_save_route_failed');
+    await withSilencedConsole(['error'], async () => {
+      mockSaveRoute.mockRejectedValue(new Error('boom'));
+      const view = await render(<StoryNavigatorScreen />);
+      await fireEvent.press(view.getByText('navigator_save_as_route'));
+      await fireEvent.press(view.getByTestId('persist-new'));
+      await mockAlert.mock.calls[0][2][1].onPress();
+      expect(mockAlert).toHaveBeenCalledWith('error', 'navigator_save_route_failed');
+    });
   });
 });

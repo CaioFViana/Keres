@@ -102,6 +102,7 @@ jest.mock('../../../src/services/AuthTokenManager', () => ({
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ChangePasswordScreen from '../../../src/screens/enterstack/ChangePasswordScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const server = { id: 'srv-1', url: 'https://s.example', userName: 'alice' };
 
@@ -183,31 +184,33 @@ describe('ChangePasswordScreen', () => {
   });
 
   it('maps save failures to specific messages', async () => {
-    const view = await render(<ChangePasswordScreen />);
-    await view.findByText('save');
-    await fireEvent.changeText(view.getByPlaceholderText('current_password_placeholder'), 'old');
-    await fireEvent.changeText(view.getByPlaceholderText('new_password_placeholder'), 'newpass123');
-    await fireEvent.changeText(
-      view.getByPlaceholderText('confirm_new_password_placeholder'),
-      'newpass123',
-    );
+    await withSilencedConsole(['error'], async () => {
+      const view = await render(<ChangePasswordScreen />);
+      await view.findByText('save');
+      await fireEvent.changeText(view.getByPlaceholderText('current_password_placeholder'), 'old');
+      await fireEvent.changeText(view.getByPlaceholderText('new_password_placeholder'), 'newpass123');
+      await fireEvent.changeText(
+        view.getByPlaceholderText('confirm_new_password_placeholder'),
+        'newpass123',
+      );
 
-    mockChangeOwnPassword.mockRejectedValueOnce({ response: { status: 401 } });
-    await fireEvent.press(view.getByText('save'));
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'incorrect_current_password'),
-    );
+      mockChangeOwnPassword.mockRejectedValueOnce({ response: { status: 401 } });
+      await fireEvent.press(view.getByText('save'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'incorrect_current_password'),
+      );
 
-    mockChangeOwnPassword.mockRejectedValueOnce({ isOffline: true });
-    await fireEvent.press(view.getByText('save'));
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'server_unreachable'));
+      mockChangeOwnPassword.mockRejectedValueOnce({ isOffline: true });
+      await fireEvent.press(view.getByText('save'));
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'server_unreachable'));
 
-    mockChangeOwnPassword.mockRejectedValueOnce(new Error('boom'));
-    await fireEvent.press(view.getByText('save'));
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_change_password'),
-    );
-    expect(mockGoBack).not.toHaveBeenCalled();
+      mockChangeOwnPassword.mockRejectedValueOnce(new Error('boom'));
+      await fireEvent.press(view.getByText('save'));
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_change_password'),
+      );
+      expect(mockGoBack).not.toHaveBeenCalled();
+    });
   });
 
   it('regenerates recovery codes after confirmation and shows them once', async () => {
@@ -233,19 +236,21 @@ describe('ChangePasswordScreen', () => {
   });
 
   it('maps regenerate failures to specific messages', async () => {
-    mockRegenerateRecoveryCodes.mockRejectedValue({ response: { status: 401 } });
-    const view = await render(<ChangePasswordScreen />);
-    await view.findByText('regenerate_recovery_codes_button');
-    await fireEvent.changeText(view.getByPlaceholderText('current_password_placeholder'), 'old');
-    await fireEvent.press(view.getByText('regenerate_recovery_codes_button'));
-    const confirm = alertButtons(0).find((b) => b.text === 'regenerate_recovery_codes_button');
-    await act(async () => {
-      await confirm?.onPress?.();
+    await withSilencedConsole(['error'], async () => {
+      mockRegenerateRecoveryCodes.mockRejectedValue({ response: { status: 401 } });
+      const view = await render(<ChangePasswordScreen />);
+      await view.findByText('regenerate_recovery_codes_button');
+      await fireEvent.changeText(view.getByPlaceholderText('current_password_placeholder'), 'old');
+      await fireEvent.press(view.getByText('regenerate_recovery_codes_button'));
+      const confirm = alertButtons(0).find((b) => b.text === 'regenerate_recovery_codes_button');
+      await act(async () => {
+        await confirm?.onPress?.();
+      });
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'incorrect_current_password'),
+      );
+      expect(view.queryByText('recovery_codes_title')).toBeNull();
     });
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'incorrect_current_password'),
-    );
-    expect(view.queryByText('recovery_codes_title')).toBeNull();
   });
 
   it('recovers with a code when the current password is forgotten', async () => {

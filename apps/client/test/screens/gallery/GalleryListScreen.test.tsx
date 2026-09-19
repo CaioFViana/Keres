@@ -213,6 +213,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import GalleryListScreen from '../../../src/screens/gallery/GalleryListScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const freshListState = () => ({
   listProps: {},
@@ -301,22 +302,24 @@ describe('GalleryListScreen', () => {
   });
 
   it('surfaces picker failures without importing', async () => {
-    await render(<GalleryListScreen />);
+    await withSilencedConsole(['log'], async () => {
+      await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
-    const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
-    mockPickDocuments.mockRejectedValue(new Error('denied'));
-    await act(async () => {
-      choose('document');
+      mockHeaderConfig.current?.actions[0].onPress();
+      const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
+      mockPickDocuments.mockRejectedValue(new Error('denied'));
+      await act(async () => {
+        choose('document');
+      });
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith(
+          expect.stringContaining('media_picker_failed'),
+          'error',
+        ),
+      );
+      expect(mockImportPickedMediaAssets).not.toHaveBeenCalled();
     });
-
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.stringContaining('media_picker_failed'),
-        'error',
-      ),
-    );
-    expect(mockImportPickedMediaAssets).not.toHaveBeenCalled();
   });
 
   it('adds a link through the modal and handles duplicates', async () => {

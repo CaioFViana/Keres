@@ -23,6 +23,7 @@ jest.mock('react-i18next', () => ({
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, renderHook } from '@testing-library/react-native';
 import { useFriendshipFormActions } from '../../../src/screens/enterstack/useFriendshipFormActions';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import type { FriendshipFormState } from '../../../src/screens/enterstack/useFriendshipFormState';
 import type { FriendshipService } from '../../../src/services/FriendshipService';
 
@@ -145,16 +146,18 @@ it('sends the API request before writing a local pending friendship', async () =
 });
 
 it('does not write locally when the API rejects the friend request', async () => {
-  mockSendFriendRequest.mockRejectedValue(new Error('already friends'));
-  const view = await renderActions();
+  await withSilencedConsole(['error'], async () => {
+    mockSendFriendRequest.mockRejectedValue(new Error('already friends'));
+    const view = await renderActions();
 
-  await act(async () => {
-    await view.result.current.handleSaveFriendship();
+    await act(async () => {
+      await view.result.current.handleSaveFriendship();
+    });
+
+    expect(friendshipService.addFriendship).not.toHaveBeenCalled();
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_friendship');
+    expect(navigation.goBack).not.toHaveBeenCalled();
   });
-
-  expect(friendshipService.addFriendship).not.toHaveBeenCalled();
-  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_friendship');
-  expect(navigation.goBack).not.toHaveBeenCalled();
 });
 
 it('requires a selected server before lookup', async () => {
@@ -183,17 +186,19 @@ it('marks the friend as not found when the server has no such tag', async () => 
 });
 
 it('reports lookup failures', async () => {
-  mockGetUserByTag.mockRejectedValue(new Error('boom'));
-  const state = createState();
-  const view = await renderActions(state);
+  await withSilencedConsole(['error'], async () => {
+    mockGetUserByTag.mockRejectedValue(new Error('boom'));
+    const state = createState();
+    const view = await renderActions(state);
 
-  await act(async () => {
-    await view.result.current.handleCheckFriendTag();
+    await act(async () => {
+      await view.result.current.handleCheckFriendTag();
+    });
+
+    expect(state.setFriendFound).toHaveBeenCalledWith(false);
+    expect(state.setIsCheckingFriend).toHaveBeenCalledWith(false);
+    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_check_user_id');
   });
-
-  expect(state.setFriendFound).toHaveBeenCalledWith(false);
-  expect(state.setIsCheckingFriend).toHaveBeenCalledWith(false);
-  expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_check_user_id');
 });
 
 it('blocks saving without a logged-in user', async () => {

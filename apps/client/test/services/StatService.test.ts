@@ -38,6 +38,7 @@ const seedStat = async (id: string, overrides: Record<string, unknown> = {}): Pr
 beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database);
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 

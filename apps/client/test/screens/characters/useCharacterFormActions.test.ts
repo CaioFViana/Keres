@@ -45,6 +45,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useCharacterFormActions } from '../../../src/screens/characters/useCharacterFormActions';
 import type { CharacterFormState } from '../../../src/screens/characters/useCharacterFormState';
 import type { CharacterService } from '../../../src/services/storymanagement/CharacterService';
@@ -180,26 +181,28 @@ it('delegates deletion and completes it with an event and back navigation', asyn
 });
 
 it('does not emit success after a secondary-write failure, then recovers on retry', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('character-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('character-1');
-    return { entityId: 'character-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('character-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('character-1');
+      return { entityId: 'character-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockEmit).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedCharacterId).toHaveBeenCalledWith('character-1');
+    expect(mockEmit).toHaveBeenCalledWith('character_changed', 'story-1', 'character-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedCharacterId).toHaveBeenCalledWith('character-1');
-  expect(mockEmit).toHaveBeenCalledWith('character_changed', 'story-1', 'character-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });

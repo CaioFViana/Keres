@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import StatListScreen from '../../../src/screens/stats/StatListScreen';
 
 const mockNavigate = jest.fn();
@@ -236,12 +237,14 @@ describe('StatListScreen', () => {
   });
 
   it('alerts when deleting fails', async () => {
-    mockDeleteStat.mockRejectedValue(new Error('boom'));
-    const view = await render(<StatListScreen />);
-    await fireEvent.press(view.getAllByLabelText('delete')[0]);
-    const buttons = mockAlert.mock.calls[0][2];
-    await buttons[1].onPress();
-    expect(mockAlert).toHaveBeenCalledWith('error', 'stat_save_failed');
+    await withSilencedConsole(['error'], async () => {
+      mockDeleteStat.mockRejectedValue(new Error('boom'));
+      const view = await render(<StatListScreen />);
+      await fireEvent.press(view.getAllByLabelText('delete')[0]);
+      const buttons = mockAlert.mock.calls[0][2];
+      await buttons[1].onPress();
+      expect(mockAlert).toHaveBeenCalledWith('error', 'stat_save_failed');
+    });
   });
 
   it('reorders stats through the modal', async () => {

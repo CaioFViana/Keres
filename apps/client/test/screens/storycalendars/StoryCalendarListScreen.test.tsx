@@ -189,6 +189,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import StoryCalendarListScreen from '../../../src/screens/storycalendars/StoryCalendarListScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const epochDay = partsToDayNumber(definition, { year: 2, month: 1, day: 1 });
 
@@ -402,10 +403,12 @@ describe('StoryCalendarListScreen', () => {
   });
 
   it('notifies when promoting fails', async () => {
-    mockSetPrimary.mockRejectedValue(new Error('nope'));
-    const view = await render(<StoryCalendarListScreen />);
+    await withSilencedConsole(['log'], async () => {
+      mockSetPrimary.mockRejectedValue(new Error('nope'));
+      const view = await render(<StoryCalendarListScreen />);
 
-    await fireEvent.press(view.getByText('calendar_make_primary'));
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('calendar_save_failed', 'error'));
+      await fireEvent.press(view.getByText('calendar_make_primary'));
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('calendar_save_failed', 'error'));
+    });
   });
 });

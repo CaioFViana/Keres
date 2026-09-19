@@ -62,6 +62,7 @@ beforeEach(async () => {
   useChapterStore.getState().initializeService();
   useSceneStore.getState().setDbAndStoryId(database.db, TEST_STORY_ID);
   useSceneStore.getState().initializeService();
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   jest.spyOn(console, 'warn').mockImplementation(() => {});
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });

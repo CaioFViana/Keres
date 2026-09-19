@@ -41,6 +41,7 @@ const seedField = async (id: string, key = 'rank'): Promise<void> => {
 beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database);
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 

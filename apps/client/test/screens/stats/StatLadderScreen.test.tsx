@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import StatLadderScreen from '../../../src/screens/stats/StatLadderScreen';
 
 const mockNavigate = jest.fn();
@@ -177,10 +178,12 @@ describe('StatLadderScreen', () => {
   });
 
   it('alerts when saving fails', async () => {
-    mockReplaceLadder.mockRejectedValue(new Error('boom'));
-    const view = await render(<StatLadderScreen />);
-    await fireEvent.press(view.getByText('save'));
-    expect(mockAlert).toHaveBeenCalledWith('error', 'boom');
+    await withSilencedConsole(['error'], async () => {
+      mockReplaceLadder.mockRejectedValue(new Error('boom'));
+      const view = await render(<StatLadderScreen />);
+      await fireEvent.press(view.getByText('save'));
+      expect(mockAlert).toHaveBeenCalledWith('error', 'boom');
+    });
   });
 
   it('opts a stat out of its own ladder', async () => {

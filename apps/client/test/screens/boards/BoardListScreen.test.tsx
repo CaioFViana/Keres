@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import BoardListScreen from '../../../src/screens/boards/BoardListScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -153,9 +154,11 @@ describe('BoardListScreen', () => {
   });
 
   it('shows the load error', async () => {
-    mockGetBoards.mockRejectedValue(new Error('boom'));
-    const view = await render(<BoardListScreen />);
-    expect(await view.findByText('board_load_failed')).toBeTruthy();
+    await withSilencedConsole(['log'], async () => {
+      mockGetBoards.mockRejectedValue(new Error('boom'));
+      const view = await render(<BoardListScreen />);
+      expect(await view.findByText('board_load_failed')).toBeTruthy();
+    });
   });
 
   it('lists boards and opens the canvas', async () => {

@@ -35,6 +35,7 @@ const seedLocation = async (id: string): Promise<void> => {
 
 beforeEach(async () => {
   database = await createTestDatabase();
+  jest.spyOn(console, 'log').mockImplementation(() => undefined);
   await seedLocalStory(database);
   await seedLocation('world');
   await seedLocation('harbor');
@@ -42,7 +43,10 @@ beforeEach(async () => {
   await seedLocation('forest');
 });
 
-afterEach(() => database.close());
+afterEach(() => {
+  database.close();
+  jest.restoreAllMocks();
+});
 
 describe('LocationRelationService reads', () => {
   it('reads the parent, the children and the connections of a location', async () => {

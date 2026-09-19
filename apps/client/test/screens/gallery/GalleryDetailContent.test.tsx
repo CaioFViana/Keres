@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mockGetById = jest.fn();
 const mockUpdateGallery = jest.fn();
@@ -328,20 +329,22 @@ describe('GalleryDetailContent', () => {
   });
 
   it('reports save failures without closing', async () => {
-    const onClose = jest.fn();
-    mockUpdateGallery.mockRejectedValue(new Error('nope'));
-    const view = await render(<GalleryDetailContent galleryId="gallery-1" onClose={onClose} />);
+    await withSilencedConsole(['error'], async () => {
+      const onClose = jest.fn();
+      mockUpdateGallery.mockRejectedValue(new Error('nope'));
+      const view = await render(<GalleryDetailContent galleryId="gallery-1" onClose={onClose} />);
 
-    await waitFor(() => expect(view.getByText('cover.jpg')).toBeTruthy());
-    await fireEvent.press(view.getByText('save_changes'));
+      await waitFor(() => expect(view.getByText('cover.jpg')).toBeTruthy());
+      await fireEvent.press(view.getByText('save_changes'));
 
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.stringContaining('media_save_failed'),
-        'error',
-      ),
-    );
-    expect(onClose).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith(
+          expect.stringContaining('media_save_failed'),
+          'error',
+        ),
+      );
+      expect(onClose).not.toHaveBeenCalled();
+    });
   });
 
   it('deletes the record and its local files after confirmation', async () => {

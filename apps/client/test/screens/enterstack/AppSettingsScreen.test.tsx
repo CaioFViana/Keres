@@ -191,6 +191,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 });
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import SettingsScreen from '../../../src/screens/enterstack/AppSettingsScreen';
 
 type AlertButton = { text: string; onPress?: () => void | Promise<void> };
@@ -198,6 +199,7 @@ type AlertButton = { text: string; onPress?: () => void | Promise<void> };
 describe('AppSettingsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, 'log').mockImplementation((() => undefined) as never);
     mockSelectAll.mockResolvedValue([{ id: 'srv-1' }]);
     mockResetDatabase.mockResolvedValue(undefined);
     mockClearAllAuth.mockResolvedValue(undefined);
@@ -207,6 +209,7 @@ describe('AppSettingsScreen', () => {
 
   afterEach(() => {
     cleanup();
+    (console.log as jest.Mock).mockRestore();
   });
 
   it('renders the current settings and branding', async () => {
@@ -297,15 +300,17 @@ describe('AppSettingsScreen', () => {
   });
 
   it('reports reset failures', async () => {
-    mockResetDatabase.mockRejectedValue(new Error('boom'));
-    const view = await render(<SettingsScreen />);
-    await view.findByText('reset_application');
-    await fireEvent.press(view.getByText('reset_application'));
-    const reset = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'reset');
-    await act(async () => {
-      await reset?.onPress?.();
+    await withSilencedConsole(['error'], async () => {
+      mockResetDatabase.mockRejectedValue(new Error('boom'));
+      const view = await render(<SettingsScreen />);
+      await view.findByText('reset_application');
+      await fireEvent.press(view.getByText('reset_application'));
+      const reset = (mockAlert.mock.calls[0][2] as AlertButton[]).find((b) => b.text === 'reset');
+      await act(async () => {
+        await reset?.onPress?.();
+      });
+      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'reset_application_error'));
+      expect(mockDispatch).not.toHaveBeenCalled();
     });
-    await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'reset_application_error'));
-    expect(mockDispatch).not.toHaveBeenCalled();
   });
 });

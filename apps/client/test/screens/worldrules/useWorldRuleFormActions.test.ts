@@ -46,6 +46,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useWorldRuleFormActions } from '../../../src/screens/worldrules/useWorldRuleFormActions';
 import type { WorldRuleFormState } from '../../../src/screens/worldrules/useWorldRuleFormState';
 import type { WorldRuleService } from '../../../src/services/storymanagement/WorldRuleService';
@@ -169,26 +170,28 @@ it('delegates deletion and completes it with an event and back navigation', asyn
 });
 
 it('does not emit success after a secondary-write failure, then recovers on retry', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('world-rule-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('world-rule-1');
-    return { entityId: 'world-rule-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('world-rule-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('world-rule-1');
+      return { entityId: 'world-rule-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockEmit).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedWorldRuleId).toHaveBeenCalledWith('world-rule-1');
+    expect(mockEmit).toHaveBeenCalledWith('worldrule_changed', 'story-1', 'world-rule-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedWorldRuleId).toHaveBeenCalledWith('world-rule-1');
-  expect(mockEmit).toHaveBeenCalledWith('worldrule_changed', 'story-1', 'world-rule-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });

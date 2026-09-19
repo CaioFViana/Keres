@@ -136,6 +136,7 @@ jest.mock('../../../src/state/userSettingsStore', () => ({
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ImportExportScreen from '../../../src/screens/enterstack/ImportExportScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const stories = [
   { id: 'story-1', title: 'Epic', type: 'linear' },
@@ -181,13 +182,15 @@ describe('ImportExportScreen', () => {
   });
 
   it('shows the error and empty states', async () => {
-    mockGetAllStories.mockRejectedValueOnce(new Error('db down'));
-    const failed = await render(<ImportExportScreen />);
-    await failed.findByText('failed_to_load_stories');
+    await withSilencedConsole(['log'], async () => {
+      mockGetAllStories.mockRejectedValueOnce(new Error('db down'));
+      const failed = await render(<ImportExportScreen />);
+      await failed.findByText('failed_to_load_stories');
 
-    mockGetAllStories.mockResolvedValue([]);
-    const empty = await render(<ImportExportScreen />);
-    await empty.findByText('export_story_no_stories');
+      mockGetAllStories.mockResolvedValue([]);
+      const empty = await render(<ImportExportScreen />);
+      await empty.findByText('export_story_no_stories');
+    });
   });
 
   it('exports a story as JSON', async () => {
@@ -223,15 +226,17 @@ describe('ImportExportScreen', () => {
   });
 
   it('reports JSON export failures', async () => {
-    mockExportFullStory.mockRejectedValue(new Error('boom'));
-    const view = await render(<ImportExportScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
-    const json = alertButtons(0).find((b) => b.text === 'export_story_choose_json');
-    await act(async () => {
-      await json?.onPress?.();
+    await withSilencedConsole(['log'], async () => {
+      mockExportFullStory.mockRejectedValue(new Error('boom'));
+      const view = await render(<ImportExportScreen />);
+      await view.findByText('Epic');
+      await fireEvent.press(view.getByText('Epic'));
+      const json = alertButtons(0).find((b) => b.text === 'export_story_choose_json');
+      await act(async () => {
+        await json?.onPress?.();
+      });
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('export_story_failed', 'error'));
     });
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('export_story_failed', 'error'));
   });
 
   it('exports a story as ZIP with its media', async () => {
@@ -248,29 +253,31 @@ describe('ImportExportScreen', () => {
   });
 
   it('warns about partial ZIP exports and ZIP failures', async () => {
-    mockBuildZipBytes.mockResolvedValue({
-      bytes: new Uint8Array([1]),
-      includedCount: 1,
-      totalCount: 3,
-    });
-    const view = await render(<ImportExportScreen />);
-    await view.findByText('Epic');
-    await fireEvent.press(view.getByText('Epic'));
-    const zip = alertButtons(0).find((b) => b.text === 'export_story_choose_zip');
-    await act(async () => {
-      await zip?.onPress?.();
-    });
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('export_story_zip_success_partial', 'warning'),
-    );
+    await withSilencedConsole(['log'], async () => {
+      mockBuildZipBytes.mockResolvedValue({
+        bytes: new Uint8Array([1]),
+        includedCount: 1,
+        totalCount: 3,
+      });
+      const view = await render(<ImportExportScreen />);
+      await view.findByText('Epic');
+      await fireEvent.press(view.getByText('Epic'));
+      const zip = alertButtons(0).find((b) => b.text === 'export_story_choose_zip');
+      await act(async () => {
+        await zip?.onPress?.();
+      });
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('export_story_zip_success_partial', 'warning'),
+      );
 
-    mockBuildZipBytes.mockRejectedValueOnce(new Error('zip boom'));
-    await fireEvent.press(view.getByText('Epic'));
-    const retry = alertButtons(1).find((b) => b.text === 'export_story_choose_zip');
-    await act(async () => {
-      await retry?.onPress?.();
+      mockBuildZipBytes.mockRejectedValueOnce(new Error('zip boom'));
+      await fireEvent.press(view.getByText('Epic'));
+      const retry = alertButtons(1).find((b) => b.text === 'export_story_choose_zip');
+      await act(async () => {
+        await retry?.onPress?.();
+      });
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('export_story_failed', 'error'));
     });
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('export_story_failed', 'error'));
   });
 
   it('imports a story file with its media', async () => {
@@ -315,27 +322,29 @@ describe('ImportExportScreen', () => {
   });
 
   it('maps import rejections to specific messages', async () => {
-    const { StoryImportError } = jest.requireMock('../../../src/utils/storyTransfer') as {
-      StoryImportError: new (reason: string) => Error;
-    };
-    const view = await render(<ImportExportScreen />);
-    await view.findByText('import_story_choose_file');
+    await withSilencedConsole(['log'], async () => {
+      const { StoryImportError } = jest.requireMock('../../../src/utils/storyTransfer') as {
+        StoryImportError: new (reason: string) => Error;
+      };
+      const view = await render(<ImportExportScreen />);
+      await view.findByText('import_story_choose_file');
 
-    for (const [reason, message] of [
-      ['future_format_version', 'import_story_future_version'],
-      ['invalid_format', 'import_story_invalid_file'],
-      ['corrupt_content', 'import_story_corrupt_content'],
-      ['unknown', 'import_story_unreadable_file'],
-    ] as const) {
+      for (const [reason, message] of [
+        ['future_format_version', 'import_story_future_version'],
+        ['invalid_format', 'import_story_invalid_file'],
+        ['corrupt_content', 'import_story_corrupt_content'],
+        ['unknown', 'import_story_unreadable_file'],
+      ] as const) {
+        mockPickFile.mockResolvedValueOnce({ story: {}, media: [] });
+        mockImportFullStory.mockRejectedValueOnce(new StoryImportError(reason));
+        await fireEvent.press(view.getByText('import_story_choose_file'));
+        await waitFor(() => expect(mockNotify).toHaveBeenCalledWith(message, 'error'));
+      }
+
       mockPickFile.mockResolvedValueOnce({ story: {}, media: [] });
-      mockImportFullStory.mockRejectedValueOnce(new StoryImportError(reason));
+      mockImportFullStory.mockRejectedValueOnce(new Error('boom'));
       await fireEvent.press(view.getByText('import_story_choose_file'));
-      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith(message, 'error'));
-    }
-
-    mockPickFile.mockResolvedValueOnce({ story: {}, media: [] });
-    mockImportFullStory.mockRejectedValueOnce(new Error('boom'));
-    await fireEvent.press(view.getByText('import_story_choose_file'));
-    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('import_story_failed', 'error'));
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('import_story_failed', 'error'));
+    });
   });
 });

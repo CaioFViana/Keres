@@ -111,6 +111,7 @@ jest.mock('../../../src/state/notificationStore', () => ({
 
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import FriendDetailScreen from '../../../src/screens/enterstack/FriendDetailScreen';
 
 const server = { id: 'srv-1', idUser: 'me-on-server', name: 'Main' };
@@ -250,12 +251,14 @@ describe('FriendDetailScreen', () => {
   });
 
   it('reports load failures without leaving', async () => {
-    mockGetAllFriendships.mockRejectedValue(new Error('db down'));
-    const view = await render(<FriendDetailScreen />);
-    await waitFor(() =>
-      expect(mockNotify).toHaveBeenCalledWith('failed_to_load_friendships', 'error'),
-    );
-    await view.findByText('friendship_not_found');
-    expect(mockGoBack).not.toHaveBeenCalled();
+    await withSilencedConsole(['error'], async () => {
+      mockGetAllFriendships.mockRejectedValue(new Error('db down'));
+      const view = await render(<FriendDetailScreen />);
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('failed_to_load_friendships', 'error'),
+      );
+      await view.findByText('friendship_not_found');
+      expect(mockGoBack).not.toHaveBeenCalled();
+    });
   });
 });

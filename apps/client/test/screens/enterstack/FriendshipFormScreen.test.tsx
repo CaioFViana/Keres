@@ -126,6 +126,7 @@ jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill
 
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import FriendshipFormScreen from '../../../src/screens/enterstack/FriendshipFormScreen';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mainServer = { id: 'srv-1', name: 'Main', tag: 'main', idUser: 'me-on-server' };
 const otherServer = { id: 'srv-2', name: 'Backup', tag: null, idUser: 'me-on-backup' };
@@ -202,16 +203,18 @@ describe('FriendshipFormScreen', () => {
   });
 
   it('reports lookup failures', async () => {
-    mockGetUserByTag.mockRejectedValue(new Error('boom'));
-    const view = await render(<FriendshipFormScreen />);
-    await view.findByText('check_user');
-    await waitFor(() =>
-      expect(view.getByTestId('server-pill').props.children).toBe('select_server:srv-1'),
-    );
-    await fireEvent.changeText(view.getByPlaceholderText('enter_friend_id'), 'friend123');
-    await fireEvent.press(view.getByText('check_user'));
-    await view.findByText('user_not_found');
-    expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_check_user_id');
+    await withSilencedConsole(['error'], async () => {
+      mockGetUserByTag.mockRejectedValue(new Error('boom'));
+      const view = await render(<FriendshipFormScreen />);
+      await view.findByText('check_user');
+      await waitFor(() =>
+        expect(view.getByTestId('server-pill').props.children).toBe('select_server:srv-1'),
+      );
+      await fireEvent.changeText(view.getByPlaceholderText('enter_friend_id'), 'friend123');
+      await fireEvent.press(view.getByText('check_user'));
+      await view.findByText('user_not_found');
+      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_check_user_id');
+    });
   });
 
   it('resets the lookup when the server changes', async () => {
@@ -228,18 +231,20 @@ describe('FriendshipFormScreen', () => {
   });
 
   it('shows placeholders without servers and reports load failures', async () => {
-    mockGetAllServers.mockResolvedValue([]);
-    const empty = await render(<FriendshipFormScreen />);
-    await empty.findByText('add_new_friendship');
-    await waitFor(() =>
-      expect(empty.getByTestId('server-pill').props.children).toBe('no_servers_available:null'),
-    );
+    await withSilencedConsole(['error'], async () => {
+      mockGetAllServers.mockResolvedValue([]);
+      const empty = await render(<FriendshipFormScreen />);
+      await empty.findByText('add_new_friendship');
+      await waitFor(() =>
+        expect(empty.getByTestId('server-pill').props.children).toBe('no_servers_available:null'),
+      );
 
-    mockGetAllServers.mockRejectedValue(new Error('db down'));
-    const failed = await render(<FriendshipFormScreen />);
-    await failed.findByText('add_new_friendship');
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_form_data'),
-    );
+      mockGetAllServers.mockRejectedValue(new Error('db down'));
+      const failed = await render(<FriendshipFormScreen />);
+      await failed.findByText('add_new_friendship');
+      await waitFor(() =>
+        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_load_form_data'),
+      );
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
@@ -359,19 +360,21 @@ describe('ItemDetailScreen', () => {
   });
 
   it('shows not-found and load-failure errors, and leaves deleted items', async () => {
-    mockGetItemById.mockResolvedValue(null);
-    const missing = await render(<ItemDetailScreen />);
-    await waitFor(() => expect(missing.getByTestId('screen-error')).toBeTruthy());
-    expect(missing.getByTestId('screen-error').props.children).toBe('Item not found');
+    await withSilencedConsole(['error'], async () => {
+      mockGetItemById.mockResolvedValue(null);
+      const missing = await render(<ItemDetailScreen />);
+      await waitFor(() => expect(missing.getByTestId('screen-error')).toBeTruthy());
+      expect(missing.getByTestId('screen-error').props.children).toBe('Item not found');
 
-    mockGetItemById.mockRejectedValue(new Error('db down'));
-    const failed = await render(<ItemDetailScreen />);
-    await waitFor(() => expect(failed.getByTestId('screen-error')).toBeTruthy());
-    expect(failed.getByTestId('screen-error').props.children).toBe('Failed to load item');
+      mockGetItemById.mockRejectedValue(new Error('db down'));
+      const failed = await render(<ItemDetailScreen />);
+      await waitFor(() => expect(failed.getByTestId('screen-error')).toBeTruthy());
+      expect(failed.getByTestId('screen-error').props.children).toBe('Failed to load item');
 
-    mockGetItemById.mockResolvedValue(makeItem({ isDeleted: true }));
-    await render(<ItemDetailScreen />);
-    await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+      mockGetItemById.mockResolvedValue(makeItem({ isDeleted: true }));
+      await render(<ItemDetailScreen />);
+      await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+    });
   });
 
   it('binds the journey timeline, notes and gallery to the item', async () => {

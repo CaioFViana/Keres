@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Keyboard, StyleSheet, Text } from 'react-native';
 import DetailContainer from '../../../src/components/layout/DetailContainer/DetailContainer';
@@ -13,6 +13,7 @@ import ScreenTitle from '../../../src/components/layout/ScreenTitle/ScreenTitle'
 import ThemedFullscreenModal from '../../../src/components/layout/ThemedFullscreenModal/ThemedFullscreenModal';
 import { useFormScrollBottomPadding } from '../../../src/hooks/useFormScrollBottomPadding';
 import { useResponsiveLayout } from '../../../src/hooks/useResponsiveLayout';
+import { useNotificationStore } from '../../../src/state/notificationStore';
 
 jest.mock('../../../src/theme', () => {
   const actual = jest.requireActual('../../../src/theme');
@@ -45,6 +46,10 @@ jest.mock('../../../src/theme', () => {
     }),
   };
 });
+
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Icon',
+}));
 
 jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: jest.fn(() => ({
@@ -412,5 +417,28 @@ describe('ThemedFullscreenModal', () => {
     expect(onRequestClose).toHaveBeenCalledTimes(1);
     const surface = screen.getByText('full').parent;
     expect(StyleSheet.flatten(surface?.props.style).backgroundColor).toBe('#ffffff');
+  });
+
+  it('draws toasts fired from inside as ordinary children', async () => {
+    useNotificationStore.setState({
+      currentNotifications: [{ id: 'a', message: 'Pack installed', type: 'success' }, null, null],
+      queue: [],
+    });
+    try {
+      const screen = await render(
+        <ThemedFullscreenModal visible onRequestClose={() => {}}>
+          <Text>full</Text>
+        </ThemedFullscreenModal>,
+      );
+
+      // The overlay content stays, and the toast lands with it - no second Modal, which iOS
+      // would refuse to present over this one.
+      expect(screen.getByText('full')).toBeTruthy();
+      expect(screen.getByText('Pack installed')).toBeTruthy();
+    } finally {
+      await act(async () => {
+        useNotificationStore.setState({ currentNotifications: [null, null, null], queue: [] });
+      });
+    }
   });
 });

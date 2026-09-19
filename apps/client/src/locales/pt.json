@@ -1215,6 +1215,7 @@
   "operation_tag_relation_added": "{{tagRelationDescription}} adicionado",
   "operation_tag_relation_removed": "{{tagRelationDescription}} removido",
   "operation_type": "Tipo de Operação",
+  "packs_apply_browse_shipped": "Ver pacotes iniciais",
   "packs_apply_extras": "Incluir adicionais",
   "packs_apply_extras_hint": "Cada pacote escolhido pode trazer também seus capítulos, cenas e personagens iniciais.",
   "packs_apply_hint": "Estrutura para começar esta história. Só oferecido agora, durante a criação.",

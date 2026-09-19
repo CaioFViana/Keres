@@ -15,6 +15,11 @@ const mockCreateStoryWithPacks = jest.fn();
 const mockStoryRole = { role: null, canEdit: true, canManageStoryPolicy: true, loading: false };
 const mockUseScreenTour = jest.fn();
 const mockUserSettings = { userId: 'user-1' as string | null };
+const mockOpenInstaller = jest.fn();
+const mockInstallerState = {
+  openInstaller: (...args: unknown[]) => mockOpenInstaller(...args),
+  lastInstalledPackId: null as string | null,
+};
 const mockSetTheme = jest.fn();
 const mockColors = {
   primary: '#0000ff',
@@ -86,6 +91,11 @@ jest.mock('../../../src/utils/AppAlert', () => ({
 jest.mock('../../../src/state/userSettingsStore', () => ({
   useUserSettingsStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockUserSettings) : mockUserSettings,
+}));
+
+jest.mock('../../../src/state/shippedPacksInstallerStore', () => ({
+  useShippedPacksInstallerStore: (selector?: (state: unknown) => unknown) =>
+    typeof selector === 'function' ? selector(mockInstallerState) : mockInstallerState,
 }));
 
 jest.mock('../../../src/services/storymanagement/StoryService', () => ({
@@ -208,6 +218,7 @@ describe('StoryFormScreen', () => {
     mockStoryRole.canEdit = true;
     mockStoryRole.canManageStoryPolicy = true;
     mockUserSettings.userId = 'user-1';
+    mockInstallerState.lastInstalledPackId = null;
     mockGetStoryById.mockResolvedValue(storedStory);
     mockCreateStory.mockResolvedValue({ id: 'story-1' });
     mockUpdateStory.mockResolvedValue(undefined);
@@ -413,6 +424,37 @@ describe('StoryFormScreen', () => {
       'delete_story_message',
       expect.any(Array),
       { cancelable: true },
+    );
+  });
+
+  it('offers the shipped-packs installer alongside the pack list', async () => {
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    await fireEvent.press(view.getByTestId('browse-shipped-packs'));
+    expect(mockOpenInstaller).toHaveBeenCalled();
+  });
+
+  it('offers the shipped-packs installer when no packs are on the device', async () => {
+    mockListPacks.mockResolvedValue([]);
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    expect(view.getByText('packs_apply_none')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('browse-shipped-packs'));
+    expect(mockOpenInstaller).toHaveBeenCalled();
+  });
+
+  it('pre-selects a pack installed from the overlay', async () => {
+    mockInstallerState.lastInstalledPackId = 'pack-1';
+    const view = await render(<StoryFormScreen />);
+    await view.findByText('create_story');
+
+    await waitFor(() =>
+      expect(JSON.parse(view.getByTestId('packs-pill').props.children as string)).toEqual({
+        selected: ['pack-1'],
+        options: ['pack-1'],
+      }),
     );
   });
 });

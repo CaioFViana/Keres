@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-nati
 import React from 'react';
 
 const mockNotify = jest.fn();
+const mockMarkInstalled = jest.fn();
 const mockPreviewShippedPacks = jest.fn();
 const mockInstallShippedPack = jest.fn();
 const mockDb = {};
@@ -68,6 +69,11 @@ jest.mock('../../../src/state/notificationStore', () => ({
   useNotificationStore: (selector: (state: { showNotification: unknown }) => unknown) =>
     selector({ showNotification: mockNotify }),
 }));
+jest.mock('../../../src/state/shippedPacksInstallerStore', () => ({
+  __esModule: true,
+  useShippedPacksInstallerStore: (selector: (state: { markInstalled: unknown }) => unknown) =>
+    selector({ markInstalled: mockMarkInstalled }),
+}));
 jest.mock('../../../src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
@@ -86,6 +92,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: mockLanguage } }),
 }));
 
+import ShippedPacksContent from '../../../src/screens/packs/ShippedPacksContent';
 import ShippedPacksScreen from '../../../src/screens/packs/ShippedPacksScreen';
 
 const makePreview = (overrides = {}) => ({
@@ -189,12 +196,15 @@ it('follows the dropdown to the other language pack', async () => {
 
 it('installs the selected pack', async () => {
   mockPreviewShippedPacks.mockReturnValue([makePreview()]);
+  mockInstallShippedPack.mockResolvedValue({ status: 'installed', packId: 'pack-1' });
   const view = await render(<ShippedPacksScreen />);
 
   await waitFor(() => expect(view.getByText('Fantasy Basics')).toBeTruthy());
   await fireEvent.press(view.getByTestId('install-fantasy-btn'));
   await waitFor(() => expect(mockInstallShippedPack).toHaveBeenCalledWith('fantasy', 'en'));
   expect(mockNotify).toHaveBeenCalledWith('shipped_packs_install_success', 'success');
+  // The story form is not refocused by the overlay's modal, so it learns about the newcomer here.
+  expect(mockMarkInstalled).toHaveBeenCalledWith('pack-1');
 });
 
 it('reports failed and throwing installs', async () => {
@@ -215,4 +225,20 @@ it('reports failed and throwing installs', async () => {
     expect(mockNotify).toHaveBeenCalledWith('shipped_packs_install_failed', 'error'),
   );
   consoleSpy.mockRestore();
+});
+
+it('shows no close control when hosted as a plain screen', async () => {
+  const view = await render(<ShippedPacksScreen />);
+
+  await waitFor(() => expect(view.getByText('shipped_packs_description')).toBeTruthy());
+  expect(view.queryByLabelText('close')).toBeNull();
+});
+
+it('shows a titled close control when hosted in the overlay', async () => {
+  const onClose = jest.fn();
+  const view = await render(<ShippedPacksContent onClose={onClose} showCloseButton />);
+
+  await waitFor(() => expect(view.getByText('shipped_packs_title')).toBeTruthy());
+  await fireEvent.press(view.getByLabelText('close'));
+  expect(onClose).toHaveBeenCalled();
 });

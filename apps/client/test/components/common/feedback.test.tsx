@@ -1,6 +1,6 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import AppAlertHost from '../../../src/components/common/feedback/AppAlertHost/AppAlertHost';
 import NotificationItem from '../../../src/components/common/feedback/NotificationItem/NotificationItem';
 import NotificationPopup from '../../../src/components/common/feedback/NotificationPopup/NotificationPopup';
@@ -9,7 +9,10 @@ import {
   ScreenLoading,
 } from '../../../src/components/common/feedback/ScreenState/ScreenState';
 import { useAppAlertStore } from '../../../src/state/appAlertStore';
+import { useGalleryMediaViewerStore } from '../../../src/state/galleryMediaViewerStore';
 import { useNotificationStore } from '../../../src/state/notificationStore';
+import { usePresenceMatrixViewerStore } from '../../../src/state/presenceMatrixViewerStore';
+import { useShippedPacksInstallerStore } from '../../../src/state/shippedPacksInstallerStore';
 
 jest.mock('../../../src/theme', () => {
   const actual = jest.requireActual('../../../src/theme');
@@ -176,8 +179,15 @@ describe('AppAlertHost', () => {
 });
 
 describe('NotificationPopup', () => {
-  afterEach(() => {
-    useNotificationStore.setState({ currentNotifications: [null, null, null], queue: [] });
+  // Awaited: a sync `act` leaves its scope open and empties every later render in the file.
+  afterEach(async () => {
+    // This file's resets run before RNTL's auto-cleanup, so the trees are still mounted.
+    await act(async () => {
+      useNotificationStore.setState({ currentNotifications: [null, null, null], queue: [] });
+      useGalleryMediaViewerStore.setState({ galleryId: null });
+      usePresenceMatrixViewerStore.setState({ request: null });
+      useShippedPacksInstallerStore.setState({ open: false, lastInstalledPackId: null });
+    });
   });
 
   it('renders nothing when every lane is empty', async () => {
@@ -215,6 +225,75 @@ describe('NotificationPopup', () => {
     )[0];
     await fireEvent.press(close);
     expect(useNotificationStore.getState().currentNotifications[0]).toBeNull();
+  });
+
+  it('hides the modal layer when every lane is empty', async () => {
+    useNotificationStore.setState({ currentNotifications: [null, null, null], queue: [] });
+    const screen = await render(<NotificationPopup />);
+
+    expect(screen.queryByTestId('notification-modal')).toBeNull();
+  });
+
+  it('rides a transparent passthrough modal while a lane is occupied', async () => {
+    useNotificationStore.setState({
+      currentNotifications: [{ id: 'a', message: 'Saved', type: 'success' }, null, null],
+      queue: [],
+    });
+    const screen = await render(<NotificationPopup />);
+
+    // A fullscreen native Modal lives above the whole React tree, where no zIndex can reach -
+    // the toasts need a native layer of their own to stay visible over one.
+    const modal = screen.getByTestId('notification-modal');
+    expect(modal.props.visible).toBe(true);
+    expect(modal.props.transparent).toBe(true);
+    // ...which must never eat touches meant for the app beneath.
+    expect(screen.getByTestId('notification-lanes').props.pointerEvents).toBe('box-none');
+  });
+
+  it('stands down while a fullscreen overlay draws the lanes itself', async () => {
+    useNotificationStore.setState({
+      currentNotifications: [{ id: 'a', message: 'Saved', type: 'success' }, null, null],
+      queue: [],
+    });
+
+    // The shipped-packs installer: the toast must come from inside its Modal, not from here.
+    useShippedPacksInstallerStore.setState({ open: true });
+    const installing = await render(<NotificationPopup />);
+    expect(installing.queryByTestId('notification-modal')).toBeNull();
+    expect(installing.queryByText('Saved')).toBeNull();
+
+    // Same deal for the other two fullscreen overlays.
+    await act(async () => {
+      useShippedPacksInstallerStore.setState({ open: false });
+      useGalleryMediaViewerStore.setState({ galleryId: 'g1' });
+    });
+    const peeking = await render(<NotificationPopup />);
+    expect(peeking.queryByTestId('notification-modal')).toBeNull();
+    expect(peeking.queryByText('Saved')).toBeNull();
+
+    await act(async () => {
+      useGalleryMediaViewerStore.setState({ galleryId: null });
+      usePresenceMatrixViewerStore.setState({ request: { kind: 'character', characterId: 'c1' } });
+    });
+    const matrix = await render(<NotificationPopup />);
+    expect(matrix.queryByTestId('notification-modal')).toBeNull();
+    expect(matrix.queryByText('Saved')).toBeNull();
+  });
+
+  it('keeps the plain view on web, where a fixed overlay would swallow clicks', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web');
+    try {
+      useNotificationStore.setState({
+        currentNotifications: [{ id: 'a', message: 'Saved', type: 'success' }, null, null],
+        queue: [],
+      });
+      const screen = await render(<NotificationPopup />);
+
+      expect(screen.queryByTestId('notification-modal')).toBeNull();
+      expect(screen.getByText('Saved')).toBeTruthy();
+    } finally {
+      restorePlatform.restore();
+    }
   });
 });
 

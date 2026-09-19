@@ -156,6 +156,10 @@ jest.mock('../../src/screens/examplestories/ExampleStoriesScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/components/features/packs/ShippedPacksInstallerOverlay', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 
 import StorySelectionStack from '../../src/navigation/StorySelectionStack';
 

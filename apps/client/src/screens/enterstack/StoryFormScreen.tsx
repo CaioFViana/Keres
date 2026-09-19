@@ -6,18 +6,20 @@ import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/Mult
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { packHasExtras } from '../../services/storymanagement/PackService';
+import { useShippedPacksInstallerStore } from '../../state/shippedPacksInstallerStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -40,6 +42,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
+  browseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  browseText: { fontSize: 14, marginLeft: 6 },
   extrasRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -83,6 +93,8 @@ const StoryFormScreen = () => {
   const canManageStoryPolicy = !initialStoryId || canManageExistingPolicy;
 
   const { storyServiceRef, packServiceRef, packs } = useStoryFormResources(initialStoryId);
+  const openInstaller = useShippedPacksInstallerStore((state) => state.openInstaller);
+  const lastInstalledPackId = useShippedPacksInstallerStore((state) => state.lastInstalledPackId);
   const storyFormState = useStoryFormState({
     initialStoryId,
     storyServiceRef,
@@ -98,6 +110,34 @@ const StoryFormScreen = () => {
     error,
     isEditing,
   } = storyFormState;
+
+  // Installing from the overlay reports back through the store (the modal never refocuses this
+  // form, so nothing else would notice). The list refetch in `useStoryFormResources` runs on the
+  // same signal; this waits for the newcomer to actually be listed before checking it.
+  const consumedInstalledPackIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isEditing || !lastInstalledPackId) return;
+    if (consumedInstalledPackIdRef.current === lastInstalledPackId) return;
+    if (!packs.some((pack) => pack.id === lastInstalledPackId)) return;
+    consumedInstalledPackIdRef.current = lastInstalledPackId;
+    if (!selectedPackIds.includes(lastInstalledPackId)) {
+      setSelectedPackIds([...selectedPackIds, lastInstalledPackId]);
+    }
+  }, [isEditing, lastInstalledPackId, packs, selectedPackIds, setSelectedPackIds]);
+
+  const browseShippedPacks = (
+    <TouchableOpacity
+      style={styles.browseRow}
+      onPress={openInstaller}
+      testID="browse-shipped-packs"
+      accessibilityRole="button"
+    >
+      <Ionicons name="gift-outline" size={18} color={colors.primary} />
+      <Text style={[styles.browseText, { color: colors.primary }]}>
+        {t('packs_apply_browse_shipped')}
+      </Text>
+    </TouchableOpacity>
+  );
 
   const { deleting, handleDelete, handleSave, saving } = useStoryFormActions({
     state: storyFormState,
@@ -211,11 +251,15 @@ const StoryFormScreen = () => {
                     ))}
                 </View>
               )}
+              {browseShippedPacks}
             </>
           ) : (
-            <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
-              {t('packs_apply_none')}
-            </Text>
+            <>
+              <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>
+                {t('packs_apply_none')}
+              </Text>
+              {browseShippedPacks}
+            </>
           )}
         </View>
       )}

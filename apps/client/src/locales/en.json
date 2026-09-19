@@ -1215,6 +1215,7 @@
   "operation_tag_relation_added": "{{tagRelationDescription}} added",
   "operation_tag_relation_removed": "{{tagRelationDescription}} removed",
   "operation_type": "Operation Type",
+  "packs_apply_browse_shipped": "Browse starter packs",
   "packs_apply_extras": "Include extras",
   "packs_apply_extras_hint": "Each chosen pack can also bring its starter chapters, scenes and characters.",
   "packs_apply_hint": "Structure to start this story with. Only offered now, while it is being created.",

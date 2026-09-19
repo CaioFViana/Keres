@@ -28,6 +28,9 @@ let mockListProps: {
   data: TagItem[];
   renderItem: (info: { item: TagItem }) => React.ReactNode;
   sortOptions: { label: string; value: string }[];
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
 jest.mock('@react-navigation/native', () => {
@@ -156,6 +159,18 @@ it('requests its guided tour', async () => {
   await render(<TagsScreen />);
 
   expect(mockUseScreenTour).toHaveBeenCalledWith('TagsStack');
+});
+
+it('guides the empty list toward creation', async () => {
+  await render(<TagsScreen />);
+
+  expect(mockListProps?.emptyStateTitle).toBe('tags_empty_title');
+  expect(mockListProps?.emptyStateMessage).toBe('tags_empty_message');
+  expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+    'tags_empty_create',
+  ]);
+  mockListProps?.emptyStateActions?.[0].onPress();
+  expect(mockNavigate).toHaveBeenCalledWith('TagForm', { tagId: undefined });
 });
 
 it('binds the tag store through the shared list hook', async () => {

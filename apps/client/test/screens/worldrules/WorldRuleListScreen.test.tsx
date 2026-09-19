@@ -31,6 +31,9 @@ let mockListProps: {
   renderItem: (info: { item: WorldRuleItem }) => React.ReactNode;
   filterOptions: { label: string; value: string }[];
   sortOptions: { label: string; value: string }[];
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
 jest.mock('@react-navigation/native', () => {
@@ -177,6 +180,18 @@ it('binds the world rule store through the shared list hook', async () => {
   expect(mockUseEntityListScreen).toHaveBeenCalledWith(
     expect.objectContaining({ collectionKey: 'worldRules', changeEvent: 'worldrule_changed' }),
   );
+});
+
+it('guides the empty list toward creation', async () => {
+  await render(<WorldRulesScreen />);
+
+  expect(mockListProps?.emptyStateTitle).toBe('worldrules_empty_title');
+  expect(mockListProps?.emptyStateMessage).toBe('worldrules_empty_message');
+  expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+    'worldrules_empty_create',
+  ]);
+  mockListProps?.emptyStateActions?.[0].onPress();
+  expect(mockNavigate).toHaveBeenCalledWith('WorldRuleForm', { worldRuleId: undefined });
 });
 
 it('shows loading and error states from the list hook', async () => {

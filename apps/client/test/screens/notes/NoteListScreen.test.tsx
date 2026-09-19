@@ -20,6 +20,9 @@ let mockListProps: {
   renderItem: (info: { item: { id: string; title: string } }) => React.ReactNode;
   filterOptions: { label: string; value: string }[];
   sortOptions: { label: string; value: string }[];
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
 jest.mock('@react-navigation/native', () => {
@@ -165,6 +168,18 @@ describe('NotesScreen', () => {
     await render(<NotesScreen />);
 
     expect(mockUseScreenTour).toHaveBeenCalledWith('NotesStack');
+  });
+
+  it('guides the empty list toward creation', async () => {
+    await render(<NotesScreen />);
+
+    expect(mockListProps?.emptyStateTitle).toBe('notes_empty_title');
+    expect(mockListProps?.emptyStateMessage).toBe('notes_empty_message');
+    expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+      'notes_empty_create',
+    ]);
+    mockListProps?.emptyStateActions?.[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('NoteForm', { noteId: undefined });
   });
 
   it('binds the note store through the shared list hook', async () => {

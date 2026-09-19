@@ -8,6 +8,11 @@ const mockUseScreenTour = jest.fn();
 let mockStory: any = null;
 let mockPlotsData: any = null;
 let mockCanEdit = true;
+let mockListProps: {
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
+} | null = null;
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
@@ -52,32 +57,50 @@ jest.mock(
     const React = require('react');
     return {
       __esModule: true,
-      default: ({
-        data,
-        renderItem,
-        keyExtractor,
-        onSearch,
-        onSortChange,
-        onSortDirectionChange,
-        emptyListComponent,
-      }: any) => (
-        <>
-          <Text testID="gfs-search" onPress={() => onSearch('north')}>
-            search
-          </Text>
-          <Text testID="gfs-sort" onPress={() => onSortChange('sceneCount')}>
-            sort
-          </Text>
-          <Text testID="gfs-dir" onPress={() => onSortDirectionChange('desc')}>
-            dir
-          </Text>
-          {data.length === 0
-            ? emptyListComponent
-            : data.map((item: any) => (
+      default: (props: any) => {
+        mockListProps = props;
+        const {
+          data,
+          renderItem,
+          keyExtractor,
+          onSearch,
+          onSortChange,
+          onSortDirectionChange,
+          emptyStateTitle,
+          emptyStateActions,
+        } = props;
+        return (
+          <>
+            <Text testID="gfs-search" onPress={() => onSearch('north')}>
+              search
+            </Text>
+            <Text testID="gfs-sort" onPress={() => onSortChange('sceneCount')}>
+              sort
+            </Text>
+            <Text testID="gfs-dir" onPress={() => onSortDirectionChange('desc')}>
+              dir
+            </Text>
+            {data.length === 0 ? (
+              <>
+                <Text testID="empty-title">{emptyStateTitle}</Text>
+                {(emptyStateActions ?? []).map((action: any) => (
+                  <Text
+                    key={action.label}
+                    testID={`empty-action-${action.label}`}
+                    onPress={action.onPress}
+                  >
+                    {action.label}
+                  </Text>
+                ))}
+              </>
+            ) : (
+              data.map((item: any) => (
                 <React.Fragment key={keyExtractor(item)}>{renderItem({ item })}</React.Fragment>
-              ))}
-        </>
-      ),
+              ))
+            )}
+          </>
+        );
+      },
     };
   },
 );
@@ -207,7 +230,20 @@ describe('PlotListScreen', () => {
     await fireEvent.press(view.getByTestId('gfs-search'));
     expect(view.queryByTestId('plot-plot-1')).toBeNull();
     expect(view.queryByTestId('plot-plot-2')).toBeNull();
-    expect(view.getByText('no_plots')).toBeTruthy();
+    expect(view.getByTestId('empty-title').props.children).toBe('plots_empty_title');
+  });
+
+  it('guides the empty list toward creation', async () => {
+    const view = await render(<PlotListScreen />);
+    await fireEvent.press(view.getByTestId('gfs-search'));
+
+    expect(mockListProps?.emptyStateTitle).toBe('plots_empty_title');
+    expect(mockListProps?.emptyStateMessage).toBe('plots_empty_message');
+    expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+      'plots_empty_create',
+    ]);
+    mockListProps?.emptyStateActions?.[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('PlotForm', {});
   });
 
   it('sorts by scene count and direction', async () => {

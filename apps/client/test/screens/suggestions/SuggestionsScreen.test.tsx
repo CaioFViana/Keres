@@ -31,6 +31,12 @@ const mockHeaderConfig: {
 } = { current: null };
 const mockDb = {};
 const mockI18n = { t: (key: string) => key };
+const mockUseScreenTour = jest.fn();
+
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 
 const HERBS = 'list_01ARZ3NDEKTSV4RRFFQ69G5FAA_herbs';
 const SPICES = 'list_01ARZ3NDEKTSV4RRFFQ69G5FAB_spices';
@@ -186,6 +192,12 @@ describe('SuggestionsScreen', () => {
     mockRenameNamedList.mockResolvedValue({});
     mockCopyStoredValues.mockResolvedValue({ copied: 1, skipped: 0 });
     mockDeleteNamedList.mockResolvedValue({});
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<SuggestionsScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('Suggestions');
   });
 
   it('loads named lists with their stored and story values', async () => {

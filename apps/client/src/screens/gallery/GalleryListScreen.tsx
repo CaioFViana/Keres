@@ -253,6 +253,19 @@ const GalleryListScreen = () => {
           sortOptions={sortOptions}
           entityName="Gallery"
           storyId={storyId || ''}
+          emptyStateTitle={t('galleries_empty_title')}
+          emptyStateMessage={t('galleries_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('galleries_empty_create'),
+                    onPress: handleAddMedia,
+                    testID: 'empty-create-gallery',
+                  },
+                ]
+              : []
+          }
         />
       </View>
     </View>

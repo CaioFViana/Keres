@@ -69,6 +69,9 @@ let mockHeaderArgs: {
 let mockListProps: {
   data: { id: string }[];
   onFilterChange: (ids: string[]) => void;
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 
 jest.mock('@react-navigation/native', () => {
@@ -615,6 +618,23 @@ describe('NarrativeElementsListScreen', () => {
     const view = await render(<NarrativeElementsListScreen />);
     await view.findByTestId(`rowname-ch-1`);
     expect(rowNames(view)).toEqual(['Arrival', 'Later']);
+  });
+
+  it('guides the empty story toward creation instead of an empty unchaptered group', async () => {
+    mockGetAllChapters.mockResolvedValue([]);
+    mockGetAllScenes.mockResolvedValue([]);
+    const view = await render(<NarrativeElementsListScreen />);
+    await waitFor(() => expect(mockListProps).not.toBeNull());
+    await waitFor(() => expect(mockListProps?.data).toEqual([]));
+
+    expect(view.queryByTestId(`rowname-${UNCHAPTERED_GROUP_ID}`)).toBeNull();
+    expect(mockListProps?.emptyStateTitle).toBe('narrative_empty_title');
+    expect(mockListProps?.emptyStateMessage).toBe('narrative_empty_message');
+    expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+      'narrative_empty_create',
+    ]);
+    mockListProps?.emptyStateActions?.[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
   });
 
   it('renders empty without a story', async () => {

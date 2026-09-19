@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -56,11 +56,6 @@ const PlotListScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 20,
-    },
   });
 
   useScreenHeader({
@@ -174,7 +169,19 @@ const PlotListScreen = () => {
           onSortDirectionChange={setSortDirection}
           currentSortDirection={sortDirection}
           currentSortValue={activeSort}
-          emptyListComponent={<Text style={styles.emptyText}>{t('no_plots')}</Text>}
+          emptyStateTitle={t('plots_empty_title')}
+          emptyStateMessage={t('plots_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('plots_empty_create'),
+                    onPress: () => navigation.navigate('PlotForm', {}),
+                    testID: 'empty-create-plot',
+                  },
+                ]
+              : []
+          }
           disableTagFilter
           disableFavoriteFilter
           isLoading={loading}

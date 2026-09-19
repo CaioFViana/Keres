@@ -14,6 +14,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { AppAlert } from '@/src/utils/AppAlert';
 import ThemePreview from './ThemePreview';
@@ -23,6 +25,8 @@ const StoryAppearanceScreen = () => {
   // The drawer owns the visible header. Register its back action against this nested stack so the
   // header arrow returns to Customization instead of attempting to pop the drawer itself.
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StoryAppearance');
+  const cardAnchorRef = useScreenAnchor('Appearance', 'card');
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const drizzleDb = useDrizzle();
@@ -121,7 +125,7 @@ const StoryAppearanceScreen = () => {
     >
       <Text style={styles.title}>{t('appearance_title')}</Text>
       <Text style={styles.description}>{t('appearance_screen_description')}</Text>
-      <View style={styles.card}>
+      <View ref={cardAnchorRef} collapsable={false} style={styles.card}>
         <View style={styles.cardHeading}>
           <Ionicons name="color-palette-outline" size={24} color={colors.primary} />
           <Text style={styles.cardTitle}>{t('theme')}</Text>

@@ -160,6 +160,19 @@ const NotesScreen = () => {
           disableTagFilter={false}
           entityName="Note"
           storyId={storyId || ''}
+          emptyStateTitle={t('notes_empty_title')}
+          emptyStateMessage={t('notes_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('notes_empty_create'),
+                    onPress: () => navigation.navigate('NoteForm', { noteId: undefined }),
+                    testID: 'empty-create-note',
+                  },
+                ]
+              : []
+          }
         />
       </View>
     </ScreenContainer>

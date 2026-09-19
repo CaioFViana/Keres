@@ -43,7 +43,12 @@ const mockHeaderConfig: {
   current: null,
 };
 const mockDb = {};
-const mockI18n = { t: (key: string) => key };
+const mockUseScreenTour = jest.fn();
+
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));const mockI18n = { t: (key: string) => key };
 
 const definition: CalendarDefinitionType = {
   secondsPerMinute: 60,
@@ -221,6 +226,12 @@ describe('StoryCalendarListScreen', () => {
     mockUpdateStory.mockResolvedValue({});
     mockGetStoryById.mockResolvedValue({ id: 'story-1', timelineEpochDay: null });
     mockReload.mockResolvedValue({});
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<StoryCalendarListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('StoryCalendarList');
   });
 
   it('renders calendars with the primary badge and epoch fields', async () => {

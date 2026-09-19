@@ -30,10 +30,9 @@ import type {
 import { useChapterStore } from '../../../state/chapterStore';
 import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
-import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
+import { isUnchapteredGroup } from '../../../utils/narrativeSceneOrder';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -43,10 +42,9 @@ import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import {
   createChapterListItemRenderer,
   type AdvancedNarrativeMatches,
-  matchesChoiceQuery,
-  matchesSceneQuery,
   scenesShownForChapter,
 } from './createChapterListItemRenderer';
+import { useVisibleChapters } from './useVisibleChapters';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
@@ -316,128 +314,23 @@ const NarrativeElementsListScreen = () => {
     }));
   }, [scenes, storedScenes]);
 
-  const visibleChapters = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-    const filtered = outlineChapters.filter((chapter) => {
-      if (!chapterBelongsToArc(chapter, activeArcId)) return false;
-      const chapterScenes = scenesWithFavoriteState.filter(
-        (scene) => scene.chapterId === chapter.id,
-      );
-      const hasFavorite = chapter.isFavorite || chapterScenes.some((scene) => scene.isFavorite);
-      if (favoriteFilterState === 'favorite' && !hasFavorite) return false;
-      if (favoriteFilterState === 'not-favorite' && hasFavorite) return false;
-      if (advancedMatches) {
-        if (!advancedMatches.chapterIds.has(chapter.id)) return false;
-        if (!chapterScenes.some((scene) => advancedMatches.sceneIds.has(scene.id))) return false;
-        if (!chapterScenes.some((scene) => advancedMatches.choiceSourceSceneIds.has(scene.id))) {
-          return false;
-        }
-      }
-      if (
-        activeTagIds.length > 0 &&
-        !(tagsByChapterId.get(chapter.id) ?? []).some((tag) => activeTagIds.includes(tag.id)) &&
-        !chapterScenes.some((scene) =>
-          (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
-        )
-      ) {
-        return false;
-      }
-      if (!query) return true;
-      const chapterMatches = [chapter.name, chapter.summary, chapter.extraNotes].some((value) =>
-        value?.toLocaleLowerCase().includes(query),
-      );
-      return (
-        chapterMatches ||
-        chapterScenes.some((scene) => matchesSceneQuery(scene, query)) ||
-        choices.some(
-          (choice) =>
-            matchesChoiceQuery(choice, query) &&
-            chapterScenes.some((scene) => scene.id === choice.sceneId),
-        )
-      );
-    });
-    const direction = sortDirection === 'desc' ? -1 : 1;
-    const sorted = [...filtered]
-      .sort((a, b) => {
-        const by =
-          activeSort === 'name'
-            ? a.name.localeCompare(b.name)
-            : activeSort === 'createdAt'
-              ? a.createdAt.getTime() - b.createdAt.getTime()
-              : activeSort === 'updatedAt'
-                ? a.updatedAt.getTime() - b.updatedAt.getTime()
-                : a.index - b.index;
-        return by * direction;
-      })
-      .map((chapter) => ({
-        ...chapter,
-        isFavorite: chapter.isFavorite,
-      }));
-
-    const unchapteredScenes = scenesWithFavoriteState.filter((scene) => !scene.chapterId);
-    const unchapteredHasFavorite = unchapteredScenes.some((scene) => scene.isFavorite);
-    const unchapteredPassesFavorite =
-      favoriteFilterState === 'all' ||
-      (favoriteFilterState === 'favorite' && unchapteredHasFavorite) ||
-      (favoriteFilterState === 'not-favorite' && !unchapteredHasFavorite);
-    const unchapteredPassesAdvanced =
-      !advancedMatches || unchapteredScenes.some((scene) => advancedMatches.sceneIds.has(scene.id));
-    const unchapteredPassesTags =
-      activeTagIds.length === 0 ||
-      unchapteredScenes.some((scene) =>
-        (tagsBySceneId.get(scene.id) ?? []).some((tag) => activeTagIds.includes(tag.id)),
-      );
-    const unchapteredPassesQuery =
-      !query || unchapteredScenes.some((scene) => matchesSceneQuery(scene, query));
-    const showEmptyUnchaptered =
-      canEdit &&
-      !query &&
-      !advancedMatches &&
-      activeTagIds.length === 0 &&
-      favoriteFilterState === 'all';
-    if (
-      (unchapteredScenes.length > 0 &&
-        unchapteredPassesFavorite &&
-        unchapteredPassesAdvanced &&
-        unchapteredPassesTags &&
-        unchapteredPassesQuery) ||
-      (showEmptyUnchaptered && unchapteredScenes.length === 0 && storyId)
-    ) {
-      sorted.push({
-        id: UNCHAPTERED_GROUP_ID,
-        storyId: unchapteredScenes[0]?.storyId ?? storyId ?? '',
-        name: t('unchaptered_scenes'),
-        index: Number.MAX_SAFE_INTEGER,
-        type: 'chapter',
-        summary: null,
-        extraNotes: null,
-        arcId: null,
-        isFavorite: false,
-        createdAt: new Date(0),
-        updatedAt: new Date(0),
-        version: 1,
-        isDeleted: false,
-        deletedAt: null,
-      });
-    }
-    return sorted;
-  }, [
-    activeSort,
-    activeTagIds,
-    advancedMatches,
-    choices,
-    favoriteFilterState,
-    activeArcId,
+  const visibleChapters = useVisibleChapters({
     outlineChapters,
-    scenesWithFavoriteState,
-    searchQuery,
-    sortDirection,
+    scenes: scenesWithFavoriteState,
+    choices,
     tagsByChapterId,
     tagsBySceneId,
-    t,
+    activeTagIds,
+    advancedMatches,
+    favoriteFilterState,
+    activeArcId,
+    searchQuery,
+    activeSort,
+    sortDirection,
     canEdit,
     storyId,
-  ]);
+    t,
+  });
 
   const memoizedChapterListItem = useMemo(
     () =>
@@ -630,6 +523,19 @@ const NarrativeElementsListScreen = () => {
               : 'chapter_outline_scene_count_other',
             { count: visibleSceneCount },
           )}
+          emptyStateTitle={t('narrative_empty_title')}
+          emptyStateMessage={t('narrative_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('narrative_empty_create'),
+                    onPress: () => navigation.navigate('ChapterForm', { chapterId: undefined }),
+                    testID: 'empty-create-chapter',
+                  },
+                ]
+              : []
+          }
         />
       </View>
       <ChapterReorderModal

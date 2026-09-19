@@ -4,6 +4,8 @@ import FormActions from '@/src/components/common/controls/FormActions/FormAction
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
@@ -159,6 +161,8 @@ VocabularyTermCard.displayName = 'VocabularyTermCard';
 
 const VocabularyScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('Vocabulary');
+  const termsAnchorRef = useScreenAnchor('Vocabulary', 'terms');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const drizzleDb = useDrizzle();
@@ -270,45 +274,47 @@ const VocabularyScreen = () => {
 
   return (
     <KeyboardAwareScreen style={common.container} contentContainerStyle={styles.content}>
-      <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
-      <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
-      <SingleSelectPill
-        value={language}
-        onValueChange={(value) => setLanguage((value ?? 'en') as 'pt' | 'en')}
-        options={[
-          { value: 'pt', label: t('language_portuguese') },
-          { value: 'en', label: t('language_english') },
-        ]}
-        disabled={!canManageStoryPolicy}
-      />
-      <Text style={styles.languageHint}>{t('vocabulary_language_hint')}</Text>
-      {STORY_VOCABULARY_ENTITY_TYPES.map((type) => (
-        <VocabularyTermCard
-          key={type}
-          type={type}
-          term={terms[type]}
-          language={language}
-          editable={canManageStoryPolicy}
-          onChange={setTerm}
+      <View ref={termsAnchorRef} collapsable={false}>
+        <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
+        <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
+        <SingleSelectPill
+          value={language}
+          onValueChange={(value) => setLanguage((value ?? 'en') as 'pt' | 'en')}
+          options={[
+            { value: 'pt', label: t('language_portuguese') },
+            { value: 'en', label: t('language_english') },
+          ]}
+          disabled={!canManageStoryPolicy}
         />
-      ))}
-      {canManageStoryPolicy && (
-        <FormActions stackOnCompact style={styles.formActions}>
-          <Button
-            style={styles.secondaryButton}
-            onPress={() => setTerms(draftFromVocabulary(null))}
-          >
-            <Text style={styles.secondaryButtonText}>{t('vocabulary_use_defaults')}</Text>
-          </Button>
-          <Button style={styles.secondaryButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.secondaryButtonText}>{t('cancel')}</Text>
-          </Button>
-          <Button onPress={handleSave} disabled={saving}>
-            {t('save')}
-          </Button>
-        </FormActions>
-      )}
-      <View testID="vocabulary-footer-spacer" style={styles.footerSpacer} />
+        <Text style={styles.languageHint}>{t('vocabulary_language_hint')}</Text>
+        {STORY_VOCABULARY_ENTITY_TYPES.map((type) => (
+          <VocabularyTermCard
+            key={type}
+            type={type}
+            term={terms[type]}
+            language={language}
+            editable={canManageStoryPolicy}
+            onChange={setTerm}
+          />
+        ))}
+        {canManageStoryPolicy && (
+          <FormActions stackOnCompact style={styles.formActions}>
+            <Button
+              style={styles.secondaryButton}
+              onPress={() => setTerms(draftFromVocabulary(null))}
+            >
+              <Text style={styles.secondaryButtonText}>{t('vocabulary_use_defaults')}</Text>
+            </Button>
+            <Button style={styles.secondaryButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.secondaryButtonText}>{t('cancel')}</Text>
+            </Button>
+            <Button onPress={handleSave} disabled={saving}>
+              {t('save')}
+            </Button>
+          </FormActions>
+        )}
+        <View testID="vocabulary-footer-spacer" style={styles.footerSpacer} />
+      </View>
     </KeyboardAwareScreen>
   );
 };

@@ -10,6 +10,8 @@ import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from '
 import { StorySchemaFieldReorderModal } from '../../components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
 import { useDrizzle } from '../../db';
 import type { StorySchemaFieldSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
@@ -39,6 +41,9 @@ type StorySchemaListScreenNavigationProp = NativeStackNavigationProp<
 
 const StorySchemaListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StorySchemaList');
+  const tabsAnchorRef = useScreenAnchor('StorySchema', 'tabs');
+  const fieldsAnchorRef = useScreenAnchor('StorySchema', 'fields');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
 
@@ -205,7 +210,12 @@ const StorySchemaListScreen = () => {
       <Text style={styles.title}>{t('story_schema_management_title')}</Text>
       <Text style={styles.description}>{t('story_schema_management_description')}</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsContainer}>
+      <ScrollView
+        ref={tabsAnchorRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.tabsContainer}
+      >
         {STORY_SCHEMA_ENTITY_TYPES.map((entityType) => (
           <TouchableOpacity
             key={entityType}
@@ -224,42 +234,44 @@ const StorySchemaListScreen = () => {
         ))}
       </ScrollView>
 
-      <FlatList
-        data={fields}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.fieldRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldName}>
-                {item.name}
-                {item.isRequired ? ' *' : ''}
-              </Text>
-              <Text style={styles.fieldMeta}>
-                {item.key} · {t(`attribute_type_${item.type}`)}
-              </Text>
+      <View ref={fieldsAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <FlatList
+          data={fields}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.fieldRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldName}>
+                  {item.name}
+                  {item.isRequired ? ' *' : ''}
+                </Text>
+                <Text style={styles.fieldMeta}>
+                  {item.key} · {t(`attribute_type_${item.type}`)}
+                </Text>
+              </View>
+              {canEdit && (
+                <>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() =>
+                      navigation.navigate('StorySchemaFieldForm', {
+                        entityType: activeEntityType,
+                        fieldId: item.id,
+                      })
+                    }
+                  >
+                    <Ionicons name="pencil-outline" size={22} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+                    <Ionicons name="trash-outline" size={22} color={colors.error} />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
-            {canEdit && (
-              <>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() =>
-                    navigation.navigate('StorySchemaFieldForm', {
-                      entityType: activeEntityType,
-                      fieldId: item.id,
-                    })
-                  }
-                >
-                  <Ionicons name="pencil-outline" size={22} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-                  <Ionicons name="trash-outline" size={22} color={colors.error} />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyText}>{t('no_custom_attributes')}</Text>}
-      />
+          )}
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('no_custom_attributes')}</Text>}
+        />
+      </View>
 
       <StorySchemaFieldReorderModal
         isVisible={isReorderModalVisible}

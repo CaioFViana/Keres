@@ -19,10 +19,17 @@ describe('screenGuides', () => {
       'OperationLogStack',
       'PackList',
       'PlotsStack',
+      'StatList',
       'StoryAnalysis',
+      'StoryAppearance',
+      'StoryArcList',
+      'StoryCalendarList',
       'StoryForm',
+      'StorySchemaList',
       'StorySelectionMain',
+      'Suggestions',
       'TagsStack',
+      'Vocabulary',
       'WorldRulesStack',
     ]);
     for (const [screenId, guide] of Object.entries(screenGuides)) {

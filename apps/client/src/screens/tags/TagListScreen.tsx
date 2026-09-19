@@ -120,6 +120,15 @@ const TagsScreen = () => {
           disableTagFilter={true}
           entityName="Tag"
           storyId={storyId || ''}
+          emptyStateTitle={t('tags_empty_title')}
+          emptyStateMessage={t('tags_empty_message')}
+          emptyStateActions={[
+            {
+              label: t('tags_empty_create'),
+              onPress: () => navigation.navigate('TagForm', { tagId: undefined }),
+              testID: 'empty-create-tag',
+            },
+          ]}
         />
       </View>
     </ScreenContainer>

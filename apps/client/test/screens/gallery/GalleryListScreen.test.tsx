@@ -28,6 +28,9 @@ let mockListProps: {
   data: { id: string }[];
   renderItem: (info: { item: { id: string } }) => React.ReactNode;
   numColumns?: number;
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 let mockLinkModalVisible = false;
 
@@ -248,6 +251,18 @@ describe('GalleryListScreen', () => {
     await render(<GalleryListScreen />);
 
     expect(mockUseScreenTour).toHaveBeenCalledWith('GalleryStack');
+  });
+
+  it('guides the empty list toward adding media', async () => {
+    await render(<GalleryListScreen />);
+
+    expect(mockListProps?.emptyStateTitle).toBe('galleries_empty_title');
+    expect(mockListProps?.emptyStateMessage).toBe('galleries_empty_message');
+    expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+      'galleries_empty_create',
+    ]);
+    mockListProps?.emptyStateActions?.[0].onPress();
+    expect(mockPromptGalleryAddKind).toHaveBeenCalled();
   });
 
   it('binds the gallery store and sizes columns by breakpoint', async () => {

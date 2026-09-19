@@ -329,6 +329,19 @@ const ItemListScreen = () => {
           sortOptions={memoizedSortOptions}
           entityName="Item"
           storyId={storyId || ''}
+          emptyStateTitle={t('items_empty_title')}
+          emptyStateMessage={t('items_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('items_empty_create'),
+                    onPress: () => navigation.navigate('ItemForm', {}),
+                    testID: 'empty-create-item',
+                  },
+                ]
+              : []
+          }
         />
       </View>
     </View>

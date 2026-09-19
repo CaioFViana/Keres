@@ -170,6 +170,19 @@ const WorldRulesScreen = () => {
         disableTagFilter={false}
         entityName="WorldRule"
         storyId={storyId || ''}
+        emptyStateTitle={t('worldrules_empty_title')}
+        emptyStateMessage={t('worldrules_empty_message')}
+        emptyStateActions={
+          canEdit
+            ? [
+                {
+                  label: t('worldrules_empty_create'),
+                  onPress: () => navigation.navigate('WorldRuleForm', { worldRuleId: undefined }),
+                  testID: 'empty-create-worldrule',
+                },
+              ]
+            : []
+        }
       />
     </ScreenContainer>
   );

@@ -14,6 +14,12 @@ let mockStory: any = null;
 let mockStatsData: any = null;
 let mockCanEdit = true;
 let mockUserId: string | null = 'user-1';
+const mockUseScreenTour = jest.fn();
+
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
@@ -194,6 +200,12 @@ describe('StatListScreen', () => {
     mockDeleteStat.mockResolvedValue(undefined);
     mockReorderStats.mockResolvedValue(undefined);
     mockUpdateStory.mockResolvedValue(undefined);
+  });
+
+  it('requests its guided tour', async () => {
+    await render(<StatListScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('StatList');
   });
 
   it('asks for a story when none is selected', async () => {

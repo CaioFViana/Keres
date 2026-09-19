@@ -6,6 +6,7 @@ const mockAlert = jest.fn();
 const mockDeleteField = jest.fn();
 const mockReorderFields = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
 const mockDb = {};
 let mockStoryId: string | undefined = 'story-1';
 let mockUserId: string | null = 'user-1';
@@ -27,6 +28,10 @@ jest.mock('@expo/vector-icons', () => ({
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock(
   '../../../src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal',
@@ -140,6 +145,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+it('requests its guided tour', async () => {
+  await render(<StorySchemaListScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('StorySchemaList');
 });
 
 it('asks for a story when none is selected', async () => {

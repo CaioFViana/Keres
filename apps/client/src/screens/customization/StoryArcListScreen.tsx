@@ -8,6 +8,8 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
@@ -20,6 +22,8 @@ import { AppAlert } from '@/src/utils/AppAlert';
 
 const StoryArcListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StoryArcList');
+  const listAnchorRef = useScreenAnchor('StoryArcs', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -105,7 +109,7 @@ const StoryArcListScreen = () => {
   });
 
   return (
-    <ScrollView style={styles.root}>
+    <ScrollView ref={listAnchorRef} style={styles.root}>
       <Text style={styles.intro}>{t('arcs_intro', { arc: vocab.term('Arc') })}</Text>
       {arcs.map((arc) => (
         <TouchableOpacity

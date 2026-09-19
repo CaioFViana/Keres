@@ -19,6 +19,8 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
@@ -44,6 +46,8 @@ import type { CustomizationStackParamList } from '@/src/navigation/MainSystemSta
  */
 const StoryCalendarListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StoryCalendarList');
+  const listAnchorRef = useScreenAnchor('StoryCalendars', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -351,7 +355,7 @@ const StoryCalendarListScreen = () => {
     });
 
   return (
-    <View style={styles.root}>
+    <View ref={listAnchorRef} collapsable={false} style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('calendar_list_intro')}</Text>
 

@@ -31,6 +31,9 @@ let mockListProps: {
   filterOptions: { label: string; value: string }[];
   sortOptions: { label: string; value: string }[];
   onFilterChange: (ids: string[]) => void;
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: { label: string; onPress: () => void }[];
 } | null = null;
 let mockJourneyRowsProps: {
   journeys: unknown[];
@@ -288,6 +291,18 @@ describe('ItemListScreen', () => {
     await render(<ItemListScreen />);
 
     expect(mockUseScreenTour).toHaveBeenCalledWith('ItemsStack');
+  });
+
+  it('guides the empty list toward creation', async () => {
+    await render(<ItemListScreen />);
+
+    expect(mockListProps?.emptyStateTitle).toBe('items_empty_title');
+    expect(mockListProps?.emptyStateMessage).toBe('items_empty_message');
+    expect(mockListProps?.emptyStateActions?.map((action) => action.label)).toEqual([
+      'items_empty_create',
+    ]);
+    mockListProps?.emptyStateActions?.[0].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('ItemForm', {});
   });
 
   it('binds the item store through the shared list hook', async () => {

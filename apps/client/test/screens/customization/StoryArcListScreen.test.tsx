@@ -9,6 +9,7 @@ const mockGetArcsForStory = jest.fn();
 const mockDeleteArc = jest.fn();
 const mockAlert = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockUseScreenTour = jest.fn();
 let mockStory: { id: string } | null = { id: 'story-1' };
 let mockCanEdit = true;
 let mockUserId: string | null = 'user-1';
@@ -26,6 +27,10 @@ jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('@/src/db', () => ({ __esModule: true, useDrizzle: () => mockDb }));
 jest.mock('@/src/hooks/useBackButtonHandler', () => ({
@@ -117,6 +122,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+it('requests its guided tour', async () => {
+  await render(<StoryArcListScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('StoryArcList');
 });
 
 it('ensures the default arc and shows the empty state', async () => {

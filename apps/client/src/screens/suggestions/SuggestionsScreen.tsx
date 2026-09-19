@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { SuggestionSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -62,6 +64,8 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
 };
 const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('Suggestions');
+  const groupsAnchorRef = useScreenAnchor('Suggestions', 'groups');
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
 
@@ -505,7 +509,7 @@ const SuggestionsScreen = () => {
   );
 
   return (
-    <View style={commonContainerStyles.container}>
+    <View ref={groupsAnchorRef} collapsable={false} style={commonContainerStyles.container}>
       <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
       <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
       {isCompact ? (

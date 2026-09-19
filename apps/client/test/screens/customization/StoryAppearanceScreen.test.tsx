@@ -10,7 +10,12 @@ const mockT = (key: string) => key;
 let mockStory: { id: string; theme: string | null } | null = { id: 'story-1', theme: null };
 let mockCanEdit = true;
 let mockUserId: string | null = 'user-1';
+const mockUseScreenTour = jest.fn();
 
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
@@ -133,6 +138,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+it('requests its guided tour', async () => {
+  await render(<StoryAppearanceScreen />);
+
+  expect(mockUseScreenTour).toHaveBeenCalledWith('StoryAppearance');
 });
 
 it('asks for a story when none is selected', async () => {

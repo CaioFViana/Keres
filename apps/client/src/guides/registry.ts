@@ -285,6 +285,109 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
+  StoryAppearance: {
+    id: 'StoryAppearance',
+    drawerId: 'main-system',
+    helpPageId: 'appearance',
+    steps: [
+      {
+        id: 'card',
+        anchors: [screenAnchorId('Appearance', 'card')],
+        titleKey: 'tour_appearance_start_title',
+        bodyKey: 'tour_appearance_start_body',
+      },
+    ],
+  },
+  StoryArcList: {
+    id: 'StoryArcList',
+    drawerId: 'main-system',
+    helpPageId: 'arcs',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('StoryArcs', 'list')],
+        titleKey: 'tour_arcs_start_title',
+        bodyKey: 'tour_arcs_start_body',
+      },
+    ],
+  },
+  Vocabulary: {
+    id: 'Vocabulary',
+    drawerId: 'main-system',
+    helpPageId: 'vocabulary',
+    steps: [
+      {
+        id: 'terms',
+        anchors: [screenAnchorId('Vocabulary', 'terms')],
+        titleKey: 'tour_vocabulary_start_title',
+        bodyKey: 'tour_vocabulary_start_body',
+      },
+    ],
+  },
+  StoryCalendarList: {
+    id: 'StoryCalendarList',
+    drawerId: 'main-system',
+    helpPageId: 'calendars',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('StoryCalendars', 'list')],
+        titleKey: 'tour_calendars_start_title',
+        bodyKey: 'tour_calendars_start_body',
+      },
+    ],
+  },
+  StorySchemaList: {
+    id: 'StorySchemaList',
+    drawerId: 'main-system',
+    helpPageId: 'custom-attributes',
+    steps: [
+      {
+        id: 'tabs',
+        anchors: [screenAnchorId('StorySchema', 'tabs')],
+        titleKey: 'tour_schema_tabs_title',
+        bodyKey: 'tour_schema_tabs_body',
+      },
+      {
+        id: 'fields',
+        anchors: [screenAnchorId('StorySchema', 'fields')],
+        titleKey: 'tour_schema_fields_title',
+        bodyKey: 'tour_schema_fields_body',
+      },
+    ],
+  },
+  Suggestions: {
+    id: 'Suggestions',
+    drawerId: 'main-system',
+    helpPageId: 'suggestions',
+    steps: [
+      {
+        id: 'groups',
+        anchors: [screenAnchorId('Suggestions', 'groups')],
+        titleKey: 'tour_suggestions_start_title',
+        bodyKey: 'tour_suggestions_start_body',
+      },
+    ],
+  },
+  StatList: {
+    id: 'StatList',
+    drawerId: 'main-system',
+    helpPageId: 'stats',
+    steps: [
+      {
+        id: 'settings',
+        anchors: [screenAnchorId('Stats', 'settings')],
+        titleKey: 'tour_stats_setup_title',
+        bodyKey: 'tour_stats_setup_body',
+      },
+      {
+        id: 'axes',
+        anchors: [screenAnchorId('Stats', 'axes')],
+        titleKey: 'tour_stats_axes_title',
+        bodyKey: 'tour_stats_axes_body',
+      },
+    ],
+  },
   PackList: {
     id: 'PackList',
     drawerId: 'story-selection',

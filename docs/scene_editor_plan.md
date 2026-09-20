@@ -144,6 +144,15 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
 - [x] **Migração antecipada (era Fase 4):** boards, location maps e secondary
       drafts de forms portados para `editor_drafts`, com adoção transparente
       (fallback de leitura) das chaves legadas em AsyncStorage. Sem UI ainda.
+- [x] **Drafts primários de forms (extra):** hook genérico `useDurableFormDraft`
+      (restore no mount, escrita debounced, flush no unmount, limpeza só no
+      save/delete, guarda de stale via `updatedAt` em edição, chave `new` em
+      criação). Piloto plugado no form de Local. Rollout para os outros 16
+      forms: pendente (mecânico após o piloto).
+- [x] **Corrida restore-vs-clear (investigada e corrigida):** expo-sqlite não
+      garante ordem de conclusão (fila concurrent no iOS, pool IO no Android),
+      então o hook agora só rastreia após o restore assentar. Prova em
+      `useDurableFormDraft.sequencing.test.ts` (falhava 3/3 sem o gate).
 - [ ] **Fase 2:** drawer Editor (Escrever/Ler) + botão na cena + preview
       virtualizado + busca + contador.
 - [ ] **Fase 3:** modo Revisar com comments de cena; export linear com body.

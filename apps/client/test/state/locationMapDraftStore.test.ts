@@ -20,7 +20,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
  * difference - `reset` stays memory-only because the board reset already clears every canvas
  * draft key. The behaviors pinned here are the durable round-trip (an unsaved drawing survives
  * process death until it matches the saved map), the in-memory fast path on hydrate, and the
- * drop of another map's drawing when navigating between maps.
+ * per-map retention when navigating between maps (the outgoing drawing is flushed, not dropped).
  */
 
 const empty = { images: [], nodes: [] };
@@ -77,7 +77,7 @@ it('returns the in-memory drawing when hydrating the same map', async () => {
   expect(restored?.mapId).toBe('map-1');
 });
 
-it('drops another map drawing when hydrating, and reports nothing durable', async () => {
+it('flushes the outgoing drawing when hydrating another map, and restores it back', async () => {
   useLocationMapDraftStore.getState().remember({
     mapId: 'map-1',
     storyId: 'story-1',
@@ -85,9 +85,13 @@ it('drops another map drawing when hydrating, and reports nothing durable', asyn
     savedContent: empty,
   });
 
+  // Switching away flushes map-1 immediately, even before the debounce fires.
   await expect(useLocationMapDraftStore.getState().hydrate('story-1', 'map-2')).resolves.toBeNull();
   expect(useLocationMapDraftStore.getState().draft).toBeNull();
-  expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+  expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).not.toBeNull();
+
+  const restored = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-1');
+  expect(restored?.content.nodes).toHaveLength(1);
 });
 
 it('does not keep a durable draft when content matches savedContent', async () => {
@@ -176,5 +180,36 @@ describe('with a bound database', () => {
     const row = await readEditorDraft(database.db, 'story-1', 'LocationMap', 'map-1', 'content');
     expect(row).not.toBeNull();
     expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+  });
+
+  it('keeps each unsaved map when switching between maps', async () => {
+    const otherDirty = {
+      images: [],
+      nodes: [
+        { id: 'tower', locationId: 'loc-tower', x: 30, y: 30, icon: 'map', color: '#00ff00' },
+      ],
+    };
+    useLocationMapDraftStore.getState().remember({
+      mapId: 'map-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+    // Switch away before the debounce fires: the outgoing drawing must be flushed, not dropped.
+    await expect(
+      useLocationMapDraftStore.getState().hydrate('story-1', 'map-2'),
+    ).resolves.toBeNull();
+    useLocationMapDraftStore.getState().remember({
+      mapId: 'map-2',
+      storyId: 'story-1',
+      content: otherDirty,
+      savedContent: empty,
+    });
+
+    const backToFirst = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-1');
+    expect(backToFirst?.content.nodes).toHaveLength(1);
+
+    const backToSecond = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-2');
+    expect(backToSecond?.content.nodes).toHaveLength(1);
   });
 });

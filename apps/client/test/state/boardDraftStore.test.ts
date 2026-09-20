@@ -102,7 +102,7 @@ it('returns the in-memory drawing when hydrating the same board', async () => {
   expect(restored?.content.nodes).toHaveLength(1);
 });
 
-it('drops another board drawing when hydrating, and reports nothing durable', async () => {
+it('flushes the outgoing drawing when hydrating another board, and restores it back', async () => {
   useBoardDraftStore.getState().remember({
     boardId: 'board-1',
     storyId: 'story-1',
@@ -110,10 +110,13 @@ it('drops another board drawing when hydrating, and reports nothing durable', as
     savedContent: empty,
   });
 
-  // No durable copy was flushed, so the other board's drawing is dropped and nothing comes back.
+  // Switching away flushes board-1 immediately, even before the debounce fires.
   await expect(useBoardDraftStore.getState().hydrate('story-1', 'board-2')).resolves.toBeNull();
   expect(useBoardDraftStore.getState().draft).toBeNull();
-  expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
+  expect(await readCanvasDraft('board', 'story-1', 'board-1')).not.toBeNull();
+
+  const restored = await useBoardDraftStore.getState().hydrate('story-1', 'board-1');
+  expect(restored?.content.nodes).toHaveLength(1);
 });
 
 it('clears the drawing and its durable copy together', async () => {
@@ -181,6 +184,44 @@ describe('with a bound database', () => {
     const row = await readEditorDraft(database.db, 'story-1', 'Board', 'board-1', 'content');
     expect(row).not.toBeNull();
     expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
+  });
+
+  it('keeps each unsaved board when switching between boards', async () => {
+    const otherDirty = {
+      nodes: [
+        {
+          id: '01ABCDEG',
+          kind: 'note' as const,
+          x: 30,
+          y: 30,
+          title: 'Other',
+          body: null,
+        },
+      ],
+      edges: [],
+    };
+    useBoardDraftStore.getState().remember({
+      boardId: 'board-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+    // Switch away before the debounce fires: the outgoing drawing must be flushed, not dropped.
+    await expect(useBoardDraftStore.getState().hydrate('story-1', 'board-2')).resolves.toBeNull();
+    useBoardDraftStore.getState().remember({
+      boardId: 'board-2',
+      storyId: 'story-1',
+      content: otherDirty,
+      savedContent: empty,
+    });
+
+    const backToFirst = await useBoardDraftStore.getState().hydrate('story-1', 'board-1');
+    expect(backToFirst?.content.nodes).toHaveLength(1);
+    expect(backToFirst?.content.nodes[0]).toMatchObject({ title: 'Wick' });
+
+    const backToSecond = await useBoardDraftStore.getState().hydrate('story-1', 'board-2');
+    expect(backToSecond?.content.nodes).toHaveLength(1);
+    expect(backToSecond?.content.nodes[0]).toMatchObject({ title: 'Other' });
   });
 
   it('prefers the SQLite copy over a stale legacy one', async () => {

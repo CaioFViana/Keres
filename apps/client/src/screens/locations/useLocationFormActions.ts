@@ -126,6 +126,7 @@ export function useLocationFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('location_changed', storyId, savedLocationId);
         AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
@@ -164,6 +165,7 @@ export function useLocationFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await locationServiceRef.current!.deleteLocation(userId, locationId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('location_changed', storyId, locationId);
         navigation.goBack();
       },

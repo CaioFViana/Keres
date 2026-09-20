@@ -1,3 +1,10 @@
+/** @jest-environment node */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 const mockGetValuesForEntity = jest.fn();
 
 jest.mock('../../../src/services/storymanagement/AttributeValueService', () => ({
@@ -7,84 +14,136 @@ jest.mock('../../../src/services/storymanagement/AttributeValueService', () => (
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { StorySchemaField } from '@keres/shared';
 import { useLocationFormState } from '../../../src/screens/locations/useLocationFormState';
+import {
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '../../../src/services/EditorDraftService';
 import type { LocationService } from '../../../src/services/storymanagement/LocationService';
+import { createTestDatabase, type TestDatabase } from '../../helpers/testDb';
 
-const createLocationServiceRef = () => ({
-  current: {
-    getById: jest.fn(),
-  } as unknown as LocationService,
-});
-const drizzleDb = {} as never;
+let database: TestDatabase;
+
 const customFields: StorySchemaField[] = [];
 
-const renderState = async (
-  initialLocationId?: string,
-  location?: object,
-  fields: StorySchemaField[] = customFields,
-) => {
-  const locationServiceRef = createLocationServiceRef();
-  if (location) {
-    (locationServiceRef.current!.getById as jest.Mock).mockResolvedValue(location);
-  }
-  const view = await renderHook(() =>
+function locationServiceRefReturning(location: object | null) {
+  return {
+    current: {
+      getById: jest.fn().mockResolvedValue(location),
+    } as unknown as LocationService,
+  };
+}
+
+function renderForm(initialLocationId?: string, location?: object | null) {
+  // Stable across renders: a fresh ref identity per render would retrigger the load effect.
+  const locationServiceRef = locationServiceRefReturning(location ?? null);
+  return renderHook(() =>
     useLocationFormState({
       initialLocationId,
       storyId: 'story-1',
-      drizzleDb,
+      drizzleDb: database.db,
       locationServiceRef,
-      customFields: fields,
+      customFields,
     }),
   );
-  return { locationServiceRef, view };
+}
+
+const persistedLocation = {
+  name: 'Rivendell',
+  description: 'Vale elfico',
+  climate: null,
+  culture: null,
+  politics: null,
+  isFavorite: false,
+  extraNotes: null,
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks();
   mockGetValuesForEntity.mockResolvedValue([]);
+  await AsyncStorage.clear();
+  database = await createTestDatabase();
+  setEditorDraftDb(database.db);
+  jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-it('retains a newly created location id without rehydrating over draft attributes', async () => {
-  const { locationServiceRef, view } = await renderState();
+afterEach(() => {
+  resetEditorDraftDbForTests();
+  database.close();
+  jest.restoreAllMocks();
+});
 
-  await act(async () => {
-    view.result.current.setCustomValues({ field: 'draft value' });
-    view.result.current.retainPersistedLocationId('location-created');
+describe('useLocationFormState durable drafts', () => {
+  it('restores typed creation content after a navigation round-trip', async () => {
+    const first = await renderForm();
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+
+    await act(async () => {
+      first.result.current.setName('Minas Tirith');
+    });
+    await act(async () => {
+      first.unmount();
+    });
+
+    const second = await renderForm();
+    await waitFor(() => expect(second.result.current.draftRestored).toBe(true));
+
+    expect(second.result.current.name).toBe('Minas Tirith');
   });
 
-  expect(view.result.current.currentLocationId).toBe('location-created');
-  expect(view.result.current.customValues).toEqual({ field: 'draft value' });
-  expect(locationServiceRef.current!.getById).not.toHaveBeenCalled();
-  expect(mockGetValuesForEntity).not.toHaveBeenCalled();
-});
+  it('writes no draft when nothing was typed', async () => {
+    const first = await renderForm();
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    await act(async () => {
+      first.unmount();
+    });
 
-it('still hydrates the location and attributes supplied when the form opens', async () => {
-  mockGetValuesForEntity.mockResolvedValue([{ fieldId: 'field', value: 'persisted value' }]);
-  const { locationServiceRef, view } = await renderState('location-existing', {
-    name: 'Existing location',
-    description: null,
-    climate: 'arid',
-    culture: null,
-    politics: null,
-    isFavorite: false,
-    extraNotes: null,
+    const second = await renderForm();
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('');
   });
 
-  await waitFor(() => expect(view.result.current.loading).toBe(false));
+  it('restores edits over the loaded database values', async () => {
+    const first = await renderForm('loc-1', persistedLocation);
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.name).toBe('Rivendell');
 
-  expect(locationServiceRef.current!.getById).toHaveBeenCalledWith('location-existing');
-  expect(mockGetValuesForEntity).toHaveBeenCalledWith('location-existing');
-  expect(view.result.current.name).toBe('Existing location');
-  expect(view.result.current.climate).toBe('arid');
-  expect(view.result.current.customValues).toEqual({ field: 'persisted value' });
-});
+    await act(async () => {
+      first.result.current.setName('Rivendell em chamas');
+    });
+    await act(async () => {
+      first.unmount();
+    });
 
-it('applies schema defaults once for a new location instead of hydrating', async () => {
-  const { view } = await renderState(undefined, undefined, [
-    { id: 'field-1', defaultValue: 'fresh default' } as StorySchemaField,
-  ]);
+    const second = await renderForm('loc-1', persistedLocation);
+    await waitFor(() => expect(second.result.current.draftRestored).toBe(true));
 
-  await waitFor(() => expect(view.result.current.loading).toBe(false));
+    expect(second.result.current.name).toBe('Rivendell em chamas');
+    expect(second.result.current.description).toBe('Vale elfico');
+  });
 
-  expect(view.result.current.customValues).toEqual({ 'field-1': 'fresh default' });
-  expect(view.result.current.isEditing).toBe(false);
+  it('discards the draft when the entity was saved elsewhere since', async () => {
+    const first = await renderForm('loc-1', persistedLocation);
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+
+    await act(async () => {
+      first.result.current.setName('Rascunho velho');
+    });
+    await act(async () => {
+      first.unmount();
+    });
+
+    const newerLocation = {
+      ...persistedLocation,
+      name: 'Rivendell renovada',
+      updatedAt: new Date('2026-02-01T00:00:00.000Z'),
+    };
+    const second = await renderForm('loc-1', newerLocation);
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('Rivendell renovada');
+  });
 });

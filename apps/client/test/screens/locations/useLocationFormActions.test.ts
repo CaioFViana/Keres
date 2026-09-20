@@ -66,6 +66,8 @@ const createState = (overrides: Partial<LocationFormState> = {}): LocationFormSt
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as LocationFormState;
 
@@ -134,6 +136,7 @@ it('coordinates persistence and retains identity before secondary writes complet
   expect(persistPendingLocationRelations).toHaveBeenCalledWith('location-1');
   expect(mockEmit).toHaveBeenCalledWith('location_changed', 'story-1', 'location-1');
   expect(mockAlert).toHaveBeenCalledWith('success', 'created');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('retries after a secondary failure without signalling success on the first attempt', async () => {
@@ -154,10 +157,12 @@ it('retries after a secondary failure without signalling success on the first at
     await act(async () => view.result.current.handleSave());
     expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
     expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
 
     mockAlert.mockClear();
     await act(async () => view.result.current.handleSave());
     expect(state.retainPersistedLocationId).toHaveBeenCalledWith('location-1');
     expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
 });

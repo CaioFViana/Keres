@@ -4,6 +4,7 @@ import type { StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '../../db';
+import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
 import { createAttributeValueService } from '../../services/storymanagement/AttributeValueService';
 import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
 import type { LocationService } from '../../services/storymanagement/LocationService';
@@ -15,6 +16,40 @@ type UseLocationFormStateOptions = {
   locationServiceRef: RefObject<LocationService | null>;
   customFields: StorySchemaField[];
 };
+
+export type LocationFormDraftFields = {
+  name: string;
+  description: string | null;
+  climate: string | null;
+  culture: string | null;
+  politics: string | null;
+  isFavorite: boolean;
+  extraNotes: string | null;
+};
+
+const CREATE_PRISTINE: LocationFormDraftFields = {
+  name: '',
+  description: null,
+  climate: null,
+  culture: null,
+  politics: null,
+  isFavorite: false,
+  extraNotes: null,
+};
+
+function isLocationFormDraftFields(value: unknown): value is LocationFormDraftFields {
+  if (!value || typeof value !== 'object') return false;
+  const fields = value as Record<string, unknown>;
+  return (
+    typeof fields.name === 'string' &&
+    (fields.description === null || typeof fields.description === 'string') &&
+    (fields.climate === null || typeof fields.climate === 'string') &&
+    (fields.culture === null || typeof fields.culture === 'string') &&
+    (fields.politics === null || typeof fields.politics === 'string') &&
+    typeof fields.isFavorite === 'boolean' &&
+    (fields.extraNotes === null || typeof fields.extraNotes === 'string')
+  );
+}
 
 /** Owns field state, initial location hydration and defaults for a Location form. */
 export function useLocationFormState({
@@ -34,6 +69,10 @@ export function useLocationFormState({
   const [extraNotes, setExtraNotes] = useState<string | null>(null);
   const [customValues, setCustomValues] = useState<CustomAttributeValues>({});
   const [loading, setLoading] = useState(true);
+  // Edit-mode pristine values + stale guard, captured once from the loaded row (never from the
+  // live fields, which a restored draft would contaminate).
+  const [loadedPristine, setLoadedPristine] = useState<LocationFormDraftFields | null>(null);
+  const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null);
   const customDefaultsAppliedRef = useRef(false);
   const isEditing = !!currentLocationId;
   const retainPersistedLocationId = useCallback((locationId: string) => {
@@ -59,6 +98,16 @@ export function useLocationFormState({
             setPolitics(fetchedLocation.politics);
             setIsFavorite(fetchedLocation.isFavorite);
             setExtraNotes(fetchedLocation.extraNotes);
+            setLoadedPristine({
+              name: fetchedLocation.name,
+              description: fetchedLocation.description,
+              climate: fetchedLocation.climate,
+              culture: fetchedLocation.culture,
+              politics: fetchedLocation.politics,
+              isFavorite: fetchedLocation.isFavorite,
+              extraNotes: fetchedLocation.extraNotes,
+            });
+            setLoadedUpdatedAt(fetchedLocation.updatedAt?.toISOString?.() ?? null);
 
             const existingValues =
               await createAttributeValueService(drizzleDb).getValuesForEntity(initialLocationId);
@@ -93,6 +142,33 @@ export function useLocationFormState({
     }
   }, [isEditing, customFields]);
 
+  const restoreDraftFields = useCallback((fields: LocationFormDraftFields) => {
+    if (!isLocationFormDraftFields(fields)) {
+      console.error('Corrupt location form draft ignored.');
+      return;
+    }
+    setName(fields.name);
+    setDescription(fields.description);
+    setClimate(fields.climate);
+    setCulture(fields.culture);
+    setPolitics(fields.politics);
+    setIsFavorite(fields.isFavorite);
+    setExtraNotes(fields.extraNotes);
+  }, []);
+
+  // Keyed by the id the form OPENED with, never the retained one: after the base row is created
+  // mid-session the draft stays under `new` until the save succeeds and clears it.
+  const { clearFormDraft, draftRestored } = useDurableFormDraft<LocationFormDraftFields>({
+    storyId,
+    entityType: 'Location',
+    entityId: initialLocationId,
+    enabled: !!storyId && !loading,
+    snapshot: { name, description, climate, culture, politics, isFavorite, extraNotes },
+    pristine: loadedPristine ?? CREATE_PRISTINE,
+    baseUpdatedAt: initialLocationId ? loadedUpdatedAt : undefined,
+    onRestore: restoreDraftFields,
+  });
+
   return {
     currentLocationId,
     retainPersistedLocationId,
@@ -114,6 +190,8 @@ export function useLocationFormState({
     setCustomValues,
     loading,
     isEditing,
+    clearFormDraft,
+    draftRestored,
   };
 }
 

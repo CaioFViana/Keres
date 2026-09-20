@@ -2,6 +2,7 @@ export type ManuscriptInline = {
   text: string;
   bold?: boolean;
   italic?: boolean;
+  underline?: boolean;
 };
 
 export type ManuscriptBlock =
@@ -21,23 +22,35 @@ function parseInlines(text: string): ManuscriptInline[] {
     }
     if (cursor < segment.length) out.push({ text: segment.slice(cursor) });
   };
-  const boldPattern = /\*\*(.+?)\*\*/g;
+  const pushBold = (segment: string) => {
+    const boldPattern = /\*\*(.+?)\*\*/g;
+    let cursor = 0;
+    let match: RegExpExecArray | null;
+    while ((match = boldPattern.exec(segment)) !== null) {
+      if (match.index > cursor) pushItalics(segment.slice(cursor, match.index));
+      out.push({ text: match[1], bold: true });
+      cursor = match.index + match[0].length;
+    }
+    if (cursor < segment.length) pushItalics(segment.slice(cursor));
+  };
+  const underlinePattern = /__(.+?)__/g;
   let cursor = 0;
   let match: RegExpExecArray | null;
-  while ((match = boldPattern.exec(text)) !== null) {
-    if (match.index > cursor) pushItalics(text.slice(cursor, match.index));
-    out.push({ text: match[1], bold: true });
+  while ((match = underlinePattern.exec(text)) !== null) {
+    if (match.index > cursor) pushBold(text.slice(cursor, match.index));
+    out.push({ text: match[1], underline: true });
     cursor = match.index + match[0].length;
   }
-  if (cursor < text.length) pushItalics(text.slice(cursor));
+  if (cursor < text.length) pushBold(text.slice(cursor));
   return out.filter((span) => span.text.length > 0);
 }
 
 /**
  * Minimal manuscript markdown: `#`/`##`/`###` headings, `**bold**`, `*italic*`,
- * blank-line separated blocks. Single newlines inside a block are preserved (dialogue
- * lines), unmatched markers stay literal. Deliberately dependency-free: prose needs
- * nothing more, and a new renderer dependency is a Hermes-compat risk for zero gain.
+ * `__underline__`, blank-line separated blocks. Single newlines inside a block are
+ * preserved (dialogue lines), unmatched markers stay literal, styles never nest.
+ * Deliberately dependency-free: prose needs nothing more, and a new renderer
+ * dependency is a Hermes-compat risk for zero gain.
  */
 export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
   const chunks = markdown.split(/\n\s*\n/).map((chunk) => chunk.trim()).filter(Boolean);

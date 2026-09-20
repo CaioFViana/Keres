@@ -77,6 +77,8 @@ import locationMap_en from '../content/location-map/en';
 import locationMap_pt from '../content/location-map/pt';
 import locations_en from '../content/locations/en';
 import locations_pt from '../content/locations/pt';
+import manuscript_en from '../content/manuscript/en';
+import manuscript_pt from '../content/manuscript/pt';
 import narrativeElements_en from '../content/narrative-elements/en';
 import narrativeElements_pt from '../content/narrative-elements/pt';
 import notes_en from '../content/notes/en';
@@ -175,6 +177,7 @@ export type GeneratedHelpPageId =
   | 'lists-and-search'
   | 'location-map'
   | 'locations'
+  | 'manuscript'
   | 'narrative-elements'
   | 'notes'
   | 'packs'
@@ -357,6 +360,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   locations: {
     en: locations_en,
     pt: locations_pt,
+  },
+  manuscript: {
+    en: manuscript_en,
+    pt: manuscript_pt,
   },
   'narrative-elements': {
     en: narrativeElements_en,

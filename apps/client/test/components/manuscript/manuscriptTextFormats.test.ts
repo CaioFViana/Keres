@@ -34,7 +34,7 @@ const scenes: SceneSelect[] = [
     name: 'Opening',
     index: 1,
     summary: null,
-    body: '# Prologue\n\nA **bold** & <tricky> line.',
+    body: '# Prologue\n\nA **bold**, __lined__ & <tricky> line.',
     gap: null,
     gapType: null,
     calendarDateOverride: null,
@@ -113,6 +113,7 @@ describe('buildManuscriptHtml', () => {
     expect(html).toContain('<h3 class="scene" id="scene-s1">1. Opening</h3>');
     expect(html).toContain('<h4>Prologue</h4>');
     expect(html).toContain('<strong>bold</strong>');
+    expect(html).toContain('<u>lined</u>');
     expect(html).toContain('&amp; &lt;tricky&gt;');
     expect(html).toContain('<a href="#scene-s2">Next</a>');
     expect(html).toContain('page-break-before');
@@ -142,7 +143,7 @@ describe('buildManuscriptMarkdown', () => {
     expect(md).toContain('## 1. Arrival');
     expect(md).toContain('### 1. Opening');
     expect(md).toContain('#### Prologue');
-    expect(md).toContain('A **bold** & <tricky> line.');
+    expect(md).toContain('A **bold**, <u>lined</u> & <tricky> line.');
     expect(md).toContain('- Go on — See Next');
     expect(md.endsWith('\n')).toBe(true);
   });
@@ -155,7 +156,7 @@ describe('buildManuscriptText', () => {
     expect(text).toContain('My Story\n========');
     expect(text).toContain('1. Arrival\n----------');
     expect(text).toContain('1. Opening');
-    expect(text).toContain('A bold & <tricky> line.');
+    expect(text).toContain('A bold, lined & <tricky> line.');
     expect(text).toContain('* Go on — See Next');
     expect(text).not.toContain('**');
     expect(text.endsWith('\n')).toBe(true);

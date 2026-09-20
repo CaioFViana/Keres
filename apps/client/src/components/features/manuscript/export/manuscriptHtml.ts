@@ -18,10 +18,15 @@ function spansToHtml(spans: CompiledSpan[]): string {
   return spans
     .map((span) => {
       const text = escapeHtml(span.text).replace(/\n/g, '<br />');
-      if (span.bold && span.italic) return `<strong><em>${text}</em></strong>`;
-      if (span.bold) return `<strong>${text}</strong>`;
-      if (span.italic) return `<em>${text}</em>`;
-      return text;
+      const emphasized =
+        span.bold && span.italic
+          ? `<strong><em>${text}</em></strong>`
+          : span.bold
+            ? `<strong>${text}</strong>`
+            : span.italic
+              ? `<em>${text}</em>`
+              : text;
+      return span.underline ? `<u>${emphasized}</u>` : emphasized;
     })
     .join('');
 }

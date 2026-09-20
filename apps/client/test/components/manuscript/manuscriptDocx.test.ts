@@ -35,7 +35,7 @@ function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
     name: 'Opening',
     index: 1,
     summary: null,
-    body: 'First **bold** line.',
+    body: 'First **bold** and __lined__ line.',
     gap: null,
     gapType: null,
     calendarDateOverride: null,
@@ -112,6 +112,7 @@ describe('buildManuscriptDocxBase64', () => {
     expect(xml).toContain('Arrival');
     expect(xml).toContain('Opening');
     expect(xml).toContain('First ');
+    expect(xml).toContain('<w:u ');
     expect(xml).toContain('Go on');
   });
 

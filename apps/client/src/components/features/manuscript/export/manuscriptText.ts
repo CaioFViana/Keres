@@ -8,6 +8,8 @@ export type ManuscriptTextLabels = {
 function spansToMarkdown(spans: CompiledSpan[]): string {
   return spans
     .map((span) => {
+      // Underline has no markdown syntax; embedded HTML is the portable fallback.
+      if (span.underline) return `<u>${span.text}</u>`;
       if (span.bold && span.italic) return `***${span.text}***`;
       if (span.bold) return `**${span.text}**`;
       if (span.italic) return `*${span.text}*`;

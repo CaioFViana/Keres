@@ -16,10 +16,17 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import Button from '../../../components/common/controls/Button/Button';
 import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { ManuscriptExportSheet } from '../../../components/features/manuscript/ManuscriptExportSheet/ManuscriptExportSheet';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import {
+  compileLinearManuscript,
+  compileRouteManuscript,
+} from '../../../components/features/manuscript/export/manuscriptCompiler';
+import {
+  exportManuscript,
+  MANUSCRIPT_EXPORT_FORMATS,
+  type ManuscriptExportFormat,
+} from '../../../components/features/manuscript/export/manuscriptExport';
 import {
   findManuscriptMatches,
   isLooseScene,
@@ -29,94 +36,18 @@ import {
   type ManuscriptSection,
 } from '../../../components/features/manuscript/manuscriptSections';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { SceneBodyEditor } from '../../../components/features/manuscript/SceneBodyEditor/SceneBodyEditor';
-import type { SceneSelect } from '../../../db/schema';
-import { useDrizzle } from '../../../db';
+import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useManuscriptData } from '../../../hooks/useManuscriptData';
-import { useSceneBodyDraft } from '../../../hooks/useSceneBodyDraft';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import { useStoryRole } from '../../../hooks/useStoryRole';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import {
-  createSceneService,
-  type SceneService,
-} from '../../../services/storymanagement/SceneService';
+import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
 import { AppAlert } from '../../../utils/AppAlert';
 
 type ManuscriptScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Manuscript'>;
 type ManuscriptNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'Manuscript'>;
-
-function ManuscriptSectionEditor({
-  scene,
-  storyId,
-  canEdit,
-  persist,
-  onCollapse,
-}: {
-  scene: SceneSelect;
-  storyId: string;
-  canEdit: boolean;
-  persist(sceneId: string, body: string | null): Promise<void>;
-  onCollapse(): void;
-}) {
-  const { t } = useTranslation();
-  const persistScene = useCallback(
-    (body: string | null) => persist(scene.id, body),
-    [persist, scene.id],
-  );
-  const {
-    text,
-    setText,
-    wordCount,
-    charCount,
-    maxLength,
-    isDirty,
-    overLimit,
-    canSave,
-    save,
-    saving,
-    saveError,
-    draftRestored,
-  } = useSceneBodyDraft({
-    storyId,
-    sceneId: scene.id,
-    savedBody: scene.body,
-    baseUpdatedAt: scene.updatedAt.toISOString(),
-    enabled: true,
-    persist: persistScene,
-  });
-
-  useEffect(() => {
-    if (saveError) AppAlert.alert(t('error'), saveError);
-  }, [saveError, t]);
-
-  return (
-    <View>
-      <SceneBodyEditor
-        testID={`manuscript-editor-${scene.id}`}
-        value={text}
-        onChangeText={setText}
-        wordCount={wordCount}
-        charCount={charCount}
-        maxLength={maxLength}
-        overLimit={overLimit}
-        canSave={canSave && canEdit}
-        saving={saving}
-        hasUnsavedChanges={isDirty || draftRestored}
-        onSave={() => void save()}
-        editable={canEdit}
-        autoFocus
-      />
-      <View style={{ paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal }}>
-        <Button onPress={onCollapse}>{t('manuscript_collapse')}</Button>
-      </View>
-    </View>
-  );
-}
 
 const ManuscriptScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -125,28 +56,22 @@ const ManuscriptScreen = () => {
   const navigation = useNavigation<ManuscriptNavigation>();
   const route = useRoute<ManuscriptScreenRouteProp>();
   const { selectedStory } = useStoryStore();
-  const { userId } = useUserSettingsStore();
-  const drizzleDb = useDrizzle();
-  const sceneServiceRef = useRef<SceneService | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) sceneServiceRef.current ??= createSceneService(drizzleDb);
-  }, [drizzleDb]);
+  const { showNotification } = useNotificationStore();
+  const { pending: exporting, run: runExport } = useAsyncOperation();
 
   const storyId = selectedStory?.id;
   const isBranching = selectedStory?.type === 'branching';
-  const { canEdit } = useStoryRole(storyId);
-  const { chapters, scenes, routes, choices, stepsByRouteId, loading } =
-    useManuscriptData(storyId ?? null);
+  const { chapters, scenes, routes, choices, stepsByRouteId, loading } = useManuscriptData(
+    storyId ?? null,
+  );
 
   const [routeId, setRouteId] = useState<string | null>(route.params?.routeId ?? null);
   const effectiveRouteId = routeId ?? routes[0]?.id ?? null;
-  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [ordinal, setOrdinal] = useState(0);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [pureRead, setPureRead] = useState(false);
 
-  const sections: ManuscriptSection[] = useMemo(() => {
+  const allSections: ManuscriptSection[] = useMemo(() => {
     if (isBranching) {
       if (!effectiveRouteId) return [];
       return routeManuscriptSections(stepsByRouteId.get(effectiveRouteId) ?? [], scenes);
@@ -154,20 +79,19 @@ const ManuscriptScreen = () => {
     return linearManuscriptSections(chapters, scenes);
   }, [isBranching, effectiveRouteId, stepsByRouteId, chapters, scenes]);
 
+  // Pure reading drops empty scenes (there is nothing to read and no title to show).
+  const sections = useMemo(
+    () =>
+      pureRead
+        ? allSections.filter((section) => section.kind !== 'scene' || section.scene.body)
+        : allSections,
+    [pureRead, allSections],
+  );
+
   const { matches, total } = useMemo(() => findManuscriptMatches(sections, query), [sections, query]);
   useEffect(() => {
     setOrdinal(0);
   }, [query, sections]);
-
-  const looseCount = useMemo(() => {
-    if (isBranching) return 0;
-    const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
-    return scenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, chaptersById)).length;
-  }, [isBranching, chapters, scenes]);
-
-  const exportRouteName = isBranching
-    ? (routes.find((entry) => entry.id === effectiveRouteId)?.name ?? null)
-    : null;
 
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
   const jumpToOrdinal = useCallback(
@@ -184,28 +108,103 @@ const ManuscriptScreen = () => {
     [matches, total],
   );
 
-  useScreenHeader({
-    target: 'parent',
-    title: t('manuscript_title'),
-    actions: [
-      {
-        id: 'export-manuscript',
-        icon: 'share-outline',
-        label: t('export_manuscript_title'),
-        onPress: () => setExportOpen(true),
-        visible: sections.length > 0,
-      },
-    ],
-  });
+  const looseCount = useMemo(() => {
+    if (isBranching) return 0;
+    const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+    return scenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, chaptersById)).length;
+  }, [isBranching, chapters, scenes]);
 
-  const persist = useCallback(
-    async (sceneId: string, body: string | null) => {
-      if (!sceneServiceRef.current) throw new Error(t('error'));
-      if (!userId) throw new Error(t('user_not_identified'));
-      await sceneServiceRef.current.updateScene(userId, sceneId, { body });
+  const exportRouteName = isBranching
+    ? (routes.find((entry) => entry.id === effectiveRouteId)?.name ?? null)
+    : null;
+
+  const runExportFormat = useCallback(
+    (format: ManuscriptExportFormat, includeLoose: boolean) => {
+      void runExport(async () => {
+        try {
+          const manuscript = isBranching
+            ? compileRouteManuscript({
+                title: selectedStory?.title ?? '',
+                routeName: exportRouteName ?? '',
+                steps: effectiveRouteId ? (stepsByRouteId.get(effectiveRouteId) ?? []) : [],
+                scenes,
+                choices,
+                looseHeadingLabel: t('export_manuscript_loose_heading'),
+              })
+            : compileLinearManuscript({
+                title: selectedStory?.title ?? '',
+                chapters,
+                scenes,
+                choices,
+                includeLooseScenes: includeLoose,
+                looseHeadingLabel: t('export_manuscript_loose_heading'),
+              });
+          const result = await exportManuscript({
+            storyTitle: selectedStory?.title ?? '',
+            manuscript,
+            format,
+            labels: {
+              goToPage: t('export_manuscript_go_to_page'),
+              goToScene: t('export_manuscript_go_to_scene'),
+            },
+          });
+          if (result.delivered) {
+            showNotification(
+              t('export_manuscript_success', { fileName: result.fileName }),
+              'success',
+            );
+          } else {
+            showNotification(
+              t('export_story_no_share_target', { path: result.uri || result.fileName }),
+              'warning',
+            );
+          }
+        } catch (error) {
+          console.log('ManuscriptScreen: manuscript export failed.', error);
+          showNotification(t('export_manuscript_failed_body'), 'error');
+        }
+      });
     },
-    [userId, t],
+    [runExport, isBranching, selectedStory, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, showNotification],
   );
+
+  const askExportFormat = useCallback(
+    (includeLoose: boolean) => {
+      AppAlert.alert(
+        t('export_manuscript_title'),
+        isBranching && exportRouteName
+          ? t('export_manuscript_route_note', { route: exportRouteName })
+          : undefined,
+        [
+          ...MANUSCRIPT_EXPORT_FORMATS.map((format) => ({
+            text: t(`export_manuscript_format_${format}`),
+            onPress: () => runExportFormat(format, includeLoose),
+          })),
+          { text: t('cancel'), style: 'cancel' as const },
+        ],
+      );
+    },
+    [isBranching, exportRouteName, runExportFormat, t],
+  );
+
+  const handleExportPress = useCallback(() => {
+    if (exporting) return;
+    if (!isBranching && looseCount > 0) {
+      AppAlert.alert(t('export_manuscript_title'), t('export_manuscript_loose_message'), [
+        {
+          text: t('export_manuscript_include_loose', { count: looseCount }),
+          onPress: () => askExportFormat(true),
+        },
+        {
+          text: t('export_manuscript_exclude_loose'),
+          onPress: () => askExportFormat(false),
+        },
+        { text: t('cancel'), style: 'cancel' as const },
+      ]);
+      return;
+    }
+    askExportFormat(true);
+  }, [exporting, isBranching, looseCount, askExportFormat, t]);
 
   const openScene = useCallback(
     (sceneId: string) => {
@@ -213,6 +212,46 @@ const ManuscriptScreen = () => {
     },
     [navigation],
   );
+
+  const openSceneEditor = useCallback(
+    (sceneId: string) => {
+      navigation.navigate('SceneEditor', { sceneId });
+    },
+    [navigation],
+  );
+
+  useScreenHeader({
+    target: 'parent',
+    title: t('manuscript_title'),
+    renderActions: useCallback(
+      () => (
+        <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
+          <TouchableOpacity
+            testID="manuscript-pure-read"
+            accessibilityRole="button"
+            accessibilityState={{ selected: pureRead }}
+            accessibilityLabel={t('manuscript_pure_read')}
+            onPress={() => setPureRead((current) => !current)}
+          >
+            <Ionicons
+              name={pureRead ? 'eye' : 'eye-outline'}
+              size={24}
+              color={pureRead ? colors.primary : colors.text}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="manuscript-export"
+            accessibilityRole="button"
+            accessibilityLabel={t('export_manuscript_title')}
+            onPress={handleExportPress}
+          >
+            <Ionicons name="share-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+      ),
+      [pureRead, colors, handleExportPress, t],
+    ),
+  });
 
   const styles = useMemo(
     () =>
@@ -241,20 +280,28 @@ const ManuscriptScreen = () => {
         searchCount: { color: colors.textSecondary, fontSize: 13, minWidth: 64, textAlign: 'center' },
         section: {
           paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
-          paddingVertical: manuscriptTextMetrics.containerPaddingVertical,
+          paddingVertical: 20,
         },
-        divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-        containerTitle: { color: colors.text, fontSize: 22, fontWeight: '700' },
+        chapterDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+        sceneDivider: {
+          height: StyleSheet.hairlineWidth,
+          backgroundColor: colors.border,
+          marginHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
+          opacity: 0.6,
+        },
+        containerTitle: { color: colors.text, fontSize: 24, fontWeight: '700' },
         containerEvent: { fontStyle: 'italic' },
-        looseTitle: { color: colors.textSecondary, fontSize: 16, fontStyle: 'italic' },
+        looseTitle: { color: colors.textSecondary, fontSize: 17, fontStyle: 'italic' },
+        sceneHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
         sceneTitle: {
+          flex: 1,
           color: colors.textSecondary,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: '700',
           letterSpacing: 0.5,
           textTransform: 'uppercase',
-          marginBottom: 8,
         },
+        sceneEdit: { padding: 4 },
         emptyText: { color: colors.textSecondary, fontSize: 15, fontStyle: 'italic' },
         emptyWrap: { padding: 24, alignItems: 'center', gap: 12 },
       }),
@@ -265,60 +312,61 @@ const ManuscriptScreen = () => {
     ({ item, index }: { item: ManuscriptSection; index: number }) => {
       if (item.kind === 'container') {
         return (
-          <View style={styles.section}>
-            {index > 0 && <View style={styles.divider} />}
-            <Text
-              style={[
-                styles.containerTitle,
-                item.containerType === 'event' && styles.containerEvent,
-              ]}
-            >
-              {item.containerType === 'chapter' ? `${item.index}. ${item.name}` : item.name}
-            </Text>
+          <View>
+            {index > 0 && <View style={styles.chapterDivider} />}
+            <View style={styles.section}>
+              <Text
+                style={[
+                  styles.containerTitle,
+                  item.containerType === 'event' && styles.containerEvent,
+                ]}
+              >
+                {item.containerType === 'chapter' ? `${item.index}. ${item.name}` : item.name}
+              </Text>
+            </View>
           </View>
         );
       }
       if (item.kind === 'loose-heading') {
         return (
-          <View style={styles.section}>
-            <View style={styles.divider} />
-            <Text style={styles.looseTitle}>{t('unchaptered_scenes')}</Text>
+          <View>
+            <View style={styles.chapterDivider} />
+            <View style={styles.section}>
+              <Text style={styles.looseTitle}>{t('unchaptered_scenes')}</Text>
+            </View>
           </View>
         );
       }
-      const expanded = expandedKey === item.key;
       return (
         <View>
-          {index > 0 && <View style={styles.divider} />}
+          {index > 0 && <View style={styles.sceneDivider} />}
           <View style={styles.section}>
-            <TouchableOpacity onPress={() => openScene(item.scene.id)}>
-              <Text style={styles.sceneTitle}>{`${item.position}. ${item.scene.name}`}</Text>
-            </TouchableOpacity>
-            {expanded ? (
-              <ManuscriptSectionEditor
-                scene={item.scene}
-                storyId={item.scene.storyId}
-                canEdit={canEdit}
-                persist={persist}
-                onCollapse={() => setExpandedKey(null)}
-              />
-            ) : item.scene.body ? (
-              <TouchableOpacity
-                testID={`manuscript-expand-${item.scene.id}`}
-                onPress={() => setExpandedKey(item.key)}
-              >
-                <MarkdownPreview text={item.scene.body} />
-              </TouchableOpacity>
+            {!pureRead && (
+              <View style={styles.sceneHeaderRow}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
+                  <Text style={styles.sceneTitle}>{`${item.position}. ${item.scene.name}`}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID={`manuscript-edit-${item.scene.id}`}
+                  style={styles.sceneEdit}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('manuscript_open_editor')}
+                  onPress={() => openSceneEditor(item.scene.id)}
+                >
+                  <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            )}
+            {item.scene.body ? (
+              <MarkdownPreview text={item.scene.body} />
             ) : (
-              <Button onPress={() => setExpandedKey(item.key)}>
-                {t('manuscript_start_writing')}
-              </Button>
+              !pureRead && <Text style={styles.emptyText}>{t('manuscript_no_body_yet')}</Text>
             )}
           </View>
         </View>
       );
     },
-    [expandedKey, canEdit, openScene, persist, styles, t],
+    [pureRead, openScene, openSceneEditor, styles, t, colors],
   );
 
   if (loading) {
@@ -330,18 +378,6 @@ const ManuscriptScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ManuscriptExportSheet
-        visible={exportOpen}
-        onClose={() => setExportOpen(false)}
-        storyTitle={selectedStory?.title ?? ''}
-        isBranching={isBranching}
-        routeName={exportRouteName}
-        routeSteps={isBranching && effectiveRouteId ? (stepsByRouteId.get(effectiveRouteId) ?? []) : []}
-        chapters={chapters}
-        scenes={scenes}
-        choices={choices}
-        looseCount={looseCount}
-      />
       <View style={styles.toolbar}>
         {isBranching && (
           <SingleSelectPill
@@ -349,7 +385,6 @@ const ManuscriptScreen = () => {
             value={effectiveRouteId}
             onValueChange={(value) => {
               setRouteId(value);
-              setExpandedKey(null);
             }}
             placeholder={t('manuscript_route')}
           />

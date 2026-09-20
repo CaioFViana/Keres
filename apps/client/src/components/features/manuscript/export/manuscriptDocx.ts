@@ -28,6 +28,7 @@ function spansToRuns(spans: CompiledSpan[]): TextRun[] {
         text: span.text,
         bold: span.bold || undefined,
         italics: span.italic || undefined,
+        underline: span.underline ? {} : undefined,
       }),
   );
 }

@@ -7,7 +7,7 @@ import {
 } from '../manuscriptSections';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
 
-export type CompiledSpan = { text: string; bold: boolean; italic: boolean };
+export type CompiledSpan = { text: string; bold: boolean; italic: boolean; underline: boolean };
 
 export type CompiledBlock =
   | { kind: 'title'; text: string }
@@ -41,11 +41,14 @@ export function bookmarkIdForScene(sceneId: string): string {
   return `scene-${sceneId.replace(/[^A-Za-z0-9]/g, '')}`.slice(0, 40);
 }
 
-function toSpans(block: { inlines: { text: string; bold?: boolean; italic?: boolean }[] }): CompiledSpan[] {
+function toSpans(block: {
+  inlines: { text: string; bold?: boolean; italic?: boolean; underline?: boolean }[];
+}): CompiledSpan[] {
   return block.inlines.map((span) => ({
     text: span.text,
     bold: span.bold ?? false,
     italic: span.italic ?? false,
+    underline: span.underline ?? false,
   }));
 }
 

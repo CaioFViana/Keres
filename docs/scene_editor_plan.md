@@ -109,11 +109,15 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
   header **Escrever / Ler / Revisar**. Entradas: ação `document-text` no
   header do detalhe da cena + cartão "Manuscrito" (trecho + indicador de
   rascunho) sob o resumo.
-- Escrever: `SceneBodyEditor` (input + contador chars/30k e palavras +
-  draft + Save) + hook `useSceneBodyDraft` (snapshot de um campo sobre
-  `useDurableFormDraft`, campo `body`). Ler: `MarkdownPreview` (parser
-  mínimo próprio, sem dependência). Revisar: threads de `Comment` da cena
+- Escrever: `SceneBodyEditor` (input tela cheia) + `SceneBodyToolbar` fixa
+  (negrito/itálico/sublinhado/títulos via `applyManuscriptFormat`) +
+  `SceneBodyFooter` fixo (rascunho/contador/Save) + hook `useSceneBodyDraft`
+  (snapshot de um campo sobre `useDurableFormDraft`, campo `body`). Ler:
+  `MarkdownPreview` (parser mínimo próprio com `**`/`*`/`__`/`#`, sem
+  dependência, texto selecionável). Revisar: threads de `Comment` da cena
   na chave `body` via `CommentThreadModal` — zero nova entidade.
+- Toggle de modo e ações de header seguem o padrão `BoardCanvasHeaderActions`
+  (ícones Ionicons 24, `primary` quando ativo).
 - Seamless por construção: editor e preview compartilham
   `manuscriptTextMetrics` (fonte/tamanho/line-height/padding); `TextInput`
   borderless troca in place com o preview; Escrever/Ler dividem um
@@ -140,8 +144,10 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
 - Linear: capítulos por `index` com suas cenas, depois containers de evento,
   depois seção "sem capítulo". Branching: seletor de rota + `routeSteps`
   (sem validação de travessia — ler prosa não valida execução).
-- Expandir a seção monta o mesmo `SceneBodyEditor` in place; cada seção
-  salva só a própria cena (`updateScene({body})`) — sem repartir documento.
+- Sem edição inline: título da cena → detalhe, lápis ao lado → tela dedicada
+  de edição; corpo selecionável sem cliques. Modo leitura pura (olho no
+  header) esconde títulos/botões e pula cenas vazias. Divisórias: capítulos
+  full-bleed, entre cenas recuada e sutil.
 - Dados via hook próprio `useManuscriptData` (containers todos os tipos +
   cenas + choices + rotas/steps, com refresh em `scene_changed` etc.):
   `useStoryRoutes` não servia (capítulos excluem eventos; carrega
@@ -160,8 +166,11 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
   explícitos (sem switch).
 - DOCX via lib `docx`: headings, bookmarks, `PageReference` com hyperlink
   por choice ("vá para a página X" resolvido no Word/LibreOffice, nenhuma
-  paginação no app), rodapé `PAGE/NUMPAGES`, recuo de primeira linha.
-  Entrega: `Packer.toBase64String()` → bytes → `deliverFile` (reuso de
+  paginação no app), rodapé `PAGE/NUMPAGES`, recuo de primeira linha,
+  sublinhado (`__`).
+- Export segue o padrão `ImportExportScreen`: `AppAlert` encadeado (cenas
+  avulsas → formato) + `showNotification` de sucesso/aviso/erro. Entrega:
+  `Packer.toBase64String()` → bytes → `deliverFile` (reuso de
   `storyTransfer`, que ganhou `buildManuscriptFileName`).
 - PDF via `expo-print` (`printToFileAsync` sobre template HTML próprio com
   TOC/âncoras/links internos): **limitação honesta** — a API não retorna

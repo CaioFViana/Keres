@@ -1,18 +1,26 @@
+import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import Button from '../../../components/common/controls/Button/Button';
 import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
+import {
+  applyManuscriptFormat,
+  type ManuscriptFormatKind,
+  type TextSelection,
+} from '../../../components/features/manuscript/formatManuscriptSelection';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { SceneBodyEditor } from '../../../components/features/manuscript/SceneBodyEditor/SceneBodyEditor';
+import { SceneBodyFooter } from '../../../components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
+import { SceneBodyToolbar } from '../../../components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 import type { SceneSelect } from '../../../db/schema';
 import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
@@ -40,38 +48,38 @@ type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Sc
 type SceneEditorNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneEditor'>;
 type EditorMode = 'write' | 'read' | 'review';
 
-const MODES: EditorMode[] = ['write', 'read', 'review'];
+const MODES: {
+  mode: EditorMode;
+  icon: keyof typeof Ionicons.glyphMap;
+  activeIcon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { mode: 'write', icon: 'pencil-outline', activeIcon: 'pencil' },
+  { mode: 'read', icon: 'book-outline', activeIcon: 'book' },
+  { mode: 'review', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+];
 
+/** Mode switch following the header-actions standard: icon buttons, primary when active. */
 function ModeToggle({ mode, onChange }: { mode: EditorMode; onChange(mode: EditorMode): void }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-        pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
-        pillActive: { backgroundColor: colors.primaryContainer },
-        label: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
-        labelActive: { color: colors.onPrimaryContainer },
-      }),
-    [colors],
-  );
   return (
-    <View style={styles.row}>
+    <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
       {MODES.map((candidate) => {
-        const active = candidate === mode;
+        const active = candidate.mode === mode;
         return (
           <TouchableOpacity
-            key={candidate}
-            testID={`editor-mode-${candidate}`}
+            key={candidate.mode}
+            testID={`editor-mode-${candidate.mode}`}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            style={[styles.pill, active && styles.pillActive]}
-            onPress={() => onChange(candidate)}
+            accessibilityLabel={t(`manuscript_mode_${candidate.mode}`)}
+            onPress={() => onChange(candidate.mode)}
           >
-            <Text style={[styles.label, active && styles.labelActive]}>
-              {t(`manuscript_mode_${candidate}`)}
-            </Text>
+            <Ionicons
+              name={active ? candidate.activeIcon : candidate.icon}
+              size={24}
+              color={active ? colors.primary : colors.text}
+            />
           </TouchableOpacity>
         );
       })}
@@ -90,6 +98,7 @@ function SceneEditorContent({
   const { t } = useTranslation();
   const [mode, setMode] = useState<EditorMode>('write');
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [selection, setSelection] = useState<TextSelection>({ start: 0, end: 0 });
   const { canEdit } = useStoryRole(scene.storyId);
   const {
     commentsByField,
@@ -148,11 +157,23 @@ function SceneEditorContent({
     [addComment, text],
   );
 
+  const handleFormat = useCallback(
+    (kind: ManuscriptFormatKind) => {
+      const result = applyManuscriptFormat(text, selection, kind);
+      setText(result.text);
+      setSelection(result.selection);
+    },
+    [text, selection, setText],
+  );
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
         container: { flex: 1, backgroundColor: colors.surface },
+        scroller: { flex: 1 },
+        scrollerContent: { flexGrow: 1 },
         readContainer: {
+          flex: 1,
           paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
           paddingVertical: manuscriptTextMetrics.containerPaddingVertical,
         },
@@ -166,8 +187,17 @@ function SceneEditorContent({
 
   return (
     <View style={styles.container}>
+      {mode === 'write' && (
+        <SceneBodyToolbar
+          testID="scene-body-toolbar"
+          onAction={handleFormat}
+          disabled={!canEdit || saving}
+        />
+      )}
       <ScrollView
         ref={scrollRef}
+        style={styles.scroller}
+        contentContainerStyle={styles.scrollerContent}
         onScroll={(event) => {
           offsetRef.current = event.nativeEvent.contentOffset.y;
         }}
@@ -178,15 +208,9 @@ function SceneEditorContent({
             testID="scene-body-editor"
             value={text}
             onChangeText={setText}
-            wordCount={wordCount}
-            charCount={charCount}
-            maxLength={maxLength}
-            overLimit={overLimit}
-            canSave={canSave && canEdit}
-            saving={saving}
-            hasUnsavedChanges={isDirty || draftRestored}
-            onSave={() => void save()}
-            editable={canEdit}
+            selection={selection}
+            onSelectionChange={setSelection}
+            editable={canEdit && !saving}
           />
         ) : (
           <View style={styles.readContainer}>
@@ -201,6 +225,19 @@ function SceneEditorContent({
           </View>
         )}
       </ScrollView>
+      {mode === 'write' && (
+        <SceneBodyFooter
+          testID="scene-body-footer"
+          wordCount={wordCount}
+          charCount={charCount}
+          maxLength={maxLength}
+          overLimit={overLimit}
+          canSave={canSave && canEdit}
+          saving={saving}
+          hasUnsavedChanges={isDirty || draftRestored}
+          onSave={() => void save()}
+        />
+      )}
       <CommentThreadModal
         visible={commentsOpen}
         onClose={() => setCommentsOpen(false)}

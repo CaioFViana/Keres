@@ -301,14 +301,26 @@ describe('SceneEditorScreen', () => {
     await view.findByTestId('scene-body-editor.input');
 
     const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
-    await fireEvent.press(header.getByText('manuscript_mode_read'));
+    await fireEvent.press(header.getByTestId('editor-mode-read'));
 
     await waitFor(() => expect(view.queryByText('Saved prose.')).toBeTruthy());
     expect(view.queryByTestId('scene-body-editor.input')).toBeNull();
 
-    await fireEvent.press(header.getByText('manuscript_mode_write'));
+    await fireEvent.press(header.getByTestId('editor-mode-write'));
     const input = await view.findByTestId('scene-body-editor.input');
     expect(input.props.value).toBe('Saved prose.');
+  });
+
+  it('formats the selection through the toolbar', async () => {
+    const view = await render(<SceneEditorScreen />);
+    const input = await view.findByTestId('scene-body-editor.input');
+
+    await fireEvent(input, 'selectionChange', {
+      nativeEvent: { selection: { start: 0, end: 5 } },
+    });
+    await fireEvent.press(view.getByTestId('scene-body-toolbar.bold'));
+
+    expect(mockSetText).toHaveBeenCalledWith('**Saved** prose.');
   });
 
   it('reviews through the scene comments of the body field', async () => {

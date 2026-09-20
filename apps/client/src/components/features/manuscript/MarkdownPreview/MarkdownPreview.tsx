@@ -13,6 +13,7 @@ function InlineText({ span, baseSize }: { span: ManuscriptInline; baseSize: numb
       style={{
         fontWeight: span.bold ? '700' : '400',
         fontStyle: span.italic ? 'italic' : 'normal',
+        textDecorationLine: span.underline ? 'underline' : 'none',
         fontSize: baseSize,
       }}
     >
@@ -21,7 +22,15 @@ function InlineText({ span, baseSize }: { span: ManuscriptInline; baseSize: numb
   );
 }
 
-export function MarkdownPreview({ text, testID }: { text: string; testID?: string }) {
+export function MarkdownPreview({
+  text,
+  testID,
+  selectable = true,
+}: {
+  text: string;
+  testID?: string;
+  selectable?: boolean;
+}) {
   const { colors } = useTheme();
   const blocks = useMemo(() => parseManuscriptMarkdown(text), [text]);
   const styles = useMemo(
@@ -48,6 +57,7 @@ export function MarkdownPreview({ text, testID }: { text: string; testID?: strin
         return (
           <View key={block.key} style={styles.block}>
             <Text
+              selectable={selectable}
               style={[
                 styles.paragraph,
                 isHeading && {

@@ -45,6 +45,16 @@ describe('parseManuscriptMarkdown', () => {
     ]);
   });
 
+  it('parses underline spans', () => {
+    const blocks = parseManuscriptMarkdown('Read __this part__ carefully.');
+
+    expect(blocks[0].inlines).toEqual([
+      { text: 'Read ' },
+      { text: 'this part', underline: true },
+      { text: ' carefully.' },
+    ]);
+  });
+
   it('leaves unmatched markers literal', () => {
     const blocks = parseManuscriptMarkdown('A **lonely marker here.\n\nAnd *one more.');
 

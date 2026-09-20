@@ -12,6 +12,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -46,9 +47,11 @@ const PlotFormScreen = () => {
 
   const plotFormState = usePlotFormState({
     plotId,
+    storyId: selectedStory?.id,
     plotServiceRef,
   });
-  const { name, setName, details, setDetails, loading, isEditing } = plotFormState;
+  const { name, setName, details, setDetails, loading, isEditing, isDirty, resetForm } =
+    plotFormState;
 
   const { deleting, handleDelete, handleSave, handleSavePlotScene, handleDeletePlotScene, saving } =
     usePlotFormActions({
@@ -73,9 +76,12 @@ const PlotFormScreen = () => {
     [],
   );
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: isEditing ? t('edit_plot') : t('create_plot'),
+    actions: resetHeaderAction,
   });
 
   if (loading) {

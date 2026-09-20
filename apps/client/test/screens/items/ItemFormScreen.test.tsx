@@ -43,6 +43,8 @@ const mockFormState: {
     customValues: Record<string, unknown>;
     loading: boolean;
     isEditing: boolean;
+    isDirty: boolean;
+    resetForm: () => Promise<void>;
   };
 } = {
   current: {
@@ -57,6 +59,8 @@ const mockFormState: {
     customValues: {},
     loading: false,
     isEditing: false,
+    isDirty: false,
+    resetForm: jest.fn().mockResolvedValue(undefined),
   },
 };
 const mockActionsState: { current: { deleting: boolean; saving: boolean } } = {
@@ -337,6 +341,8 @@ describe('ItemFormScreen', () => {
       customValues: {},
       loading: false,
       isEditing: false,
+      isDirty: false,
+      resetForm: jest.fn().mockResolvedValue(undefined),
     };
     mockActionsState.current = { deleting: false, saving: false };
   });

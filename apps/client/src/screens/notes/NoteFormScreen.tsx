@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -70,6 +71,8 @@ const NoteFormScreen = () => {
     setCustomValues,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = noteFormState;
 
   const { availableTags, selectedTagIds, persistTagRelations, handleTagSelectionChange } =
@@ -104,9 +107,12 @@ const NoteFormScreen = () => {
 
   const formTitle = isEditing ? t('edit_note_title') : t('create_note_title');
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   if (loading) {

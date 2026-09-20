@@ -11,6 +11,7 @@ import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSw
 import { ScreenLoading } from '../../components/common/feedback/ScreenState/ScreenState';
 import TextInput from '../../components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -36,9 +37,11 @@ const StatFormScreen = () => {
   const { statServiceRef, data } = useStatFormResources(storyId);
   const statFormState = useStatFormState({
     statId,
+    storyId,
     stats: data.stats,
   });
-  const { name, setName, isPrimary, setIsPrimary, loading, isEditing } = statFormState;
+  const { name, setName, isPrimary, setIsPrimary, loading, isEditing, isDirty, resetForm } =
+    statFormState;
   const { handleSave, saving } = useStatFormActions({
     state: statFormState,
     statServiceRef,
@@ -50,9 +53,12 @@ const StatFormScreen = () => {
 
   const title = isEditing ? t('stat_form_edit') : t('stat_form_new');
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: title,
+    actions: resetHeaderAction,
   });
 
   const commonInputStyles = getCommonInputStyles(colors);

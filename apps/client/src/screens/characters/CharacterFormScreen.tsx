@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CharacterStackParamList } from '../../navigation/MainSystemStack';
 import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
@@ -101,6 +102,8 @@ const CharacterFormScreen = () => {
     setCustomValues,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = characterFormState;
 
   const {
@@ -186,9 +189,12 @@ const CharacterFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   if (loading) {

@@ -54,6 +54,7 @@ export function useRouteFormActions({
           name: state.name,
           details: state.details.trim() || null,
         });
+        await state.clearFormDraft();
         if (state.routeId) navigation.goBack();
         else navigation.replace('RouteDetail', { routeId: saved.id });
       } catch {
@@ -74,6 +75,7 @@ export function useRouteFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await routeServiceRef.current!.delete(userId, routeId);
+        await state.clearFormDraft();
         navigation.navigate('Routes');
       },
     });

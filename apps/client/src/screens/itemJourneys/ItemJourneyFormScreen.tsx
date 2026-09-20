@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -91,6 +92,8 @@ const ItemJourneyFormScreen = () => {
     setExtraNotes,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = itemJourneyFormState;
 
   const {
@@ -133,9 +136,12 @@ const ItemJourneyFormScreen = () => {
     entity: journey,
   });
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   const itemOptions = useMemo(

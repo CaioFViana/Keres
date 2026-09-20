@@ -149,6 +149,7 @@ export function useSceneFormActions({
             ),
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('scene_changed', storyId, sceneId);
         AppAlert.alert(t('success'), state.isEditing ? copy.updated : copy.created);
         if (created) {
@@ -181,6 +182,7 @@ export function useSceneFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await sceneServiceRef.current!.deleteScene(userId, sceneId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('scene_changed', storyId, sceneId);
         navigation.goBack();
       },

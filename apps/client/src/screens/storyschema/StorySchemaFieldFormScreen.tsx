@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { CustomizationStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -56,6 +57,7 @@ const StorySchemaFieldFormScreen = () => {
 
   const storySchemaFieldFormState = useStorySchemaFieldFormState({
     initialFieldId,
+    storyId,
     storySchemaFieldServiceRef,
     onFieldMissing,
   });
@@ -76,6 +78,8 @@ const StorySchemaFieldFormScreen = () => {
     isEditing,
     handleNameChange,
     handleKeyChange,
+    isDirty,
+    resetForm,
   } = storySchemaFieldFormState;
 
   const { handleSave, saving } = useStorySchemaFieldFormActions({
@@ -89,9 +93,12 @@ const StorySchemaFieldFormScreen = () => {
     existingFieldCount: existingFields.length,
   });
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: isEditing ? t('edit_attribute_title') : t('create_attribute_title'),
+    actions: resetHeaderAction,
   });
 
   const typeOptions = ATTRIBUTE_TYPE_OPTIONS.map((value) => ({

@@ -34,6 +34,8 @@ interface FormState {
   customValues: Record<string, unknown>;
   loading: boolean;
   isEditing: boolean;
+  isDirty: boolean;
+  resetForm: () => Promise<void>;
 }
 
 const baseFormState = (): FormState => ({
@@ -47,6 +49,8 @@ const baseFormState = (): FormState => ({
   customValues: {},
   loading: false,
   isEditing: false,
+  isDirty: false,
+  resetForm: jest.fn().mockResolvedValue(undefined),
 });
 
 let mockFormState: FormState = baseFormState();

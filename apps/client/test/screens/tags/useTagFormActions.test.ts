@@ -36,6 +36,8 @@ const createState = (overrides: Partial<TagFormState> = {}): TagFormState =>
     loading: false,
     loadError: null,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as TagFormState;
 
@@ -76,7 +78,8 @@ it('rejects an unnamed tag before persistence', async () => {
 });
 
 it('creates a tag, shows success and navigates back', async () => {
-  const view = await renderActions();
+  const state = createState();
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -88,13 +91,13 @@ it('creates a tag, shows success and navigates back', async () => {
     storyId: 'story-1',
   });
   expect(mockAlert).toHaveBeenCalledWith('success', 'tag_created_successfully');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('updates an existing tag and navigates back', async () => {
-  const view = await renderActions(
-    createState({ tagId: 'tag-1', isEditing: true, isFavorite: true }),
-  );
+  const state = createState({ tagId: 'tag-1', isEditing: true, isFavorite: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -105,17 +108,20 @@ it('updates an existing tag and navigates back', async () => {
     extraNotes: null,
   });
   expect(mockAlert).toHaveBeenCalledWith('success', 'tag_updated_successfully');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('delegates deletion and completes it with back navigation', async () => {
-  const view = await renderActions(createState({ tagId: 'tag-1', isEditing: true }));
+  const state = createState({ tagId: 'tag-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(tagService.deleteTag).toHaveBeenCalledWith('user-1', 'tag-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
@@ -125,14 +131,17 @@ it('does not show success after a create failure, then recovers on retry', async
     .mockResolvedValueOnce({ id: 'tag-1' });
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-  const view = await renderActions();
+  const state = createState();
+  const view = await renderActions(state);
   await act(async () => view.result.current.handleSave());
   expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_tag');
   expect(navigation.goBack).not.toHaveBeenCalled();
+  expect(state.clearFormDraft).not.toHaveBeenCalled();
 
   mockAlert.mockClear();
   await act(async () => view.result.current.handleSave());
   expect(mockAlert).toHaveBeenCalledWith('success', 'tag_created_successfully');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
   log.mockRestore();
 });

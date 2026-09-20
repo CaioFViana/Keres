@@ -139,6 +139,7 @@ export function useChapterFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('chapter_changed', storyId, savedChapterId);
         AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
@@ -175,6 +176,7 @@ export function useChapterFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await chapterServiceRef.current!.deleteChapter(userId, chapterId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('chapter_changed', storyId, chapterId);
         navigation.goBack();
       },

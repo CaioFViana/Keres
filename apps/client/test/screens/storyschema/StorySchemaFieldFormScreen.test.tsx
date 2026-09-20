@@ -30,6 +30,8 @@ let mockFormState = {
   defaultValue: null as string | null,
   loading: false,
   isEditing: false,
+  isDirty: true,
+  resetForm: jest.fn().mockResolvedValue(undefined),
 };
 let mockSaving = false;
 
@@ -232,6 +234,8 @@ const freshFormState = () => ({
   defaultValue: null as string | null,
   loading: false,
   isEditing: false,
+  isDirty: true,
+  resetForm: jest.fn().mockResolvedValue(undefined),
 });
 
 beforeEach(() => {
@@ -356,4 +360,26 @@ it('goes back when the field is missing', async () => {
   };
   onFieldMissing.onFieldMissing();
   expect(mockGoBack).toHaveBeenCalled();
+});
+
+it('registers a reset header action while dirty', async () => {
+  await render(<StorySchemaFieldFormScreen />);
+  const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+    actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+  };
+  expect(config.actions).toHaveLength(1);
+  expect(config.actions[0]).toMatchObject({
+    id: 'reset-form',
+    icon: 'arrow-undo-outline',
+    disabled: false,
+  });
+});
+
+it('disables the reset header action while pristine', async () => {
+  mockFormState = { ...freshFormState(), isDirty: false };
+  await render(<StorySchemaFieldFormScreen />);
+  const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+    actions: Array<{ disabled: boolean }>;
+  };
+  expect(config.actions[0].disabled).toBe(true);
 });

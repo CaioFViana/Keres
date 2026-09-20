@@ -1,3 +1,10 @@
+/** @jest-environment node */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
 const mockGetValuesForEntity = jest.fn();
 const mockReadSecondaryDraft = jest.fn();
 
@@ -11,14 +18,20 @@ jest.mock('../../../../src/services/storymanagement/EntityFormSecondaryDraftStor
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { StorySchemaField } from '@keres/shared';
 import { useChapterFormState } from '../../../../src/screens/narrative-elements/chapters/useChapterFormState';
+import {
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '../../../../src/services/EditorDraftService';
 import type { ChapterService } from '../../../../src/services/storymanagement/ChapterService';
+import { createTestDatabase, type TestDatabase } from '../../../helpers/testDb';
+
+let database: TestDatabase;
 
 const createChapterServiceRef = () => ({
   current: {
     getById: jest.fn(),
   } as unknown as ChapterService,
 });
-const drizzleDb = {} as never;
 
 const renderState = async (options: {
   initialChapterId?: string;
@@ -37,7 +50,7 @@ const renderState = async (options: {
       initialChapterId: options.initialChapterId,
       storyId: options.storyId ?? 'story-1',
       activeArcId: options.activeArcId,
-      drizzleDb,
+      drizzleDb: database.db,
       chapterServiceRef,
       customFields: options.customFields ?? [],
     }),
@@ -45,10 +58,30 @@ const renderState = async (options: {
   return { chapterServiceRef, view };
 };
 
-beforeEach(() => {
+const persistedChapter = {
+  name: 'A Longa Jornada',
+  summary: 'Resumo do capítulo',
+  isFavorite: false,
+  extraNotes: null,
+  type: 'chapter',
+  arcId: 'arc-1',
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+};
+
+beforeEach(async () => {
   jest.clearAllMocks();
   mockGetValuesForEntity.mockResolvedValue([]);
   mockReadSecondaryDraft.mockResolvedValue(null);
+  await AsyncStorage.clear();
+  database = await createTestDatabase();
+  setEditorDraftDb(database.db);
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  resetEditorDraftDbForTests();
+  database.close();
+  jest.restoreAllMocks();
 });
 
 it('starts a creation form with the active arc, custom defaults and editing off', async () => {
@@ -138,7 +171,7 @@ it('logs and finishes loading when hydration fails', async () => {
     useChapterFormState({
       initialChapterId: 'chapter-1',
       storyId: 'story-1',
-      drizzleDb,
+      drizzleDb: database.db,
       chapterServiceRef,
       customFields: [],
     }),
@@ -148,4 +181,183 @@ it('logs and finishes loading when hydration fails', async () => {
 
   expect(error).toHaveBeenCalledWith('Failed to load chapter:', expect.any(Error));
   error.mockRestore();
+});
+
+describe('useChapterFormState durable drafts', () => {
+  it('restores typed creation content after a navigation round-trip', async () => {
+    const { view: first } = await renderState({});
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+
+    await act(async () => {
+      first.result.current.setName('O Retorno do Rei');
+    });
+    await act(async () => {
+      first.unmount();
+    });
+
+    const { view: second } = await renderState({});
+    await waitFor(() => expect(second.result.current.draftRestored).toBe(true));
+
+    expect(second.result.current.name).toBe('O Retorno do Rei');
+  });
+
+  it('writes no draft when nothing was typed', async () => {
+    const { view: first } = await renderState({});
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    await act(async () => {
+      first.unmount();
+    });
+
+    const { view: second } = await renderState({});
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('');
+  });
+
+  it('restores edits over the loaded database values', async () => {
+    const { view: first } = await renderState({
+      initialChapterId: 'chapter-1',
+      chapter: persistedChapter,
+    });
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.name).toBe('A Longa Jornada');
+
+    await act(async () => {
+      first.result.current.setName('A Longa Jornada, revisada');
+    });
+    await act(async () => {
+      first.unmount();
+    });
+
+    const { view: second } = await renderState({
+      initialChapterId: 'chapter-1',
+      chapter: persistedChapter,
+    });
+    await waitFor(() => expect(second.result.current.draftRestored).toBe(true));
+
+    expect(second.result.current.name).toBe('A Longa Jornada, revisada');
+    expect(second.result.current.summary).toBe('Resumo do capítulo');
+  });
+
+  it('resets a creation back to blanks and drops the stored draft', async () => {
+    const { view: first } = await renderState({});
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.isDirty).toBe(false);
+
+    await act(async () => {
+      first.result.current.setName('O Retorno do Rei');
+    });
+    expect(first.result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await first.result.current.resetForm();
+    });
+
+    expect(first.result.current.name).toBe('');
+    expect(first.result.current.isDirty).toBe(false);
+    await act(async () => {
+      first.unmount();
+    });
+
+    // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
+    const { view: second } = await renderState({});
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('');
+
+    // ...so typing again drafts again.
+    await act(async () => {
+      second.result.current.setName('As Duas Torres');
+    });
+    await act(async () => {
+      second.unmount();
+    });
+    const { view: third } = await renderState({});
+    await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
+    expect(third.result.current.name).toBe('As Duas Torres');
+  });
+
+  it('resets an edit back to the saved values and drops the stored draft', async () => {
+    const { view: first } = await renderState({
+      initialChapterId: 'chapter-1',
+      chapter: persistedChapter,
+    });
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.isDirty).toBe(false);
+
+    await act(async () => {
+      first.result.current.setName('Rascunho');
+      first.result.current.setIsEvent(true);
+    });
+    expect(first.result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await first.result.current.resetForm();
+    });
+
+    expect(first.result.current.name).toBe('A Longa Jornada');
+    expect(first.result.current.isEvent).toBe(false);
+    expect(first.result.current.isDirty).toBe(false);
+    await act(async () => {
+      first.unmount();
+    });
+
+    const { view: second } = await renderState({
+      initialChapterId: 'chapter-1',
+      chapter: persistedChapter,
+    });
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('A Longa Jornada');
+  });
+
+  it('discards the draft when the entity was saved elsewhere since', async () => {
+    const { view: first } = await renderState({
+      initialChapterId: 'chapter-1',
+      chapter: persistedChapter,
+    });
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+
+    await act(async () => {
+      first.result.current.setName('Rascunho velho');
+    });
+    await act(async () => {
+      first.unmount();
+    });
+
+    const newerChapter = {
+      ...persistedChapter,
+      name: 'A Jornada refeita',
+      updatedAt: new Date('2026-02-01T00:00:00.000Z'),
+    };
+    const { view: second } = await renderState({
+      initialChapterId: 'chapter-1',
+      chapter: newerChapter,
+    });
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('A Jornada refeita');
+  });
+
+  it('treats an active-arc prefill as pristine and keeps it on reset', async () => {
+    const { view: first } = await renderState({ activeArcId: 'arc-active' });
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+
+    expect(first.result.current.arcId).toBe('arc-active');
+    expect(first.result.current.isDirty).toBe(false);
+
+    await act(async () => {
+      first.result.current.setName('Rascunho');
+    });
+    expect(first.result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await first.result.current.resetForm();
+    });
+    expect(first.result.current.name).toBe('');
+    expect(first.result.current.arcId).toBe('arc-active');
+    expect(first.result.current.isDirty).toBe(false);
+  });
 });

@@ -98,6 +98,8 @@ function formState(overrides: any = {}) {
     setIsPrimary: jest.fn(),
     loading: false,
     isEditing: false,
+    isDirty: false,
+    resetForm: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }

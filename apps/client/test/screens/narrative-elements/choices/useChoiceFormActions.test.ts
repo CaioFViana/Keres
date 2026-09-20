@@ -59,6 +59,8 @@ const createState = (overrides: Partial<ChoiceFormState> = {}): ChoiceFormState 
     setNotes: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as ChoiceFormState;
 
@@ -145,16 +147,19 @@ it('coordinates persistence, notification and replacement after creation', async
   expect(navigation.dispatch).toHaveBeenCalledWith(
     expect.objectContaining({ payload: expect.objectContaining({ name: 'ChoiceForm' }) }),
   );
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('delegates deletion and completes it with an event and back navigation', async () => {
-  const view = await renderActions(createState({ currentChoiceId: 'choice-1', isEditing: true }));
+  const state = createState({ currentChoiceId: 'choice-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(choiceService.deleteChoice).toHaveBeenCalledWith('user-1', 'choice-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(mockEmit).toHaveBeenCalledWith('choice_changed', 'story-1', 'choice-1');
   expect(navigation.goBack).toHaveBeenCalled();
 });
@@ -177,12 +182,14 @@ it('does not emit success after a secondary-write failure, then recovers on retr
     await act(async () => view.result.current.handleSave());
     expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
     expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
 
     mockAlert.mockClear();
     await act(async () => view.result.current.handleSave());
     expect(state.retainPersistedChoiceId).toHaveBeenCalledWith('choice-1');
     expect(mockEmit).toHaveBeenCalledWith('choice_changed', 'story-1', 'choice-1');
     expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
 });
 

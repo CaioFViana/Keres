@@ -48,6 +48,8 @@ let mockFormState = {
   customValues: {},
   loading: false,
   isEditing: false,
+  isDirty: true,
+  resetForm: jest.fn().mockResolvedValue(undefined),
 };
 let mockSaving = false;
 let mockDeleting = false;
@@ -316,6 +318,8 @@ const freshFormState = () => ({
   customValues: {},
   loading: false,
   isEditing: false,
+  isDirty: true,
+  resetForm: jest.fn().mockResolvedValue(undefined),
 });
 
 beforeEach(() => {
@@ -489,4 +493,26 @@ it('tolerates missing route params', async () => {
   const view = await render(<WorldRuleFormScreen />);
 
   expect(view.getByTestId('form-title').props.children).toBe('copy_create');
+});
+
+it('registers a reset header action while dirty', async () => {
+  await render(<WorldRuleFormScreen />);
+  const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+    actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+  };
+  expect(config.actions).toHaveLength(1);
+  expect(config.actions[0]).toMatchObject({
+    id: 'reset-form',
+    icon: 'arrow-undo-outline',
+    disabled: false,
+  });
+});
+
+it('disables the reset header action while pristine', async () => {
+  mockFormState = { ...freshFormState(), isDirty: false };
+  await render(<WorldRuleFormScreen />);
+  const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+    actions: Array<{ disabled: boolean }>;
+  };
+  expect(config.actions[0].disabled).toBe(true);
 });

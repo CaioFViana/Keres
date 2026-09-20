@@ -70,6 +70,8 @@ const createState = (overrides: Partial<ChapterFormState> = {}): ChapterFormStat
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as ChapterFormState;
 
@@ -151,16 +153,19 @@ it('coordinates persistence, notification and replacement after creation', async
   expect(navigation.dispatch).toHaveBeenCalledWith(
     expect.objectContaining({ payload: expect.objectContaining({ name: 'ChapterForm' }) }),
   );
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('delegates deletion and completes it with an event and back navigation', async () => {
-  const view = await renderActions(createState({ currentChapterId: 'chapter-1', isEditing: true }));
+  const state = createState({ currentChapterId: 'chapter-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(chapterService.deleteChapter).toHaveBeenCalledWith('user-1', 'chapter-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(mockEmit).toHaveBeenCalledWith('chapter_changed', 'story-1', 'chapter-1');
   expect(navigation.goBack).toHaveBeenCalled();
 });
@@ -183,12 +188,14 @@ it('does not emit success after a secondary-write failure, then recovers on retr
     await act(async () => view.result.current.handleSave());
     expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
     expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
 
     mockAlert.mockClear();
     await act(async () => view.result.current.handleSave());
     expect(state.retainPersistedChapterId).toHaveBeenCalledWith('chapter-1');
     expect(mockEmit).toHaveBeenCalledWith('chapter_changed', 'story-1', 'chapter-1');
     expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
 });
 

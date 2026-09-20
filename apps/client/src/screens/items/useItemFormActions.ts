@@ -122,6 +122,7 @@ export function useItemFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('item_changed', storyId, savedItemId);
         AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
@@ -158,6 +159,7 @@ export function useItemFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await itemServiceRef.current!.deleteItem(userId, itemId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('item_changed', storyId, itemId);
         navigation.goBack();
       },

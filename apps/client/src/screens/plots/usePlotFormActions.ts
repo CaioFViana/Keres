@@ -62,6 +62,7 @@ export function usePlotFormActions({
           name: state.name,
           details: state.details.trim() || null,
         });
+        await state.clearFormDraft();
         if (state.isEditing) navigation.goBack();
         // A new plot has no relations yet. Keep the author in its form so scenes can be added right
         // away, rather than sending them to the read-only detail screen.
@@ -88,6 +89,7 @@ export function usePlotFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await plotServiceRef.current!.delete(userId, plotId);
+        await state.clearFormDraft();
         navigation.navigate('Plots');
       },
     });

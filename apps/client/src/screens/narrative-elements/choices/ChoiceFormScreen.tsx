@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
@@ -75,6 +76,8 @@ const ChoiceFormScreen = () => {
     setNotes,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = choiceFormState;
 
   const { checks, effects, relations } = useChoiceFormAssociations(
@@ -136,9 +139,12 @@ const ChoiceFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   const sceneOptions = useMemo(

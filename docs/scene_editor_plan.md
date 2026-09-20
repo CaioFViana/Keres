@@ -158,6 +158,23 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
       confirmação (`form_reset_*` em en/pt). Create volta ao branco, edit
       restaura os valores salvos; ambos apagam o draft sem desarmar o
       tracking (`deleteStoredDraft`). Filas secundárias mantêm o ciclo próprio.
+- [x] **Rollout drafts+reset p/ 13 forms (feito):** Character, Scene, Chapter,
+      Choice, Note, Item, Tag, Plot, Route, Stat, WorldRule, ItemJourney,
+      StorySchemaField — todos com `useDurableFormDraft` + `clearFormDraft`
+      no save/delete + botão de reset via hook compartilhado
+      `useFormResetHeaderAction` (lógica de confirmação testada uma vez em
+      `test/hooks/useFormResetHeaderAction.test.ts`; sem novas chaves de
+      locale). Regras do rollout: (a) forms com prefill de create (Scene/
+      Chapter/Choice/ItemJourney) compõem o pristine com o prefill — reset
+      mantém o prefill e nenhum draft é escrito até digitar; (b) flags
+      transientes que afetam edição (ex. `keyManuallyEdited` do schema
+      field) entram no draft para o restore não mudar comportamento;
+      (c) Story, Friendship e Pack ficaram DE FORA — Story já tem
+      `useStoryIdentityDraft` próprio e os três vivem fora do escopo
+      história (sem storyId estável para a chave). Cada form ganhou testes
+      de draft no seu `useXFormState.test.ts` + asserts de clear no
+      `useXFormActions.test.ts`; telas com captura de header ganharam
+      testes de wiring do botão.
 - [ ] **Fase 2:** drawer Editor (Escrever/Ler) + botão na cena + preview
       virtualizado + busca + contador.
 - [ ] **Fase 3:** modo Revisar com comments de cena; export linear com body.

@@ -109,6 +109,7 @@ export function useItemJourneyFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('item_journey_changed', storyId, savedItemJourneyId);
         AppAlert.alert(
           t('success'),
@@ -153,6 +154,7 @@ export function useItemJourneyFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await itemJourneyServiceRef.current!.deleteItemJourney(userId, itemJourneyId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('item_journey_changed', storyId, itemJourneyId);
         navigation.goBack();
       },

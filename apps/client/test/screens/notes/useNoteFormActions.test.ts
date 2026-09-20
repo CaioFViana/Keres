@@ -51,6 +51,8 @@ const createState = (overrides: Partial<NoteFormState> = {}): NoteFormState =>
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as NoteFormState;
 
@@ -112,17 +114,20 @@ it('coordinates persistence, success messaging and back navigation after creatio
     field: 'value',
   });
   expect(mockAlert).toHaveBeenCalledWith('success', 'note_created_successfully');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('delegates deletion and completes it with back navigation', async () => {
-  const view = await renderActions(createState({ currentNoteId: 'note-1', isEditing: true }));
+  const state = createState({ currentNoteId: 'note-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(noteService.deleteNote).toHaveBeenCalledWith('user-1', 'note-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
@@ -144,11 +149,13 @@ it('does not show success after a secondary-write failure, then recovers on retr
     await act(async () => view.result.current.handleSave());
     expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_save_note');
     expect(navigation.goBack).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
 
     mockAlert.mockClear();
     await act(async () => view.result.current.handleSave());
     expect(state.retainPersistedNoteId).toHaveBeenCalledWith('note-1');
     expect(mockAlert).toHaveBeenCalledWith('success', 'note_updated_successfully');
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
     expect(navigation.goBack).toHaveBeenCalled();
   });
 });

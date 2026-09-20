@@ -109,6 +109,7 @@ export function useNoteFormActions({
           },
         });
 
+        await state.clearFormDraft();
         AppAlert.alert(
           t('success'),
           t(created ? 'note_created_successfully' : 'note_updated_successfully'),
@@ -138,6 +139,7 @@ export function useNoteFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await noteServiceRef.current!.deleteNote(userId, noteId);
+        await state.clearFormDraft();
         navigation.goBack();
       },
     });

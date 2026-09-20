@@ -208,6 +208,8 @@ function freshFormState(overrides: Record<string, unknown> = {}) {
     setCustomValues: noop,
     loading: false,
     isEditing: true,
+    isDirty: true,
+    resetForm: noop,
     ...overrides,
   };
 }
@@ -288,5 +290,27 @@ describe('CharacterFormScreen', () => {
     await render(<CharacterFormScreen />);
     await waitFor(() => expect(mockReadSecondaryDraft).toHaveBeenCalled());
     expect(mockShowNotification).not.toHaveBeenCalled();
+  });
+
+  it('registers a reset header action while dirty', async () => {
+    await render(<CharacterFormScreen />);
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+    };
+    expect(config.actions).toHaveLength(1);
+    expect(config.actions[0]).toMatchObject({
+      id: 'reset-form',
+      icon: 'arrow-undo-outline',
+      disabled: false,
+    });
+  });
+
+  it('disables the reset header action while pristine', async () => {
+    mockFormState = freshFormState({ isDirty: false });
+    await render(<CharacterFormScreen />);
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      actions: Array<{ disabled: boolean }>;
+    };
+    expect(config.actions[0].disabled).toBe(true);
   });
 });

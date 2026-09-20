@@ -21,6 +21,8 @@ const createState = (overrides: Partial<StatFormState> = {}): StatFormState =>
     setIsPrimary: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as StatFormState;
 
@@ -60,7 +62,8 @@ it('rejects an unnamed stat before persistence', async () => {
 });
 
 it('creates a stat with the next order and navigates back', async () => {
-  const view = await renderActions();
+  const state = createState();
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -70,13 +73,13 @@ it('creates a stat with the next order and navigates back', async () => {
     isPrimary: true,
     order: 2,
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('updates an existing stat and navigates back', async () => {
-  const view = await renderActions(
-    createState({ statId: 'stat-1', isEditing: true, isPrimary: false }),
-  );
+  const state = createState({ statId: 'stat-1', isEditing: true, isPrimary: false });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -84,17 +87,20 @@ it('updates an existing stat and navigates back', async () => {
     name: 'Strength',
     isPrimary: false,
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('surfaces the thrown message when save fails', async () => {
   (statService.createStat as jest.Mock).mockRejectedValueOnce(new Error('too many primary'));
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const view = await renderActions();
+  const state = createState();
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
   expect(mockAlert).toHaveBeenCalledWith('error', 'too many primary');
+  expect(state.clearFormDraft).not.toHaveBeenCalled();
   expect(navigation.goBack).not.toHaveBeenCalled();
   log.mockRestore();
 });

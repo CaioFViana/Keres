@@ -89,6 +89,8 @@ const createState = (overrides: Partial<SceneFormState> = {}): SceneFormState =>
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as SceneFormState;
 
@@ -167,16 +169,19 @@ it('coordinates persistence, notification and replacement after creation', async
   expect(navigation.dispatch).toHaveBeenCalledWith(
     expect.objectContaining({ payload: expect.objectContaining({ name: 'SceneForm' }) }),
   );
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('delegates deletion and completes it with an event and back navigation', async () => {
-  const view = await renderActions(createState({ currentSceneId: 'scene-1', isEditing: true }));
+  const state = createState({ currentSceneId: 'scene-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(sceneService.deleteScene).toHaveBeenCalledWith('user-1', 'scene-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(mockEmit).toHaveBeenCalledWith('scene_changed', 'story-1', 'scene-1');
   expect(navigation.goBack).toHaveBeenCalled();
 });
@@ -274,12 +279,14 @@ it('navigates back after updating instead of replacing', async () => {
 it('alerts when persistence fails', async () => {
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   mockSaveSceneWithRelations.mockRejectedValue(new Error('db down'));
-  const view = await renderActions(createState());
+  const state = createState();
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
   expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
   expect(mockEmit).not.toHaveBeenCalled();
+  expect(state.clearFormDraft).not.toHaveBeenCalled();
   log.mockRestore();
 });
 

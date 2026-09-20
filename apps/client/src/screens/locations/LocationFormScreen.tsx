@@ -1,6 +1,5 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import { AppAlert } from '@/src/utils/AppAlert';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { readEntityFormSecondaryDraft } from '../../services/storymanagement/EntityFormSecondaryDraftStore';
@@ -168,29 +168,12 @@ const LocationFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
-  const confirmResetForm = useCallback(() => {
-    AppAlert.alert(
-      t('form_reset_title'),
-      t(isEditing ? 'form_reset_edit_message' : 'form_reset_create_message'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        { text: t('reset'), style: 'destructive', onPress: () => void resetForm() },
-      ],
-    );
-  }, [t, isEditing, resetForm]);
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
 
   useScreenHeader({
     target: 'parent',
     title: formTitle,
-    actions: [
-      {
-        id: 'reset-form',
-        icon: 'arrow-undo-outline',
-        label: t('reset'),
-        onPress: confirmResetForm,
-        disabled: !isDirty,
-      },
-    ],
+    actions: resetHeaderAction,
   });
 
   if (loading) {

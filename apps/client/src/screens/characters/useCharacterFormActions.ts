@@ -133,6 +133,7 @@ export function useCharacterFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('character_changed', storyId, savedCharacterId);
         AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
@@ -173,6 +174,7 @@ export function useCharacterFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await characterServiceRef.current!.deleteCharacter(userId, characterId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('character_changed', storyId, characterId);
         navigation.goBack();
       },

@@ -48,7 +48,8 @@ const mockUseScreenTour = jest.fn();
 jest.mock('../../../src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
-}));const mockI18n = { t: (key: string) => key };
+}));
+const mockI18n = { t: (key: string) => key };
 
 const definition: CalendarDefinitionType = {
   secondsPerMinute: 60,

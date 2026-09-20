@@ -8,6 +8,7 @@ import { BackHandler, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db'; // Import useDrizzle
 import { migrate } from '../../db/migrate'; // Import migrate
 import { setAuthDb } from '../../services/AuthTokenManager';
+import { setEditorDraftDb } from '../../services/EditorDraftService';
 import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
 import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useNotificationStore } from '../../state/notificationStore'; // Import useNotificationStore
@@ -93,6 +94,7 @@ const ColdInstallScreen = () => {
     // erased. Reattach them as soon as the fresh schema exists, before server registration
     // can attempt to persist tokens or start its first synchronization.
     setAuthDb(drizzleDb);
+    setEditorDraftDb(drizzleDb);
     await syncEngine.bindDatabase(drizzleDb);
 
     // Create initial client settings in SQLite

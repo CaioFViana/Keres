@@ -10,6 +10,7 @@ export * from './choiceChecks';
 export * from './choices';
 export * from './clientSettings';
 export * from './comments';
+export * from './editorDrafts';
 export * from './effects';
 export * from './friendships';
 export * from './galleries';

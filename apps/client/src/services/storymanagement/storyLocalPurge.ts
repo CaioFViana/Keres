@@ -12,6 +12,7 @@ import {
   choiceChecks,
   choices,
   comments,
+  editorDrafts,
   effects,
   favorites,
   galleries,
@@ -55,6 +56,7 @@ import {
 export const STORY_CHILD_TABLES = [
   attributeValues,
   comments,
+  editorDrafts,
   favorites,
   chapters,
   chapterAnchors,

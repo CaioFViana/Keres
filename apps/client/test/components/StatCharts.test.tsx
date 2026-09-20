@@ -117,9 +117,9 @@ describe('StatLadderBar', () => {
 
     expect(skiaOf(screen, 'SkiaCanvas')).toHaveLength(1);
     expect(skiaOf(screen, 'SkiaCircle')).toHaveLength(0);
-    expect(
-      skiaOf(screen, 'SkiaLine').filter((line) => line.props.color === '#00f'),
-    ).toHaveLength(0);
+    expect(skiaOf(screen, 'SkiaLine').filter((line) => line.props.color === '#00f')).toHaveLength(
+      0,
+    );
   });
 
   it('labels the rungs that fit', async () => {

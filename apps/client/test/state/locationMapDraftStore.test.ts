@@ -2,8 +2,14 @@
  * @jest-environment node
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { readCanvasDraft } from '../../src/services/canvasDraftPersistence';
+import { readCanvasDraft, writeCanvasDraftNow } from '../../src/services/canvasDraftPersistence';
+import {
+  readEditorDraft,
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '../../src/services/EditorDraftService';
 import { useLocationMapDraftStore } from '../../src/state/locationMapDraftStore';
+import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -122,4 +128,53 @@ it('clears the drawing and its durable copy together, and resets memory-only', a
   useLocationMapDraftStore.getState().reset();
   expect(useLocationMapDraftStore.getState().draft).toBeNull();
   expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).not.toBeNull();
+});
+
+describe('with a bound database', () => {
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    database = await createTestDatabase();
+    setEditorDraftDb(database.db);
+  });
+
+  afterEach(() => {
+    resetEditorDraftDbForTests();
+    database.close();
+  });
+
+  it('persists through SQLite instead of AsyncStorage', async () => {
+    jest.useFakeTimers();
+    useLocationMapDraftStore.getState().remember({
+      mapId: 'map-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+    await jest.advanceTimersByTimeAsync(400);
+
+    const row = await readEditorDraft(database.db, 'story-1', 'LocationMap', 'map-1', 'content');
+    expect(JSON.parse(row!.content)).toMatchObject({ mapId: 'map-1' });
+    expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+
+    useLocationMapDraftStore.setState({ draft: null });
+    const restored = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-1');
+    expect(restored?.content.nodes).toHaveLength(1);
+  });
+
+  it('adopts a legacy AsyncStorage draft into SQLite on hydrate', async () => {
+    await writeCanvasDraftNow('location-map', 'story-1', 'map-1', {
+      mapId: 'map-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+
+    const restored = await useLocationMapDraftStore.getState().hydrate('story-1', 'map-1');
+
+    expect(restored?.content.nodes).toHaveLength(1);
+    const row = await readEditorDraft(database.db, 'story-1', 'LocationMap', 'map-1', 'content');
+    expect(row).not.toBeNull();
+    expect(await readCanvasDraft('location-map', 'story-1', 'map-1')).toBeNull();
+  });
 });

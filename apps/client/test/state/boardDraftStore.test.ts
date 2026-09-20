@@ -2,8 +2,14 @@
  * @jest-environment node
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  readEditorDraft,
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '../../src/services/EditorDraftService';
 import { useBoardDraftStore } from '../../src/state/boardDraftStore';
-import { readCanvasDraft } from '../../src/services/canvasDraftPersistence';
+import { readCanvasDraft, writeCanvasDraftNow } from '../../src/services/canvasDraftPersistence';
+import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -127,4 +133,75 @@ it('clears the drawing and its durable copy together', async () => {
   expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
   // Clearing nothing is a no-op, not an error.
   useBoardDraftStore.getState().clear();
+});
+
+describe('with a bound database', () => {
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    database = await createTestDatabase();
+    setEditorDraftDb(database.db);
+  });
+
+  afterEach(() => {
+    resetEditorDraftDbForTests();
+    database.close();
+  });
+
+  it('persists through SQLite instead of AsyncStorage', async () => {
+    jest.useFakeTimers();
+    useBoardDraftStore.getState().remember({
+      boardId: 'board-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+    await jest.advanceTimersByTimeAsync(400);
+
+    const row = await readEditorDraft(database.db, 'story-1', 'Board', 'board-1', 'content');
+    expect(JSON.parse(row!.content)).toMatchObject({ boardId: 'board-1' });
+    expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
+
+    useBoardDraftStore.setState({ draft: null });
+    const restored = await useBoardDraftStore.getState().hydrate('story-1', 'board-1');
+    expect(restored?.content.nodes).toHaveLength(1);
+  });
+
+  it('adopts a legacy AsyncStorage draft into SQLite on hydrate', async () => {
+    await writeCanvasDraftNow('board', 'story-1', 'board-1', {
+      boardId: 'board-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+
+    const restored = await useBoardDraftStore.getState().hydrate('story-1', 'board-1');
+
+    expect(restored?.content.nodes).toHaveLength(1);
+    const row = await readEditorDraft(database.db, 'story-1', 'Board', 'board-1', 'content');
+    expect(row).not.toBeNull();
+    expect(await readCanvasDraft('board', 'story-1', 'board-1')).toBeNull();
+  });
+
+  it('prefers the SQLite copy over a stale legacy one', async () => {
+    jest.useFakeTimers();
+    await writeCanvasDraftNow('board', 'story-1', 'board-1', {
+      boardId: 'board-1',
+      storyId: 'story-1',
+      content: empty,
+      savedContent: empty,
+    });
+    useBoardDraftStore.getState().remember({
+      boardId: 'board-1',
+      storyId: 'story-1',
+      content: dirty,
+      savedContent: empty,
+    });
+    await jest.advanceTimersByTimeAsync(400);
+    useBoardDraftStore.setState({ draft: null });
+
+    const restored = await useBoardDraftStore.getState().hydrate('story-1', 'board-1');
+
+    expect(restored?.content.nodes).toHaveLength(1);
+  });
 });

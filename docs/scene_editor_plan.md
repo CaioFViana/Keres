@@ -139,12 +139,16 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
 - [x] **Fase 0 (fundação, feito):** retenção cliente (3.1) + `body`
       30k em shared/API/client/export (1.1+1.2) + squash servidor (3.2),
       cada um com teste mantido.
-- [ ] **Fase 1:** tabela `editor_drafts` + serviço de draft genérico.
+- [x] **Fase 1 (feito):** tabela `editor_drafts` + serviço de draft genérico
+      (`EditorDraftService`, bound via `setEditorDraftDb` como `setAuthDb`).
+- [x] **Migração antecipada (era Fase 4):** boards, location maps e secondary
+      drafts de forms portados para `editor_drafts`, com adoção transparente
+      (fallback de leitura) das chaves legadas em AsyncStorage. Sem UI ainda.
 - [ ] **Fase 2:** drawer Editor (Escrever/Ler) + botão na cena + preview
       virtualizado + busca + contador.
 - [ ] **Fase 3:** modo Revisar com comments de cena; export linear com body.
-- [ ] **Fase 4:** migração boards/location-maps p/ `editor_drafts`; export
-      por rota com "página X"; coalescência no push; gzip.
+- [ ] **Fase 4:** export por rota com "página X"; coalescência no push; gzip.
+      (Migração p/ `editor_drafts` já feita — ver acima.)
 - [ ] **Futuro incerto:** comentários inline (v2), editor por blocos (só
       com evidência), diff-sync (só se storage doer).
 

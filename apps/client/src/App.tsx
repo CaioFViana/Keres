@@ -21,6 +21,7 @@ import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
+import { setEditorDraftDb } from './services/EditorDraftService';
 import { restoreHostedCookieSession } from './services/HostedCookieSession';
 import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import { useUserSettingsStore } from './state/userSettingsStore';
@@ -139,6 +140,7 @@ const DatabaseInitializer = () => {
 
         // Initialize AuthTokenManager with the Drizzle DB instance
         setAuthDb(initializedDrizzle);
+        setEditorDraftDb(initializedDrizzle);
         await authTokenManager.hydrateTokens();
         // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);

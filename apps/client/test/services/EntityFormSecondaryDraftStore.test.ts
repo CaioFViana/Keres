@@ -3,12 +3,18 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  readEditorDraft,
+  resetEditorDraftDbForTests,
+  setEditorDraftDb,
+} from '../../src/services/EditorDraftService';
+import {
   clearEntityFormSecondaryDraft,
   patchEntityFormSecondaryDraft,
   readEntityFormSecondaryDraft,
   resetEntityFormSecondaryDraftLocksForTests,
   writeEntityFormSecondaryDraft,
 } from '../../src/services/storymanagement/EntityFormSecondaryDraftStore';
+import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -184,5 +190,70 @@ describe('EntityFormSecondaryDraftStore', () => {
     // drops the other field. Serialization applies both updates.
     expect(draft?.selectedTagIds).toEqual(['tag-a']);
     expect(draft?.pendingEntityRelations).toEqual([{ id: 'rel-b' }]);
+  });
+});
+
+describe('EntityFormSecondaryDraftStore with a bound database', () => {
+  let database: TestDatabase;
+
+  const emptyQueues = {
+    selectedTagIds: [] as string[],
+    pendingNoteRelations: [],
+    customValues: {},
+    pendingEntityRelations: [],
+  };
+
+  beforeEach(async () => {
+    resetEntityFormSecondaryDraftLocksForTests();
+    await AsyncStorage.clear();
+    database = await createTestDatabase();
+    setEditorDraftDb(database.db);
+  });
+
+  afterEach(() => {
+    resetEditorDraftDbForTests();
+    database.close();
+  });
+
+  it('round-trips through SQLite instead of AsyncStorage', async () => {
+    await writeEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+      ...emptyQueues,
+      selectedTagIds: ['tag-a'],
+    });
+
+    const row = await readEditorDraft(database.db, 'story-1', 'Character', 'char-1', 'secondary');
+    expect(JSON.parse(row!.content)).toMatchObject({ selectedTagIds: ['tag-a'] });
+    expect(
+      await AsyncStorage.getItem('keres:entity-secondary-draft:story-1:Character:char-1'),
+    ).toBeNull();
+
+    const draft = await readEntityFormSecondaryDraft('story-1', 'Character', 'char-1');
+    expect(draft?.selectedTagIds).toEqual(['tag-a']);
+
+    await patchEntityFormSecondaryDraft('story-1', 'Character', 'char-1', {
+      selectedTagIds: ['tag-b'],
+    });
+    expect(
+      (await readEntityFormSecondaryDraft('story-1', 'Character', 'char-1'))?.selectedTagIds,
+    ).toEqual(['tag-b']);
+
+    await clearEntityFormSecondaryDraft('story-1', 'Character', 'char-1');
+    expect(await readEntityFormSecondaryDraft('story-1', 'Character', 'char-1')).toBeNull();
+  });
+
+  it('adopts a legacy AsyncStorage draft into SQLite on read', async () => {
+    await AsyncStorage.setItem(
+      'keres:entity-secondary-draft:story-1:Character:char-1',
+      JSON.stringify({ ...emptyQueues, selectedTagIds: ['tag-a'] }),
+    );
+
+    const draft = await readEntityFormSecondaryDraft('story-1', 'Character', 'char-1');
+
+    expect(draft?.selectedTagIds).toEqual(['tag-a']);
+    const row = await readEditorDraft(database.db, 'story-1', 'Character', 'char-1', 'secondary');
+    expect(row).not.toBeNull();
+    expect(
+      await AsyncStorage.getItem('keres:entity-secondary-draft:story-1:Character:char-1'),
+    ).toBeNull();
   });
 });

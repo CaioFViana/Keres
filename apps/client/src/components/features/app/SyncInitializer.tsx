@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../db';
 import apiClient, { isOfflineError } from '../../../services/apiClient';
 import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
+import { setEditorDraftDb } from '../../../services/EditorDraftService';
 import { createFriendshipService } from '../../../services/FriendshipService';
 import { createServerService } from '../../../services/ServerService';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
@@ -69,6 +70,7 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
 
     await syncEngine.bindDatabase(drizzleClient);
     setAuthDb(drizzleClient); // Ensure authDb is set, especially if drizzleClient changes
+    setEditorDraftDb(drizzleClient);
 
     const serverService = createServerService(drizzleClient);
     let localStories: Awaited<ReturnType<typeof storyService.getAllStories>>;

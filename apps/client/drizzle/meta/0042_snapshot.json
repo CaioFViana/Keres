@@ -1,89 +1,9 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "44bdc30e-2dc8-47a6-9209-2504b961b5c3",
-  "prevId": "c513f3c4-838f-439e-b24c-18dc39bcf59f",
+  "id": "1082d01d-44a5-4293-a227-41ffab2a0267",
+  "prevId": "d9324bfd-c689-4dd4-944f-43db1dbe671e",
   "tables": {
-    "api_logs": {
-      "name": "api_logs",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "level": {
-          "name": "level",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "message": {
-          "name": "message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "meta": {
-          "name": "meta",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "story_id": {
-          "name": "story_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "api_logs_story_id_idx": {
-          "name": "api_logs_story_id_idx",
-          "columns": ["story_id"],
-          "isUnique": false
-        },
-        "api_logs_user_id_idx": {
-          "name": "api_logs_user_id_idx",
-          "columns": ["user_id"],
-          "isUnique": false
-        },
-        "api_logs_created_at_idx": {
-          "name": "api_logs_created_at_idx",
-          "columns": ["\"created_at\" desc"],
-          "isUnique": false
-        },
-        "api_logs_level_idx": {
-          "name": "api_logs_level_idx",
-          "columns": ["level"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "attribute_values": {
       "name": "attribute_values",
       "columns": {
@@ -148,8 +68,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -174,26 +93,7 @@
           "isUnique": true
         }
       },
-      "foreignKeys": {
-        "attribute_values_story_id_stories_id_fk": {
-          "name": "attribute_values_story_id_stories_id_fk",
-          "tableFrom": "attribute_values",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "attribute_values_field_id_story_schema_fields_id_fk": {
-          "name": "attribute_values_field_id_story_schema_fields_id_fk",
-          "tableFrom": "attribute_values",
-          "tableTo": "story_schema_fields",
-          "columnsFrom": ["field_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -255,16 +155,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -275,17 +173,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "boards_story_id_stories_id_fk": {
-          "name": "boards_story_id_stories_id_fk",
-          "tableFrom": "boards",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -377,16 +265,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -397,17 +283,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "chapters_story_id_stories_id_fk": {
-          "name": "chapters_story_id_stories_id_fk",
-          "tableFrom": "chapters",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -520,8 +396,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -540,50 +415,14 @@
         }
       },
       "indexes": {
-        "story_chapter_anchor_order_unq": {
-          "name": "story_chapter_anchor_order_unq",
+        "chapter_anchor_order_unique": {
+          "name": "chapter_anchor_order_unique",
           "columns": ["story_id", "chapter_id", "order"],
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"chapter_anchors\".\"is_deleted\" = 0"
         }
       },
-      "foreignKeys": {
-        "chapter_anchors_story_id_stories_id_fk": {
-          "name": "chapter_anchors_story_id_stories_id_fk",
-          "tableFrom": "chapter_anchors",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "chapter_anchors_chapter_id_chapters_id_fk": {
-          "name": "chapter_anchors_chapter_id_chapters_id_fk",
-          "tableFrom": "chapter_anchors",
-          "tableTo": "chapters",
-          "columnsFrom": ["chapter_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "chapter_anchors_start_scene_id_scenes_id_fk": {
-          "name": "chapter_anchors_start_scene_id_scenes_id_fk",
-          "tableFrom": "chapter_anchors",
-          "tableTo": "scenes",
-          "columnsFrom": ["start_scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "chapter_anchors_end_scene_id_scenes_id_fk": {
-          "name": "chapter_anchors_end_scene_id_scenes_id_fk",
-          "tableFrom": "chapter_anchors",
-          "tableTo": "scenes",
-          "columnsFrom": ["end_scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -645,16 +484,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -665,41 +502,18 @@
         }
       },
       "indexes": {
-        "story_char1_char2_unq": {
-          "name": "story_char1_char2_unq",
-          "columns": ["story_id", "character1_id", "character2_id"],
-          "isUnique": true
+        "character_relation_pair_unique": {
+          "name": "character_relation_pair_unique",
+          "columns": [
+            "story_id",
+            "MIN(\"character1_id\", \"character2_id\")",
+            "MAX(\"character1_id\", \"character2_id\")"
+          ],
+          "isUnique": true,
+          "where": "\"character_relations\".\"is_deleted\" = 0"
         }
       },
-      "foreignKeys": {
-        "character_relations_story_id_stories_id_fk": {
-          "name": "character_relations_story_id_stories_id_fk",
-          "tableFrom": "character_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "character_relations_character1_id_characters_id_fk": {
-          "name": "character_relations_character1_id_characters_id_fk",
-          "tableFrom": "character_relations",
-          "tableTo": "characters",
-          "columnsFrom": ["character1_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "character_relations_character2_id_characters_id_fk": {
-          "name": "character_relations_character2_id_characters_id_fk",
-          "tableFrom": "character_relations",
-          "tableTo": "characters",
-          "columnsFrom": ["character2_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -820,14 +634,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 1
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -842,13 +648,19 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -859,17 +671,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "characters_story_id_stories_id_fk": {
-          "name": "characters_story_id_stories_id_fk",
-          "tableFrom": "characters",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -924,16 +726,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -944,35 +744,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "character_scenes_character_id_characters_id_fk": {
-          "name": "character_scenes_character_id_characters_id_fk",
-          "tableFrom": "character_scenes",
-          "tableTo": "characters",
-          "columnsFrom": ["character_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "character_scenes_story_id_stories_id_fk": {
-          "name": "character_scenes_story_id_stories_id_fk",
-          "tableFrom": "character_scenes",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "character_scenes_scene_id_scenes_id_fk": {
-          "name": "character_scenes_scene_id_scenes_id_fk",
-          "tableFrom": "character_scenes",
-          "tableTo": "scenes",
-          "columnsFrom": ["scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -1006,16 +778,14 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'AND'"
+          "autoincrement": false
         },
         "order": {
           "name": "order",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 0
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -1036,16 +806,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -1057,15 +825,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "choice_check_groups_story_id_stories_id_fk": {
-          "name": "choice_check_groups_story_id_stories_id_fk",
-          "tableFrom": "choice_check_groups",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "choice_check_groups_choice_id_choices_id_fk": {
           "name": "choice_check_groups_choice_id_choices_id_fk",
           "tableFrom": "choice_check_groups",
@@ -1109,8 +868,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'block'"
+          "autoincrement": false
         },
         "type": {
           "name": "type",
@@ -1124,8 +882,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 0
+          "autoincrement": false
         },
         "scene_id": {
           "name": "scene_id",
@@ -1188,16 +945,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -1209,15 +964,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "choice_checks_story_id_stories_id_fk": {
-          "name": "choice_checks_story_id_stories_id_fk",
-          "tableFrom": "choice_checks",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "choice_checks_group_id_choice_check_groups_id_fk": {
           "name": "choice_checks_group_id_choice_check_groups_id_fk",
           "tableFrom": "choice_checks",
@@ -1314,16 +1060,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -1334,35 +1078,136 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "choices_story_id_stories_id_fk": {
-          "name": "choices_story_id_stories_id_fk",
-          "tableFrom": "choices",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "client_settings": {
+      "name": "client_settings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
         },
-        "choices_scene_id_scenes_id_fk": {
-          "name": "choices_scene_id_scenes_id_fk",
-          "tableFrom": "choices",
-          "tableTo": "scenes",
-          "columnsFrom": ["scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+        "local_username": {
+          "name": "local_username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "choices_next_scene_id_scenes_id_fk": {
-          "name": "choices_next_scene_id_scenes_id_fk",
-          "tableFrom": "choices",
-          "tableTo": "scenes",
-          "columnsFrom": ["next_scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "dark_mode": {
+          "name": "dark_mode",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "use_24_hour_time": {
+          "name": "use_24_hour_time",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "date_display_format": {
+          "name": "date_display_format",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'iso'"
+        },
+        "show_contextual_help": {
+          "name": "show_contextual_help",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "suggest_literary_devices": {
+          "name": "suggest_literary_devices",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "export_format": {
+          "name": "export_format",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'svg'"
+        },
+        "show_tutorials": {
+          "name": "show_tutorials",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "seen_tutorials": {
+          "name": "seen_tutorials",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{\"version\":1,\"seen\":[]}'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -1466,8 +1311,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -1486,35 +1330,72 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "comments_story_id_stories_id_fk": {
-          "name": "comments_story_id_stories_id_fk",
-          "tableFrom": "comments",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "editor_drafts": {
+      "name": "editor_drafts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
         },
-        "comments_field_id_story_schema_fields_id_fk": {
-          "name": "comments_field_id_story_schema_fields_id_fk",
-          "tableFrom": "comments",
-          "tableTo": "story_schema_fields",
-          "columnsFrom": ["field_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+        "story_id": {
+          "name": "story_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "comments_author_user_id_users_id_fk": {
-          "name": "comments_author_user_id_users_id_fk",
-          "tableFrom": "comments",
-          "tableTo": "users",
-          "columnsFrom": ["author_user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
+      "indexes": {
+        "editor_draft_owner_unique": {
+          "name": "editor_draft_owner_unique",
+          "columns": ["story_id", "entity_type", "entity_id", "field"],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -1590,16 +1471,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -1611,15 +1490,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "effects_story_id_stories_id_fk": {
-          "name": "effects_story_id_stories_id_fk",
-          "tableFrom": "effects",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "effects_item_id_items_id_fk": {
           "name": "effects_item_id_items_id_fk",
           "tableFrom": "effects",
@@ -1644,6 +1514,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "server_id": {
+          "name": "server_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "sender_id": {
           "name": "sender_id",
           "type": "text",
@@ -1653,6 +1530,13 @@
         },
         "receiver_id": {
           "name": "receiver_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "friend_username": {
+          "name": "friend_username",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -1685,8 +1569,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP"
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -1697,30 +1580,39 @@
         }
       },
       "foreignKeys": {
-        "friendships_sender_id_users_id_fk": {
-          "name": "friendships_sender_id_users_id_fk",
+        "friendships_server_id_servers_id_fk": {
+          "name": "friendships_server_id_servers_id_fk",
+          "tableFrom": "friendships",
+          "tableTo": "servers",
+          "columnsFrom": ["server_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "friendships_sender_id_users_id_user_fk": {
+          "name": "friendships_sender_id_users_id_user_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
           "columnsFrom": ["sender_id"],
-          "columnsTo": ["id"],
+          "columnsTo": ["id_user"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "friendships_receiver_id_users_id_fk": {
-          "name": "friendships_receiver_id_users_id_fk",
+        "friendships_receiver_id_users_id_user_fk": {
+          "name": "friendships_receiver_id_users_id_user_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
           "columnsFrom": ["receiver_id"],
-          "columnsTo": ["id"],
+          "columnsTo": ["id_user"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "friendships_blocked_by_id_users_id_fk": {
-          "name": "friendships_blocked_by_id_users_id_fk",
+        "friendships_blocked_by_id_users_id_user_fk": {
+          "name": "friendships_blocked_by_id_users_id_user_fk",
           "tableFrom": "friendships",
           "tableTo": "users",
           "columnsFrom": ["blocked_by_id"],
-          "columnsTo": ["id"],
+          "columnsTo": ["id_user"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1830,16 +1722,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -1847,26 +1737,40 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "local_path": {
+          "name": "local_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "upload_state": {
+          "name": "upload_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "download_state": {
+          "name": "download_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'downloaded'"
+        },
+        "thumbnail_path": {
+          "name": "thumbnail_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
-      "indexes": {
-        "galleries_story_hash_idx": {
-          "name": "galleries_story_hash_idx",
-          "columns": ["story_id", "hash"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "galleries_story_id_stories_id_fk": {
-          "name": "galleries_story_id_stories_id_fk",
-          "tableFrom": "galleries",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -1928,16 +1832,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -1947,88 +1849,7 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "gallery_relations_owner_idx": {
-          "name": "gallery_relations_owner_idx",
-          "columns": ["story_id", "owner_type", "owner_id"],
-          "isUnique": false
-        },
-        "gallery_relations_gallery_idx": {
-          "name": "gallery_relations_gallery_idx",
-          "columns": ["gallery_id"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "gallery_relations_story_id_stories_id_fk": {
-          "name": "gallery_relations_story_id_stories_id_fk",
-          "tableFrom": "gallery_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "gallery_relations_gallery_id_galleries_id_fk": {
-          "name": "gallery_relations_gallery_id_galleries_id_fk",
-          "tableFrom": "gallery_relations",
-          "tableTo": "galleries",
-          "columnsFrom": ["gallery_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "media_blobs": {
-      "name": "media_blobs",
-      "columns": {
-        "hash": {
-          "name": "hash",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "mime_type": {
-          "name": "mime_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "size_bytes": {
-          "name": "size_bytes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "storage_path": {
-          "name": "storage_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "media_blobs_storage_path_idx": {
-          "name": "media_blobs_storage_path_idx",
-          "columns": ["storage_path"],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -2091,8 +1912,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -2117,26 +1937,7 @@
           "isUnique": true
         }
       },
-      "foreignKeys": {
-        "favorites_story_id_stories_id_fk": {
-          "name": "favorites_story_id_stories_id_fk",
-          "tableFrom": "favorites",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "favorites_user_id_users_id_fk": {
-          "name": "favorites_user_id_users_id_fk",
-          "tableFrom": "favorites",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -2212,16 +2013,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -2233,15 +2032,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "item_journeys_story_id_stories_id_fk": {
-          "name": "item_journeys_story_id_stories_id_fk",
-          "tableFrom": "item_journeys",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "item_journeys_item_id_items_id_fk": {
           "name": "item_journeys_item_id_items_id_fk",
           "tableFrom": "item_journeys",
@@ -2360,16 +2150,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -2380,26 +2168,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "items_story_id_stories_id_fk": {
-          "name": "items_story_id_stories_id_fk",
-          "tableFrom": "items",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "items_character_owner_id_characters_id_fk": {
-          "name": "items_character_owner_id_characters_id_fk",
-          "tableFrom": "items",
-          "tableTo": "characters",
-          "columnsFrom": ["character_owner_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -2490,16 +2259,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -2510,17 +2277,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "locations_story_id_stories_id_fk": {
-          "name": "locations_story_id_stories_id_fk",
-          "tableFrom": "locations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -2582,16 +2339,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -2602,17 +2357,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "location_maps_story_id_stories_id_fk": {
-          "name": "location_maps_story_id_stories_id_fk",
-          "tableFrom": "location_maps",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -2674,16 +2419,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -2694,78 +2437,18 @@
         }
       },
       "indexes": {
-        "story_loca_locb_type_unq": {
-          "name": "story_loca_locb_type_unq",
-          "columns": ["story_id", "location_a_id", "location_b_id", "relation_type"],
-          "isUnique": true
+        "location_relation_pair_unique": {
+          "name": "location_relation_pair_unique",
+          "columns": [
+            "story_id",
+            "MIN(\"location_a_id\", \"location_b_id\")",
+            "MAX(\"location_a_id\", \"location_b_id\")",
+            "relation_type"
+          ],
+          "isUnique": true,
+          "where": "\"location_relations\".\"is_deleted\" = 0"
         }
       },
-      "foreignKeys": {
-        "location_relations_story_id_stories_id_fk": {
-          "name": "location_relations_story_id_stories_id_fk",
-          "tableFrom": "location_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "location_relations_location_a_id_locations_id_fk": {
-          "name": "location_relations_location_a_id_locations_id_fk",
-          "tableFrom": "location_relations",
-          "tableTo": "locations",
-          "columnsFrom": ["location_a_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "location_relations_location_b_id_locations_id_fk": {
-          "name": "location_relations_location_b_id_locations_id_fk",
-          "tableFrom": "location_relations",
-          "tableTo": "locations",
-          "columnsFrom": ["location_b_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "media_storage_settings": {
-      "name": "media_storage_settings",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "storage_identity": {
-          "name": "storage_identity",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -2836,8 +2519,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -2856,26 +2538,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "modes_story_id_stories_id_fk": {
-          "name": "modes_story_id_stories_id_fk",
-          "tableFrom": "modes",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "modes_character_id_characters_id_fk": {
-          "name": "modes_character_id_characters_id_fk",
-          "tableFrom": "modes",
-          "tableTo": "characters",
-          "columnsFrom": ["character_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -2906,6 +2569,13 @@
         },
         "body": {
           "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "gallery_id": {
+          "name": "gallery_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -2945,16 +2615,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -2965,17 +2633,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "notes_story_id_stories_id_fk": {
-          "name": "notes_story_id_stories_id_fk",
-          "tableFrom": "notes",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3037,16 +2695,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -3057,32 +2713,13 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "note_relations_story_id_stories_id_fk": {
-          "name": "note_relations_story_id_stories_id_fk",
-          "tableFrom": "note_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "note_relations_note_id_notes_id_fk": {
-          "name": "note_relations_note_id_notes_id_fk",
-          "tableFrom": "note_relations",
-          "tableTo": "notes",
-          "columnsFrom": ["note_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "operation_log": {
-      "name": "operation_log",
+    "operation_logs": {
+      "name": "operation_logs",
       "columns": {
         "id": {
           "name": "id",
@@ -3140,73 +2777,39 @@
           "notNull": true,
           "autoincrement": false
         },
-        "entity_version": {
-          "name": "entity_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "is_synced": {
+          "name": "is_synced",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "server_operation_version": {
+          "name": "server_operation_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "conflict_state": {
+          "name": "conflict_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
-      "indexes": {
-        "operation_log_story_id_operation_version_idx": {
-          "name": "operation_log_story_id_operation_version_idx",
-          "columns": ["story_id", "operation_version"],
-          "isUnique": true
-        },
-        "operation_log_created_at_idx": {
-          "name": "operation_log_created_at_idx",
-          "columns": ["created_at"],
-          "isUnique": false
-        },
-        "operation_log_user_id_idx": {
-          "name": "operation_log_user_id_idx",
-          "columns": ["user_id"],
-          "isUnique": false
-        },
-        "operation_log_entity_type_idx": {
-          "name": "operation_log_entity_type_idx",
-          "columns": ["entity_type"],
-          "isUnique": false
-        },
-        "operation_log_operation_type_idx": {
-          "name": "operation_log_operation_type_idx",
-          "columns": ["operation_type"],
-          "isUnique": false
-        },
-        "operation_log_entity_type_entity_id_entity_version_idx": {
-          "name": "operation_log_entity_type_entity_id_entity_version_idx",
-          "columns": ["entity_type", "entity_id", "entity_version"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "operation_log_story_id_stories_id_fk": {
-          "name": "operation_log_story_id_stories_id_fk",
-          "tableFrom": "operation_log",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "operation_log_user_id_users_id_fk": {
-          "name": "operation_log_user_id_users_id_fk",
-          "tableFrom": "operation_log",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3218,13 +2821,6 @@
           "name": "id",
           "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "text",
-          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
@@ -3279,6 +2875,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "source_story_id": {
+          "name": "source_story_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -3294,29 +2897,8 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "pack_owner_idx": {
-          "name": "pack_owner_idx",
-          "columns": ["owner_id"],
-          "isUnique": false
-        },
-        "pack_visibility_idx": {
-          "name": "pack_visibility_idx",
-          "columns": ["visibility"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "packs_owner_id_users_id_fk": {
-          "name": "packs_owner_id_users_id_fk",
-          "tableFrom": "packs",
-          "tableTo": "users",
-          "columnsFrom": ["owner_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3371,16 +2953,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -3391,17 +2971,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "plots_story_id_stories_id_fk": {
-          "name": "plots_story_id_stories_id_fk",
-          "tableFrom": "plots",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3463,16 +3033,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -3505,35 +3073,7 @@
           "where": "\"plot_scenes\".\"is_deleted\" = false"
         }
       },
-      "foreignKeys": {
-        "plot_scenes_story_id_stories_id_fk": {
-          "name": "plot_scenes_story_id_stories_id_fk",
-          "tableFrom": "plot_scenes",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "plot_scenes_plot_id_plots_id_fk": {
-          "name": "plot_scenes_plot_id_plots_id_fk",
-          "tableFrom": "plot_scenes",
-          "tableTo": "plots",
-          "columnsFrom": ["plot_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "plot_scenes_scene_id_scenes_id_fk": {
-          "name": "plot_scenes_scene_id_scenes_id_fk",
-          "tableFrom": "plot_scenes",
-          "tableTo": "scenes",
-          "columnsFrom": ["scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3588,16 +3128,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -3608,17 +3146,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "routes_story_id_stories_id_fk": {
-          "name": "routes_story_id_stories_id_fk",
-          "tableFrom": "routes",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -3687,16 +3215,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -3724,147 +3250,6 @@
           "where": "\"route_steps\".\"is_deleted\" = false"
         }
       },
-      "foreignKeys": {
-        "route_steps_story_id_stories_id_fk": {
-          "name": "route_steps_story_id_stories_id_fk",
-          "tableFrom": "route_steps",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "route_steps_route_id_routes_id_fk": {
-          "name": "route_steps_route_id_routes_id_fk",
-          "tableFrom": "route_steps",
-          "tableTo": "routes",
-          "columnsFrom": ["route_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "route_steps_scene_id_scenes_id_fk": {
-          "name": "route_steps_scene_id_scenes_id_fk",
-          "tableFrom": "route_steps",
-          "tableTo": "scenes",
-          "columnsFrom": ["scene_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "route_steps_selected_choice_id_choices_id_fk": {
-          "name": "route_steps_selected_choice_id_choices_id_fk",
-          "tableFrom": "route_steps",
-          "tableTo": "choices",
-          "columnsFrom": ["selected_choice_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "registration_settings": {
-      "name": "registration_settings",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_registration_open": {
-          "name": "is_registration_open",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "max_users": {
-          "name": "max_users",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "auto_manage": {
-          "name": "auto_manage",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "default_tier_id": {
-          "name": "default_tier_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "registration_settings_default_tier_id_tiers_id_fk": {
-          "name": "registration_settings_default_tier_id_tiers_id_fk",
-          "tableFrom": "registration_settings",
-          "tableTo": "tiers",
-          "columnsFrom": ["default_tier_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "showcase_settings": {
-      "name": "showcase_settings",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_showcase_enabled": {
-          "name": "is_showcase_enabled",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "is_hosted_client_enabled": {
-          "name": "is_hosted_client_enabled",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -4021,16 +3406,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -4041,44 +3424,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "scenes_story_id_stories_id_fk": {
-          "name": "scenes_story_id_stories_id_fk",
-          "tableFrom": "scenes",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "scenes_chapter_id_chapters_id_fk": {
-          "name": "scenes_chapter_id_chapters_id_fk",
-          "tableFrom": "scenes",
-          "tableTo": "chapters",
-          "columnsFrom": ["chapter_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "scenes_location_id_locations_id_fk": {
-          "name": "scenes_location_id_locations_id_fk",
-          "tableFrom": "scenes",
-          "tableTo": "locations",
-          "columnsFrom": ["location_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "scenes_calendar_date_override_calendar_id_story_calendars_id_fk": {
-          "name": "scenes_calendar_date_override_calendar_id_story_calendars_id_fk",
-          "tableFrom": "scenes",
-          "tableTo": "story_calendars",
-          "columnsFrom": ["calendar_date_override_calendar_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4147,8 +3493,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -4173,17 +3518,101 @@
           "isUnique": true
         }
       },
-      "foreignKeys": {
-        "see_also_relations_story_id_stories_id_fk": {
-          "name": "see_also_relations_story_id_stories_id_fk",
-          "tableFrom": "see_also_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "servers": {
+      "name": "servers",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id_user": {
+          "name": "id_user",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_name": {
+          "name": "user_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tag": {
+          "name": "tag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_sync_date": {
+          "name": "last_sync_date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4252,8 +3681,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -4278,44 +3706,7 @@
           "isUnique": false
         }
       },
-      "foreignKeys": {
-        "stat_relations_story_id_stories_id_fk": {
-          "name": "stat_relations_story_id_stories_id_fk",
-          "tableFrom": "stat_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "stat_relations_character_id_characters_id_fk": {
-          "name": "stat_relations_character_id_characters_id_fk",
-          "tableFrom": "stat_relations",
-          "tableTo": "characters",
-          "columnsFrom": ["character_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "stat_relations_mode_id_modes_id_fk": {
-          "name": "stat_relations_mode_id_modes_id_fk",
-          "tableFrom": "stat_relations",
-          "tableTo": "modes",
-          "columnsFrom": ["mode_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "stat_relations_stat_id_stats_id_fk": {
-          "name": "stat_relations_stat_id_stats_id_fk",
-          "tableFrom": "stat_relations",
-          "tableTo": "stats",
-          "columnsFrom": ["stat_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4377,8 +3768,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -4403,26 +3793,7 @@
           "isUnique": false
         }
       },
-      "foreignKeys": {
-        "stat_strengths_story_id_stories_id_fk": {
-          "name": "stat_strengths_story_id_stories_id_fk",
-          "tableFrom": "stat_strengths",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "stat_strengths_stat_id_stats_id_fk": {
-          "name": "stat_strengths_stat_id_stats_id_fk",
-          "tableFrom": "stat_strengths",
-          "tableTo": "stats",
-          "columnsFrom": ["stat_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4486,8 +3857,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -4506,17 +3876,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "stats_story_id_stories_id_fk": {
-          "name": "stats_story_id_stories_id_fk",
-          "tableFrom": "stats",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4698,16 +4058,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -4716,27 +4074,47 @@
           "notNull": false,
           "autoincrement": false
         },
-        "last_operation_version": {
-          "name": "last_operation_version",
+        "server_id": {
+          "name": "server_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "last_operation_log": {
+          "name": "last_operation_log",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": 0
+        },
+        "last_server_synced_log": {
+          "name": "last_server_synced_log",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "last_public_favorite_log": {
+          "name": "last_public_favorite_log",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "my_role": {
+          "name": "my_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "stories_user_id_users_id_fk": {
-          "name": "stories_user_id_users_id_fk",
-          "tableFrom": "stories",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4777,8 +4155,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 0
+          "autoincrement": false
         },
         "color": {
           "name": "color",
@@ -4828,16 +4205,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -4848,17 +4223,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "story_arcs_story_id_stories_id_fk": {
-          "name": "story_arcs_story_id_stories_id_fk",
-          "tableFrom": "story_arcs",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4935,16 +4300,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -4955,17 +4318,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "story_calendars_story_id_stories_id_fk": {
-          "name": "story_calendars_story_id_stories_id_fk",
-          "tableFrom": "story_calendars",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -4980,13 +4333,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "story_id": {
-          "name": "story_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -4994,20 +4340,26 @@
           "notNull": true,
           "autoincrement": false
         },
-        "permission_type": {
-          "name": "permission_type",
+        "story_id": {
+          "name": "story_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "version": {
-          "name": "version",
-          "type": "integer",
+        "server_id": {
+          "name": "server_id",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
+        },
+        "permission": {
+          "name": "permission",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -5023,13 +4375,19 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -5040,26 +4398,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "story_permissions_story_id_stories_id_fk": {
-          "name": "story_permissions_story_id_stories_id_fk",
-          "tableFrom": "story_permissions",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "story_permissions_user_id_users_id_fk": {
-          "name": "story_permissions_user_id_users_id_fk",
-          "tableFrom": "story_permissions",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -5074,15 +4413,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "story_id": {
-          "name": "story_id",
+        "server_id": {
+          "name": "server_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "owner_user_id": {
-          "name": "owner_user_id",
+        "story_id": {
+          "name": "story_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -5102,13 +4441,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "format_version": {
-          "name": "format_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "byte_size": {
           "name": "byte_size",
           "type": "integer",
@@ -5116,144 +4448,35 @@
           "notNull": true,
           "autoincrement": false
         },
-        "media_included": {
-          "name": "media_included",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "media_total": {
-          "name": "media_total",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "snapshot": {
-          "name": "snapshot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "notified": {
+          "name": "notified",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         }
       },
       "indexes": {
-        "story_publication_story_idx": {
-          "name": "story_publication_story_idx",
-          "columns": ["story_id"],
-          "isUnique": false
-        },
-        "story_publication_label_unq": {
-          "name": "story_publication_label_unq",
-          "columns": ["story_id", "label"],
+        "publication_server_unq": {
+          "name": "publication_server_unq",
+          "columns": ["server_id", "id"],
           "isUnique": true
         }
       },
       "foreignKeys": {
-        "story_publications_story_id_stories_id_fk": {
-          "name": "story_publications_story_id_stories_id_fk",
+        "story_publications_server_id_servers_id_fk": {
+          "name": "story_publications_server_id_servers_id_fk",
           "tableFrom": "story_publications",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "story_publications_owner_user_id_users_id_fk": {
-          "name": "story_publications_owner_user_id_users_id_fk",
-          "tableFrom": "story_publications",
-          "tableTo": "users",
-          "columnsFrom": ["owner_user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "story_showcase_entries": {
-      "name": "story_showcase_entries",
-      "columns": {
-        "story_id": {
-          "name": "story_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "owner_user_id": {
-          "name": "owner_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "visibility": {
-          "name": "visibility",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'public'"
-        },
-        "password_hash": {
-          "name": "password_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "label_mode": {
-          "name": "label_mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'both'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "story_showcase_entries_story_id_stories_id_fk": {
-          "name": "story_showcase_entries_story_id_stories_id_fk",
-          "tableFrom": "story_showcase_entries",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "story_showcase_entries_owner_user_id_users_id_fk": {
-          "name": "story_showcase_entries_owner_user_id_users_id_fk",
-          "tableFrom": "story_showcase_entries",
-          "tableTo": "users",
-          "columnsFrom": ["owner_user_id"],
+          "tableTo": "servers",
+          "columnsFrom": ["server_id"],
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -5364,8 +4587,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -5390,17 +4612,7 @@
           "isUnique": true
         }
       },
-      "foreignKeys": {
-        "story_schema_fields_story_id_stories_id_fk": {
-          "name": "story_schema_fields_story_id_stories_id_fk",
-          "tableFrom": "story_schema_fields",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -5455,8 +4667,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -5475,23 +4686,137 @@
         }
       },
       "indexes": {
-        "story_suggestion_type_value_unq": {
-          "name": "story_suggestion_type_value_unq",
+        "suggestion_type_value_unique": {
+          "name": "suggestion_type_value_unique",
           "columns": ["story_id", "type", "value"],
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"suggestions\".\"is_deleted\" = 0"
         }
       },
-      "foreignKeys": {
-        "suggestions_story_id_stories_id_fk": {
-          "name": "suggestions_story_id_stories_id_fk",
-          "tableFrom": "suggestions",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "sync_conflicts": {
+      "name": "sync_conflicts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "story_id": {
+          "name": "story_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "local_operation_type": {
+          "name": "local_operation_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "local_operation_ids": {
+          "name": "local_operation_ids",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "local_values": {
+          "name": "local_values",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "server_values": {
+          "name": "server_values",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "client_version": {
+          "name": "client_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "server_version": {
+          "name": "server_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "resolution": {
+          "name": "resolution",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "detected_at": {
+          "name": "detected_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -5553,16 +4878,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -5573,32 +4896,14 @@
         }
       },
       "indexes": {
-        "story_tag_relation_unq": {
-          "name": "story_tag_relation_unq",
+        "tag_relation_target_unique": {
+          "name": "tag_relation_target_unique",
           "columns": ["story_id", "tag_id", "relation_id", "relation_type"],
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"tag_relations\".\"is_deleted\" = 0"
         }
       },
-      "foreignKeys": {
-        "tag_relations_story_id_stories_id_fk": {
-          "name": "tag_relations_story_id_stories_id_fk",
-          "tableFrom": "tag_relations",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "tag_relations_tag_id_tags_id_fk": {
-          "name": "tag_relations_tag_id_tags_id_fk",
-          "tableFrom": "tag_relations",
-          "tableTo": "tags",
-          "columnsFrom": ["tag_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -5654,22 +4959,23 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
         },
         "updated_at": {
           "name": "updated_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
         },
         "version": {
           "name": "version",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
@@ -5688,122 +4994,11 @@
         }
       },
       "indexes": {
-        "story_name_unq": {
-          "name": "story_name_unq",
+        "tag_story_name_unique": {
+          "name": "tag_story_name_unique",
           "columns": ["story_id", "name"],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "tags_story_id_stories_id_fk": {
-          "name": "tags_story_id_stories_id_fk",
-          "tableFrom": "tags",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "tiers": {
-      "name": "tiers",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_default": {
-          "name": "is_default",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "max_stories": {
-          "name": "max_stories",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "max_entities_per_story": {
-          "name": "max_entities_per_story",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "max_entities_total": {
-          "name": "max_entities_total",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "max_storage_bytes_per_story": {
-          "name": "max_storage_bytes_per_story",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "max_storage_bytes_total": {
-          "name": "max_storage_bytes_total",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_deleted": {
-          "name": "is_deleted",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "tiers_name_unique": {
-          "name": "tiers_name_unique",
-          "columns": ["name"],
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"tags\".\"is_deleted\" = 0"
         }
       },
       "foreignKeys": {},
@@ -5814,32 +5009,32 @@
     "users": {
       "name": "users",
       "columns": {
-        "id": {
-          "name": "id",
+        "id_user": {
+          "name": "id_user",
           "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
         },
-        "username": {
-          "name": "username",
+        "id_server": {
+          "name": "id_server",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "tag": {
           "name": "tag",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "password": {
-          "name": "password",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "avatar_color": {
@@ -5863,21 +5058,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "is_admin": {
-          "name": "is_admin",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "tier_id": {
-          "name": "tier_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -5892,13 +5072,19 @@
           "notNull": true,
           "autoincrement": false
         },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -5908,92 +5094,8 @@
           "autoincrement": false
         }
       },
-      "indexes": {
-        "users_username_unique": {
-          "name": "users_username_unique",
-          "columns": ["username"],
-          "isUnique": true
-        },
-        "users_tag_lower_idx": {
-          "name": "users_tag_lower_idx",
-          "columns": ["lower(\"tag\")"],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "users_tier_id_tiers_id_fk": {
-          "name": "users_tier_id_tiers_id_fk",
-          "tableFrom": "users",
-          "tableTo": "tiers",
-          "columnsFrom": ["tier_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "user_recovery_codes": {
-      "name": "user_recovery_codes",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "code_hash": {
-          "name": "code_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_used": {
-          "name": "is_used",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "used_at": {
-          "name": "used_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
       "indexes": {},
-      "foreignKeys": {
-        "user_recovery_codes_user_id_users_id_fk": {
-          "name": "user_recovery_codes_user_id_users_id_fk",
-          "tableFrom": "user_recovery_codes",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -6106,16 +5208,14 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 1
+          "autoincrement": false
         },
         "is_deleted": {
           "name": "is_deleted",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": false
+          "autoincrement": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -6126,17 +5226,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "world_rules_story_id_stories_id_fk": {
-          "name": "world_rules_story_id_stories_id_fk",
-          "tableFrom": "world_rules",
-          "tableTo": "stories",
-          "columnsFrom": ["story_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -6151,16 +5241,22 @@
   },
   "internal": {
     "indexes": {
-      "api_logs_created_at_idx": {
+      "character_relation_pair_unique": {
         "columns": {
-          "\"created_at\" desc": {
+          "MIN(\"character1_id\", \"character2_id\")": {
+            "isExpression": true
+          },
+          "MAX(\"character1_id\", \"character2_id\")": {
             "isExpression": true
           }
         }
       },
-      "users_tag_lower_idx": {
+      "location_relation_pair_unique": {
         "columns": {
-          "lower(\"tag\")": {
+          "MIN(\"location_a_id\", \"location_b_id\")": {
+            "isExpression": true
+          },
+          "MAX(\"location_a_id\", \"location_b_id\")": {
             "isExpression": true
           }
         }

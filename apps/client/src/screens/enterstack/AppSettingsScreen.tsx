@@ -18,6 +18,7 @@ import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
 import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
+import { setEditorDraftDb } from '../../services/EditorDraftService';
 import { mediaFileService } from '../../services/MediaFileService';
 import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useGuideStore } from '../../state/guideStore';
@@ -144,6 +145,7 @@ const SettingsScreen = () => {
               await Promise.all([realtimeShutdown, syncEngine.reset()]);
               await authTokenManager.clearAllAuth(serverIds);
               setAuthDb(null);
+              setEditorDraftDb(null);
               await mediaFileService.deleteAllMedia();
 
               await resetDatabase(db);

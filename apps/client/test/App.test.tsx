@@ -14,6 +14,9 @@ jest.mock('expo-status-bar', () => ({ __esModule: true, StatusBar: () => null })
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,
   useSafeAreaInsets: jest.fn(),
+  // React.ReactNode resolves via the UMD global type; the factory's JSX uses the automatic
+  // runtime, so no react import is needed here.
+  SafeAreaProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 jest.mock('../src/db', () => {
   const React = require('react');

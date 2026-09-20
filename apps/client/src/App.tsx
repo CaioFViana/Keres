@@ -7,14 +7,10 @@ import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import {
-  DefaultTheme as DefaultNavigationTheme,
-  ThemeProvider as NavigationThemeProvider,
-} from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AppDrizzleClient } from './db';
 import { DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
@@ -73,42 +69,15 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-/**
- * Drawers and headers read React Navigation's theme, while the application reads its own
- * ThemeProvider. Keeping the two in sync prevents navigation's light default border from
- * appearing as a white divider in a dark story or dark mode.
- */
-const NavigationThemeBridge = ({ children }: { children: React.ReactNode }) => {
-  const { colors, isDarkMode } = useTheme();
-  const navigationTheme = React.useMemo(
-    () => ({
-      ...DefaultNavigationTheme,
-      dark: isDarkMode,
-      colors: {
-        ...DefaultNavigationTheme.colors,
-        primary: colors.primary,
-        background: colors.background,
-        card: colors.surface,
-        text: colors.text,
-        border: colors.border,
-        notification: colors.notification,
-      },
-    }),
-    [colors, isDarkMode],
-  );
-
-  return <NavigationThemeProvider value={navigationTheme}>{children}</NavigationThemeProvider>;
-};
-
 // New ThemeInitializer component to provide drizzleClient to ThemeProvider
 const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
   const drizzleClient = useDrizzle(); // Get drizzleClient from context
 
+  // The navigation theme mapping lives with the navigator itself
+  // (see navigation/navigationTheme.ts), which hands it to its NavigationContainer.
   return (
     <ThemeProvider drizzleClient={drizzleClient}>
-      <NavigationThemeBridge>
-        <SafeAreaWrapper>{children}</SafeAreaWrapper>
-      </NavigationThemeBridge>
+      <SafeAreaWrapper>{children}</SafeAreaWrapper>
     </ThemeProvider>
   );
 };
@@ -184,12 +153,17 @@ const DatabaseInitializer = () => {
 };
 
 export default function App() {
+  // SafeAreaWrapper (and form hooks deep in the tree) read insets via useSafeAreaInsets(),
+  // which throws without this provider. expo-router/entry used to supply it implicitly;
+  // with the entry registering <App /> directly, it lives here explicitly.
   return (
-    <SQLiteProvider databaseName={'keres.db'}>
-      <I18nextProvider i18n={i18n}>
-        <DatabaseInitializer />
-      </I18nextProvider>
-    </SQLiteProvider>
+    <SafeAreaProvider>
+      <SQLiteProvider databaseName={'keres.db'}>
+        <I18nextProvider i18n={i18n}>
+          <DatabaseInitializer />
+        </I18nextProvider>
+      </SQLiteProvider>
+    </SafeAreaProvider>
   );
 }
 

@@ -35,6 +35,9 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,
   useSafeAreaInsets: jest.fn(),
+  // React.ReactNode resolves via the UMD global type; the factory's JSX uses the automatic
+  // runtime, so no react import is needed here.
+  SafeAreaProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 jest.mock('../src/db', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
@@ -99,7 +102,6 @@ jest.mock('@/src/components/features/app/DocumentTitleSync', () => () => null);
 jest.mock('@/src/components/features/app/WebScrollbarTheme', () => () => null);
 jest.mock('@/src/components/features/export/SvgRasterHost', () => () => null);
 
-import { ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -200,26 +202,3 @@ it('survives a native background-sync failure', async () => {
   await waitFor(() => expect(screen.getByTestId('app-navigator')).toBeTruthy());
 });
 
-it('bridges the app palette into the navigation theme', async () => {
-  (useTheme as jest.Mock).mockReturnValue({ colors: palette, isDarkMode: true });
-  const screen = await render(<App />);
-
-  await waitFor(() => expect(screen.getByTestId('app-navigator')).toBeTruthy());
-
-  expect(NavigationThemeProvider).toHaveBeenCalledWith(
-    expect.objectContaining({
-      value: expect.objectContaining({
-        dark: true,
-        colors: expect.objectContaining({
-          primary: palette.primary,
-          background: palette.background,
-          card: palette.surface,
-          text: palette.text,
-          border: palette.border,
-          notification: palette.notification,
-        }),
-      }),
-    }),
-    undefined,
-  );
-});

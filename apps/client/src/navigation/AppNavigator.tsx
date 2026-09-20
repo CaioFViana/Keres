@@ -1,5 +1,6 @@
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Import ActivityIndicator and View
 
 import SyncInitializer from '@/src/components/features/app/SyncInitializer'; // Import SyncInitializer
@@ -11,6 +12,7 @@ import { useTheme } from '../theme';
 import { readShowcaseRequest } from '../showcase/showcaseRequest';
 import ColdInstallStack from './ColdInstallStack';
 import MainSystemStack from './MainSystemStack';
+import { buildNavigationTheme } from './navigationTheme';
 import StorySelectionStack from './StorySelectionStack';
 
 export type RootStackParamList = {
@@ -32,7 +34,11 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   const showcase = readShowcaseRequest();
 
   const drizzleDb = useDrizzle();
-  const { colors } = useTheme();
+  const { colors, isDarkMode } = useTheme();
+  const navigationTheme = useMemo(
+    () => buildNavigationTheme(colors, isDarkMode),
+    [colors, isDarkMode],
+  );
 
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
@@ -91,17 +97,22 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
         'MainSystem'
       : 'StorySelection';
 
+  // expo-router/entry used to wrap the whole app in its own navigation container;
+  // with the entry registering <App /> directly, the container lives here, owning
+  // this navigator tree. No linking prop: deep-link routing was never configured.
   return (
-    <SyncInitializer>
-      <RootStack.Navigator
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
-        initialRouteName={initialRouteName}
-      >
-        <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
-        <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
-        <RootStack.Screen name="MainSystem" component={MainSystemStack} />
-      </RootStack.Navigator>
-    </SyncInitializer>
+    <NavigationContainer theme={navigationTheme}>
+      <SyncInitializer>
+        <RootStack.Navigator
+          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+          initialRouteName={initialRouteName}
+        >
+          <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />
+          <RootStack.Screen name="StorySelection" component={StorySelectionStack} />
+          <RootStack.Screen name="MainSystem" component={MainSystemStack} />
+        </RootStack.Navigator>
+      </SyncInitializer>
+    </NavigationContainer>
   );
 };
 

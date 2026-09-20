@@ -11,7 +11,7 @@ import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLa
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

@@ -8,7 +8,6 @@ jest.mock('../../src/services/storymanagement/SuggestionService', () => ({
   createSuggestionService: jest.fn(),
 }));
 jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
-  const React = require('react');
   return {
     __esModule: true,
     default: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>

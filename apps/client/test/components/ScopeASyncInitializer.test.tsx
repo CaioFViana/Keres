@@ -1,5 +1,4 @@
 import { act, render } from '@testing-library/react-native';
-import React from 'react';
 import { Text } from 'react-native';
 import SyncInitializer from '../../src/components/features/app/SyncInitializer';
 

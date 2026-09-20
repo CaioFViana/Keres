@@ -16,8 +16,6 @@ jest.mock('expo-system-ui', () => ({
   setBackgroundColorAsync: jest.fn(),
 }));
 jest.mock('@react-navigation/native', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
-  const React = require('react');
   return {
     __esModule: true,
     DefaultTheme: {

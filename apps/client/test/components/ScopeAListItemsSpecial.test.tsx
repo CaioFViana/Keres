@@ -1,7 +1,6 @@
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { OperationLogEntityType } from '@keres/shared';
-import React from 'react';
 import CommentListItem from '../../src/components/features/list-items/CommentListItem';
 import GalleryGridItem, {
   iconForGalleryMedia,

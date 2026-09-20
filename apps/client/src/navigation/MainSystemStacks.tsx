@@ -1,6 +1,5 @@
 import { type StorySchemaEntityType } from '@keres/shared';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';

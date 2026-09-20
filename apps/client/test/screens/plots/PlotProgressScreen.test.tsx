@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import PlotProgressScreen from '../../../src/screens/plots/PlotProgressScreen';
 
 const mockNavigate = jest.fn();

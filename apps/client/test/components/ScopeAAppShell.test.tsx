@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import { render } from '@testing-library/react-native';
-import React from 'react';
 import { Platform } from 'react-native';
 import DocumentTitleSync from '../../src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '../../src/components/features/app/WebScrollbarTheme';

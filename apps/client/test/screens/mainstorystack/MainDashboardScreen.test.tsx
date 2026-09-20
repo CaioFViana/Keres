@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 import { BackHandler } from 'react-native';
 import { useUserSettingsStore } from '../../../src/state/userSettingsStore';
 

@@ -4,7 +4,7 @@ import type { StorySchemaEntityType } from '@keres/shared';
 import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { StorySchemaFieldReorderModal } from '../../components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';

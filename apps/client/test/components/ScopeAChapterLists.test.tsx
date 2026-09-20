@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import type { ChoiceSelect, SceneSelect } from '../../src/db/schema';
 import ChapterSceneBranchTree from '../../src/components/features/chapters/ChapterSceneBranchTree';
 import ChapterScenesList from '../../src/components/features/chapters/ChapterScenesList';

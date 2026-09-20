@@ -9,7 +9,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { and, eq, isNull } from 'drizzle-orm';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Linking,

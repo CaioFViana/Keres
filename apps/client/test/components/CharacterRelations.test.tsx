@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import CharacterRelationManager from '../../src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import CharacterRelationRows from '../../src/components/features/relations/CharacterRelationRows';
 import type { Character } from '@keres/shared/entities/Character';

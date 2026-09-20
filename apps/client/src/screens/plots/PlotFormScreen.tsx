@@ -8,7 +8,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import PlotSceneManager from '@/src/components/features/plots/PlotSceneManager/PlotSceneManager';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

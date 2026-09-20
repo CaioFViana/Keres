@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Import ActivityIndicator and View
 
 import SyncInitializer from '@/src/components/features/app/SyncInitializer'; // Import SyncInitializer

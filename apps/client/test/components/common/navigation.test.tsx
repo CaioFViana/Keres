@@ -1,6 +1,5 @@
 import { CommonActions, DrawerActions } from '@react-navigation/native';
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { PanResponder, StyleSheet, Text } from 'react-native';
 import DrawerMenuButton from '../../../src/components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../../../src/components/common/navigation/NavigationBackButton/NavigationBackButton';

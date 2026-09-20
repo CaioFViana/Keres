@@ -12,7 +12,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';

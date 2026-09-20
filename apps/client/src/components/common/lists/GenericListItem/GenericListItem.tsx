@@ -119,7 +119,7 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
       marginRight: 10,
     },
     headerToggle: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
     },
     dropdownArrow: {
       marginLeft: 10,

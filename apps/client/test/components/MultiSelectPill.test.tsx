@@ -4,7 +4,6 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import MultiSelectPill, {
   SingleSelectPill,

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import type { SceneSelect } from '@/src/db/schema';
 import { useChapterNames } from '@/src/hooks/useChapterNames';

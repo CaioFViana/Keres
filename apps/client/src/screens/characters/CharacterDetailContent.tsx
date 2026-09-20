@@ -26,7 +26,6 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import type { TFunction } from 'i18next';
-import React from 'react';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
 import type { CharacterSelect } from '../../db/schemas/characters';
 import type { ModeSelect } from '../../db/schemas/modes';

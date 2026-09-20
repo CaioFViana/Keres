@@ -1,5 +1,4 @@
 /** @jest-environment node */
-import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import HeaderActions from '../../src/components/common/navigation/HeaderActions/HeaderActions';
 jest.mock('../../src/theme', () => ({ useTheme: () => ({ colors: { text: '#123' } }) }));

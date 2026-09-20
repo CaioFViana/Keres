@@ -160,12 +160,12 @@ describe('ColdInstallScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBackHandler.current = null;
-    jest
-      .spyOn(BackHandler, 'addEventListener')
-      .mockImplementation((_event: string, handler: () => boolean | null | undefined) => {
-        mockBackHandler.current = handler;
-        return { remove: jest.fn() };
-      });
+    jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, handler) => {
+      // RN 0.86 passes a HardwareBackPressEvent the production handlers ignore; the holder
+      // keeps the old zero-arg shape so the assertions below read unchanged.
+      mockBackHandler.current = () => handler({ type: 'hardwareBackPress', timeStamp: 0 });
+      return { remove: jest.fn() };
+    });
     jest.spyOn(BackHandler, 'exitApp').mockImplementation(() => {});
     mockMigrate.mockResolvedValue(undefined);
     mockCreateClientSettings.mockResolvedValue(undefined);

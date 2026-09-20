@@ -37,7 +37,6 @@ jest.mock(
   }),
 );
 
-import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import OperationLogScreen from '../../../src/screens/operationlog/OperationLogListScreen';
 import { entityEventEmitter } from '../../../src/utils/EventEmitter';

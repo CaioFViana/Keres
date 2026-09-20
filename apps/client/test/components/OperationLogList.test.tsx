@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import OperationLogList from '../../src/components/features/operation-log/OperationLogList/OperationLogList';
 import type { OperationLogSelect } from '../../src/db/schema';
 

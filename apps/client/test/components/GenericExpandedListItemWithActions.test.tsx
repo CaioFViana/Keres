@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native';
-import React from 'react';
 import { Text } from 'react-native';
 
 import GenericExpandedListItemWithActions from '../../src/components/common/lists/GenericExpandedListItemWithActions/GenericExpandedListItemWithActions';

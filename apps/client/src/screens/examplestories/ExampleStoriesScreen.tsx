@@ -6,7 +6,7 @@ import { useScreenTour } from '../../guides/useScreenTour';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';

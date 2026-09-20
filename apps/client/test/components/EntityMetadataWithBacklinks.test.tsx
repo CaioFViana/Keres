@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native';
-import React from 'react';
 import EntityMetadataWithBacklinks from '../../src/components/features/mentions/EntityMetadataWithBacklinks';
 
 const mockMetadataProps = { current: null as Record<string, unknown> | null };

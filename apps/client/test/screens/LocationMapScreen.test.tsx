@@ -1,5 +1,4 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 
 const mockColors = {
   background: '#111',
@@ -152,7 +151,6 @@ jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () =>
   };
 });
 jest.mock('../../src/components/features/location-maps/LocationMapTools', () => {
-  const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -167,7 +165,6 @@ jest.mock('../../src/components/features/location-maps/LocationMapTools', () => 
   };
 });
 jest.mock('../../src/components/features/location-maps/LocationMapNodeSheet', () => {
-  const React = require('react');
   const { Text, TouchableOpacity, View } = require('react-native');
   return {
     __esModule: true,

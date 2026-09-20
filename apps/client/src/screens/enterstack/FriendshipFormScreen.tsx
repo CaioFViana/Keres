@@ -6,7 +6,6 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

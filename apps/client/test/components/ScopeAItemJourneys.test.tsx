@@ -1,5 +1,4 @@
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import React from 'react';
 import ItemJourneyTimeline from '../../src/components/features/item-journeys/ItemJourney/ItemJourneyTimeline';
 import ItemJourneyRows from '../../src/components/features/item-journeys/ItemJourneyRows';
 import type { ItemJourneySelect, ItemSelect, SceneSelect } from '../../src/db/schema';

@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';

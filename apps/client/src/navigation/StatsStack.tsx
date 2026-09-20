@@ -1,5 +1,4 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
 import StatComparisonScreen from '../screens/stats/StatComparisonScreen';
 import StatFormScreen from '../screens/stats/StatFormScreen';
 import StatLadderScreen from '../screens/stats/StatLadderScreen';

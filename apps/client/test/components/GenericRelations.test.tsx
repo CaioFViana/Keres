@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { Text } from 'react-native';
 import GenericRelationDisplay from '../../src/components/features/relations/RelationManager/GenericRelationDisplay';
 import RelationAttributeLine from '../../src/components/features/relations/RelationManager/RelationAttributeLine';

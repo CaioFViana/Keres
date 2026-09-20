@@ -4,7 +4,7 @@ import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import { useStoryServerCollaboration } from '@/src/hooks/useStoryServerCollaboration';
 import { Ionicons } from '@expo/vector-icons';
 import type { ThemeColors } from '@keres/shared';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';

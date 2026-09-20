@@ -1,4 +1,3 @@
-import React from 'react';
 import { Modal, Platform, StyleSheet, View } from 'react-native';
 import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
 import { useNotificationStore } from '../../../../state/notificationStore';

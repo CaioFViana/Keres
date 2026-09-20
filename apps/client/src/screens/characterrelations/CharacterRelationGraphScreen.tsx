@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {

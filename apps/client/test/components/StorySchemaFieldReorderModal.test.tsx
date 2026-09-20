@@ -1,5 +1,4 @@
 import { act, render } from '@testing-library/react-native';
-import React from 'react';
 import { StorySchemaFieldReorderModal } from '../../src/components/features/storyschema/StorySchemaFieldReorderModal/StorySchemaFieldReorderModal';
 import type { StorySchemaFieldSelect } from '../../src/db/schema';
 

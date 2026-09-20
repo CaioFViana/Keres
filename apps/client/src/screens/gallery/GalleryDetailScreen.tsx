@@ -1,7 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { GalleryStackParamList } from '../../navigation/MainSystemStack';

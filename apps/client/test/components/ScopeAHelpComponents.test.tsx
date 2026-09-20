@@ -1,5 +1,4 @@
 import { fireEvent, render, type RenderResult } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import { HelpFieldTable } from '../../src/components/features/help/HelpFieldTable/HelpFieldTable';
 import { HelpSearchBar } from '../../src/components/features/help/HelpSearchBar/HelpSearchBar';

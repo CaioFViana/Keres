@@ -1,5 +1,4 @@
 import { act, cleanup, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 
 const mockGetOperationLogById = jest.fn();
 const mockGetEntityIdentifier = jest.fn();

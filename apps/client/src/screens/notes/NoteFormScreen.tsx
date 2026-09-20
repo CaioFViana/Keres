@@ -10,7 +10,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

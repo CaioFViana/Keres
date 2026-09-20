@@ -4,7 +4,7 @@ import { getOnColorForFill } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

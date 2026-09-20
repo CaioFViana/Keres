@@ -1,6 +1,5 @@
 import { AttributeType, encodeAttributeValue } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import AttributeValueInput from '../../../src/components/common/forms/CustomAttributeFields/AttributeValueInput';
 import CustomAttributeFields, {

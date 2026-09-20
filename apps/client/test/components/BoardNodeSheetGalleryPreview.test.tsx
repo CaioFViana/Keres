@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import BoardNodeSheetGalleryPreview from '../../src/components/features/boards/BoardNodeSheetGalleryPreview';
 import ImageZoomViewer from '../../src/components/features/media/MediaPlayer/ImageZoomViewer';
 import { useResolvedMediaUri } from '../../src/hooks/useResolvedMediaUri';

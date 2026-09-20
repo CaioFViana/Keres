@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import FormActions from '../../src/components/common/controls/FormActions/FormActions';
 

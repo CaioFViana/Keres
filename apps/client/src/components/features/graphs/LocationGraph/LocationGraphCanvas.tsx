@@ -1,5 +1,5 @@
 import { DashPathEffect, Path } from '@shopify/react-native-skia';
-import React, { forwardRef, useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import GraphCanvasFrame from '../GraphCanvasFrame/GraphCanvasFrame';
 import SkiaEdgeCanvas from '../SkiaEdgeCanvas/SkiaEdgeCanvas';

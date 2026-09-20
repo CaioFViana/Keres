@@ -2,7 +2,7 @@ import { Button, FormContainer, SingleSelectPill, TextInput } from '@/src/compon
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db'; // Import useDrizzle

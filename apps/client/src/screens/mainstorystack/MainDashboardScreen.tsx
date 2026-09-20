@@ -1,7 +1,7 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackHandler } from 'react-native';
 

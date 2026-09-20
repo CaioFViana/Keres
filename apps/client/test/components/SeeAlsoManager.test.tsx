@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
 import SeeAlsoManager, {
   type SeeAlsoManagerHandle,
 } from '../../src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';

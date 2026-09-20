@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 
 const mockShowNotification = jest.fn();
 const mockUseScreenHeader = jest.fn();

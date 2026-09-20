@@ -1,5 +1,5 @@
 import { render, type RenderResult } from '@testing-library/react-native';
-import React, { createRef } from 'react';
+import { createRef } from 'react';
 import { Animated, PanResponder, StyleSheet, View } from 'react-native';
 import GraphCanvasFrame, {
   graphCanvasPlaneStyle,

@@ -1,5 +1,5 @@
 import type { SeeAlsoEntityType } from '@keres/shared';
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';

@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import LocationRelationManager from '../../src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import type { LocationRelationSelect, LocationSelect } from '../../src/db/schema';
 

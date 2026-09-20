@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';

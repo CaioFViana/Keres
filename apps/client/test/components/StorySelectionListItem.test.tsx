@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import type { Story } from '@keres/shared/entities/Story';
 import StorySelectionListItem from '../../src/components/features/list-items/StorySelectionListItem';
 

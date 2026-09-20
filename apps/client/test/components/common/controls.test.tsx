@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Button from '../../../src/components/common/controls/Button/Button';
 import ThemedSwitch from '../../../src/components/common/controls/ThemedSwitch/ThemedSwitch';

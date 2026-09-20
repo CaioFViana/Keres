@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import RouteDetailScreen from '../../../src/screens/routes/RouteDetailScreen';
 
 const mockNavigate = jest.fn();

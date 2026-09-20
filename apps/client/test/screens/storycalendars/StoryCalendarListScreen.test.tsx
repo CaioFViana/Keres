@@ -1,7 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { CalendarDefinitionType } from '@keres/shared';
 import { gregorianDayNumber, partsToDayNumber } from '@keres/shared';
-import React from 'react';
 
 const mockNavigate = jest.fn();
 const mockNavigation = { navigate: mockNavigate };

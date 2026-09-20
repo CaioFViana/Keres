@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import BoardCanvasScreen from '../../../src/screens/boards/BoardCanvasScreen';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 

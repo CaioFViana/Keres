@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import AppAlertHost from '../../../src/components/common/feedback/AppAlertHost/AppAlertHost';
 import NotificationItem from '../../../src/components/common/feedback/NotificationItem/NotificationItem';

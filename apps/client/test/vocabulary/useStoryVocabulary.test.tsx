@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native';
-import React from 'react';
 
 jest.mock('react-i18next', () => ({
   __esModule: true,

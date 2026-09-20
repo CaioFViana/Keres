@@ -8,7 +8,6 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import { useSQLiteContext } from 'expo-sqlite';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';

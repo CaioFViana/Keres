@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import NoteRelationManager from '../../src/components/features/notes/NoteManager/NoteRelationManager';
 

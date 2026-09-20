@@ -5,7 +5,7 @@ import { StatRadarChart } from '@/src/components/features/stats/StatRadarChart/S
 import { useTheme } from '@/src/theme';
 import { buildStatRadarLayout } from '@keres/shared/graphs/statRadarLayout';
 import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 

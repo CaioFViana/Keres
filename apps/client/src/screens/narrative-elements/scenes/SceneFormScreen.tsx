@@ -17,7 +17,7 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';

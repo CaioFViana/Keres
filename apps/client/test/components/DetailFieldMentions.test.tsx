@@ -1,4 +1,3 @@
-import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import DetailField from '../../src/components/common/display/DetailField/DetailField';
 import { MentionMatcherContext, MentionNavigationContext } from '../../src/mentions/MentionContext';

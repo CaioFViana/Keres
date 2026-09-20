@@ -12,7 +12,7 @@ import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import 
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import type { SceneSelect } from '../../../db/schema';

@@ -1,6 +1,5 @@
 import { AttributeType } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { Text } from 'react-native';
 import AdvancedSearchModal from '../../../src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import ReorderModal from '../../../src/components/common/modals/ReorderModal/ReorderModal';

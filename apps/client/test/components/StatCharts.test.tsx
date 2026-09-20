@@ -1,5 +1,4 @@
 import { act, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import { StatLadderBar } from '../../src/components/features/stats/StatLadderBar/StatLadderBar';
 import { StatRadarChart } from '../../src/components/features/stats/StatRadarChart/StatRadarChart';

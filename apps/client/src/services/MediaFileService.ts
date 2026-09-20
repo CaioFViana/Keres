@@ -144,7 +144,7 @@ async function generateVideoThumbnail(
     if (destination.exists) {
       destination.delete();
     }
-    new File(uri).copy(destination);
+    await new File(uri).copy(destination);
     return destination.uri;
   } catch (error) {
     console.warn('Could not generate video thumbnail:', error);
@@ -295,7 +295,7 @@ export const mediaFileService = {
     // If it already exists, the bytes are the same by definition of the addressing: re-copying would only
     // waste time and I/O.
     if (!destination.exists) {
-      source.copy(destination);
+      await source.copy(destination);
     }
 
     const thumbnailPath =

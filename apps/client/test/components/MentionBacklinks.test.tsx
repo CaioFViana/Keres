@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { MentionBacklinksSection } from '../../src/components/features/mentions/MentionBacklinksSection';
 
 jest.mock('../../src/theme', () => ({

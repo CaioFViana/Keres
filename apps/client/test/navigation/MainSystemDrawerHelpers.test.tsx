@@ -27,7 +27,6 @@ jest.mock('../../src/components/common/navigation/DrawerMenuButton/DrawerMenuBut
 
 import { fireEvent, render } from '@testing-library/react-native';
 import { DrawerActions } from '@react-navigation/native';
-import React from 'react';
 import {
   ArcContextDrawerScreen,
   drawerIcon,

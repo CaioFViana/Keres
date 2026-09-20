@@ -4,7 +4,6 @@ import type { LocationMapContentType } from '@keres/shared';
 import { clipSpatialSegment } from '@keres/shared';
 import { pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import LocationMapConnectionLayer from '../../src/components/features/location-maps/LocationMapConnectionLayer';
 

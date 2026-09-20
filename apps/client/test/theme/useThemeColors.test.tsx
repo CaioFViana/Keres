@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react-native';
 import { themes } from '@keres/shared';
-import React from 'react';
 import { Text } from 'react-native';
 
 jest.mock('../../src/state/themeStore', () => ({

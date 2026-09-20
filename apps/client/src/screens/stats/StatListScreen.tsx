@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';

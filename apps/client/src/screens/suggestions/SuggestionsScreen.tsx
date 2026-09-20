@@ -10,7 +10,7 @@ import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/sha
 import { WORLD_PIECE_SECTIONS } from '@keres/shared/entities/WorldRule';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';

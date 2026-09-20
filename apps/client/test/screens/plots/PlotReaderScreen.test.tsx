@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import PlotReaderScreen from '../../../src/screens/plots/PlotReaderScreen';
 
 const mockNavigate = jest.fn();

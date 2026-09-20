@@ -1,6 +1,5 @@
 import { avatarColorFromSeed } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import Avatar from '../../../src/components/common/display/Avatar/Avatar';
 import CollapsibleCard from '../../../src/components/common/display/CollapsibleCard/CollapsibleCard';

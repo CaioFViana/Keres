@@ -1,5 +1,4 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 
 const mockGetById = jest.fn();

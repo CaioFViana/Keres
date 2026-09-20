@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import DatePickerModal from '../../src/components/common/inputs/DatePickerInput/DatePickerModal';
 
 jest.mock('../../src/theme', () => ({

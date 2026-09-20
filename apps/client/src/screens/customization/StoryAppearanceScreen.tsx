@@ -10,7 +10,7 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { themeDisplayOptions } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';

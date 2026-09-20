@@ -3,7 +3,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';

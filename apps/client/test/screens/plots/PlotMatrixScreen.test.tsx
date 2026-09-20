@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import PlotMatrixScreen from '../../../src/screens/plots/PlotMatrixScreen';
 
 const mockNavigate = jest.fn();

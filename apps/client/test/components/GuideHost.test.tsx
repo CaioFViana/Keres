@@ -1,6 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { DrawerActions } from '@react-navigation/native';
-import React from 'react';
 import GuideHost from '../../src/components/common/feedback/GuideHost/GuideHost';
 import { __resetGuideAnchorsForTests, registerGuideAnchor } from '../../src/guides/anchorRegistry';
 import type { Guide } from '../../src/guides/types';

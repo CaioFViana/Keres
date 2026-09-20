@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import PlotSceneManager from '../../src/components/features/plots/PlotSceneManager/PlotSceneManager';
 import type { SceneSelect } from '../../src/db/schema';
 import type { PlotScene } from '@keres/shared/entities/PlotScene';

@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react-native';
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { Text } from 'react-native';
 
 jest.mock('drizzle-orm', () => ({

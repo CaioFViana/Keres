@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 import StatLadderScreen from '../../../src/screens/stats/StatLadderScreen';
 

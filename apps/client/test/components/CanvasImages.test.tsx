@@ -1,6 +1,5 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
 import type { BoardContentType, LocationMapImageType } from '@keres/shared';
-import React from 'react';
 import BoardCanvas from '../../src/components/features/boards/BoardCanvas';
 import LocationMapImageView from '../../src/components/features/location-maps/LocationMapImageView';
 

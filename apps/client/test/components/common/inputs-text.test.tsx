@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import SuggestionTextInput from '../../../src/components/common/inputs/SuggestionTextInput/SuggestionTextInput';
 import TextInput from '../../../src/components/common/inputs/TextInput/TextInput';

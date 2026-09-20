@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { View } from 'react-native';
 import { HelpBlockRenderer } from '../../src/components/features/help/HelpBlockRenderer/HelpBlockRenderer';
 

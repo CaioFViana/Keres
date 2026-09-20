@@ -9,7 +9,7 @@ import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../db';
 import type {

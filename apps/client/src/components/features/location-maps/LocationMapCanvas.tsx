@@ -1,5 +1,5 @@
 import { spatialRectIntersects, type LocationMapContentType } from '@keres/shared';
-import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import GraphCanvasFrame, {
   graphCanvasPlaneStyle,

@@ -1,6 +1,5 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,

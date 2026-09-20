@@ -1,6 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

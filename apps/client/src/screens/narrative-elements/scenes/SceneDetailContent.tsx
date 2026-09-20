@@ -19,7 +19,6 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
-import React from 'react';
 import {
   Text,
   TouchableOpacity,

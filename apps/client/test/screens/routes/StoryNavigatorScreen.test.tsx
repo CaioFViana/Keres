@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import StoryNavigatorScreen from '../../../src/screens/routes/StoryNavigatorScreen';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 

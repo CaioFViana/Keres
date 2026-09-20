@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import FavoriteButton from '../../../src/components/common/lists/GenericExpandedListItemWithActions/Buttons/FavoriteButton';
 import ViewDetailsButton from '../../../src/components/common/lists/GenericExpandedListItemWithActions/Buttons/ViewDetailsButton';

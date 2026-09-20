@@ -8,7 +8,6 @@ import {
   StackActions,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';

@@ -26,7 +26,7 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // 
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect

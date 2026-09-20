@@ -6,7 +6,6 @@ import {
   type CalendarDefinitionType,
 } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import ColorPickerInput from '../../../src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import ColorPickerModal from '../../../src/components/common/inputs/ColorPickerInput/ColorPickerModal';

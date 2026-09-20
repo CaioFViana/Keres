@@ -13,7 +13,7 @@ import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
 import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';

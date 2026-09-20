@@ -4,7 +4,7 @@ import { buildPlotCoverage } from '@keres/shared/graphs/plotCoverageLayout';
 import { renderPlotCoverageSvg } from '@keres/shared/graphs/plotCoverageSvg';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';

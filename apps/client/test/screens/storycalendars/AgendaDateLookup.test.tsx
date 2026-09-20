@@ -43,7 +43,6 @@ jest.mock('@/src/components/common/inputs/DatePickerInput/DatePickerInput', () =
   },
 }));
 
-import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {

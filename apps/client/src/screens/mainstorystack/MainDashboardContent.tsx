@@ -8,7 +8,6 @@ import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { themeDisplayOptions } from '@keres/shared';
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
-import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useTheme } from '../../theme';

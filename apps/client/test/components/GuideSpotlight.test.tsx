@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native';
-import React from 'react';
 import { Dimensions } from 'react-native';
 import GuideSpotlight, {
   roundedRectSvg,

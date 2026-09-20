@@ -1,7 +1,14 @@
 /**
  * @jest-environment node
  */
-jest.mock('react-native', () => ({ __esModule: true, useWindowDimensions: jest.fn() }));
+jest.mock('react-native', () => ({
+  __esModule: true,
+  useWindowDimensions: jest.fn(),
+  // The hook under test only uses useWindowDimensions, but SDK 56+ installs expo/fetch as
+  // the global fetch, and resolving it loads expo-modules-core's Platform shim, which reads
+  // Platform.OS/.select off react-native at import time.
+  Platform: { OS: 'ios', select: jest.fn() },
+}));
 
 import { renderHook } from '@testing-library/react-native';
 import { useWindowDimensions } from 'react-native';

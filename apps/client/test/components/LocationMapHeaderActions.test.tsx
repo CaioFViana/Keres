@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import LocationMapHeaderActions from '../../src/components/features/location-maps/LocationMapHeaderActions';
 
 jest.mock('../../src/theme', () => ({

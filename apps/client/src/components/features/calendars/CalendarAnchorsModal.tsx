@@ -8,7 +8,7 @@ import type { CalendarAnchorPreviewRow } from '@/src/utils/calendarAnchorPreview
 import type { CalendarDefinitionType } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import type { TFunction } from 'i18next';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,

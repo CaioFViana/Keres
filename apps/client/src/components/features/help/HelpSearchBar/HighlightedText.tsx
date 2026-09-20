@@ -1,4 +1,3 @@
-import React from 'react';
 import type { TextStyle } from 'react-native';
 import { Text } from 'react-native';
 

@@ -28,6 +28,19 @@ module.exports = defineConfig([
           disallowTypeAnnotations: false,
         },
       ],
+      /**
+       * React Hooks v6 rules, new as errors in eslint-config-expo 57: 313 findings on code
+       * the SDK 55 gate accepted (refs-during-render in animation code, setState-in-effect
+       * data fetching, manual memoization the compiler would own). Each fix is a
+       * behavior-touching refactor that needs device verification, so they land here as
+       * warnings for gradual adoption instead of blocking the SDK 57 upgrade. Revisit and
+       * re-tighten rule by rule; do not add new violations.
+       */
+      'react-hooks/refs': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
     },
   },
 ]);

@@ -374,13 +374,13 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
               colors={['#FFFFFF', 'transparent']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <LinearGradient
               colors={['#000000', 'transparent']}
               start={{ x: 0, y: 1 }}
               end={{ x: 0, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View
               style={[
@@ -397,7 +397,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
               colors={['#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View
               style={[

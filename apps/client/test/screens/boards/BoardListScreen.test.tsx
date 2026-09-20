@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import BoardListScreen from '../../../src/screens/boards/BoardListScreen';
 import { withSilencedConsole } from '../../helpers/silenceConsole';
 

@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import LanguageInstallRow, {
   LANGUAGE_INSTALL_CONTROL_SIZE,

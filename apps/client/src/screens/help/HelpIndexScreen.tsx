@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, {
+import {
   type Dispatch,
   type SetStateAction,
   useCallback,

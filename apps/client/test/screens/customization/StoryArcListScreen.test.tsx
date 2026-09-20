@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();

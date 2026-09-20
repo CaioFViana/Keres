@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import StatRankingScreen from '../../../src/screens/stats/StatRankingScreen';
 
 const mockNavigate = jest.fn();

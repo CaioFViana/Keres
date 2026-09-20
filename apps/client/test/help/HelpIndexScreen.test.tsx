@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import { HelpIndexScreen } from '../../src/screens/help/HelpIndexScreen';
 
 const mockNavigate = jest.fn();

@@ -19,7 +19,7 @@ import { createNoteRelationService } from '@/src/services/storymanagement/NoteRe
 import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDrizzle } from '../../db';

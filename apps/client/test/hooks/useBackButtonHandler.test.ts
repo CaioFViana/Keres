@@ -57,7 +57,7 @@ beforeEach(() => {
   useHeaderBackActionStore.setState({ backAction: undefined, crossStackReturnAction: undefined });
   (useResponsiveLayout as jest.Mock).mockReturnValue({ isWide: false });
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, listener) => {
-    hardwareBack = () => listener() === true;
+    hardwareBack = () => listener({ type: 'hardwareBackPress', timeStamp: 0 }) === true;
     return { remove: jest.fn() };
   });
 });

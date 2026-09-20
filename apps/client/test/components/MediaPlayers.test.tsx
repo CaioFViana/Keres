@@ -173,7 +173,7 @@ describe('VideoPreviewPlayer', () => {
       player: mockVideo.player,
       nativeControls: true,
       contentFit: 'contain',
-      allowsFullscreen: true,
+      fullscreenOptions: { enable: true },
       allowsPictureInPicture: true,
     });
   });

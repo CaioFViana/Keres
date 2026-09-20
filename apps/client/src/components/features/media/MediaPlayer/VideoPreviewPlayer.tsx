@@ -28,7 +28,7 @@ const VideoPreviewPlayer: React.FC<VideoPreviewPlayerProps> = ({ uri, style }) =
       style={[styles.video, style]}
       nativeControls
       contentFit="contain"
-      allowsFullscreen
+      fullscreenOptions={{ enable: true }}
       allowsPictureInPicture
     />
   );

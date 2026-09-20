@@ -5,6 +5,30 @@ const originalConsoleInfo = console.info;
 // React Native test renderers are treated as an `act`-aware environment.
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+// Expo 55's WinterCG runtime installs lazy `URL`/`URLSearchParams` globals whose implementation
+// (`whatwg-url-minimum`) reads the `TextEncoder` global at load. Hermes provides it on device and
+// the node test env has it, but the jsdom env does not - without this, every jsdom suite that
+// touches a URL fails with `ReferenceError: TextEncoder is not defined`. Node's own encoder is
+// spec-compliant, so it stands in. Guarded so the node env keeps its native binding.
+if (typeof globalThis.TextEncoder === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- setup files cannot use imports.
+  const { TextEncoder } = require('util');
+  Object.defineProperty(globalThis, 'TextEncoder', {
+    configurable: true,
+    enumerable: false,
+    value: TextEncoder,
+    writable: true,
+  });
+}
+
+// Reanimated 4.2's Jest entry imports the real `react-native-worklets` index, which
+// instantiates its native module at load and throws in Jest. The worklets package ships its
+// own mock - register it so the reanimated mock below can load.
+jest.mock('react-native-worklets', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  require('react-native-worklets/src/mock'),
+);
+
 // Reanimated schedules native-frame updates in the real runtime. Its Jest implementation keeps
 // collapsible controls deterministic and prevents animation updates from leaking outside `act`.
 jest.mock('react-native-reanimated', () => {

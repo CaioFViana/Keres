@@ -47,8 +47,8 @@
     "packages/*"
   ],
   "patchedDependencies": {
-    "expo-sqlite@16.0.10": "patches/expo-sqlite@16.0.10.patch",
-    "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch"
+    "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch",
+    "expo-sqlite@55.0.20": "patches/expo-sqlite@55.0.20.patch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8"

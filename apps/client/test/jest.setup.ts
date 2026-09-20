@@ -54,6 +54,28 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+// `expo-video` extends a native-backed class at import time, which throws in Jest, and half the
+// service graph reaches it transitively through MediaFileService. The suites that exercise it
+// (media players, thumbnails) register richer per-file mocks, so the global stand-in only keeps
+// everyone else loading.
+jest.mock('expo-video', () => ({
+  createVideoPlayer: () => ({ generateThumbnailsAsync: async () => [], release: () => {} }),
+  useVideoPlayer: () => null,
+  VideoView: () => null,
+}));
+
+// Same story for the thumbnail-saving half of the chain: the native module is null in Jest and
+// only `generateVideoThumbnail` touches it (mocked per file where its calls are asserted).
+jest.mock('expo-image-manipulator', () => ({
+  ImageManipulator: {
+    manipulate: () => ({
+      renderAsync: async () => ({ saveAsync: async () => ({ uri: '' }) }),
+    }),
+  },
+  SaveFormat: { JPEG: 'jpeg', PNG: 'png', WEBP: 'webp' },
+  FlipType: { Vertical: 'vertical', Horizontal: 'horizontal' },
+}));
+
 /**
  * i18next prints a sponsorship banner whenever it initializes. It has no diagnostic value in
  * this suite, while other `console.info` calls remain visible to preserve useful test output.

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BackHandler } from 'react-native';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 
@@ -18,6 +18,28 @@ interface BackButtonHandlerOptions {
    * stack starts at its own list. Whoever knows where it came from passes the correct way back here.
    */
   onBack?: () => void;
+}
+
+/**
+ * Whether a navigation state has its drawer open: the last `{ type: 'drawer' }` history
+ * entry's status, falling back to the state's default. This mirrors
+ * `getDrawerStatusFromState` without importing '@react-navigation/drawer', whose index pulls
+ * navigator factories that break suites with partial navigation mocks.
+ */
+function isDrawerOpen(state: unknown): boolean {
+  if (typeof state !== 'object' || state === null) {
+    return false;
+  }
+  const history = (state as { history?: unknown }).history;
+  if (Array.isArray(history)) {
+    for (let index = history.length - 1; index >= 0; index--) {
+      const entry = history[index] as { type?: unknown; status?: unknown } | null | undefined;
+      if (entry?.type === 'drawer') {
+        return entry.status === 'open';
+      }
+    }
+  }
+  return (state as { default?: unknown }).default === 'open';
 }
 
 /**
@@ -70,6 +92,22 @@ export const useBackButtonHandler = ({
 
   useEffect(() => {
     const backAction = () => {
+      const parentNavigation = navigation.getParent();
+      // -1. An open drawer is the topmost layer: hardware back dismisses it before anything
+      // below (stack pops, custom returns) gets a say. Without this the drawer could only be
+      // closed by tapping the overlay or the hamburger.
+      if (parentNavigation) {
+        let drawerOpen = false;
+        try {
+          drawerOpen = isDrawerOpen(parentNavigation.getState());
+        } catch {
+          // No state yet (or an unexpected shape): fall through to the stack handling below.
+        }
+        if (drawerOpen) {
+          parentNavigation.dispatch(DrawerActions.closeDrawer());
+          return true;
+        }
+      }
       // 0. Volta customizada: quem abriu a tela sabe para onde ela deve voltar.
       if (onBackRef.current) {
         onBackRef.current();
@@ -86,7 +124,7 @@ export const useBackButtonHandler = ({
         return true; // Event handled
       } else {
         // 2. If the current nested stack cannot go back, delegate to the parent navigator (DrawerNavigator).
-        const parentNavigation = navigation.getParent(); // This is the DrawerNavigator's navigation object
+        // This is the DrawerNavigator's navigation object (fetched above for the drawer check).
 
         if (parentNavigation && parentNavigation.canGoBack()) {
           // Check if parent can go back

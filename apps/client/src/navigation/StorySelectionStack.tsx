@@ -366,6 +366,7 @@ const StorySelectionNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('StorySelectionMain', { screen: 'StorySelectionScreen' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -381,6 +382,7 @@ const StorySelectionNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -396,6 +398,7 @@ const StorySelectionNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('FriendshipDrawer', { screen: 'FriendshipList' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -454,6 +457,7 @@ const StorySelectionNavigator = () => {
               // The menu entry means the list, not wherever the stack was last left.
               e.preventDefault();
               navigation.navigate('PacksDrawer', { screen: 'PackList' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -484,6 +488,7 @@ const StorySelectionNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('StoryDevicesDrawer', { screen: 'DeviceIndex' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -499,6 +504,7 @@ const StorySelectionNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
+              navigation.closeDrawer();
             },
           })}
         />

@@ -39,8 +39,18 @@ jest.mock('expo-audio', () => ({
   useAudioPlayerStatus: () => mockAudioStatus,
 }));
 
+type StatusListener = (event: { status: string }) => void;
+const makeAddListenerMock = () =>
+  jest.fn(() => ({ remove: jest.fn() })) as unknown as jest.MockedFunction<
+    (eventName: string, listener: StatusListener) => { remove: () => void }
+  >;
+
 const mockVideo = {
-  player: { loop: true },
+  player: {
+    loop: true,
+    status: 'idle',
+    addListener: makeAddListenerMock(),
+  },
   source: null as unknown,
   viewProps: null as Record<string, unknown> | null,
 };
@@ -66,7 +76,11 @@ beforeEach(() => {
   mockAudioPlayer.pause.mockClear();
   mockAudioPlayer.seekTo.mockClear();
   mockAudioStatus = { playing: false, isLoaded: true, duration: 120, currentTime: 30 };
-  mockVideo.player = { loop: true };
+  mockVideo.player = {
+    loop: true,
+    status: 'idle',
+    addListener: makeAddListenerMock(),
+  };
   mockVideo.source = null;
   mockVideo.viewProps = null;
 });
@@ -185,6 +199,29 @@ describe('VideoPreviewPlayer', () => {
       expect.objectContaining({ width: '100%', height: '100%' }),
       { opacity: 0.5 },
     ]);
+  });
+
+  it('shows an unavailable state instead of a black box when playback fails', async () => {
+    const screen = await render(<VideoPreviewPlayer uri="file://clip.webm" />);
+
+    expect(screen.getByTestId('video-view')).toBeTruthy();
+    const statusListener = mockVideo.player.addListener.mock.calls[0][1];
+    await act(async () => {
+      statusListener({ status: 'error' });
+    });
+
+    expect(screen.queryByTestId('video-view')).toBeNull();
+    expect(screen.getByTestId('icon-videocam-off-outline')).toBeTruthy();
+    expect(screen.getByText('media_preview_unavailable')).toBeTruthy();
+  });
+
+  it('starts unavailable when the player is already errored', async () => {
+    mockVideo.player.status = 'error';
+
+    const screen = await render(<VideoPreviewPlayer uri="file://clip.webm" />);
+
+    expect(screen.queryByTestId('video-view')).toBeNull();
+    expect(screen.getByText('media_preview_unavailable')).toBeTruthy();
   });
 });
 

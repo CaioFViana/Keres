@@ -497,7 +497,7 @@ it.each([
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {
   await renderDrawer();
-  const navigation = { navigate: jest.fn() };
+  const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
   const preventDefault = jest.fn();
   const listeners = drawerScreen(drawerName)?.listeners({ navigation });
 
@@ -505,6 +505,9 @@ it.each([
 
   expect(preventDefault).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith(drawerName, { screen });
+  // The router only auto-closes when the route index changes; same-section taps (already
+  // focused) would leave the menu open over the reset list without this explicit close.
+  expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
 
 it('resets the root stack to story selection instead of restoring a nested drawer state', async () => {

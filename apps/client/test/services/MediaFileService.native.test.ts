@@ -101,12 +101,28 @@ jest.mock('expo-file-system', () => {
   };
 });
 jest.mock('expo-file-system/legacy', () => ({ deleteAsync: jest.fn() }));
-jest.mock('expo-video-thumbnails', () => ({ getThumbnailAsync: jest.fn() }));
+jest.mock('expo-video', () => ({ createVideoPlayer: jest.fn() }));
+jest.mock('expo-image-manipulator', () => ({
+  ImageManipulator: { manipulate: jest.fn() },
+  SaveFormat: { JPEG: 'jpeg' },
+}));
 
 import * as FileSystem from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
-import * as VideoThumbnails from 'expo-video-thumbnails';
+import { ImageManipulator } from 'expo-image-manipulator';
+import { createVideoPlayer } from 'expo-video';
 import { mediaFileService, UnsupportedMediaError } from '../../src/services/MediaFileService';
+
+/** Wires the `createVideoPlayer -> generateThumbnailsAsync -> manipulate -> saveAsync` chain. */
+function mockThumbnailChain(frameUri = 'file://cache/frame.jpg') {
+  const release = jest.fn();
+  const generateThumbnailsAsync = jest.fn().mockResolvedValue([{ requestedTime: 1 }]);
+  (createVideoPlayer as jest.Mock).mockReturnValue({ generateThumbnailsAsync, release });
+  const saveAsync = jest.fn().mockResolvedValue({ uri: frameUri });
+  const renderAsync = jest.fn().mockResolvedValue({ saveAsync });
+  (ImageManipulator.manipulate as jest.Mock).mockReturnValue({ renderAsync });
+  return { generateThumbnailsAsync, release, renderAsync, saveAsync };
+}
 
 const fsMock = (
   FileSystem as unknown as {
@@ -168,11 +184,28 @@ describe('MediaFileService on native storage', () => {
     ).rejects.toBeInstanceOf(UnsupportedMediaError);
   });
 
+  it('imports matroska video by extension with the shared video type', async () => {
+    fsMock.files.set('file://picked/clip.mkv', { exists: true, md5: 'mkv-hash', size: 200 });
+    mockThumbnailChain();
+
+    const imported = await mediaFileService.importAsset('story', {
+      name: 'clip.mkv',
+      uri: 'file://picked/clip.mkv',
+      mimeType: null,
+      size: 200,
+    } as any);
+
+    expect(imported).toMatchObject({
+      mediaType: 'video',
+      mimeType: 'video/x-matroska',
+      hash: 'mkv-hash',
+      localPath: 'file://documents/media/story/mkv-hash.mkv',
+    });
+  });
+
   it('creates a persistent video thumbnail beside the imported file', async () => {
     fsMock.files.set('file://picked/intro.mp4', { exists: true, md5: 'video-hash', size: 100 });
-    (VideoThumbnails.getThumbnailAsync as jest.Mock).mockResolvedValue({
-      uri: 'file://cache/frame.jpg',
-    });
+    const chain = mockThumbnailChain();
 
     const imported = await mediaFileService.importAsset('story', {
       name: 'intro.mp4',
@@ -182,14 +215,15 @@ describe('MediaFileService on native storage', () => {
     } as any);
 
     expect(imported.thumbnailPath).toBe('file://documents/media/story/video-hash_thumb.jpg');
-    expect(VideoThumbnails.getThumbnailAsync).toHaveBeenCalledWith(
-      'file://documents/media/story/video-hash.mp4',
-      { time: 1000, quality: 0.5 },
-    );
+    expect(createVideoPlayer).toHaveBeenCalledWith('file://documents/media/story/video-hash.mp4');
+    expect(chain.generateThumbnailsAsync).toHaveBeenCalledWith(1, { maxWidth: 480 });
+    expect(ImageManipulator.manipulate).toHaveBeenCalledWith({ requestedTime: 1 });
+    expect(chain.saveAsync).toHaveBeenCalledWith({ format: 'jpeg', compress: 0.6 });
     expect(fsMock.calls.copied).toContainEqual([
       'file://cache/frame.jpg',
       'file://documents/media/story/video-hash_thumb.jpg',
     ]);
+    expect(chain.release).toHaveBeenCalledTimes(1);
   });
 
   it('addresses media by content hash and checks presence without throwing', async () => {
@@ -229,9 +263,7 @@ describe('MediaFileService on native storage', () => {
   it('replaces a stale thumbnail and survives a thumbnail failure', async () => {
     const thumb = 'file://documents/media/story/video-hash_thumb.jpg';
     fsMock.files.set(thumb, { exists: true });
-    (VideoThumbnails.getThumbnailAsync as jest.Mock).mockResolvedValue({
-      uri: 'file://cache/frame.jpg',
-    });
+    const chain = mockThumbnailChain();
 
     await expect(
       mediaFileService.generateVideoThumbnail(
@@ -242,7 +274,7 @@ describe('MediaFileService on native storage', () => {
     ).resolves.toBe(thumb);
     expect(fsMock.calls.deletedFiles).toContain(thumb);
 
-    (VideoThumbnails.getThumbnailAsync as jest.Mock).mockRejectedValue(new Error('no codec'));
+    chain.generateThumbnailsAsync.mockRejectedValue(new Error('no codec'));
     await expect(
       mediaFileService.generateVideoThumbnail('story', 'video-hash', 'file://picked/intro.mp4'),
     ).resolves.toBeUndefined();
@@ -250,6 +282,23 @@ describe('MediaFileService on native storage', () => {
       'Could not generate video thumbnail:',
       expect.any(Error),
     );
+    // The player is released even when extraction fails, and the import still succeeds.
+    expect(chain.release).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats an empty thumbnail list as a missing thumbnail without warning', async () => {
+    const chain = mockThumbnailChain();
+    chain.generateThumbnailsAsync.mockResolvedValue([]);
+
+    await expect(
+      mediaFileService.generateVideoThumbnail('story', 'video-hash', 'file://picked/intro.mp4'),
+    ).resolves.toBeUndefined();
+    expect(ImageManipulator.manipulate).not.toHaveBeenCalled();
+    expect(console.warn).not.toHaveBeenCalledWith(
+      'Could not generate video thumbnail:',
+      expect.anything(),
+    );
+    expect(chain.release).toHaveBeenCalledTimes(1);
   });
 
   it('never lets a filesystem cleanup failure escape', async () => {

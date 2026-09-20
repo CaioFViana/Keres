@@ -32,7 +32,18 @@ export function galleryHasFile(type: string | null | undefined): boolean {
 }
 
 /**
- * Accepted formats. Playable types are restricted to what Expo can display without transcoding.
+ * Accepted formats. Playable types are restricted to containers at least one OS player decodes
+ * without transcoding - not every entry plays everywhere:
+ *
+ * - video/mp4, video/quicktime, video/x-m4v, video/3gpp: iOS (AVPlayer), Android (Media3) and web.
+ * - video/webm: Android and web (Chrome/Firefox); iOS cannot decode it.
+ * - video/x-matroska: Android and web (Chrome); iOS cannot decode it.
+ *
+ * A file that imports fine but does not play on the device is a normal outcome, not a corrupt
+ * record: the preview players surface a "preview unavailable" state instead of failing the
+ * import (see `VideoPreviewPlayer`). Deliberately absent: avi/wmv/flv/mpeg (no OS player
+ * decodes them) and HLS (a stream, not an importable file).
+ *
  * Documents are stored as files and handed to the OS; links have no bytes.
  */
 export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = {
@@ -45,7 +56,14 @@ export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = 
     'image/heic',
     'image/heif',
   ],
-  video: ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v', 'video/3gpp'],
+  video: [
+    'video/mp4',
+    'video/quicktime',
+    'video/webm',
+    'video/x-m4v',
+    'video/3gpp',
+    'video/x-matroska',
+  ],
   audio: [
     'audio/mpeg',
     'audio/mp4',
@@ -104,6 +122,7 @@ export const MEDIA_MIME_TYPE_EXTENSIONS: Record<string, string> = {
   'video/webm': 'webm',
   'video/x-m4v': 'm4v',
   'video/3gpp': '3gp',
+  'video/x-matroska': 'mkv',
   'application/pdf': 'pdf',
   'application/msword': 'doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',

@@ -209,7 +209,7 @@ it.each([
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {
   await renderDrawer();
-  const navigation = { navigate: jest.fn() };
+  const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
   const preventDefault = jest.fn();
   const listeners = drawerScreen(drawerName)?.listeners({ navigation });
 
@@ -217,6 +217,9 @@ it.each([
 
   expect(preventDefault).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith(drawerName, { screen });
+  // Same-section taps do not change the route index, so the router would not auto-close;
+  // the explicit close keeps the menu from lingering over the reset list.
+  expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
 
 it('uses the compact front drawer dimensions on small screens', async () => {

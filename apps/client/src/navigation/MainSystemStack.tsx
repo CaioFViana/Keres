@@ -297,12 +297,13 @@ const MainSystemNavigator = () => {
               overflow: 'hidden',
             },
           }}
-          listeners={{
+          listeners={({ navigation }) => ({
             drawerItemPress: (event) => {
               event.preventDefault();
               setArcPickerOpen(true);
+              navigation.closeDrawer();
             },
-          }}
+          })}
         />
         <Drawer.Screen
           name="GlobalSearch"
@@ -331,6 +332,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('CharactersStack', { screen: 'Characters' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -346,6 +348,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('NarrativeElementsStack', { screen: 'NarrativeElements' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -361,6 +364,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('PlotsStack', { screen: 'Plots' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -376,6 +380,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('LocationsStack', { screen: 'Locations' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -391,6 +396,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('ItemsStack', { screen: 'Items' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -406,6 +412,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('TagsStack', { screen: 'Tags' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -421,6 +428,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('WorldRulesStack', { screen: 'WorldIndex' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -436,6 +444,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('NotesStack', { screen: 'Notes' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -451,6 +460,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('GalleryStack', { screen: 'GalleryList' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -468,6 +478,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('BoardsStack', { screen: 'BoardList' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -483,6 +494,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('CustomizationStack', { screen: 'CustomizationIndex' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -498,6 +510,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('CommentsStack', { screen: 'CommentsList' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -513,6 +526,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -542,6 +556,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('StoryDevicesDrawer', { screen: 'DeviceIndex' });
+              navigation.closeDrawer();
             },
           })}
         />
@@ -557,6 +572,7 @@ const MainSystemNavigator = () => {
             drawerItemPress: (e) => {
               e.preventDefault();
               navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
+              navigation.closeDrawer();
             },
           })}
         />

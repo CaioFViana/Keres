@@ -9,9 +9,11 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
-import * as VideoThumbnails from 'expo-video-thumbnails';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { createVideoPlayer, type VideoPlayer } from 'expo-video';
 import { Platform } from 'react-native';
 import * as webMediaStore from './webMediaStore';
+import { captureVideoThumbnail } from './webVideoThumbnail';
 
 const isWeb = Platform.OS === 'web';
 
@@ -96,6 +98,7 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
     mov: 'video/quicktime',
     webm: 'video/webm',
     m4v: 'video/x-m4v',
+    mkv: 'video/x-matroska',
     mp3: 'audio/mpeg',
     m4a: 'audio/mp4',
     aac: 'audio/aac',
@@ -124,31 +127,89 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
   return byExtension[extension];
 }
 
+/** The second of the video the grid thumbnail is taken from. */
+const VIDEO_THUMBNAIL_TIME_SECONDS = 1;
+/** Grid cells are small; anything bigger wastes disk and decode time. */
+const VIDEO_THUMBNAIL_MAX_WIDTH = 480;
+/** JPEG quality of the persisted thumbnail. */
+const VIDEO_THUMBNAIL_JPEG_QUALITY = 0.6;
+
 /**
  * Extracts a frame from the video and writes it beside the medium, with the same hash address.
  *
  * Generated once and persisted (instead of recomputed on every display) because extracting a
  * frame is expensive enough to stall the scrolling if it happened per grid cell on every
- * render. A failure here does not stop the medium existing - a video with no thumbnail still plays, it just
+ * render. `expo-video` only hands back a reference to a native image, not a file, so the frame
+ * is rendered to the cache through `expo-image-manipulator` before it is persisted.
+ *
+ * The player is created and released inside this function because extraction happens in services
+ * (import, sync), outside any component that could own a `useVideoPlayer` hook.
+ *
+ * A failure here does not stop the medium existing - a video with no thumbnail still plays, it just
  * shows the generic icon in the list.
  */
-async function generateVideoThumbnail(
+/**
+ * The web counterpart of the native extraction below: the stored bytes are resolved to a
+ * `blob:` URL, a frame is captured from it, and the frame is written back to the store under
+ * the thumbnail address. `writeBytes` overwrites, so regenerating needs no prior delete.
+ */
+async function generateWebVideoThumbnail(
   storyId: string,
   hash: string,
   videoUri: string,
 ): Promise<string | undefined> {
   try {
-    const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, { time: 1000, quality: 0.5 });
+    const blobUrl = await webMediaStore.resolveBlobUri(videoUri);
+    const frame = await captureVideoThumbnail(blobUrl);
+    if (!frame) {
+      return undefined;
+    }
+    const thumbnailRelativePath = webThumbnailRelativePath(storyId, hash);
+    await webMediaStore.writeBytes(thumbnailRelativePath, frame);
+    return webMediaStore.DESKTOP_MEDIA_URI_PREFIX + thumbnailRelativePath;
+  } catch (error) {
+    console.warn('Could not generate video thumbnail:', error);
+    return undefined;
+  }
+}
+
+async function generateVideoThumbnail(
+  storyId: string,
+  hash: string,
+  videoUri: string,
+): Promise<string | undefined> {
+  // `expo-video` throws `not supported on Web yet`, so frame extraction on desktop goes through
+  // a `<video>` element instead (see `generateWebVideoThumbnail`).
+  if (isWeb) {
+    return generateWebVideoThumbnail(storyId, hash, videoUri);
+  }
+  let player: VideoPlayer | undefined;
+  try {
+    player = createVideoPlayer(videoUri);
+    const [first] = await player.generateThumbnailsAsync(VIDEO_THUMBNAIL_TIME_SECONDS, {
+      maxWidth: VIDEO_THUMBNAIL_MAX_WIDTH,
+    });
+    // iOS answers with an empty list when the player has nothing loaded yet instead of throwing.
+    if (!first) {
+      return undefined;
+    }
+    const rendered = await ImageManipulator.manipulate(first).renderAsync();
+    const saved = await rendered.saveAsync({
+      format: SaveFormat.JPEG,
+      compress: VIDEO_THUMBNAIL_JPEG_QUALITY,
+    });
     const directory = ensureDirectory(storyMediaDirectory(storyId));
     const destination = new File(directory, `${hash}_thumb.jpg`);
     if (destination.exists) {
       destination.delete();
     }
-    await new File(uri).copy(destination);
+    await new File(saved.uri).copy(destination);
     return destination.uri;
   } catch (error) {
     console.warn('Could not generate video thumbnail:', error);
     return undefined;
+  } finally {
+    player?.release();
   }
 }
 

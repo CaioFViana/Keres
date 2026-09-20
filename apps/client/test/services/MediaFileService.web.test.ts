@@ -9,7 +9,11 @@ jest.mock('expo-file-system', () => ({
   Paths: { document: 'file://documents' },
 }));
 jest.mock('expo-file-system/legacy', () => ({ deleteAsync: jest.fn() }));
-jest.mock('expo-video-thumbnails', () => ({ getThumbnailAsync: jest.fn() }));
+jest.mock('expo-video', () => ({ createVideoPlayer: jest.fn() }));
+jest.mock('expo-image-manipulator', () => ({
+  ImageManipulator: { manipulate: jest.fn() },
+  SaveFormat: { JPEG: 'jpeg' },
+}));
 jest.mock('../../src/services/webMediaStore', () => ({
   DESKTOP_MEDIA_URI_PREFIX: 'desktop-media:',
   deleteDirectory: jest.fn(),
@@ -17,12 +21,17 @@ jest.mock('../../src/services/webMediaStore', () => ({
   existsSync: jest.fn(),
   md5Hex: jest.fn(),
   readBytes: jest.fn(),
+  resolveBlobUri: jest.fn(),
   writeBytes: jest.fn(),
 }));
+// The `<video>` capture itself is covered by webVideoThumbnail.test.ts; here only the wiring.
+jest.mock('../../src/services/webVideoThumbnail', () => ({ captureVideoThumbnail: jest.fn() }));
 
-import * as VideoThumbnails from 'expo-video-thumbnails';
+import { ImageManipulator } from 'expo-image-manipulator';
+import { createVideoPlayer } from 'expo-video';
 import { mediaFileService, UnsupportedMediaError } from '../../src/services/MediaFileService';
 import * as webMediaStore from '../../src/services/webMediaStore';
+import { captureVideoThumbnail } from '../../src/services/webVideoThumbnail';
 
 const store = webMediaStore as jest.Mocked<typeof webMediaStore>;
 
@@ -122,10 +131,35 @@ it('refuses a web import without blob data or without a recognizable type', asyn
   ).rejects.toBeInstanceOf(UnsupportedMediaError);
 });
 
-it('attempts a video thumbnail on web import and logs cleanup failures instead of throwing', async () => {
+it('writes a captured web frame beside the video without touching the native chain', async () => {
+  store.md5Hex.mockReturnValue('web-hash');
+  store.existsSync.mockReturnValue(false);
+  store.resolveBlobUri.mockResolvedValue('blob:video');
+  (captureVideoThumbnail as jest.Mock).mockResolvedValue(new Uint8Array([9]));
+
+  const imported = await mediaFileService.importAsset('story', {
+    name: 'intro.mp4',
+    uri: 'blob:picked',
+    mimeType: 'video/mp4',
+    file: new File(['x'], 'intro.mp4', { type: 'video/mp4' }),
+  } as any);
+
+  expect(imported.thumbnailPath).toBe('desktop-media:media/story/web-hash_thumb.jpg');
+  expect(store.resolveBlobUri).toHaveBeenCalledWith('desktop-media:media/story/web-hash.mp4');
+  expect(captureVideoThumbnail).toHaveBeenCalledWith('blob:video');
+  expect(store.writeBytes).toHaveBeenCalledWith(
+    'media/story/web-hash_thumb.jpg',
+    new Uint8Array([9]),
+  );
+  expect(createVideoPlayer).not.toHaveBeenCalled();
+  expect(ImageManipulator.manipulate).not.toHaveBeenCalled();
+});
+
+it('leaves web videos without a thumbnail when no frame is captured and logs cleanup failures instead of throwing', async () => {
   store.md5Hex.mockReturnValue('web-hash');
   store.existsSync.mockReturnValue(true);
-  (VideoThumbnails.getThumbnailAsync as jest.Mock).mockRejectedValue(new Error('no codec'));
+  store.resolveBlobUri.mockResolvedValue('blob:video');
+  (captureVideoThumbnail as jest.Mock).mockResolvedValue(undefined);
   store.deleteFile.mockRejectedValue(new Error('locked'));
   store.deleteDirectory.mockRejectedValue(new Error('locked'));
 
@@ -137,6 +171,9 @@ it('attempts a video thumbnail on web import and logs cleanup failures instead o
   } as any);
 
   expect(imported.thumbnailPath).toBeUndefined();
+  expect(store.writeBytes).not.toHaveBeenCalled();
+  expect(createVideoPlayer).not.toHaveBeenCalled();
+  expect(ImageManipulator.manipulate).not.toHaveBeenCalled();
   mediaFileService.deleteLocal('desktop-media:media/story/web-hash.mp4');
   mediaFileService.deleteLocal('file://not-web');
   mediaFileService.deleteStoryMedia('story');

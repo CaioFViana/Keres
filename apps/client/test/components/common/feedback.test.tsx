@@ -279,6 +279,26 @@ describe('NotificationPopup', () => {
     expect(matrix.queryByText('Saved')).toBeNull();
   });
 
+  it('keeps the plain passthrough view on android, where a modal dialog eats every touch', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'android');
+    try {
+      useNotificationStore.setState({
+        currentNotifications: [{ id: 'a', message: 'Saved', type: 'success' }, null, null],
+        queue: [],
+      });
+      const screen = await render(<NotificationPopup />);
+
+      // A fullscreen Android dialog consumes every touch inside its bounds - including the
+      // ones `box-none` lets fall through - so the app beneath would freeze until the toast
+      // fades. The plain host is an ordinary view: touches outside the items never hit it.
+      expect(screen.queryByTestId('notification-modal')).toBeNull();
+      expect(screen.getByText('Saved')).toBeTruthy();
+      expect(screen.getByTestId('notification-host').props.pointerEvents).toBe('box-none');
+    } finally {
+      restorePlatform.restore();
+    }
+  });
+
   it('keeps the plain view on web, where a fixed overlay would swallow clicks', async () => {
     const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web');
     try {

@@ -261,6 +261,21 @@ describe('MediaFileService on native storage', () => {
     expect(chain.release).toHaveBeenCalledTimes(1);
   });
 
+  it('hands the video player the once-decoded path of a double-encoded URI', async () => {
+    // Storage URIs inside Expo Go are double-encoded and must stay that way (the permission
+    // scope only accepts that spelling); `expo-video` strips `file://` without decoding, so
+    // the player gets exactly one level pre-decoded.
+    mockThumbnailChain();
+    const encoded =
+      'file:///data/user/0/host.exp.exponent/files/ExperienceData/%2540anonymous%252FKeres-Client-1/media/story/video-hash.mp4';
+
+    await mediaFileService.generateVideoThumbnail('story', 'video-hash', encoded);
+
+    expect(createVideoPlayer).toHaveBeenCalledWith(
+      'file:///data/user/0/host.exp.exponent/files/ExperienceData/%40anonymous%2FKeres-Client-1/media/story/video-hash.mp4',
+    );
+  });
+
   it('addresses media by content hash and checks presence without throwing', async () => {
     const path = 'file://documents/media/story/image-hash.png';
     fsMock.files.set(path, { exists: true, bytes: new Uint8Array([1]) });

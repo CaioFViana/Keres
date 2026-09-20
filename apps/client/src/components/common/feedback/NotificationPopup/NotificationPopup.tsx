@@ -20,35 +20,44 @@ const NotificationPopup = () => {
 
   if (fullscreenOverlayOpen) return null;
 
-  // On web the DOM stacking already favors this host (and a fixed overlay div would swallow
-  // clicks - `box-none` is not valid CSS, so the browser would drop the passthrough), so the
-  // plain view stays. Everywhere else the toasts ride a transparent passthrough Modal of their
-  // own: a fullscreen native `Modal` (an alert, a guided tour...) lives in its own native layer
-  // above the whole React tree, where no zIndex can reach.
-  if (Platform.OS === 'web') {
+  // On iOS the toasts ride a transparent passthrough Modal of their own: a fullscreen
+  // native `Modal` (an alert, a guided tour...) lives in its own native layer above the
+  // whole React tree, where no zIndex can reach - and a touch that misses every view of the
+  // modal window still falls through to the app window beneath.
+  if (Platform.OS === 'ios') {
+    // The layer only exists while a lane is occupied, and `box-none` lets every touch
+    // outside the items fall through to the app beneath. One honest trade-off: a toast
+    // already on screen stays under a Modal opened after it (it fades within seconds).
     return (
-      <View style={styles.container}>
-        <NotificationLanes />
-      </View>
+      <Modal
+        visible={currentNotifications.some((notification) => notification !== null)}
+        transparent
+        animationType="none"
+        onRequestClose={() => {}}
+        testID="notification-modal"
+      >
+        <View style={styles.modalContainer} pointerEvents="box-none" testID="notification-lanes">
+          <NotificationLanes />
+        </View>
+      </Modal>
     );
   }
 
-  // The layer only exists while a lane is occupied, and `box-none` lets every touch outside
-  // the items fall through to the app beneath. Two honest trade-offs: a toast already on
-  // screen stays under a Modal opened after it (it fades within seconds), and Android's back
-  // button is swallowed while a toast is visible (`onRequestClose` has nothing to close).
+  // Everywhere else the plain view stays. On web the DOM stacking already favors this host
+  // (and a fixed overlay div would swallow clicks - `box-none` is not valid CSS, so the
+  // browser would drop the passthrough). On Android a fullscreen dialog consumes every touch
+  // inside its bounds - including the ones `box-none` lets fall through - so a Modal host
+  // would freeze the whole app until the toast fades; an ordinary view has no such window,
+  // and `box-none` keeps the empty areas around the items touchable. Trade-off: a toast fired
+  // while a fullscreen native Modal is open stays under it (it fades within seconds).
   return (
-    <Modal
-      visible={currentNotifications.some((notification) => notification !== null)}
-      transparent
-      animationType="none"
-      onRequestClose={() => {}}
-      testID="notification-modal"
+    <View
+      style={styles.container}
+      pointerEvents={Platform.OS === 'web' ? undefined : 'box-none'}
+      testID="notification-host"
     >
-      <View style={styles.modalContainer} pointerEvents="box-none" testID="notification-lanes">
-        <NotificationLanes />
-      </View>
-    </Modal>
+      <NotificationLanes />
+    </View>
   );
 };
 

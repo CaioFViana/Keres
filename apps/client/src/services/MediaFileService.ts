@@ -15,6 +15,7 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { createVideoPlayer, type VideoPlayer } from 'expo-video';
 import { Platform } from 'react-native';
+import { decodeFileUriOnce } from '../utils/fileUri';
 import * as webMediaStore from './webMediaStore';
 import { captureVideoThumbnail } from './webVideoThumbnail';
 
@@ -64,6 +65,9 @@ export class UnsupportedMediaError extends Error {
 }
 
 function storyMediaDirectory(storyId: string): Directory {
+  // Keep the spelling `Paths.document` arrives with: inside Expo Go it is percent-encoded
+  // and the permission scope only accepts that form, so decoding here breaks creation with
+  // a missing-WRITE-permission rejection. See `decodeFileUriOnce`.
   return new Directory(Paths.document, 'media', storyId);
 }
 
@@ -244,7 +248,7 @@ async function generateVideoThumbnail(
   }
   let player: VideoPlayer | undefined;
   try {
-    player = createVideoPlayer(videoUri);
+    player = createVideoPlayer(decodeFileUriOnce(videoUri));
     const [first] = await player.generateThumbnailsAsync(VIDEO_THUMBNAIL_TIME_SECONDS, {
       maxWidth: VIDEO_THUMBNAIL_MAX_WIDTH,
     });

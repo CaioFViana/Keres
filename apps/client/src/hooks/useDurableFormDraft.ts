@@ -75,6 +75,7 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
   onRestore,
 }: DurableFormDraftOptions<TFields>): {
   clearFormDraft: () => Promise<void>;
+  deleteStoredDraft: () => Promise<void>;
   draftRestored: boolean;
 } {
   const draftEntityId = entityId ?? NEW_ENTITY_DRAFT_ID;
@@ -105,6 +106,15 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
   const clearFormDraft = useCallback(async () => {
     clearedRef.current = true;
     lastWrittenRef.current = null;
+    if (!storyId || !isEditorDraftDbBound()) return;
+    await clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
+  }, [storyId, entityType, draftEntityId]);
+
+  /**
+   * Removes the stored row but keeps tracking: for in-place reset while the form stays mounted.
+   * Unlike `clearFormDraft` (terminal, for save/delete), typing afterwards drafts again.
+   */
+  const deleteStoredDraft = useCallback(async () => {
     if (!storyId || !isEditorDraftDbBound()) return;
     await clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
   }, [storyId, entityType, draftEntityId]);
@@ -195,5 +205,5 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     [],
   );
 
-  return { clearFormDraft, draftRestored };
+  return { clearFormDraft, deleteStoredDraft, draftRestored };
 }

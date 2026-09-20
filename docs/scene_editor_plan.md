@@ -153,6 +153,11 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
       garante ordem de conclusão (fila concurrent no iOS, pool IO no Android),
       então o hook agora só rastreia após o restore assentar. Prova em
       `useDurableFormDraft.sequencing.test.ts` (falhava 3/3 sem o gate).
+- [x] **Botão reset no form de Local (piloto):** ação `arrow-undo-outline` no
+      header via `useScreenHeader`, desabilitada quando pristine, com
+      confirmação (`form_reset_*` em en/pt). Create volta ao branco, edit
+      restaura os valores salvos; ambos apagam o draft sem desarmar o
+      tracking (`deleteStoredDraft`). Filas secundárias mantêm o ciclo próprio.
 - [ ] **Fase 2:** drawer Editor (Escrever/Ler) + botão na cena + preview
       virtualizado + busca + contador.
 - [ ] **Fase 3:** modo Revisar com comments de cena; export linear com body.

@@ -124,6 +124,72 @@ describe('useLocationFormState durable drafts', () => {
     expect(second.result.current.description).toBe('Vale elfico');
   });
 
+  it('resets a creation back to blanks and drops the stored draft', async () => {
+    const first = await renderForm();
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.isDirty).toBe(false);
+
+    await act(async () => {
+      first.result.current.setName('Minas Tirith');
+    });
+    expect(first.result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await first.result.current.resetForm();
+    });
+
+    expect(first.result.current.name).toBe('');
+    expect(first.result.current.isDirty).toBe(false);
+    await act(async () => {
+      first.unmount();
+    });
+
+    // Nothing comes back: the draft died with the reset, and tracking re-armed instead.
+    const second = await renderForm();
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('');
+
+    // ...so typing again drafts again.
+    await act(async () => {
+      second.result.current.setName('Osgiliath');
+    });
+    await act(async () => {
+      second.unmount();
+    });
+    const third = await renderForm();
+    await waitFor(() => expect(third.result.current.draftRestored).toBe(true));
+    expect(third.result.current.name).toBe('Osgiliath');
+  });
+
+  it('resets an edit back to the saved values and drops the stored draft', async () => {
+    const first = await renderForm('loc-1', persistedLocation);
+    await waitFor(() => expect(first.result.current.loading).toBe(false));
+    expect(first.result.current.isDirty).toBe(false);
+
+    await act(async () => {
+      first.result.current.setName('Rascunho');
+      first.result.current.setClimate('Árido');
+    });
+    expect(first.result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await first.result.current.resetForm();
+    });
+
+    expect(first.result.current.name).toBe('Rivendell');
+    expect(first.result.current.climate).toBeNull();
+    expect(first.result.current.isDirty).toBe(false);
+    await act(async () => {
+      first.unmount();
+    });
+
+    const second = await renderForm('loc-1', persistedLocation);
+    await waitFor(() => expect(second.result.current.loading).toBe(false));
+    expect(second.result.current.draftRestored).toBe(false);
+    expect(second.result.current.name).toBe('Rivendell');
+  });
+
   it('discards the draft when the entity was saved elsewhere since', async () => {
     const first = await renderForm('loc-1', persistedLocation);
     await waitFor(() => expect(first.result.current.loading).toBe(false));

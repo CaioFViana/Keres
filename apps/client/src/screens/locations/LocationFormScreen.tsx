@@ -1,5 +1,6 @@
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
+import { AppAlert } from '@/src/utils/AppAlert';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -84,6 +85,8 @@ const LocationFormScreen = () => {
     setCustomValues,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = locationFormState;
 
   const {
@@ -165,9 +168,29 @@ const LocationFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
+  const confirmResetForm = useCallback(() => {
+    AppAlert.alert(
+      t('form_reset_title'),
+      t(isEditing ? 'form_reset_edit_message' : 'form_reset_create_message'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('reset'), style: 'destructive', onPress: () => void resetForm() },
+      ],
+    );
+  }, [t, isEditing, resetForm]);
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: [
+      {
+        id: 'reset-form',
+        icon: 'arrow-undo-outline',
+        label: t('reset'),
+        onPress: confirmResetForm,
+        disabled: !isDirty,
+      },
+    ],
   });
 
   if (loading) {

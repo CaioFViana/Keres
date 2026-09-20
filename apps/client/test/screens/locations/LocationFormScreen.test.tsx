@@ -8,6 +8,7 @@ const mockPersistSecondaryDraft = jest.fn();
 const mockClearSecondaryDraft = jest.fn();
 const mockHandleSave = jest.fn();
 const mockHandleDelete = jest.fn();
+const mockAlert = jest.fn();
 
 let mockRouteParams: { locationId?: string } = {};
 let mockFormState: Record<string, unknown> = {};
@@ -45,6 +46,10 @@ jest.mock('../../../src/services/storymanagement/EntityFormSecondaryDraftStore',
 jest.mock('../../../src/state/notificationStore', () => ({
   __esModule: true,
   useNotificationStore: () => mockShowNotification,
+}));
+jest.mock('../../../src/utils/AppAlert', () => ({
+  __esModule: true,
+  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,
@@ -194,6 +199,8 @@ function freshFormState(overrides: Record<string, unknown> = {}) {
     setCustomValues: noop,
     loading: false,
     isEditing: true,
+    isDirty: true,
+    resetForm: jest.fn(),
     ...overrides,
   };
 }
@@ -265,6 +272,70 @@ describe('LocationFormScreen', () => {
     await render(<LocationFormScreen />);
     await waitFor(() =>
       expect(mockShowNotification).toHaveBeenCalledWith('entity_secondary_draft_restored', 'info'),
+    );
+  });
+
+  it('registers a reset header action while dirty', async () => {
+    await render(<LocationFormScreen />);
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      actions: Array<{ id: string; icon: string; disabled: boolean; onPress: () => void }>;
+    };
+    expect(config.actions).toHaveLength(1);
+    expect(config.actions[0]).toMatchObject({
+      id: 'reset-form',
+      icon: 'arrow-undo-outline',
+      disabled: false,
+    });
+  });
+
+  it('disables the reset header action while pristine', async () => {
+    mockFormState = freshFormState({ isDirty: false });
+    await render(<LocationFormScreen />);
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      actions: Array<{ disabled: boolean }>;
+    };
+    expect(config.actions[0]?.disabled).toBe(true);
+  });
+
+  it('asks for confirmation and resets only on confirm', async () => {
+    const resetForm = jest.fn();
+    mockFormState = freshFormState({ currentLocationId: undefined, isEditing: false, resetForm });
+    await render(<LocationFormScreen />);
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      actions: Array<{ onPress: () => void }>;
+    };
+
+    config.actions[0]?.onPress();
+    expect(mockAlert).toHaveBeenCalledTimes(1);
+    const [, message, buttons] = mockAlert.mock.calls[0] as [
+      string,
+      string,
+      Array<{ text: string; onPress?: () => void }>,
+    ];
+    expect(message).toBe('form_reset_create_message');
+
+    const cancel = buttons.find((button) => button.text === 'cancel');
+    cancel?.onPress?.();
+    expect(resetForm).not.toHaveBeenCalled();
+
+    const confirm = buttons.find((button) => button.text === 'reset');
+    confirm?.onPress?.();
+    expect(resetForm).toHaveBeenCalledTimes(1);
+  });
+
+  it('warns about restoring saved values in edit mode', async () => {
+    mockRouteParams = { locationId: 'loc-1' };
+    mockFormState = freshFormState();
+    await render(<LocationFormScreen />);
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      actions: Array<{ onPress: () => void }>;
+    };
+
+    config.actions[0]?.onPress();
+    expect(mockAlert).toHaveBeenCalledWith(
+      'form_reset_title',
+      'form_reset_edit_message',
+      expect.any(Array),
     );
   });
 

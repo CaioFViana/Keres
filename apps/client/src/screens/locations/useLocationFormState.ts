@@ -158,16 +158,39 @@ export function useLocationFormState({
 
   // Keyed by the id the form OPENED with, never the retained one: after the base row is created
   // mid-session the draft stays under `new` until the save succeeds and clears it.
-  const { clearFormDraft, draftRestored } = useDurableFormDraft<LocationFormDraftFields>({
-    storyId,
-    entityType: 'Location',
-    entityId: initialLocationId,
-    enabled: !!storyId && !loading,
-    snapshot: { name, description, climate, culture, politics, isFavorite, extraNotes },
-    pristine: loadedPristine ?? CREATE_PRISTINE,
-    baseUpdatedAt: initialLocationId ? loadedUpdatedAt : undefined,
-    onRestore: restoreDraftFields,
-  });
+  const { clearFormDraft, deleteStoredDraft, draftRestored } =
+    useDurableFormDraft<LocationFormDraftFields>({
+      storyId,
+      entityType: 'Location',
+      entityId: initialLocationId,
+      enabled: !!storyId && !loading,
+      snapshot: { name, description, climate, culture, politics, isFavorite, extraNotes },
+      pristine: loadedPristine ?? CREATE_PRISTINE,
+      baseUpdatedAt: initialLocationId ? loadedUpdatedAt : undefined,
+      onRestore: restoreDraftFields,
+    });
+
+  const pristineFields = loadedPristine ?? CREATE_PRISTINE;
+  const isDirty =
+    JSON.stringify({ name, description, climate, culture, politics, isFavorite, extraNotes }) !==
+    JSON.stringify(pristineFields);
+
+  /**
+   * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
+   * armed: typing afterwards drafts again. Secondary queues (tags, notes, relations, customs)
+   * keep their own lifecycle and are untouched.
+   */
+  const resetForm = useCallback(async () => {
+    const target = loadedPristine ?? CREATE_PRISTINE;
+    setName(target.name);
+    setDescription(target.description);
+    setClimate(target.climate);
+    setCulture(target.culture);
+    setPolitics(target.politics);
+    setIsFavorite(target.isFavorite);
+    setExtraNotes(target.extraNotes);
+    await deleteStoredDraft();
+  }, [loadedPristine, deleteStoredDraft]);
 
   return {
     currentLocationId,
@@ -192,6 +215,8 @@ export function useLocationFormState({
     isEditing,
     clearFormDraft,
     draftRestored,
+    isDirty,
+    resetForm,
   };
 }
 

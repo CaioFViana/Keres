@@ -288,6 +288,13 @@
       "when": 1789844596637,
       "tag": "0040_safe_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1789866006194,
+      "tag": "0041_whole_wendigo",
+      "breakpoints": true
     }
   ]
 }

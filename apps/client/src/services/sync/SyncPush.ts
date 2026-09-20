@@ -13,6 +13,7 @@ import { and, asc, eq, isNull } from 'drizzle-orm';
 import * as schema from '../../db/schema';
 import type { OperationLogSelect } from '../../db/schema';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { trimSyncedOperationLogs } from '../../utils/syncUtils';
 import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
 import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
 import type { SyncContext } from './SyncContext';
@@ -65,6 +66,16 @@ export class SyncPush {
     }
     if (totalConflicts > 0) {
       notifier.conflictsDetected(totalConflicts);
+    }
+    // Retention: synchronized history beyond the newest 100 is display-only weight. Best effort -
+    // a trim failure must never fail the push that just succeeded.
+    try {
+      await trimSyncedOperationLogs(this.context.db()!, this.context.storyId()!);
+    } catch (trimError: any) {
+      console.log(
+        `Error trimming synchronized operations for story ${this.context.storyId()}:`,
+        trimError?.message || trimError,
+      );
     }
     return { offline: false };
   }

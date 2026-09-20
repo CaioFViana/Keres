@@ -252,6 +252,7 @@ function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
     name: 'Opening',
     index: 0,
     summary: 'It begins',
+    body: null,
     gap: null,
     gapType: null,
     calendarDateOverride: null,

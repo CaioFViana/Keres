@@ -339,6 +339,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'name',
       'index',
       'summary',
+      // The Editor's manuscript prose: writer-facing content, like the summary above it.
+      'body',
       'gap',
       'gapType',
       'calendarDateOverride',

@@ -1,5 +1,5 @@
 import type { StoryUpdateType } from '@keres/shared';
-import { eq } from 'drizzle-orm'; // Import eq
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'; // Import eq
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema'; // Import all schema
 import type { ServerService } from '../services/ServerService'; // Import ServerService
@@ -118,6 +118,55 @@ export async function recordLocalOperation(
   console.log(
     `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${nextOperationVersion}`,
   );
+}
+
+/**
+ * How many synchronized operations a story keeps on the device. Everything still waiting for the
+ * server is always kept (it is the pending queue, not history), and so is every operation carrying
+ * a conflict state - trimming those would destroy the evidence the conflict screen needs.
+ */
+export const MAX_RETAINED_SYNCED_OPERATIONS = 100;
+
+/**
+ * Drops synchronized, conflict-free history beyond the newest `keep` operations for one story.
+ * Runs after a successful push; without it the local log grows forever (one row per save), and
+ * with scene prose in the payloads that growth stops being negligible.
+ *
+ * Ordered by `operationVersion` (strictly monotonic per story), never `createdAt`: the SQLite
+ * timestamp column only has second precision, so two saves in the same second could tie.
+ *
+ * @returns how many rows were removed.
+ */
+export async function trimSyncedOperationLogs(
+  db: AppDrizzleClient,
+  storyId: string,
+  keep: number = MAX_RETAINED_SYNCED_OPERATIONS,
+): Promise<number> {
+  if (!db) {
+    console.error('trimSyncedOperationLogs: Drizzle client (db) not set.');
+    return 0;
+  }
+
+  const synced = await db.query.operationLogs.findMany({
+    where: and(
+      eq(schema.operationLogs.storyId, storyId),
+      eq(schema.operationLogs.isSynced, true),
+      isNull(schema.operationLogs.conflictState),
+    ),
+    columns: { id: true },
+    orderBy: [desc(schema.operationLogs.operationVersion)],
+  });
+  const stale = synced.slice(keep);
+  if (stale.length === 0) {
+    return 0;
+  }
+  await db.delete(schema.operationLogs).where(
+    inArray(
+      schema.operationLogs.id,
+      stale.map((row) => row.id),
+    ),
+  );
+  return stale.length;
 }
 
 export async function getUserIdForOperation(

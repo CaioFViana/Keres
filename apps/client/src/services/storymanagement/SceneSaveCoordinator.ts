@@ -2,9 +2,19 @@ import type { Scene } from '@keres/shared';
 import type { SceneService } from './SceneService';
 import { saveEntityWithSecondaryData } from './EntityFormSaveCoordinator';
 
+// `body` is deliberately excluded: the manuscript is owned by the scene Editor, and a form save
+// must never touch (let alone null out) prose it cannot see.
 export type SceneFormData = Omit<
   Scene,
-  'id' | 'storyId' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt' | 'index'
+  | 'id'
+  | 'storyId'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'version'
+  | 'isDeleted'
+  | 'deletedAt'
+  | 'index'
+  | 'body'
 >;
 
 type SceneRelationsPersistence = (sceneId: string) => Promise<void>;

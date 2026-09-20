@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { CreateChapterDataSchema } from '../../schemas/ChapterSchemas';
 import { CreateCharacterDataSchema, PartialCharacterSchema } from '../../schemas/CharacterSchemas';
 import { CreateNoteDataSchema } from '../../schemas/NoteSchemas';
-import { CreateSceneDataSchema } from '../../schemas/SceneSchemas';
+import {
+  CreateSceneDataSchema,
+  MAX_SCENE_BODY_LENGTH,
+  PartialSceneSchema,
+} from '../../schemas/SceneSchemas';
 import {
   CreateStoryDataSchema,
   PartialStorySchema,
@@ -83,6 +87,27 @@ describe('create-entity schemas', () => {
     const parsed = CreateSceneDataSchema.parse(sceneBase);
     expect(parsed.isStart).toBe(false);
     expect(parsed.isFinish).toBe(false);
+  });
+
+  /**
+   * The manuscript ceiling: enforced at this shared boundary so client and API agree. Missing
+   * means unwritten (null), not invalid - scenes created before the Editor existed carry no key.
+   */
+  it('defaults a scene body to null and caps it at 30k characters', () => {
+    expect(MAX_SCENE_BODY_LENGTH).toBe(30000);
+    expect(CreateSceneDataSchema.parse(sceneBase)).toMatchObject({ body: null });
+    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, body: 'a'.repeat(30000) }).success).toBe(
+      true,
+    );
+    expect(CreateSceneDataSchema.safeParse({ ...sceneBase, body: 'a'.repeat(30001) }).success).toBe(
+      false,
+    );
+  });
+
+  it('caps the scene body on updates too, while leaving it optional', () => {
+    expect(PartialSceneSchema.safeParse({}).success).toBe(true);
+    expect(PartialSceneSchema.safeParse({ body: 'a'.repeat(30000) }).success).toBe(true);
+    expect(PartialSceneSchema.safeParse({ body: 'a'.repeat(30001) }).success).toBe(false);
   });
 
   it('defaults a tag to a null colour instead of dropping the key', () => {

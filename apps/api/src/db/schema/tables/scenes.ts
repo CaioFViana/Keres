@@ -19,6 +19,7 @@ export const scenes = table('scenes', {
   name: text('name').notNull(),
   index: integer('index').notNull(),
   summary: text('summary'),
+  body: text('body'),
   gap: integer('gap'),
   gapType: text('gap_type'),
   calendarDateOverride: text('calendar_date_override'),

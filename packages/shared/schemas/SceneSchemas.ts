@@ -17,6 +17,14 @@ const CalendarDateOverrideSchema = z
   .nullable()
   .default(null);
 
+/**
+ * Max manuscript characters per scene, markdown included. 30k is ~5.000 words - a "very long"
+ * chapter by editorial standards (Reedsy/Jericho put standard chapters at 2-4k words), so no
+ * legitimate scene hits it; whoever does gets told to split the scene. Enforced here, at the
+ * validation boundary both client and API share.
+ */
+export const MAX_SCENE_BODY_LENGTH = 30000;
+
 export const SceneSchema = z.object({
   id: z.string(),
   storyId: z.string(),
@@ -36,6 +44,9 @@ export const SceneSchema = z.object({
   name: z.string(),
   index: z.number(),
   summary: z.string().nullable(),
+  // `.default(null)` like calendarDateOverrideCalendarId below: packages exported before the
+  // Editor existed carry no `body` key and must still parse, with no format bump.
+  body: z.string().max(MAX_SCENE_BODY_LENGTH).nullable().default(null),
   gap: SceneTimingValueSchema,
   gapType: z.string().nullable(),
   calendarDateOverride: CalendarDateOverrideSchema,

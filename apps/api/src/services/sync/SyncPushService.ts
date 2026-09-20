@@ -23,6 +23,7 @@ import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler
 import { storyPermissionService } from '../StoryPermissionService';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflictDetails';
+import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
 import type { SyncOperationLogService } from './SyncOperationLogService';
 
 /**
@@ -360,6 +361,14 @@ export class SyncPushService {
         maxOperationVersion: lastOperationVersion,
         originatingUser: userId,
       });
+
+      // Best-effort history compaction: old update runs collapse into their final state. A
+      // compaction failure must never fail the push that just succeeded.
+      try {
+        await compactStoryUpdateHistory(storyId);
+      } catch (error) {
+        logger.error('SyncService: history compaction failed', error);
+      }
     }
 
     return { lastOperationVersion, applied, conflicts };

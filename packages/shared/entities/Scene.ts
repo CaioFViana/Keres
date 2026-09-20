@@ -8,6 +8,8 @@ export interface Scene {
   name: string;
   index: number;
   summary: string | null;
+  /** The scene's manuscript prose (markdown), edited in the scene Editor. Null until written. */
+  body: string | null;
   gap: number | null;
   gapType: string | null;
   /** ISO-like calendar coordinates (`YYYY-MM-DDTHH:mm`), not a timezone-aware JS date. */

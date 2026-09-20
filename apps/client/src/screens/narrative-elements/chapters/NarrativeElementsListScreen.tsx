@@ -476,6 +476,13 @@ const NarrativeElementsListScreen = () => {
         onPress: () => navigation.navigate('ChapterForm', { chapterId: undefined }),
         visible: !!canEdit,
       },
+      {
+        id: 'open-manuscript',
+        icon: 'book-outline',
+        label: t('manuscript_title'),
+        onPress: () => navigation.navigate('Manuscript', {}),
+        visible: !!selectedStory,
+      },
     ],
   });
 

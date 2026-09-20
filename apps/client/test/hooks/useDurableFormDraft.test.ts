@@ -39,6 +39,7 @@ async function seedRow(fields: Fields, baseUpdatedAt: string | null = null) {
 function useHarness(options: {
   enabled?: boolean;
   entityId?: string;
+  field?: string;
   pristine?: Fields;
   baseUpdatedAt?: string | null;
   onRestore?: (fields: Fields) => void;
@@ -47,6 +48,7 @@ function useHarness(options: {
   const draft = useDurableFormDraft<Fields>({
     storyId: 'story-1',
     entityType: 'Location',
+    field: options.field,
     entityId: options.entityId,
     enabled: options.enabled ?? true,
     snapshot,
@@ -229,6 +231,32 @@ describe('useDurableFormDraft', () => {
 
     // No timer advanced: the unmount flush wrote it.
     expect(await storedRow()).not.toBeNull();
+    jest.useRealTimers();
+  });
+
+  it('isolates drafts by field when a custom field is given', async () => {
+    jest.useFakeTimers();
+    await writeEditorDraft(
+      database.db,
+      'story-1',
+      'Location',
+      NEW_ENTITY_DRAFT_ID,
+      'body',
+      JSON.stringify({ fields: DIRTY, baseUpdatedAt: null }),
+    );
+    const onRestore = jest.fn();
+    const view = await renderHook(() => useHarness({ field: 'body', onRestore }));
+
+    await waitFor(() => expect(onRestore).toHaveBeenCalledWith(DIRTY));
+    expect(view.result.current.draft.draftRestored).toBe(true);
+
+    await act(async () => {
+      await view.result.current.draft.clearFormDraft();
+    });
+    expect(
+      await readEditorDraft(database.db, 'story-1', 'Location', NEW_ENTITY_DRAFT_ID, 'body'),
+    ).toBeNull();
+    expect(await storedRow()).toBeNull();
     jest.useRealTimers();
   });
 

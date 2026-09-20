@@ -75,6 +75,15 @@ export function buildExportZipFileName(storyTitle: string, now: Date = new Date(
   return `${slugify(storyTitle)}-${now.toISOString().slice(0, 10)}.zip`;
 }
 
+/** The manuscript file's name (`manuscrito` suffix so it never collides with the data backup). */
+export function buildManuscriptFileName(
+  storyTitle: string,
+  extension: string,
+  now: Date = new Date(),
+): string {
+  return `${slugify(storyTitle)}-manuscrito-${now.toISOString().slice(0, 10)}.${extension}`;
+}
+
 /** The name of the story map's image file, in the same pattern as the data export. */
 export function buildStoryMapFileName(storyTitle: string, now: Date = new Date()): string {
   return `${slugify(storyTitle)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
@@ -129,9 +138,10 @@ export interface ExportDeliveryResult {
  * permission and would give the user less choice, not more.
  *
  * It accepts text or bytes because the simple export's `.json` and the `.zip` with media
- * share exactly this mechanism - only the content type changes.
+ * share exactly this mechanism - only the content type changes. The manuscript export
+ * (DOCX/PDF/Markdown/text) reuses it too, which is why it is exported.
  */
-async function deliverFile(
+export async function deliverFile(
   contents: string | Uint8Array,
   fileName: string,
   mimeType: string,

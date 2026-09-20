@@ -3,6 +3,7 @@ import {
   buildExportFileName,
   buildExportZipFileName,
   buildLocationGraphMapFileName,
+  buildManuscriptFileName,
   buildStoryMapFileName,
 } from '../../src/utils/storyTransfer';
 
@@ -60,6 +61,11 @@ describe('export file names', () => {
     ['location map', buildLocationGraphMapFileName, 'a-queda-locations-2026-08-11.svg'],
   ])('names the %s consistently with the data export', (_label, build, expected) => {
     expect(build('A Queda', DATE)).toBe(expected);
+  });
+
+  it('names the manuscript apart from the data backup', () => {
+    expect(buildManuscriptFileName('A Queda', 'docx', DATE)).toBe('a-queda-manuscrito-2026-08-11.docx');
+    expect(buildManuscriptFileName('A Queda', 'pdf', DATE)).toBe('a-queda-manuscrito-2026-08-11.pdf');
   });
 
   it('keeps exports of different days apart, so a backup never silently overwrites another', () => {

@@ -47,6 +47,7 @@ jest.mock('@react-navigation/native', () => {
     __esModule: true,
     useNavigation: () => (navigation ??= { navigate: mockNavigate, goBack: mockGoBack }),
     useRoute: () => route,
+    useFocusEffect: () => undefined,
   };
 });
 
@@ -245,6 +246,9 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent'
       deleteNoteRelation: (id: string) => void;
       describeEffect: (effect: unknown) => string;
       t: (key: string) => string;
+      manuscriptExcerpt: string | null;
+      hasBodyDraft: boolean;
+      onOpenEditor: () => void;
     }) => (
       <>
         <Text testID="scene-content">
@@ -266,7 +270,12 @@ jest.mock('../../../../src/screens/narrative-elements/scenes/SceneDetailContent'
             journeys: props.itemJourneys.length,
             notes: props.sceneNoteRelations.length,
             allNotes: props.allNotes.length,
+            excerpt: props.manuscriptExcerpt,
+            bodyDraft: props.hasBodyDraft,
           })}
+        </Text>
+        <Text testID="content-open-editor" onPress={props.onOpenEditor}>
+          open-editor
         </Text>
         <Text testID="content-location" onPress={props.handleLocationPress}>
           location
@@ -526,10 +535,30 @@ describe('SceneDetailScreen', () => {
   it('opens the edit form from the header action', async () => {
     const view = await render(<SceneDetailScreen />);
     await view.findByTestId('scene-content');
-    expect(mockHeaderArgs?.actions).toHaveLength(1);
+    expect(mockHeaderArgs?.actions).toHaveLength(2);
     expect(mockHeaderArgs?.actions[0].visible).toBe(true);
     mockHeaderArgs?.actions[0].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('SceneForm', { sceneId: 'scene-1' });
+  });
+
+  it('opens the manuscript editor from the header and the content', async () => {
+    mockGetSceneById.mockResolvedValue(
+      makeScene({ body: '  First line.\nSecond line with   spaces.  ' }),
+    );
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    expect(mockHeaderArgs?.actions[1].visible).toBe(true);
+    mockHeaderArgs?.actions[1].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('SceneEditor', { sceneId: 'scene-1' });
+
+    await fireEvent.press(view.getByTestId('content-open-editor'));
+    expect(mockNavigate).toHaveBeenCalledWith('SceneEditor', { sceneId: 'scene-1' });
+
+    expect(jsonOf(view, 'scene-content')).toMatchObject({
+      excerpt: 'First line. Second line with spaces.',
+      bodyDraft: false,
+    });
   });
 
   it('hides the edit action without edit rights', async () => {

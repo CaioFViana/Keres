@@ -148,7 +148,15 @@ jest.mock('../../src/screens/narrative-elements/choices/ChoiceViewScreen', () =>
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/narrative-elements/scenes/ManuscriptScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/narrative-elements/scenes/SceneEditorScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -367,6 +375,8 @@ const stacks: Array<{
       'ChapterDetail',
       'ChapterForm',
       'SceneDetail',
+      'SceneEditor',
+      'Manuscript',
       'SceneForm',
       'ChoiceDetail',
       'ChoiceForm',

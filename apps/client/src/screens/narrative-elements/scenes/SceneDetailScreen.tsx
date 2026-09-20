@@ -11,12 +11,13 @@ import type { Effect } from '@keres/shared/entities/Effect';
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
 import type { Location } from '@keres/shared/entities/Location'; // Import Location
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import type { SceneSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { readStoredSceneBodyText } from '../../../hooks/useSceneBodyDraft';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
 import { useNavigateToEntityDetail } from '../../../hooks/useNavigateToEntityDetail';
@@ -39,6 +40,17 @@ import { useSceneDetailServices } from './useSceneDetailServices';
 
 // Define the parameter list for this screen
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
+
+const MANUSCRIPT_EXCERPT_LENGTH = 200;
+
+function excerptBody(body: string | null | undefined): string | null {
+  if (!body) return null;
+  const normalized = body.replace(/\s+/g, ' ').trim();
+  if (!normalized) return null;
+  return normalized.length > MANUSCRIPT_EXCERPT_LENGTH
+    ? `${normalized.slice(0, MANUSCRIPT_EXCERPT_LENGTH)}…`
+    : normalized;
+}
 
 const SceneDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -98,6 +110,7 @@ const SceneDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
+  const [hasBodyDraft, setHasBodyDraft] = useState(false);
 
   const styles = StyleSheet.create({
     subTitle: {
@@ -482,6 +495,31 @@ const SceneDetailScreen = () => {
     fetchSceneNames,
   ]);
 
+  // The draft flag refreshes on focus too: leaving the editor without saving emits no
+  // scene event, so data alone would leave a stale indicator behind.
+  const refreshBodyDraftFlag = useCallback(async () => {
+    if (!scene?.storyId) {
+      setHasBodyDraft(false);
+      return;
+    }
+    const draft = await readStoredSceneBodyText(scene.storyId, sceneId);
+    setHasBodyDraft(!!draft && draft !== (scene.body ?? ''));
+  }, [scene?.storyId, scene?.body, sceneId]);
+
+  useEffect(() => {
+    void refreshBodyDraftFlag();
+  }, [refreshBodyDraftFlag]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshBodyDraftFlag();
+    }, [refreshBodyDraftFlag]),
+  );
+
+  const openEditor = useCallback(() => {
+    navigation.navigate('SceneEditor', { sceneId });
+  }, [navigation, sceneId]);
+
   const navigateToDetail = useNavigateToEntityDetail();
 
   const handleLocationPress = useCallback(() => {
@@ -507,6 +545,13 @@ const SceneDetailScreen = () => {
         label: t('edit'),
         onPress: () => navigation.navigate('SceneForm', { sceneId: sceneId }),
         visible: !!canEdit,
+      },
+      {
+        id: 'open-editor',
+        icon: 'document-text-outline',
+        label: t('manuscript_open_editor'),
+        onPress: openEditor,
+        visible: !!scene,
       },
     ],
   });
@@ -549,6 +594,9 @@ const SceneDetailScreen = () => {
       chapter={chapter}
       sceneTags={sceneTags}
       commentField={commentField}
+      manuscriptExcerpt={excerptBody(scene.body)}
+      hasBodyDraft={hasBodyDraft}
+      onOpenEditor={openEditor}
       dateForScene={dateForScene}
       calendar={calendar}
       locationCopy={locationCopy}

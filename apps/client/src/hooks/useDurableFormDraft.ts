@@ -14,6 +14,12 @@ export const NEW_ENTITY_DRAFT_ID = 'new';
 type DurableFormDraftOptions<TFields extends Record<string, unknown>> = {
   storyId?: string;
   entityType: string;
+  /**
+   * Which work-in-progress this draft holds for the entity. Defaults to the primary form
+   * draft; the scene manuscript editor passes `SCENE_BODY_DRAFT_FIELD` so prose and form
+   * fields never share a row.
+   */
+  field?: string;
   /** Omitted while creating - the draft is keyed as the story's pending `new` entity. */
   entityId?: string;
   /** Whether the initial load finished; nothing is read or written before that. */
@@ -67,6 +73,7 @@ function parseStoredDraft(raw: string): StoredFormDraft | null {
 export function useDurableFormDraft<TFields extends Record<string, unknown>>({
   storyId,
   entityType,
+  field,
   entityId,
   enabled,
   snapshot,
@@ -79,6 +86,7 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
   draftRestored: boolean;
 } {
   const draftEntityId = entityId ?? NEW_ENTITY_DRAFT_ID;
+  const draftField = field ?? FORM_DRAFT_FIELD;
   const [draftRestored, setDraftRestored] = useState(false);
   const restoreAttemptedRef = useRef(false);
   // expo-sqlite completes concurrent async queries in no guaranteed order (concurrent queue on
@@ -107,8 +115,8 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     clearedRef.current = true;
     lastWrittenRef.current = null;
     if (!storyId || !isEditorDraftDbBound()) return;
-    await clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
-  }, [storyId, entityType, draftEntityId]);
+    await clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
+  }, [storyId, entityType, draftEntityId, draftField]);
 
   /**
    * Removes the stored row but keeps tracking: for in-place reset while the form stays mounted.
@@ -116,8 +124,8 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
    */
   const deleteStoredDraft = useCallback(async () => {
     if (!storyId || !isEditorDraftDbBound()) return;
-    await clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
-  }, [storyId, entityType, draftEntityId]);
+    await clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
+  }, [storyId, entityType, draftEntityId, draftField]);
 
   useEffect(() => {
     if (!enabled || !storyId || restoreAttemptedRef.current) return;
@@ -129,7 +137,7 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     void (async () => {
       let row: { content: string } | null = null;
       try {
-        row = await readBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
+        row = await readBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
       } catch (error) {
         console.error('Failed to read form draft:', error);
       } finally {
@@ -138,20 +146,20 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
       if (!row) return;
       const stored = parseStoredDraft(row.content);
       if (!stored) {
-        await clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
+        await clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
         return;
       }
       // Another device (or this one, via sync) saved the entity after the draft: resurrecting
       // the older typing over newer data would be wrong, so the stale draft dies here.
       if (baseUpdatedAt !== undefined && stored.baseUpdatedAt !== baseUpdatedAt) {
-        await clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
+        await clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
         return;
       }
       lastWrittenRef.current = JSON.stringify(stored.fields);
       setDraftRestored(true);
       onRestoreRef.current(stored.fields as TFields);
     })();
-  }, [enabled, storyId, entityType, draftEntityId, baseUpdatedAt]);
+  }, [enabled, storyId, entityType, draftEntityId, draftField, baseUpdatedAt]);
 
   const serialized = JSON.stringify(snapshot);
   useEffect(() => {
@@ -160,20 +168,20 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     if (serialized === lastWrittenRef.current) return;
     lastWrittenRef.current = serialized;
     if (serialized === JSON.stringify(pristine)) {
-      void clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
+      void clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
       return;
     }
     scheduleWriteEditorDraft(
       storyId,
       entityType,
       draftEntityId,
-      FORM_DRAFT_FIELD,
+      draftField,
       JSON.stringify({ fields: snapshot, baseUpdatedAt: baseUpdatedAt ?? null }),
     );
     // `snapshot`/`pristine` identities change every render; the serialized strings are the
     // real dependencies. `baseUpdatedAt` is stable per mount (loaded once with the entity).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, storyId, entityType, draftEntityId, serialized, restoreSettled]);
+  }, [enabled, storyId, entityType, draftEntityId, draftField, serialized, restoreSettled]);
 
   // Flush-on-unmount: navigation away inside the debounce window must not eat the last
   // keystrokes. `writeEditorDraftNow` cancels the pending debounced timer first, so this never
@@ -184,14 +192,14 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
       if (!storyId || clearedRef.current || !isEditorDraftDbBound()) return;
       const latest = JSON.stringify(latestSnapshotRef.current);
       if (latest === JSON.stringify(latestPristineRef.current)) {
-        void clearBoundEditorDraft(storyId, entityType, draftEntityId, FORM_DRAFT_FIELD);
+        void clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
         return;
       }
       void writeEditorDraftNow(
         storyId,
         entityType,
         draftEntityId,
-        FORM_DRAFT_FIELD,
+        draftField,
         JSON.stringify({
           fields: latestSnapshotRef.current,
           baseUpdatedAt: latestBaseUpdatedAtRef.current ?? null,

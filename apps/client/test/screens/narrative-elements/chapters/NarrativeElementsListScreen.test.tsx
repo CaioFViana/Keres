@@ -850,7 +850,7 @@ describe('NarrativeElementsListScreen', () => {
     await view.findByTestId(`rowname-ch-1`);
     const actions = mockHeaderArgs?.actions ?? [];
     expect(mockHeaderArgs?.title).toBe('narrative_elements_title');
-    expect(actions.map((action) => action.visible)).toEqual([true, true, true, true]);
+    expect(actions.map((action) => action.visible)).toEqual([true, true, true, true, true]);
     expect(actions[0].label).toBe('story_flow_title');
     await act(async () => {
       actions[0].onPress();
@@ -864,6 +864,11 @@ describe('NarrativeElementsListScreen', () => {
       actions[3].onPress();
     });
     expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
+    expect(actions[4].label).toBe('manuscript_title');
+    await act(async () => {
+      actions[4].onPress();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith('Manuscript', {});
   });
 
   it('labels the map action and hides the timeline for branching stories', async () => {
@@ -893,6 +898,7 @@ describe('NarrativeElementsListScreen', () => {
       true,
       false,
       false,
+      true,
     ]);
   });
 
@@ -905,6 +911,7 @@ describe('NarrativeElementsListScreen', () => {
       false,
       true,
       true,
+      false,
     ]);
   });
 

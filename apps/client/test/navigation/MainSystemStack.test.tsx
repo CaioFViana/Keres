@@ -260,7 +260,15 @@ jest.mock('../../src/screens/operationlog/OperationLogListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/narrative-elements/scenes/ManuscriptScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/narrative-elements/scenes/SceneEditorScreen', () => ({
   __esModule: true,
   default: () => null,
 }));

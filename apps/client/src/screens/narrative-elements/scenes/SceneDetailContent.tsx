@@ -61,6 +61,10 @@ export interface SceneDetailContentProps {
   chapter: { name: string; index: number } | null | undefined;
   sceneTags: TagSelect[];
   commentField(field: string, value: string): Omit<CommentableDetailFieldProps, 'label'>;
+  /** Truncated prose for the manuscript entry, or null when nothing was written yet. */
+  manuscriptExcerpt: string | null;
+  hasBodyDraft: boolean;
+  onOpenEditor(): void;
   dateForScene(
     scene: SceneSelect,
   ): { date: string; gapRange?: unknown; durationEnd?: unknown } | null | undefined;
@@ -109,6 +113,9 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     openGalleryMediaViewer,
     canEdit,
     characterSceneRelations,
+    manuscriptExcerpt,
+    hasBodyDraft,
+    onOpenEditor,
     characters,
     itemJourneys,
     allItems,
@@ -148,6 +155,16 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         {...commentField('summary', scene.summary || t('common_na'))}
         label={t('summary')}
       />
+      <DetailField
+        label={t('manuscript_prose')}
+        value={manuscriptExcerpt || t('manuscript_no_body_yet')}
+        onPress={onOpenEditor}
+      />
+      {hasBodyDraft && (
+        <Text style={{ color: colors.notification, fontSize: 13, marginBottom: 12 }}>
+          {t('manuscript_unsaved_draft')}
+        </Text>
+      )}
       {dateForScene(scene) && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
       )}

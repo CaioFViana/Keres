@@ -357,6 +357,9 @@ function baseProps(overrides = {}) {
     chapter: { name: 'Arrival', index: 2 },
     sceneTags: [] as TagSelect[],
     commentField,
+    manuscriptExcerpt: null,
+    hasBodyDraft: false,
+    onOpenEditor: jest.fn(),
     dateForScene: () => null,
     calendar: {},
     locationCopy: { entity: 'location_entity' },
@@ -484,6 +487,31 @@ describe('SceneDetailContent', () => {
   it('hides the location section without a location', async () => {
     const view = await render(<SceneDetailContent {...baseProps()} />);
     expect(view.queryByTestId('section-location_entity')).toBeNull();
+  });
+
+  it('renders the manuscript excerpt and opens the editor on press', async () => {
+    const props = baseProps({ manuscriptExcerpt: 'It was a dark stormy night' });
+    const view = await render(<SceneDetailContent {...props} />);
+
+    expect(view.getByText('manuscript_prose')).toBeTruthy();
+    expect(view.getByText('It was a dark stormy night')).toBeTruthy();
+    await fireEvent.press(view.getByText('It was a dark stormy night'));
+    expect(props.onOpenEditor).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the empty-state text without prose and no draft flag without a draft', async () => {
+    const view = await render(<SceneDetailContent {...baseProps()} />);
+
+    expect(view.getByText('manuscript_no_body_yet')).toBeTruthy();
+    expect(view.queryByText('manuscript_unsaved_draft')).toBeNull();
+  });
+
+  it('flags an unsaved manuscript draft', async () => {
+    const view = await render(
+      <SceneDetailContent {...baseProps({ manuscriptExcerpt: 'saved', hasBodyDraft: true })} />,
+    );
+
+    expect(view.getByText('manuscript_unsaved_draft')).toBeTruthy();
   });
 
   it('passes filtered entities to the managers and wires actions', async () => {

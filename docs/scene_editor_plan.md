@@ -4,8 +4,11 @@ Modo de escrita por cena no Keres: cada cena ganha um corpo de manuscrito
 editável numa tela dedicada (drawer Editor), com WIP local, sync via
 infraestrutura existente e exportação por cena/rota.
 
-Status geral: **fase 0 em implementação** (fundação de dados + contenção de
-crescimento). UI do editor ainda não iniciada.
+Status geral: **fases 0–4 entregues** (fundação + editor por cena +
+manuscrito + exportação DOCX/PDF/Markdown/texto). Pendente só verificação
+manual em aparelho (impressão PDF, share sheets, abertura em Word/
+LibreOffice) e instrumentação de performance. Detalhe em `.agents/plans/
+2026-09-20-scene-editor-mvp.md`.
 
 ## 1. Decisões de dados
 
@@ -100,39 +103,76 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
   patch, fallback p/ estado cheio, pull com gaps, recovery de cadeias de
   patch, UX de conflito legível). Revisitar só se storage doer após 3.1+3.2.
 
-## 4. UI do editor (planejada, não iniciada)
+## 4. UI do editor (entregue)
 
-- Botão "Escrever" no detalhe da cena → drawer/tela dedicada (não o form
-  de resumo). Toggle no header: **Escrever / Revisar / Ler** (espírito do
-  modo sugestão do Google Docs).
-- MVP: Escrever (input + contador + draft), Revisar (comentários em nível
-  de cena — reutilizar entidade Comment existente, sem inline), Ler
-  (preview markdown).
-- Comentário inline ancorado em trecho: v2 (modelo de âncora por offset
-  com invalidação a cada edição — custo alto).
+- `SceneEditorScreen`: tela dedicada (não o form de resumo) com toggle no
+  header **Escrever / Ler / Revisar**. Entradas: ação `document-text` no
+  header do detalhe da cena + cartão "Manuscrito" (trecho + indicador de
+  rascunho) sob o resumo.
+- Escrever: `SceneBodyEditor` (input + contador chars/30k e palavras +
+  draft + Save) + hook `useSceneBodyDraft` (snapshot de um campo sobre
+  `useDurableFormDraft`, campo `body`). Ler: `MarkdownPreview` (parser
+  mínimo próprio, sem dependência). Revisar: threads de `Comment` da cena
+  na chave `body` via `CommentThreadModal` — zero nova entidade.
+- Seamless por construção: editor e preview compartilham
+  `manuscriptTextMetrics` (fonte/tamanho/line-height/padding); `TextInput`
+  borderless troca in place com o preview; Escrever/Ler dividem um
+  `ScrollView` que preserva o offset.
+- Comentário inline ancorado em trecho: v2 (o campo `excerptText` do
+  comentário já permite citar o trecho manualmente).
 
-### 4.1 Texto longo e virtualização
+### 4.1 Texto longo e virtualização (como ficou)
 
-- Leitura: preview markdown → blocos → `FlatList` virtualizada. 100%
-  seamless, barato — fazer desde o dia 1.
-- Edição: `TextInput` nativo + teto 30k (nessa faixa o desempenho é
-  aceitável). Não virtualizar *dentro* do input (quebra IME/seleção).
-- "Janela deslizante" num input único: proibido (saltos, clipboard/find
-  quebrados).
-- Busca própria (contador + anterior/próximo via selection/scroll), não
-  find nativo.
-- Editor por blocos (1 input por parágrafo): só com evidência de lag em
-  aparelho fraco.
+- Virtualização no nível da **seção do manuscrito** (`FlatList` de cenas),
+  não dentro do preview: `MarkdownPreview` renderiza blocos em Views
+  simples (teto 30k limita o pior caso) para evitar `FlatList` aninhada.
+- Edição: `TextInput` nativo + teto 30k; um único input montado por vez
+  (seção expandida). "Janela deslizante": proibida (mantido).
+- Busca própria com contador + anterior/próximo + `scrollToIndex`
+  (sem highlight intra-preview no MVP).
+- Editor por blocos: só com evidência de lag em aparelho fraco (mantido).
 
-## 5. Branching e exportação
+### 4.2 Manuscrito (telas juntas — lacuna fechada)
 
-- Linear: compilar cenas por `index`/capítulo. Branching: compilar **por
-  rota** seguindo `routeSteps` (telas `RouteReaderScreen`/`StoryNavigator`
-  já existem).
-- "Vá para a página X": paginação **em tempo de exportação** para PDF/DOCX
-  — nunca dado armazenado.
-- `scenes.body` viaja no pacote de história junto com a cena (writer/import
-  narrativo já trafegam scenes; incluir no schema de export).
+- `ManuscriptScreen` (botão `book-outline` no header da lista de elementos
+  narrativos): todas as cenas em sequência com separação por cena, espelhando
+  o padrão `RouteReaderScreen` (título tocável → detalhe).
+- Linear: capítulos por `index` com suas cenas, depois containers de evento,
+  depois seção "sem capítulo". Branching: seletor de rota + `routeSteps`
+  (sem validação de travessia — ler prosa não valida execução).
+- Expandir a seção monta o mesmo `SceneBodyEditor` in place; cada seção
+  salva só a própria cena (`updateScene({body})`) — sem repartir documento.
+- Dados via hook próprio `useManuscriptData` (containers todos os tipos +
+  cenas + choices + rotas/steps, com refresh em `scene_changed` etc.):
+  `useStoryRoutes` não servia (capítulos excluem eventos; carrega
+  checks/effects desnecessários).
+
+## 5. Branching e exportação (entregue)
+
+- `manuscriptCompiler` puro (linear + por rota): blocos título/subtítulo/
+  capítulo/cena/parágrafo/choice; um bookmark por cena (`scene-<id>`,
+  primeira ocorrência vence em rotas com loop); choices órfãs degradam
+  para nome sem referência.
+- **Cenas avulsas = `chapterId` nulo OU capítulo `type: 'event`'**
+  (`isLooseScene`, predicado confirmado contra `ChapterType.ts`). O
+  manuscrito mostra tudo; o exportador linear tem switch "Incluir N cenas
+  avulsas" (default incluir) com apêndice final. Em rotas os steps são
+  explícitos (sem switch).
+- DOCX via lib `docx`: headings, bookmarks, `PageReference` com hyperlink
+  por choice ("vá para a página X" resolvido no Word/LibreOffice, nenhuma
+  paginação no app), rodapé `PAGE/NUMPAGES`, recuo de primeira linha.
+  Entrega: `Packer.toBase64String()` → bytes → `deliverFile` (reuso de
+  `storyTransfer`, que ganhou `buildManuscriptFileName`).
+- PDF via `expo-print` (`printToFileAsync` sobre template HTML próprio com
+  TOC/âncoras/links internos): **limitação honesta** — a API não retorna
+  mapeamento layout→página, então o PDF referencia destinos por nome de
+  cena com link clicável, nunca por número de página. PDF indisponível na
+  web (sem pipeline de impressão); lá o export oferece DOCX/MD/TXT.
+- Markdown + texto puro saem do mesmo compilador (bônus + fallback).
+- `scenes.body` viaja no pacote de história via `SceneSchema` (`.default
+  (null)`, sem bump de formato).
+- Spike de viabilidade: bundle ESM do `docx` sem imports node-core;
+  `expo export -p web` (Metro) passa com as novas dependências.
 
 ## 6. Fases
 
@@ -175,11 +215,20 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
       de draft no seu `useXFormState.test.ts` + asserts de clear no
       `useXFormActions.test.ts`; telas com captura de header ganharam
       testes de wiring do botão.
-- [ ] **Fase 2:** drawer Editor (Escrever/Ler) + botão na cena + preview
-      virtualizado + busca + contador.
-- [ ] **Fase 3:** modo Revisar com comments de cena; export linear com body.
-- [ ] **Fase 4:** export por rota com "página X"; coalescência no push; gzip.
+- [x] **Fase 2 (feito):** `SceneEditorScreen` (Escrever/Ler) + entradas no
+      detalhe da cena + preview + contador/teto + `useSceneBodyDraft`
+      sobre `editor_drafts` (campo `body`); `ManuscriptScreen` com lista
+      virtualizada, busca própria e edição inline por seção.
+- [x] **Fase 3 (feito):** modo Revisar (comments de cena na chave `body`,
+      zero nova entidade); export linear com body (DOCX/PDF/MD/TXT).
+- [x] **Fase 4 (feito):** export por rota com "vá para a página X" via
+      `PAGEREF` + switch de cenas avulsas. Coalescência no push e gzip:
+      continuam diferidos (só com medição de dor — ver 3.3).
       (Migração p/ `editor_drafts` já feita — ver acima.)
+- [ ] **Verificação manual pendente (requer aparelho):** impressão PDF via
+      `expo-print`, share sheets iOS/Android, abertura do DOCX em Word/
+      LibreOffice (números `PAGEREF`), sensação de scroll/jank e do
+      seamless em aparelho fraco.
 - [ ] **Futuro incerto:** comentários inline (v2), editor por blocos (só
       com evidência), diff-sync (só se storage doer).
 
@@ -187,5 +236,6 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
 
 - Teto exato de bytes do body HTTP no deploy (Fastify default ~1 MB;
   confirmar em produção antes de fixar expectativas de lote gigante).
-- Mapeamento fino da UI atual do detalhe da cena (fase 2).
-- Modelo completo de routes/routeSteps para o export (fase 4).
+- [x] Mapeamento fino da UI atual do detalhe da cena (fase 2) — feito.
+- [x] Modelo completo de routes/routeSteps para o export (fase 4) — feito;
+      predicado de avulsas resolvido (`chapterId` nulo ou capítulo-evento).

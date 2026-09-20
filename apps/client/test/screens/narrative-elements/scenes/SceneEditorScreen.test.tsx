@@ -1,0 +1,365 @@
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import React from 'react';
+import SceneEditorScreen from '../../../../src/screens/narrative-elements/scenes/SceneEditorScreen';
+import type { SceneSelect } from '../../../../src/db/schema';
+
+const mockNavigate = jest.fn();
+const mockGoBack = jest.fn();
+const mockGetById = jest.fn();
+const mockUpdateScene = jest.fn();
+const mockAddComment = jest.fn();
+const mockDeleteComment = jest.fn();
+const mockUpdateComment = jest.fn();
+const mockSetText = jest.fn();
+const mockSaveBody = jest.fn();
+
+let mockHeaderArgs: { title: string; renderActions?: () => React.ReactNode } | null = null;
+let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
+let mockCanEdit = true;
+let mockCommentsByField: Record<string, { id: string }[]> = {};
+let mockBodyText = 'Saved prose.';
+let mockBodyDirty = false;
+let mockUseSceneBodyDraftOptions: {
+  savedBody: string | null;
+  persist: (body: string | null) => Promise<void>;
+} | null = null;
+
+jest.mock('@react-navigation/native', () => {
+  const route = { params: { sceneId: 'scene-1' } };
+  let navigation: { navigate: (...args: never[]) => void; goBack: () => void } | null = null;
+  return {
+    __esModule: true,
+    useNavigation: () => (navigation ??= { navigate: mockNavigate, goBack: mockGoBack }),
+    useRoute: () => route,
+  };
+});
+
+jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
+  __esModule: true,
+  useBackButtonHandler: () => undefined,
+}));
+
+jest.mock('../../../../src/hooks/useScreenHeader', () => ({
+  __esModule: true,
+  useScreenHeader: (args: {
+    title: string;
+    renderActions?: () => React.ReactNode;
+  }) => {
+    mockHeaderArgs = args;
+  },
+}));
+
+jest.mock('../../../../src/hooks/useEntityRefreshLifecycle', () => {
+  const react = jest.requireActual('react') as typeof import('react');
+  return {
+    __esModule: true,
+    useEntityInitialLoad: (callback: () => void) => {
+      react.useEffect(() => {
+        callback();
+      }, [callback]);
+    },
+    useEntityEventSubscriptions: (
+      subscriptions: { event: string; listener: (...args: never[]) => unknown }[],
+    ) => {
+      mockSubscriptions = subscriptions;
+    },
+  };
+});
+
+jest.mock('../../../../src/hooks/useStoryRole', () => ({
+  __esModule: true,
+  useStoryRole: () => ({ canEdit: mockCanEdit }),
+}));
+
+jest.mock('../../../../src/hooks/useEntityComments', () => ({
+  __esModule: true,
+  useEntityComments: () => ({
+    commentsByField: mockCommentsByField,
+    canComment: true,
+    isStoryOwner: true,
+    currentUserId: 'user-1',
+    addComment: mockAddComment,
+    deleteComment: mockDeleteComment,
+    updateComment: mockUpdateComment,
+  }),
+}));
+
+jest.mock('../../../../src/state/storyStore', () => ({
+  __esModule: true,
+  useStoryStore: () => ({ selectedStory: { id: 'story-1' } }),
+}));
+
+jest.mock('../../../../src/state/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: () => ({ userId: 'user-1' }),
+}));
+
+// The draft lifecycle itself is covered node-side in `useSceneBodyDraft.test.ts` (the real
+// SQLite driver cannot load in this environment); here the hook is a wired seam.
+jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
+  __esModule: true,
+  useSceneBodyDraft: (options: {
+    savedBody: string | null;
+    persist: (body: string | null) => Promise<void>;
+  }) => {
+    mockUseSceneBodyDraftOptions = options;
+    return {
+      text: mockBodyText,
+      setText: mockSetText,
+      wordCount: 2,
+      charCount: mockBodyText.length,
+      maxLength: 30000,
+      isDirty: mockBodyDirty,
+      overLimit: false,
+      canSave: mockBodyDirty,
+      save: mockSaveBody,
+      saving: false,
+      saveError: null,
+      clearBodyDraft: jest.fn(),
+      draftRestored: false,
+    };
+  },
+}));
+
+jest.mock('../../../../src/db', () => ({
+  __esModule: true,
+  useDrizzle: () => ({}),
+}));
+
+jest.mock('../../../../src/services/storymanagement/SceneService', () => ({
+  __esModule: true,
+  createSceneService: () => ({ getById: mockGetById, updateScene: mockUpdateScene }),
+}));
+
+jest.mock('../../../../src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({
+    colors: {
+      background: '#fff',
+      border: '#ddd',
+      card: '#fff',
+      error: '#f00',
+      notification: '#fa0',
+      onPrimary: '#fff',
+      onPrimaryContainer: '#001',
+      primary: '#00f',
+      primaryContainer: '#ccf',
+      surface: '#eee',
+      text: '#111',
+      textSecondary: '#555',
+    },
+  }),
+}));
+
+jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
+  const copies: Record<string, object> = {};
+  return {
+    __esModule: true,
+    useVocabularyEntityCopy: (kind: string) =>
+      (copies[kind] ??= {
+        notFound: `notfound-${kind}`,
+        failedToLoad: `failed-${kind}`,
+        failedToSave: `failed-save-${kind}`,
+        loadingDetails: `loading-${kind}`,
+        dataMissing: `missing-${kind}`,
+      }),
+  };
+});
+
+jest.mock('react-i18next', () => {
+  const t = (key: string) => key;
+  return { __esModule: true, useTranslation: () => ({ t }) };
+});
+
+jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    ScreenLoading: ({ message }: { message: string }) => (
+      <Text testID="screen-loading">{message}</Text>
+    ),
+    ScreenError: ({ message, onGoBack }: { message: string; onGoBack: () => void }) => (
+      <Text testID="screen-error" onPress={onGoBack}>
+        {message}
+      </Text>
+    ),
+  };
+});
+
+jest.mock('../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: {
+      visible: boolean;
+      comments: { id: string }[];
+      fieldValueSnapshot: string;
+      onSubmit: (input: {
+        commentText: string;
+        excerptText: string | null;
+        criticality: number;
+      }) => Promise<void>;
+    }) =>
+      props.visible ? (
+        <>
+          <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
+          <Text
+            testID="comments-submit"
+            onPress={() =>
+              props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
+            }
+          >
+            submit
+          </Text>
+        </>
+      ) : null,
+  };
+});
+
+const stamp = new Date('2026-01-01T00:00:00.000Z');
+
+function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
+  return {
+    id: 'scene-1',
+    storyId: 'story-1',
+    chapterId: 'chapter-1',
+    locationId: null,
+    name: 'Opening',
+    index: 1,
+    summary: 'It begins',
+    body: 'Saved prose.',
+    gap: null,
+    gapType: null,
+    calendarDateOverride: null,
+    calendarDateOverrideCalendarId: null,
+    duration: null,
+    durationType: null,
+    isStart: false,
+    isFinish: false,
+    isFavorite: false,
+    extraNotes: null,
+    createdAt: stamp,
+    updatedAt: stamp,
+    version: 1,
+    isDeleted: false,
+    deletedAt: null,
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockHeaderArgs = null;
+  mockSubscriptions = [];
+  mockCanEdit = true;
+  mockCommentsByField = {};
+  mockBodyText = 'Saved prose.';
+  mockBodyDirty = false;
+  mockUseSceneBodyDraftOptions = null;
+  mockGetById.mockResolvedValue(makeScene());
+  mockUpdateScene.mockImplementation(async (_userId: string, _sceneId: string, data: object) =>
+    makeScene({ ...data, updatedAt: new Date('2026-02-01T00:00:00.000Z') }),
+  );
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  cleanup();
+  jest.restoreAllMocks();
+});
+
+describe('SceneEditorScreen', () => {
+  it('loads the scene and starts in write mode with the saved body', async () => {
+    const view = await render(<SceneEditorScreen />);
+    const input = await view.findByTestId('scene-body-editor.input');
+
+    expect(input.props.value).toBe('Saved prose.');
+    expect(mockHeaderArgs?.title).toBe('Opening');
+  });
+
+  it('types through the draft hook and persists through the scene service', async () => {
+    mockBodyDirty = true;
+    const view = await render(<SceneEditorScreen />);
+    const input = await view.findByTestId('scene-body-editor.input');
+
+    await fireEvent.changeText(input, 'Saved prose plus more.');
+    expect(mockSetText).toHaveBeenCalledWith('Saved prose plus more.');
+
+    await fireEvent.press(view.getByText('save'));
+    expect(mockSaveBody).toHaveBeenCalledTimes(1);
+
+    expect(mockUseSceneBodyDraftOptions?.savedBody).toBe('Saved prose.');
+    await mockUseSceneBodyDraftOptions?.persist('Saved prose plus more.');
+    expect(mockUpdateScene).toHaveBeenCalledWith('user-1', 'scene-1', {
+      body: 'Saved prose plus more.',
+    });
+  });
+
+  it('toggles between write and read from the header without losing text', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
+    await fireEvent.press(header.getByText('manuscript_mode_read'));
+
+    await waitFor(() => expect(view.queryByText('Saved prose.')).toBeTruthy());
+    expect(view.queryByTestId('scene-body-editor.input')).toBeNull();
+
+    await fireEvent.press(header.getByText('manuscript_mode_write'));
+    const input = await view.findByTestId('scene-body-editor.input');
+    expect(input.props.value).toBe('Saved prose.');
+  });
+
+  it('reviews through the scene comments of the body field', async () => {
+    mockCommentsByField = { body: [{ id: 'c-1' }], summary: [{ id: 'c-9' }] };
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    // The pills themselves are covered by the toggle test; here the mode switches through
+    // the captured header action so a single tree stays mounted.
+    const toggle = mockHeaderArgs?.renderActions?.() as React.ReactElement<{
+      onChange(mode: string): void;
+    }>;
+    await act(async () => {
+      toggle.props.onChange('review');
+    });
+
+    await fireEvent.press(await view.findByText('manuscript_comments_button'));
+    expect((await view.findByTestId('comments-modal')).props.children).toBe('comments:1');
+
+    await fireEvent.press(view.getByTestId('comments-submit'));
+    expect(mockAddComment).toHaveBeenCalledWith(
+      { fieldKey: 'body' },
+      expect.objectContaining({
+        commentText: 'Needs a beat',
+        contentSnapshot: 'Saved prose.',
+      }),
+    );
+  });
+
+  it('shows the not-found state for a missing scene', async () => {
+    mockGetById.mockResolvedValue(null);
+    const view = await render(<SceneEditorScreen />);
+
+    await waitFor(() =>
+      expect(view.getByTestId('screen-error').props.children).toBe('notfound-Scene'),
+    );
+    await fireEvent.press(view.getByTestId('screen-error'));
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the scene on change events', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    mockGetById.mockResolvedValue(makeScene({ name: 'Rewritten' }));
+    const changed = mockSubscriptions.find((sub) => sub.event === 'scene_changed');
+    await (changed?.listener as (storyId: string, sceneId: string) => Promise<void>)(
+      'story-1',
+      'scene-1',
+    );
+
+    await waitFor(() => expect(mockHeaderArgs?.title).toBe('Rewritten'));
+  });
+});

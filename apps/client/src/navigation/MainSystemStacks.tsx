@@ -37,7 +37,9 @@ import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/
 import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
 import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
+import ManuscriptScreen from '../screens/narrative-elements/scenes/ManuscriptScreen';
 import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import SceneEditorScreen from '../screens/narrative-elements/scenes/SceneEditorScreen';
 import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
 import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
 import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
@@ -164,6 +166,8 @@ export type NarrativeElementsStackParamList = {
   ChapterDetail: ChapterDetailScreenParamList['ChapterDetail'];
   ChapterForm: { chapterId?: string };
   SceneDetail: { sceneId: string };
+  SceneEditor: { sceneId: string };
+  Manuscript: { routeId?: string };
   SceneForm: { sceneId?: string; chapterId?: string };
   ChoiceDetail: { choiceId: string };
   ChoiceForm: { choiceId?: string; sceneId?: string };
@@ -185,6 +189,8 @@ export const NarrativeElementsStackNavigator = () => {
       <NarrativeElementsStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
       <NarrativeElementsStack.Screen name="ChapterForm" component={ChapterFormScreen} />
       <NarrativeElementsStack.Screen name="SceneDetail" component={SceneDetailScreen} />
+      <NarrativeElementsStack.Screen name="SceneEditor" component={SceneEditorScreen} />
+      <NarrativeElementsStack.Screen name="Manuscript" component={ManuscriptScreen} />
       <NarrativeElementsStack.Screen name="SceneForm" component={SceneFormScreen} />
       <NarrativeElementsStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
       <NarrativeElementsStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />

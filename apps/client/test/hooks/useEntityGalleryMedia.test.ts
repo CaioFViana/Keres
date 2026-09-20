@@ -13,6 +13,12 @@ jest.mock('../../src/services/galleryLink', () => ({ createGalleryLink: jest.fn(
 jest.mock('../../src/services/MediaFileService', () => ({
   mediaFileService: { pick: jest.fn(), pickDocuments: jest.fn() },
 }));
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ dispatch: mockDispatch }),
+  DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },
+}));
+
+const mockDispatch = jest.fn();
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useDrizzle } from '../../src/db';
@@ -58,6 +64,10 @@ it('imports selected assets, links every resulting gallery, and refreshes', asyn
   await waitFor(() => expect(result.current.loading).toBe(false));
 
   await act(async () => result.current.addPlayableMedia());
+  // The drawer is put away before the picker covers the app and once it returns, so the
+  // native activity transition can never reveal (or strand) an open menu.
+  expect(mockDispatch).toHaveBeenCalledTimes(2);
+  expect(mockDispatch).toHaveBeenCalledWith({ type: 'CLOSE_DRAWER' });
   expect(relation.linkGalleryToOwner).toHaveBeenCalledTimes(2);
   expect(relation.linkGalleryToOwner).toHaveBeenCalledWith('user', 'story', 'new-1', {
     ownerId: 'character',

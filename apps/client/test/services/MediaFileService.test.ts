@@ -25,7 +25,8 @@ it('uses the supported picker configuration and distinguishes cancellation from 
   getDocumentAsync.mockResolvedValueOnce({ canceled: false, assets: [asset] });
   await expect(mediaFileService.pick()).resolves.toEqual([asset]);
   expect(getDocumentAsync).toHaveBeenCalledWith(
-    expect.objectContaining({ copyToCacheDirectory: true, multiple: true }),
+    // No staged copy: inside Expo Go both file-system modules refuse to read it back.
+    expect.objectContaining({ copyToCacheDirectory: false, multiple: true }),
   );
 
   const error = new UnsupportedMediaError('application/zip', 'mapa.zip');
@@ -47,7 +48,7 @@ it('opens a separate picker for documents', async () => {
   await expect(mediaFileService.pickDocuments()).resolves.toEqual([asset]);
   expect(getDocumentAsync).toHaveBeenLastCalledWith(
     expect.objectContaining({
-      copyToCacheDirectory: true,
+      copyToCacheDirectory: false,
       multiple: true,
       type: expect.arrayContaining(['application/pdf']),
     }),

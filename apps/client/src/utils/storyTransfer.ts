@@ -1,5 +1,6 @@
 import type { FullStoryExportType } from '@keres/shared';
 import {
+  base64ToBytes,
   describeStoryIntegrityViolations,
   findStoryExportIntegrityErrors,
   FullStoryExportSchema,
@@ -10,6 +11,7 @@ import {
 } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
@@ -261,10 +263,38 @@ export interface StoryImportPayload {
  * file invisible in the picker with no explanation whatsoever. The content is validated below
  * either way, so a wrong file gives a clear message instead of vanishing.
  */
+/**
+ * Reads the picked file's bytes natively, retrying through the legacy module on failure.
+ *
+ * Same retry as the gallery import (`MediaFileService`): the provider URI can defeat either
+ * module, so a failed new-API read falls back to the legacy one. When both fail the error
+ * propagates and the caller reports the file as unreadable, exactly as before.
+ */
+async function readPickedBytes(uri: string): Promise<Uint8Array> {
+  try {
+    return await new File(uri).bytes();
+  } catch {
+    const base64 = await LegacyFileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+    return base64ToBytes(base64);
+  }
+}
+
+/** Text twin of `readPickedBytes`, for the JSON package. */
+async function readPickedText(uri: string): Promise<string> {
+  try {
+    return await new File(uri).text();
+  } catch {
+    return await LegacyFileSystem.readAsStringAsync(uri, { encoding: 'utf8' });
+  }
+}
+
 export async function pickStoryExportFile(): Promise<StoryImportPayload | null> {
   const result = await DocumentPicker.getDocumentAsync({
     type: '*/*',
-    copyToCacheDirectory: true,
+    // Off for the same sandbox reason as the gallery picker (`mediaFileService.pick`): inside
+    // Expo Go both file-system modules refuse the staged `file://` copy ("isn't readable"),
+    // while the provider's `content://` URI is let through by design.
+    copyToCacheDirectory: false,
     multiple: false,
   });
 
@@ -280,7 +310,7 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
     try {
       bytes = asset.file
         ? new Uint8Array(await asset.file.arrayBuffer()) // web: o seletor já entrega o Blob
-        : await new File(asset.uri).bytes();
+        : await readPickedBytes(asset.uri);
     } catch (error) {
       throw new StoryImportError(
         'unreadable',
@@ -296,7 +326,7 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
   try {
     rawContents = asset.file
       ? await asset.file.text() // web: o seletor já entrega o Blob
-      : await new File(asset.uri).text();
+      : await readPickedText(asset.uri);
   } catch (error) {
     throw new StoryImportError(
       'unreadable',

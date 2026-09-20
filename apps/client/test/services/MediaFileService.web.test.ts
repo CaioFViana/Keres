@@ -155,6 +155,25 @@ it('writes a captured web frame beside the video without touching the native cha
   expect(ImageManipulator.manipulate).not.toHaveBeenCalled();
 });
 
+it('identifies an extensionless web asset from its bytes when the picker says nothing', async () => {
+  store.md5Hex.mockReturnValue('sniffed-hash');
+  store.existsSync.mockReturnValue(false);
+
+  const jpegHeader = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00]);
+  const imported = await mediaFileService.importAsset('story', {
+    name: 'noext',
+    uri: 'blob:picked',
+    mimeType: null,
+    file: new File([jpegHeader as BlobPart], 'noext'),
+  } as any);
+
+  expect(imported).toMatchObject({
+    mediaType: 'image',
+    mimeType: 'image/jpeg',
+    localPath: 'desktop-media:media/story/sniffed-hash.jpg',
+  });
+});
+
 it('leaves web videos without a thumbnail when no frame is captured and logs cleanup failures instead of throwing', async () => {
   store.md5Hex.mockReturnValue('web-hash');
   store.existsSync.mockReturnValue(true);

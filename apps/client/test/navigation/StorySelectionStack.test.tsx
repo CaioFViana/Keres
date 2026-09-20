@@ -222,6 +222,22 @@ it.each([
   expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
 
+it.each([['ImportExport'], ['PublishStory'], ['ExampleStories'], ['Settings']])(
+  'closes the drawer when the plain entry %s is tapped while focused',
+  async (drawerName) => {
+    await renderDrawer();
+    const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
+    const preventDefault = jest.fn();
+    const listeners = drawerScreen(drawerName)?.listeners({ navigation });
+
+    listeners.drawerItemPress({ preventDefault });
+
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(navigation.navigate).toHaveBeenCalledWith(drawerName);
+    expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
+  },
+);
+
 it('uses the compact front drawer dimensions on small screens', async () => {
   mockResponsiveLayout.isCompact = true;
   mockResponsiveLayout.isWide = false;

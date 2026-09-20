@@ -4,6 +4,7 @@ jest.mock('expo-file-system', () => ({
   File: jest.fn(),
   Paths: { cache: 'cache' },
 }));
+jest.mock('expo-file-system/legacy', () => ({ readAsStringAsync: jest.fn() }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
 jest.mock('../../src/services/MediaFileService', () => ({
@@ -16,6 +17,7 @@ jest.mock('../../src/utils/storyMediaBundle', () => ({
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { extractStoryZip } from '../../src/utils/storyMediaBundle';
@@ -30,6 +32,7 @@ import {
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
 const FileMock = File as unknown as jest.Mock;
+const legacyReadMock = LegacyFileSystem.readAsStringAsync as jest.Mock;
 const extractZipMock = extractStoryZip as jest.Mock;
 const shareAvailableMock = Sharing.isAvailableAsync as jest.Mock;
 const shareMock = Sharing.shareAsync as jest.Mock;
@@ -234,7 +237,8 @@ describe('story transfer picker', () => {
     );
     expect(getDocumentAsync).toHaveBeenCalledWith({
       type: '*/*',
-      copyToCacheDirectory: true,
+      // No staged copy: inside Expo Go both file-system modules refuse to read it back.
+      copyToCacheDirectory: false,
       multiple: false,
     });
   });
@@ -326,6 +330,56 @@ describe('story transfer picker', () => {
     extractZipMock.mockResolvedValue(extracted);
 
     await expect(pickStoryExportFile()).resolves.toEqual(extracted);
+    expect(extractZipMock).toHaveBeenCalledWith(new Uint8Array([1, 2]), 'backup.zip');
+  });
+
+  it('reads a native JSON package through the new API without touching the legacy module', async () => {
+    Platform.OS = 'ios';
+    getDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ name: 'backup.json', uri: 'file://cache/backup.json' }],
+    });
+    FileMock.mockImplementationOnce(() => ({
+      text: jest.fn().mockResolvedValue(JSON.stringify(validExport())),
+    }));
+
+    const picked = await pickStoryExportFile();
+
+    expect(picked?.story.story).toMatchObject({ id: STORY_ID });
+    expect(legacyReadMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to legacy reads when the sandbox hides the staged native copy', async () => {
+    Platform.OS = 'android';
+    getDocumentAsync.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ name: 'backup.json', uri: 'file://cache/backup.json' }],
+    });
+    FileMock.mockImplementationOnce(() => ({
+      text: jest.fn().mockRejectedValue(new Error('denied')),
+    }));
+    legacyReadMock.mockResolvedValueOnce(JSON.stringify(validExport()));
+
+    const picked = await pickStoryExportFile();
+
+    expect(picked?.story.story).toMatchObject({ id: STORY_ID });
+    expect(legacyReadMock).toHaveBeenCalledWith('file://cache/backup.json', { encoding: 'utf8' });
+
+    getDocumentAsync.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ name: 'backup.zip', uri: 'file://cache/backup.zip' }],
+    });
+    FileMock.mockImplementationOnce(() => ({
+      bytes: jest.fn().mockRejectedValue(new Error('denied')),
+    }));
+    legacyReadMock.mockResolvedValueOnce('AQI=');
+    extractZipMock.mockResolvedValue({ story: validExport(), media: [] });
+
+    await pickStoryExportFile();
+
+    expect(legacyReadMock).toHaveBeenCalledWith('file://cache/backup.zip', {
+      encoding: 'base64',
+    });
     expect(extractZipMock).toHaveBeenCalledWith(new Uint8Array([1, 2]), 'backup.zip');
   });
 });

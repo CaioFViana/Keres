@@ -28,6 +28,7 @@ beforeEach(() => {
 });
 
 it('creates new media, reuses duplicates, restores a missing local file, and counts rejected assets', async () => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
   const galleryService = {
     getByHash: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce({
       id: 'existing-gallery',
@@ -64,16 +65,31 @@ it('creates new media, reuses duplicates, restores a missing local file, and cou
     downloadState: 'downloaded',
     thumbnailPath: null,
   });
+  // Even a genuinely unsupported file logs its context: the interface reports every rejection
+  // as "unsupported format", so the log is what tells a bad file from a failed import.
+  expect(console.log).toHaveBeenCalledWith(
+    'Failed to import media asset:',
+    expect.objectContaining({ mimeType: null, reason: expect.any(String) }),
+  );
+  (console.log as jest.Mock).mockRestore();
 });
 
-it('logs an unexpected import failure and counts the asset as rejected', async () => {
+it('logs an unexpected import failure with the asset context and counts it as rejected', async () => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   const galleryService = { getByHash: jest.fn(), createGallery: jest.fn() } as any;
   mockMediaFileService.importAsset.mockRejectedValueOnce(new Error('disk gone'));
 
-  const result = await importPickedMediaAssets(galleryService, 'story', 'user', [{} as any]);
+  const result = await importPickedMediaAssets(galleryService, 'story', 'user', [
+    { name: 'clip.mp4', mimeType: 'video/mp4', uri: 'file://picked/clip.mp4', size: 8 } as any,
+  ]);
 
   expect(result).toEqual({ added: 0, duplicates: 0, rejected: 1, galleryIds: [] });
-  expect(console.log).toHaveBeenCalledWith('Failed to import media asset:', expect.any(Error));
+  expect(console.log).toHaveBeenCalledWith('Failed to import media asset:', {
+    name: 'clip.mp4',
+    mimeType: 'video/mp4',
+    uri: 'file://picked/clip.mp4',
+    size: 8,
+    reason: 'disk gone',
+  });
   (console.log as jest.Mock).mockRestore();
 });

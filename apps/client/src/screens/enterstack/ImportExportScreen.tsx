@@ -5,7 +5,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -34,6 +34,7 @@ import {
 const ImportExportScreen = () => {
   const { t } = useTranslation();
   useScreenHeader({ target: 'self', title: t('import_export_title') });
+  const navigation = useNavigation();
   const { colors } = useTheme();
   useBackButtonHandler();
   const drizzleDb = useDrizzle();
@@ -159,6 +160,10 @@ const ImportExportScreen = () => {
       return;
     }
 
+    // The picker covers the app with a native activity: an open drawer would be revealed
+    // mid-transition on return, so it is put away on both sides of the flow. A no-op when
+    // already closed.
+    navigation.dispatch(DrawerActions.closeDrawer());
     setImporting(true);
     try {
       const picked = await pickStoryExportFile();
@@ -217,9 +222,10 @@ const ImportExportScreen = () => {
       console.log('ImportExportScreen: failed to import story.', importError);
       showNotification(t('import_story_failed'), 'error');
     } finally {
+      navigation.dispatch(DrawerActions.closeDrawer());
       setImporting(false);
     }
-  }, [drizzleDb, userId, showNotification, t, loadStories, fetchStoryList]);
+  }, [drizzleDb, userId, navigation, showNotification, t, loadStories, fetchStoryList]);
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),

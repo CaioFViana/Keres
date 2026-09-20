@@ -44,7 +44,11 @@ import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
 import StoryDevicesStackNavigator from './StoryDevicesStack';
-import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
+import {
+  DRAWER_SWIPE_EDGE_WIDTH,
+  DRAWER_SWIPE_MIN_DISTANCE,
+  drawerItemListeners,
+} from './drawerInteraction';
 
 export type StorySelectionMainStackParamList = {
   StorySelectionScreen: undefined;
@@ -362,13 +366,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('story_selection_title'),
             drawerIcon: drawerIcon('book-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StorySelectionMain', { screen: 'StorySelectionScreen' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('StorySelectionMain', 'StorySelectionScreen')}
         />
         <Drawer.Screen
           name="ServerManagementDrawer"
@@ -378,13 +376,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('manage_servers'),
             drawerIcon: drawerIcon('server-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('ServerManagementDrawer', { screen: 'ServerManagement' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('ServerManagementDrawer', 'ServerManagement')}
         />
         <Drawer.Screen
           name="FriendshipDrawer"
@@ -394,13 +386,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('manage_friendships'),
             drawerIcon: drawerIcon('people-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('FriendshipDrawer', { screen: 'FriendshipList' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('FriendshipDrawer', 'FriendshipList')}
         />
         {/*
         Import/export vive no menu principal, e não no menu de uma história: importar cria
@@ -415,6 +401,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('import_export_title'),
             drawerIcon: drawerIcon('swap-horizontal-outline'),
           }}
+          listeners={drawerItemListeners('ImportExport')}
         />
         {/*
         Publicar só existe com servidor: uma história que nunca saiu deste aparelho não tem
@@ -434,6 +421,7 @@ const StorySelectionNavigator = () => {
               overflow: 'hidden',
             },
           }}
+          listeners={drawerItemListeners('PublishStory')}
         />
         {/*
         Mesmo raciocínio do Import/Export logo acima: instalar um exemplo cria uma história
@@ -452,14 +440,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('packs_title'),
             drawerIcon: drawerIcon('archive-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              // The menu entry means the list, not wherever the stack was last left.
-              e.preventDefault();
-              navigation.navigate('PacksDrawer', { screen: 'PackList' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('PacksDrawer', 'PackList')}
         />
         <Drawer.Screen
           name="ExampleStories"
@@ -469,6 +450,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('examples_title'),
             drawerIcon: drawerIcon('flask-outline'),
           }}
+          listeners={drawerItemListeners('ExampleStories')}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"
@@ -484,13 +466,7 @@ const StorySelectionNavigator = () => {
               overflow: 'hidden',
             },
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StoryDevicesDrawer', { screen: 'DeviceIndex' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('StoryDevicesDrawer', 'DeviceIndex')}
         />
         <Drawer.Screen
           name="HelpDrawer"
@@ -500,13 +476,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('help_title'),
             drawerIcon: drawerIcon('help-circle-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('HelpDrawer', 'HelpIndex')}
         />
         <Drawer.Screen
           name="Settings"
@@ -516,6 +486,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('settings_title'),
             drawerIcon: drawerIcon('settings-outline'),
           }}
+          listeners={drawerItemListeners('Settings')}
         />
       </Drawer.Navigator>
       <ShippedPacksInstallerOverlay />

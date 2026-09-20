@@ -1,10 +1,13 @@
 import type { MediaType } from '@keres/shared';
 import {
   DOCUMENT_PICKER_MIME_FILTERS,
+  base64ToBytes,
   extensionForMimeType,
   MEDIA_PICKER_MIME_FILTERS,
+  MEDIA_SNIFF_HEADER_BYTES,
   isSupportedMediaMimeType,
   mediaTypeForMimeType,
+  sniffMediaMimeType,
 } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
@@ -125,6 +128,62 @@ function resolveMimeType(asset: DocumentPicker.DocumentPickerAsset): string | un
   };
 
   return byExtension[extension];
+}
+
+/**
+ * Identifies the file from its first bytes when the picker and the file name say nothing
+ * usable.
+ *
+ * Only the header is read - the whole file is never loaded for this. An unreadable file yields
+ * nothing and the caller reports it as unsupported, exactly as if no sniffing existed.
+ */
+async function sniffAssetMimeType(
+  asset: DocumentPicker.DocumentPickerAsset,
+): Promise<string | undefined> {
+  try {
+    const header = isWeb
+      ? asset.file
+        ? await asset.file.slice(0, MEDIA_SNIFF_HEADER_BYTES).arrayBuffer()
+        : undefined
+      : await nativeHeaderBytes(asset.uri);
+    if (!header) {
+      return undefined;
+    }
+    const sniffed = sniffMediaMimeType(new Uint8Array(header));
+    return sniffed && isSupportedMediaMimeType(sniffed) ? sniffed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Reads a file's first bytes natively, retrying through the legacy module on failure. */
+async function nativeHeaderBytes(uri: string): Promise<ArrayBuffer | undefined> {
+  try {
+    return await new File(uri).slice(0, MEDIA_SNIFF_HEADER_BYTES).arrayBuffer();
+  } catch {
+    // Same retry as the hash fallback in `importAsset`: the provider URI can defeat either
+    // module, so the header comes from the legacy one when the new API cannot read it.
+  }
+  try {
+    const base64 = await LegacyFileSystem.readAsStringAsync(uri, {
+      encoding: 'base64',
+      position: 0,
+      length: MEDIA_SNIFF_HEADER_BYTES,
+    });
+    return base64ToBytes(base64).buffer as ArrayBuffer;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Hashes through the legacy module when the new API cannot read the picked URI. */
+async function legacyMd5(uri: string): Promise<string | undefined> {
+  try {
+    const info = await LegacyFileSystem.getInfoAsync(uri, { md5: true });
+    return info.exists && info.md5 ? info.md5 : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** The second of the video the grid thumbnail is taken from. */
@@ -266,12 +325,20 @@ export const mediaFileService = {
   /**
    * Abre o seletor do sistema restrito aos formatos suportados.
    *
+   * `copyToCacheDirectory` stays false on purpose: the staged copy lands in the host app's
+   * global cache directory, outside the experience sandbox, and inside Expo Go both
+   * file-system modules refuse to read it back ("isn't readable") - every mobile import
+   * failed on the hash, then on the copy. With the flag off the picker hands over the
+   * provider's `content://` URI instead, which both modules let through by design, and the
+   * import copies the bytes into the story folder immediately, so the transient provider
+   * grant is enough. (On iOS the picker still hands over an app-container file URL either way.)
+   *
    * Devolve `null` se a pessoa cancelar.
    */
   async pick(): Promise<DocumentPicker.DocumentPickerAsset[] | null> {
     const result = await DocumentPicker.getDocumentAsync({
       type: [...MEDIA_PICKER_MIME_FILTERS],
-      copyToCacheDirectory: true,
+      copyToCacheDirectory: false,
       multiple: true,
     });
 
@@ -284,7 +351,8 @@ export const mediaFileService = {
   async pickDocuments(): Promise<DocumentPicker.DocumentPickerAsset[] | null> {
     const result = await DocumentPicker.getDocumentAsync({
       type: [...DOCUMENT_PICKER_MIME_FILTERS],
-      copyToCacheDirectory: true,
+      // Off for the same sandbox reason as `pick()` (see above): the staged copy is unreadable.
+      copyToCacheDirectory: false,
       multiple: true,
     });
 
@@ -306,7 +374,13 @@ export const mediaFileService = {
     storyId: string,
     asset: DocumentPicker.DocumentPickerAsset,
   ): Promise<ImportedMedia> {
-    const mimeType = resolveMimeType(asset);
+    let mimeType = resolveMimeType(asset);
+    if (!mimeType) {
+      // The picker does not always report a mime type (Android answers null for providers it
+      // does not recognize) and names can arrive without an extension - the content itself is
+      // the last resort before giving up on the file.
+      mimeType = await sniffAssetMimeType(asset);
+    }
     const mediaType = mediaTypeForMimeType(mimeType);
 
     if (!mimeType || !mediaType) {
@@ -345,7 +419,17 @@ export const mediaFileService = {
     }
 
     const source = new File(asset.uri);
-    const hash = source.md5;
+    // The picked URI belongs to the provider (`content://` on Android, an app-container file
+    // on iOS), not to the story folder - either file-system module can fail reading it
+    // (a lost grant, a dead provider, a cloud timeout), so the hash and the copy each retry
+    // through the other module before the import gives up. Files the app owns (the story
+    // folder) never need the retry.
+    let hash: string | null | undefined = source.md5;
+    let copyWithLegacy = false;
+    if (!hash) {
+      copyWithLegacy = true;
+      hash = await legacyMd5(asset.uri);
+    }
     if (!hash) {
       throw new Error(`Could not compute a content hash for "${asset.name}".`);
     }
@@ -356,7 +440,15 @@ export const mediaFileService = {
     // If it already exists, the bytes are the same by definition of the addressing: re-copying would only
     // waste time and I/O.
     if (!destination.exists) {
-      await source.copy(destination);
+      if (copyWithLegacy) {
+        await LegacyFileSystem.copyAsync({ from: asset.uri, to: destination.uri });
+      } else {
+        try {
+          await source.copy(destination);
+        } catch {
+          await LegacyFileSystem.copyAsync({ from: asset.uri, to: destination.uri });
+        }
+      }
     }
 
     const thumbnailPath =

@@ -1,4 +1,5 @@
 import type { GalleryOwnerEntity } from '@keres/shared';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import type { GallerySelect } from '../db/schema';
@@ -20,6 +21,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
  */
 export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: GalleryOwnerEntity) {
   const drizzleDb = useDrizzle();
+  const navigation = useNavigation();
   const { selectedStory } = useStoryStore();
   const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
@@ -87,19 +89,27 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
   const importFromPicker = useCallback(
     async (picker: () => Promise<Awaited<ReturnType<typeof mediaFileService.pick>>>) => {
       if (!services || !storyId || !userId || !ownerId) return null;
-      const assets = await picker();
-      if (!assets) return null;
-      setImporting(true);
+      // The picker covers the app with a native activity: an open drawer would be revealed
+      // mid-transition on return, so it is put away on both sides of the flow. A no-op when
+      // already closed.
+      navigation.dispatch(DrawerActions.closeDrawer());
       try {
-        const summary = await importPickedMediaAssets(services.gallery, storyId, userId, assets);
-        await linkImported(summary.galleryIds);
-        await refresh();
-        return summary;
+        const assets = await picker();
+        if (!assets) return null;
+        setImporting(true);
+        try {
+          const summary = await importPickedMediaAssets(services.gallery, storyId, userId, assets);
+          await linkImported(summary.galleryIds);
+          await refresh();
+          return summary;
+        } finally {
+          setImporting(false);
+        }
       } finally {
-        setImporting(false);
+        navigation.dispatch(DrawerActions.closeDrawer());
       }
     },
-    [linkImported, ownerId, refresh, services, storyId, userId],
+    [linkImported, navigation, ownerId, refresh, services, storyId, userId],
   );
 
   const addPlayableMedia = useCallback(

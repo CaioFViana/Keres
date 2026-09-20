@@ -12,6 +12,7 @@ const mockBuildZipBytes = jest.fn();
 const mockDeliverExport = jest.fn();
 const mockDeliverZipExport = jest.fn();
 const mockPickFile = jest.fn();
+const mockDispatch = jest.fn();
 const mockSetTheme = jest.fn();
 const mockUserSettings = { userId: 'user-1' as string | null };
 const mockNotificationState = { showNotification: (...args: unknown[]) => mockNotify(...args) };
@@ -52,6 +53,8 @@ jest.mock('@react-navigation/native', () => {
         return typeof cleanup === 'function' ? cleanup : undefined;
       }, []);
     },
+    useNavigation: () => ({ dispatch: mockDispatch }),
+    DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },
   };
 });
 
@@ -289,6 +292,8 @@ describe('ImportExportScreen', () => {
     await view.findByText('import_story_choose_file');
     await fireEvent.press(view.getByText('import_story_choose_file'));
     await waitFor(() => expect(mockImportFullStory).toHaveBeenCalled());
+    // The drawer is put away before the picker covers the app and once it returns.
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'CLOSE_DRAWER' });
     expect(mockWriteDownloaded).toHaveBeenCalledWith(
       expect.any(String),
       'h1',

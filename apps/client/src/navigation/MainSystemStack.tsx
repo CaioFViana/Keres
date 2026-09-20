@@ -35,7 +35,11 @@ import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
-import { DRAWER_SWIPE_EDGE_WIDTH, DRAWER_SWIPE_MIN_DISTANCE } from './drawerInteraction';
+import {
+  DRAWER_SWIPE_EDGE_WIDTH,
+  DRAWER_SWIPE_MIN_DISTANCE,
+  drawerItemListeners,
+} from './drawerInteraction';
 import type { HelpStackParamList } from './HelpStack';
 import HelpStackNavigator from './HelpStack';
 import type { StoryDevicesStackParamList } from './StoryDevicesStack';
@@ -112,8 +116,10 @@ export type MainSystemDrawerParamList = {
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
   BoardsStack: NavigatorScreenParams<BoardStackParamList> | undefined;
   Settings: undefined;
-  StorySettings: { storyId: string };
-  StoryAnalysis: { storyId: string };
+  // Optional on purpose: the dashboard passes the story explicitly, but arriving straight
+  // from the drawer navigates with no param at all (both screens read `selectedStory`).
+  StorySettings: { storyId: string } | undefined;
+  StoryAnalysis: { storyId: string } | undefined;
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
   CustomizationStack: NavigatorScreenParams<CustomizationStackParamList> | undefined;
@@ -278,6 +284,7 @@ const MainSystemNavigator = () => {
               </Text>
             ),
           }}
+          listeners={drawerItemListeners('MainDashboard')}
         />
         <Drawer.Screen
           name="ArcContext"
@@ -313,6 +320,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('global_search_title'),
             drawerIcon: drawerIcon('search-outline'),
           }}
+          listeners={drawerItemListeners('GlobalSearch')}
         />
         <Drawer.Screen
           name="CharactersStack"
@@ -322,19 +330,7 @@ const MainSystemNavigator = () => {
             drawerLabel: term('Character', true),
             drawerIcon: drawerIcon('people-outline'),
           }}
-          listeners={({ navigation }) => ({
-            // The Drawer's default behaviour, when an item is tapped, restores the nested state exactly as it was
-            // (that is how tabs preserve navigation - it is intentional in most apps). Here we want the opposite:
-            // tapping "Characters" should always lead to the list, not to wherever the stack was left.
-            // `preventDefault` blocks that restoration, and navigating straight to the "Characters" route (the
-            // stack's root) makes the stack navigator discard everything above it - without depending on a separate
-            // global event and hoping the ListScreen is mounted in time to hear it.
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('CharactersStack', { screen: 'Characters' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('CharactersStack', 'Characters')}
         />
         <Drawer.Screen
           name="NarrativeElementsStack"
@@ -344,13 +340,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('narrative_elements_title'),
             drawerIcon: drawerIcon('book-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('NarrativeElementsStack', { screen: 'NarrativeElements' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('NarrativeElementsStack', 'NarrativeElements')}
         />
         <Drawer.Screen
           name="PlotsStack"
@@ -360,13 +350,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('plots_title'),
             drawerIcon: drawerIcon('git-branch-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('PlotsStack', { screen: 'Plots' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('PlotsStack', 'Plots')}
         />
         <Drawer.Screen
           name="LocationsStack"
@@ -376,13 +360,7 @@ const MainSystemNavigator = () => {
             drawerLabel: term('Location', true),
             drawerIcon: drawerIcon('map-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('LocationsStack', { screen: 'Locations' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('LocationsStack', 'Locations')}
         />
         <Drawer.Screen
           name="ItemsStack"
@@ -392,13 +370,7 @@ const MainSystemNavigator = () => {
             drawerLabel: term('Item', true),
             drawerIcon: drawerIcon('cube-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('ItemsStack', { screen: 'Items' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('ItemsStack', 'Items')}
         />
         <Drawer.Screen
           name="TagsStack"
@@ -408,13 +380,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('tags_title'),
             drawerIcon: drawerIcon('pricetag-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('TagsStack', { screen: 'Tags' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('TagsStack', 'Tags')}
         />
         <Drawer.Screen
           name="WorldRulesStack"
@@ -424,13 +390,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('world_title'),
             drawerIcon: drawerIcon('globe-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('WorldRulesStack', { screen: 'WorldIndex' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('WorldRulesStack', 'WorldIndex')}
         />
         <Drawer.Screen
           name="NotesStack"
@@ -440,13 +400,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('notes_title'),
             drawerIcon: drawerIcon('document-text-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('NotesStack', { screen: 'Notes' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('NotesStack', 'Notes')}
         />
         <Drawer.Screen
           name="GalleryStack"
@@ -456,13 +410,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('gallery_title'),
             drawerIcon: drawerIcon('images-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('GalleryStack', { screen: 'GalleryList' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('GalleryStack', 'GalleryList')}
         />
         <Drawer.Screen
           name="BoardsStack"
@@ -474,13 +422,7 @@ const MainSystemNavigator = () => {
               getEntityAppearance('Board').icon as keyof typeof Ionicons.glyphMap,
             ),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('BoardsStack', { screen: 'BoardList' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('BoardsStack', 'BoardList')}
         />
         <Drawer.Screen
           name="CustomizationStack"
@@ -490,13 +432,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('customization_title'),
             drawerIcon: drawerIcon('color-wand-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('CustomizationStack', { screen: 'CustomizationIndex' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('CustomizationStack', 'CustomizationIndex')}
         />
         <Drawer.Screen
           name="CommentsStack"
@@ -506,13 +442,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('comments_title'),
             drawerIcon: drawerIcon('chatbubbles-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('CommentsStack', { screen: 'CommentsList' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('CommentsStack', 'CommentsList')}
         />
         <Drawer.Screen
           name="OperationLogStack"
@@ -522,13 +452,7 @@ const MainSystemNavigator = () => {
             drawerLabel: t('operation_logs_title'),
             drawerIcon: drawerIcon('time-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('OperationLogStack', 'OperationLog')}
         />
         <Drawer.Screen
           name="StoryAnalysis"
@@ -537,6 +461,7 @@ const MainSystemNavigator = () => {
             title: t('story_analysis_title'),
             drawerIcon: drawerIcon('analytics-outline'),
           }}
+          listeners={drawerItemListeners('StoryAnalysis')}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"
@@ -552,13 +477,7 @@ const MainSystemNavigator = () => {
               overflow: 'hidden',
             },
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('StoryDevicesDrawer', { screen: 'DeviceIndex' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('StoryDevicesDrawer', 'DeviceIndex')}
         />
         <Drawer.Screen
           name="HelpDrawer"
@@ -568,18 +487,13 @@ const MainSystemNavigator = () => {
             drawerLabel: t('help_title'),
             drawerIcon: drawerIcon('help-circle-outline'),
           }}
-          listeners={({ navigation }) => ({
-            drawerItemPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('HelpDrawer', { screen: 'HelpIndex' });
-              navigation.closeDrawer();
-            },
-          })}
+          listeners={drawerItemListeners('HelpDrawer', 'HelpIndex')}
         />
         <Drawer.Screen
           name="StorySettings"
           component={StorySettingsScreen}
           options={{ title: t('story_settings_title'), drawerIcon: drawerIcon('settings-outline') }}
+          listeners={drawerItemListeners('StorySettings')}
         />
         <Drawer.Screen
           name="StorySelection"

@@ -3,7 +3,7 @@ import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -84,37 +84,45 @@ const GalleryListScreen = () => {
         return;
       }
 
-      let assets;
+      // The picker covers the app with a native activity: an open drawer would be revealed
+      // mid-transition on return, so it is put away on both sides of the flow. A no-op when
+      // already closed.
+      navigation.dispatch(DrawerActions.closeDrawer());
       try {
-        assets = await picker();
-      } catch (pickError) {
-        console.log('Media picker failed:', pickError);
-        showNotification(t('media_picker_failed'), 'error');
-        return;
-      }
+        let assets;
+        try {
+          assets = await picker();
+        } catch (pickError) {
+          console.log('Media picker failed:', pickError);
+          showNotification(t('media_picker_failed'), 'error');
+          return;
+        }
 
-      if (!assets) {
-        return;
-      }
+        if (!assets) {
+          return;
+        }
 
-      setImporting(true);
-      const galleryService = createGalleryService(db);
-      const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
-      setImporting(false);
+        setImporting(true);
+        const galleryService = createGalleryService(db);
+        const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
+        setImporting(false);
 
-      if (summary.added > 0) {
-        showNotification(t('media_added_successfully', { count: summary.added }), 'success');
-      }
-      if (summary.duplicates > 0) {
-        showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
-      }
-      if (summary.rejected > 0) {
-        showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
-      }
+        if (summary.added > 0) {
+          showNotification(t('media_added_successfully', { count: summary.added }), 'success');
+        }
+        if (summary.duplicates > 0) {
+          showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
+        }
+        if (summary.rejected > 0) {
+          showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
+        }
 
-      await refetch();
+        await refetch();
+      } finally {
+        navigation.dispatch(DrawerActions.closeDrawer());
+      }
     },
-    [storyId, userId, db, showNotification, t, refetch],
+    [storyId, userId, db, navigation, showNotification, t, refetch],
   );
 
   const handleAddLink = useCallback(

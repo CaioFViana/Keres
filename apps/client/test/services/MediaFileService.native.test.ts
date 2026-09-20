@@ -4,7 +4,14 @@
 jest.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 jest.mock('expo-document-picker', () => ({ getDocumentAsync: jest.fn() }));
 jest.mock('expo-file-system', () => {
-  type MockFileData = { exists?: boolean; md5?: string; size?: number; bytes?: Uint8Array };
+  type MockFileData = {
+    exists?: boolean;
+    md5?: string;
+    size?: number;
+    bytes?: Uint8Array;
+    copyThrows?: boolean;
+    sliceThrows?: boolean;
+  };
   type MockPathPart = string | { uri: string };
   const files = new Map<string, MockFileData>();
   const directories = new Map<string, boolean>();
@@ -69,6 +76,9 @@ jest.mock('expo-file-system', () => {
     }
 
     copy(destination: File) {
+      if (files.get(this.uri)?.copyThrows) {
+        throw new Error('denied');
+      }
       calls.copied.push([this.uri, destination.uri]);
       const source = files.get(this.uri) || {};
       files.set(destination.uri, { ...source, exists: true });
@@ -91,6 +101,16 @@ jest.mock('expo-file-system', () => {
     bytes() {
       return Promise.resolve(files.get(this.uri)?.bytes || new Uint8Array());
     }
+
+    slice(start?: number, end?: number) {
+      if (files.get(this.uri)?.sliceThrows) {
+        throw new Error('denied');
+      }
+      const all = files.get(this.uri)?.bytes || new Uint8Array();
+      // `Uint8Array.slice` copies, so the part owns a buffer of exactly its bytes.
+      const part = all.slice(start ?? 0, end ?? all.length);
+      return { arrayBuffer: () => Promise.resolve(part.buffer as ArrayBuffer) };
+    }
   }
 
   return {
@@ -100,7 +120,12 @@ jest.mock('expo-file-system', () => {
     __mock: { calls, directories, files },
   };
 });
-jest.mock('expo-file-system/legacy', () => ({ deleteAsync: jest.fn() }));
+jest.mock('expo-file-system/legacy', () => ({
+  deleteAsync: jest.fn(),
+  getInfoAsync: jest.fn(),
+  copyAsync: jest.fn(),
+  readAsStringAsync: jest.fn(),
+}));
 jest.mock('expo-video', () => ({ createVideoPlayer: jest.fn() }));
 jest.mock('expo-image-manipulator', () => ({
   ImageManipulator: { manipulate: jest.fn() },
@@ -135,7 +160,17 @@ const fsMock = (
         deletedDirectories: string[];
       };
       directories: Map<string, boolean>;
-      files: Map<string, { exists?: boolean; md5?: string; size?: number; bytes?: Uint8Array }>;
+      files: Map<
+        string,
+        {
+          exists?: boolean;
+          md5?: string;
+          size?: number;
+          bytes?: Uint8Array;
+          copyThrows?: boolean;
+          sliceThrows?: boolean;
+        }
+      >;
     };
   }
 ).__mock;
@@ -245,12 +280,130 @@ describe('MediaFileService on native storage', () => {
     await expect(mediaFileService.readBytes(path)).resolves.toEqual(new Uint8Array([1]));
   });
 
+  it('identifies an extensionless asset from its content when the picker says nothing', async () => {
+    const pngHeader = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]);
+    fsMock.files.set('file://picked/download', {
+      exists: true,
+      md5: 'sniffed-hash',
+      size: 9,
+      bytes: pngHeader,
+    });
+
+    const imported = await mediaFileService.importAsset('story', {
+      name: 'download',
+      uri: 'file://picked/download',
+      mimeType: null,
+      size: 9,
+    } as any);
+
+    expect(imported).toMatchObject({
+      mediaType: 'image',
+      mimeType: 'image/png',
+      hash: 'sniffed-hash',
+      localPath: 'file://documents/media/story/sniffed-hash.png',
+    });
+  });
+
+  it('still rejects when neither the name, the picker, nor the content identifies the file', async () => {
+    fsMock.files.set('file://picked/blob', {
+      exists: true,
+      md5: 'blob-hash',
+      size: 3,
+      bytes: new Uint8Array([1, 2, 3]),
+    });
+
+    await expect(
+      mediaFileService.importAsset('story', {
+        name: 'blob',
+        uri: 'file://picked/blob',
+        mimeType: null,
+      } as any),
+    ).rejects.toBeInstanceOf(UnsupportedMediaError);
+  });
+
+  it('hashes and copies through the legacy module when the sandbox hides the picked file', async () => {
+    // No `md5`: inside Expo Go the new API answers null for the picker's staged copy.
+    fsMock.files.set('file://picked/photo.jpg', { exists: true, size: 40 });
+    (LegacyFileSystem.getInfoAsync as jest.Mock).mockResolvedValue({
+      exists: true,
+      md5: 'legacy-hash',
+      size: 40,
+    });
+
+    const imported = await mediaFileService.importAsset('story', {
+      name: 'photo.jpg',
+      uri: 'file://picked/photo.jpg',
+      mimeType: 'image/jpeg',
+      size: 40,
+    } as any);
+
+    expect(imported).toMatchObject({
+      hash: 'legacy-hash',
+      localPath: 'file://documents/media/story/legacy-hash.jpg',
+    });
+    expect(LegacyFileSystem.getInfoAsync).toHaveBeenCalledWith('file://picked/photo.jpg', {
+      md5: true,
+    });
+    expect(LegacyFileSystem.copyAsync).toHaveBeenCalledWith({
+      from: 'file://picked/photo.jpg',
+      to: 'file://documents/media/story/legacy-hash.jpg',
+    });
+    expect(fsMock.calls.copied).toEqual([]);
+  });
+
+  it('retries a refused new-API copy through the legacy module', async () => {
+    fsMock.files.set('file://picked/photo.jpg', {
+      exists: true,
+      md5: 'photo-hash',
+      size: 40,
+      copyThrows: true,
+    });
+
+    const imported = await mediaFileService.importAsset('story', {
+      name: 'photo.jpg',
+      uri: 'file://picked/photo.jpg',
+      mimeType: 'image/jpeg',
+      size: 40,
+    } as any);
+
+    expect(imported.localPath).toBe('file://documents/media/story/photo-hash.jpg');
+    expect(LegacyFileSystem.copyAsync).toHaveBeenCalledWith({
+      from: 'file://picked/photo.jpg',
+      to: 'file://documents/media/story/photo-hash.jpg',
+    });
+  });
+
+  it('sniffs the header through the legacy module when slicing is refused', async () => {
+    fsMock.files.set('file://picked/download', {
+      exists: true,
+      md5: 'sniffed-hash',
+      size: 9,
+      sliceThrows: true,
+    });
+    (LegacyFileSystem.readAsStringAsync as jest.Mock).mockResolvedValue('iVBORw0KGgo=');
+
+    const imported = await mediaFileService.importAsset('story', {
+      name: 'download',
+      uri: 'file://picked/download',
+      mimeType: null,
+      size: 9,
+    } as any);
+
+    expect(imported).toMatchObject({ mediaType: 'image', mimeType: 'image/png' });
+    expect(LegacyFileSystem.readAsStringAsync).toHaveBeenCalledWith('file://picked/download', {
+      encoding: 'base64',
+      position: 0,
+      length: 128,
+    });
+  });
+
   it('refuses an asset without a name to guess from and one without a hash', async () => {
     await expect(
       mediaFileService.importAsset('story', { name: '', uri: 'file://picked/nameless' } as any),
     ).rejects.toBeInstanceOf(UnsupportedMediaError);
 
     fsMock.files.set('file://picked/hashless.png', { exists: true, size: 10 });
+    (LegacyFileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
     await expect(
       mediaFileService.importAsset('story', {
         name: 'hashless.png',

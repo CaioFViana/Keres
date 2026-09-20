@@ -3,6 +3,7 @@ import React from 'react';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
+const mockDispatch = jest.fn();
 const mockToggleFavorite = jest.fn();
 const mockRefetch = jest.fn();
 const mockShowNotification = jest.fn();
@@ -41,9 +42,11 @@ jest.mock('@react-navigation/native', () => {
     useNavigation: () => ({
       navigate: mockNavigate,
       goBack: mockGoBack,
+      dispatch: mockDispatch,
       getParent: () => ({ setOptions: jest.fn() }),
     }),
     useFocusEffect: (callback: () => void | (() => void)) => react.useEffect(callback, [callback]),
+    DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },
   };
 });
 jest.mock('@/src/hooks/useScreenHeader', () => ({
@@ -325,6 +328,8 @@ describe('GalleryListScreen', () => {
     );
     await waitFor(() => expect(mockRefetch).toHaveBeenCalled());
     expect(view.getByTestId('gallery-list-stub')).toBeTruthy();
+    // The drawer is put away before the picker covers the app and once it returns.
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'CLOSE_DRAWER' });
   });
 
   it('surfaces picker failures without importing', async () => {

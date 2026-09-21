@@ -98,6 +98,7 @@ const SuggestionUsageScreen = () => {
   }, [service, storyId, type, value]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for immediate feedback; the usages themselves arrive after `await`. The rule cannot verify across the callback boundary.
     load();
   }, [load]);
 

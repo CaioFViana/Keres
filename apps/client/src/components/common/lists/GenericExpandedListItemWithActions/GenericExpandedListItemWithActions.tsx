@@ -41,9 +41,13 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(initialExpanded);
   const isOpen = controlledIsExpanded ?? uncontrolledIsOpen;
 
-  React.useEffect(() => {
+  const [prevControlledIsExpanded, setPrevControlledIsExpanded] = useState(controlledIsExpanded);
+  const [prevInitialExpanded, setPrevInitialExpanded] = useState(initialExpanded);
+  if (controlledIsExpanded !== prevControlledIsExpanded || initialExpanded !== prevInitialExpanded) {
+    setPrevControlledIsExpanded(controlledIsExpanded);
+    setPrevInitialExpanded(initialExpanded);
     if (controlledIsExpanded === undefined && initialExpanded) setUncontrolledIsOpen(true);
-  }, [controlledIsExpanded, initialExpanded]);
+  }
 
   const toggleOpen = () => {
     const nextIsOpen = !isOpen;

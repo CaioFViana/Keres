@@ -51,7 +51,7 @@ jest.mock('@react-navigation/native', () => {
       React.useEffect(() => {
         const cleanup = callback();
         return typeof cleanup === 'function' ? cleanup : undefined;
-      }, []);
+      }, [callback]);
     },
     useNavigation: () => ({ dispatch: mockDispatch }),
     DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },

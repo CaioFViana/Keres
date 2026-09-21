@@ -121,6 +121,8 @@ const StoryCalendarFormScreen = () => {
    * Empty is kept as 1 rather than 0: every one of these is a divisor somewhere, and a zero would
    * make a year zero days long while the writer is still typing.
    */
+  const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
+
   const numberField = (
     key: 'daysPerWeek' | 'hoursPerDay' | 'minutesPerHour' | 'secondsPerMinute',
     label: string,
@@ -144,7 +146,6 @@ const StoryCalendarFormScreen = () => {
     </View>
   );
 
-  const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
   const styles = useMemo(
     () =>
       StyleSheet.create({

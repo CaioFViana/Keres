@@ -156,8 +156,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const orderedScenes = useMemo(() => {
     const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
     const colorsByChapter = buildChapterColors(chapters);
-    let previousChapterIndex: number | undefined;
-    return scenes
+    const sorted = scenes
       .filter((scene): scene is typeof scene & { chapterId: string } =>
         Boolean(scene.chapterId && chapterIds.includes(scene.chapterId)),
       )
@@ -165,23 +164,24 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         (a, b) =>
           (chapterById.get(a.chapterId)?.index ?? 0) - (chapterById.get(b.chapterId)?.index ?? 0) ||
           a.index - b.index,
-      )
-      .map((scene) => {
-        const chapterIndex = chapterById.get(scene.chapterId)?.index;
-        const hideGapBefore =
-          previousChapterIndex !== undefined &&
-          chapterIndex !== previousChapterIndex &&
-          chapterIndex !== previousChapterIndex + 1;
-        previousChapterIndex = chapterIndex;
-        return {
-          ...scene,
-          hideGapBefore,
-          chapterName: chapterById.get(scene.chapterId)?.name ?? t('common_na'),
-          chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
-          gapLabel: formatSceneGap(scene, t, { calendar }),
-          durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
-        };
-      });
+      );
+    return sorted.map((scene, position) => {
+      const chapterIndex = chapterById.get(scene.chapterId)?.index;
+      const previousChapterIndex =
+        position === 0 ? undefined : chapterById.get(sorted[position - 1]!.chapterId)?.index;
+      const hideGapBefore =
+        previousChapterIndex !== undefined &&
+        chapterIndex !== previousChapterIndex &&
+        chapterIndex !== previousChapterIndex + 1;
+      return {
+        ...scene,
+        hideGapBefore,
+        chapterName: chapterById.get(scene.chapterId)?.name ?? t('common_na'),
+        chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
+        gapLabel: formatSceneGap(scene, t, { calendar }),
+        durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
+      };
+    });
   }, [calendar, chapterIds, chapters, colors.border, scenes, t]);
   const chapterDurationLabels = useMemo(
     () =>

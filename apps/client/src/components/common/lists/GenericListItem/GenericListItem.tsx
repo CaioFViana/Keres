@@ -142,8 +142,10 @@ const GenericListItem: React.FC<GenericListItemProps> = ({
     (event: LayoutChangeEvent) => {
       const measuredHeight = event.nativeEvent.layout.height;
       if (contentHeight.value !== measuredHeight) {
+        // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
         contentHeight.value = measuredHeight;
         if (isOpen) {
+          // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
           animatedHeight.value = withTiming(contentHeight.value, { duration: 300 });
         }
       }

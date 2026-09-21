@@ -60,9 +60,16 @@ const StorySettingsScreen = () => {
 
   const applyStoryIdentity = identity.applyStoryIdentity;
 
-  useEffect(() => {
+  const [prevStoryId, setPrevStoryId] = useState<typeof storyId | null>(null);
+  if (storyId !== prevStoryId) {
+    setPrevStoryId(storyId);
     if (!storyId) {
       setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!storyId) {
       return;
     }
     const loadStory = async () => {

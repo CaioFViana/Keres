@@ -289,7 +289,9 @@ const StoryTimelineScreen = () => {
         <Text style={styles.message}>{t('story_timeline_no_scenes')}</Text>
       )}
       <View style={styles.controls}>
+        {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
         {(
+          // eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed.
           [
             ['add', () => canvas.current?.zoomBy(1.25)],
             ['remove', () => canvas.current?.zoomBy(0.8)],

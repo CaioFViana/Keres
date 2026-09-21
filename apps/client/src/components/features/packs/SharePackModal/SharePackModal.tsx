@@ -3,7 +3,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { PackVisibility } from '@keres/shared';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -57,12 +57,16 @@ const SharePackModal: React.FC<SharePackModalProps> = ({
    */
   const onlyServerId = servers.length === 1 ? servers[0].id : null;
 
-  useEffect(() => {
+  const [prevVisible, setPrevVisible] = useState<boolean | null>(null);
+  const [prevOnlyServerId, setPrevOnlyServerId] = useState<string | null | undefined>(undefined);
+  if (visible !== prevVisible || onlyServerId !== prevOnlyServerId) {
+    setPrevVisible(visible);
+    setPrevOnlyServerId(onlyServerId);
     // Private every time it opens, never the last answer: a pack going public is a deliberate act,
     // and inheriting that from the previous share would make it an accident.
     setVisibility('private');
     setServerId(onlyServerId);
-  }, [visible, onlyServerId]);
+  }
 
   const styles = StyleSheet.create({
     modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },

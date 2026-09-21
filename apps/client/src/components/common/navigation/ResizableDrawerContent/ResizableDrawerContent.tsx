@@ -25,9 +25,11 @@ export function useResizableDrawerWidth(viewportWidth: number) {
   );
   const [drawerWidth, setDrawerWidth] = useState(DRAWER_DEFAULT_WIDTH);
 
-  useEffect(() => {
+  const [prevMaximumWidth, setPrevMaximumWidth] = useState(maximumWidth);
+  if (maximumWidth !== prevMaximumWidth) {
+    setPrevMaximumWidth(maximumWidth);
     setDrawerWidth((current) => clamp(current, DRAWER_MIN_WIDTH, maximumWidth));
-  }, [maximumWidth]);
+  }
 
   return { drawerWidth, setDrawerWidth, maximumWidth };
 }
@@ -90,6 +92,7 @@ const ResizableDrawerContent: React.FC<ResizableDrawerContentProps> = ({
 
   const panResponder = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponder: () => resizable,
         onMoveShouldSetPanResponder: (_, gestureState) =>

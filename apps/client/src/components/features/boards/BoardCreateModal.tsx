@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
@@ -30,12 +30,26 @@ const BoardCreateModal: React.FC<Props> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  useEffect(() => {
+  // Only the two fields are used, and `initialValues` is a fresh object per render of
+  // whoever owns it: tracking it by identity would loop forever.
+  const initialName = initialValues?.name ?? '';
+  const initialDescription = initialValues?.description ?? '';
+  const [prevInitialName, setPrevInitialName] = useState<string | null>(null);
+  const [prevInitialDescription, setPrevInitialDescription] = useState<string | null>(null);
+  const [prevVisible, setPrevVisible] = useState<boolean | null>(null);
+  if (
+    visible !== prevVisible ||
+    initialName !== prevInitialName ||
+    initialDescription !== prevInitialDescription
+  ) {
+    setPrevVisible(visible);
+    setPrevInitialName(initialName);
+    setPrevInitialDescription(initialDescription);
     if (visible) {
-      setName(initialValues?.name ?? '');
-      setDescription(initialValues?.description ?? '');
+      setName(initialName);
+      setDescription(initialDescription);
     }
-  }, [initialValues, visible]);
+  }
 
   const styles = StyleSheet.create({
     sheet: {

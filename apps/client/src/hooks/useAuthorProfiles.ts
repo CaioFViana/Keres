@@ -16,10 +16,20 @@ export function useAuthorProfiles(
   const [profiles, setProfiles] = useState<Record<string, ResolvedUserProfile>>({});
   const idsKey = [...userIds].sort().join(',');
 
+  const [prevEnabled, setPrevEnabled] = useState(enabled);
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevIdsKey, setPrevIdsKey] = useState(idsKey);
+  if (enabled !== prevEnabled || storyId !== prevStoryId || idsKey !== prevIdsKey) {
+    setPrevEnabled(enabled);
+    setPrevStoryId(storyId);
+    setPrevIdsKey(idsKey);
+    if (enabled && (!storyId || !idsKey)) {
+      setProfiles({});
+    }
+  }
+
   useEffect(() => {
     if (!enabled || !storyId || !idsKey) {
-      if (!enabled) return;
-      setProfiles({});
       return;
     }
     let cancelled = false;

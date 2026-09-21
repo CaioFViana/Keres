@@ -62,19 +62,12 @@ const LocationMapNodeView: React.FC<Props> = ({
   const destinationHoldHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showDestinationHoldHint, setShowDestinationHoldHint] = useState(false);
   const nodeId = useRef(node.id);
-  nodeId.current = node.id;
   const destinationMapId = useRef(node.destinationMapId);
-  destinationMapId.current = node.destinationMapId;
   const position = useRef({ x: node.x, y: node.y });
-  position.current = { x: node.x, y: node.y };
   const scaleRef = useRef(scale);
-  scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
-  layoutEditingRef.current = layoutEditing;
   const connectionModeRef = useRef(connectionMode);
-  connectionModeRef.current = connectionMode;
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const handlers = useRef({
     onSelect,
     onMove,
@@ -88,19 +81,30 @@ const LocationMapNodeView: React.FC<Props> = ({
     onConnectionEnd,
     onConnectionCancel,
   });
-  handlers.current = {
-    onSelect,
-    onMove,
-    onDragStart,
-    onDragEnd,
-    onBringToFront,
-    onSendToBack,
-    onOpenDestination,
-    onConnectionStart,
-    onConnectionMove,
-    onConnectionEnd,
-    onConnectionCancel,
-  };
+  useEffect(() => {
+    // Latest-ref sync for the responder below: every reader runs on gestures, after effects
+    // have flushed. No dependency array - the sync unconditionally followed every render.
+    nodeId.current = node.id;
+    destinationMapId.current = node.destinationMapId;
+    position.current = { x: node.x, y: node.y };
+    scaleRef.current = scale;
+    layoutEditingRef.current = layoutEditing;
+    connectionModeRef.current = connectionMode;
+    selectedRef.current = selected;
+    handlers.current = {
+      onSelect,
+      onMove,
+      onDragStart,
+      onDragEnd,
+      onBringToFront,
+      onSendToBack,
+      onOpenDestination,
+      onConnectionStart,
+      onConnectionMove,
+      onConnectionEnd,
+      onConnectionCancel,
+    };
+  });
 
   const clearDestinationHoldHint = () => {
     if (destinationHoldHintTimer.current !== null) {
@@ -119,6 +123,7 @@ const LocationMapNodeView: React.FC<Props> = ({
 
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
@@ -136,6 +141,7 @@ const LocationMapNodeView: React.FC<Props> = ({
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
           dragging.current = false;
+          // eslint-disable-next-line react-hooks/purity -- runs only when the gesture grants; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
           pressedAt.current = Date.now();
           origin.current = { x: position.current.x, y: position.current.y };
           if (connectionModeRef.current) handlers.current.onConnectionStart?.(nodeId.current);
@@ -194,6 +200,7 @@ const LocationMapNodeView: React.FC<Props> = ({
             // action that changes maps, which prevents an accidental map switch while editing.
             if (
               destinationMapId.current &&
+              // eslint-disable-next-line react-hooks/purity -- runs only when the gesture releases; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
               Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION
             )
               handlers.current.onOpenDestination?.(nodeId.current);
@@ -216,7 +223,11 @@ const LocationMapNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  useEffect(() => {
+    // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
+    // tracks the node's committed position. Readers are gesture handlers (post-commit).
+    if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  }, [node.x, node.y]);
 
   const styles = useMemo(
     () =>

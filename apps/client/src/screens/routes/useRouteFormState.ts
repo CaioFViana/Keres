@@ -38,9 +38,16 @@ export function useRouteFormState({ routeId, storyId, routeServiceRef }: UseRout
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null);
   const isEditing = !!routeId;
 
-  useEffect(() => {
+  const [prevRouteId, setPrevRouteId] = useState(routeId);
+  if (routeId !== prevRouteId) {
+    setPrevRouteId(routeId);
     if (!routeId) {
       setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!routeId) {
       return;
     }
     if (!routeServiceRef.current) {

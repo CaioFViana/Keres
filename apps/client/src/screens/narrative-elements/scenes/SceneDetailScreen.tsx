@@ -507,6 +507,7 @@ const SceneDetailScreen = () => {
   }, [scene?.storyId, scene?.body, sceneId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `refreshBodyDraftFlag` clears synchronously only when no scene is loaded; everything else waits for `await`. The rule cannot verify across the callback boundary.
     void refreshBodyDraftFlag();
   }, [refreshBodyDraftFlag]);
 

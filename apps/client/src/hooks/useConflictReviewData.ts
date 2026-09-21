@@ -18,12 +18,19 @@ export function useConflictReviewData(conflicts: PendingConflict[]) {
   const [snapshots, setSnapshots] = useState<Map<string, Record<string, any>>>(new Map());
   const [names, setNames] = useState<Map<string, string>>(new Map());
 
+  const [prevConflicts, setPrevConflicts] = useState(conflicts);
+  if (conflicts !== prevConflicts) {
+    setPrevConflicts(conflicts);
+    if (collectConflictEntityRefs(conflicts).length === 0) {
+      setSnapshots(new Map());
+      setNames(new Map());
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
     const snapshotRefs = collectConflictEntityRefs(conflicts);
     if (snapshotRefs.length === 0) {
-      setSnapshots(new Map());
-      setNames(new Map());
       return;
     }
     (async () => {

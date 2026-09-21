@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FlatList,
@@ -89,9 +89,13 @@ const ManuscriptScreen = () => {
   );
 
   const { matches, total } = useMemo(() => findManuscriptMatches(sections, query), [sections, query]);
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query);
+  const [prevSections, setPrevSections] = useState(sections);
+  if (query !== prevQuery || sections !== prevSections) {
+    setPrevQuery(query);
+    setPrevSections(sections);
     setOrdinal(0);
-  }, [query, sections]);
+  }
 
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
   const jumpToOrdinal = useCallback(

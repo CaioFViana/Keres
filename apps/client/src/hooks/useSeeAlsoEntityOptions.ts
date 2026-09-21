@@ -113,6 +113,7 @@ export function useSeeAlsoEntityOptions(
   }, [db, storyId, excludeEntityType, excludeEntityId, t, label]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` clears synchronously only when no story is selected (and sets loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
     load();
   }, [load]);
 

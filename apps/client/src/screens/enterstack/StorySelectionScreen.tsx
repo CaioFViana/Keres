@@ -45,11 +45,11 @@ const StorySelectionScreen = () => {
   const navigation = useNavigation<StorySelectionScreenNavigationProp>();
   const { colors, setTheme } = useTheme();
   const drizzleClient = useDrizzle();
-  const storyService = useRef(createStoryService(drizzleClient)).current;
-  const storyContentMetricsService = useRef(
+  const [storyService] = useState(() => createStoryService(drizzleClient));
+  const [storyContentMetricsService] = useState(() =>
     createStoryContentMetricsService(drizzleClient),
-  ).current;
-  const serverService = useRef(createServerService(drizzleClient)).current;
+  );
+  const [serverService] = useState(() => createServerService(drizzleClient));
   const { setSelectedStory } = useStoryStore();
   const { stories, fetchStories, updateStoryFavoriteStatus } = useStoryListStore();
   const { t } = useTranslation();
@@ -118,6 +118,7 @@ const StorySelectionScreen = () => {
     if (isFocused) {
       fetchStoriesData();
       fetchSummary();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchServerNames` only reaches setState after `await`; the rule cannot verify across the callback boundary.
       fetchServerNames();
       setTheme('default');
     }

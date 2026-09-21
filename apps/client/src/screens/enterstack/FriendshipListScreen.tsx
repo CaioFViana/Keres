@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -41,8 +41,8 @@ const FriendshipListScreen = () => {
   const drizzleClient = useDrizzle();
   // Stable references: recreating these every render would change their identity, which sits
   // in fetchFriendshipsAndServers' dependency array and would re-subscribe/re-run on every render.
-  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
-  const serverService = useRef(createServerService(drizzleClient)).current;
+  const [friendshipService] = useState(() => createFriendshipService(drizzleClient));
+  const [serverService] = useState(() => createServerService(drizzleClient));
   const { userId: localUserId } = useUserSettingsStore(); // Renamed userId to localUserId
   const { showNotification } = useNotificationStore();
 

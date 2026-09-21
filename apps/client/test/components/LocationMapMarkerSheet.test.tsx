@@ -21,7 +21,9 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) =>
 jest.mock(
   '../../src/components/layout/ResponsiveModal/ResponsiveModal',
   () =>
-    ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    function MockResponsiveModal({ children }: { children: React.ReactNode }) {
+      return <>{children}</>;
+    },
 );
 jest.mock('../../src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');

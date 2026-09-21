@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { Notification } from '../../../../state/notificationStore';
 import { useNotificationStore } from '../../../../state/notificationStore';
@@ -15,8 +15,8 @@ interface NotificationItemProps {
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, laneIndex }) => {
   const { colors } = useTheme();
   const { clearNotificationLane } = useNotificationStore();
-  const slideAnim = useRef(new Animated.Value(width)).current; // Initial position off-screen right
-  const progressBarAnim = useRef(new Animated.Value(0)).current; // Initial progress bar width (0 to 1 for percentage)
+  const [slideAnim] = useState(() => new Animated.Value(width)); // Initial position off-screen right
+  const [progressBarAnim] = useState(() => new Animated.Value(0)); // Initial progress bar width (0 to 1 for percentage)
 
   useEffect(() => {
     // Reset animations

@@ -77,9 +77,16 @@ export function useStorySchemaFieldFormState({
   );
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isEditing) {
+  const [prevInitialFieldId, setPrevInitialFieldId] = useState(initialFieldId);
+  if (initialFieldId !== prevInitialFieldId) {
+    setPrevInitialFieldId(initialFieldId);
+    if (!initialFieldId) {
       setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!initialFieldId) {
       return;
     }
     (async () => {
@@ -120,7 +127,7 @@ export function useStorySchemaFieldFormState({
         setLoading(false);
       }
     })();
-  }, [isEditing, initialFieldId, storySchemaFieldServiceRef, onFieldMissing, t]);
+  }, [initialFieldId, storySchemaFieldServiceRef, onFieldMissing, t]);
 
   const handleNameChange = (text: string) => {
     setName(text);

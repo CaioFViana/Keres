@@ -144,6 +144,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   }, [storyId, galleryId, galleryService, relationService, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets error/loading synchronously only when no story is selected (and loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
     load();
   }, [load]);
 

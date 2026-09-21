@@ -10,7 +10,7 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { themeDisplayOptions } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
@@ -40,9 +40,13 @@ const StoryAppearanceScreen = () => {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const [prevSelectedStoryId, setPrevSelectedStoryId] = useState(selectedStory?.id);
+  const [prevSelectedStoryTheme, setPrevSelectedStoryTheme] = useState(selectedStory?.theme);
+  if (selectedStory?.id !== prevSelectedStoryId || selectedStory?.theme !== prevSelectedStoryTheme) {
+    setPrevSelectedStoryId(selectedStory?.id);
+    setPrevSelectedStoryTheme(selectedStory?.theme);
     setThemeName(selectedStory?.theme || 'default');
-  }, [selectedStory?.id, selectedStory?.theme]);
+  }
 
   useScreenHeader({
     target: 'parent',

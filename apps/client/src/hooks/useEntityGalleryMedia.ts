@@ -56,6 +56,7 @@ export function useEntityGalleryMedia(ownerId: string | undefined, ownerType: Ga
   }, [services, storyId, ownerId, ownerType]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `refresh` clears synchronously only when services/ids are missing (and sets loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
     refresh();
   }, [refresh]);
 

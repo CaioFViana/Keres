@@ -4,7 +4,7 @@ import { getOnColorForFill } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -75,7 +75,7 @@ const GlobalSearchScreen = () => {
   const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
 
-  const globalSearchService = useRef(createGlobalSearchService(drizzleDb)).current;
+  const [globalSearchService] = useState(() => createGlobalSearchService(drizzleDb));
 
   const [query, setQuery] = useState('');
   const [committedQuery, setCommittedQuery] = useState('');
@@ -95,17 +95,37 @@ const GlobalSearchScreen = () => {
     };
   }, [query, debouncedSetCommittedQuery]);
 
+  const [prevCommittedQuery, setPrevCommittedQuery] = useState(committedQuery);
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevUserId, setPrevUserId] = useState(userId);
+  const [prevGlobalSearchService, setPrevGlobalSearchService] = useState(globalSearchService);
+  if (
+    committedQuery !== prevCommittedQuery ||
+    storyId !== prevStoryId ||
+    userId !== prevUserId ||
+    globalSearchService !== prevGlobalSearchService
+  ) {
+    setPrevCommittedQuery(committedQuery);
+    setPrevStoryId(storyId);
+    setPrevUserId(userId);
+    setPrevGlobalSearchService(globalSearchService);
+    const trimmed = committedQuery.trim();
+    if (!storyId || !userId || trimmed.length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
     const trimmed = committedQuery.trim();
     if (!storyId || !userId || trimmed.length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     globalSearchService
       .searchAllEntities(storyId, trimmed, userId)
       .then((found) => {

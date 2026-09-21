@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -55,17 +55,11 @@ const LocationMapImageView: React.FC<Props> = ({
   const origin = useRef({ x: image.x, y: image.y });
   const dragging = useRef(false);
   const imageId = useRef(image.id);
-  imageId.current = image.id;
   const position = useRef({ x: image.x, y: image.y });
-  position.current = { x: image.x, y: image.y };
   const scaleRef = useRef(scale);
-  scaleRef.current = scale;
   const lockedRef = useRef(locked);
-  lockedRef.current = locked;
   const layoutEditingRef = useRef(layoutEditing);
-  layoutEditingRef.current = layoutEditing;
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const handlers = useRef({
     onSelect,
     onMove,
@@ -77,20 +71,31 @@ const LocationMapImageView: React.FC<Props> = ({
     onToggleLock,
     onRemove,
   });
-  handlers.current = {
-    onSelect,
-    onMove,
-    onResize,
-    onDragStart,
-    onDragEnd,
-    onBringToFront,
-    onSendToBack,
-    onToggleLock,
-    onRemove,
-  };
+  useEffect(() => {
+    // Latest-ref sync for the responders below: every reader runs on gestures, after effects
+    // have flushed. No dependency array - the sync unconditionally followed every render.
+    imageId.current = image.id;
+    position.current = { x: image.x, y: image.y };
+    scaleRef.current = scale;
+    lockedRef.current = locked;
+    layoutEditingRef.current = layoutEditing;
+    selectedRef.current = selected;
+    handlers.current = {
+      onSelect,
+      onMove,
+      onResize,
+      onDragStart,
+      onDragEnd,
+      onBringToFront,
+      onSendToBack,
+      onToggleLock,
+      onRemove,
+    };
+  });
 
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
@@ -149,13 +154,20 @@ const LocationMapImageView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current) origin.current = { x: image.x, y: image.y };
+  useEffect(() => {
+    // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
+    // tracks the image's committed position. Readers are gesture handlers (post-commit).
+    if (!dragging.current) origin.current = { x: image.x, y: image.y };
+  }, [image.x, image.y]);
 
   const sizeRef = useRef({ width: image.width, height: image.height });
-  sizeRef.current = { width: image.width, height: image.height };
-  const resizeOrigin = useRef(sizeRef.current);
+  useEffect(() => {
+    sizeRef.current = { width: image.width, height: image.height };
+  }, [image.width, image.height]);
+  const resizeOrigin = useRef({ width: image.width, height: image.height });
   const resizePan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponder: () => layoutEditing,
         onMoveShouldSetPanResponder: () => layoutEditing,

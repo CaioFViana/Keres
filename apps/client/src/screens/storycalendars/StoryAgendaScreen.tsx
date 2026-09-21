@@ -16,7 +16,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -94,18 +94,17 @@ const StoryAgendaScreen = () => {
 
   // Opens on the month holding the first thing that happens, not on year one. A calendar without
   // an epoch is still browseable; begin it at its own year one rather than hiding its viewer.
-  useEffect(() => {
-    if (cursor !== null) return;
+  if (cursor === null) {
     if (entries.length > 0) {
       setCursor(entries[0].dayNumber);
-      return;
+    } else {
+      setCursor(
+        definition
+          ? partsToDayNumber(definition, { year: 1, month: 1, day: 1 })
+          : gregorianDayNumber({ year: 1, month: 1, day: 1 }),
+      );
     }
-    setCursor(
-      definition
-        ? partsToDayNumber(definition, { year: 1, month: 1, day: 1 })
-        : gregorianDayNumber({ year: 1, month: 1, day: 1 }),
-    );
-  }, [cursor, definition, entries]);
+  }
 
   const byDay = useMemo(() => {
     const map = new Map<number, typeof entries>();

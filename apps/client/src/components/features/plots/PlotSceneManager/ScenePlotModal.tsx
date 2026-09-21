@@ -5,7 +5,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { PlotScene } from '@keres/shared/entities/PlotScene';
 import { PLOT_SCENE_NOTE_MAX_LENGTH } from '@keres/shared/entities/PlotScene';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -43,11 +43,17 @@ const ScenePlotModal: React.FC<ScenePlotModalProps> = ({
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState<{ sceneId?: string; note?: string }>({});
 
-  useEffect(() => {
+  const [prevInitialRelation, setPrevInitialRelation] = useState<
+    typeof initialRelation | undefined
+  >(undefined);
+  const [prevIsVisible, setPrevIsVisible] = useState<boolean | null>(null);
+  if (initialRelation !== prevInitialRelation || isVisible !== prevIsVisible) {
+    setPrevInitialRelation(initialRelation);
+    setPrevIsVisible(isVisible);
     setSceneId(initialRelation?.sceneId ?? null);
     setNote(initialRelation?.note ?? '');
     setErrors({});
-  }, [initialRelation, isVisible]);
+  }
 
   const selectableScenes = useMemo(
     () =>

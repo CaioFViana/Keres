@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -99,9 +99,13 @@ const StoryAnalysisScreen = () => {
   const [hasRunFull, setHasRunFull] = useState(selectedStory?.type !== 'branching');
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
+  const [prevCompletenessChecks, setPrevCompletenessChecks] = useState(
+    selectedStory?.completenessChecks,
+  );
+  if (selectedStory?.completenessChecks !== prevCompletenessChecks) {
+    setPrevCompletenessChecks(selectedStory?.completenessChecks);
     setCompletenessChecks(selectedStory?.completenessChecks ?? false);
-  }, [selectedStory?.completenessChecks]);
+  }
 
   const loadCheapReport = useCallback(async () => {
     if (!storyId) return;

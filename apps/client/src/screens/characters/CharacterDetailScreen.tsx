@@ -376,6 +376,7 @@ const CharacterDetailScreen = () => {
 
   useEffect(() => {
     if (character) {
+      /* eslint-disable react-hooks/set-state-in-effect -- each fetch clears synchronously only when its service/data is missing and otherwise sets after `await`; the rule cannot verify across the callback boundary. */
       fetchRelationsForCharacter();
       fetchAllCharactersInStory(); // Fetch all characters here
       fetchScenesForCharacter(); // Fetch character scene relations
@@ -383,6 +384,7 @@ const CharacterDetailScreen = () => {
       fetchAllItemsInStory(); // Fetch all items
       fetchAllItemJourneysInStory(); // Fetch all item journeys
       fetchAllLocationsInStory(); // Fetch all locations
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [
     character,
@@ -400,6 +402,7 @@ const CharacterDetailScreen = () => {
     handleDeleteRelation,
     handleSaveCharacterScene,
     handleDeleteCharacterScene,
+  // eslint-disable-next-line react-hooks/refs -- the factory only closes over the service refs for its async event handlers; nothing is read during the call.
   } = createCharacterDetailMutations({
     characterRelationServiceRef,
     characterSceneServiceRef,

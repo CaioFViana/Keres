@@ -38,12 +38,15 @@ export function usePlotFormState({ plotId, storyId, plotServiceRef }: UsePlotFor
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null);
   const isEditing = !!plotId;
 
-  useEffect(() => {
-    if (!isEditing) {
+  const [prevPlotId, setPrevPlotId] = useState(plotId);
+  if (plotId !== prevPlotId) {
+    setPrevPlotId(plotId);
+    if (!plotId) {
       setLoading(false);
-      return;
     }
+  }
 
+  useEffect(() => {
     const loadPlot = async () => {
       if (!plotServiceRef.current || !plotId) {
         setLoading(false);
@@ -64,7 +67,7 @@ export function usePlotFormState({ plotId, storyId, plotServiceRef }: UsePlotFor
       }
     };
     void loadPlot();
-  }, [isEditing, plotId, plotServiceRef]);
+  }, [plotId, plotServiceRef]);
 
   const restoreDraftFields = useCallback((fields: PlotFormDraftFields) => {
     if (!isPlotFormDraftFields(fields)) {

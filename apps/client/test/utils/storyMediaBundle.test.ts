@@ -4,7 +4,7 @@ import {
 } from '@keres/shared';
 import { File } from 'expo-file-system';
 import { mediaFileService } from '../../src/services/MediaFileService';
-import { StoryImportError } from '../../src/utils/StoryImportError';
+import type { StoryImportError } from '../../src/utils/StoryImportError';
 import { buildStoryZipBytes, extractStoryZip } from '../../src/utils/storyMediaBundle';
 
 jest.mock('../../src/services/MediaFileService', () => ({

@@ -29,18 +29,25 @@ module.exports = defineConfig([
         },
       ],
       /**
-       * React Hooks v6 rules, new as errors in eslint-config-expo 57: 313 findings on code
-       * the SDK 55 gate accepted (refs-during-render in animation code, setState-in-effect
-       * data fetching, manual memoization the compiler would own). Each fix is a
-       * behavior-touching refactor that needs device verification, so they land here as
-       * warnings for gradual adoption instead of blocking the SDK 57 upgrade. Revisit and
-       * re-tighten rule by rule; do not add new violations.
+       * React Hooks v6 rules, new as errors in eslint-config-expo 57 (313 findings on code
+       * the SDK 55 gate accepted). All five were revisited and re-tightened:
+       *
+       * - refs / set-state-in-effect / immutability / purity are back at error: every
+       *   finding was either refactored (render-adjust sync, useMemo services, index
+       *   lookbacks) or suppressed per line with a justification the rule cannot verify
+       *   (async-callback boundaries, reanimated shared values, gesture-only responders).
+       * - preserve-manual-memoization stays off, deliberately: without the React Compiler
+       *   in the toolchain it only asks to pessimize already-optimal property-level deps
+       *   (`[story?.id]` -> `[story]`, recreating callbacks on every field change). The one
+       *   genuine ordering bug it surfaced (inputStyles used before declaration in
+       *   StoryCalendarFormScreen) was fixed by moving the memo above its user.
+       * Do not add new violations.
        */
-      'react-hooks/refs': 'warn',
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/preserve-manual-memoization': 'warn',
-      'react-hooks/immutability': 'warn',
-      'react-hooks/purity': 'warn',
+      'react-hooks/refs': 'error',
+      'react-hooks/set-state-in-effect': 'error',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/immutability': 'error',
+      'react-hooks/purity': 'error',
     },
   },
 ]);

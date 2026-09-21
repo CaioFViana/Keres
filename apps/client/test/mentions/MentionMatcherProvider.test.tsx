@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react-native';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { Text } from 'react-native';
 
 jest.mock('drizzle-orm', () => ({
@@ -169,7 +169,10 @@ it('unsubscribes on unmount', async () => {
 it('exposes the shared empty matcher while disabled', async () => {
   let matcher: unknown;
   const Capture = () => {
-    matcher = useContext(MentionMatcherContext);
+    const captured = useContext(MentionMatcherContext);
+    useEffect(() => {
+      matcher = captured;
+    }, [captured]);
     return null;
   };
   (useStoryStore as unknown as jest.Mock).mockImplementation((selector: any) =>

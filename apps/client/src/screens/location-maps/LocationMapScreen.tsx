@@ -141,6 +141,7 @@ const LocationMapScreen = () => {
     }
   }, [db, mapId, showNotification, storyId, t]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void load();
   }, [load]);
   useEffect(() => {
@@ -264,9 +265,16 @@ const LocationMapScreen = () => {
     [content.nodes, selectedNodeId],
   );
 
+  const [prevDb, setPrevDb] = useState(db);
+  const [prevSelectedNode, setPrevSelectedNode] = useState(selectedNode);
+  if (db !== prevDb || selectedNode !== prevSelectedNode) {
+    setPrevDb(db);
+    setPrevSelectedNode(selectedNode);
+    setSelectedNodeSummary(null);
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setSelectedNodeSummary(null);
     if (!selectedNode) return;
     (async () => {
       const summary = await loadBoardEntitySummary(db, 'Location', selectedNode.locationId);

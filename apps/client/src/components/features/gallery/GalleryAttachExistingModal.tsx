@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { MediaType } from '@keres/shared';
 import { Image } from 'expo-image';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -99,12 +99,14 @@ const GalleryAttachExistingModal: React.FC<Props> = ({
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  useEffect(() => {
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible) {
       setSearch('');
       setSelectedIds([]);
     }
-  }, [visible]);
+  }
 
   const visibleMedia = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase();

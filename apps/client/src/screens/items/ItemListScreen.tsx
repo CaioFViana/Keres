@@ -96,6 +96,7 @@ const ItemListScreen = () => {
   }, [drizzleDb, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadJourneys` only reaches setState after `await`; the rule cannot verify across the callback boundary.
     loadJourneys();
   }, [loadJourneys]);
 
@@ -109,6 +110,7 @@ const ItemListScreen = () => {
   }, [drizzleDb, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadCharacterNames` clears synchronously only when db/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadCharacterNames();
   }, [loadCharacterNames]);
   useEffect(() => {
@@ -158,6 +160,7 @@ const ItemListScreen = () => {
   }, [drizzleDb, items, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadTags` clears synchronously only when db/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadTags();
   }, [loadTags]);
 

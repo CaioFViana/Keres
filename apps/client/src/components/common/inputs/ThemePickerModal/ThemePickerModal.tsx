@@ -2,7 +2,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { themeDisplayOptions, themes } from '@keres/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@/src/theme';
@@ -36,11 +36,15 @@ const ThemePickerModal: React.FC<ThemePickerModalProps> = ({
   const savedThemeName = value || 'default';
   const [draftThemeName, setDraftThemeName] = useState(savedThemeName);
 
-  useEffect(() => {
+  const [prevSavedThemeName, setPrevSavedThemeName] = useState(savedThemeName);
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible || savedThemeName !== prevSavedThemeName) {
+    setPrevVisible(visible);
+    setPrevSavedThemeName(savedThemeName);
     if (visible) {
       setDraftThemeName(savedThemeName);
     }
-  }, [savedThemeName, visible]);
+  }
 
   const handleClose = () => {
     onPreview(savedThemeName);

@@ -270,8 +270,10 @@ const NoteDetailScreen = () => {
 
   useEffect(() => {
     if (note) {
+      /* eslint-disable react-hooks/set-state-in-effect -- `fetchTagsForNote` clears synchronously only when its service/data is missing and `processNoteRelations` only reaches setState after `await`; the rule cannot verify across the callback boundary. */
       fetchTagsForNote();
       processNoteRelations(); // Process relations after they are fetched
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [note, fetchTagsForNote, processNoteRelations]);
 

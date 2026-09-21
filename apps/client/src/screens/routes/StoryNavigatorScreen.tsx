@@ -15,7 +15,7 @@ import {
 } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -97,15 +97,18 @@ export default function StoryNavigatorScreen() {
     },
     [effectMessages, sceneEffects, scenes, startSceneId, t],
   );
-  useEffect(() => {
-    if (!startSceneId) {
-      const first = scenes.find((scene) => scene.isStart)?.id ?? scenes[0]?.id ?? null;
+  // Default start scene: `scenes` and `reset` have unstable identities (fresh references per
+  // render), so tracking them with previous-value state would loop forever. The latches below
+  // only act while their target is still unset, and each firing resolves its own latch.
+  if (!startSceneId) {
+    const first = scenes.find((scene) => scene.isStart)?.id ?? scenes[0]?.id ?? null;
+    if (first !== startSceneId) {
       setStartSceneId(first);
     }
-  }, [scenes, startSceneId]);
-  useEffect(() => {
-    if (startSceneId && !currentSceneId) reset(startSceneId);
-  }, [currentSceneId, reset, startSceneId]);
+  }
+  if (startSceneId && !currentSceneId) {
+    reset(startSceneId);
+  }
   const availableChoices = useMemo(
     () =>
       choices

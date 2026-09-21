@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { StatSelect } from '../../db/schema';
 import { useDurableFormDraft } from '../../hooks/useDurableFormDraft';
 
@@ -35,16 +35,22 @@ export function useStatFormState({ statId, storyId, stats }: UseStatFormStateOpt
   const [loadedPristine, setLoadedPristine] = useState<StatFormDraftFields | null>(null);
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!statId) return;
-    const stat = stats.find((row) => row.id === statId);
-    if (!stat) return;
-    setName(stat.name);
-    setIsPrimary(stat.isPrimary);
-    setLoadedPristine({ name: stat.name, isPrimary: stat.isPrimary });
-    setLoadedUpdatedAt(stat.updatedAt?.toISOString?.() ?? null);
-    setLoading(false);
-  }, [stats, statId]);
+  const [prevStats, setPrevStats] = useState<typeof stats | null>(null);
+  const [prevStatId, setPrevStatId] = useState(statId);
+  if (stats !== prevStats || statId !== prevStatId) {
+    setPrevStats(stats);
+    setPrevStatId(statId);
+    if (statId) {
+      const stat = stats.find((row) => row.id === statId);
+      if (stat) {
+        setName(stat.name);
+        setIsPrimary(stat.isPrimary);
+        setLoadedPristine({ name: stat.name, isPrimary: stat.isPrimary });
+        setLoadedUpdatedAt(stat.updatedAt?.toISOString?.() ?? null);
+        setLoading(false);
+      }
+    }
+  }
 
   const restoreDraftFields = useCallback((fields: StatFormDraftFields) => {
     if (!isStatFormDraftFields(fields)) {

@@ -143,7 +143,7 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
   return {
     __esModule: true,
     default: React.forwardRef(
-      (
+      function MockLocationGraphCanvas(
         props: {
           layout: { nodes: { id: string; location: { name: string } }[]; edges: unknown[] };
           selectedNodeId: string | null;
@@ -151,7 +151,7 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
           onSelectNode: (node: { id: string }) => void;
         },
         ref: React.Ref<{ zoomBy: (factor: number) => void; fitToScreen: () => void }>,
-      ) => {
+      ) {
         React.useImperativeHandle(ref, () => ({
           zoomBy: mockZoomBy,
           fitToScreen: mockFitToScreen,

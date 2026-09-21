@@ -7,7 +7,7 @@ import {
 } from '@keres/shared';
 import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import type { CanvasCameraTransform } from '../../../hooks/useCanvasViewport';
 import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
@@ -199,17 +199,19 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   // System font on native, bundled Roboto on web; null while unavailable, where labels
   // are skipped.
   const edgeFont = useEdgeFont(11);
-  const connectionCacheRef = useRef(
-    new Map<
-      string,
-      { relation: LocationMapConnection; from: WorldNode; to: WorldNode; path: ConnectionPath }
-    >(),
+  const [connectionCache] = useState(
+    () =>
+      new Map<
+        string,
+        { relation: LocationMapConnection; from: WorldNode; to: WorldNode; path: ConnectionPath }
+      >(),
   );
-  const containsCacheRef = useRef(
-    new Map<
-      string,
-      { relation: LocationMapContains; from: WorldNode; to: WorldNode; arrow: ContainsArrow }
-    >(),
+  const [containsCache] = useState(
+    () =>
+      new Map<
+        string,
+        { relation: LocationMapContains; from: WorldNode; to: WorldNode; arrow: ContainsArrow }
+      >(),
   );
   const nodesByLocation = useMemo(
     () => new Map(content.nodes.map((node) => [node.locationId, node])),
@@ -223,7 +225,7 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
       if (!from || !to) return [];
       const id = `${connection.locationAId}-${connection.locationBId}`;
       activeIds.add(id);
-      const cached = connectionCacheRef.current.get(id);
+      const cached = connectionCache.get(id);
       if (cached?.relation === connection && cached.from === from && cached.to === to)
         return [cached.path];
       const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
@@ -238,13 +240,13 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
         start,
         end,
       };
-      connectionCacheRef.current.set(id, { relation: connection, from, to, path });
+      connectionCache.set(id, { relation: connection, from, to, path });
       return [path];
     });
-    for (const id of connectionCacheRef.current.keys())
-      if (!activeIds.has(id)) connectionCacheRef.current.delete(id);
+    for (const id of connectionCache.keys())
+      if (!activeIds.has(id)) connectionCache.delete(id);
     return paths;
-  }, [connections, nodesByLocation]);
+  }, [connectionCache, connections, nodesByLocation]);
   const containsArrows = useMemo(() => {
     const activeIds = new Set<string>();
     const arrows = contains.flatMap((relation) => {
@@ -253,7 +255,7 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
       if (!from || !to) return [];
       const id = `${relation.parentLocationId}-${relation.childLocationId}`;
       activeIds.add(id);
-      const cached = containsCacheRef.current.get(id);
+      const cached = containsCache.get(id);
       if (cached?.relation === relation && cached.from === from && cached.to === to)
         return [cached.arrow];
       const start = pointOnCircleBoundary(from, to, NODE_RADIUS + LINE_END_MARGIN);
@@ -271,13 +273,13 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
         start,
         end: tip,
       };
-      containsCacheRef.current.set(id, { relation, from, to, arrow });
+      containsCache.set(id, { relation, from, to, arrow });
       return [arrow];
     });
-    for (const id of containsCacheRef.current.keys())
-      if (!activeIds.has(id)) containsCacheRef.current.delete(id);
+    for (const id of containsCache.keys())
+      if (!activeIds.has(id)) containsCache.delete(id);
     return arrows;
-  }, [contains, nodesByLocation]);
+  }, [containsCache, contains, nodesByLocation]);
   const markerConnectionPaths = useMemo(() => {
     const points = new Map(
       [...content.nodes, ...(content.markers ?? [])].map((point) => [point.id, point]),

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Animated, Easing, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/src/theme';
@@ -26,7 +26,7 @@ const ThemedSwitch: React.FC<ThemedSwitchProps> = ({
   accessibilityLabel,
 }) => {
   const { colors } = useTheme();
-  const thumbPosition = useRef(new Animated.Value(value ? 1 : 0)).current;
+  const [thumbPosition] = useState(() => new Animated.Value(value ? 1 : 0));
   const isInitialRender = useRef(true);
 
   useEffect(() => {

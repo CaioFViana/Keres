@@ -146,17 +146,23 @@ const GenericFilterSortList = <T,>({
     return hasNativeSearchableFields || supportsCustomAttributes;
   }, [advancedSearchScopes, entityName]);
 
-  React.useEffect(() => {
+  const [prevSelectedFilterValues, setPrevSelectedFilterValues] = useState(selectedFilterValues);
+  if (selectedFilterValues !== prevSelectedFilterValues) {
+    setPrevSelectedFilterValues(selectedFilterValues);
     setSelectedFilter(selectedFilterValues || []);
-  }, [selectedFilterValues]);
+  }
 
-  React.useEffect(() => {
+  const [prevFavoriteFilterState, setPrevFavoriteFilterState] = useState(currentFavoriteFilterState);
+  if (currentFavoriteFilterState !== prevFavoriteFilterState) {
+    setPrevFavoriteFilterState(currentFavoriteFilterState);
     setInternalFavoriteFilterState(currentFavoriteFilterState || 'all');
-  }, [currentFavoriteFilterState]);
+  }
 
-  React.useEffect(() => {
+  const [prevCurrentSortValue, setPrevCurrentSortValue] = useState(currentSortValue);
+  if (currentSortValue !== prevCurrentSortValue) {
+    setPrevCurrentSortValue(currentSortValue);
     setSelectedSort(currentSortValue || null);
-  }, [currentSortValue]);
+  }
 
   const handleSearchTextChange = (text: string) => {
     onSearch(text);

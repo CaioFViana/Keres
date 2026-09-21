@@ -64,7 +64,7 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 const mockGraphConnectionModal = jest.fn();
 jest.mock('../../src/components/features/graphs/GraphConnectionModal/GraphConnectionModal', () => {
   const RN = jest.requireActual('react-native');
-  return (props: Record<string, unknown>) => {
+  return function MockGraphConnectionModal(props: Record<string, unknown>) {
     mockGraphConnectionModal(props);
     return <RN.View testID="graph-connection-modal" />;
   };

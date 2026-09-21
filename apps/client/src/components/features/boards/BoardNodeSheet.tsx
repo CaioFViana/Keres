@@ -63,13 +63,23 @@ const BoardNodeSheet: React.FC<Props> = ({
   const [noteTitle, setNoteTitle] = useState(noteTitleFromNode);
   const [noteBody, setNoteBody] = useState(noteBodyFromNode);
 
-  useEffect(() => {
+  const [prevNodeId, setPrevNodeId] = useState(node.id);
+  const [prevNoteTitleFromNode, setPrevNoteTitleFromNode] = useState(noteTitleFromNode);
+  const [prevNoteBodyFromNode, setPrevNoteBodyFromNode] = useState(noteBodyFromNode);
+  if (
+    node.id !== prevNodeId ||
+    noteTitleFromNode !== prevNoteTitleFromNode ||
+    noteBodyFromNode !== prevNoteBodyFromNode
+  ) {
+    setPrevNodeId(node.id);
+    setPrevNoteTitleFromNode(noteTitleFromNode);
+    setPrevNoteBodyFromNode(noteBodyFromNode);
     setConnectTo(null);
     setDirected(true);
     setEdgeLabel('');
     setNoteTitle(noteTitleFromNode);
     setNoteBody(noteBodyFromNode);
-  }, [node.id, noteBodyFromNode, noteTitleFromNode]);
+  }
 
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
   // An edge is a relationship between a pair, irrespective of its direction. Keeping the picker
@@ -80,7 +90,11 @@ const BoardNodeSheet: React.FC<Props> = ({
   // State updates are asynchronous, so a fast double tap can call `addEdge` twice before the
   // picker rerenders. Keep the immediate interaction state in a ref as well as in the UI state.
   const connectedNodeIdsRef = useRef(connectedNodeIds);
-  connectedNodeIdsRef.current = connectedNodeIds;
+  useEffect(() => {
+    // No dependency array: `connectedNodeIds` is a fresh `Set` every render, so the sync
+    // unconditionally followed every render; readers are event handlers (post-commit).
+    connectedNodeIdsRef.current = connectedNodeIds;
+  });
   const others = content.nodes.filter(
     (item) => item.id !== node.id && !connectedNodeIds.has(item.id),
   );

@@ -46,7 +46,7 @@ import { createCommentService } from '../../src/services/storymanagement/Comment
 import { createFavoriteService } from '../../src/services/storymanagement/FavoriteService';
 import { createServerService } from '../../src/services/ServerService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { SyncEngineService } from '../../src/services/SyncEngineService';
+import type { SyncEngineService } from '../../src/services/SyncEngineService';
 import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 

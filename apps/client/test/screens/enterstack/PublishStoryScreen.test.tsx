@@ -70,7 +70,7 @@ jest.mock('@react-navigation/native', () => {
       React.useEffect(() => {
         const cleanup = callback();
         return typeof cleanup === 'function' ? cleanup : undefined;
-      }, []);
+      }, [callback]);
     },
   };
 });

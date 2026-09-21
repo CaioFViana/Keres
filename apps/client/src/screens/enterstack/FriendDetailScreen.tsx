@@ -56,8 +56,8 @@ const FriendDetailScreen = () => {
   // Stable references: recreating these every render would change `load`'s identity (it
   // depends on both), and `load` runs unconditionally inside the effect below - an unstable
   // dependency there is an infinite render loop, not just wasted work.
-  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
-  const serverService = useRef(createServerService(drizzleClient)).current;
+  const [friendshipService] = useState(() => createFriendshipService(drizzleClient));
+  const [serverService] = useState(() => createServerService(drizzleClient));
   const { showNotification } = useNotificationStore();
 
   const [friendship, setFriendship] = useState<FriendshipWithServer | null>(null);

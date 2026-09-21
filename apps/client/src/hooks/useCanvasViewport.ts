@@ -96,6 +96,24 @@ interface OverlayState {
   scale: number;
 }
 
+/** Initial overlay surface before the first sync; shared by the ref mirror and the state. */
+function initialOverlayState(bounds: CanvasViewportBounds | null): OverlayState {
+  return {
+    origin: { x: bounds?.x ?? 0, y: bounds?.y ?? 0 },
+    width: 0,
+    height: 0,
+    scale: 0,
+    renderWindow: bounds
+      ? {
+          x: bounds.x ?? 0,
+          y: bounds.y ?? 0,
+          width: bounds.width,
+          height: bounds.height,
+        }
+      : { x: 0, y: 0, width: 0, height: 0 },
+  };
+}
+
 /**
  * Pan and zoom for every canvas in the app: boards and location maps as well as the story,
  * location, relation, matrix and timeline drawings.
@@ -123,12 +141,17 @@ export function useCanvasViewport(
   const refitOnLayoutChange = options.refitOnLayoutChange ?? true;
   const fitMode = options.fitMode ?? 'contain';
   /** In refs so that changing a handler does not rebuild the `PanResponder` mid-gesture. */
-  const onTap = useRef(options.onTap);
-  onTap.current = options.onTap;
-  const autoPanHandler = useRef(options.onAutoPan);
-  autoPanHandler.current = options.onAutoPan;
+  const { onTap: onTapOption, onAutoPan: onAutoPanOption } = options;
+  const onTap = useRef(onTapOption);
+  const autoPanHandler = useRef(onAutoPanOption);
   const boundsRef = useRef(bounds);
-  boundsRef.current = bounds;
+  useEffect(() => {
+    // Latest-ref sync for the gesture responders: every reader runs on events, after effects
+    // have flushed, so syncing here (instead of during render) changes no observable timing.
+    onTap.current = onTapOption;
+    autoPanHandler.current = onAutoPanOption;
+    boundsRef.current = bounds;
+  }, [onTapOption, onAutoPanOption, bounds]);
 
   const containerRef = useRef<View>(null);
   const viewport = useRef({ width: 0, height: 0 });
@@ -136,9 +159,9 @@ export function useCanvasViewport(
   const viewportOrigin = useRef({ x: 0, y: 0 });
 
   const transform = useRef<Transform>({ scale: 1, x: 0, y: 0 });
-  const animatedScale = useRef(new Animated.Value(1)).current;
-  const animatedX = useRef(new Animated.Value(0)).current;
-  const animatedY = useRef(new Animated.Value(0)).current;
+  const [animatedScale] = useState(() => new Animated.Value(1));
+  const [animatedX] = useState(() => new Animated.Value(0));
+  const [animatedY] = useState(() => new Animated.Value(0));
   /**
    * The live camera mirrored to a shared value. The Skia edge overlay is a sibling of the
    * animated plane (sizing it inside the scaled plane would need world-unit layout and rebuild
@@ -151,21 +174,8 @@ export function useCanvasViewport(
   /** Live scale mirrored to state only outside gestures, for drag math and child props. */
   const [scaleState, setScaleState] = useState(1);
 
-  const overlayRef = useRef<OverlayState>({
-    origin: { x: bounds?.x ?? 0, y: bounds?.y ?? 0 },
-    width: 0,
-    height: 0,
-    scale: 0,
-    renderWindow: bounds
-      ? {
-          x: bounds.x ?? 0,
-          y: bounds.y ?? 0,
-          width: bounds.width,
-          height: bounds.height,
-        }
-      : { x: 0, y: 0, width: 0, height: 0 },
-  });
-  const [overlay, setOverlay] = useState<OverlayState>(overlayRef.current);
+  const overlayRef = useRef<OverlayState>(initialOverlayState(bounds));
+  const [overlay, setOverlay] = useState<OverlayState>(() => initialOverlayState(bounds));
 
   /**
    * A child (a board pin) that is dragging must keep the responder. Capture would steal the
@@ -186,6 +196,7 @@ export function useCanvasViewport(
     animatedScale.setValue(transform.current.scale);
     animatedX.setValue(transform.current.x);
     animatedY.setValue(transform.current.y);
+    // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
     cameraTransform.value = [
       { translateX: transform.current.x },
       { translateY: transform.current.y },
@@ -395,7 +406,9 @@ export function useCanvasViewport(
     },
     [cameraTopLeft, clamp, publish, syncOverlays],
   );
-  autoPanFrameRef.current = autoPanFrame;
+  useEffect(() => {
+    autoPanFrameRef.current = autoPanFrame;
+  }, [autoPanFrame]);
 
   const updateAutoPan = useCallback(
     (screenPoint: SpatialPoint) => {
@@ -443,6 +456,7 @@ export function useCanvasViewport(
 
   const panResponder = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         // It does not capture the touch's start: that way a simple tap reaches the node and opens the
         // details. The drag is stolen from the node later, in the move's capture phase.

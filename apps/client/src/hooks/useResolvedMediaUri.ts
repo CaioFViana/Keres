@@ -11,22 +11,30 @@ import { DESKTOP_MEDIA_URI_PREFIX, resolveBlobUri } from '../services/webMediaSt
  * file through the main process's IPC). That is why the hook starts at `null` (still resolving) until
  * the effect completes.
  */
+function passThroughMediaPath(path: string): string | null {
+  if (Platform.OS !== 'web' || !path.startsWith(DESKTOP_MEDIA_URI_PREFIX)) {
+    return path;
+  }
+  return null;
+}
+
 export function useResolvedMediaUri(path: string | null | undefined): string | null {
-  const [resolved, setResolved] = useState<string | null>(null);
+  const [resolved, setResolved] = useState<string | null>(() =>
+    path ? passThroughMediaPath(path) : null,
+  );
+
+  const [prevPath, setPrevPath] = useState(path);
+  if (path !== prevPath) {
+    setPrevPath(path);
+    setResolved(path ? passThroughMediaPath(path) : null);
+  }
 
   useEffect(() => {
-    if (!path) {
-      setResolved(null);
-      return;
-    }
-
-    if (Platform.OS !== 'web' || !path.startsWith(DESKTOP_MEDIA_URI_PREFIX)) {
-      setResolved(path);
+    if (!path || passThroughMediaPath(path) !== null) {
       return;
     }
 
     let cancelled = false;
-    setResolved(null);
     resolveBlobUri(path)
       .then((blobUri) => {
         if (!cancelled) {

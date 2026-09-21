@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { growCanvasBounds, type CanvasWorldBounds } from '../utils/growingCanvasBounds';
 
 /**
@@ -13,10 +13,9 @@ export function useGrowingCanvasBounds(required: CanvasWorldBounds): CanvasWorld
     [allocated, height, originX, originY, width],
   );
 
-  useLayoutEffect(() => {
-    if (next === allocated) return;
+  if (next !== allocated) {
     setAllocated(next);
-  }, [allocated, next]);
+  }
 
   return next;
 }

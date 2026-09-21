@@ -12,7 +12,7 @@ import {
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -64,15 +64,10 @@ const OperationLogDetailScreen: React.FC = () => {
   const [operationLog, setOperationLog] = useState<OperationLogSelect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [operationLogService, setOperationLogService] = useState<ReturnType<
-    typeof createOperationLogService
-  > | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) {
-      setOperationLogService(createOperationLogService(drizzleDb));
-    }
-  }, [drizzleDb]);
+  const operationLogService = useMemo(
+    () => (drizzleDb ? createOperationLogService(drizzleDb) : null),
+    [drizzleDb],
+  );
 
   const fetchOperationLogDetails = useCallback(async () => {
     if (!operationLogService || !logId) return;
@@ -95,6 +90,7 @@ const OperationLogDetailScreen: React.FC = () => {
   }, [operationLogService, logId, t, userId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchOperationLogDetails` resets loading/error synchronously for immediate feedback; the log itself arrives after `await`. The rule cannot verify across the callback boundary.
     fetchOperationLogDetails();
   }, [fetchOperationLogDetails]);
 
@@ -416,6 +412,7 @@ const ResolvedFieldValue: React.FC<{
 
   useEffect(() => {
     let isMounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronous loading feedback for the async `getEntityIdentifier` chain below; the name itself arrives in `.then`/`.finally`.
     setLoading(true);
     EntityService.getEntityIdentifier(db, entityType.toLowerCase(), entityId, storyId, t)
       .then((resolved) => {

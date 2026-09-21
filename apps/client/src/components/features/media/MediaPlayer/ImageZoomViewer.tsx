@@ -46,12 +46,16 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
   const [content, setContent] = useState<{ width: number; height: number } | null>(null);
 
   const viewport = useRef({ width: windowWidth, height: windowHeight });
-  viewport.current = { width: windowWidth, height: windowHeight };
+  useEffect(() => {
+    // Latest-ref sync for the gesture callbacks: every reader runs on events, after effects
+    // have flushed, so syncing here (instead of during render) changes no observable timing.
+    viewport.current = { width: windowWidth, height: windowHeight };
+  }, [windowWidth, windowHeight]);
 
   const transform = useRef<Transform>({ scale: 1, x: 0, y: 0 });
-  const animatedScale = useRef(new Animated.Value(1)).current;
-  const animatedX = useRef(new Animated.Value(0)).current;
-  const animatedY = useRef(new Animated.Value(0)).current;
+  const [animatedScale] = useState(() => new Animated.Value(1));
+  const [animatedX] = useState(() => new Animated.Value(0));
+  const [animatedY] = useState(() => new Animated.Value(0));
 
   const gesture = useRef({ lastDx: 0, lastDy: 0, pinchDistance: 0, pinchScale: 1 });
   const lastTap = useRef<{ time: number; x: number; y: number } | null>(null);
@@ -164,6 +168,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
 
   const panResponder = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (event, gestureState) =>
@@ -236,6 +241,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
             return;
           }
 
+          // eslint-disable-next-line react-hooks/purity -- runs only inside the tap responder; the wiring invokes nothing during render, and time-stamping a tap is not render impurity.
           const now = Date.now();
           const focus = { x: tapCandidate.current.startX, y: tapCandidate.current.startY };
           const previousTap = lastTap.current;

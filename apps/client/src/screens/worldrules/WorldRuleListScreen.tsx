@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
@@ -47,7 +47,7 @@ const WorldRulesScreen = () => {
   });
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const tagService = useRef(createTagService(drizzleDb)).current;
+  const [tagService] = useState(() => createTagService(drizzleDb));
 
   const {
     listProps,
@@ -79,6 +79,7 @@ const WorldRulesScreen = () => {
   }, [storyId, tagService]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchTags();
   }, [fetchTags]);
 

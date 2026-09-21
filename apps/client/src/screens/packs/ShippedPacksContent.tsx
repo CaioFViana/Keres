@@ -1,7 +1,7 @@
 import { LanguageInstallRow } from '@/src/components/common';
 import { useLanguageLabel } from '@/src/hooks/useLanguageLabel';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -73,16 +73,15 @@ const ShippedPacksContent: React.FC<ShippedPacksContentProps> = ({
   const showNotification = useNotificationStore((state) => state.showNotification);
   const markInstalled = useShippedPacksInstallerStore((state) => state.markInstalled);
 
-  const [groups, setGroups] = useState<ShippedPackGroup[]>([]);
+  // Loaded on mount rather than on focus: the previews are static bundled data, so refetching
+  // on every focus bought nothing even when this was a screen alone - and the overlay host has
+  // no focus events at all.
+  const groups = useMemo(
+    () => groupBySlug(createShippedPackService(drizzleDb).previewShippedPacks()),
+    [drizzleDb],
+  );
   const [installingSlug, setInstallingSlug] = useState<string | null>(null);
   const [chosenLanguageBySlug, setChosenLanguageBySlug] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    // Loaded on mount rather than on focus: the previews are static bundled data, so refetching
-    // on every focus bought nothing even when this was a screen alone - and the overlay host has
-    // no focus events at all.
-    setGroups(groupBySlug(createShippedPackService(drizzleDb).previewShippedPacks()));
-  }, [drizzleDb]);
 
   const languageLabel = useLanguageLabel();
 

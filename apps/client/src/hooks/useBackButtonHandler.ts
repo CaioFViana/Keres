@@ -62,7 +62,9 @@ export const useBackButtonHandler = ({
   // always passes a new function on every render, and without this the handler would register itself again
   // on every key typed on the screen.
   const onBackRef = useRef(onBack);
-  onBackRef.current = onBack;
+  useEffect(() => {
+    onBackRef.current = onBack;
+  }, [onBack]);
 
   useFocusEffect(
     useCallback(() => {

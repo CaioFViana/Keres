@@ -20,10 +20,17 @@ export function useCommentFieldLabel(
   const db = useDrizzle();
   const [customFieldName, setCustomFieldName] = useState<string | null>(null);
 
+  const [prevFieldId, setPrevFieldId] = useState(fieldId);
+  if (fieldId !== prevFieldId) {
+    setPrevFieldId(fieldId);
+    if (!fieldId) {
+      setCustomFieldName(null);
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
     if (!fieldId) {
-      setCustomFieldName(null);
       return;
     }
     db.query.storySchemaFields

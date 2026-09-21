@@ -72,6 +72,7 @@ const PackBrowseScreen = () => {
   }, [server, showNotification, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadRemote` sets loading synchronously for immediate feedback; the pack list itself arrives after `await`. The rule cannot verify across the callback boundary.
     loadRemote();
   }, [loadRemote]);
 

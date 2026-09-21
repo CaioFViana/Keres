@@ -255,6 +255,7 @@ const TagDetailScreen = () => {
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- `processTagRelations` only reaches setState after `await`; the rule cannot verify across the callback boundary.
       processTagRelations();
     }
   }, [allTagRelations, selectedStory?.id, processTagRelations]);

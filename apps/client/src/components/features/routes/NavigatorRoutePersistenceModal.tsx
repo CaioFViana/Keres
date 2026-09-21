@@ -4,7 +4,7 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { Route } from '@keres/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
@@ -42,12 +42,26 @@ export default function NavigatorRoutePersistenceModal({
   const [routeId, setRouteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!visible) return;
-    setName(suggestedName);
-    setRouteId(routes[0]?.id ?? null);
-    setError(null);
-  }, [routes, suggestedName, visible]);
+  // Only the first route's id is used, and `routes` itself is a fresh array per render of
+  // whoever owns it: tracking the array by identity would loop forever.
+  const firstRouteId = routes[0]?.id ?? null;
+  const [prevFirstRouteId, setPrevFirstRouteId] = useState<string | null | undefined>(undefined);
+  const [prevSuggestedName, setPrevSuggestedName] = useState<typeof suggestedName | null>(null);
+  const [prevVisible, setPrevVisible] = useState<boolean | null>(null);
+  if (
+    visible !== prevVisible ||
+    firstRouteId !== prevFirstRouteId ||
+    suggestedName !== prevSuggestedName
+  ) {
+    setPrevVisible(visible);
+    setPrevFirstRouteId(firstRouteId);
+    setPrevSuggestedName(suggestedName);
+    if (visible) {
+      setName(suggestedName);
+      setRouteId(firstRouteId);
+      setError(null);
+    }
+  }
 
   const routeOptions = useMemo(
     () => routes.map((route) => ({ value: route.id, label: route.name })),

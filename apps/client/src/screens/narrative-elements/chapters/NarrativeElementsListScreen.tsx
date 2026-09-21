@@ -124,22 +124,37 @@ const NarrativeElementsListScreen = () => {
   }, [db, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadOutline` only reaches setState after `await`; the rule cannot verify across the callback boundary.
     loadOutline();
   }, [loadOutline]);
 
-  useEffect(() => {
-    if (!storyId) {
-      setAdvancedMatches(null);
-      return;
-    }
+  const narrativeCriteria = useMemo(() => {
     const chapterCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'chapter');
     const sceneCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'scene');
     const choiceCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'choice');
     const hasCriteria = [chapterCriteria, sceneCriteria, choiceCriteria].some(
       (criteria) => Object.keys(criteria).length > 0,
     );
-    if (!hasCriteria) {
+    return { chapterCriteria, sceneCriteria, choiceCriteria, hasCriteria };
+  }, [advancedSearchCriteria]);
+
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevAdvancedSearchCriteria, setPrevAdvancedSearchCriteria] =
+    useState(advancedSearchCriteria);
+  if (storyId !== prevStoryId || advancedSearchCriteria !== prevAdvancedSearchCriteria) {
+    setPrevStoryId(storyId);
+    setPrevAdvancedSearchCriteria(advancedSearchCriteria);
+    if (!storyId || !narrativeCriteria.hasCriteria) {
       setAdvancedMatches(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!storyId) {
+      return;
+    }
+    const { chapterCriteria, sceneCriteria, choiceCriteria, hasCriteria } = narrativeCriteria;
+    if (!hasCriteria) {
       return;
     }
 
@@ -189,7 +204,7 @@ const NarrativeElementsListScreen = () => {
     return () => {
       cancelled = true;
     };
-  }, [advancedSearchCriteria, choices, db, outlineChapters, scenes, storyId]);
+  }, [narrativeCriteria, choices, db, outlineChapters, scenes, storyId]);
 
   const loadTags = useCallback(async () => {
     if (!storyId) {
@@ -218,6 +233,7 @@ const NarrativeElementsListScreen = () => {
   }, [db, outlineChapters, scenes, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadTags();
   }, [loadTags]);
 

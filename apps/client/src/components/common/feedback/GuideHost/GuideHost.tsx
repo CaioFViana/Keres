@@ -58,10 +58,21 @@ const ActiveGuideOverlay: React.FC = () => {
   const guide: Guide | null = activeTour?.guide ?? null;
   const step = guide && activeTour ? guide.steps[activeTour.stepIndex] : undefined;
 
+  const [prevActiveTour, setPrevActiveTour] = useState(activeTour);
+  const [prevGuideStep, setPrevGuideStep] = useState(step);
+  const [prevIsWide, setPrevIsWide] = useState(isWide);
+  if (activeTour !== prevActiveTour || step !== prevGuideStep || isWide !== prevIsWide) {
+    setPrevActiveTour(activeTour);
+    setPrevGuideStep(step);
+    setPrevIsWide(isWide);
+    if (activeTour && step) {
+      setSpot(null);
+    }
+  }
+
   useEffect(() => {
     if (!activeTour || !step) return;
     let cancelled = false;
-    setSpot(null);
     const anchors = step.anchors ?? [];
     if (anchors.length === 0) return;
     (async () => {

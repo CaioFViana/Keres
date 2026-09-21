@@ -37,7 +37,13 @@ jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard',
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
   const { View } = jest.requireActual('react-native');
-  return ({ title, children }: { title: string; children: React.ReactNode }) => {
+  return function MockCollapsibleCard({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) {
     mockCollapsibleCard(title);
     return React.createElement(View, { testID: 'collapsible-card' }, children);
   };

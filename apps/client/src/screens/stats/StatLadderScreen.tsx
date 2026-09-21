@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
@@ -83,8 +83,8 @@ const StatLadderScreen = () => {
     title: title,
   });
 
-  useEffect(() => {
-    if (hydrated || data.loading) return;
+  // Hydrates the editable tiers once the data is ready; the `hydrated` latch makes it one-shot.
+  if (!hydrated && !data.loading) {
     const source = statId && ownRows.length === 0 ? data.defaultLadder : ownRows;
     setHasOwnLadder(!statId || ownRows.length > 0);
     setTiers(
@@ -100,7 +100,7 @@ const StatLadderScreen = () => {
         })),
     );
     setHydrated(true);
-  }, [data.defaultLadder, data.loading, hydrated, ownRows, statId]);
+  }
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);

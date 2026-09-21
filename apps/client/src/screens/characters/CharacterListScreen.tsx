@@ -1,7 +1,7 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -62,7 +62,7 @@ const CharactersScreen = () => {
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [relations, setRelations] = useState<CharacterRelation[]>([]);
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
-  const tagService = useRef(createTagService(drizzleDb)).current;
+  const [tagService] = useState(() => createTagService(drizzleDb));
   const { canEdit } = useStoryRole(storyId);
 
   // Styles are always defined at the top
@@ -82,6 +82,7 @@ const CharactersScreen = () => {
   }, [storyId, tagService]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchTags();
   }, [fetchTags]);
 
@@ -100,6 +101,7 @@ const CharactersScreen = () => {
   }, [drizzleDb, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchRelations` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchRelations();
   }, [fetchRelations]);
 

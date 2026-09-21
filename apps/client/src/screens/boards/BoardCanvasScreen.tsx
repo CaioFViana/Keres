@@ -78,9 +78,16 @@ const BoardCanvasScreen = () => {
   const [connectionMode, setConnectionMode] = useState(false);
   const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
-  const [livePins, setLivePins] = useState<
-    Record<string, { label: string; group: BoardPinOption['group'] }>
-  >({});
+  const livePins = useMemo(() => {
+    const next: Record<string, { label: string; group: BoardPinOption['group'] }> = {};
+    for (const option of options) {
+      next[`${option.entityType}:${option.entityId}`] = {
+        label: option.label,
+        group: option.group,
+      };
+    }
+    return next;
+  }, [options]);
   const [exporting, setExporting] = useState(false);
   const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
   const [selectedSummary, setSelectedSummary] = useState<BoardEntitySummary | null>(null);
@@ -130,23 +137,20 @@ const BoardCanvasScreen = () => {
   }, [boardId, db, showNotification, storyId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void load();
   }, [load]);
 
-  useEffect(() => {
-    const next: Record<string, { label: string; group: BoardPinOption['group'] }> = {};
-    for (const option of options) {
-      next[`${option.entityType}:${option.entityId}`] = {
-        label: option.label,
-        group: option.group,
-      };
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  if (storyId !== prevStoryId) {
+    setPrevStoryId(storyId);
+    if (!storyId) {
+      setGalleryMediaById({});
     }
-    setLivePins(next);
-  }, [options]);
+  }
 
   useEffect(() => {
     if (!storyId) {
-      setGalleryMediaById({});
       return;
     }
     let cancelled = false;
@@ -169,9 +173,16 @@ const BoardCanvasScreen = () => {
     };
   }, [db, storyId]);
 
+  const [prevDb, setPrevDb] = useState(db);
+  const [prevSelected, setPrevSelected] = useState(selected);
+  if (db !== prevDb || selected !== prevSelected) {
+    setPrevDb(db);
+    setPrevSelected(selected);
+    setSelectedSummary(null);
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setSelectedSummary(null);
     if (!selected || selected.kind !== 'entity') return;
     (async () => {
       const summary = await loadBoardEntitySummary(

@@ -8,7 +8,7 @@ import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import type { ScenePosition } from '@keres/shared';
 import { SCENE_POSITIONS } from '@keres/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -81,7 +81,15 @@ const AnchorEditModal: React.FC<Props> = ({
   const [showStartDistance, setShowStartDistance] = useState(false);
   const [showEndDistance, setShowEndDistance] = useState(false);
 
-  useEffect(() => {
+  const [prevInitial, setPrevInitial] = useState<typeof initial | null>(null);
+  const [prevAllowOpenStretch, setPrevAllowOpenStretch] = useState<typeof allowOpenStretch | null>(
+    null,
+  );
+  const [prevVisible, setPrevVisible] = useState<boolean | null>(null);
+  if (initial !== prevInitial || allowOpenStretch !== prevAllowOpenStretch || visible !== prevVisible) {
+    setPrevInitial(initial);
+    setPrevAllowOpenStretch(allowOpenStretch);
+    setPrevVisible(visible);
     const next = initial ?? emptyDraft();
     setDraft(next);
     setStartAmount(next.startOffset ? String(Math.abs(next.startOffset)) : '');
@@ -90,7 +98,7 @@ const AnchorEditModal: React.FC<Props> = ({
     setMode(closed || !allowOpenStretch ? 'closed' : 'open');
     setShowStartDistance(Boolean(next.startOffset));
     setShowEndDistance(Boolean(next.endOffset));
-  }, [allowOpenStretch, initial, visible]);
+  }
 
   const unitOptions = useMemo(
     () =>

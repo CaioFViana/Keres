@@ -16,7 +16,7 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -65,7 +65,7 @@ const ServerRegistrationScreen = () => {
 
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
-  const serverService = useRef(createServerService(drizzleDb)).current;
+  const [serverService] = useState(() => createServerService(drizzleDb));
   const { setActiveServer } = useUserSettingsStore();
 
   const [mode, setMode] = useState<ServerAuthMode>('login');

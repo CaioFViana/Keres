@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardNodeType } from '@keres/shared';
 import { Image } from 'expo-image';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
@@ -79,19 +79,12 @@ const BoardNodeView: React.FC<Props> = ({
   const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
   const nodeRef = useRef(node);
-  nodeRef.current = node;
   const nodeId = useRef(node.id);
-  nodeId.current = node.id;
   const position = useRef({ x: node.x, y: node.y });
-  position.current = { x: node.x, y: node.y };
   const scaleRef = useRef(scale);
-  scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
-  layoutEditingRef.current = layoutEditing;
   const connectionModeRef = useRef(connectionMode);
-  connectionModeRef.current = connectionMode;
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const handlers = useRef({
     onSelect,
     onMove,
@@ -106,23 +99,35 @@ const BoardNodeView: React.FC<Props> = ({
     onConnectionEnd,
     onConnectionCancel,
   });
-  handlers.current = {
-    onSelect,
-    onMove,
-    onResize,
-    onDragStart,
-    onDragEnd,
-    onOpenDetails,
-    onBringToFront,
-    onSendToBack,
-    onConnectionStart,
-    onConnectionMove,
-    onConnectionEnd,
-    onConnectionCancel,
-  };
+  useEffect(() => {
+    // Latest-ref sync for the responders below: every reader runs on gestures, after effects
+    // have flushed. No dependency array - the sync unconditionally followed every render.
+    nodeRef.current = node;
+    nodeId.current = node.id;
+    position.current = { x: node.x, y: node.y };
+    scaleRef.current = scale;
+    layoutEditingRef.current = layoutEditing;
+    connectionModeRef.current = connectionMode;
+    selectedRef.current = selected;
+    handlers.current = {
+      onSelect,
+      onMove,
+      onResize,
+      onDragStart,
+      onDragEnd,
+      onOpenDetails,
+      onBringToFront,
+      onSendToBack,
+      onConnectionStart,
+      onConnectionMove,
+      onConnectionEnd,
+      onConnectionCancel,
+    };
+  });
 
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         // A selected card in layout mode exposes real controls inside itself. Let those controls
@@ -195,7 +200,11 @@ const BoardNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  useEffect(() => {
+    // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
+    // tracks the node's committed position. Readers are gesture handlers (post-commit).
+    if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  }, [node.x, node.y]);
 
   const hasGalleryImage =
     node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia);
@@ -212,10 +221,13 @@ const BoardNodeView: React.FC<Props> = ({
     !!node.cardNote;
   const detailLines = Math.max(2, Math.floor((size.height - (hasGalleryImage ? 180 : 66)) / 18));
   const sizeRef = useRef(size);
-  sizeRef.current = size;
+  useEffect(() => {
+    sizeRef.current = size;
+  }, [size]);
   const resizeOrigin = useRef(size);
   const resizePan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponder: () => layoutEditing,
         onMoveShouldSetPanResponder: () => layoutEditing,

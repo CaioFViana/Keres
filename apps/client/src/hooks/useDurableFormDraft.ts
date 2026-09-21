@@ -100,16 +100,20 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
   // caller navigates away right after, and a post-clear write would resurrect the draft.
   const clearedRef = useRef(false);
   const onRestoreRef = useRef(onRestore);
-  onRestoreRef.current = onRestore;
   const latestSnapshotRef = useRef(snapshot);
-  latestSnapshotRef.current = snapshot;
   const latestPristineRef = useRef(pristine);
-  latestPristineRef.current = pristine;
   // The unmount cleanup below is mount-only: without this ref it would keep the first render's
   // `baseUpdatedAt` (still null while the entity loads) and every flushed edit draft would look
   // stale on the way back.
   const latestBaseUpdatedAtRef = useRef(baseUpdatedAt);
-  latestBaseUpdatedAtRef.current = baseUpdatedAt;
+  useEffect(() => {
+    // Latest-ref sync for the async restore/track/cleanup callbacks: every reader runs after
+    // effects have flushed, so syncing here (instead of during render) changes no timing.
+    onRestoreRef.current = onRestore;
+    latestSnapshotRef.current = snapshot;
+    latestPristineRef.current = pristine;
+    latestBaseUpdatedAtRef.current = baseUpdatedAt;
+  }, [onRestore, snapshot, pristine, baseUpdatedAt]);
 
   const clearFormDraft = useCallback(async () => {
     clearedRef.current = true;
@@ -127,10 +131,13 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     await clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
   }, [storyId, entityType, draftEntityId, draftField]);
 
+  if (enabled && storyId && !restoreSettled && !isEditorDraftDbBound()) {
+    setRestoreSettled(true);
+  }
+
   useEffect(() => {
     if (!enabled || !storyId || restoreAttemptedRef.current) return;
     if (!isEditorDraftDbBound()) {
-      setRestoreSettled(true);
       return;
     }
     restoreAttemptedRef.current = true;

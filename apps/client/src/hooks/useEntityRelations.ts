@@ -53,9 +53,9 @@ export function useEntityRelations({
   const { userId } = useUserSettingsStore();
   const { selectedStory } = useStoryStore();
   const storyId = selectedStory?.id;
-  const initialEntityIdRef = useRef(entityId);
-  const preservesCreationDraft = preserveDraftOnEntityCreation && !initialEntityIdRef.current;
-  const hydrationEntityId = preserveDraftOnEntityCreation ? initialEntityIdRef.current : entityId;
+  const [initialEntityId] = useState(entityId);
+  const preservesCreationDraft = preserveDraftOnEntityCreation && !initialEntityId;
+  const hydrationEntityId = preserveDraftOnEntityCreation ? initialEntityId : entityId;
 
   // One-shot durable-draft hydration for this mount. Refresh must not reapply a stored copy
   // over in-session deletes/edits; load once, then the session owns the queues.
@@ -255,6 +255,7 @@ export function useEntityRelations({
   }, [refreshAvailableTags, refreshSelectedTags, refreshNotes, refreshNoteRelations]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the sub-refreshes clear synchronously only when services/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
     refresh();
   }, [refresh]);
 

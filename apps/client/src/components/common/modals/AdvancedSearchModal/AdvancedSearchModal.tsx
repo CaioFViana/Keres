@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance, type StorySchemaEntityType } from '@keres/shared';
 import type { EntityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -81,9 +81,11 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
     [entityName, scopes],
   );
 
-  useEffect(() => {
+  const [prevInitialCriteria, setPrevInitialCriteria] = useState(initialCriteria);
+  if (initialCriteria !== prevInitialCriteria) {
+    setPrevInitialCriteria(initialCriteria);
     setSearchCriteria(initialCriteria);
-  }, [initialCriteria]);
+  }
 
   const handleInputChange = useCallback((fieldName: string, value: any) => {
     setSearchCriteria((prev) => ({

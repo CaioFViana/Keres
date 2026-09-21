@@ -33,6 +33,7 @@ export function useCalendarAnchorPreview(definition: CalendarDefinitionType, ena
     }
   }, [db, enabled, story]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void reload();
   }, [reload]);
   const rows = useMemo(

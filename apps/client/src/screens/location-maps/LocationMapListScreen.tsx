@@ -70,6 +70,7 @@ const LocationMapListScreen = () => {
   }, [db, storyId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     void reload();
   }, [reload]);
 

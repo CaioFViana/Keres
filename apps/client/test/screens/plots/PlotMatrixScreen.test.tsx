@@ -62,7 +62,7 @@ jest.mock('../../../src/components/features/presence-matrix/PresenceMatrixCanvas
   const React = require('react');
   return {
     __esModule: true,
-    default: React.forwardRef(({ layout, onPressScene, onPressRow }: any, ref: any) => {
+    default: React.forwardRef(function MockPresenceMatrixCanvas({ layout, onPressScene, onPressRow }: any, ref: any) {
       React.useImperativeHandle(ref, () => ({
         zoomBy: jest.fn(),
         fitToScreen: jest.fn(),

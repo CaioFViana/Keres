@@ -140,7 +140,7 @@ jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () =>
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: React.forwardRef((props: any, _ref: unknown) => {
+    default: React.forwardRef(function MockLocationMapCanvas(props: any, _ref: unknown) {
       mockCanvasProps = props;
       return (
         <TouchableOpacity testID="map-select-node" onPress={() => props.onSelectNode('node-1')}>

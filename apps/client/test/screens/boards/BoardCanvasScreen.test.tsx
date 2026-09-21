@@ -91,7 +91,7 @@ jest.mock('../../../src/components/features/boards/BoardCanvas', () => {
   return {
     __esModule: true,
     default: React.forwardRef(
-      ({ content, titles, onSelectNode, onConnectNodes }: any, ref: any) => {
+      function MockBoardCanvas({ content, titles, onSelectNode, onConnectNodes }: any, ref: any) {
         React.useImperativeHandle(ref, () => ({
           viewportWorldCenter: () => ({ x: 160, y: 160 }),
           zoomBy: jest.fn(),

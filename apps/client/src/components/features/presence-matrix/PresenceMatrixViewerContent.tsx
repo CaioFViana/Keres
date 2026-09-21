@@ -6,7 +6,7 @@ import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayou
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { CharacterSelect, ItemSelect } from '../../../db/schema';
@@ -62,10 +62,12 @@ const PresenceMatrixViewerContent: React.FC<{
     (id: string) => seriesColor(Math.max(0, itemIds.indexOf(id)), itemIds.length),
     [itemIds],
   );
-  useEffect(() => {
+  const [prevRequest, setPrevRequest] = useState(request);
+  if (request !== prevRequest) {
+    setPrevRequest(request);
     setIds(request.kind === 'character' && request.characterId ? [request.characterId] : []);
     setItemIds(request.kind === 'item' && request.itemId ? [request.itemId] : []);
-  }, [request]);
+  }
 
   const selectedItems = useMemo(
     () =>
@@ -469,6 +471,7 @@ const PresenceMatrixViewerContent: React.FC<{
       )}
       {layout.rows.length > 0 && (
         <View style={styles.controls}>
+          {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
           {[
             ['add', () => canvas.current?.zoomBy(1.25)],
             ['remove', () => canvas.current?.zoomBy(0.8)],

@@ -5,7 +5,7 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -40,16 +40,18 @@ export default function RouteStepsScreen() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [start, setStart] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  useEffect(
-    () =>
-      setSteps(
-        stepsOf(routeId).map((entry) => ({
-          sceneId: entry.sceneId,
-          selectedChoiceId: entry.selectedChoiceId,
-        })),
-      ),
-    [routeId, stepsOf],
-  );
+  const [prevRouteId, setPrevRouteId] = useState<typeof routeId | null>(null);
+  const [prevStepsOf, setPrevStepsOf] = useState<typeof stepsOf | null>(null);
+  if (routeId !== prevRouteId || stepsOf !== prevStepsOf) {
+    setPrevRouteId(routeId);
+    setPrevStepsOf(() => stepsOf);
+    setSteps(
+      stepsOf(routeId).map((entry) => ({
+        sceneId: entry.sceneId,
+        selectedChoiceId: entry.selectedChoiceId,
+      })),
+    );
+  }
   const styles = useMemo(
     () =>
       StyleSheet.create({

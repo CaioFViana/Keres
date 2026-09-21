@@ -2,7 +2,7 @@ import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import CommentableDetailField from '../../src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import CommentList from '../../src/components/features/comments/CommentList/CommentList';
-import CommentThreadModal from '../../src/components/features/comments/CommentThreadModal/CommentThreadModal';
+import type CommentThreadModal from '../../src/components/features/comments/CommentThreadModal/CommentThreadModal';
 import type { CommentSelect } from '../../src/db/schema';
 
 jest.mock('../../src/theme', () => ({

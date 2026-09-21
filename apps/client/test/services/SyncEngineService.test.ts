@@ -22,11 +22,8 @@ import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
-import {
-  OFFLINE_RETRY_MS,
-  SYNC_INTERVAL_MS,
-  SyncEngineService,
-} from '../../src/services/SyncEngineService';
+import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '../../src/services/SyncEngineService';
+import type { SyncEngineService } from '../../src/services/SyncEngineService';
 import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';

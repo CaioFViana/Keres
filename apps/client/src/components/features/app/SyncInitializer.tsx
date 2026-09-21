@@ -24,8 +24,8 @@ interface SyncInitializerProps {
 
 const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const drizzleClient = useDrizzle();
-  const storyService = useRef(createStoryService(drizzleClient)).current;
-  const friendshipService = useRef(createFriendshipService(drizzleClient)).current;
+  const [storyService] = useState(() => createStoryService(drizzleClient));
+  const [friendshipService] = useState(() => createFriendshipService(drizzleClient));
   const { userId, activeServer } = useUserSettingsStore();
   // Registering or re-authenticating a server happens while this component remains mounted.
   // A scalar revision makes the reconciliation/WebSocket effects react to that persisted

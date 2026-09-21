@@ -259,12 +259,15 @@ const SuggestionsScreen = () => {
     }, [loadGroups, loadValues]),
   );
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadValues` clears synchronously only when no story/type is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadValues();
   }, [loadValues]);
-  useEffect(() => {
+  const [prevSelectedType, setPrevSelectedType] = useState(selectedType);
+  if (selectedType !== prevSelectedType) {
+    setPrevSelectedType(selectedType);
     setRenamingList(false);
     setRenameListName('');
-  }, [selectedType]);
+  }
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
       if (changedStoryId === storyId) loadValues();

@@ -1,6 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PanResponder,
@@ -117,13 +117,15 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const [pickerLayout, setPickerLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [hueLayout, setHueLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
-  useEffect(() => {
+  const [prevCurrentColor, setPrevCurrentColor] = useState<typeof currentColor | null>(null);
+  if (currentColor !== prevCurrentColor) {
+    setPrevCurrentColor(currentColor);
     const { r, g, b } = hexToRgb(currentColor);
     const { h, s, v } = rgbToHsv(r, g, b);
     setHue(h);
     setSaturation(s);
     setValue(v);
-  }, [currentColor]);
+  }
 
   const getRgbFromHsv = useCallback(() => {
     return hsvToRgb(hue, saturation, value);
@@ -155,8 +157,10 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     }
   }, []);
 
-  const saturationValuePanResponder = useRef(
-    PanResponder.create({
+  const [saturationValuePanResponder] = useState(
+    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
+    () =>
+      PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt, gestureState) => {
@@ -175,10 +179,12 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
         }
       },
     }),
-  ).current;
+  );
 
-  const huePanResponder = useRef(
-    PanResponder.create({
+  const [huePanResponder] = useState(
+    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
+    () =>
+      PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt, gestureState) => {
@@ -197,7 +203,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
         }
       },
     }),
-  ).current;
+  );
 
   const getBackgroundColorForSatValPicker = useCallback(() => {
     const { r, g, b } = hsvToRgb(hue, 100, 100); // Max saturation and value for the base hue

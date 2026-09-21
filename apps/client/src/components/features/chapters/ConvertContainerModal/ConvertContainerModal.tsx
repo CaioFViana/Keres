@@ -3,7 +3,7 @@ import Button from '@/src/components/common/controls/Button/Button';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import type { ChapterType } from '@keres/shared';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -46,11 +46,15 @@ const ConvertContainerModal: React.FC<ConvertContainerModalProps> = ({
   const lastSlot = chapterNames.length + 1;
   const [position, setPosition] = useState<string>(String(lastSlot));
 
-  useEffect(() => {
+  const [prevVisible, setPrevVisible] = useState(visible);
+  const [prevLastSlot, setPrevLastSlot] = useState(lastSlot);
+  if (visible !== prevVisible || lastSlot !== prevLastSlot) {
+    setPrevVisible(visible);
+    setPrevLastSlot(lastSlot);
     // The end of the spine every time it opens: the least surprising place, and the writer is being
     // shown the claim rather than having it made for them.
     setPosition(String(lastSlot));
-  }, [visible, lastSlot]);
+  }
 
   const styles = StyleSheet.create({
     modalContent: { backgroundColor: colors.background, borderRadius: 10, padding: 20 },

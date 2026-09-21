@@ -11,7 +11,7 @@ import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLa
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -72,11 +72,13 @@ const PlotMatrixScreen = () => {
 
   // The first batch of plots comes selected: an empty matrix on the first opening looks like a broken
   // screen, not a choice to make.
-  useEffect(() => {
+  const [prevPlots, setPrevPlots] = useState<typeof plots | null>(null);
+  if (plots !== prevPlots) {
+    setPrevPlots(plots);
     setSelectedIds((current) =>
       current.length > 0 ? current : plots.slice(0, MAX_VISIBLE_SERIES).map((plot) => plot.id),
     );
-  }, [plots]);
+  }
 
   const colorOf = useCallback(
     (plotId: string) =>
@@ -267,7 +269,9 @@ const PlotMatrixScreen = () => {
 
       {layout.rows.length > 0 && scenes.length > 0 && (
         <View style={styles.controls}>
+          {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
           {(
+            // eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed.
             [
               ['add', () => canvas.current?.zoomBy(1.25)],
               ['remove', () => canvas.current?.zoomBy(0.8)],

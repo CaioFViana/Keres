@@ -459,6 +459,7 @@ const LocationDetailsScreen = () => {
 
   useEffect(() => {
     if (location) {
+      /* eslint-disable react-hooks/set-state-in-effect -- each fetch clears synchronously only when its service/data is missing and otherwise sets after `await`; the rule cannot verify across the callback boundary. */
       fetchAllCharactersInStory(); // Fetch all characters
       fetchAllScenesInStory(); // Fetch all scenes
       fetchAllCharacterSceneRelations(); // Fetch all character scene relations
@@ -466,6 +467,7 @@ const LocationDetailsScreen = () => {
       fetchAllItemJourneysInStory(); // Fetch all item journeys
       fetchAllLocationsInStory(); // Fetch all locations
       fetchAllLocationRelationsInStory(); // Fetch all Location relations
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [
     location,

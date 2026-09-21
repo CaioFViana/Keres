@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ThemedSwitch from '../../components/common/controls/ThemedSwitch/ThemedSwitch';
@@ -50,10 +50,8 @@ const StatRankingScreen = () => {
     title: t('stat_ranking_title'),
   });
 
-  useEffect(() => {
-    // With nothing chosen yet, it starts with the first axis - the screen never opens empty for nothing.
-    if (!statId && data.stats.length > 0) setStatId(data.stats[0]!.id);
-  }, [data.stats, statId]);
+  // With nothing chosen yet, it starts with the first axis - the screen never opens empty for nothing.
+  if (!statId && data.stats.length > 0) setStatId(data.stats[0]!.id);
 
   const groups = useMemo(() => {
     if (!statId) return [];

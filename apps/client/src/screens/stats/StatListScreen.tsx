@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -53,10 +53,17 @@ const StatListScreen = () => {
   );
   const [savingSettings, setSavingSettings] = useState(false);
 
-  useEffect(() => {
+  const [prevStatSystem, setPrevStatSystem] = useState(selectedStory?.statSystem);
+  const [prevStatNotation, setPrevStatNotation] = useState(selectedStory?.statNotation);
+  if (
+    selectedStory?.statSystem !== prevStatSystem ||
+    selectedStory?.statNotation !== prevStatNotation
+  ) {
+    setPrevStatSystem(selectedStory?.statSystem);
+    setPrevStatNotation(selectedStory?.statNotation);
     setStatSystem(selectedStory?.statSystem ?? false);
     setStatNotation((selectedStory?.statNotation ?? 'letter') as StatNotation);
-  }, [selectedStory?.statNotation, selectedStory?.statSystem]);
+  }
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = useMemo(

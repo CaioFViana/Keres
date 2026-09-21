@@ -67,10 +67,19 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
 
   const linkedServer = availableServers.find((server) => server.id === serverId) ?? null;
 
-  useEffect(() => {
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevLinkedServer, setPrevLinkedServer] = useState(linkedServer);
+  if (storyId !== prevStoryId || linkedServer !== prevLinkedServer) {
+    setPrevStoryId(storyId);
+    setPrevLinkedServer(linkedServer);
     if (!storyId || !linkedServer) {
       setIsOwnerOnServer(null);
       setCollaborators(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!storyId || !linkedServer) {
       return;
     }
     let cancelled = false;
@@ -100,10 +109,19 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     };
   }, [storyId, linkedServer]);
 
-  useEffect(() => {
+  const [prevOwnerLinkedServer, setPrevOwnerLinkedServer] = useState(linkedServer);
+  const [prevIsOwnerOnServer, setPrevIsOwnerOnServer] = useState(isOwnerOnServer);
+  if (linkedServer !== prevOwnerLinkedServer || isOwnerOnServer !== prevIsOwnerOnServer) {
+    setPrevOwnerLinkedServer(linkedServer);
+    setPrevIsOwnerOnServer(isOwnerOnServer);
     if (!linkedServer || isOwnerOnServer !== true) {
       setAddableFriends([]);
       setSelectedFriendId(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!linkedServer || isOwnerOnServer !== true) {
       return;
     }
     let cancelled = false;

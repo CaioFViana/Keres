@@ -191,10 +191,13 @@ export function applySurfaceChange(
   newSurface: string,
 ): ManuscriptEditorState {
   const oldSurface = getSurfaceText(state);
-  if (newSurface === oldSurface) return state;
+  // Pasted Windows text carries \r\n: normalize before block splitting so a
+  // pasted blank line still splits blocks (and heading hits one block).
+  const surface = newSurface.replace(/\r\n?/g, '\n');
+  if (surface === oldSurface) return state;
   const oldBlocks = state.doc.blocks;
   const oldContents = contentsOf(oldBlocks);
-  const newContents = newSurface.split('\n\n');
+  const newContents = surface.split('\n\n');
   let prefix = 0;
   while (
     prefix < oldContents.length &&
@@ -282,7 +285,9 @@ export function setEditorSelection(
   selection: ManuscriptEditorSelection,
 ): ManuscriptEditorState {
   const normalized = clampSelection(selection, getSurfaceText(state).length);
-  if (sameSelection(normalized, state.selection) && state.pendingMarks === null) return state;
+  // Identical selection echoes (focus, re-render) must not disarm pending
+  // marks: only a real caret move cancels the armed typing style.
+  if (sameSelection(normalized, state.selection)) return state;
   return { ...state, selection: normalized, pendingMarks: null };
 }
 

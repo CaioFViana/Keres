@@ -306,6 +306,35 @@ describe('useSceneBodyDraft', () => {
     expect(view.result.current.activeMarks.heading).toBe(1);
   });
 
+  it('heads only the caret block across a blank line', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: 'one\n\ntwo' }));
+
+    await act(async () => {
+      view.result.current.changeSelection({ start: 6, end: 6 });
+      view.result.current.applyFormat('heading');
+    });
+
+    expect(view.result.current.serializedBody).toBe('one\n\n# two');
+  });
+
+  it('keeps the armed style through selection echoes, typing styled', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: 'ab' }));
+
+    await act(async () => {
+      view.result.current.changeSelection({ start: 2, end: 2 });
+      view.result.current.applyFormat('bold');
+    });
+    // Native echoes of the unchanged caret must not disarm the style.
+    await act(async () => {
+      view.result.current.changeSelection({ start: 2, end: 2 });
+    });
+    await act(async () => {
+      view.result.current.changeText('abx');
+    });
+
+    expect(view.result.current.serializedBody).toBe('ab**x**');
+  });
+
   it('keeps drafting after a save while staying mounted', async () => {
     jest.useFakeTimers();
     const view = await renderHook(() => useHarness({ savedBody: 'saved' }));

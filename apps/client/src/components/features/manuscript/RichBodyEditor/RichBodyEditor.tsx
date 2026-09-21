@@ -1,5 +1,5 @@
 import type { ManuscriptDocument, ManuscriptMark } from '@keres/shared';
-import { useMemo } from 'react';
+import { useMemo, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, View, type TextStyle } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -15,6 +15,8 @@ export type RichBodyEditorProps = {
   editable?: boolean;
   autoFocus?: boolean;
   testID?: string;
+  /** Lets the host refocus the input after toolbar actions keep the caret. */
+  inputRef?: Ref<TextInput>;
 };
 
 type OverlaySegment = { text: string; style: TextStyle };
@@ -67,12 +69,20 @@ function buildOverlaySegments(doc: ManuscriptDocument, baseColor: string): Overl
 }
 
 /**
- * The manuscript prose input with WYSIWYG formatting: a transparent `TextInput`
- * showing the markup-free surface over a ghost `Text` that paints the document
- * runs. The input stays the sole touch target, so the keyboard, autocorrect,
- * IME and the OS selection handles are all native; the overlay only paints.
- * Both layers share `manuscriptTextMetrics` exactly, so toggling between
- * writing and reading never shifts the layout.
+ * The manuscript prose input with WYSIWYG formatting: a `TextInput` whose
+ * glyphs hide in the surface color, showing the markup-free surface under a
+ * ghost `Text` that paints the document runs. The input stays the sole touch
+ * target, so the keyboard, autocorrect, IME and the OS selection handles are
+ * all native; the overlay only paints. Both layers share
+ * `manuscriptTextMetrics` exactly, so toggling between writing and reading
+ * never shifts the layout. While a ranged selection is active the layers swap
+ * (text-colored input, hidden overlay) so the native highlight never exposes
+ * the overlay drifting behind it.
+ *
+ * The input text is surface-colored instead of transparent on purpose: the
+ * explicit `cursorColor` prop is ignored on some Android builds and the caret
+ * then falls back to the text color, so transparent text means an invisible
+ * caret. Opaque surface-matched glyphs keep the OS caret path intact.
  */
 export function RichBodyEditor({
   doc,
@@ -83,16 +93,29 @@ export function RichBodyEditor({
   editable = true,
   autoFocus = false,
   testID,
+  inputRef,
 }: RichBodyEditorProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  // A ranged selection is painted from the input's plain metrics, so the
+  // styled overlay would visibly drift behind the highlight: while selecting,
+  // the input itself goes opaque and the overlay hides. Collapsed caret (or
+  // no selection yet) keeps the WYSIWYG overlay.
+  const isSelecting = selection != null && selection.start !== selection.end;
   // Pure derivation from props: no render-adjust state, nothing to latch.
   const segments = useMemo(() => buildOverlaySegments(doc, colors.text), [doc, colors.text]);
   const styles = useMemo(
     () =>
       StyleSheet.create({
         container: { flex: 1, position: 'relative', backgroundColor: colors.surface },
-        overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+        overlay: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: isSelecting ? 0 : 1,
+        },
         overlayText: {
           color: colors.text,
           fontSize: manuscriptTextMetrics.fontSize,
@@ -102,7 +125,7 @@ export function RichBodyEditor({
         },
         input: {
           flex: 1,
-          color: 'transparent',
+          color: isSelecting ? colors.text : colors.surface,
           backgroundColor: 'transparent',
           fontSize: manuscriptTextMetrics.fontSize,
           lineHeight: manuscriptTextMetrics.lineHeight,
@@ -111,7 +134,7 @@ export function RichBodyEditor({
           textAlignVertical: 'top',
         },
       }),
-    [colors],
+    [colors, isSelecting],
   );
   return (
     <View style={styles.container} testID={testID}>
@@ -125,6 +148,7 @@ export function RichBodyEditor({
         </Text>
       </View>
       <TextInput
+        ref={inputRef}
         testID={testID ? `${testID}.input` : undefined}
         style={styles.input}
         value={surfaceText}
@@ -138,7 +162,6 @@ export function RichBodyEditor({
         placeholderTextColor={colors.textSecondary}
         scrollEnabled={false}
         selectionColor={colors.primary}
-        cursorColor={colors.primary}
       />
     </View>
   );

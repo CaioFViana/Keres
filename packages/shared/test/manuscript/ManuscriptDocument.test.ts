@@ -111,6 +111,19 @@ describe('parseMarkdownToDocument', () => {
     expect(doc.blocks[1]).toEqual(paragraph('Second.'));
   });
 
+  it('normalizes CRLF and lone CR line endings before splitting', () => {
+    const doc = parseMarkdownToDocument('# Title\r\n\r\nFirst.\rSecond.\r\n\r\n**bold** tail');
+
+    expect(doc.blocks).toHaveLength(3);
+    expect(doc.blocks[0]).toEqual({
+      kind: 'heading',
+      level: 1,
+      spans: [{ text: 'Title', marks: [] }],
+    });
+    expect(doc.blocks[1]).toEqual(paragraph('First.\nSecond.'));
+    expect(documentTextContent(doc)).not.toContain('\r');
+  });
+
   it('parses heading levels but keeps bare hashes literal', () => {
     const doc = parseMarkdownToDocument('# One\n\n## Two\n\n### Three');
 

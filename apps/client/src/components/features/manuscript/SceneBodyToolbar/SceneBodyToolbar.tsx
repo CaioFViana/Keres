@@ -64,6 +64,9 @@ export function SceneBodyToolbar({
           <TouchableOpacity
             key={action.kind}
             testID={testID ? `${testID}.${action.kind}` : undefined}
+            // Never steal the editor's input focus (Android): tapping a mark
+            // must keep the keyboard up and the caret where it was.
+            focusable={false}
             accessibilityRole="button"
             accessibilityLabel={t(action.labelKey)}
             accessibilityState={{ selected: isActive }}

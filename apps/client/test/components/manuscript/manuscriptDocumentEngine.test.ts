@@ -97,6 +97,16 @@ describe('applySurfaceChange', () => {
     expect(stored(applySurfaceChange(editorOf('**a**\n\n*b*'), 'ab'))).toBe('**a***b*');
   });
 
+  it('normalizes CRLF text so pasted blank lines still split blocks', () => {
+    const state = applySurfaceChange(editorOf('ab'), 'a\r\n\r\nb');
+
+    expect(getSurfaceText(state)).toBe('a\n\nb');
+    expect(stored(state)).toBe('a\n\nb');
+    expect(state.selection).toEqual({ start: 3, end: 3 });
+    // ...so heading hits only the block under the caret.
+    expect(stored(toggleEditorHeading(state, 3))).toBe('a\n\n# b');
+  });
+
   it('keeps the first kind when joining blocks', () => {
     expect(stored(applySurfaceChange(editorOf('# a\n\nb'), 'ab'))).toBe('# ab');
   });
@@ -115,6 +125,12 @@ describe('setEditorSelection', () => {
     const state = editorOf('ab', { start: 1, end: 1 });
 
     expect(setEditorSelection(state, { start: 1, end: 1 })).toBe(state);
+  });
+
+  it('keeps pending marks on identical selection echoes', () => {
+    const armed = toggleEditorMark(editorOf('ab', { start: 2, end: 2 }), 'bold');
+
+    expect(setEditorSelection(armed, { start: 2, end: 2 })).toBe(armed);
   });
 });
 

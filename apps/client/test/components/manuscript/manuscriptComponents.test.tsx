@@ -150,17 +150,19 @@ describe('RichBodyEditor', () => {
     );
   });
 
-  it('keeps the input transparent with theme caret/selection over identical metrics', async () => {
+  it('hides input glyphs in the surface color with theme selection over identical metrics', async () => {
     const view = await render(
       <RichBodyEditor doc={DOC} surfaceText={SURFACE} onChangeText={jest.fn()} testID="editor" />,
     );
 
     const input = view.getByTestId('editor.input');
     const inputStyle = StyleSheet.flatten(input.props.style);
-    expect(inputStyle.color).toBe('transparent');
+    expect(inputStyle.color).toBe('#eee');
     expect(inputStyle.backgroundColor).toBe('transparent');
     expect(input.props.selectionColor).toBe('#00f');
-    expect(input.props.cursorColor).toBe('#00f');
+    // No explicit caret color: the OS default stays visible where the
+    // explicit prop is ignored and the caret falls back to the text color.
+    expect(input.props.cursorColor).toBeUndefined();
     expect(input.props.multiline).toBe(true);
     expect(input.props.scrollEnabled).toBe(false);
     expect(inputStyle.textAlignVertical).toBe('top');
@@ -184,6 +186,44 @@ describe('RichBodyEditor', () => {
     );
 
     expect(view.getByTestId('editor.overlay').parent!.props.pointerEvents).toBe('none');
+  });
+
+  it('swaps to the opaque input and hides the overlay while a range is selected', async () => {
+    const view = await render(
+      <RichBodyEditor
+        doc={DOC}
+        surfaceText={SURFACE}
+        selection={{ start: 0, end: 7 }}
+        onChangeText={jest.fn()}
+        testID="editor"
+      />,
+    );
+
+    const inputStyle = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
+    expect(inputStyle.color).toBe('#111');
+    const overlayContainerStyle = StyleSheet.flatten(
+      view.getByTestId('editor.overlay').parent!.props.style,
+    );
+    expect(overlayContainerStyle.opacity).toBe(0);
+  });
+
+  it('keeps the WYSIWYG overlay on a collapsed caret', async () => {
+    const view = await render(
+      <RichBodyEditor
+        doc={DOC}
+        surfaceText={SURFACE}
+        selection={{ start: 2, end: 2 }}
+        onChangeText={jest.fn()}
+        testID="editor"
+      />,
+    );
+
+    const inputStyle = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
+    expect(inputStyle.color).toBe('#eee');
+    const overlayContainerStyle = StyleSheet.flatten(
+      view.getByTestId('editor.overlay').parent!.props.style,
+    );
+    expect(overlayContainerStyle.opacity).toBe(1);
   });
 });
 
@@ -237,6 +277,14 @@ describe('SceneBodyToolbar', () => {
 
     for (const glyph of ['B', 'I', 'U', 'H', 'S']) {
       expect(StyleSheet.flatten(view.getByText(glyph).props.style).color).toBe('#111');
+    }
+  });
+
+  it('never steals the editor input focus', async () => {
+    const view = await render(<SceneBodyToolbar onAction={jest.fn()} testID="toolbar" />);
+
+    for (const kind of ['bold', 'italic', 'underline', 'heading', 'strikethrough']) {
+      expect(view.getByTestId(`toolbar.${kind}`).props.focusable).toBe(false);
     }
   });
 });

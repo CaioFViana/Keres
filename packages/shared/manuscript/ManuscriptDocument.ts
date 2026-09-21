@@ -200,6 +200,7 @@ function parseChunk(chunk: string): ManuscriptBlock {
 /** Parses stored markdown into a normalized document. Never throws. */
 export function parseMarkdownToDocument(markdown: string): ManuscriptDocument {
   const chunks = markdown
+    .replace(/\r\n?/g, '\n')
     .split(/\n\s*\n/)
     .map((chunk) => chunk.trim())
     .filter(Boolean);

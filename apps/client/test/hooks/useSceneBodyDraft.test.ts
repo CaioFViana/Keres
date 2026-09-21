@@ -108,7 +108,7 @@ describe('useSceneBodyDraft', () => {
     expect(view.result.current.isDirty).toBe(true);
   });
 
-  it('pushes restores into a mounted editor imperatively', async () => {
+  it('seeds restores without touching a mounted editor', async () => {
     type DraftRow = Awaited<ReturnType<typeof EditorDraftService.readBoundEditorDraft>>;
     let resolveRead!: (row: DraftRow) => void;
     const gate = new Promise<DraftRow>((resolve) => {
@@ -116,6 +116,7 @@ describe('useSceneBodyDraft', () => {
     });
     jest.spyOn(EditorDraftService, 'readBoundEditorDraft').mockImplementation(() => gate);
     const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
+    expect(view.result.current.restoreSettled).toBe(false);
     const instance = fakeInstance();
     view.result.current.editorRef.current = instance as unknown as EnrichedTextInputInstance;
 
@@ -127,8 +128,22 @@ describe('useSceneBodyDraft', () => {
     });
     await waitFor(() => expect(view.result.current.draftRestored).toBe(true));
 
-    // An uncontrolled input ignores new defaults while mounted.
-    expect(instance.setValue).toHaveBeenCalledWith(html('<p>unsaved prose</p>'));
+    // Hosts mount the editor only after the settle, so the seed already
+    // carries the restore: pushing it in would race the host's asynchronous
+    // mount-seed application, which lands last on web and wipes the restore.
+    expect(view.result.current.restoreSettled).toBe(true);
+    expect(instance.setValue).not.toHaveBeenCalled();
+    expect(view.result.current.initialHtml).toBe(html('<p>unsaved prose</p>'));
+    expect(view.result.current.serializedBody).toBe('unsaved prose');
+  });
+
+  it('settles vacuously when disabled without reading', async () => {
+    const read = jest.spyOn(EditorDraftService, 'readBoundEditorDraft');
+    const view = await renderHook(() => useHarness({ savedBody: 'saved', enabled: false }));
+
+    expect(view.result.current.restoreSettled).toBe(true);
+    expect(view.result.current.draftRestored).toBe(false);
+    expect(read).not.toHaveBeenCalled();
   });
 
   it('discards a draft saved against an older revision', async () => {

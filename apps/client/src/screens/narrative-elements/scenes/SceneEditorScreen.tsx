@@ -125,6 +125,7 @@ function SceneEditorContent({
     saving,
     saveError,
     draftRestored,
+    restoreSettled,
   } = useSceneBodyDraft({
     storyId: scene.storyId,
     sceneId: scene.id,
@@ -176,6 +177,7 @@ function SceneEditorContent({
         container: { flex: 1, backgroundColor: colors.surface },
         scroller: { flex: 1 },
         scrollerContent: { flexGrow: 1 },
+        editorPlaceholder: { flex: 1, backgroundColor: colors.surface },
         readContainer: {
           flex: 1,
           paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
@@ -214,14 +216,23 @@ function SceneEditorContent({
         scrollEventThrottle={16}
       >
         {mode === 'write' ? (
-          <RichBodyEditor
-            testID="scene-body-editor"
-            defaultHtml={initialHtml}
-            onHtmlChange={onHtmlChange}
-            onMarksChange={onMarksChange}
-            editable={canEdit && !saving}
-            inputRef={editorRef}
-          />
+          // The editor mounts only after the draft restore settles so the
+          // seed already carries restored prose: pushing it into a mounted
+          // editor races the host's asynchronous seed application, which lands
+          // last on web and wipes both the visual and the doc. The placeholder
+          // holds the layout for the (millisecond) wait.
+          restoreSettled ? (
+            <RichBodyEditor
+              testID="scene-body-editor"
+              defaultHtml={initialHtml}
+              onHtmlChange={onHtmlChange}
+              onMarksChange={onMarksChange}
+              editable={canEdit && !saving}
+              inputRef={editorRef}
+            />
+          ) : (
+            <View style={styles.editorPlaceholder} testID="scene-body-editor-loading" />
+          )
         ) : (
           <View style={styles.readContainer}>
             <MarkdownPreview text={serializedBody} />

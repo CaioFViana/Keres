@@ -84,6 +84,7 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
   clearFormDraft: () => Promise<void>;
   deleteStoredDraft: () => Promise<void>;
   draftRestored: boolean;
+  restoreSettled: boolean;
 } {
   const draftEntityId = entityId ?? NEW_ENTITY_DRAFT_ID;
   const draftField = field ?? FORM_DRAFT_FIELD;
@@ -131,7 +132,9 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     await clearBoundEditorDraft(storyId, entityType, draftEntityId, draftField);
   }, [storyId, entityType, draftEntityId, draftField]);
 
-  if (enabled && storyId && !restoreSettled && !isEditorDraftDbBound()) {
+  // Vacuous settle: disabled, story-less, or unbound instances have nothing
+  // to restore, so consumers waiting on `restoreSettled` must not hang.
+  if (!restoreSettled && (!enabled || !storyId || !isEditorDraftDbBound())) {
     setRestoreSettled(true);
   }
 
@@ -220,5 +223,5 @@ export function useDurableFormDraft<TFields extends Record<string, unknown>>({
     [],
   );
 
-  return { clearFormDraft, deleteStoredDraft, draftRestored };
+  return { clearFormDraft, deleteStoredDraft, draftRestored, restoreSettled };
 }

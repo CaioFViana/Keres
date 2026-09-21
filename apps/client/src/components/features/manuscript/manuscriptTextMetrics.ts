@@ -13,4 +13,12 @@ export const manuscriptTextMetrics = {
   paragraphSpacing: 14,
   containerPaddingHorizontal: 20,
   containerPaddingVertical: 16,
+  /**
+   * Web-only body font: the exact stack react-native-web compiles `System`
+   * into for `Text`/`TextInput`, so the TipTap host (a bare div outside the
+   * RN text reset) renders the same face as the reader. Native inherits the
+   * system font on both sides, so this must never be passed there.
+   */
+  webFontFamily:
+    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
 } as const;

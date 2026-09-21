@@ -76,8 +76,8 @@ export function useSceneBodyDraft({
   );
   // The uncontrolled input seeds from this on mount (RichBodyEditor freezes
   // it per mount: the web host rebuilds the editor when defaultValue
-  // changes); deriving it from the live doc (not just the saved body)
-  // rehydrates tab-switch remounts, while mounted restores push via setValue.
+  // changes); deriving it from the live doc (not just the saved body) folds
+  // pre-mount restores and tab-switch remounts into the seed.
   const initialHtml = useMemo(() => documentToEnrichedHtml(doc), [doc]);
   const { chars: charCount, words: wordCount } = useMemo(() => {
     const text = documentTextContent(doc);
@@ -85,12 +85,14 @@ export function useSceneBodyDraft({
     return { chars: text.length, words: trimmed === '' ? 0 : trimmed.split(/\s+/).length };
   }, [doc]);
   const handleRestore = useCallback((fields: SceneBodyFields) => {
-    const next = parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : '');
-    setDoc(next);
-    // A mounted uncontrolled input ignores new defaults: push restores in.
-    editorRef.current?.setValue(documentToEnrichedHtml(next));
+    // Hosts mount the editor only after the restore settles, so the seed
+    // already carries the restored prose: no imperative push-in, and no race
+    // against the host's asynchronous mount-seed application (which used to
+    // land after the push and wipe both the visual and the doc on web).
+    setDoc(parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : ''));
   }, []);
-  const { clearFormDraft, deleteStoredDraft, draftRestored } = useDurableFormDraft<SceneBodyFields>(
+  const { clearFormDraft, deleteStoredDraft, draftRestored, restoreSettled } =
+    useDurableFormDraft<SceneBodyFields>(
     {
       storyId,
       entityType: 'Scene',
@@ -160,6 +162,8 @@ export function useSceneBodyDraft({
     /** Terminal clear for hosts that unmount right after (mirrors the form flow). */
     clearBodyDraft: clearFormDraft,
     draftRestored,
+    /** True once the stored draft (if any) has been restored: mount the editor only then. */
+    restoreSettled,
   };
 }
 

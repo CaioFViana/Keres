@@ -1,5 +1,5 @@
 import type { ManuscriptMark } from '@keres/shared';
-import { useCallback, useMemo, useState, type RefObject } from 'react';
+import { createElement, useCallback, useMemo, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View, type NativeSyntheticEvent } from 'react-native';
 import {
@@ -35,6 +35,36 @@ function marksFromStyleState(state: LibStyleState): ManuscriptMark[] {
   if (state.underline.isActive) marks.push('underline');
   if (state.strikeThrough.isActive) marks.push('strikethrough');
   return marks;
+}
+
+/**
+ * DOM anchor for the web-only inner-host CSS below (react-native-web renders
+ * `id` as the element id). One editor instance per screen, so a fixed id is
+ * safe — and a second editor would want the same native look anyway.
+ */
+const WEB_CSS_SCOPE_ID = 'keres-rich-body-editor';
+
+/**
+ * Inner-host layout the `style` prop cannot reach: it lands inline on the
+ * host wrapper, but the nested contenteditable sizes to its content without
+ * this — a one-line box with the focus ring hugging the text instead of a
+ * seamless full-area editor. Scoped to our container (`>div` is the host
+ * wrapper, our only div child; `.ProseMirror` is TipTap-stable) so no other
+ * element is touched. Padding lives on the inner node so clicks on the
+ * padded area land inside the editable and focus it.
+ */
+export const RICH_BODY_EDITOR_WEB_CSS = [
+  `#${WEB_CSS_SCOPE_ID}>div{display:flex;flex-direction:column}`,
+  `#${WEB_CSS_SCOPE_ID} .ProseMirror{flex:1;padding:${manuscriptTextMetrics.containerPaddingVertical}px ${manuscriptTextMetrics.containerPaddingHorizontal}px}`,
+  `#${WEB_CSS_SCOPE_ID} .ProseMirror:focus{outline:none}`,
+].join('');
+
+function ManuscriptEditorWebChrome() {
+  if (Platform.OS !== 'web') return null;
+  // `dangerouslySetInnerHTML` (not a string child): identical DOM output, and
+  // it keeps the RN test renderer — which only allows text inside `<Text>` —
+  // able to mount this branch.
+  return createElement('style', { dangerouslySetInnerHTML: { __html: RICH_BODY_EDITOR_WEB_CSS } });
 }
 
 /**
@@ -88,16 +118,28 @@ function RichBodyEditorInner({
         input: {
           flex: 1,
           color: colors.text,
+          // Web-only: without it the bare host div falls back to the browser
+          // default face instead of the app's system stack (see metrics).
+          // (Plain `Platform.OS` check like the gates above: `Platform.select`
+          // is hardcoded per bundle platform and ignores OS overrides.)
+          fontFamily:
+            Platform.OS === 'web' ? manuscriptTextMetrics.webFontFamily : undefined,
           fontSize: manuscriptTextMetrics.fontSize,
           lineHeight: manuscriptTextMetrics.lineHeight,
-          paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
-          paddingVertical: manuscriptTextMetrics.containerPaddingVertical,
+          // Web keeps the wrapper padding-free: it lives on the inner
+          // contenteditable via RICH_BODY_EDITOR_WEB_CSS so padding clicks
+          // focus the editor (read-mode metrics, same values).
+          paddingHorizontal:
+            Platform.OS === 'web' ? 0 : manuscriptTextMetrics.containerPaddingHorizontal,
+          paddingVertical:
+            Platform.OS === 'web' ? 0 : manuscriptTextMetrics.containerPaddingVertical,
         },
       }),
     [colors],
   );
   return (
-    <View style={styles.container} testID={testID}>
+    <View style={styles.container} testID={testID} id={WEB_CSS_SCOPE_ID}>
+      <ManuscriptEditorWebChrome />
       <EnrichedTextInput
         ref={inputRef}
         testID={testID ? `${testID}.input` : undefined}

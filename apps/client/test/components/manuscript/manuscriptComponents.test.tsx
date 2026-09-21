@@ -4,7 +4,10 @@ import { Platform, StyleSheet } from 'react-native';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { manuscriptTextMetrics } from '../../../src/components/features/manuscript/manuscriptTextMetrics';
 import { MarkdownPreview } from '../../../src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
-import { RichBodyEditor } from '../../../src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
+import {
+  RICH_BODY_EDITOR_WEB_CSS,
+  RichBodyEditor,
+} from '../../../src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
 import { SceneBodyEditor } from '../../../src/components/features/manuscript/SceneBodyEditor/SceneBodyEditor';
 import { SceneBodyFooter } from '../../../src/components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
 import { SceneBodyToolbar } from '../../../src/components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
@@ -187,6 +190,54 @@ describe('RichBodyEditor', () => {
       // Same mounted input would keep the frozen seed; the remount reseeds
       // from the live doc, so nothing typed is lost.
       expect(view.getByTestId('editor.input').props.defaultValue).toBe(reseeded);
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    }
+  });
+
+  it('uses the app system stack on web and inherits it on native', async () => {
+    const nativeStyle = StyleSheet.flatten(
+      (await renderEditor()).getByTestId('editor.input').props.style,
+    );
+    expect(nativeStyle.fontFamily).toBeUndefined();
+    expect(nativeStyle.paddingHorizontal).toBe(
+      manuscriptTextMetrics.containerPaddingHorizontal,
+    );
+    expect(nativeStyle.paddingVertical).toBe(manuscriptTextMetrics.containerPaddingVertical);
+
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+    try {
+      const webStyle = StyleSheet.flatten(
+        (await renderEditor()).getByTestId('editor.input').props.style,
+      );
+      expect(webStyle.fontFamily).toBe(manuscriptTextMetrics.webFontFamily);
+      // Padding moves to the inner contenteditable via scoped CSS so padding
+      // clicks land inside the editable and focus it.
+      expect(webStyle.paddingHorizontal).toBe(0);
+      expect(webStyle.paddingVertical).toBe(0);
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    }
+  });
+
+  it('scopes inner-host CSS to the container id on web only', async () => {
+    const { containerPaddingHorizontal: ph, containerPaddingVertical: pv } =
+      manuscriptTextMetrics;
+    expect(RICH_BODY_EDITOR_WEB_CSS).toBe(
+      '#keres-rich-body-editor>div{display:flex;flex-direction:column}' +
+        `#keres-rich-body-editor .ProseMirror{flex:1;padding:${pv}px ${ph}px}` +
+        '#keres-rich-body-editor .ProseMirror:focus{outline:none}',
+    );
+    const nativeView = await renderEditor();
+    expect(nativeView.getByTestId('editor').props.id).toBe('keres-rich-body-editor');
+    expect(JSON.stringify(nativeView.toJSON())).not.toContain('ProseMirror');
+
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+    try {
+      const webView = await renderEditor();
+      expect(JSON.stringify(webView.toJSON())).toContain(RICH_BODY_EDITOR_WEB_CSS);
     } finally {
       Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
     }

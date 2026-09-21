@@ -24,6 +24,7 @@ let mockCommentsByField: Record<string, { id: string }[]> = {};
 let mockBodyText = 'Saved prose.';
 let mockBodyDirty = false;
 let mockActiveMarks: string[] = [];
+let mockRestoreSettled = true;
 let mockUseSceneBodyDraftOptions: {
   savedBody: string | null;
   persist: (body: string | null) => Promise<void>;
@@ -131,6 +132,7 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
       saveError: null,
       clearBodyDraft: jest.fn(),
       draftRestored: false,
+      restoreSettled: mockRestoreSettled,
     };
   },
 }));
@@ -270,6 +272,7 @@ beforeEach(() => {
   mockBodyText = 'Saved prose.';
   mockBodyDirty = false;
   mockActiveMarks = [];
+  mockRestoreSettled = true;
   mockUseSceneBodyDraftOptions = null;
   mockGetById.mockResolvedValue(makeScene());
   mockUpdateScene.mockImplementation(async (_userId: string, _sceneId: string, data: object) =>
@@ -291,6 +294,25 @@ describe('SceneEditorScreen', () => {
 
     expect(input.props.defaultValue).toBe('<html><p>Saved prose.</p></html>');
     expect(mockHeaderArgs?.title).toBe('Opening');
+  });
+
+  it('holds a placeholder until the draft restore settles, then seeds it', async () => {
+    mockRestoreSettled = false;
+    const loading = await render(<SceneEditorScreen />);
+    await loading.findByTestId('scene-body-editor-loading');
+
+    expect(loading.queryByTestId('scene-body-editor.input')).toBeNull();
+    await loading.unmount();
+
+    // The settle carries the restored prose, so the seed — not a racing
+    // imperative push — is what the mounted editor shows.
+    mockRestoreSettled = true;
+    mockBodyText = 'unsaved prose';
+    const view = await render(<SceneEditorScreen />);
+    const input = await view.findByTestId('scene-body-editor.input');
+
+    expect(input.props.defaultValue).toBe('<html><p>unsaved prose</p></html>');
+    expect(view.queryByTestId('scene-body-editor-loading')).toBeNull();
   });
 
   it('types through the draft hook and persists through the scene service', async () => {

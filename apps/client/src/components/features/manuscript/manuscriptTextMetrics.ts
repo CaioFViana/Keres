@@ -1,6 +1,7 @@
 /**
  * The single source of manuscript text metrics, shared by the prose editor
- * (`SceneBodyEditor`) and the reader (`MarkdownPreview`).
+ * (`RichBodyEditor`, both its input and its ghost overlay) and the reader
+ * (`MarkdownPreview`).
  *
  * Both render body text with these exact numbers so toggling between writing
  * and reading never shifts the layout: editing must feel like an existing

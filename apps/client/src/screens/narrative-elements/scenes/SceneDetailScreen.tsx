@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import type { SceneSelect } from '../../../db/schema';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
+import { stripManuscriptMarkers } from '../../../components/features/manuscript/parseManuscriptMarkdown';
 import { readStoredSceneBodyText } from '../../../hooks/useSceneBodyDraft';
 import { useEntityComments } from '../../../hooks/useEntityComments';
 import { useEntityRelations } from '../../../hooks/useEntityRelations';
@@ -45,7 +46,7 @@ const MANUSCRIPT_EXCERPT_LENGTH = 200;
 
 function excerptBody(body: string | null | undefined): string | null {
   if (!body) return null;
-  const normalized = body.replace(/\s+/g, ' ').trim();
+  const normalized = stripManuscriptMarkers(body).replace(/\s+/g, ' ').trim();
   if (!normalized) return null;
   return normalized.length > MANUSCRIPT_EXCERPT_LENGTH
     ? `${normalized.slice(0, MANUSCRIPT_EXCERPT_LENGTH)}…`

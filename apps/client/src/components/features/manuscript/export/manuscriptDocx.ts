@@ -29,6 +29,7 @@ function spansToRuns(spans: CompiledSpan[]): TextRun[] {
         bold: span.bold || undefined,
         italics: span.italic || undefined,
         underline: span.underline ? {} : undefined,
+        strike: span.strikethrough || undefined,
       }),
   );
 }

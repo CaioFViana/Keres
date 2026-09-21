@@ -4,11 +4,12 @@ Modo de escrita por cena no Keres: cada cena ganha um corpo de manuscrito
 editável numa tela dedicada (drawer Editor), com WIP local, sync via
 infraestrutura existente e exportação por cena/rota.
 
-Status geral: **fases 0–4 entregues** (fundação + editor por cena +
-manuscrito + exportação DOCX/PDF/Markdown/texto). Pendente só verificação
-manual em aparelho (impressão PDF, share sheets, abertura em Word/
-LibreOffice) e instrumentação de performance. Detalhe em `.agents/plans/
-2026-09-20-scene-editor-mvp.md`.
+Status geral: **fases 0–5 entregues** (fundação + editor por cena +
+manuscrito + exportação DOCX/PDF/Markdown/texto + rich text WYSIWYG).
+Pendente só verificação manual em aparelho (impressão PDF, share sheets,
+abertura em Word/LibreOffice, checklist do overlay) e instrumentação de
+performance. Detalhe em `.agents/plans/2026-09-20-scene-editor-mvp.md`
+e `.agents/plans/2026-09-21-manuscript-rich-text.md`.
 
 ## 1. Decisões de dados
 
@@ -36,14 +37,23 @@ markdown (negrito/itálico) fica bem abaixo de 10% em prosa normal.
   compartilhado (`SceneSchemas.ts`) — protege cliente, servidor e sync.
 - UI deve mostrar contador (X / 30k); quem bater no teto recebe a sugestão
   de dividir a cena (bom conselho de escrita + combina com o modelo do app).
+- O contador mostra caracteres/palavras **sem os marcadores markdown**
+  (`**`, `*`, `__`, `~~`, `#`, separadores `---`/`***`); o teto de 30k
+  continua medido no fonte armazenado (é o que o servidor valida).
+- Faixas sobre a contagem visível: acima de 20k sugere dividir a cena;
+  a partir de 27k avisa "cena grande demais" (os 3k restantes são folga
+  para os marcadores caberem nos 30k).
 
-### 1.3 Formato: markdown puro no MVP
+### 1.3 Formato: markdown no armazenamento, rico na escrita
 
-Negrito/itálico/títulos/diálogo via markdown; recuo de primeira linha é
-decisão de **render/export** (CSS `text-indent`, indent no template DOCX),
-não de armazenamento. JSON estruturado (TipTap/ProseMirror) só se v2
-precisar de comentários inline ou blocos especiais — exige bump de versão
-de export.
+Negrito/itálico/sublinhado/riscado/títulos/diálogo via markdown; recuo de
+primeira linha é decisão de **render/export** (CSS `text-indent`, indent no
+template DOCX), não de armazenamento. A fonte da verdade na escrita são
+runs estilizados (`packages/shared/manuscript`, reutilizável pela API na
+publicação futura); markdown é só a serialização de armazenamento, e o
+modo Escrever pinta os runs sobre um `TextInput` sem nenhum marcador.
+JSON estruturado (TipTap/ProseMirror) só se v2 precisar de comentários
+inline ou blocos especiais — exige bump de versão de export.
 
 ## 2. WIP local: tabela `editor_drafts` (client-only, planejada)
 
@@ -109,13 +119,18 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
   header **Escrever / Ler / Revisar**. Entradas: ação `document-text` no
   header do detalhe da cena + cartão "Manuscrito" (trecho + indicador de
   rascunho) sob o resumo.
-- Escrever: `SceneBodyEditor` (input tela cheia) + `SceneBodyToolbar` fixa
-  (negrito/itálico/sublinhado/títulos via `applyManuscriptFormat`) +
-  `SceneBodyFooter` fixo (rascunho/contador/Save) + hook `useSceneBodyDraft`
-  (snapshot de um campo sobre `useDurableFormDraft`, campo `body`). Ler:
-  `MarkdownPreview` (parser mínimo próprio com `**`/`*`/`__`/`#`, sem
-  dependência, texto selecionável). Revisar: threads de `Comment` da cena
-  na chave `body` via `CommentThreadModal` — zero nova entidade.
+- Escrever: `RichBodyEditor` document-driven (overlay pinta os runs do
+  documento sobre `TextInput` com a superfície sem markup, mesmas
+  métricas) + engine pura `manuscriptDocumentEngine` (diff da superfície,
+  toggle, pending marks Word-style) + `SceneBodyToolbar` fixa
+  (negrito/itálico/sublinhado/riscado/títulos, botão ativo via
+  `getEditorActiveMarks`) + `SceneBodyFooter` fixo (rascunho/contador/
+  Save) + hook `useSceneBodyDraft` (estado do documento, snapshot
+  markdown sobre `useDurableFormDraft`, campo `body`). Ler:
+  `MarkdownPreview` (parser mínimo próprio com `**`/`*`/`__`/`~~`/`#`
+  e escapes, sem dependência, texto selecionável). Revisar: threads de
+  `Comment` da cena na chave `body` via `CommentThreadModal` — zero
+  nova entidade.
 - Toggle de modo e ações de header seguem o padrão `BoardCanvasHeaderActions`
   (ícones Ionicons 24, `primary` quando ativo).
 - Seamless por construção: editor e preview compartilham
@@ -227,17 +242,27 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
 - [x] **Fase 2 (feito):** `SceneEditorScreen` (Escrever/Ler) + entradas no
       detalhe da cena + preview + contador/teto + `useSceneBodyDraft`
       sobre `editor_drafts` (campo `body`); `ManuscriptScreen` com lista
-      virtualizada, busca própria e edição inline por seção.
+      virtualizada e busca própria, sem edição inline — o lápis de cada
+      seção navega para a tela dedicada `SceneEditor` (host único; §4.2).
 - [x] **Fase 3 (feito):** modo Revisar (comments de cena na chave `body`,
       zero nova entidade); export linear com body (DOCX/PDF/MD/TXT).
 - [x] **Fase 4 (feito):** export por rota com "vá para a página X" via
       `PAGEREF` + switch de cenas avulsas. Coalescência no push e gzip:
       continuam diferidos (só com medição de dor — ver 3.3).
       (Migração p/ `editor_drafts` já feita — ver acima.)
+- [x] **Fase 5 rich text (feito):** editor document-model no Escrever
+      (runs estilizados em `packages/shared` como fonte da verdade,
+      markdown só na serialização, sem WebView/sem dep nova), engine de
+      edição pura + `RichBodyEditor` sem nenhum marcador na superfície,
+      toolbar com estado, riscado `~~` de ponta a ponta (edição, leitura,
+      DOCX/PDF/MD/TXT), excerpt sem marcadores. Plano em `.agents/plans/
+      2026-09-21-manuscript-rich-text.md`.
 - [ ] **Verificação manual pendente (requer aparelho):** impressão PDF via
       `expo-print`, share sheets iOS/Android, abertura do DOCX em Word/
       LibreOffice (números `PAGEREF`), sensação de scroll/jank e do
-      seamless em aparelho fraco.
+      seamless em aparelho fraco; overlay rico (caret/seleção visíveis
+      com texto transparente no iOS/Android, alinhamento caret↔glifo,
+      teclados/IME, cena de 30k).
 - [ ] **Futuro incerto:** comentários inline (v2), editor por blocos (só
       com evidência), diff-sync (só se storage doer).
 

@@ -79,6 +79,25 @@ describe('exportManuscript', () => {
     );
   });
 
+  it('passes strikethrough spans through to the text builders', async () => {
+    const struck = {
+      title: 'My Story',
+      blocks: [
+        {
+          kind: 'paragraph',
+          spans: [
+            { text: 'A ', bold: false, italic: false, underline: false, strikethrough: false },
+            { text: 'cut', bold: false, italic: false, underline: false, strikethrough: true },
+          ],
+        },
+      ],
+    } as unknown as CompiledManuscript;
+
+    await exportManuscript({ storyTitle: 'My Story', manuscript: struck, format: 'md', labels });
+
+    expect(mockBuildMarkdown).toHaveBeenCalledWith(struck, labels);
+  });
+
   it.each([
     ['md', 'My Story.md', 'text/markdown'],
     ['txt', 'My Story.txt', 'text/plain'],

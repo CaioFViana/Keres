@@ -194,6 +194,29 @@ describe('withoutLooseSections', () => {
   });
 });
 
+describe('compileLinearManuscript strikethrough', () => {
+  it('maps ~~ spans and defaults the flag to false elsewhere', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'A ~~cut~~ line.' })],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+    });
+
+    const paragraph = manuscript.blocks.find((block) => block.kind === 'paragraph');
+    expect(paragraph).toMatchObject({
+      kind: 'paragraph',
+      spans: [
+        { text: 'A ', strikethrough: false },
+        { text: 'cut', strikethrough: true },
+        { text: ' line.', strikethrough: false },
+      ],
+    });
+  });
+});
+
 describe('compileRouteManuscript', () => {
   it('compiles steps with a route subtitle and repeat-safe bookmarks', () => {
     const scenes = [

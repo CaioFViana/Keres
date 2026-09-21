@@ -10,7 +10,9 @@ const mockUpdateScene = jest.fn();
 const mockAddComment = jest.fn();
 const mockDeleteComment = jest.fn();
 const mockUpdateComment = jest.fn();
-const mockSetText = jest.fn();
+const mockChangeText = jest.fn();
+const mockChangeSelection = jest.fn();
+const mockApplyFormat = jest.fn();
 const mockSaveBody = jest.fn();
 
 let mockHeaderArgs: { title: string; renderActions?: () => React.ReactNode } | null = null;
@@ -19,6 +21,7 @@ let mockCanEdit = true;
 let mockCommentsByField: Record<string, { id: string }[]> = {};
 let mockBodyText = 'Saved prose.';
 let mockBodyDirty = false;
+let mockActiveMarks: { marks: string[]; heading: number } = { marks: [], heading: 0 };
 let mockUseSceneBodyDraftOptions: {
   savedBody: string | null;
   persist: (body: string | null) => Promise<void>;
@@ -103,11 +106,20 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
     persist: (body: string | null) => Promise<void>;
   }) => {
     mockUseSceneBodyDraftOptions = options;
+    const shared = jest.requireActual('@keres/shared') as typeof import('@keres/shared');
+    const doc = shared.parseMarkdownToDocument(mockBodyText);
+    const surfaceText = shared.documentTextContent(doc);
     return {
-      text: mockBodyText,
-      setText: mockSetText,
+      editor: { doc, selection: { start: 0, end: 0 }, pendingMarks: null },
+      surfaceText,
+      serializedBody: mockBodyText,
+      changeText: mockChangeText,
+      changeSelection: mockChangeSelection,
+      applyFormat: mockApplyFormat,
+      activeMarks: mockActiveMarks,
       wordCount: 2,
-      charCount: mockBodyText.length,
+      charCount: surfaceText.length,
+      sizeStatus: 'ok',
       maxLength: 30000,
       isDirty: mockBodyDirty,
       overLimit: false,
@@ -255,6 +267,7 @@ beforeEach(() => {
   mockCommentsByField = {};
   mockBodyText = 'Saved prose.';
   mockBodyDirty = false;
+  mockActiveMarks = { marks: [], heading: 0 };
   mockUseSceneBodyDraftOptions = null;
   mockGetById.mockResolvedValue(makeScene());
   mockUpdateScene.mockImplementation(async (_userId: string, _sceneId: string, data: object) =>
@@ -284,7 +297,7 @@ describe('SceneEditorScreen', () => {
     const input = await view.findByTestId('scene-body-editor.input');
 
     await fireEvent.changeText(input, 'Saved prose plus more.');
-    expect(mockSetText).toHaveBeenCalledWith('Saved prose plus more.');
+    expect(mockChangeText).toHaveBeenCalledWith('Saved prose plus more.');
 
     await fireEvent.press(view.getByText('save'));
     expect(mockSaveBody).toHaveBeenCalledTimes(1);
@@ -318,9 +331,25 @@ describe('SceneEditorScreen', () => {
     await fireEvent(input, 'selectionChange', {
       nativeEvent: { selection: { start: 0, end: 5 } },
     });
+    expect(mockChangeSelection).toHaveBeenCalledWith({ start: 0, end: 5 });
     await fireEvent.press(view.getByTestId('scene-body-toolbar.bold'));
 
-    expect(mockSetText).toHaveBeenCalledWith('**Saved** prose.');
+    expect(mockApplyFormat).toHaveBeenCalledWith('bold');
+  });
+
+  it('reflects the hook actives in the toolbar over the rich overlay', async () => {
+    mockBodyText = '**Saved** prose.';
+    mockActiveMarks = { marks: ['bold'], heading: 0 };
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    expect(view.getByTestId('scene-body-editor.overlay')).toBeTruthy();
+    expect(view.getByTestId('scene-body-toolbar.bold').props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(view.getByTestId('scene-body-toolbar.italic').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
   });
 
   it('reviews through the scene comments of the body field', async () => {

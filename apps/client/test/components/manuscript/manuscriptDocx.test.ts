@@ -129,6 +129,23 @@ describe('buildManuscriptDocxBase64', () => {
     expect(xml).toContain('Go to page');
   });
 
+  it('renders ~~ spans with strike-through runs', async () => {
+    const struck = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'A ~~cut~~ line.' })],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+    });
+    const xml = await documentXml(
+      await buildManuscriptDocxBase64(struck, { goToPage: 'Go to page' }),
+    );
+
+    expect(xml).toContain('cut');
+    expect(xml).toContain('w:strike');
+  });
+
   it('renders name-only choices when the target left the export', async () => {
     const xml = await documentXml(
       await buildManuscriptDocxBase64(manuscript(false), { goToPage: 'Go to page' }),

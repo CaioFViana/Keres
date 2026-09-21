@@ -174,3 +174,6 @@ export * from './rules/reorderIndices';
 export * from './rules/syncConflict';
 export * from './rules/storyExportIntegrity';
 export * from './rules/storyOwnerFields';
+// Manuscript document model: the client editor and (later) the API publisher
+// share styled runs as the source of truth, with markdown as serialization.
+export * from './manuscript/ManuscriptDocument';

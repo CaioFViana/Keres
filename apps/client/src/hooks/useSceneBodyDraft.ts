@@ -1,5 +1,26 @@
-import { MAX_SCENE_BODY_LENGTH } from '@keres/shared';
-import { useCallback, useState } from 'react';
+import {
+  MAX_SCENE_BODY_LENGTH,
+  parseMarkdownToDocument,
+  serializeDocumentToMarkdown,
+} from '@keres/shared';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  applySurfaceChange,
+  createManuscriptEditor,
+  getEditorActiveMarks,
+  getEditorCounts,
+  getSurfaceText,
+  setEditorSelection,
+  toggleEditorHeading,
+  toggleEditorMark,
+  type ManuscriptEditorSelection,
+  type ManuscriptEditorState,
+  type ManuscriptFormatKind,
+} from '../components/features/manuscript/manuscriptDocumentEngine';
+import {
+  getManuscriptSizeStatus,
+  type ManuscriptSizeStatus,
+} from '../components/features/manuscript/parseManuscriptMarkdown';
 import {
   SCENE_BODY_DRAFT_FIELD,
   readBoundEditorDraft,
@@ -9,11 +30,8 @@ import { useDurableFormDraft } from './useDurableFormDraft';
 
 export type SceneBodyFields = { body: string };
 
-export function countWords(text: string): number {
-  const trimmed = text.trim();
-  if (!trimmed) return 0;
-  return trimmed.split(/\s+/).length;
-}
+export type { ManuscriptSizeStatus };
+export type { ManuscriptEditorSelection, ManuscriptEditorState };
 
 type UseSceneBodyDraftOptions = {
   storyId?: string;
@@ -29,13 +47,15 @@ type UseSceneBodyDraftOptions = {
 };
 
 /**
- * Manuscript prose state for one scene: the text, its durable client-only draft and save.
+ * Manuscript prose state for one scene: the editing document, its durable
+ * client-only draft and save.
  *
- * The draft reuses `useDurableFormDraft` as a single-field snapshot, inheriting restore,
- * stale-guard, debounce and flush-on-unmount. After a successful save the stored row is
- * removed with the non-terminal clear so stay-mounted hosts (the manuscript's inline
- * section) keep drafting on the next keystroke; navigating away afterwards flushes
- * nothing because the text already matches the saved body.
+ * The editor holds styled runs; drafts, persistence and comments keep flowing
+ * serialized markdown, so the storage format, the 30k cap and every downstream
+ * consumer (sync, export, search) are untouched. After a successful save the
+ * stored row is removed with the non-terminal clear so stay-mounted hosts keep
+ * drafting on the next keystroke; navigating away afterwards flushes nothing
+ * because the serialized body already matches the saved one.
  */
 export function useSceneBodyDraft({
   storyId,
@@ -45,11 +65,28 @@ export function useSceneBodyDraft({
   enabled,
   persist,
 }: UseSceneBodyDraftOptions) {
-  const [text, setText] = useState(savedBody ?? '');
+  const [editor, setEditor] = useState<ManuscriptEditorState>(() =>
+    createManuscriptEditor(parseMarkdownToDocument(savedBody ?? '')),
+  );
   const [saveError, setSaveError] = useState<string | null>(null);
   const { pending: saving, run: runSave } = useAsyncOperation();
+  const serializedBody = useMemo(() => serializeDocumentToMarkdown(editor.doc), [editor]);
+  // Dirtiness compares canonical forms: semantically-equal stored markdown
+  // (adjacent same-mark spans, extra blank lines) mounts clean instead of
+  // drafting a normalization nobody typed. Storage canonicalizes on save.
+  const savedCanonicalBody = useMemo(
+    () => serializeDocumentToMarkdown(parseMarkdownToDocument(savedBody ?? '')),
+    [savedBody],
+  );
+  const surfaceText = useMemo(() => getSurfaceText(editor), [editor]);
+  const { chars: charCount, words: wordCount } = useMemo(() => getEditorCounts(editor), [editor]);
+  const activeMarks = useMemo(() => getEditorActiveMarks(editor), [editor]);
   const handleRestore = useCallback((fields: SceneBodyFields) => {
-    setText(typeof fields.body === 'string' ? fields.body : '');
+    setEditor(
+      createManuscriptEditor(
+        parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : ''),
+      ),
+    );
   }, []);
   const { clearFormDraft, deleteStoredDraft, draftRestored } = useDurableFormDraft<SceneBodyFields>(
     {
@@ -58,22 +95,36 @@ export function useSceneBodyDraft({
       field: SCENE_BODY_DRAFT_FIELD,
       entityId: sceneId,
       enabled,
-      snapshot: { body: text },
-      pristine: { body: savedBody ?? '' },
+      snapshot: { body: serializedBody },
+      pristine: { body: savedCanonicalBody },
       baseUpdatedAt,
       onRestore: handleRestore,
     },
   );
 
-  const isDirty = text !== (savedBody ?? '');
-  const overLimit = text.length > MAX_SCENE_BODY_LENGTH;
+  const isDirty = serializedBody !== savedCanonicalBody;
+  // Counts run on markup-free content, but the storage cap the server enforces
+  // is measured on the serialized source — hence the 27k/3k split.
+  const overLimit = serializedBody.length > MAX_SCENE_BODY_LENGTH;
+
+  const changeText = useCallback((text: string) => {
+    setEditor((prev) => applySurfaceChange(prev, text));
+  }, []);
+  const changeSelection = useCallback((selection: ManuscriptEditorSelection) => {
+    setEditor((prev) => setEditorSelection(prev, selection));
+  }, []);
+  const applyFormat = useCallback((kind: ManuscriptFormatKind) => {
+    setEditor((prev) =>
+      kind === 'heading' ? toggleEditorHeading(prev) : toggleEditorMark(prev, kind),
+    );
+  }, []);
 
   const save = useCallback(async (): Promise<boolean> => {
     let ok = false;
     await runSave(async () => {
       setSaveError(null);
       try {
-        await persist(text === '' ? null : text);
+        await persist(serializedBody === '' ? null : serializedBody);
         await deleteStoredDraft();
         ok = true;
       } catch (error) {
@@ -81,13 +132,19 @@ export function useSceneBodyDraft({
       }
     });
     return ok;
-  }, [runSave, persist, text, deleteStoredDraft]);
+  }, [runSave, persist, serializedBody, deleteStoredDraft]);
 
   return {
-    text,
-    setText,
-    wordCount: countWords(text),
-    charCount: text.length,
+    editor,
+    surfaceText,
+    serializedBody,
+    changeText,
+    changeSelection,
+    applyFormat,
+    activeMarks,
+    wordCount,
+    charCount,
+    sizeStatus: getManuscriptSizeStatus(charCount),
     maxLength: MAX_SCENE_BODY_LENGTH,
     isDirty,
     overLimit,

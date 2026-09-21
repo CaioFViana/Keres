@@ -2,7 +2,6 @@
 import { MAX_SCENE_BODY_LENGTH } from '@keres/shared';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import {
-  countWords,
   readStoredSceneBodyText,
   useSceneBodyDraft,
 } from '../../src/hooks/useSceneBodyDraft';
@@ -65,7 +64,8 @@ describe('useSceneBodyDraft', () => {
   it('starts from the saved body, clean and unsavable', async () => {
     const view = await renderHook(() => useHarness({ savedBody: 'Once upon a time' }));
 
-    expect(view.result.current.text).toBe('Once upon a time');
+    expect(view.result.current.surfaceText).toBe('Once upon a time');
+    expect(view.result.current.serializedBody).toBe('Once upon a time');
     expect(view.result.current.wordCount).toBe(4);
     expect(view.result.current.charCount).toBe(16);
     expect(view.result.current.isDirty).toBe(false);
@@ -76,7 +76,8 @@ describe('useSceneBodyDraft', () => {
   it('starts empty when nothing was ever written', async () => {
     const view = await renderHook(() => useHarness({ savedBody: null }));
 
-    expect(view.result.current.text).toBe('');
+    expect(view.result.current.surfaceText).toBe('');
+    expect(view.result.current.serializedBody).toBe('');
     expect(view.result.current.wordCount).toBe(0);
   });
 
@@ -85,7 +86,7 @@ describe('useSceneBodyDraft', () => {
     const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
 
     await waitFor(() => expect(view.result.current.draftRestored).toBe(true));
-    expect(view.result.current.text).toBe('unsaved prose');
+    expect(view.result.current.surfaceText).toBe('unsaved prose');
     expect(view.result.current.isDirty).toBe(true);
   });
 
@@ -97,7 +98,7 @@ describe('useSceneBodyDraft', () => {
 
     await waitFor(async () => expect(await storedBodyRow()).toBeNull());
     expect(view.result.current.draftRestored).toBe(false);
-    expect(view.result.current.text).toBe('newer');
+    expect(view.result.current.surfaceText).toBe('newer');
   });
 
   it('drafts typing under the body field, debounced', async () => {
@@ -105,7 +106,7 @@ describe('useSceneBodyDraft', () => {
     const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
 
     await act(async () => {
-      view.result.current.setText('saved plus more');
+      view.result.current.changeText('saved plus more');
     });
     expect(view.result.current.isDirty).toBe(true);
     expect(view.result.current.canSave).toBe(true);
@@ -126,7 +127,7 @@ describe('useSceneBodyDraft', () => {
     const view = await renderHook(() => useHarness({ savedBody: 'saved', persist }));
 
     await act(async () => {
-      view.result.current.setText('saved plus more');
+      view.result.current.changeText('saved plus more');
     });
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
@@ -150,7 +151,7 @@ describe('useSceneBodyDraft', () => {
     const view = await renderHook(() => useHarness({ savedBody: 'saved', persist }));
 
     await act(async () => {
-      view.result.current.setText('');
+      view.result.current.changeText('');
     });
     await act(async () => {
       await view.result.current.save();
@@ -167,7 +168,7 @@ describe('useSceneBodyDraft', () => {
     const view = await renderHook(() => useHarness({ savedBody: 'saved', persist }));
 
     await act(async () => {
-      view.result.current.setText('doomed');
+      view.result.current.changeText('doomed');
     });
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
@@ -188,7 +189,7 @@ describe('useSceneBodyDraft', () => {
     const view = await renderHook(() => useHarness({ savedBody: '', persist }));
 
     await act(async () => {
-      view.result.current.setText('x'.repeat(MAX_SCENE_BODY_LENGTH + 1));
+      view.result.current.changeText('x'.repeat(MAX_SCENE_BODY_LENGTH + 1));
     });
 
     expect(view.result.current.overLimit).toBe(true);
@@ -196,12 +197,121 @@ describe('useSceneBodyDraft', () => {
     expect(view.result.current.maxLength).toBe(MAX_SCENE_BODY_LENGTH);
   });
 
+  it('loads stored markdown as content with zero markup on the surface', async () => {
+    const view = await renderHook(() =>
+      useHarness({ savedBody: '# Title\n\nA **bold** move.' }),
+    );
+
+    expect(view.result.current.surfaceText).toBe('Title\n\nA bold move.');
+    expect(view.result.current.charCount).toBe('Title\n\nA bold move.'.length);
+    expect(view.result.current.wordCount).toBe(4);
+    expect(view.result.current.sizeStatus).toBe('ok');
+    expect(view.result.current.serializedBody).toBe('# Title\n\nA **bold** move.');
+    expect(view.result.current.isDirty).toBe(false);
+  });
+
+  it('treats typed markup characters as content, escaping them on serialize', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: '' }));
+
+    await act(async () => {
+      view.result.current.changeText('a*b*c');
+    });
+
+    expect(view.result.current.surfaceText).toBe('a*b*c');
+    expect(view.result.current.charCount).toBe(5);
+    expect(view.result.current.serializedBody).toBe('a\\*b\\*c');
+  });
+
+  it('reports the size band on content chars, ignoring stored markers', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: '' }));
+
+    await act(async () => {
+      view.result.current.changeText('x'.repeat(20000));
+    });
+    expect(view.result.current.sizeStatus).toBe('ok');
+
+    await act(async () => {
+      view.result.current.changeSelection({ start: 0, end: 20000 });
+      view.result.current.applyFormat('bold');
+    });
+    expect(view.result.current.charCount).toBe(20000);
+    expect(view.result.current.sizeStatus).toBe('ok');
+    expect(view.result.current.serializedBody).toBe(`**${'x'.repeat(20000)}**`);
+
+    await act(async () => {
+      view.result.current.changeText('x'.repeat(20001));
+    });
+    expect(view.result.current.sizeStatus).toBe('large');
+
+    // Advisory only: 27k warns but still saves, the storage cap is what blocks.
+    await act(async () => {
+      view.result.current.changeText('x'.repeat(27000));
+    });
+    expect(view.result.current.sizeStatus).toBe('tooLarge');
+    expect(view.result.current.overLimit).toBe(false);
+    expect(view.result.current.canSave).toBe(true);
+  });
+
+  it('still enforces the storage cap on the serialized source', async () => {
+    const persist = jest.fn(async () => {});
+    // 12000 content chars, but over 30k stored: alternating marks never merge.
+    const view = await renderHook(() =>
+      useHarness({ savedBody: '**a**b'.repeat(6000), persist }),
+    );
+
+    expect(view.result.current.charCount).toBe(12000);
+    expect(view.result.current.sizeStatus).toBe('ok');
+    expect(view.result.current.overLimit).toBe(true);
+    expect(view.result.current.canSave).toBe(false);
+    expect(view.result.current.isDirty).toBe(false);
+  });
+
+  it('mounts semantically-equal markdown clean and canonicalizes on save', async () => {
+    const persist = jest.fn(async () => {});
+    const view = await renderHook(() => useHarness({ savedBody: '**a****b**', persist }));
+
+    expect(view.result.current.surfaceText).toBe('ab');
+    expect(view.result.current.serializedBody).toBe('**ab**');
+    expect(view.result.current.isDirty).toBe(false);
+
+    await act(async () => {
+      view.result.current.changeText('abc');
+    });
+    await act(async () => {
+      await view.result.current.save();
+    });
+
+    expect(persist).toHaveBeenCalledWith('**abc**');
+  });
+
+  it('formats through the toolbar action and reports actives', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: 'hello' }));
+
+    await act(async () => {
+      view.result.current.changeSelection({ start: 1, end: 4 });
+      view.result.current.applyFormat('bold');
+    });
+    expect(view.result.current.serializedBody).toBe('h**ell**o');
+    expect(view.result.current.activeMarks).toEqual({ marks: ['bold'], heading: 0 });
+
+    await act(async () => {
+      view.result.current.changeSelection({ start: 2, end: 2 });
+    });
+    expect(view.result.current.activeMarks).toEqual({ marks: ['bold'], heading: 0 });
+
+    await act(async () => {
+      view.result.current.applyFormat('heading');
+    });
+    expect(view.result.current.serializedBody).toBe('# h**ell**o');
+    expect(view.result.current.activeMarks.heading).toBe(1);
+  });
+
   it('keeps drafting after a save while staying mounted', async () => {
     jest.useFakeTimers();
     const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
 
     await act(async () => {
-      view.result.current.setText('v2');
+      view.result.current.changeText('v2');
     });
     await act(async () => {
       await view.result.current.save();
@@ -209,7 +319,7 @@ describe('useSceneBodyDraft', () => {
     expect(await storedBodyRow()).toBeNull();
 
     await act(async () => {
-      view.result.current.setText('v3');
+      view.result.current.changeText('v3');
     });
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
@@ -218,18 +328,6 @@ describe('useSceneBodyDraft', () => {
     expect(row).not.toBeNull();
     expect(JSON.parse(row!.content)).toMatchObject({ fields: { body: 'v3' } });
     jest.useRealTimers();
-  });
-});
-
-describe('countWords', () => {
-  it.each([
-    ['', 0],
-    ['   ', 0],
-    ['hello', 1],
-    ['hello world', 2],
-    ['  hello   world\nnew line  ', 4],
-  ])('counts %p as %i', (text, expected) => {
-    expect(countWords(text)).toBe(expected);
   });
 });
 

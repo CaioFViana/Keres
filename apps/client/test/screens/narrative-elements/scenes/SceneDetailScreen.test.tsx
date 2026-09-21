@@ -561,6 +561,18 @@ describe('SceneDetailScreen', () => {
     });
   });
 
+  it('strips manuscript markers from the excerpt', async () => {
+    mockGetSceneById.mockResolvedValue(
+      makeScene({ body: '# Title\n\nA **bold**, ~~cut~~ and __lined__ line.' }),
+    );
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    expect(jsonOf(view, 'scene-content')).toMatchObject({
+      excerpt: 'Title A bold, cut and lined line.',
+    });
+  });
+
   it('hides the edit action without edit rights', async () => {
     mockCanEdit = false;
     const view = await render(<SceneDetailScreen />);

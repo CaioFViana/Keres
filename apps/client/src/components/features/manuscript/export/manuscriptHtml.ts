@@ -26,7 +26,8 @@ function spansToHtml(spans: CompiledSpan[]): string {
             : span.italic
               ? `<em>${text}</em>`
               : text;
-      return span.underline ? `<u>${emphasized}</u>` : emphasized;
+      const underlined = span.underline ? `<u>${emphasized}</u>` : emphasized;
+      return span.strikethrough ? `<s>${underlined}</s>` : underlined;
     })
     .join('');
 }

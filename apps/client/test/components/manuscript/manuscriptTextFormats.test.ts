@@ -103,6 +103,15 @@ const manuscript = compileLinearManuscript({
   looseHeadingLabel: 'Loose',
 });
 
+const struckManuscript = compileLinearManuscript({
+  title: 'My Story',
+  chapters: [chapter],
+  scenes: [{ ...scenes[0], body: 'A ~~cut~~ line.' }],
+  choices: [],
+  includeLooseScenes: true,
+  looseHeadingLabel: 'Loose',
+});
+
 describe('buildManuscriptHtml', () => {
   it('renders a standalone document with anchors, styles and escaped text', () => {
     const html = buildManuscriptHtml(manuscript, { goToScene: 'See' });
@@ -117,6 +126,12 @@ describe('buildManuscriptHtml', () => {
     expect(html).toContain('&amp; &lt;tricky&gt;');
     expect(html).toContain('<a href="#scene-s2">Next</a>');
     expect(html).toContain('page-break-before');
+  });
+
+  it('wraps ~~ spans in s-tags', () => {
+    const html = buildManuscriptHtml(struckManuscript, { goToScene: 'See' });
+
+    expect(html).toContain('<s>cut</s>');
   });
 
   it('degrades orphaned choices to name-only text without links', () => {
@@ -147,6 +162,12 @@ describe('buildManuscriptMarkdown', () => {
     expect(md).toContain('- Go on — See Next');
     expect(md.endsWith('\n')).toBe(true);
   });
+
+  it('emits ~~ spans as paired tildes', () => {
+    const md = buildManuscriptMarkdown(struckManuscript, { goToScene: 'See' });
+
+    expect(md).toContain('A ~~cut~~ line.');
+  });
 });
 
 describe('buildManuscriptText', () => {
@@ -160,5 +181,12 @@ describe('buildManuscriptText', () => {
     expect(text).toContain('* Go on — See Next');
     expect(text).not.toContain('**');
     expect(text.endsWith('\n')).toBe(true);
+  });
+
+  it('strips ~~ markers from plain text', () => {
+    const text = buildManuscriptText(struckManuscript, { goToScene: 'See' });
+
+    expect(text).toContain('A cut line.');
+    expect(text).not.toContain('~~');
   });
 });

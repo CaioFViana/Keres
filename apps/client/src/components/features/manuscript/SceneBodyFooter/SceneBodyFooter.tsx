@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '../../../common/controls/Button/Button';
 import { useTheme } from '../../../../theme';
 import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
+import type { ManuscriptSizeStatus } from '../parseManuscriptMarkdown';
 
 export type SceneBodyFooterProps = {
   wordCount: number;
   charCount: number;
+  /** User-visible size band (20k nudge, 27k too large); advisory, never blocks. */
+  sizeStatus: ManuscriptSizeStatus;
   maxLength: number;
   overLimit: boolean;
   canSave: boolean;
@@ -22,6 +25,7 @@ export type SceneBodyFooterProps = {
 export function SceneBodyFooter({
   wordCount,
   charCount,
+  sizeStatus,
   maxLength,
   overLimit,
   canSave,
@@ -47,12 +51,22 @@ export function SceneBodyFooter({
         counterOver: { color: colors.error },
         draftFlag: { color: colors.notification, fontSize: 13 },
         hint: { color: colors.error, fontSize: 13, marginBottom: 8 },
+        warningHint: { color: colors.notification, fontSize: 13, marginBottom: 8 },
       }),
     [colors],
   );
+  // One hint at most: the blocking storage cap wins over the advisory size bands.
+  let sizeHint: ReactNode = null;
+  if (overLimit) {
+    sizeHint = <Text style={styles.hint}>{t('manuscript_split_hint')}</Text>;
+  } else if (sizeStatus === 'tooLarge') {
+    sizeHint = <Text style={styles.hint}>{t('manuscript_size_too_large')}</Text>;
+  } else if (sizeStatus === 'large') {
+    sizeHint = <Text style={styles.warningHint}>{t('manuscript_size_large')}</Text>;
+  }
   return (
     <View style={styles.bar} testID={testID}>
-      {overLimit && <Text style={styles.hint}>{t('manuscript_split_hint')}</Text>}
+      {sizeHint}
       {saving && <Text style={styles.counter}>{t('saving')}</Text>}
       <View style={styles.row}>
         {hasUnsavedChanges && !saving && (

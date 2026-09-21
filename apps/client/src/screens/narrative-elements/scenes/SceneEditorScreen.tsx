@@ -11,14 +11,9 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import Button from '../../../components/common/controls/Button/Button';
 import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
-import {
-  applyManuscriptFormat,
-  type ManuscriptFormatKind,
-  type TextSelection,
-} from '../../../components/features/manuscript/formatManuscriptSelection';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
-import { SceneBodyEditor } from '../../../components/features/manuscript/SceneBodyEditor/SceneBodyEditor';
+import { RichBodyEditor } from '../../../components/features/manuscript/RichBodyEditor/RichBodyEditor';
 import { SceneBodyFooter } from '../../../components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
 import { SceneBodyToolbar } from '../../../components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
 import type { SceneSelect } from '../../../db/schema';
@@ -98,7 +93,6 @@ function SceneEditorContent({
   const { t } = useTranslation();
   const [mode, setMode] = useState<EditorMode>('write');
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [selection, setSelection] = useState<TextSelection>({ start: 0, end: 0 });
   const { canEdit } = useStoryRole(scene.storyId);
   const {
     commentsByField,
@@ -112,10 +106,16 @@ function SceneEditorContent({
   const bodyComments = commentsByField[SCENE_BODY_DRAFT_FIELD] ?? [];
 
   const {
-    text,
-    setText,
+    editor,
+    surfaceText,
+    serializedBody,
+    changeText,
+    changeSelection,
+    applyFormat,
+    activeMarks,
     wordCount,
     charCount,
+    sizeStatus,
     maxLength,
     isDirty,
     overLimit,
@@ -153,17 +153,11 @@ function SceneEditorContent({
 
   const handleAddComment = useCallback(
     (input: { commentText: string; excerptText: string | null; criticality: number }) =>
-      addComment({ fieldKey: SCENE_BODY_DRAFT_FIELD }, { ...input, contentSnapshot: text }),
-    [addComment, text],
-  );
-
-  const handleFormat = useCallback(
-    (kind: ManuscriptFormatKind) => {
-      const result = applyManuscriptFormat(text, selection, kind);
-      setText(result.text);
-      setSelection(result.selection);
-    },
-    [text, selection, setText],
+      addComment(
+        { fieldKey: SCENE_BODY_DRAFT_FIELD },
+        { ...input, contentSnapshot: serializedBody },
+      ),
+    [addComment, serializedBody],
   );
 
   const styles = useMemo(
@@ -190,8 +184,15 @@ function SceneEditorContent({
       {mode === 'write' && (
         <SceneBodyToolbar
           testID="scene-body-toolbar"
-          onAction={handleFormat}
+          onAction={applyFormat}
           disabled={!canEdit || saving}
+          active={{
+            bold: activeMarks.marks.includes('bold'),
+            italic: activeMarks.marks.includes('italic'),
+            underline: activeMarks.marks.includes('underline'),
+            strikethrough: activeMarks.marks.includes('strikethrough'),
+            heading: activeMarks.heading > 0,
+          }}
         />
       )}
       <ScrollView
@@ -204,17 +205,18 @@ function SceneEditorContent({
         scrollEventThrottle={16}
       >
         {mode === 'write' ? (
-          <SceneBodyEditor
+          <RichBodyEditor
             testID="scene-body-editor"
-            value={text}
-            onChangeText={setText}
-            selection={selection}
-            onSelectionChange={setSelection}
+            doc={editor.doc}
+            surfaceText={surfaceText}
+            selection={editor.selection}
+            onChangeText={changeText}
+            onSelectionChange={changeSelection}
             editable={canEdit && !saving}
           />
         ) : (
           <View style={styles.readContainer}>
-            <MarkdownPreview text={text} />
+            <MarkdownPreview text={serializedBody} />
           </View>
         )}
         {mode === 'review' && (
@@ -230,6 +232,7 @@ function SceneEditorContent({
           testID="scene-body-footer"
           wordCount={wordCount}
           charCount={charCount}
+          sizeStatus={sizeStatus}
           maxLength={maxLength}
           overLimit={overLimit}
           canSave={canSave && canEdit}
@@ -243,7 +246,7 @@ function SceneEditorContent({
         onClose={() => setCommentsOpen(false)}
         storyId={scene.storyId}
         fieldLabel={t('manuscript_prose')}
-        fieldValueSnapshot={text}
+        fieldValueSnapshot={serializedBody}
         comments={bodyComments}
         canComment={canComment}
         isStoryOwner={isStoryOwner}

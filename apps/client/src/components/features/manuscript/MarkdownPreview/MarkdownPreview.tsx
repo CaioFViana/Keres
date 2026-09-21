@@ -8,12 +8,18 @@ import {
 } from '../parseManuscriptMarkdown';
 
 function InlineText({ span, baseSize }: { span: ManuscriptInline; baseSize: number }) {
+  const decorations: ('underline' | 'line-through')[] = [
+    ...(span.underline ? (['underline'] as const) : []),
+    ...(span.strikethrough ? (['line-through'] as const) : []),
+  ];
+  const textDecorationLine: 'none' | 'underline' | 'line-through' | 'underline line-through' =
+    decorations.length === 2 ? 'underline line-through' : (decorations[0] ?? 'none');
   return (
     <Text
       style={{
         fontWeight: span.bold ? '700' : '400',
         fontStyle: span.italic ? 'italic' : 'normal',
-        textDecorationLine: span.underline ? 'underline' : 'none',
+        textDecorationLine,
         fontSize: baseSize,
       }}
     >

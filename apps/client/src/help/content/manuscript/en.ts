@@ -22,7 +22,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Open a scene and select Write manuscript (pencil icon in the header, or the Manuscript card).',
-        'Write in Write mode. The toolbar above the text applies **bold**, *italic*, __underline__ and headings; typing stays safe as a local draft until you save.',
+        'Write in Write mode. The toolbar above the text applies **bold**, *italic*, __underline__ and ~~strikethrough~~; typing stays safe as a local draft until you save.',
         'Switch to Read to preview the formatted page, or to Review to read and answer scene comments.',
         'Open the Manuscript from the narrative elements header (book icon) to read everything in order, search the full text, or export.',
         'In the manuscript, tap a scene title to open the scene, or the pencil beside it to edit its prose. The eye icon toggles pure reading: titles and buttons disappear so nothing steals a tap.',

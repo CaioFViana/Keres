@@ -1,26 +1,27 @@
+import type { ManuscriptMark, ManuscriptSpan } from '@keres/shared';
+import { parseMarkdownToDocument } from '@keres/shared';
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
-import {
-  parseManuscriptMarkdown,
-  type ManuscriptInline,
-} from '../parseManuscriptMarkdown';
 
-function InlineText({ span, baseSize }: { span: ManuscriptInline; baseSize: number }) {
-  const decorations: ('underline' | 'line-through')[] = [
-    ...(span.underline ? (['underline'] as const) : []),
-    ...(span.strikethrough ? (['line-through'] as const) : []),
-  ];
-  const textDecorationLine: 'none' | 'underline' | 'line-through' | 'underline line-through' =
-    decorations.length === 2 ? 'underline line-through' : (decorations[0] ?? 'none');
+function decorationLine(marks: ManuscriptMark[]): TextStyle['textDecorationLine'] {
+  const underline = marks.includes('underline');
+  const strike = marks.includes('strikethrough');
+  if (underline && strike) return 'underline line-through';
+  if (underline) return 'underline';
+  if (strike) return 'line-through';
+  return 'none';
+}
+
+function InlineText({ span }: { span: ManuscriptSpan }) {
   return (
     <Text
       style={{
-        fontWeight: span.bold ? '700' : '400',
-        fontStyle: span.italic ? 'italic' : 'normal',
-        textDecorationLine,
-        fontSize: baseSize,
+        fontWeight: span.marks.includes('bold') ? '700' : '400',
+        fontStyle: span.marks.includes('italic') ? 'italic' : 'normal',
+        textDecorationLine: decorationLine(span.marks),
+        fontSize: manuscriptTextMetrics.fontSize,
       }}
     >
       {span.text}
@@ -28,6 +29,12 @@ function InlineText({ span, baseSize }: { span: ManuscriptInline; baseSize: numb
   );
 }
 
+/**
+ * Read-mode renderer over the shared document model — the same model the
+ * editor writes, so combined marks (`***both***`) render exactly as typed and
+ * write mode and read mode can never diverge. The legacy client markdown
+ * parser stays with the export pipeline, which owns its own AST.
+ */
 export function MarkdownPreview({
   text,
   testID,
@@ -38,7 +45,7 @@ export function MarkdownPreview({
   selectable?: boolean;
 }) {
   const { colors } = useTheme();
-  const blocks = useMemo(() => parseManuscriptMarkdown(text), [text]);
+  const doc = useMemo(() => parseMarkdownToDocument(text), [text]);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -53,33 +60,15 @@ export function MarkdownPreview({
   );
   return (
     <View testID={testID}>
-      {blocks.map((block) => {
-        const isHeading = block.kind === 'heading';
-        const size = isHeading
-          ? Math.round(
-              manuscriptTextMetrics.fontSize * manuscriptTextMetrics.headingScale[block.level],
-            )
-          : manuscriptTextMetrics.fontSize;
-        return (
-          <View key={block.key} style={styles.block}>
-            <Text
-              selectable={selectable}
-              style={[
-                styles.paragraph,
-                isHeading && {
-                  fontSize: size,
-                  lineHeight: Math.round(size * 1.4),
-                  fontWeight: '700',
-                },
-              ]}
-            >
-              {block.inlines.map((span, index) => (
-                <InlineText key={index} span={span} baseSize={size} />
-              ))}
-            </Text>
-          </View>
-        );
-      })}
+      {doc.blocks.map((block, index) => (
+        <View key={`block-${index}`} style={styles.block}>
+          <Text selectable={selectable} style={styles.paragraph}>
+            {block.spans.map((span, spanIndex) => (
+              <InlineText key={spanIndex} span={span} />
+            ))}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }

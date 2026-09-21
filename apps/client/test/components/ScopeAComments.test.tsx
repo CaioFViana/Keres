@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import CommentableDetailField from '../../src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import CommentList from '../../src/components/features/comments/CommentList/CommentList';
 import type CommentThreadModal from '../../src/components/features/comments/CommentThreadModal/CommentThreadModal';
@@ -77,6 +78,7 @@ jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   };
 });
 
+const mockKeyboardAwareScreen = jest.fn();
 jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen', () => {
   const actual = jest.requireActual(
     '../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
@@ -84,7 +86,15 @@ jest.mock('../../src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen',
   return {
     __esModule: true,
     ...actual,
-    default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    default: (props: { children: React.ReactNode; footer?: React.ReactNode }) => {
+      mockKeyboardAwareScreen(props);
+      return (
+        <>
+          {props.children}
+          {props.footer}
+        </>
+      );
+    },
   };
 });
 
@@ -440,5 +450,38 @@ describe('CommentThreadModal', () => {
     expect(view.queryByText('delete')).toBeNull();
     expect(view.queryByPlaceholderText('comment_text_placeholder')).toBeNull();
     expect(view.queryByText('no_comments_yet')).toBeNull();
+  });
+
+  it('pins the composer through the footer slot instead of the scroll content', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(<RealModal {...baseProps} />);
+
+    const calls = mockKeyboardAwareScreen.mock.calls as { footer?: unknown }[][];
+    expect(calls.length).toBeGreaterThan(0);
+    expect(calls[calls.length - 1][0].footer).toBeTruthy();
+    // The composer still renders (post button reachable) from the slot.
+    expect(view.getByTestId('comment-composer')).toBeTruthy();
+    expect(view.getByTestId('add_comment')).toBeTruthy();
+  });
+
+  it('grows the composer inputs with their measured content', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(<RealModal {...baseProps} />);
+
+    await fireEvent(view.getByTestId('comment-text-input'), 'contentSizeChange', {
+      nativeEvent: { contentSize: { width: 100, height: 220 } },
+    });
+
+    expect(
+      StyleSheet.flatten(view.getByTestId('comment-text-input').props.style).minHeight,
+    ).toBe(220);
   });
 });

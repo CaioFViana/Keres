@@ -18,13 +18,13 @@ describe('parseManuscriptMarkdown', () => {
     expect(blocks[1]).toMatchObject({ kind: 'paragraph', inlines: [{ text: 'Second.' }] });
   });
 
-  it('parses heading levels', () => {
+  it('degrades legacy heading prefixes to plain paragraphs', () => {
     const blocks = parseManuscriptMarkdown('# One\n\n## Two\n\n### Three');
 
     expect(blocks).toMatchObject([
-      { kind: 'heading', level: 1 },
-      { kind: 'heading', level: 2 },
-      { kind: 'heading', level: 3 },
+      { kind: 'paragraph' },
+      { kind: 'paragraph' },
+      { kind: 'paragraph' },
     ]);
     expect(blocks[0].inlines).toEqual([{ text: 'One' }]);
   });
@@ -74,10 +74,10 @@ describe('parseManuscriptMarkdown', () => {
     expect(blocks[0].inlines).toEqual([{ text: '"Yes," she said.\n"No," he replied.' }]);
   });
 
-  it('parses inline styles inside headings', () => {
+  it('parses inline styles in degraded legacy headings', () => {
     const blocks = parseManuscriptMarkdown('## The **bold** chapter');
 
-    expect(blocks[0]).toMatchObject({ kind: 'heading', level: 2 });
+    expect(blocks[0]).toMatchObject({ kind: 'paragraph' });
     expect(blocks[0].inlines).toEqual([{ text: 'The ' }, { text: 'bold', bold: true }, { text: ' chapter' }]);
   });
 

@@ -2,21 +2,19 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
-import type { ManuscriptFormatKind } from '../manuscriptDocumentEngine';
+import type { ManuscriptMark } from '@keres/shared';
 
-const ACTIONS: { kind: ManuscriptFormatKind; glyph: string; labelKey: string }[] = [
+const ACTIONS: { kind: ManuscriptMark; glyph: string; labelKey: string }[] = [
   { kind: 'bold', glyph: 'B', labelKey: 'manuscript_format_bold' },
   { kind: 'italic', glyph: 'I', labelKey: 'manuscript_format_italic' },
   { kind: 'underline', glyph: 'U', labelKey: 'manuscript_format_underline' },
-  { kind: 'heading', glyph: 'H', labelKey: 'manuscript_format_heading' },
   { kind: 'strikethrough', glyph: 'S', labelKey: 'manuscript_format_strikethrough' },
 ];
 
 /**
- * Fixed formatting row above the prose input: bold, italic, underline, a
- * heading cycler and strikethrough. A dumb button row -
- * The document engine owns the logic and the `active` map (from
- * `getEditorActiveMarks`) drives the primary highlight.
+ * Fixed formatting row above the prose input: bold, italic, underline and
+ * strikethrough. A dumb button row - the native editor owns the logic and
+ * the `active` map (from its style state) drives the primary highlight.
  */
 export function SceneBodyToolbar({
   onAction,
@@ -24,9 +22,9 @@ export function SceneBodyToolbar({
   active = {},
   testID,
 }: {
-  onAction(kind: ManuscriptFormatKind): void;
+  onAction(kind: ManuscriptMark): void;
   disabled?: boolean;
-  active?: Partial<Record<ManuscriptFormatKind, boolean>>;
+  active?: Partial<Record<ManuscriptMark, boolean>>;
   testID?: string;
 }) {
   const { colors } = useTheme();
@@ -49,7 +47,6 @@ export function SceneBodyToolbar({
         glyphBold: { fontWeight: '700' },
         glyphItalic: { fontStyle: 'italic' },
         glyphUnderline: { textDecorationLine: 'underline' },
-        glyphHeading: { fontWeight: '700' },
         glyphStrikethrough: { textDecorationLine: 'line-through' },
         glyphActive: { color: colors.primary },
         disabled: { opacity: 0.4 },
@@ -80,7 +77,6 @@ export function SceneBodyToolbar({
                 action.kind === 'bold' && styles.glyphBold,
                 action.kind === 'italic' && styles.glyphItalic,
                 action.kind === 'underline' && styles.glyphUnderline,
-                action.kind === 'heading' && styles.glyphHeading,
                 action.kind === 'strikethrough' && styles.glyphStrikethrough,
                 isActive && styles.glyphActive,
               ]}

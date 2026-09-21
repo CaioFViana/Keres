@@ -28,7 +28,6 @@ export type CompiledBlock =
       bookmarkId: string | null;
     }
   | { kind: 'loose-heading'; label: string }
-  | { kind: 'body-heading'; level: 1 | 2 | 3; spans: CompiledSpan[] }
   | { kind: 'paragraph'; spans: CompiledSpan[] }
   | {
       kind: 'choice';
@@ -113,11 +112,7 @@ function sectionsToBlocks({
     if (bookmarkId) emitted.add(bookmarkId);
     if (section.scene.body) {
       for (const parsed of parseManuscriptMarkdown(section.scene.body)) {
-        blocks.push(
-          parsed.kind === 'heading'
-            ? { kind: 'body-heading', level: parsed.level, spans: toSpans(parsed) }
-            : { kind: 'paragraph', spans: toSpans(parsed) },
-        );
+        blocks.push({ kind: 'paragraph', spans: toSpans(parsed) });
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {

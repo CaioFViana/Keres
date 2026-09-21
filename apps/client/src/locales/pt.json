@@ -1036,7 +1036,6 @@
   "manuscript_counter": "{{words}} palavras · {{chars}} / {{max}}",
   "manuscript_empty": "Comece a escrever…",
   "manuscript_format_bold": "Negrito",
-  "manuscript_format_heading": "Título",
   "manuscript_format_italic": "Itálico",
   "manuscript_format_strikethrough": "Riscado",
   "manuscript_format_underline": "Sublinhado",

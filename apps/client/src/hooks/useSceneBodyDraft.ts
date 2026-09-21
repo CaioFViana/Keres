@@ -1,22 +1,15 @@
 import {
   MAX_SCENE_BODY_LENGTH,
+  documentTextContent,
+  documentToEnrichedHtml,
+  enrichedHtmlToDocument,
   parseMarkdownToDocument,
   serializeDocumentToMarkdown,
+  type ManuscriptDocument,
+  type ManuscriptMark,
 } from '@keres/shared';
-import { useCallback, useMemo, useState } from 'react';
-import {
-  applySurfaceChange,
-  createManuscriptEditor,
-  getEditorActiveMarks,
-  getEditorCounts,
-  getSurfaceText,
-  setEditorSelection,
-  toggleEditorHeading,
-  toggleEditorMark,
-  type ManuscriptEditorSelection,
-  type ManuscriptEditorState,
-  type ManuscriptFormatKind,
-} from '../components/features/manuscript/manuscriptDocumentEngine';
+import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   getManuscriptSizeStatus,
   type ManuscriptSizeStatus,
@@ -31,7 +24,6 @@ import { useDurableFormDraft } from './useDurableFormDraft';
 export type SceneBodyFields = { body: string };
 
 export type { ManuscriptSizeStatus };
-export type { ManuscriptEditorSelection, ManuscriptEditorState };
 
 type UseSceneBodyDraftOptions = {
   storyId?: string;
@@ -50,12 +42,14 @@ type UseSceneBodyDraftOptions = {
  * Manuscript prose state for one scene: the editing document, its durable
  * client-only draft and save.
  *
- * The editor holds styled runs; drafts, persistence and comments keep flowing
- * serialized markdown, so the storage format, the 30k cap and every downstream
- * consumer (sync, export, search) are untouched. After a successful save the
- * stored row is removed with the non-terminal clear so stay-mounted hosts keep
- * drafting on the next keystroke; navigating away afterwards flushes nothing
- * because the serialized body already matches the saved one.
+ * The native editor owns live content and styling (uncontrolled); this hook
+ * mirrors it as a document through the HTML boundary. Drafts, persistence and
+ * comments keep flowing serialized markdown, so the storage format, the 30k
+ * cap and every downstream consumer (sync, export, search) are untouched.
+ * After a successful save the stored row is removed with the non-terminal
+ * clear so stay-mounted hosts keep drafting on the next keystroke; navigating
+ * away afterwards flushes nothing because the serialized body already matches
+ * the saved one.
  */
 export function useSceneBodyDraft({
   storyId,
@@ -65,12 +59,14 @@ export function useSceneBodyDraft({
   enabled,
   persist,
 }: UseSceneBodyDraftOptions) {
-  const [editor, setEditor] = useState<ManuscriptEditorState>(() =>
-    createManuscriptEditor(parseMarkdownToDocument(savedBody ?? '')),
+  const [doc, setDoc] = useState<ManuscriptDocument>(() =>
+    parseMarkdownToDocument(savedBody ?? ''),
   );
+  const [activeMarks, setActiveMarks] = useState<ManuscriptMark[]>([]);
+  const editorRef = useRef<EnrichedTextInputInstance | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { pending: saving, run: runSave } = useAsyncOperation();
-  const serializedBody = useMemo(() => serializeDocumentToMarkdown(editor.doc), [editor]);
+  const serializedBody = useMemo(() => serializeDocumentToMarkdown(doc), [doc]);
   // Dirtiness compares canonical forms: semantically-equal stored markdown
   // (adjacent same-mark spans, extra blank lines) mounts clean instead of
   // drafting a normalization nobody typed. Storage canonicalizes on save.
@@ -78,15 +74,21 @@ export function useSceneBodyDraft({
     () => serializeDocumentToMarkdown(parseMarkdownToDocument(savedBody ?? '')),
     [savedBody],
   );
-  const surfaceText = useMemo(() => getSurfaceText(editor), [editor]);
-  const { chars: charCount, words: wordCount } = useMemo(() => getEditorCounts(editor), [editor]);
-  const activeMarks = useMemo(() => getEditorActiveMarks(editor), [editor]);
+  // The uncontrolled input seeds from this on mount (RichBodyEditor freezes
+  // it per mount: the web host rebuilds the editor when defaultValue
+  // changes); deriving it from the live doc (not just the saved body)
+  // rehydrates tab-switch remounts, while mounted restores push via setValue.
+  const initialHtml = useMemo(() => documentToEnrichedHtml(doc), [doc]);
+  const { chars: charCount, words: wordCount } = useMemo(() => {
+    const text = documentTextContent(doc);
+    const trimmed = text.trim();
+    return { chars: text.length, words: trimmed === '' ? 0 : trimmed.split(/\s+/).length };
+  }, [doc]);
   const handleRestore = useCallback((fields: SceneBodyFields) => {
-    setEditor(
-      createManuscriptEditor(
-        parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : ''),
-      ),
-    );
+    const next = parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : '');
+    setDoc(next);
+    // A mounted uncontrolled input ignores new defaults: push restores in.
+    editorRef.current?.setValue(documentToEnrichedHtml(next));
   }, []);
   const { clearFormDraft, deleteStoredDraft, draftRestored } = useDurableFormDraft<SceneBodyFields>(
     {
@@ -107,16 +109,19 @@ export function useSceneBodyDraft({
   // is measured on the serialized source — hence the 27k/3k split.
   const overLimit = serializedBody.length > MAX_SCENE_BODY_LENGTH;
 
-  const changeText = useCallback((text: string) => {
-    setEditor((prev) => applySurfaceChange(prev, text));
+  const onHtmlChange = useCallback((html: string) => {
+    setDoc(enrichedHtmlToDocument(html));
   }, []);
-  const changeSelection = useCallback((selection: ManuscriptEditorSelection) => {
-    setEditor((prev) => setEditorSelection(prev, selection));
+  const onMarksChange = useCallback((marks: ManuscriptMark[]) => {
+    setActiveMarks(marks);
   }, []);
-  const applyFormat = useCallback((kind: ManuscriptFormatKind) => {
-    setEditor((prev) =>
-      kind === 'heading' ? toggleEditorHeading(prev) : toggleEditorMark(prev, kind),
-    );
+  const applyFormat = useCallback((kind: ManuscriptMark) => {
+    const instance = editorRef.current;
+    if (!instance) return;
+    if (kind === 'bold') instance.toggleBold();
+    else if (kind === 'italic') instance.toggleItalic();
+    else if (kind === 'underline') instance.toggleUnderline();
+    else instance.toggleStrikeThrough();
   }, []);
 
   const save = useCallback(async (): Promise<boolean> => {
@@ -135,13 +140,13 @@ export function useSceneBodyDraft({
   }, [runSave, persist, serializedBody, deleteStoredDraft]);
 
   return {
-    editor,
-    surfaceText,
-    serializedBody,
-    changeText,
-    changeSelection,
+    editorRef,
+    initialHtml,
+    onHtmlChange,
+    onMarksChange,
     applyFormat,
     activeMarks,
+    serializedBody,
     wordCount,
     charCount,
     sizeStatus: getManuscriptSizeStatus(charCount),

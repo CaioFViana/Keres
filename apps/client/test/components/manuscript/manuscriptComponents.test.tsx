@@ -1,7 +1,7 @@
-import { parseMarkdownToDocument } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
+import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { manuscriptTextMetrics } from '../../../src/components/features/manuscript/manuscriptTextMetrics';
 import { MarkdownPreview } from '../../../src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { RichBodyEditor } from '../../../src/components/features/manuscript/RichBodyEditor/RichBodyEditor';
@@ -50,36 +50,50 @@ function footerProps(
   };
 }
 
+function marksState(active: {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikeThrough?: boolean;
+}) {
+  const state = (on?: boolean) => ({ isActive: on ?? false, isConflicting: false, isBlocking: false });
+  return {
+    bold: state(active.bold),
+    italic: state(active.italic),
+    underline: state(active.underline),
+    strikeThrough: state(active.strikeThrough),
+  };
+}
+
 describe('SceneBodyEditor', () => {
-  it('renders the value and forwards typing and selection', async () => {
-    const onChangeText = jest.fn();
-    const onSelectionChange = jest.fn();
+  it('seeds and forwards HTML and marks through the alias', async () => {
+    const onHtmlChange = jest.fn();
+    const onMarksChange = jest.fn();
     const view = await render(
       <SceneBodyEditor
-        doc={parseMarkdownToDocument('hello world')}
-        surfaceText="hello world"
-        onChangeText={onChangeText}
-        selection={{ start: 0, end: 5 }}
-        onSelectionChange={onSelectionChange}
+        defaultHtml="<html><p>hello world</p></html>"
+        onHtmlChange={onHtmlChange}
+        onMarksChange={onMarksChange}
         testID="editor"
       />,
     );
 
     const input = view.getByTestId('editor.input');
-    expect(input.props.value).toBe('hello world');
-    expect(input.props.selection).toEqual({ start: 0, end: 5 });
-    await fireEvent.changeText(input, 'hello world!');
-    expect(onChangeText).toHaveBeenCalledWith('hello world!');
-    await fireEvent(input, 'selectionChange', { nativeEvent: { selection: { start: 6, end: 11 } } });
-    expect(onSelectionChange).toHaveBeenCalledWith({ start: 6, end: 11 });
+    expect(input.props.defaultValue).toBe('<html><p>hello world</p></html>');
+    await fireEvent(input, 'changeHtml', {
+      nativeEvent: { value: '<html><p>hello world!</p></html>' },
+    });
+    expect(onHtmlChange).toHaveBeenCalledWith('<html><p>hello world!</p></html>');
+    await fireEvent(input, 'changeState', { nativeEvent: marksState({ italic: true }) });
+    expect(onMarksChange).toHaveBeenCalledWith(['italic']);
   });
 
   it('uses the shared manuscript metrics for a seamless preview swap', async () => {
     const view = await render(
       <SceneBodyEditor
-        doc={parseMarkdownToDocument('hello')}
-        surfaceText="hello"
-        onChangeText={jest.fn()}
+        defaultHtml="<html><p>hello</p></html>"
+        onHtmlChange={jest.fn()}
+        onMarksChange={jest.fn()}
         testID="editor"
       />,
     );
@@ -87,143 +101,122 @@ describe('SceneBodyEditor', () => {
     const style = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
     expect(style.fontSize).toBe(manuscriptTextMetrics.fontSize);
     expect(style.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
-    const overlayStyle = StyleSheet.flatten(view.getByTestId('editor.overlay').props.style);
-    expect(overlayStyle.fontSize).toBe(manuscriptTextMetrics.fontSize);
-    expect(overlayStyle.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
   });
 });
 
 describe('RichBodyEditor', () => {
-  const DOC = parseMarkdownToDocument('## Chapter\n\nA **bold** and ~~cut~~ line.');
-  const SURFACE = 'Chapter\n\nA bold and cut line.';
+  const HTML = '<html><p>Prologue</p><p><b>bold</b> and <s>cut</s> line.</p></html>';
 
-  function overlaySource(overlay: { props: { children?: unknown } }): string {
-    const children = overlay.props.children;
-    const list = Array.isArray(children) ? children : children == null ? [] : [children];
-    return list
-      .map((child) =>
-        typeof child === 'string'
-          ? child
-          : ((child as React.ReactElement<{ children?: string }>).props.children ?? ''),
-      )
-      .join('');
+  function renderEditor(overrides: Partial<React.ComponentProps<typeof RichBodyEditor>> = {}) {
+    return render(
+      <RichBodyEditor
+        defaultHtml={HTML}
+        onHtmlChange={jest.fn()}
+        onMarksChange={jest.fn()}
+        testID="editor"
+        {...overrides}
+      />,
+    );
   }
 
-  it('mirrors the surface char-for-char in a single overlay Text', async () => {
-    const view = await render(
-      <RichBodyEditor doc={DOC} surfaceText={SURFACE} onChangeText={jest.fn()} testID="editor" />,
-    );
+  it('seeds the native editor with HTML and streams edits back out', async () => {
+    const onHtmlChange = jest.fn();
+    const view = await renderEditor({ onHtmlChange });
 
-    expect(overlaySource(view.getByTestId('editor.overlay'))).toBe(SURFACE);
+    const input = view.getByTestId('editor.input');
+    expect(input.props.defaultValue).toBe(HTML);
+    await fireEvent(input, 'changeHtml', { nativeEvent: { value: '<html><p>hi</p></html>' } });
+    expect(onHtmlChange).toHaveBeenCalledWith('<html><p>hi</p></html>');
   });
 
-  it('renders an empty overlay for empty text without breaking the input', async () => {
-    const view = await render(
+  it('maps native style state to manuscript marks', async () => {
+    const onMarksChange = jest.fn();
+    const view = await renderEditor({ onMarksChange });
+
+    const input = view.getByTestId('editor.input');
+    await fireEvent(input, 'changeState', {
+      nativeEvent: marksState({ bold: true, strikeThrough: true }),
+    });
+    expect(onMarksChange).toHaveBeenCalledWith(['bold', 'strikethrough']);
+    await fireEvent(input, 'changeState', { nativeEvent: marksState({}) });
+    expect(onMarksChange).toHaveBeenCalledWith([]);
+  });
+
+  it('renders empty HTML without breaking the input', async () => {
+    const view = await renderEditor({ defaultHtml: '' });
+
+    expect(view.getByTestId('editor.input').props.defaultValue).toBe('');
+  });
+
+  it('freezes the seed while mounted so the web host never rebuilds mid-edit', async () => {
+    const onHtmlChange = jest.fn();
+    const onMarksChange = jest.fn();
+    const view = await renderEditor({ onHtmlChange, onMarksChange });
+
+    await view.rerender(
       <RichBodyEditor
-        doc={parseMarkdownToDocument('')}
-        surfaceText=""
-        onChangeText={jest.fn()}
+        defaultHtml="<html><p>live doc changed after a keystroke</p></html>"
+        onHtmlChange={onHtmlChange}
+        onMarksChange={onMarksChange}
         testID="editor"
       />,
     );
 
-    expect(overlaySource(view.getByTestId('editor.overlay'))).toBe('');
-    expect(view.getByTestId('editor.input').props.value).toBe('');
+    expect(view.getByTestId('editor.input').props.defaultValue).toBe(HTML);
   });
 
-  it('renders content spans with rich styles and no markers anywhere', async () => {
-    const view = await render(
-      <RichBodyEditor doc={DOC} surfaceText={SURFACE} onChangeText={jest.fn()} testID="editor" />,
-    );
+  it('remounts on web when editable flips so read-only never sticks', async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+    try {
+      const onHtmlChange = jest.fn();
+      const onMarksChange = jest.fn();
+      const view = await renderEditor({ editable: false, onHtmlChange, onMarksChange });
 
-    expect(view.queryByText('**')).toBeNull();
-    expect(view.queryByText('##')).toBeNull();
-    expect(view.queryByText('~~')).toBeNull();
-    expect(StyleSheet.flatten(view.getByText('bold').props.style).fontWeight).toBe('700');
-    expect(StyleSheet.flatten(view.getByText('cut').props.style).textDecorationLine).toBe(
-      'line-through',
-    );
-    expect(StyleSheet.flatten(view.getByText('Chapter').props.style).fontSize).toBe(
-      Math.round(
-        manuscriptTextMetrics.fontSize * manuscriptTextMetrics.headingScale[2],
-      ),
-    );
+      const reseeded = '<html><p>typed while the role resolved</p></html>';
+      await view.rerender(
+        <RichBodyEditor
+          defaultHtml={reseeded}
+          onHtmlChange={onHtmlChange}
+          onMarksChange={onMarksChange}
+          editable
+          testID="editor"
+        />,
+      );
+
+      // Same mounted input would keep the frozen seed; the remount reseeds
+      // from the live doc, so nothing typed is lost.
+      expect(view.getByTestId('editor.input').props.defaultValue).toBe(reseeded);
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    }
   });
 
-  it('hides input glyphs in the surface color with theme selection over identical metrics', async () => {
-    const view = await render(
-      <RichBodyEditor doc={DOC} surfaceText={SURFACE} onChangeText={jest.fn()} testID="editor" />,
-    );
+  it('attaches the host input ref for toolbar toggles', async () => {
+    const enrichedMock = jest.requireMock('react-native-enriched-html') as {
+      __enrichedTest: { refHolder: { current: unknown } };
+    };
+    const inputRef = React.createRef<EnrichedTextInputInstance>();
+    await renderEditor({ inputRef });
+
+    expect(enrichedMock.__enrichedTest.refHolder.current).toBe(inputRef);
+  });
+
+  it('keeps theme selection over the shared manuscript metrics', async () => {
+    const view = await renderEditor();
 
     const input = view.getByTestId('editor.input');
     const inputStyle = StyleSheet.flatten(input.props.style);
-    expect(inputStyle.color).toBe('#eee');
-    expect(inputStyle.backgroundColor).toBe('transparent');
     expect(input.props.selectionColor).toBe('#00f');
-    // No explicit caret color: the OS default stays visible where the
-    // explicit prop is ignored and the caret falls back to the text color.
+    // No explicit caret color: the OS default caret draws over visible text.
     expect(input.props.cursorColor).toBeUndefined();
-    expect(input.props.multiline).toBe(true);
     expect(input.props.scrollEnabled).toBe(false);
-    expect(inputStyle.textAlignVertical).toBe('top');
-
-    const overlayStyle = StyleSheet.flatten(view.getByTestId('editor.overlay').props.style);
-    expect(overlayStyle.fontSize).toBe(manuscriptTextMetrics.fontSize);
-    expect(overlayStyle.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
-    expect(overlayStyle.paddingHorizontal).toBe(
-      manuscriptTextMetrics.containerPaddingHorizontal,
-    );
-    expect(overlayStyle.paddingVertical).toBe(manuscriptTextMetrics.containerPaddingVertical);
-    expect(inputStyle.fontSize).toBe(overlayStyle.fontSize);
-    expect(inputStyle.lineHeight).toBe(overlayStyle.lineHeight);
-    expect(inputStyle.paddingHorizontal).toBe(overlayStyle.paddingHorizontal);
-    expect(inputStyle.paddingVertical).toBe(overlayStyle.paddingVertical);
-  });
-
-  it('leaves the input as the sole touch target', async () => {
-    const view = await render(
-      <RichBodyEditor doc={DOC} surfaceText={SURFACE} onChangeText={jest.fn()} testID="editor" />,
-    );
-
-    expect(view.getByTestId('editor.overlay').parent!.props.pointerEvents).toBe('none');
-  });
-
-  it('swaps to the opaque input and hides the overlay while a range is selected', async () => {
-    const view = await render(
-      <RichBodyEditor
-        doc={DOC}
-        surfaceText={SURFACE}
-        selection={{ start: 0, end: 7 }}
-        onChangeText={jest.fn()}
-        testID="editor"
-      />,
-    );
-
-    const inputStyle = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
+    expect(input.props.linkRegex).toBeNull();
     expect(inputStyle.color).toBe('#111');
-    const overlayContainerStyle = StyleSheet.flatten(
-      view.getByTestId('editor.overlay').parent!.props.style,
-    );
-    expect(overlayContainerStyle.opacity).toBe(0);
-  });
-
-  it('keeps the WYSIWYG overlay on a collapsed caret', async () => {
-    const view = await render(
-      <RichBodyEditor
-        doc={DOC}
-        surfaceText={SURFACE}
-        selection={{ start: 2, end: 2 }}
-        onChangeText={jest.fn()}
-        testID="editor"
-      />,
-    );
-
-    const inputStyle = StyleSheet.flatten(view.getByTestId('editor.input').props.style);
-    expect(inputStyle.color).toBe('#eee');
-    const overlayContainerStyle = StyleSheet.flatten(
-      view.getByTestId('editor.overlay').parent!.props.style,
-    );
-    expect(overlayContainerStyle.opacity).toBe(1);
+    expect(inputStyle.fontSize).toBe(manuscriptTextMetrics.fontSize);
+    expect(inputStyle.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
+    expect(inputStyle.paddingHorizontal).toBe(manuscriptTextMetrics.containerPaddingHorizontal);
+    expect(inputStyle.paddingVertical).toBe(manuscriptTextMetrics.containerPaddingVertical);
   });
 });
 
@@ -232,7 +225,6 @@ describe('SceneBodyToolbar', () => {
     ['bold', 'B'],
     ['italic', 'I'],
     ['underline', 'U'],
-    ['heading', 'H'],
     ['strikethrough', 'S'],
   ] as const)('dispatches %s from its button', async (kind, glyph) => {
     const onAction = jest.fn();
@@ -263,7 +255,6 @@ describe('SceneBodyToolbar', () => {
     expect(StyleSheet.flatten(view.getByText('S').props.style).color).toBe('#00f');
     expect(StyleSheet.flatten(view.getByText('I').props.style).color).toBe('#111');
     expect(StyleSheet.flatten(view.getByText('U').props.style).color).toBe('#111');
-    expect(StyleSheet.flatten(view.getByText('H').props.style).color).toBe('#111');
     expect(view.getByTestId('toolbar.bold').props.accessibilityState).toMatchObject({
       selected: true,
     });
@@ -275,7 +266,7 @@ describe('SceneBodyToolbar', () => {
   it('renders every glyph in the text color without actives', async () => {
     const view = await render(<SceneBodyToolbar onAction={jest.fn()} testID="toolbar" />);
 
-    for (const glyph of ['B', 'I', 'U', 'H', 'S']) {
+    for (const glyph of ['B', 'I', 'U', 'S']) {
       expect(StyleSheet.flatten(view.getByText(glyph).props.style).color).toBe('#111');
     }
   });
@@ -283,7 +274,7 @@ describe('SceneBodyToolbar', () => {
   it('never steals the editor input focus', async () => {
     const view = await render(<SceneBodyToolbar onAction={jest.fn()} testID="toolbar" />);
 
-    for (const kind of ['bold', 'italic', 'underline', 'heading', 'strikethrough']) {
+    for (const kind of ['bold', 'italic', 'underline', 'strikethrough']) {
       expect(view.getByTestId(`toolbar.${kind}`).props.focusable).toBe(false);
     }
   });
@@ -336,12 +327,9 @@ describe('SceneBodyFooter', () => {
 });
 
 describe('MarkdownPreview', () => {
-  it('renders paragraphs and headings with inline styles', async () => {
+  it('renders paragraphs with inline styles', async () => {
     const view = await render(
-      <MarkdownPreview
-        text={'## Chapter\n\nA **bold**, *soft* and __lined__ line.'}
-        testID="preview"
-      />,
+      <MarkdownPreview text={'Chapter\n\nA **bold**, *soft* and __lined__ line.'} testID="preview" />,
     );
 
     expect(view.getByText('Chapter')).toBeTruthy();
@@ -356,6 +344,27 @@ describe('MarkdownPreview', () => {
 
     const cut = StyleSheet.flatten(view.getByText('cut').props.style);
     expect(cut.textDecorationLine).toBe('line-through');
+  });
+
+  it('renders combined marks exactly as the editor stores them', async () => {
+    const view = await render(
+      <MarkdownPreview text={'A ***both*** and **__strong__** word.'} testID="preview" />,
+    );
+
+    const both = StyleSheet.flatten(view.getByText('both').props.style);
+    expect(both.fontWeight).toBe('700');
+    expect(both.fontStyle).toBe('italic');
+    const strong = StyleSheet.flatten(view.getByText('strong').props.style);
+    expect(strong.fontWeight).toBe('700');
+    expect(strong.textDecorationLine).toBe('underline');
+    expect(view.queryByText('***')).toBeNull();
+  });
+
+  it('degrades legacy heading prefixes to plain paragraphs', async () => {
+    const view = await render(<MarkdownPreview text={'# Old title'} testID="preview" />);
+
+    expect(view.getByText('Old title')).toBeTruthy();
+    expect(view.queryByText('# Old title')).toBeNull();
   });
 
   it('renders body text with the shared manuscript metrics', async () => {

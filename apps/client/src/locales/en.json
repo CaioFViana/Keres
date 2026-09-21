@@ -1036,7 +1036,6 @@
   "manuscript_counter": "{{words}} words · {{chars}} / {{max}}",
   "manuscript_empty": "Start writing…",
   "manuscript_format_bold": "Bold",
-  "manuscript_format_heading": "Heading",
   "manuscript_format_italic": "Italic",
   "manuscript_format_strikethrough": "Strikethrough",
   "manuscript_format_underline": "Underline",

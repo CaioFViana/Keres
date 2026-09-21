@@ -5,9 +5,9 @@ editável numa tela dedicada (drawer Editor), com WIP local, sync via
 infraestrutura existente e exportação por cena/rota.
 
 Status geral: **fases 0–5 entregues** (fundação + editor por cena +
-manuscrito + exportação DOCX/PDF/Markdown/texto + rich text WYSIWYG).
+manuscrito + exportação DOCX/PDF/Markdown/texto + rich text single-box S1).
 Pendente só verificação manual em aparelho (impressão PDF, share sheets,
-abertura em Word/LibreOffice, checklist do overlay) e instrumentação de
+abertura em Word/LibreOffice, checklist do editor) e instrumentação de
 performance. Detalhe em `.agents/plans/2026-09-20-scene-editor-mvp.md`
 e `.agents/plans/2026-09-21-manuscript-rich-text.md`.
 
@@ -119,16 +119,16 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
   header **Escrever / Ler / Revisar**. Entradas: ação `document-text` no
   header do detalhe da cena + cartão "Manuscrito" (trecho + indicador de
   rascunho) sob o resumo.
-- Escrever: `RichBodyEditor` document-driven (overlay pinta os runs do
-  documento sobre `TextInput` com a superfície sem markup, mesmas
-  métricas) + engine pura `manuscriptDocumentEngine` (diff da superfície,
+- Escrever: `RichBodyEditor` document-driven (S1: um `TextInput` plano
+  com a superfície sem markup, sem overlay — caret/seleção/copy 100%
+  nativos) + engine pura `manuscriptDocumentEngine` (diff da superfície,
   toggle, pending marks Word-style) + `SceneBodyToolbar` fixa
-  (negrito/itálico/sublinhado/riscado/títulos, botão ativo via
+  (negrito/itálico/sublinhado/riscado, botão ativo via
   `getEditorActiveMarks`) + `SceneBodyFooter` fixo (rascunho/contador/
   Save) + hook `useSceneBodyDraft` (estado do documento, snapshot
   markdown sobre `useDurableFormDraft`, campo `body`). Ler:
-  `MarkdownPreview` (parser mínimo próprio com `**`/`*`/`__`/`~~`/`#`
-  e escapes, sem dependência, texto selecionável). Revisar: threads de
+  `MarkdownPreview` (mesmo modelo shared do editor, sem dependência,
+  texto selecionável; sem títulos — nomes vivem nos campos). Revisar: threads de
   `Comment` da cena na chave `body` via `CommentThreadModal` — zero
   nova entidade.
 - Toggle de modo e ações de header seguem o padrão `BoardCanvasHeaderActions`
@@ -253,15 +253,17 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
 - [x] **Fase 5 rich text (feito):** editor document-model no Escrever
       (runs estilizados em `packages/shared` como fonte da verdade,
       markdown só na serialização, sem WebView/sem dep nova), engine de
-      edição pura + `RichBodyEditor` sem nenhum marcador na superfície,
-      toolbar com estado, riscado `~~` de ponta a ponta (edição, leitura,
-      DOCX/PDF/MD/TXT), excerpt sem marcadores. Plano em `.agents/plans/
+      edição pura + `RichBodyEditor` S1 sem nenhum marcador na superfície
+      (input único plano; overlay WYSIWYG removido após falha em aparelho:
+      seleção duplicada, copy desalinhado, caret invisível), toolbar com
+      estado, riscado `~~` de ponta a ponta (edição, leitura,
+      DOCX/PDF/MD/TXT), excerpt sem marcadores, títulos removidos do corpo
+      (nomes vivem nos campos). Plano em `.agents/plans/
       2026-09-21-manuscript-rich-text.md`.
 - [ ] **Verificação manual pendente (requer aparelho):** impressão PDF via
       `expo-print`, share sheets iOS/Android, abertura do DOCX em Word/
       LibreOffice (números `PAGEREF`), sensação de scroll/jank e do
-      seamless em aparelho fraco; overlay rico (caret/seleção visíveis
-      com texto transparente no iOS/Android, alinhamento caret↔glifo,
+      seamless em aparelho fraco; editor S1 (caret/seleção/copy nativos,
       teclados/IME, cena de 30k).
 - [ ] **Futuro incerto:** comentários inline (v2), editor por blocos (só
       com evidência), diff-sync (só se storage doer).

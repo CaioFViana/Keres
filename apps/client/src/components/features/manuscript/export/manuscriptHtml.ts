@@ -32,8 +32,6 @@ function spansToHtml(spans: CompiledSpan[]): string {
     .join('');
 }
 
-const BODY_HEADING_TAG = { 1: 'h4', 2: 'h5', 3: 'h6' } as const;
-
 /**
  * The compiled manuscript as a self-contained print document. Chapters break pages;
  * choices link to their target scene's anchor by name. Page counters ride on print CSS
@@ -66,11 +64,6 @@ export function buildManuscriptHtml(
           `<h3 class="scene" id="${block.bookmarkId ?? ''}">${escapeHtml(`${block.number}. ${block.name}`)}</h3>`,
         );
         break;
-      case 'body-heading': {
-        const tag = BODY_HEADING_TAG[block.level];
-        parts.push(`<${tag}>${spansToHtml(block.spans)}</${tag}>`);
-        break;
-      }
       case 'paragraph':
         parts.push(`<p>${spansToHtml(block.spans)}</p>`);
         break;

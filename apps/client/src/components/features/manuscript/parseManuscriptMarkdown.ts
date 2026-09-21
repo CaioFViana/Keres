@@ -6,9 +6,7 @@ export type ManuscriptInline = {
   strikethrough?: boolean;
 };
 
-export type ManuscriptBlock =
-  | { key: string; kind: 'heading'; level: 1 | 2 | 3; inlines: ManuscriptInline[] }
-  | { key: string; kind: 'paragraph'; inlines: ManuscriptInline[] };
+export type ManuscriptBlock = { key: string; kind: 'paragraph'; inlines: ManuscriptInline[] };
 
 type ManuscriptInlineStyle = 'bold' | 'italic' | 'underline' | 'strikethrough';
 
@@ -80,17 +78,18 @@ function parseLevel(segment: string, level: number, inlines: ManuscriptInline[])
 
 /**
  * Reader-visible text: the stored source minus the markdown markers (`**`, `*`,
- * `__`, `~~`, `# ` heading prefixes) and whole-line separators (`---`, `***`).
- * Mirrors the parser — only paired markers are formatting, so unmatched markers
- * stay literal (and counted), exactly as they render. Escaped literals (`\*`)
- * count as their char. Newlines are kept: they are prose structure, not markup.
+ * `__`, `~~`), legacy `# ` prefixes and whole-line separators (`---`, `***`).
+ * Fresh `#` is literal prose (the editor escapes it); only unescaped legacy
+ * prefixes strip, mirroring the parser. Unmatched markers stay literal (and
+ * counted), exactly as they render. Escaped literals (`\*`) count as their
+ * char. Newlines are kept: they are prose structure, not markup.
  */
 export function stripManuscriptMarkers(markdown: string): string {
   const stripped = protectEscapes(markdown)
     // Whole-line separators first: 3+ marker chars, optionally spaced
-    // (`---`, `* * *`). Heading prefixes contain `#`, so they never match here.
+    // (`---`, `* * *`).
     .replace(/^(?:[ \t]*[*\-_]){3,}[ \t]*$/gm, '')
-    // `# `/`## `/`### ` heading prefixes (a `#` without a trailing space is prose).
+    // Legacy `# `/`## `/`### ` prefixes (a `#` without a trailing space is prose).
     .replace(/^#{1,3}[ \t]+(?=\S)/gm, '')
     // Paired inline markers, `**` before `*` so bold pairs are not half-eaten.
     .replace(/__(.+?)__/g, '$1')
@@ -118,12 +117,12 @@ export function getManuscriptSizeStatus(visibleCharCount: number): ManuscriptSiz
 }
 
 /**
- * Minimal manuscript markdown: `#`/`##`/`###` headings, `**bold**`, `*italic*`,
- * `__underline__`, `~~strikethrough~~`, backslash escapes, blank-line separated
- * blocks. Single newlines inside a block are preserved (dialogue lines),
- * unmatched markers stay literal, styles never nest. Deliberately
- * dependency-free: prose needs nothing more, and a new renderer dependency is
- * a Hermes-compat risk for zero gain.
+ * Minimal manuscript markdown: `**bold**`, `*italic*`, `__underline__`,
+ * `~~strikethrough~~`, backslash escapes, blank-line separated blocks. Single
+ * newlines inside a block are preserved (dialogue lines), unmatched markers
+ * stay literal, styles never nest. Legacy `# ` prefixes degrade to plain
+ * paragraphs. Deliberately dependency-free: prose needs nothing more, and a
+ * new renderer dependency is a Hermes-compat risk for zero gain.
  */
 export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
   const chunks = markdown
@@ -132,19 +131,8 @@ export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
     .filter(Boolean);
   return chunks.map((chunk, index) => {
     const key = `block-${index}`;
-    const heading = /^(#{1,3})\s+(.+)$/.exec(chunk);
-    if (heading) {
-      const inlines: ManuscriptInline[] = [];
-      parseLevel(protectEscapes(heading[2]), 0, inlines);
-      return {
-        key,
-        kind: 'heading',
-        level: heading[1].length as 1 | 2 | 3,
-        inlines,
-      };
-    }
     const inlines: ManuscriptInline[] = [];
-    parseLevel(protectEscapes(chunk), 0, inlines);
+    parseLevel(protectEscapes(chunk.replace(/^#{1,3}[ \t]+/, '')), 0, inlines);
     return { key, kind: 'paragraph', inlines };
   });
 }

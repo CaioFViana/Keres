@@ -229,6 +229,26 @@ describe('KeyboardAwareScreen', () => {
     addListener.mockRestore();
     await screen.unmount();
   });
+
+  it('pins the footer below the scroll view, outside the scroll content', async () => {
+    type AncestorNode = { type: unknown; parent: AncestorNode | null };
+    const hasScrollAncestor = (node: AncestorNode): boolean => {
+      let current = node.parent;
+      while (current) {
+        if (current.type === 'RCTScrollView') return true;
+        current = current.parent;
+      }
+      return false;
+    };
+    const screen = await render(
+      <KeyboardAwareScreen footer={<Text testID="foot">pinned</Text>}>
+        <Text testID="body">scrolls</Text>
+      </KeyboardAwareScreen>,
+    );
+
+    expect(hasScrollAncestor(screen.getByTestId('foot') as unknown as AncestorNode)).toBe(false);
+    expect(hasScrollAncestor(screen.getByTestId('body') as unknown as AncestorNode)).toBe(true);
+  });
 });
 
 describe('ResponsiveGrid', () => {

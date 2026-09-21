@@ -50,9 +50,6 @@ export function buildManuscriptMarkdown(
       case 'scene-heading':
         lines.push(`### ${block.number}. ${block.name}`, '');
         break;
-      case 'body-heading':
-        lines.push(`${'#'.repeat(block.level + 3)} ${spansToMarkdown(block.spans)}`, '');
-        break;
       case 'paragraph':
         lines.push(spansToMarkdown(block.spans), '');
         break;
@@ -92,9 +89,6 @@ export function buildManuscriptText(
         break;
       case 'scene-heading':
         lines.push(`${block.number}. ${block.name}`, '');
-        break;
-      case 'body-heading':
-        lines.push(spansToText(block.spans), '');
         break;
       case 'paragraph':
         lines.push(spansToText(block.spans), '');

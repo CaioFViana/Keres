@@ -25,7 +25,6 @@ function paragraph(text: string, marks: ManuscriptMark[] = []): ManuscriptBlock 
 function charMarks(doc: ManuscriptDocument) {
   return doc.blocks.map((block) => ({
     kind: block.kind,
-    level: block.kind === 'heading' ? block.level : 0,
     chars: block.spans.flatMap((span) =>
       [...span.text].map((char) => ({ char, marks: [...span.marks].sort() })),
     ),
@@ -71,16 +70,16 @@ describe('normalizeManuscriptSpans', () => {
 });
 
 describe('normalizeManuscriptDocument', () => {
-  it('drops textless blocks and keeps heading levels', () => {
+  it('drops textless blocks', () => {
     expect(
       normalizeManuscriptDocument({
         blocks: [
           { kind: 'paragraph', spans: [{ text: '', marks: [] }] },
-          { kind: 'heading', level: 2, spans: [{ text: 'T', marks: [] }] },
+          paragraph('T'),
         ],
       }),
     ).toEqual({
-      blocks: [{ kind: 'heading', level: 2, spans: [{ text: 'T', marks: [] }] }],
+      blocks: [paragraph('T')],
     });
   });
 });
@@ -115,20 +114,15 @@ describe('parseMarkdownToDocument', () => {
     const doc = parseMarkdownToDocument('# Title\r\n\r\nFirst.\rSecond.\r\n\r\n**bold** tail');
 
     expect(doc.blocks).toHaveLength(3);
-    expect(doc.blocks[0]).toEqual({
-      kind: 'heading',
-      level: 1,
-      spans: [{ text: 'Title', marks: [] }],
-    });
+    expect(doc.blocks[0]).toEqual(paragraph('Title'));
     expect(doc.blocks[1]).toEqual(paragraph('First.\nSecond.'));
     expect(documentTextContent(doc)).not.toContain('\r');
   });
 
-  it('parses heading levels but keeps bare hashes literal', () => {
+  it('degrades legacy heading prefixes to plain paragraphs, keeps bare hashes literal', () => {
     const doc = parseMarkdownToDocument('# One\n\n## Two\n\n### Three');
 
-    expect(doc.blocks.map((block) => block.kind)).toEqual(['heading', 'heading', 'heading']);
-    expect(doc.blocks[0]).toMatchObject({ level: 1 });
+    expect(doc.blocks).toEqual([paragraph('One'), paragraph('Two'), paragraph('Three')]);
     expect(parseMarkdownToDocument('#Nope and C#').blocks).toEqual([
       paragraph('#Nope and C#'),
     ]);
@@ -197,15 +191,12 @@ describe('serializeDocumentToMarkdown', () => {
     expect(serializeDocumentToMarkdown({ blocks: [] })).toBe('');
   });
 
-  it('emits headings and paragraphs joined by blank lines', () => {
+  it('emits paragraphs joined by blank lines', () => {
     expect(
       serializeDocumentToMarkdown({
-        blocks: [
-          { kind: 'heading', level: 1, spans: [{ text: 'T', marks: ['bold'] }] },
-          paragraph('plain'),
-        ],
+        blocks: [paragraph('T', ['bold']), paragraph('plain')],
       }),
-    ).toBe('# **T**\n\nplain');
+    ).toBe('**T**\n\nplain');
   });
 
   it('nests combined marks deterministically', () => {
@@ -262,9 +253,6 @@ describe('serializeDocumentToMarkdown', () => {
     const corpus = [
       '',
       'plain',
-      '# H1',
-      '## H2',
-      '### H3',
       'A **bold** move',
       '*it* and __ul__ and ~~s~~',
       '***both***',
@@ -284,10 +272,21 @@ describe('serializeDocumentToMarkdown', () => {
       '100 ~ ok',
       '**a**b**c**',
       '**a**\n**b**',
-      '# **Bold head**',
     ];
     for (const markdown of corpus) {
       expect(serializeDocumentToMarkdown(parseMarkdownToDocument(markdown))).toBe(markdown);
+    }
+  });
+
+  it('degrades legacy heading prefixes instead of round-tripping them', () => {
+    const cases: [string, string][] = [
+      ['# H1', 'H1'],
+      ['## H2', 'H2'],
+      ['### H3', 'H3'],
+      ['# **Bold head**', '**Bold head**'],
+    ];
+    for (const [source, degraded] of cases) {
+      expect(serializeDocumentToMarkdown(parseMarkdownToDocument(source))).toBe(degraded);
     }
   });
 
@@ -297,9 +296,9 @@ describe('serializeDocumentToMarkdown', () => {
       { blocks: [paragraph('~~__both outer~~__')] },
       {
         blocks: [
-          { kind: 'heading', level: 3, spans: [{ text: 'T *', marks: ['bold'] }] },
+          paragraph('T *', ['bold']),
           paragraph('a\nb', ['italic']),
-          paragraph('\\# not a heading, 2 * 3, C:\\temp'),
+          paragraph('\\# literal hash, 2 * 3, C:\\temp'),
         ],
       },
     ];
@@ -315,7 +314,7 @@ describe('documentTextContent', () => {
     expect(
       documentTextContent({
         blocks: [
-          { kind: 'heading', level: 1, spans: [{ text: 'Title', marks: ['bold'] }] },
+          paragraph('Title', ['bold']),
           {
             kind: 'paragraph',
             spans: [

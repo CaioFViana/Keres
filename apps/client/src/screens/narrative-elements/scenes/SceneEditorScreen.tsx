@@ -4,14 +4,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TouchableOpacity, View, type TextInput } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import Button from '../../../components/common/controls/Button/Button';
 import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
-import type { ManuscriptFormatKind } from '../../../components/features/manuscript/manuscriptDocumentEngine';
+import type { ManuscriptMark } from '@keres/shared';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { RichBodyEditor } from '../../../components/features/manuscript/RichBodyEditor/RichBodyEditor';
@@ -107,11 +107,11 @@ function SceneEditorContent({
   const bodyComments = commentsByField[SCENE_BODY_DRAFT_FIELD] ?? [];
 
   const {
-    editor,
-    surfaceText,
+    editorRef,
+    initialHtml,
+    onHtmlChange,
+    onMarksChange,
     serializedBody,
-    changeText,
-    changeSelection,
     applyFormat,
     activeMarks,
     wordCount,
@@ -141,15 +141,14 @@ function SceneEditorContent({
   // Escrever/Ler share one scroll container and restore the offset on switch, so the
   // passage stays exactly where it was instead of jumping back to the top.
   const scrollRef = useRef<ScrollView | null>(null);
-  const bodyInputRef = useRef<TextInput | null>(null);
   const handleToolbarAction = useCallback(
-    (kind: ManuscriptFormatKind) => {
+    (kind: ManuscriptMark) => {
       applyFormat(kind);
       // A real editor keeps the caret: reassert input focus so typing
       // continues in the toggled style with the keyboard up.
-      bodyInputRef.current?.focus();
+      editorRef.current?.focus();
     },
-    [applyFormat],
+    [applyFormat, editorRef],
   );
   const offsetRef = useRef(0);
   useEffect(() => {
@@ -198,11 +197,10 @@ function SceneEditorContent({
           onAction={handleToolbarAction}
           disabled={!canEdit || saving}
           active={{
-            bold: activeMarks.marks.includes('bold'),
-            italic: activeMarks.marks.includes('italic'),
-            underline: activeMarks.marks.includes('underline'),
-            strikethrough: activeMarks.marks.includes('strikethrough'),
-            heading: activeMarks.heading > 0,
+            bold: activeMarks.includes('bold'),
+            italic: activeMarks.includes('italic'),
+            underline: activeMarks.includes('underline'),
+            strikethrough: activeMarks.includes('strikethrough'),
           }}
         />
       )}
@@ -218,13 +216,11 @@ function SceneEditorContent({
         {mode === 'write' ? (
           <RichBodyEditor
             testID="scene-body-editor"
-            doc={editor.doc}
-            surfaceText={surfaceText}
-            selection={editor.selection}
-            onChangeText={changeText}
-            onSelectionChange={changeSelection}
+            defaultHtml={initialHtml}
+            onHtmlChange={onHtmlChange}
+            onMarksChange={onMarksChange}
             editable={canEdit && !saving}
-            inputRef={bodyInputRef}
+            inputRef={editorRef}
           />
         ) : (
           <View style={styles.readContainer}>

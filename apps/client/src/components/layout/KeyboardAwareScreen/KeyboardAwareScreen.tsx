@@ -17,6 +17,12 @@ export const KeyboardAwareContext = React.createContext<(() => void) | null>(nul
 
 interface KeyboardAwareScreenProps {
   children: React.ReactNode;
+  /**
+   * Pinned below the scroll view, inside the keyboard-avoiding container:
+   * composer bars and action rows stay visible (and above the keyboard)
+   * instead of scrolling away with the content.
+   */
+  footer?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   keyboardVerticalOffset?: number;
@@ -28,6 +34,7 @@ interface KeyboardAwareScreenProps {
  */
 const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   children,
+  footer,
   style,
   contentContainerStyle,
   keyboardVerticalOffset = 64,
@@ -123,6 +130,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
         >
           {children}
         </ScrollView>
+        {footer}
       </KeyboardAvoidingView>
     </KeyboardAwareContext.Provider>
   );

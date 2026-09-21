@@ -68,6 +68,11 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   const [excerptText, setExcerptText] = useState('');
   const [criticality, setCriticality] = useState<CommentCriticality>(DEFAULT_CRITICALITY);
   const [submitting, setSubmitting] = useState(false);
+  // Web textareas never auto-grow: pin each composer's measured content height
+  // as its minimum (same technique as the prose editor) so long comments grow
+  // the field instead of scrolling inside a fixed box.
+  const [excerptHeight, setExcerptHeight] = useState<number | null>(null);
+  const [commentHeight, setCommentHeight] = useState<number | null>(null);
 
   const sortedComments = useMemo(
     () => [...comments].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
@@ -181,6 +186,80 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     postButton: { paddingHorizontal: 20 },
   });
 
+  // Pinned composer: rides the footer's slot below the thread scroll view, so
+  // scrolling the thread never pushes the inputs and the post button away.
+  const footer = !canComment ? undefined : (
+    <View style={styles.footer} testID="comment-composer">
+      <View style={styles.snapshotBlock}>
+        <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
+        <Text style={styles.snapshotText} numberOfLines={4}>
+          {fieldValueSnapshot || t('common_na')}
+        </Text>
+      </View>
+
+      <TextInput
+        testID="comment-excerpt-input"
+        style={[
+          styles.input,
+          styles.excerptInput,
+          excerptHeight != null && { minHeight: Math.max(40, excerptHeight) },
+        ]}
+        value={excerptText}
+        onChangeText={setExcerptText}
+        onContentSizeChange={(event) => setExcerptHeight(event.nativeEvent.contentSize.height)}
+        placeholder={t('excerpt_placeholder')}
+        multiline
+      />
+      {excerptMismatch && (
+        <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>
+      )}
+
+      <TextInput
+        testID="comment-text-input"
+        style={[
+          styles.input,
+          styles.commentInput,
+          commentHeight != null && { minHeight: Math.max(70, commentHeight) },
+        ]}
+        value={commentText}
+        onChangeText={setCommentText}
+        onContentSizeChange={(event) => setCommentHeight(event.nativeEvent.contentSize.height)}
+        placeholder={t('comment_text_placeholder')}
+        multiline
+      />
+
+      <View style={styles.actionRow}>
+        <View style={styles.criticalityRow}>
+          {CRITICALITY_LEVELS.map((level) => (
+            <TouchableOpacity
+              key={level}
+              style={[
+                styles.criticalityButton,
+                criticality === level && styles.criticalityButtonActive,
+              ]}
+              onPress={() => setCriticality(level)}
+              accessibilityLabel={t(`comment_criticality_${level}`)}
+            >
+              <Ionicons
+                name={CRITICALITY_ICONS[level]}
+                size={20}
+                color={criticality === level ? colors.primary : colors.textSecondary}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Button
+          onPress={handleSubmit}
+          disabled={submitting || !commentText.trim()}
+          style={styles.postButton}
+        >
+          {submitting ? t('saving') : t('add_comment')}
+        </Button>
+      </View>
+    </View>
+  );
+
   return (
     <ResponsiveModal
       visible={visible}
@@ -193,6 +272,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       <KeyboardAwareScreen
         contentContainerStyle={styles.keyboardContent}
         keyboardVerticalOffset={0}
+        footer={footer}
       >
         <View style={styles.header}>
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -255,65 +335,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
           )}
         </View>
 
-        {canComment && (
-          <View style={styles.footer}>
-            <View style={styles.snapshotBlock}>
-              <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
-              <Text style={styles.snapshotText} numberOfLines={4}>
-                {fieldValueSnapshot || t('common_na')}
-              </Text>
-            </View>
-
-            <TextInput
-              style={[styles.input, styles.excerptInput]}
-              value={excerptText}
-              onChangeText={setExcerptText}
-              placeholder={t('excerpt_placeholder')}
-              multiline
-            />
-            {excerptMismatch && (
-              <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>
-            )}
-
-            <TextInput
-              style={[styles.input, styles.commentInput]}
-              value={commentText}
-              onChangeText={setCommentText}
-              placeholder={t('comment_text_placeholder')}
-              multiline
-            />
-
-            <View style={styles.actionRow}>
-              <View style={styles.criticalityRow}>
-                {CRITICALITY_LEVELS.map((level) => (
-                  <TouchableOpacity
-                    key={level}
-                    style={[
-                      styles.criticalityButton,
-                      criticality === level && styles.criticalityButtonActive,
-                    ]}
-                    onPress={() => setCriticality(level)}
-                    accessibilityLabel={t(`comment_criticality_${level}`)}
-                  >
-                    <Ionicons
-                      name={CRITICALITY_ICONS[level]}
-                      size={20}
-                      color={criticality === level ? colors.primary : colors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Button
-                onPress={handleSubmit}
-                disabled={submitting || !commentText.trim()}
-                style={styles.postButton}
-              >
-                {submitting ? t('saving') : t('add_comment')}
-              </Button>
-            </View>
-          </View>
-        )}
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );

@@ -120,7 +120,7 @@ describe('buildManuscriptHtml', () => {
     expect(html).toContain('<h1 class="title">My Story</h1>');
     expect(html).toContain('<h2 class="chapter">1. Arrival</h2>');
     expect(html).toContain('<h3 class="scene" id="scene-s1">1. Opening</h3>');
-    expect(html).toContain('<h4>Prologue</h4>');
+    expect(html).toContain('<p>Prologue</p>');
     expect(html).toContain('<strong>bold</strong>');
     expect(html).toContain('<u>lined</u>');
     expect(html).toContain('&amp; &lt;tricky&gt;');
@@ -157,7 +157,7 @@ describe('buildManuscriptMarkdown', () => {
     expect(md).toContain('# My Story');
     expect(md).toContain('## 1. Arrival');
     expect(md).toContain('### 1. Opening');
-    expect(md).toContain('#### Prologue');
+    expect(md).toContain('Prologue\n\nA **bold**');
     expect(md).toContain('A **bold**, <u>lined</u> & <tricky> line.');
     expect(md).toContain('- Go on — See Next');
     expect(md.endsWith('\n')).toBe(true);

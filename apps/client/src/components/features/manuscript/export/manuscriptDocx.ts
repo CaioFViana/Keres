@@ -34,12 +34,6 @@ function spansToRuns(spans: CompiledSpan[]): TextRun[] {
   );
 }
 
-const BODY_HEADING_LEVEL = {
-  1: HeadingLevel.HEADING_3,
-  2: HeadingLevel.HEADING_4,
-  3: HeadingLevel.HEADING_5,
-} as const;
-
 /**
  * The compiled manuscript as a Word document: title page flow, chapters with page breaks,
  * one bookmark per scene, and every choice pointing at its target through a PAGEREF field -
@@ -108,15 +102,6 @@ export function buildManuscriptDocument(
         firstContent = false;
         break;
       }
-      case 'body-heading':
-        children.push(
-          new Paragraph({
-            heading: BODY_HEADING_LEVEL[block.level],
-            keepNext: true,
-            children: spansToRuns(block.spans),
-          }),
-        );
-        break;
       case 'paragraph':
         children.push(
           new Paragraph({

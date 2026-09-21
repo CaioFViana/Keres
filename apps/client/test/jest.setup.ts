@@ -142,3 +142,38 @@ jest.mock('@shopify/react-native-skia', () => {
     },
   };
 });
+
+// `react-native-enriched-html` mounts native Fabric views (TipTap on web) that
+// do not exist in Jest. Tests assert our wiring (default HTML, event mapping),
+// so the stand-in keeps every prop queryable on a host placeholder. Like the
+// Skia mock, the ref stays out of the host tree (the renderer would overwrite
+// test-driven holders); tests read it off `__enrichedTest.refHolder` instead.
+jest.mock('react-native-enriched-html', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const React = require('react');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const { View } = require('react-native');
+  const refHolder: { current: unknown } = { current: null };
+  const EnrichedTextInput = (props: { children?: React.ReactNode }) => {
+    const { ref, ...rest } = (props ?? {}) as {
+      ref?: React.Ref<unknown>;
+    } & Record<string, unknown>;
+    refHolder.current = ref ?? null;
+    return React.createElement(
+      View,
+      rest,
+      (rest as { children?: React.ReactNode }).children,
+    );
+  };
+  EnrichedTextInput.displayName = 'EnrichedTextInput';
+  return {
+    __esModule: true,
+    EnrichedTextInput,
+    __enrichedTest: {
+      refHolder,
+      reset() {
+        refHolder.current = null;
+      },
+    },
+  };
+});

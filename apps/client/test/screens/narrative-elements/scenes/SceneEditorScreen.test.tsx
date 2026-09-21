@@ -10,10 +10,12 @@ const mockUpdateScene = jest.fn();
 const mockAddComment = jest.fn();
 const mockDeleteComment = jest.fn();
 const mockUpdateComment = jest.fn();
-const mockChangeText = jest.fn();
-const mockChangeSelection = jest.fn();
+const mockOnHtmlChange = jest.fn();
+const mockOnMarksChange = jest.fn();
 const mockApplyFormat = jest.fn();
 const mockSaveBody = jest.fn();
+const mockEditorFocus = jest.fn();
+const mockEditorRef = { current: { focus: mockEditorFocus } };
 
 let mockHeaderArgs: { title: string; renderActions?: () => React.ReactNode } | null = null;
 let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
@@ -21,7 +23,7 @@ let mockCanEdit = true;
 let mockCommentsByField: Record<string, { id: string }[]> = {};
 let mockBodyText = 'Saved prose.';
 let mockBodyDirty = false;
-let mockActiveMarks: { marks: string[]; heading: number } = { marks: [], heading: 0 };
+let mockActiveMarks: string[] = [];
 let mockUseSceneBodyDraftOptions: {
   savedBody: string | null;
   persist: (body: string | null) => Promise<void>;
@@ -110,11 +112,11 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
     const doc = shared.parseMarkdownToDocument(mockBodyText);
     const surfaceText = shared.documentTextContent(doc);
     return {
-      editor: { doc, selection: { start: 0, end: 0 }, pendingMarks: null },
-      surfaceText,
+      editorRef: mockEditorRef,
+      initialHtml: shared.documentToEnrichedHtml(doc),
+      onHtmlChange: mockOnHtmlChange,
+      onMarksChange: mockOnMarksChange,
       serializedBody: mockBodyText,
-      changeText: mockChangeText,
-      changeSelection: mockChangeSelection,
       applyFormat: mockApplyFormat,
       activeMarks: mockActiveMarks,
       wordCount: 2,
@@ -267,7 +269,7 @@ beforeEach(() => {
   mockCommentsByField = {};
   mockBodyText = 'Saved prose.';
   mockBodyDirty = false;
-  mockActiveMarks = { marks: [], heading: 0 };
+  mockActiveMarks = [];
   mockUseSceneBodyDraftOptions = null;
   mockGetById.mockResolvedValue(makeScene());
   mockUpdateScene.mockImplementation(async (_userId: string, _sceneId: string, data: object) =>
@@ -287,7 +289,7 @@ describe('SceneEditorScreen', () => {
     const view = await render(<SceneEditorScreen />);
     const input = await view.findByTestId('scene-body-editor.input');
 
-    expect(input.props.value).toBe('Saved prose.');
+    expect(input.props.defaultValue).toBe('<html><p>Saved prose.</p></html>');
     expect(mockHeaderArgs?.title).toBe('Opening');
   });
 
@@ -296,8 +298,10 @@ describe('SceneEditorScreen', () => {
     const view = await render(<SceneEditorScreen />);
     const input = await view.findByTestId('scene-body-editor.input');
 
-    await fireEvent.changeText(input, 'Saved prose plus more.');
-    expect(mockChangeText).toHaveBeenCalledWith('Saved prose plus more.');
+    await fireEvent(input, 'changeHtml', {
+      nativeEvent: { value: '<html><p>Saved prose plus more.</p></html>' },
+    });
+    expect(mockOnHtmlChange).toHaveBeenCalledWith('<html><p>Saved prose plus more.</p></html>');
 
     await fireEvent.press(view.getByText('save'));
     expect(mockSaveBody).toHaveBeenCalledTimes(1);
@@ -321,29 +325,35 @@ describe('SceneEditorScreen', () => {
 
     await fireEvent.press(header.getByTestId('editor-mode-write'));
     const input = await view.findByTestId('scene-body-editor.input');
-    expect(input.props.value).toBe('Saved prose.');
+    expect(input.props.defaultValue).toBe('<html><p>Saved prose.</p></html>');
   });
 
-  it('formats the selection through the toolbar', async () => {
+  it('formats through the toolbar and refocuses the editor', async () => {
     const view = await render(<SceneEditorScreen />);
     const input = await view.findByTestId('scene-body-editor.input');
 
-    await fireEvent(input, 'selectionChange', {
-      nativeEvent: { selection: { start: 0, end: 5 } },
+    await fireEvent(input, 'changeState', {
+      nativeEvent: {
+        bold: { isActive: true, isConflicting: false, isBlocking: false },
+        italic: { isActive: false, isConflicting: false, isBlocking: false },
+        underline: { isActive: false, isConflicting: false, isBlocking: false },
+        strikeThrough: { isActive: false, isConflicting: false, isBlocking: false },
+      },
     });
-    expect(mockChangeSelection).toHaveBeenCalledWith({ start: 0, end: 5 });
+    expect(mockOnMarksChange).toHaveBeenCalledWith(['bold']);
     await fireEvent.press(view.getByTestId('scene-body-toolbar.bold'));
 
     expect(mockApplyFormat).toHaveBeenCalledWith('bold');
+    expect(mockEditorFocus).toHaveBeenCalledTimes(1);
   });
 
-  it('reflects the hook actives in the toolbar over the rich overlay', async () => {
+  it('reflects the hook actives in the toolbar over the native input', async () => {
     mockBodyText = '**Saved** prose.';
-    mockActiveMarks = { marks: ['bold'], heading: 0 };
+    mockActiveMarks = ['bold'];
     const view = await render(<SceneEditorScreen />);
-    await view.findByTestId('scene-body-editor.input');
+    const input = await view.findByTestId('scene-body-editor.input');
 
-    expect(view.getByTestId('scene-body-editor.overlay')).toBeTruthy();
+    expect(input.props.defaultValue).toBe('<html><p><b>Saved</b> prose.</p></html>');
     expect(view.getByTestId('scene-body-toolbar.bold').props.accessibilityState).toMatchObject({
       selected: true,
     });

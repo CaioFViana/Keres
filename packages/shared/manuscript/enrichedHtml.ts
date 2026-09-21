@@ -10,11 +10,19 @@ import {
  * Storage boundary between the manuscript document model and the
  * `react-native-enriched-html` editor, whose source of truth is HTML.
  *
- * Canonical tags mirror the editor's supported set: `<p>` paragraphs, `<br>`
- * line breaks, `<b>`/`<i>`/`<u>`/`<s>` inline marks. Everything else the editor
- * can produce (headings, lists, links, … — reachable via paste) degrades to
- * plain paragraphs: prose text is never lost, structure outside the model is.
- * Unknown tags, comments, scripts and styles are dropped the same way.
+ * Canonical tags mirror the editor's supported set: `<p>` paragraphs
+ * (an empty `<p></p>` is a blank line), `<b>`/`<i>`/`<u>`/`<s>` inline marks.
+ * A bare `<br>` between blocks is the host's empty-paragraph encoding (it
+ * emits `<p></p>` as `<br>`); a `<br>` after text stays a soft break. Nothing
+ * else the editor can produce (headings, lists, links, … — reachable via
+ * paste) survives as structure: prose text is never lost, structure outside
+ * the model degrades to plain paragraphs. Unknown tags, comments, scripts
+ * and styles are dropped the same way.
+ *
+ * The emitter never writes `<br>`: the host rewrites interior `<br>` into
+ * paragraph splits plus phantom empties when seeding (proven against the real
+ * build), so soft lines promote to paragraphs on emit. Soft breaks survive
+ * live typing and storage, and canonicalize to paragraphs on the next reseed.
  */
 
 const TAG_TO_MARK: Record<string, ManuscriptMark> = {
@@ -108,6 +116,11 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
   let current: RawSpan[] = [];
   let marks: ManuscriptMark[] = [];
   let skipDepth = 0;
+  // Set by a block open, cleared by any significant content: lets a close
+  // tell an explicit `<p></p>` (blank line) from pretty-printing whitespace.
+  let pendingEmpty = false;
+  const hasSignificantContent = () =>
+    current.some((span) => span.text === NEWLINE_STANDIN || /\S/.test(span.text));
 
   const flushBlock = () => {
     // Raw newlines are pretty-printing (real breaks arrive as `<br>`
@@ -161,10 +174,23 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     marks = [];
   };
 
+  // A close (or the end of input) ends the pending paragraph: explicit
+  // empties become blank-line blocks, content flushes normally, and
+  // pretty-printing noise between blocks drops. Always consumes the flag so
+  // nested closes (`<div><p></p></div>`) emit exactly one blank.
+  const closeBoundary = () => {
+    const explicitEmpty = pendingEmpty && !hasSignificantContent();
+    flushBlock();
+    pendingEmpty = false;
+    if (explicitEmpty) blocks.push([]);
+  };
+
   for (const token of tokens) {
     if (!token.startsWith('<') || !token.endsWith('>')) {
       if (skipDepth === 0 && token !== '') {
-        current.push({ text: decodeEntities(token), marks: [...marks] });
+        const text = decodeEntities(token);
+        current.push({ text, marks: [...marks] });
+        if (/\S/.test(text)) pendingEmpty = false;
       }
       continue;
     }
@@ -179,7 +205,7 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     if (skipDepth > 0) continue;
     if (closing) {
       if (BLOCK_TAGS.has(name)) {
-        flushBlock();
+        closeBoundary();
       } else if (TAG_TO_MARK[name] !== undefined) {
         const mark = TAG_TO_MARK[name];
         const at = marks.lastIndexOf(mark);
@@ -189,8 +215,17 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     }
     if (BLOCK_TAGS.has(name)) {
       flushBlock();
+      pendingEmpty = true;
     } else if (name === 'br' || name === 'wbr') {
-      current.push({ text: NEWLINE_STANDIN, marks: [] });
+      if (hasSignificantContent()) {
+        current.push({ text: NEWLINE_STANDIN, marks: [] });
+        pendingEmpty = false;
+      } else {
+        // Bare break between blocks: the host's empty-paragraph encoding.
+        current = [];
+        pendingEmpty = false;
+        blocks.push([]);
+      }
     } else if (name === 'hr') {
       flushBlock();
     } else if (name === 'img' || name === 'source') {
@@ -200,28 +235,41 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     }
     // Any other tag: dropped, inner text kept.
   }
-  flushBlock();
+  closeBoundary();
   return normalizeManuscriptDocument({ blocks: blocks.map((spans) => ({ kind: 'paragraph', spans })) });
 }
 
-/** Serializes a document to the editor's canonical HTML (`<p>`/`<br>`/marks). */
+/**
+ * Serializes a document to the editor's canonical HTML (`<p>`/marks, with
+ * `<p></p>` for blank lines). Soft lines promote to paragraphs: the host
+ * rewrites an interior `<br>` into splits plus phantom empties when seeding,
+ * so the boundary form never carries `<br>`.
+ */
 export function documentToEnrichedHtml(doc: ManuscriptDocument): string {
   const normalized = normalizeManuscriptDocument(doc);
   if (normalized.blocks.length === 0) return '';
-  const blocks = normalized.blocks.map((block) => {
-    const inner = block.spans
-      .map((span) => {
-        let text = escapeHtml(span.text).replace(/\n/g, '<br>');
-        for (const mark of [...HTML_OUTER_FIRST].reverse()) {
-          if (span.marks.includes(mark)) {
-            const tag = MARK_TO_TAG[mark];
-            text = `<${tag}>${text}</${tag}>`;
-          }
-        }
-        return text;
-      })
-      .join('');
-    return `<p>${inner}</p>`;
-  });
-  return `<html>${blocks.join('')}</html>`;
+  const wrapMark = (text: string, marks: ManuscriptMark[]): string => {
+    for (const mark of [...HTML_OUTER_FIRST].reverse()) {
+      if (marks.includes(mark)) {
+        const tag = MARK_TO_TAG[mark];
+        text = `<${tag}>${text}</${tag}>`;
+      }
+    }
+    return text;
+  };
+  const blocksHtml: string[] = [];
+  for (const block of normalized.blocks) {
+    const lines: ManuscriptSpan[][] = [[]];
+    for (const span of block.spans) {
+      span.text.split('\n').forEach((segment, index) => {
+        if (index > 0) lines.push([]);
+        if (segment !== '') lines[lines.length - 1].push({ text: segment, marks: span.marks });
+      });
+    }
+    for (const line of lines) {
+      const inner = line.map((span) => wrapMark(escapeHtml(span.text), span.marks)).join('');
+      blocksHtml.push(`<p>${inner}</p>`);
+    }
+  }
+  return `<html>${blocksHtml.join('')}</html>`;
 }

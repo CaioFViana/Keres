@@ -17,6 +17,9 @@
  * trailing newline (`parseMarkdownToDocument` guarantees this; the editing
  * engine must preserve it). Marks never cross block boundaries and never span
  * a single newline inside a block — matching the reader, which is single-line.
+ * Blocks may be empty (`spans: []`): blank lines between or around prose,
+ * preserved byte-identically through storage so consecutive Enters survive a
+ * save round-trip and count in the text like the final output counts them.
  */
 
 export type ManuscriptMark = 'bold' | 'italic' | 'underline' | 'strikethrough';
@@ -86,19 +89,26 @@ export function normalizeManuscriptSpans(spans: ManuscriptSpan[]): ManuscriptSpa
   return out;
 }
 
-/** Normalizes every block and drops textless blocks. Pure, never mutates. */
+/** A block with no visible text: empty or whitespace/newlines only. */
+function isTextlessSpans(spans: ManuscriptSpan[]): boolean {
+  return spans.every((span) => span.text.trim() === '');
+}
+
+/**
+ * Normalizes every block, keeping textless ones as canonical empty blocks
+ * (`spans: []`) so blank lines survive. Pure, never mutates.
+ */
 export function normalizeManuscriptDocument(doc: ManuscriptDocument): ManuscriptDocument {
-  const blocks: ManuscriptBlock[] = [];
-  for (const block of doc.blocks) {
-    const spans = normalizeManuscriptSpans(block.spans);
-    if (spans.length === 0) continue;
-    blocks.push({ kind: 'paragraph', spans });
-  }
-  return { blocks };
+  return {
+    blocks: doc.blocks.map((block) => {
+      const spans = normalizeManuscriptSpans(block.spans);
+      return { kind: 'paragraph' as const, spans: isTextlessSpans(spans) ? [] : spans };
+    }),
+  };
 }
 
 export function isEmptyManuscriptDocument(doc: ManuscriptDocument): boolean {
-  return normalizeManuscriptDocument(doc).blocks.length === 0;
+  return normalizeManuscriptDocument(doc).blocks.every((block) => block.spans.length === 0);
 }
 
 type Frame = { marker: ManuscriptMark | null; parts: ManuscriptSpan[] };
@@ -178,27 +188,45 @@ function parseInlineLine(line: string): ManuscriptSpan[] {
   return normalizeManuscriptSpans(stack[0].parts);
 }
 
-function parseChunk(chunk: string): ManuscriptBlock {
+function parseChunkLines(lines: string[]): ManuscriptBlock {
   // Legacy `# ` prefixes (pre-removal headings) degrade to plain paragraphs.
-  const content = chunk.replace(/^#{1,3}[ \t]+/, '');
+  const [first, ...rest] = lines;
+  const content = [first.replace(/^#{1,3}[ \t]+/, ''), ...rest];
   const spans = normalizeManuscriptSpans(
-    content
-      .split('\n')
-      .flatMap((line, index) =>
-        index === 0 ? parseInlineLine(line) : [{ text: '\n', marks: [] }, ...parseInlineLine(line)],
-      ),
+    content.flatMap((line, index) =>
+      index === 0 ? parseInlineLine(line) : [{ text: '\n', marks: [] }, ...parseInlineLine(line)],
+    ),
   );
   return { kind: 'paragraph', spans };
 }
 
-/** Parses stored markdown into a normalized document. Never throws. */
+const BLANK_LINE_PATTERN = /^[ \t]*$/;
+
+/**
+ * Parses stored markdown into a normalized document. Never throws.
+ *
+ * Blank-line runs stay blank lines: each `\n\n` separator is a block boundary
+ * and blank lines beyond the first form empty blocks, so `a\n\n\n\nb` reads
+ * back the gap the serializer wrote, byte-identically. Space-only lines are
+ * layout noise and fold into plain blank lines first.
+ */
 export function parseMarkdownToDocument(markdown: string): ManuscriptDocument {
-  const chunks = markdown
-    .replace(/\r\n?/g, '\n')
-    .split(/\n\s*\n/)
-    .map((chunk) => chunk.trim())
-    .filter(Boolean);
-  return normalizeManuscriptDocument({ blocks: chunks.map(parseChunk) });
+  const normalized = markdown.replace(/\r\n?/g, '\n');
+  if (normalized.trim() === '') return { blocks: [] };
+  const flattened = normalized
+    .split('\n')
+    .map((line) => (BLANK_LINE_PATTERN.test(line) ? '' : line))
+    .join('\n');
+  const blocks = flattened.split('\n\n').map((chunk) => {
+    const lines = chunk.split('\n');
+    while (lines.length > 0 && lines[0] === '') lines.shift();
+    while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+    if (lines.length === 0) return { kind: 'paragraph' as const, spans: [] };
+    lines[0] = lines[0].replace(/^[ \t]+/, '');
+    lines[lines.length - 1] = lines[lines.length - 1].replace(/[ \t]+$/, '');
+    return parseChunkLines(lines);
+  });
+  return normalizeManuscriptDocument({ blocks });
 }
 
 type LineSegment = { text: string; marks: ManuscriptMark[] };

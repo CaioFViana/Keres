@@ -42,7 +42,7 @@ import { useSceneDetailServices } from './useSceneDetailServices';
 // Define the parameter list for this screen
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
 
-const MANUSCRIPT_EXCERPT_LENGTH = 200;
+const MANUSCRIPT_EXCERPT_LENGTH = 150;
 
 function excerptBody(body: string | null | undefined): string | null {
   if (!body) return null;

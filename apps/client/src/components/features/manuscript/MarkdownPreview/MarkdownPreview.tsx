@@ -55,20 +55,29 @@ export function MarkdownPreview({
           fontSize: manuscriptTextMetrics.fontSize,
           lineHeight: manuscriptTextMetrics.lineHeight,
         },
+        // Blank lines read as full beats with no text node to pollute copies.
+        blankBlock: {
+          height: manuscriptTextMetrics.lineHeight,
+          marginBottom: manuscriptTextMetrics.paragraphSpacing,
+        },
       }),
     [colors],
   );
   return (
     <View testID={testID}>
-      {doc.blocks.map((block, index) => (
-        <View key={`block-${index}`} style={styles.block}>
-          <Text selectable={selectable} style={styles.paragraph}>
-            {block.spans.map((span, spanIndex) => (
-              <InlineText key={spanIndex} span={span} />
-            ))}
-          </Text>
-        </View>
-      ))}
+      {doc.blocks.map((block, index) =>
+        block.spans.length === 0 ? (
+          <View key={`block-${index}`} style={styles.blankBlock} />
+        ) : (
+          <View key={`block-${index}`} style={styles.block}>
+            <Text selectable={selectable} style={styles.paragraph}>
+              {block.spans.map((span, spanIndex) => (
+                <InlineText key={spanIndex} span={span} />
+              ))}
+            </Text>
+          </View>
+        ),
+      )}
     </View>
   );
 }

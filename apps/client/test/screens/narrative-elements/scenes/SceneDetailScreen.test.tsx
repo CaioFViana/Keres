@@ -573,6 +573,16 @@ describe('SceneDetailScreen', () => {
     });
   });
 
+  it('caps the manuscript excerpt at 150 characters', async () => {
+    mockGetSceneById.mockResolvedValue(makeScene({ body: `Opening. ${'x'.repeat(200)}` }));
+    const view = await render(<SceneDetailScreen />);
+    await view.findByTestId('scene-content');
+
+    expect(jsonOf(view, 'scene-content')).toMatchObject({
+      excerpt: `Opening. ${'x'.repeat(141)}…`,
+    });
+  });
+
   it('hides the edit action without edit rights', async () => {
     mockCanEdit = false;
     const view = await render(<SceneDetailScreen />);

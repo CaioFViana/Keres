@@ -70,16 +70,21 @@ describe('normalizeManuscriptSpans', () => {
 });
 
 describe('normalizeManuscriptDocument', () => {
-  it('drops textless blocks', () => {
+  it('keeps textless blocks as canonical empty blocks', () => {
     expect(
       normalizeManuscriptDocument({
         blocks: [
           { kind: 'paragraph', spans: [{ text: '', marks: [] }] },
           paragraph('T'),
+          { kind: 'paragraph', spans: [{ text: ' \n ', marks: ['bold'] }] },
         ],
       }),
     ).toEqual({
-      blocks: [paragraph('T')],
+      blocks: [
+        { kind: 'paragraph', spans: [] },
+        paragraph('T'),
+        { kind: 'paragraph', spans: [] },
+      ],
     });
   });
 });
@@ -92,6 +97,11 @@ describe('isEmptyManuscriptDocument', () => {
         blocks: [{ kind: 'paragraph', spans: [{ text: '', marks: [] }] }],
       }),
     ).toBe(true);
+    expect(
+      isEmptyManuscriptDocument({
+        blocks: [{ kind: 'paragraph', spans: [] }, paragraph('x')],
+      }),
+    ).toBe(false);
     expect(isEmptyManuscriptDocument({ blocks: [paragraph('x')] })).toBe(false);
   });
 });
@@ -102,12 +112,39 @@ describe('parseMarkdownToDocument', () => {
     expect(parseMarkdownToDocument('  \n  \n ')).toEqual({ blocks: [] });
   });
 
-  it('splits blank-line separated paragraphs, collapsing runs', () => {
+  it('splits blank-line separated paragraphs, keeping runs as empty blocks', () => {
     const doc = parseMarkdownToDocument('First.\n\n\n\nSecond.');
 
-    expect(doc.blocks).toHaveLength(2);
-    expect(doc.blocks[0]).toEqual(paragraph('First.'));
-    expect(doc.blocks[1]).toEqual(paragraph('Second.'));
+    expect(doc.blocks).toEqual([
+      paragraph('First.'),
+      { kind: 'paragraph', spans: [] },
+      paragraph('Second.'),
+    ]);
+  });
+
+  it('preserves longer runs and edge blank lines', () => {
+    expect(parseMarkdownToDocument('a\n\n\n\n\n\nb').blocks).toEqual([
+      paragraph('a'),
+      { kind: 'paragraph', spans: [] },
+      { kind: 'paragraph', spans: [] },
+      paragraph('b'),
+    ]);
+    expect(parseMarkdownToDocument('\n\na\n\n').blocks).toEqual([
+      { kind: 'paragraph', spans: [] },
+      paragraph('a'),
+      { kind: 'paragraph', spans: [] },
+    ]);
+  });
+
+  it('degrades odd non-canonical runs without blank-line leftovers', () => {
+    expect(parseMarkdownToDocument('a\n\n\nb').blocks).toEqual([
+      paragraph('a'),
+      paragraph('b'),
+    ]);
+    expect(parseMarkdownToDocument('a\n   \n b').blocks).toEqual([
+      paragraph('a'),
+      paragraph('b'),
+    ]);
   });
 
   it('normalizes CRLF and lone CR line endings before splitting', () => {
@@ -199,6 +236,14 @@ describe('serializeDocumentToMarkdown', () => {
     ).toBe('**T**\n\nplain');
   });
 
+  it('emits empty blocks as blank lines', () => {
+    expect(
+      serializeDocumentToMarkdown({
+        blocks: [paragraph('a'), { kind: 'paragraph', spans: [] }, paragraph('b')],
+      }),
+    ).toBe('a\n\n\n\nb');
+  });
+
   it('nests combined marks deterministically', () => {
     expect(
       serializeDocumentToMarkdown({ blocks: [paragraph('x', ['italic', 'bold'])] }),
@@ -264,6 +309,9 @@ describe('serializeDocumentToMarkdown', () => {
       '\\# head',
       'multi\nline',
       'p1\n\np2',
+      'p1\n\n\n\np2',
+      'p1\n\n\n\n\n\np2',
+      '\n\np1\n\n',
       '---',
       '___',
       '2 * 3',
@@ -327,5 +375,13 @@ describe('documentTextContent', () => {
       }),
     ).toBe('Title\n\nA bold move.');
     expect(documentTextContent({ blocks: [] })).toBe('');
+  });
+
+  it('counts blank lines through the block separators', () => {
+    expect(
+      documentTextContent({
+        blocks: [paragraph('a'), { kind: 'paragraph', spans: [] }, paragraph('b')],
+      }),
+    ).toBe('a\n\n\n\nb');
   });
 });

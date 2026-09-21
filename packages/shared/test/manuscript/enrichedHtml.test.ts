@@ -31,10 +31,18 @@ describe('documentToEnrichedHtml', () => {
     ).toBe('<html><p><b><i>a&amp;&lt;b&gt;</i></b></p></html>');
   });
 
-  it('emits soft breaks as <br>', () => {
+  it('promotes soft lines to paragraphs and never emits <br>', () => {
     expect(documentToEnrichedHtml({ blocks: [paragraph('a\nb')] })).toBe(
-      '<html><p>a<br>b</p></html>',
+      '<html><p>a</p><p>b</p></html>',
     );
+  });
+
+  it('emits empty blocks as empty paragraphs', () => {
+    expect(
+      documentToEnrichedHtml({
+        blocks: [paragraph('a'), { kind: 'paragraph', spans: [] }, paragraph('b')],
+      }),
+    ).toBe('<html><p>a</p><p></p><p>b</p></html>');
   });
 });
 
@@ -54,10 +62,37 @@ describe('enrichedHtmlToDocument', () => {
     ]);
   });
 
-  it('keeps soft breaks and drops empty lines', () => {
+  it('keeps soft breaks after text and reads bare breaks as blank lines', () => {
     const doc = enrichedHtmlToDocument('<html><p>a<br>b</p><br><p>c</p></html>');
 
-    expect(doc.blocks).toEqual([paragraph('a\nb'), paragraph('c')]);
+    expect(doc.blocks).toEqual([
+      paragraph('a\nb'),
+      { kind: 'paragraph', spans: [] },
+      paragraph('c'),
+    ]);
+  });
+
+  it('reads empty paragraphs and stacked bare breaks as blank lines', () => {
+    expect(enrichedHtmlToDocument('<html><p>a</p><p></p><p>b</p></html>').blocks).toEqual([
+      paragraph('a'),
+      { kind: 'paragraph', spans: [] },
+      paragraph('b'),
+    ]);
+    expect(enrichedHtmlToDocument('<html><p>a</p><br><br><p>b</p></html>').blocks).toEqual([
+      paragraph('a'),
+      { kind: 'paragraph', spans: [] },
+      { kind: 'paragraph', spans: [] },
+      paragraph('b'),
+    ]);
+    expect(enrichedHtmlToDocument('<html><p><br></p></html>').blocks).toEqual([
+      { kind: 'paragraph', spans: [] },
+    ]);
+  });
+
+  it('emits nested empty paragraphs exactly once', () => {
+    expect(enrichedHtmlToDocument('<html><div><p></p></div></html>').blocks).toEqual([
+      { kind: 'paragraph', spans: [] },
+    ]);
   });
 
   it('splits blocks on blank-line runs like markdown chunks', () => {
@@ -102,11 +137,28 @@ describe('enrichedHtmlToDocument', () => {
 
   it('round-trips documents through HTML without changing markdown', () => {
     const markdown =
-      'First *line*.\n\nSecond **bold**\nline with __ul__ and ~~s~~.\n\nFish & chips 2 < 3.';
+      'First *line*.\n\nSecond **bold** line with __ul__ and ~~s~~.\n\nFish & chips 2 < 3.';
     const back = enrichedHtmlToDocument(
       documentToEnrichedHtml(parseMarkdownToDocument(markdown)),
     );
 
     expect(serializeDocumentToMarkdown(back)).toBe(markdown);
+  });
+
+  it('round-trips blank lines through HTML byte-identically', () => {
+    const markdown = 'First.\n\n\n\nSecond.\n\n\n\n\n\nThird.';
+    const back = enrichedHtmlToDocument(
+      documentToEnrichedHtml(parseMarkdownToDocument(markdown)),
+    );
+
+    expect(serializeDocumentToMarkdown(back)).toBe(markdown);
+  });
+
+  it('canonicalizes soft breaks to paragraphs through the HTML boundary', () => {
+    const back = enrichedHtmlToDocument(
+      documentToEnrichedHtml(parseMarkdownToDocument('a\nb')),
+    );
+
+    expect(serializeDocumentToMarkdown(back)).toBe('a\n\nb');
   });
 });

@@ -1,6 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, type ViewStyle } from 'react-native';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { manuscriptTextMetrics } from '../../../src/components/features/manuscript/manuscriptTextMetrics';
 import { MarkdownPreview } from '../../../src/components/features/manuscript/MarkdownPreview/MarkdownPreview';
@@ -494,5 +494,23 @@ describe('MarkdownPreview', () => {
     const style = StyleSheet.flatten(paragraph.props.style);
     expect(style.fontSize).toBe(manuscriptTextMetrics.fontSize);
     expect(style.lineHeight).toBe(manuscriptTextMetrics.lineHeight);
+  });
+
+  it('renders blank lines as full beats without text nodes', async () => {
+    const view = await render(
+      <MarkdownPreview text={'Above.\n\n\n\nBelow.'} testID="preview" />,
+    );
+
+    const root = view.getByTestId('preview');
+    expect(root.children).toHaveLength(3);
+    const blank = root.children[1] as unknown as {
+      props: { style: ViewStyle };
+      children: unknown[];
+    };
+    const style = StyleSheet.flatten(blank.props.style);
+    expect(style.height).toBe(manuscriptTextMetrics.lineHeight);
+    expect(blank.children).toHaveLength(0);
+    expect(view.getByText('Above.')).toBeTruthy();
+    expect(view.getByText('Below.')).toBeTruthy();
   });
 });

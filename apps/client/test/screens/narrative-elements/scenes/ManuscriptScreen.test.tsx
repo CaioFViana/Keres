@@ -291,6 +291,12 @@ describe('ManuscriptScreen', () => {
     expect(mockUseScreenTour).toHaveBeenCalledWith('Manuscript');
   });
 
+  it('exposes two header actions for the compact overflow', async () => {
+    await render(<ManuscriptScreen />);
+
+    expect(mockHeaderActions?.map((action) => action.id)).toEqual(['pure-read', 'export']);
+  });
+
   it('navigates to the scene from its title and to the editor from its pencil', async () => {
     const view = await render(<ManuscriptScreen />);
 

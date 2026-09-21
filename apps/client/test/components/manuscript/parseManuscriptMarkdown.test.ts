@@ -1,4 +1,5 @@
 import {
+  countManuscriptDisplayChars,
   getManuscriptSizeStatus,
   parseManuscriptMarkdown,
   stripManuscriptMarkers,
@@ -177,12 +178,23 @@ describe('stripManuscriptMarkers', () => {
 describe('getManuscriptSizeStatus', () => {
   it.each([
     [0, 'ok'],
-    [20000, 'ok'],
-    [20001, 'large'],
-    [26999, 'large'],
-    [27000, 'tooLarge'],
-    [30000, 'tooLarge'],
-  ] as const)('maps %i visible chars to %s', (chars, expected) => {
+    [19999, 'ok'],
+    [20000, 'large'],
+    [30000, 'large'],
+  ] as const)('maps %i storage chars to %s', (chars, expected) => {
     expect(getManuscriptSizeStatus(chars)).toBe(expected);
+  });
+});
+
+describe('countManuscriptDisplayChars', () => {
+  it.each([
+    ['', 0],
+    ['hello', 5],
+    ['hello world', 11],
+    ['Title\nA bold move.', 18],
+    ['Title\n\nA bold move.', 18],
+    ['a\n\n\n\nb', 4],
+  ])('counts %p as %i', (text, expected) => {
+    expect(countManuscriptDisplayChars(text)).toBe(expected);
   });
 });

@@ -9,9 +9,8 @@ import type { ManuscriptSizeStatus } from '../parseManuscriptMarkdown';
 export type SceneBodyFooterProps = {
   wordCount: number;
   charCount: number;
-  /** User-visible size band (20k nudge, 27k too large); advisory, never blocks. */
+  /** Storage-scale length warning (20k); advisory, never blocks. */
   sizeStatus: ManuscriptSizeStatus;
-  maxLength: number;
   overLimit: boolean;
   canSave: boolean;
   saving: boolean;
@@ -26,7 +25,6 @@ export function SceneBodyFooter({
   wordCount,
   charCount,
   sizeStatus,
-  maxLength,
   overLimit,
   canSave,
   saving,
@@ -55,12 +53,10 @@ export function SceneBodyFooter({
       }),
     [colors],
   );
-  // One hint at most: the blocking storage cap wins over the advisory size bands.
+  // One hint at most: the over-cap legacy state wins over the advisory warning.
   let sizeHint: ReactNode = null;
   if (overLimit) {
     sizeHint = <Text style={styles.hint}>{t('manuscript_split_hint')}</Text>;
-  } else if (sizeStatus === 'tooLarge') {
-    sizeHint = <Text style={styles.hint}>{t('manuscript_size_too_large')}</Text>;
   } else if (sizeStatus === 'large') {
     sizeHint = <Text style={styles.warningHint}>{t('manuscript_size_large')}</Text>;
   }
@@ -73,7 +69,7 @@ export function SceneBodyFooter({
           <Text style={styles.draftFlag}>{t('manuscript_unsaved_draft')}</Text>
         )}
         <Text style={[styles.counter, overLimit && styles.counterOver]}>
-          {t('manuscript_counter', { words: wordCount, chars: charCount, max: maxLength })}
+          {t('manuscript_counter', { words: wordCount, chars: charCount })}
         </Text>
         <Button onPress={onSave} disabled={!canSave} testID={testID ? `${testID}.save` : undefined}>
           {t('save')}

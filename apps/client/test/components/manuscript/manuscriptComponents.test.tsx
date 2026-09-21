@@ -42,7 +42,6 @@ function footerProps(
     wordCount: 2,
     charCount: 11,
     sizeStatus: 'ok',
-    maxLength: 30000,
     overLimit: false,
     canSave: true,
     saving: false,
@@ -418,23 +417,17 @@ describe('SceneBodyFooter', () => {
     expect(view.getByText('manuscript_split_hint')).toBeTruthy();
   });
 
-  it('nudges a split on large scenes and warns when too large', async () => {
+  it('warns on large scenes without any size band above it', async () => {
     const large = await render(<SceneBodyFooter {...footerProps({ sizeStatus: 'large' })} />);
     expect(large.getByText('manuscript_size_large')).toBeTruthy();
-    expect(large.queryByText('manuscript_size_too_large')).toBeNull();
-
-    const tooLarge = await render(<SceneBodyFooter {...footerProps({ sizeStatus: 'tooLarge' })} />);
-    expect(tooLarge.getByText('manuscript_size_too_large')).toBeTruthy();
-    expect(tooLarge.queryByText('manuscript_size_large')).toBeNull();
   });
 
-  it('prefers the blocking cap hint over the advisory size bands', async () => {
+  it('prefers the over-cap hint over the advisory warning', async () => {
     const view = await render(
-      <SceneBodyFooter {...footerProps({ overLimit: true, sizeStatus: 'tooLarge' })} />,
+      <SceneBodyFooter {...footerProps({ overLimit: true, sizeStatus: 'large' })} />,
     );
 
     expect(view.getByText('manuscript_split_hint')).toBeTruthy();
-    expect(view.queryByText('manuscript_size_too_large')).toBeNull();
     expect(view.queryByText('manuscript_size_large')).toBeNull();
   });
 

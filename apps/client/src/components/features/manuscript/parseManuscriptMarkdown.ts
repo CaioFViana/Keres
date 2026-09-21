@@ -100,19 +100,29 @@ export function stripManuscriptMarkers(markdown: string): string {
 }
 
 /**
- * User-facing size bands, measured on the marker-stripped text. Storage still
- * caps at 30k source chars (server-validated); 27k leaves 3k of headroom so the
- * markers themselves always fit, and 20k is the early "consider splitting" nudge.
+ * User-facing character count: visible characters with every line break —
+ * soft breaks and blank-line paragraph separators alike — counting once, the
+ * way Word counts paragraph marks. Markup never reaches this number: bold,
+ * italic and friends count toward the storage budget instead.
+ */
+export function countManuscriptDisplayChars(text: string): number {
+  return text.replace(/\n\n/g, '\n').length;
+}
+
+/**
+ * The scene-length warning, measured on serialized storage chars (what the
+ * backend persists, markers/escapes/breaks included) — never on the displayed
+ * count, which markup would understate. At 20k the footer warns the scene is
+ * getting long; typing itself blocks at the 30k storage cap. No number is ever
+ * shown to the user. Boundary-exact.
  */
 export const MANUSCRIPT_LARGE_SCENE_CHARS = 20000;
-export const MANUSCRIPT_TOO_LARGE_SCENE_CHARS = 27000;
 
-export type ManuscriptSizeStatus = 'ok' | 'large' | 'tooLarge';
+export type ManuscriptSizeStatus = 'ok' | 'large';
 
-/** Above 20k suggests a split; reaching 27k is too large. Boundary-exact. */
-export function getManuscriptSizeStatus(visibleCharCount: number): ManuscriptSizeStatus {
-  if (visibleCharCount >= MANUSCRIPT_TOO_LARGE_SCENE_CHARS) return 'tooLarge';
-  if (visibleCharCount > MANUSCRIPT_LARGE_SCENE_CHARS) return 'large';
+/** At 20k storage chars the scene counts as long. Boundary-exact. */
+export function getManuscriptSizeStatus(storageCharCount: number): ManuscriptSizeStatus {
+  if (storageCharCount >= MANUSCRIPT_LARGE_SCENE_CHARS) return 'large';
   return 'ok';
 }
 

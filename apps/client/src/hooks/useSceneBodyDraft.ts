@@ -11,6 +11,7 @@ import {
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  countManuscriptDisplayChars,
   getManuscriptSizeStatus,
   type ManuscriptSizeStatus,
 } from '../components/features/manuscript/parseManuscriptMarkdown';
@@ -44,8 +45,14 @@ type UseSceneBodyDraftOptions = {
  *
  * The native editor owns live content and styling (uncontrolled); this hook
  * mirrors it as a document through the HTML boundary. Drafts, persistence and
- * comments keep flowing serialized markdown, so the storage format, the 30k
- * cap and every downstream consumer (sync, export, search) are untouched.
+ * comments keep flowing serialized markdown, so the storage format and every
+ * downstream consumer (sync, export, search) are untouched.
+ *
+ * Counting runs on two tracks: the footer shows plain words and visible
+ * characters (markup is metadata, never characters), while the 20k length
+ * warning and the hard 30k typing cap measure serialized storage — what the
+ * backend actually persists. No number is ever shown for either threshold.
+ *
  * After a successful save the stored row is removed with the non-terminal
  * clear so stay-mounted hosts keep drafting on the next keystroke; navigating
  * away afterwards flushes nothing because the serialized body already matches
@@ -84,17 +91,29 @@ export function useSceneBodyDraft({
   // changes); deriving it from the live doc (not just the saved body) folds
   // pre-mount restores and tab-switch remounts into the seed.
   const initialHtml = useMemo(() => documentToEnrichedHtml(doc), [doc]);
+  // Hard-cap bookkeeping: the last accepted native state and its storage
+  // length. Growth past the backend allocation is refused by pushing the
+  // last-good HTML back; restore/reset re-seed both so a stale seed can never
+  // wipe newer content. Initialized from the mount content.
+  const lastGoodHtmlRef = useRef(initialHtml);
+  const prevStorageLengthRef = useRef(savedCanonicalBody.length);
   const { chars: charCount, words: wordCount } = useMemo(() => {
     const text = documentTextContent(doc);
     const trimmed = text.trim();
-    return { chars: text.length, words: trimmed === '' ? 0 : trimmed.split(/\s+/).length };
+    return {
+      chars: countManuscriptDisplayChars(text),
+      words: trimmed === '' ? 0 : trimmed.split(/\s+/).length,
+    };
   }, [doc]);
   const handleRestore = useCallback((fields: SceneBodyFields) => {
     // Hosts mount the editor only after the restore settles, so the seed
     // already carries the restored prose: no imperative push-in, and no race
     // against the host's asynchronous mount-seed application (which used to
     // land after the push and wipe both the visual and the doc on web).
-    setDoc(parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : ''));
+    const next = parseMarkdownToDocument(typeof fields.body === 'string' ? fields.body : '');
+    setDoc(next);
+    lastGoodHtmlRef.current = documentToEnrichedHtml(next);
+    prevStorageLengthRef.current = serializeDocumentToMarkdown(next).length;
   }, []);
   const { clearFormDraft, deleteStoredDraft, draftRestored, restoreSettled } =
     useDurableFormDraft<SceneBodyFields>(
@@ -112,12 +131,24 @@ export function useSceneBodyDraft({
   );
 
   const isDirty = serializedBody !== savedCanonicalBody;
-  // Counts run on markup-free content, but the storage cap the server enforces
-  // is measured on the serialized source — hence the 27k/3k split.
+  // Reachable only through over-cap legacy content (old drafts typed before
+  // the input cap existed): live typing can never grow past the allocation.
   const overLimit = serializedBody.length > MAX_SCENE_BODY_LENGTH;
 
   const onHtmlChange = useCallback((html: string) => {
-    setDoc(enrichedHtmlToDocument(html));
+    const next = enrichedHtmlToDocument(html);
+    const nextStorageLength = serializeDocumentToMarkdown(next).length;
+    if (nextStorageLength > MAX_SCENE_BODY_LENGTH && nextStorageLength > prevStorageLengthRef.current) {
+      // Hard storage cap: refuse growth past what the backend persists by
+      // pushing the last accepted state back into the uncontrolled input, so
+      // the keystroke (or paste) visibly has no effect. Shrinkage is always
+      // accepted, so over-cap legacy content can still be fixed by deleting.
+      editorRef.current?.setValue(lastGoodHtmlRef.current);
+      return;
+    }
+    prevStorageLengthRef.current = nextStorageLength;
+    lastGoodHtmlRef.current = html;
+    setDoc(next);
   }, []);
   const onMarksChange = useCallback((marks: ManuscriptMark[]) => {
     setActiveMarks(marks);
@@ -164,7 +195,10 @@ export function useSceneBodyDraft({
     setActiveMarks([]);
     setDraftResolved(true);
     await deleteStoredDraft();
-    editorRef.current?.setValue(documentToEnrichedHtml(next));
+    const resetHtml = documentToEnrichedHtml(next);
+    lastGoodHtmlRef.current = resetHtml;
+    prevStorageLengthRef.current = serializeDocumentToMarkdown(next).length;
+    editorRef.current?.setValue(resetHtml);
   }, [savedBody, deleteStoredDraft]);
 
   return {
@@ -177,8 +211,7 @@ export function useSceneBodyDraft({
     serializedBody,
     wordCount,
     charCount,
-    sizeStatus: getManuscriptSizeStatus(charCount),
-    maxLength: MAX_SCENE_BODY_LENGTH,
+    sizeStatus: getManuscriptSizeStatus(serializedBody.length),
     isDirty,
     overLimit,
     canSave: isDirty && !overLimit && !saving,

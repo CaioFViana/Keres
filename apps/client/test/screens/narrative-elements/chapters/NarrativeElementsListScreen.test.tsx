@@ -860,15 +860,15 @@ describe('NarrativeElementsListScreen', () => {
       actions[1].onPress();
     });
     expect(mockNavigate).toHaveBeenCalledWith('StoryTimeline');
+    expect(actions[3].label).toBe('manuscript_title');
     await act(async () => {
       actions[3].onPress();
     });
-    expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
-    expect(actions[4].label).toBe('manuscript_title');
+    expect(mockNavigate).toHaveBeenCalledWith('Manuscript', {});
     await act(async () => {
       actions[4].onPress();
     });
-    expect(mockNavigate).toHaveBeenCalledWith('Manuscript', {});
+    expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
   });
 
   it('labels the map action and hides the timeline for branching stories', async () => {
@@ -897,8 +897,8 @@ describe('NarrativeElementsListScreen', () => {
       true,
       true,
       false,
-      false,
       true,
+      false,
     ]);
   });
 
@@ -910,8 +910,8 @@ describe('NarrativeElementsListScreen', () => {
       false,
       false,
       true,
-      true,
       false,
+      true,
     ]);
   });
 

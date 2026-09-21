@@ -486,18 +486,18 @@ const NarrativeElementsListScreen = () => {
         visible: !!canEdit,
       },
       {
-        id: 'action-3',
-        icon: 'add',
-        label: t('add'),
-        onPress: () => navigation.navigate('ChapterForm', { chapterId: undefined }),
-        visible: !!canEdit,
-      },
-      {
         id: 'open-manuscript',
         icon: 'book-outline',
         label: t('manuscript_title'),
         onPress: () => navigation.navigate('Manuscript', {}),
         visible: !!selectedStory,
+      },
+      {
+        id: 'action-3',
+        icon: 'add',
+        label: t('add'),
+        onPress: () => navigation.navigate('ChapterForm', { chapterId: undefined }),
+        visible: !!canEdit,
       },
     ],
   });

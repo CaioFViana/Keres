@@ -240,17 +240,49 @@ describe('useSceneBodyDraft', () => {
     jest.useRealTimers();
   });
 
-  it('refuses to save past the shared length cap', async () => {
-    const persist = jest.fn(async () => {});
-    const view = await renderHook(() => useHarness({ savedBody: '', persist }));
+  it('refuses typing past the storage cap, pushing back the last accepted state', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: '' }));
+    const instance = fakeInstance();
+    view.result.current.editorRef.current = instance as unknown as EnrichedTextInputInstance;
+
+    const atCap = html(`<p>${'x'.repeat(MAX_SCENE_BODY_LENGTH)}</p>`);
+    await act(async () => {
+      view.result.current.onHtmlChange(atCap);
+    });
+    expect(view.result.current.serializedBody).toBe('x'.repeat(MAX_SCENE_BODY_LENGTH));
+    expect(view.result.current.overLimit).toBe(false);
+    expect(view.result.current.canSave).toBe(true);
 
     await act(async () => {
       view.result.current.onHtmlChange(html(`<p>${'x'.repeat(MAX_SCENE_BODY_LENGTH + 1)}</p>`));
     });
+    expect(view.result.current.serializedBody).toBe('x'.repeat(MAX_SCENE_BODY_LENGTH));
+    expect(view.result.current.overLimit).toBe(false);
+    expect(instance.setValue).toHaveBeenCalledWith(atCap);
+  });
+
+  it('accepts deletions from over-cap legacy content but refuses further growth', async () => {
+    const view = await renderHook(() =>
+      useHarness({ savedBody: 'x'.repeat(MAX_SCENE_BODY_LENGTH + 5) }),
+    );
+    const instance = fakeInstance();
+    view.result.current.editorRef.current = instance as unknown as EnrichedTextInputInstance;
 
     expect(view.result.current.overLimit).toBe(true);
     expect(view.result.current.canSave).toBe(false);
-    expect(view.result.current.maxLength).toBe(MAX_SCENE_BODY_LENGTH);
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html(`<p>${'x'.repeat(MAX_SCENE_BODY_LENGTH + 6)}</p>`));
+    });
+    expect(view.result.current.serializedBody).toBe('x'.repeat(MAX_SCENE_BODY_LENGTH + 5));
+    expect(instance.setValue).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html(`<p>${'x'.repeat(MAX_SCENE_BODY_LENGTH)}</p>`));
+    });
+    expect(view.result.current.serializedBody).toBe('x'.repeat(MAX_SCENE_BODY_LENGTH));
+    expect(view.result.current.overLimit).toBe(false);
+    expect(view.result.current.canSave).toBe(true);
   });
 
   it('loads stored markdown as content with zero markup in the counts', async () => {
@@ -261,7 +293,8 @@ describe('useSceneBodyDraft', () => {
     expect(view.result.current.initialHtml).toBe(
       html('<p>Title</p><p>A <b>bold</b> move.</p>'),
     );
-    expect(view.result.current.charCount).toBe('Title\n\nA bold move.'.length);
+    // The paragraph break counts once, the way Word counts paragraph marks.
+    expect(view.result.current.charCount).toBe('Title\nA bold move.'.length);
     expect(view.result.current.wordCount).toBe(4);
     expect(view.result.current.sizeStatus).toBe('ok');
     // Legacy `# ` prefixes degrade to plain paragraphs, content preserved.
@@ -280,33 +313,44 @@ describe('useSceneBodyDraft', () => {
     expect(view.result.current.serializedBody).toBe('a\\*b\\*c');
   });
 
-  it('reports the size band on content chars, ignoring stored markers', async () => {
+  it('reports the size band on storage chars, warning early on markup-heavy prose', async () => {
     const view = await renderHook(() => useHarness({ savedBody: '' }));
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html(`<p>${'x'.repeat(19999)}</p>`));
+    });
+    expect(view.result.current.charCount).toBe(19999);
+    expect(view.result.current.sizeStatus).toBe('ok');
 
     await act(async () => {
       view.result.current.onHtmlChange(html(`<p>${'x'.repeat(20000)}</p>`));
     });
-    expect(view.result.current.sizeStatus).toBe('ok');
-
-    await act(async () => {
-      view.result.current.onHtmlChange(html(`<p><b>${'x'.repeat(20000)}</b></p>`));
-    });
-    expect(view.result.current.charCount).toBe(20000);
-    expect(view.result.current.sizeStatus).toBe('ok');
-    expect(view.result.current.serializedBody).toBe(`**${'x'.repeat(20000)}**`);
-
-    await act(async () => {
-      view.result.current.onHtmlChange(html(`<p>${'x'.repeat(20001)}</p>`));
-    });
     expect(view.result.current.sizeStatus).toBe('large');
 
-    // Advisory only: 27k warns but still saves, the storage cap is what blocks.
+    // Markup counts toward storage but never toward the displayed count: the
+    // warning fires while the reader-visible text is still short.
+    await act(async () => {
+      view.result.current.onHtmlChange(html(`<p><b>${'x'.repeat(19997)}</b></p>`));
+    });
+    expect(view.result.current.charCount).toBe(19997);
+    expect(view.result.current.serializedBody).toBe(`**${'x'.repeat(19997)}**`);
+    expect(view.result.current.sizeStatus).toBe('large');
+
+    // Advisory only: everything under the storage cap still saves.
     await act(async () => {
       view.result.current.onHtmlChange(html(`<p>${'x'.repeat(27000)}</p>`));
     });
-    expect(view.result.current.sizeStatus).toBe('tooLarge');
+    expect(view.result.current.sizeStatus).toBe('large');
     expect(view.result.current.overLimit).toBe(false);
     expect(view.result.current.canSave).toBe(true);
+  });
+
+  it('warns on storage while the displayed count stays small', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: '**a**b'.repeat(3500) }));
+
+    expect(view.result.current.charCount).toBe(7000);
+    expect(view.result.current.serializedBody.length).toBe(21000);
+    expect(view.result.current.sizeStatus).toBe('large');
   });
 
   it('still enforces the storage cap on the serialized source', async () => {
@@ -317,7 +361,7 @@ describe('useSceneBodyDraft', () => {
     );
 
     expect(view.result.current.charCount).toBe(12000);
-    expect(view.result.current.sizeStatus).toBe('ok');
+    expect(view.result.current.sizeStatus).toBe('large');
     expect(view.result.current.overLimit).toBe(true);
     expect(view.result.current.canSave).toBe(false);
     expect(view.result.current.isDirty).toBe(false);

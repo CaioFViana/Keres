@@ -35,14 +35,17 @@ markdown (negrito/itálico) fica bem abaixo de 10% em prosa normal.
 
 - Fonte única: `body: z.string().max(30000).nullable()` no schema
   compartilhado (`SceneSchemas.ts`) — protege cliente, servidor e sync.
-- UI deve mostrar contador (X / 30k); quem bater no teto recebe a sugestão
-  de dividir a cena (bom conselho de escrita + combina com o modelo do app).
+- UI mostra contador de palavras e caracteres visíveis, sem nenhum número de
+  limite; quem estourar o teto (só possível via conteúdo legado) recebe a
+  sugestão de dividir a cena (bom conselho de escrita + combina com o modelo
+  do app).
 - O contador mostra caracteres/palavras **sem os marcadores markdown**
-  (`**`, `*`, `__`, `~~`, `#`, separadores `---`/`***`); o teto de 30k
-  continua medido no fonte armazenado (é o que o servidor valida).
-- Faixas sobre a contagem visível: acima de 20k sugere dividir a cena;
-  a partir de 27k avisa "cena grande demais" (os 3k restantes são folga
-  para os marcadores caberem nos 30k).
+  (`**`, `*`, `__`, `~~`, `#`, separadores `---`/`***`), com cada quebra de
+  linha valendo um caractere (estilo Word); o teto de 30k continua medido no
+  fonte armazenado (é o que o servidor valida).
+- Aviso aos 20k de armazenamento ("cena ficando longa"); a digitação bloqueia
+  de verdade ao bater nos 30k, recusando crescimento (apagar continua sempre
+  permitido).
 
 ### 1.3 Formato: markdown no armazenamento, rico na escrita
 

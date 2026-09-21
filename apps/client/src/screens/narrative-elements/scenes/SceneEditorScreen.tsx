@@ -1,15 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import Button from '../../../components/common/controls/Button/Button';
+import type { HeaderAction } from '../../../components/common/navigation/HeaderActions/HeaderActions';
 import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
 import type { ManuscriptMark } from '@keres/shared';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
@@ -46,87 +46,13 @@ type EditorMode = 'write' | 'read' | 'review';
 
 const MODES: {
   mode: EditorMode;
-  icon: keyof typeof Ionicons.glyphMap;
-  activeIcon: keyof typeof Ionicons.glyphMap;
+  icon: HeaderAction['icon'];
+  activeIcon: HeaderAction['icon'];
 }[] = [
   { mode: 'write', icon: 'pencil-outline', activeIcon: 'pencil' },
   { mode: 'read', icon: 'book-outline', activeIcon: 'book' },
   { mode: 'review', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
 ];
-
-/**
- * Manuscript sibling of the entity-form header reset: a confirm dialog that drops the prose
- * draft and re-hydrates the saved body. Always the edit copy — the scene row exists already.
- */
-function ResetBodyButton({ disabled, onReset }: { disabled: boolean; onReset(): void }) {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-  const confirmReset = useCallback(() => {
-    AppAlert.alert(t('form_reset_title'), t('form_reset_edit_message'), [
-      { text: t('cancel'), style: 'cancel' },
-      { text: t('reset'), style: 'destructive', onPress: () => void onReset() },
-    ]);
-  }, [onReset, t]);
-  return (
-    <TouchableOpacity
-      testID="editor-reset-body"
-      accessibilityRole="button"
-      accessibilityLabel={t('reset')}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={confirmReset}
-    >
-      <Ionicons
-        name="arrow-undo-outline"
-        size={24}
-        color={disabled ? colors.textSecondary : colors.text}
-      />
-    </TouchableOpacity>
-  );
-}
-
-/**
- * Header cluster following the header-actions standard: icon buttons, primary when active.
- * The mode switch and the draft reset live together so the header stays one component.
- */
-function EditorHeaderActions({
-  mode,
-  onChange,
-  resetDisabled,
-  onReset,
-}: {
-  mode: EditorMode;
-  onChange(mode: EditorMode): void;
-  resetDisabled: boolean;
-  onReset(): void;
-}) {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}>
-      {MODES.map((candidate) => {
-        const active = candidate.mode === mode;
-        return (
-          <TouchableOpacity
-            key={candidate.mode}
-            testID={`editor-mode-${candidate.mode}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            accessibilityLabel={t(`manuscript_mode_${candidate.mode}`)}
-            onPress={() => onChange(candidate.mode)}
-          >
-            <Ionicons
-              name={active ? candidate.activeIcon : candidate.icon}
-              size={24}
-              color={active ? colors.primary : colors.text}
-            />
-          </TouchableOpacity>
-        );
-      })}
-      <ResetBodyButton disabled={resetDisabled} onReset={onReset} />
-    </View>
-  );
-}
 
 function SceneEditorContent({
   scene,
@@ -162,7 +88,6 @@ function SceneEditorContent({
     wordCount,
     charCount,
     sizeStatus,
-    maxLength,
     isDirty,
     overLimit,
     canSave,
@@ -202,18 +127,38 @@ function SceneEditorContent({
     scrollRef.current?.scrollTo({ y: offsetRef.current, animated: false });
   }, [mode]);
 
-  const renderHeaderActions = useCallback(
-    () => (
-      <EditorHeaderActions
-        mode={mode}
-        onChange={setMode}
-        resetDisabled={!isDirty || saving}
-        onReset={() => void resetBody()}
-      />
-    ),
-    [mode, isDirty, saving, resetBody],
-  );
-  useScreenHeader({ target: 'parent', title: scene.name, renderActions: renderHeaderActions });
+  // Manuscript sibling of the entity-form header reset: a confirm dialog that drops the
+  // prose draft and re-hydrates the saved body. Always the edit copy — the scene row exists.
+  const confirmResetBody = useCallback(() => {
+    AppAlert.alert(t('form_reset_title'), t('form_reset_edit_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('reset'), style: 'destructive', onPress: () => void resetBody() },
+    ]);
+  }, [resetBody, t]);
+
+  useScreenHeader({
+    target: 'parent',
+    title: scene.name,
+    actions: [
+      ...MODES.map((candidate) => {
+        const active = candidate.mode === mode;
+        return {
+          id: `mode-${candidate.mode}`,
+          icon: active ? candidate.activeIcon : candidate.icon,
+          label: t(`manuscript_mode_${candidate.mode}`),
+          active,
+          onPress: () => setMode(candidate.mode),
+        };
+      }),
+      {
+        id: 'reset-body',
+        icon: 'arrow-undo-outline',
+        label: t('reset'),
+        disabled: !isDirty || saving,
+        onPress: confirmResetBody,
+      },
+    ],
+  });
 
   const handleAddComment = useCallback(
     (input: { commentText: string; excerptText: string | null; criticality: number }) =>
@@ -306,7 +251,6 @@ function SceneEditorContent({
           wordCount={wordCount}
           charCount={charCount}
           sizeStatus={sizeStatus}
-          maxLength={maxLength}
           overLimit={overLimit}
           canSave={canSave && canEdit}
           saving={saving}

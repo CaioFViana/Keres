@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
+import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import SceneEditorScreen from '../../../../src/screens/narrative-elements/scenes/SceneEditorScreen';
 import type { SceneSelect } from '../../../../src/db/schema';
 
@@ -19,7 +19,7 @@ const mockAlert = jest.fn();
 const mockEditorFocus = jest.fn();
 const mockEditorRef = { current: { focus: mockEditorFocus } };
 
-let mockHeaderArgs: { title: string; renderActions?: () => React.ReactNode } | null = null;
+let mockHeaderArgs: { title: string; actions?: readonly HeaderAction[] } | null = null;
 let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
 let mockCanEdit = true;
 let mockCommentsByField: Record<string, { id: string }[]> = {};
@@ -49,10 +49,7 @@ jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
 
 jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
-  useScreenHeader: (args: {
-    title: string;
-    renderActions?: () => React.ReactNode;
-  }) => {
+  useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderArgs = args;
   },
 }));
@@ -125,7 +122,6 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
       wordCount: 2,
       charCount: surfaceText.length,
       sizeStatus: 'ok',
-      maxLength: 30000,
       isDirty: mockBodyDirty,
       overLimit: false,
       canSave: mockBodyDirty,
@@ -296,6 +292,18 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+function headerAction(id: string): HeaderAction {
+  const action = mockHeaderArgs?.actions?.find((candidate) => candidate.id === id);
+  expect(action).toBeTruthy();
+  return action as HeaderAction;
+}
+
+async function pressHeaderAction(id: string) {
+  await act(async () => {
+    headerAction(id).onPress();
+  });
+}
+
 describe('SceneEditorScreen', () => {
   it('loads the scene and starts in write mode with the saved body', async () => {
     const view = await render(<SceneEditorScreen />);
@@ -348,13 +356,15 @@ describe('SceneEditorScreen', () => {
     const view = await render(<SceneEditorScreen />);
     await view.findByTestId('scene-body-editor.input');
 
-    const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
-    await fireEvent.press(header.getByTestId('editor-mode-read'));
+    expect(headerAction('mode-write')).toMatchObject({ icon: 'pencil', active: true });
+    expect(headerAction('mode-read')).toMatchObject({ icon: 'book-outline', active: false });
+    await pressHeaderAction('mode-read');
 
     await waitFor(() => expect(view.queryByText('Saved prose.')).toBeTruthy());
     expect(view.queryByTestId('scene-body-editor.input')).toBeNull();
+    expect(headerAction('mode-read')).toMatchObject({ icon: 'book', active: true });
 
-    await fireEvent.press(header.getByTestId('editor-mode-write'));
+    await pressHeaderAction('mode-write');
     const input = await view.findByTestId('scene-body-editor.input');
     expect(input.props.defaultValue).toBe('<html><p>Saved prose.</p></html>');
   });
@@ -363,11 +373,11 @@ describe('SceneEditorScreen', () => {
     const view = await render(<SceneEditorScreen />);
     await view.findByTestId('scene-body-editor.input');
 
-    const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
-    const reset = header.getByTestId('editor-reset-body');
-
-    expect(reset.props.accessibilityState).toMatchObject({ disabled: true });
-    await fireEvent.press(reset);
+    expect(headerAction('reset-body')).toMatchObject({
+      icon: 'arrow-undo-outline',
+      label: 'reset',
+      disabled: true,
+    });
     expect(mockAlert).not.toHaveBeenCalled();
     expect(mockResetBody).not.toHaveBeenCalled();
   });
@@ -377,11 +387,9 @@ describe('SceneEditorScreen', () => {
     const view = await render(<SceneEditorScreen />);
     await view.findByTestId('scene-body-editor.input');
 
-    const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
-    const reset = header.getByTestId('editor-reset-body');
-    expect(reset.props.accessibilityState).toMatchObject({ disabled: false });
+    expect(headerAction('reset-body')).toMatchObject({ disabled: false });
 
-    await fireEvent.press(reset);
+    await pressHeaderAction('reset-body');
     expect(mockAlert).toHaveBeenCalledTimes(1);
     const [title, message, buttons] = mockAlert.mock.calls[0] as [
       string,
@@ -438,14 +446,9 @@ describe('SceneEditorScreen', () => {
     const view = await render(<SceneEditorScreen />);
     await view.findByTestId('scene-body-editor.input');
 
-    // The pills themselves are covered by the toggle test; here the mode switches through
-    // the captured header action so a single tree stays mounted.
-    const toggle = mockHeaderArgs?.renderActions?.() as React.ReactElement<{
-      onChange(mode: string): void;
-    }>;
-    await act(async () => {
-      toggle.props.onChange('review');
-    });
+    // The modes themselves are covered by the toggle test; here the mode switches
+    // through the captured header action.
+    await pressHeaderAction('mode-review');
 
     await fireEvent.press(await view.findByText('manuscript_comments_button'));
     expect((await view.findByTestId('comments-modal')).props.children).toBe('comments:1');

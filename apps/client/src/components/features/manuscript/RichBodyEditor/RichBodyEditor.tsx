@@ -15,6 +15,13 @@ export type RichBodyEditorProps = {
   onHtmlChange(html: string): void;
   onMarksChange(marks: ManuscriptMark[]): void;
   editable?: boolean;
+  /**
+   * Whether the user may edit at all (story role). The web remount key tracks
+   * this — not `editable`: transient disables (saving) must not remount, or
+   * overlapping remounts race the host's async seed application and the loser
+   * (an empty transient emit) wipes the doc. Defaults to `editable`.
+   */
+  canEdit?: boolean;
   autoFocus?: boolean;
   testID?: string;
   /** Lets the host drive formatting imperatively (toolbar toggles, refocus). */
@@ -76,13 +83,14 @@ function ManuscriptEditorWebChrome() {
  */
 export function RichBodyEditor(props: RichBodyEditorProps) {
   // Web-only: the TipTap host snapshots `editable` at creation and never
-  // syncs it afterwards, while our `editable` starts false and resolves async
-  // with the story role (and flips around saves) — remount the input when it
-  // changes so read-only never sticks. The remount reseeds from the live doc
-  // prop, so no typed content is lost. Native applies `editable` live.
+  // syncs it afterwards, while permission starts false and resolves async
+  // with the story role — remount the input when it changes so read-only
+  // never sticks. The remount reseeds from the live doc prop, so no typed
+  // content is lost. Native applies `editable` live.
   const editable = props.editable ?? true;
-  const inputKey = Platform.OS === 'web' ? `editable-${editable}` : 'input';
-  return <RichBodyEditorInner key={inputKey} {...props} />;
+  const canEdit = props.canEdit ?? editable;
+  const inputKey = Platform.OS === 'web' ? `canedit-${canEdit}` : 'input';
+  return <RichBodyEditorInner key={inputKey} {...props} canEdit={canEdit} editable={editable} />;
 }
 
 function RichBodyEditorInner({
@@ -90,6 +98,7 @@ function RichBodyEditorInner({
   onHtmlChange,
   onMarksChange,
   editable = true,
+  canEdit = true,
   autoFocus = false,
   testID,
   inputRef,
@@ -137,8 +146,17 @@ function RichBodyEditorInner({
       }),
     [colors],
   );
+  // Permitted-but-disabled (saving) locks pointer input without remounting:
+  // the remount key above ignores transient disables, so the container takes
+  // over the lock the `editable` flip used to imply on web.
+  const pointerEvents = canEdit && !editable ? 'none' : 'auto';
   return (
-    <View style={styles.container} testID={testID} id={WEB_CSS_SCOPE_ID}>
+    <View
+      style={styles.container}
+      testID={testID}
+      id={WEB_CSS_SCOPE_ID}
+      pointerEvents={pointerEvents}
+    >
       <ManuscriptEditorWebChrome />
       <EnrichedTextInput
         ref={inputRef}

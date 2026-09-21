@@ -228,6 +228,7 @@ function SceneEditorContent({
               onHtmlChange={onHtmlChange}
               onMarksChange={onMarksChange}
               editable={canEdit && !saving}
+              canEdit={canEdit}
               inputRef={editorRef}
             />
           ) : (

@@ -168,13 +168,18 @@ describe('RichBodyEditor', () => {
     expect(view.getByTestId('editor.input').props.defaultValue).toBe(HTML);
   });
 
-  it('remounts on web when editable flips so read-only never sticks', async () => {
+  it('remounts on web when permission flips so read-only never sticks', async () => {
     const originalOS = Platform.OS;
     Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
     try {
       const onHtmlChange = jest.fn();
       const onMarksChange = jest.fn();
-      const view = await renderEditor({ editable: false, onHtmlChange, onMarksChange });
+      const view = await renderEditor({
+        editable: false,
+        canEdit: false,
+        onHtmlChange,
+        onMarksChange,
+      });
 
       const reseeded = '<html><p>typed while the role resolved</p></html>';
       await view.rerender(
@@ -183,6 +188,7 @@ describe('RichBodyEditor', () => {
           onHtmlChange={onHtmlChange}
           onMarksChange={onMarksChange}
           editable
+          canEdit
           testID="editor"
         />,
       );
@@ -192,6 +198,68 @@ describe('RichBodyEditor', () => {
       expect(view.getByTestId('editor.input').props.defaultValue).toBe(reseeded);
     } finally {
       Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    }
+  });
+
+  it('does not remount on web for transient editable flips while saving', async () => {
+    const originalOS = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+    try {
+      const onHtmlChange = jest.fn();
+      const onMarksChange = jest.fn();
+      const view = await renderEditor({
+        editable: true,
+        canEdit: true,
+        onHtmlChange,
+        onMarksChange,
+      });
+
+      // A save flips editable twice around the same permission: remounting
+      // there overlaps with the host's async seed application, and the loser
+      // (an empty transient emit) wipes the doc.
+      await view.rerender(
+        <RichBodyEditor
+          defaultHtml="<html><p>saving started</p></html>"
+          onHtmlChange={onHtmlChange}
+          onMarksChange={onMarksChange}
+          editable={false}
+          canEdit
+          testID="editor"
+        />,
+      );
+      await view.rerender(
+        <RichBodyEditor
+          defaultHtml="<html><p>saving finished</p></html>"
+          onHtmlChange={onHtmlChange}
+          onMarksChange={onMarksChange}
+          editable
+          canEdit
+          testID="editor"
+        />,
+      );
+
+      expect(view.getByTestId('editor.input').props.defaultValue).toBe(HTML);
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: originalOS, configurable: true });
+    }
+  });
+
+  it('locks pointer input while permitted-but-disabled, nowhere else', async () => {
+    const cases: {
+      name: string;
+      editable?: boolean;
+      canEdit?: boolean;
+      locked: boolean;
+    }[] = [
+      { name: 'editing', editable: true, canEdit: true, locked: false },
+      { name: 'saving', editable: false, canEdit: true, locked: true },
+      { name: 'reader', editable: false, canEdit: false, locked: false },
+      { name: 'defaults', editable: undefined, canEdit: undefined, locked: false },
+    ];
+    for (const { editable, canEdit, locked } of cases) {
+      const view = await renderEditor({ editable, canEdit });
+      expect(view.getByTestId('editor').props.pointerEvents).toBe(locked ? 'none' : 'auto');
+      await view.unmount();
     }
   });
 

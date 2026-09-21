@@ -15,7 +15,7 @@ import { formatStatNumber, OVERSHOOT_RATIO, type StatTier } from './statLadder';
 export interface LadderBarSegment {
   x: number;
   width: number;
-  /** Índice do degrau, para alternar o preenchimento e manter a leitura das faixas. */
+  /** Index of the rung, to alternate the fill and keep the bands readable. */
   index: number;
   label: string;
 }
@@ -36,7 +36,7 @@ export interface LadderBarValue {
 
 export interface StatLadderBarLayout {
   width: number;
-  /** Onde termina a escada; depois disso vem a faixa de transbordo. */
+  /** Where the ladder ends; past that comes the overflow band. */
   ladderWidth: number;
   segments: LadderBarSegment[];
   /** The band beyond the ladder's top, drawn separately so it does not pass through a rung. */

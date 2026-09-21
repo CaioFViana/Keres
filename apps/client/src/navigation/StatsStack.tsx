@@ -16,6 +16,11 @@ export type StatsStackParamList = {
 
 const Stack = createNativeStackNavigator<StatsStackParamList>();
 
+/**
+ * Standalone stats navigator (list, form, ladder, comparison, ranking), superseded by
+ * `CustomizationStackNavigator` in `MainSystemStacks`, which mounts the same screens as
+ * part of the customization flow. Currently unreferenced - neither drawer mounts it.
+ */
 export default function StatsStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

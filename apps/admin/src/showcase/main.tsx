@@ -14,7 +14,7 @@ initI18n(SHOWCASE_LANGUAGE_KEY, 'showcase');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* Páginas em `/showcase` (produção); em `vite dev` a porta é só do site, então a raiz. */}
+    {/* Pages live under `/showcase` in production; under `vite dev` the port serves only this site, so the root. */}
     <BrowserRouter basename={import.meta.env.PROD ? '/showcase' : undefined}>
       <ShowcaseApp />
     </BrowserRouter>

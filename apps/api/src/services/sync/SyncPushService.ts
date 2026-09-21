@@ -155,7 +155,7 @@ export class SyncPushService {
 
       let currentEntity: SyncEntityRow | undefined;
 
-      /** Contexto que a tela de conflito usa para montar o comparativo lado a lado. */
+      /** Context the conflict screen uses to build the side-by-side comparison. */
       const conflictContext = (): Partial<SyncConflict> => ({
         serverEntity: currentEntity ? serializeSyncEntity(currentEntity) : null,
         attemptedChanges:

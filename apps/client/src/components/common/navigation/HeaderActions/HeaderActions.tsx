@@ -5,6 +5,15 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'rea
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import { useTheme } from '@/src/theme';
 
+/**
+ * The shared header-actions framework: list/detail screens declare their actions as data
+ * and this renders them as header icons - no per-screen menu code.
+ *
+ * Contract per action: `visible: false` removes it from the row entirely; `disabled` dims
+ * and blocks presses; `busy` swaps the icon for a spinner and also blocks presses;
+ * `active` tints a toggle-style action with the primary color. On compact screens two or
+ * more actions collapse into a burger menu (see below) so the title keeps its room.
+ */
 export interface HeaderAction {
   id: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];

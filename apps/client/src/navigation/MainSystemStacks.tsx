@@ -83,8 +83,18 @@ import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { showcaseInitialRoute } from '../showcase/showcaseRequest';
 
-//#region Suggestions
-//#endregion
+/**
+ * The main drawer's nested stacks: one navigator per drawer section (characters, plots,
+ * locations, ...), mounted as sibling `Drawer.Screen`s in `MainSystemStack`.
+ *
+ * Every navigator hides its own header (`headerShown: false`) because the drawer draws the
+ * single shared header (back button, help shortcut, contextual actions); each screen sets
+ * its own header content through the drawer via `getParent()?.setOptions(...)`. Every
+ * navigator also installs `useBackButtonHandler` so Android hardware back pops the nested
+ * stack (closing an open drawer first) instead of leaving the app. Navigators with a
+ * showcase entry point resolve their initial route through `showcaseInitialRoute` so
+ * screen captures open without flashing the list first.
+ */
 //#region Plots
 const PlotsStack = createNativeStackNavigator<PlotsStackParamList>();
 export type PlotsStackParamList = {

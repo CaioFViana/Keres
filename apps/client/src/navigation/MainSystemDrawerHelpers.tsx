@@ -5,6 +5,12 @@ import React from 'react';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import type { MainSystemDrawerParamList } from './MainSystemStack';
 
+/**
+ * Route names that count as a stack's root for header purposes. `MainSystemStack` shows
+ * its nested back button only off these roots, and `drawerItemListeners` navigates each
+ * drawer entry back to its root: a new stack's list screen belongs here, or the drawer
+ * header will draw a back arrow on it.
+ */
 export const mainSystemStackRootScreens = new Set([
   'Characters',
   'NarrativeElements',
@@ -37,6 +43,11 @@ export const DrawerToggleButton = ({
   navigation: MainDashboardScreenNavigationProp;
 }) => <DrawerMenuButton onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())} />;
 
+/**
+ * Placeholder behind the arc-picker drawer entry: it redirects straight to the dashboard
+ * because the entry's `drawerItemPress` (in `MainSystemStack`) is intercepted to open the
+ * picker instead - this component only renders if that interception is bypassed.
+ */
 export const ArcContextDrawerScreen = () => {
   const navigation = useNavigation<MainDashboardScreenNavigationProp>();
   React.useEffect(() => navigation.navigate('MainDashboard'), [navigation]);

@@ -165,8 +165,8 @@ export abstract class BaseSyncEntityHandler<
   protected versionColumnName: string;
   protected isDeletedColumnName?: string;
   protected deletedAtColumnName?: string;
-  protected createSchema: CreateType; // Zod schema for creation
-  protected updateSchema: UpdateType; // Zod schema for updates
+  protected createSchema: CreateType;
+  protected updateSchema: UpdateType;
 
   /** The API entity-table registry is the sole mapping from a domain entity to host persistence. */
   protected get table() {
@@ -184,8 +184,8 @@ export abstract class BaseSyncEntityHandler<
   constructor(
     idColumnName: string,
     versionColumnName: string,
-    createSchema: CreateType, // New: Zod schema for creation
-    updateSchema: UpdateType, // New: Zod schema for updates
+    createSchema: CreateType,
+    updateSchema: UpdateType,
     options?: {
       storyIdColumnName?: string;
       userIdColumnName?: string;
@@ -330,16 +330,14 @@ export abstract class BaseSyncEntityHandler<
 
     this.checkVersionConflict(update.changes.version, this.readVersion(currentEntity), update.id!);
 
-    // Validate incoming changes against the update schema.
     const validatedChanges: z.infer<UpdateType> = this.updateSchema.parse(incomingChanges);
     this.stripImmutableFields(validatedChanges as Record<string, unknown>);
     this.keepOnlyProvidedKeys(validatedChanges as Record<string, unknown>, incomingChanges);
 
-    // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
     const changes: Record<string, unknown> = {
-      ...validatedChanges, // Use validated changes
+      ...validatedChanges,
       updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       [this.versionColumnName]: sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
     };
@@ -400,7 +398,6 @@ export abstract class BaseSyncEntityHandler<
 
     this.checkVersionConflict(update.version!, this.readVersion(currentEntity), update.id!);
 
-    // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
     const [deleted] = await database

@@ -178,8 +178,8 @@ const StatRankingScreen = () => {
               {item.label}
             </Text>
             <Text style={[styles.rowValue, item.inherited && styles.inherited]}>
-              {/* Dentro de um grupo de tier o cabeçalho já diz a letra; repeti-la em cada
-                  linha só rouba espaço do número, que é o que diferencia as linhas ali. */}
+              {/* Inside a tier group the header already states the letter; repeating it on
+                  every row only steals space from the number, which is what tells rows apart there. */}
               {section.title && section.key !== 'none' ? item.valueDisplay : item.display}
               {item.inherited ? ` · ${t('stat_inherited')}` : ''}
             </Text>

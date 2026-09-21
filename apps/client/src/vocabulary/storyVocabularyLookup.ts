@@ -11,6 +11,11 @@ import {
   resolveStoryTerm,
 } from './resolveStoryTerm';
 
+/**
+ * Vocabulary resolution for non-component callers (entity solvers, services) that already
+ * hold `t` and the database handle: `useStoryVocabulary`/`useVocabularyEntityCopy` cover
+ * screens and components.
+ */
 export async function loadStoryVocabulary(
   db: AppDrizzleClient,
   storyId: string,

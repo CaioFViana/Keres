@@ -15,7 +15,7 @@ export interface AttributeValue {
   storyId: string;
   entityType: StorySchemaEntityType;
   entityId: string;
-  /** FK para `StorySchemaField.id`. */
+  /** FK to `StorySchemaField.id`. */
   fieldId: string;
   value: string | null;
   createdAt: Date;

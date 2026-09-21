@@ -9,12 +9,12 @@ export const servers = sqliteTable('servers', {
   tag: text('tag'),
   name: text('name').notNull(),
   url: text('url').notNull(),
-  lastSyncDate: integer('last_sync_date', { mode: 'timestamp' }), // Nullable
+  lastSyncDate: integer('last_sync_date', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),
-  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(), // Added for consistency
-  deletedAt: integer('deleted_at', { mode: 'timestamp' }), // Added for consistency
+  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 });
 export type ServerInsert = InferInsertModel<typeof servers>;
 export type ServerSelect = InferSelectModel<typeof servers>;

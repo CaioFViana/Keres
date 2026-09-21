@@ -238,7 +238,7 @@ const StatLadderScreen = () => {
       {editingOwnLadder ? (
         <>
           <Text style={styles.label}>{t('stat_ladder_title')}</Text>
-          {/* A régua do rascunho: mostra o formato da escada sendo montada antes de salvar. */}
+          {/* The draft ruler: shows the shape of the ladder being built before saving. */}
           <View style={styles.preview}>
             <StatLadderBar ladder={previewLadder} value={null} />
           </View>

@@ -1,20 +1,33 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 
+/**
+ * Local-first journal of every mutation, and the source of what `SyncPush` sends.
+ *
+ * Each row records one create/update/delete/reorder with a per-story monotonic
+ * `operationVersion` (sequenced against `stories.lastOperationLog`), so the push order
+ * stays deterministic even when two writes share the same timestamp. Rows that arrived
+ * from the server are recorded here too (`isSynced: true`) for history display.
+ * This table is append-heavy by design: refused operations are parked via
+ * `conflictState`, never deleted, until the user resolves them.
+ */
 export const operationLogs = sqliteTable('operation_logs', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
   userId: text('user_id').notNull(),
-  operationVersion: integer('operation_version').notNull(), // Unique per storyId
+  /** Strictly increasing within a story; defines the order operations are pushed in. */
+  operationVersion: integer('operation_version').notNull(),
   operationType: text('operation_type', {
     enum: ['create', 'update', 'delete', 'reorder'],
-  }).notNull(), // Add 'reorder'
+  }).notNull(),
   entityType: text('entity_type').notNull(),
   entityId: text('entity_id').notNull(),
-  payload: text('payload').notNull(), // Stored as JSON string
+  /** JSON-encoded snapshot of the written fields, including the resulting `version`. */
+  payload: text('payload').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  isSynced: integer('is_synced', { mode: 'boolean' }).notNull().default(false), // Add isSynced
-  serverOperationVersion: integer('server_operation_version').default(0), // Add serverOperationVersion
+  isSynced: integer('is_synced', { mode: 'boolean' }).notNull().default(false),
+  /** The version the server assigned once accepted; also used to spot echoed-back ops. */
+  serverOperationVersion: integer('server_operation_version').default(0),
   /**
    * Marks operations that must not go to the server in the current state.
    *

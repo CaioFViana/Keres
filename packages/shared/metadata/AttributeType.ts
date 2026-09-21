@@ -1,4 +1,4 @@
-/** Tipos suportados por um atributo customizado de Story Schema. */
+/** Types supported by a Story Schema custom attribute. */
 export enum AttributeType {
   TEXT = 'text',
   LONG_TEXT = 'long_text',

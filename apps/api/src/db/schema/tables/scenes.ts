@@ -4,9 +4,9 @@ import { stories } from './stories';
 import { storyCalendars } from './storyCalendars';
 import { chapters } from './chapters';
 import { locations } from './locations';
-import { choices } from './choices'; // Will be created later
-import { characterScenes } from './characterScenes'; // Will be created later
-import { itemJourneys } from './itemJourneys'; // Will be created later
+import { choices } from './choices';
+import { characterScenes } from './characterScenes';
+import { itemJourneys } from './itemJourneys';
 
 export const scenes = table('scenes', {
   id: text('id').primaryKey(),

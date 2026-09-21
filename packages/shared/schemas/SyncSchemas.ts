@@ -1,8 +1,6 @@
-// packages/shared/entities/sync/SyncSchemas.ts
 import { z } from 'zod';
 import { STORY_SCHEMA_ENTITY_TYPES } from '../metadata/StorySchemaEntityType';
 
-// Define a Zod schema for ULID strings
 export const UlidSchema = z.string().regex(/^[0-9A-Z]{26}$/, 'Invalid ULID format');
 
 /**
@@ -27,7 +25,7 @@ export const SYNC_CLIENT_IMMUTABLE_FIELD_SET: ReadonlySet<string> = new Set(
   SYNC_CLIENT_IMMUTABLE_FIELDS,
 );
 
-/** Teto do lote de push. O cap HTTP ainda vale; isto evita um lote de dezenas de milhares de ops. */
+/** Push batch ceiling. The HTTP cap still applies; this avoids a batch of tens of thousands of ops. */
 export const MAX_SYNC_BATCH_SIZE = 200;
 
 /** Ceiling of operations returned in a single pull. The client pulls again from the cursor. */
@@ -45,14 +43,14 @@ export function omitSyncImmutableFields<T extends Record<string, unknown>>(
 }
 
 // 1. Defines the kind of synchronization operation
-export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete', 'reorder']); // Added 'reorder'
+export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete', 'reorder']);
 export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 
 // 2. Base schema for any StoryUpdate
 // It holds the fields common to every operation
 export const BaseStoryUpdateSchema = z
   .object({
-    entity: z.string().min(1, 'Entity name cannot be empty'), // Nome da entidade (ex: 'Story', 'Character')
+    entity: z.string().min(1, 'Entity name cannot be empty'), // Entity name (e.g. 'Story', 'Character')
     // Create, update, delete and reorder all require the ULID; the envelope leaves it optional and each
     // concrete variant re-declares it where it is mandatory.
     id: UlidSchema.optional(),
@@ -80,7 +78,7 @@ export const BaseStoryUpdateSchema = z
     operationVersion: z.number().int().min(0).optional(),
   })
   .extend({
-    operationTime: z.string().datetime().optional(), // CHANGED: Expect ISO string, as per user's instruction
+    operationTime: z.string().datetime().optional(),
     originatingUser: z.string().optional(),
     /**
      * Id of the row in the *client's local* operation log. Sent on push and returned untouched in the
@@ -108,9 +106,9 @@ export type CreateStoryUpdate = z.infer<typeof CreateStoryUpdateSchema>;
 // 4. Schema for update operations
 export const UpdateStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('update'),
-  id: UlidSchema, // ID é obrigatório para atualizações
+  id: UlidSchema, // ID is required for updates
   // Without `version` the schema refuses the batch (422). The client engine always sends the base
-  // aqui; recusar o omitido fecha a porta para um cliente adulterado.
+  // here; refusing the omitted one closes the door to a tampered client.
   changes: z.object({ version: z.number().int().min(0) }).passthrough(),
 });
 export type UpdateStoryUpdate = z.infer<typeof UpdateStoryUpdateSchema>;
@@ -118,7 +116,7 @@ export type UpdateStoryUpdate = z.infer<typeof UpdateStoryUpdateSchema>;
 // 5. Schema for delete operations
 export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   type: z.literal('delete'),
-  id: UlidSchema, // ID é obrigatório para exclusões
+  id: UlidSchema, // ID is required for deletes
   // Optional on purpose: `StoryService.deleteStory`/`unlinkFromServer` omit the version because the
   // local `stories.version` never stayed in lockstep with the server. With no version, the server only
   // accepts deleting the Story itself when the caller is the owner (it forces the tombstone at the
@@ -127,7 +125,6 @@ export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
 });
 export type DeleteStoryUpdate = z.infer<typeof DeleteStoryUpdateSchema>;
 
-// Define a Zod schema for the items within the reorder update
 export const ReorderItemSchema = z.object({
   id: UlidSchema,
   newIndex: z.number().int().min(1),
@@ -193,9 +190,9 @@ export const SyncConflictReasonSchema = z.enum([
   'not_found',
   /** The entity was deleted on the server, but the client was still editing it. */
   'deleted_on_server',
-  /** A entidade foi editada no servidor, mas o cliente a excluiu localmente. */
+  /** The entity was edited on the server, but the client deleted it locally. */
   'edited_on_server',
-  /** O cliente e o servidor mudaram os mesmos campos da mesma entidade. */
+  /** The client and the server changed the same fields of the same entity. */
   'concurrent_edit',
   /**
    * The operation references another entity (character, scene, item...) that was deleted on the
@@ -231,9 +228,9 @@ export const SyncConflictSchema = z.object({
   clientVersion: z.number().int().optional(),
   /** The entity's current version on the server. */
   serverVersion: z.number().int().optional(),
-  /** Estado atual da entidade no servidor, para a tela poder mostrar o comparativo. */
+  /** Current state of the entity on the server, so the screen can show the comparison. */
   serverEntity: z.record(z.string(), z.any()).nullable().optional(),
-  /** O que o cliente tentou gravar, para a tela poder mostrar o comparativo. */
+  /** What the client tried to write, so the screen can show the comparison. */
   attemptedChanges: z.record(z.string(), z.any()).optional(),
   /**
    * Only present for `reason: 'version_conflict'` on an `update`: the fields that actually changed on

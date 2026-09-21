@@ -174,7 +174,7 @@ const ImportExportScreen = () => {
 
       const storyService = createStoryService(drizzleDb);
 
-      // O importador insere com ids refeitos. Portanto pode ser usado para restaurar um backup paralelo.
+      // The importer inserts with remade ids, so it can also restore a parallel backup.
       const importedStoryId = createULID();
 
       // It writes the .zip's media files into the device's storage before creating the records - the gallery
@@ -204,7 +204,7 @@ const ImportExportScreen = () => {
 
       showNotification(t('import_story_success', { title: storyExport.story.title }), 'success');
       await loadStories();
-      fetchStoryList(storyService); // Mantém a tela de seleção de histórias em dia.
+      fetchStoryList(storyService); // Keeps the story selection screen up to date.
     } catch (importError) {
       if (importError instanceof StoryImportError) {
         console.log('ImportExportScreen: import rejected.', importError.message);

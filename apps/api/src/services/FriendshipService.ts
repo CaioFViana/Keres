@@ -61,8 +61,8 @@ export class FriendshipService {
       // either direction. Without this, two requests racing in opposite directions (A→B and
       // B→A) can both read "no existing row" before either commits and create two independent
       // rows - the unique constraint on (senderId, receiverId) only catches an exact duplicate
-      // (A→B twice), not the reverse direction. Como cada motor faz isso de um jeito, o
-      // detalhe mora em `lockUserPair`.
+      // (A→B twice), not the reverse direction. Each engine does that differently, so the
+      // detail lives in `lockUserPair`.
       await lockUserPair(tx, senderId, receiverId);
 
       // Check for an existing direct pending request (sender -> receiver)

@@ -8,8 +8,7 @@ import { AppError } from '../../utils/errors';
 const storyExportImportService = new StoryExportImportService();
 
 export const storyRoutes = new Elysia()
-  .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
-  // Route to export a full story
+  .decorate('user', null as JWTPayload | null)
   .get(
     '/:storyId/export',
     async ({ params, user }) => {
@@ -17,7 +16,6 @@ export const storyRoutes = new Elysia()
         throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
 
-      // Validate if the user has at least 'reader' permission for the story
       const hasReadPermission = await storyPermissionService.hasPermission(
         user.userId,
         params.storyId,
@@ -48,7 +46,6 @@ export const storyRoutes = new Elysia()
       },
     },
   )
-  // Route to import a full story
   .post(
     '/import',
     async ({ body, query, user }) => {
@@ -64,7 +61,7 @@ export const storyRoutes = new Elysia()
       return { storyId: newStoryId };
     },
     {
-      body: FullStoryExportSchema, // Use the schema for validation
+      body: FullStoryExportSchema,
       query: t.Object({
         // Present when a client is uploading a local (never synchronized) story for the first time, to
         // preserve the same ID on both sides - see `importStory`, which rejects it if a story with this ID

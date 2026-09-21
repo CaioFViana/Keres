@@ -10,7 +10,7 @@ export interface Mode {
   storyId: string;
   characterId: string;
   name: string;
-  /** O que muda nesta forma, em texto livre. */
+  /** What changes in this form, in free text. */
   modeChanges: string | null;
   /** Display order, ascending. */
   order: number;

@@ -49,7 +49,7 @@ export function storeLanguage(storageKey: string, language: SupportedLanguage): 
   localStorage.setItem(storageKey, language);
 }
 
-/** Each language's name in its own language - someone who cannot read the current one still */
+/** Each language's name in its own language - someone who cannot read the current one still recognises their own. */
 export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   en: 'English',
   pt: 'Português',

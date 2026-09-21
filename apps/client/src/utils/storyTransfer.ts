@@ -309,7 +309,7 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
     let bytes: Uint8Array;
     try {
       bytes = asset.file
-        ? new Uint8Array(await asset.file.arrayBuffer()) // web: o seletor já entrega o Blob
+        ? new Uint8Array(await asset.file.arrayBuffer()) // web: the picker already hands over the Blob
         : await readPickedBytes(asset.uri);
     } catch (error) {
       throw new StoryImportError(
@@ -325,7 +325,7 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
   let rawContents: string;
   try {
     rawContents = asset.file
-      ? await asset.file.text() // web: o seletor já entrega o Blob
+      ? await asset.file.text() // web: the picker already hands over the Blob
       : await readPickedText(asset.uri);
   } catch (error) {
     throw new StoryImportError(

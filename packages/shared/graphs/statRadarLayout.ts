@@ -28,7 +28,7 @@ export interface RadarSeriesInput {
   id: string;
   label: string;
   color: string;
-  /** Valor por statId. Ausente ou `null` = sem valor, desenhado no centro. */
+  /** Value per statId. Absent or `null` = no value, drawn at the center. */
   values: ReadonlyMap<string, number | null>;
 }
 
@@ -50,9 +50,9 @@ export interface RadarAxis {
 export interface RadarRing {
   radius: number;
   label: string;
-  /** `points` de um `<Polygon>`. */
+  /** `points` of a `<Polygon>`. */
   points: string;
-  /** O anel externo da faixa de transbordo, desenhado tracejado. */
+  /** The outer ring of the overflow band, drawn dashed. */
   isOverflow: boolean;
 }
 
@@ -74,7 +74,7 @@ export interface RadarSeries {
 export interface StatRadarLayout {
   size: number;
   center: RadarPoint;
-  /** Raio do anel externo da escada (sem a faixa de transbordo). */
+  /** Radius of the ladder's outer ring (without the overflow band). */
   radius: number;
   axes: RadarAxis[];
   rings: RadarRing[];
@@ -85,7 +85,7 @@ export interface StatRadarLayoutInput {
   stats: readonly RadarStat[];
   series: readonly RadarSeriesInput[];
   notation: StatNotation;
-  /** Lado do quadrado do desenho, em pixels. */
+  /** Side of the drawing square, in pixels. */
   size: number;
   /** Space reserved for the axis labels. */
   padding?: number;

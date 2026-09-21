@@ -1,4 +1,4 @@
-import type { ClientSettings, MapExportFormat } from '@keres/shared/entities/ClientSettings'; // Import ClientSettings
+import type { ClientSettings, MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
 import { create } from 'zustand';
 import type { AppDrizzleClient } from '../db';
@@ -13,8 +13,16 @@ import {
   withTutorialSeen,
 } from '../utils/tutorialProgress';
 
+/**
+ * Device-level settings, durable in the `client_settings` table.
+ *
+ * Unlike the entity stores (whose rows live in SQLite but whose filter state is
+ * ephemeral), every setter here writes through to the database first and only then
+ * updates Zustand, so a preference survives restarts. `initializeSettings` hydrates
+ * the store once at startup; `activeServer` is the sole in-memory-only field.
+ */
 interface UserSettingsState {
-  userId: string | null; // Add userId to state
+  userId: string | null;
   username: string | null;
   language: string | null;
   /** `true` = 24h, `false` = AM/PM. It applies to every time display/edit in the Date features. */
@@ -26,7 +34,7 @@ interface UserSettingsState {
   showTutorials: boolean;
   tutorialProgress: TutorialProgress;
   activeServer: ServerSelect | null;
-  initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>; // Change return type
+  initializeSettings: (db: AppDrizzleClient) => Promise<ClientSettings | null>;
   setUsername: (db: AppDrizzleClient, username: string) => Promise<void>;
   setLanguage: (db: AppDrizzleClient, language: string) => Promise<void>;
   setUse24HourTime: (db: AppDrizzleClient, use24HourTime: boolean) => Promise<void>;
@@ -56,7 +64,7 @@ interface UserSettingsState {
 }
 
 export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
-  userId: null, // Initialize userId
+  userId: null,
   username: null,
   language: null,
   use24HourTime: true,
@@ -82,9 +90,9 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
         exportFormat: settings.exportFormat ?? 'svg',
         showTutorials: settings.showTutorials ?? true,
         tutorialProgress: parseTutorialProgress(settings.seenTutorials),
-      }); // Set userId
+      });
     }
-    return settings; // Return the settings object
+    return settings;
   },
 
   setUsername: async (db: AppDrizzleClient, username: string) => {
@@ -173,6 +181,6 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
       showTutorials: true,
       tutorialProgress: defaultTutorialProgress(),
       activeServer: null,
-    }); // Reset all settings including activeServer
+    });
   },
 }));

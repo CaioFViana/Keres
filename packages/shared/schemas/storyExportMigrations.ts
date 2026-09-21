@@ -60,7 +60,7 @@ const migrateV2ToV3: StoryExportMigration = {
   }),
 };
 
-/** V3 -> V4: grupos/checks de Choice e effects (Scene/Choice). */
+/** V3 -> V4: Choice groups/checks and effects (Scene/Choice). */
 const migrateV3ToV4: StoryExportMigration = {
   fromVersion: 3,
   migrate: (data) => ({
@@ -71,7 +71,7 @@ const migrateV3ToV4: StoryExportMigration = {
   }),
 };
 
-/** V4 -> V5: sistema de status (stats, escadas, valores) e modos de personagem. */
+/** V4 -> V5: stat system (stats, ladders, values) and character modes. */
 const migrateV4ToV5: StoryExportMigration = {
   fromVersion: 4,
   migrate: (data) => ({

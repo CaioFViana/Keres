@@ -83,8 +83,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     super(
       'id',
       'version',
-      CreateStoryDataSchema, // Pass create schema
-      PartialStorySchema, // Pass update schema
+      CreateStoryDataSchema,
+      PartialStorySchema,
       {
         userIdColumnName: 'userId',
         isDeletedColumnName: 'isDeleted',
@@ -126,12 +126,12 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     await database.insert(stories).values({
       id: update.id!,
       userId: userId, // Set by server
-      createdAt: clientOperationTime, // Set from operationTime
-      updatedAt: clientOperationTime, // Set from operationTime
+      createdAt: clientOperationTime,
+      updatedAt: clientOperationTime,
       version: 1,
       isDeleted: false,
       deletedAt: null,
-      ...validatedData, // Spread validated data
+      ...validatedData,
     });
   }
 
@@ -272,7 +272,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
             .set({
               index: item.newIndex,
               updatedAt: new Date(),
-              version: chapterToUpdate.version + 1, // Increment individual chapter version
+              version: chapterToUpdate.version + 1,
             })
             .where(eq(chapters.id, item.id));
         });
@@ -284,7 +284,7 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
           .update(stories)
           .set({
             updatedAt: new Date(),
-            version: currentEntity.version + 1, // Increment story version
+            version: currentEntity.version + 1,
           })
           .where(eq(stories.id, validatedReorderUpdate.id!));
       });

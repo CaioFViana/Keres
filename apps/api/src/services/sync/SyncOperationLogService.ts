@@ -25,6 +25,9 @@ export class SyncOperationLogService {
   ): Promise<{ id: string; operationVersion: number }> {
     const { storyId, userId, update, entityId, entityVersion } = args;
     const handler = this.entityHandlers.get(update.entity);
+    // The log row must carry enough to rebuild the operation on pull even when no handler is
+    // registered for the entity: a delete needs only its id, a reorder its shared-encoded items.
+    // With a handler, the payload is what was written, never the client's raw JSON.
     let payload: Record<string, unknown> = {};
     if (handler) {
       payload = handler.sanitizePayloadForLog(update, userId);

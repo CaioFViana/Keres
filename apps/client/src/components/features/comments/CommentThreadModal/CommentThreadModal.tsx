@@ -41,9 +41,9 @@ interface CommentThreadModalProps {
 }
 
 /**
- * Usa o mesmo `ResponsiveModal` de `GraphNodeSheet`/seletores: bottom sheet em telas
- * compactas, painel lateral em telas largas - em vez de um bottom sheet fixo em qualquer
- * tamanho de tela, que ficava com cara de app mobile mesmo no desktop.
+ * Uses the same `ResponsiveModal` as `GraphNodeSheet`/selectors: bottom sheet on compact
+ * screens, side panel on wide screens - instead of a fixed bottom sheet at any screen
+ * size, which looked like a mobile app even on desktop.
  */
 const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   visible,

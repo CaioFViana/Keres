@@ -12,6 +12,13 @@ interface DetailContainerProps extends ScrollViewProps {
   width?: ContentWidth;
 }
 
+/**
+ * Read-only detail layout: title, optional description, scrolling body and an optional
+ * footer. A plain `ScrollView`, not `KeyboardAwareScreen` - detail screens display data;
+ * editing screens use `EntityFormContainer`, which owns keyboard avoidance and the
+ * closing action row.
+ */
+
 export default function DetailContainer({
   children,
   title,

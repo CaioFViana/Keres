@@ -1,9 +1,9 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native'; // Import ActivityIndicator and View
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import SyncInitializer from '@/src/components/features/app/SyncInitializer'; // Import SyncInitializer
+import SyncInitializer from '@/src/components/features/app/SyncInitializer';
 import { useDrizzle } from '../db';
 import { getClientSettings } from '../services/ClientSettingsService';
 import { useThemeStore } from '../state/themeStore';

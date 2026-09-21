@@ -60,7 +60,7 @@ export function getEntityTable(entityType: string) {
   ];
 }
 
-/** Campos de data: chegam como string no JSON e as tabelas locais esperam `Date`. */
+/** Date fields: they arrive as strings in JSON while the local tables expect `Date`. */
 const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'deletedAt']);
 
 /**

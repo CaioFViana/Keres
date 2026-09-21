@@ -1,7 +1,21 @@
 import type { CreateStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import { omitClientProtectedFields } from '../entityTableRegistry';
 
-/** Returns the entity version on which a local resulting version was based. */
+/**
+ * Pure sync helpers, free of database and network access so they stay unit-testable.
+ *
+ * The key invariant here is the version convention: every local write stores the
+ * *resulting* version in the operation payload, while the server's optimistic
+ * concurrency check needs the *base* the edit was made on.
+ */
+
+/**
+ * Recovers the base version from a local payload (`resulting - 1`).
+ *
+ * `SyncPush` sends this as the operation's `version` so the server can detect an
+ * interleaving write; `undefined` means the payload carries no version and the
+ * operation must be skipped rather than sent with a fabricated base.
+ */
 export function deriveBaseVersion(payload: Record<string, any>): number | undefined {
   const resultingVersion = payload?.version;
   return typeof resultingVersion === 'number' && resultingVersion >= 1
@@ -9,11 +23,18 @@ export function deriveBaseVersion(payload: Record<string, any>): number | undefi
     : undefined;
 }
 
+/** `EntityType:entityId` key used to group pending operations and conflicts per entity. */
 export function syncEntityKey(entityType: string, entityId: string): string {
   return `${entityType}:${entityId}`;
 }
 
-/** Removes local bookkeeping columns before a server update reaches a client handler. */
+/**
+ * Strips local bookkeeping columns before a server update reaches a client handler.
+ *
+ * Without this, applying a remote create/update could overwrite the row's sync cursors
+ * (`lastOperationLog`, `myRole`, ...) with whatever the server echoed back. Deletes and
+ * reorders carry no entity fields, so they pass through untouched.
+ */
 export function protectRemoteUpdate(update: StoryUpdate): StoryUpdate {
   if (update.type === 'create') {
     return {

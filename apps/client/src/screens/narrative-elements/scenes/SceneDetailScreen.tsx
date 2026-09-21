@@ -5,11 +5,11 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import type { Chapter } from '@keres/shared/entities/Chapter';
-import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // Import CharacterScene entity
-import type { Choice } from '@keres/shared/entities/Choice'; // Import Choice
+import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
+import type { Choice } from '@keres/shared/entities/Choice';
 import type { Effect } from '@keres/shared/entities/Effect';
-import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney
-import type { Location } from '@keres/shared/entities/Location'; // Import Location
+import type { Item, ItemJourney } from '@keres/shared/entities/Item';
+import type { Location } from '@keres/shared/entities/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -39,11 +39,12 @@ import { describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { SceneDetailContent } from './SceneDetailContent';
 import { useSceneDetailServices } from './useSceneDetailServices';
 
-// Define the parameter list for this screen
 type SceneDetailScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneDetail'>;
 
 const MANUSCRIPT_EXCERPT_LENGTH = 150;
 
+// Card preview of the prose: markup-stripped, collapsed to one line and truncated with an
+// ellipsis. Null when nothing readable was written, so the entry falls back to its empty copy.
 function excerptBody(body: string | null | undefined): string | null {
   if (!body) return null;
   const normalized = stripManuscriptMarkers(body).replace(/\s+/g, ' ').trim();
@@ -89,12 +90,12 @@ const SceneDetailScreen = () => {
     deleteComment,
     updateComment,
   } = useEntityComments(scene?.storyId, 'Scene', sceneId);
-  const [chapter, setChapter] = useState<Chapter | null>(null); // State for chapter details
-  const [location, setLocation] = useState<Location | null>(null); // State for location details
-  const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined); // State for previous scene
-  const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined); // State for next scene
-  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]); // State for choices leaving this scene
-  const [incomingChoicesForScene, setIncomingChoicesForScene] = useState<Choice[]>([]); // State for choices arriving at this scene
+  const [chapter, setChapter] = useState<Chapter | null>(null);
+  const [location, setLocation] = useState<Location | null>(null);
+  const [previousScene, setPreviousScene] = useState<SceneSelect | undefined>(undefined);
+  const [nextScene, setNextScene] = useState<SceneSelect | undefined>(undefined);
+  const [choicesForScene, setChoicesForScene] = useState<Choice[]>([]);
+  const [incomingChoicesForScene, setIncomingChoicesForScene] = useState<Choice[]>([]);
   const [sceneNamesById, setSceneNamesById] = useState<Record<string, string>>({}); // For choice target/source scene labels
   const {
     selectedTags: sceneTags,
@@ -103,10 +104,10 @@ const SceneDetailScreen = () => {
     saveNoteRelation,
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Scene', entityId: sceneId });
-  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]); // State for character-scene relations
-  const [allItems, setAllItems] = useState<Item[]>([]); // State for all items in the story
-  const [itemJourneys, setItemJourneys] = useState<ItemJourney[]>([]); // State for item journeys related to the scene
-  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]); // State for effects caused by this scene
+  const [characterSceneRelations, setCharacterSceneRelations] = useState<CharacterScene[]>([]);
+  const [allItems, setAllItems] = useState<Item[]>([]);
+  const [itemJourneys, setItemJourneys] = useState<ItemJourney[]>([]);
+  const [sceneEffects, setSceneEffects] = useState<Effect[]>([]);
   const isBranching = selectedStory?.type === 'branching';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -460,8 +461,8 @@ const SceneDetailScreen = () => {
       fetchChapter();
       fetchLocation();
       fetchCharacterSceneRelations();
-      fetchAllItems(); // Fetch all items when scene changes
-      fetchItemJourneysForScene(); // Fetch item journeys for scene when scene changes
+      fetchAllItems();
+      fetchItemJourneysForScene();
       if (isBranching) {
         fetchSceneEffects();
       }
@@ -498,6 +499,9 @@ const SceneDetailScreen = () => {
 
   // The draft flag refreshes on focus too: leaving the editor without saving emits no
   // scene event, so data alone would leave a stale indicator behind.
+  // The flag means "a stored draft exists AND differs from the saved body": a draft that
+  // already matches (saved elsewhere, then revisited) reads clean, and corrupt or missing
+  // rows read as no flag rather than failing the screen.
   const refreshBodyDraftFlag = useCallback(async () => {
     if (!scene?.storyId) {
       setHasBodyDraft(false);

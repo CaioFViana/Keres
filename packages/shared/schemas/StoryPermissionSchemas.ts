@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const SharedStoryPermissionTypeEnum = z.enum(['reader', 'writer']); // New shared enum
+export const SharedStoryPermissionTypeEnum = z.enum(['reader', 'writer']);
 
 /**
  * The caller's effective access level for a story, combining implicit ownership (no
@@ -12,11 +12,11 @@ export type EffectiveStoryRole = z.infer<typeof EffectiveStoryRoleEnum>;
 export const CreateStoryPermissionSchema = z.object({
   storyId: z.string().ulid(),
   targetUserId: z.string().ulid(),
-  permissionType: SharedStoryPermissionTypeEnum, // Use the shared enum
+  permissionType: SharedStoryPermissionTypeEnum,
 });
 
 export const UpdateStoryPermissionSchema = z.object({
-  permissionType: SharedStoryPermissionTypeEnum, // Use the shared enum
+  permissionType: SharedStoryPermissionTypeEnum,
 });
 
 export const StoryPermissionIdParam = z.object({

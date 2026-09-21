@@ -1,20 +1,25 @@
+/**
+ * SQLite access layer: the Drizzle client singleton plus the React context that serves it.
+ *
+ * The native database is opened once at startup; `initializeDrizzle` wraps it here and
+ * everything below reads it back via `useDrizzle` (components) or the `db` export
+ * (services). `resetDatabase` drops every table and clears the singleton, so the next
+ * launch must re-run migrations and re-initialize before touching the database again.
+ */
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { createContext, useContext } from 'react'; // Import React Context utilities
+import { createContext, useContext } from 'react';
 import * as schema from './schema';
 
-export let db: AppDrizzleClient | null = null; // Export the Drizzle client
+/** Module-level singleton. Null until `initializeDrizzle` runs, and after `resetDatabase`. */
+export let db: AppDrizzleClient | null = null;
 
-// Define the type for the Drizzle client
 export type AppDrizzleClient = ReturnType<typeof drizzle<typeof schema>>;
 
-// Type for the transaction client
 export type AppDrizzleTransaction = Parameters<Parameters<AppDrizzleClient['transaction']>[0]>[0];
 
-// Create a React Context for the Drizzle client
 export const DrizzleContext = createContext<AppDrizzleClient | null>(null);
 
-// Custom hook to use the Drizzle client from context
 export const useDrizzle = () => {
   const context = useContext(DrizzleContext);
   if (context === null) {
@@ -24,29 +29,27 @@ export const useDrizzle = () => {
 };
 
 export function initializeDrizzle(dbInstance: SQLiteDatabase) {
+  // Idempotent: the database is opened once, so a repeat call must not re-wrap it.
   if (!db) {
-    // Use the exported 'db' variable
     db = drizzle(dbInstance, { schema });
   }
-  return db; // Return the initialized client
+  return db;
 }
 
 export async function resetDatabase(dbInstance: SQLiteDatabase) {
-  // Renamed parameter to avoid conflict
   console.log('Resetting database...');
-  // Get all table names
   const tableNamesResult = await dbInstance.getAllAsync<{ name: string }>(
     "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';",
   );
   const tableNames = tableNamesResult.map((row) => row.name);
 
-  // Drop all tables
   for (const tableName of tableNames) {
     console.log(`Dropping table: ${tableName}`);
     await dbInstance.execAsync(`DROP TABLE IF EXISTS ${tableName};`);
   }
   console.log('All tables dropped.');
-  db = null; // Set the global db variable to null after reset
+  // Clearing the singleton forces re-initialization; a stale client would point at dropped tables.
+  db = null;
 }
 
 export * from './schema';

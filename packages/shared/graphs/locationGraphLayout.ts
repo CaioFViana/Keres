@@ -158,7 +158,7 @@ export function buildLocationGraphLayout(
   const placed = new Set<string>();
   const treeBoxes = treeRoots
     .map((root) => layoutTree(root, childrenOf, locationById, placed))
-    // Maiores primeiro deixa o empacotamento em prateleiras mais compacto (first-fit decreasing).
+    // Largest first keeps the shelf packing tighter (first-fit decreasing).
     .sort((a, b) => b.width * b.height - a.width * a.height);
 
   const packed = packTrees(treeBoxes);

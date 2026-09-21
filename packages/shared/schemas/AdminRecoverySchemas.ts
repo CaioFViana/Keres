@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const AdminDeletedItemsQuerySchema = z.object({
-  /** Nome da entidade (ex: 'Story', 'Character'). Ausente = busca em todas. */
+  /** Entity name (e.g. 'Story', 'Character'). Absent = search in all of them. */
   entityType: z.string().optional(),
   storyId: z.string().optional(),
   /** Case-insensitive substring over name / storyTitle / id / entityType (after enrichment). */

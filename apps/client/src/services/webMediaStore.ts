@@ -212,7 +212,7 @@ export async function deleteDirectory(relativeDirPath: string): Promise<void> {
   await backend().deleteDirectory(relativeDirPath);
 }
 
-/** MD5 hex - precisa ser exatamente o mesmo algoritmo do servidor (ver MediaStorageService.ts). */
+/** MD5 hex - must be exactly the same algorithm as the server's (see MediaStorageService.ts). */
 export function md5Hex(bytes: Uint8Array): string {
   return SparkMD5.ArrayBuffer.hash(bytes.buffer as ArrayBuffer);
 }

@@ -72,7 +72,7 @@ function assertProtocolCompatible(headers: Record<string, string | undefined>): 
 }
 
 export const syncRoute = new Elysia()
-  .decorate('user', null as JWTPayload | null) // Explicitly decorate 'user' property
+  .decorate('user', null as JWTPayload | null)
   .post(
     '/:storyId',
     async ({ params, body, user, headers }) => {
@@ -187,7 +187,7 @@ export const syncRoute = new Elysia()
         message: `Pull request received for story ${storyId}`,
         updates: updates,
         publicFavorites,
-        serverMaxOperationVersion: serverMaxOperationVersion, // Include the server's max operation version
+        serverMaxOperationVersion: serverMaxOperationVersion,
         role,
       };
     },
@@ -196,7 +196,7 @@ export const syncRoute = new Elysia()
         storyId: t.String(), // ULID for the story
       }),
       query: t.Object({
-        lastOperationVersion: t.Numeric({ minimum: 0 }), // Expecting a numeric version
+        lastOperationVersion: t.Numeric({ minimum: 0 }),
         lastPublicFavoriteVersion: t.Optional(t.Numeric({ minimum: 0 })),
       }),
       detail: {
@@ -206,9 +206,8 @@ export const syncRoute = new Elysia()
         tags: ['Sync'],
       },
       response: t.Object({
-        // Update the response schema
         message: t.String(),
-        updates: t.Array(t.Any()), // updates are StoryUpdate objects, using t.Any() for simplicity, can be more specific
+        updates: t.Array(t.Any()),
         publicFavorites: t.Array(t.Any()),
         serverMaxOperationVersion: t.Number(),
         role: t.Union([t.Literal('owner'), t.Literal('writer'), t.Literal('reader')]),

@@ -76,6 +76,10 @@ const ManuscriptScreen = () => {
   const [ordinal, setOrdinal] = useState(0);
   const [pureRead, setPureRead] = useState(false);
 
+  // Reading order per story shape: branching follows one route's steps in position order
+  // (empty until a route exists), linear stacks chapters, events, then the homeless tail.
+  // The deep-linked routeId is only the initial pick - afterwards the pill owns it, and an
+  // unset pick falls back to the first route.
   const allSections: ManuscriptSection[] = useMemo(() => {
     if (isBranching) {
       if (!effectiveRouteId) return [];
@@ -94,6 +98,9 @@ const ManuscriptScreen = () => {
   );
 
   const { matches, total } = useMemo(() => findManuscriptMatches(sections, query), [sections, query]);
+  // Derived-state reset during render (the sanctioned pattern, not an effect): a new query
+  // or new sections invalidate the current match position, so the ordinal restarts at the
+  // first match. React re-renders immediately with ordinal 0; no stale jump escapes.
   const [prevQuery, setPrevQuery] = useState(query);
   const [prevSections, setPrevSections] = useState(sections);
   if (query !== prevQuery || sections !== prevSections) {
@@ -103,6 +110,8 @@ const ManuscriptScreen = () => {
   }
 
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
+  // Match navigation wraps past both ends: prev from the first match lands on the last,
+  // next from the last lands on the first. Each jump scrolls the owning section near the top.
   const jumpToOrdinal = useCallback(
     (next: number) => {
       if (total === 0) return;
@@ -127,6 +136,10 @@ const ManuscriptScreen = () => {
     ? (routes.find((entry) => entry.id === effectiveRouteId)?.name ?? null)
     : null;
 
+  // Export pipeline: compile the in-memory read model into format-neutral blocks, then
+  // hand the manuscript to the shared delivery path (share sheet, or a browser download on
+  // web). A delivered file notifies success; a build with no share target reports where the
+  // file is instead of claiming success; anything thrown notifies failure.
   const runExportFormat = useCallback(
     (format: ManuscriptExportFormat, includeLoose: boolean) => {
       void runExport(async () => {
@@ -196,6 +209,9 @@ const ManuscriptScreen = () => {
     [isBranching, exportRouteName, runExportFormat, t],
   );
 
+  // Linear exports gate on loose scenes: chapterless fragments and event-container prose
+  // are offered behind an explicit include/exclude choice. Route exports never ask - the
+  // route itself is the scope. Re-entrant presses while an export runs are ignored.
   const handleExportPress = useCallback(() => {
     if (exporting) return;
     if (!isBranching && looseCount > 0) {
@@ -437,6 +453,8 @@ const ManuscriptScreen = () => {
             data={sections}
             keyExtractor={(item) => item.key}
             renderItem={renderSection}
+            // Unmeasured rows cannot be jumped to directly: scroll to the estimated
+            // offset first so the row measures, then retry the indexed jump on the next tick.
             onScrollToIndexFailed={(info) => {
               listRef.current?.scrollToOffset({
                 offset: info.averageItemLength * info.index,

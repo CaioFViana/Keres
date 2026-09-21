@@ -151,7 +151,7 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
         inserted,
       );
 
-      // Ambos os lados podem estar com a tela de detalhe montada - avisa os dois.
+      // Both sides may have their detail screen mounted - notify both.
       entityEventEmitter.emit('see_also_relation_changed', storyId, entityA.entityId);
       entityEventEmitter.emit('see_also_relation_changed', storyId, entityB.entityId);
 

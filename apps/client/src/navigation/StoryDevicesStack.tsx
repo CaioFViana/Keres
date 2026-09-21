@@ -10,6 +10,10 @@ export type StoryDevicesStackParamList = {
 };
 const Stack = createNativeStackNavigator<StoryDevicesStackParamList>();
 
+/**
+ * The literary-devices library, mounted in both drawers. It reuses the help screens with
+ * a different library, so devices get the index/page navigation for free.
+ */
 export default function StoryDevicesStackNavigator() {
   const [openSections, setOpenSections] = React.useState<Record<string, boolean>>({ start: true });
 

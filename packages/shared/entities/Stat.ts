@@ -12,7 +12,7 @@ export interface Stat {
   name: string;
   /** Only primary stats become radar axes; secondary ones stay in the list alone. */
   isPrimary: boolean;
-  /** Ordem dos eixos no radar, crescente. */
+  /** Order of the axes on the radar, ascending. */
   order: number;
   createdAt: Date;
   updatedAt: Date;
@@ -51,7 +51,7 @@ export interface StatRelation {
   id: string;
   storyId: string;
   characterId: string;
-  /** `null` = modo normal do personagem. */
+  /** `null` = the character's normal mode. */
   modeId: string | null;
   statId: string;
   value: number;

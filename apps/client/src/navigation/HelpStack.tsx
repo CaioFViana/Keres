@@ -9,6 +9,11 @@ export type HelpStackParamList = {
   HelpPage: { pageId: string; returnDrawerRoute?: string };
 };
 const Stack = createNativeStackNavigator<HelpStackParamList>();
+/**
+ * In-app manual: index plus one page per article, mounted in both drawers. Each page takes
+ * an optional `returnDrawerRoute` so the drawer's help shortcut can send the reader back
+ * to the screen whose shortcut opened the page.
+ */
 export default function HelpStackNavigator() {
   const [openSections, setOpenSections] = React.useState<Record<string, boolean>>({ start: true });
 

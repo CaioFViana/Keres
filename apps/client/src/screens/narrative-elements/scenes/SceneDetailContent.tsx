@@ -62,6 +62,7 @@ export interface SceneDetailContentProps {
   commentField(field: string, value: string): Omit<CommentableDetailFieldProps, 'label'>;
   /** Truncated prose for the manuscript entry, or null when nothing was written yet. */
   manuscriptExcerpt: string | null;
+  /** True when a stored prose draft differs from the saved body: the "unsaved draft" flag. */
   hasBodyDraft: boolean;
   onOpenEditor(): void;
   dateForScene(

@@ -84,6 +84,8 @@ export class SyncPullService {
             orderBy: [operationLog.operationVersion],
           })
         : [];
+    // The same row can arrive through both cursors, so the merge dedupes by id and restores
+    // version order: the client applies updates in sequence and must never see one twice.
     const operations = Array.from(
       new Map(
         [...visibleOperations, ...historicalPublicFavorites].map((operation) => [

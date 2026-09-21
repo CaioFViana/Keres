@@ -197,8 +197,8 @@ a:hover {
 }
 
 /*
- * O seletor de idioma da barra lateral usa as cores dela, não as do formulário: ele fica sobre
- * o fundo da barra, que em várias paletas é bem diferente do fundo dos cartões.
+ * The sidebar's language selector uses the sidebar's colours, not the form's: it sits on
+ * the bar's background, which in several palettes is quite different from the cards' background.
  */
 .sidebar-footer select {
   width: 100%;
@@ -212,7 +212,7 @@ a:hover {
   cursor: pointer;
 }
 
-/* No login não há barra lateral: o seletor acompanha o cartão. */
+/* On the login screen there is no sidebar: the selector follows the card's styling. */
 .login-language {
   align-self: center;
   padding: 0.35rem 0.5rem;

@@ -6,13 +6,13 @@ export const clientSettings = sqliteTable('client_settings', {
   localUsername: text('local_username').notNull(),
   language: text('language').notNull(),
   darkMode: integer('dark_mode', { mode: 'boolean' }).notNull(),
-  /** Formato de hora das features de Data. `true` = 24h, `false` = AM/PM. */
+  /** Time format for the Date features. `true` = 24h, `false` = AM/PM. */
   use24HourTime: integer('use_24_hour_time', { mode: 'boolean' }).notNull().default(true),
   /** How Gregorian story dates are displayed on this device. */
   dateDisplayFormat: text('date_display_format', { enum: ['iso', 'dmy', 'mdy'] })
     .notNull()
     .default('iso'),
-  /** Controla a disponibilidade do atalho de ajuda contextual nos headers. */
+  /** Controls whether the contextual help shortcut is available in the headers. */
   showContextualHelp: integer('show_contextual_help', { mode: 'boolean' }).notNull().default(true),
   /** Controls whether the literary devices item is present in the side menus. */
   suggestLiteraryDevices: integer('suggest_literary_devices', { mode: 'boolean' })

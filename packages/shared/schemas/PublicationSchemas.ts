@@ -94,7 +94,7 @@ export type CreatePublicationRequest = z.infer<typeof CreatePublicationRequestSc
 export type UpdateShowcaseVisibilityRequest = z.infer<typeof UpdateShowcaseVisibilityRequestSchema>;
 export type UnlockShowcaseStoryRequest = z.infer<typeof UnlockShowcaseStoryRequestSchema>;
 
-/** `2026-08-19`, no fuso local de quem publica (o servidor). */
+/** `2026-08-19`, in the publisher's local time zone (the server). */
 function formatDatePart(publishedAt: Date): string {
   const year = publishedAt.getFullYear();
   const month = String(publishedAt.getMonth() + 1).padStart(2, '0');

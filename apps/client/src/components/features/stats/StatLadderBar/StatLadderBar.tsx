@@ -83,8 +83,8 @@ export function StatLadderBar({ ladder, value }: StatLadderBarProps) {
               </React.Fragment>
             ))}
 
-            {/* A faixa além do topo da escada, tracejada como o anel externo do radar: ainda é
-                o último degrau, mas fora da escala que o autor cadastrou. */}
+            {/* The band past the top of the ladder, dashed like the radar's outer ring: still
+                the last rung, but outside the scale the author registered. */}
             <Rect
               x={layout.overflow.x}
               y={TRACK_TOP}

@@ -1,8 +1,8 @@
 import type { StoryUpdateType } from '@keres/shared';
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'; // Import eq
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
-import * as schema from '../db/schema'; // Import all schema
-import type { ServerService } from '../services/ServerService'; // Import ServerService
+import * as schema from '../db/schema';
+import type { ServerService } from '../services/ServerService';
 import { entityEventEmitter } from './EventEmitter';
 import i18n from './i18n';
 import { createULID } from './entityUtils';
@@ -66,6 +66,14 @@ export async function assertStoryIsOwned(db: AppDrizzleClient, storyId: string):
   }
 }
 
+/**
+ * Appends one entry to the story's local op-log queue and bumps the story's
+ * `lastOperationLog` to the entry's version, so versions stay a dense per-story sequence
+ * the sync code can resume from. Entries start unsynced (`isSynced: false`,
+ * `serverOperationVersion: 0`) with the payload stored stringified. Callers must run the
+ * `assertStoryIsWritable`/`assertStoryIsOwned` gates *before* their table write - by the
+ * time this runs, the local row already exists.
+ */
 export async function recordLocalOperation(
   db: AppDrizzleClient,
   storyId: string,
@@ -97,7 +105,7 @@ export async function recordLocalOperation(
     operationType: operationType,
     entityType: entityType,
     entityId: entityId,
-    payload: JSON.stringify(payload), // Store payload as JSON string
+    payload: JSON.stringify(payload),
     createdAt: new Date(),
     isSynced: false,
     serverOperationVersion: 0,
@@ -106,7 +114,7 @@ export async function recordLocalOperation(
   // Update the story's lastOperationLog
   await db
     .update(schema.stories)
-    .set({ lastOperationLog: nextOperationVersion, updatedAt: new Date() }) // Also update updatedAt
+    .set({ lastOperationLog: nextOperationVersion, updatedAt: new Date() })
     .where(eq(schema.stories.id, storyId));
 
   // Without this, a local edit's own operation log row doesn't show up in the Operation Log

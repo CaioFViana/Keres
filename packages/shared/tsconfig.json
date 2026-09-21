@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
-    // `@keres/shared` guarda a lista de ícones de avatar num .json (ver metadata/avatar.ts).
+    // `@keres/shared` keeps the avatar icon list in a .json (see metadata/avatar.ts).
     "resolveJsonModule": true,
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
-    // Import de tipo é escrito como tal, e o compilador não adivinha: o que está escrito é o
-    // que sobra no bundle. Complementa `@typescript-eslint/consistent-type-imports`, que já
-    // cobra a mesma coisa linha a linha.
+    // A type import is written as such, and the compiler does not guess: what is written is what
+    // remains in the bundle. Complements `@typescript-eslint/consistent-type-imports`, which already
+    // enforces the same thing line by line.
     "verbatimModuleSyntax": true,
-    // Travas de compilador ligadas porque hoje custam zero erro (medido) e barram classes
-    // inteiras de descuido: variável/import esquecido, `case` que vaza para o seguinte, e
-    // método que sobrescreve o da classe base sem dizer.
+    // Compiler locks enabled because today they cost zero errors (measured) and bar whole
+    // classes of carelessness: forgotten variable/import, `case` falling through to the next, and
+    // a method overriding the base class's without saying so.
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,

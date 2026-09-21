@@ -104,7 +104,7 @@ const ExampleStoriesScreen = () => {
         );
         if (result.status === 'installed') {
           showNotification(t('example_stories_install_success'), 'success');
-          fetchStoryList(createStoryService(drizzleDb)); // Mantém a tela de seleção de histórias em dia.
+          fetchStoryList(createStoryService(drizzleDb)); // Keeps the story selection screen up to date.
         } else {
           showNotification(t('example_stories_install_failed'), 'error');
         }

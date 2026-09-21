@@ -497,7 +497,9 @@ const MainSystemNavigator = () => {
         />
         <Drawer.Screen
           name="StorySelection"
-          component={() => <View />} // A dummy component, as it won't be displayed
+          // Never rendered: the entry's `drawerItemPress` is intercepted to reset the root
+          // stack back to story selection, so this placeholder only satisfies the type.
+          component={() => <View />}
           options={{
             title: t('story_selection_title'),
             drawerIcon: drawerIcon('exit-outline'),

@@ -20,7 +20,7 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import type { ChapterType } from '@keres/shared';
 import { AppAlert } from '@/src/utils/AppAlert';
 import { useDrizzle } from '@/src/db';
-import type { ChapterSelect, SceneSelect } from '@/src/db/schema'; // Import SceneSelect
+import type { ChapterSelect, SceneSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   useEntityEventSubscriptions,
@@ -33,9 +33,9 @@ import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { createChapterService } from '@/src/services/storymanagement/ChapterService';
 import { useChapterStore } from '@/src/state/chapterStore';
 import type { LocationService } from '@/src/services/storymanagement/LocationService';
-import { createLocationService } from '@/src/services/storymanagement/LocationService'; // Import LocationService
+import { createLocationService } from '@/src/services/storymanagement/LocationService';
 import type { SceneService } from '@/src/services/storymanagement/SceneService';
-import { createSceneService } from '@/src/services/storymanagement/SceneService'; // Import SceneService
+import { createSceneService } from '@/src/services/storymanagement/SceneService';
 import { useStoryStore } from '@/src/state/storyStore';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useSceneCalendarDates } from '@/src/hooks/useSceneCalendarDates';
@@ -48,7 +48,7 @@ import {
   formatSceneUniverseDuration,
   hasSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
-import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
+import type { Location } from '@keres/shared/entities/Location';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -56,7 +56,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
 
-// Define the parameter list for this screen
 export type ChapterDetailScreenParamList = {
   ChapterDetail: { chapterId: string };
 };
@@ -79,10 +78,9 @@ const ChapterDetailScreen = () => {
 
   const drizzleDb = useDrizzle();
   const chapterServiceRef = useRef<ReturnType<typeof createChapterService> | null>(null);
-  const sceneServiceRef = useRef<SceneService | null>(null); // Ref for SceneService
-  const locationServiceRef = useRef<LocationService | null>(null); // Ref for LocationService
+  const sceneServiceRef = useRef<SceneService | null>(null);
+  const locationServiceRef = useRef<LocationService | null>(null);
 
-  // Initialize services once when drizzleDb is available
   useEffect(() => {
     if (drizzleDb) {
       if (!chapterServiceRef.current) {
@@ -120,8 +118,8 @@ const ChapterDetailScreen = () => {
     deleteNoteRelation,
   } = useEntityRelations({ entityType: 'Chapter', entityId: chapterId });
 
-  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]); // State for for all scenes in story
-  const [allLocations, setAllLocations] = useState<Location[]>([]); // State for all locations in story
+  const [allScenes, setAllScenes] = useState<SceneSelect[]>([]);
+  const [allLocations, setAllLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headerTitle, setHeaderTitle] = useState(t('loading'));
@@ -230,8 +228,8 @@ const ChapterDetailScreen = () => {
 
   useEffect(() => {
     if (chapter) {
-      fetchAllScenesInStory(); // Fetch all scenes
-      fetchAllLocationsInStory(); // Fetch all locations
+      fetchAllScenesInStory();
+      fetchAllLocationsInStory();
     }
   }, [chapter, fetchAllScenesInStory, fetchAllLocationsInStory]);
 

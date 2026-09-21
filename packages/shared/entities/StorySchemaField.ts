@@ -17,10 +17,10 @@ export interface StorySchemaField {
   key: string;
   description: string | null;
   type: AttributeType;
-  /** Alvo fixo de um atributo ENTITY; imutÃ¡vel apÃ³s a criaÃ§Ã£o, como key e entityType. */
+  /** Fixed target of an ENTITY attribute; immutable after creation, like key and entityType. */
   targetEntityType: StorySchemaEntityType | null;
   isRequired: boolean;
-  /** Sempre texto puro, igual a `AttributeValue.value` - ver `attributeValueCodec.ts`. */
+  /** Always plain text, like `AttributeValue.value` - see `attributeValueCodec.ts`. */
   defaultValue: string | null;
   /** Display order in forms/details, ascending. Not editable. Not important enough to reorder! */
   order: number;

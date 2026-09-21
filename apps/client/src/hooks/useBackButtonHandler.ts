@@ -110,7 +110,7 @@ export const useBackButtonHandler = ({
           return true;
         }
       }
-      // 0. Volta customizada: quem abriu a tela sabe para onde ela deve voltar.
+      // 0. Custom back: whoever opened the screen knows where it should go back to.
       if (onBackRef.current) {
         onBackRef.current();
         return true;

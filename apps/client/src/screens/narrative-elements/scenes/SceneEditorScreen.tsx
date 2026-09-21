@@ -63,6 +63,9 @@ function SceneEditorContent({
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  // Write/read/review state machine: write owns the toolbar, the native editor and the save
+  // footer; read and review render the live serialized doc (unsaved typing included), with
+  // review adding the prose-comments entry. Mode switches never touch the doc.
   const [mode, setMode] = useState<EditorMode>('write');
   const [commentsOpen, setCommentsOpen] = useState(false);
   const { canEdit } = useStoryRole(scene.storyId);
@@ -110,7 +113,7 @@ function SceneEditorContent({
     if (saveError) AppAlert.alert(t('error'), saveError);
   }, [saveError, t]);
 
-  // Escrever/Ler share one scroll container and restore the offset on switch, so the
+  // Write/Read share one scroll container and restore the offset on switch, so the
   // passage stays exactly where it was instead of jumping back to the top.
   const scrollRef = useRef<ScrollView | null>(null);
   const handleToolbarAction = useCallback(
@@ -160,6 +163,9 @@ function SceneEditorContent({
     ],
   });
 
+  // Prose comments anchor to the live serialized doc, not the saved row: the snapshot must
+  // show reviewers what the writer saw when commenting, unsaved typing included. The field
+  // key matches the draft field so body comments stay on the body wherever they surface.
   const handleAddComment = useCallback(
     (input: { commentText: string; excerptText: string | null; criticality: number }) =>
       addComment(
@@ -316,6 +322,10 @@ const SceneEditorScreen = () => {
     }
   }, [sceneId, navigation, copy]);
 
+  // Live updates while editing (sync or another surface saving this scene): the saved row
+  // refreshes underneath, but the editing doc stays - the prose hook never reseeds from the
+  // saved body, so remote saves re-arm dirtiness instead of clobbering in-progress prose. A
+  // deleted scene has no editor to stay on, so it navigates back like the initial load.
   const handleSceneChange = useCallback(
     async (_storyId: string, changedSceneId: string) => {
       if (changedSceneId !== sceneId || !sceneServiceRef.current) return;
@@ -337,6 +347,10 @@ const SceneEditorScreen = () => {
     ),
   );
 
+  // Save path for the prose hook: empty prose persists as null (no body yet), and the
+  // fresh row replaces local state so the saved body (and dirtiness against it) re-derives.
+  // The editing doc is NOT reseeded from it - the hook seeds once at mount, so a save never
+  // disturbs the caret.
   const persist = useCallback(
     async (body: string | null) => {
       if (!sceneServiceRef.current) throw new Error(copy.failedToSave);
@@ -358,6 +372,8 @@ const SceneEditorScreen = () => {
   if (selectedStory?.id && scene.storyId !== selectedStory.id) {
     return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;
   }
+  // Stable key by id: scene refreshes (save, sync) must NOT remount the content, or the
+  // editing doc would reseed and wipe unsaved typing. A different scene still remounts.
   return <SceneEditorContent key={scene.id} scene={scene} persist={persist} />;
 };
 

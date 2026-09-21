@@ -20,7 +20,7 @@ import {
   tagRelations,
   tags,
   worldRules,
-} from '../../db/schema'; // Import all possible relation tables
+} from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class TagRelationSyncHandler extends BaseSyncEntityHandler<

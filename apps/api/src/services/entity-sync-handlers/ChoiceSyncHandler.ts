@@ -5,10 +5,10 @@ import type {
   DeleteStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { CreateChoiceDataSchema, PartialChoiceSchema } from '@keres/shared'; // Added DeleteStoryUpdate
+import { CreateChoiceDataSchema, PartialChoiceSchema } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
-import { choices, scenes, stories } from '../../db/schema'; // Import stories
+import { choices, scenes, stories } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class ChoiceSyncHandler extends BaseSyncEntityHandler<
@@ -99,14 +99,14 @@ export class ChoiceSyncHandler extends BaseSyncEntityHandler<
     );
 
     await database.insert(choices).values({
-      id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
-      storyId: storyId, // Ensure storyId is set from the context
-      ...validatedData, // Spread the validated data from the client
-      version: 1, // Ensure version starts at 1 for new creations
-      createdAt: new Date(), // Ensure createdAt is set
-      updatedAt: new Date(), // Ensure updatedAt is set
-      isDeleted: false, // Ensure isDeleted is false
-      deletedAt: null, // Ensure deletedAt is null
+      id: update.id!,
+      storyId: storyId,
+      ...validatedData,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
     });
   }
 

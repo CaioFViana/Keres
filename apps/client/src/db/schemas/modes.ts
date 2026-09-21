@@ -2,8 +2,8 @@ import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
- * Um estado alternativo de um personagem ao longo da obra. Independente do sistema de status:
- * existe mesmo com `stories.stat_system` desligado.
+ * An alternate state of a character across the work. Independent of the status system:
+ * it exists even with `stories.stat_system` turned off.
  */
 export const modes = sqliteTable('modes', {
   id: text('id').primaryKey(),

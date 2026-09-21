@@ -18,6 +18,14 @@ interface UseOperationLogsOptions {
   shouldRefetch?: boolean;
 }
 
+/**
+ * Operation history for one story, in recent-first or paginated mode.
+ *
+ * Subscribes to `operation_log_updated` so each sync cycle and local write resets to
+ * page 1; appended pages are deduplicated by id because a refetch racing `loadMore`
+ * can otherwise duplicate rows. WorldRule rows additionally resolve their section for
+ * display, defaulting to an empty map when none are present.
+ */
 export function useOperationLogs({
   storyId,
   limit,

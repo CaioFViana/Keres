@@ -311,14 +311,6 @@ export class SyncEngineService {
     this.clearStoryContext();
   }
 
-  /**
-   * The version the user based their edit on.
-   *
-   * Every local service increments `version` by exactly 1 and writes the *resulting* version into the
-   * operation's payload. The server needs the base, not the result: it is by comparing the base with the
-   * version it holds now that it discovers whether somebody wrote in between. Sending the result (as used
-   * to happen) made the check always pass.
-   */
   private throwIfCycleAborted(signal: AbortSignal): void {
     if (signal.aborted) {
       const error = new Error('Sync cycle aborted.');
@@ -327,7 +319,14 @@ export class SyncEngineService {
     }
   }
 
-  /** Runs one full pull/push cycle. Resolves to true when the server was unreachable. */
+  /**
+   * Runs one full pull/push cycle. Resolves to true when the server was unreachable.
+   *
+   * Versioning note: every local service increments `version` by exactly 1 and writes the
+   * *resulting* version into the operation's payload. The server needs the base, not the
+   * result: it is by comparing the base with the version it holds now that it discovers
+   * whether somebody wrote in between (see `deriveBaseVersion` in `syncPure.ts`).
+   */
   private async performSync(signal: AbortSignal): Promise<boolean> {
     if (!this.storyId) {
       console.log('No storyId set for sync operation.');

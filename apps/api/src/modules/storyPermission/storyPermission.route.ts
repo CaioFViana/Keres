@@ -1,10 +1,10 @@
 import {
   CreateStoryPermissionSchema,
-  StoryAndTargetUserParams, // Import the new schema
+  StoryAndTargetUserParams,
   StoryIdParam,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index'; // Import JWTPayload
+import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { AppError } from '../../utils/errors';
 
@@ -42,7 +42,7 @@ async function withOwnershipCheck<T>(action: () => Promise<T>): Promise<T> {
 }
 
 export const storyPermissionRoutes = new Elysia()
-  .decorate('user', null as JWTPayload | null) // Decorate 'user' property
+  .decorate('user', null as JWTPayload | null)
   .post(
     '/',
     async ({ body, user }) => {
@@ -59,7 +59,7 @@ export const storyPermissionRoutes = new Elysia()
       );
     },
     {
-      body: CreateStoryPermissionSchema, // This schema now serves for upsert
+      body: CreateStoryPermissionSchema,
       response: StoryPermissionResponseSchema,
       detail: {
         summary: 'Create or update a story permission',
@@ -70,7 +70,7 @@ export const storyPermissionRoutes = new Elysia()
     },
   )
   .delete(
-    '/story/:storyId/user/:targetUserId', // New path for delete
+    '/story/:storyId/user/:targetUserId',
     async ({ params, user }) => {
       if (!user || !user.userId) {
         throw new AppError(401, 'Unauthorized: User not authenticated.');
@@ -84,7 +84,7 @@ export const storyPermissionRoutes = new Elysia()
       );
     },
     {
-      params: StoryAndTargetUserParams, // Use the new params schema
+      params: StoryAndTargetUserParams,
       response: t.Object({ message: t.String() }),
       detail: {
         summary: 'Delete a story permission',

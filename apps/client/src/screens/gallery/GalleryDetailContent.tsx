@@ -57,7 +57,7 @@ interface GalleryDetailContentProps {
    * `navigation.goBack()` directly - its host decides what "close" means.
    */
   onClose: () => void;
-  /** Exibe um controle expl\u00edcito para fechar a tela ou o overlay que hospeda o conte\u00fado. */
+  /** Shows an explicit control to close the screen or the overlay hosting the content. */
   showCloseButton?: boolean;
 }
 

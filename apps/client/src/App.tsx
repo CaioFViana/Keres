@@ -30,11 +30,9 @@ import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
 import i18n from './utils/i18n';
 
-// Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme(); // Get theme colors
-  // Determine status bar style based on background color lightness
+  const { colors } = useTheme();
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
 
   // The native window's background shows for an instant during stack and Modal transitions. Keeping it
@@ -57,21 +55,20 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       {children}
       <DocumentTitleSync />
       <NotificationPopup />
-      {/* AppAlert.alert() precisa poder ser chamado de qualquer tela, então o Modal que o
-          renderiza mora aqui, não em cada tela. */}
+      {/* AppAlert.alert() must be callable from any screen, so the Modal that renders it
+          lives here, not in each screen. */}
       <AppAlertHost />
-      {/* Os tours guiados de primeira abertura, no mesmo molde: um Modal único dirigido por store. */}
+      {/* The first-open guided tours follow the same pattern: a single store-driven Modal. */}
       <GuideHost />
-      {/* O PNG de qualquer exportação é rasterizado por este canvas oculto, então ele também
-          mora aqui, ao lado do AppAlertHost. */}
+      {/* Every export's PNG is rasterized by this hidden canvas, so it also
+          lives here, next to AppAlertHost. */}
       <SvgRasterHost />
     </View>
   );
 };
 
-// New ThemeInitializer component to provide drizzleClient to ThemeProvider
 const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
-  const drizzleClient = useDrizzle(); // Get drizzleClient from context
+  const drizzleClient = useDrizzle();
 
   // The navigation theme mapping lives with the navigator itself
   // (see navigation/navigationTheme.ts), which hands it to its NavigationContainer.
@@ -90,6 +87,9 @@ const DatabaseInitializer = () => {
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
 
   useEffect(() => {
+    // Boot order is load-bearing: the web media cache must exist before anything calls
+    // `exists()`, auth tokens hydrate before the first API use, and the language applies
+    // only after settings load. Screens mount only once all three are done (see below).
     const initialize = async () => {
       console.log('DatabaseInitializer: Starting database initialization...');
       try {
@@ -107,11 +107,9 @@ const DatabaseInitializer = () => {
         setDbInitialized(true);
         console.log('DatabaseInitializer: Database initialized successfully.');
 
-        // Initialize AuthTokenManager with the Drizzle DB instance
         setAuthDb(initializedDrizzle);
         setEditorDraftDb(initializedDrizzle);
         await authTokenManager.hydrateTokens();
-        // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);
         await restoreHostedCookieSession(initializedDrizzle);
 

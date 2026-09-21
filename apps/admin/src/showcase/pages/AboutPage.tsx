@@ -20,8 +20,8 @@ export function AboutPage() {
       <h2>{t('about.downloadTitle')}</h2>
       <p>{t('about.downloadBody')}</p>
       {/*
-        `Trans` porque a frase tem um trecho em negrito no meio: o nome da tela do app. Partir a
-        string em três pedaços deixaria a ordem das palavras presa ao inglês.
+        `Trans` because the sentence has a bold span in the middle: the app screen's name. Splitting
+        the string into three pieces would pin the word order to English.
       */}
       <p>
         <Trans ns="showcase" i18nKey="about.importBody" components={{ strong: <strong /> }} />

@@ -14,6 +14,16 @@ import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { AppAlert } from '../utils/AppAlert';
 
+/**
+ * Server linkage and collaboration state for one story's settings screen.
+ *
+ * Owns three chained async stages: (1) resolve the linked server from the local
+ * registry, (2) probe ownership by fetching collaborators (a 403 means "not owner",
+ * not an error), (3) list addable friends once ownership is confirmed. Each stage
+ * guards its own `cancelled` flag and each handoff resets the downstream state
+ * during render, so switching stories can never show the previous story's server,
+ * collaborators, or friend picker.
+ */
 export function useStoryServerCollaboration(storyId: string | undefined) {
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
@@ -95,6 +105,8 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
         }
       } catch (err: any) {
         if (cancelled) return;
+        // A 403 is not an error here - it is how the server reports that the
+        // current user is linked to the story but is not its owner.
         if (err?.response?.status === 403) {
           setIsOwnerOnServer(false);
         } else {

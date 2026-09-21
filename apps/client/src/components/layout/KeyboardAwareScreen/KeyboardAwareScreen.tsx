@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 
+/** Exposes `scrollToFocusedInput` to descendants so custom inputs can request a scroll-into-view pass. */
 export const KeyboardAwareContext = React.createContext<(() => void) | null>(null);
 
 interface KeyboardAwareScreenProps {

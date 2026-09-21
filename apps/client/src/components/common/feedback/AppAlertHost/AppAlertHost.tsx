@@ -109,7 +109,7 @@ const AppAlertHost: React.FC = () => {
         activeOpacity={1}
         onPress={() => current.cancelable && dismiss()}
       >
-        {/* Toque dentro do card não deve fechar o alerta - só o toque no fundo. */}
+        {/* Taps inside the card must not dismiss the alert - only taps on the backdrop. */}
         <TouchableOpacity activeOpacity={1} style={styles.card} onPress={() => {}}>
           <Text style={styles.title}>{current.title}</Text>
           {!!current.message && <Text style={styles.message}>{current.message}</Text>}

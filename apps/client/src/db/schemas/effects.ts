@@ -10,9 +10,9 @@ export const effects = sqliteTable('effects', {
   effectType: text('effect_type', {
     enum: ['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset'],
   }).notNull(),
-  // Usado quando effectType = 'itemGrant' | 'itemTake'
+  // Only used when effectType = 'itemGrant' | 'itemTake'
   itemId: text('item_id').references(() => items.id),
-  // Usado quando effectType = 'triggerSet' | 'triggerUnset'
+  // Only used when effectType = 'triggerSet' | 'triggerUnset'
   triggerName: text('trigger_name'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),

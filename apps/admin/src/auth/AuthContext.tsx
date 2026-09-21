@@ -35,6 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsBootstrapping(false);
   }, []);
 
+  // Bridges the non-React apiClient into React state: any 401 anywhere clears the token
+  // and this event is how the provider finds out, so the panel returns to login.
   useEffect(() => {
     const onSessionCleared = () => {
       markLoggedOut();
@@ -50,6 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Guards the StrictMode double-mount and unmount-while-probing: a stale answer must
+    // neither authenticate nor log out a provider that is no longer there.
     let cancelled = false;
     setIsBootstrapping(true);
     probeAdminAccess()

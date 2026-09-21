@@ -1,4 +1,4 @@
-/** Destinos públicos da landing. Centralizados para testes e para o rodapé. */
+/** The landing page's public destinations. Centralised for tests and for the footer. */
 
 export const GITHUB_REPO_URL = 'https://github.com/CaioFViana/Keres';
 export const GITHUB_RELEASES_URL = `${GITHUB_REPO_URL}/releases`;

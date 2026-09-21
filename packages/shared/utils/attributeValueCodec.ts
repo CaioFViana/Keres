@@ -31,7 +31,7 @@ function parseSuggestionList(stored: string): string[] {
   return trimmed ? [trimmed] : [];
 }
 
-/** Expande o valor persistido em itens para colheita de uso (`getValueUsageCounts`). */
+/** Expands the persisted value into items for usage harvesting (`getValueUsageCounts`). */
 export function explodeAttributeUsageValue(
   type: AttributeType | string | null | undefined,
   stored: string,

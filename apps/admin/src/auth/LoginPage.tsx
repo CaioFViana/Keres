@@ -65,7 +65,7 @@ export function LoginPage() {
         <button type="submit" disabled={loading}>
           {loading ? t('login.signingIn') : t('login.signIn')}
         </button>
-        {/* Antes de entrar: quem não lê inglês precisa poder trocar o idioma já no login. */}
+        {/* Before signing in: a reader who cannot read English must be able to switch language here, on the login screen itself. */}
         <LanguageSelect storageKey={ADMIN_LANGUAGE_KEY} className="login-language" />
       </form>
     </div>

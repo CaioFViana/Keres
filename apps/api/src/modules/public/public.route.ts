@@ -106,7 +106,7 @@ export const publicRoutes = new Elysia()
             });
           }
           set.headers['etag'] = etag;
-          // O site consulta em intervalo; sem isto cada visita repetida baixaria a lista inteira.
+          // The site polls on an interval; without this every repeated visit would download the whole list.
           set.headers['cache-control'] = cacheControl;
           return showcaseService.listPublicStories();
         },

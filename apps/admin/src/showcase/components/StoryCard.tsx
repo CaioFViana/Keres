@@ -40,11 +40,11 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
 
         <div className="story-card-foot">
           {/*
-            Autor e quem publicou são coisas diferentes: o autor é um texto livre da história
-            (pode ser um pseudônimo, uma equipe, ou "domínio público" numa obra que a pessoa só
-            transcreveu), e quem publicou é a conta que subiu o pacote. Sem autor declarado, o
-            card mostra só quem publicou - inventar o nome da conta como autor seria atribuir a
-            ela uma obra que talvez não seja dela.
+            Author and publisher are different things: the author is free text from the story
+            (it may be a pseudonym, a team, or "public domain" on a work the person only
+            transcribed), and the publisher is the account that uploaded the package. With no
+            declared author, the card shows only the publisher - passing the account name off
+            as the author would attribute to it a work that may not be theirs.
           */}
           <div className="owner">
             <OwnerAvatar owner={owner} size={26} />

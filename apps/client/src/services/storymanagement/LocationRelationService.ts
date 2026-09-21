@@ -6,7 +6,7 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
-/** Mesmo limite defensivo do handler no servidor - ver LocationRelationSyncHandler.ts (API). */
+/** Same defensive limit as the server-side handler - see LocationRelationSyncHandler.ts (API). */
 const MAX_ANCESTOR_WALK = 500;
 
 export interface LocationRelationService {

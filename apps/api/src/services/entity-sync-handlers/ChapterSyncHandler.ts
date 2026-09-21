@@ -7,7 +7,7 @@ import type {
 import { ChapterReorderingStoryUpdateSchema, completeReorderProblem } from '@keres/shared';
 import type { CreateChapterDataType } from '@keres/shared/';
 import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
-import { and, eq } from 'drizzle-orm'; // Import necessary Drizzle-orm functions
+import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { chapters, scenes, storyArcs } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
@@ -56,14 +56,14 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     }
 
     await database.insert(chapters).values({
-      id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
-      storyId: storyId, // Ensure storyId is set from the context
-      ...validatedData, // Spread the validated data from the client
-      version: 1, // Ensure version starts at 1 for new creations
-      createdAt: new Date(), // Ensure createdAt is set
-      updatedAt: new Date(), // Ensure updatedAt is set
-      isDeleted: false, // Ensure isDeleted is false
-      deletedAt: null, // Ensure deletedAt is null
+      id: update.id!,
+      storyId: storyId,
+      ...validatedData,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
     });
   }
 
@@ -76,9 +76,8 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     database: CompatibleDb = db,
   ): Promise<void> {
     if (update.type === 'reorder' && update.entity === 'Chapter') {
-      // Refined check
       const validatedReorderUpdate: ChapterReorderingStoryUpdate =
-        ChapterReorderingStoryUpdateSchema.parse(update); // Corrected schema and type
+        ChapterReorderingStoryUpdateSchema.parse(update);
 
       // Perform version check for the Chapter itself
       this.checkVersionConflict(
@@ -123,7 +122,7 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
             .set({
               index: item.newIndex,
               updatedAt: new Date(),
-              version: sceneToUpdate.version + 1, // Increment individual scene version
+              version: sceneToUpdate.version + 1,
             })
             .where(eq(scenes.id, item.id));
         });
@@ -135,7 +134,7 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
           .update(chapters)
           .set({
             updatedAt: new Date(),
-            version: currentEntity.version + 1, // Increment chapter version
+            version: currentEntity.version + 1,
           })
           .where(eq(chapters.id, validatedReorderUpdate.id!));
       });

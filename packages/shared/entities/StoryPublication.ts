@@ -16,7 +16,7 @@ export interface StoryPublication {
   operationVersion: number;
   /** `CURRENT_STORY_FORMAT_VERSION` at the instant of publication. */
   formatVersion: number;
-  /** Tamanho do .zip em bytes. */
+  /** Size of the .zip in bytes. */
   byteSize: number;
   /** How many media files went into the package, out of how many the story references. */
   mediaIncluded: number;

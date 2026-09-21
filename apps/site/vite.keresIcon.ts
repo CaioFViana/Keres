@@ -24,8 +24,20 @@ export const KERES_ICON_SOURCE = path.resolve(
   'desktop_icon.png',
 );
 
+/**
+ * Side of the wordmark used on the pages. The original is 1024px and almost 900 KB - weight that
+ * does not pay off for a logo drawn at 28px in the header. 128px covers high-density screens (4x
+ * in the header, almost 6x in the footer) for a fraction of the bytes.
+ */
 const LOGO_SIZE = 128;
 
+/**
+ * Downscales a square PNG by block averaging.
+ *
+ * The average is computed with premultiplied alpha: without that, the colour of fully transparent
+ * pixels (which in a PNG can be anything, black included) enters the sum and leaves a dark halo
+ * around the artwork's edge - very visible on a cut-out logo like this one.
+ */
 function downscaleSquarePng(source: Buffer, size: number): Buffer {
   const image = PNG.sync.read(source);
   if (image.width === size && image.height === size) {
@@ -80,6 +92,13 @@ function downscaleSquarePng(source: Buffer, size: number): Buffer {
   return PNG.sync.write(output);
 }
 
+/**
+ * Builds a multi-size `favicon.ico` (16/24/32/48/64) from the desktop PNG, the same idea as
+ * electron-builder converting that file to .ico.
+ *
+ * `devUrls` are the paths the development server has to answer - the landing page is served at
+ * the root, so the default is just `/favicon.ico`.
+ */
 export function keresFavicon(devUrls: string[] = ['/favicon.ico']): Plugin {
   let icoPromise: Promise<Buffer> | null = null;
   const ico = () => {
@@ -111,10 +130,18 @@ export function keresFavicon(devUrls: string[] = ['/favicon.ico']): Plugin {
   };
 }
 
+/** The virtual module the pages import to get the wordmark's URL. */
 export const KERES_LOGO_MODULE_ID = 'virtual:keres-logo';
 const RESOLVED_LOGO_MODULE_ID = `\0${KERES_LOGO_MODULE_ID}`;
+/** Path served in development, where no asset is emitted. */
 const DEV_LOGO_URL = '/keres-logo.png';
 
+/**
+ * Publishes the scaled-down wordmark as `virtual:keres-logo`, whose default export is the image's URL.
+ *
+ * A virtual module rather than a directly imported file because the image does not exist on disk
+ * inside `apps/site` - it is derived from the client's icon at build time.
+ */
 export function keresLogo(): Plugin {
   let logoPromise: Promise<Buffer> | null = null;
   const logo = async () => {
@@ -147,6 +174,7 @@ export function keresLogo(): Plugin {
         name: 'keres-logo.png',
         source: await logo(),
       });
+      // Vite rewrites this into the final URL with the app's `base` already applied.
       return `export default import.meta.ROLLUP_FILE_URL_${referenceId};`;
     },
     configureServer(server) {

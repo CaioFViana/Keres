@@ -1,13 +1,19 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-// Import all migration files dynamically
-import migrations from './migrations/index'; // Import the generated migrations array
+import migrations from './migrations/index';
 
+/**
+ * Applies pending client-side migrations in order, recording each in `_migrations`.
+ *
+ * Unlike the server's migration runner, this one is hand-rolled against expo-sqlite:
+ * it diffs the generated migration list against the `_migrations` table and runs only
+ * what is missing, so re-opening the database is a no-op once everything is applied.
+ * A failing migration aborts startup (the error is rethrown) rather than leaving a
+ * half-migrated schema behind.
+ */
 export async function migrate(expoDb: SQLiteDatabase) {
-  // Renamed db to expoDb for clarity
   console.log('migrate: Starting custom Drizzle client-side migrations...');
 
-  // Ensure _migrations table exists
   await expoDb.execAsync(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +28,6 @@ export async function migrate(expoDb: SQLiteDatabase) {
   const appliedMigrationNames = new Set(appliedMigrations.map((m) => m.name));
 
   for (const migration of migrations) {
-    // Use the dynamically imported migrations
     if (!appliedMigrationNames.has(migration.name)) {
       console.log(`migrate: Applying migration: ${migration.name}`);
       try {

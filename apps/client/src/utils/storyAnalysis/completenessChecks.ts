@@ -244,7 +244,7 @@ export function checkStorySchema(input: StoryAnalysisInput): StoryAnalysisFindin
         field.type === AttributeType.NUMBER
           ? decoded === null
           : field.type === AttributeType.DATE
-            ? // `Date.parse` continua como segunda chance de propósito: só o formato canônico
+            ? // `Date.parse` stays on purpose as a second chance: only the canonical format
               // (`attributeDateValue.ts`) is accepted straight away, but free-text values saved before the date picker
               // existed must not all turn into warnings at once.
               !isValidAttributeDate(raw) && Number.isNaN(Date.parse(raw))

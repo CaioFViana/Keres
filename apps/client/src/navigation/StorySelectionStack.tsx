@@ -282,6 +282,9 @@ const StorySelectionNavigator = () => {
           const showNestedBackButton =
             isNestedDestination ||
             (nestedState?.type === 'stack' && (nestedState.index ?? 0) > 0 && nestedStackKey);
+          // Same lazy resolution as the main drawer's back button: the route object captured
+          // while the header mounts can hold a partial state, so the live target is read
+          // from the drawer navigation at press time.
           const goBackInNestedStack = () => {
             const liveDrawerRoute = navigation
               .getState()
@@ -389,9 +392,9 @@ const StorySelectionNavigator = () => {
           listeners={drawerItemListeners('FriendshipDrawer', 'FriendshipList')}
         />
         {/*
-        Import/export vive no menu principal, e não no menu de uma história: importar cria
-        uma história nova (não existe história ativa nesse momento) e exportar deve poder
-        alcançar qualquer uma das histórias, não só a que estiver aberta.
+        Import/export lives in the main menu, not in a story's menu: importing creates
+        a new story (there is no active story at that point) and exporting must reach
+        any story, not just the open one.
       */}
         <Drawer.Screen
           name="ImportExport"
@@ -404,10 +407,10 @@ const StorySelectionNavigator = () => {
           listeners={drawerItemListeners('ImportExport')}
         />
         {/*
-        Publicar só existe com servidor: uma história que nunca saiu deste aparelho não tem
-        onde ser publicada. O item é escondido pela altura, como o de Escolhas em
-        MainSystemStack faz com histórias lineares - a tela continua registrada, então uma
-        navegação direta (ou o link da ajuda) não quebra quando o servidor é removido.
+        Publishing only exists with a server: a story that never left this device has
+        nowhere to be published. The item is hidden by height, as the Choices one in
+        MainSystemStack does with linear stories - the screen stays registered, so a
+        direct navigation (or the help link) does not break when the server is removed.
       */}
         <Drawer.Screen
           name="PublishStory"
@@ -424,10 +427,6 @@ const StorySelectionNavigator = () => {
           listeners={drawerItemListeners('PublishStory')}
         />
         {/*
-        Mesmo raciocínio do Import/Export logo acima: instalar um exemplo cria uma história
-        nova, então não depende de (nem pertence ao menu de) uma história já aberta.
-      */}
-        {/*
         Same reasoning as Import/Export and the examples above: a pack is made from a story and
         applied when a new one is created, so it belongs to the app's menu rather than to any single
         story's.
@@ -442,6 +441,10 @@ const StorySelectionNavigator = () => {
           }}
           listeners={drawerItemListeners('PacksDrawer', 'PackList')}
         />
+        {/*
+        Same reasoning as Import/Export above: installing an example creates a new
+        story, so it depends on (and belongs to the menu of) no already-open story.
+      */}
         <Drawer.Screen
           name="ExampleStories"
           component={ExampleStoriesScreen}

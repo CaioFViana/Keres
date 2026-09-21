@@ -93,8 +93,8 @@ export function StoryPage() {
         <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
         <h1>{snapshot.title}</h1>
         {/*
-          Quem publicou, sempre - é um fato sobre esta página. O autor da obra é outra coisa e
-          aparece entre os dados da história, abaixo.
+          The publisher, always - it is a fact about this page. The work's author is a different
+          thing, shown among the story's data below.
         */}
         <div className="owner">
           <OwnerAvatar owner={owner} size={34} />
@@ -111,9 +111,9 @@ export function StoryPage() {
 
       <dl className="story-facts">
         {/*
-          Texto livre da própria história: pode ser um pseudônimo, uma equipe, ou uma atribuição
-          de domínio público. Não tem relação com a conta que publicou, e por isso não cai para
-          o nome dela quando está vazio.
+          Free text from the story itself: it may be a pseudonym, a team, or a public-domain
+          attribution. It has no relation to the account that published, so it never falls back
+          to that account's name when empty.
         */}
         {snapshot.author && (
           <div>

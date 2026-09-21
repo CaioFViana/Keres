@@ -3,6 +3,15 @@ import { resolve } from 'node:path';
 import { mergeLcovReports, parseLcov, serializeLcov } from './lib/coverage';
 import { repoRoot } from './lib/packages';
 
+/**
+ * Merges the API's unit and integration lcov reports into one union report.
+ *
+ *   bun run api:coverage:merge
+ *
+ * The two suites cover the same files, so the merge keeps the highest hit count per location
+ * (see `lib/coverage.ts`) instead of counting every line twice. Editors and coverage services
+ * read the single `apps/api/coverage-combined/lcov.info` this writes.
+ */
 const reports = [
   parseLcov(repoRoot, 'apps/api', 'coverage'),
   parseLcov(repoRoot, 'apps/api', 'coverage-integration'),

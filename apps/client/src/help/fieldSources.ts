@@ -4,7 +4,7 @@ export { entityMetadataHelpPages, fieldSources } from './visibleFieldSources';
 export const visibleEntityProperties = fieldSources;
 
 export type EntityPropertyClassification = {
-  /** Campos apresentados ao leitor em uma tela, fluxo ou artigo de ajuda. */
+  /** Fields presented to the reader on a screen, flow, or help article. */
   documented: string[];
   /** Identity, synchronization or internal-link keys that are not editable fields. */
   invisible: string[];

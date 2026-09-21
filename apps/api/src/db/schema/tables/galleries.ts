@@ -87,7 +87,7 @@ export const mediaBlobs = table(
     hash: text('hash').primaryKey(),
     mimeType: text('mime_type').notNull(),
     sizeBytes: integer('size_bytes').notNull(),
-    /** Caminho relativo à raiz de armazenamento configurada. */
+    /** Path relative to the configured storage root. */
     storagePath: text('storage_path').notNull(),
     createdAt: timestampNow('created_at'),
   },

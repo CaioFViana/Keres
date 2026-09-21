@@ -14,9 +14,9 @@ export const effects = table('effects', {
   effectType: text('effect_type', {
     enum: ['itemGrant', 'itemTake', 'triggerSet', 'triggerUnset'],
   }).notNull(),
-  // Usado quando effectType = 'itemGrant' | 'itemTake'
+  // Used when effectType = 'itemGrant' | 'itemTake'
   itemId: text('item_id').references(() => items.id),
-  // Usado quando effectType = 'triggerSet' | 'triggerUnset'
+  // Used when effectType = 'triggerSet' | 'triggerUnset'
   triggerName: text('trigger_name'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),

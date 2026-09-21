@@ -28,7 +28,7 @@ export class SyncService {
     );
   }
 
-  /** Exposto para AdminRecoveryService (restaurar entidades) e TierEnforcementService (contar uso). */
+  /** Exposed for AdminRecoveryService (restoring entities) and TierEnforcementService (counting usage). */
   getEntityHandlers(): ReadonlyMap<string, SyncEntityHandler> {
     return this.entityHandlers;
   }

@@ -146,6 +146,9 @@ const GenericFilterSortList = <T,>({
     return hasNativeSearchableFields || supportsCustomAttributes;
   }, [advancedSearchScopes, entityName]);
 
+  // Controlled from the parent, mirrored locally for the pill controls: when the parent's
+  // props change (a filter cleared elsewhere, a deep link), the render-time comparisons
+  // below resync the local selections instead of leaving the pills showing stale state.
   const [prevSelectedFilterValues, setPrevSelectedFilterValues] = useState(selectedFilterValues);
   if (selectedFilterValues !== prevSelectedFilterValues) {
     setPrevSelectedFilterValues(selectedFilterValues);
@@ -233,7 +236,6 @@ const GenericFilterSortList = <T,>({
 
   const handleOpenAdvancedSearchModal = useCallback(() => {
     if (hasAdvancedSearchFields) {
-      // Only open if there are fields
       setIsAdvancedSearchModalVisible(true);
     }
   }, [hasAdvancedSearchFields]);
@@ -307,7 +309,7 @@ const GenericFilterSortList = <T,>({
           <TouchableOpacity
             onPress={handleOpenAdvancedSearchModal}
             style={styles(colors).advancedSearchButton}
-            disabled={!hasAdvancedSearchFields} // Disable if no fields are searchable
+            disabled={!hasAdvancedSearchFields}
           >
             <Ionicons
               name="search-outline"
@@ -385,7 +387,7 @@ const GenericFilterSortList = <T,>({
       {storyId &&
         entityName &&
         onAdvancedSearch &&
-        hasAdvancedSearchFields && ( // Only render modal if there are searchable fields
+        hasAdvancedSearchFields && (
           <AdvancedSearchModal
             entityName={entityName}
             storyId={storyId}

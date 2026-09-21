@@ -1,11 +1,11 @@
 /*
- * O visual do site público.
+ * The public site's look.
  *
- * Duas famílias de variáveis convivem aqui de propósito:
- *   --color-*  o visual fixo do Keres (cabeçalho, rodapé, listagem)
- *   --story-*  a paleta da história aberta, injetada em linha por `paletteVars`
- * A segunda só existe dentro da página de uma história - é o que permite tingir aquela página
- * com o tema que o autor escolheu sem deixar a moldura do site ilegível.
+ * Two variable families coexist here on purpose:
+ *   --color-*  the fixed Keres look (header, footer, listing)
+ *   --story-*  the open story's palette, injected inline by `paletteVars`
+ * The second only exists inside a story's page - it is what allows tinting that page
+ * with the theme its author chose without making the site's frame unreadable.
  */
 
 :root,
@@ -114,9 +114,9 @@ a {
 }
 
 /*
- * O ícone é um PNG recortado, desenhado bem abaixo do seu tamanho nativo: sem
- * `object-fit: contain` uma proporção diferente o esticaria, e o `display: block` evita a
- * folga de linha de base que uma imagem inline abriria dentro do flex do cabeçalho.
+ * The icon is a cropped PNG, drawn well below its native size: without
+ * `object-fit: contain` a different aspect ratio would stretch it, and `display: block`
+ * avoids the baseline gap an inline image would open inside the header's flex layout.
  */
 .mark {
   display: block;
@@ -136,7 +136,7 @@ a {
   color: var(--color-text);
 }
 
-/* Mesma forma do botão de tema ao lado, para os dois lerem como um par de controles. */
+/* Same shape as the theme button beside it, so the two read as a pair of controls. */
 .language-select {
   padding: 6px 10px;
   border: 1px solid var(--color-border);
@@ -363,7 +363,7 @@ a {
   min-width: 0;
 }
 
-/* O conteúdo é o SVG do ícone escolhido pela pessoa; a cor de fundo vem em linha. */
+/* The content is the SVG of the icon the person chose; the background colour comes inline. */
 .avatar {
   display: inline-flex;
   align-items: center;

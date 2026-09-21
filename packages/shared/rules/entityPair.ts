@@ -1,4 +1,4 @@
-/** Uma ponta de um par: o tipo da entidade e o id dela. */
+/** One end of a pair: the entity's type and its id. */
 export interface EntityPairRef {
   type: string;
   id: string;

@@ -99,7 +99,7 @@ export const ALL_SUPPORTED_MEDIA_MIME_TYPES: readonly string[] = MEDIA_TYPES.fla
   (type) => SUPPORTED_MEDIA_MIME_TYPES[type],
 );
 
-/** Filtro para o seletor de ficheiros reproduzíveis: `['image/*', 'video/*', 'audio/*']`. */
+/** Filter for the playable-file picker: `['image/*', 'video/*', 'audio/*']`. */
 export const MEDIA_PICKER_MIME_FILTERS: readonly string[] = PLAYABLE_MEDIA_TYPES.map(
   (type) => `${type}/*`,
 );
@@ -422,7 +422,7 @@ export type CreateGalleryRelationDataType = z.infer<typeof CreateGalleryRelation
 export type GalleryRelationType = z.infer<typeof GalleryRelationSchema>;
 export type PartialGalleryRelationType = z.infer<typeof PartialGalleryRelationSchema>;
 
-/** Corpo de `POST /media/:storyId/blobs/status`. */
+/** Body of `POST /media/:storyId/blobs/status`. */
 export const MediaBlobStatusRequestSchema = z.object({
   hashes: z.array(MediaHashSchema).max(500),
 });

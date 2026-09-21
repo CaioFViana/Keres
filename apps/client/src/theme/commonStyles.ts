@@ -5,7 +5,6 @@ import type { ThemeColors } from '@keres/shared';
 // shared by themed and non-themed components without an import cycle.
 export { isColorLight } from '@keres/shared';
 
-// Helper function to slightly saturate a hex color
 export const saturateColor = (hex: string, factor: number = 1.1): string => {
   if (!hex || hex.length !== 7) return hex; // Expects #RRGGBB
 
@@ -158,7 +157,6 @@ export const getCommonContainerStyles = (colors: ThemeColors) =>
       width: '100%',
       padding: 20,
     },
-    // Add other common container styles here if needed
   });
 
 export const getCommonInputStyles = (colors: ThemeColors) =>
@@ -198,7 +196,6 @@ export const getCommonInputStyles = (colors: ThemeColors) =>
       paddingBottom: 50,
       paddingTop: 0,
     },
-    // Add other common input styles here if needed
   });
 
 /**

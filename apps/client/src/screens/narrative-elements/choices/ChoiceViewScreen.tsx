@@ -138,7 +138,7 @@ const ChoiceViewScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Recarrega ao focar: cenas e escolhas podem ter mudado em outra tela.
+  // Reload on focus: scenes and choices may have changed on another screen.
   useFocusEffect(
     useCallback(() => {
       loadGraph();

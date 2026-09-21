@@ -36,6 +36,8 @@ import {
   type ManuscriptSection,
 } from '../../../components/features/manuscript/manuscriptSections';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
+import { useScreenTour } from '../../../guides/useScreenTour';
 import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useManuscriptData } from '../../../hooks/useManuscriptData';
@@ -51,6 +53,9 @@ type ManuscriptNavigation = NativeStackNavigationProp<NarrativeElementsStackPara
 
 const ManuscriptScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('Manuscript');
+  const searchAnchorRef = useScreenAnchor('Manuscript', 'search');
+  const listAnchorRef = useScreenAnchor('Manuscript', 'list');
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<ManuscriptNavigation>();
@@ -227,34 +232,21 @@ const ManuscriptScreen = () => {
   useScreenHeader({
     target: 'parent',
     title: t('manuscript_title'),
-    renderActions: useCallback(
-      () => (
-        <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
-          <TouchableOpacity
-            testID="manuscript-pure-read"
-            accessibilityRole="button"
-            accessibilityState={{ selected: pureRead }}
-            accessibilityLabel={t('manuscript_pure_read')}
-            onPress={() => setPureRead((current) => !current)}
-          >
-            <Ionicons
-              name={pureRead ? 'eye' : 'eye-outline'}
-              size={24}
-              color={pureRead ? colors.primary : colors.text}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="manuscript-export"
-            accessibilityRole="button"
-            accessibilityLabel={t('export_manuscript_title')}
-            onPress={handleExportPress}
-          >
-            <Ionicons name="share-outline" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      ),
-      [pureRead, colors, handleExportPress, t],
-    ),
+    actions: [
+      {
+        id: 'pure-read',
+        icon: pureRead ? 'eye' : 'eye-outline',
+        label: t('manuscript_pure_read'),
+        active: pureRead,
+        onPress: () => setPureRead((current) => !current),
+      },
+      {
+        id: 'export',
+        icon: 'share-outline',
+        label: t('export_manuscript_title'),
+        onPress: handleExportPress,
+      },
+    ],
   });
 
   const styles = useMemo(
@@ -393,7 +385,7 @@ const ManuscriptScreen = () => {
             placeholder={t('manuscript_route')}
           />
         )}
-        <View style={styles.searchRow}>
+        <View ref={searchAnchorRef} collapsable={false} style={styles.searchRow}>
           <TextInput
             testID="manuscript-search"
             style={styles.searchInput}
@@ -438,22 +430,24 @@ const ManuscriptScreen = () => {
           <Text style={styles.emptyText}>{t('manuscript_no_scenes')}</Text>
         </View>
       ) : (
-        <FlatList
-          ref={listRef}
-          testID="manuscript-list"
-          data={sections}
-          keyExtractor={(item) => item.key}
-          renderItem={renderSection}
-          onScrollToIndexFailed={(info) => {
-            listRef.current?.scrollToOffset({
-              offset: info.averageItemLength * info.index,
-              animated: false,
-            });
-            setTimeout(() => {
-              listRef.current?.scrollToIndex({ index: info.index, animated: false });
-            }, 100);
-          }}
-        />
+        <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+          <FlatList
+            ref={listRef}
+            testID="manuscript-list"
+            data={sections}
+            keyExtractor={(item) => item.key}
+            renderItem={renderSection}
+            onScrollToIndexFailed={(info) => {
+              listRef.current?.scrollToOffset({
+                offset: info.averageItemLength * info.index,
+                animated: false,
+              });
+              setTimeout(() => {
+                listRef.current?.scrollToIndex({ index: info.index, animated: false });
+              }, 100);
+            }}
+          />
+        </View>
       )}
     </View>
   );

@@ -54,12 +54,56 @@ const MODES: {
   { mode: 'review', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
 ];
 
-/** Mode switch following the header-actions standard: icon buttons, primary when active. */
-function ModeToggle({ mode, onChange }: { mode: EditorMode; onChange(mode: EditorMode): void }) {
+/**
+ * Manuscript sibling of the entity-form header reset: a confirm dialog that drops the prose
+ * draft and re-hydrates the saved body. Always the edit copy — the scene row exists already.
+ */
+function ResetBodyButton({ disabled, onReset }: { disabled: boolean; onReset(): void }) {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const confirmReset = useCallback(() => {
+    AppAlert.alert(t('form_reset_title'), t('form_reset_edit_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('reset'), style: 'destructive', onPress: () => void onReset() },
+    ]);
+  }, [onReset, t]);
+  return (
+    <TouchableOpacity
+      testID="editor-reset-body"
+      accessibilityRole="button"
+      accessibilityLabel={t('reset')}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={confirmReset}
+    >
+      <Ionicons
+        name="arrow-undo-outline"
+        size={24}
+        color={disabled ? colors.textSecondary : colors.text}
+      />
+    </TouchableOpacity>
+  );
+}
+
+/**
+ * Header cluster following the header-actions standard: icon buttons, primary when active.
+ * The mode switch and the draft reset live together so the header stays one component.
+ */
+function EditorHeaderActions({
+  mode,
+  onChange,
+  resetDisabled,
+  onReset,
+}: {
+  mode: EditorMode;
+  onChange(mode: EditorMode): void;
+  resetDisabled: boolean;
+  onReset(): void;
+}) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   return (
-    <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}>
       {MODES.map((candidate) => {
         const active = candidate.mode === mode;
         return (
@@ -79,6 +123,7 @@ function ModeToggle({ mode, onChange }: { mode: EditorMode; onChange(mode: Edito
           </TouchableOpacity>
         );
       })}
+      <ResetBodyButton disabled={resetDisabled} onReset={onReset} />
     </View>
   );
 }
@@ -124,7 +169,8 @@ function SceneEditorContent({
     save,
     saving,
     saveError,
-    draftRestored,
+    resetBody,
+    hasUnsavedChanges,
     restoreSettled,
   } = useSceneBodyDraft({
     storyId: scene.storyId,
@@ -157,8 +203,15 @@ function SceneEditorContent({
   }, [mode]);
 
   const renderHeaderActions = useCallback(
-    () => <ModeToggle mode={mode} onChange={setMode} />,
-    [mode],
+    () => (
+      <EditorHeaderActions
+        mode={mode}
+        onChange={setMode}
+        resetDisabled={!isDirty || saving}
+        onReset={() => void resetBody()}
+      />
+    ),
+    [mode, isDirty, saving, resetBody],
   );
   useScreenHeader({ target: 'parent', title: scene.name, renderActions: renderHeaderActions });
 
@@ -257,7 +310,7 @@ function SceneEditorContent({
           overLimit={overLimit}
           canSave={canSave && canEdit}
           saving={saving}
-          hasUnsavedChanges={isDirty || draftRestored}
+          hasUnsavedChanges={hasUnsavedChanges}
           onSave={() => void save()}
         />
       )}

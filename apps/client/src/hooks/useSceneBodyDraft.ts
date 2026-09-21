@@ -63,6 +63,11 @@ export function useSceneBodyDraft({
     parseMarkdownToDocument(savedBody ?? ''),
   );
   const [activeMarks, setActiveMarks] = useState<ManuscriptMark[]>([]);
+  // A restored draft keeps the "unsaved" flag lit only until the user resolves
+  // it: a successful save or an explicit reset means the server (or the saved
+  // row) has seen everything, so the flag must clear even though the session
+  // restore itself stays recorded in `draftRestored`.
+  const [draftResolved, setDraftResolved] = useState(false);
   const editorRef = useRef<EnrichedTextInputInstance | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const { pending: saving, run: runSave } = useAsyncOperation();
@@ -133,6 +138,7 @@ export function useSceneBodyDraft({
       try {
         await persist(serializedBody === '' ? null : serializedBody);
         await deleteStoredDraft();
+        setDraftResolved(true);
         ok = true;
       } catch (error) {
         setSaveError(error instanceof Error ? error.message : String(error));
@@ -140,6 +146,26 @@ export function useSceneBodyDraft({
     });
     return ok;
   }, [runSave, persist, serializedBody, deleteStoredDraft]);
+
+  /**
+   * Back to the saved prose, dropping the stored draft: the manuscript sibling
+   * of the entity-form `resetForm`. Tracking stays armed (non-terminal clear),
+   * so typing afterwards drafts again.
+   *
+   * Unlike the mount-time restore — which must never push into the editor
+   * (see `handleRestore`) — this only runs on user action against a
+   * long-mounted editor, so the imperative `setValue` is the documented path.
+   * When the editor is unmounted (read/review modes) the ref is empty and the
+   * next mount seeds from the reset doc via `initialHtml`.
+   */
+  const resetBody = useCallback(async (): Promise<void> => {
+    const next = parseMarkdownToDocument(savedBody ?? '');
+    setDoc(next);
+    setActiveMarks([]);
+    setDraftResolved(true);
+    await deleteStoredDraft();
+    editorRef.current?.setValue(documentToEnrichedHtml(next));
+  }, [savedBody, deleteStoredDraft]);
 
   return {
     editorRef,
@@ -159,6 +185,9 @@ export function useSceneBodyDraft({
     save,
     saving,
     saveError,
+    resetBody,
+    /** Dirty, or restored-from-draft and not yet saved-or-reset since. */
+    hasUnsavedChanges: isDirty || (draftRestored && !draftResolved),
     /** Terminal clear for hosts that unmount right after (mirrors the form flow). */
     clearBodyDraft: clearFormDraft,
     draftRestored,

@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import type { ChapterSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../../../../src/db/schema';
 import ManuscriptScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptScreen';
 
@@ -8,9 +8,10 @@ const mockGoBack = jest.fn();
 const mockExportManuscript = jest.fn();
 const mockAlert = jest.fn();
 const mockNotify = jest.fn();
+const mockUseScreenTour = jest.fn();
 
 let mockHeaderTitle: string | null = null;
-let mockHeaderActions: (() => React.ReactNode) | null = null;
+let mockHeaderActions: readonly HeaderAction[] | null = null;
 let mockStoryType = 'linear';
 let mockStoryTitle = 'My Story';
 let mockManuscriptData: {
@@ -46,9 +47,9 @@ jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
 
 jest.mock('../../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
-  useScreenHeader: (args: { title: string; renderActions?: () => React.ReactNode }) => {
+  useScreenHeader: (args: { title: string; actions?: readonly HeaderAction[] }) => {
     mockHeaderTitle = args.title;
-    mockHeaderActions = args.renderActions ?? null;
+    mockHeaderActions = args.actions ?? null;
   },
 }));
 
@@ -146,6 +147,11 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
     ),
   };
 });
+
+jest.mock('../../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 
@@ -257,6 +263,14 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+async function pressHeaderAction(id: string) {
+  const action = mockHeaderActions?.find((candidate) => candidate.id === id);
+  expect(action).toBeTruthy();
+  await act(async () => {
+    action?.onPress();
+  });
+}
+
 describe('ManuscriptScreen', () => {
   it('renders linear sections with chapters, titles and bodies', async () => {
     const view = await render(<ManuscriptScreen />);
@@ -269,6 +283,12 @@ describe('ManuscriptScreen', () => {
     expect(view.getByText('manuscript_no_body_yet')).toBeTruthy();
     expect(view.getByText('unchaptered_scenes')).toBeTruthy();
     expect(view.getByText('Lost pages.')).toBeTruthy();
+  });
+
+  it('starts the manuscript tour on open', async () => {
+    await render(<ManuscriptScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('Manuscript');
   });
 
   it('navigates to the scene from its title and to the editor from its pencil', async () => {
@@ -285,8 +305,16 @@ describe('ManuscriptScreen', () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
-    const header = await render(<>{mockHeaderActions?.()}</>);
-    await fireEvent.press(header.getByTestId('manuscript-pure-read'));
+    expect(mockHeaderActions?.find((action) => action.id === 'pure-read')).toMatchObject({
+      icon: 'eye-outline',
+      label: 'manuscript_pure_read',
+      active: false,
+    });
+    await pressHeaderAction('pure-read');
+    expect(mockHeaderActions?.find((action) => action.id === 'pure-read')).toMatchObject({
+      icon: 'eye',
+      active: true,
+    });
 
     await waitFor(() => expect(view.queryByText('1. Opening')).toBeNull());
     expect(view.queryByTestId('manuscript-edit-s-1')).toBeNull();
@@ -357,8 +385,7 @@ describe('ManuscriptScreen', () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
-    const header = await render(<>{mockHeaderActions?.()}</>);
-    await fireEvent.press(header.getByTestId('manuscript-export'));
+    await pressHeaderAction('export');
 
     expect(mockAlert).toHaveBeenCalledTimes(1);
     const [title, message, looseButtons] = mockAlert.mock.calls[0] as [
@@ -397,8 +424,7 @@ describe('ManuscriptScreen', () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
-    const header = await render(<>{mockHeaderActions?.()}</>);
-    await fireEvent.press(header.getByTestId('manuscript-export'));
+    await pressHeaderAction('export');
 
     const [, , looseButtons] = mockAlert.mock.calls[0] as [
       string,
@@ -428,8 +454,7 @@ describe('ManuscriptScreen', () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
-    const header = await render(<>{mockHeaderActions?.()}</>);
-    await fireEvent.press(header.getByTestId('manuscript-export'));
+    await pressHeaderAction('export');
 
     expect(mockAlert).toHaveBeenCalledTimes(1);
     const [title, message, formatButtons] = mockAlert.mock.calls[0] as [
@@ -455,8 +480,7 @@ describe('ManuscriptScreen', () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
-    const header = await render(<>{mockHeaderActions?.()}</>);
-    await fireEvent.press(header.getByTestId('manuscript-export'));
+    await pressHeaderAction('export');
     const [, , looseButtons] = mockAlert.mock.calls[0] as [
       string,
       string,

@@ -17,6 +17,8 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  * every screen would be the chain of tips the article warns about. Wave 3 extends the same
  * screen-only pattern to the rest of the story drawer, so every drawer destination owns a
  * first-open tour; system entries (ArcContext, Help, Settings, Selection) stay quiet.
+ * Nested routes own tours the same way once they matter enough (Manuscript): the focus
+ * hook fires for drawer roots and inner screens alike.
  */
 export const screenGuides: Record<string, Guide> = {
   StorySelectionMain: {
@@ -126,6 +128,25 @@ export const screenGuides: Record<string, Guide> = {
         anchors: [screenAnchorId('Items', 'list')],
         titleKey: 'tour_items_start_title',
         bodyKey: 'tour_items_start_body',
+      },
+    ],
+  },
+  Manuscript: {
+    id: 'Manuscript',
+    drawerId: 'main-system',
+    helpPageId: 'manuscript',
+    steps: [
+      {
+        id: 'read',
+        anchors: [screenAnchorId('Manuscript', 'list')],
+        titleKey: 'tour_manuscript_read_title',
+        bodyKey: 'tour_manuscript_read_body',
+      },
+      {
+        id: 'search',
+        anchors: [screenAnchorId('Manuscript', 'search')],
+        titleKey: 'tour_manuscript_search_title',
+        bodyKey: 'tour_manuscript_search_body',
       },
     ],
   },

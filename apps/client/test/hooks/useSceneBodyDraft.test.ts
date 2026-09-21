@@ -380,6 +380,116 @@ describe('useSceneBodyDraft', () => {
     expect(view.result.current.activeMarks).toEqual(['bold', 'italic']);
   });
 
+  it('resets typed prose back to the saved body, pushing it into the mounted editor', async () => {
+    jest.useFakeTimers();
+    const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
+    const instance = fakeInstance();
+    view.result.current.editorRef.current = instance as unknown as EnrichedTextInputInstance;
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html('<p>saved plus more</p>'));
+      view.result.current.onMarksChange(['bold']);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    expect(await storedBodyRow()).not.toBeNull();
+
+    await act(async () => {
+      await view.result.current.resetBody();
+    });
+
+    expect(view.result.current.serializedBody).toBe('saved');
+    expect(view.result.current.initialHtml).toBe(html('<p>saved</p>'));
+    expect(view.result.current.isDirty).toBe(false);
+    expect(view.result.current.activeMarks).toEqual([]);
+    expect(view.result.current.hasUnsavedChanges).toBe(false);
+    expect(await storedBodyRow()).toBeNull();
+    expect(instance.setValue).toHaveBeenCalledWith(html('<p>saved</p>'));
+    jest.useRealTimers();
+  });
+
+  it('resets through the seed when the editor is unmounted', async () => {
+    const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html('<p>typed</p>'));
+    });
+    expect(view.result.current.isDirty).toBe(true);
+
+    // No mounted instance (read/review modes unmount the input): the reset
+    // must not throw, and the next mount seeds from the reset doc.
+    await act(async () => {
+      await view.result.current.resetBody();
+    });
+
+    expect(view.result.current.serializedBody).toBe('saved');
+    expect(view.result.current.initialHtml).toBe(html('<p>saved</p>'));
+    expect(view.result.current.isDirty).toBe(false);
+  });
+
+  it('keeps drafting after a reset while staying mounted', async () => {
+    jest.useFakeTimers();
+    const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html('<p>v2</p>'));
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    expect(await storedBodyRow()).not.toBeNull();
+
+    await act(async () => {
+      await view.result.current.resetBody();
+    });
+    expect(await storedBodyRow()).toBeNull();
+
+    await act(async () => {
+      view.result.current.onHtmlChange(html('<p>v3</p>'));
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+    const row = await storedBodyRow();
+    expect(row).not.toBeNull();
+    expect(JSON.parse(row!.content)).toMatchObject({ fields: { body: 'v3' } });
+    jest.useRealTimers();
+  });
+
+  it('clears the restored flag when reset back to the saved body', async () => {
+    await seedBodyDraft('unsaved prose');
+    const view = await renderHook(() => useHarness({ savedBody: 'saved' }));
+
+    await waitFor(() => expect(view.result.current.draftRestored).toBe(true));
+    expect(view.result.current.hasUnsavedChanges).toBe(true);
+
+    await act(async () => {
+      await view.result.current.resetBody();
+    });
+
+    expect(view.result.current.serializedBody).toBe('saved');
+    expect(view.result.current.hasUnsavedChanges).toBe(false);
+    expect(await storedBodyRow()).toBeNull();
+  });
+
+  it('clears a restored-but-clean draft from the unsaved flag on save', async () => {
+    await seedBodyDraft('saved');
+    const persist = jest.fn(async () => {});
+    const view = await renderHook(() => useHarness({ savedBody: 'saved', persist }));
+
+    await waitFor(() => expect(view.result.current.draftRestored).toBe(true));
+    expect(view.result.current.isDirty).toBe(false);
+    expect(view.result.current.hasUnsavedChanges).toBe(true);
+
+    await act(async () => {
+      await view.result.current.save();
+    });
+
+    expect(persist).toHaveBeenCalledWith('saved');
+    expect(view.result.current.hasUnsavedChanges).toBe(false);
+  });
+
   it('keeps drafting after a save while staying mounted', async () => {
     jest.useFakeTimers();
     const view = await renderHook(() => useHarness({ savedBody: 'saved' }));

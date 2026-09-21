@@ -14,6 +14,8 @@ const mockOnHtmlChange = jest.fn();
 const mockOnMarksChange = jest.fn();
 const mockApplyFormat = jest.fn();
 const mockSaveBody = jest.fn();
+const mockResetBody = jest.fn();
+const mockAlert = jest.fn();
 const mockEditorFocus = jest.fn();
 const mockEditorRef = { current: { focus: mockEditorFocus } };
 
@@ -131,6 +133,8 @@ jest.mock('../../../../src/hooks/useSceneBodyDraft', () => ({
       saving: false,
       saveError: null,
       clearBodyDraft: jest.fn(),
+      resetBody: mockResetBody,
+      hasUnsavedChanges: mockBodyDirty,
       draftRestored: false,
       restoreSettled: mockRestoreSettled,
     };
@@ -165,6 +169,11 @@ jest.mock('../../../../src/theme', () => ({
       textSecondary: '#555',
     },
   }),
+}));
+
+jest.mock('../../../../src/utils/AppAlert', () => ({
+  __esModule: true,
+  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 
 jest.mock('../../../../src/vocabulary/useVocabularyEntityCopy', () => {
@@ -348,6 +357,46 @@ describe('SceneEditorScreen', () => {
     await fireEvent.press(header.getByTestId('editor-mode-write'));
     const input = await view.findByTestId('scene-body-editor.input');
     expect(input.props.defaultValue).toBe('<html><p>Saved prose.</p></html>');
+  });
+
+  it('keeps the header reset disabled while the prose matches the saved body', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
+    const reset = header.getByTestId('editor-reset-body');
+
+    expect(reset.props.accessibilityState).toMatchObject({ disabled: true });
+    await fireEvent.press(reset);
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(mockResetBody).not.toHaveBeenCalled();
+  });
+
+  it('resets the prose through a header confirm, like the entity forms', async () => {
+    mockBodyDirty = true;
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    const header = await render(<>{mockHeaderArgs?.renderActions?.()}</>);
+    const reset = header.getByTestId('editor-reset-body');
+    expect(reset.props.accessibilityState).toMatchObject({ disabled: false });
+
+    await fireEvent.press(reset);
+    expect(mockAlert).toHaveBeenCalledTimes(1);
+    const [title, message, buttons] = mockAlert.mock.calls[0] as [
+      string,
+      string,
+      { text: string; style?: string; onPress?: () => void }[],
+    ];
+    expect(title).toBe('form_reset_title');
+    expect(message).toBe('form_reset_edit_message');
+    expect(buttons.some((button) => button.style === 'cancel')).toBe(true);
+    expect(mockResetBody).not.toHaveBeenCalled();
+
+    await act(async () => {
+      buttons.find((button) => button.text === 'reset')?.onPress?.();
+    });
+    expect(mockResetBody).toHaveBeenCalledTimes(1);
   });
 
   it('formats through the toolbar and refocuses the editor', async () => {

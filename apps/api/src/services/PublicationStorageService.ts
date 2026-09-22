@@ -91,11 +91,7 @@ export class PublicationStorageService {
     );
   }
 
-  async deleteManuscript(
-    storyId: string,
-    publicationId: string,
-    extension: string,
-  ): Promise<void> {
+  async deleteManuscript(storyId: string, publicationId: string, extension: string): Promise<void> {
     await this.blobStorage.delete(this.manuscriptKeyFor(storyId, publicationId, extension));
   }
 }

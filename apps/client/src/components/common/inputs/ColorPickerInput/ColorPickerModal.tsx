@@ -161,48 +161,48 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
     () =>
       PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt, gestureState) => {
-        saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
-          setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
-          handleColorSelect(
-            gestureState,
-            { x: pageX, y: pageY, width: _width, height: _height },
-            false,
-          );
-        });
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        if (pickerLayout.width > 0) {
-          handleColorSelect(gestureState, pickerLayout, false);
-        }
-      },
-    }),
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (evt, gestureState) => {
+          saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+            setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
+            handleColorSelect(
+              gestureState,
+              { x: pageX, y: pageY, width: _width, height: _height },
+              false,
+            );
+          });
+        },
+        onPanResponderMove: (evt, gestureState) => {
+          if (pickerLayout.width > 0) {
+            handleColorSelect(gestureState, pickerLayout, false);
+          }
+        },
+      }),
   );
 
   const [huePanResponder] = useState(
     // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
     () =>
       PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt, gestureState) => {
-        hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
-          setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
-          handleColorSelect(
-            gestureState,
-            { x: pageX, y: pageY, width: _width, height: _height },
-            true,
-          );
-        });
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        if (hueLayout.width > 0) {
-          handleColorSelect(gestureState, hueLayout, true);
-        }
-      },
-    }),
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (evt, gestureState) => {
+          hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+            setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
+            handleColorSelect(
+              gestureState,
+              { x: pageX, y: pageY, width: _width, height: _height },
+              true,
+            );
+          });
+        },
+        onPanResponderMove: (evt, gestureState) => {
+          if (hueLayout.width > 0) {
+            handleColorSelect(gestureState, hueLayout, true);
+          }
+        },
+      }),
   );
 
   const getBackgroundColorForSatValPicker = useCallback(() => {

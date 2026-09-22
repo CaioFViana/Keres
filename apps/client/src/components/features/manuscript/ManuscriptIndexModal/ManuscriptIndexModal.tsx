@@ -116,7 +116,12 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
         sceneRowCurrent: { backgroundColor: colors.primaryContainer },
         sceneTitle: { color: colors.text, fontSize: 15 },
         sceneTitleCurrent: { color: colors.onPrimaryContainer, fontWeight: '700' },
-        emptyText: { color: colors.textSecondary, fontSize: 15, fontStyle: 'italic', marginTop: 12 },
+        emptyText: {
+          color: colors.textSecondary,
+          fontSize: 15,
+          fontStyle: 'italic',
+          marginTop: 12,
+        },
         closeButton: { backgroundColor: colors.textSecondary },
       }),
     [colors],

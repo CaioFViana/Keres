@@ -36,7 +36,9 @@ const CREATE_PRISTINE: StorySchemaFieldFormDraftFields = {
   defaultValue: null,
 };
 
-function isStorySchemaFieldFormDraftFields(value: unknown): value is StorySchemaFieldFormDraftFields {
+function isStorySchemaFieldFormDraftFields(
+  value: unknown,
+): value is StorySchemaFieldFormDraftFields {
   if (!value || typeof value !== 'object') return false;
   const fields = value as Record<string, unknown>;
   return (

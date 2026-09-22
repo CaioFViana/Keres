@@ -45,9 +45,7 @@ describe('MarkedText', () => {
   });
 
   it('clamps out-of-bounds ranges instead of crashing', async () => {
-    const view = await render(
-      <MarkedText text="hi" ranges={[{ start: 1, length: 99 }]} />,
-    );
+    const view = await render(<MarkedText text="hi" ranges={[{ start: 1, length: 99 }]} />);
 
     expect(view.getByText('h')).toBeTruthy();
     expect(StyleSheet.flatten(view.getByText('i').props.style).backgroundColor).toBe('#aaf');

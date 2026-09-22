@@ -34,7 +34,9 @@ jest.mock('expo-print', () => ({
 
 jest.mock('expo-file-system', () => ({
   __esModule: true,
-  File: jest.fn().mockImplementation(() => ({ bytes: (...args: unknown[]) => mockReadBytes(...args) })),
+  File: jest
+    .fn()
+    .mockImplementation(() => ({ bytes: (...args: unknown[]) => mockReadBytes(...args) })),
 }));
 
 const manuscript = {
@@ -198,5 +200,3 @@ describe('exportManuscript', () => {
     );
   });
 });
-
-

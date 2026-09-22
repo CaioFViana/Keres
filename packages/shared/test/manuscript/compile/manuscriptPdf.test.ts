@@ -159,9 +159,7 @@ describe('buildManuscriptPdf', () => {
   });
 
   it('encodes Portuguese punctuation as WinAnsi bytes', () => {
-    const text = shownText(
-      buildManuscriptPdf(manuscript([paragraph('“Olá” — «mundo»…')]), LABELS),
-    );
+    const text = shownText(buildManuscriptPdf(manuscript([paragraph('“Olá” — «mundo»…')]), LABELS));
 
     const byte = (code: number) => String.fromCharCode(code);
     expect(text).toContain(byte(0x93));
@@ -188,10 +186,7 @@ describe('buildManuscriptPdf', () => {
   });
 
   it('stores the title as UTF-16BE so metadata keeps every character', () => {
-    const bytes = buildManuscriptPdf(
-      { title: 'João “Olá”', blocks: [paragraph('Hi.')] },
-      LABELS,
-    );
+    const bytes = buildManuscriptPdf({ title: 'João “Olá”', blocks: [paragraph('Hi.')] }, LABELS);
 
     expectSoundXref(bytes);
     expect(raw(bytes)).toContain('00E3006F0020201C004F006C00E1201D');
@@ -200,7 +195,7 @@ describe('buildManuscriptPdf', () => {
   it('trims phantom lines from empty headings', () => {
     const text = raw(
       buildManuscriptPdf(
-        { title: '', blocks: [{ kind: 'title', text: '' }, paragraph('First line.') ] },
+        { title: '', blocks: [{ kind: 'title', text: '' }, paragraph('First line.')] },
         LABELS,
       ),
     );
@@ -248,9 +243,7 @@ describe('buildManuscriptPdf', () => {
   });
 
   it('degrades control characters instead of emitting raw bytes', () => {
-    const text = shownText(
-      buildManuscriptPdf(manuscript([paragraph('a\x01\x7Fb')]), LABELS),
-    );
+    const text = shownText(buildManuscriptPdf(manuscript([paragraph('a\x01\x7Fb')]), LABELS));
 
     expect(text).toContain('a??b');
   });
@@ -322,7 +315,13 @@ describe('buildManuscriptPdf', () => {
           kind: 'paragraph',
           spans: [
             { text: 'plain ', bold: false, italic: false, underline: false, strikethrough: false },
-            { text: 'two words', bold: false, italic: false, underline: true, strikethrough: false },
+            {
+              text: 'two words',
+              bold: false,
+              italic: false,
+              underline: true,
+              strikethrough: false,
+            },
             { text: ' mid ', bold: false, italic: false, underline: false, strikethrough: false },
             { text: 'gone', bold: false, italic: false, underline: false, strikethrough: true },
           ],
@@ -332,9 +331,7 @@ describe('buildManuscriptPdf', () => {
 
     // Three marked words, two rules: the contiguous underline shares one.
     expect(raw(buildManuscriptPdf(marked, LABELS)).match(/re f/g)).toHaveLength(2);
-    expect(raw(buildManuscriptPdf(manuscript([paragraph('plain')]), LABELS))).not.toContain(
-      're f',
-    );
+    expect(raw(buildManuscriptPdf(manuscript([paragraph('plain')]), LABELS))).not.toContain('re f');
   });
 
   it('omits the index unless enabled', () => {
@@ -364,10 +361,7 @@ describe('buildManuscriptPdf', () => {
   });
 
   it('degrades unencodable characters instead of breaking the file', () => {
-    const bytes = buildManuscriptPdf(
-      manuscript([paragraph('Dragon 🐉 rises — “yes”.')]),
-      LABELS,
-    );
+    const bytes = buildManuscriptPdf(manuscript([paragraph('Dragon 🐉 rises — “yes”.')]), LABELS);
 
     expectSoundXref(bytes);
     // WinAnsi bytes, read back as Latin-1: 0x97 em dash, 0x93/0x94 quotes.

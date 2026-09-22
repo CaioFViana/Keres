@@ -93,8 +93,7 @@ export function usePlotFormState({ plotId, storyId, plotServiceRef }: UsePlotFor
     });
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
-  const isDirty =
-    JSON.stringify({ name, details }) !== JSON.stringify(pristineFields);
+  const isDirty = JSON.stringify({ name, details }) !== JSON.stringify(pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays

@@ -149,24 +149,22 @@ describe('ManuscriptIndexModal', () => {
   });
 
   it('highlights the scene the reader is on', async () => {
-    const view = await render(
-      <ManuscriptIndexModal {...baseProps} currentSectionIndex={1} />,
-    );
+    const view = await render(<ManuscriptIndexModal {...baseProps} currentSectionIndex={1} />);
 
-    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject(
-      { selected: true },
-    );
-    expect(view.getByTestId('manuscript-index-scene-s-2').props.accessibilityState).toMatchObject(
-      { selected: false },
-    );
+    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(view.getByTestId('manuscript-index-scene-s-2').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
   });
 
   it('highlights nothing before the reader has a position', async () => {
     const view = await render(<ManuscriptIndexModal {...baseProps} />);
 
-    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject(
-      { selected: false },
-    );
+    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
   });
 
   it('renders route scenes flat when there are no containers', async () => {
@@ -174,13 +172,27 @@ describe('ManuscriptIndexModal', () => {
       {
         key: 'step-step-1',
         kind: 'scene',
-        scene: { id: 's-a', chapterId: 'ch-1', name: 'Alpha', index: 1, body: 'First.', isDeleted: false },
+        scene: {
+          id: 's-a',
+          chapterId: 'ch-1',
+          name: 'Alpha',
+          index: 1,
+          body: 'First.',
+          isDeleted: false,
+        },
         position: 1,
       },
       {
         key: 'step-step-2',
         kind: 'scene',
-        scene: { id: 's-b', chapterId: 'ch-1', name: 'Beta', index: 2, body: 'Second.', isDeleted: false },
+        scene: {
+          id: 's-b',
+          chapterId: 'ch-1',
+          name: 'Beta',
+          index: 2,
+          body: 'Second.',
+          isDeleted: false,
+        },
         position: 2,
       },
     ];

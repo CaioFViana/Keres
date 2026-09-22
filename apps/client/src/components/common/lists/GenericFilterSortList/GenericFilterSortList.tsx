@@ -155,7 +155,9 @@ const GenericFilterSortList = <T,>({
     setSelectedFilter(selectedFilterValues || []);
   }
 
-  const [prevFavoriteFilterState, setPrevFavoriteFilterState] = useState(currentFavoriteFilterState);
+  const [prevFavoriteFilterState, setPrevFavoriteFilterState] = useState(
+    currentFavoriteFilterState,
+  );
   if (currentFavoriteFilterState !== prevFavoriteFilterState) {
     setPrevFavoriteFilterState(currentFavoriteFilterState);
     setInternalFavoriteFilterState(currentFavoriteFilterState || 'all');
@@ -384,20 +386,17 @@ const GenericFilterSortList = <T,>({
         }
         style={styles(colors).list}
       />
-      {storyId &&
-        entityName &&
-        onAdvancedSearch &&
-        hasAdvancedSearchFields && (
-          <AdvancedSearchModal
-            entityName={entityName}
-            storyId={storyId}
-            isVisible={isAdvancedSearchModalVisible}
-            onClose={handleCloseAdvancedSearchModal}
-            onSearch={handleAdvancedSearchSubmit}
-            initialCriteria={currentAdvancedSearchCriteria}
-            scopes={advancedSearchScopes}
-          />
-        )}
+      {storyId && entityName && onAdvancedSearch && hasAdvancedSearchFields && (
+        <AdvancedSearchModal
+          entityName={entityName}
+          storyId={storyId}
+          isVisible={isAdvancedSearchModalVisible}
+          onClose={handleCloseAdvancedSearchModal}
+          onSearch={handleAdvancedSearchSubmit}
+          initialCriteria={currentAdvancedSearchCriteria}
+          scopes={advancedSearchScopes}
+        />
+      )}
     </View>
   );
 };

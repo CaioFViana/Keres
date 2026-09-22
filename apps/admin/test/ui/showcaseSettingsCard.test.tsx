@@ -42,9 +42,7 @@ async function chooseFile(input: HTMLInputElement, file: File): Promise<void> {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.get.mockResolvedValue(settings());
-  mocks.update.mockImplementation(async (patch: Record<string, unknown>) =>
-    settings({ ...patch }),
-  );
+  mocks.update.mockImplementation(async (patch: Record<string, unknown>) => settings({ ...patch }));
   mocks.uploadLogo.mockResolvedValue(
     settings({ logoContentType: 'image/png', logoUpdatedAt: '2026-09-22T00:00:00.000Z' }),
   );

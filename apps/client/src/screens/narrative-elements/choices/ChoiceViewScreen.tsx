@@ -346,11 +346,7 @@ const ChoiceViewScreen = () => {
 
       const result = await deliverMapExport(
         svg,
-        buildStoryMapFileName(
-          selectedStory.title,
-          new Date(),
-          exportFileLanguage(i18n.language),
-        ),
+        buildStoryMapFileName(selectedStory.title, new Date(), exportFileLanguage(i18n.language)),
         useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {

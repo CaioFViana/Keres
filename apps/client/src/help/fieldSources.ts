@@ -384,7 +384,15 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   ShowcaseVersion: {
     documented: [],
-    invisible: ['id', 'label', 'byteSize', 'mediaIncluded', 'mediaTotal', 'createdAt', 'manuscript'],
+    invisible: [
+      'id',
+      'label',
+      'byteSize',
+      'mediaIncluded',
+      'mediaTotal',
+      'createdAt',
+      'manuscript',
+    ],
   },
   StoryPublication: {
     documented: [],

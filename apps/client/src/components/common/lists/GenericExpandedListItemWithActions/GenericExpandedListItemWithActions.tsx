@@ -43,7 +43,10 @@ const GenericExpandedListItemWithActions = <T extends { id: string; isFavorite?:
 
   const [prevControlledIsExpanded, setPrevControlledIsExpanded] = useState(controlledIsExpanded);
   const [prevInitialExpanded, setPrevInitialExpanded] = useState(initialExpanded);
-  if (controlledIsExpanded !== prevControlledIsExpanded || initialExpanded !== prevInitialExpanded) {
+  if (
+    controlledIsExpanded !== prevControlledIsExpanded ||
+    initialExpanded !== prevInitialExpanded
+  ) {
     setPrevControlledIsExpanded(controlledIsExpanded);
     setPrevInitialExpanded(initialExpanded);
     if (controlledIsExpanded === undefined && initialExpanded) setUncontrolledIsOpen(true);

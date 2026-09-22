@@ -76,8 +76,7 @@ jest.mock('@/src/hooks/useScreenHeader', () => ({
 }));
 jest.mock('../../../src/screens/storycalendars/AgendaDateLookup', () => {
   const { Text } = require('react-native');
-  const stub =
-    (marker: string) =>
+  const stub = (marker: string) =>
     function MockAgendaDateLookup(props: { cursor: number; onMonthChange: (day: number) => void }) {
       mockLookupProps = props;
       return (

@@ -243,8 +243,7 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
       connectionCache.set(id, { relation: connection, from, to, path });
       return [path];
     });
-    for (const id of connectionCache.keys())
-      if (!activeIds.has(id)) connectionCache.delete(id);
+    for (const id of connectionCache.keys()) if (!activeIds.has(id)) connectionCache.delete(id);
     return paths;
   }, [connectionCache, connections, nodesByLocation]);
   const containsArrows = useMemo(() => {
@@ -276,8 +275,7 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
       containsCache.set(id, { relation, from, to, arrow });
       return [arrow];
     });
-    for (const id of containsCache.keys())
-      if (!activeIds.has(id)) containsCache.delete(id);
+    for (const id of containsCache.keys()) if (!activeIds.has(id)) containsCache.delete(id);
     return arrows;
   }, [containsCache, contains, nodesByLocation]);
   const markerConnectionPaths = useMemo(() => {

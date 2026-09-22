@@ -84,7 +84,11 @@ describe('parseManuscriptMarkdown', () => {
     const blocks = parseManuscriptMarkdown('## The **bold** chapter');
 
     expect(blocks[0]).toMatchObject({ kind: 'paragraph' });
-    expect(blocks[0].inlines).toEqual([{ text: 'The ' }, { text: 'bold', bold: true }, { text: ' chapter' }]);
+    expect(blocks[0].inlines).toEqual([
+      { text: 'The ' },
+      { text: 'bold', bold: true },
+      { text: ' chapter' },
+    ]);
   });
 
   it('keys blocks in order', () => {
@@ -139,9 +143,7 @@ describe('parseManuscriptMarkdown escapes', () => {
   });
 
   it('honors escapes inside styled spans', () => {
-    expect(parseManuscriptMarkdown('**a\\*b**')[0].inlines).toEqual([
-      { text: 'a*b', bold: true },
-    ]);
+    expect(parseManuscriptMarkdown('**a\\*b**')[0].inlines).toEqual([{ text: 'a*b', bold: true }]);
   });
 });
 

@@ -86,7 +86,11 @@ const AnchorEditModal: React.FC<Props> = ({
     null,
   );
   const [prevVisible, setPrevVisible] = useState<boolean | null>(null);
-  if (initial !== prevInitial || allowOpenStretch !== prevAllowOpenStretch || visible !== prevVisible) {
+  if (
+    initial !== prevInitial ||
+    allowOpenStretch !== prevAllowOpenStretch ||
+    visible !== prevVisible
+  ) {
     setPrevInitial(initial);
     setPrevAllowOpenStretch(allowOpenStretch);
     setPrevVisible(visible);

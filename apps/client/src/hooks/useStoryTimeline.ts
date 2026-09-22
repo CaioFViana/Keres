@@ -13,7 +13,11 @@ import {
   formatSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
-import { buildStoryTimelineFileName, deliverMapExport, exportFileLanguage } from '@/src/utils/storyTransfer';
+import {
+  buildStoryTimelineFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '@/src/utils/storyTransfer';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {
   calendarSecondsPerDay,

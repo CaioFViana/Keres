@@ -23,10 +23,7 @@ export interface TextSegment {
 
 /** Fold one character for accent-insensitive comparison: strip marks, then lower. */
 function foldChar(char: string): string {
-  return char
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase();
+  return char.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
 
 function foldText(text: string): string {
@@ -122,7 +119,8 @@ export function splitTextByRanges(text: string, ranges: TextRange[]): TextSegmen
   const segments: TextSegment[] = [];
   let cursor = 0;
   for (const range of usable) {
-    if (range.start > cursor) segments.push({ text: text.slice(cursor, range.start), marked: false });
+    if (range.start > cursor)
+      segments.push({ text: text.slice(cursor, range.start), marked: false });
     // Overlapping ranges collapse onto the furthest end: a character is marked once.
     const end = Math.max(range.end, cursor);
     if (end > Math.max(range.start, cursor)) {

@@ -41,7 +41,10 @@ import { AppAlert } from '../../../utils/AppAlert';
 import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntityCopy';
 
 type SceneEditorScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'SceneEditor'>;
-type SceneEditorNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'SceneEditor'>;
+type SceneEditorNavigation = NativeStackNavigationProp<
+  NarrativeElementsStackParamList,
+  'SceneEditor'
+>;
 type EditorMode = 'write' | 'read' | 'review';
 
 const MODES: {
@@ -342,10 +345,7 @@ const SceneEditorScreen = () => {
 
   useEntityInitialLoad(fetchScene);
   useEntityEventSubscriptions(
-    useMemo(
-      () => [{ event: 'scene_changed', listener: handleSceneChange }],
-      [handleSceneChange],
-    ),
+    useMemo(() => [{ event: 'scene_changed', listener: handleSceneChange }], [handleSceneChange]),
   );
 
   // Save path for the prose hook: empty prose persists as null (no body yet), and the
@@ -368,7 +368,13 @@ const SceneEditorScreen = () => {
     return <ScreenLoading padded message={copy.loadingDetails} />;
   }
   if (error || !scene) {
-    return <ScreenError padded message={error ?? copy.dataMissing} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError
+        padded
+        message={error ?? copy.dataMissing}
+        onGoBack={() => navigation.goBack()}
+      />
+    );
   }
   if (selectedStory?.id && scene.storyId !== selectedStory.id) {
     return <ScreenError padded message={copy.notFound} onGoBack={() => navigation.goBack()} />;

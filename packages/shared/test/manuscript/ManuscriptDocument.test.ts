@@ -80,11 +80,7 @@ describe('normalizeManuscriptDocument', () => {
         ],
       }),
     ).toEqual({
-      blocks: [
-        { kind: 'paragraph', spans: [] },
-        paragraph('T'),
-        { kind: 'paragraph', spans: [] },
-      ],
+      blocks: [{ kind: 'paragraph', spans: [] }, paragraph('T'), { kind: 'paragraph', spans: [] }],
     });
   });
 });
@@ -137,14 +133,8 @@ describe('parseMarkdownToDocument', () => {
   });
 
   it('degrades odd non-canonical runs without blank-line leftovers', () => {
-    expect(parseMarkdownToDocument('a\n\n\nb').blocks).toEqual([
-      paragraph('a'),
-      paragraph('b'),
-    ]);
-    expect(parseMarkdownToDocument('a\n   \n b').blocks).toEqual([
-      paragraph('a'),
-      paragraph('b'),
-    ]);
+    expect(parseMarkdownToDocument('a\n\n\nb').blocks).toEqual([paragraph('a'), paragraph('b')]);
+    expect(parseMarkdownToDocument('a\n   \n b').blocks).toEqual([paragraph('a'), paragraph('b')]);
   });
 
   it('normalizes CRLF and lone CR line endings before splitting', () => {
@@ -160,9 +150,7 @@ describe('parseMarkdownToDocument', () => {
     const doc = parseMarkdownToDocument('# One\n\n## Two\n\n### Three');
 
     expect(doc.blocks).toEqual([paragraph('One'), paragraph('Two'), paragraph('Three')]);
-    expect(parseMarkdownToDocument('#Nope and C#').blocks).toEqual([
-      paragraph('#Nope and C#'),
-    ]);
+    expect(parseMarkdownToDocument('#Nope and C#').blocks).toEqual([paragraph('#Nope and C#')]);
   });
 
   it('parses the four inline marks', () => {
@@ -188,9 +176,7 @@ describe('parseMarkdownToDocument', () => {
     expect(parseMarkdownToDocument('__**x**__').blocks).toEqual([
       paragraph('x', ['bold', 'underline']),
     ]);
-    expect(parseMarkdownToDocument('***x***').blocks).toEqual([
-      paragraph('x', ['bold', 'italic']),
-    ]);
+    expect(parseMarkdownToDocument('***x***').blocks).toEqual([paragraph('x', ['bold', 'italic'])]);
     expect(parseMarkdownToDocument('*__x__*').blocks).toEqual([
       paragraph('x', ['italic', 'underline']),
     ]);
@@ -203,9 +189,7 @@ describe('parseMarkdownToDocument', () => {
   });
 
   it('degrades overlapping markers to literal', () => {
-    expect(parseMarkdownToDocument('**a__b**c__').blocks).toEqual([
-      paragraph('**a__b**c__'),
-    ]);
+    expect(parseMarkdownToDocument('**a__b**c__').blocks).toEqual([paragraph('**a__b**c__')]);
   });
 
   it('honors backslash escapes and keeps other backslashes', () => {
@@ -216,9 +200,7 @@ describe('parseMarkdownToDocument', () => {
   });
 
   it('preserves single newlines but never styles across them', () => {
-    expect(parseMarkdownToDocument('"Yes,"\n"No."').blocks).toEqual([
-      paragraph('"Yes,"\n"No."'),
-    ]);
+    expect(parseMarkdownToDocument('"Yes,"\n"No."').blocks).toEqual([paragraph('"Yes,"\n"No."')]);
     expect(parseMarkdownToDocument('**a\nb**').blocks).toEqual([paragraph('**a\nb**')]);
   });
 });
@@ -245,9 +227,9 @@ describe('serializeDocumentToMarkdown', () => {
   });
 
   it('nests combined marks deterministically', () => {
-    expect(
-      serializeDocumentToMarkdown({ blocks: [paragraph('x', ['italic', 'bold'])] }),
-    ).toBe('***x***');
+    expect(serializeDocumentToMarkdown({ blocks: [paragraph('x', ['italic', 'bold'])] })).toBe(
+      '***x***',
+    );
     expect(
       serializeDocumentToMarkdown({ blocks: [paragraph('x', ['strikethrough', 'underline'])] }),
     ).toBe('~~__x__~~');

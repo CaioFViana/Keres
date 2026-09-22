@@ -15,7 +15,11 @@ let ana: TestUser;
 function uploadLogo(token: string | undefined, bytes: Uint8Array, type: string, name = 'logo.png') {
   const form = new FormData();
   form.append('logo', new File([Buffer.from(bytes)], name, { type }));
-  return request('POST', '/admin/showcase-settings/logo', token ? { token, body: form } : { body: form });
+  return request(
+    'POST',
+    '/admin/showcase-settings/logo',
+    token ? { token, body: form } : { body: form },
+  );
 }
 
 beforeEach(async () => {
@@ -29,7 +33,9 @@ beforeEach(async () => {
 
 describe('GET /admin/showcase-settings', () => {
   it('returns the branding defaults and no logo', async () => {
-    const { status, data } = await request('GET', '/admin/showcase-settings', { token: admin.token });
+    const { status, data } = await request('GET', '/admin/showcase-settings', {
+      token: admin.token,
+    });
 
     expect(status).toBe(200);
     expect(data).toMatchObject({
@@ -129,7 +135,12 @@ describe('POST /admin/showcase-settings/logo', () => {
   it('replaces the previous logo', async () => {
     await uploadLogo(admin.token, PNG_BYTES, 'image/png');
 
-    const { data } = await uploadLogo(admin.token, new Uint8Array([0xff, 0xd8]), 'image/jpeg', 'logo.jpg');
+    const { data } = await uploadLogo(
+      admin.token,
+      new Uint8Array([0xff, 0xd8]),
+      'image/jpeg',
+      'logo.jpg',
+    );
 
     expect(data.logoContentType).toBe('image/jpeg');
   });

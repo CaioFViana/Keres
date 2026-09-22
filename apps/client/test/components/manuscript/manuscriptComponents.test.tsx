@@ -59,7 +59,11 @@ function marksState(active: {
   underline?: boolean;
   strikeThrough?: boolean;
 }) {
-  const state = (on?: boolean) => ({ isActive: on ?? false, isConflicting: false, isBlocking: false });
+  const state = (on?: boolean) => ({
+    isActive: on ?? false,
+    isConflicting: false,
+    isBlocking: false,
+  });
   return {
     bold: state(active.bold),
     italic: state(active.italic),
@@ -268,9 +272,7 @@ describe('RichBodyEditor', () => {
       (await renderEditor()).getByTestId('editor.input').props.style,
     );
     expect(nativeStyle.fontFamily).toBeUndefined();
-    expect(nativeStyle.paddingHorizontal).toBe(
-      manuscriptTextMetrics.containerPaddingHorizontal,
-    );
+    expect(nativeStyle.paddingHorizontal).toBe(manuscriptTextMetrics.containerPaddingHorizontal);
     expect(nativeStyle.paddingVertical).toBe(manuscriptTextMetrics.containerPaddingVertical);
 
     const originalOS = Platform.OS;
@@ -290,8 +292,7 @@ describe('RichBodyEditor', () => {
   });
 
   it('scopes inner-host CSS to the container id on web only', async () => {
-    const { containerPaddingHorizontal: ph, containerPaddingVertical: pv } =
-      manuscriptTextMetrics;
+    const { containerPaddingHorizontal: ph, containerPaddingVertical: pv } = manuscriptTextMetrics;
     expect(RICH_BODY_EDITOR_WEB_CSS).toBe(
       '#keres-rich-body-editor>div{display:flex;flex-direction:column}' +
         `#keres-rich-body-editor .ProseMirror{flex:1;padding:${pv}px ${ph}px}` +
@@ -442,7 +443,10 @@ describe('SceneBodyFooter', () => {
 describe('MarkdownPreview', () => {
   it('renders paragraphs with inline styles', async () => {
     const view = await render(
-      <MarkdownPreview text={'Chapter\n\nA **bold**, *soft* and __lined__ line.'} testID="preview" />,
+      <MarkdownPreview
+        text={'Chapter\n\nA **bold**, *soft* and __lined__ line.'}
+        testID="preview"
+      />,
     );
 
     expect(view.getByText('Chapter')).toBeTruthy();
@@ -491,9 +495,7 @@ describe('MarkdownPreview', () => {
   });
 
   it('renders blank lines as full beats without text nodes', async () => {
-    const view = await render(
-      <MarkdownPreview text={'Above.\n\n\n\nBelow.'} testID="preview" />,
-    );
+    const view = await render(<MarkdownPreview text={'Above.\n\n\n\nBelow.'} testID="preview" />);
 
     const root = view.getByTestId('preview');
     expect(root.children).toHaveLength(3);
@@ -510,9 +512,7 @@ describe('MarkdownPreview', () => {
   });
 
   it('trims trailing blank lines instead of airing the section end', async () => {
-    const view = await render(
-      <MarkdownPreview text={'Just prose.\n\n\n\n'} testID="preview" />,
-    );
+    const view = await render(<MarkdownPreview text={'Just prose.\n\n\n\n'} testID="preview" />);
 
     expect(view.getByTestId('preview').children).toHaveLength(1);
     expect(view.getByText('Just prose.')).toBeTruthy();

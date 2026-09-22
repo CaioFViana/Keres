@@ -8,7 +8,9 @@ const captured = vi.hoisted(() => ({ patch: null as Record<string, unknown> | nu
 vi.mock('../../src/db', () => ({
   db: {
     query: { showcaseSettings: { findFirst: mocks.findFirst } },
-    insert: () => ({ values: () => ({ onConflictDoNothing: () => ({ returning: mocks.returning }) }) }),
+    insert: () => ({
+      values: () => ({ onConflictDoNothing: () => ({ returning: mocks.returning }) }),
+    }),
     update: () => ({
       set: (patch: Record<string, unknown>) => {
         captured.patch = patch;

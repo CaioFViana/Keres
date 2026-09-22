@@ -90,29 +90,30 @@ jest.mock('../../../src/components/features/boards/BoardCanvas', () => {
   const React = require('react');
   return {
     __esModule: true,
-    default: React.forwardRef(
-      function MockBoardCanvas({ content, titles, onSelectNode, onConnectNodes }: any, ref: any) {
-        React.useImperativeHandle(ref, () => ({
-          viewportWorldCenter: () => ({ x: 160, y: 160 }),
-          zoomBy: jest.fn(),
-          fitToScreen: jest.fn(),
-        }));
-        return (
-          <>
-            <Text testID="canvas-nodes">{`nodes:${content.nodes.length}`}</Text>
-            <Text testID="canvas-titles">{JSON.stringify(titles)}</Text>
-            {content.nodes[0] ? (
-              <Text testID="canvas-select-first" onPress={() => onSelectNode(content.nodes[0])}>
-                select
-              </Text>
-            ) : null}
-            <Text testID="canvas-connect" onPress={() => onConnectNodes('a', 'b')}>
-              connect
+    default: React.forwardRef(function MockBoardCanvas(
+      { content, titles, onSelectNode, onConnectNodes }: any,
+      ref: any,
+    ) {
+      React.useImperativeHandle(ref, () => ({
+        viewportWorldCenter: () => ({ x: 160, y: 160 }),
+        zoomBy: jest.fn(),
+        fitToScreen: jest.fn(),
+      }));
+      return (
+        <>
+          <Text testID="canvas-nodes">{`nodes:${content.nodes.length}`}</Text>
+          <Text testID="canvas-titles">{JSON.stringify(titles)}</Text>
+          {content.nodes[0] ? (
+            <Text testID="canvas-select-first" onPress={() => onSelectNode(content.nodes[0])}>
+              select
             </Text>
-          </>
-        );
-      },
-    ),
+          ) : null}
+          <Text testID="canvas-connect" onPress={() => onConnectNodes('a', 'b')}>
+            connect
+          </Text>
+        </>
+      );
+    }),
   };
 });
 

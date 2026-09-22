@@ -564,8 +564,8 @@ describe('CommentThreadModal', () => {
       nativeEvent: { contentSize: { width: 100, height: 220 } },
     });
 
-    expect(
-      StyleSheet.flatten(view.getByTestId('comment-text-input').props.style).minHeight,
-    ).toBe(220);
+    expect(StyleSheet.flatten(view.getByTestId('comment-text-input').props.style).minHeight).toBe(
+      220,
+    );
   });
 });

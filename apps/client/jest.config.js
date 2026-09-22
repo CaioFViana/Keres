@@ -7,10 +7,7 @@ module.exports = {
   // the web integration test can mount the real implementation. Everything
   // else keeps the preset's ignore list untouched.
   transformIgnorePatterns: expoPreset.transformIgnorePatterns.map((pattern) =>
-    pattern.replace(
-      'standard-navigation))',
-      'standard-navigation|react-native-enriched-html))',
-    ),
+    pattern.replace('standard-navigation))', 'standard-navigation|react-native-enriched-html))'),
   ),
   // `src` is here only so *coverage* can see the files no test imports.
   // With only `test/` on the list, Jest does not scan `src/` and the `collectCoverageFrom` below has

@@ -58,7 +58,9 @@ describe('PublicationStorageService', () => {
 
   it('signs a manuscript URL only on backends that can sign', async () => {
     const unsigned = new PublicationStorageService({} as never);
-    await expect(unsigned.presignedManuscriptUrl('story', 'publication', 'txt', 60)).resolves.toBeNull();
+    await expect(
+      unsigned.presignedManuscriptUrl('story', 'publication', 'txt', 60),
+    ).resolves.toBeNull();
 
     const presignGet = vi.fn(async () => 'https://cdn.example/r.manuscript.txt?sig=1');
     const signed = new PublicationStorageService({ presignGet } as never);

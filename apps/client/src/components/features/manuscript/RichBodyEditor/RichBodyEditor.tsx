@@ -2,10 +2,7 @@ import type { ManuscriptMark } from '@keres/shared';
 import { createElement, useCallback, useMemo, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View, type NativeSyntheticEvent } from 'react-native';
-import {
-  EnrichedTextInput,
-  type EnrichedTextInputInstance,
-} from 'react-native-enriched-html';
+import { EnrichedTextInput, type EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useTheme } from '../../../../theme';
 import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
 
@@ -117,7 +114,8 @@ function RichBodyEditorInner({
     [onHtmlChange],
   );
   const handleChangeState = useCallback(
-    (event: NativeSyntheticEvent<LibStyleState>) => onMarksChange(marksFromStyleState(event.nativeEvent)),
+    (event: NativeSyntheticEvent<LibStyleState>) =>
+      onMarksChange(marksFromStyleState(event.nativeEvent)),
     [onMarksChange],
   );
   const styles = useMemo(
@@ -131,8 +129,7 @@ function RichBodyEditorInner({
           // default face instead of the app's system stack (see metrics).
           // (Plain `Platform.OS` check like the gates above: `Platform.select`
           // is hardcoded per bundle platform and ignores OS overrides.)
-          fontFamily:
-            Platform.OS === 'web' ? manuscriptTextMetrics.webFontFamily : undefined,
+          fontFamily: Platform.OS === 'web' ? manuscriptTextMetrics.webFontFamily : undefined,
           fontSize: manuscriptTextMetrics.fontSize,
           lineHeight: manuscriptTextMetrics.lineHeight,
           // Web keeps the wrapper padding-free: it lives on the inner

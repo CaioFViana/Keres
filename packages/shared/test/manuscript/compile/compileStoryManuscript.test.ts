@@ -32,7 +32,9 @@ describe('structural inputs', () => {
 });
 
 function input(overrides: Partial<CompileStoryManuscriptInput> = {}): CompileStoryManuscriptInput {
-  const chapters: ManuscriptChapter[] = [{ id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter' }];
+  const chapters: ManuscriptChapter[] = [
+    { id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter' },
+  ];
   const scenes: ManuscriptScene[] = [
     {
       id: 's-1',
@@ -183,9 +185,7 @@ describe('compileStoryManuscript loose scenes and labels', () => {
 
 describe('compileStoryManuscript limits', () => {
   it('rejects an unknown format', async () => {
-    await expect(
-      compileStoryManuscript(input(), { format: 'pdf' as never }),
-    ).rejects.toThrow();
+    await expect(compileStoryManuscript(input(), { format: 'pdf' as never })).rejects.toThrow();
   });
 
   it('throws past the byte budget', async () => {

@@ -29,14 +29,8 @@ if (Platform.OS !== 'web') {
     ensureCanvasKit,
   } = require('./src/components/features/graphs/SkiaEdgeCanvas/canvasKitBoot');
   const { promiseWithTimeout } = require('./src/utils/promiseWithTimeout');
-  promiseWithTimeout(ensureCanvasKit(), 30000, 'CanvasKit boot').then(
-    boot,
-    (error) => {
-      console.error(
-        '[SkiaEdgeCanvas] CanvasKit failed to load; booting without edge lines.',
-        error,
-      );
-      boot();
-    },
-  );
+  promiseWithTimeout(ensureCanvasKit(), 30000, 'CanvasKit boot').then(boot, (error) => {
+    console.error('[SkiaEdgeCanvas] CanvasKit failed to load; booting without edge lines.', error);
+    boot();
+  });
 }

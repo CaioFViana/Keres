@@ -114,9 +114,9 @@ describe('linearManuscriptSections with arcId', () => {
       'scene:s-orphan',
     ]);
     // Positions restart over the visible scenes: no gaps leak the hidden count.
-    expect(sections.filter((s) => s.kind === 'scene').map((s) => (s as { position: number }).position)).toEqual([
-      1, 2, 3,
-    ]);
+    expect(
+      sections.filter((s) => s.kind === 'scene').map((s) => (s as { position: number }).position),
+    ).toEqual([1, 2, 3]);
   });
 
   it('keeps event containers of the arc after its chapters', () => {

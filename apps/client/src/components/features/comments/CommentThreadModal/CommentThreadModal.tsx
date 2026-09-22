@@ -229,9 +229,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       {showExcerptAnchorNotice && (
         <Text style={styles.noticeText}>{t('excerpt_anchor_notice')}</Text>
       )}
-      {excerptMismatch && (
-        <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>
-      )}
+      {excerptMismatch && <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>}
 
       <TextInput
         testID="comment-text-input"
@@ -353,7 +351,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
             })
           )}
         </View>
-
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );

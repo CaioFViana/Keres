@@ -532,9 +532,9 @@ describe('PublishStoryScreen', () => {
     expect(view.getByText('export_manuscript_format_md')).toBeTruthy();
     expect(view.getByText('export_manuscript_format_txt')).toBeTruthy();
     expect(view.getByText('export_manuscript_format_html')).toBeTruthy();
-    expect(
-      view.getByTestId('publish-loose-switch-story-1').props.accessibilityState,
-    ).toMatchObject({ checked: true });
+    expect(view.getByTestId('publish-loose-switch-story-1').props.accessibilityState).toMatchObject(
+      { checked: true },
+    );
 
     await fireEvent.press(view.getByText('export_manuscript_format_md'));
     await fireEvent.press(view.getByText('publish_create_version'));
@@ -559,9 +559,9 @@ describe('PublishStoryScreen', () => {
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
     await view.findByText('publish_manuscript_format');
     await fireEvent.press(view.getByTestId('publish-loose-switch-story-1'));
-    expect(
-      view.getByTestId('publish-loose-switch-story-1').props.accessibilityState,
-    ).toMatchObject({ checked: false });
+    expect(view.getByTestId('publish-loose-switch-story-1').props.accessibilityState).toMatchObject(
+      { checked: false },
+    );
 
     await fireEvent.press(view.getByText('publish_create_version'));
     await waitFor(() =>
@@ -611,9 +611,7 @@ describe('PublishStoryScreen', () => {
     await fireEvent.press(view.getByText('Epic'));
     await view.findByText('publish_create_version');
 
-    await waitFor(() =>
-      expect(view.getByText('publish_manuscript_no_routes')).toBeTruthy(),
-    );
+    await waitFor(() => expect(view.getByText('publish_manuscript_no_routes')).toBeTruthy());
     expect(
       view.getByTestId('publish-manuscript-switch-story-1').props.accessibilityState,
     ).toMatchObject({ disabled: true });

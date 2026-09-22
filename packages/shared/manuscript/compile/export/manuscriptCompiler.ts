@@ -178,7 +178,9 @@ export function withoutLooseSections(
     (section) => section.kind !== 'scene' || !isLooseScene(section.scene, chaptersById),
   );
   const usedContainers = new Set(
-    kept.filter((s) => s.kind === 'scene').map((s) => (s as { scene: ManuscriptScene }).scene.chapterId),
+    kept
+      .filter((s) => s.kind === 'scene')
+      .map((s) => (s as { scene: ManuscriptScene }).scene.chapterId),
   );
   return kept.filter((section) => {
     if (section.kind === 'container') return usedContainers.has(section.containerId);
@@ -312,7 +314,8 @@ export function manuscriptTocEntries(blocks: CompiledBlock[]): ManuscriptTocEntr
       entries.push({ level: 0, text: block.label, bookmarkId: block.bookmarkId });
     } else if (block.kind === 'scene-heading') {
       const target = block.bookmarkId ?? sceneBookmark.get(block.id) ?? null;
-      if (target !== null) entries.push({ level: 1, text: `${block.number}. ${block.name}`, bookmarkId: target });
+      if (target !== null)
+        entries.push({ level: 1, text: `${block.number}. ${block.name}`, bookmarkId: target });
     }
   }
   return entries;

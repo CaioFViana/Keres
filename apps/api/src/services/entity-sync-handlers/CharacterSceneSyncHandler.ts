@@ -18,17 +18,11 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
   entityName = 'CharacterScene';
 
   constructor() {
-    super(
-      'id',
-      'version',
-      CreateCharacterSceneDataSchema,
-      PartialCharacterSceneSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateCharacterSceneDataSchema, PartialCharacterSceneSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(

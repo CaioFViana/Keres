@@ -15,13 +15,18 @@ export function useStoryArcs() {
   const setActiveArcId = useStoryStore((state) => state.setActiveArcId);
   const { setTheme } = useTheme();
   const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
+  // Loading is not the same as empty: every mount starts with no arcs, and only
+  // the user (or a genuinely deleted arc) may clear the selection — never the load.
+  const [loaded, setLoaded] = useState(false);
 
   const reload = useCallback(async () => {
     if (!story?.id) {
       setArcs([]);
+      setLoaded(true);
       return;
     }
     setArcs(await createStoryArcService(db).getArcsForStory(story.id));
+    setLoaded(true);
   }, [db, story?.id]);
 
   useEffect(() => {
@@ -40,10 +45,10 @@ export function useStoryArcs() {
   }, [reload, story?.id]);
 
   useEffect(() => {
-    if (activeArcId && !arcs.some((arc) => arc.id === activeArcId)) {
+    if (loaded && activeArcId && !arcs.some((arc) => arc.id === activeArcId)) {
       setActiveArcId(null);
     }
-  }, [activeArcId, arcs, setActiveArcId]);
+  }, [loaded, activeArcId, arcs, setActiveArcId]);
 
   const activeArc = useMemo(
     () => arcs.find((arc) => arc.id === activeArcId) ?? null,

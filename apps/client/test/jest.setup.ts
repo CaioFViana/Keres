@@ -159,11 +159,7 @@ jest.mock('react-native-enriched-html', () => {
       ref?: React.Ref<unknown>;
     } & Record<string, unknown>;
     refHolder.current = ref ?? null;
-    return React.createElement(
-      View,
-      rest,
-      (rest as { children?: React.ReactNode }).children,
-    );
+    return React.createElement(View, rest, (rest as { children?: React.ReactNode }).children);
   };
   EnrichedTextInput.displayName = 'EnrichedTextInput';
   return {

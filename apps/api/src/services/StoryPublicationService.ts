@@ -143,7 +143,10 @@ export class StoryPublicationService {
     }
     const options = parsed.data;
     if (storyType === 'branching' && !options.routeId) {
-      throw new AppError(400, 'A routeId is required to publish a manuscript of a branching story.');
+      throw new AppError(
+        400,
+        'A routeId is required to publish a manuscript of a branching story.',
+      );
     }
     if (storyType !== 'branching' && options.routeId) {
       throw new AppError(400, 'routeId is only valid for branching stories.');

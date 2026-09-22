@@ -114,9 +114,7 @@ export function linearManuscriptSections(
   let position = 0;
 
   const pushContainer = (chapter: ManuscriptChapter) => {
-    const own = live
-      .filter((scene) => scene.chapterId === chapter.id)
-      .sort(byIndex);
+    const own = live.filter((scene) => scene.chapterId === chapter.id).sort(byIndex);
     if (own.length === 0) return;
     sections.push({
       key: `container-${chapter.id}`,
@@ -162,7 +160,9 @@ export function routeManuscriptSections(
   steps: ManuscriptRouteStep[],
   scenes: ManuscriptScene[],
 ): ManuscriptSection[] {
-  const byId = new Map(scenes.filter((scene) => !scene.isDeleted).map((scene) => [scene.id, scene]));
+  const byId = new Map(
+    scenes.filter((scene) => !scene.isDeleted).map((scene) => [scene.id, scene]),
+  );
   const sections: ManuscriptSection[] = [];
   let position = 0;
   for (const step of [...steps]

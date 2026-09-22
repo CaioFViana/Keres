@@ -43,7 +43,10 @@ jest.mock('../../../src/components/features/story-timeline/StoryTimelineCanvas',
   const React = require('react');
   return {
     __esModule: true,
-    default: React.forwardRef(function MockStoryTimelineCanvas({ layout, onPressScene }: any, ref: any) {
+    default: React.forwardRef(function MockStoryTimelineCanvas(
+      { layout, onPressScene }: any,
+      ref: any,
+    ) {
       React.useImperativeHandle(ref, () => ({
         zoomBy: jest.fn(),
         fitToScreen: jest.fn(),

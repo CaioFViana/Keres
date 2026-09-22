@@ -244,12 +244,15 @@ const LEADING_HASH_PATTERN = /^#{1,3}[ \t]/;
 function escapeLineSegments(segments: LineSegment[]): LineSegment[] {
   const raw = segments.map((segment) => segment.text).join('');
   const escapeStars =
-    segments.some((segment) => segment.marks.includes('bold') || segment.marks.includes('italic')) ||
-    STAR_PAIR_PATTERN.test(raw);
+    segments.some(
+      (segment) => segment.marks.includes('bold') || segment.marks.includes('italic'),
+    ) || STAR_PAIR_PATTERN.test(raw);
   const escapeUnderscores =
-    segments.some((segment) => segment.marks.includes('underline')) || UNDERSCORE_PAIR_PATTERN.test(raw);
+    segments.some((segment) => segment.marks.includes('underline')) ||
+    UNDERSCORE_PAIR_PATTERN.test(raw);
   const escapeTildes =
-    segments.some((segment) => segment.marks.includes('strikethrough')) || TILDE_PAIR_PATTERN.test(raw);
+    segments.some((segment) => segment.marks.includes('strikethrough')) ||
+    TILDE_PAIR_PATTERN.test(raw);
   return segments.map((segment) => {
     let text = segment.text.replace(/\\(?=[\\*_~#])/g, '\\\\');
     if (escapeStars) text = text.replace(/\*/g, '\\*');

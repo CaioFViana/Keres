@@ -61,11 +61,17 @@ export function PublishManuscriptSection({
             {SERVER_MANUSCRIPT_FORMATS.map((format) => (
               <TouchableOpacity
                 key={format}
-                style={[styles.modeOption, manuscript.manuscriptFormat === format && styles.modeOptionActive]}
+                style={[
+                  styles.modeOption,
+                  manuscript.manuscriptFormat === format && styles.modeOptionActive,
+                ]}
                 onPress={() => manuscript.setManuscriptFormat(format)}
               >
                 <Text
-                  style={[styles.modeText, manuscript.manuscriptFormat === format && styles.modeTextActive]}
+                  style={[
+                    styles.modeText,
+                    manuscript.manuscriptFormat === format && styles.modeTextActive,
+                  ]}
                 >
                   {t(`export_manuscript_format_${format}`)}
                 </Text>

@@ -44,9 +44,9 @@ function ebmlHeader(docType: string): Uint8Array {
 describe('sniffMediaMimeType', () => {
   it('identifies images, audio frames, and documents from their magic bytes', () => {
     expect(sniffMediaMimeType(headerWith([0xff, 0xd8, 0xff, 0xe0]))).toBe('image/jpeg');
-    expect(
-      sniffMediaMimeType(headerWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
-    ).toBe('image/png');
+    expect(sniffMediaMimeType(headerWith([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(
+      'image/png',
+    );
     expect(sniffMediaMimeType(headerWith([], [0, 'GIF89a']))).toBe('image/gif');
     expect(sniffMediaMimeType(headerWith([0x42, 0x4d]))).toBe('image/bmp');
     expect(sniffMediaMimeType(headerWith([], [0, '%PDF-1.7']))).toBe('application/pdf');

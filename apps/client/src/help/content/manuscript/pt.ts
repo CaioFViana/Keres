@@ -3,7 +3,16 @@ const page: HelpPage = {
   id: 'manuscript',
   title: 'Manuscrito',
   summary: 'Escreva a história em si, cena por cena, e leia tudo como um documento.',
-  keywords: ['manuscrito', 'escrever', 'editor', 'prosa', 'exportar', 'negrito', 'itálico', 'leitura'],
+  keywords: [
+    'manuscrito',
+    'escrever',
+    'editor',
+    'prosa',
+    'exportar',
+    'negrito',
+    'itálico',
+    'leitura',
+  ],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
@@ -17,7 +26,10 @@ const page: HelpPage = {
       text: '“Saindo da estação” tem um resumo de uma linha para planejar e três parágrafos de prosa para ler. O editor da cena guarda a prosa; o manuscrito a mostra junto com todas as outras cenas, na ordem da história.',
     },
     { type: 'heading', level: 2, text: 'Como fazer' },
-    { type: 'path', segments: ['Menu da história', 'Elementos narrativos', 'Abrir cena', 'Escrever manuscrito'] },
+    {
+      type: 'path',
+      segments: ['Menu da história', 'Elementos narrativos', 'Abrir cena', 'Escrever manuscrito'],
+    },
     {
       type: 'steps',
       items: [

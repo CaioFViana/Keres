@@ -402,7 +402,7 @@ const CharacterDetailScreen = () => {
     handleDeleteRelation,
     handleSaveCharacterScene,
     handleDeleteCharacterScene,
-  // eslint-disable-next-line react-hooks/refs -- the factory only closes over the service refs for its async event handlers; nothing is read during the call.
+    // eslint-disable-next-line react-hooks/refs -- the factory only closes over the service refs for its async event handlers; nothing is read during the call.
   } = createCharacterDetailMutations({
     characterRelationServiceRef,
     characterSceneServiceRef,

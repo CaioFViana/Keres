@@ -1,7 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
@@ -60,6 +67,7 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { height: screenHeight } = useWindowDimensions();
   const [format, setFormat] = useState<ManuscriptExportFormat>('docx');
   const [arcId, setArcId] = useState<string | null>(null);
   const [includeSceneNames, setIncludeSceneNames] = useState(false);
@@ -73,6 +81,10 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
         content: { padding: 20 },
         title: { color: colors.text, fontSize: 20, fontWeight: '700' },
         description: { color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
+        // The modal surface clips at 90% of the screen: without a bounded scroll
+        // region a long option list pushes the actions out of reach. The bound
+        // scales with the screen so the title and the actions always stay visible.
+        list: { marginTop: 16, maxHeight: Math.min(screenHeight * 0.5, 460) },
         section: {
           color: colors.textSecondary,
           fontSize: 13,
@@ -104,7 +116,7 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
         },
         cancelButton: { backgroundColor: colors.textSecondary },
       }),
-    [colors],
+    [colors, screenHeight],
   );
 
   const confirm = () => {
@@ -150,90 +162,92 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
           </Text>
         ) : null}
 
-        {arcs.length > 1 ? (
-          <>
-            <Text style={styles.section}>{t('export_manuscript_arc')}</Text>
-            {renderArcOption(null, t('export_manuscript_arc_all'), 'export-arc-all')}
-            {arcs.map((arc) => renderArcOption(arc.id, arc.title, `export-arc-${arc.id}`))}
-          </>
-        ) : null}
+        <ScrollView style={styles.list} testID="export-options-scroll" showsVerticalScrollIndicator>
+          {arcs.length > 1 ? (
+            <>
+              <Text style={styles.section}>{t('export_manuscript_arc')}</Text>
+              {renderArcOption(null, t('export_manuscript_arc_all'), 'export-arc-all')}
+              {arcs.map((arc) => renderArcOption(arc.id, arc.title, `export-arc-${arc.id}`))}
+            </>
+          ) : null}
 
-        <Text style={styles.section}>{t('export_format')}</Text>
-        {MANUSCRIPT_EXPORT_FORMATS.map((option) => {
-          const selected = option === format;
-          return (
-            <TouchableOpacity
-              key={option}
-              testID={`export-format-${option}`}
-              style={[styles.option, selected && styles.optionSelected]}
-              onPress={() => setFormat(option)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-            >
-              <Ionicons
-                name={selected ? 'checkmark-circle' : 'ellipse-outline'}
-                size={22}
-                color={selected ? colors.primary : colors.textSecondary}
+          <Text style={styles.section}>{t('export_format')}</Text>
+          {MANUSCRIPT_EXPORT_FORMATS.map((option) => {
+            const selected = option === format;
+            return (
+              <TouchableOpacity
+                key={option}
+                testID={`export-format-${option}`}
+                style={[styles.option, selected && styles.optionSelected]}
+                onPress={() => setFormat(option)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+              >
+                <Ionicons
+                  name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={22}
+                  color={selected ? colors.primary : colors.textSecondary}
+                />
+                <Text style={styles.optionLabel}>{t(`export_manuscript_format_${option}`)}</Text>
+              </TouchableOpacity>
+            );
+          })}
+
+          <Text style={styles.section}>{t('export_manuscript_contents')}</Text>
+          <View style={styles.switchRow}>
+            <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
+              {t('export_manuscript_include_scene_names')}
+            </Text>
+            <ThemedSwitch
+              testID="export-scene-names"
+              accessibilityLabel={t('export_manuscript_include_scene_names')}
+              value={includeSceneNames}
+              onValueChange={setIncludeSceneNames}
+            />
+          </View>
+
+          {includeSceneNames && chapterNumberingAvailable ? (
+            <View style={styles.switchRow}>
+              <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
+                {t('export_manuscript_reset_numbers')}
+              </Text>
+              <ThemedSwitch
+                testID="export-reset-numbers"
+                accessibilityLabel={t('export_manuscript_reset_numbers')}
+                value={resetSceneNumbers}
+                onValueChange={setResetSceneNumbers}
               />
-              <Text style={styles.optionLabel}>{t(`export_manuscript_format_${option}`)}</Text>
-            </TouchableOpacity>
-          );
-        })}
+            </View>
+          ) : null}
 
-        <Text style={styles.section}>{t('export_manuscript_contents')}</Text>
-        <View style={styles.switchRow}>
-          <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
-            {t('export_manuscript_include_scene_names')}
-          </Text>
-          <ThemedSwitch
-            testID="export-scene-names"
-            accessibilityLabel={t('export_manuscript_include_scene_names')}
-            value={includeSceneNames}
-            onValueChange={setIncludeSceneNames}
-          />
-        </View>
+          {showLooseSwitch ? (
+            <View style={styles.switchRow}>
+              <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
+                {t('export_manuscript_include_loose', { count: looseCount })}
+              </Text>
+              <ThemedSwitch
+                testID="export-loose"
+                accessibilityLabel={t('export_manuscript_include_loose', { count: looseCount })}
+                value={includeLooseScenes}
+                onValueChange={setIncludeLooseScenes}
+              />
+            </View>
+          ) : null}
 
-        {includeSceneNames && chapterNumberingAvailable ? (
-          <View style={styles.switchRow}>
-            <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
-              {t('export_manuscript_reset_numbers')}
-            </Text>
-            <ThemedSwitch
-              testID="export-reset-numbers"
-              accessibilityLabel={t('export_manuscript_reset_numbers')}
-              value={resetSceneNumbers}
-              onValueChange={setResetSceneNumbers}
-            />
-          </View>
-        ) : null}
-
-        {showLooseSwitch ? (
-          <View style={styles.switchRow}>
-            <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
-              {t('export_manuscript_include_loose', { count: looseCount })}
-            </Text>
-            <ThemedSwitch
-              testID="export-loose"
-              accessibilityLabel={t('export_manuscript_include_loose', { count: looseCount })}
-              value={includeLooseScenes}
-              onValueChange={setIncludeLooseScenes}
-            />
-          </View>
-        ) : null}
-
-        {format !== 'txt' ? (
-          <View style={styles.switchRow}>
-            <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
-              {t('export_manuscript_include_index')}
-            </Text>
-            <ThemedSwitch
-              testID="export-index"
-              accessibilityLabel={t('export_manuscript_include_index')}
-              value={includeIndex}
-              onValueChange={setIncludeIndex}
-            />
-          </View>
-        ) : null}
+          {format !== 'txt' ? (
+            <View style={styles.switchRow}>
+              <Text style={[styles.optionLabel, { fontWeight: '400' }]}>
+                {t('export_manuscript_include_index')}
+              </Text>
+              <ThemedSwitch
+                testID="export-index"
+                accessibilityLabel={t('export_manuscript_include_index')}
+                value={includeIndex}
+                onValueChange={setIncludeIndex}
+              />
+            </View>
+          ) : null}
+        </ScrollView>
 
         <FormActions stackOnCompact>
           <Button testID="export-cancel" onPress={onClose} style={styles.cancelButton}>

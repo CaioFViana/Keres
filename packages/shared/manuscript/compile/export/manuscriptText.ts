@@ -115,7 +115,10 @@ export function buildManuscriptMarkdown(
       case 'chapter': {
         const anchor = anchorFor(block.bookmarkId);
         if (anchor) lines.push(anchor);
-        lines.push(`## ${block.number === null ? block.name : `${block.number}. ${block.name}`}`, '');
+        lines.push(
+          `## ${block.number === null ? block.name : `${block.number}. ${block.name}`}`,
+          '',
+        );
         break;
       }
       case 'loose-heading': {
@@ -163,7 +166,9 @@ export function buildManuscriptText(
         lines.push(block.text, '');
         break;
       case 'chapter':
-        lines.push(...underline(block.number === null ? block.name : `${block.number}. ${block.name}`, '-'));
+        lines.push(
+          ...underline(block.number === null ? block.name : `${block.number}. ${block.name}`, '-'),
+        );
         break;
       case 'loose-heading':
         lines.push(...underline(block.label, '-'));
@@ -176,7 +181,10 @@ export function buildManuscriptText(
         break;
       case 'choice': {
         const lead = `* ${block.text}`;
-        lines.push(block.targetSceneName ? `${lead} — ${labels.goToScene} ${block.targetSceneName}` : lead, '');
+        lines.push(
+          block.targetSceneName ? `${lead} — ${labels.goToScene} ${block.targetSceneName}` : lead,
+          '',
+        );
         break;
       }
     }

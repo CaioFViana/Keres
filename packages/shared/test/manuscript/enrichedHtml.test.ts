@@ -48,9 +48,7 @@ describe('documentToEnrichedHtml', () => {
 
 describe('enrichedHtmlToDocument', () => {
   it('parses paragraphs and marks', () => {
-    const doc = enrichedHtmlToDocument(
-      '<html><p>plain</p><p><b>bold</b> and <i>it</i></p></html>',
-    );
+    const doc = enrichedHtmlToDocument('<html><p>plain</p><p><b>bold</b> and <i>it</i></p></html>');
 
     expect(doc.blocks).toHaveLength(2);
     expect(doc.blocks[0]).toEqual(paragraph('plain'));
@@ -138,26 +136,20 @@ describe('enrichedHtmlToDocument', () => {
   it('round-trips documents through HTML without changing markdown', () => {
     const markdown =
       'First *line*.\n\nSecond **bold** line with __ul__ and ~~s~~.\n\nFish & chips 2 < 3.';
-    const back = enrichedHtmlToDocument(
-      documentToEnrichedHtml(parseMarkdownToDocument(markdown)),
-    );
+    const back = enrichedHtmlToDocument(documentToEnrichedHtml(parseMarkdownToDocument(markdown)));
 
     expect(serializeDocumentToMarkdown(back)).toBe(markdown);
   });
 
   it('round-trips blank lines through HTML byte-identically', () => {
     const markdown = 'First.\n\n\n\nSecond.\n\n\n\n\n\nThird.';
-    const back = enrichedHtmlToDocument(
-      documentToEnrichedHtml(parseMarkdownToDocument(markdown)),
-    );
+    const back = enrichedHtmlToDocument(documentToEnrichedHtml(parseMarkdownToDocument(markdown)));
 
     expect(serializeDocumentToMarkdown(back)).toBe(markdown);
   });
 
   it('canonicalizes soft breaks to paragraphs through the HTML boundary', () => {
-    const back = enrichedHtmlToDocument(
-      documentToEnrichedHtml(parseMarkdownToDocument('a\nb')),
-    );
+    const back = enrichedHtmlToDocument(documentToEnrichedHtml(parseMarkdownToDocument('a\nb')));
 
     expect(serializeDocumentToMarkdown(back)).toBe('a\n\nb');
   });

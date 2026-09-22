@@ -1,8 +1,4 @@
-import {
-  CreateStoryPermissionSchema,
-  StoryAndTargetUserParams,
-  StoryIdParam,
-} from '@keres/shared';
+import { CreateStoryPermissionSchema, StoryAndTargetUserParams, StoryIdParam } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';

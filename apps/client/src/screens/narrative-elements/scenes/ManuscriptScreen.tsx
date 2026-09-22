@@ -52,7 +52,10 @@ import { useTheme } from '../../../theme';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
 
 type ManuscriptScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Manuscript'>;
-type ManuscriptNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'Manuscript'>;
+type ManuscriptNavigation = NativeStackNavigationProp<
+  NarrativeElementsStackParamList,
+  'Manuscript'
+>;
 
 // A row counts as visible once half of it shows; module scope keeps the reference stable.
 const MANUSCRIPT_VIEWABILITY = { itemVisiblePercentThreshold: 50 };
@@ -93,7 +96,10 @@ const ManuscriptScreen = () => {
   // their scenes; unchaptered and orphan scenes stay visible. The linear path filters
   // inside the shared sections builder; routes have no arc of their own, so the
   // branching path drops other-arc scenes and their steps vanish with them.
-  const chaptersById = useMemo(() => new Map(chapters.map((chapter) => [chapter.id, chapter])), [chapters]);
+  const chaptersById = useMemo(
+    () => new Map(chapters.map((chapter) => [chapter.id, chapter])),
+    [chapters],
+  );
   const visibleScenes = useMemo(
     () => scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, activeArcId)),
     [scenes, chaptersById, activeArcId],
@@ -120,7 +126,10 @@ const ManuscriptScreen = () => {
     [pureRead, allSections],
   );
 
-  const { matches, total } = useMemo(() => findManuscriptMatches(sections, query), [sections, query]);
+  const { matches, total } = useMemo(
+    () => findManuscriptMatches(sections, query),
+    [sections, query],
+  );
   // Search marks follow the counter's own rule (case-insensitive, scene names and
   // bodies): ranges over the bare name, shifted past the "position. " prefix the list
   // adds. Bodies mark through `MarkdownPreview`; container headings never match.
@@ -214,9 +223,12 @@ const ManuscriptScreen = () => {
     // The count follows the visible manuscript: other-arc containers are gone, and
     // their scenes went with them, so nothing hidden leaks into the loose switch.
     const visibleById = new Map(
-      chapters.filter((chapter) => chapterBelongsToArc(chapter, activeArcId)).map((chapter) => [chapter.id, chapter]),
+      chapters
+        .filter((chapter) => chapterBelongsToArc(chapter, activeArcId))
+        .map((chapter) => [chapter.id, chapter]),
     );
-    return visibleScenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, visibleById)).length;
+    return visibleScenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, visibleById))
+      .length;
   }, [isBranching, chapters, visibleScenes, activeArcId]);
 
   const exportRouteName = isBranching
@@ -246,7 +258,9 @@ const ManuscriptScreen = () => {
           // A specific arc exports as its own book: the arc title replaces the story
           // title on the cover and in the file name, and only its scenes ship. The
           // export arc is the modal's own pick, independent of the reading filter.
-          const exportArc = exportArcId ? (arcs.find((arc) => arc.id === exportArcId) ?? null) : null;
+          const exportArc = exportArcId
+            ? (arcs.find((arc) => arc.id === exportArcId) ?? null)
+            : null;
           const exportTitle = exportArc?.title ?? selectedStory?.title ?? '';
           const exportScenes = exportArcId
             ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, exportArcId))
@@ -298,7 +312,22 @@ const ManuscriptScreen = () => {
         }
       });
     },
-    [runExport, isBranching, selectedStory, arcs, chaptersById, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, i18n, showNotification],
+    [
+      runExport,
+      isBranching,
+      selectedStory,
+      arcs,
+      chaptersById,
+      exportRouteName,
+      effectiveRouteId,
+      stepsByRouteId,
+      scenes,
+      choices,
+      chapters,
+      t,
+      i18n,
+      showNotification,
+    ],
   );
 
   // The modal owns format and switches; re-entrant presses while an export runs are ignored.
@@ -365,7 +394,12 @@ const ManuscriptScreen = () => {
           fontSize: 15,
         },
         searchNav: { padding: 8 },
-        searchCount: { color: colors.textSecondary, fontSize: 13, minWidth: 64, textAlign: 'center' },
+        searchCount: {
+          color: colors.textSecondary,
+          fontSize: 13,
+          minWidth: 64,
+          textAlign: 'center',
+        },
         section: {
           paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
           paddingVertical: 20,
@@ -465,7 +499,9 @@ const ManuscriptScreen = () => {
     return <ScreenLoading padded message={t('loading')} />;
   }
   if (!storyId) {
-    return <ScreenError padded message={t('no_story_selected')} onGoBack={() => navigation.goBack()} />;
+    return (
+      <ScreenError padded message={t('no_story_selected')} onGoBack={() => navigation.goBack()} />
+    );
   }
 
   return (

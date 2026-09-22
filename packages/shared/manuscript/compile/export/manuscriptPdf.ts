@@ -106,7 +106,13 @@ function winAnsiByte(char: string): number {
   return 0x3f;
 }
 
-type Word = { text: string; font: PdfFont; width: number; underline: boolean; strikethrough: boolean };
+type Word = {
+  text: string;
+  font: PdfFont;
+  width: number;
+  underline: boolean;
+  strikethrough: boolean;
+};
 
 /** One drawn line. Paragraphs and choices flatten to one or more of these. */
 type LineRun = {
@@ -258,8 +264,7 @@ function flattenRuns(
       const page = anchors.get(entry.bookmarkId)?.page ?? null;
       const nameWidth = widthOfTextAtSize(entry.text, font, BODY_SIZE);
       const numberText = page === null ? '' : String(page);
-      const numberWidth =
-        numberText === '' ? 0 : widthOfTextAtSize(numberText, font, BODY_SIZE);
+      const numberWidth = numberText === '' ? 0 : widthOfTextAtSize(numberText, font, BODY_SIZE);
       const dotWidth = widthOfTextAtSize('.', font, BODY_SIZE);
       const dotCount =
         numberText === ''
@@ -404,11 +409,7 @@ function flattenRuns(
           ? (anchors.get(block.targetBookmarkId)?.page ?? null)
           : null;
         const { lines, indents } = wrapGroup(
-          wordsOf(
-            choiceText(block.text, block.targetSceneName, page, labels),
-            'times',
-            BODY_SIZE,
-          ),
+          wordsOf(choiceText(block.text, block.targetSceneName, page, labels), 'times', BODY_SIZE),
           BODY_SIZE,
           CONTENT_WIDTH,
           CHOICE_INDENT,
@@ -593,7 +594,9 @@ function drawLine(run: LineRun, y: number, writer: PdfWriter): void {
   run.words.forEach((word, index) => {
     if (index > 0) x += widthOfTextAtSize(' ', word.font, run.size);
     placed.push({ word, x });
-    writer.ascii(`BT /F${fontIndex(word.font)} ${trim(run.size)} Tf ${gray} g 1 0 0 1 ${trim(x)} ${trim(y - run.size)} Tm `);
+    writer.ascii(
+      `BT /F${fontIndex(word.font)} ${trim(run.size)} Tf ${gray} g 1 0 0 1 ${trim(x)} ${trim(y - run.size)} Tm `,
+    );
     writer.literal(word.text);
     writer.ascii(' Tj ET\n');
     x += word.width;
@@ -743,9 +746,7 @@ export function buildManuscriptPdf(
   const fontBase = firstPageId + 2 * pages.length;
   pages.forEach((_, index) => {
     const contentId = firstPageId + 2 * index + 1;
-    const annotRefs = annotIdsByPage[index]
-      .map((id) => `${id} 0 R`)
-      .join(' ');
+    const annotRefs = annotIdsByPage[index].map((id) => `${id} 0 R`).join(' ');
     const annotsEntry = annotRefs === '' ? '' : ` /Annots [${annotRefs}]`;
     writer.object((body) => {
       body.ascii(

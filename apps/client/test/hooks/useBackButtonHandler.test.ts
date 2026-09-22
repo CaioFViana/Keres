@@ -103,9 +103,7 @@ it('closes an open parent drawer before anything below gets the back press', asy
   await renderHook(() => useBackButtonHandler());
 
   expect(hardwareBack?.()).toBe(true);
-  expect(parent.dispatch).toHaveBeenCalledWith(
-    expect.objectContaining({ type: 'CLOSE_DRAWER' }),
-  );
+  expect(parent.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'CLOSE_DRAWER' }));
   expect(mockNavigation.goBack).not.toHaveBeenCalled();
   expect(parent.goBack).not.toHaveBeenCalled();
 });

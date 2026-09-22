@@ -13,10 +13,7 @@ import {
 } from '@keres/shared';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  SCENE_BODY_DRAFT_FIELD,
-  readBoundEditorDraft,
-} from '../services/EditorDraftService';
+import { SCENE_BODY_DRAFT_FIELD, readBoundEditorDraft } from '../services/EditorDraftService';
 import { useAsyncOperation } from './useAsyncOperation';
 import { useDurableFormDraft } from './useDurableFormDraft';
 
@@ -114,8 +111,7 @@ export function useSceneBodyDraft({
     prevStorageLengthRef.current = serializeDocumentToMarkdown(next).length;
   }, []);
   const { clearFormDraft, deleteStoredDraft, draftRestored, restoreSettled } =
-    useDurableFormDraft<SceneBodyFields>(
-    {
+    useDurableFormDraft<SceneBodyFields>({
       storyId,
       entityType: 'Scene',
       field: SCENE_BODY_DRAFT_FIELD,
@@ -125,8 +121,7 @@ export function useSceneBodyDraft({
       pristine: { body: savedCanonicalBody },
       baseUpdatedAt,
       onRestore: handleRestore,
-    },
-  );
+    });
 
   const isDirty = serializedBody !== savedCanonicalBody;
   // Reachable only through over-cap legacy content (old drafts typed before
@@ -136,7 +131,10 @@ export function useSceneBodyDraft({
   const onHtmlChange = useCallback((html: string) => {
     const next = enrichedHtmlToDocument(html);
     const nextStorageLength = serializeDocumentToMarkdown(next).length;
-    if (nextStorageLength > MAX_SCENE_BODY_LENGTH && nextStorageLength > prevStorageLengthRef.current) {
+    if (
+      nextStorageLength > MAX_SCENE_BODY_LENGTH &&
+      nextStorageLength > prevStorageLengthRef.current
+    ) {
       // Hard storage cap: refuse growth past what the backend persists by
       // pushing the last accepted state back into the uncontrolled input, so
       // the keystroke (or paste) visibly has no effect. Shrinkage is always

@@ -104,7 +104,10 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
     <NavigationContainer theme={navigationTheme}>
       <SyncInitializer>
         <RootStack.Navigator
-          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
           initialRouteName={initialRouteName}
         >
           <RootStack.Screen name="ColdInstall" component={ColdInstallStack} />

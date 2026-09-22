@@ -145,43 +145,37 @@ jest.mock('../../../src/components/features/graphs/LocationGraph/LocationGraphCa
   const { Text } = require('react-native');
   return {
     __esModule: true,
-    default: React.forwardRef(
-      function MockLocationGraphCanvas(
-        props: {
-          layout: { nodes: { id: string; location: { name: string } }[]; edges: unknown[] };
-          selectedNodeId: string | null;
-          highlightedNodeIds: string[];
-          onSelectNode: (node: { id: string }) => void;
-        },
-        ref: React.Ref<{ zoomBy: (factor: number) => void; fitToScreen: () => void }>,
-      ) {
-        React.useImperativeHandle(ref, () => ({
-          zoomBy: mockZoomBy,
-          fitToScreen: mockFitToScreen,
-        }));
-        return (
-          <>
-            <Text testID="canvas-marker">
-              {JSON.stringify({
-                nodes: props.layout.nodes.map((n) => n.id),
-                edges: props.layout.edges.length,
-                selected: props.selectedNodeId,
-                highlighted: props.highlightedNodeIds,
-              })}
-            </Text>
-            {props.layout.nodes.map((node) => (
-              <Text
-                key={node.id}
-                testID={`node-${node.id}`}
-                onPress={() => props.onSelectNode(node)}
-              >
-                {node.location.name}
-              </Text>
-            ))}
-          </>
-        );
+    default: React.forwardRef(function MockLocationGraphCanvas(
+      props: {
+        layout: { nodes: { id: string; location: { name: string } }[]; edges: unknown[] };
+        selectedNodeId: string | null;
+        highlightedNodeIds: string[];
+        onSelectNode: (node: { id: string }) => void;
       },
-    ),
+      ref: React.Ref<{ zoomBy: (factor: number) => void; fitToScreen: () => void }>,
+    ) {
+      React.useImperativeHandle(ref, () => ({
+        zoomBy: mockZoomBy,
+        fitToScreen: mockFitToScreen,
+      }));
+      return (
+        <>
+          <Text testID="canvas-marker">
+            {JSON.stringify({
+              nodes: props.layout.nodes.map((n) => n.id),
+              edges: props.layout.edges.length,
+              selected: props.selectedNodeId,
+              highlighted: props.highlightedNodeIds,
+            })}
+          </Text>
+          {props.layout.nodes.map((node) => (
+            <Text key={node.id} testID={`node-${node.id}`} onPress={() => props.onSelectNode(node)}>
+              {node.location.name}
+            </Text>
+          ))}
+        </>
+      );
+    }),
   };
 });
 jest.mock('../../../src/components/features/graphs/GraphNodeSheet/GraphNodeSheet', () => {

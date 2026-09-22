@@ -207,35 +207,38 @@ jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', 
   };
 });
 
-jest.mock('../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal', () => {
-  const { Text } = require('react-native');
-  return {
-    __esModule: true,
-    default: (props: {
-      visible: boolean;
-      comments: { id: string }[];
-      fieldValueSnapshot: string;
-      onSubmit: (input: {
-        commentText: string;
-        excerptText: string | null;
-        criticality: number;
-      }) => Promise<void>;
-    }) =>
-      props.visible ? (
-        <>
-          <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
-          <Text
-            testID="comments-submit"
-            onPress={() =>
-              props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
-            }
-          >
-            submit
-          </Text>
-        </>
-      ) : null,
-  };
-});
+jest.mock(
+  '../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+  () => {
+    const { Text } = require('react-native');
+    return {
+      __esModule: true,
+      default: (props: {
+        visible: boolean;
+        comments: { id: string }[];
+        fieldValueSnapshot: string;
+        onSubmit: (input: {
+          commentText: string;
+          excerptText: string | null;
+          criticality: number;
+        }) => Promise<void>;
+      }) =>
+        props.visible ? (
+          <>
+            <Text testID="comments-modal">{`comments:${props.comments.length}`}</Text>
+            <Text
+              testID="comments-submit"
+              onPress={() =>
+                props.onSubmit({ commentText: 'Needs a beat', excerptText: null, criticality: 1 })
+              }
+            >
+              submit
+            </Text>
+          </>
+        ) : null,
+    };
+  },
+);
 
 const stamp = new Date('2026-01-01T00:00:00.000Z');
 

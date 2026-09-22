@@ -88,23 +88,20 @@ export class SyncPullService {
     });
     const visibleOperations = operationsAfterMainCursor.filter(
       (operation) =>
-        operation.entityType !== 'Favorite' ||
-        publishesFavorites ||
-        operation.userId === userId,
+        operation.entityType !== 'Favorite' || publishesFavorites || operation.userId === userId,
     );
 
     // A separate cursor exposes favourites which predate a change to public visibility.
-    const historicalPublicFavorites =
-      publishesFavorites
-        ? await db.query.operationLog.findMany({
-            where: and(
-              eq(operationLog.storyId, storyId),
-              eq(operationLog.entityType, 'Favorite'),
-              gt(operationLog.operationVersion, lastPublicFavoriteVersion),
-            ),
-            orderBy: [operationLog.operationVersion],
-          })
-        : [];
+    const historicalPublicFavorites = publishesFavorites
+      ? await db.query.operationLog.findMany({
+          where: and(
+            eq(operationLog.storyId, storyId),
+            eq(operationLog.entityType, 'Favorite'),
+            gt(operationLog.operationVersion, lastPublicFavoriteVersion),
+          ),
+          orderBy: [operationLog.operationVersion],
+        })
+      : [];
     // The same row can arrive through both cursors, so the merge dedupes by id and restores
     // version order: the client applies updates in sequence and must never see one twice.
     const operations = Array.from(

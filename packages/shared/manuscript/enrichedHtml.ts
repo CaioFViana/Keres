@@ -90,7 +90,10 @@ const NAMED_ENTITIES: Record<string, string> = {
 function decodeEntities(text: string): string {
   return text.replace(/&(#\d+|#x[\da-fA-F]+|\w+);/g, (entity, body: string) => {
     if (body[0] === '#') {
-      const code = body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+      const code =
+        body[1] === 'x' || body[1] === 'X'
+          ? parseInt(body.slice(2), 16)
+          : parseInt(body.slice(1), 10);
       return Number.isNaN(code) ? entity : String.fromCodePoint(code);
     }
     return NAMED_ENTITIES[body] ?? entity;
@@ -236,7 +239,9 @@ export function enrichedHtmlToDocument(html: string): ManuscriptDocument {
     // Any other tag: dropped, inner text kept.
   }
   closeBoundary();
-  return normalizeManuscriptDocument({ blocks: blocks.map((spans) => ({ kind: 'paragraph', spans })) });
+  return normalizeManuscriptDocument({
+    blocks: blocks.map((spans) => ({ kind: 'paragraph', spans })),
+  });
 }
 
 /**

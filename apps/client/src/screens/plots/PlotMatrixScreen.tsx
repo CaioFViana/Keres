@@ -270,25 +270,27 @@ const PlotMatrixScreen = () => {
       {layout.rows.length > 0 && scenes.length > 0 && (
         <View style={styles.controls}>
           {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
-          {(
+          {
             // eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed.
-            [
-              ['add', () => canvas.current?.zoomBy(1.25)],
-              ['remove', () => canvas.current?.zoomBy(0.8)],
-              ['scan-outline', () => canvas.current?.fitToScreen()],
-              ['image-outline', exportMatrix],
-            ] as const
-          ).map(([name, press]) => (
-            <TouchableOpacity
-              key={name}
-              style={styles.control}
-              onPress={press}
-              disabled={saving}
-              accessibilityLabel={t(MATRIX_CONTROL_LABELS[name])}
-            >
-              <Ionicons name={name} size={20} color={colors.text} />
-            </TouchableOpacity>
-          ))}
+            (
+              [
+                ['add', () => canvas.current?.zoomBy(1.25)],
+                ['remove', () => canvas.current?.zoomBy(0.8)],
+                ['scan-outline', () => canvas.current?.fitToScreen()],
+                ['image-outline', exportMatrix],
+              ] as const
+            ).map(([name, press]) => (
+              <TouchableOpacity
+                key={name}
+                style={styles.control}
+                onPress={press}
+                disabled={saving}
+                accessibilityLabel={t(MATRIX_CONTROL_LABELS[name])}
+              >
+                <Ionicons name={name} size={20} color={colors.text} />
+              </TouchableOpacity>
+            ))
+          }
         </View>
       )}
       {selectedScene && (

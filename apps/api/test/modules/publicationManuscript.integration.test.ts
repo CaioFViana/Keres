@@ -137,9 +137,7 @@ describe('publishing with a manuscript', () => {
 
     expect(withLoose.status).toBe(200);
     expect(withoutLoose.status).toBe(200);
-    expect(withoutLoose.data.manuscriptByteSize).toBeLessThan(
-      withLoose.data.manuscriptByteSize,
-    );
+    expect(withoutLoose.data.manuscriptByteSize).toBeLessThan(withLoose.data.manuscriptByteSize);
   });
 
   it('publishes a branching manuscript along its route, ignoring includeLooseScenes', async () => {

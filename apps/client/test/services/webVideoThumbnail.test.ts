@@ -115,11 +115,7 @@ describe('captureVideoThumbnail', () => {
     expect(canvas.width).toBe(480);
     expect(canvas.height).toBe(270);
     expect(canvas.drawImage).toHaveBeenCalledWith(video, 0, 0, 480, 270);
-    expect(canvas.toBlob).toHaveBeenCalledWith(
-      expect.any(Function),
-      'image/jpeg',
-      0.6,
-    );
+    expect(canvas.toBlob).toHaveBeenCalledWith(expect.any(Function), 'image/jpeg', 0.6);
     expect(video.removeAttribute).toHaveBeenCalledWith('src');
     expect(video.load).toHaveBeenCalledTimes(1);
   });

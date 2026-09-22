@@ -35,7 +35,11 @@ describe('ShowcaseLogoStorageService', () => {
     await service.store(pngBytes(), 'image/png');
 
     expect(files.get(SHOWCASE_LOGO_KEY)?.mimeType).toBe('image/png');
-    expect(storage.put).toHaveBeenCalledWith(SHOWCASE_LOGO_KEY, expect.any(ArrayBuffer), 'image/png');
+    expect(storage.put).toHaveBeenCalledWith(
+      SHOWCASE_LOGO_KEY,
+      expect.any(ArrayBuffer),
+      'image/png',
+    );
   });
 
   it('replaces the previous logo instead of keeping the first upload', async () => {
@@ -55,7 +59,11 @@ describe('ShowcaseLogoStorageService', () => {
 
     await service.store(pngBytes(), contentType);
 
-    expect(storage.put).toHaveBeenCalledWith(SHOWCASE_LOGO_KEY, expect.any(ArrayBuffer), contentType);
+    expect(storage.put).toHaveBeenCalledWith(
+      SHOWCASE_LOGO_KEY,
+      expect.any(ArrayBuffer),
+      contentType,
+    );
   });
 
   it.each(['image/svg+xml', 'image/gif', 'application/pdf', ''])(
@@ -77,8 +85,9 @@ describe('ShowcaseLogoStorageService', () => {
     await service.store(new ArrayBuffer(SHOWCASE_LOGO_MAX_BYTES), 'image/png');
     expect(storage.put).toHaveBeenCalledTimes(1);
 
-    await expect(service.store(new ArrayBuffer(SHOWCASE_LOGO_MAX_BYTES + 1), 'image/png')).rejects
-      .toMatchObject({ status: 413 });
+    await expect(
+      service.store(new ArrayBuffer(SHOWCASE_LOGO_MAX_BYTES + 1), 'image/png'),
+    ).rejects.toMatchObject({ status: 413 });
     expect(storage.put).toHaveBeenCalledTimes(1);
   });
 

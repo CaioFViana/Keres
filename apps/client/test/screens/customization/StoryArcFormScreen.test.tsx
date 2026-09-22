@@ -254,7 +254,9 @@ it('resets typed values back to blanks after confirm', async () => {
   const alertCalls = mockAlert.mock.calls;
   expect(alertCalls[alertCalls.length - 1][1]).toBe('form_reset_create_message');
   await act(async () => {
-    lastAlertButtons().find((button) => button.style === 'destructive')?.onPress?.();
+    lastAlertButtons()
+      .find((button) => button.style === 'destructive')
+      ?.onPress?.();
   });
 
   expect(view.getByTestId('input-title').props.value).toBe('');
@@ -265,7 +267,11 @@ it('resets typed values back to blanks after confirm', async () => {
 
 it('resets edited values back to the loaded arc after confirm', async () => {
   mockArcId = 'arc-1';
-  mockGetArcById.mockResolvedValue({ title: 'Prologue', description: 'Start', themeOverride: null });
+  mockGetArcById.mockResolvedValue({
+    title: 'Prologue',
+    description: 'Start',
+    themeOverride: null,
+  });
   const view = await render(<StoryArcFormScreen />);
 
   await waitFor(() => expect(view.getByTestId('input-title').props.value).toBe('Prologue'));
@@ -278,7 +284,9 @@ it('resets edited values back to the loaded arc after confirm', async () => {
   const alertCalls = mockAlert.mock.calls;
   expect(alertCalls[alertCalls.length - 1][1]).toBe('form_reset_edit_message');
   await act(async () => {
-    lastAlertButtons().find((button) => button.style === 'destructive')?.onPress?.();
+    lastAlertButtons()
+      .find((button) => button.style === 'destructive')
+      ?.onPress?.();
   });
 
   expect(view.getByTestId('input-title').props.value).toBe('Prologue');

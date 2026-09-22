@@ -9,24 +9,22 @@ import pt from '../locales/pt.json';
 // react-hooks/rules-of-hooks (any `use*` identifier is treated as a hook call at module
 // scope, which this genuinely isn't) - so we call it as `i18n.use(...)` instead.
 // eslint-disable-next-line import/no-named-as-default-member
-i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      en: {
-        translation: en,
-      },
-      pt: {
-        translation: pt,
-      },
+i18n.use(initReactI18next).init({
+  resources: {
+    en: {
+      translation: en,
     },
-    lng: 'en',
-    fallbackLng: 'en',
+    pt: {
+      translation: pt,
+    },
+  },
+  lng: 'en',
+  fallbackLng: 'en',
 
-    interpolation: {
-      escapeValue: false, // react already guards against xss
-    },
-  });
+  interpolation: {
+    escapeValue: false, // react already guards against xss
+  },
+});
 
 export const getLanguageOptions = (t: TFunction) => [
   { label: t('language_english'), value: 'en' },

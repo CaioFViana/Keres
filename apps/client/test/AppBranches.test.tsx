@@ -201,4 +201,3 @@ it('survives a native background-sync failure', async () => {
 
   await waitFor(() => expect(screen.getByTestId('app-navigator')).toBeTruthy());
 });
-

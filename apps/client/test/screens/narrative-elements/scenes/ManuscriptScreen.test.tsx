@@ -2,7 +2,12 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import { FlatList, Platform, StyleSheet } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
-import type { ChapterSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../../../../src/db/schema';
+import type {
+  ChapterSelect,
+  RouteSelect,
+  RouteStepSelect,
+  SceneSelect,
+} from '../../../../src/db/schema';
 import type { ManuscriptExportChoices } from '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
 import ManuscriptScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptScreen';
 
@@ -671,7 +676,11 @@ describe('ManuscriptScreen', () => {
       expect(mockNotify).toHaveBeenCalledWith('export_manuscript_failed_body', 'error'),
     );
 
-    mockExportManuscript.mockResolvedValueOnce({ delivered: false, fileName: 'x.docx', uri: '/tmp/x' });
+    mockExportManuscript.mockResolvedValueOnce({
+      delivered: false,
+      fileName: 'x.docx',
+      uri: '/tmp/x',
+    });
     await act(async () => {
       mockModalProps?.onExport(choices);
     });
@@ -728,9 +737,9 @@ describe('ManuscriptScreen', () => {
     expect(view.getByText('export_manuscript_loose_heading')).toBeTruthy();
     expect(view.getByTestId('manuscript-index-scene-s-3')).toBeTruthy();
     // No position yet: nothing highlighted.
-    expect(
-      view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState,
-    ).toMatchObject({ selected: false });
+    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
   });
 
   it('collapses an index chapter without touching the list', async () => {
@@ -764,12 +773,12 @@ describe('ManuscriptScreen', () => {
     await fireEvent.press(view.getByTestId('manuscript-search-next'));
     await fireEvent.press(view.getByTestId('manuscript-index-open'));
 
-    expect(
-      view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState,
-    ).toMatchObject({ selected: true });
-    expect(
-      view.getByTestId('manuscript-index-scene-s-2').props.accessibilityState,
-    ).toMatchObject({ selected: false });
+    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(view.getByTestId('manuscript-index-scene-s-2').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
   });
 
   it('lists route scenes flat in the index for branching stories', async () => {

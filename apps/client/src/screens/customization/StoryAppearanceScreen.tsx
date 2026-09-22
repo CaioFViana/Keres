@@ -42,7 +42,10 @@ const StoryAppearanceScreen = () => {
 
   const [prevSelectedStoryId, setPrevSelectedStoryId] = useState(selectedStory?.id);
   const [prevSelectedStoryTheme, setPrevSelectedStoryTheme] = useState(selectedStory?.theme);
-  if (selectedStory?.id !== prevSelectedStoryId || selectedStory?.theme !== prevSelectedStoryTheme) {
+  if (
+    selectedStory?.id !== prevSelectedStoryId ||
+    selectedStory?.theme !== prevSelectedStoryTheme
+  ) {
     setPrevSelectedStoryId(selectedStory?.id);
     setPrevSelectedStoryTheme(selectedStory?.theme);
     setThemeName(selectedStory?.theme || 'default');

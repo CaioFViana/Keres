@@ -70,7 +70,10 @@ async function settingsXml(bytes: Uint8Array): Promise<string> {
 
 describe('buildManuscriptDocxBytes', () => {
   it('packs a valid zip carrying the manuscript', async () => {
-    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' });
+    const bytes = await buildManuscriptDocxBytes(manuscript(true), {
+      goToPage: 'Go to page',
+      tocHeading: 'Contents',
+    });
 
     expect(bytes).toBeInstanceOf(Uint8Array);
     // Zip magic: `PK\x03\x04`.
@@ -86,7 +89,10 @@ describe('buildManuscriptDocxBytes', () => {
 
   it('bookmarks every scene and points every choice at an existing bookmark', async () => {
     const xml = await documentXml(
-      await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' }),
+      await buildManuscriptDocxBytes(manuscript(true), {
+        goToPage: 'Go to page',
+        tocHeading: 'Contents',
+      }),
     );
 
     const bookmarks = bookmarkNames(xml);
@@ -116,7 +122,10 @@ describe('buildManuscriptDocxBytes', () => {
 
   it('renders name-only choices when the target left the export', async () => {
     const xml = await documentXml(
-      await buildManuscriptDocxBytes(manuscript(false), { goToPage: 'Go to page', tocHeading: 'Contents' }),
+      await buildManuscriptDocxBytes(manuscript(false), {
+        goToPage: 'Go to page',
+        tocHeading: 'Contents',
+      }),
     );
 
     expect(bookmarkNames(xml)).not.toContain('scene-sloose');
@@ -209,7 +218,10 @@ describe('buildManuscriptDocxBytes', () => {
   });
 
   it('numbers pages in the footer', async () => {
-    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' });
+    const bytes = await buildManuscriptDocxBytes(manuscript(true), {
+      goToPage: 'Go to page',
+      tocHeading: 'Contents',
+    });
     const zip = await JSZip.loadAsync(bytes);
     const footers = zip.file(/word\/footer\d*\.xml/);
     expect(footers.length).toBeGreaterThan(0);

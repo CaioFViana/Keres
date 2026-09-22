@@ -11,10 +11,7 @@ import type { ThemeColors } from '../theme';
  * expo-router removal), the mapping moved here with it: the container takes the built
  * theme as a prop, keeping navigator + theme in one self-sufficient place.
  */
-export function buildNavigationTheme(
-  colors: ThemeColors,
-  isDarkMode: boolean,
-): NavigationTheme {
+export function buildNavigationTheme(colors: ThemeColors, isDarkMode: boolean): NavigationTheme {
   return {
     ...DefaultTheme,
     dark: isDarkMode,

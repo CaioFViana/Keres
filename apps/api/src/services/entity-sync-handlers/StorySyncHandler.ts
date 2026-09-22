@@ -80,17 +80,11 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
   }
 
   constructor() {
-    super(
-      'id',
-      'version',
-      CreateStoryDataSchema,
-      PartialStorySchema,
-      {
-        userIdColumnName: 'userId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateStoryDataSchema, PartialStorySchema, {
+      userIdColumnName: 'userId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   /**

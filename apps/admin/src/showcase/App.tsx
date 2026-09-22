@@ -16,7 +16,7 @@ export function ShowcaseApp() {
   return (
     <ShowcaseThemeProvider>
       <ShowcaseConfigProvider>
-          <Layout>
+        <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/story/:storyId" element={<StoryPage />} />

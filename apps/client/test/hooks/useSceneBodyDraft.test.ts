@@ -2,10 +2,7 @@
 import { MAX_SCENE_BODY_LENGTH } from '@keres/shared';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
-import {
-  readStoredSceneBodyText,
-  useSceneBodyDraft,
-} from '../../src/hooks/useSceneBodyDraft';
+import { readStoredSceneBodyText, useSceneBodyDraft } from '../../src/hooks/useSceneBodyDraft';
 import * as EditorDraftService from '../../src/services/EditorDraftService';
 import {
   SCENE_BODY_DRAFT_FIELD,
@@ -286,13 +283,9 @@ describe('useSceneBodyDraft', () => {
   });
 
   it('loads stored markdown as content with zero markup in the counts', async () => {
-    const view = await renderHook(() =>
-      useHarness({ savedBody: '# Title\n\nA **bold** move.' }),
-    );
+    const view = await renderHook(() => useHarness({ savedBody: '# Title\n\nA **bold** move.' }));
 
-    expect(view.result.current.initialHtml).toBe(
-      html('<p>Title</p><p>A <b>bold</b> move.</p>'),
-    );
+    expect(view.result.current.initialHtml).toBe(html('<p>Title</p><p>A <b>bold</b> move.</p>'));
     // The paragraph break counts once, the way Word counts paragraph marks.
     expect(view.result.current.charCount).toBe('Title\nA bold move.'.length);
     expect(view.result.current.wordCount).toBe(4);
@@ -356,9 +349,7 @@ describe('useSceneBodyDraft', () => {
   it('still enforces the storage cap on the serialized source', async () => {
     const persist = jest.fn(async () => {});
     // 12000 content chars, but over 30k stored: alternating marks never merge.
-    const view = await renderHook(() =>
-      useHarness({ savedBody: '**a**b'.repeat(6000), persist }),
-    );
+    const view = await renderHook(() => useHarness({ savedBody: '**a**b'.repeat(6000), persist }));
 
     expect(view.result.current.charCount).toBe(12000);
     expect(view.result.current.sizeStatus).toBe('large');

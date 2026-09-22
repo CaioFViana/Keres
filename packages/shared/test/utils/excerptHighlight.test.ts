@@ -121,9 +121,7 @@ describe('splitTextByRanges', () => {
         { start: 5, length: 2 },
         { start: 1, length: 0 },
       ]),
-    ).toEqual([
-      { text: 'hi', marked: false },
-    ]);
+    ).toEqual([{ text: 'hi', marked: false }]);
     // The first range clamps to an empty span at 0, so nothing is marked.
     expect(splitTextByRanges('hi', [{ start: 1, length: 99 }])).toEqual([
       { text: 'h', marked: false },

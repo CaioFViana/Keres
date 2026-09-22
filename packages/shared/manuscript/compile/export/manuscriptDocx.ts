@@ -182,7 +182,9 @@ export function buildManuscriptDocument(
             }),
           );
         } else if (block.targetSceneName) {
-          children.push(new Paragraph({ children: [new TextRun(`${lead} — ${block.targetSceneName}`)] }));
+          children.push(
+            new Paragraph({ children: [new TextRun(`${lead} — ${block.targetSceneName}`)] }),
+          );
         } else {
           children.push(new Paragraph({ children: [new TextRun(lead)] }));
         }

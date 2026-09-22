@@ -96,7 +96,11 @@ describe('compileLinearManuscript', () => {
     const paragraph = manuscript.blocks[4];
     expect(paragraph).toMatchObject({
       kind: 'paragraph',
-      spans: [{ text: 'Second ', bold: false, italic: false }, { text: 'bold', bold: true, italic: false }, { text: ' line.', bold: false, italic: false }],
+      spans: [
+        { text: 'Second ', bold: false, italic: false },
+        { text: 'bold', bold: true, italic: false },
+        { text: ' line.', bold: false, italic: false },
+      ],
     });
     expect(manuscript.blocks[5]).toMatchObject({
       kind: 'choice',
@@ -248,11 +252,9 @@ describe('compileRouteManuscript', () => {
       'choice',
     ]);
     const headings = manuscript.blocks.filter((block) => block.kind === 'scene-heading');
-    expect(headings.map((heading) => (heading as { bookmarkId: string | null }).bookmarkId)).toEqual([
-      'scene-sa',
-      'scene-sb',
-      null,
-    ]);
+    expect(
+      headings.map((heading) => (heading as { bookmarkId: string | null }).bookmarkId),
+    ).toEqual(['scene-sa', 'scene-sb', null]);
   });
 
   it('omits scene headings when scene names are off', () => {

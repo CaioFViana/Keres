@@ -17,11 +17,7 @@ import {
   type ManuscriptOptionsInput,
 } from './manuscriptContracts';
 import { sceneMatchesArc } from './manuscriptSections';
-import type {
-  ManuscriptChapter,
-  ManuscriptRouteStep,
-  ManuscriptScene,
-} from './manuscriptSections';
+import type { ManuscriptChapter, ManuscriptRouteStep, ManuscriptScene } from './manuscriptSections';
 
 /** The minimum the entry needs to know about a route. */
 export interface ManuscriptRoute {

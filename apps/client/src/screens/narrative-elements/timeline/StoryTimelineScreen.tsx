@@ -290,25 +290,27 @@ const StoryTimelineScreen = () => {
       )}
       <View style={styles.controls}>
         {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
-        {(
+        {
           // eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed.
-          [
-            ['add', () => canvas.current?.zoomBy(1.25)],
-            ['remove', () => canvas.current?.zoomBy(0.8)],
-            ['scan-outline', () => canvas.current?.fitToScreen()],
-            ['image-outline', exportTimeline],
-          ] as const
-        ).map(([name, onPress]) => (
-          <TouchableOpacity
-            key={name}
-            style={styles.control}
-            onPress={onPress}
-            disabled={saving}
-            accessibilityLabel={t(TIMELINE_CONTROL_LABELS[name])}
-          >
-            <Ionicons name={name} size={20} color={colors.text} />
-          </TouchableOpacity>
-        ))}
+          (
+            [
+              ['add', () => canvas.current?.zoomBy(1.25)],
+              ['remove', () => canvas.current?.zoomBy(0.8)],
+              ['scan-outline', () => canvas.current?.fitToScreen()],
+              ['image-outline', exportTimeline],
+            ] as const
+          ).map(([name, onPress]) => (
+            <TouchableOpacity
+              key={name}
+              style={styles.control}
+              onPress={onPress}
+              disabled={saving}
+              accessibilityLabel={t(TIMELINE_CONTROL_LABELS[name])}
+            >
+              <Ionicons name={name} size={20} color={colors.text} />
+            </TouchableOpacity>
+          ))
+        }
       </View>
       <StoryTimelineSheets
         scenes={scenes}

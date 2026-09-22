@@ -57,9 +57,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   const buildOptions = useCallback(
     (story: StorySelect, t: (key: string) => string): PublishManuscriptOptions | undefined => {
       const effectiveRouteId =
-        story.type === 'branching'
-          ? (manuscriptRouteId ?? manuscriptRoutes[0]?.id ?? null)
-          : null;
+        story.type === 'branching' ? (manuscriptRouteId ?? manuscriptRoutes[0]?.id ?? null) : null;
       if (!attachManuscript || (story.type === 'branching' && !effectiveRouteId)) {
         return undefined;
       }

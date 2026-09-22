@@ -17,7 +17,10 @@ const page: HelpPage = {
       text: '“Leaving the station” has a one-line summary for planning and three paragraphs of prose for reading. The scene editor holds the prose; the manuscript shows it together with every other scene, in story order.',
     },
     { type: 'heading', level: 2, text: 'How to do it' },
-    { type: 'path', segments: ['Story menu', 'Narrative Elements', 'Open scene', 'Write manuscript'] },
+    {
+      type: 'path',
+      segments: ['Story menu', 'Narrative Elements', 'Open scene', 'Write manuscript'],
+    },
     {
       type: 'steps',
       items: [

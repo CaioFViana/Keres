@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, within } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import ManuscriptExportModal from '../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
@@ -63,6 +64,19 @@ describe('ManuscriptExportModal', () => {
     const view = await render(<ManuscriptExportModal {...baseProps} visible={false} />);
 
     expect(view.queryByTestId('export-modal')).toBeNull();
+  });
+
+  it('keeps the options in a bounded scroll region with the actions fixed below', async () => {
+    const view = await render(<ManuscriptExportModal {...baseProps} arcs={twoArcs} />);
+
+    const scroll = view.getByTestId('export-options-scroll');
+    expect(within(scroll).getByTestId('export-arc-arc-1')).toBeTruthy();
+    expect(within(scroll).getByTestId('export-format-docx')).toBeTruthy();
+    expect(within(scroll).getByTestId('export-scene-names')).toBeTruthy();
+    // Actions stay outside the scroll region, always reachable.
+    expect(within(scroll).queryByTestId('export-confirm')).toBeNull();
+    expect(view.getByTestId('export-confirm')).toBeTruthy();
+    expect(StyleSheet.flatten(scroll.props.style)?.maxHeight).toEqual(expect.any(Number));
   });
 
   it('lists every format with docx selected', async () => {
@@ -145,7 +159,11 @@ describe('ManuscriptExportModal', () => {
   it('hides the reset switch for branching stories', async () => {
     const onExport = jest.fn();
     const view = await render(
-      <ManuscriptExportModal {...baseProps} chapterNumberingAvailable={false} onExport={onExport} />,
+      <ManuscriptExportModal
+        {...baseProps}
+        chapterNumberingAvailable={false}
+        onExport={onExport}
+      />,
     );
 
     await fireEvent.press(view.getByTestId('export-scene-names'));
@@ -154,9 +172,7 @@ describe('ManuscriptExportModal', () => {
 
     await fireEvent.press(view.getByTestId('export-confirm'));
 
-    expect(onExport).toHaveBeenCalledWith(
-      expect.objectContaining({ resetSceneNumbers: false }),
-    );
+    expect(onExport).toHaveBeenCalledWith(expect.objectContaining({ resetSceneNumbers: false }));
   });
 
   it('hides the index switch for plain text only', async () => {
@@ -243,9 +259,7 @@ describe('ManuscriptExportModal', () => {
 
     await fireEvent.press(view.getByTestId('export-confirm'));
 
-    expect(onExport).toHaveBeenCalledWith(
-      expect.objectContaining({ arcId: 'arc-2' }),
-    );
+    expect(onExport).toHaveBeenCalledWith(expect.objectContaining({ arcId: 'arc-2' }));
   });
 
   it('closes without exporting on cancel', async () => {

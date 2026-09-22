@@ -72,7 +72,13 @@ describe('linearManuscriptSections', () => {
             ? `container:${s.name}`
             : 'loose-heading',
       ),
-    ).toEqual(['container:Arrival', 'scene:s-1a#1', 'scene:s-1b#2', 'container:Second', 'scene:s-2#3']);
+    ).toEqual([
+      'container:Arrival',
+      'scene:s-1a#1',
+      'scene:s-1b#2',
+      'container:Second',
+      'scene:s-2#3',
+    ]);
   });
 
   it('puts event containers after chapters and the homeless last', () => {
@@ -85,28 +91,31 @@ describe('linearManuscriptSections', () => {
       ],
     );
 
-    expect(
-      sections.map((s) => (s.kind === 'scene' ? s.scene.id : s.kind)),
-    ).toEqual(['container', 's-ch', 'container', 's-ev', 'loose-heading', 's-loose']);
+    expect(sections.map((s) => (s.kind === 'scene' ? s.scene.id : s.kind))).toEqual([
+      'container',
+      's-ch',
+      'container',
+      's-ev',
+      'loose-heading',
+      's-loose',
+    ]);
     expect(sections[2]).toMatchObject({ kind: 'container', containerType: 'event' });
   });
 
   it('skips empty containers, deleted scenes and the loose heading without homeless', () => {
     const sections = linearManuscriptSections(
       [makeChapter(), makeChapter({ id: 'ch-empty', name: 'Empty', index: 2 })],
-      [
-        makeScene(),
-        makeScene({ id: 's-gone', chapterId: 'ch-1', index: 2, isDeleted: true }),
-      ],
+      [makeScene(), makeScene({ id: 's-gone', chapterId: 'ch-1', index: 2, isDeleted: true })],
     );
 
     expect(sections.map((s) => s.kind)).toEqual(['container', 'scene']);
   });
 
   it('treats scenes of gone chapters as homeless', () => {
-    const sections = linearManuscriptSections([makeChapter()], [
-      makeScene({ id: 's-orphan', chapterId: 'gone' }),
-    ]);
+    const sections = linearManuscriptSections(
+      [makeChapter()],
+      [makeScene({ id: 's-orphan', chapterId: 'gone' })],
+    );
 
     expect(sections.map((s) => s.kind)).toEqual(['loose-heading', 'scene']);
   });

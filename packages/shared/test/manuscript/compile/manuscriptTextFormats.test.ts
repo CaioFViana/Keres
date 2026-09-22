@@ -75,7 +75,10 @@ describe('buildManuscriptHtml', () => {
   });
 
   it('wraps ~~ spans in s-tags', () => {
-    const html = buildManuscriptHtml(struckManuscript, { goToScene: 'See', tocHeading: 'Contents' });
+    const html = buildManuscriptHtml(struckManuscript, {
+      goToScene: 'See',
+      tocHeading: 'Contents',
+    });
 
     expect(html).toContain('<s>cut</s>');
   });
@@ -155,7 +158,10 @@ describe('buildManuscriptMarkdown', () => {
   });
 
   it('emits ~~ spans as paired tildes', () => {
-    const md = buildManuscriptMarkdown(struckManuscript, { goToScene: 'See', tocHeading: 'Contents' });
+    const md = buildManuscriptMarkdown(struckManuscript, {
+      goToScene: 'See',
+      tocHeading: 'Contents',
+    });
 
     expect(md).toContain('A ~~cut~~ line.');
   });
@@ -236,7 +242,15 @@ describe('buildManuscriptMarkdown', () => {
           { kind: 'title', text: 'My Story' },
           {
             kind: 'paragraph',
-            spans: [{ text: '2 * 3 = 6', bold: false, italic: false, underline: false, strikethrough: false }],
+            spans: [
+              {
+                text: '2 * 3 = 6',
+                bold: false,
+                italic: false,
+                underline: false,
+                strikethrough: false,
+              },
+            ],
           },
         ],
       } as unknown as CompiledManuscript,
@@ -257,7 +271,13 @@ describe('buildManuscriptMarkdown', () => {
             kind: 'paragraph',
             spans: [
               { text: 'a', bold: false, italic: true, underline: false, strikethrough: false },
-              { text: ' and 5 * 3', bold: false, italic: false, underline: false, strikethrough: false },
+              {
+                text: ' and 5 * 3',
+                bold: false,
+                italic: false,
+                underline: false,
+                strikethrough: false,
+              },
             ],
           },
         ],
@@ -276,7 +296,15 @@ describe('buildManuscriptMarkdown', () => {
           { kind: 'title', text: 'My Story' },
           {
             kind: 'paragraph',
-            spans: [{ text: '# head', bold: false, italic: false, underline: false, strikethrough: false }],
+            spans: [
+              {
+                text: '# head',
+                bold: false,
+                italic: false,
+                underline: false,
+                strikethrough: false,
+              },
+            ],
           },
         ],
       } as unknown as CompiledManuscript,
@@ -298,9 +326,21 @@ describe('buildManuscriptMarkdown', () => {
               { text: 'Test ', bold: false, italic: false, underline: false, strikethrough: false },
               { text: 'of ', bold: false, italic: true, underline: false, strikethrough: false },
               { text: 'scene', bold: false, italic: true, underline: true, strikethrough: false },
-              { text: ' "like this"', bold: false, italic: true, underline: false, strikethrough: false },
+              {
+                text: ' "like this"',
+                bold: false,
+                italic: true,
+                underline: false,
+                strikethrough: false,
+              },
               { text: ' ', bold: false, italic: false, underline: false, strikethrough: false },
-              { text: 'that will be a failure', bold: false, italic: false, underline: false, strikethrough: true },
+              {
+                text: 'that will be a failure',
+                bold: false,
+                italic: false,
+                underline: false,
+                strikethrough: true,
+              },
             ],
           },
         ],
@@ -402,7 +442,10 @@ describe('buildManuscriptText', () => {
   });
 
   it('strips ~~ markers from plain text', () => {
-    const text = buildManuscriptText(struckManuscript, { goToScene: 'See', tocHeading: 'Contents' });
+    const text = buildManuscriptText(struckManuscript, {
+      goToScene: 'See',
+      tocHeading: 'Contents',
+    });
 
     expect(text).toContain('A cut line.');
     expect(text).not.toContain('~~');

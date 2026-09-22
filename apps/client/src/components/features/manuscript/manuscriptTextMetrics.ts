@@ -19,6 +19,5 @@ export const manuscriptTextMetrics = {
    * RN text reset) renders the same face as the reader. Native inherits the
    * system font on both sides, so this must never be passed there.
    */
-  webFontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+  webFontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
 } as const;

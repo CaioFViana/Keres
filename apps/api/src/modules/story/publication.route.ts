@@ -22,12 +22,7 @@ const PublicationResponseSchema = t.Object({
 
 /** Manuscript rendition to publish alongside the package. Mirrors shared `ManuscriptOptionsSchema`. */
 const ManuscriptRequestSchema = t.Object({
-  format: t.Union([
-    t.Literal('docx'),
-    t.Literal('md'),
-    t.Literal('txt'),
-    t.Literal('html'),
-  ]),
+  format: t.Union([t.Literal('docx'), t.Literal('md'), t.Literal('txt'), t.Literal('html')]),
   includeLooseScenes: t.Optional(t.Boolean()),
   /** Required for branching stories, refused for linear ones; must belong to the story. */
   routeId: t.Optional(t.String()),

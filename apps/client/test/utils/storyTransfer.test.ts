@@ -82,7 +82,9 @@ describe('export file names', () => {
     expect(buildStoryTimelineFileName('A Queda', DATE, 'pt')).toBe(
       'a-queda-linha-do-tempo-2026-08-11.svg',
     );
-    expect(buildStoryTimelineFileName('A Queda', DATE, 'en')).toBe('a-queda-timeline-2026-08-11.svg');
+    expect(buildStoryTimelineFileName('A Queda', DATE, 'en')).toBe(
+      'a-queda-timeline-2026-08-11.svg',
+    );
     expect(buildLocationMapFileName('Atlas', DATE, 'pt')).toBe('atlas-mapa-2026-08-11.svg');
     expect(buildLocationMapFileName('Atlas', DATE, 'en')).toBe('atlas-map-2026-08-11.svg');
   });

@@ -12,7 +12,11 @@ export const SHOWCASE_LOGO_MAX_BYTES = 512 * 1024;
 export const SHOWCASE_LOGO_CONTENT_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
 
 export function validateShowcaseLogo(contentType: string, sizeBytes: number): void {
-  if (!SHOWCASE_LOGO_CONTENT_TYPES.includes(contentType as (typeof SHOWCASE_LOGO_CONTENT_TYPES)[number])) {
+  if (
+    !SHOWCASE_LOGO_CONTENT_TYPES.includes(
+      contentType as (typeof SHOWCASE_LOGO_CONTENT_TYPES)[number],
+    )
+  ) {
     throw new AppError(415, `Unsupported logo type "${contentType}".`);
   }
   if (sizeBytes > SHOWCASE_LOGO_MAX_BYTES) {

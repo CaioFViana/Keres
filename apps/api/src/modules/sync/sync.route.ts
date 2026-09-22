@@ -166,14 +166,27 @@ export const syncRoute = new Elysia()
       }
 
       const { storyId } = params;
-      const { lastOperationVersion, lastPublicFavoriteVersion } = query;
+      const {
+        lastOperationVersion,
+        lastPublicFavoriteVersion,
+        favoritesCount,
+        favoritesMaxVersion,
+      } = query;
 
-      const { updates, publicFavorites, serverMaxOperationVersion, role } =
+      // Both halves of the roster checksum or neither: a half-sent fingerprint is treated
+      // as no fingerprint, which keeps old clients on the legacy always-send behaviour.
+      const clientFavorites =
+        favoritesCount !== undefined && favoritesMaxVersion !== undefined
+          ? { count: favoritesCount, maxVersion: favoritesMaxVersion }
+          : undefined;
+
+      const { updates, publicFavorites, serverMaxOperationVersion, role, favoritesFingerprint } =
         await syncService.getUpdatesForStory(
           user.userId,
           storyId,
           lastOperationVersion,
           lastPublicFavoriteVersion,
+          clientFavorites,
         );
 
       logger.info('Received pull request', {
@@ -189,6 +202,7 @@ export const syncRoute = new Elysia()
         publicFavorites,
         serverMaxOperationVersion: serverMaxOperationVersion,
         role,
+        favoritesFingerprint,
       };
     },
     {
@@ -198,6 +212,8 @@ export const syncRoute = new Elysia()
       query: t.Object({
         lastOperationVersion: t.Numeric({ minimum: 0 }),
         lastPublicFavoriteVersion: t.Optional(t.Numeric({ minimum: 0 })),
+        favoritesCount: t.Optional(t.Numeric({ minimum: 0 })),
+        favoritesMaxVersion: t.Optional(t.Numeric({ minimum: 0 })),
       }),
       detail: {
         summary: 'Pull story updates from the server',
@@ -211,6 +227,9 @@ export const syncRoute = new Elysia()
         publicFavorites: t.Array(t.Any()),
         serverMaxOperationVersion: t.Number(),
         role: t.Union([t.Literal('owner'), t.Literal('writer'), t.Literal('reader')]),
+        // Present only for `individual_public` stories: the roster checksum the client
+        // echoes back on the next pull, and adopts for the remaining pages of this one.
+        favoritesFingerprint: t.Optional(t.Object({ count: t.Number(), maxVersion: t.Number() })),
       }),
     },
   )

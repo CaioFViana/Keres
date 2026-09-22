@@ -25,6 +25,7 @@ import { TierLimitExceededError, tierEnforcementService } from '../TierEnforceme
 import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflictDetails';
 import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
 import type { SyncOperationLogService } from './SyncOperationLogService';
+import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates
@@ -371,7 +372,31 @@ export class SyncPushService {
       }
     }
 
+    if (applied.some((operation) => operation.entity === 'Story')) {
+      await this.repairPublicFavoritesAfterStoryChange(storyId);
+    }
+
     return { lastOperationVersion, applied, conflicts };
+  }
+
+  /**
+   * A Story op may have flipped `favoriteBehavior` to `individual_public`, exposing imported
+   * favorites that have no operation logs. Repairing here - once per story edit, not once per
+   * pull per client - covers the switch at its source. Best-effort like compaction: the
+   * pull-time fingerprint mismatch re-runs the same repair, so a failure here self-heals.
+   */
+  private async repairPublicFavoritesAfterStoryChange(storyId: string): Promise<void> {
+    try {
+      const current = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+        columns: { favoriteBehavior: true },
+      });
+      if (current?.favoriteBehavior === 'individual_public') {
+        await ensurePublicFavoriteOperationLogs(storyId);
+      }
+    } catch (error) {
+      logger.error('SyncService: public favorite repair after story change failed', error);
+    }
   }
 
   private async getMaxOperationVersion(storyId: string): Promise<number> {

@@ -9,6 +9,8 @@ import { ulid } from 'ulid';
 import { db } from '../../db';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { AppError } from '../../utils/errors';
+import { logger } from '../../utils/logger';
+import { ensurePublicFavoriteOperationLogs } from '../sync/publicFavoriteRepair';
 import { importStoryAssets } from './DatabaseStoryPackageAssetsImport';
 import { importStoryCore } from './DatabaseStoryPackageCoreImport';
 import { importStoryFinalCollections } from './DatabaseStoryPackageFinalImport';
@@ -116,6 +118,19 @@ export class DatabaseStoryPackageImporter {
       await importStoryInteractions(context);
       await importStoryFinalCollections(context);
     });
+
+    // Imported rows carry no operation logs by design, which would leave a public story's
+    // favorites invisible to cursor-based pulls. Repairing here covers the upload path at
+    // its source instead of re-scanning for it on every pull. Best-effort: the import
+    // already committed, so throwing would report a failure that is not one - and the
+    // pull-time fingerprint mismatch re-runs the same repair on first contact anyway.
+    if (validatedFullStory.story.favoriteBehavior === 'individual_public') {
+      try {
+        await ensurePublicFavoriteOperationLogs(targetStoryId);
+      } catch (error) {
+        logger.error('Story import: public favorite repair failed', error);
+      }
+    }
 
     return targetStoryId;
   }

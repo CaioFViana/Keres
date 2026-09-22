@@ -57,12 +57,14 @@ export class SyncService {
     storyId: string,
     lastOperationVersion: number,
     lastPublicFavoriteVersion = 0,
+    clientFavorites?: { count: number; maxVersion: number } | null,
   ) {
     return this.pullService.getUpdatesForStory(
       userId,
       storyId,
       lastOperationVersion,
       lastPublicFavoriteVersion,
+      clientFavorites,
     );
   }
 

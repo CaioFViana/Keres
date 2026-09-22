@@ -205,7 +205,12 @@ describe('server-bound API services', () => {
       format: 'md',
       includeLooseScenes: false,
       routeId: 'route-1',
-      labels: { goToPage: 'Go to page', goToScene: 'See', looseHeading: 'Loose scenes' },
+      labels: {
+        goToPage: 'Go to page',
+        goToScene: 'See',
+        looseHeading: 'Loose scenes',
+        tocHeading: 'Contents',
+      },
     } as const;
     await service.publish(server, 'story', 7, 'both', 'public', undefined, manuscript);
     expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {

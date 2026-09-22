@@ -31,6 +31,7 @@ export const ManuscriptLabelsSchema = z.object({
   goToPage: labelSchema,
   goToScene: labelSchema,
   looseHeading: labelSchema,
+  tocHeading: labelSchema,
 });
 export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 
@@ -38,7 +39,8 @@ export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   goToPage: 'Go to page',
   goToScene: 'See',
-  looseHeading: 'Loose scenes',
+  looseHeading: 'Appendix',
+  tocHeading: 'Contents',
 };
 
 export const ManuscriptOptionsSchema = z.object({

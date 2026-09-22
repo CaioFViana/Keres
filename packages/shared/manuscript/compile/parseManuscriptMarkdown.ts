@@ -1,3 +1,5 @@
+import { parseInlineLine, type ManuscriptSpan } from '../ManuscriptDocument';
+
 export type ManuscriptInline = {
   text: string;
   bold?: boolean;
@@ -8,19 +10,35 @@ export type ManuscriptInline = {
 
 export type ManuscriptBlock = { key: string; kind: 'paragraph'; inlines: ManuscriptInline[] };
 
-type ManuscriptInlineStyle = 'bold' | 'italic' | 'underline' | 'strikethrough';
+/** Reader spans to flat export inlines: only true flags are set. */
+function toInline(span: ManuscriptSpan): ManuscriptInline {
+  const inline: ManuscriptInline = { text: span.text };
+  if (span.marks.includes('bold')) inline.bold = true;
+  if (span.marks.includes('italic')) inline.italic = true;
+  if (span.marks.includes('underline')) inline.underline = true;
+  if (span.marks.includes('strikethrough')) inline.strikethrough = true;
+  return inline;
+}
 
-/**
- * Outermost level first. Styles never nest: a matched pair's content is a leaf,
- * and only the text between pairs recurses into the next level. The order
- * between non-nested styles is arbitrary but deterministic.
- */
-const INLINE_LEVELS: { pattern: RegExp; style: ManuscriptInlineStyle }[] = [
-  { pattern: /~~(.+?)~~/g, style: 'strikethrough' },
-  { pattern: /__(.+?)__/g, style: 'underline' },
-  { pattern: /\*\*(.+?)\*\*/g, style: 'bold' },
-  { pattern: /\*([^*\n]+?)\*/g, style: 'italic' },
-];
+function sameFlags(left: ManuscriptInline, right: ManuscriptInline): boolean {
+  return (
+    (left.bold ?? false) === (right.bold ?? false) &&
+    (left.italic ?? false) === (right.italic ?? false) &&
+    (left.underline ?? false) === (right.underline ?? false) &&
+    (left.strikethrough ?? false) === (right.strikethrough ?? false)
+  );
+}
+
+/** Merge adjacent same-flag inlines, like the reader's normalize step. */
+function mergeInlines(inlines: ManuscriptInline[]): ManuscriptInline[] {
+  const merged: ManuscriptInline[] = [];
+  for (const inline of inlines) {
+    const last = merged[merged.length - 1];
+    if (last && sameFlags(last, inline)) last.text += inline.text;
+    else merged.push({ ...inline });
+  }
+  return merged;
+}
 
 /**
  * Backslash escapes (`\*`, `\\`, ...) the editor serializer emits for literal
@@ -51,29 +69,6 @@ function protectEscapes(text: string): string {
 
 function restoreEscapes(text: string): string {
   return text.replace(STANDIN_RANGE, (char) => STANDIN_TO_ESCAPED[char]);
-}
-
-function parseLevel(segment: string, level: number, inlines: ManuscriptInline[]): void {
-  if (level >= INLINE_LEVELS.length) {
-    if (segment.length > 0) inlines.push({ text: restoreEscapes(segment) });
-    return;
-  }
-  const { pattern, style } = INLINE_LEVELS[level];
-  pattern.lastIndex = 0;
-  let cursor = 0;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(segment)) !== null) {
-    if (match.index > cursor) {
-      parseLevel(segment.slice(cursor, match.index), level + 1, inlines);
-    }
-    const span: ManuscriptInline = { text: restoreEscapes(match[1]) };
-    span[style] = true;
-    inlines.push(span);
-    cursor = match.index + match[0].length;
-  }
-  if (cursor < segment.length) {
-    parseLevel(segment.slice(cursor), level + 1, inlines);
-  }
 }
 
 /**
@@ -129,13 +124,14 @@ export function getManuscriptSizeStatus(storageCharCount: number): ManuscriptSiz
 /**
  * Minimal manuscript markdown: `**bold**`, `*italic*`, `__underline__`,
  * `~~strikethrough~~`, backslash escapes, blank-line separated blocks. Single
- * newlines inside a block are preserved (dialogue lines), unmatched markers
- * stay literal, styles never nest. Legacy `# ` prefixes degrade to plain
+ * newlines inside a block survive as their own inlines (dialogue lines),
+ * unmatched markers stay literal, legacy `# ` prefixes degrade to plain
  * paragraphs. Deliberately dependency-free: prose needs nothing more, and a
  * new renderer dependency is a Hermes-compat risk for zero gain.
  *
- * This is the export reader, not the editor model: it stays separate from
- * `ManuscriptDocument` on purpose (flat inline spans vs. styled runs).
+ * Inline parsing IS the reader's: every line runs through the app's own stack
+ * machine, so the export styles exactly what the app shows (nesting
+ * included) and only the span shape differs (flat inlines vs. marked runs).
  */
 export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
   const chunks = markdown
@@ -144,8 +140,15 @@ export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
     .filter(Boolean);
   return chunks.map((chunk, index) => {
     const key = `block-${index}`;
+    const lines = chunk
+      .replace(/^#{1,3}[ \t]+/, '')
+      .replace(/\r\n?/g, '\n')
+      .split('\n');
     const inlines: ManuscriptInline[] = [];
-    parseLevel(protectEscapes(chunk.replace(/^#{1,3}[ \t]+/, '')), 0, inlines);
-    return { key, kind: 'paragraph', inlines };
+    lines.forEach((line, lineIndex) => {
+      if (lineIndex > 0) inlines.push({ text: '\n' });
+      for (const span of parseInlineLine(line)) inlines.push(toInline(span));
+    });
+    return { key, kind: 'paragraph', inlines: mergeInlines(inlines) };
   });
 }

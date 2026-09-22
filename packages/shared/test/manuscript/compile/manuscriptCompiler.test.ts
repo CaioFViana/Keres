@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bookmarkIdForChapter,
   bookmarkIdForScene,
   compileLinearManuscript,
   compileRouteManuscript,
+  manuscriptTocEntries,
   withoutLooseSections,
   type CompiledBlock,
   type ManuscriptChoice,
@@ -143,6 +145,34 @@ describe('compileLinearManuscript', () => {
       targetSceneName: 'Note',
     });
   });
+
+  it('omits scene headings and bare choices when scene names are off', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters,
+      scenes,
+      choices: [makeChoice()],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+      includeSceneNames: false,
+    });
+
+    expect(kinds(manuscript.blocks)).toEqual([
+      'title',
+      'chapter',
+      'paragraph',
+      'paragraph',
+      'choice',
+      'paragraph',
+      'loose-heading',
+      'paragraph',
+    ]);
+    expect(manuscript.blocks.find((block) => block.kind === 'choice')).toMatchObject({
+      text: 'Go on',
+      targetBookmarkId: null,
+      targetSceneName: null,
+    });
+  });
 });
 
 describe('withoutLooseSections', () => {
@@ -222,6 +252,154 @@ describe('compileRouteManuscript', () => {
       'scene-sa',
       'scene-sb',
       null,
+    ]);
+  });
+
+  it('omits scene headings when scene names are off', () => {
+    const scenes = [
+      makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
+      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+    ];
+    const manuscript = compileRouteManuscript({
+      title: 'My Story',
+      routeName: 'Main',
+      steps: [
+        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
+        makeStep({ id: 'step-2', position: 2, sceneId: 's-b' }),
+      ],
+      scenes,
+      choices: [],
+      looseHeadingLabel: 'Loose',
+      includeSceneNames: false,
+    });
+
+    expect(kinds(manuscript.blocks)).toEqual(['title', 'subtitle', 'paragraph', 'paragraph']);
+  });
+});
+
+describe('bookmarkIdForChapter', () => {
+  it('builds Word-safe bookmark names that never collide with scenes', () => {
+    expect(bookmarkIdForChapter('ch-1')).toBe('chapter-ch1');
+    expect(bookmarkIdForChapter('a b.c-d')).toBe('chapter-abcd');
+    expect(bookmarkIdForChapter('s-1')).not.toBe(bookmarkIdForScene('s-1'));
+  });
+});
+
+describe('resetSceneNumbersPerChapter', () => {
+  const chapters = [makeChapter(), makeChapter({ id: 'ch-2', name: 'Later', index: 2 })];
+  const scenes = [
+    makeScene({ id: 's-1', chapterId: 'ch-1', index: 1 }),
+    makeScene({ id: 's-2', chapterId: 'ch-1', index: 2 }),
+    makeScene({ id: 's-3', chapterId: 'ch-2', index: 1 }),
+    makeScene({ id: 's-loose', chapterId: null, index: 1 }),
+  ];
+
+  function headingNumbers(reset: boolean): number[] {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters,
+      scenes,
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+      resetSceneNumbersPerChapter: reset,
+    });
+    return manuscript.blocks
+      .filter((block) => block.kind === 'scene-heading')
+      .map((block) => (block as { number: number }).number);
+  }
+
+  it('numbers scenes globally by default', () => {
+    expect(headingNumbers(false)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('restarts scene numbers in every chapter and the appendix', () => {
+    expect(headingNumbers(true)).toEqual([1, 2, 1, 1]);
+  });
+
+  it('is a no-op for routes, which have a single group', () => {
+    const scenes = [
+      makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
+      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+    ];
+    const manuscript = compileRouteManuscript({
+      title: 'My Story',
+      routeName: 'Main',
+      steps: [
+        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
+        makeStep({ id: 'step-2', position: 2, sceneId: 's-b' }),
+      ],
+      scenes,
+      choices: [],
+      looseHeadingLabel: 'Loose',
+      resetSceneNumbersPerChapter: true,
+    });
+
+    expect(
+      manuscript.blocks
+        .filter((block) => block.kind === 'scene-heading')
+        .map((block) => (block as { number: number }).number),
+    ).toEqual([1, 2]);
+  });
+});
+
+describe('manuscriptTocEntries', () => {
+  it('lists chapters, appendix and scenes in document order', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter(), makeChapter({ id: 'ch-2', name: 'Later', index: 2 })],
+      scenes: [
+        makeScene({ id: 's-1', chapterId: 'ch-1', index: 1 }),
+        makeScene({ id: 's-2', chapterId: 'ch-2', index: 1 }),
+        makeScene({ id: 's-loose', chapterId: null, index: 1 }),
+      ],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Appendix',
+    });
+
+    expect(manuscriptTocEntries(manuscript.blocks)).toEqual([
+      { level: 0, text: '1. Arrival', bookmarkId: 'chapter-ch1' },
+      { level: 1, text: '1. Opening', bookmarkId: 'scene-s1' },
+      { level: 0, text: '2. Later', bookmarkId: 'chapter-ch2' },
+      { level: 1, text: '2. Opening', bookmarkId: 'scene-s2' },
+      { level: 0, text: 'Appendix', bookmarkId: 'appendix' },
+      { level: 1, text: '3. Opening', bookmarkId: 'scene-sloose' },
+    ]);
+  });
+
+  it("links repeat visits to the scene's first bookmark", () => {
+    const manuscript = compileRouteManuscript({
+      title: 'My Story',
+      routeName: 'Main',
+      steps: [
+        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
+        makeStep({ id: 'step-2', position: 2, sceneId: 's-a' }),
+      ],
+      scenes: [makeScene({ id: 's-a', name: 'Alpha', body: 'First.' })],
+      choices: [],
+      looseHeadingLabel: 'Loose',
+    });
+
+    expect(manuscriptTocEntries(manuscript.blocks)).toEqual([
+      { level: 1, text: '1. Alpha', bookmarkId: 'scene-sa' },
+      { level: 1, text: '2. Alpha', bookmarkId: 'scene-sa' },
+    ]);
+  });
+
+  it('lists no scenes when scene names are off', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter()],
+      scenes: [makeScene()],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Appendix',
+      includeSceneNames: false,
+    });
+
+    expect(manuscriptTocEntries(manuscript.blocks)).toEqual([
+      { level: 0, text: '1. Arrival', bookmarkId: 'chapter-ch1' },
     ]);
   });
 });

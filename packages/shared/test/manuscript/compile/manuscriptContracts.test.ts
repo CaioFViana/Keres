@@ -43,7 +43,8 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
     expect(DEFAULT_MANUSCRIPT_LABELS).toEqual({
       goToPage: 'Go to page',
       goToScene: 'See',
-      looseHeading: 'Loose scenes',
+      looseHeading: 'Appendix',
+      tocHeading: 'Contents',
     });
   });
 });

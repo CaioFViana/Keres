@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 import {
   compileLinearManuscript,
+  type CompiledManuscript,
   type ManuscriptChoice,
 } from '../../../manuscript/compile/export/manuscriptCompiler';
 import { buildManuscriptDocxBytes } from '../../../manuscript/compile/export/manuscriptDocx';
@@ -62,7 +63,7 @@ function pageReferences(xml: string): string[] {
 
 describe('buildManuscriptDocxBytes', () => {
   it('packs a valid zip carrying the manuscript', async () => {
-    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page' });
+    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' });
 
     expect(bytes).toBeInstanceOf(Uint8Array);
     // Zip magic: `PK\x03\x04`.
@@ -78,7 +79,7 @@ describe('buildManuscriptDocxBytes', () => {
 
   it('bookmarks every scene and points every choice at an existing bookmark', async () => {
     const xml = await documentXml(
-      await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page' }),
+      await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' }),
     );
 
     const bookmarks = bookmarkNames(xml);
@@ -99,7 +100,7 @@ describe('buildManuscriptDocxBytes', () => {
       looseHeadingLabel: 'Loose',
     });
     const xml = await documentXml(
-      await buildManuscriptDocxBytes(struck, { goToPage: 'Go to page' }),
+      await buildManuscriptDocxBytes(struck, { goToPage: 'Go to page', tocHeading: 'Contents' }),
     );
 
     expect(xml).toContain('cut');
@@ -108,7 +109,7 @@ describe('buildManuscriptDocxBytes', () => {
 
   it('renders name-only choices when the target left the export', async () => {
     const xml = await documentXml(
-      await buildManuscriptDocxBytes(manuscript(false), { goToPage: 'Go to page' }),
+      await buildManuscriptDocxBytes(manuscript(false), { goToPage: 'Go to page', tocHeading: 'Contents' }),
     );
 
     expect(bookmarkNames(xml)).not.toContain('scene-sloose');
@@ -117,8 +118,75 @@ describe('buildManuscriptDocxBytes', () => {
     expect(xml).toContain('Note');
   });
 
+  it('renders a clickable index when enabled', async () => {
+    const xml = await documentXml(
+      await buildManuscriptDocxBytes(
+        manuscript(true),
+        { goToPage: 'Go to page', tocHeading: 'Contents' },
+        { includeToc: true },
+      ),
+    );
+
+    expect(xml).toContain('Contents');
+    const hyperlinks = Array.from(
+      xml.matchAll(/<w:hyperlink[^>]*w:anchor="([^"]+)"/g),
+      (match) => match[1],
+    );
+    expect(hyperlinks).toEqual(
+      expect.arrayContaining(['chapter-ch1', 'scene-s1', 'scene-s2', 'appendix', 'scene-sloose']),
+    );
+    const references = pageReferences(xml);
+    expect(references).toEqual(
+      expect.arrayContaining(['chapter-ch1', 'scene-s1', 'scene-s2', 'appendix', 'scene-sloose']),
+    );
+    const bookmarks = bookmarkNames(xml);
+    for (const reference of references) expect(bookmarks).toContain(reference);
+    expect(xml).toContain('w:leader="dot"');
+    expect(xml).toContain('<w:br w:type="page"/>');
+  });
+
+  it('omits the index and chapter bookmarks unless enabled', async () => {
+    const xml = await documentXml(
+      await buildManuscriptDocxBytes(manuscript(true), {
+        goToPage: 'Go to page',
+        tocHeading: 'Contents',
+      }),
+    );
+
+    expect(xml).not.toContain('Contents');
+    expect(xml).not.toContain('w:anchor="chapter-');
+    expect(xml).not.toContain('w:anchor="appendix"');
+    expect(pageReferences(xml)).not.toContain('chapter-ch1');
+    expect(bookmarkNames(xml)).not.toContain('chapter-ch1');
+    expect(bookmarkNames(xml)).not.toContain('appendix');
+    expect(bookmarkNames(xml)).toEqual(expect.arrayContaining(['scene-s1']));
+    expect(xml).not.toContain('<w:br w:type="page"/>');
+  });
+
+  it('renders underline and strikethrough runs', async () => {
+    const marked = {
+      title: 'My Story',
+      blocks: [
+        { kind: 'title', text: 'My Story' },
+        {
+          kind: 'paragraph',
+          spans: [
+            { text: 'under', bold: false, italic: false, underline: true, strikethrough: false },
+            { text: 'struck', bold: false, italic: false, underline: false, strikethrough: true },
+          ],
+        },
+      ],
+    } as unknown as CompiledManuscript;
+    const xml = await documentXml(
+      await buildManuscriptDocxBytes(marked, { goToPage: 'Go to page', tocHeading: 'Contents' }),
+    );
+
+    expect(xml).toContain('<w:u ');
+    expect(xml).toContain('w:strike');
+  });
+
   it('numbers pages in the footer', async () => {
-    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page' });
+    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' });
     const zip = await JSZip.loadAsync(bytes);
     const footers = zip.file(/word\/footer\d*\.xml/);
     expect(footers.length).toBeGreaterThan(0);

@@ -5,6 +5,10 @@ import {
   parseManuscriptMarkdown,
   stripManuscriptMarkers,
 } from '../../../manuscript/compile/parseManuscriptMarkdown';
+import {
+  parseMarkdownToDocument,
+  type ManuscriptSpan,
+} from '../../../manuscript/ManuscriptDocument';
 
 describe('parseManuscriptMarkdown', () => {
   it('returns no blocks for empty or blank input', () => {
@@ -101,10 +105,20 @@ describe('parseManuscriptMarkdown strikethrough', () => {
     ]);
   });
 
-  it('applies strikethrough as the outermost level, before underline', () => {
+  it('nests distinct markers like the reader instead of swallowing them', () => {
     const [block] = parseManuscriptMarkdown('~~a __b__ c~~');
 
-    expect(block.inlines).toEqual([{ text: 'a __b__ c', strikethrough: true }]);
+    expect(block.inlines).toEqual([
+      { text: 'a ', strikethrough: true },
+      { text: 'b', strikethrough: true, underline: true },
+      { text: ' c', strikethrough: true },
+    ]);
+  });
+
+  it('matches the reader on unclosed markers', () => {
+    const [block] = parseManuscriptMarkdown('**unclosed and *single');
+
+    expect(block.inlines).toEqual([{ text: '**unclosed and *single' }]);
   });
 
   it('leaves unmatched tildes literal', () => {
@@ -128,6 +142,35 @@ describe('parseManuscriptMarkdown escapes', () => {
     expect(parseManuscriptMarkdown('**a\\*b**')[0].inlines).toEqual([
       { text: 'a*b', bold: true },
     ]);
+  });
+});
+
+describe('parseManuscriptMarkdown reader parity', () => {
+  const comparable = (spans: ManuscriptSpan[]) =>
+    spans.map((span) => ({
+      text: span.text,
+      ...(span.marks.includes('bold') ? { bold: true } : {}),
+      ...(span.marks.includes('italic') ? { italic: true } : {}),
+      ...(span.marks.includes('underline') ? { underline: true } : {}),
+      ...(span.marks.includes('strikethrough') ? { strikethrough: true } : {}),
+    }));
+
+  it.each([
+    'Test *of* __scene__ *"like this"* ~~that will be a failure~~',
+    'Test *of __scene__ "like this"* ~~that will be a failure~~',
+    '*a **b** c*',
+    '***bolditalic*** and **__both__**',
+    '**unclosed and *single',
+    '~~strike *nested italic* done~~',
+    'escaped \\*star\\* literal',
+    'a*b and 5 * 3 = 15',
+    'snake__case__var',
+    '"Yes," she said.\n"No," he replied.',
+  ])('matches the reader on %p', (input) => {
+    const [readerBlock] = parseMarkdownToDocument(input).blocks;
+    const [block] = parseManuscriptMarkdown(input);
+
+    expect(block.inlines).toEqual(comparable(readerBlock.spans));
   });
 });
 

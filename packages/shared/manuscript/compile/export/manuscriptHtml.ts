@@ -1,8 +1,15 @@
-import type { CompiledManuscript, CompiledSpan } from './manuscriptCompiler';
+import {
+  manuscriptTocEntries,
+  type CompiledManuscript,
+  type CompiledSpan,
+  type ManuscriptRenderOptions,
+} from './manuscriptCompiler';
 
 export type ManuscriptHtmlLabels = {
   /** Name-based cross-reference, e.g. "See" - the PDF renderer reports no page mapping. */
   goToScene: string;
+  /** Index heading, e.g. "Contents". */
+  tocHeading: string;
 };
 
 function escapeHtml(text: string): string {
@@ -41,9 +48,28 @@ function spansToHtml(spans: CompiledSpan[]): string {
 export function buildManuscriptHtml(
   manuscript: CompiledManuscript,
   labels: ManuscriptHtmlLabels,
+  options: ManuscriptRenderOptions = {},
 ): string {
   const parts: string[] = [];
+  const pushToc = () => {
+    const entries = manuscriptTocEntries(manuscript.blocks);
+    if (entries.length === 0) return;
+    const items = entries
+      .map(
+        (entry) =>
+          `<li class="${entry.level === 0 ? 'toc-chapter' : 'toc-scene'}"><a href="#${entry.bookmarkId}">${escapeHtml(entry.text)}</a></li>`,
+      )
+      .join('\n');
+    parts.push(
+      `<nav class="toc"><h2>${escapeHtml(labels.tocHeading)}</h2>\n<ul>\n${items}\n</ul></nav>`,
+    );
+  };
+  let tocEmitted = false;
   for (const block of manuscript.blocks) {
+    if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
+      tocEmitted = true;
+      if (options.includeToc) pushToc();
+    }
     switch (block.kind) {
       case 'title':
         parts.push(`<h1 class="title">${escapeHtml(block.text)}</h1>`);
@@ -53,11 +79,13 @@ export function buildManuscriptHtml(
         break;
       case 'chapter':
         parts.push(
-          `<h2 class="chapter">${escapeHtml(block.number === null ? block.name : `${block.number}. ${block.name}`)}</h2>`,
+          `<h2 class="chapter"${options.includeToc ? ` id="${block.bookmarkId}"` : ''}>${escapeHtml(block.number === null ? block.name : `${block.number}. ${block.name}`)}</h2>`,
         );
         break;
       case 'loose-heading':
-        parts.push(`<h2 class="chapter loose">${escapeHtml(block.label)}</h2>`);
+        parts.push(
+          `<h2 class="chapter loose"${options.includeToc ? ` id="${block.bookmarkId}"` : ''}>${escapeHtml(block.label)}</h2>`,
+        );
         break;
       case 'scene-heading':
         parts.push(
@@ -98,7 +126,7 @@ export function buildManuscriptHtml(
   p { text-indent: 2em; margin: 0 0 0.6rem; }
   p.choice, .subtitle { text-indent: 0; }
   .choice { margin-left: 1rem; }
-  a { color: #1a56db; }
+  a { color: #1a56db; }${options.includeToc ? '\n  .toc ul { list-style: none; padding: 0; }\n  .toc-scene { margin-left: 1.5rem; }\n  nav.toc + * { page-break-before: always; break-before: page; }' : ''}
   @page { margin: 2cm; @bottom-center { content: counter(page); } }
 </style>
 </head>

@@ -28,7 +28,7 @@ export type CompiledSpan = {
 export type CompiledBlock =
   | { kind: 'title'; text: string }
   | { kind: 'subtitle'; text: string }
-  | { kind: 'chapter'; id: string; number: number | null; name: string }
+  | { kind: 'chapter'; id: string; number: number | null; name: string; bookmarkId: string }
   | {
       kind: 'scene-heading';
       id: string;
@@ -37,7 +37,7 @@ export type CompiledBlock =
       /** Null when this scene already contributed its bookmark (route loops). */
       bookmarkId: string | null;
     }
-  | { kind: 'loose-heading'; label: string }
+  | { kind: 'loose-heading'; label: string; bookmarkId: string }
   | { kind: 'paragraph'; spans: CompiledSpan[] }
   | {
       kind: 'choice';
@@ -55,6 +55,14 @@ export type CompiledManuscript = { title: string; blocks: CompiledBlock[] };
 export function bookmarkIdForScene(sceneId: string): string {
   return `scene-${sceneId.replace(/[^A-Za-z0-9]/g, '')}`.slice(0, 40);
 }
+
+/** Chapter bookmarks share the constraints; the prefix keeps them collision-free. */
+export function bookmarkIdForChapter(chapterId: string): string {
+  return `chapter-${chapterId.replace(/[^A-Za-z0-9]/g, '')}`.slice(0, 40);
+}
+
+/** The appendix bookmark: at most one loose section exists per manuscript. */
+export const APPENDIX_BOOKMARK_ID = 'appendix';
 
 function toSpans(block: {
   inlines: {
@@ -79,6 +87,8 @@ type SectionsInput = {
   choicesBySceneId: Map<string, ManuscriptChoice[]>;
   sceneNameById: Map<string, string>;
   looseHeadingLabel: string;
+  includeSceneNames: boolean;
+  resetSceneNumbersPerChapter: boolean;
 };
 
 function sectionsToBlocks({
@@ -86,6 +96,8 @@ function sectionsToBlocks({
   choicesBySceneId,
   sceneNameById,
   looseHeadingLabel,
+  includeSceneNames,
+  resetSceneNumbersPerChapter,
 }: SectionsInput): CompiledBlock[] {
   // First occurrence wins: a looping route bookmarks the scene once, and every choice
   // points at that bookmark.
@@ -97,28 +109,46 @@ function sectionsToBlocks({
   }
   const emitted = new Set<string>();
   const blocks: CompiledBlock[] = [];
+  // Per-group scene counters for restarted numbering: each container and the
+  // appendix count their own scenes from 1. Routes never open a group, so the
+  // single implicit group reproduces the global positions exactly.
+  let groupKey = '';
+  const groupCounts = new Map<string, number>();
   for (const section of sections) {
     if (section.kind === 'container') {
+      groupKey = section.containerId;
       blocks.push({
         kind: 'chapter',
         id: section.containerId,
         number: section.containerType === 'chapter' ? section.index : null,
         name: section.name,
+        bookmarkId: bookmarkIdForChapter(section.containerId),
       });
       continue;
     }
     if (section.kind === 'loose-heading') {
-      blocks.push({ kind: 'loose-heading', label: looseHeadingLabel });
+      groupKey = APPENDIX_BOOKMARK_ID;
+      blocks.push({
+        kind: 'loose-heading',
+        label: looseHeadingLabel,
+        bookmarkId: APPENDIX_BOOKMARK_ID,
+      });
       continue;
     }
+    const groupNumber = (groupCounts.get(groupKey) ?? 0) + 1;
+    groupCounts.set(groupKey, groupNumber);
     const bookmarkId = bookmarkFor.get(section.scene.id) ?? null;
-    blocks.push({
-      kind: 'scene-heading',
-      id: section.scene.id,
-      number: section.position,
-      name: section.scene.name,
-      bookmarkId: bookmarkId && !emitted.has(bookmarkId) ? bookmarkId : null,
-    });
+    // Without scene names there is no heading to hang the bookmark on, so
+    // choices degrade to bare text: any reference would name a scene.
+    if (includeSceneNames) {
+      blocks.push({
+        kind: 'scene-heading',
+        id: section.scene.id,
+        number: resetSceneNumbersPerChapter ? groupNumber : section.position,
+        name: section.scene.name,
+        bookmarkId: bookmarkId && !emitted.has(bookmarkId) ? bookmarkId : null,
+      });
+    }
     if (bookmarkId) emitted.add(bookmarkId);
     if (section.scene.body) {
       for (const parsed of parseManuscriptMarkdown(section.scene.body)) {
@@ -131,8 +161,8 @@ function sectionsToBlocks({
         id: choice.id,
         text: choice.text,
         targetSceneId: choice.nextSceneId,
-        targetBookmarkId: bookmarkFor.get(choice.nextSceneId) ?? null,
-        targetSceneName: sceneNameById.get(choice.nextSceneId) ?? null,
+        targetBookmarkId: includeSceneNames ? (bookmarkFor.get(choice.nextSceneId) ?? null) : null,
+        targetSceneName: includeSceneNames ? (sceneNameById.get(choice.nextSceneId) ?? null) : null,
       });
     }
   }
@@ -177,6 +207,10 @@ export type CompileLinearOptions = {
   choices: ManuscriptChoice[];
   includeLooseScenes: boolean;
   looseHeadingLabel: string;
+  /** Scene headings on/off; off also renders choices without target references. Defaults to on. */
+  includeSceneNames?: boolean;
+  /** Restart scene numbers in every chapter and the appendix. Defaults to off. */
+  resetSceneNumbersPerChapter?: boolean;
 };
 
 export function compileLinearManuscript({
@@ -186,6 +220,8 @@ export function compileLinearManuscript({
   choices,
   includeLooseScenes,
   looseHeadingLabel,
+  includeSceneNames = true,
+  resetSceneNumbersPerChapter = false,
 }: CompileLinearOptions): CompiledManuscript {
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   let sections = linearManuscriptSections(chapters, scenes);
@@ -199,6 +235,8 @@ export function compileLinearManuscript({
         choicesBySceneId: groupChoices(choices),
         sceneNameById: new Map(scenes.map((scene) => [scene.id, scene.name])),
         looseHeadingLabel,
+        includeSceneNames,
+        resetSceneNumbersPerChapter,
       }),
     ],
   };
@@ -211,6 +249,10 @@ export type CompileRouteOptions = {
   scenes: ManuscriptScene[];
   choices: ManuscriptChoice[];
   looseHeadingLabel: string;
+  /** Scene headings on/off; off also renders choices without target references. Defaults to on. */
+  includeSceneNames?: boolean;
+  /** Accepted for uniformity; routes have a single group, so it changes nothing. */
+  resetSceneNumbersPerChapter?: boolean;
 };
 
 export function compileRouteManuscript({
@@ -220,6 +262,8 @@ export function compileRouteManuscript({
   scenes,
   choices,
   looseHeadingLabel,
+  includeSceneNames = true,
+  resetSceneNumbersPerChapter = false,
 }: CompileRouteOptions): CompiledManuscript {
   return {
     title,
@@ -231,7 +275,48 @@ export function compileRouteManuscript({
         choicesBySceneId: groupChoices(choices),
         sceneNameById: new Map(scenes.map((scene) => [scene.id, scene.name])),
         looseHeadingLabel,
+        includeSceneNames,
+        resetSceneNumbersPerChapter,
       }),
     ],
   };
 }
+
+/** One clickable index line: chapters and the appendix at level 0, scenes at 1. */
+export type ManuscriptTocEntry = { level: 0 | 1; text: string; bookmarkId: string };
+
+/**
+ * The index over compiled blocks, in document order. Repeat visits in a
+ * looping route resolve to the scene's first bookmark, like choices do;
+ * without scene names there are no scene blocks, so chapters stand alone.
+ */
+export function manuscriptTocEntries(blocks: CompiledBlock[]): ManuscriptTocEntry[] {
+  const sceneBookmark = new Map<string, string>();
+  for (const block of blocks) {
+    if (block.kind === 'scene-heading' && block.bookmarkId !== null) {
+      if (!sceneBookmark.has(block.id)) sceneBookmark.set(block.id, block.bookmarkId);
+    }
+  }
+  const entries: ManuscriptTocEntry[] = [];
+  for (const block of blocks) {
+    if (block.kind === 'chapter') {
+      entries.push({
+        level: 0,
+        text: block.number === null ? block.name : `${block.number}. ${block.name}`,
+        bookmarkId: block.bookmarkId,
+      });
+    } else if (block.kind === 'loose-heading') {
+      entries.push({ level: 0, text: block.label, bookmarkId: block.bookmarkId });
+    } else if (block.kind === 'scene-heading') {
+      const target = block.bookmarkId ?? sceneBookmark.get(block.id) ?? null;
+      if (target !== null) entries.push({ level: 1, text: `${block.number}. ${block.name}`, bookmarkId: target });
+    }
+  }
+  return entries;
+}
+
+/** Writer flags shared by every renderer. Plain text reads none of them. */
+export type ManuscriptRenderOptions = {
+  /** Clickable index after the title block. Defaults to off. */
+  includeToc?: boolean;
+};

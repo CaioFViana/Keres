@@ -502,8 +502,18 @@ describe('MarkdownPreview', () => {
     };
     const style = StyleSheet.flatten(blank.props.style);
     expect(style.height).toBe(manuscriptTextMetrics.lineHeight);
+    expect(style.marginBottom).toBeUndefined();
     expect(blank.children).toHaveLength(0);
     expect(view.getByText('Above.')).toBeTruthy();
     expect(view.getByText('Below.')).toBeTruthy();
+  });
+
+  it('trims trailing blank lines instead of airing the section end', async () => {
+    const view = await render(
+      <MarkdownPreview text={'Just prose.\n\n\n\n'} testID="preview" />,
+    );
+
+    expect(view.getByTestId('preview').children).toHaveLength(1);
+    expect(view.getByText('Just prose.')).toBeTruthy();
   });
 });

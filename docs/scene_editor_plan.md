@@ -190,11 +190,14 @@ versão = max, payload = estado final fundido + `{squashedFrom}`.
   avulsas → formato) + `showNotification` de sucesso/aviso/erro. Entrega:
   `Packer.toBase64String()` → bytes → `deliverFile` (reuso de
   `storyTransfer`, que ganhou `buildManuscriptFileName`).
-- PDF via `expo-print` (`printToFileAsync` sobre template HTML próprio com
+- PDF nativo via `expo-print` (`printToFileAsync` sobre template HTML próprio com
   TOC/âncoras/links internos): **limitação honesta** — a API não retorna
   mapeamento layout→página, então o PDF referencia destinos por nome de
-  cena com link clicável, nunca por número de página. PDF indisponível na
-  web (sem pipeline de impressão); lá o export oferece DOCX/MD/TXT.
+  cena com link clicável, nunca por número de página. PDF na web via
+  escritor próprio em TypeScript puro (`manuscriptPdf.ts`, Courier, sem
+  dependências e sem pipeline de impressão — uma lib de PDF quebrava o bundle
+  web do Metro): bytes reais com numeração verdadeira de páginas, entregues
+  como download no navegador. Todas as plataformas oferecem DOCX/PDF/MD/TXT.
 - Markdown + texto puro saem do mesmo compilador (bônus + fallback).
 - `scenes.body` viaja no pacote de história via `SceneSchema` (`.default
   (null)`, sem bump de formato).

@@ -26,5 +26,11 @@
       "semicolons": "always",
       "trailingCommas": "all"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/shared/manuscript/compile/export/timesWidths.ts"],
+      "formatter": { "enabled": false }
+    }
+  ]
 }

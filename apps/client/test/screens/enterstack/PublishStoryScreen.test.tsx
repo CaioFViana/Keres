@@ -210,6 +210,7 @@ const manuscriptLabels = {
   goToPage: 'export_manuscript_go_to_page',
   goToScene: 'export_manuscript_go_to_scene',
   looseHeading: 'export_manuscript_loose_heading',
+  tocHeading: 'export_manuscript_index_heading',
 };
 const remoteUnpublished = {
   isPublished: false,

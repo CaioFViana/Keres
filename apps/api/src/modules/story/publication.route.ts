@@ -36,6 +36,7 @@ const ManuscriptRequestSchema = t.Object({
       goToPage: t.Optional(t.String({ maxLength: 80 })),
       goToScene: t.Optional(t.String({ maxLength: 80 })),
       looseHeading: t.Optional(t.String({ maxLength: 80 })),
+      tocHeading: t.Optional(t.String({ maxLength: 80 })),
     }),
   ),
 });

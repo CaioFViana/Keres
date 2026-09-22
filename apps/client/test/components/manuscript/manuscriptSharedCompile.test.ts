@@ -17,7 +17,7 @@ const scenes = [
   { id: 's-2', chapterId: null, name: 'Fragment', index: 2, body: 'Lost.', isDeleted: false },
 ];
 const choices = [{ id: 'c-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Drift' }];
-const labels = { goToPage: 'Go to page', goToScene: 'See' };
+const labels = { goToPage: 'Go to page', goToScene: 'See', tocHeading: 'Contents' };
 
 describe('shared manuscript pipeline', () => {
   it('renders the linear manuscript to markdown and text', () => {

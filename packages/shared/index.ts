@@ -185,6 +185,7 @@ export * from './manuscript/compile/export/manuscriptCompiler';
 export * from './manuscript/compile/export/manuscriptText';
 export * from './manuscript/compile/export/manuscriptDocx';
 export * from './manuscript/compile/export/manuscriptHtml';
+export * from './manuscript/compile/export/manuscriptPdf';
 export * from './manuscript/compile/manuscriptContracts';
 export * from './manuscript/compile/compileStoryManuscript';
 // The reader's block collides with the editor model's `ManuscriptBlock`, so it

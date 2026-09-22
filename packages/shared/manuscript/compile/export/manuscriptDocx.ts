@@ -4,22 +4,37 @@ import {
   Document,
   Footer,
   HeadingLevel,
+  InternalHyperlink,
+  LeaderType,
   Packer,
+  PageBreak,
   PageNumber,
   PageReference,
   Paragraph,
+  Tab,
+  TabStopType,
   TextRun,
 } from 'docx';
-import type { CompiledManuscript, CompiledSpan } from './manuscriptCompiler';
+import {
+  manuscriptTocEntries,
+  type CompiledManuscript,
+  type CompiledSpan,
+  type ManuscriptRenderOptions,
+  type ManuscriptTocEntry,
+} from './manuscriptCompiler';
 
 export type ManuscriptDocxLabels = {
   /** Prefix of a choice reference, e.g. "Go to page" - the number itself is a PAGEREF field. */
   goToPage: string;
+  /** Index heading, e.g. "Contents". */
+  tocHeading: string;
 };
 
 /** Half an inch, the manuscript first-line convention, in twentieths of a point. */
 const FIRST_LINE_INDENT_TWIPS = 720;
 const PARAGRAPH_SPACING_AFTER = 120;
+/** Index page numbers flush right: A4 (11906 twips) minus 1" margins on both sides. */
+const TOC_TAB_TWIPS = 9026;
 
 function spansToRuns(spans: CompiledSpan[]): TextRun[] {
   return spans.map(
@@ -42,10 +57,44 @@ function spansToRuns(spans: CompiledSpan[]): TextRun[] {
 export function buildManuscriptDocument(
   manuscript: CompiledManuscript,
   labels: ManuscriptDocxLabels,
+  options: ManuscriptRenderOptions = {},
 ): Document {
   const children: Paragraph[] = [];
+  const pushToc = (entries: ManuscriptTocEntry[]) => {
+    if (entries.length === 0) return;
+    children.push(
+      new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        children: [new TextRun(labels.tocHeading)],
+      }),
+    );
+    for (const entry of entries) {
+      children.push(
+        new Paragraph({
+          children: [
+            new InternalHyperlink({
+              anchor: entry.bookmarkId,
+              children: [new TextRun(entry.text)],
+            }),
+            new Tab(),
+            new PageReference(entry.bookmarkId, { hyperlink: true }),
+          ],
+          tabStops: [{ type: TabStopType.RIGHT, position: TOC_TAB_TWIPS, leader: LeaderType.DOT }],
+          indent: entry.level === 1 ? { left: 360 } : undefined,
+        }),
+      );
+    }
+    // The title page holds the title and the index alone: the body always
+    // opens on a fresh page, whatever kind of block leads it.
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+  };
   let firstContent = true;
+  let tocEmitted = false;
   for (const block of manuscript.blocks) {
+    if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
+      tocEmitted = true;
+      if (options.includeToc) pushToc(manuscriptTocEntries(manuscript.blocks));
+    }
     switch (block.kind) {
       case 'title':
         children.push(
@@ -66,28 +115,36 @@ export function buildManuscriptDocument(
           }),
         );
         break;
-      case 'chapter':
+      case 'chapter': {
+        const run = new TextRun(
+          block.number === null ? block.name : `${block.number}. ${block.name}`,
+        );
         children.push(
           new Paragraph({
             heading: HeadingLevel.HEADING_1,
             pageBreakBefore: !firstContent,
-            children: [
-              new TextRun(block.number === null ? block.name : `${block.number}. ${block.name}`),
-            ],
+            children: options.includeToc
+              ? [new Bookmark({ id: block.bookmarkId, children: [run] })]
+              : [run],
           }),
         );
         firstContent = false;
         break;
-      case 'loose-heading':
+      }
+      case 'loose-heading': {
+        const run = new TextRun(block.label);
         children.push(
           new Paragraph({
             heading: HeadingLevel.HEADING_1,
             pageBreakBefore: !firstContent,
-            children: [new TextRun(block.label)],
+            children: options.includeToc
+              ? [new Bookmark({ id: block.bookmarkId, children: [run] })]
+              : [run],
           }),
         );
         firstContent = false;
         break;
+      }
       case 'scene-heading': {
         const run = new TextRun(`${block.number}. ${block.name}`);
         children.push(
@@ -160,6 +217,9 @@ export function buildManuscriptDocument(
 export async function buildManuscriptDocxBytes(
   manuscript: CompiledManuscript,
   labels: ManuscriptDocxLabels,
+  options: ManuscriptRenderOptions = {},
 ): Promise<Uint8Array> {
-  return new Uint8Array(await Packer.toArrayBuffer(buildManuscriptDocument(manuscript, labels)));
+  return new Uint8Array(
+    await Packer.toArrayBuffer(buildManuscriptDocument(manuscript, labels, options)),
+  );
 }

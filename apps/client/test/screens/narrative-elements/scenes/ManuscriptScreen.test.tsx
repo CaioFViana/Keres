@@ -1,14 +1,24 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import type { ChapterSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../../../../src/db/schema';
+import type { ManuscriptExportChoices } from '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
 import ManuscriptScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
 const mockExportManuscript = jest.fn();
-const mockAlert = jest.fn();
 const mockNotify = jest.fn();
 const mockUseScreenTour = jest.fn();
+
+let mockModalProps: {
+  visible: boolean;
+  routeName: string | null;
+  showLooseSwitch: boolean;
+  looseCount: number;
+  onExport: (choices: ManuscriptExportChoices) => void;
+  onClose: () => void;
+} | null = null;
 
 let mockHeaderTitle: string | null = null;
 let mockHeaderActions: readonly HeaderAction[] | null = null;
@@ -68,10 +78,21 @@ jest.mock('../../../../src/hooks/useManuscriptData', () => ({
   useManuscriptData: () => mockManuscriptData,
 }));
 
-jest.mock('../../../../src/utils/AppAlert', () => ({
-  __esModule: true,
-  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
-}));
+jest.mock(
+  '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal',
+  () => {
+    const { Text } = require('react-native');
+    return {
+      __esModule: true,
+      default: (props: unknown) => {
+        mockModalProps = props as typeof mockModalProps;
+        return (props as { visible: boolean }).visible ? (
+          <Text testID="export-modal">open</Text>
+        ) : null;
+      },
+    };
+  },
+);
 
 jest.mock('../../../../src/components/features/manuscript/export/manuscriptExport', () => ({
   __esModule: true,
@@ -246,10 +267,19 @@ function sceneNames(call: { manuscript: { blocks: { kind: string; name?: string 
     .map((block) => block.name ?? '');
 }
 
+function sceneNumbers(call: {
+  manuscript: { blocks: { kind: string; number?: number }[] };
+}): number[] {
+  return call.manuscript.blocks
+    .filter((block) => block.kind === 'scene-heading')
+    .map((block) => block.number ?? 0);
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockHeaderTitle = null;
   mockHeaderActions = null;
+  mockModalProps = null;
   mockStoryType = 'linear';
   mockStoryTitle = 'My Story';
   mockManuscriptData = linearData();
@@ -387,33 +417,37 @@ describe('ManuscriptScreen', () => {
     expect(view.getByTestId('screen-loading')).toBeTruthy();
   });
 
-  it('exports the linear manuscript through the alert chain with loose scenes', async () => {
+  it('opens the export modal offering loose scenes', async () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
+    expect(view.queryByTestId('export-modal')).toBeNull();
+
     await pressHeaderAction('export');
 
-    expect(mockAlert).toHaveBeenCalledTimes(1);
-    const [title, message, looseButtons] = mockAlert.mock.calls[0] as [
-      string,
-      string,
-      { text: string; onPress?: () => void }[],
-    ];
-    expect(title).toBe('export_manuscript_title');
-    expect(message).toBe('export_manuscript_loose_message');
+    expect(view.getByTestId('export-modal')).toBeTruthy();
+    expect(mockModalProps).toMatchObject({
+      visible: true,
+      routeName: null,
+      showLooseSwitch: true,
+      looseCount: 1,
+    });
+  });
 
-    const include = looseButtons.find(
-      (button) => button.text === 'export_manuscript_include_loose:{"count":1}',
-    );
-    await include?.onPress?.();
-    expect(mockAlert).toHaveBeenCalledTimes(2);
-    const [, , formatButtons] = mockAlert.mock.calls[1] as [
-      string,
-      unknown,
-      { text: string; onPress?: () => void }[],
-    ];
-    const docx = formatButtons.find((button) => button.text === 'export_manuscript_format_docx');
-    await docx?.onPress?.();
+  it('exports the linear manuscript with the modal choices', async () => {
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'docx',
+        includeSceneNames: true,
+        includeLooseScenes: true,
+        resetSceneNumbers: false,
+        includeIndex: false,
+      });
+    });
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
     const call = mockExportManuscript.mock.calls[0][0];
@@ -426,53 +460,70 @@ describe('ManuscriptScreen', () => {
     );
   });
 
-  it('excludes loose scenes when chosen', async () => {
+  it('omits scene names and loose scenes when switched off', async () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
-
     await pressHeaderAction('export');
 
-    const [, , looseButtons] = mockAlert.mock.calls[0] as [
-      string,
-      string,
-      { text: string; onPress?: () => void }[],
-    ];
-    const exclude = looseButtons.find((button) => button.text === 'export_manuscript_exclude_loose');
-    await exclude?.onPress?.();
-
-    const [, , formatButtons] = mockAlert.mock.calls[1] as [
-      string,
-      unknown,
-      { text: string; onPress?: () => void }[],
-    ];
-    const pdf = formatButtons.find((button) => button.text === 'export_manuscript_format_pdf');
-    await pdf?.onPress?.();
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'md',
+        includeSceneNames: false,
+        includeLooseScenes: false,
+        resetSceneNumbers: false,
+        includeIndex: false,
+      });
+    });
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
     const call = mockExportManuscript.mock.calls[0][0];
-    expect(call.format).toBe('pdf');
-    expect(sceneNames(call)).toEqual(['Opening', 'Inland']);
+    expect(call.format).toBe('md');
+    expect(sceneNames(call)).toEqual([]);
+    const text = JSON.stringify(call.manuscript.blocks);
+    expect(text).toContain('Waves. Waves again.');
+    expect(text).not.toContain('Lost pages.');
   });
 
-  it('exports the current route in one alert in branching stories', async () => {
+  it('restarts scene numbers per chapter and forwards the index flag', async () => {
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'pdf',
+        includeSceneNames: true,
+        includeLooseScenes: true,
+        resetSceneNumbers: true,
+        includeIndex: true,
+      });
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const call = mockExportManuscript.mock.calls[0][0];
+    expect(sceneNumbers(call)).toEqual([1, 2, 1]);
+    expect(call.options).toEqual({ includeToc: true });
+    expect(call.labels).toMatchObject({ tocHeading: 'export_manuscript_index_heading' });
+  });
+
+  it('exports the current route with no loose switch in branching stories', async () => {
     mockStoryType = 'branching';
     mockManuscriptData = branchingData();
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
-
     await pressHeaderAction('export');
 
-    expect(mockAlert).toHaveBeenCalledTimes(1);
-    const [title, message, formatButtons] = mockAlert.mock.calls[0] as [
-      string,
-      string,
-      { text: string; onPress?: () => void }[],
-    ];
-    expect(title).toBe('export_manuscript_title');
-    expect(message).toBe('export_manuscript_route_note:{"route":"Main"}');
+    expect(mockModalProps).toMatchObject({ routeName: 'Main', showLooseSwitch: false });
 
-    const docx = formatButtons.find((button) => button.text === 'export_manuscript_format_docx');
-    await docx?.onPress?.();
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'docx',
+        includeSceneNames: true,
+        includeLooseScenes: false,
+        resetSceneNumbers: false,
+        includeIndex: false,
+      });
+    });
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
     const call = mockExportManuscript.mock.calls[0][0];
@@ -485,33 +536,60 @@ describe('ManuscriptScreen', () => {
   it('notifies export failures and undelivered files', async () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
-
     await pressHeaderAction('export');
-    const [, , looseButtons] = mockAlert.mock.calls[0] as [
-      string,
-      string,
-      { text: string; onPress?: () => void }[],
-    ];
-    await looseButtons[0].onPress?.();
-    const [, , formatButtons] = mockAlert.mock.calls[1] as [
-      string,
-      unknown,
-      { text: string; onPress?: () => void }[],
-    ];
+    const choices: ManuscriptExportChoices = {
+      format: 'docx',
+      includeSceneNames: false,
+      includeLooseScenes: false,
+      resetSceneNumbers: false,
+      includeIndex: false,
+    };
 
     mockExportManuscript.mockRejectedValueOnce(new Error('disk full'));
-    await formatButtons[0].onPress?.();
+    await act(async () => {
+      mockModalProps?.onExport(choices);
+    });
     await waitFor(() =>
       expect(mockNotify).toHaveBeenCalledWith('export_manuscript_failed_body', 'error'),
     );
 
     mockExportManuscript.mockResolvedValueOnce({ delivered: false, fileName: 'x.docx', uri: '/tmp/x' });
-    await formatButtons[0].onPress?.();
+    await act(async () => {
+      mockModalProps?.onExport(choices);
+    });
     await waitFor(() =>
       expect(mockNotify).toHaveBeenCalledWith(
         'export_story_no_share_target:{"path":"/tmp/x"}',
         'warning',
       ),
     );
+  });
+
+  it('delivers pdf as a file on web like every other format', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web');
+    try {
+      const view = await render(<ManuscriptScreen />);
+      await view.findByTestId('manuscript-list');
+      await pressHeaderAction('export');
+
+      await act(async () => {
+        mockModalProps?.onExport({
+          format: 'pdf',
+          includeSceneNames: false,
+          includeLooseScenes: false,
+          resetSceneNumbers: false,
+          includeIndex: false,
+        });
+      });
+
+      await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+      expect(mockExportManuscript.mock.calls[0][0]).toMatchObject({ format: 'pdf' });
+      expect(mockNotify).toHaveBeenCalledWith(
+        'export_manuscript_success:{"fileName":"x.docx"}',
+        'success',
+      );
+    } finally {
+      restorePlatform.restore();
+    }
   });
 });

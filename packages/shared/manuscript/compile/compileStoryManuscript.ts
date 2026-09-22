@@ -13,6 +13,7 @@ import {
   MAX_MANUSCRIPT_BYTES,
   ManuscriptOptionsSchema,
   type ManuscriptFormat,
+  type ManuscriptLabels,
   type ManuscriptOptionsInput,
 } from './manuscriptContracts';
 import type {
@@ -50,7 +51,7 @@ function encodeText(text: string): Uint8Array {
 async function renderBytes(
   compiled: CompiledManuscript,
   format: ManuscriptFormat,
-  labels: { goToPage: string; goToScene: string },
+  labels: ManuscriptLabels,
 ): Promise<Uint8Array> {
   switch (format) {
     case 'docx':

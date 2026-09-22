@@ -71,6 +71,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
           goToPage: t('export_manuscript_go_to_page'),
           goToScene: t('export_manuscript_go_to_scene'),
           looseHeading: t('export_manuscript_loose_heading'),
+          tocHeading: t('export_manuscript_index_heading'),
         },
       };
     },

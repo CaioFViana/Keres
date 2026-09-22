@@ -28,11 +28,10 @@ import {
 } from '@keres/shared';
 import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
-import {
-  exportManuscript,
-  MANUSCRIPT_EXPORT_FORMATS,
-  type ManuscriptExportFormat,
-} from '../../../components/features/manuscript/export/manuscriptExport';
+import ManuscriptExportModal, {
+  type ManuscriptExportChoices,
+} from '../../../components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
+import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';
@@ -44,7 +43,6 @@ import type { NarrativeElementsStackParamList } from '../../../navigation/MainSy
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { AppAlert } from '../../../utils/AppAlert';
 
 type ManuscriptScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Manuscript'>;
 type ManuscriptNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'Manuscript'>;
@@ -73,6 +71,7 @@ const ManuscriptScreen = () => {
   const [query, setQuery] = useState('');
   const [ordinal, setOrdinal] = useState(0);
   const [pureRead, setPureRead] = useState(false);
+  const [exportVisible, setExportVisible] = useState(false);
 
   // Reading order per story shape: branching follows one route's steps in position order
   // (empty until a route exists), linear stacks chapters, events, then the homeless tail.
@@ -138,10 +137,21 @@ const ManuscriptScreen = () => {
   // hand the manuscript to the shared delivery path (share sheet, or a browser download on
   // web). A delivered file notifies success; a build with no share target reports where the
   // file is instead of claiming success; anything thrown notifies failure.
-  const runExportFormat = useCallback(
-    (format: ManuscriptExportFormat, includeLoose: boolean) => {
+  const runExportChoices = useCallback(
+    ({
+      format,
+      includeSceneNames,
+      includeLooseScenes,
+      resetSceneNumbers,
+      includeIndex,
+    }: ManuscriptExportChoices) => {
       void runExport(async () => {
         try {
+          const labels = {
+            goToPage: t('export_manuscript_go_to_page'),
+            goToScene: t('export_manuscript_go_to_scene'),
+            tocHeading: t('export_manuscript_index_heading'),
+          };
           const manuscript = isBranching
             ? compileRouteManuscript({
                 title: selectedStory?.title ?? '',
@@ -150,23 +160,25 @@ const ManuscriptScreen = () => {
                 scenes,
                 choices,
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
+                includeSceneNames,
+                resetSceneNumbersPerChapter: resetSceneNumbers,
               })
             : compileLinearManuscript({
                 title: selectedStory?.title ?? '',
                 chapters,
                 scenes,
                 choices,
-                includeLooseScenes: includeLoose,
+                includeLooseScenes,
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
+                includeSceneNames,
+                resetSceneNumbersPerChapter: resetSceneNumbers,
               });
           const result = await exportManuscript({
             storyTitle: selectedStory?.title ?? '',
             manuscript,
             format,
-            labels: {
-              goToPage: t('export_manuscript_go_to_page'),
-              goToScene: t('export_manuscript_go_to_scene'),
-            },
+            labels,
+            options: { includeToc: includeIndex },
           });
           if (result.delivered) {
             showNotification(
@@ -188,46 +200,11 @@ const ManuscriptScreen = () => {
     [runExport, isBranching, selectedStory, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, showNotification],
   );
 
-  const askExportFormat = useCallback(
-    (includeLoose: boolean) => {
-      AppAlert.alert(
-        t('export_manuscript_title'),
-        isBranching && exportRouteName
-          ? t('export_manuscript_route_note', { route: exportRouteName })
-          : undefined,
-        [
-          ...MANUSCRIPT_EXPORT_FORMATS.map((format) => ({
-            text: t(`export_manuscript_format_${format}`),
-            onPress: () => runExportFormat(format, includeLoose),
-          })),
-          { text: t('cancel'), style: 'cancel' as const },
-        ],
-      );
-    },
-    [isBranching, exportRouteName, runExportFormat, t],
-  );
-
-  // Linear exports gate on loose scenes: chapterless fragments and event-container prose
-  // are offered behind an explicit include/exclude choice. Route exports never ask - the
-  // route itself is the scope. Re-entrant presses while an export runs are ignored.
+  // The modal owns format and switches; re-entrant presses while an export runs are ignored.
   const handleExportPress = useCallback(() => {
     if (exporting) return;
-    if (!isBranching && looseCount > 0) {
-      AppAlert.alert(t('export_manuscript_title'), t('export_manuscript_loose_message'), [
-        {
-          text: t('export_manuscript_include_loose', { count: looseCount }),
-          onPress: () => askExportFormat(true),
-        },
-        {
-          text: t('export_manuscript_exclude_loose'),
-          onPress: () => askExportFormat(false),
-        },
-        { text: t('cancel'), style: 'cancel' as const },
-      ]);
-      return;
-    }
-    askExportFormat(true);
-  }, [exporting, isBranching, looseCount, askExportFormat, t]);
+    setExportVisible(true);
+  }, [exporting]);
 
   const openScene = useCallback(
     (sceneId: string) => {
@@ -465,6 +442,15 @@ const ManuscriptScreen = () => {
           />
         </View>
       )}
+      <ManuscriptExportModal
+        visible={exportVisible}
+        routeName={isBranching ? exportRouteName : null}
+        showLooseSwitch={!isBranching && looseCount > 0}
+        looseCount={looseCount}
+        chapterNumberingAvailable={!isBranching}
+        onExport={runExportChoices}
+        onClose={() => setExportVisible(false)}
+      />
     </View>
   );
 };

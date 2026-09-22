@@ -1,5 +1,6 @@
 /** @jest-environment node */
 import type { CompiledManuscript } from '@keres/shared';
+import { Platform } from 'react-native';
 import { exportManuscript } from '../../../src/components/features/manuscript/export/manuscriptExport';
 
 const mockDeliverFile = jest.fn();
@@ -38,7 +39,7 @@ const manuscript = {
   title: 'My Story',
   blocks: [{ kind: 'title', text: 'My Story' }],
 } as unknown as CompiledManuscript;
-const labels = { goToPage: 'Go to page', goToScene: 'See' };
+const labels = { goToPage: 'Go to page', goToScene: 'See', tocHeading: 'Contents' };
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -52,7 +53,7 @@ describe('exportManuscript', () => {
   it('delivers docx bytes from the shared builder', async () => {
     await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'docx', labels });
 
-    expect(mockBuildDocxBytes).toHaveBeenCalledWith(manuscript, labels);
+    expect(mockBuildDocxBytes).toHaveBeenCalledWith(manuscript, labels, {});
     expect(mockDeliverFile).toHaveBeenCalledWith(
       new Uint8Array([80, 75, 3, 4]),
       'My Story.docx',
@@ -73,6 +74,25 @@ describe('exportManuscript', () => {
       'application/pdf',
       'com.adobe.pdf',
     );
+  });
+
+  it('draws pdf bytes directly on web, where there is no print pipeline', async () => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web');
+    try {
+      await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'pdf', labels });
+
+      expect(mockPrintToFile).not.toHaveBeenCalled();
+      expect(mockDeliverFile).toHaveBeenCalledTimes(1);
+      const [bytes, fileName, mimeType, uti] = mockDeliverFile.mock.calls[0];
+      expect((bytes as Uint8Array).slice(0, 5)).toEqual(
+        new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]),
+      );
+      expect(fileName).toBe('My Story.pdf');
+      expect(mimeType).toBe('application/pdf');
+      expect(uti).toBe('com.adobe.pdf');
+    } finally {
+      restorePlatform.restore();
+    }
   });
 
   it('passes strikethrough spans through to the shared text builder', async () => {
@@ -112,4 +132,43 @@ describe('exportManuscript', () => {
       'public.plain-text',
     );
   });
+
+  it('forwards render options to the shared builders', async () => {
+    await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript,
+      format: 'docx',
+      labels,
+      options: { includeToc: true },
+    });
+
+    expect(mockBuildDocxBytes).toHaveBeenCalledWith(manuscript, labels, { includeToc: true });
+  });
+
+  it('renders the shared markdown index when enabled', async () => {
+    const withChapter = {
+      title: 'My Story',
+      blocks: [
+        { kind: 'title', text: 'My Story' },
+        { kind: 'chapter', id: 'ch-1', number: 1, name: 'Arrival', bookmarkId: 'chapter-ch1' },
+      ],
+    } as unknown as CompiledManuscript;
+
+    await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript: withChapter,
+      format: 'md',
+      labels,
+      options: { includeToc: true },
+    });
+
+    expect(mockDeliverFile).toHaveBeenCalledWith(
+      expect.stringContaining('- [1. Arrival](#chapter-ch1)'),
+      'My Story.md',
+      'text/markdown',
+      'public.plain-text',
+    );
+  });
 });
+
+

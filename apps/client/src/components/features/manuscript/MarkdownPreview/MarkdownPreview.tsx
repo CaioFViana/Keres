@@ -46,6 +46,16 @@ export function MarkdownPreview({
 }) {
   const { colors } = useTheme();
   const doc = useMemo(() => parseMarkdownToDocument(text), [text]);
+  // Trailing Enters are storage, not reading: a body ending in blank lines
+  // would otherwise air the section end (and, between scenes, pile a blank
+  // join onto the divider). Leading and interior blanks stay byte-honest.
+  const blocks = useMemo(() => {
+    const visible = [...doc.blocks];
+    while (visible.length > 0 && visible[visible.length - 1].spans.length === 0) {
+      visible.pop();
+    }
+    return visible;
+  }, [doc]);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -55,17 +65,18 @@ export function MarkdownPreview({
           fontSize: manuscriptTextMetrics.fontSize,
           lineHeight: manuscriptTextMetrics.lineHeight,
         },
-        // Blank lines read as full beats with no text node to pollute copies.
+        // Blank lines read as full beats with no text node to pollute copies:
+        // exactly one line-height, no margins, so each stored blank line
+        // costs one line — the same beat as the editor's empty line.
         blankBlock: {
           height: manuscriptTextMetrics.lineHeight,
-          marginBottom: manuscriptTextMetrics.paragraphSpacing,
         },
       }),
     [colors],
   );
   return (
     <View testID={testID}>
-      {doc.blocks.map((block, index) =>
+      {blocks.map((block, index) =>
         block.spans.length === 0 ? (
           <View key={`block-${index}`} style={styles.blankBlock} />
         ) : (

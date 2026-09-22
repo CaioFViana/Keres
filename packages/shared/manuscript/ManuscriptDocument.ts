@@ -128,8 +128,11 @@ function pushText(frame: Frame, text: string): void {
  * (`**__x__**`, `***x***`) while same-marker overlaps degrade to literal.
  * Backslash escapes one escapable char; unclosed openers and empty pairs
  * (`****`) stay literal, like the reader.
+ *
+ * Shared with the export reader, so compiled manuscripts style exactly what
+ * the app shows: one inline grammar, two span shapes.
  */
-function parseInlineLine(line: string): ManuscriptSpan[] {
+export function parseInlineLine(line: string): ManuscriptSpan[] {
   const stack: Frame[] = [{ marker: null, parts: [] }];
   const current = () => stack[stack.length - 1];
   const closeTopFrame = () => {

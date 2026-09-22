@@ -108,6 +108,8 @@
   "appears_in_arcs_empty": "No {{arcs}} derived from scenes yet.",
   "arc": "Arc",
   "arc_delete_blocked": "The default {{arc}} cannot be deleted.",
+  "arc_delete_message": "Delete \"{{name}}\"? Its chapters move back to the default {{arc}}; nothing written is removed.",
+  "arc_delete_title": "Delete {{arc}}",
   "arc_form_title_new": "New {{arc}}",
   "arc_picker_title": "Choose {{arcs}}",
   "arc_theme_description": "When this {{arc}} is selected, it can replace the story theme.",

@@ -399,8 +399,10 @@ describe('SceneDetailContent', () => {
   });
 
   it('renders the title, tags fallback and chapter numbering for linear stories', async () => {
-    const view = await render(<SceneDetailContent {...baseProps()} />);
-    expect(view.getByTestId('detail-title').props.children).toBe('Opening');
+    const view = await render(
+      <SceneDetailContent {...baseProps({ scene: makeScene({ index: 3 }) })} />,
+    );
+    expect(view.getByTestId('detail-title').props.children).toBe('3. Opening');
     expect(view.getByText('no_tags_found')).toBeTruthy();
     expect(view.getByText(/2\. /)).toBeTruthy();
     expect(view.getByText(/Arrival/)).toBeTruthy();
@@ -418,6 +420,7 @@ describe('SceneDetailContent', () => {
     );
     expect(view.getByText('Arrival')).toBeTruthy();
     expect(view.queryByText(/2\. /)).toBeNull();
+    expect(view.getByTestId('detail-title').props.children).toBe('Opening');
   });
 
   it('shows the unchaptered label without a chapter or chapter id', async () => {

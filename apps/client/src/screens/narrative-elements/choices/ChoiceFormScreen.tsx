@@ -208,9 +208,6 @@ const ChoiceFormScreen = () => {
       description={copy.formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -220,6 +217,9 @@ const ChoiceFormScreen = () => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

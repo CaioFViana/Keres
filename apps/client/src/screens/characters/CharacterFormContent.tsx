@@ -170,9 +170,6 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
       description={formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -182,6 +179,9 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

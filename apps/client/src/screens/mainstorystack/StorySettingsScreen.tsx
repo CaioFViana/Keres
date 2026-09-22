@@ -259,15 +259,15 @@ const StorySettingsScreen = () => {
       description={t('story_settings_screen_description')}
       actions={
         <>
-          <Button onPress={handleSave} disabled={!canEdit || saving || deleting}>
-            {t('update_story')}
-          </Button>
           <Button
             onPress={handleDelete}
             style={{ backgroundColor: colors.error }}
             disabled={!canManageStoryPolicy || saving || deleting}
           >
             {t('delete_story_title')}
+          </Button>
+          <Button onPress={handleSave} disabled={!canEdit || saving || deleting}>
+            {t('update_story')}
           </Button>
         </>
       }

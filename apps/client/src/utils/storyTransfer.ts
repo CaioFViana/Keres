@@ -77,36 +77,72 @@ export function buildExportZipFileName(storyTitle: string, now: Date = new Date(
   return `${slugify(storyTitle)}-${now.toISOString().slice(0, 10)}.zip`;
 }
 
-/** The manuscript file's name (`manuscrito` suffix so it never collides with the data backup). */
+/** The app languages file-name slugs come in; anything else falls back to English. */
+export type ExportFileLanguage = 'pt' | 'en';
+
+/** Resolves an i18next language tag (`pt-BR`, `en`, ...) to a file-name language. */
+export function exportFileLanguage(appLanguage: string | undefined): ExportFileLanguage {
+  return appLanguage?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+}
+
+type FileNameSlugKind = 'manuscript' | 'map' | 'relations' | 'locations' | 'timeline';
+
+/**
+ * The per-language word inside export file names. Every slug is pre-slugified ASCII, so file
+ * names never carry accents or spaces whatever the app language is.
+ */
+const FILE_NAME_SLUGS: Record<FileNameSlugKind, Record<ExportFileLanguage, string>> = {
+  manuscript: { en: 'manuscript', pt: 'manuscrito' },
+  map: { en: 'map', pt: 'mapa' },
+  relations: { en: 'relations', pt: 'relacoes' },
+  locations: { en: 'locations', pt: 'locais' },
+  timeline: { en: 'timeline', pt: 'linha-do-tempo' },
+};
+
+/** The manuscript file's name (slugged kind suffix so it never collides with the data backup). */
 export function buildManuscriptFileName(
   storyTitle: string,
   extension: string,
   now: Date = new Date(),
+  language: ExportFileLanguage = 'en',
 ): string {
-  return `${slugify(storyTitle)}-manuscrito-${now.toISOString().slice(0, 10)}.${extension}`;
+  return `${slugify(storyTitle)}-${FILE_NAME_SLUGS.manuscript[language]}-${now.toISOString().slice(0, 10)}.${extension}`;
 }
 
 /** The name of the story map's image file, in the same pattern as the data export. */
-export function buildStoryMapFileName(storyTitle: string, now: Date = new Date()): string {
-  return `${slugify(storyTitle)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
+export function buildStoryMapFileName(
+  storyTitle: string,
+  now: Date = new Date(),
+  language: ExportFileLanguage = 'en',
+): string {
+  return `${slugify(storyTitle)}-${FILE_NAME_SLUGS.map[language]}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** The name of the relations map's image file, in the same pattern as the data export. */
 export function buildCharacterRelationMapFileName(
   storyTitle: string,
   now: Date = new Date(),
+  language: ExportFileLanguage = 'en',
 ): string {
-  return `${slugify(storyTitle)}-relacoes-${now.toISOString().slice(0, 10)}.svg`;
+  return `${slugify(storyTitle)}-${FILE_NAME_SLUGS.relations[language]}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** The name of the Locations structure graph's image file, in the same pattern as the data export. */
-export function buildLocationGraphMapFileName(storyTitle: string, now: Date = new Date()): string {
-  return `${slugify(storyTitle)}-locations-${now.toISOString().slice(0, 10)}.svg`;
+export function buildLocationGraphMapFileName(
+  storyTitle: string,
+  now: Date = new Date(),
+  language: ExportFileLanguage = 'en',
+): string {
+  return `${slugify(storyTitle)}-${FILE_NAME_SLUGS.locations[language]}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** The narrative timeline SVG's name. */
-export function buildStoryTimelineFileName(storyTitle: string, now: Date = new Date()): string {
-  return `${slugify(storyTitle)}-linha-do-tempo-${now.toISOString().slice(0, 10)}.svg`;
+export function buildStoryTimelineFileName(
+  storyTitle: string,
+  now: Date = new Date(),
+  language: ExportFileLanguage = 'en',
+): string {
+  return `${slugify(storyTitle)}-${FILE_NAME_SLUGS.timeline[language]}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** The board drawing's image file. */
@@ -119,8 +155,12 @@ export function buildBoardMapFileName(
 }
 
 /** The location map drawing's image file. */
-export function buildLocationMapFileName(mapName: string, now: Date = new Date()): string {
-  return `${slugify(mapName)}-mapa-${now.toISOString().slice(0, 10)}.svg`;
+export function buildLocationMapFileName(
+  mapName: string,
+  now: Date = new Date(),
+  language: ExportFileLanguage = 'en',
+): string {
+  return `${slugify(mapName)}-${FILE_NAME_SLUGS.map[language]}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
 /** The result of trying to deliver the file to the user. */

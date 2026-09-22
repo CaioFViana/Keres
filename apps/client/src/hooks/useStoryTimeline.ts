@@ -13,7 +13,7 @@ import {
   formatSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
-import { buildStoryTimelineFileName, deliverMapExport } from '@/src/utils/storyTransfer';
+import { buildStoryTimelineFileName, deliverMapExport, exportFileLanguage } from '@/src/utils/storyTransfer';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {
   calendarSecondsPerDay,
@@ -58,7 +58,7 @@ const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) 
  * ceiling.
  */
 export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | null) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { definition: primaryCalendar, calendars, describeDay } = useStoryCalendar();
   const calendar = calendarOverride ?? primaryCalendar;
   const { colors } = useTheme();
@@ -379,7 +379,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
       });
       const result = await deliverMapExport(
         svg,
-        buildStoryTimelineFileName(story.title),
+        buildStoryTimelineFileName(story.title, new Date(), exportFileLanguage(i18n.language)),
         useUserSettingsStore.getState().exportFormat,
       );
       notify(
@@ -394,7 +394,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
     } finally {
       setSaving(false);
     }
-  }, [colors, layout, notify, scaleMode, showSceneNames, story, storyDurationLabel, t]);
+  }, [colors, layout, notify, scaleMode, showSceneNames, story, storyDurationLabel, t, i18n]);
 
   return {
     story,

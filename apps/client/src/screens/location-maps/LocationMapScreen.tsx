@@ -31,6 +31,7 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
 import { useLocationMapExport } from '../../hooks/useLocationMapExport';
+import { exportFileLanguage } from '../../utils/storyTransfer';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -48,7 +49,7 @@ import { useTheme } from '../../theme';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<LocationStackParamList, 'LocationMap'>>();
@@ -325,6 +326,7 @@ const LocationMapScreen = () => {
     t,
     showNotification,
     setExporting,
+    language: exportFileLanguage(i18n.language),
   });
 
   const {

@@ -108,6 +108,8 @@
   "appears_in_arcs_empty": "Ainda não há {{arcs}} derivados das cenas.",
   "arc": "Arco",
   "arc_delete_blocked": "O {{arc}} padrão não pode ser excluído.",
+  "arc_delete_message": "Excluir \"{{name}}\"? Os capítulos voltam para o {{arc}} padrão; nada escrito é removido.",
+  "arc_delete_title": "Excluir {{arc}}",
   "arc_form_title_new": "Novo {{arc}}",
   "arc_picker_title": "Escolher {{arcs}}",
   "arc_theme_description": "Quando este {{arc}} está selecionado, pode substituir o tema da história.",

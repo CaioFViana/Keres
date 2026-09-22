@@ -7,11 +7,13 @@ const mockDeliverFile = jest.fn();
 const mockBuildDocxBytes = jest.fn();
 const mockPrintToFile = jest.fn();
 const mockReadBytes = jest.fn();
+const mockBuildManuscriptFileName = jest.fn(
+  (...args: unknown[]) => `${args[0] as string}.${args[1] as string}`,
+);
 
 jest.mock('../../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildManuscriptFileName: (storyTitle: string, extension: string) =>
-    `${storyTitle}.${extension}`,
+  buildManuscriptFileName: (...args: unknown[]) => mockBuildManuscriptFileName(...args),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
 
@@ -167,6 +169,32 @@ describe('exportManuscript', () => {
       'My Story.md',
       'text/markdown',
       'public.plain-text',
+    );
+  });
+
+  it('passes the app language to the file name builder, defaulting to English', async () => {
+    await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'md', labels });
+
+    expect(mockBuildManuscriptFileName).toHaveBeenCalledWith(
+      'My Story',
+      'md',
+      expect.any(Date),
+      'en',
+    );
+
+    await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript,
+      format: 'md',
+      labels,
+      language: 'pt',
+    });
+
+    expect(mockBuildManuscriptFileName).toHaveBeenLastCalledWith(
+      'My Story',
+      'md',
+      expect.any(Date),
+      'pt',
     );
   });
 });

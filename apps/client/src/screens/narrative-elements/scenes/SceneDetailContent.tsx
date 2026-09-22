@@ -135,7 +135,7 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
   } = props;
   return (
     <DetailContainer
-      title={scene.name}
+      title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

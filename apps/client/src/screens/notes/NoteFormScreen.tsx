@@ -125,9 +125,6 @@ const NoteFormScreen = () => {
       description={t('note_form_description')}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_note')}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -137,6 +134,9 @@ const NoteFormScreen = () => {
               {t('delete_note_title')}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {isEditing ? t('save_changes') : t('create_note')}
+          </Button>
         </>
       }
     >

@@ -379,15 +379,15 @@ const ServerRegistrationScreen = () => {
       actions={
         serverId ? (
           <FormActions stackOnCompact>
-            <Button onPress={handleSave} disabled={loading}>
-              {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
-            </Button>
             <Button
               onPress={handleDeleteServer}
               style={{ backgroundColor: colors.error }}
               disabled={loading}
             >
               {t('delete_server')}
+            </Button>
+            <Button onPress={handleSave} disabled={loading}>
+              {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
             </Button>
           </FormActions>
         ) : (

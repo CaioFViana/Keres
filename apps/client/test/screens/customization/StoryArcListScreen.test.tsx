@@ -177,7 +177,12 @@ it('deletes a non-default arc after confirmation', async () => {
 
   await waitFor(() => expect(view.getByText('Rising')).toBeTruthy());
   await fireEvent.press(view.getByLabelText('delete'));
-  expect(mockAlert).toHaveBeenCalled();
+  // The confirmation names the arc (interpolated by i18next from the key).
+  expect(mockAlert).toHaveBeenCalledWith(
+    'arc_delete_title',
+    'arc_delete_message',
+    expect.any(Array),
+  );
 
   const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => Promise<void> }[];
   const confirm = buttons.find((button) => button.text === 'delete');

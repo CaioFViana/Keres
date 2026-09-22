@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -10,6 +11,7 @@ const mockCreateArc = jest.fn();
 const mockNotify = jest.fn();
 const mockApplyTheme = jest.fn();
 const mockUseScreenHeader = jest.fn();
+const mockAlert = jest.fn();
 const mockDb = {};
 const mockT = (key: string) => key;
 let mockArcId: string | undefined;
@@ -31,6 +33,9 @@ jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
+}));
+jest.mock('../../../src/utils/AppAlert', () => ({
+  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
 jest.mock('@/src/components/common', () => ({
   __esModule: true,
@@ -55,6 +60,7 @@ jest.mock('@/src/components/common', () => ({
     value: string;
     onChangeText: (value: string) => void;
     multiline?: boolean;
+    style?: StyleProp<TextStyle>;
   }) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
@@ -62,6 +68,7 @@ jest.mock('@/src/components/common', () => ({
       testID: props.multiline ? 'input-description' : 'input-title',
       value: props.value,
       onChangeText: props.onChangeText,
+      style: props.style,
     });
   },
   ThemePickerModal: (props: {
@@ -205,6 +212,77 @@ it('renders a blank creation form with the inherited theme', async () => {
   expect(view.getByText('arc_theme_inherited')).toBeTruthy();
   expect(view.queryByTestId('btn-arc_theme_inherit')).toBeNull();
   expect(mockGetArcById).not.toHaveBeenCalled();
+});
+
+it('grows the description field with the shared multiline style', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  // Without a minHeight the multiline field renders one line tall.
+  const style = StyleSheet.flatten(view.getByTestId('input-description').props.style);
+  expect(style?.minHeight).toBeGreaterThan(0);
+});
+
+type HeaderActionStub = { id: string; disabled?: boolean; onPress: () => void };
+
+const lastHeaderActions = (): HeaderActionStub[] => {
+  const calls = mockUseScreenHeader.mock.calls;
+  return calls[calls.length - 1][0].actions as HeaderActionStub[];
+};
+
+const lastAlertButtons = (): { style?: string; onPress?: () => void }[] => {
+  const calls = mockAlert.mock.calls;
+  return calls[calls.length - 1][2] as { style?: string; onPress?: () => void }[];
+};
+
+it('exposes a disabled reset header action while the form is pristine', async () => {
+  await render(<StoryArcFormScreen />);
+
+  expect(lastHeaderActions().find((action) => action.id === 'reset-form')).toMatchObject({
+    disabled: true,
+  });
+});
+
+it('resets typed values back to blanks after confirm', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Rising');
+  const reset = lastHeaderActions().find((action) => action.id === 'reset-form');
+  expect(reset).toMatchObject({ disabled: false });
+  await act(async () => {
+    reset?.onPress();
+  });
+  const alertCalls = mockAlert.mock.calls;
+  expect(alertCalls[alertCalls.length - 1][1]).toBe('form_reset_create_message');
+  await act(async () => {
+    lastAlertButtons().find((button) => button.style === 'destructive')?.onPress?.();
+  });
+
+  expect(view.getByTestId('input-title').props.value).toBe('');
+  expect(lastHeaderActions().find((action) => action.id === 'reset-form')).toMatchObject({
+    disabled: true,
+  });
+});
+
+it('resets edited values back to the loaded arc after confirm', async () => {
+  mockArcId = 'arc-1';
+  mockGetArcById.mockResolvedValue({ title: 'Prologue', description: 'Start', themeOverride: null });
+  const view = await render(<StoryArcFormScreen />);
+
+  await waitFor(() => expect(view.getByTestId('input-title').props.value).toBe('Prologue'));
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Changed');
+  const reset = lastHeaderActions().find((action) => action.id === 'reset-form');
+  expect(reset).toMatchObject({ disabled: false });
+  await act(async () => {
+    reset?.onPress();
+  });
+  const alertCalls = mockAlert.mock.calls;
+  expect(alertCalls[alertCalls.length - 1][1]).toBe('form_reset_edit_message');
+  await act(async () => {
+    lastAlertButtons().find((button) => button.style === 'destructive')?.onPress?.();
+  });
+
+  expect(view.getByTestId('input-title').props.value).toBe('Prologue');
+  expect(view.getByTestId('input-description').props.value).toBe('Start');
 });
 
 it('creates an arc on save and goes back', async () => {

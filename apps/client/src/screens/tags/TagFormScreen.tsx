@@ -90,9 +90,6 @@ const TagFormScreen = () => {
       description={t('tag_form_description')}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_tag')}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -102,6 +99,9 @@ const TagFormScreen = () => {
               {t('delete_tag_title')}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {isEditing ? t('save_changes') : t('create_tag')}
+          </Button>
         </>
       }
     >

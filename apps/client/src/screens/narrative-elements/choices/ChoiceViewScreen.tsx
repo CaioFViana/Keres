@@ -38,7 +38,11 @@ import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
-import { buildStoryMapFileName, deliverMapExport } from '../../../utils/storyTransfer';
+import {
+  buildStoryMapFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '../../../utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 
 /**
@@ -65,7 +69,7 @@ interface SceneNodeConnection {
 
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const navigation =
@@ -342,7 +346,11 @@ const ChoiceViewScreen = () => {
 
       const result = await deliverMapExport(
         svg,
-        buildStoryMapFileName(selectedStory.title),
+        buildStoryMapFileName(
+          selectedStory.title,
+          new Date(),
+          exportFileLanguage(i18n.language),
+        ),
         useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
@@ -363,7 +371,7 @@ const ChoiceViewScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
+  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t, i18n]);
 
   return (
     <ChoiceViewContent

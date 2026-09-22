@@ -496,11 +496,11 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
 
             {canEdit && (
               <FormActions stackOnCompact style={{ marginTop: 25 }}>
-                <Button onPress={handleSave} disabled={saving}>
-                  {saving ? t('saving') : t('save_changes')}
-                </Button>
                 <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
                   {t('delete')}
+                </Button>
+                <Button onPress={handleSave} disabled={saving}>
+                  {saving ? t('saving') : t('save_changes')}
                 </Button>
               </FormActions>
             )}

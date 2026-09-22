@@ -9,7 +9,11 @@ import type {
 import type { LocationMapSelect } from '../db/schema';
 import type { NotificationType } from '../state/notificationStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
-import { buildLocationMapFileName, deliverMapExport } from '../utils/storyTransfer';
+import {
+  buildLocationMapFileName,
+  deliverMapExport,
+  type ExportFileLanguage,
+} from '../utils/storyTransfer';
 import { buildStandaloneLocationMapSvg } from '../utils/storyMapSvgExport';
 
 type GalleryMediaById = Record<
@@ -39,6 +43,8 @@ interface Options {
   t: TFunction;
   showNotification: (message: string, type?: NotificationType) => void;
   setExporting: Dispatch<SetStateAction<boolean>>;
+  /** App language for the file-name slug; never the system language. */
+  language: ExportFileLanguage;
 }
 
 /** Builds and delivers a standalone location-map SVG without inflating its screen controller. */
@@ -53,6 +59,7 @@ export function useLocationMapExport({
   t,
   showNotification,
   setExporting,
+  language,
 }: Options) {
   return useCallback(async () => {
     if (!map) return;
@@ -71,7 +78,7 @@ export function useLocationMapExport({
       });
       const result = await deliverMapExport(
         svg,
-        buildLocationMapFileName(map.name),
+        buildLocationMapFileName(map.name, new Date(), language),
         useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
@@ -102,5 +109,6 @@ export function useLocationMapExport({
     setExporting,
     showNotification,
     t,
+    language,
   ]);
 }

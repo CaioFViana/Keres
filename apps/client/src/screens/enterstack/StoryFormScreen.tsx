@@ -171,9 +171,6 @@ const StoryFormScreen = () => {
       }
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting || !canEdit}>
-            {isEditing ? t('update_story') : t('create_story')}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -183,6 +180,9 @@ const StoryFormScreen = () => {
               {t('delete_story_title')}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting || !canEdit}>
+            {isEditing ? t('update_story') : t('create_story')}
+          </Button>
         </>
       }
     >

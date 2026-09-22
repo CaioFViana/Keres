@@ -158,9 +158,6 @@ const ItemFormScreen = () => {
       description={copy.formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -170,6 +167,9 @@ const ItemFormScreen = () => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

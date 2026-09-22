@@ -133,9 +133,6 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
       description={formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -145,6 +142,9 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

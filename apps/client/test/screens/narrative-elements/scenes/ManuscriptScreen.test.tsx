@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { FlatList, Platform, StyleSheet } from 'react-native';
+import TestRenderer from 'react-test-renderer';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import type { ChapterSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../../../../src/db/schema';
 import type { ManuscriptExportChoices } from '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
@@ -27,6 +28,7 @@ let mockStoryType = 'linear';
 let mockStoryTitle = 'My Story';
 let mockActiveArcId: string | null = null;
 let mockArcs: { id: string; title: string }[] = [];
+let mockLanguage = 'en';
 let mockManuscriptData: {
   chapters: ChapterSelect[];
   scenes: SceneSelect[];
@@ -183,7 +185,10 @@ jest.mock('../../../../src/theme', () => ({
 jest.mock('react-i18next', () => {
   const t = (key: string, params?: Record<string, unknown>) =>
     params ? `${key}:${JSON.stringify(params)}` : key;
-  return { __esModule: true, useTranslation: () => ({ t }) };
+  return {
+    __esModule: true,
+    useTranslation: () => ({ t, i18n: { language: mockLanguage } }),
+  };
 });
 
 jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
@@ -341,6 +346,7 @@ beforeEach(() => {
   mockStoryTitle = 'My Story';
   mockActiveArcId = null;
   mockArcs = [];
+  mockLanguage = 'en';
   mockManuscriptData = linearData();
   mockExportManuscript.mockResolvedValue({ delivered: true, fileName: 'x.docx' });
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -539,11 +545,33 @@ describe('ManuscriptScreen', () => {
     const call = mockExportManuscript.mock.calls[0][0];
     expect(call.storyTitle).toBe('My Story');
     expect(call.format).toBe('docx');
+    expect(call.language).toBe('en');
     expect(sceneNames(call)).toEqual(['Opening', 'Inland', 'Fragment']);
     expect(mockNotify).toHaveBeenCalledWith(
       'export_manuscript_success:{"fileName":"x.docx"}',
       'success',
     );
+  });
+
+  it('exports the file name in the app language', async () => {
+    mockLanguage = 'pt-BR';
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'md',
+        includeSceneNames: true,
+        includeLooseScenes: true,
+        resetSceneNumbers: false,
+        includeIndex: false,
+        arcId: null,
+      });
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockExportManuscript.mock.calls[0][0]).toMatchObject({ language: 'pt' });
   });
 
   it('omits scene names and loose scenes when switched off', async () => {
@@ -788,6 +816,35 @@ describe('ManuscriptScreen', () => {
     // Event containers of the other arc hide with their scenes.
     expect(view.queryByText('Quake')).toBeNull();
     expect(view.queryByText('Rumble.')).toBeNull();
+  });
+
+  it('keeps the viewability callback identical across arc switches and read-mode toggles', async () => {
+    // Web FlatList throws when this prop identity changes between renders; the
+    // RNTL host tree cannot see composite props, hence the manual renderer.
+    mockArcs = twoArcs;
+    mockManuscriptData = twoArcData();
+    let mounted!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      mounted = TestRenderer.create(<ManuscriptScreen />);
+    });
+    const callbackOf = () =>
+      mounted.root.findByType(FlatList).props.onViewableItemsChanged as unknown;
+    const first = callbackOf();
+
+    mockActiveArcId = 'arc-1';
+    await act(async () => {
+      mounted.update(<ManuscriptScreen />);
+    });
+    expect(callbackOf()).toBe(first);
+
+    await act(async () => {
+      mockHeaderActions?.find((action) => action.id === 'pure-read')?.onPress();
+    });
+    expect(callbackOf()).toBe(first);
+
+    await act(async () => {
+      mounted.unmount();
+    });
   });
 
   it('keeps the index modal on the same filtered sections as the list', async () => {

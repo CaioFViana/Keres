@@ -166,9 +166,6 @@ const WorldRuleFormScreen = () => {
       description={copy.formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -178,6 +175,9 @@ const WorldRuleFormScreen = () => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

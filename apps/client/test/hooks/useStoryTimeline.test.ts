@@ -11,11 +11,13 @@ const mockSceneService = { getAllByStoryId: jest.fn() };
 const mockAnchorService = { getAnchorsForStory: jest.fn() };
 const mockDeliver = jest.fn();
 const mockRender = jest.fn();
+const mockBuildFileName = jest.fn((..._args: unknown[]) => 'Story.svg');
+let mockLanguage = 'en';
 
 jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: jest.fn(() => ({ t: mockT })),
+  useTranslation: jest.fn(() => ({ t: mockT, i18n: { language: mockLanguage } })),
 }));
 jest.mock('../../src/state/storyStore', () => ({
   __esModule: true,
@@ -69,7 +71,8 @@ jest.mock('../../src/utils/storyArcFilter', () => ({
 }));
 jest.mock('../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildStoryTimelineFileName: jest.fn(() => 'Story.svg'),
+  ...jest.requireActual('../../src/utils/storyTransfer'),
+  buildStoryTimelineFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
 jest.mock('@keres/shared/graphs/storyTimelineLayout', () => ({
@@ -93,6 +96,7 @@ import { withSilencedConsole } from '../helpers/silenceConsole';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockLanguage = 'en';
   (useStoryCalendar as jest.Mock).mockReturnValue({
     definition: null,
     calendars: [],
@@ -138,6 +142,7 @@ describe('useStoryTimeline', () => {
   });
 
   it('updates display controls and exports the built timeline', async () => {
+    mockLanguage = 'pt-BR';
     const view = await renderHook(() => useStoryTimeline());
     await waitFor(() => expect(view.result.current.loading).toBe(false));
     await act(async () => {
@@ -147,6 +152,7 @@ describe('useStoryTimeline', () => {
     });
     await act(async () => view.result.current.exportTimeline());
     expect(mockRender).toHaveBeenCalled();
+    expect(mockBuildFileName).toHaveBeenCalledWith('Story', expect.any(Date), 'pt');
     expect(mockDeliver).toHaveBeenCalledWith('<svg />', 'Story.svg', 'svg');
     expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_success', 'success');
   });

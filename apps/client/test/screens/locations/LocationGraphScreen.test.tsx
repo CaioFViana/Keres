@@ -11,6 +11,8 @@ const mockZoomBy = jest.fn();
 const mockFitToScreen = jest.fn();
 
 let mockIsCompact = false;
+let mockLanguage = 'en';
+const mockBuildFileName = jest.fn((...args: unknown[]) => `${args[0] as string}-map.svg`);
 
 const mockNavigation = { navigate: mockNavigate, goBack: mockGoBack };
 const mockT = ((key: string) => key) as (key: string) => string;
@@ -84,7 +86,8 @@ jest.mock('../../../src/theme', () => ({
 }));
 jest.mock('../../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildLocationGraphMapFileName: (title: string) => `${title}-map.svg`,
+  ...jest.requireActual('../../../src/utils/storyTransfer'),
+  buildLocationGraphMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
 jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
@@ -227,7 +230,7 @@ jest.mock('react-i18next', () => {
   return {
     ...actual,
     __esModule: true,
-    useTranslation: () => ({ t: mockT }),
+    useTranslation: () => ({ t: mockT, i18n: { language: mockLanguage } }),
   };
 });
 
@@ -287,6 +290,7 @@ describe('LocationGraphScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockIsCompact = false;
+    mockLanguage = 'en';
     mockGetAllLocationsByStoryId.mockResolvedValue([
       makeLocation('loc-1', 'Keep'),
       makeLocation('loc-2', 'Harbor'),
@@ -370,10 +374,12 @@ describe('LocationGraphScreen', () => {
   });
 
   it('exports the map and notifies on success', async () => {
+    mockLanguage = 'pt-BR';
     const view = await render(<LocationGraphScreen />);
     await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
     await fireEvent.press(view.getByLabelText('location_graph_export'));
     await waitFor(() => expect(mockDeliverMapExport).toHaveBeenCalled());
+    expect(mockBuildFileName).toHaveBeenCalledWith('My Story', expect.any(Date), 'pt');
     const [svg, fileName, format] = mockDeliverMapExport.mock.calls[0];
     expect(typeof svg).toBe('string');
     expect((svg as string).includes('<svg')).toBe(true);

@@ -3,8 +3,11 @@ import {
   buildExportFileName,
   buildExportZipFileName,
   buildLocationGraphMapFileName,
+  buildLocationMapFileName,
   buildManuscriptFileName,
   buildStoryMapFileName,
+  buildStoryTimelineFileName,
+  exportFileLanguage,
 } from '../../src/utils/storyTransfer';
 
 jest.mock('../../src/services/MediaFileService', () => ({
@@ -55,17 +58,63 @@ describe('export file names', () => {
   });
 
   it.each([
-    ['data package', buildExportZipFileName, 'a-queda-2026-08-11.zip'],
     ['story map', buildStoryMapFileName, 'a-queda-mapa-2026-08-11.svg'],
     ['relation map', buildCharacterRelationMapFileName, 'a-queda-relacoes-2026-08-11.svg'],
-    ['location map', buildLocationGraphMapFileName, 'a-queda-locations-2026-08-11.svg'],
-  ])('names the %s consistently with the data export', (_label, build, expected) => {
-    expect(build('A Queda', DATE)).toBe(expected);
+    ['location map', buildLocationGraphMapFileName, 'a-queda-locais-2026-08-11.svg'],
+  ])('names the %s in Portuguese', (_label, build, expected) => {
+    expect(build('A Queda', DATE, 'pt')).toBe(expected);
+  });
+
+  it('names the data package consistently with the data export', () => {
+    expect(buildExportZipFileName('A Queda', DATE)).toBe('a-queda-2026-08-11.zip');
   });
 
   it('names the manuscript apart from the data backup', () => {
-    expect(buildManuscriptFileName('A Queda', 'docx', DATE)).toBe('a-queda-manuscrito-2026-08-11.docx');
-    expect(buildManuscriptFileName('A Queda', 'pdf', DATE)).toBe('a-queda-manuscrito-2026-08-11.pdf');
+    expect(buildManuscriptFileName('A Queda', 'docx', DATE, 'pt')).toBe(
+      'a-queda-manuscrito-2026-08-11.docx',
+    );
+    expect(buildManuscriptFileName('A Queda', 'pdf', DATE, 'pt')).toBe(
+      'a-queda-manuscrito-2026-08-11.pdf',
+    );
+  });
+
+  it('names the timeline and the location map drawing per language', () => {
+    expect(buildStoryTimelineFileName('A Queda', DATE, 'pt')).toBe(
+      'a-queda-linha-do-tempo-2026-08-11.svg',
+    );
+    expect(buildStoryTimelineFileName('A Queda', DATE, 'en')).toBe('a-queda-timeline-2026-08-11.svg');
+    expect(buildLocationMapFileName('Atlas', DATE, 'pt')).toBe('atlas-mapa-2026-08-11.svg');
+    expect(buildLocationMapFileName('Atlas', DATE, 'en')).toBe('atlas-map-2026-08-11.svg');
+  });
+
+  it.each([
+    ['pt-BR', 'pt'],
+    ['pt', 'pt'],
+    ['en-US', 'en'],
+    ['en', 'en'],
+    [undefined, 'en'],
+  ])('resolves the app language %s to %s file slugs', (appLanguage, expected) => {
+    expect(exportFileLanguage(appLanguage)).toBe(expected);
+  });
+
+  it.each([
+    ['story map', buildStoryMapFileName, 'a-queda-map-2026-08-11.svg'],
+    ['relation map', buildCharacterRelationMapFileName, 'a-queda-relations-2026-08-11.svg'],
+    ['location map', buildLocationGraphMapFileName, 'a-queda-locations-2026-08-11.svg'],
+  ])('names the %s in English', (_label, build, expected) => {
+    expect(build('A Queda', DATE, 'en')).toBe(expected);
+  });
+
+  it('names the manuscript in English', () => {
+    expect(buildManuscriptFileName('A Queda', 'docx', DATE, 'en')).toBe(
+      'a-queda-manuscript-2026-08-11.docx',
+    );
+  });
+
+  it('defaults file slugs to English', () => {
+    expect(buildManuscriptFileName('A Queda', 'docx', DATE)).toBe(
+      'a-queda-manuscript-2026-08-11.docx',
+    );
   });
 
   it('keeps exports of different days apart, so a backup never silently overwrites another', () => {

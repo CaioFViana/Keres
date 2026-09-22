@@ -15,6 +15,8 @@ const mockDb = {};
 const mockT = (key: string) => key;
 let mockStory: { id: string; title: string } | null = { id: 'story-1', title: 'Saga' };
 let mockIsCompact = false;
+let mockLanguage = 'en';
+const mockBuildFileName = jest.fn((...args: unknown[]) => `${args[0] as string}.svg`);
 
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
@@ -212,7 +214,8 @@ jest.mock('../../../src/theme', () => ({
 }));
 jest.mock('../../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildCharacterRelationMapFileName: (title: string) => `${title}.svg`,
+  ...jest.requireActual('../../../src/utils/storyTransfer'),
+  buildCharacterRelationMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
 jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
@@ -223,7 +226,7 @@ jest.mock('../../../src/vocabulary/useStoryVocabulary', () => ({
 }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: mockT }),
+  useTranslation: () => ({ t: mockT, i18n: { language: mockLanguage } }),
 }));
 
 import CharacterRelationGraphScreen from '../../../src/screens/characterrelations/CharacterRelationGraphScreen';
@@ -282,6 +285,7 @@ beforeEach(() => {
   mockDeliverMapExport.mockReset();
   mockStory = { id: 'story-1', title: 'Saga' };
   mockIsCompact = false;
+  mockLanguage = 'en';
   mockGetCharactersByStoryId.mockResolvedValue([
     makeCharacter('char-1', 'Aria'),
     makeCharacter('char-2', 'Bram'),
@@ -415,11 +419,13 @@ it('toggles edge labels off and on', async () => {
 });
 
 it('exports the map and reports delivery', async () => {
+  mockLanguage = 'pt-BR';
   const view = await render(<CharacterRelationGraphScreen />);
 
   await waitFor(() => expect(view.getByTestId('graph-canvas')).toBeTruthy());
   await fireEvent.press(view.getByLabelText('character_relation_map_export'));
   await waitFor(() => expect(mockDeliverMapExport).toHaveBeenCalled());
+  expect(mockBuildFileName).toHaveBeenCalledWith('Saga', expect.any(Date), 'pt');
   expect(mockNotify).toHaveBeenCalledWith('character_relation_map_export_success', 'success');
 });
 

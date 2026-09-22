@@ -29,7 +29,11 @@ import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characte
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { buildCharacterRelationMapFileName, deliverMapExport } from '../../utils/storyTransfer';
+import {
+  buildCharacterRelationMapFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 
@@ -57,7 +61,7 @@ interface CharacterRelationNodeConnection {
 
 const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
@@ -211,7 +215,11 @@ const CharacterRelationGraphScreen = () => {
 
       const result = await deliverMapExport(
         svg,
-        buildCharacterRelationMapFileName(selectedStory.title),
+        buildCharacterRelationMapFileName(
+          selectedStory.title,
+          new Date(),
+          exportFileLanguage(i18n.language),
+        ),
         useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
@@ -244,6 +252,7 @@ const CharacterRelationGraphScreen = () => {
     showEdgeLabels,
     showNotification,
     t,
+    i18n,
   ]);
 
   const styles = useMemo(

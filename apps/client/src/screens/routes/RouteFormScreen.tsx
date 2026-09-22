@@ -89,15 +89,15 @@ export default function RouteFormScreen() {
       </FormField>
       {isEditing ? (
         <FormActions stackOnCompact>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {t('save_changes')}
-          </Button>
           <Button
             onPress={handleDelete}
             style={{ backgroundColor: colors.error }}
             disabled={saving || deleting}
           >
             {t('delete_route_title')}
+          </Button>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {t('save_changes')}
           </Button>
         </FormActions>
       ) : (

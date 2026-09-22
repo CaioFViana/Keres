@@ -33,6 +33,8 @@ let mockSelectedStory: { id: string; type: string; title: string } | null = {
 let mockIsCompact = false;
 let mockHeaderArgs: { title: string } | null = null;
 let mockRemoteHandler: ((change: { storyId?: string }) => void) | null = null;
+let mockLanguage = 'en';
+const mockBuildFileName = jest.fn((...args: unknown[]) => `${args[0] as string}-map.svg`);
 
 jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react') as typeof import('react');
@@ -118,7 +120,8 @@ jest.mock('../../../../src/utils/EventEmitter', () => ({
 
 jest.mock('../../../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildStoryMapFileName: (title: string) => `${title}-map.svg`,
+  ...jest.requireActual('../../../../src/utils/storyTransfer'),
+  buildStoryMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliverMapExport(...args),
 }));
 
@@ -126,7 +129,7 @@ jest.mock('react-i18next', () => {
   const t = (key: string) => key;
   return {
     __esModule: true,
-    useTranslation: () => ({ t }),
+    useTranslation: () => ({ t, i18n: { language: mockLanguage } }),
   };
 });
 
@@ -313,6 +316,7 @@ beforeEach(() => {
   mockIsCompact = false;
   mockHeaderArgs = null;
   mockRemoteHandler = null;
+  mockLanguage = 'en';
   mockServicesLoaded();
   mockDeliverMapExport.mockResolvedValue({ delivered: true, fileName: 'map.svg' });
 });
@@ -437,10 +441,12 @@ describe('ChoiceViewScreen', () => {
   });
 
   it('exports the map and notifies success', async () => {
+    mockLanguage = 'pt-BR';
     const view = await render(<ChoiceViewScreen />);
     await waitFor(() => expect(jsonOf(view, 'view-content').loading).toBe(false));
     await fireEvent.press(view.getByTestId('content-export'));
     await waitFor(() => expect(mockDeliverMapExport).toHaveBeenCalledTimes(1));
+    expect(mockBuildFileName).toHaveBeenCalledWith('My Story', expect.any(Date), 'pt');
     expect(mockDeliverMapExport).toHaveBeenCalledWith(
       expect.stringContaining('<svg'),
       'My Story-map.svg',

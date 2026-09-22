@@ -1,5 +1,6 @@
 const mockBuildSvg = jest.fn();
 const mockDeliver = jest.fn();
+const mockBuildFileName = jest.fn((...args: unknown[]) => `${args[0] as string}.svg`);
 
 jest.mock('../../src/utils/storyMapSvgExport', () => ({
   __esModule: true,
@@ -7,7 +8,7 @@ jest.mock('../../src/utils/storyMapSvgExport', () => ({
 }));
 jest.mock('../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildLocationMapFileName: jest.fn((name: string) => `${name}.svg`),
+  buildLocationMapFileName: (...args: unknown[]) => mockBuildFileName(...args),
   deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
 
@@ -46,9 +47,11 @@ describe('useLocationMapExport', () => {
         t: t as never,
         showNotification,
         setExporting,
+        language: 'pt',
       }),
     );
     await act(async () => view.result.current());
+    expect(mockBuildFileName).toHaveBeenCalledWith('Atlas', expect.any(Date), 'pt');
     expect(mockBuildSvg).toHaveBeenCalledWith(
       content,
       {},
@@ -81,6 +84,7 @@ describe('useLocationMapExport', () => {
         t: t as never,
         showNotification,
         setExporting,
+        language: 'en',
       }),
     );
     await act(async () => view.result.current());
@@ -103,6 +107,7 @@ describe('useLocationMapExport', () => {
         t: t as never,
         showNotification,
         setExporting,
+        language: 'en',
       }),
     );
     await act(async () => withoutMap.result.current());

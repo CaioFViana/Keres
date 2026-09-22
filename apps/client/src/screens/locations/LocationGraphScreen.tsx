@@ -32,7 +32,11 @@ import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayo
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
-import { buildLocationGraphMapFileName, deliverMapExport } from '../../utils/storyTransfer';
+import {
+  buildLocationGraphMapFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
@@ -56,7 +60,7 @@ interface LocationNodeConnection {
 
 const LocationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
@@ -243,7 +247,11 @@ const LocationGraphScreen = () => {
 
       const result = await deliverMapExport(
         svg,
-        buildLocationGraphMapFileName(selectedStory.title),
+        buildLocationGraphMapFileName(
+          selectedStory.title,
+          new Date(),
+          exportFileLanguage(i18n.language),
+        ),
         useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
@@ -265,7 +273,7 @@ const LocationGraphScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, graphSubtitle, selectedIds, selectedStory, showNotification, t]);
+  }, [colors, layout, graphSubtitle, selectedIds, selectedStory, showNotification, t, i18n]);
 
   const styles = useMemo(
     () =>

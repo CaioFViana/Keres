@@ -13,6 +13,7 @@ import {
   buildManuscriptFileName,
   deliverFile,
   type ExportDeliveryResult,
+  type ExportFileLanguage,
 } from '../../../../utils/storyTransfer';
 
 export type ManuscriptExportFormat = 'docx' | 'pdf' | 'md' | 'txt';
@@ -52,15 +53,18 @@ export async function exportManuscript({
   format,
   labels,
   options = {},
+  language = 'en',
 }: {
   storyTitle: string;
   manuscript: CompiledManuscript;
   format: ManuscriptExportFormat;
   labels: ManuscriptExportLabels;
   options?: ManuscriptRenderOptions;
+  /** App language for the file-name slug; never the system language. */
+  language?: ExportFileLanguage;
 }): Promise<ExportDeliveryResult> {
   const file = FORMAT_FILES[format];
-  const fileName = buildManuscriptFileName(storyTitle, file.extension);
+  const fileName = buildManuscriptFileName(storyTitle, file.extension, new Date(), language);
   if (format === 'docx') {
     const bytes = await buildManuscriptDocxBytes(manuscript, labels, options);
     return deliverFile(bytes, fileName, file.mimeType, file.uti);

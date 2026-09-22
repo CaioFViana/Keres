@@ -68,26 +68,30 @@ const StoryArcListScreen = () => {
       notify(t('arc_delete_blocked', { arc: vocab.term('Arc') }), 'error');
       return;
     }
-    AppAlert.alert(t('delete'), vocab.term('Arc'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await createStoryArcService(db).deleteArc(userId, arc.id);
-            await reload();
-          } catch (error) {
-            notify(
-              error instanceof Error
-                ? error.message
-                : t('arc_delete_blocked', { arc: vocab.term('Arc') }),
-              'error',
-            );
-          }
+    AppAlert.alert(
+      t('arc_delete_title', { arc: vocab.term('Arc') }),
+      t('arc_delete_message', { name: arc.title, arc: vocab.term('Arc') }),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await createStoryArcService(db).deleteArc(userId, arc.id);
+              await reload();
+            } catch (error) {
+              notify(
+                error instanceof Error
+                  ? error.message
+                  : t('arc_delete_blocked', { arc: vocab.term('Arc') }),
+                'error',
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const styles = StyleSheet.create({

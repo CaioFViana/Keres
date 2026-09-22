@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FlatList,
@@ -36,6 +36,7 @@ import ManuscriptExportModal, {
 } from '../../../components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
 import ManuscriptIndexModal from '../../../components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
 import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
+import { exportFileLanguage } from '../../../utils/storyTransfer';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';
@@ -64,7 +65,7 @@ const ManuscriptScreen = () => {
   const searchAnchorRef = useScreenAnchor('Manuscript', 'search');
   const listAnchorRef = useScreenAnchor('Manuscript', 'list');
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<ManuscriptNavigation>();
   const route = useRoute<ManuscriptScreenRouteProp>();
   const { selectedStory } = useStoryStore();
@@ -181,15 +182,23 @@ const ManuscriptScreen = () => {
     [],
   );
   // The reader's position follows the topmost visible scene; container headings are
-  // landmarks, not reading, so they never take the highlight.
+  // landmarks, not reading, so they never take the highlight. FlatList forbids swapping
+  // this callback between renders (web throws an invariant), so its identity is frozen
+  // and the latest sections arrive through a ref: arc switches and read-mode toggles
+  // rebuild `sections` but must never swap the callback.
+  const sectionsRef = useRef(sections);
+  useEffect(() => {
+    sectionsRef.current = sections;
+  }, [sections]);
   const handleViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const current = sectionsRef.current;
       const firstScene = viewableItems
-        .filter((item) => item.index != null && sections[item.index]?.kind === 'scene')
+        .filter((item) => item.index != null && current[item.index]?.kind === 'scene')
         .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))[0];
       if (firstScene?.index != null) setCurrentSectionIndex(firstScene.index);
     },
-    [sections],
+    [],
   );
   // An index pick closes the modal and jumps the list to that scene.
   const handleIndexSelect = useCallback(
@@ -270,6 +279,7 @@ const ManuscriptScreen = () => {
             format,
             labels,
             options: { includeToc: includeIndex },
+            language: exportFileLanguage(i18n.language),
           });
           if (result.delivered) {
             showNotification(
@@ -288,7 +298,7 @@ const ManuscriptScreen = () => {
         }
       });
     },
-    [runExport, isBranching, selectedStory, arcs, chaptersById, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, showNotification],
+    [runExport, isBranching, selectedStory, arcs, chaptersById, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, i18n, showNotification],
   );
 
   // The modal owns format and switches; re-entrant presses while an export runs are ignored.

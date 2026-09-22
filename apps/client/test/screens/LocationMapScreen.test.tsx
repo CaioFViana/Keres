@@ -16,7 +16,7 @@ jest.mock('../../src/theme', () => ({
 const mockT = (key: string) => key;
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: mockT }),
+  useTranslation: () => ({ t: mockT, i18n: { language: 'en' } }),
 }));
 
 const mockGoBack = jest.fn();

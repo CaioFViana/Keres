@@ -181,6 +181,79 @@ describe('compileLinearManuscript with arcId', () => {
     expect(text).not.toContain('"name":"Two"');
   });
 
+  it('renumbers single-arc chapters from 1 in emission order', () => {
+    const arcChapters = [
+      makeChapter({ id: 'ch-2', name: 'Two', index: 2, arcId: 'arc-2' }),
+      makeChapter({ id: 'ch-3', name: 'Three', index: 5, arcId: 'arc-2' }),
+    ];
+    const arcScenes = [
+      makeScene({ id: 's-2', chapterId: 'ch-2', name: 'B1', body: 'Beta.' }),
+      makeScene({ id: 's-3a', chapterId: 'ch-3', index: 1, name: 'C1', body: 'Gamma.' }),
+      makeScene({ id: 's-3b', chapterId: 'ch-3', index: 2, name: 'C2', body: 'Delta.' }),
+    ];
+    const manuscript = compileLinearManuscript({
+      title: 'Arc Two',
+      chapters: arcChapters,
+      scenes: arcScenes,
+      choices: [],
+      includeLooseScenes: false,
+      looseHeadingLabel: 'Loose',
+      arcId: 'arc-2',
+    });
+
+    expect(
+      manuscript.blocks.flatMap((block) => (block.kind === 'chapter' ? [block.number] : [])),
+    ).toEqual([1, 2]);
+    // Scenes follow: positions already restart over the visible scenes.
+    expect(
+      manuscript.blocks.flatMap((block) => (block.kind === 'scene-heading' ? [block.number] : [])),
+    ).toEqual([1, 2, 3]);
+  });
+
+  it('renumbers single-arc chapters with per-chapter scene restart', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'Arc Two',
+      chapters: [makeChapter({ id: 'ch-2', name: 'Two', index: 2, arcId: 'arc-2' })],
+      scenes: [
+        makeScene({ id: 's-2a', chapterId: 'ch-2', index: 7, name: 'B1', body: 'Beta.' }),
+        makeScene({ id: 's-2b', chapterId: 'ch-2', index: 8, name: 'B2', body: 'Beta two.' }),
+      ],
+      choices: [],
+      includeLooseScenes: false,
+      looseHeadingLabel: 'Loose',
+      arcId: 'arc-2',
+      resetSceneNumbersPerChapter: true,
+    });
+
+    expect(
+      manuscript.blocks.flatMap((block) => (block.kind === 'chapter' ? [block.number] : [])),
+    ).toEqual([1]);
+    expect(
+      manuscript.blocks.flatMap((block) => (block.kind === 'scene-heading' ? [block.number] : [])),
+    ).toEqual([1, 2]);
+  });
+
+  it('keeps story-wide chapter numbers when exporting all arcs', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [
+        makeChapter({ id: 'ch-2', name: 'Two', index: 2, arcId: 'arc-2' }),
+        makeChapter({ id: 'ch-3', name: 'Three', index: 5, arcId: 'arc-2' }),
+      ],
+      scenes: [
+        makeScene({ id: 's-2', chapterId: 'ch-2', name: 'B1', body: 'Beta.' }),
+        makeScene({ id: 's-3', chapterId: 'ch-3', index: 1, name: 'C1', body: 'Gamma.' }),
+      ],
+      choices: [],
+      includeLooseScenes: false,
+      looseHeadingLabel: 'Loose',
+    });
+
+    expect(
+      manuscript.blocks.flatMap((block) => (block.kind === 'chapter' ? [block.number] : [])),
+    ).toEqual([2, 5]);
+  });
+
   it('keeps choices of visible scenes, with hidden targets as name-only references', () => {
     const manuscript = compileLinearManuscript({
       title: 'Arc One',
@@ -244,3 +317,4 @@ describe('compileStoryManuscript with arcId', () => {
     expect(text).not.toContain('Beta.');
   });
 });
+

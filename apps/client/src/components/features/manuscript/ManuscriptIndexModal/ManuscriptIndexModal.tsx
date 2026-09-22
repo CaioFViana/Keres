@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -86,6 +86,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { height: screenHeight } = useWindowDimensions();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const { leading, groups } = useMemo(
     () => groupIndexSections(sections, looseHeadingLabel),
@@ -97,7 +98,9 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
       StyleSheet.create({
         content: { padding: 20 },
         title: { color: colors.text, fontSize: 20, fontWeight: '700' },
-        list: { marginTop: 12, marginBottom: 8 },
+        // The modal surface clips at 90% of the screen: the list needs a bound of
+        // its own or a long chapter list pushes the close button out of reach.
+        list: { marginTop: 12, marginBottom: 8, maxHeight: Math.min(screenHeight * 0.5, 460) },
         chapterRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -124,7 +127,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
         },
         closeButton: { backgroundColor: colors.textSecondary },
       }),
-    [colors],
+    [colors, screenHeight],
   );
 
   const toggleGroup = (key: string) => {
@@ -168,7 +171,11 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
         {sceneCount === 0 ? (
           <Text style={styles.emptyText}>{t('manuscript_no_scenes')}</Text>
         ) : (
-          <ScrollView style={styles.list}>
+          <ScrollView
+            style={styles.list}
+            testID="manuscript-index-list"
+            showsVerticalScrollIndicator
+          >
             {leading.map((entry) => renderScene(entry, false))}
             {groups.map((group) => {
               const expanded = !collapsed.has(group.key);

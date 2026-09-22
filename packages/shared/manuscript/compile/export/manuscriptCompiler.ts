@@ -217,6 +217,20 @@ export type CompileLinearOptions = {
   arcId?: string | null;
 };
 
+/**
+ * Arcs are separate generations: a single-arc export numbers its chapters from 1 in
+ * emission order, no matter their story-wide indexes. Events carry no number either
+ * way, and scene positions already restart over the visible scenes.
+ */
+function renumberArcChapters(sections: ManuscriptSection[]): ManuscriptSection[] {
+  let number = 0;
+  return sections.map((section) => {
+    if (section.kind !== 'container' || section.containerType !== 'chapter') return section;
+    number += 1;
+    return { ...section, index: number };
+  });
+}
+
 export function compileLinearManuscript({
   title,
   chapters,
@@ -231,6 +245,7 @@ export function compileLinearManuscript({
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   let sections = linearManuscriptSections(chapters, scenes, { arcId });
   if (!includeLooseScenes) sections = withoutLooseSections(sections, chaptersById);
+  if (arcId) sections = renumberArcChapters(sections);
   return {
     title,
     blocks: [

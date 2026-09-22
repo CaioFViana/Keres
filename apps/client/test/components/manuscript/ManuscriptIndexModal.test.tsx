@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { cleanup, fireEvent, render, within } from '@testing-library/react-native';
 import type { ManuscriptSection } from '@keres/shared';
+import { StyleSheet } from 'react-native';
 import ManuscriptIndexModal from '../../../src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
@@ -82,6 +83,16 @@ afterEach(() => {
 });
 
 describe('ManuscriptIndexModal', () => {
+  it('keeps the chapter list in a bounded scroll region with close fixed below', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    const list = view.getByTestId('manuscript-index-list');
+    expect(within(list).getByTestId('manuscript-index-container-ch-1')).toBeTruthy();
+    expect(within(list).queryByTestId('manuscript-index-close')).toBeNull();
+    expect(view.getByTestId('manuscript-index-close')).toBeTruthy();
+    expect(StyleSheet.flatten(list.props.style)?.maxHeight).toEqual(expect.any(Number));
+  });
+
   it('renders nothing while hidden', async () => {
     const view = await render(<ManuscriptIndexModal {...baseProps} visible={false} />);
 

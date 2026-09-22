@@ -1,16 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { fetchConfig } from '../api/showcaseApi';
+import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
 
 export function AboutPage() {
   const { t } = useTranslation('showcase');
-  const [version, setVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchConfig()
-      .then((config) => setVersion(config.serverVersion))
-      .catch(() => setVersion(null));
-  }, []);
+  const config = useShowcaseConfig();
+  const version = config?.serverVersion ?? null;
 
   return (
     <section className="prose">
@@ -26,6 +20,7 @@ export function AboutPage() {
       <p>
         <Trans ns="showcase" i18nKey="about.importBody" components={{ strong: <strong /> }} />
       </p>
+      <p>{t('about.manuscriptBody')}</p>
 
       <h2>{t('about.responsibilityTitle')}</h2>
       <p>{t('about.responsibilityBody')}</p>

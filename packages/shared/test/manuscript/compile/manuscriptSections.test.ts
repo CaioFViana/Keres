@@ -1,76 +1,38 @@
-import type { ChapterSelect, RouteStepSelect, SceneSelect } from '../../../src/db/schema';
+import { describe, expect, it } from 'vitest';
 import {
   findManuscriptMatches,
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
   sectionIndexForMatch,
-} from '../../../src/components/features/manuscript/manuscriptSections';
+  type ManuscriptChapter,
+  type ManuscriptRouteStep,
+  type ManuscriptScene,
+} from '../../../manuscript/compile/manuscriptSections';
 
-const stamp = new Date('2026-01-01T00:00:00.000Z');
-
-function makeChapter(overrides: Partial<ChapterSelect> = {}): ChapterSelect {
-  return {
-    id: 'ch-1',
-    storyId: 'story-1',
-    name: 'Arrival',
-    index: 1,
-    type: 'chapter',
-    summary: null,
-    isFavorite: false,
-    extraNotes: null,
-    arcId: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-    ...overrides,
-  };
+function makeChapter(overrides: Partial<ManuscriptChapter> = {}): ManuscriptChapter {
+  return { id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter', ...overrides };
 }
 
-function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
+function makeScene(overrides: Partial<ManuscriptScene> = {}): ManuscriptScene {
   return {
     id: 'scene-1',
-    storyId: 'story-1',
     chapterId: 'ch-1',
-    locationId: null,
     name: 'Opening',
     index: 1,
-    summary: null,
     body: null,
-    gap: null,
-    gapType: null,
-    calendarDateOverride: null,
-    calendarDateOverrideCalendarId: null,
-    duration: null,
-    durationType: null,
-    isStart: false,
-    isFinish: false,
-    isFavorite: false,
-    extraNotes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
     isDeleted: false,
-    deletedAt: null,
     ...overrides,
   };
 }
 
-function makeStep(overrides: Partial<RouteStepSelect> = {}): RouteStepSelect {
+function makeStep(overrides: Partial<ManuscriptRouteStep> = {}): ManuscriptRouteStep {
   return {
     id: 'step-1',
-    storyId: 'story-1',
     routeId: 'route-1',
     position: 1,
     sceneId: 'scene-1',
-    selectedChoiceId: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
     isDeleted: false,
-    deletedAt: null,
     ...overrides,
   };
 }

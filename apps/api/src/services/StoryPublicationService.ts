@@ -1,7 +1,14 @@
 import {
   buildPublicationLabel,
   buildStoryZipBytes,
+  compileStoryManuscript,
   CURRENT_STORY_FORMAT_VERSION,
+  FORMAT_META,
+  ManuscriptOptionsSchema,
+  type FullStoryExportType,
+  type ManuscriptFormat,
+  type ManuscriptOptions,
+  type ManuscriptOptionsInput,
   type PublicationLabelMode,
   type ShowcaseVisibility,
   type StoryPublicationSnapshot,
@@ -115,6 +122,112 @@ export class StoryPublicationService {
     }
   }
 
+  /**
+   * Validates the requested manuscript options against the story, without compiling anything.
+   *
+   * A branching story has no linear order, so its manuscript must follow a route - and a linear story
+   * has no routes worth following, so `routeId` is refused there. The route must be one of this
+   * story's live routes, read from the same export the manuscript will be compiled from.
+   */
+  private parseManuscriptOptions(
+    storyType: string,
+    storyExport: FullStoryExportType,
+    manuscript: ManuscriptOptionsInput,
+  ): ManuscriptOptions {
+    const parsed = ManuscriptOptionsSchema.safeParse(manuscript);
+    if (!parsed.success) {
+      const details = parsed.error.issues
+        .map((issue) => `${issue.path.join('.') || 'manuscript'}: ${issue.message}`)
+        .join('; ');
+      throw new AppError(400, `Invalid manuscript options: ${details}.`);
+    }
+    const options = parsed.data;
+    if (storyType === 'branching' && !options.routeId) {
+      throw new AppError(400, 'A routeId is required to publish a manuscript of a branching story.');
+    }
+    if (storyType !== 'branching' && options.routeId) {
+      throw new AppError(400, 'routeId is only valid for branching stories.');
+    }
+    if (options.routeId) {
+      const belongs = (storyExport.routes ?? []).some(
+        (route) => route.id === options.routeId && route.storyId === storyExport.story.id,
+      );
+      if (!belongs) {
+        throw new AppError(400, `Route "${options.routeId}" does not belong to this story.`);
+      }
+    }
+    return options;
+  }
+
+  /** Compiles the manuscript from the already-fetched export. Oversized output is the caller's fault. */
+  private async compileManuscript(
+    storyExport: FullStoryExportType,
+    options: ManuscriptOptions,
+  ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
+    try {
+      const compiled = await compileStoryManuscript(
+        {
+          storyTitle: storyExport.story.title,
+          storyType: storyExport.story.type,
+          chapters: (storyExport.chapters ?? []).map((chapter) => ({
+            id: chapter.id,
+            name: chapter.name,
+            index: chapter.index,
+            type: chapter.type,
+          })),
+          scenes: (storyExport.scenes ?? []).map((scene) => ({
+            id: scene.id,
+            chapterId: scene.chapterId,
+            name: scene.name,
+            index: scene.index,
+            body: scene.body,
+            isDeleted: scene.isDeleted,
+          })),
+          choices: (storyExport.choices ?? []).map((choice) => ({
+            id: choice.id,
+            sceneId: choice.sceneId,
+            nextSceneId: choice.nextSceneId,
+            text: choice.text,
+          })),
+          routes: (storyExport.routes ?? []).map((route) => ({ id: route.id, name: route.name })),
+          routeSteps: (storyExport.routeSteps ?? []).map((step) => ({
+            id: step.id,
+            routeId: step.routeId,
+            position: step.position,
+            sceneId: step.sceneId,
+            isDeleted: step.isDeleted,
+          })),
+        },
+        options,
+      );
+      return { bytes: compiled.bytes, format: options.format };
+    } catch (error) {
+      // The compiler throws a plain Error for input-caused failures (unknown route, output past the
+      // byte cap). Those are 400s; anything else (a renderer bug) keeps bubbling as a 500.
+      if (error instanceof Error && /exceeds the .* limit|Unknown route/.test(error.message)) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  }
+
+  /** Removes a version's blobs: the .zip and, when one was published, its manuscript sibling. */
+  private async deleteVersionBlobs(
+    storyId: string,
+    publicationId: string,
+    manuscriptFormat: string | null,
+  ): Promise<void> {
+    await publicationStorageService.delete(storyId, publicationId).catch(() => undefined);
+    if (manuscriptFormat) {
+      const extension =
+        (FORMAT_META as Record<string, { extension: string }>)[manuscriptFormat]?.extension ??
+        manuscriptFormat;
+      await publicationStorageService
+        .deleteManuscript(storyId, publicationId, extension)
+        .catch(() => undefined);
+    }
+  }
+
   async publish(
     userId: string,
     storyId: string,
@@ -122,6 +235,7 @@ export class StoryPublicationService {
     labelMode: PublicationLabelMode,
     visibility: ShowcaseVisibility = 'public',
     password?: string,
+    manuscript?: ManuscriptOptionsInput,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
@@ -143,14 +257,33 @@ export class StoryPublicationService {
     const publicationId = ulid();
     const zip = await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash));
 
+    // Validated and compiled before any blob is written, so a refused manuscript leaves no litter -
+    // the same guarantee the .zip gets from the rollback below. `includeLooseScenes` needs no
+    // branching branch here: the route compiler ignores it by construction.
+    const manuscriptOptions =
+      manuscript === undefined
+        ? null
+        : this.parseManuscriptOptions(story.type, storyExport, manuscript);
+    const compiledManuscript = manuscriptOptions
+      ? await this.compileManuscript(storyExport, manuscriptOptions)
+      : null;
+
     // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
-    // no row is invisible. If the transaction below fails, the file is removed in the `catch` - without
+    // no row is invisible. If the transaction below fails, the files are removed in the `catch` - without
     // that, every refused publication would leave an orphaned .zip taking up disk.
     await publicationStorageService.store(storyId, publicationId, zip.bytes);
+    if (compiledManuscript) {
+      await publicationStorageService.storeManuscript(
+        storyId,
+        publicationId,
+        compiledManuscript.bytes,
+        compiledManuscript.format,
+      );
+    }
 
     const passwordHash = visibility === 'password' ? await hashPassword(password!) : null;
 
-    const prunedIds = await this.runPublishTransaction(
+    const pruned = await this.runPublishTransaction(
       async (tx) => {
         const existing = await tx
           .select({ label: storyPublications.label })
@@ -183,13 +316,18 @@ export class StoryPublicationService {
           byteSize: zip.bytes.byteLength,
           mediaIncluded: zip.includedCount,
           mediaTotal: zip.totalCount,
+          manuscriptFormat: compiledManuscript?.format ?? null,
+          manuscriptByteSize: compiledManuscript ? compiledManuscript.bytes.byteLength : null,
           snapshot: this.snapshotOf(story),
         });
 
         // The trimming is done here rather than in SQL because `OFFSET` without `LIMIT` is invalid on SQLite,
         // and there are at most six rows per story - not worth an artificial `LIMIT` just for that.
         const existingIds = await tx
-          .select({ id: storyPublications.id })
+          .select({
+            id: storyPublications.id,
+            manuscriptFormat: storyPublications.manuscriptFormat,
+          })
           .from(storyPublications)
           .where(eq(storyPublications.storyId, storyId))
           .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id));
@@ -198,17 +336,23 @@ export class StoryPublicationService {
         if (surplus.length > 0) {
           const ids = surplus.map((row) => row.id);
           await tx.delete(storyPublications).where(inArray(storyPublications.id, ids));
-          return ids;
+          return surplus;
         }
         return [];
       },
-      () => publicationStorageService.delete(storyId, publicationId),
+      async () => {
+        await publicationStorageService.delete(storyId, publicationId);
+        if (compiledManuscript) {
+          const extension = FORMAT_META[compiledManuscript.format].extension;
+          await publicationStorageService.deleteManuscript(storyId, publicationId, extension);
+        }
+      },
     );
 
     // After the commit: if a blob delete fails, the worst case is an orphaned file, not a version listed
     // on the site whose download no longer exists.
-    for (const id of prunedIds) {
-      await publicationStorageService.delete(storyId, id).catch(() => undefined);
+    for (const row of pruned) {
+      await this.deleteVersionBlobs(storyId, row.id, row.manuscriptFormat);
     }
 
     await this.notifyAudience(storyId, userId);
@@ -336,7 +480,7 @@ export class StoryPublicationService {
       }
     });
 
-    await publicationStorageService.delete(storyId, publicationId).catch(() => undefined);
+    await this.deleteVersionBlobs(storyId, publicationId, publication.manuscriptFormat);
     await this.notifyAudience(storyId, userId);
   }
 
@@ -345,16 +489,16 @@ export class StoryPublicationService {
 
     const removed = await db.transaction(async (tx) => {
       const publications = await tx
-        .select({ id: storyPublications.id })
+        .select({ id: storyPublications.id, manuscriptFormat: storyPublications.manuscriptFormat })
         .from(storyPublications)
         .where(eq(storyPublications.storyId, storyId));
       await tx.delete(storyPublications).where(eq(storyPublications.storyId, storyId));
       await tx.delete(storyShowcaseEntries).where(eq(storyShowcaseEntries.storyId, storyId));
-      return publications.map((row) => row.id);
+      return publications;
     });
 
-    for (const id of removed) {
-      await publicationStorageService.delete(storyId, id).catch(() => undefined);
+    for (const row of removed) {
+      await this.deleteVersionBlobs(storyId, row.id, row.manuscriptFormat);
     }
     await this.notifyAudience(storyId, userId);
   }

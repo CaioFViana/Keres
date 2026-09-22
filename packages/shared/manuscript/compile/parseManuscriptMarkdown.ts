@@ -133,6 +133,9 @@ export function getManuscriptSizeStatus(storageCharCount: number): ManuscriptSiz
  * stay literal, styles never nest. Legacy `# ` prefixes degrade to plain
  * paragraphs. Deliberately dependency-free: prose needs nothing more, and a
  * new renderer dependency is a Hermes-compat risk for zero gain.
+ *
+ * This is the export reader, not the editor model: it stays separate from
+ * `ManuscriptDocument` on purpose (flat inline spans vs. styled runs).
  */
 export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
   const chunks = markdown

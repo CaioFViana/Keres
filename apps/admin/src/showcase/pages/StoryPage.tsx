@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import type { ShowcaseStoryDetail } from '@keres/shared';
-import { fetchDownloadUrl, fetchStory, unlockStory } from '../api/showcaseApi';
+import {
+  fetchDownloadUrl,
+  fetchManuscriptDownloadUrl,
+  fetchStory,
+  unlockStory,
+} from '../api/showcaseApi';
 import { OwnerAvatar } from '../components/OwnerAvatar';
 import { PasswordGate } from '../components/PasswordGate';
 import { formatBytes, formatDate, genreList } from '../format';
@@ -18,6 +23,7 @@ export function StoryPage() {
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadingManuscript, setDownloadingManuscript] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +55,18 @@ export function StoryPage() {
       setError(caught instanceof Error ? caught.message : t('story.downloadFailed'));
     } finally {
       setDownloading(null);
+    }
+  };
+
+  const downloadManuscript = async (publicationId: string) => {
+    setDownloadingManuscript(publicationId);
+    setError(null);
+    try {
+      window.location.href = await fetchManuscriptDownloadUrl(storyId, publicationId);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : t('story.downloadFailed'));
+    } finally {
+      setDownloadingManuscript(null);
     }
   };
 
@@ -166,14 +184,31 @@ export function StoryPage() {
                   })}`}
               </span>
             </div>
-            <button
-              type="button"
-              className="download-button"
-              disabled={downloading === newest.id}
-              onClick={() => void download(newest.id)}
-            >
-              {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
-            </button>
+            <div className="version-actions">
+              <button
+                type="button"
+                className="download-button"
+                disabled={downloading === newest.id}
+                onClick={() => void download(newest.id)}
+              >
+                {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
+              </button>
+              {newest.manuscript && (
+                <button
+                  type="button"
+                  className="download-button ghost manuscript-button"
+                  disabled={downloadingManuscript === newest.id}
+                  onClick={() => void downloadManuscript(newest.id)}
+                >
+                  {downloadingManuscript === newest.id
+                    ? t('story.preparing')
+                    : t('story.manuscriptDownload', {
+                        format: newest.manuscript.format.toUpperCase(),
+                        size: formatBytes(newest.manuscript.byteSize),
+                      })}
+                </button>
+              )}
+            </div>
           </li>
 
           {older.map((version) => (
@@ -184,14 +219,31 @@ export function StoryPage() {
                   {formatDate(version.createdAt, i18n.language)} · {formatBytes(version.byteSize)}
                 </span>
               </div>
-              <button
-                type="button"
-                className="download-button ghost"
-                disabled={downloading === version.id}
-                onClick={() => void download(version.id)}
-              >
-                {downloading === version.id ? t('story.preparing') : t('story.download')}
-              </button>
+              <div className="version-actions">
+                <button
+                  type="button"
+                  className="download-button ghost"
+                  disabled={downloading === version.id}
+                  onClick={() => void download(version.id)}
+                >
+                  {downloading === version.id ? t('story.preparing') : t('story.download')}
+                </button>
+                {version.manuscript && (
+                  <button
+                    type="button"
+                    className="download-button ghost manuscript-button"
+                    disabled={downloadingManuscript === version.id}
+                    onClick={() => void downloadManuscript(version.id)}
+                  >
+                    {downloadingManuscript === version.id
+                      ? t('story.preparing')
+                      : t('story.manuscriptDownload', {
+                          format: version.manuscript.format.toUpperCase(),
+                          size: formatBytes(version.manuscript.byteSize),
+                        })}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>

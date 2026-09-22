@@ -1,97 +1,41 @@
-import { compileLinearManuscript } from '../../../src/components/features/manuscript/export/manuscriptCompiler';
-import { buildManuscriptHtml } from '../../../src/components/features/manuscript/export/manuscriptHtml';
+import { describe, expect, it } from 'vitest';
+import {
+  compileLinearManuscript,
+  type ManuscriptChoice,
+} from '../../../manuscript/compile/export/manuscriptCompiler';
+import { buildManuscriptHtml } from '../../../manuscript/compile/export/manuscriptHtml';
 import {
   buildManuscriptMarkdown,
   buildManuscriptText,
-} from '../../../src/components/features/manuscript/export/manuscriptText';
-import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../src/db/schema';
+} from '../../../manuscript/compile/export/manuscriptText';
+import type {
+  ManuscriptChapter,
+  ManuscriptScene,
+} from '../../../manuscript/compile/manuscriptSections';
 
-const stamp = new Date('2026-01-01T00:00:00.000Z');
+const chapter: ManuscriptChapter = { id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter' };
 
-const chapter: ChapterSelect = {
-  id: 'ch-1',
-  storyId: 'story-1',
-  name: 'Arrival',
-  index: 1,
-  type: 'chapter',
-  summary: null,
-  isFavorite: false,
-  extraNotes: null,
-  arcId: null,
-  createdAt: stamp,
-  updatedAt: stamp,
-  version: 1,
-  isDeleted: false,
-  deletedAt: null,
-};
-
-const scenes: SceneSelect[] = [
+const scenes: ManuscriptScene[] = [
   {
     id: 's-1',
-    storyId: 'story-1',
     chapterId: 'ch-1',
-    locationId: null,
     name: 'Opening',
     index: 1,
-    summary: null,
     body: '# Prologue\n\nA **bold**, __lined__ & <tricky> line.',
-    gap: null,
-    gapType: null,
-    calendarDateOverride: null,
-    calendarDateOverrideCalendarId: null,
-    duration: null,
-    durationType: null,
-    isStart: false,
-    isFinish: false,
-    isFavorite: false,
-    extraNotes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
     isDeleted: false,
-    deletedAt: null,
   },
   {
     id: 's-2',
-    storyId: 'story-1',
     chapterId: 'ch-1',
-    locationId: null,
     name: 'Next',
     index: 2,
-    summary: null,
     body: null,
-    gap: null,
-    gapType: null,
-    calendarDateOverride: null,
-    calendarDateOverrideCalendarId: null,
-    duration: null,
-    durationType: null,
-    isStart: false,
-    isFinish: false,
-    isFavorite: false,
-    extraNotes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
     isDeleted: false,
-    deletedAt: null,
   },
 ];
 
-const choices = [
-  {
-    id: 'choice-1',
-    storyId: 'story-1',
-    sceneId: 's-1',
-    nextSceneId: 's-2',
-    text: 'Go on',
-    notes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-  } as ChoiceSelect,
+const choices: ManuscriptChoice[] = [
+  { id: 'choice-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Go on' },
 ];
 
 const manuscript = compileLinearManuscript({

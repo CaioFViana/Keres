@@ -1,4 +1,5 @@
 import type {
+  ManuscriptFormat,
   ShowcaseOwner,
   ShowcaseStoryCard,
   ShowcaseStoryDetail,
@@ -40,6 +41,13 @@ export class ShowcaseService {
       mediaIncluded: row.mediaIncluded,
       mediaTotal: row.mediaTotal,
       createdAt: row.createdAt.toISOString(),
+      manuscript:
+        row.manuscriptFormat && row.manuscriptByteSize != null
+          ? {
+              format: row.manuscriptFormat as ManuscriptFormat,
+              byteSize: row.manuscriptByteSize,
+            }
+          : null,
     };
   }
 

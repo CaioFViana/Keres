@@ -1,4 +1,10 @@
-import type { PublicationLabelMode, ShowcaseVisibility, StoryPublication } from '@keres/shared';
+import type {
+  ManuscriptFormat,
+  ManuscriptLabels,
+  PublicationLabelMode,
+  ShowcaseVisibility,
+  StoryPublication,
+} from '@keres/shared';
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -9,6 +15,21 @@ export interface StoryShowcaseState {
   labelMode: PublicationLabelMode;
   hasPassword: boolean;
   publications: StoryPublication[];
+}
+
+/** Manuscript renditions the server can build. PDF stays local-only (expo-print). */
+export const SERVER_MANUSCRIPT_FORMATS: ManuscriptFormat[] = ['docx', 'md', 'txt', 'html'];
+
+/**
+ * How the server should render the story's manuscript for this version. Options
+ * only - no bytes leave the device; the server compiles from its own copy.
+ */
+export interface PublishManuscriptOptions {
+  format: ManuscriptFormat;
+  includeLooseScenes: boolean;
+  /** When set, the manuscript follows this route instead of the linear order. */
+  routeId?: string;
+  labels: ManuscriptLabels;
 }
 
 /**
@@ -50,12 +71,14 @@ export class PublicationApiService {
     labelMode: PublicationLabelMode,
     visibility: ShowcaseVisibility = 'public',
     password?: string,
+    manuscript?: PublishManuscriptOptions,
   ): Promise<StoryPublication> {
     const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
       operationVersion,
       labelMode,
       visibility,
       password,
+      manuscript,
     });
     return response.data;
   }

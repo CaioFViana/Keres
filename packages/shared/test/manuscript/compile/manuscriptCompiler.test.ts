@@ -1,79 +1,48 @@
-import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../src/db/schema';
+import { describe, expect, it } from 'vitest';
 import {
   bookmarkIdForScene,
   compileLinearManuscript,
   compileRouteManuscript,
   withoutLooseSections,
   type CompiledBlock,
-} from '../../../src/components/features/manuscript/export/manuscriptCompiler';
-import { linearManuscriptSections } from '../../../src/components/features/manuscript/manuscriptSections';
+  type ManuscriptChoice,
+} from '../../../manuscript/compile/export/manuscriptCompiler';
+import {
+  linearManuscriptSections,
+  type ManuscriptChapter,
+  type ManuscriptRouteStep,
+  type ManuscriptScene,
+} from '../../../manuscript/compile/manuscriptSections';
 
-const stamp = new Date('2026-01-01T00:00:00.000Z');
-
-function makeChapter(overrides: Partial<ChapterSelect> = {}): ChapterSelect {
-  return {
-    id: 'ch-1',
-    storyId: 'story-1',
-    name: 'Arrival',
-    index: 1,
-    type: 'chapter',
-    summary: null,
-    isFavorite: false,
-    extraNotes: null,
-    arcId: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-    ...overrides,
-  };
+function makeChapter(overrides: Partial<ManuscriptChapter> = {}): ManuscriptChapter {
+  return { id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter', ...overrides };
 }
 
-function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
+function makeScene(overrides: Partial<ManuscriptScene> = {}): ManuscriptScene {
   return {
     id: 's-1',
-    storyId: 'story-1',
     chapterId: 'ch-1',
-    locationId: null,
     name: 'Opening',
     index: 1,
-    summary: null,
     body: 'First line.\n\nSecond **bold** line.',
-    gap: null,
-    gapType: null,
-    calendarDateOverride: null,
-    calendarDateOverrideCalendarId: null,
-    duration: null,
-    durationType: null,
-    isStart: false,
-    isFinish: false,
-    isFavorite: false,
-    extraNotes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
     isDeleted: false,
-    deletedAt: null,
     ...overrides,
   };
 }
 
-function makeChoice(overrides: Partial<ChoiceSelect> = {}): ChoiceSelect {
+function makeChoice(overrides: Partial<ManuscriptChoice> = {}): ManuscriptChoice {
+  return { id: 'choice-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Go on', ...overrides };
+}
+
+function makeStep(overrides: Partial<ManuscriptRouteStep> = {}): ManuscriptRouteStep {
   return {
-    id: 'choice-1',
-    storyId: 'story-1',
-    sceneId: 's-1',
-    nextSceneId: 's-2',
-    text: 'Go on',
-    notes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
+    id: 'step-1',
+    routeId: 'route-1',
+    position: 1,
+    sceneId: 's-a',
     isDeleted: false,
-    deletedAt: null,
     ...overrides,
-  } as ChoiceSelect;
+  };
 }
 
 function kinds(blocks: CompiledBlock[]): string[] {
@@ -227,10 +196,10 @@ describe('compileRouteManuscript', () => {
       title: 'My Story',
       routeName: 'Main',
       steps: [
-        { id: 'step-1', position: 1, sceneId: 's-a', isDeleted: false },
-        { id: 'step-2', position: 2, sceneId: 's-b', isDeleted: false },
-        { id: 'step-3', position: 3, sceneId: 's-a', isDeleted: false },
-      ] as never,
+        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
+        makeStep({ id: 'step-2', position: 2, sceneId: 's-b' }),
+        makeStep({ id: 'step-3', position: 3, sceneId: 's-a' }),
+      ],
       scenes,
       choices: [makeChoice({ id: 'c-1', sceneId: 's-a', nextSceneId: 's-b' })],
       looseHeadingLabel: 'Loose',

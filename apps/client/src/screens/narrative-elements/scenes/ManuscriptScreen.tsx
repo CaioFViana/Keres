@@ -16,25 +16,23 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
-import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import type { ManuscriptSection } from '@keres/shared';
 import {
   compileLinearManuscript,
   compileRouteManuscript,
-} from '../../../components/features/manuscript/export/manuscriptCompiler';
-import {
-  exportManuscript,
-  MANUSCRIPT_EXPORT_FORMATS,
-  type ManuscriptExportFormat,
-} from '../../../components/features/manuscript/export/manuscriptExport';
-import {
   findManuscriptMatches,
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
   sectionIndexForMatch,
-  type ManuscriptSection,
-} from '../../../components/features/manuscript/manuscriptSections';
+} from '@keres/shared';
+import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
+import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import {
+  exportManuscript,
+  MANUSCRIPT_EXPORT_FORMATS,
+  type ManuscriptExportFormat,
+} from '../../../components/features/manuscript/export/manuscriptExport';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';

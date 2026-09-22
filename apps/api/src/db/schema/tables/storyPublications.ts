@@ -37,6 +37,10 @@ export const storyPublications = table(
     byteSize: bigintNumber('byte_size').notNull(),
     mediaIncluded: integer('media_included').notNull().default(0),
     mediaTotal: integer('media_total').notNull().default(0),
+    /** Manuscript rendition published alongside the package (`ManuscriptFormat`), or null when none. */
+    manuscriptFormat: text('manuscript_format'),
+    /** Rendered manuscript size in bytes. Set together with `manuscriptFormat`, never alone. */
+    manuscriptByteSize: bigintNumber('manuscript_byte_size'),
     snapshot: json('snapshot').$type<StoryPublicationSnapshot>().notNull(),
     createdAt: timestampNow('created_at'),
   },

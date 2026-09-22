@@ -24,6 +24,9 @@ const mockPublish = jest.fn();
 const mockDeletePublication = jest.fn();
 const mockUnpublish = jest.fn();
 const mockIsOffline = jest.fn();
+const mockGetChapters = jest.fn();
+const mockGetScenes = jest.fn();
+const mockGetRoutes = jest.fn();
 const mockNotify = jest.fn();
 const mockSetTheme = jest.fn();
 const mockConnectivity = { isOffline: (...args: unknown[]) => mockIsOffline(...args) };
@@ -123,7 +126,52 @@ jest.mock('../../../src/services/PublicationApiService', () => ({
     deletePublication: (...args: unknown[]) => mockDeletePublication(...args),
     unpublish: (...args: unknown[]) => mockUnpublish(...args),
   },
+  SERVER_MANUSCRIPT_FORMATS: ['docx', 'md', 'txt', 'html'],
 }));
+
+jest.mock('../../../src/services/storymanagement/ChapterService', () => ({
+  createChapterService: () => ({
+    getAllByStoryId: (...args: unknown[]) => mockGetChapters(...args),
+  }),
+}));
+
+jest.mock('../../../src/services/storymanagement/SceneService', () => ({
+  createSceneService: () => ({
+    getAllByStoryId: (...args: unknown[]) => mockGetScenes(...args),
+  }),
+}));
+
+jest.mock('../../../src/services/storymanagement/RouteService', () => ({
+  createRouteService: () => ({
+    getAllByStoryId: (...args: unknown[]) => mockGetRoutes(...args),
+  }),
+}));
+
+jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    SingleSelectPill: (props: {
+      options: { label: string; value: string }[];
+      value: string | null;
+      onValueChange: (value: string | null) => void;
+      placeholder?: string;
+    }) => (
+      <>
+        <Text testID="route-picker-value">{props.value ?? props.placeholder}</Text>
+        {props.options.map((option) => (
+          <Text
+            key={option.value}
+            testID={`route-option-${option.value}`}
+            onPress={() => props.onValueChange(option.value)}
+          >
+            {option.label}
+          </Text>
+        ))}
+      </>
+    ),
+  };
+});
 
 jest.mock('../../../src/services/apiClient', () => ({
   __esModule: true,
@@ -154,8 +202,14 @@ const story = {
   id: 'story-1',
   serverId: 'srv-1',
   title: 'Epic',
+  type: 'linear',
   lastOperationLog: 5,
   lastServerSyncedLog: 5,
+};
+const manuscriptLabels = {
+  goToPage: 'export_manuscript_go_to_page',
+  goToScene: 'export_manuscript_go_to_scene',
+  looseHeading: 'export_manuscript_loose_heading',
 };
 const remoteUnpublished = {
   isPublished: false,
@@ -196,6 +250,9 @@ describe('PublishStoryScreen', () => {
     mockUnpublish.mockResolvedValue(undefined);
     mockSyncPubs.mockResolvedValue(undefined);
     mockIsOffline.mockReturnValue(false);
+    mockGetChapters.mockResolvedValue([]);
+    mockGetScenes.mockResolvedValue([]);
+    mockGetRoutes.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -257,6 +314,7 @@ describe('PublishStoryScreen', () => {
         'version',
         'public',
         undefined,
+        undefined,
       ),
     );
     expect(mockSyncPubs).toHaveBeenCalledWith(server);
@@ -285,7 +343,15 @@ describe('PublishStoryScreen', () => {
     await fireEvent.changeText(view.getByPlaceholderText('publish_password_placeholder'), 'pw1234');
     await fireEvent.press(view.getByText('publish_create_version'));
     await waitFor(() =>
-      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'password', 'pw1234'),
+      expect(mockPublish).toHaveBeenCalledWith(
+        server,
+        'story-1',
+        5,
+        'both',
+        'password',
+        'pw1234',
+        undefined,
+      ),
     );
   });
 
@@ -442,5 +508,126 @@ describe('PublishStoryScreen', () => {
     const view = await render(<PublishStoryScreen />);
     await view.findByText('Epic');
     expect(view.getByText(/publish_not_published/)).toBeTruthy();
+  });
+
+  it('attaches the manuscript with options and localized labels, never bytes', async () => {
+    mockGetChapters.mockResolvedValue([{ id: 'ch-1', type: 'chapter' }]);
+    mockGetScenes.mockResolvedValue([
+      { id: 's-1', chapterId: 'ch-1', isDeleted: false },
+      { id: 's-2', chapterId: null, isDeleted: false },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    expect(mockGetChapters).toHaveBeenCalledWith('story-1', null);
+    expect(mockGetScenes).toHaveBeenCalledWith('story-1');
+    expect(view.queryByText('publish_manuscript_format')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByText('publish_manuscript_format');
+    expect(view.getByText('export_manuscript_format_docx')).toBeTruthy();
+    expect(view.getByText('export_manuscript_format_md')).toBeTruthy();
+    expect(view.getByText('export_manuscript_format_txt')).toBeTruthy();
+    expect(view.getByText('export_manuscript_format_html')).toBeTruthy();
+    expect(
+      view.getByTestId('publish-loose-switch-story-1').props.accessibilityState,
+    ).toMatchObject({ checked: true });
+
+    await fireEvent.press(view.getByText('export_manuscript_format_md'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() =>
+      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'public', undefined, {
+        format: 'md',
+        includeLooseScenes: true,
+        labels: manuscriptLabels,
+      }),
+    );
+    const sent = mockPublish.mock.calls[0][6];
+    expect(sent.routeId).toBeUndefined();
+    expect(JSON.stringify(sent)).not.toContain('Uint8Array');
+  });
+
+  it('excludes loose scenes from the manuscript when toggled off', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByText('publish_manuscript_format');
+    await fireEvent.press(view.getByTestId('publish-loose-switch-story-1'));
+    expect(
+      view.getByTestId('publish-loose-switch-story-1').props.accessibilityState,
+    ).toMatchObject({ checked: false });
+
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() =>
+      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'public', undefined, {
+        format: 'docx',
+        includeLooseScenes: false,
+        labels: manuscriptLabels,
+      }),
+    );
+  });
+
+  it('sends the picked route for branching stories, defaulting to the first', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
+    mockGetRoutes.mockResolvedValue([
+      { id: 'r-1', name: 'Main' },
+      { id: 'r-2', name: 'Alt' },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    expect(mockGetRoutes).toHaveBeenCalledWith('story-1');
+    expect(view.queryByText('publish_manuscript_no_routes')).toBeNull();
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByText('publish_manuscript_route');
+    expect(view.getByTestId('route-picker-value').props.children).toBe('r-1');
+    expect(view.queryByTestId('publish-loose-switch-story-1')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('route-option-r-2'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() =>
+      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'public', undefined, {
+        format: 'docx',
+        includeLooseScenes: true,
+        routeId: 'r-2',
+        labels: manuscriptLabels,
+      }),
+    );
+  });
+
+  it('disables the manuscript option without routes in branching stories', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
+    mockGetRoutes.mockResolvedValue([]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await waitFor(() =>
+      expect(view.getByText('publish_manuscript_no_routes')).toBeTruthy(),
+    );
+    expect(
+      view.getByTestId('publish-manuscript-switch-story-1').props.accessibilityState,
+    ).toMatchObject({ disabled: true });
+
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() =>
+      expect(mockPublish).toHaveBeenCalledWith(
+        server,
+        'story-1',
+        5,
+        'both',
+        'public',
+        undefined,
+        undefined,
+      ),
+    );
   });
 });

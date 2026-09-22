@@ -1,20 +1,18 @@
 import {
   MAX_SCENE_BODY_LENGTH,
+  countManuscriptDisplayChars,
   documentTextContent,
   documentToEnrichedHtml,
   enrichedHtmlToDocument,
+  getManuscriptSizeStatus,
   parseMarkdownToDocument,
   serializeDocumentToMarkdown,
   type ManuscriptDocument,
   type ManuscriptMark,
+  type ManuscriptSizeStatus,
 } from '@keres/shared';
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  countManuscriptDisplayChars,
-  getManuscriptSizeStatus,
-  type ManuscriptSizeStatus,
-} from '../components/features/manuscript/parseManuscriptMarkdown';
 import {
   SCENE_BODY_DRAFT_FIELD,
   readBoundEditorDraft,

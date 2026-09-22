@@ -1,9 +1,10 @@
+import { describe, expect, it } from 'vitest';
 import {
   countManuscriptDisplayChars,
   getManuscriptSizeStatus,
   parseManuscriptMarkdown,
   stripManuscriptMarkers,
-} from '../../../src/components/features/manuscript/parseManuscriptMarkdown';
+} from '../../../manuscript/compile/parseManuscriptMarkdown';
 
 describe('parseManuscriptMarkdown', () => {
   it('returns no blocks for empty or blank input', () => {

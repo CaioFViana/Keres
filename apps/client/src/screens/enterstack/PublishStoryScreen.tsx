@@ -31,6 +31,8 @@ import {
 } from '../../services/PublicationApiService';
 import { createPublicationService } from '../../services/PublicationService';
 import { createServerService } from '../../services/ServerService';
+import { PublishManuscriptSection } from './PublishManuscriptSection';
+import { usePublishManuscript } from './usePublishManuscript';
 import { useConnectivityStore } from '../../state/connectivityStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
@@ -84,6 +86,7 @@ const PublishStoryScreen = () => {
   const [labelMode, setLabelMode] = useState<LabelMode>('both');
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState('');
+  const manuscript = usePublishManuscript(drizzleDb);
   const [busyStoryId, setBusyStoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,6 +204,7 @@ const PublishStoryScreen = () => {
           labelMode,
           usePassword ? 'password' : 'public',
           usePassword ? password.trim() : undefined,
+          manuscript.buildOptions(row.story, t),
         );
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
 
@@ -236,7 +240,7 @@ const PublishStoryScreen = () => {
         setBusyStoryId(null);
       }
     },
-    [drizzleDb, labelMode, load, password, showNotification, t, usePassword],
+    [drizzleDb, labelMode, load, manuscript, password, showNotification, t, usePassword],
   );
 
   const handlePublish = useCallback(
@@ -465,6 +469,7 @@ const PublishStoryScreen = () => {
                     setUsePassword(showcase?.visibility === 'password');
                     setPassword('');
                     setLabelMode(showcase?.labelMode ?? 'both');
+                    manuscript.resetForStory(row.story);
                   }
                   setExpandedStoryId(expanded ? null : row.story.id);
                 }}
@@ -549,6 +554,12 @@ const PublishStoryScreen = () => {
                       )}
                     </>
                   )}
+
+                  <PublishManuscriptSection
+                    storyId={row.story.id}
+                    storyType={row.story.type}
+                    manuscript={manuscript}
+                  />
 
                   <TouchableOpacity
                     style={[

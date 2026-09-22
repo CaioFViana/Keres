@@ -1,11 +1,21 @@
-import type { ChapterSelect, ChoiceSelect, RouteStepSelect, SceneSelect } from '../../../../db/schema';
 import {
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
+  type ManuscriptChapter,
+  type ManuscriptRouteStep,
+  type ManuscriptScene,
   type ManuscriptSection,
 } from '../manuscriptSections';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
+
+/** The minimum the pipeline needs to know about a choice. */
+export interface ManuscriptChoice {
+  id: string;
+  sceneId: string;
+  nextSceneId: string;
+  text: string;
+}
 
 export type CompiledSpan = {
   text: string;
@@ -66,7 +76,7 @@ function toSpans(block: {
 
 type SectionsInput = {
   sections: ManuscriptSection[];
-  choicesBySceneId: Map<string, ChoiceSelect[]>;
+  choicesBySceneId: Map<string, ManuscriptChoice[]>;
   sceneNameById: Map<string, string>;
   looseHeadingLabel: string;
 };
@@ -132,13 +142,13 @@ function sectionsToBlocks({
 /** Drops loose scene rows plus the containers and heading they would leave behind. */
 export function withoutLooseSections(
   sections: ManuscriptSection[],
-  chaptersById: Map<string, Pick<ChapterSelect, 'type'>>,
+  chaptersById: Map<string, Pick<ManuscriptChapter, 'type'>>,
 ): ManuscriptSection[] {
   const kept = sections.filter(
     (section) => section.kind !== 'scene' || !isLooseScene(section.scene, chaptersById),
   );
   const usedContainers = new Set(
-    kept.filter((s) => s.kind === 'scene').map((s) => (s as { scene: SceneSelect }).scene.chapterId),
+    kept.filter((s) => s.kind === 'scene').map((s) => (s as { scene: ManuscriptScene }).scene.chapterId),
   );
   return kept.filter((section) => {
     if (section.kind === 'container') return usedContainers.has(section.containerId);
@@ -150,8 +160,8 @@ export function withoutLooseSections(
   });
 }
 
-function groupChoices(choices: ChoiceSelect[]): Map<string, ChoiceSelect[]> {
-  const byScene = new Map<string, ChoiceSelect[]>();
+function groupChoices(choices: ManuscriptChoice[]): Map<string, ManuscriptChoice[]> {
+  const byScene = new Map<string, ManuscriptChoice[]>();
   for (const choice of choices) {
     const list = byScene.get(choice.sceneId) ?? [];
     list.push(choice);
@@ -162,9 +172,9 @@ function groupChoices(choices: ChoiceSelect[]): Map<string, ChoiceSelect[]> {
 
 export type CompileLinearOptions = {
   title: string;
-  chapters: ChapterSelect[];
-  scenes: SceneSelect[];
-  choices: ChoiceSelect[];
+  chapters: ManuscriptChapter[];
+  scenes: ManuscriptScene[];
+  choices: ManuscriptChoice[];
   includeLooseScenes: boolean;
   looseHeadingLabel: string;
 };
@@ -197,9 +207,9 @@ export function compileLinearManuscript({
 export type CompileRouteOptions = {
   title: string;
   routeName: string;
-  steps: RouteStepSelect[];
-  scenes: SceneSelect[];
-  choices: ChoiceSelect[];
+  steps: ManuscriptRouteStep[];
+  scenes: ManuscriptScene[];
+  choices: ManuscriptChoice[];
   looseHeadingLabel: string;
 };
 

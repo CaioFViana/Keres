@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ManuscriptInfoSchema } from '../manuscript/compile/manuscriptContracts';
 
 export const PublicationLabelModeSchema = z.enum(['version', 'date', 'both']);
 export const ShowcaseVisibilitySchema = z.enum(['public', 'password']);
@@ -62,6 +63,7 @@ export const ShowcaseVersionSchema = z.object({
   mediaIncluded: z.number().int(),
   mediaTotal: z.number().int(),
   createdAt: z.string(),
+  manuscript: ManuscriptInfoSchema.nullable(),
 });
 
 export const ShowcaseStoryCardSchema = z.object({

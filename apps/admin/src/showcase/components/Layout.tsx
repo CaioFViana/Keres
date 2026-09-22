@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { LanguageSelect } from '../../i18n/LanguageSelect';
 import { SHOWCASE_LANGUAGE_KEY } from '../../i18n';
 import keresLogoUrl from 'virtual:keres-logo';
+import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 
 /**
@@ -50,14 +51,26 @@ function ThemeToggle() {
  */
 export function Layout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('showcase');
+  const config = useShowcaseConfig();
+  const siteName = config?.siteName || 'Keres';
 
   return (
     <div className="site">
       <header className="site-header">
         <div className="site-header-inner">
           <Link to="/" className="brand">
-            <KeresMark />
-            <span className="brand-name">Keres</span>
+            {config?.logoUrl ? (
+              <img
+                src={config.logoUrl}
+                height={28}
+                alt=""
+                aria-hidden="true"
+                className="mark site-logo"
+              />
+            ) : (
+              <KeresMark />
+            )}
+            <span className="brand-name">{siteName}</span>
           </Link>
           <nav className="site-nav">
             <Link to="/">{t('nav.stories')}</Link>

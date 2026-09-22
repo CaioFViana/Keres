@@ -1,3 +1,4 @@
+import { FORMAT_META, type ManuscriptFormat } from '@keres/shared';
 import type { BlobStorage } from './media-storage/BlobStorage';
 import { createBlobStorage } from './media-storage/createBlobStorage';
 
@@ -49,6 +50,53 @@ export class PublicationStorageService {
 
   async delete(storyId: string, publicationId: string): Promise<void> {
     await this.blobStorage.delete(this.storageKeyFor(storyId, publicationId));
+  }
+
+  /** Manuscript sibling of the package: same folder, `.manuscript.{ext}` suffix. */
+  manuscriptKeyFor(storyId: string, publicationId: string, extension: string): string {
+    return `publications/${storyId}/${publicationId}.manuscript.${extension}`;
+  }
+
+  async storeManuscript(
+    storyId: string,
+    publicationId: string,
+    bytes: Uint8Array,
+    format: ManuscriptFormat,
+  ): Promise<void> {
+    const meta = FORMAT_META[format];
+    await this.blobStorage.put(
+      this.manuscriptKeyFor(storyId, publicationId, meta.extension),
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      meta.mimeType,
+    );
+  }
+
+  async readManuscript(storyId: string, publicationId: string, extension: string) {
+    return this.blobStorage.get(this.manuscriptKeyFor(storyId, publicationId, extension));
+  }
+
+  /** Signed manuscript URL, or `null` on backends that cannot sign (same contract as the .zip). */
+  async presignedManuscriptUrl(
+    storyId: string,
+    publicationId: string,
+    extension: string,
+    ttlSeconds: number,
+  ): Promise<string | null> {
+    if (!this.blobStorage.presignGet) {
+      return null;
+    }
+    return this.blobStorage.presignGet(
+      this.manuscriptKeyFor(storyId, publicationId, extension),
+      ttlSeconds,
+    );
+  }
+
+  async deleteManuscript(
+    storyId: string,
+    publicationId: string,
+    extension: string,
+  ): Promise<void> {
+    await this.blobStorage.delete(this.manuscriptKeyFor(storyId, publicationId, extension));
   }
 }
 

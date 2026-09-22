@@ -1,3 +1,4 @@
+import type { ManuscriptInfo } from '../manuscript/compile/manuscriptContracts';
 import type { StoryPublicationSnapshot } from './StoryPublication';
 
 /** The author, as the anonymous site can see them: no email, no internal id beyond the public one. */
@@ -16,6 +17,8 @@ export interface ShowcaseVersion {
   mediaIncluded: number;
   mediaTotal: number;
   createdAt: string;
+  /** The version's manuscript rendition, when one was published alongside it. */
+  manuscript: ManuscriptInfo | null;
 }
 
 /** A card on the Showcase's home page. */

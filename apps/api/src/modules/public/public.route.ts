@@ -1,8 +1,9 @@
-import { APP_RELEASE } from '@keres/shared';
+import { APP_RELEASE, FORMAT_META } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { jwtShowcase } from '../../config/jwt';
 import { packService } from '../../services/PackService';
 import { publicationStorageService } from '../../services/PublicationStorageService';
+import { showcaseLogoStorageService } from '../../services/ShowcaseLogoStorageService';
 import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
@@ -61,18 +62,53 @@ const VersionSchema = t.Object({
   mediaIncluded: t.Number(),
   mediaTotal: t.Number(),
   createdAt: t.String(),
+  manuscript: t.Nullable(
+    t.Object({
+      format: t.String(),
+      byteSize: t.Number(),
+    }),
+  ),
 });
+
+/** A version's manuscript delivery metadata, or null when the version carries no manuscript. */
+function manuscriptMetaOf(publication: {
+  manuscriptFormat: string | null;
+}): { extension: string; mimeType: string } | null {
+  if (!publication.manuscriptFormat) {
+    return null;
+  }
+  return (
+    (FORMAT_META as Record<string, { extension: string; mimeType: string }>)[
+      publication.manuscriptFormat
+    ] ?? null
+  );
+}
 
 export const publicRoutes = new Elysia()
   .use(jwtShowcase)
   .get(
     '/config',
-    async () => ({
-      showcaseEnabled: await showcaseSettingsService.isEnabled(),
-      serverVersion: APP_RELEASE.version,
-    }),
+    async () => {
+      const settings = await showcaseSettingsService.getOrCreate();
+      return {
+        showcaseEnabled: settings.isShowcaseEnabled,
+        serverVersion: APP_RELEASE.version,
+        siteName: settings.siteName,
+        sitePalette: settings.sitePalette,
+        logoUrl:
+          settings.logoContentType && settings.logoUpdatedAt
+            ? `/api/public/showcase-logo?v=${settings.logoUpdatedAt.getTime()}`
+            : null,
+      };
+    },
     {
-      response: t.Object({ showcaseEnabled: t.Boolean(), serverVersion: t.String() }),
+      response: t.Object({
+        showcaseEnabled: t.Boolean(),
+        serverVersion: t.String(),
+        siteName: t.String(),
+        sitePalette: t.String(),
+        logoUrl: t.Nullable(t.String()),
+      }),
       detail: {
         summary: 'Showcase availability',
         description:
@@ -92,6 +128,40 @@ export const publicRoutes = new Elysia()
           throw new AppError(404, 'Not found.');
         }
       })
+      .get(
+        '/showcase-logo',
+        async ({ set, headers }) => {
+          const settings = await showcaseSettingsService.getOrCreate();
+          if (!settings.logoContentType || !settings.logoUpdatedAt) {
+            throw new AppError(404, 'Not found.');
+          }
+          const body = await showcaseLogoStorageService.read();
+          if (!body) {
+            throw new AppError(404, 'Not found.');
+          }
+          // The `?v=` on the config URL changes on every upload, so an hour of caching is safe.
+          const etag = `W/"showcase-logo-${settings.logoUpdatedAt.getTime()}"`;
+          const cacheControl = 'public, max-age=3600';
+          if (headers['if-none-match'] === etag) {
+            return new Response(null, {
+              status: 304,
+              headers: { etag, 'cache-control': cacheControl },
+            });
+          }
+          set.headers['content-type'] = settings.logoContentType;
+          set.headers['etag'] = etag;
+          set.headers['cache-control'] = cacheControl;
+          return body;
+        },
+        {
+          detail: {
+            summary: 'The public site logo',
+            description:
+              'Serves the logo uploaded by the administrator. 404s while the showcase is disabled or no logo was uploaded.',
+            tags: ['Showcase'],
+          },
+        },
+      )
       .get(
         '/stories',
         async ({ set, headers }) => {
@@ -332,6 +402,125 @@ export const publicRoutes = new Elysia()
           response: t.Object({ url: t.String() }),
           detail: {
             summary: 'Get a download link for a published version',
+            description:
+              'For a password-protected story, returns a link carrying a 60-second token, because a browser download cannot send an Authorization header.',
+            tags: ['Showcase'],
+          },
+        },
+      )
+      .get(
+        '/stories/:storyId/publications/:publicationId/manuscript/download',
+        async ({ params, headers, query, jwtShowcase: showcaseJwt, set }) => {
+          const entry = await showcaseService.getEntry(params.storyId);
+          if (!entry) {
+            throw new AppError(404, 'Not found.');
+          }
+          if (entry.visibility === 'password') {
+            // Same arrangement as the package download: the token arrives as a query parameter
+            // because `<a download>` carries no header.
+            const authorized =
+              (await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId)) ||
+              (await verifyShowcaseToken(
+                showcaseJwt,
+                query.access ? `Showcase ${query.access}` : undefined,
+                params.storyId,
+              ));
+            if (!authorized) {
+              throw new AppError(404, 'Not found.');
+            }
+          }
+
+          const publication = await showcaseService.getPublication(
+            params.storyId,
+            params.publicationId,
+          );
+          // A version published without a manuscript answers like a version that was never
+          // published: there is nothing to say beyond "not found".
+          const meta = publication ? manuscriptMetaOf(publication) : null;
+          if (!publication || !meta) {
+            throw new AppError(404, 'Not found.');
+          }
+
+          const fileName = `${slugify(
+            (publication.snapshot as { title: string }).title,
+          )}-${publication.label}-manuscript.${meta.extension}`;
+
+          const presigned = await publicationStorageService.presignedManuscriptUrl(
+            params.storyId,
+            params.publicationId,
+            meta.extension,
+            DOWNLOAD_URL_TTL_SECONDS,
+          );
+          if (presigned) {
+            set.status = 302;
+            set.headers['location'] = presigned;
+            return;
+          }
+
+          const body = await publicationStorageService.readManuscript(
+            params.storyId,
+            params.publicationId,
+            meta.extension,
+          );
+          if (!body) {
+            throw new AppError(404, 'Not found.');
+          }
+
+          set.headers['content-type'] = meta.mimeType;
+          set.headers['content-disposition'] = `attachment; filename="${fileName}"`;
+          // A publication never changes after it is created.
+          set.headers['cache-control'] = 'public, max-age=31536000, immutable';
+          return body;
+        },
+        {
+          params: t.Object({ storyId: t.String(), publicationId: t.String() }),
+          query: t.Object({ access: t.Optional(t.String()) }),
+          detail: {
+            summary: 'Download a published version manuscript',
+            description:
+              'Serves the readable manuscript published alongside the version, in the rendition the owner chose.',
+            tags: ['Showcase'],
+          },
+        },
+      )
+      .post(
+        '/stories/:storyId/publications/:publicationId/manuscript/download-url',
+        async ({ params, headers, jwtShowcase: showcaseJwt }) => {
+          const entry = await showcaseService.getEntry(params.storyId);
+          if (!entry) {
+            throw new AppError(404, 'Not found.');
+          }
+          if (
+            entry.visibility === 'password' &&
+            !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
+          ) {
+            throw new AppError(404, 'Not found.');
+          }
+
+          const publication = await showcaseService.getPublication(
+            params.storyId,
+            params.publicationId,
+          );
+          if (!publication || !manuscriptMetaOf(publication)) {
+            throw new AppError(404, 'Not found.');
+          }
+
+          const access =
+            entry.visibility === 'password'
+              ? await showcaseJwt.sign({
+                  storyId: params.storyId,
+                  exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
+                })
+              : undefined;
+
+          const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/manuscript/download`;
+          return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };
+        },
+        {
+          params: t.Object({ storyId: t.String(), publicationId: t.String() }),
+          response: t.Object({ url: t.String() }),
+          detail: {
+            summary: 'Get a download link for a published version manuscript',
             description:
               'For a password-protected story, returns a link carrying a 60-second token, because a browser download cannot send an Authorization header.',
             tags: ['Showcase'],

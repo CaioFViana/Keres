@@ -199,6 +199,22 @@ describe('server-bound API services', () => {
       visibility: 'password',
       password: 'secret',
     });
+
+    // The manuscript travels as render options only: no bytes leave the device.
+    const manuscript = {
+      format: 'md',
+      includeLooseScenes: false,
+      routeId: 'route-1',
+      labels: { goToPage: 'Go to page', goToScene: 'See', looseHeading: 'Loose scenes' },
+    } as const;
+    await service.publish(server, 'story', 7, 'both', 'public', undefined, manuscript);
+    expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {
+      operationVersion: 7,
+      labelMode: 'both',
+      visibility: 'public',
+      password: undefined,
+      manuscript,
+    });
     expect(mockClient.put).toHaveBeenCalledWith('/stories/story/showcase', {
       visibility: 'public',
       password: undefined,

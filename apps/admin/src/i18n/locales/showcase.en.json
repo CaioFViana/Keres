@@ -5,6 +5,7 @@
     "downloadTitle": "What you can download here",
     "downloadBody": "Each published version is a complete package of a story's Keres base: its structure and everything written around it, plus the media the author attached. It is not the story as a finished work - Keres is always a companion to whatever the story is actually being made in, whether that is a novel, a game, or a campaign.",
     "importBody": "Open a package in Keres through <strong>Import / Export</strong>. Importing makes a separate copy on your device; it does not join the author's story or send anything back to them.",
+    "manuscriptBody": "Some versions also carry the story's manuscript - the readable text, in the format its author chose - ready to download next to the package.",
     "responsibilityTitle": "Who is responsible for what",
     "responsibilityBody": "The stories here belong to the people who published them, and this server is run by whoever chose to run it. Keres, the application, is not affiliated with either, does not host or moderate these stories, and takes no position on them.",
     "serverVersion": "Server version {{version}}"
@@ -22,6 +23,8 @@
   },
   "home": {
     "eyebrow": "Keres Showcase",
+    "eyebrowWithSite": "{{siteName}} Showcase",
+    "documentTitle": "{{siteName}} — Stories, laid open.",
     "title": "Stories, laid open.",
     "intro": "Every story below was written in Keres and published here by its author. Open one to read what it is about, then download the whole thing - characters, chapters, scenes, locations and all - and open it in your own copy of Keres.",
     "publishedStories": "Published stories",
@@ -142,6 +145,7 @@
     "downloadIntro": "Each version is a complete Keres package - the story and its media - that imports straight back into the app.",
     "downloadLatest": "Download latest",
     "download": "Download",
+    "manuscriptDownload": "Manuscript ({{format}} · {{size}})",
     "preparing": "Preparing…",
     "downloadFailed": "Could not start the download.",
     "mediaCount": "{{included}}/{{total}} media"

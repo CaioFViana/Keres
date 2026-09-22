@@ -111,7 +111,15 @@
     "description": "The showcase lists published stories. The hosted client is the web app served at the root; when disabled, the root shows a simple page linking to administration and the showcase.",
     "enabled": "Showcase enabled",
     "hostedClientEnabled": "Enable the hosted client at the root",
-    "loadFailed": "Failed to load."
+    "loadFailed": "Failed to load.",
+    "branding": "Site branding",
+    "siteName": "Site name",
+    "sitePalette": "Site palette",
+    "logo": "Logo",
+    "logoHint": "PNG, JPEG or WebP, up to 512 KB. Without one the site shows the Keres mark.",
+    "logoPreview": "Current logo",
+    "uploadLogo": "Upload logo",
+    "removeLogo": "Remove logo"
   },
   "theme": {
     "system": "Theme: System",

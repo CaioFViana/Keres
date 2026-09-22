@@ -152,10 +152,14 @@ export function buildManuscriptDocument(
   });
 }
 
-/** The document packed as base64, ready to decode into bytes for delivery. */
-export function buildManuscriptDocxBase64(
+/**
+ * The document packed as bytes, ready for delivery. ArrayBuffer out of the
+ * packer keeps this free of Node-only (`Buffer`) and browser-only (`atob`)
+ * decoders on every runtime the package ships to.
+ */
+export async function buildManuscriptDocxBytes(
   manuscript: CompiledManuscript,
   labels: ManuscriptDocxLabels,
-): Promise<string> {
-  return Packer.toBase64String(buildManuscriptDocument(manuscript, labels));
+): Promise<Uint8Array> {
+  return new Uint8Array(await Packer.toArrayBuffer(buildManuscriptDocument(manuscript, labels)));
 }

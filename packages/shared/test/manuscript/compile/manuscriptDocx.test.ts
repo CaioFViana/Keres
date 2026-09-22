@@ -1,75 +1,33 @@
-/** @jest-environment node */
 import JSZip from 'jszip';
-import { compileLinearManuscript } from '../../../src/components/features/manuscript/export/manuscriptCompiler';
-import { buildManuscriptDocxBase64 } from '../../../src/components/features/manuscript/export/manuscriptDocx';
-import type { ChapterSelect, ChoiceSelect, SceneSelect } from '../../../src/db/schema';
+import { describe, expect, it } from 'vitest';
+import {
+  compileLinearManuscript,
+  type ManuscriptChoice,
+} from '../../../manuscript/compile/export/manuscriptCompiler';
+import { buildManuscriptDocxBytes } from '../../../manuscript/compile/export/manuscriptDocx';
+import type {
+  ManuscriptChapter,
+  ManuscriptScene,
+} from '../../../manuscript/compile/manuscriptSections';
 
-const stamp = new Date('2026-01-01T00:00:00.000Z');
-
-function makeChapter(overrides: Partial<ChapterSelect> = {}): ChapterSelect {
-  return {
-    id: 'ch-1',
-    storyId: 'story-1',
-    name: 'Arrival',
-    index: 1,
-    type: 'chapter',
-    summary: null,
-    isFavorite: false,
-    extraNotes: null,
-    arcId: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-    ...overrides,
-  };
+function makeChapter(overrides: Partial<ManuscriptChapter> = {}): ManuscriptChapter {
+  return { id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter', ...overrides };
 }
 
-function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
+function makeScene(overrides: Partial<ManuscriptScene> = {}): ManuscriptScene {
   return {
     id: 's-1',
-    storyId: 'story-1',
     chapterId: 'ch-1',
-    locationId: null,
     name: 'Opening',
     index: 1,
-    summary: null,
     body: 'First **bold** and __lined__ line.',
-    gap: null,
-    gapType: null,
-    calendarDateOverride: null,
-    calendarDateOverrideCalendarId: null,
-    duration: null,
-    durationType: null,
-    isStart: false,
-    isFinish: false,
-    isFavorite: false,
-    extraNotes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
     isDeleted: false,
-    deletedAt: null,
     ...overrides,
   };
 }
 
-function makeChoice(overrides: Partial<ChoiceSelect> = {}): ChoiceSelect {
-  return {
-    id: 'choice-1',
-    storyId: 'story-1',
-    sceneId: 's-1',
-    nextSceneId: 's-2',
-    text: 'Go on',
-    notes: null,
-    createdAt: stamp,
-    updatedAt: stamp,
-    version: 1,
-    isDeleted: false,
-    deletedAt: null,
-    ...overrides,
-  } as ChoiceSelect;
+function makeChoice(overrides: Partial<ManuscriptChoice> = {}): ManuscriptChoice {
+  return { id: 'choice-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Go on', ...overrides };
 }
 
 function manuscript(includeLooseScenes: boolean) {
@@ -87,8 +45,8 @@ function manuscript(includeLooseScenes: boolean) {
   });
 }
 
-async function documentXml(base64: string): Promise<string> {
-  const zip = await JSZip.loadAsync(Buffer.from(base64, 'base64'));
+async function documentXml(bytes: Uint8Array): Promise<string> {
+  const zip = await JSZip.loadAsync(bytes);
   const file = zip.file('word/document.xml');
   if (!file) throw new Error('no document.xml in the package');
   return file.async('string');
@@ -102,12 +60,14 @@ function pageReferences(xml: string): string[] {
   return Array.from(xml.matchAll(/PAGEREF ([A-Za-z0-9_-]+)/g), (match) => match[1]);
 }
 
-describe('buildManuscriptDocxBase64', () => {
+describe('buildManuscriptDocxBytes', () => {
   it('packs a valid zip carrying the manuscript', async () => {
-    const base64 = await buildManuscriptDocxBase64(manuscript(true), { goToPage: 'Go to page' });
+    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page' });
 
-    expect(base64.startsWith('UEsDB')).toBe(true);
-    const xml = await documentXml(base64);
+    expect(bytes).toBeInstanceOf(Uint8Array);
+    // Zip magic: `PK\x03\x04`.
+    expect(Array.from(bytes.subarray(0, 4))).toEqual([0x50, 0x4b, 0x03, 0x04]);
+    const xml = await documentXml(bytes);
     expect(xml).toContain('My Story');
     expect(xml).toContain('Arrival');
     expect(xml).toContain('Opening');
@@ -118,7 +78,7 @@ describe('buildManuscriptDocxBase64', () => {
 
   it('bookmarks every scene and points every choice at an existing bookmark', async () => {
     const xml = await documentXml(
-      await buildManuscriptDocxBase64(manuscript(true), { goToPage: 'Go to page' }),
+      await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page' }),
     );
 
     const bookmarks = bookmarkNames(xml);
@@ -139,7 +99,7 @@ describe('buildManuscriptDocxBase64', () => {
       looseHeadingLabel: 'Loose',
     });
     const xml = await documentXml(
-      await buildManuscriptDocxBase64(struck, { goToPage: 'Go to page' }),
+      await buildManuscriptDocxBytes(struck, { goToPage: 'Go to page' }),
     );
 
     expect(xml).toContain('cut');
@@ -148,7 +108,7 @@ describe('buildManuscriptDocxBase64', () => {
 
   it('renders name-only choices when the target left the export', async () => {
     const xml = await documentXml(
-      await buildManuscriptDocxBase64(manuscript(false), { goToPage: 'Go to page' }),
+      await buildManuscriptDocxBytes(manuscript(false), { goToPage: 'Go to page' }),
     );
 
     expect(bookmarkNames(xml)).not.toContain('scene-sloose');
@@ -158,8 +118,8 @@ describe('buildManuscriptDocxBase64', () => {
   });
 
   it('numbers pages in the footer', async () => {
-    const base64 = await buildManuscriptDocxBase64(manuscript(true), { goToPage: 'Go to page' });
-    const zip = await JSZip.loadAsync(Buffer.from(base64, 'base64'));
+    const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page' });
+    const zip = await JSZip.loadAsync(bytes);
     const footers = zip.file(/word\/footer\d*\.xml/);
     expect(footers.length).toBeGreaterThan(0);
     const footerXml = await footers[0].async('string');

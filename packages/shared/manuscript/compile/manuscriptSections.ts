@@ -1,4 +1,31 @@
-import type { ChapterSelect, RouteStepSelect, SceneSelect } from '../../../db/schema';
+import type { ChapterType } from '../../metadata/ChapterType';
+
+/** The minimum the pipeline needs to know about a chapter. */
+export interface ManuscriptChapter {
+  id: string;
+  name: string;
+  index: number;
+  type: ChapterType;
+}
+
+/** The minimum the pipeline needs to know about a scene. */
+export interface ManuscriptScene {
+  id: string;
+  chapterId: string | null;
+  name: string;
+  index: number;
+  body: string | null;
+  isDeleted: boolean;
+}
+
+/** The minimum the pipeline needs to know about a route step. */
+export interface ManuscriptRouteStep {
+  id: string;
+  routeId: string;
+  position: number;
+  sceneId: string;
+  isDeleted: boolean;
+}
 
 export type ManuscriptSection =
   | {
@@ -10,7 +37,7 @@ export type ManuscriptSection =
       containerType: 'chapter' | 'event';
     }
   | { key: string; kind: 'loose-heading' }
-  | { key: string; kind: 'scene'; scene: SceneSelect; position: number };
+  | { key: string; kind: 'scene'; scene: ManuscriptScene; position: number };
 
 export type ManuscriptMatch = { sectionIndex: number; count: number };
 
@@ -22,8 +49,8 @@ const byIndex = (a: { index: number }, b: { index: number }) => a.index - b.inde
  * manuscript shows them all; the exporter offers them behind a switch.
  */
 export function isLooseScene(
-  scene: Pick<SceneSelect, 'chapterId'>,
-  chaptersById: Map<string, Pick<ChapterSelect, 'type'>>,
+  scene: Pick<ManuscriptScene, 'chapterId'>,
+  chaptersById: Map<string, Pick<ManuscriptChapter, 'type'>>,
 ): boolean {
   if (!scene.chapterId) return true;
   const chapter = chaptersById.get(scene.chapterId);
@@ -36,15 +63,15 @@ export function isLooseScene(
  * not an outline.
  */
 export function linearManuscriptSections(
-  chapters: ChapterSelect[],
-  scenes: SceneSelect[],
+  chapters: ManuscriptChapter[],
+  scenes: ManuscriptScene[],
 ): ManuscriptSection[] {
   const live = scenes.filter((scene) => !scene.isDeleted);
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   const sections: ManuscriptSection[] = [];
   let position = 0;
 
-  const pushContainer = (chapter: ChapterSelect) => {
+  const pushContainer = (chapter: ManuscriptChapter) => {
     const own = live
       .filter((scene) => scene.chapterId === chapter.id)
       .sort(byIndex);
@@ -90,8 +117,8 @@ export function linearManuscriptSections(
  * because a looping route visits the same scene twice.
  */
 export function routeManuscriptSections(
-  steps: RouteStepSelect[],
-  scenes: SceneSelect[],
+  steps: ManuscriptRouteStep[],
+  scenes: ManuscriptScene[],
 ): ManuscriptSection[] {
   const byId = new Map(scenes.filter((scene) => !scene.isDeleted).map((scene) => [scene.id, scene]));
   const sections: ManuscriptSection[] = [];

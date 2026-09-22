@@ -124,6 +124,13 @@ a {
   flex: 0 0 auto;
 }
 
+/* An uploaded logo keeps the header's height; a wide one shrinks to fit instead of pushing the nav. */
+.site-logo {
+  height: 28px;
+  width: auto;
+  max-width: 140px;
+}
+
 .site-nav {
   display: flex;
   align-items: center;
@@ -504,6 +511,16 @@ a {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+/* A version's buttons, side by side: the package first, the manuscript (when one was
+   published) second. More specific than `.version div` on purpose, so the row wins. */
+.version .version-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .version-sub {

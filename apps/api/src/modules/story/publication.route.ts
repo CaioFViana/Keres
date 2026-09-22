@@ -15,7 +15,29 @@ const PublicationResponseSchema = t.Object({
   byteSize: t.Number(),
   mediaIncluded: t.Number(),
   mediaTotal: t.Number(),
+  manuscriptFormat: t.Nullable(t.String()),
+  manuscriptByteSize: t.Nullable(t.Number()),
   createdAt: t.Date(),
+});
+
+/** Manuscript rendition to publish alongside the package. Mirrors shared `ManuscriptOptionsSchema`. */
+const ManuscriptRequestSchema = t.Object({
+  format: t.Union([
+    t.Literal('docx'),
+    t.Literal('md'),
+    t.Literal('txt'),
+    t.Literal('html'),
+  ]),
+  includeLooseScenes: t.Optional(t.Boolean()),
+  /** Required for branching stories, refused for linear ones; must belong to the story. */
+  routeId: t.Optional(t.String()),
+  labels: t.Optional(
+    t.Object({
+      goToPage: t.Optional(t.String({ maxLength: 80 })),
+      goToScene: t.Optional(t.String({ maxLength: 80 })),
+      looseHeading: t.Optional(t.String({ maxLength: 80 })),
+    }),
+  ),
 });
 
 /**
@@ -52,6 +74,7 @@ export const publicationRoutes = new Elysia()
         (body.labelMode ?? 'both') as PublicationLabelMode,
         (body.visibility ?? 'public') as ShowcaseVisibility,
         body.password,
+        body.manuscript,
       ),
     {
       params: t.Object({ storyId: t.String() }),
@@ -67,11 +90,13 @@ export const publicationRoutes = new Elysia()
          */
         visibility: t.Optional(t.Union([t.Literal('public'), t.Literal('password')])),
         password: t.Optional(t.String({ minLength: 4, maxLength: 200 })),
+        /** When present, a readable manuscript is compiled and published alongside the package. */
+        manuscript: t.Optional(ManuscriptRequestSchema),
       }),
       detail: {
         summary: 'Publish a new public version of a story',
         description:
-          'Owner only. Packages the story exactly like the client export does (story.json + media) and stores it as an immutable version. Rejects with 409 when the story is not in sync with the server. Only the newest 5 versions are kept.',
+          'Owner only. Packages the story exactly like the client export does (story.json + media) and stores it as an immutable version, with an optional readable manuscript alongside it. Rejects with 409 when the story is not in sync with the server. Only the newest 5 versions are kept.',
         tags: ['Showcase'],
       },
     },

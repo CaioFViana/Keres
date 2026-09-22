@@ -32,8 +32,8 @@ function InlineText({ span }: { span: ManuscriptSpan }) {
 /**
  * Read-mode renderer over the shared document model — the same model the
  * editor writes, so combined marks (`***both***`) render exactly as typed and
- * write mode and read mode can never diverge. The legacy client markdown
- * parser stays with the export pipeline, which owns its own AST.
+ * write mode and read mode can never diverge. The export pipeline owns its
+ * own reader AST in `@keres/shared`.
  */
 export function MarkdownPreview({
   text,

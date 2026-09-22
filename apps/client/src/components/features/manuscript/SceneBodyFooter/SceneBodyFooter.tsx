@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from '../../../common/controls/Button/Button';
 import { useTheme } from '../../../../theme';
 import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
-import type { ManuscriptSizeStatus } from '../parseManuscriptMarkdown';
+import type { ManuscriptSizeStatus } from '@keres/shared';
 
 export type SceneBodyFooterProps = {
   wordCount: number;

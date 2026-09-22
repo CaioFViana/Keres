@@ -1,15 +1,18 @@
+import type { CompiledManuscript } from '@keres/shared';
+import {
+  buildManuscriptDocxBytes,
+  buildManuscriptHtml,
+  buildManuscriptMarkdown,
+  buildManuscriptText,
+} from '@keres/shared';
 import { File } from 'expo-file-system';
+import * as Print from 'expo-print';
 import { Platform } from 'react-native';
 import {
   buildManuscriptFileName,
   deliverFile,
   type ExportDeliveryResult,
 } from '../../../../utils/storyTransfer';
-import { decodeBase64ToBytes } from './manuscriptBase64';
-import type { CompiledManuscript } from './manuscriptCompiler';
-import { buildManuscriptDocxBase64 } from './manuscriptDocx';
-import { buildManuscriptHtml, printManuscriptPdf } from './manuscriptHtml';
-import { buildManuscriptMarkdown, buildManuscriptText } from './manuscriptText';
 
 export type ManuscriptExportFormat = 'docx' | 'pdf' | 'md' | 'txt';
 
@@ -54,11 +57,13 @@ export async function exportManuscript({
   const file = FORMAT_FILES[format];
   const fileName = buildManuscriptFileName(storyTitle, file.extension);
   if (format === 'docx') {
-    const base64 = await buildManuscriptDocxBase64(manuscript, labels);
-    return deliverFile(decodeBase64ToBytes(base64), fileName, file.mimeType, file.uti);
+    const bytes = await buildManuscriptDocxBytes(manuscript, labels);
+    return deliverFile(bytes, fileName, file.mimeType, file.uti);
   }
   if (format === 'pdf') {
-    const { uri } = await printManuscriptPdf(buildManuscriptHtml(manuscript, labels));
+    const { uri } = await Print.printToFileAsync({
+      html: buildManuscriptHtml(manuscript, labels),
+    });
     const bytes = await new File(uri).bytes();
     return deliverFile(bytes, fileName, file.mimeType, file.uti);
   }

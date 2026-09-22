@@ -1,14 +1,11 @@
 /** @jest-environment node */
-import type { CompiledManuscript } from '../../../src/components/features/manuscript/export/manuscriptCompiler';
+import type { CompiledManuscript } from '@keres/shared';
 import { exportManuscript } from '../../../src/components/features/manuscript/export/manuscriptExport';
 
 const mockDeliverFile = jest.fn();
-const mockBuildDocx = jest.fn();
-const mockBuildHtml = jest.fn();
+const mockBuildDocxBytes = jest.fn();
 const mockPrintToFile = jest.fn();
 const mockReadBytes = jest.fn();
-const mockBuildMarkdown = jest.fn();
-const mockBuildText = jest.fn();
 
 jest.mock('../../../src/utils/storyTransfer', () => ({
   __esModule: true,
@@ -17,21 +14,19 @@ jest.mock('../../../src/utils/storyTransfer', () => ({
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
 
-jest.mock('../../../src/components/features/manuscript/export/manuscriptDocx', () => ({
-  __esModule: true,
-  buildManuscriptDocxBase64: (...args: unknown[]) => mockBuildDocx(...args),
-}));
+// Only the zip packer is doubled: md/txt/html run through the real shared
+// renderers, so this file also guards the shared wiring.
+jest.mock('@keres/shared', () => {
+  const actual = jest.requireActual('@keres/shared');
+  return {
+    ...actual,
+    buildManuscriptDocxBytes: (...args: unknown[]) => mockBuildDocxBytes(...args),
+  };
+});
 
-jest.mock('../../../src/components/features/manuscript/export/manuscriptHtml', () => ({
+jest.mock('expo-print', () => ({
   __esModule: true,
-  buildManuscriptHtml: (...args: unknown[]) => mockBuildHtml(...args),
-  printManuscriptPdf: (...args: unknown[]) => mockPrintToFile(...args),
-}));
-
-jest.mock('../../../src/components/features/manuscript/export/manuscriptText', () => ({
-  __esModule: true,
-  buildManuscriptMarkdown: (...args: unknown[]) => mockBuildMarkdown(...args),
-  buildManuscriptText: (...args: unknown[]) => mockBuildText(...args),
+  printToFileAsync: (...args: unknown[]) => mockPrintToFile(...args),
 }));
 
 jest.mock('expo-file-system', () => ({
@@ -39,25 +34,25 @@ jest.mock('expo-file-system', () => ({
   File: jest.fn().mockImplementation(() => ({ bytes: (...args: unknown[]) => mockReadBytes(...args) })),
 }));
 
-const manuscript = { title: 'My Story', blocks: [] } as unknown as CompiledManuscript;
+const manuscript = {
+  title: 'My Story',
+  blocks: [{ kind: 'title', text: 'My Story' }],
+} as unknown as CompiledManuscript;
 const labels = { goToPage: 'Go to page', goToScene: 'See' };
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockDeliverFile.mockResolvedValue({ delivered: true, fileName: 'x' });
-  mockBuildDocx.mockResolvedValue('UEsDBA==');
-  mockBuildHtml.mockReturnValue('<html></html>');
+  mockBuildDocxBytes.mockResolvedValue(new Uint8Array([80, 75, 3, 4]));
   mockPrintToFile.mockResolvedValue({ uri: 'file:///tmp/out.pdf' });
   mockReadBytes.mockResolvedValue(new Uint8Array([37, 80, 68, 70]));
-  mockBuildMarkdown.mockReturnValue('# My Story\n');
-  mockBuildText.mockReturnValue('My Story\n');
 });
 
 describe('exportManuscript', () => {
-  it('delivers docx bytes decoded from base64', async () => {
+  it('delivers docx bytes from the shared builder', async () => {
     await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'docx', labels });
 
-    expect(mockBuildDocx).toHaveBeenCalledWith(manuscript, labels);
+    expect(mockBuildDocxBytes).toHaveBeenCalledWith(manuscript, labels);
     expect(mockDeliverFile).toHaveBeenCalledWith(
       new Uint8Array([80, 75, 3, 4]),
       'My Story.docx',
@@ -69,8 +64,9 @@ describe('exportManuscript', () => {
   it('prints pdf to a temp file and delivers its bytes', async () => {
     await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'pdf', labels });
 
-    expect(mockBuildHtml).toHaveBeenCalledWith(manuscript, labels);
-    expect(mockPrintToFile).toHaveBeenCalledWith('<html></html>');
+    expect(mockPrintToFile).toHaveBeenCalledWith({
+      html: expect.stringContaining('<title>My Story</title>'),
+    });
     expect(mockDeliverFile).toHaveBeenCalledWith(
       new Uint8Array([37, 80, 68, 70]),
       'My Story.pdf',
@@ -79,7 +75,7 @@ describe('exportManuscript', () => {
     );
   });
 
-  it('passes strikethrough spans through to the text builders', async () => {
+  it('passes strikethrough spans through to the shared text builder', async () => {
     const struck = {
       title: 'My Story',
       blocks: [
@@ -95,7 +91,12 @@ describe('exportManuscript', () => {
 
     await exportManuscript({ storyTitle: 'My Story', manuscript: struck, format: 'md', labels });
 
-    expect(mockBuildMarkdown).toHaveBeenCalledWith(struck, labels);
+    expect(mockDeliverFile).toHaveBeenCalledWith(
+      expect.stringContaining('~~cut~~'),
+      'My Story.md',
+      'text/markdown',
+      'public.plain-text',
+    );
   });
 
   it.each([

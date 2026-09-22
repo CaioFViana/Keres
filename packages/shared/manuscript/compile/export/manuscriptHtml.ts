@@ -1,4 +1,3 @@
-import * as Print from 'expo-print';
 import type { CompiledManuscript, CompiledSpan } from './manuscriptCompiler';
 
 export type ManuscriptHtmlLabels = {
@@ -37,6 +36,7 @@ function spansToHtml(spans: CompiledSpan[]): string {
  * choices link to their target scene's anchor by name. Page counters ride on print CSS
  * where the platform renderer honors them - unlike the DOCX, the PDF never promises
  * real "page X" cross-references because the print pipeline reports no layout mapping.
+ * (Printing itself stays in the client: expo-print is device-only.)
  */
 export function buildManuscriptHtml(
   manuscript: CompiledManuscript,
@@ -106,9 +106,4 @@ export function buildManuscriptHtml(
 ${parts.join('\n')}
 </body>
 </html>`;
-}
-
-/** Renders the HTML to a PDF file. Device-only: the print pipeline has no test double. */
-export function printManuscriptPdf(html: string): Promise<{ uri: string }> {
-  return Print.printToFileAsync({ html });
 }

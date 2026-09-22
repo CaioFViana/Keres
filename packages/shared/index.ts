@@ -179,3 +179,23 @@ export * from './rules/storyOwnerFields';
 export * from './manuscript/ManuscriptDocument';
 // Storage boundary with the enriched-html editor (HTML in/out, doc inside).
 export * from './manuscript/enrichedHtml';
+// Pure manuscript pipeline: sections, markdown reader, compiler, renderers and entry.
+export * from './manuscript/compile/manuscriptSections';
+export * from './manuscript/compile/export/manuscriptCompiler';
+export * from './manuscript/compile/export/manuscriptText';
+export * from './manuscript/compile/export/manuscriptDocx';
+export * from './manuscript/compile/export/manuscriptHtml';
+export * from './manuscript/compile/manuscriptContracts';
+export * from './manuscript/compile/compileStoryManuscript';
+// The reader's block collides with the editor model's `ManuscriptBlock`, so it
+// exports under its own name; the file itself stays as-is.
+export {
+  MANUSCRIPT_LARGE_SCENE_CHARS,
+  countManuscriptDisplayChars,
+  getManuscriptSizeStatus,
+  parseManuscriptMarkdown,
+  stripManuscriptMarkers,
+  type ManuscriptBlock as ManuscriptReaderBlock,
+  type ManuscriptInline,
+  type ManuscriptSizeStatus,
+} from './manuscript/compile/parseManuscriptMarkdown';

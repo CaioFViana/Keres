@@ -111,7 +111,15 @@
     "description": "A vitrine lista histórias publicadas. O cliente hospedado é o aplicativo web servido na raiz; ao desligá-lo, a raiz mostra uma página simples com links para administração e vitrine.",
     "enabled": "Vitrine ativada",
     "hostedClientEnabled": "Cliente hospedado ativado na raiz",
-    "loadFailed": "Não foi possível carregar."
+    "loadFailed": "Não foi possível carregar.",
+    "branding": "Identidade do site",
+    "siteName": "Nome do site",
+    "sitePalette": "Paleta do site",
+    "logo": "Logotipo",
+    "logoHint": "PNG, JPEG ou WebP, até 512 KB. Sem um, o site mostra a marca Keres.",
+    "logoPreview": "Logotipo atual",
+    "uploadLogo": "Enviar logotipo",
+    "removeLogo": "Remover logotipo"
   },
   "theme": {
     "system": "Tema: Sistema",

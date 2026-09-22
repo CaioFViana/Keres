@@ -3,6 +3,7 @@ import {
   clearUnlockToken,
   fetchConfig,
   fetchDownloadUrl,
+  fetchManuscriptDownloadUrl,
   fetchPack,
   fetchPacks,
   fetchStories,
@@ -226,6 +227,27 @@ describe('fetchDownloadUrl', () => {
     fetchMock.mockResolvedValue(respond({ body: { message: 'Gone.' }, status: 410 }));
 
     await expect(fetchDownloadUrl('story-1', 'pub-1')).rejects.toThrow('Gone.');
+  });
+});
+
+describe('fetchManuscriptDownloadUrl', () => {
+  it('requests the manuscript link with the unlock token', async () => {
+    storeUnlockToken('story-1', 'unlock-1');
+    fetchMock.mockResolvedValue(respond({ body: { url: '/api/public/dl/ms' } }));
+
+    const url = await fetchManuscriptDownloadUrl('story-1', 'pub-1');
+
+    expect(url).toBe('/api/public/dl/ms');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/public/stories/story-1/publications/pub-1/manuscript/download-url',
+      { method: 'POST', headers: { Authorization: 'Showcase unlock-1' } },
+    );
+  });
+
+  it('throws the API message when the manuscript link cannot be issued', async () => {
+    fetchMock.mockResolvedValue(respond({ body: { message: 'Gone.' }, status: 410 }));
+
+    await expect(fetchManuscriptDownloadUrl('story-1', 'pub-1')).rejects.toThrow('Gone.');
   });
 });
 

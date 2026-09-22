@@ -45,9 +45,13 @@ async function readError(response: Response): Promise<string> {
   }
 }
 
+/** Mirrors the API's public `/config`; `logoUrl` is null until a logo is uploaded. */
 export interface ShowcaseConfig {
   showcaseEnabled: boolean;
   serverVersion: string;
+  siteName: string;
+  sitePalette: string;
+  logoUrl: string | null;
 }
 
 export async function fetchConfig(): Promise<ShowcaseConfig> {
@@ -124,6 +128,27 @@ export async function fetchDownloadUrl(storyId: string, publicationId: string): 
     `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
       publicationId,
     )}/download-url`,
+    { method: 'POST', headers: unlockHeaders(storyId) },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const { url } = (await response.json()) as { url: string };
+  return url;
+}
+
+/**
+ * A version's manuscript address. Same short-lived-token dance as the package link: only the path
+ * differs, because the artifact (readable text, not the Keres base) does.
+ */
+export async function fetchManuscriptDownloadUrl(
+  storyId: string,
+  publicationId: string,
+): Promise<string> {
+  const response = await fetch(
+    `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
+      publicationId,
+    )}/manuscript/download-url`,
     { method: 'POST', headers: unlockHeaders(storyId) },
   );
   if (!response.ok) {

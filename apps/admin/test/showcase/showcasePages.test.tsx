@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   fetchStory: vi.fn(),
   unlockStory: vi.fn(),
   fetchDownloadUrl: vi.fn(),
+  fetchManuscriptDownloadUrl: vi.fn(),
   fetchConfig: vi.fn(),
   fetchPacks: vi.fn(),
   fetchPack: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
   fetchStory: mocks.fetchStory,
   unlockStory: mocks.unlockStory,
   fetchDownloadUrl: mocks.fetchDownloadUrl,
+  fetchManuscriptDownloadUrl: mocks.fetchManuscriptDownloadUrl,
   fetchConfig: mocks.fetchConfig,
   fetchPacks: mocks.fetchPacks,
   fetchPack: mocks.fetchPack,
@@ -50,6 +52,7 @@ const card: ShowcaseStoryCard = {
     mediaIncluded: 1,
     mediaTotal: 2,
     createdAt: '2026-08-19T10:00:00.000Z',
+    manuscript: null,
   },
   updatedAt: '2026-08-19T10:00:00.000Z',
 };
@@ -67,6 +70,7 @@ const detail: ShowcaseStoryDetail = {
       mediaIncluded: 0,
       mediaTotal: 0,
       createdAt: '2026-08-01T10:00:00.000Z',
+      manuscript: null,
     },
   ],
   updatedAt: '2026-08-19T10:00:00.000Z',
@@ -199,6 +203,9 @@ beforeEach(() => {
   mocks.fetchPacks.mockResolvedValue([]);
   mocks.fetchPack.mockResolvedValue(unorderedPack);
   mocks.fetchDownloadUrl.mockResolvedValue('/api/public/stories/story-1/x/download');
+  mocks.fetchManuscriptDownloadUrl.mockResolvedValue(
+    '/api/public/stories/story-1/x/manuscript/download',
+  );
 });
 
 describe('showcase listing refresh', () => {
@@ -354,6 +361,61 @@ describe('showcase failure pages', () => {
     await flush();
 
     expect(mocks.fetchDownloadUrl).toHaveBeenCalledWith('story-1', 'pub-1');
+    await unmount();
+  });
+});
+
+describe('story manuscript download', () => {
+  const withManuscripts: ShowcaseStoryDetail = {
+    ...detail,
+    versions: [
+      { ...detail.versions[0], manuscript: { format: 'docx', byteSize: 1536 } },
+      { ...detail.versions[1], manuscript: { format: 'md', byteSize: 512 } },
+    ],
+  };
+
+  it('offers no manuscript button when no version carries one', async () => {
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    expect(container.querySelector('.manuscript-button')).toBeNull();
+    await unmount();
+  });
+
+  it('shows one manuscript button per version carrying one, naming format and size', async () => {
+    mocks.fetchStory.mockResolvedValue(withManuscripts);
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    const buttons = [...container.querySelectorAll('.manuscript-button')].map(
+      (node) => node.textContent,
+    );
+    expect(buttons).toEqual(['Manuscript (DOCX · 1.5 KB)', 'Manuscript (MD · 512 B)']);
+    await unmount();
+  });
+
+  it('downloads a version manuscript through its own button', async () => {
+    mocks.fetchStory.mockResolvedValue(withManuscripts);
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    await click(container.querySelector('.version:not(.newest) .manuscript-button')!);
+    await flush();
+
+    expect(mocks.fetchManuscriptDownloadUrl).toHaveBeenCalledWith('story-1', 'pub-1');
+    await unmount();
+  });
+
+  it('reports a manuscript failure on the story page', async () => {
+    mocks.fetchStory.mockResolvedValue(withManuscripts);
+    mocks.fetchManuscriptDownloadUrl.mockRejectedValue(new Error('Link expired.'));
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    await click(container.querySelector('.version.newest .manuscript-button')!);
+    await flush();
+
+    expect(container.querySelector('.error-text')?.textContent).toBe('Link expired.');
     await unmount();
   });
 });

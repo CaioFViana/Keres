@@ -9,19 +9,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
-
-const TIMELINE_CONTROL_LABELS = {
-  add: 'zoom_in',
-  remove: 'zoom_out',
-  'scan-outline': 'fit_to_screen',
-  'image-outline': 'story_timeline_export_image',
-} as const;
 
 const StoryTimelineScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -31,6 +24,9 @@ const StoryTimelineScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'StoryTimeline'>>();
   const canvas = useRef<StoryTimelineCanvasHandle>(null);
+  const zoomIn = useCallback(() => canvas.current?.zoomBy(1.25), []);
+  const zoomOut = useCallback(() => canvas.current?.zoomBy(0.8), []);
+  const fitCanvasToScreen = useCallback(() => canvas.current?.fitToScreen(), []);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const timeline = useStoryTimeline();
@@ -289,28 +285,38 @@ const StoryTimelineScreen = () => {
         <Text style={styles.message}>{t('story_timeline_no_scenes')}</Text>
       )}
       <View style={styles.controls}>
-        {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
-        {
-          // eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed.
-          (
-            [
-              ['add', () => canvas.current?.zoomBy(1.25)],
-              ['remove', () => canvas.current?.zoomBy(0.8)],
-              ['scan-outline', () => canvas.current?.fitToScreen()],
-              ['image-outline', exportTimeline],
-            ] as const
-          ).map(([name, onPress]) => (
-            <TouchableOpacity
-              key={name}
-              style={styles.control}
-              onPress={onPress}
-              disabled={saving}
-              accessibilityLabel={t(TIMELINE_CONTROL_LABELS[name])}
-            >
-              <Ionicons name={name} size={20} color={colors.text} />
-            </TouchableOpacity>
-          ))
-        }
+        <TouchableOpacity
+          style={styles.control}
+          onPress={zoomIn}
+          disabled={saving}
+          accessibilityLabel={t('zoom_in')}
+        >
+          <Ionicons name="add" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.control}
+          onPress={zoomOut}
+          disabled={saving}
+          accessibilityLabel={t('zoom_out')}
+        >
+          <Ionicons name="remove" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.control}
+          onPress={fitCanvasToScreen}
+          disabled={saving}
+          accessibilityLabel={t('fit_to_screen')}
+        >
+          <Ionicons name="scan-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.control}
+          onPress={exportTimeline}
+          disabled={saving}
+          accessibilityLabel={t('story_timeline_export_image')}
+        >
+          <Ionicons name="image-outline" size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
       <StoryTimelineSheets
         scenes={scenes}

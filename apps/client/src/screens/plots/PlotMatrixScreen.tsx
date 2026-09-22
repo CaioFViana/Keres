@@ -27,13 +27,6 @@ import type { PlotsScreenNavigationProp } from './PlotListScreen';
 
 /** Same cap as the presence matrix: the two charts are read side by side. */
 const MAX_VISIBLE_SERIES = 12;
-const MATRIX_CONTROL_LABELS = {
-  add: 'zoom_in',
-  remove: 'zoom_out',
-  'scan-outline': 'fit_to_screen',
-  'image-outline': 'plot_matrix_export',
-} as const;
-
 /**
  * Plots × scenes, on the same infrastructure as the presence matrix: there the cell is a checkmark (a
  * character) or a state (an item), here it is the relation's note.
@@ -48,6 +41,9 @@ const PlotMatrixScreen = () => {
   const notify = useNotificationStore((state) => state.showNotification);
   const { selectedStory } = useStoryStore();
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
+  const zoomIn = useCallback(() => canvas.current?.zoomBy(1.25), []);
+  const zoomOut = useCallback(() => canvas.current?.zoomBy(0.8), []);
+  const fitCanvasToScreen = useCallback(() => canvas.current?.fitToScreen(), []);
   // Opens the Scene in another stack: the way back is registered so the back button brings the
   // matrix again, and not the Scenes list.
   const openScene = useCallback(
@@ -269,28 +265,38 @@ const PlotMatrixScreen = () => {
 
       {layout.rows.length > 0 && scenes.length > 0 && (
         <View style={styles.controls}>
-          {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
-          {
-            // eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed.
-            (
-              [
-                ['add', () => canvas.current?.zoomBy(1.25)],
-                ['remove', () => canvas.current?.zoomBy(0.8)],
-                ['scan-outline', () => canvas.current?.fitToScreen()],
-                ['image-outline', exportMatrix],
-              ] as const
-            ).map(([name, press]) => (
-              <TouchableOpacity
-                key={name}
-                style={styles.control}
-                onPress={press}
-                disabled={saving}
-                accessibilityLabel={t(MATRIX_CONTROL_LABELS[name])}
-              >
-                <Ionicons name={name} size={20} color={colors.text} />
-              </TouchableOpacity>
-            ))
-          }
+          <TouchableOpacity
+            style={styles.control}
+            onPress={zoomIn}
+            disabled={saving}
+            accessibilityLabel={t('zoom_in')}
+          >
+            <Ionicons name="add" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.control}
+            onPress={zoomOut}
+            disabled={saving}
+            accessibilityLabel={t('zoom_out')}
+          >
+            <Ionicons name="remove" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.control}
+            onPress={fitCanvasToScreen}
+            disabled={saving}
+            accessibilityLabel={t('fit_to_screen')}
+          >
+            <Ionicons name="scan-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.control}
+            onPress={exportMatrix}
+            disabled={saving}
+            accessibilityLabel={t('plot_matrix_export')}
+          >
+            <Ionicons name="image-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
         </View>
       )}
       {selectedScene && (

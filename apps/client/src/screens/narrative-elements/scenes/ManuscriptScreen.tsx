@@ -11,26 +11,30 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  type ViewToken,
 } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import type { ManuscriptSection } from '@keres/shared';
+import type { ManuscriptSection, TextRange } from '@keres/shared';
 import {
   compileLinearManuscript,
   compileRouteManuscript,
+  findAllCaseInsensitiveMatches,
   findManuscriptMatches,
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
   sectionIndexForMatch,
 } from '@keres/shared';
+import MarkedText from '../../../components/common/display/MarkedText/MarkedText';
 import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import ManuscriptExportModal, {
   type ManuscriptExportChoices,
 } from '../../../components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
+import ManuscriptIndexModal from '../../../components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
 import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
@@ -39,13 +43,20 @@ import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useManuscriptData } from '../../../hooks/useManuscriptData';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
+import { useStoryArcs } from '../../../hooks/useStoryArcs';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
+import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
 
 type ManuscriptScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Manuscript'>;
 type ManuscriptNavigation = NativeStackNavigationProp<NarrativeElementsStackParamList, 'Manuscript'>;
+
+// A row counts as visible once half of it shows; module scope keeps the reference stable.
+const MANUSCRIPT_VIEWABILITY = { itemVisiblePercentThreshold: 50 };
+// Shared empty ranges for unmarked titles; module scope keeps the reference stable.
+const NO_RANGES: TextRange[] = [];
 
 const ManuscriptScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -57,6 +68,8 @@ const ManuscriptScreen = () => {
   const navigation = useNavigation<ManuscriptNavigation>();
   const route = useRoute<ManuscriptScreenRouteProp>();
   const { selectedStory } = useStoryStore();
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const { arcs } = useStoryArcs();
   const { showNotification } = useNotificationStore();
   const { pending: exporting, run: runExport } = useAsyncOperation();
 
@@ -72,6 +85,18 @@ const ManuscriptScreen = () => {
   const [ordinal, setOrdinal] = useState(0);
   const [pureRead, setPureRead] = useState(false);
   const [exportVisible, setExportVisible] = useState(false);
+  const [indexVisible, setIndexVisible] = useState(false);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState<number | null>(null);
+
+  // Arc filtering, like every other screen: containers outside the active arc hide with
+  // their scenes; unchaptered and orphan scenes stay visible. The linear path filters
+  // inside the shared sections builder; routes have no arc of their own, so the
+  // branching path drops other-arc scenes and their steps vanish with them.
+  const chaptersById = useMemo(() => new Map(chapters.map((chapter) => [chapter.id, chapter])), [chapters]);
+  const visibleScenes = useMemo(
+    () => scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, activeArcId)),
+    [scenes, chaptersById, activeArcId],
+  );
 
   // Reading order per story shape: branching follows one route's steps in position order
   // (empty until a route exists), linear stacks chapters, events, then the homeless tail.
@@ -80,10 +105,10 @@ const ManuscriptScreen = () => {
   const allSections: ManuscriptSection[] = useMemo(() => {
     if (isBranching) {
       if (!effectiveRouteId) return [];
-      return routeManuscriptSections(stepsByRouteId.get(effectiveRouteId) ?? [], scenes);
+      return routeManuscriptSections(stepsByRouteId.get(effectiveRouteId) ?? [], visibleScenes);
     }
-    return linearManuscriptSections(chapters, scenes);
-  }, [isBranching, effectiveRouteId, stepsByRouteId, chapters, scenes]);
+    return linearManuscriptSections(chapters, scenes, { arcId: activeArcId });
+  }, [isBranching, effectiveRouteId, stepsByRouteId, chapters, scenes, visibleScenes, activeArcId]);
 
   // Pure reading drops empty scenes (there is nothing to read and no title to show).
   const sections = useMemo(
@@ -95,6 +120,23 @@ const ManuscriptScreen = () => {
   );
 
   const { matches, total } = useMemo(() => findManuscriptMatches(sections, query), [sections, query]);
+  // Search marks follow the counter's own rule (case-insensitive, scene names and
+  // bodies): ranges over the bare name, shifted past the "position. " prefix the list
+  // adds. Bodies mark through `MarkdownPreview`; container headings never match.
+  const titleRangesByKey = useMemo(() => {
+    const map = new Map<string, TextRange[]>();
+    if (!query.trim()) return map;
+    for (const section of sections) {
+      if (section.kind !== 'scene') continue;
+      const prefixLength = `${section.position}. `.length;
+      const ranges = findAllCaseInsensitiveMatches(section.scene.name, query).map((range) => ({
+        start: range.start + prefixLength,
+        length: range.length,
+      }));
+      if (ranges.length > 0) map.set(section.key, ranges);
+    }
+    return map;
+  }, [sections, query]);
   // Derived-state reset during render (the sanctioned pattern, not an effect): a new query
   // or new sections invalidate the current match position, so the ordinal restarts at the
   // first match. React re-renders immediately with ordinal 0; no stale jump escapes.
@@ -107,6 +149,12 @@ const ManuscriptScreen = () => {
   }
 
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
+  // The one indexed jump: search matches and index picks share it, so the target also
+  // becomes the reader's position for the index highlight.
+  const scrollToSectionIndex = useCallback((index: number) => {
+    setCurrentSectionIndex(index);
+    listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.1 });
+  }, []);
   // Match navigation wraps past both ends: prev from the first match lands on the last,
   // next from the last lands on the first. Each jump scrolls the owning section near the top.
   const jumpToOrdinal = useCallback(
@@ -114,20 +162,53 @@ const ManuscriptScreen = () => {
       if (total === 0) return;
       const wrapped = ((next % total) + total) % total;
       setOrdinal(wrapped);
-      listRef.current?.scrollToIndex({
-        index: sectionIndexForMatch(matches, wrapped),
-        animated: true,
-        viewPosition: 0.1,
-      });
+      scrollToSectionIndex(sectionIndexForMatch(matches, wrapped));
     },
-    [matches, total],
+    [matches, total, scrollToSectionIndex],
+  );
+  // Unmeasured rows cannot be jumped to directly: scroll to the estimated
+  // offset first so the row measures, then retry the indexed jump on the next tick.
+  const handleScrollToIndexFailed = useCallback(
+    (info: { index: number; averageItemLength: number }) => {
+      listRef.current?.scrollToOffset({
+        offset: info.averageItemLength * info.index,
+        animated: false,
+      });
+      setTimeout(() => {
+        listRef.current?.scrollToIndex({ index: info.index, animated: false });
+      }, 100);
+    },
+    [],
+  );
+  // The reader's position follows the topmost visible scene; container headings are
+  // landmarks, not reading, so they never take the highlight.
+  const handleViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const firstScene = viewableItems
+        .filter((item) => item.index != null && sections[item.index]?.kind === 'scene')
+        .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))[0];
+      if (firstScene?.index != null) setCurrentSectionIndex(firstScene.index);
+    },
+    [sections],
+  );
+  // An index pick closes the modal and jumps the list to that scene.
+  const handleIndexSelect = useCallback(
+    (sectionIndex: number) => {
+      setIndexVisible(false);
+      scrollToSectionIndex(sectionIndex);
+    },
+    [scrollToSectionIndex],
   );
 
   const looseCount = useMemo(() => {
     if (isBranching) return 0;
-    const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
-    return scenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, chaptersById)).length;
-  }, [isBranching, chapters, scenes]);
+    // The count follows the visible manuscript: other-arc containers are gone, and
+    // their scenes went with them, so nothing hidden leaks into the loose switch.
+    const visibleById = new Map(
+      chapters.filter((chapter) => chapterBelongsToArc(chapter, activeArcId)).map((chapter) => [chapter.id, chapter]),
+    );
+    return visibleScenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, visibleById)).length;
+  }, [isBranching, chapters, visibleScenes, activeArcId]);
 
   const exportRouteName = isBranching
     ? (routes.find((entry) => entry.id === effectiveRouteId)?.name ?? null)
@@ -144,6 +225,7 @@ const ManuscriptScreen = () => {
       includeLooseScenes,
       resetSceneNumbers,
       includeIndex,
+      arcId: exportArcId,
     }: ManuscriptExportChoices) => {
       void runExport(async () => {
         try {
@@ -152,19 +234,27 @@ const ManuscriptScreen = () => {
             goToScene: t('export_manuscript_go_to_scene'),
             tocHeading: t('export_manuscript_index_heading'),
           };
+          // A specific arc exports as its own book: the arc title replaces the story
+          // title on the cover and in the file name, and only its scenes ship. The
+          // export arc is the modal's own pick, independent of the reading filter.
+          const exportArc = exportArcId ? (arcs.find((arc) => arc.id === exportArcId) ?? null) : null;
+          const exportTitle = exportArc?.title ?? selectedStory?.title ?? '';
+          const exportScenes = exportArcId
+            ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, exportArcId))
+            : scenes;
           const manuscript = isBranching
             ? compileRouteManuscript({
-                title: selectedStory?.title ?? '',
+                title: exportTitle,
                 routeName: exportRouteName ?? '',
                 steps: effectiveRouteId ? (stepsByRouteId.get(effectiveRouteId) ?? []) : [],
-                scenes,
+                scenes: exportScenes,
                 choices,
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
                 includeSceneNames,
                 resetSceneNumbersPerChapter: resetSceneNumbers,
               })
             : compileLinearManuscript({
-                title: selectedStory?.title ?? '',
+                title: exportTitle,
                 chapters,
                 scenes,
                 choices,
@@ -172,9 +262,10 @@ const ManuscriptScreen = () => {
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
                 includeSceneNames,
                 resetSceneNumbersPerChapter: resetSceneNumbers,
+                arcId: exportArcId,
               });
           const result = await exportManuscript({
-            storyTitle: selectedStory?.title ?? '',
+            storyTitle: exportTitle,
             manuscript,
             format,
             labels,
@@ -197,7 +288,7 @@ const ManuscriptScreen = () => {
         }
       });
     },
-    [runExport, isBranching, selectedStory, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, showNotification],
+    [runExport, isBranching, selectedStory, arcs, chaptersById, exportRouteName, effectiveRouteId, stepsByRouteId, scenes, choices, chapters, t, showNotification],
   );
 
   // The modal owns format and switches; re-entrant presses while an export runs are ignored.
@@ -331,7 +422,11 @@ const ManuscriptScreen = () => {
             {!pureRead && (
               <View style={styles.sceneHeaderRow}>
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
-                  <Text style={styles.sceneTitle}>{`${item.position}. ${item.scene.name}`}</Text>
+                  <MarkedText
+                    text={`${item.position}. ${item.scene.name}`}
+                    ranges={titleRangesByKey.get(item.key) ?? NO_RANGES}
+                    style={styles.sceneTitle}
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity
                   testID={`manuscript-edit-${item.scene.id}`}
@@ -345,7 +440,7 @@ const ManuscriptScreen = () => {
               </View>
             )}
             {item.scene.body ? (
-              <MarkdownPreview text={item.scene.body} />
+              <MarkdownPreview text={item.scene.body} highlightQuery={query} />
             ) : (
               !pureRead && <Text style={styles.emptyText}>{t('manuscript_no_body_yet')}</Text>
             )}
@@ -353,7 +448,7 @@ const ManuscriptScreen = () => {
         </View>
       );
     },
-    [pureRead, openScene, openSceneEditor, styles, t, colors],
+    [pureRead, openScene, openSceneEditor, styles, t, colors, titleRangesByKey, query],
   );
 
   if (loading) {
@@ -377,6 +472,15 @@ const ManuscriptScreen = () => {
           />
         )}
         <View ref={searchAnchorRef} collapsable={false} style={styles.searchRow}>
+          <TouchableOpacity
+            testID="manuscript-index-open"
+            style={styles.searchNav}
+            accessibilityRole="button"
+            accessibilityLabel={t('manuscript_index_open')}
+            onPress={() => setIndexVisible(true)}
+          >
+            <Ionicons name="list" size={22} color={colors.text} />
+          </TouchableOpacity>
           <TextInput
             testID="manuscript-search"
             style={styles.searchInput}
@@ -428,17 +532,9 @@ const ManuscriptScreen = () => {
             data={sections}
             keyExtractor={(item) => item.key}
             renderItem={renderSection}
-            // Unmeasured rows cannot be jumped to directly: scroll to the estimated
-            // offset first so the row measures, then retry the indexed jump on the next tick.
-            onScrollToIndexFailed={(info) => {
-              listRef.current?.scrollToOffset({
-                offset: info.averageItemLength * info.index,
-                animated: false,
-              });
-              setTimeout(() => {
-                listRef.current?.scrollToIndex({ index: info.index, animated: false });
-              }, 100);
-            }}
+            viewabilityConfig={MANUSCRIPT_VIEWABILITY}
+            onViewableItemsChanged={handleViewableItemsChanged}
+            onScrollToIndexFailed={handleScrollToIndexFailed}
           />
         </View>
       )}
@@ -448,8 +544,17 @@ const ManuscriptScreen = () => {
         showLooseSwitch={!isBranching && looseCount > 0}
         looseCount={looseCount}
         chapterNumberingAvailable={!isBranching}
+        arcs={arcs}
         onExport={runExportChoices}
         onClose={() => setExportVisible(false)}
+      />
+      <ManuscriptIndexModal
+        visible={indexVisible}
+        sections={sections}
+        currentSectionIndex={currentSectionIndex}
+        looseHeadingLabel={t('export_manuscript_loose_heading')}
+        onSelectSection={handleIndexSelect}
+        onClose={() => setIndexVisible(false)}
       />
     </View>
   );

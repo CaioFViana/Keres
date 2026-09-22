@@ -269,6 +269,7 @@ function SceneEditorContent({
         onClose={() => setCommentsOpen(false)}
         storyId={scene.storyId}
         fieldLabel={t('manuscript_prose')}
+        showExcerptAnchorNotice
         fieldValueSnapshot={serializedBody}
         comments={bodyComments}
         canComment={canComment}

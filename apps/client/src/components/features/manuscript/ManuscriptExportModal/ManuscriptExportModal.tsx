@@ -15,6 +15,14 @@ export interface ManuscriptExportChoices {
   includeLooseScenes: boolean;
   resetSceneNumbers: boolean;
   includeIndex: boolean;
+  /** Which arc to export; null exports every arc (the default). */
+  arcId: string | null;
+}
+
+/** The minimum the arc selector needs to know about an arc. */
+export interface ManuscriptExportArc {
+  id: string;
+  title: string;
 }
 
 interface ManuscriptExportModalProps {
@@ -26,6 +34,8 @@ interface ManuscriptExportModalProps {
   looseCount: number;
   /** Linear only: routes have a single group, so restarting numbers is meaningless. */
   chapterNumberingAvailable: boolean;
+  /** The story's arcs; the arc selector only shows when there is more than one. */
+  arcs: ManuscriptExportArc[];
   onExport: (choices: ManuscriptExportChoices) => void;
   onClose: () => void;
 }
@@ -35,7 +45,8 @@ interface ManuscriptExportModalProps {
  * by default. The loose switch only shows when there are loose scenes to
  * include; routes never ask, since the route itself is the scope. Restarting
  * numbers needs scene names on a linear story; the index needs a format that
- * supports links, which plain text does not.
+ * supports links, which plain text does not. The arc selector only shows when
+ * the story has more than one arc; a single arc is the whole story already.
  */
 const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
   visible,
@@ -43,12 +54,14 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
   showLooseSwitch,
   looseCount,
   chapterNumberingAvailable,
+  arcs,
   onExport,
   onClose,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [format, setFormat] = useState<ManuscriptExportFormat>('docx');
+  const [arcId, setArcId] = useState<string | null>(null);
   const [includeSceneNames, setIncludeSceneNames] = useState(false);
   const [includeLooseScenes, setIncludeLooseScenes] = useState(false);
   const [resetSceneNumbers, setResetSceneNumbers] = useState(false);
@@ -95,8 +108,36 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
   );
 
   const confirm = () => {
-    onExport({ format, includeSceneNames, includeLooseScenes, resetSceneNumbers, includeIndex });
+    onExport({
+      format,
+      includeSceneNames,
+      includeLooseScenes,
+      resetSceneNumbers,
+      includeIndex,
+      arcId,
+    });
     onClose();
+  };
+
+  const renderArcOption = (value: string | null, label: string, testID: string) => {
+    const selected = value === arcId;
+    return (
+      <TouchableOpacity
+        key={testID}
+        testID={testID}
+        style={[styles.option, selected && styles.optionSelected]}
+        onPress={() => setArcId(value)}
+        accessibilityRole="radio"
+        accessibilityState={{ selected }}
+      >
+        <Ionicons
+          name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+          size={22}
+          color={selected ? colors.primary : colors.textSecondary}
+        />
+        <Text style={styles.optionLabel}>{label}</Text>
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -107,6 +148,14 @@ const ManuscriptExportModal: React.FC<ManuscriptExportModalProps> = ({
           <Text style={styles.description}>
             {t('export_manuscript_route_note', { route: routeName })}
           </Text>
+        ) : null}
+
+        {arcs.length > 1 ? (
+          <>
+            <Text style={styles.section}>{t('export_manuscript_arc')}</Text>
+            {renderArcOption(null, t('export_manuscript_arc_all'), 'export-arc-all')}
+            {arcs.map((arc) => renderArcOption(arc.id, arc.title, `export-arc-${arc.id}`))}
+          </>
         ) : null}
 
         <Text style={styles.section}>{t('export_format')}</Text>

@@ -48,6 +48,8 @@ export const ManuscriptOptionsSchema = z.object({
   includeLooseScenes: z.boolean().default(true),
   /** When set, the manuscript follows this route instead of the linear order. */
   routeId: z.string().optional(),
+  /** When set, only this arc's containers and scenes are included. */
+  arcId: z.string().optional(),
   /** Label overrides; anything absent falls back to `DEFAULT_MANUSCRIPT_LABELS`. */
   labels: ManuscriptLabelsSchema.partial().optional(),
 });

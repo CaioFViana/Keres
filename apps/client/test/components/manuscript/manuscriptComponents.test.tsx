@@ -23,6 +23,7 @@ jest.mock('../../../src/theme', () => ({
       notification: '#fa0',
       onPrimary: '#fff',
       primary: '#00f',
+      primaryContainer: '#ccf',
       surface: '#eee',
       text: '#111',
       textSecondary: '#555',
@@ -515,5 +516,41 @@ describe('MarkdownPreview', () => {
 
     expect(view.getByTestId('preview').children).toHaveLength(1);
     expect(view.getByText('Just prose.')).toBeTruthy();
+  });
+
+  it('marks every case-insensitive search hit', async () => {
+    const view = await render(
+      <MarkdownPreview text="Waves. Waves again." highlightQuery="waves" testID="preview" />,
+    );
+
+    const hits = view.getAllByText(/^Waves$/);
+    expect(hits).toHaveLength(2);
+    for (const hit of hits) {
+      expect(StyleSheet.flatten(hit.props.style).backgroundColor).toBe('#ccf');
+    }
+  });
+
+  it('marks hits inside styled spans without losing their marks', async () => {
+    const view = await render(
+      <MarkdownPreview text="A **bold** word." highlightQuery="old" testID="preview" />,
+    );
+
+    const marked = view.getByText('old');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#ccf');
+    // Bold lives on the span host the mark nests in.
+    const span = StyleSheet.flatten(marked.parent!.props.style);
+    expect(span.fontWeight).toBe('700');
+  });
+
+  it('leaves the tree untouched for an empty or absent query', async () => {
+    const empty = await render(
+      <MarkdownPreview text="Waves. Waves again." highlightQuery="" testID="preview" />,
+    );
+    expect(empty.getByText('Waves. Waves again.')).toBeTruthy();
+
+    const absent = await render(
+      <MarkdownPreview text="Waves. Waves again." highlightQuery="zzz" testID="preview" />,
+    );
+    expect(absent.getByText('Waves. Waves again.')).toBeTruthy();
   });
 });

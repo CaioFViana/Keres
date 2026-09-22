@@ -392,6 +392,90 @@ describe('CommentThreadModal', () => {
     expect(view.getByText('excerpt_not_found_warning')).toBeTruthy();
   });
 
+  it('marks the typed excerpt where it first anchors in the snapshot', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(<RealModal {...baseProps} />);
+
+    // Case-insensitive: 'QUIET' anchors 'quiet'.
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'QUIET');
+    const marked = view.getByText('quiet');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+  });
+
+  it('marks only the first anchor when the excerpt repeats', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(
+      <RealModal {...baseProps} fieldValueSnapshot="Waves. Waves again." />,
+    );
+
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'waves');
+    // Only the first anchor splits out marked; the repeat stays inside the plain tail.
+    const marked = view.getByText('Waves');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+    const tail = view.getByText('. Waves again.');
+    expect(StyleSheet.flatten(tail.props.style ?? {}).backgroundColor).toBeUndefined();
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+  });
+
+  it('anchors accents and leaves a stale excerpt unmarked with its warning', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(
+      <RealModal {...baseProps} fieldValueSnapshot="Eles chegaram de manhã cedo" />,
+    );
+
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'manha');
+    expect(StyleSheet.flatten(view.getByText('manhã').props.style).backgroundColor).toBe('#aaf');
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'stale words');
+    expect(view.getByText('excerpt_not_found_warning')).toBeTruthy();
+    // No anchor, no split: the snapshot still renders as one bare text node.
+    expect(view.getByText('Eles chegaram de manhã cedo')).toBeTruthy();
+  });
+
+  it('renders saved excerpts as highlighter marks', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    mockUseAuthorProfiles.mockReturnValue({
+      'user-1': { id: 'user-1', name: 'Ari', isCurrentUser: true },
+    });
+    const view = await render(
+      <RealModal {...baseProps} comments={[comment({ excerptText: 'quiet arrival' })]} />,
+    );
+
+    const block = view.getByText('quiet arrival').parent!;
+    expect(StyleSheet.flatten(block.props.style).backgroundColor).toBe('#aaf');
+  });
+
+  it('explains the first-match anchor only in the manuscript composer', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const manuscript = await render(<RealModal {...baseProps} showExcerptAnchorNotice />);
+    expect(manuscript.getByText('excerpt_anchor_notice')).toBeTruthy();
+
+    const field = await render(<RealModal {...baseProps} />);
+    expect(field.queryByText('excerpt_anchor_notice')).toBeNull();
+  });
+
   it('alerts when posting fails', async () => {
     const RealModal = (
       jest.requireActual(

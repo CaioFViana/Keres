@@ -16,6 +16,7 @@ import {
   type ManuscriptLabels,
   type ManuscriptOptionsInput,
 } from './manuscriptContracts';
+import { sceneMatchesArc } from './manuscriptSections';
 import type {
   ManuscriptChapter,
   ManuscriptRouteStep,
@@ -68,6 +69,7 @@ async function renderBytes(
 /**
  * Compiles a story's manuscript and renders it to bytes. A `routeId` selects
  * the route order (branching stories); without one the linear order is used.
+ * An `arcId` keeps only that arc's containers and scenes in either order.
  * Throws on an unknown route or past `MAX_MANUSCRIPT_BYTES`.
  */
 export async function compileStoryManuscript(
@@ -81,11 +83,14 @@ export async function compileStoryManuscript(
     const route = (input.routes ?? []).find((candidate) => candidate.id === parsed.routeId);
     if (!route) throw new Error(`Unknown route "${parsed.routeId}".`);
     const steps = (input.routeSteps ?? []).filter((step) => step.routeId === route.id);
+    // Routes have no arc of their own; their scenes inherit their chapter's. Steps
+    // pointing at a filtered-out scene vanish, like steps pointing at a deleted one.
+    const chaptersById = new Map(input.chapters.map((chapter) => [chapter.id, chapter]));
     compiled = compileRouteManuscript({
       title: input.storyTitle,
       routeName: route.name,
       steps,
-      scenes: input.scenes,
+      scenes: input.scenes.filter((scene) => sceneMatchesArc(scene, chaptersById, parsed.arcId)),
       choices: input.choices,
       looseHeadingLabel: labels.looseHeading,
     });
@@ -97,6 +102,7 @@ export async function compileStoryManuscript(
       choices: input.choices,
       includeLooseScenes: parsed.includeLooseScenes,
       looseHeadingLabel: labels.looseHeading,
+      arcId: parsed.arcId,
     });
   }
   const bytes = await renderBytes(compiled, parsed.format, labels);

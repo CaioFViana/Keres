@@ -1,7 +1,8 @@
 import type { ManuscriptMark, ManuscriptSpan } from '@keres/shared';
-import { parseMarkdownToDocument } from '@keres/shared';
+import { findAllCaseInsensitiveMatches, parseMarkdownToDocument } from '@keres/shared';
 import { useMemo } from 'react';
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
+import MarkedText from '../../../common/display/MarkedText/MarkedText';
 import { useTheme } from '../../../../theme';
 import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
 
@@ -14,18 +15,28 @@ function decorationLine(marks: ManuscriptMark[]): TextStyle['textDecorationLine'
   return 'none';
 }
 
-function InlineText({ span }: { span: ManuscriptSpan }) {
+function InlineText({
+  span,
+  highlightQuery,
+}: {
+  span: ManuscriptSpan;
+  highlightQuery?: string | null;
+}) {
+  const ranges = useMemo(
+    () => (highlightQuery ? findAllCaseInsensitiveMatches(span.text, highlightQuery) : []),
+    [span.text, highlightQuery],
+  );
   return (
-    <Text
+    <MarkedText
+      text={span.text}
+      ranges={ranges}
       style={{
         fontWeight: span.marks.includes('bold') ? '700' : '400',
         fontStyle: span.marks.includes('italic') ? 'italic' : 'normal',
         textDecorationLine: decorationLine(span.marks),
         fontSize: manuscriptTextMetrics.fontSize,
       }}
-    >
-      {span.text}
-    </Text>
+    />
   );
 }
 
@@ -39,10 +50,13 @@ export function MarkdownPreview({
   text,
   testID,
   selectable = true,
+  highlightQuery,
 }: {
   text: string;
   testID?: string;
   selectable?: boolean;
+  /** Manuscript search query: every case-insensitive hit reads as a highlighter mark. */
+  highlightQuery?: string | null;
 }) {
   const { colors } = useTheme();
   const doc = useMemo(() => parseMarkdownToDocument(text), [text]);
@@ -83,7 +97,7 @@ export function MarkdownPreview({
           <View key={`block-${index}`} style={styles.block}>
             <Text selectable={selectable} style={styles.paragraph}>
               {block.spans.map((span, spanIndex) => (
-                <InlineText key={spanIndex} span={span} />
+                <InlineText key={spanIndex} span={span} highlightQuery={highlightQuery} />
               ))}
             </Text>
           </View>

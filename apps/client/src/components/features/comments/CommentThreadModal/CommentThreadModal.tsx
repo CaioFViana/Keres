@@ -1,6 +1,8 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import { findFirstExcerptMatch } from '@keres/shared';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +40,8 @@ interface CommentThreadModalProps {
     commentId: string,
     changes: { commentText?: string; criticality?: number },
   ) => Promise<void>;
+  /** Manuscript prose composer: explain that the first match anchors the comment. */
+  showExcerptAnchorNotice?: boolean;
 }
 
 /**
@@ -58,6 +62,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   onSubmit,
   onDelete,
   onUpdate,
+  showExcerptAnchorNotice = false,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -79,8 +84,14 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     [comments],
   );
 
-  const excerptMismatch =
-    excerptText.trim().length > 0 && !fieldValueSnapshot.includes(excerptText.trim());
+  // The typed excerpt anchors live in the snapshot by the same rule that marks it:
+  // first occurrence, case- and accent-insensitive. A stale excerpt (field edited
+  // since) simply marks nothing and keeps its warning.
+  const liveExcerptMatch = useMemo(
+    () => findFirstExcerptMatch(fieldValueSnapshot, excerptText),
+    [fieldValueSnapshot, excerptText],
+  );
+  const excerptMismatch = excerptText.trim().length > 0 && !liveExcerptMatch;
 
   const handleSubmit = useCallback(async () => {
     const trimmedComment = commentText.trim();
@@ -145,6 +156,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     excerptBlock: {
       borderLeftWidth: 2,
       borderLeftColor: colors.primary,
+      backgroundColor: colors.primaryContainer,
       paddingLeft: 8,
       marginTop: 4,
       marginBottom: 2,
@@ -176,6 +188,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     excerptInput: { minHeight: 40, textAlignVertical: 'top' },
     commentInput: { minHeight: 70, textAlignVertical: 'top' },
     warningText: { color: colors.notification, fontSize: 12, marginBottom: 8 },
+    noticeText: { color: colors.textSecondary, fontSize: 12, marginBottom: 8 },
     // Criticality icons and the post button share the same row, instead of each one
     // taking the full width on separate rows - that left a fair amount of horizontal
     // space idle on wide screens.
@@ -192,9 +205,12 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     <View style={styles.footer} testID="comment-composer">
       <View style={styles.snapshotBlock}>
         <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
-        <Text style={styles.snapshotText} numberOfLines={4}>
-          {fieldValueSnapshot || t('common_na')}
-        </Text>
+        <MarkedText
+          text={fieldValueSnapshot || t('common_na')}
+          ranges={liveExcerptMatch ? [liveExcerptMatch] : []}
+          style={styles.snapshotText}
+          numberOfLines={4}
+        />
       </View>
 
       <TextInput
@@ -210,6 +226,9 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
         placeholder={t('excerpt_placeholder')}
         multiline
       />
+      {showExcerptAnchorNotice && (
+        <Text style={styles.noticeText}>{t('excerpt_anchor_notice')}</Text>
+      )}
       {excerptMismatch && (
         <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>
       )}

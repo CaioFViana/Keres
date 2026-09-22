@@ -211,6 +211,8 @@ export type CompileLinearOptions = {
   includeSceneNames?: boolean;
   /** Restart scene numbers in every chapter and the appendix. Defaults to off. */
   resetSceneNumbersPerChapter?: boolean;
+  /** Only this arc's containers and scenes; unchaptered and orphan scenes stay. Defaults to all. */
+  arcId?: string | null;
 };
 
 export function compileLinearManuscript({
@@ -222,9 +224,10 @@ export function compileLinearManuscript({
   looseHeadingLabel,
   includeSceneNames = true,
   resetSceneNumbersPerChapter = false,
+  arcId = null,
 }: CompileLinearOptions): CompiledManuscript {
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
-  let sections = linearManuscriptSections(chapters, scenes);
+  let sections = linearManuscriptSections(chapters, scenes, { arcId });
   if (!includeLooseScenes) sections = withoutLooseSections(sections, chaptersById);
   return {
     title,

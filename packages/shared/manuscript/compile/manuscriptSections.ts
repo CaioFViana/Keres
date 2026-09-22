@@ -6,6 +6,8 @@ export interface ManuscriptChapter {
   name: string;
   index: number;
   type: ChapterType;
+  /** Which arc owns this container; absent means the caller did not load arcs (no filtering). */
+  arcId?: string | null;
 }
 
 /** The minimum the pipeline needs to know about a scene. */
@@ -58,6 +60,39 @@ export function isLooseScene(
 }
 
 /**
+ * A specific arc shows only its own containers; a nullish arc shows everything.
+ * Mirrors the client's arc filter: arcs own containers, scenes inherit from theirs.
+ */
+export function chapterMatchesArc(
+  chapter: Pick<ManuscriptChapter, 'arcId'>,
+  arcId: string | null | undefined,
+): boolean {
+  if (!arcId) return true;
+  return chapter.arcId === arcId;
+}
+
+/**
+ * Scenes inherit their container's arc. Chapterless scenes and scenes pointing at a
+ * gone chapter have no container to inherit from, so they stay visible under any arc.
+ */
+export function sceneMatchesArc(
+  scene: Pick<ManuscriptScene, 'chapterId'>,
+  chaptersById: ReadonlyMap<string, Pick<ManuscriptChapter, 'arcId'>>,
+  arcId: string | null | undefined,
+): boolean {
+  if (!arcId) return true;
+  if (!scene.chapterId) return true;
+  const chapter = chaptersById.get(scene.chapterId);
+  if (!chapter) return true;
+  return chapterMatchesArc(chapter, arcId);
+}
+
+export type LinearSectionsOptions = {
+  /** Only this arc's containers and scenes; unchaptered and orphan scenes stay. Defaults to all. */
+  arcId?: string | null;
+};
+
+/**
  * Linear order: chapters by index with their scenes, then event containers with theirs,
  * then the chapterless tail. Empty containers are skipped - the manuscript is prose,
  * not an outline.
@@ -65,9 +100,16 @@ export function isLooseScene(
 export function linearManuscriptSections(
   chapters: ManuscriptChapter[],
   scenes: ManuscriptScene[],
+  options: LinearSectionsOptions = {},
 ): ManuscriptSection[] {
-  const live = scenes.filter((scene) => !scene.isDeleted);
-  const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+  const originalById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+  const visibleChapters = chapters.filter((chapter) => chapterMatchesArc(chapter, options.arcId));
+  // Scenes resolve against the ORIGINAL map: a scene of a filtered-out container is
+  // hidden with it, not re-homed into the homeless tail as if its chapter were gone.
+  const live = scenes.filter(
+    (scene) => !scene.isDeleted && sceneMatchesArc(scene, originalById, options.arcId),
+  );
+  const chaptersById = new Map(visibleChapters.map((chapter) => [chapter.id, chapter]));
   const sections: ManuscriptSection[] = [];
   let position = 0;
 
@@ -90,10 +132,10 @@ export function linearManuscriptSections(
     }
   };
 
-  for (const chapter of [...chapters].filter((c) => c.type === 'chapter').sort(byIndex)) {
+  for (const chapter of [...visibleChapters].filter((c) => c.type === 'chapter').sort(byIndex)) {
     pushContainer(chapter);
   }
-  for (const chapter of [...chapters].filter((c) => c.type === 'event').sort(byIndex)) {
+  for (const chapter of [...visibleChapters].filter((c) => c.type === 'event').sort(byIndex)) {
     pushContainer(chapter);
   }
 

@@ -34,12 +34,18 @@ jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () =
   };
 });
 
+const twoArcs = [
+  { id: 'arc-1', title: 'First Arc' },
+  { id: 'arc-2', title: 'Second Arc' },
+];
+
 const baseProps = {
   visible: true,
   routeName: null as string | null,
   showLooseSwitch: true,
   looseCount: 2,
   chapterNumberingAvailable: true,
+  arcs: [] as { id: string; title: string }[],
   onExport: jest.fn(),
   onClose: jest.fn(),
 };
@@ -100,6 +106,7 @@ describe('ManuscriptExportModal', () => {
       includeLooseScenes: false,
       resetSceneNumbers: false,
       includeIndex: false,
+      arcId: null,
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -121,6 +128,7 @@ describe('ManuscriptExportModal', () => {
       includeLooseScenes: true,
       resetSceneNumbers: true,
       includeIndex: true,
+      arcId: null,
     });
   });
 
@@ -188,6 +196,56 @@ describe('ManuscriptExportModal', () => {
     const view = await render(<ManuscriptExportModal {...baseProps} routeName={null} />);
 
     expect(view.queryByText('export_manuscript_route_note', { exact: false })).toBeNull();
+  });
+
+  it('hides the arc selector with zero or one arc', async () => {
+    const none = await render(<ManuscriptExportModal {...baseProps} arcs={[]} />);
+    expect(none.queryByTestId('export-arc-all')).toBeNull();
+    expect(none.queryByText('export_manuscript_arc')).toBeNull();
+  });
+
+  it('hides the arc selector with a single arc', async () => {
+    const view = await render(
+      <ManuscriptExportModal {...baseProps} arcs={[{ id: 'arc-1', title: 'Only Arc' }]} />,
+    );
+
+    expect(view.queryByTestId('export-arc-all')).toBeNull();
+    expect(view.queryByText('export_manuscript_arc')).toBeNull();
+  });
+
+  it('lists all arcs plus each arc with all selected by default', async () => {
+    const view = await render(<ManuscriptExportModal {...baseProps} arcs={twoArcs} />);
+
+    expect(view.getByText('export_manuscript_arc')).toBeTruthy();
+    expect(view.getByTestId('export-arc-all').props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(view.getByTestId('export-arc-arc-1').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
+    expect(view.getByText('First Arc')).toBeTruthy();
+    expect(view.getByText('Second Arc')).toBeTruthy();
+  });
+
+  it('exports the picked arc', async () => {
+    const onExport = jest.fn();
+    const view = await render(
+      <ManuscriptExportModal {...baseProps} arcs={twoArcs} onExport={onExport} />,
+    );
+
+    await fireEvent.press(view.getByTestId('export-arc-arc-2'));
+    expect(view.getByTestId('export-arc-arc-2').props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(view.getByTestId('export-arc-all').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
+
+    await fireEvent.press(view.getByTestId('export-confirm'));
+
+    expect(onExport).toHaveBeenCalledWith(
+      expect.objectContaining({ arcId: 'arc-2' }),
+    );
   });
 
   it('closes without exporting on cancel', async () => {

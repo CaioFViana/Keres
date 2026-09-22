@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { Platform } from 'react-native';
+import { FlatList, Platform, StyleSheet } from 'react-native';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import type { ChapterSelect, RouteSelect, RouteStepSelect, SceneSelect } from '../../../../src/db/schema';
 import type { ManuscriptExportChoices } from '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
@@ -16,6 +16,7 @@ let mockModalProps: {
   routeName: string | null;
   showLooseSwitch: boolean;
   looseCount: number;
+  arcs: { id: string; title: string }[];
   onExport: (choices: ManuscriptExportChoices) => void;
   onClose: () => void;
 } | null = null;
@@ -24,6 +25,8 @@ let mockHeaderTitle: string | null = null;
 let mockHeaderActions: readonly HeaderAction[] | null = null;
 let mockStoryType = 'linear';
 let mockStoryTitle = 'My Story';
+let mockActiveArcId: string | null = null;
+let mockArcs: { id: string; title: string }[] = [];
 let mockManuscriptData: {
   chapters: ChapterSelect[];
   scenes: SceneSelect[];
@@ -65,7 +68,25 @@ jest.mock('../../../../src/hooks/useScreenHeader', () => ({
 
 jest.mock('../../../../src/state/storyStore', () => ({
   __esModule: true,
-  useStoryStore: () => ({ selectedStory: { id: 'story-1', type: mockStoryType, title: mockStoryTitle } }),
+  useStoryStore: (selector?: (state: unknown) => unknown) => {
+    const state = {
+      selectedStory: { id: 'story-1', type: mockStoryType, title: mockStoryTitle },
+      activeArcId: mockActiveArcId,
+    };
+    return typeof selector === 'function' ? selector(state) : state;
+  },
+}));
+
+jest.mock('../../../../src/hooks/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({
+    arcs: mockArcs,
+    activeArc: mockArcs.find((arc) => arc.id === mockActiveArcId) ?? null,
+    activeArcId: mockActiveArcId,
+    setActiveArcId: jest.fn(),
+    showSelector: mockArcs.length > 1,
+    reload: jest.fn(),
+  }),
 }));
 
 jest.mock('../../../../src/state/notificationStore', () => ({
@@ -99,6 +120,17 @@ jest.mock('../../../../src/components/features/manuscript/export/manuscriptExpor
   MANUSCRIPT_EXPORT_FORMATS: ['docx', 'pdf', 'md', 'txt'],
   exportManuscript: (...args: unknown[]) => mockExportManuscript(...args),
 }));
+
+// The index modal renders for real; only its surface is stubbed, since the shared
+// modal needs safe-area providers the screen harness does not set up.
+jest.mock('../../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
+      visible ? <View>{children}</View> : null,
+  };
+});
 
 jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
@@ -240,6 +272,31 @@ function linearData() {
   };
 }
 
+function twoArcData() {
+  return {
+    chapters: [
+      makeChapter({ id: 'ch-1', name: 'Arrival', index: 1, arcId: 'arc-1' }),
+      makeChapter({ id: 'ch-2', name: 'Departure', index: 2, arcId: 'arc-2' }),
+      makeChapter({ id: 'ev-1', name: 'Quake', index: 1, type: 'event', arcId: 'arc-2' }),
+    ],
+    scenes: [
+      makeScene({ id: 's-1', chapterId: 'ch-1', name: 'Opening', index: 1, body: 'Alpha.' }),
+      makeScene({ id: 's-2', chapterId: 'ch-2', name: 'Leaving', index: 1, body: 'Beta.' }),
+      makeScene({ id: 's-ev', chapterId: 'ev-1', name: 'Tremor', index: 1, body: 'Rumble.' }),
+      makeScene({ id: 's-3', name: 'Fragment', index: 3, chapterId: null, body: 'Lost pages.' }),
+    ],
+    routes: [] as RouteSelect[],
+    choices: [] as { id: string; sceneId: string; nextSceneId: string; text: string }[],
+    stepsByRouteId: new Map<string, RouteStepSelect[]>(),
+    loading: false,
+  };
+}
+
+const twoArcs = [
+  { id: 'arc-1', title: 'First Arc' },
+  { id: 'arc-2', title: 'Second Arc' },
+];
+
 function branchingData() {
   const route = { id: 'route-1', name: 'Main' } as RouteSelect;
   const other = { id: 'route-2', name: 'Alt' } as RouteSelect;
@@ -282,6 +339,8 @@ beforeEach(() => {
   mockModalProps = null;
   mockStoryType = 'linear';
   mockStoryTitle = 'My Story';
+  mockActiveArcId = null;
+  mockArcs = [];
   mockManuscriptData = linearData();
   mockExportManuscript.mockResolvedValue({ delivered: true, fileName: 'x.docx' });
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -384,6 +443,32 @@ describe('ManuscriptScreen', () => {
     expect(view.getByText('manuscript_no_results')).toBeTruthy();
   });
 
+  it('marks every search hit in scene bodies', async () => {
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.changeText(view.getByTestId('manuscript-search'), 'waves');
+
+    const hits = view.getAllByText(/^Waves$/);
+    expect(hits).toHaveLength(2);
+    for (const hit of hits) {
+      expect(StyleSheet.flatten(hit.props.style).backgroundColor).toBe('#ccf');
+    }
+  });
+
+  it('marks the search hit in the scene title and nothing else', async () => {
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.changeText(view.getByTestId('manuscript-search'), 'opening');
+
+    expect(view.getByText('manuscript_search_count:{"current":1,"total":1}')).toBeTruthy();
+    const marked = view.getByText('Opening');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#ccf');
+    // Untouched rows keep their bare trees: titles exact, bodies whole.
+    expect(view.getByText('2. Inland')).toBeTruthy();
+    expect(view.getByText('Waves. Waves again.')).toBeTruthy();
+    expect(view.getByText('1. Arrival')).toBeTruthy();
+  });
+
   it('switches routes in branching stories', async () => {
     mockStoryType = 'branching';
     mockManuscriptData = branchingData();
@@ -446,6 +531,7 @@ describe('ManuscriptScreen', () => {
         includeLooseScenes: true,
         resetSceneNumbers: false,
         includeIndex: false,
+        arcId: null,
       });
     });
 
@@ -472,6 +558,7 @@ describe('ManuscriptScreen', () => {
         includeLooseScenes: false,
         resetSceneNumbers: false,
         includeIndex: false,
+        arcId: null,
       });
     });
 
@@ -496,6 +583,7 @@ describe('ManuscriptScreen', () => {
         includeLooseScenes: true,
         resetSceneNumbers: true,
         includeIndex: true,
+        arcId: null,
       });
     });
 
@@ -522,6 +610,7 @@ describe('ManuscriptScreen', () => {
         includeLooseScenes: false,
         resetSceneNumbers: false,
         includeIndex: false,
+        arcId: null,
       });
     });
 
@@ -543,6 +632,7 @@ describe('ManuscriptScreen', () => {
       includeLooseScenes: false,
       resetSceneNumbers: false,
       includeIndex: false,
+      arcId: null,
     };
 
     mockExportManuscript.mockRejectedValueOnce(new Error('disk full'));
@@ -579,6 +669,7 @@ describe('ManuscriptScreen', () => {
           includeLooseScenes: false,
           resetSceneNumbers: false,
           includeIndex: false,
+          arcId: null,
         });
       });
 
@@ -591,5 +682,213 @@ describe('ManuscriptScreen', () => {
     } finally {
       restorePlatform.restore();
     }
+  });
+
+  it('opens the index modal listing chapters, scenes and the appendix', async () => {
+    const view = await render(<ManuscriptScreen />);
+
+    expect(view.queryByTestId('manuscript-index-modal')).toBeNull();
+    expect(view.getByTestId('manuscript-index-open')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    expect(view.getByTestId('manuscript-index-modal')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-container-ch-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-2')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-loose-heading')).toBeTruthy();
+    expect(view.getByText('export_manuscript_loose_heading')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-3')).toBeTruthy();
+    // No position yet: nothing highlighted.
+    expect(
+      view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState,
+    ).toMatchObject({ selected: false });
+  });
+
+  it('collapses an index chapter without touching the list', async () => {
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
+    expect(view.queryByTestId('manuscript-index-scene-s-1')).toBeNull();
+    // The manuscript list itself still shows the scene.
+    expect(view.getByText('1. Opening')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
+    expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
+  });
+
+  it('jumps the list to the picked index scene and closes the modal', async () => {
+    const scrollSpy = jest.spyOn(FlatList.prototype, 'scrollToIndex').mockImplementation(() => {});
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-3'));
+
+    expect(view.queryByTestId('manuscript-index-modal')).toBeNull();
+    expect(scrollSpy).toHaveBeenCalledWith({ index: 4, animated: true, viewPosition: 0.1 });
+  });
+
+  it('highlights the search match position when the index reopens', async () => {
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.changeText(view.getByTestId('manuscript-search'), 'waves');
+    await fireEvent.press(view.getByTestId('manuscript-search-next'));
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    expect(
+      view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState,
+    ).toMatchObject({ selected: true });
+    expect(
+      view.getByTestId('manuscript-index-scene-s-2').props.accessibilityState,
+    ).toMatchObject({ selected: false });
+  });
+
+  it('lists route scenes flat in the index for branching stories', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    expect(view.getByTestId('manuscript-index-step-step-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-step-step-2')).toBeTruthy();
+    expect(view.queryByText('export_manuscript_loose_heading')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('manuscript-index-close'));
+    expect(view.queryByTestId('manuscript-index-modal')).toBeNull();
+  });
+
+  it('shows every arc without an active arc', async () => {
+    mockArcs = twoArcs;
+    mockManuscriptData = twoArcData();
+    const view = await render(<ManuscriptScreen />);
+
+    expect(view.getByText('1. Arrival')).toBeTruthy();
+    expect(view.getByText('2. Departure')).toBeTruthy();
+    expect(view.getByText('Quake')).toBeTruthy();
+    expect(view.getByText('Beta.')).toBeTruthy();
+    expect(view.getByText('Rumble.')).toBeTruthy();
+  });
+
+  it('hides other-arc chapters and scenes when an arc is active', async () => {
+    mockArcs = twoArcs;
+    mockActiveArcId = 'arc-1';
+    mockManuscriptData = twoArcData();
+    const view = await render(<ManuscriptScreen />);
+
+    expect(view.getByText('1. Arrival')).toBeTruthy();
+    expect(view.getByText('1. Opening')).toBeTruthy();
+    expect(view.getByText('Alpha.')).toBeTruthy();
+    // Unchaptered scenes stay visible under any arc.
+    expect(view.getByText('unchaptered_scenes')).toBeTruthy();
+    expect(view.getByText('Lost pages.')).toBeTruthy();
+    expect(view.queryByText('2. Departure')).toBeNull();
+    expect(view.queryByText('Beta.')).toBeNull();
+    // Event containers of the other arc hide with their scenes.
+    expect(view.queryByText('Quake')).toBeNull();
+    expect(view.queryByText('Rumble.')).toBeNull();
+  });
+
+  it('keeps the index modal on the same filtered sections as the list', async () => {
+    mockArcs = twoArcs;
+    mockActiveArcId = 'arc-1';
+    mockManuscriptData = twoArcData();
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    expect(view.getByTestId('manuscript-index-container-ch-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-3')).toBeTruthy();
+    expect(view.queryByTestId('manuscript-index-container-ch-2')).toBeNull();
+    expect(view.queryByTestId('manuscript-index-scene-s-2')).toBeNull();
+    expect(view.queryByTestId('manuscript-index-container-ev-1')).toBeNull();
+  });
+
+  it('drops route steps of other-arc chapters in branching stories', async () => {
+    mockStoryType = 'branching';
+    mockArcs = twoArcs;
+    mockActiveArcId = 'arc-1';
+    const data = branchingData();
+    mockManuscriptData = {
+      ...data,
+      chapters: [makeChapter({ arcId: 'arc-2' })],
+      scenes: [
+        makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
+        makeScene({ id: 's-b', name: 'Beta', index: 2, chapterId: null, body: 'Second.' }),
+      ],
+    };
+    const view = await render(<ManuscriptScreen />);
+
+    expect(view.queryByText('First.')).toBeNull();
+    expect(view.getByText('1. Beta')).toBeTruthy();
+    expect(view.getByText('Second.')).toBeTruthy();
+  });
+
+  it('passes the story arcs to the export modal', async () => {
+    mockArcs = twoArcs;
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    expect(mockModalProps).toMatchObject({ arcs: twoArcs });
+  });
+
+  it('exports a single arc under the arc title', async () => {
+    mockArcs = twoArcs;
+    mockManuscriptData = twoArcData();
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'docx',
+        includeSceneNames: true,
+        includeLooseScenes: true,
+        resetSceneNumbers: false,
+        includeIndex: false,
+        arcId: 'arc-2',
+      });
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const call = mockExportManuscript.mock.calls[0][0];
+    expect(call.storyTitle).toBe('Second Arc');
+    expect(call.manuscript.title).toBe('Second Arc');
+    expect(sceneNames(call)).toEqual(['Leaving', 'Tremor', 'Fragment']);
+    const text = JSON.stringify(call.manuscript.blocks);
+    expect(text).toContain('Beta.');
+    expect(text).toContain('Rumble.');
+    expect(text).not.toContain('Alpha.');
+  });
+
+  it('exports every arc under the story title by default', async () => {
+    mockArcs = twoArcs;
+    mockActiveArcId = 'arc-1';
+    mockManuscriptData = twoArcData();
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'docx',
+        includeSceneNames: true,
+        includeLooseScenes: true,
+        resetSceneNumbers: false,
+        includeIndex: false,
+        arcId: null,
+      });
+    });
+
+    // The export arc is the modal's own pick: all-arcs still ships the whole
+    // story even while the reading list shows a single arc.
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const call = mockExportManuscript.mock.calls[0][0];
+    expect(call.storyTitle).toBe('My Story');
+    expect(call.manuscript.title).toBe('My Story');
+    expect(sceneNames(call)).toEqual(['Opening', 'Leaving', 'Tremor', 'Fragment']);
   });
 });

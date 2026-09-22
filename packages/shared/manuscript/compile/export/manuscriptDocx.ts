@@ -76,7 +76,9 @@ export function buildManuscriptDocument(
               anchor: entry.bookmarkId,
               children: [new TextRun(entry.text)],
             }),
-            new Tab(),
+            // A tab only triggers the dot leader inside a run: bare under
+            // <w:p> it is invalid and readers drop it with the dots.
+            new TextRun({ children: [new Tab()] }),
             new PageReference(entry.bookmarkId, { hyperlink: true }),
           ],
           tabStops: [{ type: TabStopType.RIGHT, position: TOC_TAB_TWIPS, leader: LeaderType.DOT }],
@@ -189,6 +191,9 @@ export function buildManuscriptDocument(
     }
   }
   return new Document({
+    // PAGEREF fields (index numbers, "go to page" choices) carry no cached
+    // result: readers resolve them on open instead of showing blanks.
+    features: { updateFields: true },
     sections: [
       {
         children,

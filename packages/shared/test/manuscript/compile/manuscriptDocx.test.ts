@@ -61,6 +61,13 @@ function pageReferences(xml: string): string[] {
   return Array.from(xml.matchAll(/PAGEREF ([A-Za-z0-9_-]+)/g), (match) => match[1]);
 }
 
+async function settingsXml(bytes: Uint8Array): Promise<string> {
+  const zip = await JSZip.loadAsync(bytes);
+  const file = zip.file('word/settings.xml');
+  if (!file) throw new Error('no settings.xml in the package');
+  return file.async('string');
+}
+
 describe('buildManuscriptDocxBytes', () => {
   it('packs a valid zip carrying the manuscript', async () => {
     const bytes = await buildManuscriptDocxBytes(manuscript(true), { goToPage: 'Go to page', tocHeading: 'Contents' });
@@ -143,6 +150,22 @@ describe('buildManuscriptDocxBytes', () => {
     for (const reference of references) expect(bookmarks).toContain(reference);
     expect(xml).toContain('w:leader="dot"');
     expect(xml).toContain('<w:br w:type="page"/>');
+  });
+
+  it('renders index leaders as tab runs and asks readers to resolve page numbers', async () => {
+    const bytes = await buildManuscriptDocxBytes(
+      manuscript(true),
+      { goToPage: 'Go to page', tocHeading: 'Contents' },
+      { includeToc: true },
+    );
+    const xml = await documentXml(bytes);
+
+    // A bare <w:tab/> under <w:p> is invalid: readers drop it with the dots.
+    expect(xml).toContain('<w:r><w:tab/></w:r>');
+    expect(xml).not.toContain('</w:hyperlink><w:tab/>');
+    // PAGEREF fields carry no cached result: without updateFields the numbers
+    // stay blank until the user refreshes them by hand.
+    expect(await settingsXml(bytes)).toContain('w:updateFields');
   });
 
   it('omits the index and chapter bookmarks unless enabled', async () => {

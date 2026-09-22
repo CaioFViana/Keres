@@ -103,7 +103,10 @@ const ServerManagementScreen = () => {
   const [prevLoadAndPingServers, setPrevLoadAndPingServers] = useState(() => loadAndPingServers);
   if (isFocused !== prevIsFocused || loadAndPingServers !== prevLoadAndPingServers) {
     setPrevIsFocused(isFocused);
-    setPrevLoadAndPingServers(loadAndPingServers);
+    // Wrapped: the state holds the callback itself, and an unwrapped function argument would
+    // run as a state updater instead - invoking a DB read during render on every focus change
+    // and looping into "Too many re-renders".
+    setPrevLoadAndPingServers(() => loadAndPingServers);
     if (isFocused) {
       setLoading(true);
     }

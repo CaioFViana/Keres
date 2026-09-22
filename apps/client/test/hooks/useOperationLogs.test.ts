@@ -126,6 +126,25 @@ describe('useOperationLogs', () => {
     expect(mockService.getRecentOperationLogs).toHaveBeenCalledTimes(calls);
   });
 
+  it('survives a refetch toggle without a re-render loop', async () => {
+    // `fetchLogs` is kept in state for the render-phase comparison, so storing it unwrapped
+    // would invoke it as a state updater on every toggle and loop into "Too many re-renders".
+    const view = await renderHook(
+      ({ shouldRefetch }: { shouldRefetch: boolean }) =>
+        useOperationLogs({ storyId: 'story-1', limit: 5, shouldRefetch }),
+      { initialProps: { shouldRefetch: false } },
+    );
+    await waitFor(() => expect(view.result.current.loading).toBe(false));
+    const calls = mockService.getRecentOperationLogs.mock.calls.length;
+
+    await act(async () => {
+      view.rerender({ shouldRefetch: true });
+    });
+    await waitFor(() =>
+      expect(mockService.getRecentOperationLogs.mock.calls.length).toBe(calls + 1),
+    );
+  });
+
   it('fetches nothing without a database and scopes reads to guests without a user', async () => {
     (useDrizzle as jest.Mock).mockReturnValue(null);
     const nodb = await renderHook(() => useOperationLogs({ storyId: 'story-1', limit: 5 }));

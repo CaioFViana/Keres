@@ -50,9 +50,11 @@ jest.mock('@expo/vector-icons', () => {
   };
 });
 
+const mockIsFocused = { value: true };
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
-  useIsFocused: () => true,
+  useIsFocused: () => mockIsFocused.value,
 }));
 
 jest.mock('../../../src/theme', () => {
@@ -153,6 +155,7 @@ function alertButtons(callIndex = 0): AlertButton[] {
 describe('ServerManagementScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsFocused.value = true;
     mockGetAllServers.mockResolvedValue([online, offline]);
     mockApiGet.mockImplementation((url: string) =>
       String(url).startsWith('https://a.example')
@@ -346,5 +349,27 @@ describe('ServerManagementScreen', () => {
         expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
       );
     });
+  });
+
+  it('survives losing and regaining focus without a re-render loop', async () => {
+    // Switching drawer menus flips `isFocused` while the screen stays mounted. The loader
+    // callback is kept in state for the render-phase comparison, so storing it unwrapped
+    // would invoke it as a state updater on every toggle and loop into "Too many re-renders".
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Main');
+    const callsAfterMount = mockGetAllServers.mock.calls.length;
+
+    mockIsFocused.value = false;
+    await act(async () => {
+      view.rerender(<ServerManagementScreen />);
+    });
+    expect(mockGetAllServers.mock.calls.length).toBe(callsAfterMount);
+
+    mockIsFocused.value = true;
+    await act(async () => {
+      view.rerender(<ServerManagementScreen />);
+    });
+    await view.findByText('Main');
+    expect(mockGetAllServers.mock.calls.length).toBe(callsAfterMount + 1);
   });
 });

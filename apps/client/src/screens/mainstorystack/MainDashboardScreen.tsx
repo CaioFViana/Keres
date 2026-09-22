@@ -3,7 +3,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler } from 'react-native';
+import { BackHandler, Platform } from 'react-native';
 
 import { useDrizzle } from '../../db';
 import { useScreenTour } from '../../guides/useScreenTour';
@@ -48,6 +48,12 @@ const MainDashboardScreen = () => {
   const backPressTimer = useRef<number | null>(null);
 
   useEffect(() => {
+    // The web build has no hardware back button; registering only logs
+    // "BackHandler is not supported on web" noise.
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     const backAction = () => {
       const rootStackNavigation = navigation.getParent();
 

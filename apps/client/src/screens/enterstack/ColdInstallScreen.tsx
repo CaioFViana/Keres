@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import { migrate } from '../../db/migrate';
 import { setAuthDb } from '../../services/AuthTokenManager';
@@ -49,6 +49,12 @@ const ColdInstallScreen = () => {
   const backPressTimer = useRef<number | null>(null);
 
   useEffect(() => {
+    // The web build has no hardware back button; registering only logs
+    // "BackHandler is not supported on web" noise.
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     const backAction = () => {
       if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
         BackHandler.exitApp();

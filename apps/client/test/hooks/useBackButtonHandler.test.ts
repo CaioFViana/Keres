@@ -148,6 +148,13 @@ it('registers the focused child navigator as the header back action', async () =
   expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
 });
 
+it('never touches BackHandler on web, where it only logs a warning', async () => {
+  setPlatform('web');
+  await renderHook(() => useBackButtonHandler());
+
+  expect(BackHandler.addEventListener).not.toHaveBeenCalled();
+});
+
 it('uses a one-shot cross-stack return before the destination stack back action', async () => {
   const returnToOrigin = jest.fn();
   useHeaderBackActionStore.getState().setCrossStackReturnAction(returnToOrigin);

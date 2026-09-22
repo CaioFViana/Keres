@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { BackHandler } from 'react-native';
+import { BackHandler, Platform } from 'react-native';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 
 interface BackButtonHandlerOptions {
@@ -93,6 +93,12 @@ export const useBackButtonHandler = ({
   );
 
   useEffect(() => {
+    // The web build has no hardware back button; registering only logs
+    // "BackHandler is not supported on web" noise on every screen mount.
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     const backAction = () => {
       const parentNavigation = navigation.getParent();
       // -1. An open drawer is the topmost layer: hardware back dismisses it before anything

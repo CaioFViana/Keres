@@ -164,7 +164,10 @@ export function useOperationLogs({
   const [prevFetchLogs, setPrevFetchLogs] = useState(() => fetchLogs);
   const [prevShouldRefetch, setPrevShouldRefetch] = useState(shouldRefetch);
   if (fetchLogs !== prevFetchLogs || shouldRefetch !== prevShouldRefetch) {
-    setPrevFetchLogs(fetchLogs);
+    // Wrapped: the state holds the callback itself, and an unwrapped function argument would
+    // run as a state updater instead - invoking a DB read during render and looping into
+    // "Too many re-renders".
+    setPrevFetchLogs(() => fetchLogs);
     setPrevShouldRefetch(shouldRefetch);
     if (shouldRefetch) {
       setPage(1);

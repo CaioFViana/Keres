@@ -9,7 +9,15 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  BackHandler,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useDrizzle } from '../../db';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
@@ -78,6 +86,11 @@ const StorySelectionScreen = () => {
 
   useEffect(() => {
     if (!isFocused) {
+      return;
+    }
+    // The web build has no hardware back button; registering only logs
+    // "BackHandler is not supported on web" noise.
+    if (Platform.OS === 'web') {
       return;
     }
 

@@ -366,7 +366,7 @@ describe('BoardCanvasScreen', () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
     expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:0');
-    expect(view.getByText('objects_note')).toBeTruthy();
+    expect(view.getByTestId('action-add-note')).toBeTruthy();
     expect(view.getByTestId('controls-export')).toBeTruthy();
   });
 
@@ -374,13 +374,13 @@ describe('BoardCanvasScreen', () => {
     mockCanEdit = false;
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    expect(view.queryByText('objects_note')).toBeNull();
+    expect(view.queryByTestId('action-add-note')).toBeNull();
   });
 
   it('adds a note and opens its sheet', async () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    await fireEvent.press(view.getByText('objects_note'));
+    await fireEvent.press(view.getByTestId('action-add-note'));
     expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:1');
     await fireEvent.press(view.getByTestId('canvas-select-first'));
     expect(view.getByTestId('node-kind').props.children).toBe('note');
@@ -430,7 +430,7 @@ describe('BoardCanvasScreen', () => {
   it('saves and reverts through header actions', async () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    await fireEvent.press(view.getByText('objects_note'));
+    await fireEvent.press(view.getByTestId('action-add-note'));
     const Actions = (global as any).__headerActions;
     const actions = await render(<>{Actions()}</>);
     expect(actions.getByTestId('header-dirty').props.children).toBe('dirty');
@@ -452,7 +452,7 @@ describe('BoardCanvasScreen', () => {
       mockUpdateBoard.mockRejectedValue(new Error('boom'));
       const view = await render(<BoardCanvasScreen />);
       expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-      await fireEvent.press(view.getByText('objects_note'));
+      await fireEvent.press(view.getByTestId('action-add-note'));
       const Actions = (global as any).__headerActions;
       const actions = await render(<>{Actions()}</>);
       await fireEvent.press(actions.getByTestId('header-save'));

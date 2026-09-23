@@ -121,3 +121,16 @@ Novo `packages/shared/schemas/CanvasOverlaySchemas.ts`:
 `bun run test` (maxWorkers 2, 512MB), `typecheck`, `lint`, `locales:audit`;
 testes focados mínimos por fatia no layout normal do repo; gate de 600 linhas
 por arquivo.
+
+## Errata — toolbars e edição (feita)
+
+- Toolbars viraram fileira de ícones (`CanvasActionBar`, padrão manuscript):
+  mapas = imagem, locations, marker, objetos, editar; boards = entidade,
+  objetos, nota, editar. Pickers abrem o exato mesmo modal via `trigger`
+  no `MultiSelectPill`; nota saiu de dentro do pill no board.
+- Edição refeita no molde do layout dos nós: select não abre mais o sheet
+  (só criação e o botão de detalhes abrem); seleção mostra handles +
+  coluna (detalhes, frente, trás, desselecionar); fechar o sheet volta aos
+  handles em vez de desselecionar; barra de select com Concluir; camada
+  via `moveOverlayLayer` (mesma matemática dos nós). Sem cadeado — schema
+  não tem `locked` (follow-up natural).

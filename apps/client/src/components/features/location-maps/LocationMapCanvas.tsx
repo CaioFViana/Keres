@@ -493,6 +493,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               onCommitMove={overlayCallbacks.onCommitMove}
               onCommitVertex={overlayCallbacks.onCommitVertex}
               onCommitRect={overlayCallbacks.onCommitRect}
+              onDetails={overlayCallbacks.onOpenOverlaySheet}
+              onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
+              onDeselect={overlayCallbacks.onDeselectOverlay}
             />
           )}
         </View>

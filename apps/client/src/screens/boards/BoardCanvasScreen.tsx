@@ -482,10 +482,9 @@ const BoardCanvasScreen = () => {
     placementCenter: () => canvasRef.current?.viewportWorldCenter() ?? { x: 200, y: 160 },
     onAddNote: addNote,
   });
-  const selectedOverlay =
-    (content.overlays ?? []).find(
-      (overlay) => overlay.id === overlayActions.selectedOverlayId,
-    ) ?? null;
+  const sheetOverlay =
+    (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
+    null;
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -509,11 +508,14 @@ const BoardCanvasScreen = () => {
           groupedOptions={groupedOptions}
           pickerValues={pickerValues}
           onPickEntity={handlePickEntity}
+          onAddNote={addNote}
           onObjectsAction={overlayActions.handleObjectsAction}
           drawTool={overlayActions.drawTool}
           canFinish={overlayActions.canFinish}
           onFinishDraw={overlayActions.finishDraft}
           onCancelDraw={overlayActions.cancelDraw}
+          selectMode={overlayActions.selectMode}
+          onDoneSelect={overlayActions.cancelInteraction}
         />
       )}
       <BoardCanvas
@@ -608,14 +610,14 @@ const BoardCanvasScreen = () => {
           onClose={() => setConnectionPair(null)}
         />
       )}
-      {selectedOverlay && (
+      {sheetOverlay && (
         <OverlaySheet
-          overlay={selectedOverlay}
+          overlay={sheetOverlay}
           canEdit={canEdit}
           defaultColor={colors.text}
-          onChange={(patch) => overlayActions.updateOverlay(selectedOverlay.id, patch)}
-          onRemove={() => overlayActions.deleteOverlay(selectedOverlay.id)}
-          onClose={() => overlayActions.selectOverlay(null)}
+          onChange={(patch) => overlayActions.updateOverlay(sheetOverlay.id, patch)}
+          onRemove={() => overlayActions.deleteOverlay(sheetOverlay.id)}
+          onClose={overlayActions.closeOverlaySheet}
         />
       )}
     </View>

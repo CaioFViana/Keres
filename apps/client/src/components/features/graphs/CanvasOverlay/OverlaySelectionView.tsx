@@ -5,7 +5,8 @@ import {
   type SpatialPoint,
 } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 
 interface OverlaySelectionViewProps {
@@ -16,6 +17,9 @@ interface OverlaySelectionViewProps {
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;
   onCommitRect: (id: string, rect: { x: number; y: number; width: number; height: number }) => void;
+  onDetails: (id: string) => void;
+  onMoveLayer: (id: string, direction: 'front' | 'back') => void;
+  onDeselect: () => void;
 }
 
 const HANDLE_SCREEN = 18;
@@ -25,9 +29,10 @@ type Corner = 0 | 1 | 2 | 3;
 
 /**
  * Native editing chrome for the selected overlay: a dashed bounds box, a move badge, vertex
- * handles (line/polygon) and corner handles (frame/shape). The box itself is touch-transparent
- * so taps fall through to the nodes below; only the badge and handles capture. Transient drag
- * state stays local and commits on release, like node drags.
+ * handles (line/polygon), corner handles (frame/shape) and the action column (details,
+ * raise, lower, deselect - the node layout chrome, minus resize). The box itself is
+ * touch-transparent so taps fall through to the nodes below; only the badge, handles
+ * and buttons capture. Transient drag state stays local and commits on release.
  */
 const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   overlay,
@@ -37,8 +42,12 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   onCommitMove,
   onCommitVertex,
   onCommitRect,
+  onDetails,
+  onMoveLayer,
+  onDeselect,
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const bounds = canvasOverlayBounds(overlay);
   const pad = HANDLE_SCREEN / scale;
   const [moveOffset, setMoveOffset] = useState({ x: 0, y: 0 });
@@ -113,7 +122,39 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
       justifyContent: 'center',
       backgroundColor: colors.primary,
     },
+    chromeButton: {
+      position: 'absolute',
+      right: -handle / 2,
+      width: handle + 8,
+      height: handle + 8,
+      borderRadius: (handle + 8) / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+    },
   });
+
+  const chromeButtons = (
+    [
+      { testID: 'overlay-chrome-deselect', icon: 'close', label: t('overlay_deselect'), onPress: onDeselect },
+      { testID: 'overlay-chrome-details', icon: 'create-outline', label: t('overlay_edit_details'), onPress: () => onDetails(overlay.id) },
+      { testID: 'overlay-chrome-raise', icon: 'layers', label: t('overlay_bring_to_front'), onPress: () => onMoveLayer(overlay.id, 'front') },
+      { testID: 'overlay-chrome-lower', icon: 'layers-outline', label: t('overlay_send_to_back'), onPress: () => onMoveLayer(overlay.id, 'back') },
+    ] as const
+  ).map((button, index) => (
+    <TouchableOpacity
+      key={button.testID}
+      testID={button.testID}
+      accessibilityRole="button"
+      accessibilityLabel={button.label}
+      onPress={button.onPress}
+      style={[styles.chromeButton, { top: -handle / 2 + index * (handle + 14) }]}
+    >
+      <Ionicons name={button.icon} size={handle * 0.7} color={colors.primary} />
+    </TouchableOpacity>
+  ));
 
   return (
     <View testID="overlay-selection" style={styles.wrapper} pointerEvents="box-none">
@@ -121,6 +162,7 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
       <View testID="overlay-move" style={styles.moveBadge} {...moveResponder.panHandlers}>
         <Ionicons name="move" size={handle * 0.7} color={colors.surface} />
       </View>
+      {chromeButtons}
       {vertices?.map((point, index) => (
         <DragHandle
           key={index}

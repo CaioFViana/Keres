@@ -43,6 +43,9 @@ const noop = () => {};
 const overlayCallbacks = {
   onDrawTap: noop,
   onStampPlace: noop,
+  onDeselectOverlay: noop,
+  onOpenOverlaySheet: noop,
+  onMoveOverlayLayer: noop,
   onDrawRect: noop,
   onSelectOverlay: noop,
   onCommitMove: noop,

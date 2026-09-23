@@ -78,6 +78,11 @@ interface MultiSelectPillProps {
   pillStyle?: StyleProp<ViewStyle>;
   /** Compact text for large selections, without losing the real selection inside the modal. */
   selectionSummary?: string;
+  /**
+   * Replaces the pill frame with a custom trigger (an icon button in a toolbar); the modal
+   * stays identical. The frame's label and margins are skipped - the caller lays out.
+   */
+  trigger?: (open: () => void) => React.ReactNode;
 }
 
 const FLAT_GROUP_KEY = '__flat__';
@@ -106,6 +111,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   triggerStyle,
   pillStyle,
   selectionSummary,
+  trigger,
 }) => {
   const { colors, isDarkMode } = useTheme();
   const { t } = useTranslation();
@@ -415,8 +421,11 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   });
 
   return (
-    <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View style={trigger ? style : [styles.container, style]}>
+      {!trigger && label && <Text style={styles.label}>{label}</Text>}
+      {trigger ? (
+        trigger(disabled ? () => undefined : openModal)
+      ) : (
       <TouchableOpacity
         testID="multiselect-trigger"
         onPress={openModal}
@@ -464,6 +473,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
           />
         </View>
       </TouchableOpacity>
+      )}
 
       <ResponsiveModal
         visible={modalVisible}

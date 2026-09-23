@@ -35,6 +35,11 @@ export interface OverlayCanvasCallbacks {
   /** Stamps commit on a single tap, free of the vertex snap, so they get their own tap. */
   onStampPlace: (point: SpatialPoint) => void;
   onSelectOverlay: (id: string | null) => void;
+  /** Clears the selection but stays in select mode, for the next pick. */
+  onDeselectOverlay: () => void;
+  /** Opens the label/color editor for the selected overlay. */
+  onOpenOverlaySheet: (id: string) => void;
+  onMoveOverlayLayer: (id: string, direction: 'front' | 'back') => void;
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;
   onCommitRect: (

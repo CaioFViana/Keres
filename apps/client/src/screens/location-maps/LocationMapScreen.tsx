@@ -354,10 +354,9 @@ const LocationMapScreen = () => {
     generateOverlayId,
     placementCenter: () => canvasRef.current?.viewportWorldCenter() ?? { x: 80, y: 80 },
   });
-  const selectedOverlay =
-    (content.overlays ?? []).find(
-      (overlay) => overlay.id === overlayActions.selectedOverlayId,
-    ) ?? null;
+  const sheetOverlay =
+    (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
+    null;
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !map) {
@@ -384,6 +383,8 @@ const LocationMapScreen = () => {
           canFinish={overlayActions.canFinish}
           onFinishDraw={overlayActions.finishDraft}
           onCancelDraw={overlayActions.cancelDraw}
+          selectMode={overlayActions.selectMode}
+          onDoneSelect={overlayActions.cancelInteraction}
         />
       )}
       <LocationMapCanvas
@@ -555,14 +556,14 @@ const LocationMapScreen = () => {
           onClose={() => setMarkerConnectionPair(null)}
         />
       )}
-      {selectedOverlay && (
+      {sheetOverlay && (
         <OverlaySheet
-          overlay={selectedOverlay}
+          overlay={sheetOverlay}
           canEdit={canEdit}
           defaultColor={colors.primary}
-          onChange={(patch) => overlayActions.updateOverlay(selectedOverlay.id, patch)}
-          onRemove={() => overlayActions.deleteOverlay(selectedOverlay.id)}
-          onClose={() => overlayActions.selectOverlay(null)}
+          onChange={(patch) => overlayActions.updateOverlay(sheetOverlay.id, patch)}
+          onRemove={() => overlayActions.deleteOverlay(sheetOverlay.id)}
+          onClose={overlayActions.closeOverlaySheet}
         />
       )}
       {trajectories.pickerOpen && (

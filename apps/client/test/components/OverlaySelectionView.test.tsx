@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import type { CanvasOverlayType } from '@keres/shared';
 import { PanResponder } from 'react-native';
 import OverlaySelectionView from '../../src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
@@ -7,6 +7,7 @@ jest.mock('../../src/theme', () => ({
   useTheme: () => ({ colors: { primary: '#85f', surface: '#111' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
 const POLYGON: CanvasOverlayType = {
   id: 'ov-1',
@@ -31,6 +32,9 @@ async function setup(overlay: CanvasOverlayType, scale = 2) {
     onCommitMove: jest.fn(),
     onCommitVertex: jest.fn(),
     onCommitRect: jest.fn(),
+    onDetails: jest.fn(),
+    onMoveLayer: jest.fn(),
+    onDeselect: jest.fn(),
   };
   const view = await render(
     <OverlaySelectionView overlay={overlay} scale={scale} {...callbacks} />,
@@ -95,5 +99,23 @@ describe('OverlaySelectionView', () => {
       width: 70,
       height: 50,
     });
+  });
+
+  it('routes the action column to details, layers and deselect', async () => {
+    const { view, callbacks } = await setup(POLYGON);
+
+    expect(view.getByLabelText('overlay_deselect')).toBeTruthy();
+    expect(view.getByLabelText('overlay_edit_details')).toBeTruthy();
+    expect(view.getByLabelText('overlay_bring_to_front')).toBeTruthy();
+    expect(view.getByLabelText('overlay_send_to_back')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('overlay-chrome-details'));
+    expect(callbacks.onDetails).toHaveBeenCalledWith('ov-1');
+    await fireEvent.press(view.getByTestId('overlay-chrome-raise'));
+    expect(callbacks.onMoveLayer).toHaveBeenCalledWith('ov-1', 'front');
+    await fireEvent.press(view.getByTestId('overlay-chrome-lower'));
+    expect(callbacks.onMoveLayer).toHaveBeenCalledWith('ov-1', 'back');
+    await fireEvent.press(view.getByTestId('overlay-chrome-deselect'));
+    expect(callbacks.onDeselect).toHaveBeenCalledTimes(1);
   });
 });

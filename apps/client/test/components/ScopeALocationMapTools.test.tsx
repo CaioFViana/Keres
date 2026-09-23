@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import type { LocationMapContentType } from '@keres/shared';
 import React from 'react';
 import LocationMapConnectionModal from '../../src/components/features/location-maps/LocationMapConnectionModal';
@@ -121,6 +121,8 @@ describe('LocationMapTools', () => {
         canFinish={false}
         onFinishDraw={jest.fn()}
         onCancelDraw={jest.fn()}
+        selectMode={false}
+        onDoneSelect={jest.fn()}
       />,
     );
 
@@ -143,8 +145,8 @@ describe('LocationMapTools', () => {
     await act(async () => {
       images.props.onSelectionChange(['gallery-1']);
       locations.props.onSelectionChange(['loc-1']);
-      view.getByTestId('location_map_add_marker').props.onPress();
     });
+    await fireEvent.press(view.getByTestId('action-add-marker'));
     expect(onAddImages).toHaveBeenCalledWith(['gallery-1']);
     expect(onAddLocations).toHaveBeenCalledWith(['loc-1']);
     expect(onAddMarker).toHaveBeenCalledTimes(1);
@@ -155,6 +157,10 @@ describe('LocationMapTools', () => {
       objects.props.onSelectionChange(['draw:line']);
     });
     expect(onObjectsAction).toHaveBeenCalledWith('draw:line');
+
+    // The edit button arms the select tool directly.
+    await fireEvent.press(view.getByTestId('action-edit-overlays'));
+    expect(onObjectsAction).toHaveBeenCalledWith('select');
   });
 
   it('swaps the pickers for the draw bar while a tool is armed', async () => {
@@ -172,6 +178,8 @@ describe('LocationMapTools', () => {
         canFinish
         onFinishDraw={onFinishDraw}
         onCancelDraw={onCancelDraw}
+        selectMode={false}
+        onDoneSelect={jest.fn()}
       />,
     );
 
@@ -183,6 +191,33 @@ describe('LocationMapTools', () => {
     });
     expect(onFinishDraw).toHaveBeenCalledTimes(1);
     expect(onCancelDraw).toHaveBeenCalledTimes(1);
+  });
+
+  it('swaps the pickers for the select bar while selecting', async () => {
+    const onDoneSelect = jest.fn();
+    const view = await render(
+      <LocationMapTools
+        imageOptions={imageOptions}
+        locationOptions={locationOptions}
+        onAddImages={jest.fn()}
+        onAddLocations={jest.fn()}
+        onAddMarker={jest.fn()}
+        onObjectsAction={jest.fn()}
+        drawTool={null}
+        canFinish={false}
+        onFinishDraw={jest.fn()}
+        onCancelDraw={jest.fn()}
+        selectMode
+        onDoneSelect={onDoneSelect}
+      />,
+    );
+
+    expect(view.queryAllByTestId('multi-select-pill')).toHaveLength(0);
+    expect(view.getByText('overlay_select_hint')).toBeTruthy();
+    await act(async () => {
+      view.getByTestId('overlay_select_done').props.onPress();
+    });
+    expect(onDoneSelect).toHaveBeenCalledTimes(1);
   });
 });
 

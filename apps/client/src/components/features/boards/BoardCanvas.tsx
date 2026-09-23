@@ -531,6 +531,9 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
             onCommitMove={overlayCallbacks.onCommitMove}
             onCommitVertex={overlayCallbacks.onCommitVertex}
             onCommitRect={overlayCallbacks.onCommitRect}
+            onDetails={overlayCallbacks.onOpenOverlaySheet}
+            onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
+            onDeselect={overlayCallbacks.onDeselectOverlay}
           />
         )}
       </GraphCanvasFrame>

@@ -45,6 +45,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   const [drawTool, setDrawTool] = useState<OverlayDrawTool | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
+  const [sheetOverlayId, setSheetOverlayId] = useState<string | null>(null);
   const [draftPoints, setDraftPoints] = useState<SpatialPoint[]>([]);
   const placements = useRef(0);
 
@@ -64,11 +65,13 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   const cancelInteraction = useCallback(() => {
     clearTools();
     setSelectedOverlayId(null);
+    setSheetOverlayId(null);
   }, [clearTools]);
 
   const startDraw = useCallback(
     (tool: OverlayDrawTool) => {
       setSelectedOverlayId(null);
+      setSheetOverlayId(null);
       setSelectMode(false);
       setDraftPoints([]);
       setDrawTool(tool);
@@ -79,12 +82,14 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   const cancelDraw = useCallback(() => {
     setDrawTool(null);
     setDraftPoints([]);
+    setSheetOverlayId(null);
   }, []);
 
   const startSelect = useCallback(() => {
     setDrawTool(null);
     setDraftPoints([]);
     setSelectedOverlayId(null);
+    setSheetOverlayId(null);
     setSelectMode(true);
   }, []);
 
@@ -111,6 +116,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
         : { id: generateOverlayId(), kind: 'polygon', points: draftPoints };
     patchOverlays((overlays) => [...overlays, overlay]);
     setSelectedOverlayId(overlay.id);
+    setSheetOverlayId(overlay.id);
     setDrawTool(null);
     setDraftPoints([]);
   }, [draftPoints, drawTool, generateOverlayId, patchOverlays]);
@@ -137,6 +143,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
             };
       patchOverlays((overlays) => [...overlays, overlay]);
       setSelectedOverlayId(overlay.id);
+      setSheetOverlayId(overlay.id);
       setDrawTool(null);
     },
     [generateOverlayId, patchOverlays],
@@ -158,6 +165,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
       };
       patchOverlays((overlays) => [...overlays, overlay]);
       setSelectedOverlayId(overlay.id);
+      setSheetOverlayId(overlay.id);
     },
     [generateOverlayId, patchOverlays, placementCenter],
   );
@@ -183,10 +191,44 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   );
 
   const selectOverlay = useCallback((id: string | null) => {
-    // A miss also leaves select mode: tap empty space to cancel the tool.
-    setSelectMode(false);
+    if (id === null) {
+      // A miss leaves select mode: tap empty space to cancel the tool.
+      setSelectMode(false);
+      setSelectedOverlayId(null);
+      return;
+    }
+    // A hit keeps the mode: the catcher unmounts while something is selected so the
+    // handles stay touchable, and comes back on deselect for the next pick.
     setSelectedOverlayId(id);
   }, []);
+
+  const deselectOverlay = useCallback(() => {
+    setSelectedOverlayId(null);
+    setSheetOverlayId(null);
+  }, []);
+
+  const openOverlaySheet = useCallback((id: string) => {
+    setSheetOverlayId(id);
+  }, []);
+
+  const closeOverlaySheet = useCallback(() => {
+    setSheetOverlayId(null);
+  }, []);
+
+  const moveOverlayLayer = useCallback(
+    (id: string, direction: 'front' | 'back') => {
+      // Same math as the node layer move: jump past the current extreme.
+      patchOverlays((overlays) => {
+        const levels = overlays.map((overlay) => overlay.zIndex ?? 0);
+        const target =
+          direction === 'front' ? Math.max(0, ...levels) + 1 : Math.min(0, ...levels) - 1;
+        return overlays.map((overlay) =>
+          overlay.id === id ? { ...overlay, zIndex: target } : overlay,
+        );
+      });
+    },
+    [patchOverlays],
+  );
 
   const placeStamp = useCallback(
     (point: SpatialPoint) => {
@@ -199,6 +241,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
       };
       patchOverlays((overlays) => [...overlays, overlay]);
       setSelectedOverlayId(overlay.id);
+      setSheetOverlayId(overlay.id);
       setDrawTool(null);
     },
     [generateOverlayId, patchOverlays],
@@ -217,6 +260,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     (id: string) => {
       patchOverlays((overlays) => overlays.filter((overlay) => overlay.id !== id));
       setSelectedOverlayId((current) => (current === id ? null : current));
+      setSheetOverlayId((current) => (current === id ? null : current));
     },
     [patchOverlays],
   );
@@ -292,8 +336,12 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
 
   const interactionMode: OverlayInteractionMode = useMemo(
     () =>
-      drawTool ? { kind: 'draw', tool: drawTool } : selectMode ? { kind: 'select' } : null,
-    [drawTool, selectMode],
+      drawTool
+        ? { kind: 'draw', tool: drawTool }
+        : selectMode && !selectedOverlayId
+          ? { kind: 'select' }
+          : null,
+    [drawTool, selectMode, selectedOverlayId],
   );
   const draft = useMemo(
     () =>
@@ -310,6 +358,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     drawTool,
     selectMode,
     selectedOverlayId,
+    sheetOverlayId,
     draftPoints,
     draft,
     canFinish,
@@ -318,6 +367,10 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     cancelDraw,
     cancelInteraction,
     selectOverlay,
+    deselectOverlay,
+    openOverlaySheet,
+    closeOverlaySheet,
+    moveOverlayLayer,
     addDraftPoint,
     finishDraft,
     commitRectDraw,
@@ -332,6 +385,9 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     onDrawRect: commitRectDraw,
     onStampPlace: placeStamp,
     onSelectOverlay: selectOverlay,
+    onDeselectOverlay: deselectOverlay,
+    onOpenOverlaySheet: openOverlaySheet,
+    onMoveOverlayLayer: moveOverlayLayer,
     onCommitMove: commitMove,
     onCommitVertex: commitVertex,
     onCommitRect: commitRectEdit,

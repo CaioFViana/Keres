@@ -124,6 +124,8 @@ describe('useCanvasOverlayActions', () => {
 
     await act(async () => result.current.actions.selectOverlay('ov-1'));
     expect(result.current.actions.selectedOverlayId).toBe('ov-1');
+    // Selecting never opens the sheet: the handles edit in place.
+    expect(result.current.actions.sheetOverlayId).toBeNull();
     await act(async () =>
       result.current.actions.updateOverlay('ov-1', { label: 'Trail', color: '#f00' }),
     );
@@ -146,6 +148,74 @@ describe('useCanvasOverlayActions', () => {
     await act(async () => result.current.actions.deleteOverlay('ov-1'));
     expect(result.current.content.overlays).toHaveLength(0);
     expect(result.current.actions.selectedOverlayId).toBeNull();
+  });
+
+  it('keeps select mode across picks and hides the catcher while selected', async () => {
+    const result = await setup({
+      nodes: [],
+      edges: [],
+      overlays: [
+        { id: 'ov-1', kind: 'line', points: [{ x: 0, y: 0 }] },
+        { id: 'ov-2', kind: 'line', points: [{ x: 0, y: 0 }] },
+      ],
+    } as unknown as BoardContentType);
+
+    await act(async () => result.current.actions.handleObjectsAction('select'));
+    expect(result.current.actions.interactionMode).toEqual({ kind: 'select' });
+
+    // A hit keeps the mode but unmounts the catcher so the handles stay touchable.
+    await act(async () => result.current.actions.selectOverlay('ov-1'));
+    expect(result.current.actions.selectedOverlayId).toBe('ov-1');
+    expect(result.current.actions.selectMode).toBe(true);
+    expect(result.current.actions.interactionMode).toBeNull();
+
+    // Deselect brings the catcher back for the next pick.
+    await act(async () => result.current.actions.deselectOverlay());
+    expect(result.current.actions.selectedOverlayId).toBeNull();
+    expect(result.current.actions.interactionMode).toEqual({ kind: 'select' });
+    await act(async () => result.current.actions.selectOverlay('ov-2'));
+    expect(result.current.actions.selectedOverlayId).toBe('ov-2');
+
+    // A miss leaves the mode entirely.
+    await act(async () => result.current.actions.deselectOverlay());
+    await act(async () => result.current.actions.selectOverlay(null));
+    expect(result.current.actions.selectMode).toBe(false);
+    expect(result.current.actions.interactionMode).toBeNull();
+  });
+
+  it('opens the sheet on creation and details, closing back to the handles', async () => {
+    const result = await setup();
+
+    await act(async () => result.current.actions.handleObjectsAction('draw:stamp'));
+    await act(async () => result.current.actions.onStampPlace({ x: 10, y: 20 }));
+    expect(result.current.actions.sheetOverlayId).toBe('id-1');
+
+    // Closing the sheet keeps the selection: the handles stay up.
+    await act(async () => result.current.actions.closeOverlaySheet());
+    expect(result.current.actions.sheetOverlayId).toBeNull();
+    expect(result.current.actions.selectedOverlayId).toBe('id-1');
+
+    await act(async () => result.current.actions.openOverlaySheet('id-1'));
+    expect(result.current.actions.sheetOverlayId).toBe('id-1');
+    await act(async () => result.current.actions.deleteOverlay('id-1'));
+    expect(result.current.actions.sheetOverlayId).toBeNull();
+    expect(result.current.actions.selectedOverlayId).toBeNull();
+  });
+
+  it('moves overlays past the stack extremes', async () => {
+    const result = await setup({
+      nodes: [],
+      edges: [],
+      overlays: [
+        { id: 'ov-1', kind: 'line', points: [], zIndex: 2 },
+        { id: 'ov-2', kind: 'line', points: [] },
+      ],
+    } as unknown as BoardContentType);
+
+    await act(async () => result.current.actions.moveOverlayLayer('ov-2', 'front'));
+    expect(result.current.content.overlays?.[1]).toMatchObject({ zIndex: 3 });
+    await act(async () => result.current.actions.moveOverlayLayer('ov-1', 'back'));
+    expect(result.current.content.overlays?.[0]).toMatchObject({ zIndex: -1 });
   });
 
   it('arms the stamp tool and commits one stamp per tap', async () => {

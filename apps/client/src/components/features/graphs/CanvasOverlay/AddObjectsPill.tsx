@@ -32,6 +32,8 @@ interface AddObjectsPillProps {
   includeNote: boolean;
   onAction: (action: AddObjectsAction) => void;
   style?: StyleProp<ViewStyle>;
+  /** Icon-button trigger for toolbars; the group modal stays identical. */
+  trigger?: (open: () => void) => React.ReactNode;
 }
 
 /**
@@ -39,7 +41,7 @@ interface AddObjectsPillProps {
  * and the select tool, grouped like the entity pickers. An action, not a filter: every
  * choice fires once and the pill clears, so the same action stays immediately available.
  */
-const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, style }) => {
+const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, style, trigger }) => {
   const { t } = useTranslation();
   const [values, setValues] = useState<string[]>([]);
 
@@ -103,6 +105,7 @@ const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, 
       placeholder={t('objects_add')}
       noOptionsText={t('objects_add')}
       singleSelect
+      trigger={trigger}
     />
   );
 };

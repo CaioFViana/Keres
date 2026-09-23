@@ -39,7 +39,7 @@ const PlotDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const route = useRoute<PlotDetailScreenRouteProp>();
-  const { plotId } = route.params;
+  const { plotId, occurrence } = route.params;
   const { selectedStory } = useStoryStore();
   const navigateToDetail = useNavigateToEntityDetail();
   // Opening the Scene leaves `PlotsStack` for `NarrativeElementsStack`; without registering the way back, the
@@ -108,6 +108,7 @@ const PlotDetailScreen = () => {
   return (
     <DetailContainer
       title={plot.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
@@ -122,7 +123,11 @@ const PlotDetailScreen = () => {
         })}
       </Text>
 
-      <DetailField label={t('plot_details')} value={plot.details || t('common_na')} />
+      <DetailField
+        label={t('plot_details')}
+        value={plot.details || t('common_na')}
+        fieldKey="details"
+      />
 
       <GenericRelationDisplay<SceneSelect, PlotSceneSelect>
         title={t('plot_scenes')}

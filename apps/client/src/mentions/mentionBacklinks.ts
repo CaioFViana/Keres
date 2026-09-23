@@ -16,6 +16,8 @@ export interface MentionBacklinkOccurrence {
   field: string;
   mentionCount: number;
   excerpt: string;
+  /** The first hit's surface text: detail screens locate and flash it on landing. */
+  needle: string;
 }
 
 export interface MentionBacklink {
@@ -58,7 +60,14 @@ export function buildMentionBacklinkIndex(
         includeRepeated: true,
       }).flatMap((segment) =>
         segment.ref
-          ? [{ ref: segment.ref, start: segment.start, length: segment.text.length }]
+          ? [
+              {
+                ref: segment.ref,
+                start: segment.start,
+                length: segment.text.length,
+                needle: segment.text,
+              },
+            ]
           : [],
       );
       for (const hit of hits) {
@@ -73,7 +82,7 @@ export function buildMentionBacklinkIndex(
           if (occurrence) {
             occurrence.mentionCount += 1;
           } else {
-            existing.occurrences.push({ field, mentionCount: 1, excerpt });
+            existing.occurrences.push({ field, mentionCount: 1, excerpt, needle: hit.needle });
           }
         } else {
           current.push({
@@ -81,7 +90,7 @@ export function buildMentionBacklinkIndex(
             fields: [field],
             mentionCount: 1,
             excerpt,
-            occurrences: [{ field, mentionCount: 1, excerpt }],
+            occurrences: [{ field, mentionCount: 1, excerpt, needle: hit.needle }],
           });
           index.set(key, current);
         }

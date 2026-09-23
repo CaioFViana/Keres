@@ -1,4 +1,5 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -60,7 +61,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {
-  LocationDetail: { locationId: string };
+  LocationDetail: { locationId: string; occurrence?: OccurrenceTarget };
 };
 
 type LocationDetailScreenRouteProp = RouteProp<LocationStackParamList, 'LocationDetail'>;
@@ -71,7 +72,7 @@ const LocationDetailsScreen = () => {
   const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<LocationDetailScreenRouteProp>();
-  const { locationId } = route.params;
+  const { locationId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Location');
   const sceneCopy = useVocabularyEntityCopy('Scene');
@@ -521,7 +522,7 @@ const LocationDetailsScreen = () => {
   });
 
   return (
-    <DetailContainer title={location.name}>
+    <DetailContainer title={location.name} landing={occurrence ?? null}>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField

@@ -1,5 +1,10 @@
 import type { FavoriteEntityType } from '@keres/shared';
-import { AttributeType, decodeAttributeValue, joinSuggestionListForDisplay } from '@keres/shared';
+import {
+  AttributeType,
+  decodeAttributeValue,
+  excerptAroundMatch,
+  joinSuggestionListForDisplay,
+} from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import { globalSearchFieldConfig } from '@keres/shared/metadata/globalSearchFields';
 import type { SQL } from 'drizzle-orm';
@@ -7,6 +12,7 @@ import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import { attributeValues, chapters, scenes, storySchemaFields } from '../../db/schema';
 import { getEntityTable } from '../entityTableRegistry';
+import type { OccurrenceTarget } from '../../utils/occurrenceTarget';
 import { truncate } from '../../utils/stringUtils';
 import { createFavoriteService } from './FavoriteService';
 
@@ -19,6 +25,11 @@ export interface GlobalSearchResult {
   context?: string;
   /** `null` marks entity types that do not support favorites. */
   isFavorite: boolean | null;
+  /**
+   * The first match, for detail screens to land on. Absent when the match is the
+   * title itself (the header is already at the top) or a Mode (its owner's list).
+   */
+  occurrence?: OccurrenceTarget;
 }
 
 export interface GlobalSearchService {
@@ -55,8 +66,19 @@ function formatAttributeSearchValue(type: string, stored: string | null | undefi
   return joinSuggestionListForDisplay(Array.isArray(decoded) ? decoded : null) ?? stored ?? '';
 }
 
-function buildSnippet(fieldLabel: string, value: unknown): string {
-  return truncate(`${fieldLabel}: ${String(value)}`, SNIPPET_MAX_LENGTH);
+/**
+ * `label: …match context…`, framed around the first hit like backlinks. Falls back
+ * to a head truncation when display formatting (booleans, spelled-out dates) no
+ * longer contains the term that matched storage.
+ */
+function buildSnippet(fieldLabel: string, displayValue: string, term: string): string {
+  const available = Math.max(40, SNIPPET_MAX_LENGTH - fieldLabel.length - 2);
+  const at = displayValue.toLowerCase().indexOf(term.toLowerCase());
+  const framed =
+    at === -1
+      ? truncate(displayValue, available)
+      : excerptAroundMatch(displayValue, { start: at, length: term.length }, available);
+  return `${fieldLabel}: ${framed}`;
 }
 
 /** First configured search field whose value actually contains `term` (case-insensitive) - used to pick which field to show in the snippet. */
@@ -119,12 +141,18 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           // `navigateToEntityDetail` goes (see ENTITY_ROUTES.Mode in entityNavigation).
           const resultId = entityType === 'Mode' ? row.characterId : row.id;
           const key = `${entityType}:${row.id}`;
+          // Title matches land on top (the header); Modes land on the owner's list.
+          const occurrence =
+            match && entityType !== 'Mode' && match.field !== titleField
+              ? { field: match.field, needle: trimmedTerm }
+              : undefined;
           results.set(key, {
             entityType,
             id: resultId,
             title: String(row[titleField] ?? ''),
-            snippet: match ? buildSnippet(match.field, match.value) : '',
+            snippet: match ? buildSnippet(match.field, String(match.value), trimmedTerm) : '',
             isFavorite: null,
+            occurrence,
           });
         }
       });
@@ -183,15 +211,14 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           if (results.has(key)) continue; // Native field match already covers this entity.
           const title = titlesByEntityKey.get(key);
           if (title === undefined) continue; // Entity was deleted/not found.
+          const displayValue = formatAttributeSearchValue(row.field.type, row.attribute.value);
           results.set(key, {
             entityType,
             id: row.attribute.entityId,
             title,
-            snippet: buildSnippet(
-              row.field.name,
-              formatAttributeSearchValue(row.field.type, row.attribute.value),
-            ),
+            snippet: buildSnippet(row.field.name, displayValue, trimmedTerm),
             isFavorite: null,
+            occurrence: { field: `custom:${row.attribute.fieldId}`, needle: trimmedTerm },
           });
         }
       })();
@@ -233,6 +260,7 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
               .select({
                 entityType: attributeValues.entityType,
                 entityId: attributeValues.entityId,
+                fieldId: storySchemaFields.id,
                 fieldName: storySchemaFields.name,
                 displayValue: (table as any)[titleField],
               })
@@ -255,6 +283,7 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
               .all()) as {
               entityType: string;
               entityId: string;
+              fieldId: string;
               fieldName: string;
               displayValue: unknown;
             }[];
@@ -302,8 +331,9 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
                 entityType: ownerType,
                 id: row.entityId,
                 title,
-                snippet: buildSnippet(row.fieldName, row.displayValue),
+                snippet: buildSnippet(row.fieldName, String(row.displayValue), trimmedTerm),
                 isFavorite: null,
+                occurrence: { field: `custom:${row.fieldId}`, needle: trimmedTerm },
               });
             }
           }),

@@ -168,6 +168,28 @@ it('searches and renders grouped sections', async () => {
   expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(expect.anything(), 'Character', 'char-1');
 });
 
+it('lands the detail on the result occurrence when one rides along', async () => {
+  mockSearchAllEntities.mockResolvedValue([
+    makeResult({
+      id: 'char-1',
+      title: 'Aria',
+      occurrence: { field: 'biography', needle: 'harbor' },
+    }),
+  ]);
+  const view = await render(<GlobalSearchScreen />);
+
+  await typeQuery(view, 'ar');
+  await waitFor(() => expect(view.getByTestId('result-char-1')).toBeTruthy());
+
+  await fireEvent.press(view.getByTestId('result-char-1'));
+  expect(mockNavigateToEntityDetail).toHaveBeenCalledWith(
+    expect.anything(),
+    'Character',
+    'char-1',
+    { occurrence: { field: 'biography', needle: 'harbor' } },
+  );
+});
+
 it('shows the empty state without results', async () => {
   const view = await render(<GlobalSearchScreen />);
 

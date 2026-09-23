@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -40,7 +41,7 @@ import type { WorldRulesScreenNavigationProp } from './WorldRuleListScreen';
 
 // Define the parameter list for this screen
 export type WorldRuleDetailScreenParamList = {
-  WorldRuleDetail: { worldRuleId: string };
+  WorldRuleDetail: { worldRuleId: string; occurrence?: OccurrenceTarget };
 };
 
 type WorldRuleDetailScreenRouteProp = RouteProp<WorldRuleDetailScreenParamList, 'WorldRuleDetail'>;
@@ -51,7 +52,7 @@ const WorldRuleDetailScreen = () => {
   const navigation = useNavigation<WorldRulesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<WorldRuleDetailScreenRouteProp>();
-  const { worldRuleId } = route.params;
+  const { worldRuleId, occurrence } = route.params;
 
   const drizzleDb = useDrizzle();
   const worldRuleServiceRef = useRef<ReturnType<typeof createWorldRuleService> | null>(null);
@@ -195,6 +196,7 @@ const WorldRuleDetailScreen = () => {
   return (
     <DetailContainer
       title={worldRule.title}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

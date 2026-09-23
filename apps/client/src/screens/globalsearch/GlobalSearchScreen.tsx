@@ -198,7 +198,13 @@ const GlobalSearchScreen = () => {
 
   const handleResultPress = useCallback(
     (result: GlobalSearchResult) => {
-      navigateToEntityDetail(navigation, result.entityType, result.id);
+      if (result.occurrence) {
+        navigateToEntityDetail(navigation, result.entityType, result.id, {
+          occurrence: result.occurrence,
+        });
+      } else {
+        navigateToEntityDetail(navigation, result.entityType, result.id);
+      }
     },
     [navigation],
   );

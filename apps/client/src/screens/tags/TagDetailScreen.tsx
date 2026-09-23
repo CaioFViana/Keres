@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
@@ -35,7 +36,7 @@ import type { TagsScreenNavigationProp } from './TagListScreen';
 
 // Define the parameter list for this screen
 export type TagDetailScreenParamList = {
-  TagDetail: { tagId: string };
+  TagDetail: { tagId: string; occurrence?: OccurrenceTarget };
 };
 
 type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>;
@@ -45,7 +46,7 @@ const TagDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<TagsScreenNavigationProp>();
   const route = useRoute<TagDetailScreenRouteProp>();
-  const { tagId } = route.params;
+  const { tagId, occurrence } = route.params;
 
   const drizzleDb = useDrizzle();
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
@@ -301,6 +302,7 @@ const TagDetailScreen = () => {
   return (
     <DetailContainer
       title={tag.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

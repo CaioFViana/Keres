@@ -21,6 +21,7 @@ import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeMan
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import TagList from '@/src/components/common/display/TagList/TagList';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
@@ -75,6 +76,7 @@ export type CharacterDetailContentProps = {
   saveNoteRelation: (relation: SaveNoteRelation) => Promise<void>;
   deleteNoteRelation: (relationId: string) => Promise<void>;
   appearingArcs: StoryArcSelect[];
+  occurrence?: OccurrenceTarget | null;
 };
 
 export function CharacterDetailContent(props: CharacterDetailContentProps) {
@@ -111,10 +113,12 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
     saveNoteRelation,
     deleteNoteRelation,
     appearingArcs,
+    occurrence,
   } = props;
   return (
     <DetailContainer
       title={character.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

@@ -119,7 +119,10 @@ export const MentionBacklinksSection: React.FC<Props> = ({ entityType, entityId 
               </Text>
             </View>
           ),
-          onPress: () => navigate(entry.source.type, entry.source.id),
+          onPress: () =>
+            navigate(entry.source.type, entry.source.id, {
+              occurrence: { field: occurrence.field, needle: occurrence.needle },
+            }),
         }));
       }),
     [backlinks, navigate, styles, t],

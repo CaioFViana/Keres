@@ -90,11 +90,12 @@ describe('mention backlinks', () => {
     expect(entry.excerpt).toContain('Alice finally arrives.');
     expect(entry.excerpt.startsWith('…')).toBe(true);
     expect(entry.occurrences).toEqual([
-      { field: 'summary', mentionCount: 1, excerpt: entry.excerpt },
+      { field: 'summary', mentionCount: 1, excerpt: entry.excerpt, needle: 'Alice' },
       {
         field: 'extraNotes',
         mentionCount: 2,
         excerpt: 'Alice leaves. Alice returns.',
+        needle: 'Alice',
       },
     ]);
   });

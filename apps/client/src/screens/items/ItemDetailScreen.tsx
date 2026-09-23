@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -45,7 +46,7 @@ import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { ItemsScreenNavigationProp } from './ItemListScreen';
 
 export type ItemDetailScreenParamList = {
-  ItemDetail: { itemId: string };
+  ItemDetail: { itemId: string; occurrence?: OccurrenceTarget };
 };
 
 type ItemDetailScreenRouteProp = RouteProp<ItemDetailScreenParamList, 'ItemDetail'>;
@@ -57,7 +58,7 @@ const ItemDetailScreen = () => {
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const { openItem: openJourneyMap } = useOpenPresenceMatrixViewer();
   const route = useRoute<ItemDetailScreenRouteProp>();
-  const { itemId } = route.params;
+  const { itemId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Item');
   const { agree, term } = useStoryVocabulary();
@@ -219,6 +220,7 @@ const ItemDetailScreen = () => {
   return (
     <DetailContainer
       title={item.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

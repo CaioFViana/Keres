@@ -82,7 +82,12 @@ const backlink = (overrides = {}) => ({
   mentionCount: 2,
   excerpt: 'Alice arrives in Wonderland. Alice stays.',
   occurrences: [
-    { field: 'summary', mentionCount: 2, excerpt: 'Alice arrives in Wonderland. Alice stays.' },
+    {
+      field: 'summary',
+      mentionCount: 2,
+      excerpt: 'Alice arrives in Wonderland. Alice stays.',
+      needle: 'Alice',
+    },
   ],
   ...overrides,
 });
@@ -122,8 +127,13 @@ describe('MentionBacklinksSection', () => {
         fields: ['summary', 'extraNotes'],
         mentionCount: 3,
         occurrences: [
-          { field: 'summary', mentionCount: 2, excerpt: 'Alice arrives in Wonderland.' },
-          { field: 'extraNotes', mentionCount: 1, excerpt: 'Alice stays.' },
+          {
+            field: 'summary',
+            mentionCount: 2,
+            excerpt: 'Alice arrives in Wonderland.',
+            needle: 'Alice',
+          },
+          { field: 'extraNotes', mentionCount: 1, excerpt: 'Alice stays.', needle: 'Alice' },
         ],
       }),
     ]);
@@ -136,7 +146,7 @@ describe('MentionBacklinksSection', () => {
     expect(screen.getByText('Alice stays.')).toBeTruthy();
   });
 
-  it('opens the source when an occurrence row is tapped', async () => {
+  it('opens the source at the tapped occurrence', async () => {
     mockBacklinks.mockReturnValue([backlink()]);
     const screen = await render(
       <MentionBacklinksSection entityType="Character" entityId="char-1" />,
@@ -146,7 +156,9 @@ describe('MentionBacklinksSection', () => {
     await fireEvent.press(screen.getByText('backlinks_title'));
     await fireEvent.press(screen.getByText('A beginning'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('Scene', 'scene-1');
+    expect(mockNavigate).toHaveBeenCalledWith('Scene', 'scene-1', {
+      occurrence: { field: 'summary', needle: 'Alice' },
+    });
   });
 
   it('hides ambiguous suggestions from readers and from sources See also cannot link', async () => {

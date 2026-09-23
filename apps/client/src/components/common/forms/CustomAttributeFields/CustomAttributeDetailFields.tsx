@@ -134,6 +134,7 @@ const CustomAttributeDetailFields: React.FC<CustomAttributeDetailFieldsProps> = 
             label={field.name}
             value={displayValue}
             onPress={onPress}
+            fieldKey={`custom:${field.id}`}
             mentionSourceId={entityId}
             comments={commentsByField[field.id] ?? []}
             canComment={canComment}

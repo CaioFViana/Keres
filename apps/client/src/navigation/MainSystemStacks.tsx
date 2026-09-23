@@ -82,6 +82,7 @@ import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { showcaseInitialRoute } from '../showcase/showcaseRequest';
+import type { OccurrenceTarget } from '../utils/occurrenceTarget';
 
 /**
  * The main drawer's nested stacks: one navigator per drawer section (characters, plots,
@@ -99,13 +100,13 @@ import { showcaseInitialRoute } from '../showcase/showcaseRequest';
 const PlotsStack = createNativeStackNavigator<PlotsStackParamList>();
 export type PlotsStackParamList = {
   Plots: undefined;
-  PlotDetail: { plotId: string };
+  PlotDetail: { plotId: string; occurrence?: OccurrenceTarget };
   PlotForm: { plotId?: string };
   PlotMatrix: undefined;
   PlotProgress: undefined;
   PlotReader: undefined;
   Routes: undefined;
-  RouteDetail: { routeId: string };
+  RouteDetail: { routeId: string; occurrence?: OccurrenceTarget };
   RouteForm: { routeId?: string };
   RouteSteps: { routeId: string };
   RouteReader: { routeId: string };
@@ -174,11 +175,11 @@ export type NarrativeElementsStackParamList = {
   NarrativeElements: undefined;
   ChapterDetail: ChapterDetailScreenParamList['ChapterDetail'];
   ChapterForm: { chapterId?: string };
-  SceneDetail: { sceneId: string };
+  SceneDetail: { sceneId: string; occurrence?: OccurrenceTarget };
   SceneEditor: { sceneId: string };
   Manuscript: { routeId?: string };
   SceneForm: { sceneId?: string; chapterId?: string };
-  ChoiceDetail: { choiceId: string };
+  ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
   ChoiceForm: { choiceId?: string; sceneId?: string };
   ChoiceView: undefined;
   StoryTimeline: undefined;
@@ -214,14 +215,14 @@ export const NarrativeElementsStackNavigator = () => {
 const ItemStack = createNativeStackNavigator<ItemStackParamList>();
 
 export type ItemDetailScreenParamList = {
-  ItemDetail: { itemId: string };
+  ItemDetail: { itemId: string; occurrence?: OccurrenceTarget };
 };
 
 export type ItemStackParamList = {
   Items: undefined;
   ItemDetail: ItemDetailScreenParamList['ItemDetail'];
   ItemForm: { itemId?: string };
-  ItemJourneyDetail: { itemJourneyId: string };
+  ItemJourneyDetail: { itemJourneyId: string; occurrence?: OccurrenceTarget };
   ItemJourneyForm: { itemJourneyId?: string; itemId?: string };
 };
 

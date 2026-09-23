@@ -61,7 +61,7 @@ const SceneDetailScreen = () => {
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<SceneDetailScreenRouteProp>();
-  const { sceneId } = route.params;
+  const { sceneId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Scene');
   const locationCopy = useVocabularyEntityCopy('Location');
@@ -628,6 +628,7 @@ const SceneDetailScreen = () => {
       isBranching={isBranching}
       sceneEffects={sceneEffects}
       describeEffect={(effect: Effect) => describeEffect(effect, itemNamesById, t)}
+      occurrence={occurrence}
     />
   );
 };

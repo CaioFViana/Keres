@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -44,7 +45,7 @@ import type { NotesScreenNavigationProp } from './NoteListScreen';
 
 // Define the parameter list for this screen
 export type NoteDetailScreenParamList = {
-  NoteDetail: { noteId: string };
+  NoteDetail: { noteId: string; occurrence?: OccurrenceTarget };
 };
 
 type NoteDetailScreenRouteProp = RouteProp<NoteDetailScreenParamList, 'NoteDetail'>;
@@ -55,7 +56,7 @@ const NoteDetailScreen = () => {
   const navigation = useNavigation<NotesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<NoteDetailScreenRouteProp>();
-  const { noteId } = route.params;
+  const { noteId, occurrence } = route.params;
 
   const drizzleDb = useDrizzle();
   const noteServiceRef = useRef<ReturnType<typeof createNoteService> | null>(null);
@@ -319,6 +320,7 @@ const NoteDetailScreen = () => {
   return (
     <DetailContainer
       title={note.title}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

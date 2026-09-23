@@ -16,6 +16,8 @@ export interface CommentableDetailFieldProps {
   onPress?: () => void;
   /** Passed through to `DetailField`, so the entity's own text does not link to itself. */
   mentionSourceId?: string;
+  /** Passed through to `DetailField`: the field key occurrence landings target. */
+  fieldKey?: string;
   comments: CommentSelect[];
   canComment: boolean;
   isStoryOwner: boolean;
@@ -44,6 +46,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   label,
   value,
   onPress,
+  fieldKey,
   comments,
   canComment,
   isStoryOwner,
@@ -77,6 +80,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
         value={value}
         onPress={onPress}
         mentionSourceId={mentionSourceId}
+        fieldKey={fieldKey}
       />
     );
   }
@@ -106,6 +110,7 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
           commentRanges={commentRanges}
           onCommentPress={openThread}
           selectable
+          fieldKey={fieldKey}
         />
       </View>
       <TouchableOpacity style={styles.button} onPress={openThread}>

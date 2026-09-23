@@ -215,6 +215,25 @@ código e comentários em inglês; sem mudanças fora do escopo pedido.
 - Gates: client full 596/596, 6001/6001; shared 84/84, 997/997; tsc/eslint 0;
   locales audit ok.
 
+### 1.14 Round-9: navegação por ocorrência (fecha §3.3)
+- **Entrega**: tap numa ocorrência (backlink ou busca global) pousa na detail
+  com scroll medido até o trecho + flash forte de 2s. Cobertura total: 12
+  details. Sem ciclo prev/next (decisão do usuário).
+- **Desenho**: alvo `{field, needle?}` viaja nos params de navegação; agulha
+  (texto de superfície, não offset) é localizada no valor renderizado — imune
+  a formatação/fallbacks. `DetailContainer` provê contexto + scroller;
+  `DetailField` pisca (fill forte do manuscript) e mede o próprio span;
+  factory injeta `fieldKey` em todos os campos comentáveis; customs usam
+  `custom:<fieldId>`. Scroll segue o padrão manuscript (janela, retry, geração).
+- **Busca global**: resultados carregam occurrence (títulos e Modes pousam no
+  topo/lista, como antes) e snippets emoldurados no match (`excerptAroundMatch`)
+  em vez de truncar o head.
+- **Testes**: +19 (controller, flash, serviço, presses, fiação Character/Plot).
+  Achado de ambiente: fake timers não descarregam estado de hook nem sobrevivem
+  a renders RNTL aqui — fade testado com timers reais (~2s).
+- Gates: client full 597/597, 6020/6020; shared 84/84, 997/997; tsc/eslint 0;
+  locales audit ok. SceneDetailScreen em 580/600 — próximo toque nela pede split.
+
 ---
 
 ## 2. Achados de análise (produto, sem código)
@@ -253,9 +272,10 @@ sério e sem impor método — exatamente onde os concorrentes mais apanham.
   desenho de linhas/formas — conexões hoje são aresta nó→nó (`fromNodeId`/`toNodeId`,
   drag, path SVG em cache); desenho livre precisa de primitivo polyline novo sobre a
   mesma infra de canvas/gestos/render.
-- **Backlinks vs Obsidian** (investigado no código): hoje = painel por entidade
-  referenciadora + excerpt dos primeiros 150 chars do campo. Obsidian tem 4 coisas a
-  mais: unlinked mentions, contexto ao redor do match, navegação por ocorrência, grafo.
+- **Backlinks vs Obsidian** (investigado no código): painel por ocorrência com excerpt
+  centrado no match (corrigido: não mais os primeiros 150 chars), ambíguas com
+  see-also em um toque, guards de perf. Do Obsidian falta: navegação por ocorrência;
+  grafo segue fora do escopo. Estado por sub-item no §3.3.
   A versão honesta de "unlinked" no Keres = expor **nomes ambíguos** (hoje silenciam por
   design) como sugestão com resolução em um toque — e o sink correto é o **see also**
   (derivado sugere, só o usuário persiste; zero entidade/sync nova). Perf: índice O(texto),
@@ -272,12 +292,18 @@ sério e sem impor método — exatamente onde os concorrentes mais apanham.
   de "story nova" até "10 cenas tituladas em ordem".
 - [ ] **Linhas/desenho no mapa** — só a intenção por enquanto; será elaborado. Direção:
   primitivo polyline novo reaproveitando canvas/gestos/render das conexões.
-- [ ] **Backlinks (sem grafo)** — excerpt centrado no match; navegação por ocorrência;
-  nomes ambíguos como sugestão com criação de see-also em um toque; guards de perf
-  (debounce, SELECT de colunas). **Incluir o sistema de comentários na discussão**:
-  usa código similar ao de mentions e recebeu upgrade recente — compartilhar código onde
-  der. **Bugfix junto**: no manuscript (APENAS), a busca não avança até a entidade
-  mencionada, só se estiver muito longe.
+- [x] **Backlinks (sem grafo)** — estado verificado no código:
+  - [x] excerpt centrado no match (`buildMentionBacklinkIndex` + `excerptAroundMatch`)
+  - [x] navegação por ocorrência — pouso no campo com flash 2s (scroll medido +
+    marca forte), backlinks e busca global; sem ciclo prev/next (fora do escopo)
+  - [x] nomes ambíguos como sugestão com see-also em um toque
+    (`buildAmbiguousMentionIndex` + card de sugestões + `useResolveAmbiguousMention`)
+  - [x] guards de perf (debounce 500ms nos rebuilds, SELECT só de colunas de texto,
+    build único por story, token anti-stale)
+  - [x] **Bugfix junto** (busca no manuscript não avançava até o hit salvo se longe):
+    corrigido no §1.6 (`activeMatch` + fine-scroll medido + geração anti-stale)
+  - Compartilhar código com comentários: `frameMatchWindow`/`stripMarkdownText`/
+    `collapseWhitespace` no shared, prontos para reuso.
 - [ ] **Planejar a "mini-engine"** — export HTML estático (público: itch.io, beta readers,
   arquivo; hospedável em qualquer lugar). MVP sobre os sistemas de **choice checks e
   effects**: mostrar/ocultar/desabilitar opções por estado em memória, via configuração no

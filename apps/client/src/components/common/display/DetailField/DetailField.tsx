@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
+import { useOccurrenceFlash } from '../../../../hooks/useOccurrenceLanding';
 import { useMentions } from '../../../../mentions/MentionContext';
 import { useTheme } from '../../../../theme';
 import {
@@ -25,6 +26,12 @@ interface DetailFieldProps {
   onCommentPress?: () => void;
   /** Lets the user select the value (web excerpt pre-fill reads it). */
   selectable?: boolean;
+  /**
+   * Schema field key (`biography`) or custom-attribute key (`custom:<fieldId>`).
+   * The occurrence-landing target with this key scrolls the field into view,
+   * flashing the needle where it sits.
+   */
+  fieldKey?: string;
 }
 
 /** The overlap of global `ranges` with one segment, shifted into segment-local offsets. */
@@ -54,10 +61,21 @@ const DetailField: React.FC<DetailFieldProps> = ({
   commentRanges,
   onCommentPress,
   selectable = false,
+  fieldKey,
 }) => {
   const { colors } = useTheme();
   const { matcher, openMention } = useMentions();
   const hasCommentRanges = !!commentRanges && commentRanges.length > 0;
+  const { targeted, target, flashRanges, requestScroll } = useOccurrenceFlash(fieldKey, value);
+  const containerRef = useRef<View | null>(null);
+  const spanRef = useRef<Text | null>(null);
+  // The landing scroll follows data, not just navigation: an entity swap under the
+  // same screen re-lays-out after the refetch, and the stale measurement's
+  // continuation dies on the controller's generation. No state set here.
+  useEffect(() => {
+    if (!targeted) return;
+    requestScroll(spanRef.current ?? containerRef.current);
+  }, [targeted, target, value, requestScroll]);
 
   // `onPress` makes the whole value one link (an ENTITY custom attribute); there is no text left to
   // scan for mentions inside it - and comment marks stay off, so one tap never means two things.
@@ -70,6 +88,13 @@ const DetailField: React.FC<DetailFieldProps> = ({
   );
   // Without mentions the value is one segment of its own: comment marks still split it.
   const renderSegments: MentionSegment[] = segments ?? [{ text: value, start: 0 }];
+  // The flash slices onto segments exactly like comment marks; the first touched
+  // segment hosts the scroll measurement, so long fields land on the occurrence
+  // itself rather than the field top. Untouched, the field container stands in.
+  const flashBySegment = renderSegments.map((segment) =>
+    localRanges(flashRanges, segment.start, segment.text.length),
+  );
+  const firstFlashIndex = flashBySegment.findIndex((local) => local.length > 0);
 
   const styles = StyleSheet.create({
     container: {
@@ -98,13 +123,25 @@ const DetailField: React.FC<DetailFieldProps> = ({
     mention: { color: colors.primary },
     linkIcon: { marginLeft: 4 },
   });
+  // Flash fills read as the manuscript's current hit: strong fill, legible ink.
+  const flashHostStyle = { backgroundColor: colors.primary };
+  const flashInkStyle = { color: colors.onPrimary };
 
   return (
-    <View style={styles.container}>
+    <View ref={containerRef} style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       {onPress ? (
         <TouchableOpacity style={styles.linkedValue} onPress={onPress}>
-          <Text style={[styles.value, styles.linkedValueText]}>{value}</Text>
+          <Text
+            style={[
+              styles.value,
+              styles.linkedValueText,
+              flashRanges.length > 0 && flashHostStyle,
+              flashRanges.length > 0 && flashInkStyle,
+            ]}
+          >
+            {value}
+          </Text>
           <Ionicons
             name="chevron-forward"
             size={18}
@@ -116,8 +153,9 @@ const DetailField: React.FC<DetailFieldProps> = ({
         <Text style={styles.value} selectable={selectable}>
           {renderSegments.map((segment, index) => {
             const local = localRanges(commentRanges ?? [], segment.start, segment.text.length);
+            const flashLocal = flashBySegment[index];
             // Comment wins over mention on an overlap: one tap, one meaning.
-            if (segment.ref && local.length === 0) {
+            if (segment.ref && local.length === 0 && flashLocal.length === 0) {
               return (
                 <Text
                   key={index}
@@ -129,14 +167,16 @@ const DetailField: React.FC<DetailFieldProps> = ({
                 </Text>
               );
             }
-            if (local.length === 0) {
+            if (local.length === 0 && flashLocal.length === 0) {
               return <Text key={index}>{segment.text}</Text>;
             }
             return (
               <MarkedText
                 key={index}
                 text={segment.text}
-                ranges={[]}
+                ranges={flashLocal}
+                activeRanges={flashLocal}
+                activeRef={index === firstFlashIndex ? spanRef : undefined}
                 commentRanges={local}
                 onCommentPress={onCommentPress}
               />
@@ -145,21 +185,54 @@ const DetailField: React.FC<DetailFieldProps> = ({
         </Text>
       ) : segments && segments.some((segment) => segment.ref) ? (
         <Text style={styles.value} selectable={selectable}>
-          {segments.map((segment, index) =>
-            segment.ref ? (
+          {segments.map((segment, index) => {
+            const flashLocal = flashBySegment[index];
+            if (flashLocal.length === 0) {
+              return segment.ref ? (
+                <Text
+                  key={index}
+                  style={styles.mention}
+                  onPress={() => openMention(segment.ref!)}
+                  accessibilityRole="link"
+                >
+                  {segment.text}
+                </Text>
+              ) : (
+                <Text key={index}>{segment.text}</Text>
+              );
+            }
+            // Flashed spans nest the link inside the fill host, so the mention
+            // stays tappable while it flashes.
+            return (
               <Text
                 key={index}
-                style={styles.mention}
-                onPress={() => openMention(segment.ref!)}
-                accessibilityRole="link"
+                ref={index === firstFlashIndex ? spanRef : undefined}
+                style={flashHostStyle}
               >
-                {segment.text}
+                {segment.ref ? (
+                  <Text
+                    style={[styles.mention, flashInkStyle]}
+                    onPress={() => openMention(segment.ref!)}
+                    accessibilityRole="link"
+                  >
+                    {segment.text}
+                  </Text>
+                ) : (
+                  <Text style={flashInkStyle}>{segment.text}</Text>
+                )}
               </Text>
-            ) : (
-              <Text key={index}>{segment.text}</Text>
-            ),
-          )}
+            );
+          })}
         </Text>
+      ) : flashRanges.length > 0 ? (
+        <MarkedText
+          text={value}
+          ranges={flashRanges}
+          activeRanges={flashRanges}
+          activeRef={spanRef}
+          style={styles.value}
+          selectable={selectable}
+        />
       ) : (
         <Text style={styles.value} selectable={selectable}>
           {value}

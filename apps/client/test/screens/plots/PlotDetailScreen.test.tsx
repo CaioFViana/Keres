@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import PlotDetailScreen from '../../../src/screens/plots/PlotDetailScreen';
 
 const mockNavigate = jest.fn();
@@ -195,5 +196,17 @@ describe('PlotDetailScreen', () => {
     const view = await render(<PlotDetailScreen />);
     await fireEvent.press(view.getByText('go_back'));
     expect(mockGoBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('lands a routed occurrence on its field, flashing', async () => {
+    mockRouteParams = {
+      plotId: 'plot-1',
+      occurrence: { field: 'details', needle: 'uprising' },
+    };
+    const view = await render(<PlotDetailScreen />);
+
+    expect(StyleSheet.flatten(view.getByText('uprising').props.style).backgroundColor).toBe(
+      '#00f',
+    );
   });
 });

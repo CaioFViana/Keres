@@ -308,6 +308,94 @@ describe('global search attributes and scene context', () => {
     );
   });
 
+  it('carries the first field match for detail screens to land on', async () => {
+    await database.db.insert(schema.characters).values([
+      { id: 'sage', storyId: TEST_STORY_ID, name: 'Sage', ...entityBase },
+      { id: 'captain', storyId: TEST_STORY_ID, name: 'Harbor Captain', ...entityBase },
+    ]);
+    await database.db
+      .update(schema.characters)
+      .set({ description: 'Keeper of the old harbor light.' })
+      .where(eq(schema.characters.id, 'sage'));
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    expect(
+      matches.find((match) => match.id === 'sage')?.occurrence,
+    ).toEqual({ field: 'description', needle: 'harbor' });
+    // Title matches land on top (the header): no occurrence rides along.
+    expect(
+      matches.find((match) => match.id === 'captain')?.occurrence,
+    ).toBeUndefined();
+  });
+
+  it('frames the snippet around the match instead of truncating the head', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'sage',
+      storyId: TEST_STORY_ID,
+      name: 'Sage',
+      ...entityBase,
+    });
+    await database.db
+      .update(schema.characters)
+      .set({ description: `Head ${'filler '.repeat(40)}harbor ${'tail '.repeat(40)}` })
+      .where(eq(schema.characters.id, 'sage'));
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+    const snippet = matches.find((match) => match.id === 'sage')?.snippet ?? '';
+
+    expect(snippet.startsWith('description: …')).toBe(true);
+    expect(snippet).toContain('harbor');
+    expect(snippet).not.toContain('Head');
+  });
+
+  it('addresses custom attributes by their detail-screen field key', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'sage',
+      storyId: TEST_STORY_ID,
+      name: 'Sage',
+      ...entityBase,
+    });
+    await database.db.insert(schema.storySchemaFields).values({
+      id: 'title-field',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      name: 'Title',
+      key: 'title',
+      type: AttributeType.TEXT,
+      isRequired: false,
+      order: 0,
+      ...entityBase,
+    });
+    await database.db.insert(schema.attributeValues).values({
+      id: 'sage-title',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      entityId: 'sage',
+      fieldId: 'title-field',
+      value: 'Keeper of the Harbor',
+      ...entityBase,
+    });
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'harbor',
+      TEST_USER_ID,
+    );
+
+    expect(
+      matches.find((match) => match.id === 'sage')?.occurrence,
+    ).toEqual({ field: 'custom:title-field', needle: 'harbor' });
+  });
+
   it('decorates favoritable matches and leaves the rest without a favorite state', async () => {
     await database.db.insert(schema.characters).values({
       id: 'sage',

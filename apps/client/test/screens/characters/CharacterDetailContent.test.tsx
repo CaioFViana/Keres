@@ -59,14 +59,17 @@ jest.mock('../../../src/components/layout/DetailContainer/DetailContainer', () =
     default: ({
       title,
       footer,
+      landing,
       children,
     }: {
       title: string;
       footer?: ReactNode;
+      landing?: unknown;
       children?: ReactNode;
     }) => (
       <>
         <Text testID="detail-title">{title}</Text>
+        <Text testID="detail-landing">{JSON.stringify(landing ?? null)}</Text>
         {children}
         {footer}
       </>
@@ -445,6 +448,16 @@ describe('CharacterDetailContent', () => {
     );
     expect(view.queryByTestId('commentable-subrace')).toBeNull();
     expect(view.getByTestId('detail-is_favorite').props.children).toBe('is_favorite:common_yes');
+  });
+
+  it('forwards the occurrence landing to the container', async () => {
+    const view = await render(
+      <CharacterDetailContent
+        {...baseProps({ occurrence: { field: 'biography', needle: 'harbor' } })}
+      />,
+    );
+
+    expect(jsonOf(view, 'detail-landing')).toEqual({ field: 'biography', needle: 'harbor' });
   });
 
   it('navigates back and opens gallery media', async () => {

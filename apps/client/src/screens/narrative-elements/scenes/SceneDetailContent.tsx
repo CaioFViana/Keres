@@ -38,6 +38,7 @@ import type {
 } from '../../../db/schema';
 import type { SaveNoteRelation } from '../../../services/storymanagement/NoteRelationService';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 /**
  * Presentation contract for the scene detail screen.
@@ -92,6 +93,7 @@ export interface SceneDetailContentProps {
   isBranching: boolean;
   sceneEffects: unknown[];
   describeEffect(effect: never): string;
+  occurrence?: OccurrenceTarget | null;
 }
 
 export function SceneDetailContent(props: SceneDetailContentProps) {
@@ -132,10 +134,12 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     isBranching,
     sceneEffects,
     describeEffect,
+    occurrence,
   } = props;
   return (
     <DetailContainer
       title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

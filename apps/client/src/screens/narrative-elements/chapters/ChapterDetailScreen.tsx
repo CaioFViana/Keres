@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
@@ -57,7 +58,7 @@ import { StyleSheet, View } from 'react-native';
 import type { NarrativeElementsScreenNavigationProp } from './NarrativeElementsListScreen';
 
 export type ChapterDetailScreenParamList = {
-  ChapterDetail: { chapterId: string };
+  ChapterDetail: { chapterId: string; occurrence?: OccurrenceTarget };
 };
 
 type ChapterDetailScreenRouteProp = RouteProp<ChapterDetailScreenParamList, 'ChapterDetail'>;
@@ -67,7 +68,7 @@ const ChapterDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
   const route = useRoute<ChapterDetailScreenRouteProp>();
-  const { chapterId } = route.params;
+  const { chapterId, occurrence } = route.params;
   const { t } = useTranslation();
   const locationCopy = useVocabularyEntityCopy('Location');
   const eventCopy = useVocabularyEntityCopy('Event');
@@ -295,7 +296,7 @@ const ChapterDetailScreen = () => {
   });
 
   return (
-    <DetailContainer title={chapter.name}>
+    <DetailContainer title={chapter.name} landing={occurrence ?? null}>
       <TagList tags={chapterTags} variant="chip" emptyMessage={t('no_tags_found')} />
       <CommentableDetailField
         {...commentField('summary', chapter.summary || t('common_na'))}

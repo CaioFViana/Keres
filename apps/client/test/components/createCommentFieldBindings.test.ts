@@ -30,5 +30,6 @@ it('uses the displayed text as the snapshot and preserves field permissions and 
     mentionSourceId: 'item',
     canComment: false,
     comments: [],
+    fieldKey: 'description',
   });
 });

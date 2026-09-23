@@ -1,4 +1,5 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import {
   ScreenError,
@@ -51,7 +52,7 @@ import { createCharacterDetailMutations } from './createCharacterDetailMutations
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
-  CharacterDetail: { characterId: string };
+  CharacterDetail: { characterId: string; occurrence?: OccurrenceTarget };
 };
 
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
@@ -66,7 +67,7 @@ const CharacterDetailScreen = () => {
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const { openCharacter: openPresenceMatrix } = useOpenPresenceMatrixViewer();
   const route = useRoute<CharacterDetailScreenRouteProp>();
-  const { characterId } = route.params;
+  const { characterId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Character');
   const sceneCopy = useVocabularyEntityCopy('Scene');
@@ -506,6 +507,7 @@ const CharacterDetailScreen = () => {
       saveNoteRelation={saveNoteRelation}
       deleteNoteRelation={deleteNoteRelation}
       appearingArcs={appearingArcs}
+      occurrence={occurrence}
     />
   );
 };

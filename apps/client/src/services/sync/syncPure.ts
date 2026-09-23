@@ -29,6 +29,19 @@ export function syncEntityKey(entityType: string, entityId: string): string {
 }
 
 /**
+ * Throws when the scheduler stopped the active cycle (context switch / stopAndWait). The name
+ * is what `isAbortError` recognises, so an aborted cycle unwinds quietly instead of reporting
+ * a sync failure.
+ */
+export function throwIfSyncAborted(signal: AbortSignal): void {
+  if (signal.aborted) {
+    const error = new Error('Sync cycle aborted.');
+    error.name = 'AbortError';
+    throw error;
+  }
+}
+
+/**
  * Strips local bookkeeping columns before a server update reaches a client handler.
  *
  * Without this, applying a remote create/update could overwrite the row's sync cursors

@@ -2,11 +2,13 @@ import type {
   ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   DeleteStoryUpdate,
+  Favorite,
   StoryReorderingStoryUpdate,
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { encodeReorderOperationPayload } from '@keres/shared';
+import { encodeReorderOperationPayload, MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
 import * as schema from '../../db/schema';
 import type { OperationLogSelect } from '../../db/schema';
@@ -18,7 +20,9 @@ import {
   mergeLocalOperationPayloads,
 } from '../SyncConflictService';
 import type { SyncContext } from './SyncContext';
-import { deriveBaseVersion } from './syncPure';
+import type { FavoritesFingerprint } from './syncFavoritesFingerprint';
+import { computeLocalFavoritesFingerprint } from './syncFavoritesFingerprint';
+import { deriveBaseVersion, throwIfSyncAborted } from './syncPure';
 
 interface SyncPullOptions {
   context: SyncContext;
@@ -26,6 +30,31 @@ interface SyncPullOptions {
     operations: OperationLogSelect[],
     newEntityVersion?: number,
   ) => Promise<void>;
+}
+
+export type SyncPullRole = 'owner' | 'writer' | 'reader';
+
+export interface FetchRemoteUpdatesInput {
+  /** Highest server operation already applied; pages start after it. */
+  lastSyncedLog: number;
+  lastPublicFavoriteLog: number;
+  favoriteBehavior: FavoriteBehavior;
+  /** Reported when no page carries a role (the local row's offline-first default). */
+  fallbackRole: SyncPullRole;
+}
+
+export interface FetchRemoteUpdatesResult {
+  updates: StoryUpdate[];
+  publicFavorites: Favorite[];
+  role: SyncPullRole;
+}
+
+interface PullPageResponse {
+  updates: StoryUpdate[];
+  publicFavorites?: Favorite[];
+  serverMaxOperationVersion: number;
+  role: 'owner' | 'writer' | 'reader';
+  favoritesFingerprint?: FavoritesFingerprint;
 }
 
 /** Applies remote operations while preserving and surfacing unsent local edits. */
@@ -36,6 +65,63 @@ export class SyncPull {
   public constructor(options: SyncPullOptions) {
     this.context = options.context;
     this.rebasePendingOperations = options.rebasePendingOperations;
+  }
+
+  /**
+   * Fetches every remote update since `lastSyncedLog`, following pages until one comes back
+   * incomplete so as not to leave a large backlog for the next cycle.
+   */
+  public async fetchRemoteUpdates(
+    input: FetchRemoteUpdatesInput,
+  ): Promise<FetchRemoteUpdatesResult> {
+    const storyId = this.context.storyId();
+    const client = this.context.client();
+    const signal = this.context.abortSignal();
+    const { lastSyncedLog, lastPublicFavoriteLog } = input;
+
+    // The roster checksum lets a public story's server skip re-sending every favorite on
+    // every pull. It is computed from the local table (no new persisted state): sending it
+    // only when the local story already publishes keeps private-story pulls byte-identical
+    // to before, and a story that just turned public bootstraps through the legacy
+    // always-send path until its Story op arrives here.
+    let pageFingerprint: FavoritesFingerprint | null =
+      input.favoriteBehavior === 'individual_public'
+        ? await computeLocalFavoritesFingerprint(this.context.db(), storyId)
+        : null;
+
+    console.log(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
+    const remoteUpdates: StoryUpdate[] = [];
+    let publicFavorites: Favorite[] = [];
+    let role = input.fallbackRole;
+    let pullCursor = lastSyncedLog;
+    for (let page = 0; page < 20; page += 1) {
+      throwIfSyncAborted(signal);
+      const fingerprintQuery =
+        pageFingerprint !== null
+          ? `&favoritesCount=${pageFingerprint.count}&favoritesMaxVersion=${pageFingerprint.maxVersion}`
+          : '';
+      const pullResponse = await client.get<PullPageResponse>(
+        `/sync/${storyId}/pull?lastOperationVersion=${pullCursor}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}${fingerprintQuery}`,
+        { signal },
+      );
+      const pageUpdates = pullResponse.data.updates ?? [];
+      // Once a page has delivered the roster, the following pages of the same cycle adopt
+      // the server's own numbers instead of re-sending the stale pre-pull ones - without
+      // this, every page of a large backlog would repeat the full snapshot.
+      if (pullResponse.data.favoritesFingerprint) {
+        pageFingerprint = pullResponse.data.favoritesFingerprint;
+      }
+      publicFavorites = pullResponse.data.publicFavorites ?? publicFavorites;
+      if (pullResponse.data.role) role = pullResponse.data.role;
+      remoteUpdates.push(...pageUpdates);
+      if (pageUpdates.length === 0) break;
+      pullCursor = Math.max(
+        pullCursor,
+        ...pageUpdates.map((update) => update.operationVersion || 0),
+      );
+      if (pageUpdates.length < MAX_SYNC_PULL_BATCH) break;
+    }
+    return { updates: remoteUpdates, publicFavorites, role };
   }
 
   public async isOwnEchoedOperation(update: StoryUpdate): Promise<boolean> {

@@ -2,11 +2,11 @@
  * @jest-environment node
  */
 import { eq } from 'drizzle-orm';
-import type { StoryUpdate } from '@keres/shared';
+import { MAX_SYNC_PULL_BATCH, type StoryUpdate } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import type { OperationLogSelect } from '../../src/db/schema';
 import type { ClientSyncEntityHandler } from '../../src/services/entity-sync-handlers/ClientSyncEntityHandler';
-import { SyncPull } from '../../src/services/sync/SyncPull';
+import { SyncPull, type FetchRemoteUpdatesInput } from '../../src/services/sync/SyncPull';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -463,5 +463,103 @@ describe('reconciliation decisions', () => {
         serverVersion: null,
       }),
     );
+  });
+});
+
+describe('fetching remote updates', () => {
+  const page = (overrides: Record<string, unknown> = {}) => ({
+    data: { updates: [], serverMaxOperationVersion: 0, role: 'writer', ...overrides },
+  });
+  const fetchInput = (
+    overrides: Partial<FetchRemoteUpdatesInput> = {},
+  ): FetchRemoteUpdatesInput => ({
+    lastSyncedLog: 0,
+    lastPublicFavoriteLog: 0,
+    favoriteBehavior: 'individual',
+    fallbackRole: 'reader',
+    ...overrides,
+  });
+  function pullWithClient(get: jest.Mock, signal?: AbortSignal) {
+    return new SyncPull({
+      context: {
+        db: () => database.db,
+        storyId: () => STORY_ID,
+        client: () => ({ get }) as never,
+        conflictService: () => ({ recordConflict }) as never,
+        abortSignal: () => signal ?? new AbortController().signal,
+        notifier: () => ({}) as never,
+      },
+      rebasePendingOperations: rebase,
+    });
+  }
+
+  it('follows full pages until an incomplete one, advancing the cursor', async () => {
+    const firstPage = Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) =>
+      update({ operationVersion: index + 1 }),
+    );
+    const get = jest
+      .fn()
+      .mockResolvedValueOnce(page({ updates: firstPage }))
+      .mockResolvedValueOnce(page({ updates: [update({ operationVersion: 501 })] }));
+    const fetcher = pullWithClient(get);
+
+    const result = await fetcher.fetchRemoteUpdates(fetchInput());
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[0][0]).toContain('lastOperationVersion=0');
+    expect(get.mock.calls[1][0]).toContain('lastOperationVersion=500');
+    expect(result.updates).toHaveLength(MAX_SYNC_PULL_BATCH + 1);
+    expect(result.role).toBe('writer');
+  });
+
+  it('sends the favorites fingerprint only for public stories', async () => {
+    const get = jest.fn().mockResolvedValue(page());
+    const fetcher = pullWithClient(get);
+
+    await fetcher.fetchRemoteUpdates(fetchInput({ favoriteBehavior: 'individual_public' }));
+    expect(get.mock.calls[0][0]).toContain('favoritesCount=0&favoritesMaxVersion=0');
+
+    get.mockClear();
+    await fetcher.fetchRemoteUpdates(fetchInput({ favoriteBehavior: 'individual' }));
+    expect(get.mock.calls[0][0]).not.toContain('favoritesCount=');
+  });
+
+  it('adopts the server fingerprint for the following pages', async () => {
+    const fullPage = Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) =>
+      update({ operationVersion: index + 1 }),
+    );
+    const get = jest
+      .fn()
+      .mockResolvedValueOnce(
+        page({ updates: fullPage, favoritesFingerprint: { count: 5, maxVersion: 9 } }),
+      )
+      .mockResolvedValueOnce(page());
+    const fetcher = pullWithClient(get);
+
+    await fetcher.fetchRemoteUpdates(fetchInput({ favoriteBehavior: 'individual_public' }));
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[1][0]).toContain('favoritesCount=5&favoritesMaxVersion=9');
+  });
+
+  it('keeps the fallback role when a page carries none', async () => {
+    const get = jest.fn().mockResolvedValue(page({ role: undefined }));
+    const fetcher = pullWithClient(get);
+
+    const result = await fetcher.fetchRemoteUpdates(fetchInput({ fallbackRole: 'owner' }));
+
+    expect(result.role).toBe('owner');
+  });
+
+  it('throws an abort error when the cycle was stopped', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const get = jest.fn().mockResolvedValue(page());
+    const fetcher = pullWithClient(get, controller.signal);
+
+    await expect(fetcher.fetchRemoteUpdates(fetchInput())).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    expect(get).not.toHaveBeenCalled();
   });
 });

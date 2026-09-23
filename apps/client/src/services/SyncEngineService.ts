@@ -6,7 +6,6 @@ import type {
   StoryReorderingStoryUpdate,
   StoryUpdate,
 } from '@keres/shared';
-import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
@@ -24,10 +23,8 @@ import { SyncPull } from './sync/SyncPull';
 import { SyncPush } from './sync/SyncPush';
 import { SyncMedia } from './sync/SyncMedia';
 import type { SyncNotifier } from './sync/SyncNotifier';
-import { protectRemoteUpdate, syncEntityKey } from './sync/syncPure';
+import { protectRemoteUpdate, syncEntityKey, throwIfSyncAborted } from './sync/syncPure';
 import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './sync/syncEvents';
-import type { FavoritesFingerprint } from './sync/syncFavoritesFingerprint';
-import { computeLocalFavoritesFingerprint } from './sync/syncFavoritesFingerprint';
 
 export type { ServerStoryPreview } from './sync/StoryTransfer';
 export { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from './sync/SyncScheduler';
@@ -314,11 +311,7 @@ export class SyncEngineService {
   }
 
   private throwIfCycleAborted(signal: AbortSignal): void {
-    if (signal.aborted) {
-      const error = new Error('Sync cycle aborted.');
-      error.name = 'AbortError';
-      throw error;
-    }
+    throwIfSyncAborted(signal);
   }
 
   /**
@@ -355,7 +348,7 @@ export class SyncEngineService {
       signal,
     };
     this.cycleBinding = binding;
-    const { storyId, db, client } = binding;
+    const { storyId, db } = binding;
 
     try {
       this.throwIfCycleAborted(signal);
@@ -381,57 +374,17 @@ export class SyncEngineService {
       const lastSyncedLog = localStory.lastServerSyncedLog || 0;
       const lastPublicFavoriteLog = localStory.lastPublicFavoriteLog || 0;
 
-      // The roster checksum lets a public story's server skip re-sending every favorite on
-      // every pull. It is computed from the local table (no new persisted state): sending it
-      // only when the local story already publishes keeps private-story pulls byte-identical
-      // to before, and a story that just turned public bootstraps through the legacy
-      // always-send path until its Story op arrives here.
-      let pageFingerprint: FavoritesFingerprint | null =
-        localStory.favoriteBehavior === 'individual_public'
-          ? await computeLocalFavoritesFingerprint(db, storyId)
-          : null;
-
       // 2. Pull remote updates first (since the latest known server version).
-      // The server returns at most MAX_SYNC_PULL_BATCH ops; we repeat until a page comes back incomplete, so
-      // as not to leave a large backlog for the next cycle.
-      console.log(`Pulling remote updates for story ${storyId} since version ${lastSyncedLog}...`);
-      const remoteUpdates: StoryUpdate[] = [];
-      let publicFavorites: Favorite[] = [];
-      let myRole: 'owner' | 'writer' | 'reader' = localStory.myRole || 'reader';
-      let pullCursor = lastSyncedLog;
-      for (let page = 0; page < 20; page += 1) {
-        this.throwIfCycleAborted(signal);
-        const fingerprintQuery =
-          pageFingerprint !== null
-            ? `&favoritesCount=${pageFingerprint.count}&favoritesMaxVersion=${pageFingerprint.maxVersion}`
-            : '';
-        const pullResponse = await client.get<{
-          updates: StoryUpdate[];
-          publicFavorites?: Favorite[];
-          serverMaxOperationVersion: number;
-          role: 'owner' | 'writer' | 'reader';
-          favoritesFingerprint?: FavoritesFingerprint;
-        }>(
-          `/sync/${storyId}/pull?lastOperationVersion=${pullCursor}&lastPublicFavoriteVersion=${lastPublicFavoriteLog}${fingerprintQuery}`,
-          { signal },
-        );
-        const pageUpdates = pullResponse.data.updates ?? [];
-        // Once a page has delivered the roster, the following pages of the same cycle adopt
-        // the server's own numbers instead of re-sending the stale pre-pull ones - without
-        // this, every page of a large backlog would repeat the full snapshot.
-        if (pullResponse.data.favoritesFingerprint) {
-          pageFingerprint = pullResponse.data.favoritesFingerprint;
-        }
-        publicFavorites = pullResponse.data.publicFavorites ?? publicFavorites;
-        if (pullResponse.data.role) myRole = pullResponse.data.role;
-        remoteUpdates.push(...pageUpdates);
-        if (pageUpdates.length === 0) break;
-        pullCursor = Math.max(
-          pullCursor,
-          ...pageUpdates.map((update) => update.operationVersion || 0),
-        );
-        if (pageUpdates.length < MAX_SYNC_PULL_BATCH) break;
-      }
+      const {
+        updates: remoteUpdates,
+        publicFavorites,
+        role: myRole,
+      } = await this.pull.fetchRemoteUpdates({
+        lastSyncedLog,
+        lastPublicFavoriteLog,
+        favoriteBehavior: localStory.favoriteBehavior,
+        fallbackRole: localStory.myRole || 'reader',
+      });
 
       /**
        * We move the marker only up to the highest operation that actually arrived, and not up to the

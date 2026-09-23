@@ -1,5 +1,5 @@
 import type { CommentEntityType } from '@keres/shared';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, CommentSelect } from '../../db';
 import { comments } from '../../db';
 import { createULID } from '../../utils/entityUtils';
@@ -28,6 +28,11 @@ export interface CommentService {
     storyId: string,
     entityType: CommentEntityType,
     entityId: string,
+  ): Promise<CommentSelect[]>;
+  getCommentsForEntities(
+    storyId: string,
+    entityType: CommentEntityType,
+    entityIds: string[],
   ): Promise<CommentSelect[]>;
   getAllCommentsForStory(
     storyId: string,
@@ -85,6 +90,25 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
             eq(comments.storyId, storyId),
             eq(comments.entityType, entityType),
             eq(comments.entityId, entityId),
+            eq(comments.isDeleted, false),
+          ),
+        )
+        .all();
+    },
+
+    // One query for a whole reading surface (the manuscript's scenes): the per-entity
+    // reader would cost a query per row. Writes still go through the same
+    // create/update/delete as every other surface - only the read is bulk.
+    async getCommentsForEntities(storyId, entityType, entityIds) {
+      if (entityIds.length === 0) return [];
+      return db
+        .select()
+        .from(comments)
+        .where(
+          and(
+            eq(comments.storyId, storyId),
+            eq(comments.entityType, entityType),
+            inArray(comments.entityId, entityIds),
             eq(comments.isDeleted, false),
           ),
         )

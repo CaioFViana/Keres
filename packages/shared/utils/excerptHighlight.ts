@@ -85,6 +85,36 @@ export function findFirstExcerptMatch(
  * same rule `findManuscriptMatches` counts by, so visual marks and the match counter
  * always agree. Empty or absent queries mark nothing.
  */
+/**
+ * Every non-overlapping occurrence of `excerpt` in `text`, case- AND
+ * accent-insensitive - the `findFirstExcerptMatch` rule without the first-only
+ * limit. Prose surfaces mark every occurrence (the search-style treatment
+ * comment excerpts get in the manuscript), while the modal keeps the single
+ * anchor. Offsets are UTF-16 code units into the original text.
+ */
+export function findAllFoldedMatches(
+  text: string,
+  excerpt: string | null | undefined,
+): TextRange[] {
+  if (!text || typeof excerpt !== 'string') return [];
+  const trimmed = excerpt.trim();
+  if (!trimmed) return [];
+  const needle = foldText(trimmed);
+  if (!needle) return [];
+  const { folded, starts, ends } = foldWithMap(text);
+  const ranges: TextRange[] = [];
+  let from = 0;
+  for (;;) {
+    const at = folded.indexOf(needle, from);
+    if (at === -1) break;
+    const start = starts[at];
+    const end = ends[at + needle.length - 1];
+    ranges.push({ start, length: end - start });
+    from = at + needle.length;
+  }
+  return ranges;
+}
+
 export function findAllCaseInsensitiveMatches(
   text: string,
   query: string | null | undefined,
@@ -131,6 +161,17 @@ export interface ActiveTextSegment extends TextSegment {
   active: boolean;
 }
 
+/** Clamp ranges into the text, drop empties, sort by start then end. */
+function normalizeRanges(text: string, input: TextRange[]): { start: number; end: number }[] {
+  return input
+    .map((range) => ({
+      start: Math.max(0, range.start),
+      end: Math.min(text.length, range.start + range.length),
+    }))
+    .filter((range) => range.end > range.start)
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
 /**
  * Split `text` by `ranges`, flagging the segments an `activeRanges` entry touches -
  * the current search hit among all hits. An active range need not equal a marked one
@@ -144,22 +185,14 @@ export function splitTextByActiveRanges(
   ranges: TextRange[],
   activeRanges: TextRange[],
 ): ActiveTextSegment[] {
-  const normalize = (input: TextRange[]) =>
-    input
-      .map((range) => ({
-        start: Math.max(0, range.start),
-        end: Math.min(text.length, range.start + range.length),
-      }))
-      .filter((range) => range.end > range.start)
-      .sort((a, b) => a.start - b.start || a.end - b.end);
   const merged: { start: number; end: number }[] = [];
-  for (const range of normalize(ranges)) {
+  for (const range of normalizeRanges(text, ranges)) {
     const last = merged[merged.length - 1];
     if (last && range.start <= last.end) last.end = Math.max(last.end, range.end);
     else merged.push({ ...range });
   }
   if (merged.length === 0) return [{ text, marked: false, active: false }];
-  const active = normalize(activeRanges);
+  const active = normalizeRanges(text, activeRanges);
   const overlapsActive = (start: number, end: number) =>
     active.some((range) => range.start < end && start < range.end);
   const segments: ActiveTextSegment[] = [];
@@ -185,13 +218,7 @@ export function splitTextByActiveRanges(
  * callers can render the segments directly with no further checks.
  */
 export function splitTextByRanges(text: string, ranges: TextRange[]): TextSegment[] {
-  const usable = ranges
-    .map((range) => ({
-      start: Math.max(0, range.start),
-      end: Math.min(text.length, range.start + range.length),
-    }))
-    .filter((range) => range.end > range.start)
-    .sort((a, b) => a.start - b.start || a.end - b.end);
+  const usable = normalizeRanges(text, ranges);
   if (usable.length === 0) return [{ text, marked: false }];
   const segments: TextSegment[] = [];
   let cursor = 0;
@@ -206,5 +233,60 @@ export function splitTextByRanges(text: string, ranges: TextRange[]): TextSegmen
     cursor = Math.max(cursor, end);
   }
   if (cursor < text.length) segments.push({ text: text.slice(cursor), marked: false });
+  return segments;
+}
+
+export interface CommentTextSegment extends ActiveTextSegment {
+  /** True when a comment excerpt touches the segment: tapping opens its thread. */
+  comment: boolean;
+}
+
+/**
+ * Split `text` by search `ranges` plus `commentRanges`, flagging what each
+ * marked segment is: the current hit (`active`, drawn strong), a commented
+ * passage (`comment`, tappable), or both. Marked coverage is the union, so a
+ * passage that is both hit and commented renders one segment with both flags.
+ */
+export function splitTextByCommentRanges(
+  text: string,
+  ranges: TextRange[],
+  commentRanges: TextRange[],
+  activeRanges: TextRange[] = [],
+): CommentTextSegment[] {
+  const merged: { start: number; end: number }[] = [];
+  const combined = [...normalizeRanges(text, ranges), ...normalizeRanges(text, commentRanges)].sort(
+    (a, b) => a.start - b.start || a.end - b.end,
+  );
+  for (const range of combined) {
+    const last = merged[merged.length - 1];
+    if (last && range.start <= last.end) last.end = Math.max(last.end, range.end);
+    else merged.push({ ...range });
+  }
+  if (merged.length === 0)
+    return [{ text, marked: false, active: false, comment: false }];
+  const active = normalizeRanges(text, activeRanges);
+  const commented = normalizeRanges(text, commentRanges);
+  const overlaps = (list: { start: number; end: number }[], start: number, end: number) =>
+    list.some((range) => range.start < end && start < range.end);
+  const segments: CommentTextSegment[] = [];
+  let cursor = 0;
+  for (const range of merged) {
+    if (range.start > cursor)
+      segments.push({
+        text: text.slice(cursor, range.start),
+        marked: false,
+        active: false,
+        comment: false,
+      });
+    segments.push({
+      text: text.slice(range.start, range.end),
+      marked: true,
+      active: overlaps(active, range.start, range.end),
+      comment: overlaps(commented, range.start, range.end),
+    });
+    cursor = range.end;
+  }
+  if (cursor < text.length)
+    segments.push({ text: text.slice(cursor), marked: false, active: false, comment: false });
   return segments;
 }

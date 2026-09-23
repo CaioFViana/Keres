@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   excerptAroundMatch,
   findAllCaseInsensitiveMatches,
+  findAllFoldedMatches,
   findFirstExcerptMatch,
   splitTextByActiveRanges,
+  splitTextByCommentRanges,
   splitTextByRanges,
 } from '../../utils/excerptHighlight';
 
@@ -214,5 +216,64 @@ describe('splitTextByActiveRanges', () => {
       [{ start: 3, length: 5 }],
     );
     expect(segments[0]).toEqual({ text: 'Waves', marked: true, active: true });
+  });
+});
+
+describe('findAllFoldedMatches', () => {
+  it('finds every occurrence with original offsets', () => {
+    expect(findAllFoldedMatches('Waves. Waves again.', 'waves')).toEqual([
+      { start: 0, length: 5 },
+      { start: 7, length: 5 },
+    ]);
+  });
+
+  it('matches accent-insensitively in both directions', () => {
+    expect(findAllFoldedMatches('manhã e manhã', 'manha')).toEqual([
+      { start: 0, length: 5 },
+      { start: 8, length: 5 },
+    ]);
+    expect(findAllFoldedMatches('manha e manha', 'manhã')).toEqual([
+      { start: 0, length: 5 },
+      { start: 8, length: 5 },
+    ]);
+  });
+
+  it('marks nothing for an empty excerpt or no match', () => {
+    expect(findAllFoldedMatches('Waves.', '  ')).toEqual([]);
+    expect(findAllFoldedMatches('Waves.', 'absent')).toEqual([]);
+    expect(findAllFoldedMatches('Waves.', null)).toEqual([]);
+  });
+});
+
+describe('splitTextByCommentRanges', () => {
+  it('marks the union and flags commented segments', () => {
+    expect(
+      splitTextByCommentRanges(
+        'Waves crash loudly.',
+        [{ start: 0, length: 5 }],
+        [{ start: 6, length: 5 }],
+      ),
+    ).toEqual([
+      { text: 'Waves', marked: true, active: false, comment: false },
+      { text: ' ', marked: false, active: false, comment: false },
+      { text: 'crash', marked: true, active: false, comment: true },
+      { text: ' loudly.', marked: false, active: false, comment: false },
+    ]);
+  });
+
+  it('merges an overlap into one segment with both flags', () => {
+    const segments = splitTextByCommentRanges(
+      'Waves.',
+      [{ start: 0, length: 5 }],
+      [{ start: 0, length: 5 }],
+      [{ start: 0, length: 5 }],
+    );
+    expect(segments[0]).toEqual({ text: 'Waves', marked: true, active: true, comment: true });
+  });
+
+  it('renders plain text as one unmarked segment', () => {
+    expect(splitTextByCommentRanges('Waves.', [], [])).toEqual([
+      { text: 'Waves.', marked: false, active: false, comment: false },
+    ]);
   });
 });

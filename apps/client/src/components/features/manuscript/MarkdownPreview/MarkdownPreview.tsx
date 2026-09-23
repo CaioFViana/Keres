@@ -1,5 +1,9 @@
 import type { ManuscriptMark, ManuscriptSpan, TextRange } from '@keres/shared';
-import { findAllCaseInsensitiveMatches, parseMarkdownToDocument } from '@keres/shared';
+import {
+  findAllCaseInsensitiveMatches,
+  findAllFoldedMatches,
+  parseMarkdownToDocument,
+} from '@keres/shared';
 import { useMemo } from 'react';
 import type React from 'react';
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
@@ -19,11 +23,15 @@ function decorationLine(marks: ManuscriptMark[]): TextStyle['textDecorationLine'
 function InlineText({
   span,
   ranges,
+  commentRanges,
+  onCommentPress,
   activeRangeIndex,
   activeTextRef,
 }: {
   span: ManuscriptSpan;
   ranges: TextRange[];
+  commentRanges: TextRange[];
+  onCommentPress?: () => void;
   activeRangeIndex: number | null;
   activeTextRef?: React.Ref<Text>;
 }) {
@@ -31,6 +39,8 @@ function InlineText({
     <MarkedText
       text={span.text}
       ranges={ranges}
+      commentRanges={commentRanges}
+      onCommentPress={onCommentPress}
       activeRanges={
         activeRangeIndex !== null && ranges[activeRangeIndex]
           ? [ranges[activeRangeIndex]]
@@ -60,12 +70,18 @@ export function MarkdownPreview({
   highlightQuery,
   activeMatchIndex,
   activeTextRef,
+  commentExcerpts,
+  onCommentPress,
 }: {
   text: string;
   testID?: string;
   selectable?: boolean;
   /** Manuscript search query: every case-insensitive hit reads as a highlighter mark. */
   highlightQuery?: string | null;
+  /** Comment excerpts: every occurrence reads as a tappable highlighter mark. */
+  commentExcerpts?: string[];
+  /** Fired when a comment-marked span is tapped (opens that field's thread). */
+  onCommentPress?: () => void;
   /**
    * Body-global 0-based hit drawn as the current one (manuscript search's ordinal hit
    * within this body). Nullish draws every hit equally. Counted in mark order, which is
@@ -96,6 +112,19 @@ export function MarkdownPreview({
         ),
       ),
     [blocks, highlightQuery],
+  );
+  // Comment marks follow the per-span rule search uses: spans carry no raw offsets,
+  // so each excerpt matches inside each span. Same fill as search, tappable.
+  const spanCommentRanges = useMemo(
+    () =>
+      blocks.map((block) =>
+        block.spans.map((span) =>
+          (commentExcerpts ?? []).flatMap((excerpt) =>
+            findAllFoldedMatches(span.text, excerpt),
+          ),
+        ),
+      ),
+    [blocks, commentExcerpts],
   );
   // Which span holds the current hit: spans partition the body in order, so the hits
   // count up across them exactly as the reader meets them.
@@ -147,6 +176,8 @@ export function MarkdownPreview({
                   key={spanIndex}
                   span={span}
                   ranges={spanRanges[index][spanIndex]}
+                  commentRanges={spanCommentRanges[index][spanIndex]}
+                  onCommentPress={onCommentPress}
                   activeRangeIndex={
                     activeRef !== null &&
                     activeRef.blockIndex === index &&

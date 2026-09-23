@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import SceneEditorScreen from '../../../../src/screens/narrative-elements/scenes/SceneEditorScreen';
 import type { SceneSelect } from '../../../../src/db/schema';
@@ -22,7 +23,7 @@ const mockEditorRef = { current: { focus: mockEditorFocus } };
 let mockHeaderArgs: { title: string; actions?: readonly HeaderAction[] } | null = null;
 let mockSubscriptions: { event: string; listener: (...args: never[]) => unknown }[] = [];
 let mockCanEdit = true;
-let mockCommentsByField: Record<string, { id: string }[]> = {};
+let mockCommentsByField: Record<string, { id: string; excerptText?: string }[]> = {};
 let mockBodyText = 'Saved prose.';
 let mockBodyDirty = false;
 let mockActiveMarks: string[] = [];
@@ -464,6 +465,35 @@ describe('SceneEditorScreen', () => {
         contentSnapshot: 'Saved prose.',
       }),
     );
+  });
+
+  it('pins the review comments entry below the scroller', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+    await pressHeaderAction('mode-review');
+
+    let ancestor = view.getByText('manuscript_comments_button').parent;
+    while (ancestor) {
+      expect(ancestor.type).not.toBe(ScrollView);
+      ancestor = ancestor.parent;
+    }
+  });
+
+  it('marks commented passages in review only, and taps open the thread', async () => {
+    mockCommentsByField = { body: [{ id: 'c-1', excerptText: 'prose' }] };
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+    await pressHeaderAction('mode-review');
+
+    const marked = view.getByText('prose');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#ccf');
+
+    await fireEvent.press(marked);
+    expect((await view.findByTestId('comments-modal')).props.children).toBe('comments:1');
+
+    await pressHeaderAction('mode-read');
+    expect(view.getByText('Saved prose.')).toBeTruthy();
+    expect(view.queryByText('prose')).toBeNull();
   });
 
   it('shows the not-found state for a missing scene', async () => {

@@ -1,5 +1,9 @@
 import type { TextRange } from '@keres/shared';
-import { splitTextByActiveRanges, splitTextByRanges } from '@keres/shared';
+import {
+  splitTextByActiveRanges,
+  splitTextByCommentRanges,
+  splitTextByRanges,
+} from '@keres/shared';
 import React, { useMemo } from 'react';
 import { Text, type TextProps } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -15,6 +19,10 @@ interface MarkedTextProps extends Omit<TextProps, 'children'> {
   activeRanges?: TextRange[];
   /** Attached to the active span's host, so the manuscript can scroll it into view. */
   activeRef?: React.Ref<Text>;
+  /** Comment-excerpt spans: same fill as `ranges`, tappable via `onCommentPress`. */
+  commentRanges?: TextRange[];
+  /** Fired when a comment-marked span is tapped (opens that field's thread). */
+  onCommentPress?: () => void;
 }
 
 /**
@@ -27,16 +35,28 @@ const MarkedText: React.FC<MarkedTextProps> = ({
   ranges,
   activeRanges,
   activeRef,
+  commentRanges,
+  onCommentPress,
   style,
   ...rest
 }) => {
   const { colors } = useTheme();
+  const hasComments = !!commentRanges && commentRanges.length > 0;
   const segments = useMemo(
     () =>
-      activeRanges && activeRanges.length > 0
-        ? splitTextByActiveRanges(text, ranges, activeRanges)
-        : splitTextByRanges(text, ranges).map((segment) => ({ ...segment, active: false })),
-    [text, ranges, activeRanges],
+      hasComments
+        ? splitTextByCommentRanges(text, ranges, commentRanges ?? [], activeRanges ?? [])
+        : activeRanges && activeRanges.length > 0
+          ? splitTextByActiveRanges(text, ranges, activeRanges).map((segment) => ({
+              ...segment,
+              comment: false,
+            }))
+          : splitTextByRanges(text, ranges).map((segment) => ({
+              ...segment,
+              active: false,
+              comment: false,
+            })),
+    [text, ranges, activeRanges, commentRanges, hasComments],
   );
 
   if (segments.length === 1 && !segments[0].marked) {
@@ -53,6 +73,8 @@ const MarkedText: React.FC<MarkedTextProps> = ({
           <Text
             key={index}
             ref={segment.active ? activeRef : undefined}
+            onPress={segment.comment && onCommentPress ? onCommentPress : undefined}
+            accessibilityRole={segment.comment && onCommentPress ? 'button' : undefined}
             style={
               segment.active
                 ? { backgroundColor: colors.primary, color: colors.onPrimary }

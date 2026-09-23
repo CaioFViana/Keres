@@ -122,16 +122,20 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
   };
 });
 
+const mockDetailField = jest.fn();
 jest.mock('../../src/components/common/display/DetailField/DetailField', () => {
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
-    default: ({ label, value }: { label: string; value: string }) => (
-      <RN.View testID="detail-field">
-        <RN.Text>{label}</RN.Text>
-        <RN.Text>{value}</RN.Text>
-      </RN.View>
-    ),
+    default: (props: { label: string; value: string }) => {
+      mockDetailField(props);
+      return (
+        <RN.View testID="detail-field">
+          <RN.Text>{props.label}</RN.Text>
+          <RN.Text>{props.value}</RN.Text>
+        </RN.View>
+      );
+    },
   };
 });
 
@@ -251,6 +255,30 @@ describe('CommentableDetailField', () => {
     };
     expect(closed.visible).toBe(false);
   });
+
+  it('marks excerpt passages and taps open the thread', async () => {
+    const comments = [comment({ excerptText: 'quiet' })];
+    await render(<CommentableDetailField {...baseProps} comments={comments} canComment />);
+
+    const field = mockDetailField.mock.calls[mockDetailField.mock.calls.length - 1][0] as {
+      commentRanges: { start: number; length: number }[];
+      selectable: boolean;
+      onCommentPress: () => void;
+    };
+    expect(field.commentRanges).toEqual([{ start: 2, length: 5 }]);
+    expect(field.selectable).toBe(true);
+
+    await act(async () => {
+      field.onCommentPress();
+    });
+    const last = mockThreadModal.mock.calls[mockThreadModal.mock.calls.length - 1][0] as {
+      visible: boolean;
+      initialExcerpt: string | null;
+    };
+    expect(last.visible).toBe(true);
+    // No document outside web: the opener reads null, manual excerpt as before.
+    expect(last.initialExcerpt).toBeNull();
+  });
 });
 
 describe('CommentList', () => {
@@ -316,6 +344,19 @@ describe('CommentThreadModal', () => {
     const view = await render(<RealModal {...baseProps} visible={false} />);
 
     expect(view.toJSON()).toBeNull();
+  });
+
+  it('pre-fills the excerpt from a fresh selection on open', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(<RealModal {...baseProps} visible={false} />);
+
+    await view.rerender(<RealModal {...baseProps} visible initialExcerpt="quiet arrival" />);
+
+    expect(view.getByTestId('comment-excerpt-input').props.value).toBe('quiet arrival');
   });
 
   it('lists the thread oldest-first with excerpts', async () => {

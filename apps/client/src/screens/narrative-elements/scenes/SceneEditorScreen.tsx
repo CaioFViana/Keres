@@ -28,6 +28,7 @@ import {
 import { useSceneBodyDraft } from '../../../hooks/useSceneBodyDraft';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
 import { useStoryRole } from '../../../hooks/useStoryRole';
+import { useWebSelectionClip } from '../../../hooks/useWebSelectionClip';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { SCENE_BODY_DRAFT_FIELD } from '../../../services/EditorDraftService';
 import {
@@ -71,6 +72,8 @@ function SceneEditorContent({
   // review adding the prose-comments entry. Mode switches never touch the doc.
   const [mode, setMode] = useState<EditorMode>('write');
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const openComments = useCallback(() => setCommentsOpen(true), []);
+  const { containerRef, readSelection } = useWebSelectionClip(`scene-body-${scene.id}`);
   const { canEdit } = useStoryRole(scene.storyId);
   const {
     commentsByField,
@@ -81,7 +84,15 @@ function SceneEditorContent({
     deleteComment,
     updateComment,
   } = useEntityComments(scene.storyId, 'Scene', scene.id);
-  const bodyComments = commentsByField[SCENE_BODY_DRAFT_FIELD] ?? [];
+  const bodyComments = useMemo(
+    () => commentsByField[SCENE_BODY_DRAFT_FIELD] ?? [],
+    [commentsByField],
+  );
+  const bodyExcerpts = useMemo(
+    () =>
+      bodyComments.flatMap((comment) => (comment.excerptText ? [comment.excerptText] : [])),
+    [bodyComments],
+  );
 
   const {
     editorRef,
@@ -191,8 +202,11 @@ function SceneEditorContent({
           paddingVertical: manuscriptTextMetrics.containerPaddingVertical,
         },
         reviewBar: {
+          backgroundColor: colors.surface,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
           paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
-          paddingBottom: manuscriptTextMetrics.containerPaddingVertical,
+          paddingVertical: 8,
         },
       }),
     [colors],
@@ -242,18 +256,22 @@ function SceneEditorContent({
             <View style={styles.editorPlaceholder} testID="scene-body-editor-loading" />
           )
         ) : (
-          <View style={styles.readContainer}>
-            <MarkdownPreview text={serializedBody} />
-          </View>
-        )}
-        {mode === 'review' && (
-          <View style={styles.reviewBar}>
-            <Button onPress={() => setCommentsOpen(true)} testID="scene-body-comments">
-              {t('manuscript_comments_button', { count: bodyComments.length })}
-            </Button>
+          <View ref={containerRef} collapsable={false} style={styles.readContainer}>
+            <MarkdownPreview
+              text={serializedBody}
+              commentExcerpts={mode === 'review' ? bodyExcerpts : undefined}
+              onCommentPress={mode === 'review' ? openComments : undefined}
+            />
           </View>
         )}
       </ScrollView>
+      {mode === 'review' && (
+        <View style={styles.reviewBar}>
+          <Button onPress={openComments} testID="scene-body-comments">
+            {t('manuscript_comments_button', { count: bodyComments.length })}
+          </Button>
+        </View>
+      )}
       {mode === 'write' && (
         <SceneBodyFooter
           testID="scene-body-footer"
@@ -273,6 +291,7 @@ function SceneEditorContent({
         storyId={scene.storyId}
         fieldLabel={t('manuscript_prose')}
         showExcerptAnchorNotice
+        initialExcerpt={readSelection()}
         fieldValueSnapshot={serializedBody}
         comments={bodyComments}
         canComment={canComment}

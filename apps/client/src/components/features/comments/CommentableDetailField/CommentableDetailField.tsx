@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { TextRange } from '@keres/shared';
+import { findAllFoldedMatches } from '@keres/shared';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
+import { useWebSelectionClip } from '../../../../hooks/useWebSelectionClip';
 import type { CommentSelect } from '../../../../db/schema';
 import { useTheme } from '../../../../theme';
 import CommentThreadModal from '../CommentThreadModal/CommentThreadModal';
@@ -51,7 +54,20 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
 }) => {
   const { colors } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
+  // Instance-stable registry key: two fields never share a selection slot.
+  const { containerRef, readSelection } = useWebSelectionClip(useId());
+  // Icon and marked-span taps share one opener.
+  const openThread = () => setModalVisible(true);
   const hasComments = comments.length > 0;
+  // Every commented passage, search-style: all occurrences of every excerpt, so the
+  // value reads like the manuscript's marked prose. Tapping one opens this thread.
+  const commentRanges: TextRange[] = useMemo(() => {
+    const ranges: TextRange[] = [];
+    for (const comment of comments) {
+      ranges.push(...findAllFoldedMatches(value, comment.excerptText));
+    }
+    return ranges;
+  }, [comments, value]);
 
   if (!hasComments && !canComment) {
     return (
@@ -80,15 +96,18 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
 
   return (
     <View style={styles.row}>
-      <View style={styles.field}>
+      <View ref={containerRef} collapsable={false} style={styles.field}>
         <DetailField
           label={label}
           value={value}
           onPress={onPress}
           mentionSourceId={mentionSourceId}
+          commentRanges={commentRanges}
+          onCommentPress={openThread}
+          selectable
         />
       </View>
-      <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={styles.button} onPress={openThread}>
         <Ionicons
           name={hasComments ? 'chatbubble' : 'chatbubble-outline'}
           size={18}
@@ -101,6 +120,9 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
         onClose={() => setModalVisible(false)}
         storyId={storyId}
         fieldLabel={label}
+        // Read at render, consumed on open: the live web selection clipped to this
+        // field (native reads null - manual excerpt as before).
+        initialExcerpt={readSelection()}
         fieldValueSnapshot={value}
         comments={comments}
         canComment={canComment}

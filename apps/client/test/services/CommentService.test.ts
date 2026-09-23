@@ -158,4 +158,30 @@ describe('CommentService', () => {
     });
     expect(stored?.authorUserId).toBe('server-user');
   });
+
+  it('reads many entities in one query, live comments only', async () => {
+    const service = createCommentService(database.db);
+    const input = (commentText: string) => ({
+      contentSnapshot: null,
+      excerptText: null,
+      commentText,
+      criticality: 1,
+    });
+    await service.createComment(TEST_USER_ID, TEST_STORY_ID, 'Scene', 's-1', { fieldKey: 'body' }, input('One'));
+    await service.createComment(TEST_USER_ID, TEST_STORY_ID, 'Scene', 's-2', { fieldKey: 'body' }, input('Two'));
+    const removed = await service.createComment(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      'Scene',
+      's-1',
+      { fieldKey: 'body' },
+      input('Gone'),
+    );
+    await service.deleteComment(TEST_USER_ID, removed.id, false);
+    await service.createComment(TEST_USER_ID, TEST_STORY_ID, 'Scene', 's-9', { fieldKey: 'body' }, input('Other'));
+
+    const rows = await service.getCommentsForEntities(TEST_STORY_ID, 'Scene', ['s-1', 's-2']);
+    expect(rows.map((row) => row.commentText).sort()).toEqual(['One', 'Two']);
+    expect(await service.getCommentsForEntities(TEST_STORY_ID, 'Scene', [])).toEqual([]);
+  });
 });

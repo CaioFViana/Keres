@@ -4,6 +4,7 @@ import TestRenderer from 'react-test-renderer';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import type {
   ChapterSelect,
+  CommentSelect,
   RouteSelect,
   RouteStepSelect,
   SceneSelect,
@@ -26,6 +27,19 @@ let mockModalProps: {
   arcs: { id: string; title: string }[];
   onExport: (choices: ManuscriptExportChoices) => void;
   onClose: () => void;
+} | null = null;
+
+let mockCommentsBySceneId: Record<string, CommentSelect[]> = {};
+const mockReviewAddComment = jest.fn();
+let mockThreadProps: {
+  visible: boolean;
+  fieldLabel: string;
+  comments: CommentSelect[];
+  onSubmit: (input: {
+    commentText: string;
+    excerptText: string | null;
+    criticality: number;
+  }) => Promise<void>;
 } | null = null;
 
 let mockHeaderTitle: string | null = null;
@@ -110,6 +124,30 @@ jest.mock('../../../../src/hooks/useManuscriptData', () => ({
     loadChoiceAnnotations: mockLoadChoiceAnnotations,
   }),
 }));
+
+jest.mock('../../../../src/hooks/useSceneBodyComments', () => ({
+  __esModule: true,
+  useSceneBodyComments: () => ({
+    commentsBySceneId: mockCommentsBySceneId,
+    canComment: true,
+    isStoryOwner: true,
+    currentUserId: 'user-1',
+    addComment: mockReviewAddComment,
+    updateComment: jest.fn(),
+    deleteComment: jest.fn(),
+  }),
+}));
+
+jest.mock(
+  '../../../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+  () => ({
+    __esModule: true,
+    default: (props: unknown) => {
+      mockThreadProps = props as typeof mockThreadProps;
+      return null;
+    },
+  }),
+);
 
 jest.mock(
   '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal',
@@ -352,6 +390,8 @@ beforeEach(() => {
   mockHeaderTitle = null;
   mockHeaderActions = null;
   mockModalProps = null;
+  mockCommentsBySceneId = {};
+  mockThreadProps = null;
   mockStoryType = 'linear';
   mockStoryTitle = 'My Story';
   mockActiveArcId = null;
@@ -396,10 +436,14 @@ describe('ManuscriptScreen', () => {
     expect(mockUseScreenTour).toHaveBeenCalledWith('Manuscript');
   });
 
-  it('exposes two header actions for the compact overflow', async () => {
+  it('exposes mode and export header actions for the compact overflow', async () => {
     await render(<ManuscriptScreen />);
 
-    expect(mockHeaderActions?.map((action) => action.id)).toEqual(['pure-read', 'export']);
+    expect(mockHeaderActions?.map((action) => action.id)).toEqual([
+      'mode-read',
+      'mode-review',
+      'export',
+    ]);
   });
 
   it('navigates to the scene from its title and to the editor from its pencil', async () => {
@@ -412,28 +456,82 @@ describe('ManuscriptScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('SceneEditor', { sceneId: 's-1' });
   });
 
-  it('toggles pure reading with no titles, pencils or empty scenes', async () => {
+  it('switches read and review modes from the header', async () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
 
-    expect(mockHeaderActions?.find((action) => action.id === 'pure-read')).toMatchObject({
-      icon: 'eye-outline',
-      label: 'manuscript_pure_read',
-      active: false,
-    });
-    await pressHeaderAction('pure-read');
-    expect(mockHeaderActions?.find((action) => action.id === 'pure-read')).toMatchObject({
-      icon: 'eye',
+    expect(mockHeaderActions?.find((action) => action.id === 'mode-read')).toMatchObject({
+      icon: 'book',
+      label: 'manuscript_mode_read',
       active: true,
     });
+    expect(mockHeaderActions?.find((action) => action.id === 'mode-review')).toMatchObject({
+      icon: 'chatbubbles-outline',
+      label: 'manuscript_mode_review',
+      active: false,
+    });
+    expect(view.queryByTestId('manuscript-review-tools')).toBeNull();
 
-    await waitFor(() => expect(view.queryByText('1. Opening')).toBeNull());
-    expect(view.queryByTestId('manuscript-edit-s-1')).toBeNull();
-    expect(view.queryByText('manuscript_no_body_yet')).toBeNull();
-    expect(view.getByText('Waves. Waves again.')).toBeTruthy();
-    expect(view.getByText('Lost pages.')).toBeTruthy();
-    // Chapters stay: they are non-interactive reading landmarks.
-    expect(view.getByText('1. Arrival')).toBeTruthy();
+    await pressHeaderAction('mode-review');
+
+    expect(mockHeaderActions?.find((action) => action.id === 'mode-review')).toMatchObject({
+      icon: 'chatbubbles',
+      active: true,
+    });
+    const tools = view.getByTestId('manuscript-review-tools');
+    expect(tools).toBeTruthy();
+    // The fixed bar rides below the list, never inside it.
+    let ancestor = tools.parent;
+    while (ancestor) {
+      expect(ancestor.type).not.toBe(FlatList);
+      ancestor = ancestor.parent;
+    }
+    // The bar addresses the first scene until the reader moves.
+    expect(view.getAllByText('1. Opening')).toHaveLength(2);
+    expect(view.getByText('manuscript_comments_button:{"count":0}')).toBeTruthy();
+  });
+
+  it('marks commented passages in review and taps open that scene thread', async () => {
+    mockCommentsBySceneId = {
+      's-1': [{ id: 'c-1', excerptText: 'Waves' } as CommentSelect],
+    };
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('mode-review');
+
+    const hits = view.getAllByText(/^Waves$/);
+    expect(hits).toHaveLength(2);
+    expect(StyleSheet.flatten(hits[0].props.style).backgroundColor).toBe('#ccf');
+
+    await fireEvent.press(hits[0]);
+
+    expect(mockThreadProps).toMatchObject({ visible: true, fieldLabel: '1. Opening' });
+    expect(mockThreadProps?.comments).toHaveLength(1);
+  });
+
+  it('addresses the bar to the current scene and posts against its body', async () => {
+    mockCommentsBySceneId = {
+      's-3': [{ id: 'c-3', excerptText: 'Lost' } as CommentSelect],
+    };
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-3'));
+    await pressHeaderAction('mode-review');
+
+    expect(view.getAllByText('3. Fragment')).toHaveLength(2);
+    await fireEvent.press(view.getByText('manuscript_comments_button:{"count":1}'));
+
+    expect(mockThreadProps).toMatchObject({ visible: true, fieldLabel: '3. Fragment' });
+
+    await act(async () => {
+      await mockThreadProps?.onSubmit({ commentText: 'Tighten', excerptText: null, criticality: 1 });
+    });
+    expect(mockReviewAddComment).toHaveBeenCalledWith('s-3', {
+      commentText: 'Tighten',
+      excerptText: null,
+      criticality: 1,
+      contentSnapshot: 'Lost pages.',
+    });
   });
 
   it('searches with a counter and cycles through matches', async () => {
@@ -919,7 +1017,7 @@ describe('ManuscriptScreen', () => {
     expect(view.queryByText('Rumble.')).toBeNull();
   });
 
-  it('keeps the viewability callback identical across arc switches and read-mode toggles', async () => {
+  it('keeps the viewability callback identical across arc switches and mode toggles', async () => {
     // Web FlatList throws when this prop identity changes between renders; the
     // RNTL host tree cannot see composite props, hence the manual renderer.
     mockArcs = twoArcs;
@@ -939,7 +1037,7 @@ describe('ManuscriptScreen', () => {
     expect(callbackOf()).toBe(first);
 
     await act(async () => {
-      mockHeaderActions?.find((action) => action.id === 'pure-read')?.onPress();
+      mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
     });
     expect(callbackOf()).toBe(first);
 

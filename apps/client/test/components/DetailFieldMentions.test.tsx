@@ -1,4 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import type { TextRange } from '@keres/shared';
+import { StyleSheet } from 'react-native';
 import DetailField from '../../src/components/common/display/DetailField/DetailField';
 import { MentionMatcherContext, MentionNavigationContext } from '../../src/mentions/MentionContext';
 import {
@@ -10,7 +12,15 @@ import {
 
 jest.mock('../../src/theme', () => ({
   __esModule: true,
-  useTheme: () => ({ colors: { text: '#000', textSecondary: '#666', primary: '#00f' } }),
+  useTheme: () => ({
+    colors: {
+      text: '#000',
+      textSecondary: '#666',
+      primary: '#00f',
+      onPrimary: '#fff',
+      primaryContainer: '#aaf',
+    },
+  }),
 }));
 
 /**
@@ -25,7 +35,12 @@ const renderField = (
   value: string,
   matcher: MentionMatcher,
   openMention: (ref: MentionRef) => void = () => {},
-  props: { mentionSourceId?: string } = {},
+  props: {
+    mentionSourceId?: string;
+    commentRanges?: TextRange[];
+    onCommentPress?: () => void;
+    onPress?: () => void;
+  } = {},
 ) =>
   // RNTL 14's `render` resolves to the queries; without the `await` every query is undefined.
   render(
@@ -78,5 +93,62 @@ describe('DetailField mentions', () => {
     fireEvent.press(screen.getByText('Alice'));
 
     expect(onPress).toHaveBeenCalled();
+  });
+});
+
+describe('DetailField comment marks', () => {
+  it('marks commented passages and taps open the thread', async () => {
+    const onCommentPress = jest.fn();
+    const screen = await renderField('Waves crash loudly.', EMPTY_MENTION_MATCHER, () => {}, {
+      commentRanges: [{ start: 6, length: 5 }],
+      onCommentPress,
+    });
+
+    const marked = screen.getByText('crash');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+
+    fireEvent.press(marked);
+    expect(onCommentPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the comment win where it overlaps a mention', async () => {
+    const openMention = jest.fn();
+    const onCommentPress = jest.fn();
+    const screen = await renderField('Alice went home.', matcherWithAlice(), openMention, {
+      commentRanges: [{ start: 0, length: 5 }],
+      onCommentPress,
+    });
+
+    fireEvent.press(screen.getByText('Alice'));
+
+    expect(onCommentPress).toHaveBeenCalledTimes(1);
+    expect(openMention).not.toHaveBeenCalled();
+  });
+
+  it('keeps mentions tappable outside commented passages', async () => {
+    const openMention = jest.fn();
+    const screen = await renderField('Alice went home.', matcherWithAlice(), openMention, {
+      commentRanges: [{ start: 11, length: 4 }],
+      onCommentPress: () => {},
+    });
+
+    fireEvent.press(screen.getByText('Alice'));
+
+    expect(openMention).toHaveBeenCalledWith(ALICE);
+  });
+
+  it('skips marks inside a whole-value link', async () => {
+    const onPress = jest.fn();
+    const onCommentPress = jest.fn();
+    const screen = await renderField('Alice', matcherWithAlice(), () => {}, {
+      onPress,
+      commentRanges: [{ start: 0, length: 5 }],
+      onCommentPress,
+    });
+
+    fireEvent.press(screen.getByText('Alice'));
+
+    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onCommentPress).not.toHaveBeenCalled();
   });
 });

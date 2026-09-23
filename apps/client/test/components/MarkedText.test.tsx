@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import MarkedText from '../../src/components/common/display/MarkedText/MarkedText';
 
@@ -77,5 +77,29 @@ describe('MarkedText', () => {
     );
 
     expect(view.getByTestId('marked').props.numberOfLines).toBe(4);
+  });
+
+  it('marks comment spans with the same fill and only they tap', async () => {
+    const onCommentPress = jest.fn();
+    const view = await render(
+      <MarkedText
+        text="Waves crash loudly."
+        ranges={[{ start: 0, length: 5 }]}
+        commentRanges={[{ start: 6, length: 5 }]}
+        onCommentPress={onCommentPress}
+      />,
+    );
+
+    const searchHit = view.getByText('Waves');
+    expect(StyleSheet.flatten(searchHit.props.style).backgroundColor).toBe('#aaf');
+    expect(searchHit.props.onPress).toBeUndefined();
+    const commented = view.getByText('crash');
+    expect(StyleSheet.flatten(commented.props.style).backgroundColor).toBe('#aaf');
+    expect(commented.props.accessibilityRole).toBe('button');
+
+    await act(async () => {
+      commented.props.onPress();
+    });
+    expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
 });

@@ -571,4 +571,22 @@ describe('MarkdownPreview', () => {
     );
     expect(absent.getByText('Waves. Waves again.')).toBeTruthy();
   });
+
+  it('marks comment excerpts like search hits and taps open the thread', async () => {
+    const onCommentPress = jest.fn();
+    const view = await render(
+      <MarkdownPreview
+        text="Waves crash loudly."
+        commentExcerpts={['crash']}
+        onCommentPress={onCommentPress}
+        testID="preview"
+      />,
+    );
+
+    const marked = view.getByText('crash');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#ccf');
+
+    fireEvent.press(marked);
+    expect(onCommentPress).toHaveBeenCalledTimes(1);
+  });
 });

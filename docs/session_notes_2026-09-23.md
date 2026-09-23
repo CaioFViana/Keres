@@ -96,6 +96,26 @@ código e comentários em inglês; sem mudanças fora do escopo pedido.
 - Gates: client tsc/eslint 0, suítes tocadas 194/194 (jest, incl. layering);
   shared tsc/eslint 0, 982/982 (vitest); api tsc/eslint 0, `publicationManuscript`
   12/12 (sqlite); `locales:audit` 0.
+
+### 1.7 Modo revisão no manuscript + comentários em tudo (U1–U8)
+- Correção de escopo do usuário: threads de `scenes.body` já existiam na per-scene
+  (criação/edição via `CommentService` + `CommentThreadModal`); nada disso foi
+  duplicado — só leitura bulk nova (`getCommentsForEntities` + `useSceneBodyComments`).
+- Manuscript geral: modos read/review no header (olho/`pureRead` removidos com chave
+  de locale, testes e referências); review tem `ManuscriptReviewTools` fixo (barra da
+  scene corrente + thread), marcas estilo search em títulos/corpos, tap abre a thread.
+- Scene editor: barra de review para fora do `ScrollView` (fixa); marcas + tap só em
+  review; read continua limpo.
+- Todas as detail screens (via `CommentableDetailField` + custom attributes): trechos
+  comentados marcados, tap abre a thread; comentário vence mention/link em overlap.
+- Modal: `initialExcerpt` pré-preenche na abertura; seleção web (só) via
+  `useWebSelectionClip` (clipping DOM preciso por campo; nativo sem API no `Text` —
+  verificado na doc oficial — mantém excerpt manual).
+- Shared: `findAllFoldedMatches` + `splitTextByCommentRanges` (normalize unificado;
+  comportamento dos splitters antigos preservado pelos testes).
+- Gates: client full 596/596 suítes, 5990/5990 (jest maxWorkers=2/512MB); shared
+  84/84, 988/988 (vitest); tsc/eslint 0 ambos; `locales:audit` 0; file-size gate
+  verde (construção de bar/thread mora no hook, não na tela).
 - Pergunta aberta: labels de anotação na API são inglês-only por ora; localização
   futura se o showcase precisar.
 

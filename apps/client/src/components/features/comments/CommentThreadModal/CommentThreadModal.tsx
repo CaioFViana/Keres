@@ -42,6 +42,8 @@ interface CommentThreadModalProps {
   ) => Promise<void>;
   /** Manuscript prose composer: explain that the first match anchors the comment. */
   showExcerptAnchorNotice?: boolean;
+  /** A fresh text selection, pre-filled into the excerpt composer on open. */
+  initialExcerpt?: string | null;
 }
 
 /**
@@ -63,6 +65,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   onDelete,
   onUpdate,
   showExcerptAnchorNotice = false,
+  initialExcerpt = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -72,6 +75,14 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   const [commentText, setCommentText] = useState('');
   const [excerptText, setExcerptText] = useState('');
   const [criticality, setCriticality] = useState<CommentCriticality>(DEFAULT_CRITICALITY);
+  // Derived-state reset during render (the sanctioned pattern, not an effect): a fresh
+  // selection pre-fills the excerpt on open; without one the composer keeps whatever
+  // it had, so drafts survive close/reopen exactly as before.
+  const [prevVisible, setPrevVisible] = useState(false);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
+    if (visible && initialExcerpt && initialExcerpt.trim()) setExcerptText(initialExcerpt);
+  }
   const [submitting, setSubmitting] = useState(false);
   // Web textareas never auto-grow: pin each composer's measured content height
   // as its minimum (same technique as the prose editor) so long comments grow

@@ -21,6 +21,7 @@ import type { ManuscriptSection, TextRange } from '@keres/shared';
 import {
   compileLinearManuscript,
   compileRouteManuscript,
+  findAllFoldedMatches,
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
@@ -28,6 +29,7 @@ import {
 import MarkedText from '../../../components/common/display/MarkedText/MarkedText';
 import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
+import { ManuscriptReviewTools } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
 import ManuscriptExportModal, {
   type ManuscriptExportChoices,
 } from '../../../components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
@@ -47,6 +49,11 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
+import {
+  manuscriptModeHeaderActions,
+  useManuscriptReview,
+  type ManuscriptReviewMode,
+} from './useManuscriptReview';
 import { useManuscriptSearch } from './useManuscriptSearch';
 
 type ManuscriptScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Manuscript'>;
@@ -83,7 +90,7 @@ const ManuscriptScreen = () => {
 
   const [routeId, setRouteId] = useState<string | null>(route.params?.routeId ?? null);
   const effectiveRouteId = routeId ?? routes[0]?.id ?? null;
-  const [pureRead, setPureRead] = useState(false);
+  const [mode, setMode] = useState<ManuscriptReviewMode>('read');
   const [exportVisible, setExportVisible] = useState(false);
   const [indexVisible, setIndexVisible] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number | null>(null);
@@ -113,14 +120,7 @@ const ManuscriptScreen = () => {
     return linearManuscriptSections(chapters, scenes, { arcId: activeArcId });
   }, [isBranching, effectiveRouteId, stepsByRouteId, chapters, scenes, visibleScenes, activeArcId]);
 
-  // Pure reading drops empty scenes (there is nothing to read and no title to show).
-  const sections = useMemo(
-    () =>
-      pureRead
-        ? allSections.filter((section) => section.kind !== 'scene' || section.scene.body)
-        : allSections,
-    [pureRead, allSections],
-  );
+  const sections = allSections;
 
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
   // The one indexed jump: search matches and index picks share it, so the target also
@@ -150,6 +150,21 @@ const ManuscriptScreen = () => {
     },
     [listAnchorRef, viewportRef],
   );
+  const {
+    excerptsBySceneId,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    updateComment,
+    deleteComment,
+    openThread,
+    closeThread,
+    rowRefFor,
+    bar,
+    thread,
+    openBarThread,
+    submitThread,
+  } = useManuscriptReview(storyId, sections, currentSectionIndex);
   // Unmeasured rows cannot be jumped to directly: scroll to the estimated
   // offset first so the row measures, then retry the indexed jump on the next tick.
   const handleScrollToIndexFailed = useCallback(
@@ -167,8 +182,8 @@ const ManuscriptScreen = () => {
   // The reader's position follows the topmost visible scene; container headings are
   // landmarks, not reading, so they never take the highlight. FlatList forbids swapping
   // this callback between renders (web throws an invariant), so its identity is frozen
-  // and the latest sections arrive through a ref: arc switches and read-mode toggles
-  // rebuild `sections` but must never swap the callback.
+  // and the latest sections arrive through a ref: arc switches rebuild `sections`
+  // (mode toggles never do) but must never swap the callback.
   const sectionsRef = useRef(sections);
   useEffect(() => {
     sectionsRef.current = sections;
@@ -335,13 +350,7 @@ const ManuscriptScreen = () => {
     target: 'parent',
     title: t('manuscript_title'),
     actions: [
-      {
-        id: 'pure-read',
-        icon: pureRead ? 'eye' : 'eye-outline',
-        label: t('manuscript_pure_read'),
-        active: pureRead,
-        onPress: () => setPureRead((current) => !current),
-      },
+      ...manuscriptModeHeaderActions(t, mode, setMode),
       {
         id: 'export',
         icon: 'share-outline',
@@ -440,38 +449,47 @@ const ManuscriptScreen = () => {
           </View>
         );
       }
+      // Review mode marks the scene's commented passages (title and body share the
+      // thread excerpts) and taps open the thread; read mode renders them plain.
+      const titleText = `${item.position}. ${item.scene.name}`;
+      const sceneExcerpts =
+        mode === 'review' ? (excerptsBySceneId[item.scene.id] ?? []) : [];
+      const titleCommentRanges = sceneExcerpts.flatMap((excerpt) =>
+        findAllFoldedMatches(titleText, excerpt),
+      );
+      const openSceneThread = mode === 'review' ? () => openThread(item.scene.id) : undefined;
       return (
-        <View>
+        <View ref={rowRefFor(item.key)} collapsable={false}>
           {index > 0 && <View style={styles.sceneDivider} />}
           <View style={styles.section}>
-            {!pureRead && (
-              <View style={styles.sceneHeaderRow}>
-                <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
-                  <MarkedText
-                    text={`${item.position}. ${item.scene.name}`}
-                    ranges={titleMarksByKey.ranges.get(item.key) ?? NO_RANGES}
-                    activeRanges={titleMarksByKey.active.get(item.key) ?? NO_ACTIVE}
-                    // The active title hit scrolls like a body hit: the indexed jump
-                    // lands the row, the measured scroll lands the hit itself.
-                    activeRef={
-                      activeMatch?.sectionIndex === index && activeMatch.nameMatchIndex >= 0
-                        ? scrollActiveIntoView
-                        : undefined
-                    }
-                    style={styles.sceneTitle}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  testID={`manuscript-edit-${item.scene.id}`}
-                  style={styles.sceneEdit}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('manuscript_open_editor')}
-                  onPress={() => openSceneEditor(item.scene.id)}
-                >
-                  <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            )}
+            <View style={styles.sceneHeaderRow}>
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
+                <MarkedText
+                  text={titleText}
+                  ranges={titleMarksByKey.ranges.get(item.key) ?? NO_RANGES}
+                  activeRanges={titleMarksByKey.active.get(item.key) ?? NO_ACTIVE}
+                  commentRanges={titleCommentRanges}
+                  onCommentPress={openSceneThread}
+                  // The active title hit scrolls like a body hit: the indexed jump
+                  // lands the row, the measured scroll lands the hit itself.
+                  activeRef={
+                    activeMatch?.sectionIndex === index && activeMatch.nameMatchIndex >= 0
+                      ? scrollActiveIntoView
+                      : undefined
+                  }
+                  style={styles.sceneTitle}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID={`manuscript-edit-${item.scene.id}`}
+                style={styles.sceneEdit}
+                accessibilityRole="button"
+                accessibilityLabel={t('manuscript_open_editor')}
+                onPress={() => openSceneEditor(item.scene.id)}
+              >
+                <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
             {item.scene.body ? (
               <MarkdownPreview
                 text={item.scene.body}
@@ -480,16 +498,21 @@ const ManuscriptScreen = () => {
                   activeMatch?.sectionIndex === index ? activeMatch.bodyMatchIndex : undefined
                 }
                 activeTextRef={scrollActiveIntoView}
+                commentExcerpts={mode === 'review' ? sceneExcerpts : undefined}
+                onCommentPress={openSceneThread}
               />
             ) : (
-              !pureRead && <Text style={styles.emptyText}>{t('manuscript_no_body_yet')}</Text>
+              <Text style={styles.emptyText}>{t('manuscript_no_body_yet')}</Text>
             )}
           </View>
         </View>
       );
     },
     [
-      pureRead,
+      mode,
+      excerptsBySceneId,
+      openThread,
+      rowRefFor,
       openScene,
       openSceneEditor,
       styles,
@@ -592,6 +615,22 @@ const ManuscriptScreen = () => {
             scrollEventThrottle={16}
           />
         </View>
+      )}
+      {mode === 'review' && (
+        <ManuscriptReviewTools
+          bar={bar}
+          onBarPress={openBarThread}
+          thread={thread}
+          onCloseThread={closeThread}
+          storyId={storyId}
+          canComment={canComment}
+          isStoryOwner={isStoryOwner}
+          currentUserId={currentUserId}
+          onSubmitThread={submitThread}
+          onDeleteThread={deleteComment}
+          onUpdateThread={updateComment}
+          testID="manuscript-review-tools"
+        />
       )}
       <ManuscriptExportModal
         visible={exportVisible}

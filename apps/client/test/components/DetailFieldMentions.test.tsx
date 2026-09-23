@@ -182,9 +182,9 @@ describe('DetailField occurrence flash', () => {
     expect(style.color).toBe('#fff');
     expect(requestScroll).toHaveBeenCalledTimes(1);
     // Span-level host, not the field container: long fields land on the hit.
-    expect((requestScroll.mock.calls[0][0] as { props: { children: unknown } }).props.children).toBe(
-      'home',
-    );
+    expect(
+      (requestScroll.mock.calls[0][0] as { props: { children: unknown } }).props.children,
+    ).toBe('home');
   });
 
   it('fades the flash after its window', async () => {

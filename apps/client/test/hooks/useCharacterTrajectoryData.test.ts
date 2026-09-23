@@ -29,9 +29,7 @@ describe('useCharacterTrajectoryData', () => {
     const view = await renderHook(() => useCharacterTrajectoryData('story-1', 'linear'));
 
     await waitFor(() =>
-      expect(view.result.current.chapters).toEqual([
-        { id: 'ch-1', index: 1, isDeleted: false },
-      ]),
+      expect(view.result.current.chapters).toEqual([{ id: 'ch-1', index: 1, isDeleted: false }]),
     );
     expect(mockGetChapters).toHaveBeenCalledWith('story-1');
     expect(mockGetRoutes).not.toHaveBeenCalled();

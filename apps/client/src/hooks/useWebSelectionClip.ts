@@ -101,10 +101,7 @@ export function useWebSelectionClip(key: string): {
   readSelection: () => string | null;
 } {
   useEffect(() => () => trackSelectionContainer(key, null), [key]);
-  const containerRef = useCallback(
-    (node: unknown) => trackSelectionContainer(key, node),
-    [key],
-  );
+  const containerRef = useCallback((node: unknown) => trackSelectionContainer(key, node), [key]);
   const readSelection = useCallback(() => readClippedSelection(key), [key]);
   return { containerRef, readSelection };
 }

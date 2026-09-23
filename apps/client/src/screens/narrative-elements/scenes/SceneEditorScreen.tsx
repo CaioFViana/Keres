@@ -89,8 +89,7 @@ function SceneEditorContent({
     [commentsByField],
   );
   const bodyExcerpts = useMemo(
-    () =>
-      bodyComments.flatMap((comment) => (comment.excerptText ? [comment.excerptText] : [])),
+    () => bodyComments.flatMap((comment) => (comment.excerptText ? [comment.excerptText] : [])),
     [bodyComments],
   );
 

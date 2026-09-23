@@ -56,7 +56,13 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
       paddingTop: 16,
       paddingBottom: 16,
     },
-    section: { color: colors.text, fontSize: 13, fontWeight: '700', marginTop: 14, marginBottom: 6 },
+    section: {
+      color: colors.text,
+      fontSize: 13,
+      fontWeight: '700',
+      marginTop: 14,
+      marginBottom: 6,
+    },
     row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
     rowLabel: { color: colors.text, flex: 1 },
     hint: { color: colors.textSecondary, marginTop: 4 },
@@ -109,7 +115,13 @@ const TrajectoryPickerSheet: React.FC<TrajectoryPickerSheetProps> = ({
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.section}>{t('trajectory_characters')}</Text>
-        {renderRows(characters, selectedCharacterIds, onToggleCharacter, 'trajectory_no_characters', 'trajectory-character')}
+        {renderRows(
+          characters,
+          selectedCharacterIds,
+          onToggleCharacter,
+          'trajectory_no_characters',
+          'trajectory-character',
+        )}
         <Text style={styles.section}>{t('trajectory_items')}</Text>
         {renderRows(items, selectedItemIds, onToggleItem, 'trajectory_no_items', 'trajectory-item')}
         {storyType === 'branching' && (

@@ -1,8 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  CANVAS_OVERLAY_STAMP_DEFAULT_SIZE,
-  type CanvasOverlayType,
-} from '@keres/shared';
+import { CANVAS_OVERLAY_STAMP_DEFAULT_SIZE, type CanvasOverlayType } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -29,9 +26,7 @@ const CanvasStampView: React.FC<{ stamp: StampOverlay }> = ({ stamp }) => {
           width: size,
           alignItems: 'center',
           zIndex: stamp.zIndex ?? 0,
-          ...(Platform.OS === 'web'
-            ? ({ userSelect: 'none' } as Record<string, string>)
-            : {}),
+          ...(Platform.OS === 'web' ? ({ userSelect: 'none' } as Record<string, string>) : {}),
         },
         circle: {
           width: size,

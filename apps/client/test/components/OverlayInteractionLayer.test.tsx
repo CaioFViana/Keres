@@ -49,10 +49,7 @@ describe('OverlayInteractionLayer', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('converts taps to world points and snaps vertices to targets', async () => {
-    const { config, callbacks } = await setup(
-      { kind: 'draw', tool: 'line' },
-      [{ x: 150, y: 50 }],
-    );
+    const { config, callbacks } = await setup({ kind: 'draw', tool: 'line' }, [{ x: 150, y: 50 }]);
     await config.onPanResponderGrant(tapEvent(48, 50));
     await config.onPanResponderRelease(tapEvent(48, 50), { dx: 0, dy: 0 });
     // Screen (48,50) -> world (148,50), snapped onto the target at (150,50).
@@ -73,10 +70,7 @@ describe('OverlayInteractionLayer', () => {
       end: { x: 130, y: 20 },
     });
     await config.onPanResponderRelease(tapEvent(30, 20), { dx: 30, dy: 20 });
-    expect(callbacks.onDrawRect).toHaveBeenCalledWith(
-      { x: 100, y: 0 },
-      { x: 130, y: 20 },
-    );
+    expect(callbacks.onDrawRect).toHaveBeenCalledWith({ x: 100, y: 0 }, { x: 130, y: 20 });
     expect(callbacks.onPreviewRect).toHaveBeenLastCalledWith(null);
   });
 
@@ -89,10 +83,7 @@ describe('OverlayInteractionLayer', () => {
       end: { x: 130, y: 20 },
     });
     await config.onPanResponderRelease(tapEvent(30, 20), { dx: 30, dy: 20 });
-    expect(callbacks.onDrawRect).toHaveBeenCalledWith(
-      { x: 100, y: 0 },
-      { x: 130, y: 20 },
-    );
+    expect(callbacks.onDrawRect).toHaveBeenCalledWith({ x: 100, y: 0 }, { x: 130, y: 20 });
     expect(callbacks.onPreviewRect).toHaveBeenLastCalledWith(null);
   });
 
@@ -105,9 +96,7 @@ describe('OverlayInteractionLayer', () => {
   });
 
   it('places stamps on tap, free of the vertex snap', async () => {
-    const { config, callbacks } = await setup({ kind: 'draw', tool: 'stamp' }, [
-      { x: 150, y: 50 },
-    ]);
+    const { config, callbacks } = await setup({ kind: 'draw', tool: 'stamp' }, [{ x: 150, y: 50 }]);
     await config.onPanResponderGrant(tapEvent(48, 50));
     await config.onPanResponderRelease(tapEvent(48, 50), { dx: 0, dy: 0 });
     // Screen (48,50) -> world (148,50): kept raw next to the (150,50) target.

@@ -12,8 +12,7 @@ const ACTION_GLYPH_SIZE = 22;
  * the action bar, like the draw bar's compact hint line, match it so the canvas
  * below never pops.
  */
-export const CANVAS_ACTION_ROW_HEIGHT =
-  ACTION_BUTTON_PADDING_VERTICAL * 2 + ACTION_GLYPH_SIZE;
+export const CANVAS_ACTION_ROW_HEIGHT = ACTION_BUTTON_PADDING_VERTICAL * 2 + ACTION_GLYPH_SIZE;
 
 interface CanvasActionBarButtonProps {
   icon: Glyph;
@@ -75,10 +74,12 @@ export const CanvasActionBarButton: React.FC<CanvasActionBarButtonProps> = ({
  * frames, now compact glyphs. Pickers keep their exact modal through the pill's
  * `trigger`; direct actions just fire.
  */
-export const CanvasActionBar: React.FC<{ children: React.ReactNode; testID?: string }> = ({
-  children,
-  testID,
-}) => {
+export const CanvasActionBar: React.FC<{
+  children: React.ReactNode;
+  testID?: string;
+  /** Tour anchor ref; anchored rows opt out of Android view flattening. */
+  anchorRef?: (node: unknown) => void;
+}> = ({ children, testID, anchorRef }) => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -87,7 +88,12 @@ export const CanvasActionBar: React.FC<{ children: React.ReactNode; testID?: str
     [],
   );
   return (
-    <View style={styles.row} testID={testID}>
+    <View
+      style={styles.row}
+      testID={testID}
+      ref={anchorRef}
+      collapsable={anchorRef ? false : undefined}
+    >
       {children}
     </View>
   );

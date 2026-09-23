@@ -115,10 +115,7 @@ describe('ManuscriptIndexModal', () => {
 
   it('badges scenes with counts and chapters with aggregates', async () => {
     const view = await render(
-      <ManuscriptIndexModal
-        {...baseProps}
-        commentCountsBySceneId={{ 's-1': 2, 's-3': 1 }}
-      />,
+      <ManuscriptIndexModal {...baseProps} commentCountsBySceneId={{ 's-1': 2, 's-3': 1 }} />,
     );
 
     const badgeText = (testID: string) =>

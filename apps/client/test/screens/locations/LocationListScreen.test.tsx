@@ -269,5 +269,3 @@ it('renders locations with tag filters and wires item actions', async () => {
   fireEvent.press(screen.getByTestId('view-loc-1'));
   expect(mockNavigate).toHaveBeenCalledWith('LocationDetail', { locationId: 'loc-1' });
 });
-
-

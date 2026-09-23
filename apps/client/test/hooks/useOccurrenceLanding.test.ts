@@ -113,7 +113,11 @@ describe('useOccurrenceLandingController', () => {
 });
 
 describe('useOccurrenceFlash', () => {
-  const renderFlash = (fieldKey: string | undefined, value: string, target: OccurrenceTarget | null) =>
+  const renderFlash = (
+    fieldKey: string | undefined,
+    value: string,
+    target: OccurrenceTarget | null,
+  ) =>
     renderHook(() => useOccurrenceFlash(fieldKey, value), {
       wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(

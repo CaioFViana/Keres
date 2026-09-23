@@ -324,13 +324,12 @@ describe('global search attributes and scene context', () => {
       TEST_USER_ID,
     );
 
-    expect(
-      matches.find((match) => match.id === 'sage')?.occurrence,
-    ).toEqual({ field: 'description', needle: 'harbor' });
+    expect(matches.find((match) => match.id === 'sage')?.occurrence).toEqual({
+      field: 'description',
+      needle: 'harbor',
+    });
     // Title matches land on top (the header): no occurrence rides along.
-    expect(
-      matches.find((match) => match.id === 'captain')?.occurrence,
-    ).toBeUndefined();
+    expect(matches.find((match) => match.id === 'captain')?.occurrence).toBeUndefined();
   });
 
   it('frames the snippet around the match instead of truncating the head', async () => {
@@ -391,9 +390,10 @@ describe('global search attributes and scene context', () => {
       TEST_USER_ID,
     );
 
-    expect(
-      matches.find((match) => match.id === 'sage')?.occurrence,
-    ).toEqual({ field: 'custom:title-field', needle: 'harbor' });
+    expect(matches.find((match) => match.id === 'sage')?.occurrence).toEqual({
+      field: 'custom:title-field',
+      needle: 'harbor',
+    });
   });
 
   it('decorates favoritable matches and leaves the rest without a favorite state', async () => {

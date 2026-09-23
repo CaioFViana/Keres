@@ -331,11 +331,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   return (
     <View style={styles.node} {...pan.panHandlers}>
       <View style={styles.circle} pointerEvents="none">
-        <Ionicons
-          name={mapIconGlyph(node.icon)}
-          size={22}
-          color={node.color}
-        />
+        <Ionicons name={mapIconGlyph(node.icon)} size={22} color={node.color} />
       </View>
       {!!node.destinationMapId && (
         <View pointerEvents="none" style={styles.destinationBadge}>

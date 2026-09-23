@@ -27,7 +27,12 @@ const OverlayDraftView: React.FC<OverlayDraftViewProps> = ({ points, rect, color
       {points && points.length > 0 && (
         <>
           {points.length > 1 && (
-            <Path path={canvasOverlayPolylinePath(points)} style="stroke" color={color} strokeWidth={2} />
+            <Path
+              path={canvasOverlayPolylinePath(points)}
+              style="stroke"
+              color={color}
+              strokeWidth={2}
+            />
           )}
           {points.map((point, index) => (
             <Circle key={index} cx={point.x} cy={point.y} r={dotRadius} color={color} />

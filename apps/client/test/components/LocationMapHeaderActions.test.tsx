@@ -6,6 +6,13 @@ jest.mock('../../src/theme', () => ({
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 
+const mockScreenAnchor = jest.fn();
+jest.mock('../../src/guides/useGuideAnchor', () => ({
+  __esModule: true,
+  useGuideAnchor: jest.fn(() => () => {}),
+  useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
+}));
+
 describe('LocationMapHeaderActions', () => {
   it('keeps both actions unavailable until a map changes', async () => {
     const onRevert = jest.fn();
@@ -22,16 +29,12 @@ describe('LocationMapHeaderActions', () => {
 
   it('keeps only the document actions, the mode toggles live in the tools bar', async () => {
     const view = await render(
-      <LocationMapHeaderActions
-        dirty
-        saving={false}
-        onRevert={jest.fn()}
-        onSave={jest.fn()}
-      />,
+      <LocationMapHeaderActions dirty saving={false} onRevert={jest.fn()} onSave={jest.fn()} />,
     );
 
     expect(view.getByTestId('location-map-revert')).toBeTruthy();
     expect(view.getByTestId('location-map-save')).toBeTruthy();
+    expect(mockScreenAnchor).toHaveBeenCalledWith('LocationMap', 'document');
     expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
     expect(view.queryByLabelText('trajectory_show')).toBeNull();
     expect(view.queryByLabelText('objects_edit')).toBeNull();

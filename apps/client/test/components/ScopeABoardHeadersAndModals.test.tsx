@@ -25,6 +25,13 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+const mockScreenAnchor = jest.fn();
+jest.mock('../../src/guides/useGuideAnchor', () => ({
+  __esModule: true,
+  useGuideAnchor: jest.fn(() => () => {}),
+  useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
+}));
+
 // The real surface renders a native `Modal`, which RNTL cannot see into on this platform.
 jest.mock('../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
   const { View: RNView } = jest.requireActual('react-native');
@@ -97,6 +104,7 @@ describe('BoardCanvasHeaderActions', () => {
 
     expect(view.getByLabelText('board_revert')).toBeTruthy();
     expect(view.getByLabelText('board_save')).toBeTruthy();
+    expect(mockScreenAnchor).toHaveBeenCalledWith('BoardCanvas', 'document');
     expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
     expect(view.queryByLabelText('objects_edit')).toBeNull();
     expect(view.queryByLabelText('board_edit_layout')).toBeNull();

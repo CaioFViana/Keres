@@ -265,9 +265,7 @@ describe('CalendarAnchorsModal', () => {
 
     expect(
       // Composite nodes carry the component as `type`; the lib types it as string.
-      view.container.queryAll(
-        (node) => node.type === (ActivityIndicator as unknown as string),
-      ),
+      view.container.queryAll((node) => node.type === (ActivityIndicator as unknown as string)),
     ).toHaveLength(1);
   });
 

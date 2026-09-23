@@ -1,9 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import {
-  canvasOverlayBounds,
-  type CanvasOverlayType,
-  type SpatialPoint,
-} from '@keres/shared';
+import { canvasOverlayBounds, type CanvasOverlayType, type SpatialPoint } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -88,8 +84,7 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
     [overlay.id, scale],
   );
 
-  const vertices =
-    overlay.kind === 'line' || overlay.kind === 'polygon' ? overlay.points : null;
+  const vertices = overlay.kind === 'line' || overlay.kind === 'polygon' ? overlay.points : null;
   const rect = overlay.kind === 'frame' || overlay.kind === 'shape' ? overlay : null;
   const handle = HANDLE_SCREEN / scale;
   const styles = StyleSheet.create({
@@ -138,10 +133,30 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
 
   const chromeButtons = (
     [
-      { testID: 'overlay-chrome-deselect', icon: 'close', label: t('overlay_deselect'), onPress: onDeselect },
-      { testID: 'overlay-chrome-details', icon: 'create-outline', label: t('overlay_edit_details'), onPress: () => onDetails(overlay.id) },
-      { testID: 'overlay-chrome-raise', icon: 'layers', label: t('overlay_bring_to_front'), onPress: () => onMoveLayer(overlay.id, 'front') },
-      { testID: 'overlay-chrome-lower', icon: 'layers-outline', label: t('overlay_send_to_back'), onPress: () => onMoveLayer(overlay.id, 'back') },
+      {
+        testID: 'overlay-chrome-deselect',
+        icon: 'close',
+        label: t('overlay_deselect'),
+        onPress: onDeselect,
+      },
+      {
+        testID: 'overlay-chrome-details',
+        icon: 'create-outline',
+        label: t('overlay_edit_details'),
+        onPress: () => onDetails(overlay.id),
+      },
+      {
+        testID: 'overlay-chrome-raise',
+        icon: 'layers',
+        label: t('overlay_bring_to_front'),
+        onPress: () => onMoveLayer(overlay.id, 'front'),
+      },
+      {
+        testID: 'overlay-chrome-lower',
+        icon: 'layers-outline',
+        label: t('overlay_send_to_back'),
+        onPress: () => onMoveLayer(overlay.id, 'back'),
+      },
     ] as const
   ).map((button, index) => (
     <TouchableOpacity
@@ -182,12 +197,14 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
         />
       ))}
       {rect &&
-        ([
-          [rect.x, rect.y],
-          [rect.x + rect.width, rect.y],
-          [rect.x + rect.width, rect.y + rect.height],
-          [rect.x, rect.y + rect.height],
-        ] as const).map(([cornerX, cornerY], index) => (
+        (
+          [
+            [rect.x, rect.y],
+            [rect.x + rect.width, rect.y],
+            [rect.x + rect.width, rect.y + rect.height],
+            [rect.x, rect.y + rect.height],
+          ] as const
+        ).map(([cornerX, cornerY], index) => (
           <DragHandle
             key={index}
             testID={`overlay-corner-${index}`}

@@ -41,7 +41,11 @@ jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput'
     }: {
       currentColor: string;
       onSelectColor: (color: string) => void;
-    }) => <Text testID="sheet-color" onPress={() => onSelectColor('#f00')}>{currentColor}</Text>,
+    }) => (
+      <Text testID="sheet-color" onPress={() => onSelectColor('#f00')}>
+        {currentColor}
+      </Text>
+    ),
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
@@ -74,7 +78,11 @@ jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', 
     }: {
       currentIcon: string | null;
       onSelectIcon: (icon: string) => void;
-    }) => <Text testID="sheet-icon" onPress={() => onSelectIcon('castle')}>{currentIcon}</Text>,
+    }) => (
+      <Text testID="sheet-icon" onPress={() => onSelectIcon('castle')}>
+        {currentIcon}
+      </Text>
+    ),
   };
 });
 
@@ -95,7 +103,10 @@ describe('OverlaySheet', () => {
     );
 
     expect(view.getByText('overlay_kind_polygon')).toBeTruthy();
-    await fireEvent.changeText(view.getByPlaceholderText('overlay_sheet_label_placeholder'), 'Mordor');
+    await fireEvent.changeText(
+      view.getByPlaceholderText('overlay_sheet_label_placeholder'),
+      'Mordor',
+    );
     expect(onChange).toHaveBeenCalledWith({ label: 'Mordor' });
     // The picker previews the surface default while the overlay sets no color.
     expect(view.getByTestId('sheet-color').props.children).toBe('#85f');

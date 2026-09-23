@@ -148,7 +148,11 @@ function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext):
       if (overlay.directed && shifted.length >= 2) {
         const tip = shifted[shifted.length - 1];
         const points = roundPoints(
-          canvasOverlayArrowhead(tip, canvasOverlayFinalAngle(shifted), CANVAS_OVERLAY_ARROWHEAD_SIZE),
+          canvasOverlayArrowhead(
+            tip,
+            canvasOverlayFinalAngle(shifted),
+            CANVAS_OVERLAY_ARROWHEAD_SIZE,
+          ),
         );
         parts.push(`<polygon points="${points}" fill="${color}"/>`);
       }
@@ -161,7 +165,9 @@ function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext):
       const filled = overlay.filled
         ? `<path d="${d}" fill="${color}" fill-opacity="${overlay.fillOpacity ?? CANVAS_OVERLAY_POLYGON_FILL_OPACITY}"/>`
         : '';
-      const dashed = overlay.dashed ? ` stroke-dasharray="${CANVAS_OVERLAY_DASH_INTERVALS.join(' ')}"` : '';
+      const dashed = overlay.dashed
+        ? ` stroke-dasharray="${CANVAS_OVERLAY_DASH_INTERVALS.join(' ')}"`
+        : '';
       return (
         filled +
         `<path d="${d}" fill="none" stroke="${color}" stroke-width="${overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}"${dashed}/>` +

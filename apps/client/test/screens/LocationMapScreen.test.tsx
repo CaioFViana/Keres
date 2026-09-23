@@ -215,6 +215,11 @@ jest.mock('../../src/components/features/graphs/GraphCanvasControls/GraphCanvasC
   __esModule: true,
   default: () => null,
 }));
+const mockUseScreenTour = jest.fn();
+jest.mock('../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
 
 import LocationMapScreen from '../../src/screens/location-maps/LocationMapScreen';
 
@@ -263,6 +268,7 @@ describe('LocationMapScreen', () => {
 
     await fireEvent.press(view.getByTestId('map-open-location'));
     expect(mockNavigateToEntity).toHaveBeenCalledWith('Location', 'location-1');
+    expect(mockUseScreenTour).toHaveBeenCalledWith('LocationMap', true);
   });
 
   it('adds a selected location through the map tools without replacing existing nodes', async () => {

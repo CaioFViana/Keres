@@ -50,7 +50,10 @@ export function resolveReviewScene(
   index: number | null,
 ): ManuscriptSceneSection | null {
   if (index == null) {
-    return sections.find((section): section is ManuscriptSceneSection => section.kind === 'scene') ?? null;
+    return (
+      sections.find((section): section is ManuscriptSceneSection => section.kind === 'scene') ??
+      null
+    );
   }
   const current = sections[index];
   if (current?.kind === 'scene') return current;

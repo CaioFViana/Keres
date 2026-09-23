@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useTheme } from '@/src/theme';
 
 interface Props {
@@ -19,9 +20,14 @@ interface Props {
 const LocationMapHeaderActions: React.FC<Props> = ({ dirty, saving, onRevert, onSave }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const documentAnchorRef = useScreenAnchor('LocationMap', 'document');
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}>
+    <View
+      ref={documentAnchorRef}
+      collapsable={false}
+      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}
+    >
       <TouchableOpacity
         testID="location-map-revert"
         onPress={onRevert}

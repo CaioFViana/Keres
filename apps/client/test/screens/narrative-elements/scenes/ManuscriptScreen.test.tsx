@@ -529,9 +529,7 @@ describe('ManuscriptScreen', () => {
 
     await pressHeaderAction('mode-review');
 
-    expect(
-      within(view.getByTestId('manuscript-list')).getByText('1. Opening'),
-    ).toBeTruthy();
+    expect(within(view.getByTestId('manuscript-list')).getByText('1. Opening')).toBeTruthy();
     expect(view.getByTestId('manuscript-edit-s-1')).toBeTruthy();
     expect(view.getByText('manuscript_no_body_yet')).toBeTruthy();
   });
@@ -570,7 +568,11 @@ describe('ManuscriptScreen', () => {
     expect(mockThreadProps).toMatchObject({ visible: true, fieldLabel: '3. Fragment' });
 
     await act(async () => {
-      await mockThreadProps?.onSubmit({ commentText: 'Tighten', excerptText: null, criticality: 1 });
+      await mockThreadProps?.onSubmit({
+        commentText: 'Tighten',
+        excerptText: null,
+        criticality: 1,
+      });
     });
     expect(mockReviewAddComment).toHaveBeenCalledWith('s-3', {
       commentText: 'Tighten',
@@ -993,9 +995,7 @@ describe('ManuscriptScreen', () => {
     await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
     expect(view.queryByTestId('manuscript-index-scene-s-1')).toBeNull();
     // The manuscript list itself still shows the scene.
-    expect(
-      within(view.getByTestId('manuscript-list')).getByText('1. Opening'),
-    ).toBeTruthy();
+    expect(within(view.getByTestId('manuscript-list')).getByText('1. Opening')).toBeTruthy();
 
     await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
     expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
@@ -1085,9 +1085,7 @@ describe('ManuscriptScreen', () => {
     await pressHeaderAction('mode-review');
 
     expect(view.getByText('1. Arrival')).toBeTruthy();
-    expect(
-      within(view.getByTestId('manuscript-list')).getByText('1. Opening'),
-    ).toBeTruthy();
+    expect(within(view.getByTestId('manuscript-list')).getByText('1. Opening')).toBeTruthy();
     expect(view.getByText('Alpha.')).toBeTruthy();
     // Unchaptered scenes stay visible under any arc.
     expect(view.getByText('unchaptered_scenes')).toBeTruthy();
@@ -1143,19 +1141,15 @@ describe('ManuscriptScreen', () => {
       mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
     });
     const labels = (text: string) =>
-      mounted.root.findAll(
-        (node) => node.type === Text && node.props.children === text,
-      ).length;
+      mounted.root.findAll((node) => node.type === Text && node.props.children === text).length;
     expect(labels('1. Opening')).toBe(2);
 
     const list = mounted.root.findByType(FlatList);
     expect(list.props.viewabilityConfig).toEqual({ viewAreaCoveragePercentThreshold: 20 });
     await act(async () => {
-      (
-        list.props.onViewableItemsChanged as (info: {
-          viewableItems: { index: number }[];
-        }) => void
-      )({ viewableItems: [{ index: 4 }] });
+      (list.props.onViewableItemsChanged as (info: { viewableItems: { index: number }[] }) => void)(
+        { viewableItems: [{ index: 4 }] },
+      );
     });
 
     expect(labels('1. Opening')).toBe(1);
@@ -1199,9 +1193,7 @@ describe('ManuscriptScreen', () => {
     await pressHeaderAction('mode-review');
 
     expect(view.queryByText('First.')).toBeNull();
-    expect(
-      within(view.getByTestId('manuscript-list')).getByText('1. Beta'),
-    ).toBeTruthy();
+    expect(within(view.getByTestId('manuscript-list')).getByText('1. Beta')).toBeTruthy();
     expect(view.getByText('Second.')).toBeTruthy();
   });
 

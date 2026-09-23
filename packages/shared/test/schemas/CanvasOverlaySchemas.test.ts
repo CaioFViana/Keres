@@ -21,7 +21,14 @@ const nodeId = '01ABCDEF';
 describe('CanvasOverlaySchema', () => {
   it('accepts one overlay of every kind', () => {
     const overlays = [
-      { id: lineId, kind: 'line', points: [{ x: 0, y: 0 }, { x: 10, y: 10 }] },
+      {
+        id: lineId,
+        kind: 'line',
+        points: [
+          { x: 0, y: 0 },
+          { x: 10, y: 10 },
+        ],
+      },
       {
         id: polygonId,
         kind: 'polygon',
@@ -103,12 +110,14 @@ describe('canvasOverlayBounds', () => {
       canvasOverlayBounds({ id: frameId, kind: 'frame', x: 2, y: 3, width: 10, height: 20 }),
     ).toEqual({ x: 2, y: 3, width: 10, height: 20 });
     const half = CANVAS_OVERLAY_STAMP_DEFAULT_SIZE / 2;
-    expect(canvasOverlayBounds({ id: stampId, kind: 'stamp', x: 50, y: 50, icon: 'flag' })).toEqual({
-      x: 50 - half,
-      y: 50 - half,
-      width: CANVAS_OVERLAY_STAMP_DEFAULT_SIZE,
-      height: CANVAS_OVERLAY_STAMP_DEFAULT_SIZE,
-    });
+    expect(canvasOverlayBounds({ id: stampId, kind: 'stamp', x: 50, y: 50, icon: 'flag' })).toEqual(
+      {
+        x: 50 - half,
+        y: 50 - half,
+        width: CANVAS_OVERLAY_STAMP_DEFAULT_SIZE,
+        height: CANVAS_OVERLAY_STAMP_DEFAULT_SIZE,
+      },
+    );
   });
 });
 
@@ -125,7 +134,10 @@ describe('overlays inside canvas documents', () => {
     const overlay: CanvasOverlayType = {
       id: lineId,
       kind: 'line',
-      points: [{ x: 0, y: 0 }, { x: 5, y: 5 }],
+      points: [
+        { x: 0, y: 0 },
+        { x: 5, y: 5 },
+      ],
     };
     expect(() =>
       BoardContentSchema.parse({ nodes: [], edges: [], overlays: [overlay, { ...overlay }] }),
@@ -160,7 +172,10 @@ describe('overlays inside canvas documents', () => {
     const overlay: CanvasOverlayType = {
       id: lineId,
       kind: 'line',
-      points: [{ x: 0, y: 0 }, { x: 5, y: 5 }],
+      points: [
+        { x: 0, y: 0 },
+        { x: 5, y: 5 },
+      ],
     };
     const board = remapBoardContent({ nodes: [], edges: [], overlays: [overlay] }, (id) => id);
     expect(board.overlays).toEqual([overlay]);

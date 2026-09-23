@@ -107,41 +107,44 @@ export function useManuscriptSearch(
   // Fires when the active host mounts, which covers near jumps (the ref moves) and far
   // ones (the row renders after the jump). Titles attach the same ref as bodies: the
   // indexed jump is only coarse, and whatever it misses the measured scroll corrects.
-  const scrollActiveIntoView = useCallback((node: unknown) => {
-    const generation = (scrollGenerationRef.current += 1);
-    if (!node || typeof (node as Text).measureInWindow !== 'function') return;
-    const measure = (retries: number) => {
-      if (generation !== scrollGenerationRef.current) return;
-      (node as Text).measureInWindow((segX, segY, segWidth, segHeight) => {
+  const scrollActiveIntoView = useCallback(
+    (node: unknown) => {
+      const generation = (scrollGenerationRef.current += 1);
+      if (!node || typeof (node as Text).measureInWindow !== 'function') return;
+      const measure = (retries: number) => {
         if (generation !== scrollGenerationRef.current) return;
-        const viewport = viewportRef.current;
-        if (!viewport || typeof viewport.measureInWindow !== 'function') return;
-        // Unlaid-out hosts measure zeros; one retry lets the fresh row settle.
-        if (segHeight <= 0 && retries > 0) {
-          setTimeout(() => measure(retries - 1), 120);
-          return;
-        }
-        if (segHeight <= 0) return;
-        viewport.measureInWindow((viewX, viewY, viewWidth, viewHeight) => {
+        (node as Text).measureInWindow((segX, segY, segWidth, segHeight) => {
           if (generation !== scrollGenerationRef.current) return;
-          const delta = computeScrollAdjustment({
-            segTop: segY,
-            segBottom: segY + segHeight,
-            viewTop: viewY,
-            viewBottom: viewY + viewHeight,
-            margin: ACTIVE_MATCH_MARGIN,
-          });
-          if (delta !== null) {
-            listRef.current?.scrollToOffset({
-              offset: Math.max(0, scrollOffsetRef.current + delta),
-              animated: true,
-            });
+          const viewport = viewportRef.current;
+          if (!viewport || typeof viewport.measureInWindow !== 'function') return;
+          // Unlaid-out hosts measure zeros; one retry lets the fresh row settle.
+          if (segHeight <= 0 && retries > 0) {
+            setTimeout(() => measure(retries - 1), 120);
+            return;
           }
+          if (segHeight <= 0) return;
+          viewport.measureInWindow((viewX, viewY, viewWidth, viewHeight) => {
+            if (generation !== scrollGenerationRef.current) return;
+            const delta = computeScrollAdjustment({
+              segTop: segY,
+              segBottom: segY + segHeight,
+              viewTop: viewY,
+              viewBottom: viewY + viewHeight,
+              margin: ACTIVE_MATCH_MARGIN,
+            });
+            if (delta !== null) {
+              listRef.current?.scrollToOffset({
+                offset: Math.max(0, scrollOffsetRef.current + delta),
+                animated: true,
+              });
+            }
+          });
         });
-      });
-    };
-    requestAnimationFrame(() => measure(1));
-  }, [listRef]);
+      };
+      requestAnimationFrame(() => measure(1));
+    },
+    [listRef],
+  );
 
   return {
     query,

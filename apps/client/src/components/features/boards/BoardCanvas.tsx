@@ -393,9 +393,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       () =>
         (content.overlays ?? [])
           .filter(
-            (
-              overlay,
-            ): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
+            (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
               overlay.kind === 'stamp',
           )
           .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))

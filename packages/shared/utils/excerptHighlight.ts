@@ -171,7 +171,8 @@ export function frameMatchWindow(
   const matchEnd = match.start + Math.max(0, match.length);
   const visibleEnd = windowStart + rawWindow.length - trailingCut;
   const start = prefix.length + Math.max(0, match.start - windowStart - leadingCut);
-  const end = prefix.length + Math.max(0, Math.min(matchEnd, visibleEnd) - windowStart - leadingCut);
+  const end =
+    prefix.length + Math.max(0, Math.min(matchEnd, visibleEnd) - windowStart - leadingCut);
   return {
     text: `${prefix}${window}${suffix}`,
     match: { start, length: Math.max(0, end - start) },
@@ -295,8 +296,7 @@ export function splitTextByCommentRanges(
     if (last && range.start <= last.end) last.end = Math.max(last.end, range.end);
     else merged.push({ ...range });
   }
-  if (merged.length === 0)
-    return [{ text, marked: false, active: false, comment: false }];
+  if (merged.length === 0) return [{ text, marked: false, active: false, comment: false }];
   const active = normalizeRanges(text, activeRanges);
   const commented = normalizeRanges(text, commentRanges);
   const overlaps = (list: { start: number; end: number }[], start: number, end: number) =>

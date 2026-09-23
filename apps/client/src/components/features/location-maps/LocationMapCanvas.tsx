@@ -431,81 +431,83 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
 
     return (
       <View style={{ flex: 1 }}>
-      <GraphCanvasFrame
-        containerRef={containerRef}
-        handleLayout={handleLayout}
-        panHandlers={panHandlers}
-        animatedTransform={animatedTransform}
-        underlay={underlay}
-        overlay={overlay}
-        interactionOverlay={
-          interactionMode ? (
-            <OverlayInteractionLayer
-              mode={interactionMode}
-              screenToWorld={screenToWorld}
-              scale={scale}
-              overlays={layoutContent.overlays}
-              snapTargets={snapTargets}
-              onDrawTap={overlayCallbacks.onDrawTap}
-              onStampPlace={overlayCallbacks.onStampPlace}
-              onDrawRect={(start, end) => {
-                if (interactionMode.kind === 'draw')
-                  overlayCallbacks.onDrawRect(interactionMode.tool, start, end);
-              }}
-              onPreviewRect={setRectPreview}
-              onSelectOverlay={overlayCallbacks.onSelectOverlay}
-            />
-          ) : null
-        }
-      >
-        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
-          {visiblePoints.map(({ kind, point }) => (
-            <LocationMapNodeView
-              key={point.id}
-              node={point}
-              name={
-                kind === 'node' ? (nodeNames[point.locationId] ?? point.locationId) : point.title
-              }
-              selected={
-                kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
-              }
-              layoutEditing={layoutEditing}
-              connectionMode={connectionMode}
-              overlayEditing={overlayEditing}
-              scale={scale}
-              onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
-              onMove={(id, x, y) => updateDrag(kind, id, x, y)}
-              onDragStart={handleDragStart}
-              onDragEnd={(id) => handleDragEnd(kind, id)}
-              onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
-              onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
-              onOpenDestination={kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination}
-              onConnectionStart={handleConnectionStart}
-              onConnectionMove={handleConnectionMove}
-              onConnectionEnd={handleConnectionEnd}
-              onConnectionCancel={() => setConnectionDrag(null)}
-            />
-          ))}
-          {visibleStamps.map((stamp) => (
-            <CanvasStampView key={stamp.id} stamp={stamp} />
-          ))}
-          {selectedOverlay && (
-            <OverlaySelectionView
-              overlay={selectedOverlay}
-              scale={scale}
-              onDragStart={() => setChildDragging(true)}
-              onDragEnd={() => setChildDragging(false)}
-              onCommitMove={overlayCallbacks.onCommitMove}
-              onCommitVertex={overlayCallbacks.onCommitVertex}
-              onCommitRect={overlayCallbacks.onCommitRect}
-              onDetails={overlayCallbacks.onOpenOverlaySheet}
-              onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
-              onDeselect={overlayCallbacks.onDeselectOverlay}
-            />
-          )}
-        </View>
-      </GraphCanvasFrame>
-      <TrajectoryOffMapChip count={offMapCount} />
+        <GraphCanvasFrame
+          containerRef={containerRef}
+          handleLayout={handleLayout}
+          panHandlers={panHandlers}
+          animatedTransform={animatedTransform}
+          underlay={underlay}
+          overlay={overlay}
+          interactionOverlay={
+            interactionMode ? (
+              <OverlayInteractionLayer
+                mode={interactionMode}
+                screenToWorld={screenToWorld}
+                scale={scale}
+                overlays={layoutContent.overlays}
+                snapTargets={snapTargets}
+                onDrawTap={overlayCallbacks.onDrawTap}
+                onStampPlace={overlayCallbacks.onStampPlace}
+                onDrawRect={(start, end) => {
+                  if (interactionMode.kind === 'draw')
+                    overlayCallbacks.onDrawRect(interactionMode.tool, start, end);
+                }}
+                onPreviewRect={setRectPreview}
+                onSelectOverlay={overlayCallbacks.onSelectOverlay}
+              />
+            ) : null
+          }
+        >
+          <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
+            {visiblePoints.map(({ kind, point }) => (
+              <LocationMapNodeView
+                key={point.id}
+                node={point}
+                name={
+                  kind === 'node' ? (nodeNames[point.locationId] ?? point.locationId) : point.title
+                }
+                selected={
+                  kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
+                }
+                layoutEditing={layoutEditing}
+                connectionMode={connectionMode}
+                overlayEditing={overlayEditing}
+                scale={scale}
+                onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
+                onMove={(id, x, y) => updateDrag(kind, id, x, y)}
+                onDragStart={handleDragStart}
+                onDragEnd={(id) => handleDragEnd(kind, id)}
+                onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
+                onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
+                onOpenDestination={
+                  kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination
+                }
+                onConnectionStart={handleConnectionStart}
+                onConnectionMove={handleConnectionMove}
+                onConnectionEnd={handleConnectionEnd}
+                onConnectionCancel={() => setConnectionDrag(null)}
+              />
+            ))}
+            {visibleStamps.map((stamp) => (
+              <CanvasStampView key={stamp.id} stamp={stamp} />
+            ))}
+            {selectedOverlay && (
+              <OverlaySelectionView
+                overlay={selectedOverlay}
+                scale={scale}
+                onDragStart={() => setChildDragging(true)}
+                onDragEnd={() => setChildDragging(false)}
+                onCommitMove={overlayCallbacks.onCommitMove}
+                onCommitVertex={overlayCallbacks.onCommitVertex}
+                onCommitRect={overlayCallbacks.onCommitRect}
+                onDetails={overlayCallbacks.onOpenOverlaySheet}
+                onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
+                onDeselect={overlayCallbacks.onDeselectOverlay}
+              />
+            )}
+          </View>
+        </GraphCanvasFrame>
+        <TrajectoryOffMapChip count={offMapCount} />
       </View>
     );
   },

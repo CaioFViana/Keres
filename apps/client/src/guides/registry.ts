@@ -18,7 +18,9 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  * screen-only pattern to the rest of the story drawer, so every drawer destination owns a
  * first-open tour; system entries (ArcContext, Help, Settings, Selection) stay quiet.
  * Nested routes own tours the same way once they matter enough (Manuscript): the focus
- * hook fires for drawer roots and inner screens alike.
+ * hook fires for drawer roots and inner screens alike. Canvas screens (BoardCanvas,
+ * LocationMap) tour their chrome instead of their content: document actions, the add
+ * group, then the mode toggles and how they switch each other off.
  */
 export const screenGuides: Record<string, Guide> = {
   StorySelectionMain: {
@@ -425,6 +427,56 @@ export const screenGuides: Record<string, Guide> = {
         anchors: [screenAnchorId('Packs', 'actions')],
         titleKey: 'tour_packs_create_title',
         bodyKey: 'tour_packs_create_body',
+      },
+    ],
+  },
+  BoardCanvas: {
+    id: 'BoardCanvas',
+    drawerId: 'main-system',
+    helpPageId: 'boards',
+    steps: [
+      {
+        id: 'document',
+        anchors: [screenAnchorId('BoardCanvas', 'document')],
+        titleKey: 'tour_boardcanvas_document_title',
+        bodyKey: 'tour_boardcanvas_document_body',
+      },
+      {
+        id: 'add',
+        anchors: [screenAnchorId('BoardCanvas', 'add')],
+        titleKey: 'tour_boardcanvas_add_title',
+        bodyKey: 'tour_boardcanvas_add_body',
+      },
+      {
+        id: 'modes',
+        anchors: [screenAnchorId('BoardCanvas', 'modes')],
+        titleKey: 'tour_boardcanvas_modes_title',
+        bodyKey: 'tour_boardcanvas_modes_body',
+      },
+    ],
+  },
+  LocationMap: {
+    id: 'LocationMap',
+    drawerId: 'main-system',
+    helpPageId: 'location-map',
+    steps: [
+      {
+        id: 'document',
+        anchors: [screenAnchorId('LocationMap', 'document')],
+        titleKey: 'tour_locationmap_document_title',
+        bodyKey: 'tour_locationmap_document_body',
+      },
+      {
+        id: 'add',
+        anchors: [screenAnchorId('LocationMap', 'add')],
+        titleKey: 'tour_locationmap_add_title',
+        bodyKey: 'tour_locationmap_add_body',
+      },
+      {
+        id: 'modes',
+        anchors: [screenAnchorId('LocationMap', 'modes')],
+        titleKey: 'tour_locationmap_modes_title',
+        bodyKey: 'tour_locationmap_modes_body',
       },
     ],
   },

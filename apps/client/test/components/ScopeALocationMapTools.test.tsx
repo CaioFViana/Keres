@@ -96,6 +96,13 @@ jest.mock('../../src/hooks/useResponsiveLayout', () => ({
 
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 
+const mockScreenAnchor = jest.fn();
+jest.mock('../../src/guides/useGuideAnchor', () => ({
+  __esModule: true,
+  useGuideAnchor: jest.fn(() => () => {}),
+  useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
+}));
+
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 const compactLayout = {
   width: 390,
@@ -268,6 +275,8 @@ describe('LocationMapTools', () => {
       onOpenTrajectories,
     });
 
+    expect(mockScreenAnchor).toHaveBeenCalledWith('LocationMap', 'add');
+    expect(mockScreenAnchor).toHaveBeenCalledWith('LocationMap', 'modes');
     await fireEvent.press(view.getByTestId('action-connection-mode'));
     await fireEvent.press(view.getByTestId('action-trajectories'));
     await fireEvent.press(view.getByTestId('action-edit-overlays'));

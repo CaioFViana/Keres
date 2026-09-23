@@ -43,7 +43,12 @@ interface AddObjectsPillProps {
  * every choice fires once and the pill clears, so the same action stays immediately
  * available.
  */
-const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, style, trigger }) => {
+const AddObjectsPill: React.FC<AddObjectsPillProps> = ({
+  includeNote,
+  onAction,
+  style,
+  trigger,
+}) => {
   const { t } = useTranslation();
   const [values, setValues] = useState<string[]>([]);
 

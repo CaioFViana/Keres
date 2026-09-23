@@ -32,7 +32,15 @@ it('returns empty groups without overlays', () => {
 
 it('draws a line through the shifted points with its own stroke', () => {
   const { vectors, stamps } = render([
-    { id: 'ov-1', kind: 'line', points: [{ x: 0, y: 0 }, { x: 100, y: 0 }], color: '#f00' },
+    {
+      id: 'ov-1',
+      kind: 'line',
+      points: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ],
+      color: '#f00',
+    },
   ]);
   expect(stamps).toEqual([]);
   expect(vectors).toHaveLength(1);
@@ -66,7 +74,14 @@ it('falls back to the surface stroke for colorless vectors, keeping stamps prima
   const mapContext = { ...CONTEXT, stroke: COLORS.primary };
   const { vectors, stamps } = renderCanvasOverlaySvg(
     [
-      { id: 'ov-1', kind: 'line', points: [{ x: 0, y: 0 }, { x: 100, y: 0 }] },
+      {
+        id: 'ov-1',
+        kind: 'line',
+        points: [
+          { x: 0, y: 0 },
+          { x: 100, y: 0 },
+        ],
+      },
       { id: 'ov-2', kind: 'stamp', x: 0, y: 0, icon: 'keres:castle' },
     ] as CanvasOverlayType[],
     mapContext,
@@ -183,7 +198,11 @@ it('paints lower zIndex first, document order breaking ties', () => {
     color,
     ...(zIndex === undefined ? {} : { zIndex }),
   });
-  const { vectors } = render([line('a', '#aaaaaa', 1), line('b', '#bbbbbb'), line('c', '#cccccc', 1)]);
+  const { vectors } = render([
+    line('a', '#aaaaaa', 1),
+    line('b', '#bbbbbb'),
+    line('c', '#cccccc', 1),
+  ]);
   expect(vectors.join('').indexOf('#bbbbbb')).toBeLessThan(vectors.join('').indexOf('#aaaaaa'));
   expect(vectors.join('').indexOf('#aaaaaa')).toBeLessThan(vectors.join('').indexOf('#cccccc'));
 });

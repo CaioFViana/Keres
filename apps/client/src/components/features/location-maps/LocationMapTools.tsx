@@ -12,6 +12,7 @@ import type {
   AddObjectsAction,
   OverlayDrawTool,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
 
@@ -60,6 +61,8 @@ const LocationMapTools: React.FC<Props> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { isCompact } = useResponsiveLayout();
+  const addAnchorRef = useScreenAnchor('LocationMap', 'add');
+  const modesAnchorRef = useScreenAnchor('LocationMap', 'modes');
 
   const styles = StyleSheet.create({
     tools: {
@@ -95,61 +98,61 @@ const LocationMapTools: React.FC<Props> = ({
     );
   }
   const addActions = (
-    <CanvasActionBar testID="location-map-add-actions">
-        <MultiSelectPill
-          options={imageOptions}
-          selectedValues={[]}
-          onSelectionChange={onAddImages}
-          placeholder={t('location_map_add_images')}
-          noOptionsText={t('location_map_no_images')}
-          searchPlaceholder={t('search')}
-          trigger={(open) => (
-            <CanvasActionBarButton
-              testID="action-add-images"
-              icon="image-outline"
-              label={t('location_map_add_images')}
-              onPress={open}
-            />
-          )}
-        />
-        <MultiSelectPill
-          options={locationOptions}
-          selectedValues={[]}
-          onSelectionChange={onAddLocations}
-          placeholder={t('location_map_add_locations')}
-          noOptionsText={t('location_map_no_locations')}
-          searchPlaceholder={t('search')}
-          trigger={(open) => (
-            <CanvasActionBarButton
-              testID="action-add-locations"
-              icon="location-outline"
-              label={t('location_map_add_locations')}
-              onPress={open}
-            />
-          )}
-        />
-        <CanvasActionBarButton
-          testID="action-add-marker"
-          icon="pin-outline"
-          label={t('location_map_add_marker')}
-          onPress={onAddMarker}
-        />
-        <AddObjectsPill
-          includeNote={false}
-          onAction={onObjectsAction}
-          trigger={(open) => (
-            <CanvasActionBarButton
-              testID="action-add-objects"
-              icon="shapes-outline"
-              label={t('objects_add')}
-              onPress={open}
-            />
-          )}
-        />
+    <CanvasActionBar testID="location-map-add-actions" anchorRef={addAnchorRef}>
+      <MultiSelectPill
+        options={imageOptions}
+        selectedValues={[]}
+        onSelectionChange={onAddImages}
+        placeholder={t('location_map_add_images')}
+        noOptionsText={t('location_map_no_images')}
+        searchPlaceholder={t('search')}
+        trigger={(open) => (
+          <CanvasActionBarButton
+            testID="action-add-images"
+            icon="image-outline"
+            label={t('location_map_add_images')}
+            onPress={open}
+          />
+        )}
+      />
+      <MultiSelectPill
+        options={locationOptions}
+        selectedValues={[]}
+        onSelectionChange={onAddLocations}
+        placeholder={t('location_map_add_locations')}
+        noOptionsText={t('location_map_no_locations')}
+        searchPlaceholder={t('search')}
+        trigger={(open) => (
+          <CanvasActionBarButton
+            testID="action-add-locations"
+            icon="location-outline"
+            label={t('location_map_add_locations')}
+            onPress={open}
+          />
+        )}
+      />
+      <CanvasActionBarButton
+        testID="action-add-marker"
+        icon="pin-outline"
+        label={t('location_map_add_marker')}
+        onPress={onAddMarker}
+      />
+      <AddObjectsPill
+        includeNote={false}
+        onAction={onObjectsAction}
+        trigger={(open) => (
+          <CanvasActionBarButton
+            testID="action-add-objects"
+            icon="shapes-outline"
+            label={t('objects_add')}
+            onPress={open}
+          />
+        )}
+      />
     </CanvasActionBar>
   );
   const modeActions = (
-    <CanvasActionBar testID="location-map-modes">
+    <CanvasActionBar testID="location-map-modes" anchorRef={modesAnchorRef}>
       <CanvasActionBarButton
         testID="action-connection-mode"
         icon={connectionMode ? 'git-merge' : 'git-merge-outline'}

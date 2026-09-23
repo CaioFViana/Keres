@@ -37,7 +37,11 @@ const CanvasOverlayPointSchema = z.object({
 
 /** Hex color; absent means the surface's default stroke. */
 const CanvasOverlayColorSchema = z.string().max(20).nullable().optional();
-const CanvasOverlayLabelSchema = z.string().max(MAX_CANVAS_OVERLAY_LABEL_LENGTH).nullable().optional();
+const CanvasOverlayLabelSchema = z
+  .string()
+  .max(MAX_CANVAS_OVERLAY_LABEL_LENGTH)
+  .nullable()
+  .optional();
 const CanvasOverlayStrokeWidthSchema = z.number().finite().min(0.5).max(24).optional();
 /** Visual stacking order inside the canvas; absent values preserve document order. */
 const CanvasOverlayZIndexSchema = z.number().finite().optional();

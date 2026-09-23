@@ -22,6 +22,7 @@ import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBoardCanvasLayout } from '../../hooks/useBoardCanvasLayout';
 import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
 import { useBoardNodeTitles } from '../../hooks/useBoardNodeTitles';
@@ -124,6 +125,7 @@ const BoardCanvasScreen = () => {
     showWebBackButton: true,
     onBack: () => navigation.goBack(),
   });
+  useScreenTour('BoardCanvas', canEdit);
 
   const load = useCallback(async () => {
     setLoading(true);

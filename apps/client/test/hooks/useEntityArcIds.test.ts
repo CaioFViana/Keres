@@ -34,20 +34,18 @@ describe('useEntityArcIds', () => {
     'loads %s membership from the bulk service query',
     async (kind) => {
       const view = await renderHook(() => useEntityArcIds('story', kind));
-      await waitFor(() =>
-        expect(view.result.current).toEqual(new Map([['entity', ['arc-1']]])),
-      );
+      await waitFor(() => expect(view.result.current).toEqual(new Map([['entity', ['arc-1']]])));
       expect(service.listEntityArcIds).toHaveBeenCalledWith('story', kind);
     },
   );
 
   it('refreshes only when its story changes and clears without a story', async () => {
-    const view = await renderHook<
-      ReturnType<typeof useEntityArcIds>,
-      { storyId: string }
-    >(({ storyId }) => useEntityArcIds(storyId, 'item'), {
-      initialProps: { storyId: 'story' },
-    });
+    const view = await renderHook<ReturnType<typeof useEntityArcIds>, { storyId: string }>(
+      ({ storyId }) => useEntityArcIds(storyId, 'item'),
+      {
+        initialProps: { storyId: 'story' },
+      },
+    );
     await waitFor(() => expect(service.listEntityArcIds).toHaveBeenCalledTimes(1));
 
     await act(async () => entityEventEmitter.emit('item_journey_changed', 'other-story'));

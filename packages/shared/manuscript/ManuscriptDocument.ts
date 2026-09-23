@@ -233,8 +233,7 @@ export function stripInlineMarkup(line: string): string {
         { start: frame.openAt, length: frame.openLength },
         { start: closeAt, length: closeLength },
       );
-      for (const enclosing of stack)
-        enclosing.innerConsumed += frame.openLength + closeLength;
+      for (const enclosing of stack) enclosing.innerConsumed += frame.openLength + closeLength;
     }
   };
   let i = 0;

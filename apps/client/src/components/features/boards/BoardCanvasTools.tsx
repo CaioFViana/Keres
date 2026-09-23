@@ -14,6 +14,7 @@ import type {
   AddObjectsAction,
   OverlayDrawTool,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
 
@@ -56,6 +57,8 @@ const BoardCanvasTools: React.FC<BoardCanvasToolsProps> = ({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
+  const addAnchorRef = useScreenAnchor('BoardCanvas', 'add');
+  const modesAnchorRef = useScreenAnchor('BoardCanvas', 'modes');
   const styles = StyleSheet.create({
     tools: {
       paddingHorizontal: 12,
@@ -90,45 +93,45 @@ const BoardCanvasTools: React.FC<BoardCanvasToolsProps> = ({
     );
   }
   const addActions = (
-    <CanvasActionBar testID="board-add-actions">
-        <MultiSelectPill
-          groups={groupedOptions}
-          selectedValues={pickerValues}
-          onSelectionChange={onPickEntity}
-          placeholder={t('board_add_entity')}
-          noOptionsText={t('board_no_entities')}
-          singleSelect
-          trigger={(open) => (
-            <CanvasActionBarButton
-              testID="action-add-entity"
-              icon="cube-outline"
-              label={t('board_add_entity')}
-              onPress={open}
-            />
-          )}
-        />
-        <AddObjectsPill
-          includeNote={false}
-          onAction={onObjectsAction}
-          trigger={(open) => (
-            <CanvasActionBarButton
-              testID="action-add-objects"
-              icon="shapes-outline"
-              label={t('objects_add')}
-              onPress={open}
-            />
-          )}
-        />
-        <CanvasActionBarButton
-          testID="action-add-note"
-          icon="document-text-outline"
-          label={t('board_add_note')}
-          onPress={onAddNote}
-        />
+    <CanvasActionBar testID="board-add-actions" anchorRef={addAnchorRef}>
+      <MultiSelectPill
+        groups={groupedOptions}
+        selectedValues={pickerValues}
+        onSelectionChange={onPickEntity}
+        placeholder={t('board_add_entity')}
+        noOptionsText={t('board_no_entities')}
+        singleSelect
+        trigger={(open) => (
+          <CanvasActionBarButton
+            testID="action-add-entity"
+            icon="cube-outline"
+            label={t('board_add_entity')}
+            onPress={open}
+          />
+        )}
+      />
+      <AddObjectsPill
+        includeNote={false}
+        onAction={onObjectsAction}
+        trigger={(open) => (
+          <CanvasActionBarButton
+            testID="action-add-objects"
+            icon="shapes-outline"
+            label={t('objects_add')}
+            onPress={open}
+          />
+        )}
+      />
+      <CanvasActionBarButton
+        testID="action-add-note"
+        icon="document-text-outline"
+        label={t('board_add_note')}
+        onPress={onAddNote}
+      />
     </CanvasActionBar>
   );
   const modeActions = (
-    <CanvasActionBar testID="board-modes">
+    <CanvasActionBar testID="board-modes" anchorRef={modesAnchorRef}>
       <CanvasActionBarButton
         testID="action-board-connection-mode"
         icon={connectionMode ? 'git-merge' : 'git-merge-outline'}

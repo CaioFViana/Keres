@@ -53,7 +53,11 @@ const NODES = [
 describe('useLocationMapTrajectories', () => {
   it('projects selected entities onto the map points and counts the off-map rest', async () => {
     const view = await renderHook(() =>
-      useLocationMapTrajectories({ storyId: 'story-1', storyType: 'linear', nodes: NODES as never }),
+      useLocationMapTrajectories({
+        storyId: 'story-1',
+        storyType: 'linear',
+        nodes: NODES as never,
+      }),
     );
     await waitFor(() => expect(view.result.current.characters).toHaveLength(1));
     expect(view.result.current.hasSelection).toBe(false);

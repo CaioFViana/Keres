@@ -15,10 +15,7 @@ const TrajectoryOffMapChip: React.FC<{ count: number }> = ({ count }) => {
   return (
     <View
       testID="trajectory-off-map-chip"
-      style={[
-        styles.chip,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
       pointerEvents="none"
     >
       <Ionicons name="footsteps" size={14} color={colors.textSecondary} />

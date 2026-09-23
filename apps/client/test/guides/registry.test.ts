@@ -4,6 +4,7 @@ import { getScreenGuide, screenGuides } from '../../src/guides/registry';
 describe('screenGuides', () => {
   it('registers the pilot tours by route name', () => {
     expect(Object.keys(screenGuides).sort()).toEqual([
+      'BoardCanvas',
       'BoardsStack',
       'CharactersStack',
       'CommentsStack',
@@ -12,6 +13,7 @@ describe('screenGuides', () => {
       'GalleryStack',
       'GlobalSearch',
       'ItemsStack',
+      'LocationMap',
       'LocationsStack',
       'MainDashboard',
       'Manuscript',

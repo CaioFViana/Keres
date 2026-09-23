@@ -121,7 +121,11 @@ const OverlayView = React.memo(function OverlayView({
       const tip = overlay.points[overlay.points.length - 1];
       const arrow =
         overlay.directed && overlay.points.length >= 2
-          ? canvasOverlayArrowhead(tip, canvasOverlayFinalAngle(overlay.points), CANVAS_OVERLAY_ARROWHEAD_SIZE)
+          ? canvasOverlayArrowhead(
+              tip,
+              canvasOverlayFinalAngle(overlay.points),
+              CANVAS_OVERLAY_ARROWHEAD_SIZE,
+            )
           : null;
       return (
         <>
@@ -131,7 +135,9 @@ const OverlayView = React.memo(function OverlayView({
             color={color}
             strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
           >
-            {overlay.dashed ? <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} /> : null}
+            {overlay.dashed ? (
+              <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />
+            ) : null}
           </Path>
           {arrow && <Path path={polygonPointsToPath(arrow)} color={color} />}
           {label}
@@ -154,25 +160,29 @@ const OverlayView = React.memo(function OverlayView({
             color={color}
             strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
           >
-            {overlay.dashed ? <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} /> : null}
+            {overlay.dashed ? (
+              <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />
+            ) : null}
           </Path>
           {label}
         </>
       );
     case 'frame': {
-      const path = canvasOverlayRectPath(
-        bounds.x,
-        bounds.y,
-        bounds.width,
-        bounds.height,
-      );
+      const path = canvasOverlayRectPath(bounds.x, bounds.y, bounds.width, bounds.height);
       return (
         <>
           {overlay.filled ? (
             <Path path={path} color={color} opacity={CANVAS_OVERLAY_SHAPE_FILL_OPACITY} />
           ) : null}
-          <Path path={path} style="stroke" color={color} strokeWidth={CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}>
-            {overlay.dashed === false ? null : <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />}
+          <Path
+            path={path}
+            style="stroke"
+            color={color}
+            strokeWidth={CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
+          >
+            {overlay.dashed === false ? null : (
+              <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />
+            )}
           </Path>
           {label}
         </>
@@ -194,7 +204,9 @@ const OverlayView = React.memo(function OverlayView({
             color={color}
             strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
           >
-            {overlay.dashed ? <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} /> : null}
+            {overlay.dashed ? (
+              <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />
+            ) : null}
           </Path>
           {label}
         </>

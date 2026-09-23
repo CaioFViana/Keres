@@ -216,9 +216,7 @@ describe('CommentableDetailField', () => {
     const view = await render(<CommentableDetailField {...baseProps} />);
 
     expect(view.getByTestId('detail-field')).toBeTruthy();
-    expect(
-      view.container.queryAll((node) => node.type === 'Icon'),
-    ).toHaveLength(0);
+    expect(view.container.queryAll((node) => node.type === 'Icon')).toHaveLength(0);
     expect(mockThreadModal).not.toHaveBeenCalled();
   });
 
@@ -454,21 +452,14 @@ describe('CommentThreadModal', () => {
       ) as { default: typeof CommentThreadModal }
     ).default;
     const view = await render(
-      <RealModal
-        {...baseProps}
-        showExcerptAnchorNotice
-        fieldValueSnapshot="A **quiet** arrival"
-      />,
+      <RealModal {...baseProps} showExcerptAnchorNotice fieldValueSnapshot="A **quiet** arrival" />,
     );
 
     // Rendered, like the document: no markdown symbols in the preview.
     expect(view.queryByText('A **quiet** arrival')).toBeNull();
     expect(view.getByText('A quiet arrival')).toBeTruthy();
 
-    await fireEvent.changeText(
-      view.getByPlaceholderText('excerpt_placeholder'),
-      'quiet arrival',
-    );
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'quiet arrival');
     const marked = view.getByText('quiet arrival');
     expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
     expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
@@ -527,9 +518,7 @@ describe('CommentThreadModal', () => {
         '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
       ) as { default: typeof CommentThreadModal }
     ).default;
-    const view = await render(
-      <RealModal {...baseProps} fieldValueSnapshot="Score: 2 * 3 = 6" />,
-    );
+    const view = await render(<RealModal {...baseProps} fieldValueSnapshot="Score: 2 * 3 = 6" />);
 
     await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), '2 * 3');
     const marked = view.getByText('2 * 3');

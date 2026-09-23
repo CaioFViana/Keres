@@ -38,9 +38,7 @@ describe('useCanvasOverlayActions', () => {
     expect(result.current.content.overlays).toHaveLength(1);
     expect(result.current.content.overlays?.[0]).toMatchObject({ kind: 'polygon' });
     expect(result.current.content.overlays?.[0]).toHaveProperty('points');
-    expect(
-      (result.current.content.overlays?.[0] as { points: unknown[] }).points,
-    ).toHaveLength(10);
+    expect((result.current.content.overlays?.[0] as { points: unknown[] }).points).toHaveLength(10);
     expect(result.current.actions.selectedOverlayId).toBe('id-1');
     expect(result.current.actions.interactionMode).toBeNull();
 

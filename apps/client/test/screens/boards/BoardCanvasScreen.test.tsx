@@ -45,6 +45,12 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: mockI18n }),
 }));
 
+const mockUseScreenTour = jest.fn();
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
+}));
+
 jest.mock('../../../src/theme', () => {
   const actual = jest.requireActual('../../../src/theme');
   return {
@@ -362,6 +368,7 @@ describe('BoardCanvasScreen', () => {
     expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:0');
     expect(view.getByTestId('action-add-note')).toBeTruthy();
     expect(view.getByTestId('controls-export')).toBeTruthy();
+    expect(mockUseScreenTour).toHaveBeenCalledWith('BoardCanvas', true);
   });
 
   it('hides tools for readers', async () => {
@@ -369,6 +376,7 @@ describe('BoardCanvasScreen', () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
     expect(view.queryByTestId('action-add-note')).toBeNull();
+    expect(mockUseScreenTour).toHaveBeenCalledWith('BoardCanvas', false);
   });
 
   it('adds a note and opens its sheet', async () => {

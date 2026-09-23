@@ -29,8 +29,7 @@ const NO_LANDING: OccurrenceLandingAccess = { target: null, requestScroll: () =>
  * that draws text. Defaults to inert: fields outside a landing container (tests,
  * forms, stories without the provider) render exactly as before.
  */
-export const OccurrenceLandingContext =
-  createContext<OccurrenceLandingAccess>(NO_LANDING);
+export const OccurrenceLandingContext = createContext<OccurrenceLandingAccess>(NO_LANDING);
 
 type Measurable = {
   measureInWindow: (
@@ -39,9 +38,7 @@ type Measurable = {
 };
 
 const asMeasurable = (node: unknown): Measurable | null =>
-  node && typeof (node as Measurable).measureInWindow === 'function'
-    ? (node as Measurable)
-    : null;
+  node && typeof (node as Measurable).measureInWindow === 'function' ? (node as Measurable) : null;
 
 /**
  * The detail screen's half of occurrence landing: owns the scroller, measures
@@ -91,12 +88,9 @@ export function useOccurrenceLandingController(target: OccurrenceTarget | null) 
     };
     requestAnimationFrame(() => measure(1));
   }, []);
-  const handleScroll = useCallback(
-    (event: { nativeEvent: { contentOffset: { y: number } } }) => {
-      offsetRef.current = event.nativeEvent.contentOffset.y;
-    },
-    [],
-  );
+  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    offsetRef.current = event.nativeEvent.contentOffset.y;
+  }, []);
   const access = useMemo(() => ({ target, requestScroll }), [target, requestScroll]);
   return { access, scrollRef, handleScroll };
 }

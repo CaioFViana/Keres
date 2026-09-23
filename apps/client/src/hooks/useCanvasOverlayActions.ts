@@ -64,16 +64,13 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     setSheetOverlayId(null);
   }, [clearTools]);
 
-  const startDraw = useCallback(
-    (tool: OverlayDrawTool) => {
-      setSelectedOverlayId(null);
-      setSheetOverlayId(null);
-      setSelectMode(false);
-      setDraftPoints([]);
-      setDrawTool(tool);
-    },
-    [],
-  );
+  const startDraw = useCallback((tool: OverlayDrawTool) => {
+    setSelectedOverlayId(null);
+    setSheetOverlayId(null);
+    setSelectMode(false);
+    setDraftPoints([]);
+    setDrawTool(tool);
+  }, []);
 
   const cancelDraw = useCallback(() => {
     setDrawTool(null);
@@ -95,18 +92,15 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     setSelectMode(true);
   }, []);
 
-  const addDraftPoint = useCallback(
-    (point: SpatialPoint) => {
-      const clamped = {
-        x: clampCanvasWorldCoordinate(point.x),
-        y: clampCanvasWorldCoordinate(point.y),
-      };
-      setDraftPoints((current) =>
-        current.length >= MAX_CANVAS_OVERLAY_POINTS ? current : [...current, clamped],
-      );
-    },
-    [],
-  );
+  const addDraftPoint = useCallback((point: SpatialPoint) => {
+    const clamped = {
+      x: clampCanvasWorldCoordinate(point.x),
+      y: clampCanvasWorldCoordinate(point.y),
+    };
+    setDraftPoints((current) =>
+      current.length >= MAX_CANVAS_OVERLAY_POINTS ? current : [...current, clamped],
+    );
+  }, []);
 
   const finishDraft = useCallback(() => {
     if (drawTool !== 'line' && drawTool !== 'polygon') return;
@@ -135,10 +129,12 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
         ? {
             id: generateOverlayId(),
             kind: 'polygon',
-            points: canvasOverlayPresetPoints(
-              tool.slice('preset:'.length) as CanvasOverlayPreset,
-              { x, y, width, height },
-            ),
+            points: canvasOverlayPresetPoints(tool.slice('preset:'.length) as CanvasOverlayPreset, {
+              x,
+              y,
+              width,
+              height,
+            }),
           }
         : tool === 'frame'
           ? { id: generateOverlayId(), kind: 'frame', x, y, width, height }

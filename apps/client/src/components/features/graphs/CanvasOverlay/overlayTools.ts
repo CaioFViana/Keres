@@ -57,8 +57,5 @@ export interface OverlayCanvasCallbacks {
   onMoveOverlayLayer: (id: string, direction: 'front' | 'back') => void;
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;
-  onCommitRect: (
-    id: string,
-    rect: { x: number; y: number; width: number; height: number },
-  ) => void;
+  onCommitRect: (id: string, rect: { x: number; y: number; width: number; height: number }) => void;
 }

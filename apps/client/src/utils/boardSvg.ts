@@ -224,4 +224,3 @@ function truncate(value: string, maxChars: number): string {
   if (normalized.length <= maxChars) return normalized;
   return `${normalized.slice(0, maxChars - 1)}…`;
 }
-

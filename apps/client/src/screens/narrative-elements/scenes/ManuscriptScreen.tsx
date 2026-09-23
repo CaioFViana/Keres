@@ -4,14 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  type ViewToken,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View, type ViewToken } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -437,8 +430,7 @@ const ManuscriptScreen = () => {
       // Review mode marks the scene's commented passages (title and body share the
       // thread excerpts) and taps open the thread; read mode renders them plain.
       const titleText = `${item.position}. ${item.scene.name}`;
-      const sceneExcerpts =
-        mode === 'review' ? (excerptsBySceneId[item.scene.id] ?? []) : [];
+      const sceneExcerpts = mode === 'review' ? (excerptsBySceneId[item.scene.id] ?? []) : [];
       const titleCommentRanges = sceneExcerpts.flatMap((excerpt) => {
         const hit = findFirstExcerptMatch(titleText, excerpt);
         return hit ? [hit] : [];

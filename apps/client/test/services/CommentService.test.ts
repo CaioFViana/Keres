@@ -167,8 +167,22 @@ describe('CommentService', () => {
       commentText,
       criticality: 1,
     });
-    await service.createComment(TEST_USER_ID, TEST_STORY_ID, 'Scene', 's-1', { fieldKey: 'body' }, input('One'));
-    await service.createComment(TEST_USER_ID, TEST_STORY_ID, 'Scene', 's-2', { fieldKey: 'body' }, input('Two'));
+    await service.createComment(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      'Scene',
+      's-1',
+      { fieldKey: 'body' },
+      input('One'),
+    );
+    await service.createComment(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      'Scene',
+      's-2',
+      { fieldKey: 'body' },
+      input('Two'),
+    );
     const removed = await service.createComment(
       TEST_USER_ID,
       TEST_STORY_ID,
@@ -178,7 +192,14 @@ describe('CommentService', () => {
       input('Gone'),
     );
     await service.deleteComment(TEST_USER_ID, removed.id, false);
-    await service.createComment(TEST_USER_ID, TEST_STORY_ID, 'Scene', 's-9', { fieldKey: 'body' }, input('Other'));
+    await service.createComment(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      'Scene',
+      's-9',
+      { fieldKey: 'body' },
+      input('Other'),
+    );
 
     const rows = await service.getCommentsForEntities(TEST_STORY_ID, 'Scene', ['s-1', 's-2']);
     expect(rows.map((row) => row.commentText).sort()).toEqual(['One', 'Two']);

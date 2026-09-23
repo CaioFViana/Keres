@@ -30,6 +30,7 @@ import type {
   LocationSelect,
 } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
 import { useLocationMapExport } from '../../hooks/useLocationMapExport';
@@ -111,6 +112,7 @@ const LocationMapScreen = () => {
     showWebBackButton: true,
     onBack: () => navigation.goBack(),
   });
+  useScreenTour('LocationMap', canEdit);
   const load = useCallback(async () => {
     setLoading(true);
     try {

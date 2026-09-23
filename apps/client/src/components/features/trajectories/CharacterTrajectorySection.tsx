@@ -51,9 +51,7 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
         chapters,
         relevantSceneIds: new Set(
           appearances
-            .filter(
-              (appearance) => appearance.characterId === characterId && !appearance.isDeleted,
-            )
+            .filter((appearance) => appearance.characterId === characterId && !appearance.isDeleted)
             .map((appearance) => appearance.sceneId),
         ),
         storyType,
@@ -126,9 +124,7 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
               <Text style={styles.place}>
                 {locationById.get(stop.locationId)?.name ?? stop.locationId}
               </Text>
-              <Text style={styles.scene}>
-                {sceneById.get(stop.sceneId)?.name ?? stop.sceneId}
-              </Text>
+              <Text style={styles.scene}>{sceneById.get(stop.sceneId)?.name ?? stop.sceneId}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
           </TouchableOpacity>

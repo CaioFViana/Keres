@@ -50,7 +50,14 @@ jest.mock('../../src/hooks/useNavigateToEntityDetail', () => ({
 }));
 
 const SCENES = [
-  { id: 's-1', chapterId: 'ch-1', index: 1, locationId: 'loc-a', isDeleted: false, name: 'Arrival' },
+  {
+    id: 's-1',
+    chapterId: 'ch-1',
+    index: 1,
+    locationId: 'loc-a',
+    isDeleted: false,
+    name: 'Arrival',
+  },
   { id: 's-2', chapterId: 'ch-1', index: 2, locationId: 'loc-b', isDeleted: false, name: 'Flight' },
 ];
 const APPEARANCES = [

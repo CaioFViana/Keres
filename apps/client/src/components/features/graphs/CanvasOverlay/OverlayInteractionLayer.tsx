@@ -8,9 +8,7 @@ import { PanResponder, Platform, StyleSheet, View } from 'react-native';
 import type { OverlayDrawTool } from './overlayTools';
 import { isRectDrawTool } from './overlayTools';
 
-export type OverlayCatcherMode =
-  | { kind: 'draw'; tool: OverlayDrawTool }
-  | { kind: 'select' };
+export type OverlayCatcherMode = { kind: 'draw'; tool: OverlayDrawTool } | { kind: 'select' };
 
 interface OverlayInteractionLayerProps {
   mode: OverlayCatcherMode;

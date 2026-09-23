@@ -131,9 +131,11 @@ describe('collapseWhitespace', () => {
 
 describe('sliceMatchAcrossSpans', () => {
   it('slices a block match into per-span local ranges', () => {
-    expect(
-      sliceMatchAcrossSpans(['A ', 'bold', ' word.'], { start: 2, length: 9 }),
-    ).toEqual([[], [{ start: 0, length: 4 }], [{ start: 0, length: 5 }]]);
+    expect(sliceMatchAcrossSpans(['A ', 'bold', ' word.'], { start: 2, length: 9 })).toEqual([
+      [],
+      [{ start: 0, length: 4 }],
+      [{ start: 0, length: 5 }],
+    ]);
   });
 
   it('keeps a within-span match on its own span', () => {

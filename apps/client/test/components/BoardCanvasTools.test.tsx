@@ -39,9 +39,7 @@ jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', 
   const RN = jest.requireActual('react-native');
   return {
     __esModule: true,
-    default: (props: Record<string, unknown>) => (
-      <RN.View testID="multi-select-pill" {...props} />
-    ),
+    default: (props: Record<string, unknown>) => <RN.View testID="multi-select-pill" {...props} />,
   };
 });
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({
@@ -57,6 +55,13 @@ jest.mock('../../src/hooks/useResponsiveLayout', () => ({
 }));
 
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
+
+const mockScreenAnchor = jest.fn();
+jest.mock('../../src/guides/useGuideAnchor', () => ({
+  __esModule: true,
+  useGuideAnchor: jest.fn(() => () => {}),
+  useScreenAnchor: (...args: unknown[]) => mockScreenAnchor(...args),
+}));
 
 const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
 const compactLayout = {
@@ -145,6 +150,8 @@ describe('BoardCanvasTools', () => {
   it('routes the mode toggles from the tools bar', async () => {
     const { view, handlers } = await setup();
 
+    expect(mockScreenAnchor).toHaveBeenCalledWith('BoardCanvas', 'add');
+    expect(mockScreenAnchor).toHaveBeenCalledWith('BoardCanvas', 'modes');
     await fireEvent.press(view.getByTestId('action-board-connection-mode'));
     await fireEvent.press(view.getByTestId('action-board-edit-overlays'));
     await fireEvent.press(view.getByTestId('action-board-edit-layout'));

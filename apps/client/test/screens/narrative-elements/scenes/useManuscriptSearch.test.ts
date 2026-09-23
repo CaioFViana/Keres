@@ -42,9 +42,9 @@ afterEach(() => {
 describe('useManuscriptSearch fine scroll', () => {
   it('drops the previous hit retry once a newer hit attaches', async () => {
     const scrollToOffset = jest.fn();
-    const listRef = { current: { scrollToOffset } } as unknown as React.RefObject<
-      FlatList<ManuscriptSection> | null
-    >;
+    const listRef = {
+      current: { scrollToOffset },
+    } as unknown as React.RefObject<FlatList<ManuscriptSection> | null>;
     const { result } = await renderHook(() => useManuscriptSearch(sections, listRef, jest.fn()));
     result.current.viewportRef.current = measured([[0, 0, 400, 800]]) as unknown as View;
 

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useTheme } from '@/src/theme';
 
 interface Props {
@@ -18,8 +19,13 @@ interface Props {
 const BoardCanvasHeaderActions: React.FC<Props> = ({ dirty, onRevert, onSave }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const documentAnchorRef = useScreenAnchor('BoardCanvas', 'document');
   return (
-    <View style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}>
+    <View
+      ref={documentAnchorRef}
+      collapsable={false}
+      style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}
+    >
       <TouchableOpacity onPress={onRevert} disabled={!dirty} accessibilityLabel={t('board_revert')}>
         <Ionicons
           name="arrow-undo-outline"

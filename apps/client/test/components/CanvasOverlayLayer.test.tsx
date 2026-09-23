@@ -179,7 +179,13 @@ describe('CanvasOverlayLayer', () => {
     const texts = labeled.queryAll((node) => node.type === 'SkiaText');
     expect(texts).toHaveLength(2);
     // Bounds center (5,5); the mock font measures six units per glyph.
-    expect(texts[0].props).toMatchObject({ text: 'hi', x: -1, y: 5, color: '#000', style: 'stroke' });
+    expect(texts[0].props).toMatchObject({
+      text: 'hi',
+      x: -1,
+      y: 5,
+      color: '#000',
+      style: 'stroke',
+    });
     expect(texts[1].props).toMatchObject({ text: 'hi', x: -1, y: 5, color: '#fff' });
 
     const unfonted = await renderLayer([{ ...LINE, label: 'hi' }], null);
@@ -213,9 +219,7 @@ describe('CanvasOverlayLayer', () => {
   });
 
   it('leaves stamps to the native plane', async () => {
-    const root = await renderLayer([
-      { id: '07VWXYZ1', kind: 'stamp', x: 10, y: 10, icon: 'flag' },
-    ]);
+    const root = await renderLayer([{ id: '07VWXYZ1', kind: 'stamp', x: 10, y: 10, icon: 'flag' }]);
 
     expect(root.queryAll((node) => node.type === 'SkiaPath')).toHaveLength(0);
     expect(root.queryAll((node) => node.type === 'SkiaText')).toHaveLength(0);
@@ -239,7 +243,15 @@ describe('CanvasStampView', () => {
   it('honors explicit size and color', async () => {
     const view = await render(
       <CanvasStampView
-        stamp={{ id: '07VWXYZ1', kind: 'stamp', x: 50, y: 50, size: 40, icon: 'pin', color: '#f00' }}
+        stamp={{
+          id: '07VWXYZ1',
+          kind: 'stamp',
+          x: 50,
+          y: 50,
+          size: 40,
+          icon: 'pin',
+          color: '#f00',
+        }}
       />,
     );
 
@@ -291,12 +303,20 @@ describe('canvas overlay wiring', () => {
       <BoardCanvas
         content={
           {
-            nodes: [{ id: 'a', kind: 'note', x: 0, y: 0, width: 200, height: 120, title: 'A', body: null }],
-            edges: [],
-            overlays: [
-              LINE,
-              { id: '07VWXYZ1', kind: 'stamp', x: 50, y: 50, icon: 'flag' },
+            nodes: [
+              {
+                id: 'a',
+                kind: 'note',
+                x: 0,
+                y: 0,
+                width: 200,
+                height: 120,
+                title: 'A',
+                body: null,
+              },
             ],
+            edges: [],
+            overlays: [LINE, { id: '07VWXYZ1', kind: 'stamp', x: 50, y: 50, icon: 'flag' }],
           } as unknown as BoardContentType
         }
         titles={{ a: { title: 'A', typeLabel: 'note' } }}

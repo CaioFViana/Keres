@@ -1,7 +1,4 @@
-import type {
-  ClippableContainer,
-  ClippableRange,
-} from '../../src/hooks/useWebSelectionClip';
+import type { ClippableContainer, ClippableRange } from '../../src/hooks/useWebSelectionClip';
 import {
   clipRangeToContainer,
   readClippedSelection,

@@ -1,9 +1,6 @@
 import type { LocationMapContentType } from '@keres/shared';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  loadBoardEntitySummary,
-  type BoardEntitySummary,
-} from '../utils/boardEntitySummary';
+import { loadBoardEntitySummary, type BoardEntitySummary } from '../utils/boardEntitySummary';
 
 /**
  * The selected map point plus its live entity summary. Extracted from the map screen so

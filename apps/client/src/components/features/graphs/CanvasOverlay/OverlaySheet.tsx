@@ -118,7 +118,9 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
             {overlay.kind !== 'stamp' && (
               <FormSwitchField
                 label={t('overlay_sheet_dashed')}
-                value={overlay.kind === 'frame' ? (overlay.dashed ?? true) : (overlay.dashed ?? false)}
+                value={
+                  overlay.kind === 'frame' ? (overlay.dashed ?? true) : (overlay.dashed ?? false)
+                }
                 onValueChange={(value) => onChange({ dashed: value })}
               />
             )}

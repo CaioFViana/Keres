@@ -21,10 +21,7 @@ export const CANVAS_OVERLAY_LABEL_FONT_SIZE = 11;
 export const CANVAS_OVERLAY_LABEL_HALO_WIDTH = 4;
 
 /** Polyline through `points`; `closed` appends the trailing Z (polygons). */
-export function canvasOverlayPolylinePath(
-  points: readonly SpatialPoint[],
-  closed = false,
-): string {
+export function canvasOverlayPolylinePath(points: readonly SpatialPoint[], closed = false): string {
   const line = points.map((point) => `${point.x} ${point.y}`).join(' L ');
   return closed ? `M ${line} Z` : `M ${line}`;
 }
@@ -167,18 +164,16 @@ function overlayHit(overlay: CanvasOverlayType, point: SpatialPoint, tolerance: 
   switch (overlay.kind) {
     case 'line':
       return overlay.points.some(
-        (to, index) => index > 0 && distPointToSegment(point, overlay.points[index - 1], to) <= tolerance,
+        (to, index) =>
+          index > 0 && distPointToSegment(point, overlay.points[index - 1], to) <= tolerance,
       );
     case 'polygon':
       return (
         pointInPolygon(point, overlay.points) ||
         overlay.points.some(
           (to, index) =>
-            distPointToSegment(
-              point,
-              to,
-              overlay.points[(index + 1) % overlay.points.length],
-            ) <= tolerance,
+            distPointToSegment(point, to, overlay.points[(index + 1) % overlay.points.length]) <=
+            tolerance,
         )
       );
     case 'frame':

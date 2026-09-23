@@ -1,8 +1,5 @@
 import type { CanvasOverlayType, LocationMapContentType } from '@keres/shared';
-import {
-  buildTrajectoryStops,
-  projectTrajectoryStops,
-} from '@keres/shared/graphs/trajectories';
+import { buildTrajectoryStops, projectTrajectoryStops } from '@keres/shared/graphs/trajectories';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDrizzle } from '../db';
 import type {
@@ -59,16 +56,23 @@ export function useLocationMapTrajectories({
     (async () => {
       if (!storyId) return;
       const routeService = createRouteService(db);
-      const [loadedScenes, loadedChapters, loadedAppearances, loadedItems, loadedJourneys, loadedCharacters, loadedRoutes] =
-        await Promise.all([
-          createSceneService(db).getAllByStoryId(storyId),
-          createChapterService(db).getAllByStoryId(storyId),
-          createCharacterSceneService(db).getRelationsByStoryId(storyId),
-          createItemService(db).getAllByStoryId(storyId),
-          createItemJourneyService(db).getAllByStoryId(storyId),
-          createCharacterService(db).getAllByStoryId(storyId),
-          storyType === 'branching' ? routeService.getAllByStoryId(storyId) : Promise.resolve([]),
-        ]);
+      const [
+        loadedScenes,
+        loadedChapters,
+        loadedAppearances,
+        loadedItems,
+        loadedJourneys,
+        loadedCharacters,
+        loadedRoutes,
+      ] = await Promise.all([
+        createSceneService(db).getAllByStoryId(storyId),
+        createChapterService(db).getAllByStoryId(storyId),
+        createCharacterSceneService(db).getRelationsByStoryId(storyId),
+        createItemService(db).getAllByStoryId(storyId),
+        createItemJourneyService(db).getAllByStoryId(storyId),
+        createCharacterService(db).getAllByStoryId(storyId),
+        storyType === 'branching' ? routeService.getAllByStoryId(storyId) : Promise.resolve([]),
+      ]);
       const loadedSteps: Record<string, RouteStepSelect[]> = {};
       for (const route of loadedRoutes) {
         if (route.isDeleted) continue;

@@ -9,8 +9,9 @@ import { shouldStartTour } from './shouldStartTour';
 /**
  * Opens the screen's tour on first focus: master switch on, tour unseen, nothing already
  * playing, and never in showcase captures. Screens without a registered guide are unaffected.
+ * Screens whose tour explains editing chrome pass `enabled` (viewers keep quiet).
  */
-export function useScreenTour(screenId: string): void {
+export function useScreenTour(screenId: string, enabled = true): void {
   const showTutorials = useUserSettingsStore((state) => state.showTutorials);
   const seen = useUserSettingsStore((state) => state.tutorialProgress.seen);
   const hasActiveTour = useGuideStore((state) => state.activeTour !== null);
@@ -21,7 +22,7 @@ export function useScreenTour(screenId: string): void {
   useFocusEffect(
     useCallback(() => {
       const guide = getScreenGuide(screenId);
-      if (!guide) return;
+      if (!guide || !enabled) return;
       if (
         shouldStartTour({
           showTutorials,
@@ -37,6 +38,7 @@ export function useScreenTour(screenId: string): void {
       }
     }, [
       screenId,
+      enabled,
       showTutorials,
       seen,
       dismissedGuideIds,

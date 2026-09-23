@@ -205,8 +205,6 @@ describe('PlotDetailScreen', () => {
     };
     const view = await render(<PlotDetailScreen />);
 
-    expect(StyleSheet.flatten(view.getByText('uprising').props.style).backgroundColor).toBe(
-      '#00f',
-    );
+    expect(StyleSheet.flatten(view.getByText('uprising').props.style).backgroundColor).toBe('#00f');
   });
 });

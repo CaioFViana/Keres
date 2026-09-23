@@ -61,13 +61,15 @@ const LocationMapMarkerSheetSection: React.FC<LocationMapMarkerSheetSectionProps
         }))
       }
       onCreateDestination={() =>
-        createDestination({ title: openedMarker.title, note: openedMarker.note }, (destinationMapId) =>
-          setContent((current) => ({
-            ...current,
-            markers: (current.markers ?? []).map((marker) =>
-              marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
-            ),
-          })),
+        createDestination(
+          { title: openedMarker.title, note: openedMarker.note },
+          (destinationMapId) =>
+            setContent((current) => ({
+              ...current,
+              markers: (current.markers ?? []).map((marker) =>
+                marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
+              ),
+            })),
         )
       }
       onOpenDestination={() => openDestination(openedMarker.destinationMapId)}

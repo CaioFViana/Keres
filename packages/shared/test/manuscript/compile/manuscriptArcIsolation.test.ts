@@ -317,4 +317,3 @@ describe('compileStoryManuscript with arcId', () => {
     expect(text).not.toContain('Beta.');
   });
 });
-

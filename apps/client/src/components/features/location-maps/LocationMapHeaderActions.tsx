@@ -13,9 +13,11 @@ interface Props {
   connectionMode?: boolean;
   onToggleLayout?: () => void;
   onToggleConnectionMode?: () => void;
+  trajectoriesActive?: boolean;
+  onOpenTrajectories?: () => void;
 }
 
-/** The map header's two document actions, kept together so their enabled state cannot drift apart. */
+/** The map header's tool toggles and document actions, kept together so their enabled state cannot drift apart. */
 const LocationMapHeaderActions: React.FC<Props> = ({
   dirty,
   saving,
@@ -25,6 +27,8 @@ const LocationMapHeaderActions: React.FC<Props> = ({
   connectionMode = false,
   onToggleLayout = () => undefined,
   onToggleConnectionMode = () => undefined,
+  trajectoriesActive = false,
+  onOpenTrajectories = () => undefined,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -39,6 +43,13 @@ const LocationMapHeaderActions: React.FC<Props> = ({
           name={connectionMode ? 'git-merge' : 'git-merge-outline'}
           size={24}
           color={connectionMode ? colors.primary : colors.text}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onOpenTrajectories} accessibilityLabel={t('trajectory_show')}>
+        <Ionicons
+          name="footsteps"
+          size={24}
+          color={trajectoriesActive ? colors.primary : colors.text}
         />
       </TouchableOpacity>
       <TouchableOpacity onPress={onToggleLayout} accessibilityLabel={t('board_edit_layout')}>

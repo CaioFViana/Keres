@@ -495,6 +495,8 @@ const CharacterDetailScreen = () => {
       handleDeleteRelation={handleDeleteRelation}
       characterSceneRelations={characterSceneRelations}
       allScenes={allScenes}
+      allLocations={allLocations}
+      storyType={selectedStory?.type}
       handleSaveCharacterScene={handleSaveCharacterScene}
       handleDeleteCharacterScene={handleDeleteCharacterScene}
       allItems={allItems}

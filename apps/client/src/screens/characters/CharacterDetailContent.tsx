@@ -13,6 +13,7 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CharacterTrajectorySection from '@/src/components/features/trajectories/CharacterTrajectorySection';
 import ScenePresenceList, {
   type ScenePresenceEntry,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
@@ -64,6 +65,8 @@ export type CharacterDetailContentProps = {
   handleDeleteRelation: (relationId: string) => Promise<void>;
   characterSceneRelations: CharacterScene[];
   allScenes: SceneSelect[];
+  allLocations: { id: string; name: string }[];
+  storyType: 'linear' | 'branching' | undefined;
   handleSaveCharacterScene: (characterScene: CharacterScene) => Promise<void>;
   handleDeleteCharacterScene: (characterSceneId: string) => Promise<void>;
   allItems: ItemSelect[];
@@ -101,6 +104,8 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
     handleDeleteRelation,
     characterSceneRelations,
     allScenes,
+    allLocations,
+    storyType,
     handleSaveCharacterScene,
     handleDeleteCharacterScene,
     allItems,
@@ -255,6 +260,17 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
         entityType="Location"
         sceneLabel={sceneCopy.entity}
       />
+
+      {storyType && (
+        <CharacterTrajectorySection
+          characterId={characterId}
+          storyId={character.storyId}
+          storyType={storyType}
+          scenes={allScenes}
+          appearances={characterSceneRelations}
+          locations={allLocations}
+        />
+      )}
 
       <NoteManager
         noteRelations={characterNoteRelations}

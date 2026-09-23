@@ -154,6 +154,26 @@ jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () =>
     }),
   };
 });
+jest.mock('../../src/hooks/useLocationMapTrajectories', () => ({
+  __esModule: true,
+  useLocationMapTrajectories: () => ({
+    characters: [],
+    items: [],
+    routes: [],
+    routeId: null,
+    selectedCharacterIds: [],
+    selectedItemIds: [],
+    pickerOpen: false,
+    setPickerOpen: jest.fn(),
+    toggleCharacter: jest.fn(),
+    toggleItem: jest.fn(),
+    selectRoute: jest.fn(),
+    clearSelection: jest.fn(),
+    overlays: [],
+    offMapCount: 0,
+    hasSelection: false,
+  }),
+}));
 jest.mock('../../src/components/features/location-maps/LocationMapTools', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {

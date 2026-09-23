@@ -375,6 +375,8 @@ function baseProps(overrides = {}) {
     handleDeleteRelation: jest.fn(async () => {}),
     characterSceneRelations: [] as CharacterScene[],
     allScenes: [] as SceneSelect[],
+    allLocations: [] as { id: string; name: string }[],
+    storyType: undefined as 'linear' | 'branching' | undefined,
     handleSaveCharacterScene: jest.fn(async () => {}),
     handleDeleteCharacterScene: jest.fn(async () => {}),
     allItems: [] as ItemSelect[],

@@ -29,6 +29,7 @@ import LocationMapConnectionLayer, {
   type LocationMapConnection,
   type LocationMapContains,
 } from './LocationMapConnectionLayer';
+import TrajectoryOffMapChip from './TrajectoryOffMapChip';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
@@ -68,6 +69,9 @@ interface Props {
   draft: OverlayDraft | null;
   selectedOverlayId: string | null;
   overlayCallbacks: OverlayCanvasCallbacks;
+  /** Transient trajectory lines; rendered but never persisted into the content. */
+  trajectoryOverlays: CanvasOverlayType[] | null;
+  offMapCount: number;
 }
 
 type ActiveDrag = { kind: 'image' | 'node' | 'marker'; id: string; x: number; y: number };
@@ -108,6 +112,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       draft,
       selectedOverlayId,
       overlayCallbacks,
+      trajectoryOverlays,
+      offMapCount,
     },
     ref,
   ) => {
@@ -406,7 +412,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             content={layoutContent}
             connections={connections}
             contains={contains}
-            overlays={layoutContent.overlays}
+            overlays={[...(layoutContent.overlays ?? []), ...(trajectoryOverlays ?? [])]}
             draft={draft}
             rectPreview={rectPreview}
             scale={scale}
@@ -420,6 +426,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       ) : null;
 
     return (
+      <View style={{ flex: 1 }}>
       <GraphCanvasFrame
         containerRef={containerRef}
         handleLayout={handleLayout}
@@ -489,6 +496,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           )}
         </View>
       </GraphCanvasFrame>
+      <TrajectoryOffMapChip count={offMapCount} />
+      </View>
     );
   },
 );

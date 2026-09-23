@@ -16,9 +16,10 @@ import LocationMapCanvas, {
 import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 import LocationMapConnectionModal from '@/src/components/features/location-maps/LocationMapConnectionModal';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
-import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
 import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
+import LocationMapMarkerSheetSection from '@/src/components/features/location-maps/LocationMapMarkerSheetSection';
 import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/OverlaySheet';
+import TrajectoryPickerSheet from '@/src/components/features/location-maps/TrajectoryPickerSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
@@ -36,6 +37,7 @@ import { exportFileLanguage } from '../../utils/storyTransfer';
 import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
 import { useLocationMapImageUris } from '../../hooks/useLocationMapImageUris';
 import { useLocationMapNodeSummary } from '../../hooks/useLocationMapNodeSummary';
+import { useLocationMapTrajectories } from '../../hooks/useLocationMapTrajectories';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
@@ -58,6 +60,7 @@ const LocationMapScreen = () => {
   const { mapId } = useRoute<RouteProp<LocationStackParamList, 'LocationMap'>>().params;
   const db = useDrizzle();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
+  const storyType = useStoryStore((state) => state.selectedStory?.type);
   const { canEdit } = useStoryRole(storyId);
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
@@ -183,6 +186,8 @@ const LocationMapScreen = () => {
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
+  const trajectories = useLocationMapTrajectories({ storyId, storyType, nodes: content.nodes });
+  const { hasSelection: hasTrajectories, setPickerOpen } = trajectories;
   useScreenHeader({
     target: 'parent',
     title: map?.name ?? t('location_map_list_title'),
@@ -196,6 +201,8 @@ const LocationMapScreen = () => {
             onSave={() => void save()}
             layoutEditing={layoutEditing}
             connectionMode={connectionMode}
+            trajectoriesActive={hasTrajectories}
+            onOpenTrajectories={() => setPickerOpen(true)}
             onToggleLayout={() => {
               setLayoutEditing((current) => !current);
               setConnectionMode(false);
@@ -210,7 +217,17 @@ const LocationMapScreen = () => {
             }}
           />
         ) : null,
-      [canEdit, connectionMode, dirty, layoutEditing, revert, save, saving],
+      [
+        canEdit,
+        connectionMode,
+        dirty,
+        layoutEditing,
+        revert,
+        save,
+        saving,
+        hasTrajectories,
+        setPickerOpen,
+      ],
     ),
   });
   const { galleryMediaById, imageUris, nodeNames } = useLocationMapImageUris(
@@ -417,6 +434,8 @@ const LocationMapScreen = () => {
         draft={overlayActions.draft}
         selectedOverlayId={overlayActions.selectedOverlayId}
         overlayCallbacks={overlayActions}
+        trajectoryOverlays={trajectories.overlays}
+        offMapCount={trajectories.offMapCount}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -506,66 +525,17 @@ const LocationMapScreen = () => {
           }}
         />
       )}
-      {openedMarker && (
-        <LocationMapMarkerSheet
-          title={openedMarker.title}
-          note={openedMarker.note}
-          icon={openedMarker.icon}
-          color={openedMarker.color}
-          destinationMapId={openedMarker.destinationMapId}
-          destinationUnavailable={
-            !!openedMarker.destinationMapId && !destinationName(openedMarker.destinationMapId)
-          }
-          destinationOptions={destinationOptions}
-          canEdit={canEdit}
-          onChange={(changes) =>
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).map((marker) =>
-                marker.id === openedMarker.id ? { ...marker, ...changes } : marker,
-              ),
-            }))
-          }
-          onChangeDestination={(destinationMapId) =>
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).map((marker) =>
-                marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
-              ),
-            }))
-          }
-          onCreateDestination={() =>
-            void createDestination(
-              { title: openedMarker.title, note: openedMarker.note },
-              (destinationMapId) =>
-                setContent((current) => ({
-                  ...current,
-                  markers: (current.markers ?? []).map((marker) =>
-                    marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
-                  ),
-                })),
-            )
-          }
-          onOpenDestination={() => openDestination(openedMarker.destinationMapId)}
-          onClearDestination={() =>
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).map((marker) =>
-                marker.id === openedMarker.id ? { ...marker, destinationMapId: null } : marker,
-              ),
-            }))
-          }
-          onRemove={() => {
-            setContent((current) => removeLocationMapPoint(current, openedMarker.id));
-            setSelectedMarkerId(null);
-            setOpenedMarkerId(null);
-          }}
-          onClose={() => {
-            setOpenedMarkerId(null);
-            setSelectedMarkerId(null);
-          }}
-        />
-      )}
+      <LocationMapMarkerSheetSection
+        openedMarker={openedMarker}
+        destinationName={destinationName}
+        destinationOptions={destinationOptions}
+        canEdit={canEdit}
+        setContent={setContent}
+        createDestination={createDestination}
+        openDestination={openDestination}
+        setSelectedMarkerId={setSelectedMarkerId}
+        setOpenedMarkerId={setOpenedMarkerId}
+      />
       {connectionPair && (
         <LocationMapConnectionModal
           pair={connectionPair}
@@ -593,6 +563,22 @@ const LocationMapScreen = () => {
           onChange={(patch) => overlayActions.updateOverlay(selectedOverlay.id, patch)}
           onRemove={() => overlayActions.deleteOverlay(selectedOverlay.id)}
           onClose={() => overlayActions.selectOverlay(null)}
+        />
+      )}
+      {trajectories.pickerOpen && (
+        <TrajectoryPickerSheet
+          characters={trajectories.characters}
+          items={trajectories.items}
+          routes={trajectories.routes}
+          storyType={storyType}
+          selectedCharacterIds={trajectories.selectedCharacterIds}
+          selectedItemIds={trajectories.selectedItemIds}
+          routeId={trajectories.routeId}
+          onToggleCharacter={trajectories.toggleCharacter}
+          onToggleItem={trajectories.toggleItem}
+          onSelectRoute={trajectories.selectRoute}
+          onClear={trajectories.clearSelection}
+          onClose={() => trajectories.setPickerOpen(false)}
         />
       )}
     </View>

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
 import { BOARD_LOCAL_ID_ALPHABET, BOARD_LOCAL_ID_LENGTH } from './BoardSchemas';
+import {
+  CanvasOverlaySchema,
+  canvasOverlayBounds,
+  MAX_CANVAS_OVERLAYS,
+} from './CanvasOverlaySchemas';
 
 /**
  * A Location Map is a named drawing over gallery images: pins of existing locations (with a
@@ -115,6 +120,7 @@ export const LocationMapContentSchema = z
       .array(LocationMapMarkerConnectionSchema)
       .max(MAX_LOCATION_MAP_MARKER_CONNECTIONS)
       .optional(),
+    overlays: z.array(CanvasOverlaySchema).max(MAX_CANVAS_OVERLAYS).optional(),
   })
   .superRefine((content, context) => {
     const imageIds = new Set<string>();
@@ -196,6 +202,17 @@ export const LocationMapContentSchema = z
         });
       }
     }
+    const overlayIds = new Set<string>();
+    for (const [index, overlay] of (content.overlays ?? []).entries()) {
+      if (overlayIds.has(overlay.id) || nodeIds.has(overlay.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['overlays', index, 'id'],
+          message: 'Duplicate overlay id on this location map.',
+        });
+      }
+      overlayIds.add(overlay.id);
+    }
     const pointRectangles = [...content.nodes, ...(content.markers ?? [])].map((point) => ({
       x: point.x - LOCATION_MAP_POINT_RADIUS,
       y: point.y - LOCATION_MAP_POINT_RADIUS,
@@ -211,6 +228,7 @@ export const LocationMapContentSchema = z
           height: image.height,
         })),
         ...pointRectangles,
+        ...(content.overlays ?? []).map(canvasOverlayBounds),
       ])
     ) {
       context.addIssue({
@@ -260,8 +278,8 @@ export type CreateLocationMapDataType = z.infer<typeof CreateLocationMapDataSche
 export type PartialLocationMapType = z.infer<typeof PartialLocationMapSchema>;
 
 /**
- * Rewrites `galleryId`/`locationId` after a story clone/import. Image and node ids stay: they are
- * local to this JSON, not rows in the id map.
+ * Rewrites `galleryId`/`locationId` after a story clone/import. Image, node and overlay ids
+ * stay: they are local to this JSON, not rows in the id map.
  */
 export function remapLocationMapContent(
   content: LocationMapContentType,
@@ -288,5 +306,6 @@ export function remapLocationMapContent(
       destinationLocationId: remapId(relationText.destinationLocationId),
     })),
     markerConnections: content.markerConnections?.map((connection) => ({ ...connection })),
+    overlays: content.overlays?.map((overlay) => ({ ...overlay })),
   };
 }

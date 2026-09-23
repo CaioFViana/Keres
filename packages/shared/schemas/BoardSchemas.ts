@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
+import {
+  CanvasOverlaySchema,
+  canvasOverlayBounds,
+  MAX_CANVAS_OVERLAYS,
+} from './CanvasOverlaySchemas';
 
 /**
  * A Board is a named drawing: pins of existing entities, free notes, and arrows that are not
@@ -100,6 +105,7 @@ export const BoardContentSchema = z
   .object({
     nodes: z.array(BoardNodeSchema).max(MAX_BOARD_NODES),
     edges: z.array(BoardEdgeSchema).max(MAX_BOARD_EDGES),
+    overlays: z.array(CanvasOverlaySchema).max(MAX_CANVAS_OVERLAYS).optional(),
   })
   .superRefine((content, context) => {
     const nodeIds = new Set<string>();
@@ -149,17 +155,29 @@ export const BoardContentSchema = z
         });
       }
     }
+    const overlayIds = new Set<string>();
+    for (const [index, overlay] of (content.overlays ?? []).entries()) {
+      if (overlayIds.has(overlay.id) || nodeIds.has(overlay.id) || edgeIds.has(overlay.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['overlays', index, 'id'],
+          message: 'Duplicate overlay id on this board.',
+        });
+      }
+      overlayIds.add(overlay.id);
+    }
     // A freeform Board may be large, but an unbounded JSON coordinate would make exports and
     // geometry unsafe even after the interactive canvas becomes virtualized.
     if (
-      !isSpatialEnvelopeSafe(
-        content.nodes.map((node) => ({
+      !isSpatialEnvelopeSafe([
+        ...content.nodes.map((node) => ({
           x: node.x,
           y: node.y,
           width: node.width ?? BOARD_MAX_NODE_EXTENT,
           height: node.height ?? BOARD_MAX_NODE_EXTENT,
         })),
-      )
+        ...(content.overlays ?? []).map(canvasOverlayBounds),
+      ])
     ) {
       context.addIssue({
         code: 'custom',
@@ -204,9 +222,9 @@ export type CreateBoardDataType = z.infer<typeof CreateBoardDataSchema>;
 export type PartialBoardType = z.infer<typeof PartialBoardSchema>;
 
 /**
- * Rewrites `entityId` on entity pins after a story clone/import. Node and edge ids stay:
- * they are local to this JSON, not rows in the id map. Unmapped ids (a ghost pin) stay as they
- * were — the pin remains a ghost in the copy too.
+ * Rewrites `entityId` on entity pins after a story clone/import. Node, edge and overlay
+ * ids stay: they are local to this JSON, not rows in the id map. Unmapped ids (a ghost pin)
+ * stay as they were — the pin remains a ghost in the copy too.
  */
 export function remapBoardContent(
   content: BoardContentType,
@@ -224,5 +242,6 @@ export function remapBoardContent(
         : node,
     ),
     edges: content.edges,
+    overlays: content.overlays?.map((overlay) => ({ ...overlay })),
   };
 }

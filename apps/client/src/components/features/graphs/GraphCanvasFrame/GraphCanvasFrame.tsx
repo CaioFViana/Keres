@@ -23,6 +23,11 @@ interface GraphCanvasFrameProps {
    * Skia `Group`, and a second transform here would double-apply it.
    */
   overlay?: React.ReactNode;
+  /**
+   * Touch catcher above the plane (overlay draw/select tools). Mounted only while a tool is
+   * armed; empty otherwise, so idle taps keep reaching the nodes below.
+   */
+  interactionOverlay?: React.ReactNode;
 }
 
 /**
@@ -86,6 +91,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
   children,
   underlay,
   overlay,
+  interactionOverlay,
 }) => {
   const { colors } = useTheme();
 
@@ -119,6 +125,7 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
       >
         {children}
       </Animated.View>
+      {interactionOverlay}
     </View>
   );
 };

@@ -1,9 +1,9 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import type { LocationMapContentType } from '@keres/shared';
+import { generateLocationMapLocalId, type LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import {
@@ -18,6 +18,7 @@ import LocationMapConnectionModal from '@/src/components/features/location-maps/
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
 import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
 import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
+import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/OverlaySheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
@@ -32,8 +33,10 @@ import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
 import { useLocationMapExport } from '../../hooks/useLocationMapExport';
 import { exportFileLanguage } from '../../utils/storyTransfer';
+import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
+import { useLocationMapImageUris } from '../../hooks/useLocationMapImageUris';
+import { useLocationMapNodeSummary } from '../../hooks/useLocationMapNodeSummary';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -46,7 +49,6 @@ import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
   const { t, i18n } = useTranslation();
@@ -86,7 +88,6 @@ const LocationMapScreen = () => {
     from: string;
     to: string;
   } | null>(null);
-  const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
@@ -212,79 +213,17 @@ const LocationMapScreen = () => {
       [canEdit, connectionMode, dirty, layoutEditing, revert, save, saving],
     ),
   });
-  const galleryMediaById = useMemo(() => {
-    const next: Record<
-      string,
-      {
-        mediaType: string;
-        mimeType: string;
-        localPath: string | null;
-        thumbnailPath: string | null;
-      }
-    > = {};
-    for (const gallery of galleries) {
-      next[gallery.id] = {
-        mediaType: gallery.mediaType,
-        mimeType: gallery.mimeType,
-        localPath: gallery.localPath,
-        thumbnailPath: gallery.thumbnailPath ?? null,
-      };
-    }
-    return next;
-  }, [galleries]);
-  const imagePaths = useMemo(
-    () =>
-      content.images.map((image) => {
-        const media = galleryMediaById[image.galleryId];
-        if (!media || media.mediaType !== 'image') return null;
-        return media.localPath;
-      }),
-    [content.images, galleryMediaById],
+  const { galleryMediaById, imageUris, nodeNames } = useLocationMapImageUris(
+    galleries,
+    content.images,
+    locations,
+    content.nodes,
   );
-  const resolvedUris = useResolvedMediaUris(imagePaths);
-  const imageUris = useMemo(() => {
-    const next: Record<string, string | null> = {};
-    content.images.forEach((image, index) => {
-      const path = imagePaths[index];
-      next[image.galleryId] = path ? (resolvedUris[path] ?? null) : null;
-    });
-    return next;
-  }, [content.images, imagePaths, resolvedUris]);
-  const locationNameById = useMemo(
-    () => new Map(locations.map((location) => [location.id, location.name])),
-    [locations],
+  const { selectedNode, selectedNodeSummary } = useLocationMapNodeSummary(
+    db,
+    content.nodes,
+    selectedNodeId,
   );
-  const nodeNames = useMemo(() => {
-    const next: Record<string, string> = {};
-    for (const node of content.nodes)
-      next[node.locationId] = locationNameById.get(node.locationId) ?? node.locationId;
-    return next;
-  }, [content.nodes, locationNameById]);
-
-  const selectedNode = useMemo(
-    () => content.nodes.find((node) => node.id === selectedNodeId) ?? null,
-    [content.nodes, selectedNodeId],
-  );
-
-  const [prevDb, setPrevDb] = useState(db);
-  const [prevSelectedNode, setPrevSelectedNode] = useState(selectedNode);
-  if (db !== prevDb || selectedNode !== prevSelectedNode) {
-    setPrevDb(db);
-    setPrevSelectedNode(selectedNode);
-    setSelectedNodeSummary(null);
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!selectedNode) return;
-    (async () => {
-      const summary = await loadBoardEntitySummary(db, 'Location', selectedNode.locationId);
-      if (!cancelled) setSelectedNodeSummary(summary);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, selectedNode]);
 
   const {
     connections,
@@ -381,6 +320,28 @@ const LocationMapScreen = () => {
   const openedMarker =
     (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null;
 
+  const generateOverlayId = useCallback(
+    () =>
+      generateLocationMapLocalId(
+        new Set([
+          ...content.images.map((image) => image.id),
+          ...content.nodes.map((node) => node.id),
+          ...(content.markers ?? []).map((marker) => marker.id),
+          ...(content.overlays ?? []).map((overlay) => overlay.id),
+        ]),
+      ),
+    [content],
+  );
+  const overlayActions = useCanvasOverlayActions({
+    setContent,
+    generateOverlayId,
+    placementCenter: () => canvasRef.current?.viewportWorldCenter() ?? { x: 80, y: 80 },
+  });
+  const selectedOverlay =
+    (content.overlays ?? []).find(
+      (overlay) => overlay.id === overlayActions.selectedOverlayId,
+    ) ?? null;
+
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !map) {
     return (
@@ -401,6 +362,11 @@ const LocationMapScreen = () => {
           onAddImages={addImages}
           onAddLocations={addLocations}
           onAddMarker={addMarker}
+          onObjectsAction={overlayActions.handleObjectsAction}
+          drawTool={overlayActions.drawTool}
+          canFinish={overlayActions.canFinish}
+          onFinishDraw={overlayActions.finishDraft}
+          onCancelDraw={overlayActions.cancelDraw}
         />
       )}
       <LocationMapCanvas
@@ -415,7 +381,10 @@ const LocationMapScreen = () => {
         selectedMarkerId={selectedMarkerId}
         layoutEditing={layoutEditing}
         connectionMode={connectionMode}
-        onSelectImage={handleSelectImage}
+        onSelectImage={(id) => {
+          overlayActions.cancelInteraction();
+          handleSelectImage(id);
+        }}
         onMoveImage={handleMoveImage}
         onResizeImage={handleResizeImageDirect}
         onBringImageToFront={(id) => moveImageLayer(id, 'front')}
@@ -426,9 +395,15 @@ const LocationMapScreen = () => {
         onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
         onBringMarkerToFront={(id) => moveMarkerLayer(id, 'front')}
         onSendMarkerToBack={(id) => moveMarkerLayer(id, 'back')}
-        onSelectNode={handleSelectNode}
+        onSelectNode={(id) => {
+          overlayActions.cancelInteraction();
+          handleSelectNode(id);
+        }}
         onMoveNode={handleMoveNode}
-        onSelectMarker={handleSelectMarker}
+        onSelectMarker={(id) => {
+          overlayActions.cancelInteraction();
+          handleSelectMarker(id);
+        }}
         onMoveMarker={handleMoveMarker}
         onOpenNodeDestination={handleOpenNodeDestination}
         onOpenMarkerDestination={handleOpenMarkerDestination}
@@ -438,6 +413,10 @@ const LocationMapScreen = () => {
           if (fromLocation && toLocation) setConnectionPair({ from: fromLocation, to: toLocation });
           else setMarkerConnectionPair({ from, to });
         }}
+        interactionMode={overlayActions.interactionMode}
+        draft={overlayActions.draft}
+        selectedOverlayId={overlayActions.selectedOverlayId}
+        overlayCallbacks={overlayActions}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -604,6 +583,16 @@ const LocationMapScreen = () => {
           locationNames={nodeNames}
           setContent={setContent}
           onClose={() => setMarkerConnectionPair(null)}
+        />
+      )}
+      {selectedOverlay && (
+        <OverlaySheet
+          overlay={selectedOverlay}
+          canEdit={canEdit}
+          defaultColor={colors.primary}
+          onChange={(patch) => overlayActions.updateOverlay(selectedOverlay.id, patch)}
+          onRemove={() => overlayActions.deleteOverlay(selectedOverlay.id)}
+          onClose={() => overlayActions.selectOverlay(null)}
         />
       )}
     </View>

@@ -5,6 +5,13 @@ import LocationMapConnectionModal from '../../src/components/features/location-m
 import LocationMapMarkerConnectionModal from '../../src/components/features/location-maps/LocationMapMarkerConnectionModal';
 import LocationMapTools from '../../src/components/features/location-maps/LocationMapTools';
 
+if (!(global as any).requestAnimationFrame) {
+  (global as any).requestAnimationFrame = (cb: () => void) => {
+    cb();
+    return 0;
+  };
+}
+
 jest.mock('../../src/theme', () => ({
   useTheme: () => ({
     colors: {
@@ -101,6 +108,7 @@ describe('LocationMapTools', () => {
     const onAddImages = jest.fn();
     const onAddLocations = jest.fn();
     const onAddMarker = jest.fn();
+    const onObjectsAction = jest.fn();
     const view = await render(
       <LocationMapTools
         imageOptions={imageOptions}
@@ -108,12 +116,17 @@ describe('LocationMapTools', () => {
         onAddImages={onAddImages}
         onAddLocations={onAddLocations}
         onAddMarker={onAddMarker}
+        onObjectsAction={onObjectsAction}
+        drawTool={null}
+        canFinish={false}
+        onFinishDraw={jest.fn()}
+        onCancelDraw={jest.fn()}
       />,
     );
 
     const pills = view.getAllByTestId('multi-select-pill');
-    expect(pills).toHaveLength(2);
-    const [images, locations] = pills;
+    expect(pills).toHaveLength(3);
+    const [images, locations, objects] = pills;
     expect(images.props).toMatchObject({
       options: imageOptions,
       selectedValues: [],
@@ -135,6 +148,41 @@ describe('LocationMapTools', () => {
     expect(onAddImages).toHaveBeenCalledWith(['gallery-1']);
     expect(onAddLocations).toHaveBeenCalledWith(['loc-1']);
     expect(onAddMarker).toHaveBeenCalledTimes(1);
+
+    // The third pill is the objects picker (groups mode); actions route through.
+    expect(objects.props.placeholder).toBe('objects_add');
+    await act(async () => {
+      objects.props.onSelectionChange(['draw:line']);
+    });
+    expect(onObjectsAction).toHaveBeenCalledWith('draw:line');
+  });
+
+  it('swaps the pickers for the draw bar while a tool is armed', async () => {
+    const onFinishDraw = jest.fn();
+    const onCancelDraw = jest.fn();
+    const view = await render(
+      <LocationMapTools
+        imageOptions={imageOptions}
+        locationOptions={locationOptions}
+        onAddImages={jest.fn()}
+        onAddLocations={jest.fn()}
+        onAddMarker={jest.fn()}
+        onObjectsAction={jest.fn()}
+        drawTool="polygon"
+        canFinish
+        onFinishDraw={onFinishDraw}
+        onCancelDraw={onCancelDraw}
+      />,
+    );
+
+    expect(view.queryAllByTestId('multi-select-pill')).toHaveLength(0);
+    expect(view.getByText('overlay_draw_polygon_hint')).toBeTruthy();
+    await act(async () => {
+      view.getByTestId('overlay_draw_finish').props.onPress();
+      view.getByTestId('overlay_draw_cancel').props.onPress();
+    });
+    expect(onFinishDraw).toHaveBeenCalledTimes(1);
+    expect(onCancelDraw).toHaveBeenCalledTimes(1);
   });
 });
 

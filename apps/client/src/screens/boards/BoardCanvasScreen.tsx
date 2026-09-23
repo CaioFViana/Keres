@@ -1,15 +1,15 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvasHeaderActions from '@/src/components/features/boards/BoardCanvasHeaderActions';
+import BoardCanvasTools from '@/src/components/features/boards/BoardCanvasTools';
 import BoardConnectionModal from '@/src/components/features/boards/BoardConnectionModal';
 import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
+import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/OverlaySheet';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
@@ -23,6 +23,7 @@ import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useBoardCanvasLayout } from '../../hooks/useBoardCanvasLayout';
+import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
 import {
   decodeBoardPinValue,
   useBoardPinOptions,
@@ -450,17 +451,43 @@ const BoardCanvasScreen = () => {
     if (created) setSelected(created);
   };
 
+  const handlePickEntity = (values: string[]) => {
+    const selectedValue = values[0];
+    if (!selectedValue) {
+      setPickerValues([]);
+      return;
+    }
+    // A board picker is an action, not a persistent filter: every selection creates a
+    // fresh pin, so the same entity must be immediately available for another pin.
+    addEntities([selectedValue]);
+    setPickerValues([selectedValue]);
+    requestAnimationFrame(() => setPickerValues([]));
+  };
+
+  const generateOverlayId = useCallback(
+    () =>
+      generateBoardLocalId(
+        new Set([
+          ...content.nodes.map((node) => node.id),
+          ...content.edges.map((edge) => edge.id),
+          ...(content.overlays ?? []).map((overlay) => overlay.id),
+        ]),
+      ),
+    [content],
+  );
+  const overlayActions = useCanvasOverlayActions({
+    setContent,
+    generateOverlayId,
+    placementCenter: () => canvasRef.current?.viewportWorldCenter() ?? { x: 200, y: 160 },
+    onAddNote: addNote,
+  });
+  const selectedOverlay =
+    (content.overlays ?? []).find(
+      (overlay) => overlay.id === overlayActions.selectedOverlayId,
+    ) ?? null;
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    tools: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    toolRow: { flexDirection: 'row', gap: 8 },
-    toolControl: { flex: 1 },
   });
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
@@ -477,35 +504,16 @@ const BoardCanvasScreen = () => {
   return (
     <View style={styles.container}>
       {canEdit && (
-        <View style={styles.tools}>
-          <View style={styles.toolRow}>
-            <MultiSelectPill
-              style={styles.toolControl}
-              groups={groupedOptions}
-              selectedValues={pickerValues}
-              onSelectionChange={(values) => {
-                const selectedValue = values[0];
-                if (!selectedValue) {
-                  setPickerValues([]);
-                  return;
-                }
-                // A board picker is an action, not a persistent filter: every selection creates a
-                // fresh pin, so the same entity must be immediately available for another pin.
-                addEntities([selectedValue]);
-                setPickerValues([selectedValue]);
-                requestAnimationFrame(() => setPickerValues([]));
-              }}
-              placeholder={t('board_add_entity')}
-              noOptionsText={t('board_no_entities')}
-              singleSelect
-            />
-            <View style={styles.toolControl}>
-              <Button onPress={addNote} style={{ height: 50 }}>
-                {t('board_add_note')}
-              </Button>
-            </View>
-          </View>
-        </View>
+        <BoardCanvasTools
+          groupedOptions={groupedOptions}
+          pickerValues={pickerValues}
+          onPickEntity={handlePickEntity}
+          onObjectsAction={overlayActions.handleObjectsAction}
+          drawTool={overlayActions.drawTool}
+          canFinish={overlayActions.canFinish}
+          onFinishDraw={overlayActions.finishDraft}
+          onCancelDraw={overlayActions.cancelDraw}
+        />
       )}
       <BoardCanvas
         ref={canvasRef}
@@ -517,6 +525,7 @@ const BoardCanvasScreen = () => {
         galleryMediaById={galleryMediaById}
         summaries={summariesByNode}
         onSelectNode={(node) => {
+          overlayActions.cancelInteraction();
           if (layoutEditing) setLayoutSelectedNodeId(node.id);
           else setSelected(node);
         }}
@@ -526,6 +535,10 @@ const BoardCanvasScreen = () => {
         onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
         onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
         onConnectNodes={(from, to) => setConnectionPair({ from, to })}
+        interactionMode={overlayActions.interactionMode}
+        draft={overlayActions.draft}
+        selectedOverlayId={overlayActions.selectedOverlayId}
+        overlayCallbacks={overlayActions}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -592,6 +605,16 @@ const BoardCanvasScreen = () => {
           nodeTitles={nodeTitles}
           setContent={setContent}
           onClose={() => setConnectionPair(null)}
+        />
+      )}
+      {selectedOverlay && (
+        <OverlaySheet
+          overlay={selectedOverlay}
+          canEdit={canEdit}
+          defaultColor={colors.text}
+          onChange={(patch) => overlayActions.updateOverlay(selectedOverlay.id, patch)}
+          onRemove={() => overlayActions.deleteOverlay(selectedOverlay.id)}
+          onClose={() => overlayActions.selectOverlay(null)}
         />
       )}
     </View>

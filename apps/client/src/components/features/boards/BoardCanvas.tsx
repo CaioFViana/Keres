@@ -1,12 +1,24 @@
 import {
+  canvasOverlayBounds,
   clipSpatialSegment,
   spatialRectIntersects,
   type BoardContentType,
   type BoardNodeType,
+  type CanvasOverlayType,
 } from '@keres/shared';
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
+import CanvasOverlayLayer from '@/src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
+import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
+import OverlayDraftView from '@/src/components/features/graphs/CanvasOverlay/OverlayDraftView';
+import OverlayInteractionLayer from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
+import OverlaySelectionView from '@/src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
+import type {
+  OverlayCanvasCallbacks,
+  OverlayDraft,
+  OverlayInteractionMode,
+} from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
 import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
@@ -51,6 +63,10 @@ interface Props {
   onBringNodeToFront: (nodeId: string) => void;
   onSendNodeToBack: (nodeId: string) => void;
   onConnectNodes: (fromNodeId: string, toNodeId: string) => void;
+  interactionMode: OverlayInteractionMode;
+  draft: OverlayDraft | null;
+  selectedOverlayId: string | null;
+  overlayCallbacks: OverlayCanvasCallbacks;
 }
 
 type ActiveDrag = { id: string; x: number; y: number };
@@ -112,12 +128,20 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       onBringNodeToFront,
       onSendNodeToBack,
       onConnectNodes,
+      interactionMode,
+      draft,
+      selectedOverlayId,
+      overlayCallbacks,
     },
     ref,
   ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
     const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
+    const [rectPreview, setRectPreview] = useState<{
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+    } | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
@@ -180,6 +204,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       renderWindow,
       scale,
       worldToScreen,
+      screenToWorld,
       updateAutoPan,
       stopAutoPan,
       containerRef,
@@ -187,6 +212,11 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       panHandlers,
       animatedTransform,
     } = viewport;
+    // An armed overlay tool owns every gesture until it is done: the pan responder yields
+    // while the interaction catcher above the plane takes the taps and drags.
+    useEffect(() => {
+      setChildDragging(!!interactionMode);
+    }, [interactionMode, setChildDragging]);
 
     const nodeCenter = useCallback(
       (node: BoardNodeType) => {
@@ -356,6 +386,31 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           .map(({ node }) => node),
       [visibleNodes],
     );
+    const visibleStamps = useMemo(
+      () =>
+        (content.overlays ?? [])
+          .filter(
+            (
+              overlay,
+            ): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
+              overlay.kind === 'stamp',
+          )
+          .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
+          .map((stamp, order) => ({ stamp, order }))
+          .sort(
+            (left, right) =>
+              (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ stamp }) => stamp),
+      [content.overlays, renderWindow],
+    );
+    const snapTargets = useMemo(
+      () => layoutNodes.map((node) => nodeCenter(node)),
+      [layoutNodes, nodeCenter],
+    );
+    const selectedOverlay = selectedOverlayId
+      ? ((content.overlays ?? []).find((overlay) => overlay.id === selectedOverlayId) ?? null)
+      : null;
     const connectionPath = useMemo(() => {
       if (!connectionDrag) return null;
       const source = nodesById.get(connectionDrag.fromNodeId);
@@ -379,6 +434,19 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
                 font={edgeFont}
               />
             ))}
+            <CanvasOverlayLayer
+              overlays={content.overlays}
+              renderWindow={renderWindow}
+              stroke={colors.text}
+              labelBackground={colors.background}
+              font={edgeFont}
+            />
+            <OverlayDraftView
+              points={draft?.points ?? null}
+              rect={rectPreview}
+              color={colors.primary}
+              scale={scale}
+            />
             {connectionPath && (
               <Path path={connectionPath} style="stroke" color={colors.primary} strokeWidth={2}>
                 <DashPathEffect intervals={[6, 4]} />
@@ -395,6 +463,24 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         panHandlers={panHandlers}
         animatedTransform={animatedTransform}
         overlay={overlay}
+        interactionOverlay={
+          interactionMode ? (
+            <OverlayInteractionLayer
+              mode={interactionMode}
+              screenToWorld={screenToWorld}
+              scale={scale}
+              overlays={content.overlays}
+              snapTargets={snapTargets}
+              onDrawTap={overlayCallbacks.onDrawTap}
+              onDrawRect={(start, end) => {
+                if (interactionMode.kind === 'draw')
+                  overlayCallbacks.onDrawRect(interactionMode.tool, start, end);
+              }}
+              onPreviewRect={setRectPreview}
+              onSelectOverlay={overlayCallbacks.onSelectOverlay}
+            />
+          ) : null
+        }
       >
         {stackedNodes.map((node) => {
           const meta = titles[node.id];
@@ -432,6 +518,20 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
             />
           );
         })}
+        {visibleStamps.map((stamp) => (
+          <CanvasStampView key={stamp.id} stamp={stamp} />
+        ))}
+        {selectedOverlay && (
+          <OverlaySelectionView
+            overlay={selectedOverlay}
+            scale={scale}
+            onDragStart={() => setChildDragging(true)}
+            onDragEnd={() => setChildDragging(false)}
+            onCommitMove={overlayCallbacks.onCommitMove}
+            onCommitVertex={overlayCallbacks.onCommitVertex}
+            onCommitRect={overlayCallbacks.onCommitRect}
+          />
+        )}
       </GraphCanvasFrame>
     );
   },

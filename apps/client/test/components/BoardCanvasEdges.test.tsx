@@ -40,6 +40,14 @@ const EDGE = { id: 'e1', from: 'a', to: 'b', directed: true, label: null };
 const CONTENT = { nodes: [...NODES], edges: [EDGE] } as unknown as BoardContentType;
 
 const noop = () => {};
+const overlayCallbacks = {
+  onDrawTap: noop,
+  onDrawRect: noop,
+  onSelectOverlay: noop,
+  onCommitMove: noop,
+  onCommitVertex: noop,
+  onCommitRect: noop,
+};
 
 /** The shared `View` prototype, where `measureInWindow` is mocked per test. */
 let viewPrototype: any = null;
@@ -86,6 +94,10 @@ async function renderBoard(content: BoardContentType = CONTENT) {
       onBringNodeToFront={noop}
       onSendNodeToBack={noop}
       onConnectNodes={noop}
+      interactionMode={null}
+      draft={null}
+      selectedOverlayId={null}
+      overlayCallbacks={overlayCallbacks}
     />,
   );
   // The canvas owns the first responder: the parent hook runs before any node renders.

@@ -45,25 +45,29 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: mockT, i18n: mockI18n }),
 }));
 
-jest.mock('../../../src/theme', () => ({
-  useTheme: () => ({
-    isDarkMode: false,
-    colors: {
-      background: '#fff',
-      surface: '#fff',
-      card: '#fff',
-      text: '#111',
-      textSecondary: '#555',
-      border: '#ddd',
-      primary: '#00f',
-      primaryContainer: '#ddf',
-      onPrimaryContainer: '#001',
-      secondary: '#0a0',
-      accent: '#a0a',
-      error: '#f00',
-    },
-  }),
-}));
+jest.mock('../../../src/theme', () => {
+  const actual = jest.requireActual('../../../src/theme');
+  return {
+    ...actual,
+    useTheme: () => ({
+      isDarkMode: false,
+      colors: {
+        background: '#fff',
+        surface: '#fff',
+        card: '#fff',
+        text: '#111',
+        textSecondary: '#555',
+        border: '#ddd',
+        primary: '#00f',
+        primaryContainer: '#ddf',
+        onPrimaryContainer: '#001',
+        secondary: '#0a0',
+        accent: '#a0a',
+        error: '#f00',
+      },
+    }),
+  };
+});
 
 jest.mock('../../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text } = require('react-native');
@@ -362,7 +366,7 @@ describe('BoardCanvasScreen', () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
     expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:0');
-    expect(view.getByText('board_add_note')).toBeTruthy();
+    expect(view.getByText('objects_note')).toBeTruthy();
     expect(view.getByTestId('controls-export')).toBeTruthy();
   });
 
@@ -370,13 +374,13 @@ describe('BoardCanvasScreen', () => {
     mockCanEdit = false;
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    expect(view.queryByText('board_add_note')).toBeNull();
+    expect(view.queryByText('objects_note')).toBeNull();
   });
 
   it('adds a note and opens its sheet', async () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    await fireEvent.press(view.getByText('board_add_note'));
+    await fireEvent.press(view.getByText('objects_note'));
     expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:1');
     await fireEvent.press(view.getByTestId('canvas-select-first'));
     expect(view.getByTestId('node-kind').props.children).toBe('note');
@@ -426,7 +430,7 @@ describe('BoardCanvasScreen', () => {
   it('saves and reverts through header actions', async () => {
     const view = await render(<BoardCanvasScreen />);
     expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-    await fireEvent.press(view.getByText('board_add_note'));
+    await fireEvent.press(view.getByText('objects_note'));
     const Actions = (global as any).__headerActions;
     const actions = await render(<>{Actions()}</>);
     expect(actions.getByTestId('header-dirty').props.children).toBe('dirty');
@@ -448,7 +452,7 @@ describe('BoardCanvasScreen', () => {
       mockUpdateBoard.mockRejectedValue(new Error('boom'));
       const view = await render(<BoardCanvasScreen />);
       expect(await view.findByTestId('canvas-nodes')).toBeTruthy();
-      await fireEvent.press(view.getByText('board_add_note'));
+      await fireEvent.press(view.getByText('objects_note'));
       const Actions = (global as any).__headerActions;
       const actions = await render(<>{Actions()}</>);
       await fireEvent.press(actions.getByTestId('header-save'));

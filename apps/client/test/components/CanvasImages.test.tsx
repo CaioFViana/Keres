@@ -25,6 +25,14 @@ jest.mock('../../src/hooks/useResolvedMediaUri', () => ({ useResolvedMediaUri: (
 type Root = RenderResult['container'];
 
 const noop = () => {};
+const overlayCallbacks = {
+  onDrawTap: noop,
+  onDrawRect: noop,
+  onSelectOverlay: noop,
+  onCommitMove: noop,
+  onCommitVertex: noop,
+  onCommitRect: noop,
+};
 
 async function fireLayout(root: Root) {
   const containers = root.queryAll((node) => typeof node.props.onLayout === 'function');
@@ -69,6 +77,10 @@ describe('canvas images', () => {
         onBringNodeToFront={noop}
         onSendNodeToBack={noop}
         onConnectNodes={noop}
+        interactionMode={null}
+        draft={null}
+        selectedOverlayId={null}
+        overlayCallbacks={overlayCallbacks}
       />,
     );
     await fireLayout(view.container);

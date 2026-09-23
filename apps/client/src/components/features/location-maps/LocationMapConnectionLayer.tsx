@@ -1,6 +1,7 @@
 import {
   clipSpatialSegment,
   spatialRectIntersects,
+  type CanvasOverlayType,
   type LocationMapContentType,
   type SpatialPoint,
   type SpatialRect,
@@ -12,6 +13,9 @@ import type { SharedValue } from 'react-native-reanimated';
 import type { CanvasCameraTransform } from '../../../hooks/useCanvasViewport';
 import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
+import CanvasOverlayLayer from '../graphs/CanvasOverlay/CanvasOverlayLayer';
+import OverlayDraftView from '../graphs/CanvasOverlay/OverlayDraftView';
+import type { OverlayDraft } from '../graphs/CanvasOverlay/overlayTools';
 import SkiaEdgeCanvas from '../graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
 import { measureEdgeLabelWidth } from '../graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { useEdgeFont } from '../graphs/SkiaEdgeCanvas/useEdgeFont';
@@ -34,6 +38,10 @@ interface Props {
   content: LocationMapContentType;
   connections: LocationMapConnection[];
   contains: LocationMapContains[];
+  overlays: readonly CanvasOverlayType[] | undefined;
+  draft: OverlayDraft | null;
+  rectPreview: { start: SpatialPoint; end: SpatialPoint } | null;
+  scale: number;
   connectionDrag: { fromNodeId: string; x: number; y: number } | null;
   /** Live camera from the viewport hook; the overlay tracks gestures with no React commit. */
   camera: SharedValue<CanvasCameraTransform>;
@@ -190,6 +198,10 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
   content,
   connections,
   contains,
+  overlays,
+  draft,
+  rectPreview,
+  scale,
   connectionDrag,
   camera,
   renderWindow,
@@ -385,6 +397,19 @@ const LocationMapConnectionLayer: React.FC<Props> = ({
           font={edgeFont}
         />
       ))}
+      <CanvasOverlayLayer
+        overlays={overlays}
+        renderWindow={renderWindow}
+        stroke={primary}
+        labelBackground={background}
+        font={edgeFont}
+      />
+      <OverlayDraftView
+        points={draft?.points ?? null}
+        rect={rectPreview}
+        color={primary}
+        scale={scale}
+      />
     </SkiaEdgeCanvas>
   );
 };

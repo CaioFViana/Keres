@@ -9,10 +9,14 @@ const mockColors = {
   text: '#fff',
   textSecondary: '#aaa',
 };
-jest.mock('../../src/theme', () => ({
-  __esModule: true,
-  useTheme: () => ({ colors: mockColors }),
-}));
+jest.mock('../../src/theme', () => {
+  const actual = jest.requireActual('../../src/theme');
+  return {
+    __esModule: true,
+    ...actual,
+    useTheme: () => ({ colors: mockColors }),
+  };
+});
 const mockT = (key: string) => key;
 jest.mock('react-i18next', () => ({
   __esModule: true,

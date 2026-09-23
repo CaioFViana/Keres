@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import Button from '@/src/components/common/controls/Button/Button';
+import AddObjectsPill from '@/src/components/features/graphs/CanvasOverlay/AddObjectsPill';
+import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
+import type {
+  AddObjectsAction,
+  OverlayDrawTool,
+} from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
 import { useTheme } from '../../../theme';
 
 interface Props {
@@ -11,15 +17,25 @@ interface Props {
   onAddImages: (values: string[]) => void;
   onAddLocations: (values: string[]) => void;
   onAddMarker: () => void;
+  onObjectsAction: (action: AddObjectsAction) => void;
+  drawTool: OverlayDrawTool | null;
+  canFinish: boolean;
+  onFinishDraw: () => void;
+  onCancelDraw: () => void;
 }
 
-/** The pickers above the map: add image bases from the gallery and location points. */
+/** The pickers above the map: image bases, location points, markers and drawn objects. */
 const LocationMapTools: React.FC<Props> = ({
   imageOptions,
   locationOptions,
   onAddImages,
   onAddLocations,
   onAddMarker,
+  onObjectsAction,
+  drawTool,
+  canFinish,
+  onFinishDraw,
+  onCancelDraw,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -34,8 +50,19 @@ const LocationMapTools: React.FC<Props> = ({
     },
     pointRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
     pointControl: { flex: 1 },
+    objectsRow: { marginTop: 8 },
   });
 
+  if (drawTool) {
+    return (
+      <OverlayDrawBar
+        tool={drawTool}
+        canFinish={canFinish}
+        onFinish={onFinishDraw}
+        onCancel={onCancelDraw}
+      />
+    );
+  }
   return (
     <View style={styles.tools}>
       <MultiSelectPill
@@ -61,6 +88,9 @@ const LocationMapTools: React.FC<Props> = ({
             {t('location_map_add_marker')}
           </Button>
         </View>
+      </View>
+      <View style={styles.objectsRow}>
+        <AddObjectsPill includeNote={false} onAction={onObjectsAction} />
       </View>
     </View>
   );

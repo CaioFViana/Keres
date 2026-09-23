@@ -1,6 +1,19 @@
-import { spatialRectIntersects, type LocationMapContentType } from '@keres/shared';
+import {
+  canvasOverlayBounds,
+  spatialRectIntersects,
+  type CanvasOverlayType,
+  type LocationMapContentType,
+} from '@keres/shared';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
+import OverlayInteractionLayer from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
+import OverlaySelectionView from '@/src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
+import type {
+  OverlayCanvasCallbacks,
+  OverlayDraft,
+  OverlayInteractionMode,
+} from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
 import GraphCanvasFrame, {
   graphCanvasPlaneStyle,
 } from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
@@ -51,6 +64,10 @@ interface Props {
   onOpenNodeDestination: (nodeId: string) => void;
   onOpenMarkerDestination: (markerId: string) => void;
   onConnectPoints: (fromPointId: string, toPointId: string) => void;
+  interactionMode: OverlayInteractionMode;
+  draft: OverlayDraft | null;
+  selectedOverlayId: string | null;
+  overlayCallbacks: OverlayCanvasCallbacks;
 }
 
 type ActiveDrag = { kind: 'image' | 'node' | 'marker'; id: string; x: number; y: number };
@@ -87,12 +104,20 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       onOpenNodeDestination,
       onOpenMarkerDestination,
       onConnectPoints,
+      interactionMode,
+      draft,
+      selectedOverlayId,
+      overlayCallbacks,
     },
     ref,
   ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
     const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
+    const [rectPreview, setRectPreview] = useState<{
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+    } | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
@@ -167,6 +192,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       renderWindow,
       scale,
       worldToScreen,
+      screenToWorld,
       updateAutoPan,
       stopAutoPan,
       containerRef,
@@ -174,6 +200,11 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       panHandlers,
       animatedTransform,
     } = viewport;
+    // An armed overlay tool owns every gesture until it is done: the pan responder yields
+    // while the interaction catcher above the plane takes the taps and drags.
+    useEffect(() => {
+      setChildDragging(!!interactionMode);
+    }, [interactionMode, setChildDragging]);
 
     const updateDrag = useCallback(
       (kind: ActiveDrag['kind'], id: string, x: number, y: number) => {
@@ -309,6 +340,33 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           ),
       [activeDrag?.id, layoutContent.markers, layoutContent.nodes, renderWindow],
     );
+    const visibleStamps = useMemo(
+      () =>
+        (layoutContent.overlays ?? [])
+          .filter(
+            (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
+              overlay.kind === 'stamp',
+          )
+          .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
+          .map((stamp, order) => ({ stamp, order }))
+          .sort(
+            (left, right) =>
+              (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ stamp }) => stamp),
+      [layoutContent.overlays, renderWindow],
+    );
+    const snapTargets = useMemo(
+      () =>
+        [...layoutContent.nodes, ...(layoutContent.markers ?? [])].map((point) => ({
+          x: point.x,
+          y: point.y,
+        })),
+      [layoutContent.markers, layoutContent.nodes],
+    );
+    const selectedOverlay = selectedOverlayId
+      ? ((layoutContent.overlays ?? []).find((overlay) => overlay.id === selectedOverlayId) ?? null)
+      : null;
 
     // Paint order stays images < edges < nodes: the image bases ride their own camera
     // plane below the overlay, the pins stay on the main plane above it.
@@ -348,6 +406,10 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             content={layoutContent}
             connections={connections}
             contains={contains}
+            overlays={layoutContent.overlays}
+            draft={draft}
+            rectPreview={rectPreview}
+            scale={scale}
             connectionDrag={connectionDrag}
             camera={cameraTransform}
             renderWindow={renderWindow}
@@ -365,6 +427,24 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
         animatedTransform={animatedTransform}
         underlay={underlay}
         overlay={overlay}
+        interactionOverlay={
+          interactionMode ? (
+            <OverlayInteractionLayer
+              mode={interactionMode}
+              screenToWorld={screenToWorld}
+              scale={scale}
+              overlays={layoutContent.overlays}
+              snapTargets={snapTargets}
+              onDrawTap={overlayCallbacks.onDrawTap}
+              onDrawRect={(start, end) => {
+                if (interactionMode.kind === 'draw')
+                  overlayCallbacks.onDrawRect(interactionMode.tool, start, end);
+              }}
+              onPreviewRect={setRectPreview}
+              onSelectOverlay={overlayCallbacks.onSelectOverlay}
+            />
+          ) : null
+        }
       >
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
           {visiblePoints.map(({ kind, point }) => (
@@ -393,6 +473,20 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               onConnectionCancel={() => setConnectionDrag(null)}
             />
           ))}
+          {visibleStamps.map((stamp) => (
+            <CanvasStampView key={stamp.id} stamp={stamp} />
+          ))}
+          {selectedOverlay && (
+            <OverlaySelectionView
+              overlay={selectedOverlay}
+              scale={scale}
+              onDragStart={() => setChildDragging(true)}
+              onDragEnd={() => setChildDragging(false)}
+              onCommitMove={overlayCallbacks.onCommitMove}
+              onCommitVertex={overlayCallbacks.onCommitVertex}
+              onCommitRect={overlayCallbacks.onCommitRect}
+            />
+          )}
         </View>
       </GraphCanvasFrame>
     );

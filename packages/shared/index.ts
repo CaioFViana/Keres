@@ -81,6 +81,7 @@ export * from './schemas/ChapterAnchorSchemas';
 export * from './schemas/StoryCalendarSchemas';
 export * from './schemas/StoryArcSchemas';
 export * from './schemas/BoardSchemas';
+export * from './schemas/CanvasOverlaySchemas';
 export * from './schemas/LocationMapSchemas';
 export * from './schemas/PackSchemas';
 export * from './schemas/packContentMigrations';

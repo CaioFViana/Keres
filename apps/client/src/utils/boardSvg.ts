@@ -65,6 +65,7 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
   const overlayGroups = renderCanvasOverlaySvg(content.overlays, {
     shift: (x, y) => ({ x: x + offsetX, y: y + offsetY }),
     colors: options.colors,
+    stroke: options.colors.text,
   });
   const shiftedNodes = content.nodes.map((node) => ({
     ...node,

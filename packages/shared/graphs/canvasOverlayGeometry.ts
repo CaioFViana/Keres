@@ -1,6 +1,6 @@
 import { CANVAS_OVERLAY_STAMP_DEFAULT_SIZE } from '../schemas/CanvasOverlaySchemas';
 import type { CanvasOverlayType } from '../schemas/CanvasOverlaySchemas';
-import type { SpatialPoint } from './spatialCanvas';
+import type { SpatialPoint, SpatialRect } from './spatialCanvas';
 
 /**
  * Pure path math for canvas overlays, shared by the Skia renderer and the SVG exporters so
@@ -88,22 +88,25 @@ export type CanvasOverlayPreset = (typeof CANVAS_OVERLAY_PRESETS)[number];
 const STAR_INNER_RATIO = 0.42;
 
 /**
- * Pre-made polygon vertices centered on `center` with `size` as the diameter. Presets are
+ * Pre-made polygon vertices inscribed in the dragged `rect`, ellipse-style: the horizontal
+ * and vertical radii follow the region, so the shape fills what the user drew. Presets are
  * plain polygons once created - same infrastructure, no special kind - so the select tool
  * and vertex editing treat them like any drawn region.
  */
 export function canvasOverlayPresetPoints(
   preset: CanvasOverlayPreset,
-  center: SpatialPoint,
-  size: number,
+  rect: SpatialRect,
 ): SpatialPoint[] {
-  const radius = size / 2;
+  const cx = rect.x + rect.width / 2;
+  const cy = rect.y + rect.height / 2;
+  const rx = rect.width / 2;
+  const ry = rect.height / 2;
   const regular = (sides: number, rotation: number): SpatialPoint[] =>
     Array.from({ length: sides }, (_, index) => {
       const angle = rotation + (index * 2 * Math.PI) / sides;
       return {
-        x: center.x + radius * Math.cos(angle),
-        y: center.y + radius * Math.sin(angle),
+        x: cx + rx * Math.cos(angle),
+        y: cy + ry * Math.sin(angle),
       };
     });
   switch (preset) {
@@ -121,8 +124,8 @@ export function canvasOverlayPresetPoints(
     case 'star':
       return Array.from({ length: 10 }, (_, index) => {
         const angle = -Math.PI / 2 + (index * Math.PI) / 5;
-        const arm = index % 2 === 0 ? radius : radius * STAR_INNER_RATIO;
-        return { x: center.x + arm * Math.cos(angle), y: center.y + arm * Math.sin(angle) };
+        const ratio = index % 2 === 0 ? 1 : STAR_INNER_RATIO;
+        return { x: cx + rx * ratio * Math.cos(angle), y: cy + ry * ratio * Math.sin(angle) };
       });
   }
 }

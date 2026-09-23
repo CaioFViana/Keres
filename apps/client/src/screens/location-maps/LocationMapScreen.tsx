@@ -93,6 +93,19 @@ const LocationMapScreen = () => {
   } | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const generateOverlayId = useCallback(
+    () =>
+      generateLocationMapLocalId(
+        new Set([
+          ...content.images.map((image) => image.id),
+          ...content.nodes.map((node) => node.id),
+          ...(content.markers ?? []).map((marker) => marker.id),
+          ...(content.overlays ?? []).map((overlay) => overlay.id),
+        ]),
+      ),
+    [content],
+  );
+  const overlayActions = useCanvasOverlayActions({ setContent, generateOverlayId });
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
   useBackButtonHandler({
     showWebBackButton: true,
@@ -199,35 +212,9 @@ const LocationMapScreen = () => {
             saving={saving}
             onRevert={revert}
             onSave={() => void save()}
-            layoutEditing={layoutEditing}
-            connectionMode={connectionMode}
-            trajectoriesActive={hasTrajectories}
-            onOpenTrajectories={() => setPickerOpen(true)}
-            onToggleLayout={() => {
-              setLayoutEditing((current) => !current);
-              setConnectionMode(false);
-              setOpenedNodeId(null);
-              setOpenedMarkerId(null);
-            }}
-            onToggleConnectionMode={() => {
-              setConnectionMode((current) => !current);
-              setLayoutEditing(false);
-              setOpenedNodeId(null);
-              setOpenedMarkerId(null);
-            }}
           />
         ) : null,
-      [
-        canEdit,
-        connectionMode,
-        dirty,
-        layoutEditing,
-        revert,
-        save,
-        saving,
-        hasTrajectories,
-        setPickerOpen,
-      ],
+      [canEdit, dirty, revert, save, saving],
     ),
   });
   const { galleryMediaById, imageUris, nodeNames } = useLocationMapImageUris(
@@ -337,23 +324,6 @@ const LocationMapScreen = () => {
   const openedMarker =
     (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null;
 
-  const generateOverlayId = useCallback(
-    () =>
-      generateLocationMapLocalId(
-        new Set([
-          ...content.images.map((image) => image.id),
-          ...content.nodes.map((node) => node.id),
-          ...(content.markers ?? []).map((marker) => marker.id),
-          ...(content.overlays ?? []).map((overlay) => overlay.id),
-        ]),
-      ),
-    [content],
-  );
-  const overlayActions = useCanvasOverlayActions({
-    setContent,
-    generateOverlayId,
-    placementCenter: () => canvasRef.current?.viewportWorldCenter() ?? { x: 80, y: 80 },
-  });
   const sheetOverlay =
     (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
     null;
@@ -383,8 +353,36 @@ const LocationMapScreen = () => {
           canFinish={overlayActions.canFinish}
           onFinishDraw={overlayActions.finishDraft}
           onCancelDraw={overlayActions.cancelDraw}
-          selectMode={overlayActions.selectMode}
-          onDoneSelect={overlayActions.cancelInteraction}
+          layoutEditing={layoutEditing}
+          connectionMode={connectionMode}
+          overlayEditing={overlayActions.selectMode}
+          trajectoriesActive={hasTrajectories}
+          onOpenTrajectories={() => setPickerOpen(true)}
+          onToggleLayout={() => {
+            setLayoutEditing((current) => !current);
+            setConnectionMode(false);
+            overlayActions.cancelSelect();
+            setOpenedNodeId(null);
+            setOpenedMarkerId(null);
+          }}
+          onToggleConnectionMode={() => {
+            setConnectionMode((current) => !current);
+            setLayoutEditing(false);
+            overlayActions.cancelSelect();
+            setOpenedNodeId(null);
+            setOpenedMarkerId(null);
+          }}
+          onToggleOverlayEdit={() => {
+            if (overlayActions.selectMode) {
+              overlayActions.cancelInteraction();
+              return;
+            }
+            overlayActions.handleObjectsAction('select');
+            setLayoutEditing(false);
+            setConnectionMode(false);
+            setOpenedNodeId(null);
+            setOpenedMarkerId(null);
+          }}
         />
       )}
       <LocationMapCanvas
@@ -399,6 +397,7 @@ const LocationMapScreen = () => {
         selectedMarkerId={selectedMarkerId}
         layoutEditing={layoutEditing}
         connectionMode={connectionMode}
+        overlayEditing={overlayActions.selectMode}
         onSelectImage={(id) => {
           overlayActions.cancelInteraction();
           handleSelectImage(id);

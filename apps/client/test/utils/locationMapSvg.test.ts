@@ -179,6 +179,30 @@ it('draws the node name with a contrast halo', () => {
   expect(svg).toContain('stroke="#ffffff" stroke-width="4"');
 });
 
+it('falls back to the primary stroke for colorless overlay vectors, like the canvas', () => {
+  const svg = renderLocationMapSvg(
+    {
+      images: [],
+      nodes: [
+        { id: '02GHJKMN', locationId: 'location-1', x: 400, y: 300, icon: 'pin', color: '#8BC34A' },
+      ],
+      overlays: [
+        {
+          id: 'ov-1',
+          kind: 'line',
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+        },
+      ],
+    },
+    options,
+  );
+
+  expect(svg).toContain('fill="none" stroke="#8855ff"');
+});
+
 it('draws the default map icon as a path', () => {
   const withMapIcon = {
     images: [],

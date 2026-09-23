@@ -15,6 +15,8 @@ interface Props {
   scale: number;
   /** When locked, dragging on the image pans the canvas instead of moving the image. */
   locked: boolean;
+  /** While set, the image ignores taps and drags: only overlay shapes respond. */
+  overlayEditing?: boolean;
   onSelect: (imageId: string) => void;
   onMove: (imageId: string, x: number, y: number) => void;
   onResize: (imageId: string, width: number, height: number) => void;
@@ -41,6 +43,7 @@ const LocationMapImageView: React.FC<Props> = ({
   layoutEditing,
   scale,
   locked,
+  overlayEditing = false,
   onSelect,
   onMove,
   onResize,
@@ -59,6 +62,7 @@ const LocationMapImageView: React.FC<Props> = ({
   const scaleRef = useRef(scale);
   const lockedRef = useRef(locked);
   const layoutEditingRef = useRef(layoutEditing);
+  const overlayEditingRef = useRef(overlayEditing);
   const selectedRef = useRef(selected);
   const handlers = useRef({
     onSelect,
@@ -79,6 +83,7 @@ const LocationMapImageView: React.FC<Props> = ({
     scaleRef.current = scale;
     lockedRef.current = locked;
     layoutEditingRef.current = layoutEditing;
+    overlayEditingRef.current = overlayEditing;
     selectedRef.current = selected;
     handlers.current = {
       onSelect,
@@ -99,13 +104,17 @@ const LocationMapImageView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
+          if (overlayEditingRef.current) return false;
           if (layoutEditingRef.current && selectedRef.current) return false;
           if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
-          dragging.current && !(layoutEditingRef.current && selectedRef.current),
+          !overlayEditingRef.current &&
+          dragging.current &&
+          !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !overlayEditingRef.current &&
           !(layoutEditingRef.current && selectedRef.current) &&
           !lockedRef.current &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,

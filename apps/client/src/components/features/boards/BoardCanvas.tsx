@@ -54,6 +54,8 @@ interface Props {
   selectedNodeId: string | null;
   layoutEditing: boolean;
   connectionMode: boolean;
+  /** While set, pins ignore taps and drags: only overlay shapes respond. */
+  overlayEditing: boolean;
   galleryMediaById?: BoardGalleryMediaById;
   summaries?: Record<string, BoardEntitySummary | null>;
   onSelectNode: (node: BoardNodeType) => void;
@@ -119,6 +121,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       selectedNodeId,
       layoutEditing,
       connectionMode,
+      overlayEditing,
       galleryMediaById,
       summaries,
       onSelectNode,
@@ -497,6 +500,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               selected={selectedNodeId === node.id}
               layoutEditing={layoutEditing}
               connectionMode={connectionMode}
+              overlayEditing={overlayEditing}
               scale={scale}
               galleryMedia={
                 node.kind === 'entity' && node.entityType === 'Gallery'

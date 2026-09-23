@@ -125,7 +125,7 @@ jest.mock('../../../src/components/features/boards/BoardCanvasHeaderActions', ()
   const { Text } = require('react-native');
   return {
     __esModule: true,
-    default: ({ dirty, onRevert, onSave, onToggleLayout, onToggleConnectionMode }: any) => (
+    default: ({ dirty, onRevert, onSave }: any) => (
       <>
         <Text testID="header-dirty">{dirty ? 'dirty' : 'clean'}</Text>
         <Text testID="header-save" onPress={onSave}>
@@ -133,12 +133,6 @@ jest.mock('../../../src/components/features/boards/BoardCanvasHeaderActions', ()
         </Text>
         <Text testID="header-revert" onPress={onRevert}>
           revert
-        </Text>
-        <Text testID="header-layout" onPress={onToggleLayout}>
-          layout
-        </Text>
-        <Text testID="header-connect-mode" onPress={onToggleConnectionMode}>
-          connections
         </Text>
       </>
     ),
@@ -442,8 +436,6 @@ describe('BoardCanvasScreen', () => {
     );
     expect(mockNotify).toHaveBeenCalledWith('board_saved', 'success');
     await fireEvent.press(actions.getByTestId('header-revert'));
-    await fireEvent.press(actions.getByTestId('header-layout'));
-    await fireEvent.press(actions.getByTestId('header-connect-mode'));
     expect(view.getByTestId('canvas-nodes')).toBeTruthy();
   });
 

@@ -20,6 +20,8 @@ interface Props {
   selected: boolean;
   layoutEditing: boolean;
   connectionMode?: boolean;
+  /** While set, the point ignores taps and drags: only overlay shapes respond. */
+  overlayEditing?: boolean;
   scale: number;
   onSelect: (nodeId: string) => void;
   onMove: (nodeId: string, x: number, y: number) => void;
@@ -43,6 +45,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   selected,
   layoutEditing,
   connectionMode = false,
+  overlayEditing = false,
   scale,
   onSelect,
   onMove,
@@ -68,6 +71,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   const scaleRef = useRef(scale);
   const layoutEditingRef = useRef(layoutEditing);
   const connectionModeRef = useRef(connectionMode);
+  const overlayEditingRef = useRef(overlayEditing);
   const selectedRef = useRef(selected);
   const handlers = useRef({
     onSelect,
@@ -91,6 +95,7 @@ const LocationMapNodeView: React.FC<Props> = ({
     scaleRef.current = scale;
     layoutEditingRef.current = layoutEditing;
     connectionModeRef.current = connectionMode;
+    overlayEditingRef.current = overlayEditing;
     selectedRef.current = selected;
     handlers.current = {
       onSelect,
@@ -128,15 +133,18 @@ const LocationMapNodeView: React.FC<Props> = ({
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
+          if (overlayEditingRef.current) return false;
           if (connectionModeRef.current) return true;
           if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
+          !overlayEditingRef.current &&
           (dragging.current || connectionModeRef.current) &&
           !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !overlayEditingRef.current &&
           (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,

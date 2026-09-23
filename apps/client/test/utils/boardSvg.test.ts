@@ -501,6 +501,37 @@ it('draws overlay vectors under the pins and stamps above them', () => {
   expect(stamp).toBeGreaterThan(pin);
 });
 
+it('falls back to the text stroke for colorless overlay vectors, like the canvas', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Tolkien & <Cia>',
+          body: null,
+        },
+      ],
+      edges: [],
+      overlays: [
+        {
+          id: 'ov-1',
+          kind: 'line' as const,
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+        },
+      ],
+    },
+    options,
+  );
+
+  expect(svg).toContain('fill="none" stroke="#111111"');
+});
+
 it('grows the canvas for overlays dragged outside the drawing', () => {
   const svg = renderBoardSvg(
     {

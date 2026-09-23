@@ -80,6 +80,22 @@ describe('OverlayInteractionLayer', () => {
     expect(callbacks.onPreviewRect).toHaveBeenLastCalledWith(null);
   });
 
+  it('treats presets as rect drags', async () => {
+    const { config, callbacks } = await setup({ kind: 'draw', tool: 'preset:star' });
+    await config.onPanResponderGrant(tapEvent(0, 0));
+    await config.onPanResponderMove(tapEvent(30, 20), { dx: 30, dy: 20 });
+    expect(callbacks.onPreviewRect).toHaveBeenCalledWith({
+      start: { x: 100, y: 0 },
+      end: { x: 130, y: 20 },
+    });
+    await config.onPanResponderRelease(tapEvent(30, 20), { dx: 30, dy: 20 });
+    expect(callbacks.onDrawRect).toHaveBeenCalledWith(
+      { x: 100, y: 0 },
+      { x: 130, y: 20 },
+    );
+    expect(callbacks.onPreviewRect).toHaveBeenLastCalledWith(null);
+  });
+
   it('ignores taps while a rect tool is armed', async () => {
     const { config, callbacks } = await setup({ kind: 'draw', tool: 'rect' });
     await config.onPanResponderGrant(tapEvent(5, 5));

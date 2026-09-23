@@ -76,39 +76,35 @@ describe('BoardCanvasHeaderActions', () => {
   const press = async (view: Awaited<ReturnType<typeof render>>, label: string) =>
     fireEvent.press(view.getByLabelText(label));
 
-  it('wires every header action', async () => {
+  it('wires revert and save', async () => {
     const handlers = {
       onRevert: jest.fn(),
       onSave: jest.fn(),
-      onToggleLayout: jest.fn(),
-      onToggleConnectionMode: jest.fn(),
     };
-    const view = await render(
-      <BoardCanvasHeaderActions dirty layoutEditing connectionMode {...handlers} />,
-    );
+    const view = await render(<BoardCanvasHeaderActions dirty {...handlers} />);
 
-    await press(view, 'graph_connection_mode');
-    await press(view, 'board_edit_layout');
     await press(view, 'board_revert');
     await press(view, 'board_save');
 
-    expect(handlers.onToggleConnectionMode).toHaveBeenCalledTimes(1);
-    expect(handlers.onToggleLayout).toHaveBeenCalledTimes(1);
     expect(handlers.onRevert).toHaveBeenCalledTimes(1);
     expect(handlers.onSave).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps only the document actions, the mode toggles live in the tools bar', async () => {
+    const view = await render(
+      <BoardCanvasHeaderActions dirty onRevert={jest.fn()} onSave={jest.fn()} />,
+    );
+
+    expect(view.getByLabelText('board_revert')).toBeTruthy();
+    expect(view.getByLabelText('board_save')).toBeTruthy();
+    expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
+    expect(view.queryByLabelText('objects_edit')).toBeNull();
+    expect(view.queryByLabelText('board_edit_layout')).toBeNull();
+  });
+
   it('disables revert and save while clean', async () => {
     const view = await render(
-      <BoardCanvasHeaderActions
-        dirty={false}
-        layoutEditing={false}
-        connectionMode={false}
-        onRevert={jest.fn()}
-        onSave={jest.fn()}
-        onToggleLayout={jest.fn()}
-        onToggleConnectionMode={jest.fn()}
-      />,
+      <BoardCanvasHeaderActions dirty={false} onRevert={jest.fn()} onSave={jest.fn()} />,
     );
 
     expect(view.getByLabelText('board_revert').props.accessibilityState).toMatchObject({
@@ -117,10 +113,6 @@ describe('BoardCanvasHeaderActions', () => {
     expect(view.getByLabelText('board_save').props.accessibilityState).toMatchObject({
       disabled: true,
     });
-    expect(
-      view.getByLabelText('graph_connection_mode').props.accessibilityState?.disabled,
-    ).toBeFalsy();
-    expect(view.getByLabelText('board_edit_layout').props.accessibilityState?.disabled).toBeFalsy();
   });
 });
 

@@ -5,12 +5,26 @@ import { useTheme } from '../../../../theme';
 
 type Glyph = keyof typeof Ionicons.glyphMap;
 
+const ACTION_BUTTON_PADDING_VERTICAL = 8;
+const ACTION_GLYPH_SIZE = 22;
+/**
+ * One action row height (button padding around the glyph). Rows that swap with
+ * the action bar, like the draw bar's compact hint line, match it so the canvas
+ * below never pops.
+ */
+export const CANVAS_ACTION_ROW_HEIGHT =
+  ACTION_BUTTON_PADDING_VERTICAL * 2 + ACTION_GLYPH_SIZE;
+
 interface CanvasActionBarButtonProps {
   icon: Glyph;
   /** Accessibility label - the buttons show no text. */
   label: string;
   onPress: () => void;
   testID?: string;
+  /** Mode toggles tint primary while their mode is on. */
+  active?: boolean;
+  /** Disabled actions dim and stop firing. */
+  disabled?: boolean;
 }
 
 /**
@@ -22,12 +36,18 @@ export const CanvasActionBarButton: React.FC<CanvasActionBarButtonProps> = ({
   label,
   onPress,
   testID,
+  active = false,
+  disabled = false,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        button: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+        button: {
+          paddingHorizontal: 14,
+          paddingVertical: ACTION_BUTTON_PADDING_VERTICAL,
+          borderRadius: 8,
+        },
       }),
     [],
   );
@@ -36,10 +56,16 @@ export const CanvasActionBarButton: React.FC<CanvasActionBarButtonProps> = ({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || undefined }}
       onPress={onPress}
+      disabled={disabled}
       style={styles.button}
     >
-      <Ionicons name={icon} size={22} color={colors.text} />
+      <Ionicons
+        name={icon}
+        size={ACTION_GLYPH_SIZE}
+        color={disabled ? colors.textSecondary : active ? colors.primary : colors.text}
+      />
     </TouchableOpacity>
   );
 };

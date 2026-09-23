@@ -47,6 +47,8 @@ interface Props {
   selectedMarkerId: string | null;
   layoutEditing: boolean;
   connectionMode: boolean;
+  /** While set, images and points ignore taps and drags: only overlay shapes respond. */
+  overlayEditing: boolean;
   onSelectImage: (imageId: string) => void;
   onMoveImage: (imageId: string, x: number, y: number) => void;
   onResizeImage: (imageId: string, width: number, height: number) => void;
@@ -90,6 +92,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       selectedMarkerId,
       layoutEditing,
       connectionMode,
+      overlayEditing,
       onSelectImage,
       onMoveImage,
       onResizeImage,
@@ -389,6 +392,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               uri={imageUris[image.galleryId] ?? null}
               selected={selectedImageId === image.id}
               layoutEditing={layoutEditing}
+              overlayEditing={overlayEditing}
               scale={scale}
               locked={image.locked}
               onSelect={onSelectImage}
@@ -467,6 +471,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               }
               layoutEditing={layoutEditing}
               connectionMode={connectionMode}
+              overlayEditing={overlayEditing}
               scale={scale}
               onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
               onMove={(id, x, y) => updateDrag(kind, id, x, y)}

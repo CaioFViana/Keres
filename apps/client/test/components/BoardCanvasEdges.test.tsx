@@ -91,6 +91,7 @@ async function renderBoard(content: BoardContentType = CONTENT) {
       selectedNodeId={null}
       layoutEditing={false}
       connectionMode={false}
+      overlayEditing={false}
       onSelectNode={noop}
       onMoveNode={noop}
       onResizeNode={noop}

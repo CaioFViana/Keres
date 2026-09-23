@@ -40,7 +40,7 @@ describe('AddObjectsPill', () => {
 
     const pill = view.getByTestId('objects-pill');
     const groups = pill.props.groups as { key: string; options: { value: string }[] }[];
-    expect(groups.map((group) => group.key)).toEqual(['note', 'draw', 'presets', 'stamp', 'select']);
+    expect(groups.map((group) => group.key)).toEqual(['note', 'draw', 'presets', 'stamp']);
     expect(
       groups.find((group) => group.key === 'draw')?.options.map((option) => option.value),
     ).toContain('draw:line');

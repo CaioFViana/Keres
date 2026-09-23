@@ -8,11 +8,11 @@ import {
 } from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 import AddObjectsPill from '@/src/components/features/graphs/CanvasOverlay/AddObjectsPill';
 import OverlayDrawBar from '@/src/components/features/graphs/CanvasOverlay/OverlayDrawBar';
-import OverlaySelectBar from '@/src/components/features/graphs/CanvasOverlay/OverlaySelectBar';
 import type {
   AddObjectsAction,
   OverlayDrawTool,
 } from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
+import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
 
 interface Props {
@@ -26,8 +26,14 @@ interface Props {
   canFinish: boolean;
   onFinishDraw: () => void;
   onCancelDraw: () => void;
-  selectMode: boolean;
-  onDoneSelect: () => void;
+  layoutEditing: boolean;
+  connectionMode: boolean;
+  overlayEditing: boolean;
+  trajectoriesActive: boolean;
+  onToggleLayout: () => void;
+  onToggleConnectionMode: () => void;
+  onToggleOverlayEdit: () => void;
+  onOpenTrajectories: () => void;
 }
 
 /** The icon actions above the map: image bases, location points, markers, objects, edit. */
@@ -42,11 +48,18 @@ const LocationMapTools: React.FC<Props> = ({
   canFinish,
   onFinishDraw,
   onCancelDraw,
-  selectMode,
-  onDoneSelect,
+  layoutEditing,
+  connectionMode,
+  overlayEditing,
+  trajectoriesActive,
+  onToggleLayout,
+  onToggleConnectionMode,
+  onToggleOverlayEdit,
+  onOpenTrajectories,
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { isCompact } = useResponsiveLayout();
 
   const styles = StyleSheet.create({
     tools: {
@@ -56,6 +69,19 @@ const LocationMapTools: React.FC<Props> = ({
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
+    wideRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: 8,
+    },
+    columnDivider: {
+      width: StyleSheet.hairlineWidth,
+      alignSelf: 'stretch',
+      backgroundColor: colors.border,
+      marginHorizontal: 4,
+    },
+    modesRow: { flexDirection: 'row', alignItems: 'center' },
   });
 
   if (drawTool) {
@@ -68,12 +94,8 @@ const LocationMapTools: React.FC<Props> = ({
       />
     );
   }
-  if (selectMode) {
-    return <OverlaySelectBar onDone={onDoneSelect} />;
-  }
-  return (
-    <View style={styles.tools}>
-      <CanvasActionBar>
+  const addActions = (
+    <CanvasActionBar testID="location-map-add-actions">
         <MultiSelectPill
           options={imageOptions}
           selectedValues={[]}
@@ -124,13 +146,58 @@ const LocationMapTools: React.FC<Props> = ({
             />
           )}
         />
-        <CanvasActionBarButton
-          testID="action-edit-overlays"
-          icon="create-outline"
-          label={t('objects_edit')}
-          onPress={() => onObjectsAction('select')}
-        />
-      </CanvasActionBar>
+    </CanvasActionBar>
+  );
+  const modeActions = (
+    <CanvasActionBar testID="location-map-modes">
+      <CanvasActionBarButton
+        testID="action-connection-mode"
+        icon={connectionMode ? 'git-merge' : 'git-merge-outline'}
+        active={connectionMode}
+        label={t('graph_connection_mode')}
+        onPress={onToggleConnectionMode}
+      />
+      <CanvasActionBarButton
+        testID="action-trajectories"
+        icon="footsteps"
+        active={trajectoriesActive}
+        label={t('trajectory_show')}
+        onPress={onOpenTrajectories}
+      />
+      <CanvasActionBarButton
+        testID="action-edit-overlays"
+        icon={overlayEditing ? 'checkmark-circle-outline' : 'create-outline'}
+        active={overlayEditing}
+        label={t('objects_edit')}
+        onPress={onToggleOverlayEdit}
+      />
+      <CanvasActionBarButton
+        testID="action-edit-layout"
+        icon={layoutEditing ? 'checkmark-circle-outline' : 'move-outline'}
+        active={layoutEditing}
+        label={t('board_edit_layout')}
+        onPress={onToggleLayout}
+      />
+    </CanvasActionBar>
+  );
+  if (isCompact) {
+    return (
+      <View style={styles.tools} testID="location-map-tools">
+        {modeActions}
+        <View style={styles.rowDivider} />
+        {addActions}
+      </View>
+    );
+  }
+  return (
+    <View style={styles.tools} testID="location-map-tools">
+      <View style={styles.wideRow}>
+        {addActions}
+        <View style={styles.modesRow}>
+          <View style={styles.columnDivider} />
+          {modeActions}
+        </View>
+      </View>
     </View>
   );
 };

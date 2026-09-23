@@ -13,7 +13,6 @@ async function setup(initial: BoardContentType = EMPTY) {
     const actions = useCanvasOverlayActions({
       setContent,
       generateOverlayId: () => `id-${(ids += 1)}`,
-      placementCenter: () => ({ x: 200, y: 160 }),
       onAddNote,
     });
     return { content, actions, onAddNote };
@@ -29,6 +28,13 @@ describe('useCanvasOverlayActions', () => {
     expect(result.current.actions.interactionMode).toEqual({ kind: 'draw', tool: 'line' });
 
     await act(async () => result.current.actions.handleObjectsAction('preset:star'));
+    expect(result.current.actions.interactionMode).toEqual({
+      kind: 'draw',
+      tool: 'preset:star',
+    });
+    await act(async () =>
+      result.current.actions.commitRectDraw('preset:star', { x: 0, y: 0 }, { x: 100, y: 100 }),
+    );
     expect(result.current.content.overlays).toHaveLength(1);
     expect(result.current.content.overlays?.[0]).toMatchObject({ kind: 'polygon' });
     expect(result.current.content.overlays?.[0]).toHaveProperty('points');
@@ -36,6 +42,7 @@ describe('useCanvasOverlayActions', () => {
       (result.current.content.overlays?.[0] as { points: unknown[] }).points,
     ).toHaveLength(10);
     expect(result.current.actions.selectedOverlayId).toBe('id-1');
+    expect(result.current.actions.interactionMode).toBeNull();
 
     await act(async () => result.current.actions.handleObjectsAction('select'));
     expect(result.current.actions.interactionMode).toEqual({ kind: 'select' });
@@ -176,9 +183,13 @@ describe('useCanvasOverlayActions', () => {
     await act(async () => result.current.actions.selectOverlay('ov-2'));
     expect(result.current.actions.selectedOverlayId).toBe('ov-2');
 
-    // A miss leaves the mode entirely.
-    await act(async () => result.current.actions.deselectOverlay());
+    // A miss only deselects: the header toggle owns the mode now.
     await act(async () => result.current.actions.selectOverlay(null));
+    expect(result.current.actions.selectedOverlayId).toBeNull();
+    expect(result.current.actions.selectMode).toBe(true);
+    expect(result.current.actions.interactionMode).toEqual({ kind: 'select' });
+
+    await act(async () => result.current.actions.cancelSelect());
     expect(result.current.actions.selectMode).toBe(false);
     expect(result.current.actions.interactionMode).toBeNull();
   });

@@ -1,8 +1,18 @@
 import type { CanvasOverlayPreset } from '@keres/shared/graphs/canvasOverlayGeometry';
 import type { SpatialPoint } from '@keres/shared';
 
-/** What the canvas interaction layer is doing with the next gestures. */
-export type OverlayDrawTool = 'line' | 'polygon' | 'frame' | 'rect' | 'ellipse' | 'stamp';
+/**
+ * What the canvas interaction layer is doing with the next gestures. Presets are drag
+ * tools too: the user draws the region and the shape inscribes itself in it.
+ */
+export type OverlayDrawTool =
+  | 'line'
+  | 'polygon'
+  | 'frame'
+  | 'rect'
+  | 'ellipse'
+  | 'stamp'
+  | `preset:${CanvasOverlayPreset}`;
 
 export type OverlayInteractionMode =
   | { kind: 'draw'; tool: OverlayDrawTool }
@@ -18,8 +28,13 @@ export type AddObjectsAction =
 
 export const RECT_DRAW_TOOLS: readonly OverlayDrawTool[] = ['frame', 'rect', 'ellipse'];
 
+export function isPresetDrawTool(tool: OverlayDrawTool): tool is `preset:${CanvasOverlayPreset}` {
+  return tool.startsWith('preset:');
+}
+
+/** Drag-a-rectangle tools (rect gestures), presets included. */
 export function isRectDrawTool(tool: OverlayDrawTool): boolean {
-  return (RECT_DRAW_TOOLS as readonly string[]).includes(tool);
+  return (RECT_DRAW_TOOLS as readonly string[]).includes(tool) || isPresetDrawTool(tool);
 }
 
 /** In-progress line/polygon vertices, owned by the overlay actions hook. */

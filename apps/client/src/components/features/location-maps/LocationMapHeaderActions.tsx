@@ -9,56 +9,19 @@ interface Props {
   saving: boolean;
   onRevert: () => void;
   onSave: () => void;
-  layoutEditing?: boolean;
-  connectionMode?: boolean;
-  onToggleLayout?: () => void;
-  onToggleConnectionMode?: () => void;
-  trajectoriesActive?: boolean;
-  onOpenTrajectories?: () => void;
 }
 
-/** The map header's tool toggles and document actions, kept together so their enabled state cannot drift apart. */
-const LocationMapHeaderActions: React.FC<Props> = ({
-  dirty,
-  saving,
-  onRevert,
-  onSave,
-  layoutEditing = false,
-  connectionMode = false,
-  onToggleLayout = () => undefined,
-  onToggleConnectionMode = () => undefined,
-  trajectoriesActive = false,
-  onOpenTrajectories = () => undefined,
-}) => {
+/**
+ * The map header keeps only the document actions; the mode toggles live in the
+ * tools bar, right of the add actions on medium and wide screens and on their own
+ * row above them on compact ones.
+ */
+const LocationMapHeaderActions: React.FC<Props> = ({ dirty, saving, onRevert, onSave }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12, gap: 14 }}>
-      <TouchableOpacity
-        onPress={onToggleConnectionMode}
-        accessibilityLabel={t('graph_connection_mode')}
-      >
-        <Ionicons
-          name={connectionMode ? 'git-merge' : 'git-merge-outline'}
-          size={24}
-          color={connectionMode ? colors.primary : colors.text}
-        />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onOpenTrajectories} accessibilityLabel={t('trajectory_show')}>
-        <Ionicons
-          name="footsteps"
-          size={24}
-          color={trajectoriesActive ? colors.primary : colors.text}
-        />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onToggleLayout} accessibilityLabel={t('board_edit_layout')}>
-        <Ionicons
-          name={layoutEditing ? 'checkmark-circle-outline' : 'move-outline'}
-          size={24}
-          color={layoutEditing ? colors.primary : colors.text}
-        />
-      </TouchableOpacity>
       <TouchableOpacity
         testID="location-map-revert"
         onPress={onRevert}

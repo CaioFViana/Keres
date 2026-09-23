@@ -217,6 +217,7 @@ describe('BoardNode', () => {
     selected: false,
     layoutEditing: false,
     connectionMode: false,
+    overlayEditing: false,
     scale: 1,
   };
 
@@ -385,6 +386,17 @@ describe('BoardNode', () => {
     });
     expect(handlers.onDragEnd).toHaveBeenCalledWith('node-1');
     expect(handlers.onConnectionCancel).not.toHaveBeenCalled();
+  });
+
+  it('ignores taps and drags while overlays are edited', async () => {
+    const handlers = nodeHandlers();
+    const view = await render(
+      <BoardNode node={noteNode()} {...baseProps} overlayEditing {...handlers} />,
+    );
+
+    const responder = responderOf(view);
+    expect(responder.onStartShouldSetResponder()).toBe(false);
+    expect(responder.onMoveShouldSetResponder({}, { dx: 50, dy: 0 })).toBe(false);
   });
 });
 

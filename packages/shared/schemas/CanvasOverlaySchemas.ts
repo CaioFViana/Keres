@@ -61,7 +61,10 @@ const CanvasOverlayPolygonSchema = z.object({
   points: z.array(CanvasOverlayPointSchema).min(3).max(MAX_CANVAS_OVERLAY_POINTS),
   label: CanvasOverlayLabelSchema,
   color: CanvasOverlayColorSchema,
-  /** Fill opacity of the region; absent means the surface default. */
+  /** Regions start as outlines; set to fill with `fillOpacity`. */
+  filled: z.boolean().optional(),
+  dashed: z.boolean().optional(),
+  /** Fill opacity of the region; honored only when `filled`, absent means the default. */
   fillOpacity: z.number().finite().min(0).max(1).optional(),
   strokeWidth: CanvasOverlayStrokeWidthSchema,
   zIndex: CanvasOverlayZIndexSchema,
@@ -78,6 +81,8 @@ const CanvasOverlayFrameSchema = z.object({
   color: CanvasOverlayColorSchema,
   /** Frames are dashed group outlines unless explicitly solid. */
   dashed: z.boolean().optional(),
+  /** Fills the frame like a shape; absent means outline only. */
+  filled: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
 });
 
@@ -92,6 +97,7 @@ const CanvasOverlayShapeSchema = z.object({
   label: CanvasOverlayLabelSchema,
   color: CanvasOverlayColorSchema,
   filled: z.boolean().optional(),
+  dashed: z.boolean().optional(),
   strokeWidth: CanvasOverlayStrokeWidthSchema,
   zIndex: CanvasOverlayZIndexSchema,
 });

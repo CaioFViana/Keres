@@ -26,6 +26,11 @@ export interface CanvasOverlaySvgContext {
   /** World-to-export translation each surface supplies from its own normalization. */
   shift: (x: number, y: number) => { x: number; y: number };
   colors: SvgExportColors;
+  /**
+   * Default vector stroke when the overlay sets no color: each surface passes what
+   * its layer renders on screen (boards: text, maps: primary), so the file matches.
+   */
+  stroke: string;
 }
 
 export interface CanvasOverlaySvgGroups {
@@ -120,7 +125,7 @@ function renderLabel(
 }
 
 function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext): string {
-  const color = escapeSvgXml(overlay.color ?? context.colors.text);
+  const color = escapeSvgXml(overlay.color ?? context.stroke);
   const bounds = canvasOverlayBounds(overlay);
   const center = context.shift(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   const label = overlay.label
@@ -153,9 +158,13 @@ function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext):
     case 'polygon': {
       const shifted = overlay.points.map((point) => shiftedPoint(context, point));
       const d = canvasOverlayPolylinePath(shifted, true);
+      const filled = overlay.filled
+        ? `<path d="${d}" fill="${color}" fill-opacity="${overlay.fillOpacity ?? CANVAS_OVERLAY_POLYGON_FILL_OPACITY}"/>`
+        : '';
+      const dashed = overlay.dashed ? ` stroke-dasharray="${CANVAS_OVERLAY_DASH_INTERVALS.join(' ')}"` : '';
       return (
-        `<path d="${d}" fill="${color}" fill-opacity="${overlay.fillOpacity ?? CANVAS_OVERLAY_POLYGON_FILL_OPACITY}"/>` +
-        `<path d="${d}" fill="none" stroke="${color}" stroke-width="${overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}"/>` +
+        filled +
+        `<path d="${d}" fill="none" stroke="${color}" stroke-width="${overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}"${dashed}/>` +
         label
       );
     }
@@ -168,12 +177,12 @@ function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext):
         overlay.kind === 'shape' && overlay.shapeType === 'ellipse'
           ? canvasOverlayEllipsePath(top.x, top.y, width, height)
           : canvasOverlayRectPath(top.x, top.y, width, height);
-      const filled =
-        overlay.kind === 'shape' && overlay.filled
-          ? `<path d="${d}" fill="${color}" fill-opacity="${CANVAS_OVERLAY_SHAPE_FILL_OPACITY}"/>`
-          : '';
-      // Frames dash unless opted out; shapes never dash on screen either.
-      const dashed = overlay.kind === 'frame' && overlay.dashed !== false;
+      const filled = overlay.filled
+        ? `<path d="${d}" fill="${color}" fill-opacity="${CANVAS_OVERLAY_SHAPE_FILL_OPACITY}"/>`
+        : '';
+      // Frames dash unless opted out; shapes dash only on request.
+      const dashed =
+        overlay.kind === 'frame' ? overlay.dashed !== false : (overlay.dashed ?? false);
       // Frames ignore `strokeWidth` on screen too - always the default width.
       const strokeWidth =
         overlay.kind === 'frame'

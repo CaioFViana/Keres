@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
+import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
 import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
@@ -14,7 +15,13 @@ interface OverlaySheetProps {
   canEdit: boolean;
   /** Shown in the color picker while the overlay sets no color of its own. */
   defaultColor: string;
-  onChange: (patch: { label?: string | null; color?: string | null; icon?: string }) => void;
+  onChange: (patch: {
+    label?: string | null;
+    color?: string | null;
+    icon?: string;
+    dashed?: boolean;
+    filled?: boolean;
+  }) => void;
   onRemove: () => void;
   onClose: () => void;
 }
@@ -99,6 +106,22 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
               onSelectColor={(value) => onChange({ color: value })}
               placeholder={t('overlay_sheet_color')}
             />
+            {(overlay.kind === 'polygon' ||
+              overlay.kind === 'frame' ||
+              overlay.kind === 'shape') && (
+              <FormSwitchField
+                label={t('overlay_sheet_filled')}
+                value={overlay.filled ?? false}
+                onValueChange={(value) => onChange({ filled: value })}
+              />
+            )}
+            {overlay.kind !== 'stamp' && (
+              <FormSwitchField
+                label={t('overlay_sheet_dashed')}
+                value={overlay.kind === 'frame' ? (overlay.dashed ?? true) : (overlay.dashed ?? false)}
+                onValueChange={(value) => onChange({ dashed: value })}
+              />
+            )}
             <Button onPress={onRemove} style={styles.remove}>
               {t('overlay_sheet_remove')}
             </Button>

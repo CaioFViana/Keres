@@ -27,6 +27,8 @@ interface Props {
   selected: boolean;
   layoutEditing: boolean;
   connectionMode: boolean;
+  /** While set, the pin ignores taps and drags: only overlay shapes respond. */
+  overlayEditing: boolean;
   scale: number;
   /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
   galleryMedia?: BoardGalleryMedia | null;
@@ -55,6 +57,7 @@ const BoardNodeView: React.FC<Props> = ({
   selected,
   layoutEditing,
   connectionMode,
+  overlayEditing,
   scale,
   galleryMedia,
   summary,
@@ -84,6 +87,7 @@ const BoardNodeView: React.FC<Props> = ({
   const scaleRef = useRef(scale);
   const layoutEditingRef = useRef(layoutEditing);
   const connectionModeRef = useRef(connectionMode);
+  const overlayEditingRef = useRef(overlayEditing);
   const selectedRef = useRef(selected);
   const handlers = useRef({
     onSelect,
@@ -108,6 +112,7 @@ const BoardNodeView: React.FC<Props> = ({
     scaleRef.current = scale;
     layoutEditingRef.current = layoutEditing;
     connectionModeRef.current = connectionMode;
+    overlayEditingRef.current = overlayEditing;
     selectedRef.current = selected;
     handlers.current = {
       onSelect,
@@ -133,15 +138,18 @@ const BoardNodeView: React.FC<Props> = ({
         // A selected card in layout mode exposes real controls inside itself. Let those controls
         // own the gesture; otherwise the parent responder steals a resize after a rerender.
         onStartShouldSetPanResponder: () => {
+          if (overlayEditingRef.current) return false;
           if (connectionModeRef.current) return true;
           if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
+          !overlayEditingRef.current &&
           (dragging.current || connectionModeRef.current) &&
           !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !overlayEditingRef.current &&
           (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,

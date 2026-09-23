@@ -1,7 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
+import {
+  CANVAS_ACTION_ROW_HEIGHT,
+  CanvasActionBarButton,
+} from '@/src/components/features/graphs/CanvasActionBar/CanvasActionBar';
+import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../../theme';
 import type { OverlayDrawTool } from './overlayTools';
 
@@ -19,16 +23,25 @@ const HINT_KEYS: Record<OverlayDrawTool, string> = {
   rect: 'overlay_draw_rect_hint',
   ellipse: 'overlay_draw_rect_hint',
   stamp: 'overlay_draw_stamp_hint',
+  'preset:star': 'overlay_draw_rect_hint',
+  'preset:diamond': 'overlay_draw_rect_hint',
+  'preset:square': 'overlay_draw_rect_hint',
+  'preset:triangle': 'overlay_draw_rect_hint',
+  'preset:pentagon': 'overlay_draw_rect_hint',
+  'preset:hexagon': 'overlay_draw_rect_hint',
 };
 
 /**
  * Replaces the canvas tools while a drawing tool is armed: the gesture hint plus
- * finish/cancel. Rect and stamp tools commit on the gesture, so their bar only
- * ever cancels.
+ * finish/cancel. Same metrics as the tools bar, so arming a tool never pops the
+ * canvas below: one row on medium and wide screens, and the compact two-row shape
+ * (actions, then the hint on its own line) on small ones. Rect and stamp tools
+ * commit on the gesture, so their bar only ever cancels.
  */
 const OverlayDrawBar: React.FC<OverlayDrawBarProps> = ({ tool, canFinish, onFinish, onCancel }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isCompact } = useResponsiveLayout();
   const styles = StyleSheet.create({
     bar: {
       paddingHorizontal: 12,
@@ -37,28 +50,59 @@ const OverlayDrawBar: React.FC<OverlayDrawBarProps> = ({ tool, canFinish, onFini
       borderBottomColor: colors.border,
       backgroundColor: colors.surface,
     },
-    hint: { color: colors.textSecondary, marginBottom: 8 },
-    row: { flexDirection: 'row', gap: 8 },
-    control: { flex: 1 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    compactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    rowDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginVertical: 8,
+    },
+    hint: { flex: 1, color: colors.textSecondary },
+    compactHintRow: { minHeight: CANVAS_ACTION_ROW_HEIGHT, justifyContent: 'center' },
+    compactHint: { color: colors.textSecondary },
   });
-  const hint = t(HINT_KEYS[tool]);
   const showFinish = tool === 'line' || tool === 'polygon';
+  const cancel = (
+    <CanvasActionBarButton
+      testID="overlay-draw-cancel"
+      icon="close-outline"
+      label={t('overlay_draw_cancel')}
+      onPress={onCancel}
+    />
+  );
+  const finish = showFinish ? (
+    <CanvasActionBarButton
+      testID="overlay-draw-finish"
+      icon="checkmark-outline"
+      label={t('overlay_draw_finish')}
+      onPress={onFinish}
+      disabled={!canFinish}
+    />
+  ) : null;
+  if (isCompact) {
+    return (
+      <View style={styles.bar}>
+        <View style={styles.compactRow}>
+          {cancel}
+          {finish}
+        </View>
+        <View style={styles.rowDivider} />
+        <View style={styles.compactHintRow}>
+          <Text style={styles.compactHint} numberOfLines={1}>
+            {t(HINT_KEYS[tool])}
+          </Text>
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={styles.bar}>
-      <Text style={styles.hint}>{hint}</Text>
       <View style={styles.row}>
-        <View style={styles.control}>
-          <Button onPress={onCancel} style={{ height: 50 }}>
-            {t('overlay_draw_cancel')}
-          </Button>
-        </View>
-        {showFinish && (
-          <View style={styles.control}>
-            <Button onPress={onFinish} disabled={!canFinish} style={{ height: 50 }}>
-              {t('overlay_draw_finish')}
-            </Button>
-          </View>
-        )}
+        {cancel}
+        <Text style={styles.hint} numberOfLines={1}>
+          {t(HINT_KEYS[tool])}
+        </Text>
+        {finish}
       </View>
     </View>
   );

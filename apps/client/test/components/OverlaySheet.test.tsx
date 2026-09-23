@@ -45,6 +45,25 @@ jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput'
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+jest.mock('../../src/components/common/forms/FormSwitchField/FormSwitchField', () => {
+  const { Text } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      label,
+      value,
+      onValueChange,
+    }: {
+      label: string;
+      value: boolean;
+      onValueChange: (value: boolean) => void;
+    }) => (
+      <Text testID={`sheet-switch-${label}`} onPress={() => onValueChange(!value)}>
+        {String(value)}
+      </Text>
+    ),
+  };
+});
 jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => {
   const { Text } = jest.requireActual('react-native');
   return {
@@ -123,5 +142,45 @@ describe('OverlaySheet', () => {
     );
     expect(line.queryByTestId('sheet-icon')).toBeNull();
     expect(line.queryByText('overlay_sheet_icon')).toBeNull();
+  });
+
+  it('toggles fill and dash per kind, frames dashed by default', async () => {
+    const onChange = jest.fn();
+    const props = {
+      canEdit: true,
+      defaultColor: '#85f',
+      onChange,
+      onRemove: jest.fn(),
+      onClose: jest.fn(),
+    };
+    const polygon = await render(
+      <OverlaySheet overlay={{ id: 'ov-1', kind: 'polygon', points: [] }} {...props} />,
+    );
+    expect(polygon.getByTestId('sheet-switch-overlay_sheet_filled').props.children).toBe('false');
+    await fireEvent.press(polygon.getByTestId('sheet-switch-overlay_sheet_filled'));
+    expect(onChange).toHaveBeenCalledWith({ filled: true });
+    await fireEvent.press(polygon.getByTestId('sheet-switch-overlay_sheet_dashed'));
+    expect(onChange).toHaveBeenCalledWith({ dashed: true });
+
+    const frame = await render(
+      <OverlaySheet
+        overlay={{ id: 'ov-2', kind: 'frame', x: 0, y: 0, width: 10, height: 10 }}
+        {...props}
+      />,
+    );
+    expect(frame.getByTestId('sheet-switch-overlay_sheet_dashed').props.children).toBe('true');
+    expect(frame.getByTestId('sheet-switch-overlay_sheet_filled')).toBeTruthy();
+
+    const line = await render(
+      <OverlaySheet overlay={{ id: 'ov-3', kind: 'line', points: [] }} {...props} />,
+    );
+    expect(line.getByTestId('sheet-switch-overlay_sheet_dashed')).toBeTruthy();
+    expect(line.queryByTestId('sheet-switch-overlay_sheet_filled')).toBeNull();
+
+    const stamp = await render(
+      <OverlaySheet overlay={{ id: 'ov-4', kind: 'stamp', x: 0, y: 0, icon: 'flag' }} {...props} />,
+    );
+    expect(stamp.queryByTestId('sheet-switch-overlay_sheet_dashed')).toBeNull();
+    expect(stamp.queryByTestId('sheet-switch-overlay_sheet_filled')).toBeNull();
   });
 });

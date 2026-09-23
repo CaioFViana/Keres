@@ -20,6 +20,24 @@ describe('LocationMapHeaderActions', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
+  it('keeps only the document actions, the mode toggles live in the tools bar', async () => {
+    const view = await render(
+      <LocationMapHeaderActions
+        dirty
+        saving={false}
+        onRevert={jest.fn()}
+        onSave={jest.fn()}
+      />,
+    );
+
+    expect(view.getByTestId('location-map-revert')).toBeTruthy();
+    expect(view.getByTestId('location-map-save')).toBeTruthy();
+    expect(view.queryByLabelText('graph_connection_mode')).toBeNull();
+    expect(view.queryByLabelText('trajectory_show')).toBeNull();
+    expect(view.queryByLabelText('objects_edit')).toBeNull();
+    expect(view.queryByLabelText('board_edit_layout')).toBeNull();
+  });
+
   it('routes revert and save separately, while saving keeps the save action disabled', async () => {
     const onRevert = jest.fn();
     const onSave = jest.fn();

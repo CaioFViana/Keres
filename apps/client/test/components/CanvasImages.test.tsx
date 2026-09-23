@@ -74,6 +74,7 @@ describe('canvas images', () => {
         selectedNodeId={null}
         layoutEditing={false}
         connectionMode={false}
+        overlayEditing={false}
         onSelectNode={noop}
         onMoveNode={noop}
         onResizeNode={noop}

@@ -82,6 +82,38 @@ jest.mock('../../src/components/features/graphs/GraphConnectionModal/GraphConnec
   };
 });
 
+jest.mock('../../src/hooks/useResponsiveLayout', () => ({
+  __esModule: true,
+  useResponsiveLayout: jest.fn(() => ({
+    width: 390,
+    height: 844,
+    breakpoint: 'compact',
+    isCompact: true,
+    isMedium: false,
+    isWide: false,
+  })),
+}));
+
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
+
+const mockLayout = useResponsiveLayout as jest.MockedFunction<typeof useResponsiveLayout>;
+const compactLayout = {
+  width: 390,
+  height: 844,
+  breakpoint: 'compact' as const,
+  isCompact: true,
+  isMedium: false,
+  isWide: false,
+};
+const wideLayout = {
+  width: 1200,
+  height: 800,
+  breakpoint: 'wide' as const,
+  isCompact: false,
+  isMedium: false,
+  isWide: true,
+};
+
 interface ConnectionChoice {
   directed: boolean;
   direction: 'forward' | 'reverse';
@@ -98,11 +130,36 @@ const lastModalProps = () =>
     onConfirm: (choice: ConnectionChoice) => void;
   };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockLayout.mockReturnValue(compactLayout);
+});
 
 describe('LocationMapTools', () => {
   const imageOptions = [{ label: 'Atlas', value: 'gallery-1' }];
   const locationOptions = [{ label: 'Harbor', value: 'loc-1' }];
+  const toolsProps = () => ({
+    imageOptions,
+    locationOptions,
+    onAddImages: jest.fn(),
+    onAddLocations: jest.fn(),
+    onAddMarker: jest.fn(),
+    onObjectsAction: jest.fn(),
+    drawTool: null as null,
+    canFinish: false,
+    onFinishDraw: jest.fn(),
+    onCancelDraw: jest.fn(),
+    layoutEditing: false,
+    connectionMode: false,
+    overlayEditing: false,
+    trajectoriesActive: false,
+    onToggleLayout: jest.fn(),
+    onToggleConnectionMode: jest.fn(),
+    onToggleOverlayEdit: jest.fn(),
+    onOpenTrajectories: jest.fn(),
+  });
+  const renderTools = (overrides: Partial<ReturnType<typeof toolsProps>> = {}) =>
+    render(<LocationMapTools {...toolsProps()} {...overrides} />);
 
   it('wires the image, location and marker pickers', async () => {
     const onAddImages = jest.fn();
@@ -121,8 +178,14 @@ describe('LocationMapTools', () => {
         canFinish={false}
         onFinishDraw={jest.fn()}
         onCancelDraw={jest.fn()}
-        selectMode={false}
-        onDoneSelect={jest.fn()}
+        layoutEditing={false}
+        connectionMode={false}
+        overlayEditing={false}
+        trajectoriesActive={false}
+        onToggleLayout={jest.fn()}
+        onToggleConnectionMode={jest.fn()}
+        onToggleOverlayEdit={jest.fn()}
+        onOpenTrajectories={jest.fn()}
       />,
     );
 
@@ -157,10 +220,6 @@ describe('LocationMapTools', () => {
       objects.props.onSelectionChange(['draw:line']);
     });
     expect(onObjectsAction).toHaveBeenCalledWith('draw:line');
-
-    // The edit button arms the select tool directly.
-    await fireEvent.press(view.getByTestId('action-edit-overlays'));
-    expect(onObjectsAction).toHaveBeenCalledWith('select');
   });
 
   it('swaps the pickers for the draw bar while a tool is armed', async () => {
@@ -178,46 +237,68 @@ describe('LocationMapTools', () => {
         canFinish
         onFinishDraw={onFinishDraw}
         onCancelDraw={onCancelDraw}
-        selectMode={false}
-        onDoneSelect={jest.fn()}
+        layoutEditing={false}
+        connectionMode={false}
+        overlayEditing={false}
+        trajectoriesActive={false}
+        onToggleLayout={jest.fn()}
+        onToggleConnectionMode={jest.fn()}
+        onToggleOverlayEdit={jest.fn()}
+        onOpenTrajectories={jest.fn()}
       />,
     );
 
     expect(view.queryAllByTestId('multi-select-pill')).toHaveLength(0);
     expect(view.getByText('overlay_draw_polygon_hint')).toBeTruthy();
-    await act(async () => {
-      view.getByTestId('overlay_draw_finish').props.onPress();
-      view.getByTestId('overlay_draw_cancel').props.onPress();
-    });
+    await fireEvent.press(view.getByTestId('overlay-draw-finish'));
+    await fireEvent.press(view.getByTestId('overlay-draw-cancel'));
     expect(onFinishDraw).toHaveBeenCalledTimes(1);
     expect(onCancelDraw).toHaveBeenCalledTimes(1);
   });
 
-  it('swaps the pickers for the select bar while selecting', async () => {
-    const onDoneSelect = jest.fn();
-    const view = await render(
-      <LocationMapTools
-        imageOptions={imageOptions}
-        locationOptions={locationOptions}
-        onAddImages={jest.fn()}
-        onAddLocations={jest.fn()}
-        onAddMarker={jest.fn()}
-        onObjectsAction={jest.fn()}
-        drawTool={null}
-        canFinish={false}
-        onFinishDraw={jest.fn()}
-        onCancelDraw={jest.fn()}
-        selectMode
-        onDoneSelect={onDoneSelect}
-      />,
-    );
-
-    expect(view.queryAllByTestId('multi-select-pill')).toHaveLength(0);
-    expect(view.getByText('overlay_select_hint')).toBeTruthy();
-    await act(async () => {
-      view.getByTestId('overlay_select_done').props.onPress();
+  it('routes the mode toggles from the tools bar', async () => {
+    const onToggleLayout = jest.fn();
+    const onToggleConnectionMode = jest.fn();
+    const onToggleOverlayEdit = jest.fn();
+    const onOpenTrajectories = jest.fn();
+    const view = await renderTools({
+      onToggleLayout,
+      onToggleConnectionMode,
+      onToggleOverlayEdit,
+      onOpenTrajectories,
     });
-    expect(onDoneSelect).toHaveBeenCalledTimes(1);
+
+    await fireEvent.press(view.getByTestId('action-connection-mode'));
+    await fireEvent.press(view.getByTestId('action-trajectories'));
+    await fireEvent.press(view.getByTestId('action-edit-overlays'));
+    await fireEvent.press(view.getByTestId('action-edit-layout'));
+    expect(onToggleConnectionMode).toHaveBeenCalledTimes(1);
+    expect(onOpenTrajectories).toHaveBeenCalledTimes(1);
+    expect(onToggleOverlayEdit).toHaveBeenCalledTimes(1);
+    expect(onToggleLayout).toHaveBeenCalledTimes(1);
+  });
+
+  it('stacks the modes above the add actions on compact screens', async () => {
+    mockLayout.mockReturnValue(compactLayout);
+    const view = await renderTools();
+
+    const modes = view.getByTestId('location-map-modes');
+    const adds = view.getByTestId('location-map-add-actions');
+    expect(modes.parent?.props.testID).toBe('location-map-tools');
+    expect(adds.parent?.props.testID).toBe('location-map-tools');
+    const siblings = modes.parent?.children ?? [];
+    expect(siblings.indexOf(modes)).toBeLessThan(siblings.indexOf(adds));
+  });
+
+  it('docks the modes right of the add actions on medium and wide screens', async () => {
+    mockLayout.mockReturnValue(wideLayout);
+    const view = await renderTools();
+
+    const modes = view.getByTestId('location-map-modes');
+    const adds = view.getByTestId('location-map-add-actions');
+    expect(adds.parent?.props.testID).toBeUndefined();
+    expect(adds.parent?.children[0]).toBe(adds);
+    expect(modes.parent?.parent).toBe(adds.parent);
   });
 });
 

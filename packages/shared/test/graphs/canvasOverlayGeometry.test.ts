@@ -29,12 +29,12 @@ describe('canvasOverlayGeometry', () => {
     );
   });
 
-  it('builds preset polygons centered with the right vertices', () => {
-    const center = { x: 100, y: 100 };
-    expect(canvasOverlayPresetPoints('triangle', center, 60)).toHaveLength(3);
-    expect(canvasOverlayPresetPoints('square', center, 60)).toHaveLength(4);
-    expect(canvasOverlayPresetPoints('hexagon', center, 60)).toHaveLength(6);
-    const star = canvasOverlayPresetPoints('star', center, 60);
+  it('inscribes preset polygons in the dragged region', () => {
+    const square = { x: 70, y: 70, width: 60, height: 60 };
+    expect(canvasOverlayPresetPoints('triangle', square)).toHaveLength(3);
+    expect(canvasOverlayPresetPoints('square', square)).toHaveLength(4);
+    expect(canvasOverlayPresetPoints('hexagon', square)).toHaveLength(6);
+    const star = canvasOverlayPresetPoints('star', square);
     expect(star).toHaveLength(10);
     // Alternating outer/inner arms around the center.
     const radii = star.map((point) => Math.hypot(point.x - 100, point.y - 100));
@@ -42,11 +42,19 @@ describe('canvasOverlayGeometry', () => {
       expect(radius).toBeCloseTo(index % 2 === 0 ? 30 : 30 * 0.42, 8);
     }
     // The square sits axis-aligned (corners on the diagonals), the diamond points up.
-    const [corner] = canvasOverlayPresetPoints('square', center, 60);
+    const [corner] = canvasOverlayPresetPoints('square', square);
     expect(Math.abs(corner.x - 100)).toBeCloseTo(Math.abs(corner.y - 100), 8);
-    const [tip] = canvasOverlayPresetPoints('diamond', center, 60);
+    const [tip] = canvasOverlayPresetPoints('diamond', square);
     expect(tip.x).toBeCloseTo(100, 8);
     expect(tip.y).toBeCloseTo(70, 8);
+    // Like an ellipse, the shape stretches with the region: the diamond tip touches
+    // the top edge and the widest points touch the side edges.
+    const wide = { x: 0, y: 0, width: 100, height: 40 };
+    const [wideTip, wideRight] = canvasOverlayPresetPoints('diamond', wide);
+    expect(wideTip.x).toBeCloseTo(50, 8);
+    expect(wideTip.y).toBeCloseTo(0, 8);
+    expect(wideRight.x).toBeCloseTo(100, 8);
+    expect(wideRight.y).toBeCloseTo(20, 8);
   });
 
   it('hit-tests every kind and prefers the topmost overlay', () => {

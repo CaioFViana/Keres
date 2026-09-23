@@ -18,6 +18,7 @@ const COLORS = {
 const CONTEXT = {
   shift: (x: number, y: number) => ({ x: x + 10, y: y + 20 }),
   colors: COLORS,
+  stroke: COLORS.text,
 };
 
 function render(overlays: CanvasOverlayType[]) {
@@ -61,7 +62,21 @@ it('dashes lines and tips directed ones with an arrowhead', () => {
   expect(vectors[0]).toContain('fill="#111111"');
 });
 
-it('fills polygons and strokes them shut', () => {
+it('falls back to the surface stroke for colorless vectors, keeping stamps primary', () => {
+  const mapContext = { ...CONTEXT, stroke: COLORS.primary };
+  const { vectors, stamps } = renderCanvasOverlaySvg(
+    [
+      { id: 'ov-1', kind: 'line', points: [{ x: 0, y: 0 }, { x: 100, y: 0 }] },
+      { id: 'ov-2', kind: 'stamp', x: 0, y: 0, icon: 'keres:castle' },
+    ] as CanvasOverlayType[],
+    mapContext,
+  );
+  expect(vectors[0]).toContain('stroke="#8855ff"');
+  expect(vectors[0]).not.toContain('#111111');
+  expect(stamps[0]).toContain('stroke="#8855ff"');
+});
+
+it('outlines polygons by default, filling and dashing on request', () => {
   const { vectors } = render([
     {
       id: 'ov-1',
@@ -73,10 +88,26 @@ it('fills polygons and strokes them shut', () => {
       ],
       color: '#0f0',
     },
+    {
+      id: 'ov-2',
+      kind: 'polygon',
+      points: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 50, y: 50 },
+      ],
+      color: '#0f0',
+      filled: true,
+      dashed: true,
+    },
   ]);
-  expect(vectors[0]).toContain('<path d="M 10 20 L 110 20 L 60 70 Z" fill="#0f0"');
-  expect(vectors[0]).toContain('fill-opacity="0.18"');
-  expect(vectors[0]).toContain('stroke="#0f0" stroke-width="2"');
+  expect(vectors[0]).toContain('<path d="M 10 20 L 110 20 L 60 70 Z"');
+  expect(vectors[0]).not.toContain('fill-opacity');
+  expect(vectors[0]).not.toContain('stroke-dasharray');
+  expect(vectors[1]).toContain('<path d="M 10 20 L 110 20 L 60 70 Z" fill="#0f0"');
+  expect(vectors[1]).toContain('fill-opacity="0.18"');
+  expect(vectors[1]).toContain('stroke="#0f0" stroke-width="2"');
+  expect(vectors[1]).toContain('stroke-dasharray="6 4"');
 });
 
 it('dashes frames unless opted out, always at the default width', () => {
@@ -90,7 +121,7 @@ it('dashes frames unless opted out, always at the default width', () => {
   expect(vectors[1]).not.toContain('stroke-dasharray');
 });
 
-it('draws shapes as rects or ellipses, filled only on request', () => {
+it('draws shapes as rects or ellipses, filled and dashed on request', () => {
   const { vectors } = render([
     { id: 'ov-1', kind: 'shape', shapeType: 'rect', x: 0, y: 0, width: 100, height: 60 },
     {
@@ -102,6 +133,7 @@ it('draws shapes as rects or ellipses, filled only on request', () => {
       width: 100,
       height: 60,
       filled: true,
+      dashed: true,
       color: '#00f',
     },
   ]);
@@ -110,6 +142,15 @@ it('draws shapes as rects or ellipses, filled only on request', () => {
   expect(vectors[0]).not.toContain('stroke-dasharray');
   expect(vectors[1]).toContain(' A ');
   expect(vectors[1]).toContain('fill="#00f" fill-opacity="0.25"');
+  expect(vectors[1]).toContain('stroke-dasharray="6 4"');
+});
+
+it('fills frames on request, still dashed unless opted out', () => {
+  const { vectors } = render([
+    { id: 'ov-1', kind: 'frame', x: 0, y: 0, width: 100, height: 60, filled: true },
+  ]);
+  expect(vectors[0]).toContain('fill-opacity="0.25"');
+  expect(vectors[0]).toContain('stroke-dasharray="6 4"');
 });
 
 it('centers escaped labels on the shape with a halo', () => {

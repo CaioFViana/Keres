@@ -38,8 +38,10 @@ interface AddObjectsPillProps {
 
 /**
  * The "add objects" picker above a canvas: notes, drawing tools, pre-made shape presets
- * and the select tool, grouped like the entity pickers. An action, not a filter: every
- * choice fires once and the pill clears, so the same action stays immediately available.
+ * and the stamp, grouped like the entity pickers. Selecting and editing existing
+ * objects lives in the tools bar's mode toggles instead. An action, not a filter:
+ * every choice fires once and the pill clears, so the same action stays immediately
+ * available.
  */
 const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, style, trigger }) => {
   const { t } = useTranslation();
@@ -79,12 +81,6 @@ const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, 
     label: t('objects_group_stamp'),
     icon: 'pin',
     options: [{ label: t('objects_stamp'), value: 'draw:stamp', icon: 'pin' }],
-  });
-  groups.push({
-    key: 'select',
-    label: t('objects_group_select'),
-    icon: 'locate-outline',
-    options: [{ label: t('objects_select'), value: 'select', icon: 'locate-outline' }],
   });
 
   return (

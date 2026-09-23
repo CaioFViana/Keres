@@ -110,8 +110,48 @@ describe('CanvasOverlayLayer', () => {
       'M 20 20 L 120 20 L 120 80 L 20 80 Z',
       'M 0 5 A 10 5 0 1 0 20 5 A 10 5 0 1 0 0 5 Z',
     ]);
-    // Polygon fill plus the unfilled shapes: only the polygon adds a filled path.
-    expect(filledPathsOf(root)).toEqual(['M 0 0 L 10 0 L 5 8 Z']);
+    // Regions start as outlines: nothing adds a filled path without `filled`.
+    expect(filledPathsOf(root)).toEqual([]);
+  });
+
+  it('fills and dashes regions on request', async () => {
+    const root = await renderLayer([
+      {
+        id: '04WXYZ12',
+        kind: 'polygon',
+        points: [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+          { x: 5, y: 8 },
+        ],
+        filled: true,
+        dashed: true,
+        fillOpacity: 0.5,
+      },
+      { id: '05ABCDHJ', kind: 'frame', x: 20, y: 20, width: 100, height: 60, filled: true },
+      {
+        id: '06KMPQRT',
+        kind: 'shape',
+        shapeType: 'ellipse',
+        x: 0,
+        y: 0,
+        width: 20,
+        height: 10,
+        dashed: true,
+      },
+    ]);
+
+    const fills = root.queryAll(
+      (node) => node.type === 'SkiaPath' && node.props.style !== 'stroke',
+    );
+    expect(fills.map((fill) => fill.props.path)).toEqual([
+      'M 0 0 L 10 0 L 5 8 Z',
+      'M 20 20 L 120 20 L 120 80 L 20 80 Z',
+    ]);
+    expect(fills[0].props.opacity).toBe(0.5);
+    expect(fills[1].props.opacity).toBe(0.25);
+    // Dashed polygon and shape plus the frame's default dash.
+    expect(root.queryAll((node) => node.type === 'SkiaDashPathEffect')).toHaveLength(3);
   });
 
   it('dashes frames by default and lines on request', async () => {
@@ -263,6 +303,7 @@ describe('canvas overlay wiring', () => {
         selectedNodeId={null}
         layoutEditing={false}
         connectionMode={false}
+        overlayEditing={false}
         onSelectNode={noop}
         onMoveNode={noop}
         onResizeNode={noop}

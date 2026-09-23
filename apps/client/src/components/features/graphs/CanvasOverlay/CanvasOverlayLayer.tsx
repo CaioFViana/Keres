@@ -141,17 +141,21 @@ const OverlayView = React.memo(function OverlayView({
     case 'polygon':
       return (
         <>
-          <Path
-            path={canvasOverlayPolylinePath(overlay.points, true)}
-            color={color}
-            opacity={overlay.fillOpacity ?? CANVAS_OVERLAY_POLYGON_FILL_OPACITY}
-          />
+          {overlay.filled ? (
+            <Path
+              path={canvasOverlayPolylinePath(overlay.points, true)}
+              color={color}
+              opacity={overlay.fillOpacity ?? CANVAS_OVERLAY_POLYGON_FILL_OPACITY}
+            />
+          ) : null}
           <Path
             path={canvasOverlayPolylinePath(overlay.points, true)}
             style="stroke"
             color={color}
             strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
-          />
+          >
+            {overlay.dashed ? <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} /> : null}
+          </Path>
           {label}
         </>
       );
@@ -164,6 +168,9 @@ const OverlayView = React.memo(function OverlayView({
       );
       return (
         <>
+          {overlay.filled ? (
+            <Path path={path} color={color} opacity={CANVAS_OVERLAY_SHAPE_FILL_OPACITY} />
+          ) : null}
           <Path path={path} style="stroke" color={color} strokeWidth={CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}>
             {overlay.dashed === false ? null : <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />}
           </Path>
@@ -186,7 +193,9 @@ const OverlayView = React.memo(function OverlayView({
             style="stroke"
             color={color}
             strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
-          />
+          >
+            {overlay.dashed ? <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} /> : null}
+          </Path>
           {label}
         </>
       );

@@ -5,12 +5,16 @@ import {
 } from '../../src/components/features/graphs/CanvasActionBar/CanvasActionBar';
 
 jest.mock('../../src/theme', () => ({
-  useTheme: () => ({ colors: { text: '#111' } }),
+  useTheme: () => ({ colors: { text: '#111', textSecondary: '#555', primary: '#00f' } }),
 }));
 jest.mock('@expo/vector-icons', () => {
   const { Text } = jest.requireActual('react-native');
   return {
-    Ionicons: ({ name }: { name: string }) => <Text testID={`glyph-${name}`}>{name}</Text>,
+    Ionicons: ({ name, color }: { name: string; color: string }) => (
+      <Text testID={`glyph-${name}`} color={color}>
+        {name}
+      </Text>
+    ),
   };
 });
 
@@ -42,5 +46,35 @@ describe('CanvasActionBar', () => {
     await fireEvent.press(view.getByTestId('action-second'));
     expect(onFirst).toHaveBeenCalledTimes(1);
     expect(onSecond).toHaveBeenCalledTimes(1);
+  });
+
+  it('tints the active mode primary and keeps disabled actions dim and silent', async () => {
+    const onActive = jest.fn();
+    const onDisabled = jest.fn();
+    const view = await render(
+      <CanvasActionBar>
+        <CanvasActionBarButton
+          testID="action-active"
+          icon="git-merge"
+          label="Connection mode"
+          onPress={onActive}
+          active
+        />
+        <CanvasActionBarButton
+          testID="action-disabled"
+          icon="checkmark-outline"
+          label="Finish"
+          onPress={onDisabled}
+          disabled
+        />
+      </CanvasActionBar>,
+    );
+
+    expect(view.getByTestId('glyph-git-merge').props.color).toBe('#00f');
+    expect(view.getByTestId('glyph-checkmark-outline').props.color).toBe('#555');
+    await fireEvent.press(view.getByTestId('action-active'));
+    await fireEvent.press(view.getByTestId('action-disabled'));
+    expect(onActive).toHaveBeenCalledTimes(1);
+    expect(onDisabled).not.toHaveBeenCalled();
   });
 });

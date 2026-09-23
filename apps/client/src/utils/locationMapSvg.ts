@@ -109,6 +109,7 @@ export function renderLocationMapSvg(
   const overlayGroups = renderCanvasOverlaySvg(content.overlays, {
     shift,
     colors: options.colors,
+    stroke: options.colors.primary,
   });
 
   const byLocation = new Map<string, { x: number; y: number; color: string }>();

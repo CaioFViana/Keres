@@ -7,9 +7,10 @@ import {
   canvasOverlayPresetPoints,
   type CanvasOverlayPreset,
 } from '@keres/shared/graphs/canvasOverlayGeometry';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import {
+  isPresetDrawTool,
   isRectDrawTool,
   type AddObjectsAction,
   type OverlayDrawTool,
@@ -18,28 +19,24 @@ import {
 import { clampCanvasWorldCoordinate } from '../utils/canvasDragBounds';
 
 const MIN_RECT_WORLD = 8;
-const PRESET_SIZE = 140;
-const PRESET_STAGGER = 16;
 /** The icon a fresh stamp carries until its sheet picks another. */
 const DEFAULT_STAMP_ICON = 'flag';
 
 interface UseCanvasOverlayActionsOptions<TContent extends { overlays?: CanvasOverlayType[] }> {
   setContent: Dispatch<SetStateAction<TContent>>;
   generateOverlayId: () => string;
-  placementCenter: () => SpatialPoint;
   /** Boards add notes through the pill; maps keep their marker button, so this stays unset. */
   onAddNote?: () => void;
 }
 
 /**
  * Overlay drawing/editing state shared by the board and map screens: the armed tool, the
- * in-progress vertices, the selection, and every content patch (commit, preset, move,
- * vertex, rect, label/color, delete). Screens stay thin: one hook, one pill, one sheet.
+ * in-progress vertices, the selection, and every content patch (commit, move, vertex,
+ * rect, label/color, delete). Screens stay thin: one hook, one pill, one sheet.
  */
 export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOverlayType[] }>({
   setContent,
   generateOverlayId,
-  placementCenter,
   onAddNote,
 }: UseCanvasOverlayActionsOptions<TContent>) {
   const [drawTool, setDrawTool] = useState<OverlayDrawTool | null>(null);
@@ -47,7 +44,6 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
   const [sheetOverlayId, setSheetOverlayId] = useState<string | null>(null);
   const [draftPoints, setDraftPoints] = useState<SpatialPoint[]>([]);
-  const placements = useRef(0);
 
   const patchOverlays = useCallback(
     (patch: (overlays: CanvasOverlayType[]) => CanvasOverlayType[]) => {
@@ -82,6 +78,12 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   const cancelDraw = useCallback(() => {
     setDrawTool(null);
     setDraftPoints([]);
+    setSheetOverlayId(null);
+  }, []);
+
+  const cancelSelect = useCallback(() => {
+    setSelectMode(false);
+    setSelectedOverlayId(null);
     setSheetOverlayId(null);
   }, []);
 
@@ -129,8 +131,16 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
       const width = Math.abs(end.x - start.x);
       const height = Math.abs(end.y - start.y);
       if (width < MIN_RECT_WORLD || height < MIN_RECT_WORLD) return;
-      const overlay: CanvasOverlayType =
-        tool === 'frame'
+      const overlay: CanvasOverlayType = isPresetDrawTool(tool)
+        ? {
+            id: generateOverlayId(),
+            kind: 'polygon',
+            points: canvasOverlayPresetPoints(
+              tool.slice('preset:'.length) as CanvasOverlayPreset,
+              { x, y, width, height },
+            ),
+          }
+        : tool === 'frame'
           ? { id: generateOverlayId(), kind: 'frame', x, y, width, height }
           : {
               id: generateOverlayId(),
@@ -149,27 +159,6 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     [generateOverlayId, patchOverlays],
   );
 
-  const addPreset = useCallback(
-    (preset: CanvasOverlayPreset) => {
-      const center = placementCenter();
-      const step = (placements.current % 5) * PRESET_STAGGER;
-      placements.current += 1;
-      const overlay: CanvasOverlayType = {
-        id: generateOverlayId(),
-        kind: 'polygon',
-        points: canvasOverlayPresetPoints(
-          preset,
-          { x: center.x + step, y: center.y + step },
-          PRESET_SIZE,
-        ),
-      };
-      patchOverlays((overlays) => [...overlays, overlay]);
-      setSelectedOverlayId(overlay.id);
-      setSheetOverlayId(overlay.id);
-    },
-    [generateOverlayId, patchOverlays, placementCenter],
-  );
-
   const handleObjectsAction = useCallback(
     (action: AddObjectsAction) => {
       if (action === 'note') {
@@ -185,27 +174,23 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
         startDraw(action.slice('draw:'.length) as OverlayDrawTool);
         return;
       }
-      addPreset(action.slice('preset:'.length) as CanvasOverlayPreset);
+      // Preset values arm their drag tool: the shape inscribes the drawn region.
+      startDraw(action as OverlayDrawTool);
     },
-    [addPreset, cancelInteraction, onAddNote, startDraw, startSelect],
+    [cancelInteraction, onAddNote, startDraw, startSelect],
   );
 
   const selectOverlay = useCallback((id: string | null) => {
-    if (id === null) {
-      // A miss leaves select mode: tap empty space to cancel the tool.
-      setSelectMode(false);
-      setSelectedOverlayId(null);
-      return;
-    }
-    // A hit keeps the mode: the catcher unmounts while something is selected so the
-    // handles stay touchable, and comes back on deselect for the next pick.
+    // A miss only deselects: the mode is a header toggle now, so empty taps never
+    // disarm it. A hit keeps the mode too: the catcher unmounts while something is
+    // selected so the handles stay touchable, and comes back on deselect.
     setSelectedOverlayId(id);
+    if (id === null) setSheetOverlayId(null);
   }, []);
 
   const deselectOverlay = useCallback(() => {
-    setSelectedOverlayId(null);
-    setSheetOverlayId(null);
-  }, []);
+    selectOverlay(null);
+  }, [selectOverlay]);
 
   const openOverlaySheet = useCallback((id: string) => {
     setSheetOverlayId(id);
@@ -248,7 +233,16 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   );
 
   const updateOverlay = useCallback(
-    (id: string, patch: { label?: string | null; color?: string | null; icon?: string }) => {
+    (
+      id: string,
+      patch: {
+        label?: string | null;
+        color?: string | null;
+        icon?: string;
+        dashed?: boolean;
+        filled?: boolean;
+      },
+    ) => {
       patchOverlays((overlays) =>
         overlays.map((overlay) => (overlay.id === id ? { ...overlay, ...patch } : overlay)),
       );
@@ -365,6 +359,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     interactionMode,
     handleObjectsAction,
     cancelDraw,
+    cancelSelect,
     cancelInteraction,
     selectOverlay,
     deselectOverlay,

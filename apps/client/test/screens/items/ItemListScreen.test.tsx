@@ -6,6 +6,10 @@ const mockGoBack = jest.fn();
 const mockToggleFavorite = jest.fn();
 const mockOpenItemList = jest.fn();
 const mockUseEntityListScreen = jest.fn();
+const mockUseEntityArcIds = jest.fn();
+let mockStoryState: Record<string, unknown> = {
+  selectedStory: { id: 'story-1', type: 'linear' },
+};
 const mockUseScreenTour = jest.fn();
 const mockGetJourneys = jest.fn();
 const mockGetScenes = jest.fn();
@@ -184,6 +188,10 @@ jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openItemList: mockOpenItemList }),
 }));
+jest.mock('../../../src/hooks/useEntityArcIds', () => ({
+  __esModule: true,
+  useEntityArcIds: (...args: unknown[]) => mockUseEntityArcIds(...args),
+}));
 jest.mock('../../../src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
@@ -222,8 +230,7 @@ jest.mock('../../../src/state/itemStore', () => ({
 }));
 jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,
-  useStoryStore: (selector: (state: unknown) => unknown) =>
-    selector({ selectedStory: { id: 'story-1', type: 'linear' } }),
+  useStoryStore: (selector: (state: unknown) => unknown) => selector(mockStoryState),
 }));
 jest.mock('../../../src/theme', () => ({
   __esModule: true,
@@ -278,6 +285,8 @@ describe('ItemListScreen', () => {
     mockJourneyRowsProps = null;
     mockHeaderConfig.current = null;
     mockUseEntityListScreen.mockImplementation(() => mockListState);
+    mockUseEntityArcIds.mockReturnValue(new Map());
+    mockStoryState = { selectedStory: { id: 'story-1', type: 'linear' } };
     mockGetJourneys.mockResolvedValue([]);
     mockGetScenes.mockResolvedValue([]);
     mockGetChapters.mockResolvedValue([]);
@@ -394,5 +403,30 @@ describe('ItemListScreen', () => {
     expect(mockOpenItemList).toHaveBeenCalled();
     mockHeaderConfig.current?.actions[1].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('ItemForm', {});
+  });
+
+  it('hides items from other arcs but keeps unlinked ones', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['item-1', ['arc-1']],
+        ['item-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      items: [
+        { id: 'item-1', name: 'Sword' },
+        { id: 'item-2', name: 'Shield' },
+        { id: 'item-3', name: 'Compass' },
+      ],
+    };
+    await render(<ItemListScreen />);
+    expect(mockUseEntityArcIds).toHaveBeenCalledWith('story-1', 'item');
+    await waitFor(() => expect(mockListProps?.data).toHaveLength(2));
+    expect(mockListProps?.data.map((item) => item.id)).toEqual(['item-1', 'item-3']);
   });
 });

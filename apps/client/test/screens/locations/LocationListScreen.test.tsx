@@ -7,7 +7,9 @@ const mockToggleFavorite = jest.fn();
 const mockSetAdvancedSearchCriteria = jest.fn();
 const mockGetTagsByStoryId = jest.fn();
 const mockUseEntityListScreen = jest.fn();
+const mockUseLocationArcIds = jest.fn();
 const mockUseScreenTour = jest.fn();
+const mockUseStoryStore = jest.fn();
 let mockListState = {
   listProps: {},
   items: [] as { id: string; name: string }[],
@@ -118,6 +120,10 @@ jest.mock('../../../src/hooks/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
+jest.mock('../../../src/hooks/useEntityArcIds', () => ({
+  __esModule: true,
+  useEntityArcIds: (...args: unknown[]) => mockUseLocationArcIds(...args),
+}));
 jest.mock('../../../src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: true }),
@@ -129,6 +135,10 @@ jest.mock('../../../src/services/storymanagement/TagService', () => ({
 jest.mock('../../../src/state/locationStore', () => ({
   __esModule: true,
   useLocationStore: jest.fn(),
+}));
+jest.mock('../../../src/state/storyStore', () => ({
+  __esModule: true,
+  useStoryStore: (selector: (state: object) => unknown) => mockUseStoryStore(selector),
 }));
 jest.mock('../../../src/theme', () => ({
   __esModule: true,
@@ -167,7 +177,35 @@ beforeEach(() => {
   mockListState = freshListState();
   mockListProps = null;
   mockUseEntityListScreen.mockImplementation(() => mockListState);
+  mockUseLocationArcIds.mockReturnValue(new Map());
+  mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) => selector({}));
   mockGetTagsByStoryId.mockResolvedValue([]);
+});
+
+// Runs first on purpose: later tests in this file leave async effects behind (see the
+// overlapping-act warnings on the pristine file), and a mount scheduled behind that
+// backlog never commits, so an arc-filter assertion here would read an empty tree.
+it('hides locations from other arcs but keeps unlinked ones', async () => {
+  mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
+    selector({ activeArcId: 'arc-1' }),
+  );
+  mockUseLocationArcIds.mockReturnValue(
+    new Map([
+      ['loc-1', ['arc-1']],
+      ['loc-2', ['arc-2']],
+    ]),
+  );
+  mockListState = {
+    ...freshListState(),
+    items: [
+      { id: 'loc-1', name: 'Keep' },
+      { id: 'loc-2', name: 'Forest' },
+      { id: 'loc-3', name: 'Harbor' },
+    ],
+  };
+  await render(<LocationsScreen />);
+  expect(mockUseLocationArcIds).toHaveBeenCalledWith('story-1', 'location');
+  expect(mockListProps?.data.map((item) => item.id)).toEqual(['loc-1', 'loc-3']);
 });
 
 it('requests its guided tour', async () => {
@@ -231,3 +269,5 @@ it('renders locations with tag filters and wires item actions', async () => {
   fireEvent.press(screen.getByTestId('view-loc-1'));
   expect(mockNavigate).toHaveBeenCalledWith('LocationDetail', { locationId: 'loc-1' });
 });
+
+

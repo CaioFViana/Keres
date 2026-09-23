@@ -18,6 +18,7 @@ import type { TagSelect } from '../../db/schema';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type {
@@ -27,8 +28,10 @@ import type {
 import type { LocationWithTags } from '../../services/storymanagement/LocationService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
@@ -60,6 +63,16 @@ const LocationsScreen = () => {
     collectionKey: 'locations',
     changeEvent: 'location_changed',
   });
+
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const arcIdsByLocation = useEntityArcIds(storyId ?? '', 'location');
+  const visibleLocations = useMemo(
+    () =>
+      locations.filter((location: LocationWithTags) =>
+        entityBelongsToActiveArc(arcIdsByLocation.get(location.id), activeArcId),
+      ),
+    [locations, arcIdsByLocation, activeArcId],
+  );
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [tagService] = useState(() => createTagService(drizzleDb));
@@ -174,7 +187,7 @@ const LocationsScreen = () => {
       <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
-          data={locations}
+          data={visibleLocations}
           renderItem={memoizedRenderItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('search_entities', { entities: term('Location', true) })}

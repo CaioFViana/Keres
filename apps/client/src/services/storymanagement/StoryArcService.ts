@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryArcInsert, StoryArcSelect } from '../../db/schema';
 import { chapters, characterScenes, itemJourneys, scenes, storyArcs } from '../../db/schema';
@@ -11,6 +11,8 @@ import {
   recordLocalOperation,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+
+export type ArcMembershipKind = 'character' | 'location' | 'item';
 
 export interface StoryArcService {
   getArcsForStory(storyId: string): Promise<StoryArcSelect[]>;
@@ -32,6 +34,22 @@ export interface StoryArcService {
   listArcsForCharacter(storyId: string, characterId: string): Promise<StoryArcSelect[]>;
   listArcsForLocation(storyId: string, locationId: string): Promise<StoryArcSelect[]>;
   listArcsForItem(storyId: string, itemId: string): Promise<StoryArcSelect[]>;
+  /**
+   * Arc ids per linked entity of one kind, in a single query. Entities without a
+   * chaptered link are absent: list screens keep them visible under any arc.
+   */
+  listEntityArcIds(storyId: string, kind: ArcMembershipKind): Promise<Map<string, string[]>>;
+}
+
+function groupArcRows(rows: { entityId: string | null; arcId: string }[]): Map<string, string[]> {
+  const grouped = new Map<string, string[]>();
+  for (const row of rows) {
+    if (!row.entityId) continue;
+    const list = grouped.get(row.entityId) ?? [];
+    list.push(row.arcId);
+    grouped.set(row.entityId, list);
+  }
+  return grouped;
 }
 
 export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => {
@@ -233,6 +251,65 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         storyId,
         rows.map((row) => row.id),
       );
+    },
+
+    async listEntityArcIds(storyId, kind) {
+      // Same joins and tombstone guards as the per-entity walks above, without the
+      // entity filter: one round trip groups every linked entity of the kind.
+      if (kind === 'character') {
+        const rows = await db
+          .selectDistinct({ entityId: characterScenes.characterId, arcId: storyArcs.id })
+          .from(characterScenes)
+          .innerJoin(scenes, eq(scenes.id, characterScenes.sceneId))
+          .innerJoin(chapters, eq(chapters.id, scenes.chapterId))
+          .innerJoin(storyArcs, eq(storyArcs.id, chapters.arcId))
+          .where(
+            and(
+              eq(characterScenes.storyId, storyId),
+              eq(characterScenes.isDeleted, false),
+              eq(scenes.isDeleted, false),
+              eq(chapters.isDeleted, false),
+              eq(storyArcs.isDeleted, false),
+            ),
+          )
+          .all();
+        return groupArcRows(rows);
+      }
+      if (kind === 'location') {
+        const rows = await db
+          .selectDistinct({ entityId: scenes.locationId, arcId: storyArcs.id })
+          .from(scenes)
+          .innerJoin(chapters, eq(chapters.id, scenes.chapterId))
+          .innerJoin(storyArcs, eq(storyArcs.id, chapters.arcId))
+          .where(
+            and(
+              eq(scenes.storyId, storyId),
+              isNotNull(scenes.locationId),
+              eq(scenes.isDeleted, false),
+              eq(chapters.isDeleted, false),
+              eq(storyArcs.isDeleted, false),
+            ),
+          )
+          .all();
+        return groupArcRows(rows);
+      }
+      const rows = await db
+        .selectDistinct({ entityId: itemJourneys.itemId, arcId: storyArcs.id })
+        .from(itemJourneys)
+        .innerJoin(scenes, eq(scenes.id, itemJourneys.sceneId))
+        .innerJoin(chapters, eq(chapters.id, scenes.chapterId))
+        .innerJoin(storyArcs, eq(storyArcs.id, chapters.arcId))
+        .where(
+          and(
+            eq(itemJourneys.storyId, storyId),
+            eq(itemJourneys.isDeleted, false),
+            eq(scenes.isDeleted, false),
+            eq(chapters.isDeleted, false),
+            eq(storyArcs.isDeleted, false),
+          ),
+        )
+        .all();
+      return groupArcRows(rows);
     },
   };
 

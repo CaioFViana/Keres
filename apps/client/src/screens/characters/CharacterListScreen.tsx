@@ -18,6 +18,7 @@ import type { CharacterSelect } from '../../db/schemas/characters';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -30,6 +31,7 @@ import { useStoryStore } from '../../state/storyStore';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 const CharactersScreen = () => {
@@ -58,6 +60,16 @@ const CharactersScreen = () => {
     collectionKey: 'characters',
     changeEvent: 'character_changed',
   });
+
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const arcIdsByCharacter = useEntityArcIds(storyId ?? '', 'character');
+  const visibleCharacters = useMemo(
+    () =>
+      characters.filter((character: CharacterWithTags) =>
+        entityBelongsToActiveArc(arcIdsByCharacter.get(character.id), activeArcId),
+      ),
+    [characters, arcIdsByCharacter, activeArcId],
+  );
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [relations, setRelations] = useState<CharacterRelation[]>([]);
@@ -231,7 +243,7 @@ const CharactersScreen = () => {
       <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
         <GenericFilterSortList
           {...listProps}
-          data={characters}
+          data={visibleCharacters}
           renderItem={memoizedRenderItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('search_entities', { entities: term('Character', true) })}

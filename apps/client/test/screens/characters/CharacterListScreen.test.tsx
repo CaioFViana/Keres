@@ -11,6 +11,7 @@ const mockGetCharacterRelationsByStoryId = jest.fn();
 const mockGetAllCharactersByStoryId = jest.fn();
 const mockOpenCharacterList = jest.fn();
 const mockUseEntityListScreen = jest.fn();
+const mockUseEntityArcIds = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockUseScreenTour = jest.fn();
 const mockReadShowcaseRequest = jest.fn();
@@ -151,6 +152,10 @@ jest.mock('../../../src/hooks/useEntityListScreen', () => ({
   __esModule: true,
   useEntityListScreen: (...args: unknown[]) => mockUseEntityListScreen(...args),
 }));
+jest.mock('../../../src/hooks/useEntityArcIds', () => ({
+  __esModule: true,
+  useEntityArcIds: (...args: unknown[]) => mockUseEntityArcIds(...args),
+}));
 jest.mock('../../../src/hooks/useOpenPresenceMatrixViewer', () => ({
   __esModule: true,
   useOpenPresenceMatrixViewer: () => ({ openCharacterList: mockOpenCharacterList }),
@@ -232,6 +237,7 @@ beforeEach(() => {
   mockListState = freshListState();
   mockListProps = null;
   mockUseEntityListScreen.mockImplementation(() => mockListState);
+  mockUseEntityArcIds.mockReturnValue(new Map());
   mockGetTagsByStoryId.mockResolvedValue([]);
   mockGetCharacterRelationsByStoryId.mockResolvedValue([]);
   mockGetAllCharactersByStoryId.mockResolvedValue([]);
@@ -368,5 +374,31 @@ describe('CharacterListScreen', () => {
     };
     await render(<CharactersScreen />);
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('hides characters from other arcs but keeps unlinked ones', async () => {
+    mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
+      selector({
+        selectedStory: { id: 'story-1', type: 'linear' },
+        activeArcId: 'arc-1',
+      }),
+    );
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['char-1', ['arc-1']],
+        ['char-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      items: [
+        { id: 'char-1', name: 'Aria' },
+        { id: 'char-2', name: 'Bram' },
+        { id: 'char-3', name: 'Cy' },
+      ],
+    };
+    await render(<CharactersScreen />);
+    expect(mockUseEntityArcIds).toHaveBeenCalledWith('story-1', 'character');
+    expect(mockListProps?.data.map((item) => item.id)).toEqual(['char-1', 'char-3']);
   });
 });

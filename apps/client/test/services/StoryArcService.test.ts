@@ -282,4 +282,140 @@ describe('StoryArcService', () => {
     expect(await service().listArcsForLocation(TEST_STORY_ID, 'nowhere')).toEqual([]);
     expect(await service().listArcsForItem(TEST_STORY_ID, 'nothing')).toEqual([]);
   });
+
+  it('groups arc ids per linked entity in one query per kind', async () => {
+    const first = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'First',
+      description: null,
+      sortOrder: 0,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: true,
+    });
+    const second = await service().createArc(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Second',
+      description: null,
+      sortOrder: 1,
+      color: null,
+      icon: null,
+      themeOverride: null,
+      isDefault: false,
+    });
+    await database.db.insert(schema.chapters).values([
+      {
+        id: 'chapter-1',
+        storyId: TEST_STORY_ID,
+        name: 'One',
+        index: 1,
+        arcId: first.id,
+        ...entityBase,
+        deletedAt: null,
+      },
+      {
+        id: 'chapter-2',
+        storyId: TEST_STORY_ID,
+        name: 'Two',
+        index: 2,
+        arcId: second.id,
+        ...entityBase,
+        deletedAt: null,
+      },
+    ]);
+    await database.db.insert(schema.scenes).values([
+      {
+        id: 'scene-1',
+        storyId: TEST_STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'harbor',
+        name: 'Arrival',
+        index: 1,
+        ...entityBase,
+        deletedAt: null,
+      },
+      {
+        id: 'scene-2',
+        storyId: TEST_STORY_ID,
+        chapterId: 'chapter-2',
+        locationId: 'forest',
+        name: 'Departure',
+        index: 1,
+        ...entityBase,
+        deletedAt: null,
+      },
+    ]);
+    await database.db.insert(schema.characters).values([
+      {
+        id: 'ada',
+        storyId: TEST_STORY_ID,
+        name: 'Ada',
+        ...entityBase,
+      },
+      {
+        id: 'bram',
+        storyId: TEST_STORY_ID,
+        name: 'Bram',
+        ...entityBase,
+      },
+    ]);
+    await database.db.insert(schema.characterScenes).values([
+      {
+        id: 'cs-1',
+        storyId: TEST_STORY_ID,
+        characterId: 'ada',
+        sceneId: 'scene-1',
+        ...entityBase,
+        deletedAt: null,
+      },
+      {
+        id: 'cs-2',
+        storyId: TEST_STORY_ID,
+        characterId: 'ada',
+        sceneId: 'scene-2',
+        ...entityBase,
+        deletedAt: null,
+      },
+      // A deleted link contributes nothing: Bram stays absent like an unlinked entity.
+      {
+        id: 'cs-3',
+        storyId: TEST_STORY_ID,
+        characterId: 'bram',
+        sceneId: 'scene-1',
+        ...entityBase,
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    ]);
+    await database.db.insert(schema.items).values({
+      id: 'compass',
+      storyId: TEST_STORY_ID,
+      name: 'Compass',
+      ...entityBase,
+      deletedAt: null,
+    });
+    await database.db.insert(schema.itemJourneys).values({
+      id: 'journey-1',
+      storyId: TEST_STORY_ID,
+      itemId: 'compass',
+      sceneId: 'scene-2',
+      newState: 'lost',
+      ...entityBase,
+      deletedAt: null,
+    });
+
+    const characters = await service().listEntityArcIds(TEST_STORY_ID, 'character');
+    expect([...characters.keys()].sort()).toEqual(['ada']);
+    expect([...(characters.get('ada') ?? [])].sort()).toEqual([first.id, second.id].sort());
+
+    const locations = await service().listEntityArcIds(TEST_STORY_ID, 'location');
+    expect(locations.get('harbor')).toEqual([first.id]);
+    expect(locations.get('forest')).toEqual([second.id]);
+    expect(locations.has('nowhere')).toBe(false);
+
+    const items = await service().listEntityArcIds(TEST_STORY_ID, 'item');
+    expect(items.get('compass')).toEqual([second.id]);
+    expect(items.has('nothing')).toBe(false);
+  });
 });

@@ -3,6 +3,7 @@
  */
 import {
   chapterBelongsToArc,
+  entityBelongsToActiveArc,
   resolveEffectiveTheme,
   sceneBelongsToActiveArc,
 } from '../../src/utils/storyArcFilter';
@@ -38,6 +39,24 @@ describe('sceneBelongsToActiveArc', () => {
 
   it('keeps scenes whose chapter is missing from the map', () => {
     expect(sceneBelongsToActiveArc({ chapterId: 'gone' }, chapters, 'a')).toBe(true);
+  });
+});
+
+describe('entityBelongsToActiveArc', () => {
+  it('shows everything when no arc is selected', () => {
+    expect(entityBelongsToActiveArc(['arc-1'], null)).toBe(true);
+    expect(entityBelongsToActiveArc([], null)).toBe(true);
+    expect(entityBelongsToActiveArc(undefined, null)).toBe(true);
+  });
+
+  it('keeps unlinked entities visible under any arc', () => {
+    expect(entityBelongsToActiveArc([], 'arc-1')).toBe(true);
+    expect(entityBelongsToActiveArc(undefined, 'arc-1')).toBe(true);
+  });
+
+  it('shows linked entities only in their arcs', () => {
+    expect(entityBelongsToActiveArc(['arc-1', 'arc-2'], 'arc-2')).toBe(true);
+    expect(entityBelongsToActiveArc(['arc-1'], 'arc-2')).toBe(false);
   });
 });
 

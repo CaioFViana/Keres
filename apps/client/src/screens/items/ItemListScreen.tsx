@@ -26,6 +26,7 @@ import type { ItemSelect } from '../../db/schemas/items';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -45,6 +46,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
+import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
@@ -176,16 +178,19 @@ const ItemListScreen = () => {
     };
   }, [loadTags, storyId]);
 
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const arcIdsByItem = useEntityArcIds(storyId ?? '', 'item');
   const itemsWithTags = useMemo(
     () =>
       (items as ItemSelect[])
         .map((item) => ({ ...item, tags: tagsByItemId.get(item.id) ?? [] }))
         .filter(
           (item) =>
-            activeTagIds.length === 0 ||
-            item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id)),
+            (activeTagIds.length === 0 ||
+              item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id))) &&
+            entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
         ),
-    [activeTagIds, items, tagsByItemId],
+    [activeArcId, activeTagIds, arcIdsByItem, items, tagsByItemId],
   );
 
   const handleViewDetails = useCallback(

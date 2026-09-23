@@ -1,5 +1,5 @@
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { FlatList, Platform, StyleSheet } from 'react-native';
+import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
+import { FlatList, Platform, StyleSheet, Text } from 'react-native';
 import TestRenderer from 'react-test-renderer';
 import type { HeaderAction } from '../../../../src/components/common/navigation/HeaderActions/HeaderActions';
 import type {
@@ -419,10 +419,11 @@ async function pressHeaderAction(id: string) {
 describe('ManuscriptScreen', () => {
   it('renders linear sections with chapters, titles and bodies', async () => {
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     expect(mockHeaderTitle).toBe('manuscript_title');
     expect(view.getByText('1. Arrival')).toBeTruthy();
-    expect(view.getByText('1. Opening')).toBeTruthy();
+    expect(within(view.getByTestId('manuscript-list')).getByText('1. Opening')).toBeTruthy();
     expect(view.getByText('Waves. Waves again.')).toBeTruthy();
     expect(view.getByText('2. Inland')).toBeTruthy();
     expect(view.getByText('manuscript_no_body_yet')).toBeTruthy();
@@ -448,8 +449,10 @@ describe('ManuscriptScreen', () => {
 
   it('navigates to the scene from its title and to the editor from its pencil', async () => {
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
-    await fireEvent.press(view.getByText('1. Opening'));
+    const list = within(view.getByTestId('manuscript-list'));
+    await fireEvent.press(list.getByText('1. Opening'));
     expect(mockNavigate).toHaveBeenCalledWith('SceneDetail', { sceneId: 's-1' });
 
     await fireEvent.press(view.getByTestId('manuscript-edit-s-1'));
@@ -491,6 +494,27 @@ describe('ManuscriptScreen', () => {
     expect(view.getByText('manuscript_comments_button:{"count":0}')).toBeTruthy();
   });
 
+  it('reads prose-only and reviews everything', async () => {
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+
+    expect(view.queryByText('1. Opening')).toBeNull();
+    expect(view.queryByTestId('manuscript-edit-s-1')).toBeNull();
+    expect(view.queryByText('manuscript_no_body_yet')).toBeNull();
+    expect(view.getByText('Waves. Waves again.')).toBeTruthy();
+    expect(view.getByText('Lost pages.')).toBeTruthy();
+    // Chapters stay: they are non-interactive reading landmarks.
+    expect(view.getByText('1. Arrival')).toBeTruthy();
+
+    await pressHeaderAction('mode-review');
+
+    expect(
+      within(view.getByTestId('manuscript-list')).getByText('1. Opening'),
+    ).toBeTruthy();
+    expect(view.getByTestId('manuscript-edit-s-1')).toBeTruthy();
+    expect(view.getByText('manuscript_no_body_yet')).toBeTruthy();
+  });
+
   it('marks commented passages in review and taps open that scene thread', async () => {
     mockCommentsBySceneId = {
       's-1': [{ id: 'c-1', excerptText: 'Waves' } as CommentSelect],
@@ -499,8 +523,9 @@ describe('ManuscriptScreen', () => {
     await view.findByTestId('manuscript-list');
     await pressHeaderAction('mode-review');
 
+    // One mark: the anchor is the first match, as the modal's notice says.
     const hits = view.getAllByText(/^Waves$/);
-    expect(hits).toHaveLength(2);
+    expect(hits).toHaveLength(1);
     expect(StyleSheet.flatten(hits[0].props.style).backgroundColor).toBe('#ccf');
 
     await fireEvent.press(hits[0]);
@@ -587,6 +612,7 @@ describe('ManuscriptScreen', () => {
 
   it('marks the search hit in the scene title and nothing else', async () => {
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     await fireEvent.changeText(view.getByTestId('manuscript-search'), 'opening');
 
@@ -604,6 +630,9 @@ describe('ManuscriptScreen', () => {
     let mounted!: TestRenderer.ReactTestRenderer;
     await act(async () => {
       mounted = TestRenderer.create(<ManuscriptScreen />);
+    });
+    await act(async () => {
+      mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
     });
     const search = mounted.root.findByProps({ testID: 'manuscript-search' });
     const activeTexts = () =>
@@ -631,14 +660,16 @@ describe('ManuscriptScreen', () => {
     mockStoryType = 'branching';
     mockManuscriptData = branchingData();
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     expect(view.getByTestId('route-picker-value').props.children).toBe('route-1');
-    expect(view.getByText('1. Alpha')).toBeTruthy();
-    expect(view.getByText('2. Beta')).toBeTruthy();
+    const list = within(view.getByTestId('manuscript-list'));
+    expect(list.getByText('1. Alpha')).toBeTruthy();
+    expect(list.getByText('2. Beta')).toBeTruthy();
 
     await fireEvent.press(view.getByTestId('route-option-route-2'));
-    expect(view.getByText('1. Beta')).toBeTruthy();
-    expect(view.queryByText('1. Alpha')).toBeNull();
+    expect(list.getByText('1. Beta')).toBeTruthy();
+    expect(list.queryByText('1. Alpha')).toBeNull();
   });
 
   it('shows an empty state without routes in branching stories', async () => {
@@ -913,6 +944,7 @@ describe('ManuscriptScreen', () => {
 
   it('opens the index modal listing chapters, scenes and the appendix', async () => {
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     expect(view.queryByTestId('manuscript-index-modal')).toBeNull();
     expect(view.getByTestId('manuscript-index-open')).toBeTruthy();
@@ -934,12 +966,15 @@ describe('ManuscriptScreen', () => {
 
   it('collapses an index chapter without touching the list', async () => {
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
     await fireEvent.press(view.getByTestId('manuscript-index-open'));
 
     await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
     expect(view.queryByTestId('manuscript-index-scene-s-1')).toBeNull();
     // The manuscript list itself still shows the scene.
-    expect(view.getByText('1. Opening')).toBeTruthy();
+    expect(
+      within(view.getByTestId('manuscript-list')).getByText('1. Opening'),
+    ).toBeTruthy();
 
     await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
     expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
@@ -948,6 +983,7 @@ describe('ManuscriptScreen', () => {
   it('jumps the list to the picked index scene and closes the modal', async () => {
     const scrollSpy = jest.spyOn(FlatList.prototype, 'scrollToIndex').mockImplementation(() => {});
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
     await fireEvent.press(view.getByTestId('manuscript-index-open'));
 
     await fireEvent.press(view.getByTestId('manuscript-index-scene-s-3'));
@@ -956,8 +992,29 @@ describe('ManuscriptScreen', () => {
     expect(scrollSpy).toHaveBeenCalledWith({ index: 4, animated: true, viewPosition: 0.1 });
   });
 
+  it('shows comment counts per scene and chapter aggregates in the index', async () => {
+    mockCommentsBySceneId = {
+      's-1': [
+        { id: 'c-1', excerptText: 'Waves' } as CommentSelect,
+        { id: 'c-2', excerptText: null } as CommentSelect,
+      ],
+      's-3': [{ id: 'c-3', excerptText: 'Lost' } as CommentSelect],
+    };
+    const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+
+    const badgeText = (testID: string) =>
+      within(view.getByTestId(testID)).getByText(/^[0-9]+$/).props.children;
+    expect(badgeText('manuscript-index-scene-s-1-comments')).toBe(2);
+    expect(badgeText('manuscript-index-container-ch-1-comments')).toBe(2);
+    expect(badgeText('manuscript-index-loose-heading-comments')).toBe(1);
+    expect(view.queryByTestId('manuscript-index-scene-s-2-comments')).toBeNull();
+  });
+
   it('highlights the search match position when the index reopens', async () => {
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     await fireEvent.changeText(view.getByTestId('manuscript-search'), 'waves');
     await fireEvent.press(view.getByTestId('manuscript-search-next'));
@@ -990,6 +1047,7 @@ describe('ManuscriptScreen', () => {
     mockArcs = twoArcs;
     mockManuscriptData = twoArcData();
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     expect(view.getByText('1. Arrival')).toBeTruthy();
     expect(view.getByText('2. Departure')).toBeTruthy();
@@ -1003,9 +1061,12 @@ describe('ManuscriptScreen', () => {
     mockActiveArcId = 'arc-1';
     mockManuscriptData = twoArcData();
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     expect(view.getByText('1. Arrival')).toBeTruthy();
-    expect(view.getByText('1. Opening')).toBeTruthy();
+    expect(
+      within(view.getByTestId('manuscript-list')).getByText('1. Opening'),
+    ).toBeTruthy();
     expect(view.getByText('Alpha.')).toBeTruthy();
     // Unchaptered scenes stay visible under any arc.
     expect(view.getByText('unchaptered_scenes')).toBeTruthy();
@@ -1046,6 +1107,44 @@ describe('ManuscriptScreen', () => {
     });
   });
 
+  it('moves the review bar with the reader as scenes scroll by', async () => {
+    // Tall scenes never satisfy a fraction-of-the-item rule, so the position used
+    // to pin on the last short scene scrolled past; the bar follows viewability now.
+    // RNTL host queries cannot see composite props, hence the manual renderer.
+    mockCommentsBySceneId = {
+      's-3': [{ id: 'c-3', excerptText: 'Lost' } as CommentSelect],
+    };
+    let mounted!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      mounted = TestRenderer.create(<ManuscriptScreen />);
+    });
+    await act(async () => {
+      mockHeaderActions?.find((action) => action.id === 'mode-review')?.onPress();
+    });
+    const labels = (text: string) =>
+      mounted.root.findAll(
+        (node) => node.type === Text && node.props.children === text,
+      ).length;
+    expect(labels('1. Opening')).toBe(2);
+
+    const list = mounted.root.findByType(FlatList);
+    expect(list.props.viewabilityConfig).toEqual({ viewAreaCoveragePercentThreshold: 20 });
+    await act(async () => {
+      (
+        list.props.onViewableItemsChanged as (info: {
+          viewableItems: { index: number }[];
+        }) => void
+      )({ viewableItems: [{ index: 4 }] });
+    });
+
+    expect(labels('1. Opening')).toBe(1);
+    expect(labels('3. Fragment')).toBe(2);
+
+    await act(async () => {
+      mounted.unmount();
+    });
+  });
+
   it('keeps the index modal on the same filtered sections as the list', async () => {
     mockArcs = twoArcs;
     mockActiveArcId = 'arc-1';
@@ -1076,9 +1175,12 @@ describe('ManuscriptScreen', () => {
       ],
     };
     const view = await render(<ManuscriptScreen />);
+    await pressHeaderAction('mode-review');
 
     expect(view.queryByText('First.')).toBeNull();
-    expect(view.getByText('1. Beta')).toBeTruthy();
+    expect(
+      within(view.getByTestId('manuscript-list')).getByText('1. Beta'),
+    ).toBeTruthy();
     expect(view.getByText('Second.')).toBeTruthy();
   });
 

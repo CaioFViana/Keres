@@ -8,7 +8,6 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   type ViewToken,
@@ -21,7 +20,7 @@ import type { ManuscriptSection, TextRange } from '@keres/shared';
 import {
   compileLinearManuscript,
   compileRouteManuscript,
-  findAllFoldedMatches,
+  findFirstExcerptMatch,
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
@@ -30,6 +29,7 @@ import MarkedText from '../../../components/common/display/MarkedText/MarkedText
 import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { ManuscriptReviewTools } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
+import { ManuscriptSearchToolbar } from '../../../components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
 import ManuscriptExportModal, {
   type ManuscriptExportChoices,
 } from '../../../components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
@@ -62,8 +62,11 @@ type ManuscriptNavigation = NativeStackNavigationProp<
   'Manuscript'
 >;
 
-// A row counts as visible once half of it shows; module scope keeps the reference stable.
-const MANUSCRIPT_VIEWABILITY = { itemVisiblePercentThreshold: 50 };
+// A scene counts as the reader's position while it holds a fifth of the viewport;
+// fully visible rows always count (the list's own rule), so short scenes never drop
+// out. The old half-of-the-item rule never fired for multi-page scenes, pinning the
+// position on the last short scene scrolled past.
+const MANUSCRIPT_VIEWABILITY = { viewAreaCoveragePercentThreshold: 20 };
 // Shared empty ranges for unmarked titles; module scope keeps the reference stable.
 const NO_RANGES: TextRange[] = [];
 const NO_ACTIVE: TextRange[] = [];
@@ -120,7 +123,23 @@ const ManuscriptScreen = () => {
     return linearManuscriptSections(chapters, scenes, { arcId: activeArcId });
   }, [isBranching, effectiveRouteId, stepsByRouteId, chapters, scenes, visibleScenes, activeArcId]);
 
-  const sections = allSections;
+  const {
+    sections,
+    excerptsBySceneId,
+    commentCountsBySceneId,
+    canComment,
+    isStoryOwner,
+    currentUserId,
+    updateComment,
+    deleteComment,
+    openThread,
+    closeThread,
+    rowRefFor,
+    bar,
+    thread,
+    openBarThread,
+    submitThread,
+  } = useManuscriptReview(storyId, allSections, mode, currentSectionIndex);
 
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
   // The one indexed jump: search matches and index picks share it, so the target also
@@ -150,21 +169,6 @@ const ManuscriptScreen = () => {
     },
     [listAnchorRef, viewportRef],
   );
-  const {
-    excerptsBySceneId,
-    canComment,
-    isStoryOwner,
-    currentUserId,
-    updateComment,
-    deleteComment,
-    openThread,
-    closeThread,
-    rowRefFor,
-    bar,
-    thread,
-    openBarThread,
-    submitThread,
-  } = useManuscriptReview(storyId, sections, currentSectionIndex);
   // Unmeasured rows cannot be jumped to directly: scroll to the estimated
   // offset first so the row measures, then retry the indexed jump on the next tick.
   const handleScrollToIndexFailed = useCallback(
@@ -371,25 +375,6 @@ const ManuscriptScreen = () => {
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
         },
-        searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-        searchInput: {
-          flex: 1,
-          color: colors.text,
-          backgroundColor: colors.background,
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          fontSize: 15,
-        },
-        searchNav: { padding: 8 },
-        searchCount: {
-          color: colors.textSecondary,
-          fontSize: 13,
-          minWidth: 64,
-          textAlign: 'center',
-        },
         section: {
           paddingHorizontal: manuscriptTextMetrics.containerPaddingHorizontal,
           paddingVertical: 20,
@@ -454,42 +439,45 @@ const ManuscriptScreen = () => {
       const titleText = `${item.position}. ${item.scene.name}`;
       const sceneExcerpts =
         mode === 'review' ? (excerptsBySceneId[item.scene.id] ?? []) : [];
-      const titleCommentRanges = sceneExcerpts.flatMap((excerpt) =>
-        findAllFoldedMatches(titleText, excerpt),
-      );
+      const titleCommentRanges = sceneExcerpts.flatMap((excerpt) => {
+        const hit = findFirstExcerptMatch(titleText, excerpt);
+        return hit ? [hit] : [];
+      });
       const openSceneThread = mode === 'review' ? () => openThread(item.scene.id) : undefined;
       return (
         <View ref={rowRefFor(item.key)} collapsable={false}>
           {index > 0 && <View style={styles.sceneDivider} />}
           <View style={styles.section}>
-            <View style={styles.sceneHeaderRow}>
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
-                <MarkedText
-                  text={titleText}
-                  ranges={titleMarksByKey.ranges.get(item.key) ?? NO_RANGES}
-                  activeRanges={titleMarksByKey.active.get(item.key) ?? NO_ACTIVE}
-                  commentRanges={titleCommentRanges}
-                  onCommentPress={openSceneThread}
-                  // The active title hit scrolls like a body hit: the indexed jump
-                  // lands the row, the measured scroll lands the hit itself.
-                  activeRef={
-                    activeMatch?.sectionIndex === index && activeMatch.nameMatchIndex >= 0
-                      ? scrollActiveIntoView
-                      : undefined
-                  }
-                  style={styles.sceneTitle}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                testID={`manuscript-edit-${item.scene.id}`}
-                style={styles.sceneEdit}
-                accessibilityRole="button"
-                accessibilityLabel={t('manuscript_open_editor')}
-                onPress={() => openSceneEditor(item.scene.id)}
-              >
-                <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
+            {mode === 'review' && (
+              <View style={styles.sceneHeaderRow}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
+                  <MarkedText
+                    text={titleText}
+                    ranges={titleMarksByKey.ranges.get(item.key) ?? NO_RANGES}
+                    activeRanges={titleMarksByKey.active.get(item.key) ?? NO_ACTIVE}
+                    commentRanges={titleCommentRanges}
+                    onCommentPress={openSceneThread}
+                    // The active title hit scrolls like a body hit: the indexed jump
+                    // lands the row, the measured scroll lands the hit itself.
+                    activeRef={
+                      activeMatch?.sectionIndex === index && activeMatch.nameMatchIndex >= 0
+                        ? scrollActiveIntoView
+                        : undefined
+                    }
+                    style={styles.sceneTitle}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID={`manuscript-edit-${item.scene.id}`}
+                  style={styles.sceneEdit}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('manuscript_open_editor')}
+                  onPress={() => openSceneEditor(item.scene.id)}
+                >
+                  <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            )}
             {item.scene.body ? (
               <MarkdownPreview
                 text={item.scene.body}
@@ -547,50 +535,17 @@ const ManuscriptScreen = () => {
             placeholder={t('manuscript_route')}
           />
         )}
-        <View ref={searchAnchorRef} collapsable={false} style={styles.searchRow}>
-          <TouchableOpacity
-            testID="manuscript-index-open"
-            style={styles.searchNav}
-            accessibilityRole="button"
-            accessibilityLabel={t('manuscript_index_open')}
-            onPress={() => setIndexVisible(true)}
-          >
-            <Ionicons name="list" size={22} color={colors.text} />
-          </TouchableOpacity>
-          <TextInput
-            testID="manuscript-search"
-            style={styles.searchInput}
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('manuscript_search_placeholder')}
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="search"
-            onSubmitEditing={() => jumpToOrdinal(ordinal)}
-          />
-          <TouchableOpacity
-            testID="manuscript-search-prev"
-            style={styles.searchNav}
-            onPress={() => jumpToOrdinal(ordinal - 1)}
-            disabled={total === 0}
-          >
-            <Ionicons name="chevron-up" size={22} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="manuscript-search-next"
-            style={styles.searchNav}
-            onPress={() => jumpToOrdinal(ordinal + 1)}
-            disabled={total === 0}
-          >
-            <Ionicons name="chevron-down" size={22} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-        {query.trim().length > 0 && (
-          <Text style={styles.searchCount}>
-            {total === 0
-              ? t('manuscript_no_results')
-              : t('manuscript_search_count', { current: ordinal + 1, total })}
-          </Text>
-        )}
+        <ManuscriptSearchToolbar
+          query={query}
+          onQueryChange={setQuery}
+          ordinal={ordinal}
+          total={total}
+          onPrevMatch={() => jumpToOrdinal(ordinal - 1)}
+          onNextMatch={() => jumpToOrdinal(ordinal + 1)}
+          onSubmitQuery={() => jumpToOrdinal(ordinal)}
+          onOpenIndex={() => setIndexVisible(true)}
+          searchAnchorRef={searchAnchorRef}
+        />
       </View>
       {isBranching && routes.length === 0 ? (
         <View style={styles.emptyWrap}>
@@ -647,6 +602,7 @@ const ManuscriptScreen = () => {
         sections={sections}
         currentSectionIndex={currentSectionIndex}
         looseHeadingLabel={t('export_manuscript_loose_heading')}
+        commentCountsBySceneId={commentCountsBySceneId}
         onSelectSection={handleIndexSelect}
         onClose={() => setIndexVisible(false)}
       />

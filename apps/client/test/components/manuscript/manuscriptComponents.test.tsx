@@ -589,4 +589,13 @@ describe('MarkdownPreview', () => {
     fireEvent.press(marked);
     expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
+
+  it('marks only the first match of a repeated excerpt', async () => {
+    const view = await render(
+      <MarkdownPreview text="Waves. Waves again." commentExcerpts={['Waves']} testID="preview" />,
+    );
+
+    expect(view.getAllByText(/^Waves$/)).toHaveLength(1);
+    expect(view.getByText('. Waves again.')).toBeTruthy();
+  });
 });

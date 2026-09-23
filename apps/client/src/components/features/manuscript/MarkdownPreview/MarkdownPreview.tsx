@@ -1,7 +1,7 @@
 import type { ManuscriptMark, ManuscriptSpan, TextRange } from '@keres/shared';
 import {
   findAllCaseInsensitiveMatches,
-  findAllFoldedMatches,
+  findFirstExcerptMatch,
   parseMarkdownToDocument,
 } from '@keres/shared';
 import { useMemo } from 'react';
@@ -78,7 +78,7 @@ export function MarkdownPreview({
   selectable?: boolean;
   /** Manuscript search query: every case-insensitive hit reads as a highlighter mark. */
   highlightQuery?: string | null;
-  /** Comment excerpts: every occurrence reads as a tappable highlighter mark. */
+  /** Comment excerpts: each anchor reads as a tappable highlighter mark. */
   commentExcerpts?: string[];
   /** Fired when a comment-marked span is tapped (opens that field's thread). */
   onCommentPress?: () => void;
@@ -113,19 +113,26 @@ export function MarkdownPreview({
       ),
     [blocks, highlightQuery],
   );
-  // Comment marks follow the per-span rule search uses: spans carry no raw offsets,
-  // so each excerpt matches inside each span. Same fill as search, tappable.
-  const spanCommentRanges = useMemo(
-    () =>
-      blocks.map((block) =>
-        block.spans.map((span) =>
-          (commentExcerpts ?? []).flatMap((excerpt) =>
-            findAllFoldedMatches(span.text, excerpt),
-          ),
-        ),
-      ),
-    [blocks, commentExcerpts],
-  );
+  // Each excerpt marks its anchor only: the first hit in the first span that holds
+  // it. Spans partition the body in order, so that is the body's first match - the
+  // same passage the modal's snapshot points at.
+  const spanCommentRanges = useMemo(() => {
+    const anchored = new Set<number>();
+    return blocks.map((block) =>
+      block.spans.map((span) => {
+        const ranges: TextRange[] = [];
+        (commentExcerpts ?? []).forEach((excerpt, excerptIndex) => {
+          if (anchored.has(excerptIndex)) return;
+          const hit = findFirstExcerptMatch(span.text, excerpt);
+          if (hit) {
+            anchored.add(excerptIndex);
+            ranges.push(hit);
+          }
+        });
+        return ranges;
+      }),
+    );
+  }, [blocks, commentExcerpts]);
   // Which span holds the current hit: spans partition the body in order, so the hits
   // count up across them exactly as the reader meets them.
   const activeRef = useMemo(() => {

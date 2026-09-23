@@ -85,36 +85,6 @@ export function findFirstExcerptMatch(
  * same rule `findManuscriptMatches` counts by, so visual marks and the match counter
  * always agree. Empty or absent queries mark nothing.
  */
-/**
- * Every non-overlapping occurrence of `excerpt` in `text`, case- AND
- * accent-insensitive - the `findFirstExcerptMatch` rule without the first-only
- * limit. Prose surfaces mark every occurrence (the search-style treatment
- * comment excerpts get in the manuscript), while the modal keeps the single
- * anchor. Offsets are UTF-16 code units into the original text.
- */
-export function findAllFoldedMatches(
-  text: string,
-  excerpt: string | null | undefined,
-): TextRange[] {
-  if (!text || typeof excerpt !== 'string') return [];
-  const trimmed = excerpt.trim();
-  if (!trimmed) return [];
-  const needle = foldText(trimmed);
-  if (!needle) return [];
-  const { folded, starts, ends } = foldWithMap(text);
-  const ranges: TextRange[] = [];
-  let from = 0;
-  for (;;) {
-    const at = folded.indexOf(needle, from);
-    if (at === -1) break;
-    const start = starts[at];
-    const end = ends[at + needle.length - 1];
-    ranges.push({ start, length: end - start });
-    from = at + needle.length;
-  }
-  return ranges;
-}
-
 export function findAllCaseInsensitiveMatches(
   text: string,
   query: string | null | undefined,

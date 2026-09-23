@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useId, useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { TextRange } from '@keres/shared';
-import { findAllFoldedMatches } from '@keres/shared';
+import { findFirstExcerptMatch } from '@keres/shared';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import { useWebSelectionClip } from '../../../../hooks/useWebSelectionClip';
 import type { CommentSelect } from '../../../../db/schema';
@@ -59,12 +59,13 @@ const CommentableDetailField: React.FC<CommentableDetailFieldProps> = ({
   // Icon and marked-span taps share one opener.
   const openThread = () => setModalVisible(true);
   const hasComments = comments.length > 0;
-  // Every commented passage, search-style: all occurrences of every excerpt, so the
-  // value reads like the manuscript's marked prose. Tapping one opens this thread.
+  // Each comment marks its anchor: the first match of its excerpt, the same passage
+  // the modal's snapshot points at. Tapping it opens this thread.
   const commentRanges: TextRange[] = useMemo(() => {
     const ranges: TextRange[] = [];
     for (const comment of comments) {
-      ranges.push(...findAllFoldedMatches(value, comment.excerptText));
+      const hit = findFirstExcerptMatch(value, comment.excerptText);
+      if (hit) ranges.push(hit);
     }
     return ranges;
   }, [comments, value]);

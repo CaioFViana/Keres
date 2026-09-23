@@ -113,6 +113,22 @@ describe('ManuscriptIndexModal', () => {
     expect(view.getByText('3. Fragment')).toBeTruthy();
   });
 
+  it('badges scenes with counts and chapters with aggregates', async () => {
+    const view = await render(
+      <ManuscriptIndexModal
+        {...baseProps}
+        commentCountsBySceneId={{ 's-1': 2, 's-3': 1 }}
+      />,
+    );
+
+    const badgeText = (testID: string) =>
+      within(view.getByTestId(testID)).getByText(/^[0-9]+$/).props.children;
+    expect(badgeText('manuscript-index-scene-s-1-comments')).toBe(2);
+    expect(badgeText('manuscript-index-container-ch-1-comments')).toBe(2);
+    expect(badgeText('manuscript-index-loose-heading-comments')).toBe(1);
+    expect(view.queryByTestId('manuscript-index-scene-s-2-comments')).toBeNull();
+  });
+
   it('shows event titles without a chapter number', async () => {
     const sections: ManuscriptSection[] = [
       {

@@ -16,6 +16,8 @@ interface ManuscriptIndexModalProps {
   currentSectionIndex: number | null;
   /** Label for the loose-scenes group; same source as the export heading. */
   looseHeadingLabel: string;
+  /** Comment count by scene id; scenes and groups without counts render bare. */
+  commentCountsBySceneId?: Record<string, number>;
   /** Section index in `sections` to scroll the manuscript list to. */
   onSelectSection: (sectionIndex: number) => void;
   onClose: () => void;
@@ -26,6 +28,7 @@ interface IndexSceneEntry {
   sectionIndex: number;
   position: number;
   name: string;
+  sceneId: string;
 }
 
 interface IndexGroup {
@@ -63,6 +66,7 @@ function groupIndexSections(
         sectionIndex,
         position: section.position,
         name: section.scene.name,
+        sceneId: section.scene.id,
       };
       if (current) current.scenes.push(entry);
       else leading.push(entry);
@@ -81,6 +85,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
   sections,
   currentSectionIndex,
   looseHeadingLabel,
+  commentCountsBySceneId = {},
   onSelectSection,
   onClose,
 }) => {
@@ -110,6 +115,9 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
         },
         chapterTitle: { color: colors.text, fontSize: 16, fontWeight: '700', flex: 1 },
         sceneRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
           paddingVertical: 9,
           paddingHorizontal: 12,
           marginLeft: 24,
@@ -117,8 +125,10 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
         },
         sceneRowLeading: { marginLeft: 0 },
         sceneRowCurrent: { backgroundColor: colors.primaryContainer },
-        sceneTitle: { color: colors.text, fontSize: 15 },
+        sceneTitle: { color: colors.text, fontSize: 15, flex: 1 },
         sceneTitleCurrent: { color: colors.onPrimaryContainer, fontWeight: '700' },
+        commentBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+        commentCount: { color: colors.textSecondary, fontSize: 13 },
         emptyText: {
           color: colors.textSecondary,
           fontSize: 15,
@@ -139,6 +149,16 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
     });
   };
 
+  // Pending-work overview for the writer: every commented scene carries its count,
+  // every group its aggregate - visible without expanding.
+  const renderCommentCount = (count: number, testID: string) =>
+    count > 0 ? (
+      <View testID={testID} style={styles.commentBadge}>
+        <Ionicons name="chatbubble-outline" size={12} color={colors.textSecondary} />
+        <Text style={styles.commentCount}>{count}</Text>
+      </View>
+    ) : null;
+
   const renderScene = (entry: IndexSceneEntry, grouped: boolean) => {
     const current = entry.sectionIndex === currentSectionIndex;
     return (
@@ -157,6 +177,10 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
         <Text style={[styles.sceneTitle, current && styles.sceneTitleCurrent]}>
           {`${entry.position}. ${entry.name}`}
         </Text>
+        {renderCommentCount(
+          commentCountsBySceneId[entry.sceneId] ?? 0,
+          `manuscript-index-${entry.sectionKey}-comments`,
+        )}
       </TouchableOpacity>
     );
   };
@@ -179,6 +203,10 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
             {leading.map((entry) => renderScene(entry, false))}
             {groups.map((group) => {
               const expanded = !collapsed.has(group.key);
+              const groupCount = group.scenes.reduce(
+                (total, entry) => total + (commentCountsBySceneId[entry.sceneId] ?? 0),
+                0,
+              );
               return (
                 <View key={group.key}>
                   <TouchableOpacity
@@ -194,6 +222,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
                       color={colors.textSecondary}
                     />
                     <Text style={styles.chapterTitle}>{group.title}</Text>
+                    {renderCommentCount(groupCount, `manuscript-index-${group.key}-comments`)}
                   </TouchableOpacity>
                   {expanded && group.scenes.map((entry) => renderScene(entry, true))}
                 </View>

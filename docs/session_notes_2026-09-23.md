@@ -116,6 +116,26 @@ código e comentários em inglês; sem mudanças fora do escopo pedido.
 - Gates: client full 596/596 suítes, 5990/5990 (jest maxWorkers=2/512MB); shared
   84/84, 988/988 (vitest); tsc/eslint 0 ambos; `locales:audit` 0; file-size gate
   verde (construção de bar/thread mora no hook, não na tela).
+
+### 1.8 Round-3: posição do leitor, índice com pendências, olho de volta, âncora única
+- **Barra acusava scene fantasma (vazia, fora da tela)**: `itemVisiblePercentThreshold:
+  50` nunca dispara para scenes de várias páginas, travando a posição na última
+  scene curta. Fix (verificado no source instalado do virtualized-lists):
+  `viewAreaCoveragePercentThreshold: 20` + first-by-index = scene substancial do
+  topo; corrige também o highlight do índice (mesmo callback).
+- **Índice lista pendências**: badge de contagem por scene + agregado por capítulo
+  (e grupo loose), visível sem expandir; `commentCountsBySceneId` vem do hook.
+- **Olho de volta como read mode**: read = prosa pura (sem títulos/pencils/scenes
+  vazias), review = tudo. Busca conta title hits nos dois modos (semântica do olho
+  original, sem tratamento especial).
+- **Marcas first-match-only** (supercede decisão all-occurrences): aviso do modal,
+  snapshot e prosa agora concordam — cada excerpt marca só sua âncora (primeiro
+  match do campo; na prosa, primeiro hit do primeiro span que contém). Removidos
+  `findAllFoldedMatches` + testes.
+- File-size: seções por modo foram para `useManuscriptReview` e a toolbar de busca
+  virou `ManuscriptSearchToolbar` (testIDs/estilos idênticos, zero churn de teste).
+- Gates: client full 596/596, 5995/5995; shared 84/84, 985/985; tsc/eslint 0;
+  layering verde.
 - Pergunta aberta: labels de anotação na API são inglês-only por ora; localização
   futura se o showcase precisar.
 

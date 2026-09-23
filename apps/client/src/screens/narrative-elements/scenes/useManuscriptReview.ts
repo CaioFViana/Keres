@@ -66,16 +66,25 @@ export function resolveReviewScene(
 }
 
 /**
- * Everything the manuscript's review mode owns: the scenes' body threads (the same
- * `body` threads the scene editor reads and writes), per-scene excerpt lists for
- * marking, the open thread, the bar's target scene, and stable per-row selection
- * refs for web excerpt pre-fill.
+ * Everything the manuscript's review mode owns: the mode-shaped sections (read mode
+ * keeps the old pure-reading presentation: prose only), the scenes' body threads
+ * (the same `body` threads the scene editor reads and writes), per-scene excerpt
+ * lists for marking, the open thread, the bar's target scene, and stable per-row
+ * selection refs for web excerpt pre-fill.
  */
 export function useManuscriptReview(
   storyId: string | undefined,
-  sections: ManuscriptSection[],
+  allSections: ManuscriptSection[],
+  mode: ManuscriptReviewMode,
   currentSectionIndex: number | null,
 ) {
+  const sections = useMemo(
+    () =>
+      mode === 'read'
+        ? allSections.filter((section) => section.kind !== 'scene' || section.scene.body)
+        : allSections,
+    [mode, allSections],
+  );
   const sceneIds = useMemo(
     () => [
       ...new Set(
@@ -101,6 +110,14 @@ export function useManuscriptReview(
         comment.excerptText ? [comment.excerptText] : [],
       );
       if (excerpts.length > 0) map[sceneId] = excerpts;
+    }
+    return map;
+  }, [commentsBySceneId]);
+
+  const commentCountsBySceneId = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const [sceneId, sceneComments] of Object.entries(commentsBySceneId)) {
+      if (sceneComments.length > 0) map[sceneId] = sceneComments.length;
     }
     return map;
   }, [commentsBySceneId]);
@@ -170,8 +187,10 @@ export function useManuscriptReview(
   }, []);
 
   return {
+    sections,
     commentsBySceneId,
     excerptsBySceneId,
+    commentCountsBySceneId,
     canComment,
     isStoryOwner,
     currentUserId,

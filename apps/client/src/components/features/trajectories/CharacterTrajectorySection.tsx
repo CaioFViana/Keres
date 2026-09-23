@@ -1,19 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { buildTrajectoryStops } from '@keres/shared/graphs/trajectories';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useDrizzle } from '@/src/db';
-import type {
-  ChapterSelect,
-  RouteSelect,
-  RouteStepSelect,
-} from '@/src/db/schema';
+import { useCharacterTrajectoryData } from '@/src/hooks/useCharacterTrajectoryData';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
-import { createRouteService } from '@/src/services/storymanagement/RouteService';
 import { useTheme } from '@/src/theme';
 
 interface CharacterTrajectorySectionProps {
@@ -46,39 +39,9 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const db = useDrizzle();
   const navigateToEntity = useNavigateToEntityDetail();
-  const [chapters, setChapters] = useState<ChapterSelect[]>([]);
-  const [routes, setRoutes] = useState<RouteSelect[]>([]);
-  const [stepsByRoute, setStepsByRoute] = useState<Record<string, RouteStepSelect[]>>({});
+  const { chapters, routes, stepsByRoute } = useCharacterTrajectoryData(storyId, storyType);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const loadedChapters = await createChapterService(db).getAllByStoryId(storyId);
-      let loadedRoutes: RouteSelect[] = [];
-      const loadedSteps: Record<string, RouteStepSelect[]> = {};
-      if (storyType === 'branching') {
-        const routeService = createRouteService(db);
-        loadedRoutes = (await routeService.getAllByStoryId(storyId)).filter(
-          (route) => !route.isDeleted,
-        );
-        for (const route of loadedRoutes) {
-          loadedSteps[route.id] = (await routeService.getSteps(route.id)).filter(
-            (step) => !step.isDeleted,
-          );
-        }
-      }
-      if (cancelled) return;
-      setChapters(loadedChapters.filter((chapter) => !chapter.isDeleted));
-      setRoutes(loadedRoutes);
-      setStepsByRoute(loadedSteps);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, storyId, storyType]);
 
   const routeId = selectedRouteId ?? routes[0]?.id ?? null;
   const stops = useMemo(

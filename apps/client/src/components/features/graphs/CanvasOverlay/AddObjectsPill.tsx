@@ -73,6 +73,12 @@ const AddObjectsPill: React.FC<AddObjectsPillProps> = ({ includeNote, onAction, 
     })),
   });
   groups.push({
+    key: 'stamp',
+    label: t('objects_group_stamp'),
+    icon: 'pin',
+    options: [{ label: t('objects_stamp'), value: 'draw:stamp', icon: 'pin' }],
+  });
+  groups.push({
     key: 'select',
     label: t('objects_group_select'),
     icon: 'locate-outline',

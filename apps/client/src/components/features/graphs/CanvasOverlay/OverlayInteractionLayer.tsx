@@ -19,6 +19,7 @@ interface OverlayInteractionLayerProps {
   overlays: readonly CanvasOverlayType[] | undefined;
   snapTargets: readonly SpatialPoint[];
   onDrawTap: (point: SpatialPoint) => void;
+  onStampPlace: (point: SpatialPoint) => void;
   onDrawRect: (start: SpatialPoint, end: SpatialPoint) => void;
   onPreviewRect: (rect: { start: SpatialPoint; end: SpatialPoint } | null) => void;
   onSelectOverlay: (id: string | null) => void;
@@ -42,6 +43,7 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
   overlays,
   snapTargets,
   onDrawTap,
+  onStampPlace,
   onDrawRect,
   onPreviewRect,
   onSelectOverlay,
@@ -51,6 +53,7 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
   const callbacks = useRef({
     screenToWorld,
     onDrawTap,
+    onStampPlace,
     onDrawRect,
     onPreviewRect,
     onSelectOverlay,
@@ -58,7 +61,14 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
   useEffect(() => {
     // Latest-ref sync for the responder below: every reader runs on gestures, after effects
     // have flushed. No dependency array - the sync unconditionally followed every render.
-    callbacks.current = { screenToWorld, onDrawTap, onDrawRect, onPreviewRect, onSelectOverlay };
+    callbacks.current = {
+      screenToWorld,
+      onDrawTap,
+      onStampPlace,
+      onDrawRect,
+      onPreviewRect,
+      onSelectOverlay,
+    };
   });
 
   const responder = useMemo(
@@ -95,6 +105,10 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
             if (mode.kind === 'select') {
               const hit = hitTestCanvasOverlay(world, overlays ?? [], HIT_SCREEN / safeScale);
               callbacks.current.onSelectOverlay(hit?.id ?? null);
+              return;
+            }
+            if (mode.tool === 'stamp') {
+              callbacks.current.onStampPlace(world);
               return;
             }
             if (!isRectDrawTool(mode.tool)) {

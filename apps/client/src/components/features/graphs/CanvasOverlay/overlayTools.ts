@@ -2,7 +2,7 @@ import type { CanvasOverlayPreset } from '@keres/shared/graphs/canvasOverlayGeom
 import type { SpatialPoint } from '@keres/shared';
 
 /** What the canvas interaction layer is doing with the next gestures. */
-export type OverlayDrawTool = 'line' | 'polygon' | 'frame' | 'rect' | 'ellipse';
+export type OverlayDrawTool = 'line' | 'polygon' | 'frame' | 'rect' | 'ellipse' | 'stamp';
 
 export type OverlayInteractionMode =
   | { kind: 'draw'; tool: OverlayDrawTool }
@@ -32,6 +32,8 @@ export interface OverlayDraft {
 export interface OverlayCanvasCallbacks {
   onDrawTap: (point: SpatialPoint) => void;
   onDrawRect: (tool: OverlayDrawTool, start: SpatialPoint, end: SpatialPoint) => void;
+  /** Stamps commit on a single tap, free of the vertex snap, so they get their own tap. */
+  onStampPlace: (point: SpatialPoint) => void;
   onSelectOverlay: (id: string | null) => void;
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;

@@ -12,3 +12,26 @@ import mapIconNames from './mapIcons.json';
 export const MAP_ICON_OPTIONS: readonly string[] = mapIconNames;
 
 export type MapIconName = string;
+
+/**
+ * Which icon family a stored map-icon name belongs to. Plain names are Ionicons (and
+ * stay valid as `.svg` file names for the Showcase build); the `ion:` prefix says the
+ * same explicitly, `keres:` reserves names for the future Keres SVG pack, and anything
+ * else renders as the fallback glyph instead of guessing.
+ */
+export type MapIconFamily = 'ion' | 'keres' | 'unknown';
+
+export interface ResolvedMapIcon {
+  family: MapIconFamily;
+  /** The glyph within its family (`ion:flag` and `flag` both resolve to `flag`). */
+  glyph: string;
+}
+
+export function resolveMapIcon(name: string): ResolvedMapIcon {
+  const separator = name.indexOf(':');
+  if (separator < 0) return { family: 'ion', glyph: name };
+  const family = name.slice(0, separator);
+  const glyph = name.slice(separator + 1);
+  if (family === 'ion' || family === 'keres') return { family, glyph };
+  return { family: 'unknown', glyph: name };
+}

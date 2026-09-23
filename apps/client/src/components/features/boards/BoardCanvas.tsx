@@ -472,6 +472,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               overlays={content.overlays}
               snapTargets={snapTargets}
               onDrawTap={overlayCallbacks.onDrawTap}
+              onStampPlace={overlayCallbacks.onStampPlace}
               onDrawRect={(start, end) => {
                 if (interactionMode.kind === 'draw')
                   overlayCallbacks.onDrawRect(interactionMode.tool, start, end);

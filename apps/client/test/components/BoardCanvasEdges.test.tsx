@@ -42,6 +42,7 @@ const CONTENT = { nodes: [...NODES], edges: [EDGE] } as unknown as BoardContentT
 const noop = () => {};
 const overlayCallbacks = {
   onDrawTap: noop,
+  onStampPlace: noop,
   onDrawRect: noop,
   onSelectOverlay: noop,
   onCommitMove: noop,

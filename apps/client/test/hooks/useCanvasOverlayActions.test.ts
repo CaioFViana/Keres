@@ -147,4 +147,34 @@ describe('useCanvasOverlayActions', () => {
     expect(result.current.content.overlays).toHaveLength(0);
     expect(result.current.actions.selectedOverlayId).toBeNull();
   });
+
+  it('arms the stamp tool and commits one stamp per tap', async () => {
+    const result = await setup();
+
+    await act(async () => result.current.actions.handleObjectsAction('draw:stamp'));
+    expect(result.current.actions.interactionMode).toEqual({ kind: 'draw', tool: 'stamp' });
+    expect(result.current.actions.canFinish).toBe(false);
+
+    await act(async () => result.current.actions.onStampPlace({ x: 10, y: 20 }));
+    expect(result.current.content.overlays).toHaveLength(1);
+    expect(result.current.content.overlays?.[0]).toMatchObject({
+      kind: 'stamp',
+      x: 10,
+      y: 20,
+      icon: 'flag',
+    });
+    expect(result.current.actions.selectedOverlayId).toBe('id-1');
+    expect(result.current.actions.interactionMode).toBeNull();
+  });
+
+  it('updates a stamp icon through the sheet patch', async () => {
+    const result = await setup({
+      nodes: [],
+      edges: [],
+      overlays: [{ id: 'ov-1', kind: 'stamp', x: 0, y: 0, icon: 'flag' }],
+    } as unknown as BoardContentType);
+
+    await act(async () => result.current.actions.updateOverlay('ov-1', { icon: 'castle' }));
+    expect(result.current.content.overlays?.[0]).toMatchObject({ icon: 'castle' });
+  });
 });

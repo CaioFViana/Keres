@@ -20,6 +20,8 @@ import { clampCanvasWorldCoordinate } from '../utils/canvasDragBounds';
 const MIN_RECT_WORLD = 8;
 const PRESET_SIZE = 140;
 const PRESET_STAGGER = 16;
+/** The icon a fresh stamp carries until its sheet picks another. */
+const DEFAULT_STAMP_ICON = 'flag';
 
 interface UseCanvasOverlayActionsOptions<TContent extends { overlays?: CanvasOverlayType[] }> {
   setContent: Dispatch<SetStateAction<TContent>>;
@@ -186,8 +188,24 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     setSelectedOverlayId(id);
   }, []);
 
+  const placeStamp = useCallback(
+    (point: SpatialPoint) => {
+      const overlay: CanvasOverlayType = {
+        id: generateOverlayId(),
+        kind: 'stamp',
+        x: clampCanvasWorldCoordinate(point.x),
+        y: clampCanvasWorldCoordinate(point.y),
+        icon: DEFAULT_STAMP_ICON,
+      };
+      patchOverlays((overlays) => [...overlays, overlay]);
+      setSelectedOverlayId(overlay.id);
+      setDrawTool(null);
+    },
+    [generateOverlayId, patchOverlays],
+  );
+
   const updateOverlay = useCallback(
-    (id: string, patch: { label?: string | null; color?: string | null }) => {
+    (id: string, patch: { label?: string | null; color?: string | null; icon?: string }) => {
       patchOverlays((overlays) =>
         overlays.map((overlay) => (overlay.id === id ? { ...overlay, ...patch } : overlay)),
       );
@@ -312,6 +330,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     // straight into the canvas props.
     onDrawTap: addDraftPoint,
     onDrawRect: commitRectDraw,
+    onStampPlace: placeStamp,
     onSelectOverlay: selectOverlay,
     onCommitMove: commitMove,
     onCommitVertex: commitVertex,

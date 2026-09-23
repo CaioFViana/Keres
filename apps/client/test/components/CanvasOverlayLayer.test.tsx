@@ -237,6 +237,7 @@ describe('canvas overlay wiring', () => {
     const noop = () => {};
     const overlayCallbacks = {
       onDrawTap: noop,
+      onStampPlace: noop,
       onDrawRect: noop,
       onSelectOverlay: noop,
       onCommitMove: noop,

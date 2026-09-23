@@ -90,8 +90,12 @@ Novo `packages/shared/schemas/CanvasOverlaySchemas.ts`:
    rótulo/cor no sheet, excluir). i18n em todas as strings.
 3. **Trajectory.** Derivação shared + testes; seção no CharacterDetail; toggle
    efêmero + indicador off-map no LocationMap.
-4. **Carimbo.** `resolveMapIcon` + wiring na pill (mapas; boards só se fizer
-   sentido na revisão).
+4. **Carimbo (feita).** `resolveMapIcon` no shared (`ion:` explícito,
+   `keres:` reservado, resto → fallback) + helper `mapIconGlyph` usado pelo
+   carimbo e pelos pontos do mapa; grupo Carimbo na pill (boards E mapas —
+   o componente é compartilhado), ferramenta `stamp` com commit de um toque,
+   linha de ícone no sheet do carimbo. Sem pack SVG ainda: nomes `keres:`
+   caem no glifo `location` até o pack existir.
 5. **(Secundária) Paridade de export.** Estender `storyMapSvgExport.ts`
    (boards) e `locationMapSvg.ts` (mapas) com os overlays via geometria
    compartilhada; `deliverMapExport`/`exportFormat` inalterados. Inclui

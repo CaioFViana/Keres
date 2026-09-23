@@ -26,6 +26,7 @@ async function setup(mode: OverlayCatcherMode, snapTargets: { x: number; y: numb
   }));
   const callbacks = {
     onDrawTap: jest.fn(),
+    onStampPlace: jest.fn(),
     onDrawRect: jest.fn(),
     onPreviewRect: jest.fn(),
     onSelectOverlay: jest.fn(),
@@ -84,6 +85,17 @@ describe('OverlayInteractionLayer', () => {
     await config.onPanResponderGrant(tapEvent(5, 5));
     await config.onPanResponderRelease(tapEvent(5, 5), { dx: 0, dy: 0 });
     expect(callbacks.onDrawRect).not.toHaveBeenCalled();
+    expect(callbacks.onDrawTap).not.toHaveBeenCalled();
+  });
+
+  it('places stamps on tap, free of the vertex snap', async () => {
+    const { config, callbacks } = await setup({ kind: 'draw', tool: 'stamp' }, [
+      { x: 150, y: 50 },
+    ]);
+    await config.onPanResponderGrant(tapEvent(48, 50));
+    await config.onPanResponderRelease(tapEvent(48, 50), { dx: 0, dy: 0 });
+    // Screen (48,50) -> world (148,50): kept raw next to the (150,50) target.
+    expect(callbacks.onStampPlace).toHaveBeenCalledWith({ x: 148, y: 50 });
     expect(callbacks.onDrawTap).not.toHaveBeenCalled();
   });
 

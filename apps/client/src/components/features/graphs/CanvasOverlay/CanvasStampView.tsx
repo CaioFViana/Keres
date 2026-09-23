@@ -6,6 +6,7 @@ import {
 import React, { useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import { mapIconGlyph } from '../../../../utils/mapIconGlyph';
 
 type StampOverlay = Extract<CanvasOverlayType, { kind: 'stamp' }>;
 
@@ -60,7 +61,7 @@ const CanvasStampView: React.FC<{ stamp: StampOverlay }> = ({ stamp }) => {
     <View style={styles.stamp}>
       <View style={styles.circle}>
         <Ionicons
-          name={(stamp.icon as keyof typeof Ionicons.glyphMap) || 'location'}
+          name={mapIconGlyph(stamp.icon)}
           size={size * 0.55}
           color={stamp.color ?? colors.primary}
         />

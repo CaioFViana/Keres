@@ -443,6 +443,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               overlays={layoutContent.overlays}
               snapTargets={snapTargets}
               onDrawTap={overlayCallbacks.onDrawTap}
+              onStampPlace={overlayCallbacks.onStampPlace}
               onDrawRect={(start, end) => {
                 if (interactionMode.kind === 'draw')
                   overlayCallbacks.onDrawRect(interactionMode.tool, start, end);

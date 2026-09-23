@@ -45,6 +45,19 @@ jest.mock('../../src/components/common/inputs/ColorPickerInput/ColorPickerInput'
   };
 });
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
+jest.mock('../../src/components/common/inputs/IconPickerInput/IconPickerInput', () => {
+  const { Text } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      currentIcon,
+      onSelectIcon,
+    }: {
+      currentIcon: string | null;
+      onSelectIcon: (icon: string) => void;
+    }) => <Text testID="sheet-icon" onPress={() => onSelectIcon('castle')}>{currentIcon}</Text>,
+  };
+});
 
 describe('OverlaySheet', () => {
   it('edits label and color, and removes on request', async () => {
@@ -87,5 +100,28 @@ describe('OverlaySheet', () => {
 
     expect(view.queryByTestId('sheet-color')).toBeNull();
     expect(view.queryByText('overlay_sheet_remove')).toBeNull();
+  });
+
+  it('shows the icon picker for stamps only', async () => {
+    const onChange = jest.fn();
+    const props = {
+      canEdit: true,
+      defaultColor: '#85f',
+      onChange,
+      onRemove: jest.fn(),
+      onClose: jest.fn(),
+    };
+    const stamp = await render(
+      <OverlaySheet overlay={{ id: 'ov-1', kind: 'stamp', x: 0, y: 0, icon: 'flag' }} {...props} />,
+    );
+    expect(stamp.getByTestId('sheet-icon').props.children).toBe('flag');
+    await fireEvent.press(stamp.getByTestId('sheet-icon'));
+    expect(onChange).toHaveBeenCalledWith({ icon: 'castle' });
+
+    const line = await render(
+      <OverlaySheet overlay={{ id: 'ov-2', kind: 'line', points: [] }} {...props} />,
+    );
+    expect(line.queryByTestId('sheet-icon')).toBeNull();
+    expect(line.queryByText('overlay_sheet_icon')).toBeNull();
   });
 });

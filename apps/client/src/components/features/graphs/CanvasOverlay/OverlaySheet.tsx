@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { CanvasOverlayType } from '@keres/shared';
+import { MAP_ICON_OPTIONS, type CanvasOverlayType } from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
 import ColorPickerInput from '@/src/components/common/inputs/ColorPickerInput/ColorPickerInput';
+import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../../theme';
 
@@ -13,7 +14,7 @@ interface OverlaySheetProps {
   canEdit: boolean;
   /** Shown in the color picker while the overlay sets no color of its own. */
   defaultColor: string;
-  onChange: (patch: { label?: string | null; color?: string | null }) => void;
+  onChange: (patch: { label?: string | null; color?: string | null; icon?: string }) => void;
   onRemove: () => void;
   onClose: () => void;
 }
@@ -81,6 +82,17 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
         />
         {canEdit && (
           <>
+            {overlay.kind === 'stamp' && (
+              <>
+                <Text style={styles.label}>{t('overlay_sheet_icon')}</Text>
+                <IconPickerInput
+                  currentIcon={overlay.icon}
+                  onSelectIcon={(icon) => onChange({ icon })}
+                  iconOptions={MAP_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[]}
+                  placeholder={t('overlay_sheet_icon')}
+                />
+              </>
+            )}
             <Text style={styles.label}>{t('overlay_sheet_color')}</Text>
             <ColorPickerInput
               currentColor={overlay.color ?? defaultColor}

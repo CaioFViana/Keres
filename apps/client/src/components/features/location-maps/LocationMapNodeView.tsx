@@ -3,6 +3,7 @@ import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
+import { mapIconGlyph } from '../../../utils/mapIconGlyph';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
@@ -323,7 +324,7 @@ const LocationMapNodeView: React.FC<Props> = ({
     <View style={styles.node} {...pan.panHandlers}>
       <View style={styles.circle} pointerEvents="none">
         <Ionicons
-          name={(node.icon as keyof typeof Ionicons.glyphMap) || 'location'}
+          name={mapIconGlyph(node.icon)}
           size={22}
           color={node.color}
         />

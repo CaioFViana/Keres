@@ -27,6 +27,7 @@ type Root = RenderResult['container'];
 const noop = () => {};
 const overlayCallbacks = {
   onDrawTap: noop,
+  onStampPlace: noop,
   onDrawRect: noop,
   onSelectOverlay: noop,
   onCommitMove: noop,

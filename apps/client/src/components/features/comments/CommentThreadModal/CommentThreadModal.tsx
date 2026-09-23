@@ -2,7 +2,13 @@ import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
 import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { findFirstExcerptMatch } from '@keres/shared';
+import type { TextRange } from '@keres/shared';
+import {
+  collapseWhitespace,
+  findFirstExcerptMatch,
+  frameMatchWindow,
+  stripMarkdownText,
+} from '@keres/shared';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Ionicons } from '@expo/vector-icons';
@@ -95,13 +101,32 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     [comments],
   );
 
-  // The typed excerpt anchors live in the snapshot by the same rule that marks it:
-  // first occurrence, case- and accent-insensitive. A stale excerpt (field edited
-  // since) simply marks nothing and keeps its warning.
-  const liveExcerptMatch = useMemo(
-    () => findFirstExcerptMatch(fieldValueSnapshot, excerptText),
-    [fieldValueSnapshot, excerptText],
-  );
+  // Prose snapshots hold markdown but preview rendered, like the document: no
+  // markup symbol ever shows. Plain detail fields preview raw, where asterisks
+  // are literal prose. Either way the preview flows as one line: line breaks
+  // would corrupt the framed window, so they read as spaces.
+  const displaySnapshot = useMemo(() => {
+    const rendered = showExcerptAnchorNotice
+      ? stripMarkdownText(fieldValueSnapshot)
+      : fieldValueSnapshot;
+    return collapseWhitespace(rendered);
+  }, [fieldValueSnapshot, showExcerptAnchorNotice]);
+  // The typed excerpt anchors live in the preview by the same rule that marks it:
+  // first occurrence, case- and accent-insensitive, compared in the exact space
+  // the preview shows (rendered, then collapsed, on both sides). A stale excerpt
+  // (field edited since) simply marks nothing and keeps its warning.
+  const liveExcerptMatch = useMemo(() => {
+    const rendered = showExcerptAnchorNotice ? stripMarkdownText(excerptText) : excerptText;
+    return findFirstExcerptMatch(displaySnapshot, collapseWhitespace(rendered));
+  }, [displaySnapshot, excerptText, showExcerptAnchorNotice]);
+  // Long previews frame around the anchor (like backlinks: ...context marked
+  // context...) instead of always opening at the head. Short texts pass through
+  // untouched, and with no anchor the head shows as before.
+  const framedPreview = useMemo((): { text: string; ranges: TextRange[] } => {
+    if (!liveExcerptMatch) return { text: displaySnapshot, ranges: [] };
+    const framed = frameMatchWindow(displaySnapshot, liveExcerptMatch);
+    return { text: framed.text, ranges: [framed.match] };
+  }, [displaySnapshot, liveExcerptMatch]);
   const excerptMismatch = excerptText.trim().length > 0 && !liveExcerptMatch;
 
   const handleSubmit = useCallback(async () => {
@@ -217,8 +242,8 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       <View style={styles.snapshotBlock}>
         <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
         <MarkedText
-          text={fieldValueSnapshot || t('common_na')}
-          ranges={liveExcerptMatch ? [liveExcerptMatch] : []}
+          text={framedPreview.text || t('common_na')}
+          ranges={framedPreview.ranges}
           style={styles.snapshotText}
           numberOfLines={4}
         />

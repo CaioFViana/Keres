@@ -3,6 +3,7 @@ import {
   findAllCaseInsensitiveMatches,
   findFirstExcerptMatch,
   parseMarkdownToDocument,
+  sliceMatchAcrossSpans,
 } from '@keres/shared';
 import { useMemo } from 'react';
 import type React from 'react';
@@ -113,25 +114,30 @@ export function MarkdownPreview({
       ),
     [blocks, highlightQuery],
   );
-  // Each excerpt marks its anchor only: the first hit in the first span that holds
-  // it. Spans partition the body in order, so that is the body's first match - the
-  // same passage the modal's snapshot points at.
+  // Each excerpt marks its anchor only: the first hit in the first block whose
+  // rendered text holds it, sliced back onto the spans it crosses - a block
+  // renders its spans concatenated, so passages spanning a style boundary
+  // (`**bold** word`) anchor whole instead of matching no span. Blocks partition
+  // the body in order, so that is the body's first match - the same passage the
+  // modal's snapshot points at.
   const spanCommentRanges = useMemo(() => {
     const anchored = new Set<number>();
-    return blocks.map((block) =>
-      block.spans.map((span) => {
-        const ranges: TextRange[] = [];
-        (commentExcerpts ?? []).forEach((excerpt, excerptIndex) => {
-          if (anchored.has(excerptIndex)) return;
-          const hit = findFirstExcerptMatch(span.text, excerpt);
-          if (hit) {
-            anchored.add(excerptIndex);
-            ranges.push(hit);
-          }
-        });
-        return ranges;
-      }),
-    );
+    return blocks.map((block) => {
+      const spanTexts = block.spans.map((span) => span.text);
+      const full = spanTexts.join('');
+      const perSpan: TextRange[][] = block.spans.map(() => []);
+      (commentExcerpts ?? []).forEach((excerpt, excerptIndex) => {
+        if (anchored.has(excerptIndex)) return;
+        const hit = findFirstExcerptMatch(full, excerpt);
+        if (hit) {
+          anchored.add(excerptIndex);
+          sliceMatchAcrossSpans(spanTexts, hit).forEach((local, spanIndex) => {
+            perSpan[spanIndex] = local;
+          });
+        }
+      });
+      return perSpan;
+    });
   }, [blocks, commentExcerpts]);
   // Which span holds the current hit: spans partition the body in order, so the hits
   // count up across them exactly as the reader meets them.

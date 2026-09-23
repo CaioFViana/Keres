@@ -459,6 +459,27 @@ describe('ManuscriptScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('SceneEditor', { sceneId: 's-1' });
   });
 
+  it('opens that scene thread from its comment button, regardless of position', async () => {
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+
+    // Read mode shows prose only: no per-scene buttons.
+    expect(view.queryByTestId('manuscript-comment-s-3')).toBeNull();
+
+    await pressHeaderAction('mode-review');
+
+    // The bar still addresses the first scene (the reader never moved), but the
+    // trailing loose scene's button opens s-3's own thread.
+    expect(view.getAllByText('1. Opening')).toHaveLength(2);
+    await fireEvent.press(view.getByTestId('manuscript-comment-s-3'));
+
+    expect(mockThreadProps).toMatchObject({
+      visible: true,
+      fieldLabel: '3. Fragment',
+      fieldValueSnapshot: 'Lost pages.',
+    });
+  });
+
   it('switches read and review modes from the header', async () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');

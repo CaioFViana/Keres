@@ -10,6 +10,9 @@
  *
  * All offsets are UTF-16 code-unit offsets into the ORIGINAL text, ready for `slice`
  * and for nested `<Text>` rendering.
+ *
+ * Prose comment previews compare in the same rendered space they show (see
+ * `stripMarkdownText`): strip both sides, then match with the plain rule below.
  */
 export interface TextRange {
   /** Offset of the first anchored character in the original text. */
@@ -57,6 +60,15 @@ function foldWithMap(text: string): { folded: string; starts: number[]; ends: nu
 }
 
 /**
+ * Preview text reads as one flowing line: every whitespace run (line breaks
+ * included) collapses to a single space, ends trimmed. Both preview and excerpt
+ * go through this, so anchors agree across line breaks too.
+ */
+export function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+/**
  * First occurrence of `excerpt` in `sourceText`, case- and accent-insensitive.
  * Surrounding whitespace (typed/pasted with the excerpt) is ignored; stored excerpts
  * are already trimmed. Returns null when the excerpt is empty or no longer found -
@@ -78,6 +90,26 @@ export function findFirstExcerptMatch(
   const start = starts[at];
   const end = ends[at + needle.length - 1];
   return { start, length: end - start };
+}
+
+/**
+ * Slice one block-level match into per-span local ranges, parallel to
+ * `spanTexts`: a block renders its spans concatenated with no separator, so a
+ * match over the joined text overlaps each span exactly here. Spans the match
+ * never reaches get an empty array.
+ */
+export function sliceMatchAcrossSpans(spanTexts: string[], match: TextRange): TextRange[][] {
+  const matchStart = Math.max(0, match.start);
+  const matchEnd = Math.max(matchStart, match.start + match.length);
+  let cursor = 0;
+  return spanTexts.map((spanText) => {
+    const spanStart = cursor;
+    cursor += spanText.length;
+    const start = Math.max(matchStart, spanStart);
+    const end = Math.min(matchEnd, cursor);
+    if (end <= start) return [];
+    return [{ start: start - spanStart, length: end - start }];
+  });
 }
 
 /**
@@ -104,27 +136,58 @@ export function findAllCaseInsensitiveMatches(
   return ranges;
 }
 
+export interface FramedMatchWindow {
+  /** The framed text: window with an ellipsis on each cut side. */
+  text: string;
+  /** The match relocated into `text`, clamped to its visible part. */
+  match: TextRange;
+}
+
 /**
  * A window of at most `maxLength` characters framed around `match`: short texts pass
  * through untouched, longer ones center on the match with an ellipsis on each cut side.
- * Cut edges are trimmed so the ellipsis never hugs a stray space.
+ * Cut edges are trimmed so the ellipsis never hugs a stray space, and the match is
+ * relocated into the framed text so callers can mark it where it shows.
  */
-export function excerptAroundMatch(
+export function frameMatchWindow(
   text: string,
   match: TextRange,
   maxLength: number = 150,
-): string {
-  if (text.length <= maxLength) return text;
+): FramedMatchWindow {
+  if (text.length <= maxLength)
+    return { text, match: { start: match.start, length: match.length } };
   const safeLength = Math.max(1, maxLength);
   const center = match.start + Math.max(0, match.length) / 2;
   let windowStart = Math.round(center - safeLength / 2);
   windowStart = Math.max(0, Math.min(windowStart, text.length - safeLength));
   // A match longer than the window still opens at the match instead of centering past it.
   if (match.length >= safeLength) windowStart = Math.min(match.start, text.length - safeLength);
-  const window = text.slice(windowStart, windowStart + safeLength).trim();
+  const rawWindow = text.slice(windowStart, windowStart + safeLength);
+  const leadingCut = rawWindow.length - rawWindow.trimStart().length;
+  const trailingCut = rawWindow.length - rawWindow.trimEnd().length;
+  const window = rawWindow.trim();
   const prefix = windowStart > 0 ? '…' : '';
   const suffix = windowStart + safeLength < text.length ? '…' : '';
-  return `${prefix}${window}${suffix}`;
+  const matchEnd = match.start + Math.max(0, match.length);
+  const visibleEnd = windowStart + rawWindow.length - trailingCut;
+  const start = prefix.length + Math.max(0, match.start - windowStart - leadingCut);
+  const end = prefix.length + Math.max(0, Math.min(matchEnd, visibleEnd) - windowStart - leadingCut);
+  return {
+    text: `${prefix}${window}${suffix}`,
+    match: { start, length: Math.max(0, end - start) },
+  };
+}
+
+/**
+ * The framed text alone, for callers that show context without marking it
+ * (mention backlinks). Same window `frameMatchWindow` reports the match in.
+ */
+export function excerptAroundMatch(
+  text: string,
+  match: TextRange,
+  maxLength: number = 150,
+): string {
+  return frameMatchWindow(text, match, maxLength).text;
 }
 
 export interface ActiveTextSegment extends TextSegment {

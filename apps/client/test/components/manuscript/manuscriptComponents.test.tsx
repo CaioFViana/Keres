@@ -590,6 +590,26 @@ describe('MarkdownPreview', () => {
     expect(onCommentPress).toHaveBeenCalledTimes(1);
   });
 
+  it('marks a comment excerpt spanning a style boundary', async () => {
+    const onCommentPress = jest.fn();
+    const view = await render(
+      <MarkdownPreview
+        text="A **bold** word."
+        commentExcerpts={['bold word']}
+        onCommentPress={onCommentPress}
+        testID="preview"
+      />,
+    );
+
+    const first = view.getByText('bold');
+    const second = view.getByText(' word');
+    expect(StyleSheet.flatten(first.props.style).backgroundColor).toBe('#ccf');
+    expect(StyleSheet.flatten(second.props.style).backgroundColor).toBe('#ccf');
+
+    fireEvent.press(second);
+    expect(onCommentPress).toHaveBeenCalledTimes(1);
+  });
+
   it('marks only the first match of a repeated excerpt', async () => {
     const view = await render(
       <MarkdownPreview text="Waves. Waves again." commentExcerpts={['Waves']} testID="preview" />,

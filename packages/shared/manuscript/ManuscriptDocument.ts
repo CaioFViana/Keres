@@ -201,6 +201,99 @@ export function parseInlineLine(line: string): ManuscriptSpan[] {
   return normalizeManuscriptSpans(stack[0].parts);
 }
 
+type StripFrame = {
+  marker: ManuscriptMark;
+  openAt: number;
+  openLength: number;
+  /** Nested consumed units inside this frame: raw inside minus these means content. */
+  innerConsumed: number;
+};
+
+/**
+ * Rendered text of one inline line: consumed markers and escape backslashes
+ * removed, everything else byte-identical. Mirrors `parseInlineLine` decision
+ * for decision (same stack, same closer rules, same empty-pair and
+ * unclosed-opener literals), so the result always equals the parsed spans
+ * joined - previews show exactly what the reader shows. Single line only, like
+ * the reader: markup never spans a newline.
+ */
+export function stripInlineMarkup(line: string): string {
+  // Pass 1: run the machine, recording consumed raw spans. A close with content
+  // consumes its open and close markers; an empty close (`****`) stays literal,
+  // exactly like the reader pushing the markers back as text. Unclosed openers
+  // record nothing, so they read back literal too.
+  const consumed: { start: number; length: number }[] = [];
+  const stack: StripFrame[] = [];
+  const top = () => stack[stack.length - 1];
+  const closeTop = (closeAt: number, closeLength: number) => {
+    const frame = stack.pop() as StripFrame;
+    const innerRaw = closeAt - (frame.openAt + frame.openLength);
+    if (innerRaw - frame.innerConsumed > 0) {
+      consumed.push(
+        { start: frame.openAt, length: frame.openLength },
+        { start: closeAt, length: closeLength },
+      );
+      for (const enclosing of stack)
+        enclosing.innerConsumed += frame.openLength + closeLength;
+    }
+  };
+  let i = 0;
+  while (i < line.length) {
+    const char = line[i];
+    if (char === '\\' && i + 1 < line.length && ESCAPABLE.has(line[i + 1])) {
+      consumed.push({ start: i, length: 1 });
+      i += 2;
+      continue;
+    }
+    if (char === '*') {
+      if (top()?.marker === 'italic') {
+        closeTop(i, 1);
+        i += 1;
+        continue;
+      }
+      if (line[i + 1] === '*') {
+        if (top()?.marker === 'bold') closeTop(i, 2);
+        else stack.push({ marker: 'bold', openAt: i, openLength: 2, innerConsumed: 0 });
+        i += 2;
+        continue;
+      }
+      stack.push({ marker: 'italic', openAt: i, openLength: 1, innerConsumed: 0 });
+      i += 1;
+      continue;
+    }
+    if ((char === '_' || char === '~') && line[i + 1] === char) {
+      const mark: ManuscriptMark = char === '_' ? 'underline' : 'strikethrough';
+      if (top()?.marker === mark) closeTop(i, 2);
+      else stack.push({ marker: mark, openAt: i, openLength: 2, innerConsumed: 0 });
+      i += 2;
+      continue;
+    }
+    i += 1;
+  }
+  // Nested closes record inner spans before outer ones: sort for the emit pass.
+  consumed.sort((a, b) => a.start - b.start || a.length - b.length);
+  // Pass 2: emit every raw unit outside a consumed span.
+  let text = '';
+  let cursor = 0;
+  for (const span of consumed) {
+    text += line.slice(cursor, span.start);
+    cursor = Math.max(cursor, span.start + span.length);
+  }
+  return text + line.slice(cursor);
+}
+
+/**
+ * Rendered text of a whole markdown field: each line stripped, newlines (and
+ * blank lines) preserved byte-identically. Comment previews show this instead
+ * of the raw serialization, so no markup symbol ever leaks into them.
+ */
+export function stripMarkdownText(markdown: string): string {
+  return markdown
+    .split('\n')
+    .map((line) => stripInlineMarkup(line))
+    .join('\n');
+}
+
 function parseChunkLines(lines: string[]): ManuscriptBlock {
   // Legacy `# ` prefixes (pre-removal headings) degrade to plain paragraphs.
   const [first, ...rest] = lines;

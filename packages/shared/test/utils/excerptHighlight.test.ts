@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  parseInlineLine,
+  stripInlineMarkup,
+  stripMarkdownText,
+} from '../../manuscript/ManuscriptDocument';
+import {
+  collapseWhitespace,
   excerptAroundMatch,
   findAllCaseInsensitiveMatches,
   findFirstExcerptMatch,
+  frameMatchWindow,
+  sliceMatchAcrossSpans,
   splitTextByActiveRanges,
   splitTextByCommentRanges,
   splitTextByRanges,
@@ -65,6 +73,78 @@ describe('findFirstExcerptMatch', () => {
 
   it('ignores surrounding whitespace pasted with the excerpt', () => {
     expect(findFirstExcerptMatch('A quiet arrival', '  quiet  ')).toEqual({ start: 2, length: 5 });
+  });
+});
+
+describe('stripInlineMarkup', () => {
+  it('renders exactly what the inline grammar parses', () => {
+    const lines = [
+      'A **bold** word.',
+      '**__nest__**',
+      '***both***',
+      '****',
+      '**open',
+      'a \\* b',
+      '2 * 3',
+      '__u__ and ~~s~~',
+      '*i* x *j*',
+      'plain',
+      '',
+      '**a ****',
+      '*a **** b*',
+    ];
+    for (const line of lines) {
+      const rendered = parseInlineLine(line)
+        .map((span) => span.text)
+        .join('');
+      expect(stripInlineMarkup(line)).toBe(rendered);
+    }
+  });
+});
+
+describe('stripMarkdownText', () => {
+  it('strips each line while preserving newlines byte-identically', () => {
+    expect(stripMarkdownText('A **bold** word.\n\nSecond *line*.')).toBe(
+      'A bold word.\n\nSecond line.',
+    );
+  });
+
+  it('never lets markup span a line break', () => {
+    expect(stripMarkdownText('**open\nclose**')).toBe('**open\nclose**');
+  });
+
+  it('leaves plain text and empties untouched', () => {
+    expect(stripMarkdownText('Just prose.')).toBe('Just prose.');
+    expect(stripMarkdownText('')).toBe('');
+  });
+});
+
+describe('collapseWhitespace', () => {
+  it('reads every whitespace run as one flowing space', () => {
+    expect(collapseWhitespace('a\n\nb')).toBe('a b');
+    expect(collapseWhitespace('a\r\nb')).toBe('a b');
+    expect(collapseWhitespace('a\tb')).toBe('a b');
+    expect(collapseWhitespace('  padded  ')).toBe('padded');
+    expect(collapseWhitespace('')).toBe('');
+  });
+});
+
+describe('sliceMatchAcrossSpans', () => {
+  it('slices a block match into per-span local ranges', () => {
+    expect(
+      sliceMatchAcrossSpans(['A ', 'bold', ' word.'], { start: 2, length: 9 }),
+    ).toEqual([[], [{ start: 0, length: 4 }], [{ start: 0, length: 5 }]]);
+  });
+
+  it('keeps a within-span match on its own span', () => {
+    expect(sliceMatchAcrossSpans(['abc', 'def'], { start: 1, length: 2 })).toEqual([
+      [{ start: 1, length: 2 }],
+      [],
+    ]);
+  });
+
+  it('returns empties where the match does not reach', () => {
+    expect(sliceMatchAcrossSpans(['abc', 'def'], { start: 10, length: 2 })).toEqual([[], []]);
   });
 });
 
@@ -143,6 +223,49 @@ describe('excerptAroundMatch', () => {
 
     expect(excerpt.startsWith('…')).toBe(true);
     expect(excerpt.slice(1, 61)).toBe('b'.repeat(60));
+  });
+});
+
+describe('frameMatchWindow', () => {
+  it('passes short texts through with the match untouched', () => {
+    expect(frameMatchWindow('Alice arrives.', { start: 0, length: 5 }, 150)).toEqual({
+      text: 'Alice arrives.',
+      match: { start: 0, length: 5 },
+    });
+  });
+
+  it('relocates a mid-text match into its framed window', () => {
+    const text = `${'lorem '.repeat(40)}Alice${' ipsum'.repeat(40)}`;
+    const framed = frameMatchWindow(text, { start: text.indexOf('Alice'), length: 5 }, 60);
+
+    expect(framed.text).toBe(
+      excerptAroundMatch(text, { start: text.indexOf('Alice'), length: 5 }, 60),
+    );
+    expect(framed.text.startsWith('…')).toBe(true);
+    expect(framed.text.endsWith('…')).toBe(true);
+    expect(framed.text.slice(framed.match.start, framed.match.start + framed.match.length)).toBe(
+      'Alice',
+    );
+  });
+
+  it('drops the ellipsis on the side the window never cuts', () => {
+    const head = frameMatchWindow(`Alice ${'lorem '.repeat(40)}`, { start: 0, length: 5 }, 60);
+    expect(head.text.startsWith('…')).toBe(false);
+    expect(head.text.slice(head.match.start, head.match.start + head.match.length)).toBe('Alice');
+
+    const tailText = `${'lorem '.repeat(40)}Alice`;
+    const tail = frameMatchWindow(tailText, { start: tailText.length - 5, length: 5 }, 60);
+    expect(tail.text.endsWith('…')).toBe(false);
+    expect(tail.text.slice(tail.match.start, tail.match.start + tail.match.length)).toBe('Alice');
+  });
+
+  it('clamps an overflowing match to its visible part', () => {
+    const text = `aaa ${'b'.repeat(80)} ccc`;
+    const framed = frameMatchWindow(text, { start: 4, length: 80 }, 60);
+
+    expect(framed.text.slice(framed.match.start, framed.match.start + framed.match.length)).toBe(
+      'b'.repeat(60),
+    );
   });
 });
 

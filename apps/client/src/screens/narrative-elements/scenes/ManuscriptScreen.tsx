@@ -476,6 +476,15 @@ const ManuscriptScreen = () => {
                 >
                   <Ionicons name="pencil-outline" size={20} color={colors.textSecondary} />
                 </TouchableOpacity>
+                <TouchableOpacity
+                  testID={`manuscript-comment-${item.scene.id}`}
+                  style={styles.sceneEdit}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('comments_title')}
+                  onPress={openSceneThread}
+                >
+                  <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
               </View>
             )}
             {item.scene.body ? (

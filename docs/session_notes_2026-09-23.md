@@ -139,6 +139,82 @@ código e comentários em inglês; sem mudanças fora do escopo pedido.
 - Pergunta aberta: labels de anotação na API são inglês-only por ora; localização
   futura se o showcase precisar.
 
+### 1.9 Round-4: comentários ignoram marcação na comparação
+- **Diagnosis**: excerpts citam o texto renderizado (o que a seleção copia), mas a
+  âncora comparava contra o raw com marcadores — `**bold** word` nunca continha
+  `bold word`, e na prosa o match por span falhava em toda fronteira de estilo.
+- **Fix shared**: `stripInlineMarkup` (em `ManuscriptDocument`, ao lado da gramática
+  que espelha decisão por decisão) + `findFirstExcerptMatchInMarkdown` (compara no
+  texto renderizado, reporta offsets raw, expande sobre marcadores adjacentes para
+  a marca cobrir `**bold**` inteiro) + `sliceMatchAcrossSpans`.
+- **Modal**: composer de prosa (`showExcerptAnchorNotice`: editor + manuscript)
+  ancora markdown-aware; campos de detalhe mantêm match exato (asteriscos deles
+  são prosa literal). Seleção → comentar em texto estilizado agora ancora e acende
+  a marca ao vivo em vez de cair no aviso de mismatch.
+- **Prosa**: `MarkdownPreview` casa cada excerpt no texto renderizado do bloco e
+  fatia o hit nos spans que ele cruza — mesma âncora do snapshot do modal.
+- Testes: 13 shared (incl. golden stripper-vs-parser em 13 fixtures cabeludas) +
+  3 client (modal prosa, pin do modo plano, fronteira de estilo na prosa).
+- Gates: client full 596/596, 5998/5998; shared 84/84, 998/998; tsc/eslint 0;
+  locales audit ok. Arquivos tocados seguem < 600 linhas.
+
+### 1.10 Round-5: botão de comentário por scene no manuscript
+- **Sintoma**: scene curta (1-2 linhas) no fim do tail unchaptered — o botão da
+  barra de review acusava a scene de cima. Causa provável: scene curta nunca cobre
+  20% do viewport (`viewAreaCoveragePercentThreshold`), então nunca vira posição
+  do leitor e a barra segue apontando a anterior. Detecção intocada por decisão
+  do usuário; a saída foi atribuição explícita em vez de inferida.
+- **Fix**: botão `chatbubble-outline` ao lado do lápis em cada cabeçalho de scene
+  (review mode), `manuscript-comment-{sceneId}`, que abre a thread daquela scene
+  (`openThread`, mesmo callback das marcas). Barra e marcas inalterados.
+- Label de acessibilidade reusa `comments_title` (zero churn de locale).
+- Teste: botão da loose trailing abre s-3 com snapshot `Lost pages.` enquanto a
+  barra ainda aponta s-1.
+- Gates: client full 596/596, 5999/5999; shared 998/998 (intocado); tsc/eslint 0;
+  locales audit ok. ManuscriptScreen ~561/600 linhas de código.
+
+### 1.11 Round-6: preview do comentário em prosa mostra texto renderizado
+- **Pedido**: o snapshot acima do excerpt exibia `**` etc; para `scene.body`, o
+  preview deve mostrar o texto como no documento. Seleção/detecção já estavam ok.
+- **Fix**: modal exibe `stripMarkdownText(snapshot)` no modo prosa e ancora o
+  excerpt no mesmo espaço renderizado (strip dos dois lados + regra plain) —
+  mesma detecção, marca sempre alinhada ao que se vê. Campos de detalhe seguem
+  raw/exato.
+- **Refactor honesto**: com display renderizado, os offsets raw do round-4
+  perderam o propósito — removidos `findFirstExcerptMatchInMarkdown` (+9 testes)
+  e o mapa/expansion; `stripInlineMarkup` volta a retornar só texto e ganha o
+  wrapper multilinha `stripMarkdownText`. Golden stripper-vs-parser mantido.
+- Gates: client full 596/596, 5999/5999; shared 84/84, 992/992; tsc/eslint 0;
+  locales audit ok.
+
+### 1.12 Round-7: preview do comentário enquadra a âncora (estilo backlinks)
+- **Pedido**: preview mostrava sempre o começo; em scenes longas com excerpt no
+  meio, nada útil. Agora: `...contexto marcado contexto...` como global
+  search/backlinks.
+- **Fix shared**: `frameMatchWindow` — mesmo framing de `excerptAroundMatch`
+  (150 chars, ellipsis por lado cortado, trim das bordas) mais a marca
+  relocalizada/clampada na janela; `excerptAroundMatch` virou delegação fina
+  (5 testes antigos verdes sem tocar).
+- **Modal**: preview usa a janela quando há âncora; textos curtos passam
+  intactos e sem âncora o head mostra como antes. Vale para prosa e detalhe
+  (detalhes são curtos: no-op natural).
+- Testes: 4 shared (passthrough, centro, bordas sem ellipsis, clamp de match
+  maior que a janela) + 1 client (snapshot longo em prosa enquadra `needle`
+  marcada entre dois `…`, head cortado).
+- Gates: client full 596/596, 6000/6000; shared 84/84, 996/996; tsc/eslint 0;
+  locales audit ok.
+
+### 1.13 Round-8: preview do comentário ignora quebras de linha
+- **Pedido**: quebras de linha no snapshot corrompiam o preview enquadrado.
+- **Fix**: `collapseWhitespace` no shared (toda run de whitespace vira um
+  espaço, bordas aparadas); modal aplica no snapshot E no excerpt, então a
+  âncora continua casando — excerpt digitado atravessa quebra como espaço.
+  Bônus: prefill de seleção multilinha ancora também.
+- Testes: 1 shared + 1 client (snapshot `A **bold**\nnew line.` flui como
+  `A bold new line.` e `bold new line` marca sem warning).
+- Gates: client full 596/596, 6001/6001; shared 84/84, 997/997; tsc/eslint 0;
+  locales audit ok.
+
 ---
 
 ## 2. Achados de análise (produto, sem código)

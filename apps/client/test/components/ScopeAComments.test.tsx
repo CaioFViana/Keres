@@ -447,6 +447,96 @@ describe('CommentThreadModal', () => {
     expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
   });
 
+  it('shows the prose snapshot rendered and anchors excerpts in it', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(
+      <RealModal
+        {...baseProps}
+        showExcerptAnchorNotice
+        fieldValueSnapshot="A **quiet** arrival"
+      />,
+    );
+
+    // Rendered, like the document: no markdown symbols in the preview.
+    expect(view.queryByText('A **quiet** arrival')).toBeNull();
+    expect(view.getByText('A quiet arrival')).toBeTruthy();
+
+    await fireEvent.changeText(
+      view.getByPlaceholderText('excerpt_placeholder'),
+      'quiet arrival',
+    );
+    const marked = view.getByText('quiet arrival');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+  });
+
+  it('frames a long prose preview around the anchored excerpt', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(
+      <RealModal
+        {...baseProps}
+        showExcerptAnchorNotice
+        fieldValueSnapshot={`Head ${'filler '.repeat(40)}needle ${'tail '.repeat(40)}`}
+      />,
+    );
+
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'needle');
+    const marked = view.getByText('needle');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+    // Framed, like backlinks: the head is cut, both context sides show.
+    expect(view.queryByText(/Head/)).toBeNull();
+    expect(view.getAllByText(/…/)).toHaveLength(2);
+  });
+
+  it('flows line breaks as spaces and anchors across them', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(
+      <RealModal
+        {...baseProps}
+        showExcerptAnchorNotice
+        fieldValueSnapshot={'A **bold**\nnew line.'}
+      />,
+    );
+
+    // Rendered and flowing: no symbols, no line break in the preview.
+    expect(view.getByText('A bold new line.')).toBeTruthy();
+
+    // A typed excerpt spans the break like it spans a space.
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), 'bold new line');
+    const marked = view.getByText('bold new line');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+  });
+
+  it('keeps literal markers literal outside prose mode', async () => {
+    const RealModal = (
+      jest.requireActual(
+        '../../src/components/features/comments/CommentThreadModal/CommentThreadModal',
+      ) as { default: typeof CommentThreadModal }
+    ).default;
+    const view = await render(
+      <RealModal {...baseProps} fieldValueSnapshot="Score: 2 * 3 = 6" />,
+    );
+
+    await fireEvent.changeText(view.getByPlaceholderText('excerpt_placeholder'), '2 * 3');
+    const marked = view.getByText('2 * 3');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#aaf');
+    expect(view.queryByText('excerpt_not_found_warning')).toBeNull();
+  });
+
   it('marks only the first anchor when the excerpt repeats', async () => {
     const RealModal = (
       jest.requireActual(

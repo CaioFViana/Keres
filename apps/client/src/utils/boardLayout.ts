@@ -1,4 +1,4 @@
-import type { BoardContentType, BoardNodeType } from '@keres/shared';
+import type { BoardContentType, BoardNodeType, SpatialRect } from '@keres/shared';
 
 export const BOARD_NODE_WIDTH = 148;
 export const BOARD_NODE_HEIGHT = 86;
@@ -227,8 +227,10 @@ export function normalizeBoardCanvas(
   minWidth = BOARD_CANVAS_MIN,
   minHeight = BOARD_CANVAS_MIN,
   galleryMediaById?: BoardGalleryMediaById,
+  /** Extra world rects the canvas must include (overlay bounds in the export). */
+  extraRects?: readonly SpatialRect[],
 ): { offsetX: number; offsetY: number; width: number; height: number } {
-  if (nodes.length === 0) {
+  if (nodes.length === 0 && (extraRects?.length ?? 0) === 0) {
     return { offsetX: 0, offsetY: 0, width: minWidth, height: minHeight };
   }
   let minX = Number.POSITIVE_INFINITY;
@@ -241,6 +243,12 @@ export function normalizeBoardCanvas(
     minY = Math.min(minY, node.y);
     maxX = Math.max(maxX, node.x + size.width);
     maxY = Math.max(maxY, node.y + size.height);
+  }
+  for (const rect of extraRects ?? []) {
+    minX = Math.min(minX, rect.x);
+    minY = Math.min(minY, rect.y);
+    maxX = Math.max(maxX, rect.x + rect.width);
+    maxY = Math.max(maxY, rect.y + rect.height);
   }
   return {
     offsetX: BOARD_CANVAS_PADDING - minX,

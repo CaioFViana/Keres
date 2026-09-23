@@ -9,6 +9,7 @@ import type {
 import type { LocationMapSelect } from '../db/schema';
 import type { NotificationType } from '../state/notificationStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
+import type { SvgExportColors } from '../utils/svgExport';
 import {
   buildLocationMapFileName,
   deliverMapExport,
@@ -33,13 +34,7 @@ interface Options {
   nodeNames: Record<string, string>;
   connections: LocationMapConnection[];
   contains: LocationMapContains[];
-  colors: {
-    background: string;
-    surface: string;
-    text: string;
-    textSecondary: string;
-    border: string;
-  };
+  colors: SvgExportColors;
   t: TFunction;
   showNotification: (message: string, type?: NotificationType) => void;
   setExporting: Dispatch<SetStateAction<boolean>>;

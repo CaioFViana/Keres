@@ -8,6 +8,18 @@ import type { SpatialPoint } from './spatialCanvas';
  * (or polygon points the renderers close with Z) - never a platform drawing call.
  */
 
+/**
+ * Paint both renderers share: the Skia layer and the SVG export read these, so a stroke
+ * or fill tuned on screen carries into the exported file with no second edit.
+ */
+export const CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH = 2;
+export const CANVAS_OVERLAY_DASH_INTERVALS = [6, 4] as const;
+export const CANVAS_OVERLAY_POLYGON_FILL_OPACITY = 0.18;
+export const CANVAS_OVERLAY_SHAPE_FILL_OPACITY = 0.25;
+export const CANVAS_OVERLAY_ARROWHEAD_SIZE = 10;
+export const CANVAS_OVERLAY_LABEL_FONT_SIZE = 11;
+export const CANVAS_OVERLAY_LABEL_HALO_WIDTH = 4;
+
 /** Polyline through `points`; `closed` appends the trailing Z (polygons). */
 export function canvasOverlayPolylinePath(
   points: readonly SpatialPoint[],

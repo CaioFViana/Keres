@@ -5,6 +5,13 @@ import {
   type SpatialRect,
 } from '@keres/shared';
 import {
+  CANVAS_OVERLAY_ARROWHEAD_SIZE,
+  CANVAS_OVERLAY_DASH_INTERVALS,
+  CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH,
+  CANVAS_OVERLAY_LABEL_FONT_SIZE,
+  CANVAS_OVERLAY_LABEL_HALO_WIDTH,
+  CANVAS_OVERLAY_POLYGON_FILL_OPACITY,
+  CANVAS_OVERLAY_SHAPE_FILL_OPACITY,
   canvasOverlayArrowhead,
   canvasOverlayEllipsePath,
   canvasOverlayFinalAngle,
@@ -27,14 +34,6 @@ interface CanvasOverlayLayerProps {
   /** Null-safe: without a font the vectors draw and only labels are skipped. */
   font: SkFont | null;
 }
-
-const LABEL_FONT_SIZE = 11;
-const LABEL_HALO_WIDTH = 4;
-const DEFAULT_STROKE_WIDTH = 2;
-const DEFAULT_POLYGON_FILL_OPACITY = 0.18;
-const DEFAULT_SHAPE_FILL_OPACITY = 0.25;
-const ARROWHEAD_SIZE = 10;
-const DASH_INTERVALS = [6, 4] as const;
 
 /**
  * The vector overlays of a Board or Location Map, drawn as children of the surface's own
@@ -122,7 +121,7 @@ const OverlayView = React.memo(function OverlayView({
       const tip = overlay.points[overlay.points.length - 1];
       const arrow =
         overlay.directed && overlay.points.length >= 2
-          ? canvasOverlayArrowhead(tip, canvasOverlayFinalAngle(overlay.points), ARROWHEAD_SIZE)
+          ? canvasOverlayArrowhead(tip, canvasOverlayFinalAngle(overlay.points), CANVAS_OVERLAY_ARROWHEAD_SIZE)
           : null;
       return (
         <>
@@ -130,9 +129,9 @@ const OverlayView = React.memo(function OverlayView({
             path={path}
             style="stroke"
             color={color}
-            strokeWidth={overlay.strokeWidth ?? DEFAULT_STROKE_WIDTH}
+            strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
           >
-            {overlay.dashed ? <DashPathEffect intervals={[...DASH_INTERVALS]} /> : null}
+            {overlay.dashed ? <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} /> : null}
           </Path>
           {arrow && <Path path={polygonPointsToPath(arrow)} color={color} />}
           {label}
@@ -145,13 +144,13 @@ const OverlayView = React.memo(function OverlayView({
           <Path
             path={canvasOverlayPolylinePath(overlay.points, true)}
             color={color}
-            opacity={overlay.fillOpacity ?? DEFAULT_POLYGON_FILL_OPACITY}
+            opacity={overlay.fillOpacity ?? CANVAS_OVERLAY_POLYGON_FILL_OPACITY}
           />
           <Path
             path={canvasOverlayPolylinePath(overlay.points, true)}
             style="stroke"
             color={color}
-            strokeWidth={overlay.strokeWidth ?? DEFAULT_STROKE_WIDTH}
+            strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
           />
           {label}
         </>
@@ -165,8 +164,8 @@ const OverlayView = React.memo(function OverlayView({
       );
       return (
         <>
-          <Path path={path} style="stroke" color={color} strokeWidth={DEFAULT_STROKE_WIDTH}>
-            {overlay.dashed === false ? null : <DashPathEffect intervals={[...DASH_INTERVALS]} />}
+          <Path path={path} style="stroke" color={color} strokeWidth={CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}>
+            {overlay.dashed === false ? null : <DashPathEffect intervals={[...CANVAS_OVERLAY_DASH_INTERVALS]} />}
           </Path>
           {label}
         </>
@@ -180,13 +179,13 @@ const OverlayView = React.memo(function OverlayView({
       return (
         <>
           {overlay.filled ? (
-            <Path path={path} color={color} opacity={DEFAULT_SHAPE_FILL_OPACITY} />
+            <Path path={path} color={color} opacity={CANVAS_OVERLAY_SHAPE_FILL_OPACITY} />
           ) : null}
           <Path
             path={path}
             style="stroke"
             color={color}
-            strokeWidth={overlay.strokeWidth ?? DEFAULT_STROKE_WIDTH}
+            strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
           />
           {label}
         </>
@@ -215,7 +214,7 @@ function OverlayLabel({
 }) {
   // Skia has no `textAnchor`: center by measured width instead. Both place the baseline at
   // the same y.
-  const labelX = x - measureEdgeLabelWidth(font, text, LABEL_FONT_SIZE) / 2;
+  const labelX = x - measureEdgeLabelWidth(font, text, CANVAS_OVERLAY_LABEL_FONT_SIZE) / 2;
   return (
     <>
       <SkiaText
@@ -225,7 +224,7 @@ function OverlayLabel({
         text={text}
         color={halo}
         style="stroke"
-        strokeWidth={LABEL_HALO_WIDTH}
+        strokeWidth={CANVAS_OVERLAY_LABEL_HALO_WIDTH}
       />
       <SkiaText x={labelX} y={y} font={font} text={text} color={color} />
     </>

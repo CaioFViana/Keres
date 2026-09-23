@@ -5,18 +5,20 @@ import type {
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import { interpolateColor, pointOnCircleBoundary } from '@keres/shared/graphs/locationMapGeometry';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
-import { LOCATION_MAP_ICON_PATHS } from './locationMapIconPaths';
+import { canvasOverlayExportBounds, renderCanvasOverlaySvg } from './canvasOverlaySvg';
+import { renderMapIconSvg } from './mapIconSvg';
+import {
+  escapeSvgXml,
+  roundSvg,
+  svgExportDocument,
+  svgExportTitleBlock,
+  type SvgExportColors,
+} from './svgExport';
 
 export interface LocationMapSvgOptions {
   title: string;
   subtitle: string;
-  colors: {
-    background: string;
-    surface: string;
-    text: string;
-    textSecondary: string;
-    border: string;
-  };
+  colors: SvgExportColors;
   /** Display names of the locations, keyed by location id. */
   nodeNames: Record<string, string>;
   /** Real `connected_to` relations, drawn as solid lines. */
@@ -35,42 +37,6 @@ const PADDING = 40;
 const HEADER = 70;
 /** Width of the contrast halo behind every line, so it stays visible over the image bases. */
 const HALO_WIDTH = 6;
-/** Display size of a map icon inside the node circle (ionicons viewBox is 512×512). */
-const ICON_PIXEL_SIZE = 32;
-const ICON_SCALE = ICON_PIXEL_SIZE / 512;
-
-/** Resolves the shapes for a stored Ionicons glyph name; never silently substitutes another icon. */
-function resolveMapIconShapes(iconName: string): string {
-  const key = (iconName ?? '').trim();
-  if (!key) return '';
-  if (LOCATION_MAP_ICON_PATHS[key]) return LOCATION_MAP_ICON_PATHS[key];
-  // Older picks may have used outline/sharp variants; the map sheet stores the solid name.
-  const solid = key.replace(/-outline$/, '').replace(/-sharp$/, '');
-  return LOCATION_MAP_ICON_PATHS[solid] ?? '';
-}
-
-/**
- * Draws the node's own icon with fill + transform on every shape.
- *
- * Nested `<svg viewBox>` and parent-`<g fill>` both fail in some hosts (inherited fill dropped, or
- * every nested svg painted as the first). Per-shape attributes stay reliable, and we do not fall
- * back to the Location default (`map`) — that made every custom pick look identical in the export.
- */
-function renderMapIcon(iconName: string, cx: number, cy: number, color: string): string {
-  const shapes = resolveMapIconShapes(iconName);
-  if (!shapes) return '';
-  const fill = escapeXml(color);
-  const x = round(cx - ICON_PIXEL_SIZE / 2);
-  const y = round(cy - ICON_PIXEL_SIZE / 2);
-  const transform = `translate(${x} ${y}) scale(${ICON_SCALE})`;
-  return shapes
-    .replace(/\sfill="[^"]*"/g, '')
-    .replace(/\stransform="[^"]*"/g, '')
-    .replace(
-      /<(path|circle|rect|polygon)\b([^>]*?)\s*\/>/g,
-      `<$1$2 fill="${fill}" transform="${transform}"/>`,
-    );
-}
 
 /** A triangle marking the arrow's tip, pointing along `angle` (radians). */
 function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number): string {
@@ -79,7 +45,7 @@ function arrowHeadPoints(tipX: number, tipY: number, angle: number, size: number
     [tipX - size * Math.cos(angle - 0.4), tipY - size * Math.sin(angle - 0.4)],
     [tipX - size * Math.cos(angle + 0.4), tipY - size * Math.sin(angle + 0.4)],
   ]
-    .map((pair) => pair.map(round).join(','))
+    .map((pair) => pair.map(roundSvg).join(','))
     .join(' ');
 }
 
@@ -115,10 +81,18 @@ export function renderLocationMapSvg(
     maxX = Math.max(maxX, marker.x + NODE_RADIUS);
     maxY = Math.max(maxY, marker.y + NODE_RADIUS + 18);
   }
+  for (const overlay of content.overlays ?? []) {
+    const bounds = canvasOverlayExportBounds(overlay);
+    minX = Math.min(minX, bounds.x);
+    minY = Math.min(minY, bounds.y);
+    maxX = Math.max(maxX, bounds.x + bounds.width);
+    maxY = Math.max(maxY, bounds.y + bounds.height);
+  }
   if (
     content.images.length === 0 &&
     content.nodes.length === 0 &&
-    (content.markers?.length ?? 0) === 0
+    (content.markers?.length ?? 0) === 0 &&
+    (content.overlays?.length ?? 0) === 0
   ) {
     minX = 0;
     minY = 0;
@@ -132,6 +106,10 @@ export function renderLocationMapSvg(
   const height = Math.max(400, maxY - minY + PADDING * 2 + HEADER);
 
   const shift = (x: number, y: number) => ({ x: x + offsetX, y: y + offsetY });
+  const overlayGroups = renderCanvasOverlaySvg(content.overlays, {
+    shift,
+    colors: options.colors,
+  });
 
   const byLocation = new Map<string, { x: number; y: number; color: string }>();
   for (const node of content.nodes) {
@@ -142,9 +120,9 @@ export function renderLocationMapSvg(
     const p = shift(image.x, image.y);
     const uri = options.imageUris?.[image.galleryId];
     if (uri) {
-      return `<image href="${uri}" x="${round(p.x)}" y="${round(p.y)}" width="${round(image.width)}" height="${round(image.height)}" preserveAspectRatio="xMidYMid slice"/>`;
+      return `<image href="${uri}" x="${roundSvg(p.x)}" y="${roundSvg(p.y)}" width="${roundSvg(image.width)}" height="${roundSvg(image.height)}" preserveAspectRatio="xMidYMid slice"/>`;
     }
-    return `<rect x="${round(p.x)}" y="${round(p.y)}" width="${round(image.width)}" height="${round(image.height)}" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`;
+    return `<rect x="${roundSvg(p.x)}" y="${roundSvg(p.y)}" width="${roundSvg(image.width)}" height="${roundSvg(image.height)}" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`;
   });
 
   // Every line is drawn twice: a thicker background-coloured halo first, then the coloured line,
@@ -162,12 +140,12 @@ export function renderLocationMapSvg(
       const p1 = shift(start.x, start.y);
       const p2 = shift(end.x, end.y);
       const color = interpolateColor(a.color, b.color);
-      const label = connection.label ? escapeXml(connection.label) : null;
-      const labelX = round((p1.x + p2.x) / 2);
-      const labelY = round((p1.y + p2.y) / 2 - 6);
+      const label = connection.label ? escapeSvgXml(connection.label) : null;
+      const labelX = roundSvg((p1.x + p2.x) / 2);
+      const labelY = roundSvg((p1.y + p2.y) / 2 - 6);
       return [
-        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
-        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85"/>`,
+        `<path d="M ${roundSvg(p1.x)} ${roundSvg(p1.y)} L ${roundSvg(p2.x)} ${roundSvg(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
+        `<path d="M ${roundSvg(p1.x)} ${roundSvg(p1.y)} L ${roundSvg(p2.x)} ${roundSvg(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.85"/>`,
         label
           ? `<text x="${labelX}" y="${labelY}" font-size="11" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4">${label}</text>`
           : '',
@@ -191,12 +169,12 @@ export function renderLocationMapSvg(
       const p1 = shift(start.x, start.y);
       const p2 = shift(tip.x, tip.y);
       const color = interpolateColor(from.color, to.color);
-      const label = relation.label ? escapeXml(relation.label) : null;
-      const labelX = round((p1.x + p2.x) / 2);
-      const labelY = round((p1.y + p2.y) / 2 - 6);
+      const label = relation.label ? escapeSvgXml(relation.label) : null;
+      const labelX = roundSvg((p1.x + p2.x) / 2);
+      const labelY = roundSvg((p1.y + p2.y) / 2 - 6);
       return [
-        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
-        `<path d="M ${round(p1.x)} ${round(p1.y)} L ${round(p2.x)} ${round(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
+        `<path d="M ${roundSvg(p1.x)} ${roundSvg(p1.y)} L ${roundSvg(p2.x)} ${roundSvg(p2.y)}" fill="none" stroke="${options.colors.background}" stroke-width="${HALO_WIDTH}" stroke-opacity="0.9"/>`,
+        `<path d="M ${roundSvg(p1.x)} ${roundSvg(p1.y)} L ${roundSvg(p2.x)} ${roundSvg(p2.y)}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${CONTAINS_DASH}" stroke-opacity="0.85"/>`,
         `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 13)}" fill="${options.colors.background}"/>`,
         `<polygon points="${arrowHeadPoints(p2.x, p2.y, angle, 10)}" fill="${color}"/>`,
         label
@@ -210,62 +188,43 @@ export function renderLocationMapSvg(
 
   const nodeElements = content.nodes.map((node) => {
     const p = shift(node.x, node.y);
-    const name = escapeXml(options.nodeNames[node.locationId] ?? node.locationId);
+    const name = escapeSvgXml(options.nodeNames[node.locationId] ?? node.locationId);
     // Match the on-screen layout: label sits under the circle, not over the icon at the centre.
     const labelY = p.y + NODE_RADIUS + 14;
     return [
-      `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(node.color)}" stroke-width="2"/>`,
-      renderMapIcon(node.icon, p.x, p.y, node.color),
+      `<circle cx="${roundSvg(p.x)}" cy="${roundSvg(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeSvgXml(node.color)}" stroke-width="2"/>`,
+      renderMapIconSvg(node.icon, p.x, p.y, node.color),
       // The name is drawn twice: a thick background-coloured stroke first (a halo), then the text,
       // so it stays readable over the image bases - the same treatment the lines got.
-      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
-      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+      `<text x="${roundSvg(p.x)}" y="${roundSvg(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
+      `<text x="${roundSvg(p.x)}" y="${roundSvg(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
   const markerElements = (content.markers ?? []).map((marker) => {
     const p = shift(marker.x, marker.y);
-    const name = escapeXml(marker.title);
+    const name = escapeSvgXml(marker.title);
     const labelY = p.y + NODE_RADIUS + 14;
     return [
-      `<circle cx="${round(p.x)}" cy="${round(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeXml(marker.color)}" stroke-width="2"/>`,
-      renderMapIcon(marker.icon, p.x, p.y, marker.color),
-      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
-      `<text x="${round(p.x)}" y="${round(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
+      `<circle cx="${roundSvg(p.x)}" cy="${roundSvg(p.y)}" r="${NODE_RADIUS}" fill="${options.colors.surface}" stroke="${escapeSvgXml(marker.color)}" stroke-width="2"/>`,
+      renderMapIconSvg(marker.icon, p.x, p.y, marker.color),
+      `<text x="${roundSvg(p.x)}" y="${roundSvg(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.background}" stroke="${options.colors.background}" stroke-width="4" stroke-linejoin="round">${name}</text>`,
+      `<text x="${roundSvg(p.x)}" y="${roundSvg(labelY)}" font-size="10" font-weight="600" text-anchor="middle" fill="${options.colors.text}">${name}</text>`,
     ].join('');
   });
 
   const body = [
-    `<rect x="0" y="0" width="${round(width)}" height="${round(height)}" fill="${options.colors.background}"/>`,
-    `<text x="24" y="28" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
-    `<text x="24" y="46" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
+    `<rect x="0" y="0" width="${roundSvg(width)}" height="${roundSvg(height)}" fill="${options.colors.background}"/>`,
+    svgExportTitleBlock(options.title, options.subtitle, options.colors),
     `<g>`,
     ...imageElements,
     ...connectionElements,
     ...containsElements,
+    ...overlayGroups.vectors,
     ...nodeElements,
     ...markerElements,
+    ...overlayGroups.stamps,
     '</g>',
   ].join('\n');
 
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width)}" height="${round(height)}" viewBox="0 0 ${round(width)} ${round(height)}" font-family="Helvetica, Arial, sans-serif">`,
-    `<title>${escapeXml(options.title)}</title>`,
-    body,
-    '</svg>',
-    '',
-  ].join('\n');
-}
-
-function escapeXml(value: string): string {
-  return (value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
+  return svgExportDocument({ width, height, title: options.title, body });
 }

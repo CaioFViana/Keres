@@ -96,10 +96,15 @@ Novo `packages/shared/schemas/CanvasOverlaySchemas.ts`:
    o componente é compartilhado), ferramenta `stamp` com commit de um toque,
    linha de ícone no sheet do carimbo. Sem pack SVG ainda: nomes `keres:`
    caem no glifo `location` até o pack existir.
-5. **(Secundária) Paridade de export.** Estender `storyMapSvgExport.ts`
-   (boards) e `locationMapSvg.ts` (mapas) com os overlays via geometria
-   compartilhada; `deliverMapExport`/`exportFormat` inalterados. Inclui
-   reduzir as diferenças atuais onde barato.
+5. **(Secundária, feita) Paridade de export.** `canvasOverlaySvg.ts` desenha
+   os overlays nos dois exportadores via geometria compartilhada (mesmos
+   `d`, setas, tracejados, fills e rótulos da tela; vetores sob os nós,
+   carimbos acima); `deliverMapExport`/`exportFormat` inalterados, PNG pega
+   carona no mesmo SVG. Dedup sem mudar um byte: `svgExport.ts` (escape,
+   round, título, documento), `mapIconSvg.ts` (ícones + namespace
+   `ion:`/`keres:`) e `SvgExportColors` único (com `primary` para carimbos
+   sem cor). Alturas de cabeçalho e tamanhos mínimos ficam por superfície
+   — são layout, não deriva.
 
 ## Arquivos-touch previstos
 

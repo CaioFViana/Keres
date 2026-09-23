@@ -30,6 +30,7 @@ const options = {
     text: '#111111',
     textSecondary: '#666666',
     border: '#cccccc',
+    primary: '#8855ff',
   },
   nodeNames: { 'location-1': 'Reino', 'location-2': 'Cidade' },
   connections: [{ locationAId: 'location-1', locationBId: 'location-2' }],
@@ -202,4 +203,49 @@ it('draws free markers with their own labels', () => {
   );
   expect(svg).toContain('Hidden key');
   expect(svg).toContain('#8BC34A');
+});
+
+it('draws overlay vectors under the nodes and stamps above them', () => {
+  const svg = renderLocationMapSvg(
+    {
+      images: [],
+      nodes: [
+        { id: '02GHJKMN', locationId: 'location-1', x: 400, y: 300, icon: 'pin', color: '#8BC34A' },
+      ],
+      overlays: [
+        {
+          id: 'ov-1',
+          kind: 'line' as const,
+          points: [
+            { x: -300, y: -200 },
+            { x: 0, y: 0 },
+          ],
+          color: '#123456',
+        },
+        {
+          id: 'ov-2',
+          kind: 'stamp' as const,
+          x: 100,
+          y: 100,
+          icon: 'flag',
+          color: '#654321',
+          label: 'Keep',
+        },
+      ],
+    },
+    options,
+  );
+
+  // Normalized (+340,+310) like the nodes.
+  expect(svg).toContain('<path d="M 40 110 L 340 310"');
+  const vector = svg.indexOf('#123456');
+  const node = svg.indexOf('>Reino</text>');
+  const stamp = svg.indexOf('#654321');
+  expect(vector).toBeGreaterThan(-1);
+  expect(node).toBeGreaterThan(-1);
+  expect(stamp).toBeGreaterThan(-1);
+  expect(vector).toBeLessThan(node);
+  expect(stamp).toBeGreaterThan(node);
+  expect(svg).toContain('>Keep</text>');
+  expect(svg).toContain('transform="translate(');
 });

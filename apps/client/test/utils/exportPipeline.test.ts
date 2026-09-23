@@ -31,6 +31,7 @@ const COLORS = {
   text: '#ffffff',
   textSecondary: '#aaaaaa',
   border: '#444444',
+  primary: '#8855ff',
 };
 
 const PNG_BYTES = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);

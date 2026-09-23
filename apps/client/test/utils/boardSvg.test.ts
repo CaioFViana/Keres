@@ -31,6 +31,7 @@ const options = {
     text: '#111111',
     textSecondary: '#666666',
     border: '#cccccc',
+    primary: '#8855ff',
   },
   titles: {
     '01ABCDEF': { title: 'Tolkien & <Cia>', typeLabel: 'Note' },
@@ -458,4 +459,79 @@ it("gives a resized Gallery pin's extra space to its picture, not to the footer"
   // The title stays a compact footer below the picture (the node is shifted +200 by the canvas
   // normalization): footer top 576 + 20 = 596, below the picture's bottom edge at 568.
   expect(svg).toContain('y="596"');
+});
+
+it('draws overlay vectors under the pins and stamps above them', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Tolkien & <Cia>',
+          body: null,
+        },
+      ],
+      edges: [],
+      overlays: [
+        {
+          id: 'ov-1',
+          kind: 'line' as const,
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+          color: '#123456',
+        },
+        { id: 'ov-2', kind: 'stamp' as const, x: 60, y: 60, icon: 'pin', color: '#654321' },
+      ],
+    },
+    options,
+  );
+
+  const vector = svg.indexOf('#123456');
+  const pin = svg.indexOf('Tolkien &amp;');
+  const stamp = svg.indexOf('#654321');
+  expect(vector).toBeGreaterThan(-1);
+  expect(pin).toBeGreaterThan(-1);
+  expect(stamp).toBeGreaterThan(-1);
+  expect(vector).toBeLessThan(pin);
+  expect(stamp).toBeGreaterThan(pin);
+});
+
+it('grows the canvas for overlays dragged outside the drawing', () => {
+  const svg = renderBoardSvg(
+    {
+      nodes: [
+        {
+          id: '01ABCDEF',
+          kind: 'note' as const,
+          x: 40,
+          y: 40,
+          title: 'Tolkien & <Cia>',
+          body: null,
+        },
+      ],
+      edges: [],
+      overlays: [
+        {
+          id: 'ov-1',
+          kind: 'line' as const,
+          points: [
+            { x: -300, y: -200 },
+            { x: 0, y: 0 },
+          ],
+        },
+      ],
+    },
+    options,
+  );
+
+  // Bodiless note (40,40 + 148x86) plus the overlay (-300,-200): 188 + 300 + 480 wide.
+  expect(svg).toContain('width="968"');
+  expect(svg).toContain('viewBox="0 0 968 862"');
+  // Shifted by the normalization (+540,+440) like the pins.
+  expect(svg).toContain('<path d="M 240 240 L 540 440"');
 });

@@ -344,6 +344,7 @@ const BoardCanvasScreen = () => {
           text: colors.text,
           textSecondary: colors.textSecondary,
           border: colors.border,
+          primary: colors.primary,
         },
         titles,
         galleryMediaById,

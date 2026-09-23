@@ -5,6 +5,7 @@ import type {
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import { mediaFileService } from '../services/MediaFileService';
 import type { BoardEntitySummary } from './boardEntitySummary';
+import type { SvgExportColors } from './svgExport';
 import type { BoardGalleryMediaById } from './boardLayout';
 import { renderBoardSvg, type BoardSvgOptions } from './boardSvg';
 import {
@@ -13,18 +14,10 @@ import {
 } from './locationMapExport';
 import { bytesToBase64 } from './locationMapMedia';
 
-type SvgColors = {
-  background: string;
-  surface: string;
-  text: string;
-  textSecondary: string;
-  border: string;
-};
-
 interface BuildLocationMapSvgOptions {
   title: string;
   subtitle: string;
-  colors: SvgColors;
+  colors: SvgExportColors;
   nodeNames: Record<string, string>;
   connections: LocationMapConnection[];
   contains: LocationMapContains[];
@@ -33,7 +26,7 @@ interface BuildLocationMapSvgOptions {
 interface BuildBoardSvgOptions {
   title: string;
   subtitle: string;
-  colors: SvgColors;
+  colors: SvgExportColors;
   titles: BoardSvgOptions['titles'];
   galleryMediaById: BoardGalleryMediaById;
   summaries: Record<string, BoardEntitySummary | null>;

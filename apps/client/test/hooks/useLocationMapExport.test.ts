@@ -22,6 +22,7 @@ const colors = {
   text: '#fff',
   textSecondary: '#ccc',
   border: '#333',
+  primary: '#85f',
 };
 
 beforeEach(() => {

@@ -73,6 +73,32 @@ código e comentários em inglês; sem mudanças fora do escopo pedido.
   arquivo, com comentário explicando. Higiene futura desse arquivo: pêndente (não corrigir
   a causa agora foi decisão de escopo).
 
+### 1.6 Itens 1, 3, 5 do backlog + refinamentos round-2
+- **Quick capture em modal**: quick-add de scene saiu da linha inline (o container do
+  capítulo não cresce, a nova scene ficava escondida) para `QuickAddSceneModal`
+  (`ResponsiveModal` + `FormActions`, conforme modais do sistema). O input/botão viraram
+  `QuickAddSceneRow` reutilizado dentro do modal.
+- **Busca no manuscript com scroll até o match ativo**: jump indexado por seção +
+  fine-scroll medido (`computeScrollAdjustment`, margem 96) até o host do hit ativo via
+  `measureInWindow`; scenes de várias páginas agora mantêm o hit corrente visível.
+  Lógica extraída para `useManuscriptSearch`, o que trouxe `ManuscriptScreen` de volta
+  para baixo do teto de 600 linhas (file-size gate verde).
+- **Derivação do texto dos checks no shared**: sentenças de check/effect saíram do
+  client para `packages/shared/manuscript/choiceAnnotations.ts`; API
+  (`StoryPublicationService`, via showcase) e client geram documentos idênticos
+  (inglês default; client localiza via formatter).
+- **Busca: hits no título agora rolam até o match**: duas causas. (1) Corrida stale —
+  o retry de 120ms/rAF do hit anterior disparava depois do jump e puxava a lista para
+  longe; titles sofriam mais por não terem correção própria. Fix: geração em
+  `scrollActiveIntoView` (novo attach/detach invalida continuações pendentes).
+  (2) Cobertura — o título nunca recebia `activeRef`; agora o `MarkedText` do título
+  ativo anexa o mesmo ref dos corpos.
+- Gates: client tsc/eslint 0, suítes tocadas 194/194 (jest, incl. layering);
+  shared tsc/eslint 0, 982/982 (vitest); api tsc/eslint 0, `publicationManuscript`
+  12/12 (sqlite); `locales:audit` 0.
+- Pergunta aberta: labels de anotação na API são inglês-only por ora; localização
+  futura se o showcase precisar.
+
 ---
 
 ## 2. Achados de análise (produto, sem código)

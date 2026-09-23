@@ -3,6 +3,7 @@ import {
   findManuscriptMatches,
   isLooseScene,
   linearManuscriptSections,
+  locateOrdinalMatch,
   routeManuscriptSections,
   sectionIndexForMatch,
   type ManuscriptChapter,
@@ -185,5 +186,56 @@ describe('findManuscriptMatches', () => {
     expect(sectionIndexForMatch(matches, 0)).toBe(matches[0].sectionIndex);
     const total = matches.reduce((sum, m) => sum + m.count, 0);
     expect(sectionIndexForMatch(matches, total - 1)).toBe(matches[matches.length - 1].sectionIndex);
+  });
+});
+
+describe('locateOrdinalMatch', () => {
+  const sections = linearManuscriptSections(
+    [makeChapter()],
+    [
+      makeScene({ id: 's-1', name: 'The Harbor', body: 'Waves. Waves again.' }),
+      makeScene({ id: 's-2', name: 'Inland Waves', index: 2, body: 'No water.' }),
+    ],
+  );
+
+  it('returns null without matches or with an out-of-range ordinal', () => {
+    const { matches } = findManuscriptMatches(sections, 'waves');
+    expect(locateOrdinalMatch(sections, [], 'waves', 0)).toBeNull();
+    expect(locateOrdinalMatch(sections, matches, 'waves', -1)).toBeNull();
+    expect(locateOrdinalMatch(sections, matches, 'waves', 99)).toBeNull();
+  });
+
+  it('locates body hits with a 0-based index inside the body', () => {
+    const { matches } = findManuscriptMatches(sections, 'waves');
+    expect(locateOrdinalMatch(sections, matches, 'waves', 0)).toEqual({
+      sectionIndex: 1,
+      nameMatchIndex: -1,
+      bodyMatchIndex: 0,
+    });
+    expect(locateOrdinalMatch(sections, matches, 'waves', 1)).toEqual({
+      sectionIndex: 1,
+      nameMatchIndex: -1,
+      bodyMatchIndex: 1,
+    });
+  });
+
+  it('counts name hits first, then offsets the body index past them', () => {
+    const { matches } = findManuscriptMatches(sections, 'inland waves');
+    expect(matches).toEqual([{ sectionIndex: 2, count: 1 }]);
+    expect(locateOrdinalMatch(sections, matches, 'inland waves', 0)).toEqual({
+      sectionIndex: 2,
+      nameMatchIndex: 0,
+      bodyMatchIndex: -1,
+    });
+  });
+
+  it('walks into later sections past earlier counts', () => {
+    const { matches } = findManuscriptMatches(sections, 'waves');
+    // Two body hits in s-1, one name hit in s-2.
+    expect(locateOrdinalMatch(sections, matches, 'waves', 2)).toEqual({
+      sectionIndex: 2,
+      nameMatchIndex: 0,
+      bodyMatchIndex: -1,
+    });
   });
 });

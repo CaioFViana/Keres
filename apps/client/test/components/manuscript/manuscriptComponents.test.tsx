@@ -530,6 +530,24 @@ describe('MarkdownPreview', () => {
     }
   });
 
+  it('draws the active body hit with the strong fill', async () => {
+    const view = await render(
+      <MarkdownPreview
+        text="Waves. Waves again."
+        highlightQuery="waves"
+        activeMatchIndex={1}
+        testID="preview"
+      />,
+    );
+
+    const hits = view.getAllByText(/^Waves$/);
+    expect(hits).toHaveLength(2);
+    expect(StyleSheet.flatten(hits[0].props.style).backgroundColor).toBe('#ccf');
+    const active = StyleSheet.flatten(hits[1].props.style);
+    expect(active.backgroundColor).toBe('#00f');
+    expect(active.color).toBe('#fff');
+  });
+
   it('marks hits inside styled spans without losing their marks', async () => {
     const view = await render(
       <MarkdownPreview text="A **bold** word." highlightQuery="old" testID="preview" />,

@@ -181,6 +181,7 @@ export * from './manuscript/ManuscriptDocument';
 // Storage boundary with the enriched-html editor (HTML in/out, doc inside).
 export * from './manuscript/enrichedHtml';
 // Pure manuscript pipeline: sections, markdown reader, compiler, renderers and entry.
+export * from './manuscript/choiceAnnotations';
 export * from './manuscript/compile/manuscriptSections';
 export * from './manuscript/compile/export/manuscriptCompiler';
 export * from './manuscript/compile/export/manuscriptText';

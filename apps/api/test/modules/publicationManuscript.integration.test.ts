@@ -1,10 +1,15 @@
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   chapters,
+  choiceCheckGroups,
+  choiceChecks,
+  choices,
+  effects,
+  items,
   routes,
   routeSteps,
   scenes,
@@ -26,6 +31,16 @@ async function storedPublicationFiles(storyId: string): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+async function storedManuscript(storyId: string): Promise<string> {
+  const files = await storedPublicationFiles(storyId);
+  const manuscript = files.find((file) => file.includes('.manuscript.'));
+  if (!manuscript) throw new Error('Expected a stored manuscript file.');
+  return readFile(
+    path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', storyId, manuscript),
+    'utf8',
+  );
 }
 
 let ana: TestUser;
@@ -83,6 +98,46 @@ async function seedBranchingContent(storyId: string): Promise<{ routeId: string 
     { id: newId(), storyId, routeId, position: 2, sceneId: secondSceneId },
   ]);
   return { routeId };
+}
+
+/** A choice from the first scene to the second, gated by an item the choice itself grants. */
+async function seedChoiceAnnotations(storyId: string): Promise<void> {
+  const [start, end] = await db.query.scenes.findMany({
+    where: (sceneRows, { eq: equals }) => equals(sceneRows.storyId, storyId),
+    orderBy: (sceneRows, { asc }) => [asc(sceneRows.index)],
+  });
+  const choiceId = newId();
+  await db.insert(choices).values({
+    id: choiceId,
+    storyId,
+    sceneId: start.id,
+    nextSceneId: end.id,
+    text: 'Go on',
+  });
+  const itemId = newId();
+  await db.insert(items).values({ id: itemId, storyId, name: 'Brass Key' });
+  const groupId = newId();
+  await db
+    .insert(choiceCheckGroups)
+    .values({ id: groupId, storyId, choiceId, combinator: 'AND', order: 1 });
+  await db.insert(choiceChecks).values({
+    id: newId(),
+    storyId,
+    groupId,
+    mode: 'enable',
+    type: 'inventory',
+    order: 1,
+    itemId,
+    itemPresence: 'has',
+  });
+  await db.insert(effects).values({
+    id: newId(),
+    storyId,
+    entityType: 'Choice',
+    entityId: choiceId,
+    effectType: 'itemGrant',
+    itemId,
+  });
 }
 
 beforeEach(async () => {
@@ -151,6 +206,23 @@ describe('publishing with a manuscript', () => {
     expect(status).toBe(200);
     expect(data.manuscriptFormat).toBe('md');
     expect(data.manuscriptByteSize).toBeGreaterThan(0);
+  });
+
+  it('embeds choice requirements and effects in the published manuscript', async () => {
+    const story = await uploadTestStory(ana.token, 'Branches', 'branching');
+    const { routeId } = await seedBranchingContent(story.id);
+    await seedChoiceAnnotations(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', routeId },
+    });
+    expect(status).toBe(200);
+
+    const manuscript = await storedManuscript(story.id);
+    expect(manuscript).toContain('- Go on');
+    expect(manuscript).toContain('• Enables this choice if: "Brass Key" is in the inventory');
+    expect(manuscript).toContain('Effects');
+    expect(manuscript).toContain('• Grants item "Brass Key"');
   });
 
   it('requires a routeId for a branching manuscript', async () => {

@@ -36,27 +36,43 @@ export interface MentionRef {
   id: string;
 }
 
-/** A run of text, carrying a `ref` when it is a mention the caller should make tappable. */
+/**
+ * A run of text, carrying a `ref` when it is a mention the caller should make tappable.
+ * `start` is the run's UTF-16 offset in the scanned text, so indexers can frame the
+ * occurrence (a centered excerpt) without re-scanning for it.
+ */
 export interface MentionSegment {
   text: string;
+  start: number;
   ref?: MentionRef;
 }
 
 interface MentionCandidate {
   name: string;
-  /** `null` when two active entities share this name - see `buildMentionMatcher`. */
-  ref: MentionRef | null;
+  ref: MentionRef;
+}
+
+/** A name two or more active entities answer to: linked by neither, suggested for both. */
+export interface AmbiguousMentionName {
+  name: string;
+  entities: MentionableEntity[];
 }
 
 export interface MentionMatcher {
   /** Candidates grouped by their first token, each group ordered longest name first. */
   byFirstToken: Map<string, MentionCandidate[]>;
+  /**
+   * Names the matcher stays silent on, with every claimant. Matching ignores them;
+   * the ambiguity index turns their occurrences into resolve-in-one-tap suggestions.
+   */
+  ambiguousNames: AmbiguousMentionName[];
   /** True when nothing can match; the caller can skip segmenting entirely. */
   isEmpty: boolean;
 }
 
 export const EMPTY_MENTION_MATCHER: MentionMatcher = {
   byFirstToken: new Map(),
+  ambiguousNames: [],
   isEmpty: true,
 };
 
@@ -81,7 +97,7 @@ function isWordCharacterAt(text: string, index: number): boolean {
  * Pass **active entities only**; a deleted one simply stops linking, with no extra bookkeeping.
  */
 export function buildMentionMatcher(entities: MentionableEntity[]): MentionMatcher {
-  const byName = new Map<string, MentionCandidate>();
+  const byName = new Map<string, { name: string; entities: MentionableEntity[] }>();
 
   for (const entity of entities) {
     const name = entity.name?.trim();
@@ -90,19 +106,27 @@ export function buildMentionMatcher(entities: MentionableEntity[]): MentionMatch
 
     const existing = byName.get(name);
     if (!existing) {
-      byName.set(name, { name, ref: { type: entity.type, id: entity.id } });
+      byName.set(name, { name, entities: [{ type: entity.type, id: entity.id, name }] });
       continue;
     }
-    // A second entity answering to the same name: the app has no basis to choose between them,
-    // so it links neither. Silence beats guessing what the writer meant.
-    if (existing.ref && existing.ref.id !== entity.id) {
-      existing.ref = null;
+    // The same entity listed twice is not ambiguity.
+    if (!existing.entities.some((candidate) => candidate.id === entity.id)) {
+      existing.entities.push({ type: entity.type, id: entity.id, name });
     }
   }
 
   const byFirstToken = new Map<string, MentionCandidate[]>();
-  for (const candidate of byName.values()) {
-    if (!candidate.ref) continue;
+  const ambiguousNames: AmbiguousMentionName[] = [];
+  for (const { name, entities: claimants } of byName.values()) {
+    // A second entity answering to the same name: the app has no basis to choose between them,
+    // so it links neither. Silence beats guessing what the writer meant - but the silence is
+    // recorded, so the ambiguity index can ask the writer to resolve it.
+    if (claimants.length > 1) {
+      ambiguousNames.push({ name, entities: claimants });
+      continue;
+    }
+    const [single] = claimants as [MentionableEntity];
+    const candidate: MentionCandidate = { name, ref: { type: single.type, id: single.id } };
     const token = firstTokenOf(candidate.name) as string;
     const group = byFirstToken.get(token);
     if (group) group.push(candidate);
@@ -114,7 +138,7 @@ export function buildMentionMatcher(entities: MentionableEntity[]): MentionMatch
     group.sort((a, b) => b.name.length - a.name.length);
   }
 
-  return { byFirstToken, isEmpty: byFirstToken.size === 0 };
+  return { byFirstToken, ambiguousNames, isEmpty: byFirstToken.size === 0 };
 }
 
 export interface SplitMentionOptions {
@@ -145,7 +169,7 @@ export function splitTextIntoMentionSegments(
   options: SplitMentionOptions = {},
 ): MentionSegment[] {
   if (!text) return [];
-  if (matcher.isEmpty) return [{ text }];
+  if (matcher.isEmpty) return [{ text, start: 0 }];
 
   const segments: MentionSegment[] = [];
   const alreadyLinked = new Set<string>();
@@ -179,8 +203,9 @@ export function splitTextIntoMentionSegments(
       (options.includeRepeated === true || !alreadyLinked.has(key));
 
     if (usable && matched && ref && key) {
-      if (start > plainFrom) segments.push({ text: text.slice(plainFrom, start) });
-      segments.push({ text: matched.name, ref });
+      if (start > plainFrom)
+        segments.push({ text: text.slice(plainFrom, start), start: plainFrom });
+      segments.push({ text: matched.name, start, ref });
       alreadyLinked.add(key);
       plainFrom = start + matched.name.length;
       TOKEN_PATTERN.lastIndex = plainFrom;
@@ -189,6 +214,68 @@ export function splitTextIntoMentionSegments(
     token = TOKEN_PATTERN.exec(text);
   }
 
-  if (plainFrom < text.length) segments.push({ text: text.slice(plainFrom) });
+  if (plainFrom < text.length) segments.push({ text: text.slice(plainFrom), start: plainFrom });
   return segments;
+}
+
+export interface AmbiguousNameOccurrence {
+  name: string;
+  start: number;
+  length: number;
+  entities: MentionableEntity[];
+}
+
+/**
+ * Every occurrence of the matcher's ambiguous names in `text`, under the same rules as
+ * linked mentions (case-sensitive, Unicode boundaries, longest name first) but without
+ * the first-occurrence-per-entity limit: the ambiguity index counts and frames each one.
+ * The caller filters out the text's own entity from `entities` when it cannot link to
+ * itself.
+ */
+export function findAmbiguousNameOccurrences(
+  text: string | null | undefined,
+  matcher: MentionMatcher,
+): AmbiguousNameOccurrence[] {
+  if (!text || matcher.ambiguousNames.length === 0) return [];
+  const byFirstToken = new Map<string, AmbiguousMentionName[]>();
+  for (const ambiguous of matcher.ambiguousNames) {
+    const token = firstTokenOf(ambiguous.name);
+    if (!token) continue;
+    const group = byFirstToken.get(token);
+    if (group) group.push(ambiguous);
+    else byFirstToken.set(token, [ambiguous]);
+  }
+  for (const group of byFirstToken.values()) {
+    group.sort((a, b) => b.name.length - a.name.length);
+  }
+
+  const occurrences: AmbiguousNameOccurrence[] = [];
+  let consumedUntil = 0;
+  TOKEN_PATTERN.lastIndex = 0;
+  let token = TOKEN_PATTERN.exec(text);
+  while (token) {
+    const start = token.index;
+    if (start < consumedUntil) {
+      token = TOKEN_PATTERN.exec(text);
+      continue;
+    }
+    const group = byFirstToken.get(token[0]);
+    const matched = group?.find(
+      (candidate) =>
+        text.startsWith(candidate.name, start) &&
+        !isWordCharacterAt(text, start + candidate.name.length),
+    );
+    if (matched) {
+      occurrences.push({
+        name: matched.name,
+        start,
+        length: matched.name.length,
+        entities: matched.entities,
+      });
+      consumedUntil = start + matched.name.length;
+      TOKEN_PATTERN.lastIndex = consumedUntil;
+    }
+    token = TOKEN_PATTERN.exec(text);
+  }
+  return occurrences;
 }

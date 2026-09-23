@@ -141,8 +141,11 @@ export function buildManuscriptMarkdown(
         const lead = `- ${block.text}`;
         lines.push(
           block.targetSceneName ? `${lead} — ${labels.goToScene} ${block.targetSceneName}` : lead,
-          '',
         );
+        for (const line of [...(block.requirements ?? []), ...(block.effects ?? [])]) {
+          lines.push(`  ${line}`);
+        }
+        lines.push('');
         break;
       }
     }
@@ -183,8 +186,11 @@ export function buildManuscriptText(
         const lead = `* ${block.text}`;
         lines.push(
           block.targetSceneName ? `${lead} — ${labels.goToScene} ${block.targetSceneName}` : lead,
-          '',
         );
+        for (const line of [...(block.requirements ?? []), ...(block.effects ?? [])]) {
+          lines.push(`  ${line}`);
+        }
+        lines.push('');
         break;
       }
     }

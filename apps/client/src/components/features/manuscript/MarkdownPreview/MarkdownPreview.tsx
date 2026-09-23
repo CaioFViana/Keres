@@ -1,6 +1,7 @@
-import type { ManuscriptMark, ManuscriptSpan } from '@keres/shared';
+import type { ManuscriptMark, ManuscriptSpan, TextRange } from '@keres/shared';
 import { findAllCaseInsensitiveMatches, parseMarkdownToDocument } from '@keres/shared';
 import { useMemo } from 'react';
+import type React from 'react';
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
 import MarkedText from '../../../common/display/MarkedText/MarkedText';
 import { useTheme } from '../../../../theme';
@@ -17,19 +18,25 @@ function decorationLine(marks: ManuscriptMark[]): TextStyle['textDecorationLine'
 
 function InlineText({
   span,
-  highlightQuery,
+  ranges,
+  activeRangeIndex,
+  activeTextRef,
 }: {
   span: ManuscriptSpan;
-  highlightQuery?: string | null;
+  ranges: TextRange[];
+  activeRangeIndex: number | null;
+  activeTextRef?: React.Ref<Text>;
 }) {
-  const ranges = useMemo(
-    () => (highlightQuery ? findAllCaseInsensitiveMatches(span.text, highlightQuery) : []),
-    [span.text, highlightQuery],
-  );
   return (
     <MarkedText
       text={span.text}
       ranges={ranges}
+      activeRanges={
+        activeRangeIndex !== null && ranges[activeRangeIndex]
+          ? [ranges[activeRangeIndex]]
+          : undefined
+      }
+      activeRef={activeRangeIndex !== null ? activeTextRef : undefined}
       style={{
         fontWeight: span.marks.includes('bold') ? '700' : '400',
         fontStyle: span.marks.includes('italic') ? 'italic' : 'normal',
@@ -51,12 +58,23 @@ export function MarkdownPreview({
   testID,
   selectable = true,
   highlightQuery,
+  activeMatchIndex,
+  activeTextRef,
 }: {
   text: string;
   testID?: string;
   selectable?: boolean;
   /** Manuscript search query: every case-insensitive hit reads as a highlighter mark. */
   highlightQuery?: string | null;
+  /**
+   * Body-global 0-based hit drawn as the current one (manuscript search's ordinal hit
+   * within this body). Nullish draws every hit equally. Counted in mark order, which is
+   * what the reader sees; a query spanning a mark boundary counts in the counter but
+   * marks in no span, the same drift the plain marks already have.
+   */
+  activeMatchIndex?: number | null;
+  /** Attached to the current hit's host, so the manuscript can scroll it into view. */
+  activeTextRef?: React.Ref<Text>;
 }) {
   const { colors } = useTheme();
   const doc = useMemo(() => parseMarkdownToDocument(text), [text]);
@@ -70,6 +88,34 @@ export function MarkdownPreview({
     }
     return visible;
   }, [doc]);
+  const spanRanges = useMemo(
+    () =>
+      blocks.map((block) =>
+        block.spans.map((span) =>
+          highlightQuery ? findAllCaseInsensitiveMatches(span.text, highlightQuery) : [],
+        ),
+      ),
+    [blocks, highlightQuery],
+  );
+  // Which span holds the current hit: spans partition the body in order, so the hits
+  // count up across them exactly as the reader meets them.
+  const activeRef = useMemo(() => {
+    if (activeMatchIndex === null || activeMatchIndex === undefined || activeMatchIndex < 0) {
+      return null;
+    }
+    let seen = 0;
+    for (let blockIndex = 0; blockIndex < spanRanges.length; blockIndex += 1) {
+      const blockRanges = spanRanges[blockIndex];
+      for (let spanIndex = 0; spanIndex < blockRanges.length; spanIndex += 1) {
+        const ranges = blockRanges[spanIndex];
+        if (activeMatchIndex < seen + ranges.length) {
+          return { blockIndex, spanIndex, rangeIndex: activeMatchIndex - seen };
+        }
+        seen += ranges.length;
+      }
+    }
+    return null;
+  }, [spanRanges, activeMatchIndex]);
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -97,7 +143,19 @@ export function MarkdownPreview({
           <View key={`block-${index}`} style={styles.block}>
             <Text selectable={selectable} style={styles.paragraph}>
               {block.spans.map((span, spanIndex) => (
-                <InlineText key={spanIndex} span={span} highlightQuery={highlightQuery} />
+                <InlineText
+                  key={spanIndex}
+                  span={span}
+                  ranges={spanRanges[index][spanIndex]}
+                  activeRangeIndex={
+                    activeRef !== null &&
+                    activeRef.blockIndex === index &&
+                    activeRef.spanIndex === spanIndex
+                      ? activeRef.rangeIndex
+                      : null
+                  }
+                  activeTextRef={activeTextRef}
+                />
               ))}
             </Text>
           </View>

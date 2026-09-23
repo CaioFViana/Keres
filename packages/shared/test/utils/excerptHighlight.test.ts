@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  excerptAroundMatch,
   findAllCaseInsensitiveMatches,
   findFirstExcerptMatch,
+  splitTextByActiveRanges,
   splitTextByRanges,
 } from '../../utils/excerptHighlight';
 
@@ -94,6 +96,55 @@ describe('findAllCaseInsensitiveMatches', () => {
   });
 });
 
+describe('excerptAroundMatch', () => {
+  it('returns short texts untouched', () => {
+    expect(excerptAroundMatch('Alice arrives.', { start: 0, length: 5 }, 150)).toBe(
+      'Alice arrives.',
+    );
+    expect(excerptAroundMatch('x'.repeat(150), { start: 0, length: 1 }, 150)).toBe('x'.repeat(150));
+  });
+
+  it('centers a mid-text match with an ellipsis on each cut side', () => {
+    const text = `${'lorem '.repeat(40)}Alice${' ipsum'.repeat(40)}`;
+    const at = text.indexOf('Alice');
+    const excerpt = excerptAroundMatch(text, { start: at, length: 5 }, 60);
+
+    expect(excerpt.startsWith('…')).toBe(true);
+    expect(excerpt.endsWith('…')).toBe(true);
+    expect(excerpt).toContain('Alice');
+    expect(excerpt.length).toBeLessThanOrEqual(62);
+    // Roughly centered: the match sits away from both edges of the window.
+    const inner = excerpt.slice(1, -1);
+    expect(inner.indexOf('Alice')).toBeGreaterThan(10);
+  });
+
+  it('omits the leading ellipsis when the match opens the text', () => {
+    const text = `Alice ${'lorem '.repeat(40)}`;
+    const excerpt = excerptAroundMatch(text, { start: 0, length: 5 }, 60);
+
+    expect(excerpt.startsWith('…')).toBe(false);
+    expect(excerpt.endsWith('…')).toBe(true);
+    expect(excerpt).toContain('Alice');
+  });
+
+  it('omits the trailing ellipsis when the match closes the text', () => {
+    const text = `${'lorem '.repeat(40)}Alice`;
+    const excerpt = excerptAroundMatch(text, { start: text.length - 5, length: 5 }, 60);
+
+    expect(excerpt.startsWith('…')).toBe(true);
+    expect(excerpt.endsWith('…')).toBe(false);
+    expect(excerpt).toContain('Alice');
+  });
+
+  it('opens at the match when the match itself overflows the window', () => {
+    const text = `aaa ${'b'.repeat(80)} ccc`;
+    const excerpt = excerptAroundMatch(text, { start: 4, length: 80 }, 60);
+
+    expect(excerpt.startsWith('…')).toBe(true);
+    expect(excerpt.slice(1, 61)).toBe('b'.repeat(60));
+  });
+});
+
 describe('splitTextByRanges', () => {
   it('returns the whole text unmarked without ranges', () => {
     expect(splitTextByRanges('hello', [])).toEqual([{ text: 'hello', marked: false }]);
@@ -127,5 +178,41 @@ describe('splitTextByRanges', () => {
       { text: 'h', marked: false },
       { text: 'i', marked: true },
     ]);
+  });
+});
+
+describe('splitTextByActiveRanges', () => {
+  it('flags only the segments an active range touches', () => {
+    expect(
+      splitTextByActiveRanges(
+        'Waves. Waves again.',
+        [
+          { start: 0, length: 5 },
+          { start: 7, length: 5 },
+        ],
+        [{ start: 7, length: 5 }],
+      ),
+    ).toEqual([
+      { text: 'Waves', marked: true, active: false },
+      { text: '. ', marked: false, active: false },
+      { text: 'Waves', marked: true, active: true },
+      { text: ' again.', marked: false, active: false },
+    ]);
+  });
+
+  it('marks everything inactive without active ranges', () => {
+    expect(splitTextByActiveRanges('Waves.', [{ start: 0, length: 5 }], [])).toEqual([
+      { text: 'Waves', marked: true, active: false },
+      { text: '.', marked: false, active: false },
+    ]);
+  });
+
+  it('flags a marked segment the active range only touches', () => {
+    const segments = splitTextByActiveRanges(
+      'Waves.',
+      [{ start: 0, length: 5 }],
+      [{ start: 3, length: 5 }],
+    );
+    expect(segments[0]).toEqual({ text: 'Waves', marked: true, active: true });
   });
 });

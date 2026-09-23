@@ -111,6 +111,46 @@ describe('compileLinearManuscript', () => {
     });
   });
 
+  it('carries choice requirements and effects onto the choice block', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters,
+      scenes,
+      choices: [
+        makeChoice({
+          requirements: ['Requires all of:', '• Requires the Brass Key'],
+          effects: ['Effects', '• Gain the Rusty Key'],
+        }),
+      ],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+    });
+
+    expect(manuscript.blocks[5]).toMatchObject({
+      kind: 'choice',
+      requirements: ['Requires all of:', '• Requires the Brass Key'],
+      effects: ['Effects', '• Gain the Rusty Key'],
+    });
+  });
+
+  it('leaves requirements and effects absent on open choices', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters,
+      scenes,
+      choices: [makeChoice()],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+    });
+
+    const block = manuscript.blocks[5];
+    expect(block.kind).toBe('choice');
+    if (block.kind === 'choice') {
+      expect(block.requirements).toBeUndefined();
+      expect(block.effects).toBeUndefined();
+    }
+  });
+
   it('drops loose scenes, emptied containers and the heading when excluded', () => {
     const manuscript = compileLinearManuscript({
       title: 'My Story',

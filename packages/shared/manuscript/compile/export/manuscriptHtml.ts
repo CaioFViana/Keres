@@ -106,6 +106,9 @@ export function buildManuscriptHtml(
         } else {
           parts.push(`<p class="choice">${lead}</p>`);
         }
+        for (const line of [...(block.requirements ?? []), ...(block.effects ?? [])]) {
+          parts.push(`<p class="choice-detail">${escapeHtml(line)}</p>`);
+        }
         break;
       }
     }
@@ -124,8 +127,9 @@ export function buildManuscriptHtml(
   h1.title + .chapter, .subtitle + .chapter { page-break-before: avoid; }
   .scene { font-size: 1.1rem; color: #444; margin: 2rem 0 0.75rem; }
   p { text-indent: 2em; margin: 0 0 0.6rem; }
-  p.choice, .subtitle { text-indent: 0; }
+  p.choice, p.choice-detail, .subtitle { text-indent: 0; }
   .choice { margin-left: 1rem; }
+  .choice-detail { margin-left: 2.5rem; color: #444; }
   a { color: #1a56db; }${options.includeToc ? '\n  .toc ul { list-style: none; padding: 0; }\n  .toc-scene { margin-left: 1.5rem; }\n  nav.toc + * { page-break-before: always; break-before: page; }' : ''}
   @page { margin: 2cm; @bottom-center { content: counter(page); } }
 </style>

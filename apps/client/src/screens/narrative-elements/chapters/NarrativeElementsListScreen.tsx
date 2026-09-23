@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import ChapterReorderModal from '@/src/components/features/chapters/ChapterReorderModal/ChapterReorderModal';
+import QuickAddSceneModal from '@/src/components/features/chapters/QuickAddSceneModal';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -30,6 +31,7 @@ import type {
 import { useChapterStore } from '../../../state/chapterStore';
 import { useSceneStore } from '../../../state/sceneStore';
 import { useStoryStore } from '../../../state/storyStore';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { isUnchapteredGroup } from '../../../utils/narrativeSceneOrder';
@@ -88,6 +90,7 @@ const NarrativeElementsListScreen = () => {
   });
 
   const { canEdit } = useStoryRole(storyId);
+  const { userId } = useUserSettingsStore();
   const storedScenes = useSceneStore((state) => state.scenes);
   const fetchStoredScenes = useSceneStore((state) => state.fetchScenes);
   const toggleSceneFavorite = useSceneStore((state) => state.toggleFavorite);
@@ -302,6 +305,38 @@ const NarrativeElementsListScreen = () => {
       }),
     [navigation],
   );
+  // Title-only capture lives in a modal: the outline group cannot grow to fit an inline
+  // row, which pushed the new scene below the fold until the writer closed it. The modal
+  // stays open across adds (type, add, repeat); the scene is completed by editing it
+  // later - including filing an unchaptered one into a chapter.
+  const [quickAddChapterId, setQuickAddChapterId] = useState<string | null>(null);
+  const handleQuickAddPress = useCallback(
+    (chapterId: string) => setQuickAddChapterId(chapterId),
+    [],
+  );
+  // Rejects on failure so the row keeps the typed title instead of dropping it.
+  const handleQuickAddSubmit = useCallback(
+    async (name: string) => {
+      if (!storyId || !userId || !canEdit || !quickAddChapterId) return;
+      try {
+        await createSceneService(db).createScene(userId, {
+          storyId,
+          chapterId: isUnchapteredGroup(quickAddChapterId) ? null : quickAddChapterId,
+          name,
+        });
+        await loadOutline();
+      } catch (error) {
+        console.error('Failed to quick-add scene:', error);
+        AppAlert.alert(t('error'), t('failed_to_quick_add_scene'));
+        throw error;
+      }
+    },
+    [storyId, userId, canEdit, quickAddChapterId, db, loadOutline, t],
+  );
+  const quickAddGroupName =
+    quickAddChapterId && !isUnchapteredGroup(quickAddChapterId)
+      ? (outlineChapters.find((chapter) => chapter.id === quickAddChapterId)?.name ?? '')
+      : t('unchaptered_scenes');
   const handleToggleSceneFavorite = useCallback(
     async (sceneId: string, isFavorite: boolean) => {
       setScenes((previous) =>
@@ -358,6 +393,7 @@ const NarrativeElementsListScreen = () => {
         choices,
         favoriteFilterState,
         handleAddScene,
+        handleQuickAddPress,
         handleOpenScene,
         handleToggleFavorite,
         handleToggleSceneFavorite,
@@ -378,6 +414,7 @@ const NarrativeElementsListScreen = () => {
       choices,
       favoriteFilterState,
       handleAddScene,
+      handleQuickAddPress,
       handleOpenScene,
       handleToggleFavorite,
       handleToggleSceneFavorite,
@@ -574,6 +611,12 @@ const NarrativeElementsListScreen = () => {
         scenes={scenes}
         initialChapterId={reorderChapterId}
         onReorderConfirm={handleReorderScenes}
+      />
+      <QuickAddSceneModal
+        visible={quickAddChapterId !== null}
+        groupName={quickAddGroupName}
+        onSubmit={handleQuickAddSubmit}
+        onClose={() => setQuickAddChapterId(null)}
       />
     </View>
   );

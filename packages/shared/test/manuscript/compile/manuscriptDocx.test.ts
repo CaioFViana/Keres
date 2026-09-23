@@ -103,6 +103,30 @@ describe('buildManuscriptDocxBytes', () => {
     expect(xml).toContain('Go to page');
   });
 
+  it('renders choice requirements and effects as indented paragraphs', async () => {
+    const annotated = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter()],
+      scenes: [makeScene(), makeScene({ id: 's-2', name: 'Next', index: 2, body: 'After.' })],
+      choices: [
+        makeChoice({
+          requirements: ['Requires all of:', '• Requires the Brass Key'],
+          effects: ['Effects', '• Gain the Rusty Key'],
+        }),
+      ],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+    });
+    const xml = await documentXml(
+      await buildManuscriptDocxBytes(annotated, { goToPage: 'Go to page', tocHeading: 'Contents' }),
+    );
+
+    expect(xml).toContain('Go on');
+    expect(xml).toContain('Requires all of:');
+    expect(xml).toContain('Requires the Brass Key');
+    expect(xml).toContain('Gain the Rusty Key');
+  });
+
   it('renders ~~ spans with strike-through runs', async () => {
     const struck = compileLinearManuscript({
       title: 'My Story',

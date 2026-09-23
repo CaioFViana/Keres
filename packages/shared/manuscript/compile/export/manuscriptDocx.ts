@@ -188,6 +188,14 @@ export function buildManuscriptDocument(
         } else {
           children.push(new Paragraph({ children: [new TextRun(lead)] }));
         }
+        for (const line of [...(block.requirements ?? []), ...(block.effects ?? [])]) {
+          children.push(
+            new Paragraph({
+              indent: { left: 720 },
+              children: [new TextRun(line)],
+            }),
+          );
+        }
         break;
       }
     }

@@ -1,6 +1,7 @@
 import {
   buildMentionMatcher,
   EMPTY_MENTION_MATCHER,
+  findAmbiguousNameOccurrences,
   type MentionableEntity,
   splitTextIntoMentionSegments,
 } from '../../src/utils/entityMentions';
@@ -39,9 +40,23 @@ describe('buildMentionMatcher', () => {
     expect(matcher.isEmpty).toBe(true);
   });
 
+  it('records the claimants of a dropped name for the ambiguity index', () => {
+    const matcher = matcherFor(character('c1', 'Rosa'), item('i1', 'Rosa'));
+    expect(matcher.ambiguousNames).toEqual([
+      {
+        name: 'Rosa',
+        entities: [
+          { type: 'Character', id: 'c1', name: 'Rosa' },
+          { type: 'Item', id: 'i1', name: 'Rosa' },
+        ],
+      },
+    ]);
+  });
+
   it('keeps a name repeated by the same entity id', () => {
     const matcher = matcherFor(character('c1', 'Rosa'), character('c1', 'Rosa'));
     expect(matcher.isEmpty).toBe(false);
+    expect(matcher.ambiguousNames).toEqual([]);
   });
 });
 
@@ -53,7 +68,7 @@ describe('splitTextIntoMentionSegments', () => {
 
   it('returns one plain run when nothing can match', () => {
     expect(splitTextIntoMentionSegments('anything at all', EMPTY_MENTION_MATCHER)).toEqual([
-      { text: 'anything at all' },
+      { text: 'anything at all', start: 0 },
     ]);
   });
 
@@ -72,8 +87,8 @@ describe('splitTextIntoMentionSegments', () => {
       matcherFor(character('c1', 'Alice')),
     );
     expect(segments).toEqual([
-      { text: 'Alice', ref: { type: 'Character', id: 'c1' } },
-      { text: ' went home.' },
+      { text: 'Alice', start: 0, ref: { type: 'Character', id: 'c1' } },
+      { text: ' went home.', start: 5 },
     ]);
   });
 
@@ -133,7 +148,11 @@ describe('splitTextIntoMentionSegments', () => {
       'Alice Liddell arrived.',
       matcherFor(character('c1', 'Alice'), character('c2', 'Alice Liddell')),
     );
-    expect(segments[0]).toEqual({ text: 'Alice Liddell', ref: { type: 'Character', id: 'c2' } });
+    expect(segments[0]).toEqual({
+      text: 'Alice Liddell',
+      start: 0,
+      ref: { type: 'Character', id: 'c2' },
+    });
   });
 
   it('matches a name containing punctuation', () => {
@@ -148,7 +167,7 @@ describe('splitTextIntoMentionSegments', () => {
       'Rosa was there.',
       matcherFor(character('c1', 'Rosa'), item('i1', 'Rosa')),
     );
-    expect(segments).toEqual([{ text: 'Rosa was there.' }]);
+    expect(segments).toEqual([{ text: 'Rosa was there.', start: 0 }]);
   });
 
   it('never links an entity to itself', () => {
@@ -189,7 +208,7 @@ describe('splitTextIntoMentionSegments', () => {
   it('links a mention at the very start and at the very end', () => {
     const matcher = matcherFor(character('c1', 'Alice'));
     expect(splitTextIntoMentionSegments('Alice', matcher)).toEqual([
-      { text: 'Alice', ref: { type: 'Character', id: 'c1' } },
+      { text: 'Alice', start: 0, ref: { type: 'Character', id: 'c1' } },
     ]);
   });
 
@@ -197,5 +216,68 @@ describe('splitTextIntoMentionSegments', () => {
     const matcher = matcherFor(character('c1', 'Alice Liddell'), character('c2', 'Liddell'));
     const segments = splitTextIntoMentionSegments('Alice Liddell arrived.', matcher);
     expect(linkedNames(segments)).toEqual(['Alice Liddell']);
+  });
+
+  it('carries the offset of every run for indexers', () => {
+    const segments = splitTextIntoMentionSegments(
+      'Alice saw the Rabbit.',
+      matcherFor(character('c1', 'Alice'), character('c2', 'Rabbit')),
+    );
+    expect(segments.map((segment) => [segment.text, segment.start])).toEqual([
+      ['Alice', 0],
+      [' saw the ', 5],
+      ['Rabbit', 14],
+      ['.', 20],
+    ]);
+  });
+});
+
+describe('findAmbiguousNameOccurrences', () => {
+  it('returns nothing without text or without ambiguous names', () => {
+    const matcher = matcherFor(character('c1', 'Alice'));
+    expect(findAmbiguousNameOccurrences('', matcher)).toEqual([]);
+    expect(findAmbiguousNameOccurrences(null, matcher)).toEqual([]);
+    expect(findAmbiguousNameOccurrences('Alice was there.', matcher)).toEqual([]);
+    expect(findAmbiguousNameOccurrences('Alice was there.', EMPTY_MENTION_MATCHER)).toEqual([]);
+  });
+
+  it('reports every occurrence with offsets and every claimant', () => {
+    const matcher = matcherFor(character('c1', 'Rosa'), item('i1', 'Rosa'));
+    const occurrences = findAmbiguousNameOccurrences('Rosa met Rosa.', matcher);
+
+    expect(occurrences).toEqual([
+      {
+        name: 'Rosa',
+        start: 0,
+        length: 4,
+        entities: [
+          { type: 'Character', id: 'c1', name: 'Rosa' },
+          { type: 'Item', id: 'i1', name: 'Rosa' },
+        ],
+      },
+      {
+        name: 'Rosa',
+        start: 9,
+        length: 4,
+        entities: [
+          { type: 'Character', id: 'c1', name: 'Rosa' },
+          { type: 'Item', id: 'i1', name: 'Rosa' },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps the linked-mention rules: case, boundaries, longest first', () => {
+    const matcher = matcherFor(
+      character('c1', 'Rosa'),
+      item('i1', 'Rosa'),
+      character('c2', 'Rosa Parks'),
+      item('i2', 'Rosa Parks'),
+    );
+    expect(findAmbiguousNameOccurrences('rosa and Rosemary.', matcher)).toEqual([]);
+    const occurrences = findAmbiguousNameOccurrences('Rosa Parks arrived.', matcher);
+    expect(occurrences).toEqual([
+      expect.objectContaining({ name: 'Rosa Parks', start: 0, length: 10 }),
+    ]);
   });
 });

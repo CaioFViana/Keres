@@ -3,6 +3,7 @@ import {
   buildStoryZipBytes,
   compileStoryManuscript,
   CURRENT_STORY_FORMAT_VERSION,
+  describeChoiceAnnotations,
   FORMAT_META,
   ManuscriptOptionsSchema,
   type FullStoryExportType,
@@ -168,6 +169,20 @@ export class StoryPublicationService {
     options: ManuscriptOptions,
   ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
     try {
+      // Choice requirements and effects through the shared describer the device export
+      // also uses - a publication reads exactly like the local file, in English like the
+      // manuscript's default labels.
+      const annotations = describeChoiceAnnotations({
+        groups: storyExport.choiceCheckGroups ?? [],
+        checks: storyExport.choiceChecks ?? [],
+        effects: storyExport.effects ?? [],
+        sceneNamesById: Object.fromEntries(
+          (storyExport.scenes ?? []).map((scene) => [scene.id, scene.name]),
+        ),
+        itemNamesById: Object.fromEntries(
+          (storyExport.items ?? []).map((item) => [item.id, item.name]),
+        ),
+      });
       const compiled = await compileStoryManuscript(
         {
           storyTitle: storyExport.story.title,
@@ -191,6 +206,7 @@ export class StoryPublicationService {
             sceneId: choice.sceneId,
             nextSceneId: choice.nextSceneId,
             text: choice.text,
+            ...annotations.get(choice.id),
           })),
           routes: (storyExport.routes ?? []).map((route) => ({ id: route.id, name: route.name })),
           routeSteps: (storyExport.routeSteps ?? []).map((step) => ({

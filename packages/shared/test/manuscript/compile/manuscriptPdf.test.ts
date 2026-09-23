@@ -360,6 +360,33 @@ describe('buildManuscriptPdf', () => {
     expect(raw(bytes)).not.toContain('/Link');
   });
 
+  it('draws choice requirements and effects below the choice', () => {
+    const bytes = buildManuscriptPdf(
+      manuscript([
+        { kind: 'title', text: 'My Story' },
+        {
+          kind: 'choice',
+          id: 'ch-1',
+          text: 'Go on',
+          targetSceneId: 's-2',
+          targetBookmarkId: null,
+          targetSceneName: null,
+          requirements: ['Requires all of:', 'Requires the Brass Key'],
+          effects: ['Effects', 'Gain the Rusty Key'],
+        },
+      ]),
+      LABELS,
+    );
+
+    expectSoundXref(bytes);
+    const text = shownText(bytes);
+    expect(text).toContain('Go on');
+    expect(text).toContain('Requires all of:');
+    expect(text).toContain('Requires the Brass Key');
+    expect(text).toContain('Effects');
+    expect(text).toContain('Gain the Rusty Key');
+  });
+
   it('degrades unencodable characters instead of breaking the file', () => {
     const bytes = buildManuscriptPdf(manuscript([paragraph('Dragon 🐉 rises — “yes”.')]), LABELS);
 

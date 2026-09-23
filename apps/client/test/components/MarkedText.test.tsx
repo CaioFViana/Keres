@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import MarkedText from '../../src/components/common/display/MarkedText/MarkedText';
 
 jest.mock('../../src/theme', () => ({
-  useTheme: () => ({ colors: { primaryContainer: '#aaf' } }),
+  useTheme: () => ({ colors: { primary: '#00f', onPrimary: '#fff', primaryContainer: '#aaf' } }),
 }));
 
 describe('MarkedText', () => {
@@ -49,6 +49,26 @@ describe('MarkedText', () => {
 
     expect(view.getByText('h')).toBeTruthy();
     expect(StyleSheet.flatten(view.getByText('i').props.style).backgroundColor).toBe('#aaf');
+  });
+
+  it('draws the active range with the strong fill and the rest equally', async () => {
+    const view = await render(
+      <MarkedText
+        text="Waves. Waves again."
+        ranges={[
+          { start: 0, length: 5 },
+          { start: 7, length: 5 },
+        ]}
+        activeRanges={[{ start: 7, length: 5 }]}
+      />,
+    );
+
+    const hits = view.getAllByText(/^Waves$/);
+    expect(hits).toHaveLength(2);
+    expect(StyleSheet.flatten(hits[0].props.style).backgroundColor).toBe('#aaf');
+    const active = StyleSheet.flatten(hits[1].props.style);
+    expect(active.backgroundColor).toBe('#00f');
+    expect(active.color).toBe('#fff');
   });
 
   it('passes text props through to the host', async () => {

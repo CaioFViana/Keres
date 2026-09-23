@@ -451,3 +451,56 @@ describe('buildManuscriptText', () => {
     expect(text).not.toContain('~~');
   });
 });
+
+describe('choice requirements and effects', () => {
+  const annotated = compileLinearManuscript({
+    title: 'My Story',
+    chapters: [chapter],
+    scenes,
+    choices: [
+      {
+        ...choices[0],
+        requirements: ['Requires all of:', '• Requires the Brass Key'],
+        effects: ['Effects', '• Gain the Rusty Key'],
+      },
+    ],
+    includeLooseScenes: true,
+    looseHeadingLabel: 'Loose',
+  });
+
+  it('renders one indented line per annotation in markdown', () => {
+    const md = buildManuscriptMarkdown(annotated, { goToScene: 'See', tocHeading: 'Contents' });
+
+    expect(md).toContain(
+      '- Go on — See Next\n  Requires all of:\n  • Requires the Brass Key\n  Effects\n  • Gain the Rusty Key\n',
+    );
+  });
+
+  it('renders one indented line per annotation in plain text', () => {
+    const text = buildManuscriptText(annotated, { goToScene: 'See', tocHeading: 'Contents' });
+
+    expect(text).toContain(
+      '* Go on — See Next\n  Requires all of:\n  • Requires the Brass Key\n  Effects\n  • Gain the Rusty Key\n',
+    );
+  });
+
+  it('renders escaped detail paragraphs in html', () => {
+    const html = buildManuscriptHtml(annotated, { goToScene: 'See', tocHeading: 'Contents' });
+
+    expect(html).toContain('<p class="choice-detail">Requires all of:</p>');
+    expect(html).toContain('<p class="choice-detail">• Requires the Brass Key</p>');
+    expect(html).toContain('<p class="choice-detail">Effects</p>');
+    expect(html).toContain('<p class="choice-detail">• Gain the Rusty Key</p>');
+    expect(html).toContain('.choice-detail');
+  });
+
+  it('emits no annotation lines for open choices', () => {
+    const md = buildManuscriptMarkdown(manuscript, { goToScene: 'See', tocHeading: 'Contents' });
+    const text = buildManuscriptText(manuscript, { goToScene: 'See', tocHeading: 'Contents' });
+    const html = buildManuscriptHtml(manuscript, { goToScene: 'See', tocHeading: 'Contents' });
+
+    expect(md).toContain('- Go on — See Next\n\n');
+    expect(text).toContain('* Go on — See Next\n\n');
+    expect(html).not.toContain('choice-detail">');
+  });
+});

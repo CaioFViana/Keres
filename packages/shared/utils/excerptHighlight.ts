@@ -1,10 +1,12 @@
 /**
- * Highlighter anchoring for comment excerpts and manuscript search.
+ * Highlighter anchoring for comment excerpts and manuscript search, plus the centered
+ * excerpts mention backlinks show per occurrence.
  *
  * Comment excerpts anchor by the user-decided rule: the FIRST occurrence in the source
  * text, case- AND accent-insensitive (`manha` anchors `manhã`). Manuscript search keeps
  * its own case-insensitive-only rule (`findManuscriptMatches`) and shares only the
- * splitting mechanics below, so search counts never drift from their marks.
+ * splitting mechanics below, so search counts never drift from their marks. Backlinks
+ * reuse the same range vocabulary to frame the match instead of the text head.
  *
  * All offsets are UTF-16 code-unit offsets into the ORIGINAL text, ready for `slice`
  * and for nested `<Text>` rendering.
@@ -100,6 +102,81 @@ export function findAllCaseInsensitiveMatches(
     from = at + needle.length;
   }
   return ranges;
+}
+
+/**
+ * A window of at most `maxLength` characters framed around `match`: short texts pass
+ * through untouched, longer ones center on the match with an ellipsis on each cut side.
+ * Cut edges are trimmed so the ellipsis never hugs a stray space.
+ */
+export function excerptAroundMatch(
+  text: string,
+  match: TextRange,
+  maxLength: number = 150,
+): string {
+  if (text.length <= maxLength) return text;
+  const safeLength = Math.max(1, maxLength);
+  const center = match.start + Math.max(0, match.length) / 2;
+  let windowStart = Math.round(center - safeLength / 2);
+  windowStart = Math.max(0, Math.min(windowStart, text.length - safeLength));
+  // A match longer than the window still opens at the match instead of centering past it.
+  if (match.length >= safeLength) windowStart = Math.min(match.start, text.length - safeLength);
+  const window = text.slice(windowStart, windowStart + safeLength).trim();
+  const prefix = windowStart > 0 ? '…' : '';
+  const suffix = windowStart + safeLength < text.length ? '…' : '';
+  return `${prefix}${window}${suffix}`;
+}
+
+export interface ActiveTextSegment extends TextSegment {
+  active: boolean;
+}
+
+/**
+ * Split `text` by `ranges`, flagging the segments an `activeRanges` entry touches -
+ * the current search hit among all hits. An active range need not equal a marked one
+ * exactly - touching is enough, so a caller passing the raw hit against shifted ranges
+ * still flags the right segment. Marked coverage matches
+ * `splitTextByRanges`; only overlapping ranges segment differently (merged, not sliced
+ * per range), which renders identically.
+ */
+export function splitTextByActiveRanges(
+  text: string,
+  ranges: TextRange[],
+  activeRanges: TextRange[],
+): ActiveTextSegment[] {
+  const normalize = (input: TextRange[]) =>
+    input
+      .map((range) => ({
+        start: Math.max(0, range.start),
+        end: Math.min(text.length, range.start + range.length),
+      }))
+      .filter((range) => range.end > range.start)
+      .sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: { start: number; end: number }[] = [];
+  for (const range of normalize(ranges)) {
+    const last = merged[merged.length - 1];
+    if (last && range.start <= last.end) last.end = Math.max(last.end, range.end);
+    else merged.push({ ...range });
+  }
+  if (merged.length === 0) return [{ text, marked: false, active: false }];
+  const active = normalize(activeRanges);
+  const overlapsActive = (start: number, end: number) =>
+    active.some((range) => range.start < end && start < range.end);
+  const segments: ActiveTextSegment[] = [];
+  let cursor = 0;
+  for (const range of merged) {
+    if (range.start > cursor)
+      segments.push({ text: text.slice(cursor, range.start), marked: false, active: false });
+    segments.push({
+      text: text.slice(range.start, range.end),
+      marked: true,
+      active: overlapsActive(range.start, range.end),
+    });
+    cursor = range.end;
+  }
+  if (cursor < text.length)
+    segments.push({ text: text.slice(cursor), marked: false, active: false });
+  return segments;
 }
 
 /**

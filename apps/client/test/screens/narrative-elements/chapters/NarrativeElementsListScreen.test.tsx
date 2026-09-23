@@ -444,6 +444,34 @@ jest.mock('../../../../src/components/features/scenes/SceneReorderModal/SceneReo
   };
 });
 
+jest.mock('../../../../src/components/features/chapters/QuickAddSceneModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      visible,
+      groupName,
+      onSubmit,
+      onClose,
+    }: {
+      visible: boolean;
+      groupName: string;
+      onSubmit: (name: string) => Promise<void>;
+      onClose: () => void;
+    }) => (
+      <>
+        <Text testID="quick-add">{JSON.stringify({ visible, groupName })}</Text>
+        <Text testID="quick-add-submit" onPress={() => onSubmit('Stray thought')}>
+          submit
+        </Text>
+        <Text testID="quick-add-close" onPress={onClose}>
+          close
+        </Text>
+      </>
+    ),
+  };
+});
+
 import NarrativeElementsListScreen from '../../../../src/screens/narrative-elements/chapters/NarrativeElementsListScreen';
 
 function jsonOf(view: RenderResult, testID: string) {

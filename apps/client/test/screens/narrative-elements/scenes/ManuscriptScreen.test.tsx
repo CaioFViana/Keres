@@ -9,6 +9,7 @@ import type {
   SceneSelect,
 } from '../../../../src/db/schema';
 import type { ManuscriptExportChoices } from '../../../../src/components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
+import MarkedText from '../../../../src/components/common/display/MarkedText/MarkedText';
 import ManuscriptScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptScreen';
 
 const mockNavigate = jest.fn();
@@ -101,9 +102,13 @@ jest.mock('../../../../src/state/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
 
+const mockLoadChoiceAnnotations = jest.fn(async () => new Map());
 jest.mock('../../../../src/hooks/useManuscriptData', () => ({
   __esModule: true,
-  useManuscriptData: () => mockManuscriptData,
+  useManuscriptData: () => ({
+    ...mockManuscriptData,
+    loadChoiceAnnotations: mockLoadChoiceAnnotations,
+  }),
 }));
 
 jest.mock(
@@ -454,16 +459,32 @@ describe('ManuscriptScreen', () => {
     expect(view.getByText('manuscript_no_results')).toBeTruthy();
   });
 
-  it('marks every search hit in scene bodies', async () => {
+  it('marks every search hit in scene bodies, the current one strongly', async () => {
     const view = await render(<ManuscriptScreen />);
 
     await fireEvent.changeText(view.getByTestId('manuscript-search'), 'waves');
 
     const hits = view.getAllByText(/^Waves$/);
     expect(hits).toHaveLength(2);
-    for (const hit of hits) {
-      expect(StyleSheet.flatten(hit.props.style).backgroundColor).toBe('#ccf');
-    }
+    expect(StyleSheet.flatten(hits[0].props.style).backgroundColor).toBe('#00f');
+    expect(StyleSheet.flatten(hits[1].props.style).backgroundColor).toBe('#ccf');
+  });
+
+  it('moves the strong mark as the reader cycles matches in one section', async () => {
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.changeText(view.getByTestId('manuscript-search'), 'waves');
+    await fireEvent.press(view.getByTestId('manuscript-search-next'));
+
+    const hits = view.getAllByText(/^Waves$/);
+    expect(hits).toHaveLength(2);
+    expect(StyleSheet.flatten(hits[0].props.style).backgroundColor).toBe('#ccf');
+    expect(StyleSheet.flatten(hits[1].props.style).backgroundColor).toBe('#00f');
+
+    await fireEvent.press(view.getByTestId('manuscript-search-next'));
+    const wrapped = view.getAllByText(/^Waves$/);
+    expect(StyleSheet.flatten(wrapped[0].props.style).backgroundColor).toBe('#00f');
+    expect(StyleSheet.flatten(wrapped[1].props.style).backgroundColor).toBe('#ccf');
   });
 
   it('marks the search hit in the scene title and nothing else', async () => {
@@ -473,11 +494,39 @@ describe('ManuscriptScreen', () => {
 
     expect(view.getByText('manuscript_search_count:{"current":1,"total":1}')).toBeTruthy();
     const marked = view.getByText('Opening');
-    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#ccf');
+    expect(StyleSheet.flatten(marked.props.style).backgroundColor).toBe('#00f');
     // Untouched rows keep their bare trees: titles exact, bodies whole.
     expect(view.getByText('2. Inland')).toBeTruthy();
     expect(view.getByText('Waves. Waves again.')).toBeTruthy();
     expect(view.getByText('1. Arrival')).toBeTruthy();
+  });
+
+  it('hands the scroll ref to the active title hit, and only it', async () => {
+    // The RNTL host tree cannot see composite props, hence the manual renderer.
+    let mounted!: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      mounted = TestRenderer.create(<ManuscriptScreen />);
+    });
+    const search = mounted.root.findByProps({ testID: 'manuscript-search' });
+    const activeTexts = () =>
+      mounted.root
+        .findAllByType(MarkedText)
+        .filter((node) => node.props.activeRef !== undefined)
+        .map((node) => node.props.text);
+
+    await act(async () => {
+      search.props.onChangeText('opening');
+    });
+    expect(activeTexts()).toEqual(['1. Opening']);
+
+    await act(async () => {
+      search.props.onChangeText('waves');
+    });
+    expect(activeTexts()).toEqual(['Waves. Waves again.']);
+
+    await act(async () => {
+      mounted.unmount();
+    });
   });
 
   it('switches routes in branching stories', async () => {
@@ -556,6 +605,49 @@ describe('ManuscriptScreen', () => {
       'export_manuscript_success:{"fileName":"x.docx"}',
       'success',
     );
+  });
+
+  it('carries choice requirements and effects into the exported manuscript', async () => {
+    mockManuscriptData = {
+      ...linearData(),
+      choices: [{ id: 'choice-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Ford the river' }],
+    };
+    mockLoadChoiceAnnotations.mockResolvedValueOnce(
+      new Map([
+        [
+          'choice-1',
+          {
+            requirements: ['Requires all of:', '• Requires the Brass Key'],
+            effects: ['Effects', '• Gain the Rusty Key'],
+          },
+        ],
+      ]),
+    );
+    const view = await render(<ManuscriptScreen />);
+    await view.findByTestId('manuscript-list');
+    await pressHeaderAction('export');
+
+    await act(async () => {
+      mockModalProps?.onExport({
+        format: 'md',
+        includeSceneNames: true,
+        includeLooseScenes: true,
+        resetSceneNumbers: false,
+        includeIndex: false,
+        arcId: null,
+      });
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const call = mockExportManuscript.mock.calls[0][0];
+    const choice = call.manuscript.blocks.find(
+      (block: { kind: string }) => block.kind === 'choice',
+    );
+    expect(choice).toMatchObject({
+      text: 'Ford the river',
+      requirements: ['Requires all of:', '• Requires the Brass Key'],
+      effects: ['Effects', '• Gain the Rusty Key'],
+    });
   });
 
   it('exports the file name in the app language', async () => {

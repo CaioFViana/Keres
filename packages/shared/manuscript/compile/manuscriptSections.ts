@@ -1,4 +1,5 @@
 import type { ChapterType } from '../../metadata/ChapterType';
+import { findAllCaseInsensitiveMatches } from '../../utils/excerptHighlight';
 
 /** The minimum the pipeline needs to know about a chapter. */
 export interface ManuscriptChapter {
@@ -212,4 +213,40 @@ export function sectionIndexForMatch(matches: ManuscriptMatch[], ordinal: number
     rest -= match.count;
   }
   return matches[matches.length - 1]?.sectionIndex ?? 0;
+}
+
+export interface OrdinalMatchLocation {
+  sectionIndex: number;
+  /** 0-based hit within the scene name, or -1 when the hit is in the body. */
+  nameMatchIndex: number;
+  /** 0-based hit within the scene body, or -1 when the hit is in the name. */
+  bodyMatchIndex: number;
+}
+
+/**
+ * Which hit the ordinal-th global match (0-based) is: its section plus its 0-based
+ * position inside the scene name or body. Names count first - the counter scans
+ * `name\nbody` - so the body index is the within-section index minus the name hits.
+ * Null when there is no such match.
+ */
+export function locateOrdinalMatch(
+  sections: ManuscriptSection[],
+  matches: ManuscriptMatch[],
+  query: string,
+  ordinal: number,
+): OrdinalMatchLocation | null {
+  if (matches.length === 0 || ordinal < 0) return null;
+  const total = matches.reduce((sum, match) => sum + match.count, 0);
+  if (ordinal >= total) return null;
+  const sectionIndex = sectionIndexForMatch(matches, ordinal);
+  const section = sections[sectionIndex];
+  if (!section || section.kind !== 'scene') return null;
+  let within = ordinal;
+  for (const match of matches) {
+    if (match.sectionIndex === sectionIndex) break;
+    within -= match.count;
+  }
+  const nameHits = findAllCaseInsensitiveMatches(section.scene.name, query).length;
+  if (within < nameHits) return { sectionIndex, nameMatchIndex: within, bodyMatchIndex: -1 };
+  return { sectionIndex, nameMatchIndex: -1, bodyMatchIndex: within - nameHits };
 }

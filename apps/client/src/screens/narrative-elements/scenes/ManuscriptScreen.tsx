@@ -21,12 +21,9 @@ import type { ManuscriptSection, TextRange } from '@keres/shared';
 import {
   compileLinearManuscript,
   compileRouteManuscript,
-  findAllCaseInsensitiveMatches,
-  findManuscriptMatches,
   isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
-  sectionIndexForMatch,
 } from '@keres/shared';
 import MarkedText from '../../../components/common/display/MarkedText/MarkedText';
 import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -50,6 +47,7 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
+import { useManuscriptSearch } from './useManuscriptSearch';
 
 type ManuscriptScreenRouteProp = RouteProp<NarrativeElementsStackParamList, 'Manuscript'>;
 type ManuscriptNavigation = NativeStackNavigationProp<
@@ -61,6 +59,7 @@ type ManuscriptNavigation = NativeStackNavigationProp<
 const MANUSCRIPT_VIEWABILITY = { itemVisiblePercentThreshold: 50 };
 // Shared empty ranges for unmarked titles; module scope keeps the reference stable.
 const NO_RANGES: TextRange[] = [];
+const NO_ACTIVE: TextRange[] = [];
 
 const ManuscriptScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -79,14 +78,11 @@ const ManuscriptScreen = () => {
 
   const storyId = selectedStory?.id;
   const isBranching = selectedStory?.type === 'branching';
-  const { chapters, scenes, routes, choices, stepsByRouteId, loading } = useManuscriptData(
-    storyId ?? null,
-  );
+  const { chapters, scenes, routes, choices, stepsByRouteId, loading, loadChoiceAnnotations } =
+    useManuscriptData(storyId ?? null);
 
   const [routeId, setRouteId] = useState<string | null>(route.params?.routeId ?? null);
   const effectiveRouteId = routeId ?? routes[0]?.id ?? null;
-  const [query, setQuery] = useState('');
-  const [ordinal, setOrdinal] = useState(0);
   const [pureRead, setPureRead] = useState(false);
   const [exportVisible, setExportVisible] = useState(false);
   const [indexVisible, setIndexVisible] = useState(false);
@@ -126,38 +122,6 @@ const ManuscriptScreen = () => {
     [pureRead, allSections],
   );
 
-  const { matches, total } = useMemo(
-    () => findManuscriptMatches(sections, query),
-    [sections, query],
-  );
-  // Search marks follow the counter's own rule (case-insensitive, scene names and
-  // bodies): ranges over the bare name, shifted past the "position. " prefix the list
-  // adds. Bodies mark through `MarkdownPreview`; container headings never match.
-  const titleRangesByKey = useMemo(() => {
-    const map = new Map<string, TextRange[]>();
-    if (!query.trim()) return map;
-    for (const section of sections) {
-      if (section.kind !== 'scene') continue;
-      const prefixLength = `${section.position}. `.length;
-      const ranges = findAllCaseInsensitiveMatches(section.scene.name, query).map((range) => ({
-        start: range.start + prefixLength,
-        length: range.length,
-      }));
-      if (ranges.length > 0) map.set(section.key, ranges);
-    }
-    return map;
-  }, [sections, query]);
-  // Derived-state reset during render (the sanctioned pattern, not an effect): a new query
-  // or new sections invalidate the current match position, so the ordinal restarts at the
-  // first match. React re-renders immediately with ordinal 0; no stale jump escapes.
-  const [prevQuery, setPrevQuery] = useState(query);
-  const [prevSections, setPrevSections] = useState(sections);
-  if (query !== prevQuery || sections !== prevSections) {
-    setPrevQuery(query);
-    setPrevSections(sections);
-    setOrdinal(0);
-  }
-
   const listRef = useRef<FlatList<ManuscriptSection> | null>(null);
   // The one indexed jump: search matches and index picks share it, so the target also
   // becomes the reader's position for the index highlight.
@@ -165,16 +129,26 @@ const ManuscriptScreen = () => {
     setCurrentSectionIndex(index);
     listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.1 });
   }, []);
-  // Match navigation wraps past both ends: prev from the first match lands on the last,
-  // next from the last lands on the first. Each jump scrolls the owning section near the top.
-  const jumpToOrdinal = useCallback(
-    (next: number) => {
-      if (total === 0) return;
-      const wrapped = ((next % total) + total) % total;
-      setOrdinal(wrapped);
-      scrollToSectionIndex(sectionIndexForMatch(matches, wrapped));
+  const {
+    query,
+    setQuery,
+    ordinal,
+    total,
+    activeMatch,
+    titleMarksByKey,
+    jumpToOrdinal,
+    viewportRef,
+    handleListScroll,
+    scrollActiveIntoView,
+  } = useManuscriptSearch(sections, listRef, scrollToSectionIndex);
+  // The guide anchor owns the list view's ref prop; this stable callback feeds both the
+  // tour and the search viewport without re-registering on every render.
+  const setListViewportRef = useCallback(
+    (node: unknown) => {
+      listAnchorRef(node);
+      viewportRef.current = node as View | null;
     },
-    [matches, total, scrollToSectionIndex],
+    [listAnchorRef, viewportRef],
   );
   // Unmeasured rows cannot be jumped to directly: scroll to the estimated
   // offset first so the row measures, then retry the indexed jump on the next tick.
@@ -265,13 +239,19 @@ const ManuscriptScreen = () => {
           const exportScenes = exportArcId
             ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, exportArcId))
             : scenes;
+          // Check and effect lines resolve here, at export time: reading never pays for them.
+          const annotations = await loadChoiceAnnotations(t);
+          const annotatedChoices = choices.map((choice) => {
+            const lines = annotations.get(choice.id);
+            return lines ? { ...choice, ...lines } : choice;
+          });
           const manuscript = isBranching
             ? compileRouteManuscript({
                 title: exportTitle,
                 routeName: exportRouteName ?? '',
                 steps: effectiveRouteId ? (stepsByRouteId.get(effectiveRouteId) ?? []) : [],
                 scenes: exportScenes,
-                choices,
+                choices: annotatedChoices,
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
                 includeSceneNames,
                 resetSceneNumbersPerChapter: resetSceneNumbers,
@@ -280,7 +260,7 @@ const ManuscriptScreen = () => {
                 title: exportTitle,
                 chapters,
                 scenes,
-                choices,
+                choices: annotatedChoices,
                 includeLooseScenes,
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
                 includeSceneNames,
@@ -327,6 +307,7 @@ const ManuscriptScreen = () => {
       t,
       i18n,
       showNotification,
+      loadChoiceAnnotations,
     ],
   );
 
@@ -468,7 +449,15 @@ const ManuscriptScreen = () => {
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => openScene(item.scene.id)}>
                   <MarkedText
                     text={`${item.position}. ${item.scene.name}`}
-                    ranges={titleRangesByKey.get(item.key) ?? NO_RANGES}
+                    ranges={titleMarksByKey.ranges.get(item.key) ?? NO_RANGES}
+                    activeRanges={titleMarksByKey.active.get(item.key) ?? NO_ACTIVE}
+                    // The active title hit scrolls like a body hit: the indexed jump
+                    // lands the row, the measured scroll lands the hit itself.
+                    activeRef={
+                      activeMatch?.sectionIndex === index && activeMatch.nameMatchIndex >= 0
+                        ? scrollActiveIntoView
+                        : undefined
+                    }
                     style={styles.sceneTitle}
                   />
                 </TouchableOpacity>
@@ -484,7 +473,14 @@ const ManuscriptScreen = () => {
               </View>
             )}
             {item.scene.body ? (
-              <MarkdownPreview text={item.scene.body} highlightQuery={query} />
+              <MarkdownPreview
+                text={item.scene.body}
+                highlightQuery={query}
+                activeMatchIndex={
+                  activeMatch?.sectionIndex === index ? activeMatch.bodyMatchIndex : undefined
+                }
+                activeTextRef={scrollActiveIntoView}
+              />
             ) : (
               !pureRead && <Text style={styles.emptyText}>{t('manuscript_no_body_yet')}</Text>
             )}
@@ -492,7 +488,18 @@ const ManuscriptScreen = () => {
         </View>
       );
     },
-    [pureRead, openScene, openSceneEditor, styles, t, colors, titleRangesByKey, query],
+    [
+      pureRead,
+      openScene,
+      openSceneEditor,
+      styles,
+      t,
+      colors,
+      titleMarksByKey,
+      query,
+      activeMatch,
+      scrollActiveIntoView,
+    ],
   );
 
   if (loading) {
@@ -571,7 +578,7 @@ const ManuscriptScreen = () => {
           <Text style={styles.emptyText}>{t('manuscript_no_scenes')}</Text>
         </View>
       ) : (
-        <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <View ref={setListViewportRef} collapsable={false} style={{ flex: 1 }}>
           <FlatList
             ref={listRef}
             testID="manuscript-list"
@@ -581,6 +588,8 @@ const ManuscriptScreen = () => {
             viewabilityConfig={MANUSCRIPT_VIEWABILITY}
             onViewableItemsChanged={handleViewableItemsChanged}
             onScrollToIndexFailed={handleScrollToIndexFailed}
+            onScroll={handleListScroll}
+            scrollEventThrottle={16}
           />
         </View>
       )}

@@ -180,6 +180,27 @@ describe('ChapterScenesList', () => {
 
     expect(view.getAllByText('chapter_outline_layer')).toHaveLength(2);
   });
+
+  it('hides the quick-add button without a handler or without edit rights', async () => {
+    const withoutHandler = await render(<ChapterScenesList {...baseProps} />);
+    expect(withoutHandler.queryByText('quick_add_scene')).toBeNull();
+
+    const readOnly = await render(
+      <ChapterScenesList {...baseProps} canEdit={false} onQuickAddPress={jest.fn()} />,
+    );
+    expect(readOnly.queryByText('quick_add_scene')).toBeNull();
+  });
+
+  it('opens quick capture through the quick-add button', async () => {
+    const onQuickAddPress = jest.fn();
+    const view = await render(
+      <ChapterScenesList {...baseProps} onQuickAddPress={onQuickAddPress} />,
+    );
+
+    await fireEvent.press(view.getByTestId('quick-add-scene-button'));
+
+    expect(onQuickAddPress).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('ChapterSceneBranchTree', () => {

@@ -15,6 +15,13 @@ export interface ManuscriptChoice {
   sceneId: string;
   nextSceneId: string;
   text: string;
+  /**
+   * Pre-rendered requirement lines derived from the choice's check groups (localized by
+   * the caller, which owns names and locale). Absent or empty when the choice is open.
+   */
+  requirements?: string[];
+  /** Pre-rendered effect lines for taking this choice; absent or empty when it changes nothing. */
+  effects?: string[];
 }
 
 export type CompiledSpan = {
@@ -47,6 +54,10 @@ export type CompiledBlock =
       /** Null when the target is not part of this export: render name-only, no reference. */
       targetBookmarkId: string | null;
       targetSceneName: string | null;
+      /** Requirement lines carried from the choice input; renderers draw one sub-line each. */
+      requirements?: string[];
+      /** Effect lines carried from the choice input; renderers draw one sub-line each. */
+      effects?: string[];
     };
 
 export type CompiledManuscript = { title: string; blocks: CompiledBlock[] };
@@ -163,6 +174,8 @@ function sectionsToBlocks({
         targetSceneId: choice.nextSceneId,
         targetBookmarkId: includeSceneNames ? (bookmarkFor.get(choice.nextSceneId) ?? null) : null,
         targetSceneName: includeSceneNames ? (sceneNameById.get(choice.nextSceneId) ?? null) : null,
+        requirements: choice.requirements,
+        effects: choice.effects,
       });
     }
   }

@@ -39,6 +39,7 @@ export type ChapterListItemRendererProps = {
   choices: ChoiceSelect[];
   favoriteFilterState: string;
   handleAddScene: (chapterId: string) => void;
+  handleQuickAddPress: (chapterId: string) => void;
   handleOpenScene: (sceneId: string) => void;
   handleToggleFavorite: (chapterId: string, isFavorite: boolean) => void | Promise<void>;
   handleToggleSceneFavorite: (sceneId: string, isFavorite: boolean) => void | Promise<void>;
@@ -63,6 +64,7 @@ export const createChapterListItemRenderer = (props: ChapterListItemRendererProp
     choices,
     favoriteFilterState,
     handleAddScene,
+    handleQuickAddPress,
     handleOpenScene,
     handleToggleFavorite,
     handleToggleSceneFavorite,
@@ -137,6 +139,8 @@ export const createChapterListItemRenderer = (props: ChapterListItemRendererProp
             onOpenScene={handleOpenScene}
             onToggleFavorite={handleToggleSceneFavorite}
             onAddScene={() => handleAddScene(item.id)}
+            onQuickAddPress={() => handleQuickAddPress(item.id)}
+            quickAddTestID={`quick-add-scene-${item.id}`}
             onReorderScenes={() => props.setReorderChapterId(item.id)}
             unchaptered={isUnchapteredGroup(item.id)}
             sortBy={activeSort}

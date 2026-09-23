@@ -125,6 +125,21 @@ describe('SceneService index handling', () => {
     expect(unchaptered?.chapterId).toBeNull();
   });
 
+  it('quick-captures a title-only scene unchaptered and files it into a chapter later', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+
+    const created = await service.createScene(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      name: 'Stray thought',
+    });
+    expect(created.chapterId).toBeNull();
+
+    await service.updateScene(TEST_USER_ID, created.id, { chapterId: 'chapter-1' });
+
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', `${created.id}:2`]);
+  });
+
   it('does not try to renumber when an unchaptered scene is deleted', async () => {
     const service = createSceneService(database.db);
     await database.db.insert(schema.scenes).values({

@@ -408,28 +408,39 @@ function flattenRuns(
         const page = block.targetBookmarkId
           ? (anchors.get(block.targetBookmarkId)?.page ?? null)
           : null;
-        const { lines, indents } = wrapGroup(
-          wordsOf(choiceText(block.text, block.targetSceneName, page, labels), 'times', BODY_SIZE),
-          BODY_SIZE,
-          CONTENT_WIDTH,
-          CHOICE_INDENT,
-          CHOICE_INDENT,
-        );
-        lines.forEach((words, index) => {
-          runs.push({
-            words,
-            size: BODY_SIZE,
-            leading: BODY_LEADING,
-            indent: indents[index],
-            spaceBefore: 0,
-            spaceAfter: index === lines.length - 1 ? 7 : 0,
-            centered: false,
-            gray: INK,
-            bookmarkId: null,
-            linkTarget: null,
-            keepWithNext: false,
-            forcePageBreak: false,
+        const annotations = [...(block.requirements ?? []), ...(block.effects ?? [])];
+        const pushWrapped = (text: string, indent: number, trailing: number) => {
+          const { lines, indents } = wrapGroup(
+            wordsOf(text, 'times', BODY_SIZE),
+            BODY_SIZE,
+            CONTENT_WIDTH,
+            indent,
+            indent,
+          );
+          lines.forEach((words, index) => {
+            runs.push({
+              words,
+              size: BODY_SIZE,
+              leading: BODY_LEADING,
+              indent: indents[index],
+              spaceBefore: 0,
+              spaceAfter: index === lines.length - 1 ? trailing : 0,
+              centered: false,
+              gray: INK,
+              bookmarkId: null,
+              linkTarget: null,
+              keepWithNext: false,
+              forcePageBreak: false,
+            });
           });
+        };
+        pushWrapped(
+          choiceText(block.text, block.targetSceneName, page, labels),
+          CHOICE_INDENT,
+          annotations.length > 0 ? 0 : 7,
+        );
+        annotations.forEach((line, lineIndex) => {
+          pushWrapped(line, CHOICE_INDENT * 2, lineIndex === annotations.length - 1 ? 7 : 0);
         });
         break;
       }

@@ -71,11 +71,9 @@ jest.mock('expo-image', () => ({
 
 /** TouchableOpacity surfaces `disabled` on the host tree as `accessibilityState`. */
 function pressableDisabledOf(view: RenderResult, text: string): boolean | undefined {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let node: any = view.getByText(text);
+  let node: RenderResult['container'] | null = view.getByText(text);
   while (node && node?.props?.accessibilityState?.disabled === undefined) node = node.parent;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (node as any)?.props?.accessibilityState?.disabled;
+  return node?.props?.accessibilityState?.disabled;
 }
 
 const comment = (overrides: Partial<CommentSelect> = {}): CommentSelect =>

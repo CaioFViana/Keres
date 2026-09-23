@@ -213,8 +213,7 @@ describe('CommentableDetailField', () => {
 
     expect(view.getByTestId('detail-field')).toBeTruthy();
     expect(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      view.container.queryAll((node: any) => node.type === 'Icon'),
+      view.container.queryAll((node) => node.type === 'Icon'),
     ).toHaveLength(0);
     expect(mockThreadModal).not.toHaveBeenCalled();
   });

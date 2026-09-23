@@ -123,14 +123,11 @@ const flush = async () => {
 /** TouchableOpacity composites never appear in the host tree; their host Views carry the responders. */
 const touchablesOf = (view: RenderResult) =>
   view.container.queryAll(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (node: any) =>
-      node.type === 'View' && typeof node.props?.onStartShouldSetResponder === 'function',
+    (node) => node.type === 'View' && typeof node.props?.onStartShouldSetResponder === 'function',
   );
 
 const spinnersOf = (view: RenderResult) =>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  view.container.queryAll((node: any) => node.type === 'ActivityIndicator');
+  view.container.queryAll((node) => node.type === 'ActivityIndicator');
 
 beforeEach(() => {
   jest.clearAllMocks();

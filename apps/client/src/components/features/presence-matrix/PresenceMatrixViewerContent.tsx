@@ -33,6 +33,9 @@ const PresenceMatrixViewerContent: React.FC<{
   const story = useStoryStore((state) => state.selectedStory);
   const notify = useNotificationStore((state) => state.showNotification);
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
+  const zoomIn = useCallback(() => canvas.current?.zoomBy(1.25), []);
+  const zoomOut = useCallback(() => canvas.current?.zoomBy(0.8), []);
+  const fitCanvasToScreen = useCallback(() => canvas.current?.fitToScreen(), []);
   /**
    * Events are out by default.
    *
@@ -471,26 +474,18 @@ const PresenceMatrixViewerContent: React.FC<{
       )}
       {layout.rows.length > 0 && (
         <View style={styles.controls}>
-          {/* eslint-disable-next-line react-hooks/refs -- the zoom closures read the canvas handle only when pressed. */}
-          {[
-            ['add', () => canvas.current?.zoomBy(1.25)],
-            ['remove', () => canvas.current?.zoomBy(0.8)],
-            ['scan-outline', () => canvas.current?.fitToScreen()],
-            ['image-outline', exportMap],
-          ].map(([name, press]) => (
-            <TouchableOpacity
-              key={name as string}
-              style={styles.control}
-              onPress={press as () => void}
-              disabled={saving}
-            >
-              <Ionicons
-                name={name as keyof typeof Ionicons.glyphMap}
-                size={20}
-                color={colors.text}
-              />
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity style={styles.control} onPress={zoomIn} disabled={saving}>
+            <Ionicons name="add" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.control} onPress={zoomOut} disabled={saving}>
+            <Ionicons name="remove" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.control} onPress={fitCanvasToScreen} disabled={saving}>
+            <Ionicons name="scan-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.control} onPress={exportMap} disabled={saving}>
+            <Ionicons name="image-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
         </View>
       )}
       {selectedSceneId && (

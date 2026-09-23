@@ -109,8 +109,7 @@ const ImageZoomViewer: React.FC<ImageZoomViewerProps> = ({ visible, uri, onClose
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, uri]);
+  }, [visible, uri, fitToScreen]);
 
   /** Keeps the image reachable: it does not let you drag it off the screen when zoomed in. */
   const clamp = useCallback(() => {

@@ -71,10 +71,10 @@ jest.mock('../../src/components/common/controls/Button/Button', () => {
 
 jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const RN = jest.requireActual('react-native');
-  const pill =
-    (testID: string) =>
-    // eslint-disable-next-line react/display-name
-    (props: Record<string, unknown>) => <RN.View testID={testID} {...props} />;
+  const pill = (testID: string) => {
+    const MockPill = (props: Record<string, unknown>) => <RN.View testID={testID} {...props} />;
+    return MockPill;
+  };
   return {
     __esModule: true,
     SingleSelectPill: pill('single-select-pill'),

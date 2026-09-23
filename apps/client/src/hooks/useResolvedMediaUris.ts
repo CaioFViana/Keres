@@ -48,6 +48,8 @@ export function useResolvedMediaUris(
     return () => {
       cancelled = true;
     };
+    // `uniquePaths` is rebuilt every render; `key` is its stable identity, so the
+    // effect depends on the key instead of re-resolving on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

@@ -251,8 +251,7 @@ describe('AnchorEditModal', () => {
     );
 
     // TouchableOpacity surfaces `disabled` on the host tree as `accessibilityState`.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let node: any = view.getByText('anchor_mode_open');
+    let node: RenderResult['container'] | null = view.getByText('anchor_mode_open');
     while (node && node?.props?.accessibilityState?.disabled === undefined) node = node.parent;
     expect(node?.props?.accessibilityState?.disabled).toBe(true);
     // Forced closed without an end: nothing to confirm yet.

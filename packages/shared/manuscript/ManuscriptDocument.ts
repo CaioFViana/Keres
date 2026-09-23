@@ -148,7 +148,6 @@ export function parseInlineLine(line: string): ManuscriptSpan[] {
   let i = 0;
   while (i < line.length) {
     const char = line[i];
-    const pair = line.slice(i, i + 2);
     if (char === '\\' && i + 1 < line.length && ESCAPABLE.has(line[i + 1])) {
       pushText(current(), line[i + 1]);
       i += 2;
@@ -173,15 +172,26 @@ export function parseInlineLine(line: string): ManuscriptSpan[] {
       i += 1;
       continue;
     }
-    if (pair === '__' || pair === '~~') {
-      const mark: ManuscriptMark = pair === '__' ? 'underline' : 'strikethrough';
+    if ((char === '_' || char === '~') && line[i + 1] === char) {
+      const mark: ManuscriptMark = char === '_' ? 'underline' : 'strikethrough';
       if (current().marker === mark) closeTopFrame();
       else stack.push({ marker: mark, parts: [] });
       i += 2;
       continue;
     }
-    pushText(current(), char);
-    i += 1;
+    // Plain run: consecutive chars that can never open markup merge into the
+    // same unmarked span either way, so consume them in one slice instead of
+    // one pushText per char (a 15MB unstyled line must parse in milliseconds).
+    // Lone `_`, `~` and `\` are literal, so the run starts at `i` itself and
+    // only stops before a char that may start a marker or an escape.
+    let j = i + 1;
+    while (j < line.length) {
+      const next = line[j];
+      if (next === '\\' || next === '*' || next === '_' || next === '~') break;
+      j += 1;
+    }
+    pushText(current(), line.slice(i, j));
+    i = j;
   }
   while (stack.length > 1) {
     const frame = stack.pop() as Frame;

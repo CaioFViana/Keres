@@ -63,6 +63,20 @@ jest.mock('../../src/components/common/display/EntityRelationList/EntityRelation
   };
 });
 
+const mockMapIcon = jest.fn();
+jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const React = require('react');
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: (props: { testID?: string }) => {
+      mockMapIcon(props);
+      return React.createElement(View, { testID: props.testID });
+    },
+  };
+});
+
 const arc = (overrides: Partial<StoryArcSelect> = {}): StoryArcSelect =>
   ({
     id: 'arc-1',
@@ -172,5 +186,46 @@ describe('ArcPickerModal', () => {
 
     expect(onSelect).toHaveBeenCalledWith('arc-2');
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws each row with its stored icon and color', async () => {
+    const view = await render(
+      <ArcPickerModal
+        visible
+        arcs={[
+          ...arcs,
+          arc({ id: 'arc-3', title: 'Third Arc', icon: 'keres:castle', color: null }),
+          arc({ id: 'arc-4', title: 'Fourth Arc', icon: null, color: null }),
+        ]}
+        activeArcId={null}
+        onSelect={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(view.getByTestId('arc-picker-row-all')).toBeTruthy();
+    expect(mockMapIcon.mock.calls.map((call) => call[0])).toEqual([
+      { name: 'library', size: 22, color: '#00f', testID: 'arc-picker-icon-all' },
+      { name: 'library', size: 22, color: '#123456', testID: 'arc-picker-icon-arc-1' },
+      { name: 'library', size: 22, color: '#00f', testID: 'arc-picker-icon-arc-2' },
+      { name: 'keres:castle', size: 22, color: '#00f', testID: 'arc-picker-icon-arc-3' },
+      { name: 'library', size: 22, color: '#00f', testID: 'arc-picker-icon-arc-4' },
+    ]);
+  });
+
+  it('marks only the selected row', async () => {
+    const view = await render(
+      <ArcPickerModal
+        visible
+        arcs={arcs}
+        activeArcId="arc-2"
+        onSelect={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(view.queryByTestId('arc-picker-check-all')).toBeNull();
+    expect(view.queryByTestId('arc-picker-check-arc-1')).toBeNull();
+    expect(view.getByTestId('arc-picker-check-arc-2')).toBeTruthy();
   });
 });

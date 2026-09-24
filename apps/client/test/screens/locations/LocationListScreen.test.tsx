@@ -182,32 +182,6 @@ beforeEach(() => {
   mockGetTagsByStoryId.mockResolvedValue([]);
 });
 
-// Runs first on purpose: later tests in this file leave async effects behind (see the
-// overlapping-act warnings on the pristine file), and a mount scheduled behind that
-// backlog never commits, so an arc-filter assertion here would read an empty tree.
-it('hides locations from other arcs but keeps unlinked ones', async () => {
-  mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
-    selector({ activeArcId: 'arc-1' }),
-  );
-  mockUseLocationArcIds.mockReturnValue(
-    new Map([
-      ['loc-1', ['arc-1']],
-      ['loc-2', ['arc-2']],
-    ]),
-  );
-  mockListState = {
-    ...freshListState(),
-    items: [
-      { id: 'loc-1', name: 'Keep' },
-      { id: 'loc-2', name: 'Forest' },
-      { id: 'loc-3', name: 'Harbor' },
-    ],
-  };
-  await render(<LocationsScreen />);
-  expect(mockUseLocationArcIds).toHaveBeenCalledWith('story-1', 'location');
-  expect(mockListProps?.data.map((item) => item.id)).toEqual(['loc-1', 'loc-3']);
-});
-
 it('requests its guided tour', async () => {
   await render(<LocationsScreen />);
 
@@ -234,15 +208,16 @@ it('guides the empty list toward creation', async () => {
   expect(mockNavigate).toHaveBeenCalledWith('LocationForm', { locationId: undefined });
 });
 
-it('shows loading and error states from the list hook', async () => {
+it('shows the loading state from the list hook', async () => {
   mockListState = { ...freshListState(), isInitialLoading: true };
   const loading = await render(<LocationsScreen />);
   expect(loading.getByTestId('screen-loading')).toBeTruthy();
-  loading.unmount();
+});
 
+it('shows the error state with a back action', async () => {
   mockListState = { ...freshListState(), error: 'load failed' };
   const failed = await render(<LocationsScreen />);
-  fireEvent.press(failed.getByTestId('screen-error'));
+  await fireEvent.press(failed.getByTestId('screen-error'));
   expect(mockGoBack).toHaveBeenCalled();
 });
 
@@ -263,9 +238,32 @@ it('renders locations with tag filters and wires item actions', async () => {
     'updatedAt',
   ]);
 
-  fireEvent.press(screen.getByTestId('fav-loc-1'));
+  await fireEvent.press(screen.getByTestId('fav-loc-1'));
   expect(mockToggleFavorite).toHaveBeenCalledWith('loc-1', true);
 
-  fireEvent.press(screen.getByTestId('view-loc-1'));
+  await fireEvent.press(screen.getByTestId('view-loc-1'));
   expect(mockNavigate).toHaveBeenCalledWith('LocationDetail', { locationId: 'loc-1' });
+});
+
+it('hides locations from other arcs but keeps unlinked ones', async () => {
+  mockUseStoryStore.mockImplementation((selector: (state: object) => unknown) =>
+    selector({ activeArcId: 'arc-1' }),
+  );
+  mockUseLocationArcIds.mockReturnValue(
+    new Map([
+      ['loc-1', ['arc-1']],
+      ['loc-2', ['arc-2']],
+    ]),
+  );
+  mockListState = {
+    ...freshListState(),
+    items: [
+      { id: 'loc-1', name: 'Keep' },
+      { id: 'loc-2', name: 'Forest' },
+      { id: 'loc-3', name: 'Harbor' },
+    ],
+  };
+  await render(<LocationsScreen />);
+  expect(mockUseLocationArcIds).toHaveBeenCalledWith('story-1', 'location');
+  expect(mockListProps?.data.map((item) => item.id)).toEqual(['loc-1', 'loc-3']);
 });

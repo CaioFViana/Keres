@@ -45,4 +45,14 @@ export default [
       ],
     },
   },
+  {
+    // Like the API: `any` stays allowed in tests, but production code must say
+    // `unknown` - or carry a documented disable where the value is genuinely
+    // unshaped (pre-validation migration input).
+    files: ['**/*.ts'],
+    ignores: ['test/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': ['error', { fixToUnknown: true }],
+    },
+  },
 ];

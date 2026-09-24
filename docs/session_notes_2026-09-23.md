@@ -234,6 +234,84 @@ código e comentários em inglês; sem mudanças fora do escopo pedido.
 - Gates: client full 597/597, 6020/6020; shared 84/84, 997/997; tsc/eslint 0;
   locales audit ok. SceneDetailScreen em 580/600 — próximo toque nela pede split.
 
+### 1.15 Round de overlays do canvas (handoff anterior, sem detalhe neste contexto)
+- Errata dos overlays + lock + onboarding + fix de cor no export. Entregue com gates
+  verdes: client 618/6126, shared 88/1023 na época.
+
+### 1.16 Pack de ícones Keres (59 SVGs, picker v2, fiação completa)
+- **Curadoria**: 59 SVGs do game-icons.net (CC BY 3.0) em
+  `packages/shared/metadata/keres/` + `keresIcons.json` (nome/autor/source/categoria/
+  keywords) + `NOTICE.md` no repo. Autores: Lorc, Delapouite, Carl Olsen.
+- **Decisões**: Skia-only, sem react-native-svg; nomes guardados com namespace
+  (`keres:`, `ion:` explícito, plano = ion); atribuição in-app vai para um botão em
+  Settings (decisão do usuário — NÃO implementar agora).
+- **Render**: `MapIcon` com branch por família (fonte Ionicons / Skia `ImageSVG`;
+  escala 0.8 na entrega, **0.9** depois do §1.19); `tintIconShapes` compartilhado;
+  `keresIconPaths.ts` gerado por
+  `scripts/generate-keres-icon-paths.ts` (valida bg/viewBox, sem grupos/transform).
+- **Picker v2** (`IconPickerModal`): busca (nome+keywords), 11 chips de categoria,
+  recentes duráveis (`useIconRecents`, 8), grid responsivo 4/5/6 colunas. Keres
+  sempre anexado; avatar usa essentials, mapas usam `MAP_ICON_OPTIONS`.
+- **Fiação**: Avatar, `CanvasStampView`, `LocationMapNodeView`, export SVG dos mapas
+  (`renderMapIconSvg`) e Showcase (plugin vite corta os 59 para o virtual module;
+  `OwnerAvatar` sem mudança lógica). API/DB trafegam `keres:` como string opaca.
+- Testes: manifest (nomes/categorias/SVG por entry), MapIcon (3 branches), pickers,
+  export, showcase (`keres:castle` renderiza o glifo, não o fallback).
+
+### 1.17 Curadoria do pack (revisão visual, 9 trocas)
+- Renderizei os 59 + candidatos em contact sheets (Chrome headless) e revisei um a
+  um (`C:\tmp\sheet\sheet-a.png` … `sheet-d.png`, throwaway).
+- Trocas (mesmo nome, nova arte — só station mudou de nome): `space-station`
+  (era a Death Star) → **`lunar-module`**; `sword` broadsword → **gladius (Skoll,
+  4º autor no NOTICE)**; `spear` (lia-se pena) → spears; `staff` (onda) →
+  crescent-staff; `scroll` (bota) → tied-scroll; `potion` (granada) →
+  standing-potion; `volcano` (planta) → smoking-volcano; `spaceship` (origami) →
+  rocket; `alien` (cthulhu) → alien-stare. Keywords ajustadas onde mudou o conceito.
+- Valores antigos `keres:space-station` caem no fallback `location`, sem quebrar.
+- Regen byte-idêntica fora as trocas; suítes do pack verdes.
+
+### 1.18 Ícones de story arc (form + estrutura + drawer)
+- **Form**: campo de ícone no `StoryArcFormScreen` (essentials + Keres), com estado,
+  draft durável, dirty/reset, create/update; chave `arc_icon` en+pt; oculto em
+  leitura. Service/sync/schemas já trafegavam `icon` — zero buraco.
+- **Drawer**: `drawerStoredIcon` (MapIcon) na entrada ArcContext do
+  `MainSystemStack`; fallback `library-outline` sem arco ativo.
+- **Render**: `StoryArcListScreen` e `AppearsInArcsSection` via MapIcon;
+  `EntityRelationList.icon` agora opcional (leading desenha). `ArcPickerModal`
+  intocado por decisão de escopo (ver §6).
+- Testes: form (pick/save/hydrate), lista, ScopeAArcs, EntityRelationList sem
+  ícone, drawer helpers + stack (arco ativo e fallback).
+
+### 1.19 Picker no web (pills, render Keres, wrap, recents)
+- **Pills vazando**: scrollers horizontais e grid sem largura — no web, filho sem
+  largura em coluna centralizada dimensiona pelo conteúdo e derrama. Fix:
+  `width: 100%` nos três.
+- **Keres em branco no web**: Skia-web monta o SVG num `<img>` escondido com
+  decode assíncrono mas `drawSvg` dá snapshot síncrono (e ignora o tamanho pedido)
+  — confirmado no source instalado. Fix: branch web no `MapIcon` renderiza o
+  mesmo markup tintado via data URI no `Image` do RN (`keresIconMarkup.ts`);
+  Skia segue no nativo. Verificação por pixel em Chrome headless com os bytes
+  exatos dos módulos de produção (26/32/55px, tints claro/escuro).
+- **Sem scroll horizontal nas pills**: chips quebram em linhas (`flexWrap` + `gap`),
+  compactas em telas estreitas; container limitado (`altura − 120px`), grid com
+  `flexGrow/flexShrink` cede o espaço; glifos Keres 0.8 → **0.9** (detalhe pede).
+- **Recentes cortados ao meio** (regressão do cap, print do usuário): web encolhe
+  flex items por default e o ScrollView do RNW tem `overflowY: hidden` — fileira
+  achatada = células cortadas, grid pintando por cima. Fix: `flexShrink: 0` em
+  todas as fileiras fixas, só o grid cede; travado em teste de contrato de estilo.
+- **Fechar no topo**: Cancel embaixo virou X no header (padrão MultiSelectPill),
+  sempre alcançável em telas curtas; `icon-picker-close` nos testes.
+
+### 1.20 Color picker com paridade visual (opção B)
+- Cancel/Select embaixo viraram X (esquerda) + check (direita) no header, mesmo
+  padrão do modal de ícones; estilos mortos dos botões removidos.
+- **Opção B** (escolha do usuário): check com fundo tintado da cor picked ao vivo
+  (glifo por `getContrastTextColor`, borda sutil) + hex como legenda do título —
+  fileira de preview + hex embaixo eliminada (~100px economizados). Chaves
+  `close`/`select` reutilizadas, zero churn de locale.
+- Testes: confirm/close pelos testIDs + fundo do check = cor picked + contraste
+  do glifo. `DatePickerModal` mantém os botões antigos (ver §6).
+
 ---
 
 ## 2. Achados de análise (produto, sem código)
@@ -384,3 +462,32 @@ path que teste unitário com mocks almost-sempre mente sobre.
   overlapping-act no pristine). Contornada com teste em primeiro + comentário; higiene
   real do arquivo está pendente.
 - Assimetria de lint config: `no-explicit-any` off global em `api`/`shared`, on no client.
+- `SvgRasterHost` (raster de PNG no export) usa o mesmo caminho Skia-SVG quebrado no
+  web (§1.19) — PNG exportado no web pode sair em branco. Não reportado; se aparecer,
+  mesma causa, fix análogo.
+
+---
+
+## 6. Metas que faltaram (handoff)
+
+Gates finais da sessão, tudo verde: typecheck, lint, `locales:audit`, format,
+`code:lines`; testes shared 89/1025, client 621/6149, api 41/274, admin 29/356,
+desktop 7/101, site 5/35.
+
+- [ ] **Créditos in-app do pack (decisão adiada, não esquecida)** — atribuição CC BY
+  hoje só no `keres/NOTICE.md` + autores no manifest (o futuro credits screen lê
+  dali). Falta o botão em Settings; usuário decide o desenho depois.
+- [ ] **Paridade visual do pack em aparelho real** — legibilidade/peso dos 59 foi
+  validada em contact sheets no desktop; falta olhar amostral no nativo (Skia) e
+  na web real, especialmente glifos detalhados em 20–30px.
+- [ ] **Confirmação do fix de recentes no web do usuário** — validado por leitura
+  do fonte do RNW + teste de contrato de estilo (sem driver de automação aqui);
+  pedir print de confirmação na janela real.
+- [ ] **`DatePickerModal` com header X/check** — único picker restante com botões
+  embaixo; mesma paridade dos §§1.19–1.20 se o usuário quiser.
+- [ ] **Ícones dos arcos no `ArcPickerModal`** — fileiras seguem check/elipse de
+  seleção; mostrar o `MapIcon` de cada arco é follow-up natural do §1.18.
+- [ ] **Backlog §3 em aberto** — quick capture, linhas/desenho no mapa,
+  mini-engine (export HTML), checks no export. Nada disso foi iniciado.
+- [ ] **Riscos §5 em aberto** — split do `manuscriptPdf.ts`, higiene do
+  `LocationListScreen.test.tsx`, assimetria do `no-explicit-any`.

@@ -55,6 +55,7 @@ export interface OverlayCanvasCallbacks {
   /** Opens the label/color editor for the selected overlay. */
   onOpenOverlaySheet: (id: string) => void;
   onMoveOverlayLayer: (id: string, direction: 'front' | 'back') => void;
+  onToggleLock: (id: string) => void;
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;
   onCommitRect: (id: string, rect: { x: number; y: number; width: number; height: number }) => void;

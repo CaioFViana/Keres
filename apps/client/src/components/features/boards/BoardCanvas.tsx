@@ -535,6 +535,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
             onCommitRect={overlayCallbacks.onCommitRect}
             onDetails={overlayCallbacks.onOpenOverlaySheet}
             onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
+            onToggleLock={overlayCallbacks.onToggleLock}
             onDeselect={overlayCallbacks.onDeselectOverlay}
           />
         )}

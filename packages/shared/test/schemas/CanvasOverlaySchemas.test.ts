@@ -47,6 +47,45 @@ describe('CanvasOverlaySchema', () => {
     }
   });
 
+  it('accepts the lock flag on every kind', () => {
+    const overlays = [
+      {
+        id: lineId,
+        kind: 'line',
+        points: [
+          { x: 0, y: 0 },
+          { x: 10, y: 10 },
+        ],
+        locked: true,
+      },
+      {
+        id: polygonId,
+        kind: 'polygon',
+        points: [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+          { x: 5, y: 8 },
+        ],
+        locked: true,
+      },
+      { id: frameId, kind: 'frame', x: 0, y: 0, width: 100, height: 60, locked: true },
+      {
+        id: shapeId,
+        kind: 'shape',
+        shapeType: 'ellipse',
+        x: 0,
+        y: 0,
+        width: 40,
+        height: 40,
+        locked: true,
+      },
+      { id: stampId, kind: 'stamp', x: 50, y: 50, icon: 'flag', locked: true },
+    ];
+    for (const overlay of overlays) {
+      expect(CanvasOverlaySchema.parse(overlay)).toMatchObject({ locked: true });
+    }
+  });
+
   it('rejects under-defined geometry', () => {
     expect(() =>
       CanvasOverlaySchema.parse({

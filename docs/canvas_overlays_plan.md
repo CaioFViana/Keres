@@ -132,5 +132,8 @@ por arquivo.
   (só criação e o botão de detalhes abrem); seleção mostra handles +
   coluna (detalhes, frente, trás, desselecionar); fechar o sheet volta aos
   handles em vez de desselecionar; barra de select com Concluir; camada
-  via `moveOverlayLayer` (mesma matemática dos nós). Sem cadeado — schema
-  não tem `locked` (follow-up natural).
+  via `moveOverlayLayer` (mesma matemática dos nós).
+- Cadeado (feito): `locked` opcional nos 5 kinds; travado seleciona mas
+  ignora commits de geometria (mover/vértice/rect), como as imagens do mapa;
+  toggle na coluna da seleção (`overlay-chrome-lock`), sheet/camada/excluir
+  seguem funcionando. Export inalterado (cadeado é só do editor).

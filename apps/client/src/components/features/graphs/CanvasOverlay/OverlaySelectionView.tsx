@@ -15,6 +15,7 @@ interface OverlaySelectionViewProps {
   onCommitRect: (id: string, rect: { x: number; y: number; width: number; height: number }) => void;
   onDetails: (id: string) => void;
   onMoveLayer: (id: string, direction: 'front' | 'back') => void;
+  onToggleLock: (id: string) => void;
   onDeselect: () => void;
 }
 
@@ -26,9 +27,11 @@ type Corner = 0 | 1 | 2 | 3;
 /**
  * Native editing chrome for the selected overlay: a dashed bounds box, a move badge, vertex
  * handles (line/polygon), corner handles (frame/shape) and the action column (details,
- * raise, lower, deselect - the node layout chrome, minus resize). The box itself is
- * touch-transparent so taps fall through to the nodes below; only the badge, handles
- * and buttons capture. Transient drag state stays local and commits on release.
+ * raise, lower, lock, deselect - the node layout chrome, minus resize). Locked overlays
+ * keep the box and the column but lose every drag affordance, like locked map images.
+ * The box itself is touch-transparent so taps fall through to the nodes below; only the
+ * badge, handles and buttons capture. Transient drag state stays local and commits on
+ * release.
  */
 const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   overlay,
@@ -40,6 +43,7 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   onCommitRect,
   onDetails,
   onMoveLayer,
+  onToggleLock,
   onDeselect,
 }) => {
   const { colors } = useTheme();
@@ -157,6 +161,12 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
         label: t('overlay_send_to_back'),
         onPress: () => onMoveLayer(overlay.id, 'back'),
       },
+      {
+        testID: 'overlay-chrome-lock',
+        icon: overlay.locked ? 'lock-closed-outline' : 'lock-open-outline',
+        label: t(overlay.locked ? 'overlay_unlock' : 'overlay_lock'),
+        onPress: () => onToggleLock(overlay.id),
+      },
     ] as const
   ).map((button, index) => (
     <TouchableOpacity
@@ -171,32 +181,37 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
     </TouchableOpacity>
   ));
 
+  const draggable = !overlay.locked;
   return (
     <View testID="overlay-selection" style={styles.wrapper} pointerEvents="box-none">
       <View style={styles.box} pointerEvents="none" />
-      <View testID="overlay-move" style={styles.moveBadge} {...moveResponder.panHandlers}>
-        <Ionicons name="move" size={handle * 0.7} color={colors.surface} />
-      </View>
+      {draggable && (
+        <View testID="overlay-move" style={styles.moveBadge} {...moveResponder.panHandlers}>
+          <Ionicons name="move" size={handle * 0.7} color={colors.surface} />
+        </View>
+      )}
       {chromeButtons}
-      {vertices?.map((point, index) => (
-        <DragHandle
-          key={index}
-          testID={`overlay-vertex-${index}`}
-          x={point.x - bounds.x + pad - handle / 2}
-          y={point.y - bounds.y + pad - handle / 2}
-          size={handle}
-          round
-          borderColor={colors.primary}
-          fillColor={colors.surface}
-          scale={scale}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onCommit={(dx, dy) =>
-            onCommitVertex(overlay.id, index, { x: point.x + dx, y: point.y + dy })
-          }
-        />
-      ))}
-      {rect &&
+      {draggable &&
+        vertices?.map((point, index) => (
+          <DragHandle
+            key={index}
+            testID={`overlay-vertex-${index}`}
+            x={point.x - bounds.x + pad - handle / 2}
+            y={point.y - bounds.y + pad - handle / 2}
+            size={handle}
+            round
+            borderColor={colors.primary}
+            fillColor={colors.surface}
+            scale={scale}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onCommit={(dx, dy) =>
+              onCommitVertex(overlay.id, index, { x: point.x + dx, y: point.y + dy })
+            }
+          />
+        ))}
+      {draggable &&
+        rect &&
         (
           [
             [rect.x, rect.y],

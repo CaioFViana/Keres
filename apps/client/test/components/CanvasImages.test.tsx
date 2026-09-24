@@ -31,6 +31,7 @@ const overlayCallbacks = {
   onDeselectOverlay: noop,
   onOpenOverlaySheet: noop,
   onMoveOverlayLayer: noop,
+  onToggleLock: noop,
   onDrawRect: noop,
   onSelectOverlay: noop,
   onCommitMove: noop,

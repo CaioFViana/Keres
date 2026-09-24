@@ -155,6 +155,57 @@ describe('useCanvasOverlayActions', () => {
     expect(result.current.actions.selectedOverlayId).toBeNull();
   });
 
+  it('toggles the lock and ignores geometry commits while locked', async () => {
+    const result = await setup({
+      nodes: [],
+      edges: [],
+      overlays: [
+        {
+          id: 'ov-1',
+          kind: 'line',
+          points: [
+            { x: 0, y: 0 },
+            { x: 10, y: 0 },
+          ],
+        },
+        { id: 'ov-2', kind: 'frame', x: 0, y: 0, width: 60, height: 40 },
+      ],
+    } as unknown as BoardContentType);
+
+    await act(async () => result.current.actions.toggleOverlayLock('ov-2'));
+    await act(async () =>
+      result.current.actions.commitRectEdit('ov-2', { x: 5, y: 5, width: 70, height: 50 }),
+    );
+    expect(result.current.content.overlays?.[1]).toMatchObject({
+      x: 0,
+      y: 0,
+      width: 60,
+      height: 40,
+    });
+    await act(async () => result.current.actions.toggleOverlayLock('ov-1'));
+    expect(result.current.content.overlays?.[0]).toMatchObject({ locked: true });
+    await act(async () => result.current.actions.commitMove('ov-1', 5, 5));
+    await act(async () => result.current.actions.commitVertex('ov-1', 1, { x: 20, y: 20 }));
+    expect(result.current.content.overlays?.[0]).toMatchObject({
+      points: [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+      ],
+    });
+    // Sheet edits still land: the lock only guards canvas drags, like map images.
+    await act(async () => result.current.actions.updateOverlay('ov-1', { label: 'Kept' }));
+    expect(result.current.content.overlays?.[0]).toMatchObject({ label: 'Kept' });
+    await act(async () => result.current.actions.toggleOverlayLock('ov-1'));
+    expect(result.current.content.overlays?.[0]).toMatchObject({ locked: false });
+    await act(async () => result.current.actions.commitMove('ov-1', 5, 5));
+    expect(result.current.content.overlays?.[0]).toMatchObject({
+      points: [
+        { x: 5, y: 5 },
+        { x: 15, y: 5 },
+      ],
+    });
+  });
+
   it('keeps select mode across picks and hides the catcher while selected', async () => {
     const result = await setup({
       nodes: [],

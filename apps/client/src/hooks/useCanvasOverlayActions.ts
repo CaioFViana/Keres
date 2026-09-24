@@ -228,6 +228,17 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     [generateOverlayId, patchOverlays],
   );
 
+  const toggleOverlayLock = useCallback(
+    (id: string) => {
+      patchOverlays((overlays) =>
+        overlays.map((overlay) =>
+          overlay.id === id ? { ...overlay, locked: !overlay.locked } : overlay,
+        ),
+      );
+    },
+    [patchOverlays],
+  );
+
   const updateOverlay = useCallback(
     (
       id: string,
@@ -260,7 +271,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
       if (dx === 0 && dy === 0) return;
       patchOverlays((overlays) =>
         overlays.map((overlay) => {
-          if (overlay.id !== id) return overlay;
+          if (overlay.id !== id || overlay.locked) return overlay;
           if (overlay.kind === 'line' || overlay.kind === 'polygon') {
             return {
               ...overlay,
@@ -285,7 +296,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     (id: string, index: number, point: SpatialPoint) => {
       patchOverlays((overlays) =>
         overlays.map((overlay) => {
-          if (overlay.id !== id) return overlay;
+          if (overlay.id !== id || overlay.locked) return overlay;
           if (overlay.kind !== 'line' && overlay.kind !== 'polygon') return overlay;
           if (index < 0 || index >= overlay.points.length) return overlay;
           return {
@@ -309,7 +320,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     (id: string, rect: { x: number; y: number; width: number; height: number }) => {
       patchOverlays((overlays) =>
         overlays.map((overlay) => {
-          if (overlay.id !== id) return overlay;
+          if (overlay.id !== id || overlay.locked) return overlay;
           if (overlay.kind !== 'frame' && overlay.kind !== 'shape') return overlay;
           return {
             ...overlay,
@@ -362,6 +373,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     openOverlaySheet,
     closeOverlaySheet,
     moveOverlayLayer,
+    toggleOverlayLock,
     addDraftPoint,
     finishDraft,
     commitRectDraw,
@@ -379,6 +391,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     onDeselectOverlay: deselectOverlay,
     onOpenOverlaySheet: openOverlaySheet,
     onMoveOverlayLayer: moveOverlayLayer,
+    onToggleLock: toggleOverlayLock,
     onCommitMove: commitMove,
     onCommitVertex: commitVertex,
     onCommitRect: commitRectEdit,

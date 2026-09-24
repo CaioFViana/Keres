@@ -56,6 +56,8 @@ const CanvasOverlayLineSchema = z.object({
   dashed: z.boolean().optional(),
   /** Draws an arrowhead at the last point, following the final segment. */
   directed: z.boolean().optional(),
+  /** Locked overlays still select, but their geometry commits are ignored. */
+  locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
 });
 
@@ -71,6 +73,7 @@ const CanvasOverlayPolygonSchema = z.object({
   /** Fill opacity of the region; honored only when `filled`, absent means the default. */
   fillOpacity: z.number().finite().min(0).max(1).optional(),
   strokeWidth: CanvasOverlayStrokeWidthSchema,
+  locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
 });
 
@@ -87,6 +90,7 @@ const CanvasOverlayFrameSchema = z.object({
   dashed: z.boolean().optional(),
   /** Fills the frame like a shape; absent means outline only. */
   filled: z.boolean().optional(),
+  locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
 });
 
@@ -103,6 +107,7 @@ const CanvasOverlayShapeSchema = z.object({
   filled: z.boolean().optional(),
   dashed: z.boolean().optional(),
   strokeWidth: CanvasOverlayStrokeWidthSchema,
+  locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
 });
 
@@ -117,6 +122,7 @@ const CanvasOverlayStampSchema = z.object({
   icon: z.string().min(1).max(60),
   color: CanvasOverlayColorSchema,
   label: CanvasOverlayLabelSchema,
+  locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
 });
 

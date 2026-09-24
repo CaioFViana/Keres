@@ -34,6 +34,7 @@ async function setup(overlay: CanvasOverlayType, scale = 2) {
     onCommitRect: jest.fn(),
     onDetails: jest.fn(),
     onMoveLayer: jest.fn(),
+    onToggleLock: jest.fn(),
     onDeselect: jest.fn(),
   };
   const view = await render(
@@ -117,5 +118,26 @@ describe('OverlaySelectionView', () => {
     expect(callbacks.onMoveLayer).toHaveBeenCalledWith('ov-1', 'back');
     await fireEvent.press(view.getByTestId('overlay-chrome-deselect'));
     expect(callbacks.onDeselect).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes the lock toggle with the matching label', async () => {
+    const { view, callbacks } = await setup(POLYGON);
+
+    expect(view.getByLabelText('overlay_lock')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('overlay-chrome-lock'));
+    expect(callbacks.onToggleLock).toHaveBeenCalledWith('ov-1');
+  });
+
+  it('hides every drag affordance while locked but keeps the column', async () => {
+    const { view, callbacks } = await setup({ ...POLYGON, locked: true });
+
+    expect(view.getByTestId('overlay-selection')).toBeTruthy();
+    expect(view.queryByTestId('overlay-move')).toBeNull();
+    expect(view.queryByTestId('overlay-vertex-0')).toBeNull();
+    expect(view.getByLabelText('overlay_unlock')).toBeTruthy();
+    expect(view.getByLabelText('overlay_edit_details')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('overlay-chrome-lock'));
+    expect(callbacks.onToggleLock).toHaveBeenCalledWith('ov-1');
   });
 });

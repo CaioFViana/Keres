@@ -217,11 +217,14 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
           .returning({ version: stories.version });
       });
 
+      if (!story) {
+        throw new Error(`Cannot reorder attribute fields: story ${storyId} not found.`);
+      }
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
         reorderItems,
         reorderTarget: 'StorySchemaField',
         schemaEntityType: entityType,
-        version: story?.version,
+        version: story.version,
       });
       entityEventEmitter.emit('story_schema_field_changed', storyId, entityType);
     },

@@ -1,5 +1,5 @@
 import type { StoryUpdateType } from '@keres/shared';
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lte, ne, or } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { ServerService } from '../services/ServerService';
@@ -149,6 +149,12 @@ export const MAX_RETAINED_SYNCED_OPERATIONS = 100;
  * and the local counter only breaks ties deterministically. `createdAt` stays out because the
  * SQLite timestamp column only has second precision, so two saves in the same second could tie.
  *
+ * Only rows at or below the pull cursor are eligible at all: a synced op past the cursor has not
+ * had its echo delivered yet (a blocked pull keeps pushing while starving the pull), and trimming
+ * it would make the echo arrive as a foreign operation - re-applying a reorder, which bumps
+ * versions instead of setting them. Favorites additionally wait for the public-favorites cursor,
+ * since the historical path can deliver them after the main cursor has passed.
+ *
  * @returns how many rows were removed.
  */
 export async function trimSyncedOperationLogs(
@@ -161,11 +167,29 @@ export async function trimSyncedOperationLogs(
     return 0;
   }
 
+  const story = await db.query.stories.findFirst({
+    where: eq(schema.stories.id, storyId),
+    columns: { lastServerSyncedLog: true, lastPublicFavoriteLog: true },
+  });
+  const mainCursor = story?.lastServerSyncedLog ?? 0;
+  const favoriteCursor = Math.min(mainCursor, story?.lastPublicFavoriteLog ?? 0);
+
   const synced = await db.query.operationLogs.findMany({
     where: and(
       eq(schema.operationLogs.storyId, storyId),
       eq(schema.operationLogs.isSynced, true),
       isNull(schema.operationLogs.conflictState),
+      or(
+        isNull(schema.operationLogs.serverOperationVersion),
+        and(
+          ne(schema.operationLogs.entityType, 'Favorite'),
+          lte(schema.operationLogs.serverOperationVersion, mainCursor),
+        ),
+        and(
+          eq(schema.operationLogs.entityType, 'Favorite'),
+          lte(schema.operationLogs.serverOperationVersion, favoriteCursor),
+        ),
+      ),
     ),
     columns: { id: true },
     orderBy: [

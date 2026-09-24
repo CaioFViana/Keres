@@ -5,10 +5,11 @@ import {
   type Gallery,
   type UpdateStoryUpdate,
 } from '@keres/shared';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, or } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import type { GallerySelect } from '../../db/schema';
+import { mediaFileService } from '../MediaFileService';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
@@ -88,13 +89,61 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
         ...(hashChanged
           ? {
               localPath: null,
+              // The old video's frame belongs to the old bytes: keeping it would show the wrong
+              // thumbnail until something regenerates it (which nothing would - the path exists).
+              thumbnailPath: null,
               downloadState: galleryHasFile(mediaType) ? 'pending' : 'downloaded',
               uploadState: 'uploaded',
             }
           : {}),
       })
       .where(eq(schema.galleries.id, update.id));
+    if (hashChanged && existing) {
+      await this.deleteAbandonedFiles(storyId, [existing.localPath, existing.thumbnailPath]);
+    }
     console.log(`Applied update for Gallery ${update.id} in story ${storyId}`);
+  }
+
+  /**
+   * Removes files the hash swap just detached from their row. A path goes only when no other live
+   * row points at it - files are content-addressed, so two media can share one file. Best-effort:
+   * leftovers are wasted space, never corruption, and must not fail the sync that triggered them.
+   */
+  private async deleteAbandonedFiles(storyId: string, paths: Array<string | null>): Promise<void> {
+    const candidates = [...new Set(paths.filter((path): path is string => !!path))];
+    if (candidates.length === 0) {
+      return;
+    }
+    try {
+      const sharers = await this.db
+        .select({
+          localPath: schema.galleries.localPath,
+          thumbnailPath: schema.galleries.thumbnailPath,
+        })
+        .from(schema.galleries)
+        .where(
+          and(
+            eq(schema.galleries.storyId, storyId),
+            eq(schema.galleries.isDeleted, false),
+            or(
+              inArray(schema.galleries.localPath, candidates),
+              inArray(schema.galleries.thumbnailPath, candidates),
+            ),
+          ),
+        );
+      const shared = new Set(
+        sharers
+          .flatMap((row) => [row.localPath, row.thumbnailPath])
+          .filter((path): path is string => !!path),
+      );
+      for (const path of candidates) {
+        if (!shared.has(path)) {
+          mediaFileService.deleteLocal(path);
+        }
+      }
+    } catch (error) {
+      console.warn('GalleryClientSyncHandler: could not delete abandoned media files.', error);
+    }
   }
 
   async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {

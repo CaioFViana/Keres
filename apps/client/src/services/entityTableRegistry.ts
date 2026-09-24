@@ -79,6 +79,10 @@ const PROTECTED_FIELDS = new Set([
 
 const PROTECTED_BY_ENTITY: Record<string, ReadonlySet<string>> = {
   Story: new Set(['userId']),
+  // Device-local transfer state: no remote payload may ever set it (a junk key from a
+  // compromised/newer server would otherwise reach Gallery's raw `.set()` spread and, e.g.,
+  // point `localPath` at an arbitrary path or flip a pending download to `downloaded`).
+  Gallery: new Set(['localPath', 'uploadState', 'downloadState', 'thumbnailPath']),
 };
 
 /**

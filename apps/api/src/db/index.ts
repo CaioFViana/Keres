@@ -182,6 +182,10 @@ function createSqliteDb(): SqliteDb {
   // It suits 2-5 clients: readers do not block one another; the file survives a process reboot without
   // losing the journal. Multi-instance production is still Postgres.
   void client.execute('PRAGMA journal_mode = WAL');
+  // Without this, two pushes colliding on the write lock fail the loser immediately with
+  // SQLITE_BUSY (surfacing as a spurious sync conflict); waiting a few seconds lets the
+  // short sync transactions serialize instead.
+  void client.execute('PRAGMA busy_timeout = 5000');
   return drizzleLibsql(client, { schema, logger: false });
 }
 

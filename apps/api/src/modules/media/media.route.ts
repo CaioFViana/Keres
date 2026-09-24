@@ -2,7 +2,7 @@ import { isSupportedMediaMimeType } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { env } from '../../config/env';
 import type { JWTPayload } from '../../index';
-import { mediaStorageService } from '../../services/MediaStorageService';
+import { MediaHashMismatchError, mediaStorageService } from '../../services/MediaStorageService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import {
   TierLimitExceededError,
@@ -54,7 +54,7 @@ export const mediaRoutes = new Elysia()
         throw new AppError(400, `Invalid media hash(es): ${invalid.join(', ')}`);
       }
 
-      return mediaStorageService.filterPresent(body.hashes);
+      return mediaStorageService.filterPresentInStory(params.storyId, body.hashes);
     },
     {
       params: t.Object({ storyId: t.String() }),
@@ -111,8 +111,13 @@ export const mediaRoutes = new Elysia()
         );
         return { hash: stored.hash, sizeBytes: stored.sizeBytes, mimeType };
       } catch (error: unknown) {
-        // A hash mismatch is invalid client data, not a server failure.
-        throw new AppError(400, error instanceof Error ? error.message : 'Failed to store media.');
+        // A hash mismatch is invalid client data, not a server failure - but a storage or
+        // database failure is, and answering 400 for it would tell the client its bytes are
+        // wrong instead of retryable.
+        if (error instanceof MediaHashMismatchError) {
+          throw new AppError(400, error.message);
+        }
+        throw error;
       }
     },
     {

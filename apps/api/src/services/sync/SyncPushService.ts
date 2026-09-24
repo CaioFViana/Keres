@@ -12,7 +12,7 @@ import type {
 import { sameReorderArrangement } from '@keres/shared';
 import { and, asc, eq, gt, max } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, withTransaction, type CompatibleDb } from '../../db';
+import { db, withWriteTransaction, type CompatibleDb } from '../../db';
 import { operationLog, stories } from '../../db/schema';
 import { AppError } from '../../utils/errors';
 import { eventManager } from '../../utils/EventManager';
@@ -25,8 +25,11 @@ import type {
 import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { storyPermissionService } from '../StoryPermissionService';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
+import { assertGalleryStorageQuota } from './pushGalleryQuota';
+import { collectPushMediaGarbage } from './pushMediaGc';
 import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflictDetails';
 import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
+import { shouldCompactStoryNow, storyUpdateFlipsFavorites } from './pushPolicy';
 import type { SyncOperationLogService } from './SyncOperationLogService';
 import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
 
@@ -110,6 +113,7 @@ export class SyncPushService {
 
     const applied: SyncAppliedOperation[] = [];
     const conflicts: SyncConflict[] = [];
+    let storyBehaviorChanged = false;
     /**
      * Entities that already conflicted in this batch. The following operations on them were built on
      * top of a base we have just refused, so applying them would corrupt the state - they are refused
@@ -222,7 +226,10 @@ export class SyncPushService {
         // that, a failure between the two steps (say, the process dying) left the entity changed but
         // invisible to other clients, and a resend of the same operation by the very client that originated
         // it hit a false `version_conflict` against its own work. Handlers receive this `tx` explicitly.
-        await withTransaction(async (tx) => {
+        // A *write* transaction (immediate on SQLite): every op here reads-then-maybe-writes, the
+        // classic lock-upgrade shape, and two deferred transactions upgrading at once deadlock where
+        // an immediate one simply waits its turn.
+        await withWriteTransaction(async (tx) => {
           // Creation handlers historically own their insert timestamps, and several of them do not
           // call BaseSyncEntityHandler.parseOperationTime(). Validate at the protocol boundary as
           // well, so a client clock cannot place *any* operation ahead of the server's history.
@@ -263,6 +270,7 @@ export class SyncPushService {
                     eq(operationLog.operationType, 'create'),
                   ),
                 )
+                .orderBy(asc(operationLog.operationVersion))
                 .limit(1);
               const matchesCurrent = handler.createPayloadMatches(currentEntity, createData);
               const matchesRecordedCreate =
@@ -287,6 +295,7 @@ export class SyncPushService {
               } else if (handler.tierLimitScope === 'entity') {
                 await tierEnforcementService.assertCanCreateEntity(userId, storyId);
               }
+              await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
               await handler.create(userId, storyId, update as CreateStoryUpdate, tx);
             }
           } else if (update.type === 'update' || update.type === 'reorder') {
@@ -318,6 +327,7 @@ export class SyncPushService {
               }
             }
             if (alreadyAppliedVersion === null) {
+              await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
               await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
             }
             if (update.type === 'reorder' && alreadyAppliedVersion === null) {
@@ -419,6 +429,10 @@ export class SyncPushService {
       }
 
       const { logged, entityAfter } = writeResult!;
+      // Only now that the operation committed: collecting inside the transaction both reads stale
+      // state and risks deleting bytes a rollback would resurrect the reference of (see
+      // `collectPushMediaGarbage`). `currentEntity` is still the pre-operation row here.
+      await collectPushMediaGarbage(update, currentEntity);
       lastOperationVersion = logged.operationVersion;
       applied.push({
         clientOperationId: update.clientOperationId,
@@ -428,6 +442,9 @@ export class SyncPushService {
         entity: update.entity,
         entityId,
       });
+      if (storyUpdateFlipsFavorites(update)) {
+        storyBehaviorChanged = true;
+      }
     }
 
     if (applied.length > 0) {
@@ -442,14 +459,16 @@ export class SyncPushService {
 
       // Best-effort history compaction: old update runs collapse into their final state. A
       // compaction failure must never fail the push that just succeeded.
-      try {
-        await compactStoryUpdateHistory(storyId);
-      } catch (error) {
-        logger.error('SyncService: history compaction failed', error);
+      if (shouldCompactStoryNow(storyId)) {
+        try {
+          await compactStoryUpdateHistory(storyId);
+        } catch (error) {
+          logger.error('SyncService: history compaction failed', error);
+        }
       }
     }
 
-    if (applied.some((operation) => operation.entity === 'Story')) {
+    if (storyBehaviorChanged) {
       await this.repairPublicFavoritesAfterStoryChange(storyId);
     }
 

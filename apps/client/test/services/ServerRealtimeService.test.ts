@@ -195,6 +195,179 @@ describe('stories.catalog-changed', () => {
   });
 });
 
+describe('catalog-driven resubscription', () => {
+  const emptyDb = () => ({
+    query: { stories: { findMany: jest.fn().mockResolvedValue([]) } },
+  });
+
+  it('reconnects on stories.catalog-changed so subscriptions follow the new permissions', async () => {
+    mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([]);
+    const service = new ServerRealtimeService(emptyDb() as any, server, 'me', mockSyncEngine);
+    service.start('story');
+    await flush();
+
+    const first = MockWebSocket.instances[0];
+    first.onopen?.();
+    mockClient.post.mockClear();
+
+    first.onmessage?.({ data: JSON.stringify({ type: 'stories.catalog-changed' }) });
+    await flush();
+    await flush();
+
+    // The old socket is dropped and exactly one fresh socket takes its place...
+    expect(first.close).toHaveBeenCalled();
+    expect(mockClient.post).toHaveBeenCalledWith('/auth/ws-ticket');
+    expect(MockWebSocket.instances).toHaveLength(2);
+    // ...which resubscribes to the story on open, like any (re)connect.
+    const second = MockWebSocket.instances[1];
+    second.onopen?.();
+    expect(second.send).toHaveBeenCalledWith(
+      JSON.stringify({ type: 'subscribe', storyId: 'story' }),
+    );
+
+    await service.stop();
+  });
+
+  it('discards a stale ticket fetch instead of opening a second socket', async () => {
+    mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([]);
+    const service = new ServerRealtimeService(emptyDb() as any, server, 'me', mockSyncEngine);
+    service.start('story');
+    await flush();
+
+    const first = MockWebSocket.instances[0];
+    first.onopen?.();
+
+    let resolveStale!: (value: { data: { ticket: string } }) => void;
+    mockClient.post.mockImplementationOnce(
+      () =>
+        new Promise<{ data: { ticket: string } }>((resolve) => {
+          resolveStale = resolve;
+        }),
+    );
+    first.onmessage?.({ data: JSON.stringify({ type: 'stories.catalog-changed' }) });
+    await flush();
+    // A second catalog event supersedes the still-pending reconnect...
+    first.onmessage?.({ data: JSON.stringify({ type: 'stories.catalog-changed' }) });
+    await flush();
+    await flush();
+    expect(MockWebSocket.instances).toHaveLength(2);
+
+    // ...so when the stale ticket finally lands, no third socket opens.
+    resolveStale({ data: { ticket: 'stale-ticket' } });
+    await flush();
+    await flush();
+    expect(MockWebSocket.instances).toHaveLength(2);
+
+    await service.stop();
+  });
+
+  it('ignores the late close of a replaced socket instead of reconnecting again', async () => {
+    jest.useFakeTimers();
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = jest.fn().mockResolvedValue({});
+    try {
+      mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([]);
+      const service = new ServerRealtimeService(emptyDb() as any, server, 'me', mockSyncEngine);
+      service.start('story');
+      await jest.advanceTimersByTimeAsync(0);
+
+      const first = MockWebSocket.instances[0];
+      first.onopen?.();
+      first.onmessage?.({ data: JSON.stringify({ type: 'stories.catalog-changed' }) });
+      await jest.advanceTimersByTimeAsync(0);
+      expect(MockWebSocket.instances).toHaveLength(2);
+
+      // The replaced socket's close arrives late: it must not schedule another reconnect.
+      first.onclose?.();
+      await jest.advanceTimersByTimeAsync(30_000);
+
+      expect(MockWebSocket.instances).toHaveLength(2);
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+      await service.stop();
+    } finally {
+      globalThis.fetch = realFetch;
+      jest.useRealTimers();
+    }
+  });
+});
+
+describe('half-open watchdog', () => {
+  const heartbeat = JSON.stringify({ type: 'server.heartbeat' });
+
+  it('reconnects a socket that goes silent after heartbeats started', async () => {
+    jest.useFakeTimers();
+    try {
+      const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+      service.start('story');
+      await jest.advanceTimersByTimeAsync(0);
+
+      const first = MockWebSocket.instances[0];
+      first.onopen?.();
+      first.onmessage?.({ data: heartbeat });
+      await jest.advanceTimersByTimeAsync(0);
+      expect(MockWebSocket.instances).toHaveLength(1);
+
+      // Over two missed beats plus slack: the silence is death, not idleness.
+      await jest.advanceTimersByTimeAsync(100_000);
+
+      expect(first.close).toHaveBeenCalled();
+      expect(MockWebSocket.instances).toHaveLength(2);
+      await service.stop();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('leaves alone a socket whose server never ticked, instead of churning old servers', async () => {
+    jest.useFakeTimers();
+    try {
+      const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+      service.start('story');
+      await jest.advanceTimersByTimeAsync(0);
+
+      const first = MockWebSocket.instances[0];
+      first.onopen?.();
+
+      await jest.advanceTimersByTimeAsync(300_000);
+
+      expect(first.close).not.toHaveBeenCalled();
+      expect(MockWebSocket.instances).toHaveLength(1);
+      await service.stop();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('resets the silence window on every message', async () => {
+    jest.useFakeTimers();
+    try {
+      const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+      service.start('story');
+      await jest.advanceTimersByTimeAsync(0);
+
+      const first = MockWebSocket.instances[0];
+      first.onopen?.();
+      first.onmessage?.({ data: heartbeat });
+      await jest.advanceTimersByTimeAsync(0);
+
+      await jest.advanceTimersByTimeAsync(60_000);
+      first.onmessage?.({ data: JSON.stringify({ type: 'story.changed', storyId: 'story' }) });
+      await jest.advanceTimersByTimeAsync(60_000);
+
+      // 60s since the last message: silent, but within the window.
+      expect(MockWebSocket.instances).toHaveLength(1);
+
+      await jest.advanceTimersByTimeAsync(40_000);
+
+      // 100s since the last message, observed on a 15s tick past the 75s limit: dead.
+      expect(MockWebSocket.instances).toHaveLength(2);
+      await service.stop();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
 describe('subscriptions, failures and reconnects', () => {
   it('forwards a story subscription to the open socket only', async () => {
     const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);

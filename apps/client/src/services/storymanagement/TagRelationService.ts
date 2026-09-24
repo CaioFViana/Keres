@@ -4,7 +4,11 @@ import type { AppDrizzleClient, TagRelationInsert, TagSelect } from '../../db';
 import { tagRelations, tags } from '../../db';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface TagRelationService {
@@ -81,6 +85,7 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
     },
 
     async addTagToEntity(currentUserId, storyId, relationId, relationType, tagId): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       // Check if the relation already exists and is not deleted
       const existingRelation = await db.query.tagRelations.findFirst({
         where: and(
@@ -159,6 +164,7 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
     },
 
     async removeTagFromEntity(currentUserId, storyId, entityId, entityType, tagId): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const relationToDelete = await db.query.tagRelations.findFirst({
         where: and(
           eq(tagRelations.storyId, storyId),

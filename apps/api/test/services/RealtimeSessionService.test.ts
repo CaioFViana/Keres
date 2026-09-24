@@ -29,6 +29,9 @@ beforeEach(() => {
     logInfo,
     now: () => now,
     createId: () => 'ticket-1',
+    // No real intervals by default: several tests open sockets they never close, and a 30s
+    // timer per open would outlive the file. The heartbeat behavior itself is driven by hand below.
+    startHeartbeat: () => () => {},
   });
 });
 
@@ -148,6 +151,94 @@ describe('RealtimeSessionService', () => {
 
     expect(socket.close).toHaveBeenCalledOnce();
     expect(getReadableStoryIds).not.toHaveBeenCalled();
+  });
+
+  it('ignores null and primitive messages instead of throwing on them', async () => {
+    const socket = { send: vi.fn(), realtimeUserId: 'user-1' };
+
+    await service.handleEventMessage(socket, null);
+    await service.handleEventMessage(socket, 42);
+    await service.handleEventMessage(socket, true);
+    await service.handleEventMessage(socket, ['subscribe']);
+
+    expect(canReadStory).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it('closes the socket instead of leaving it half-subscribed when the story list fails', async () => {
+    const ticket = service.createTicket({ userId: 'user-1', username: 'ana' });
+    const socket = { send: vi.fn(), close: vi.fn() };
+    getReadableStoryIds.mockRejectedValueOnce(new Error('database unreachable'));
+
+    await expect(service.openEvents(socket, ticket)).resolves.toBeUndefined();
+
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(socket.send).not.toHaveBeenCalledWith(expect.stringContaining('server.heartbeat'));
+    expect(listeners.get('userUpdate:user-1')?.size ?? 0).toBe(0);
+    expect(listeners.get('storyUpdate:story-1')?.size ?? 0).toBe(0);
+  });
+
+  it('ignores subscription requests that arrive after the socket closed', async () => {
+    const socket = { send: vi.fn(), realtimeUserId: 'user-1' };
+    service.closeEvents(socket);
+    vi.clearAllMocks();
+
+    await service.handleEventMessage(socket, { type: 'subscribe', storyId: 'story-1' });
+
+    expect(canReadStory).not.toHaveBeenCalled();
+    expect(listeners.get('storyUpdate:story-1')).toBeUndefined();
+  });
+
+  it('ticks heartbeats while open, stops them on close, and reaps a socket it cannot send to', async () => {
+    const ticks: Array<() => void> = [];
+    const stops: Array<() => void> = [];
+    const heartbeatService = new RealtimeSessionService({
+      eventBus: {
+        on: (key, callback) => {
+          const callbacks = listeners.get(key) ?? new Set();
+          callbacks.add(callback);
+          listeners.set(key, callbacks);
+        },
+        off: (key, callback) => listeners.get(key)?.delete(callback),
+        emit: (key, event) => listeners.get(key)?.forEach((callback) => callback(event as never)),
+      },
+      canReadStory,
+      getReadableStoryIds,
+      logInfo,
+      now: () => now,
+      createId: () => 'ticket-hb',
+      startHeartbeat: (tick) => {
+        ticks.push(tick);
+        const stop = vi.fn();
+        stops.push(stop);
+        return stop;
+      },
+    });
+    const ticket = heartbeatService.createTicket({ userId: 'user-1', username: 'ana' });
+    const socket = { send: vi.fn(), close: vi.fn() };
+
+    await heartbeatService.openEvents(socket, ticket);
+    expect(ticks).toHaveLength(1);
+    ticks[0]!();
+    expect(socket.send).toHaveBeenCalledTimes(2);
+    expect(socket.send).toHaveBeenLastCalledWith(expect.stringContaining('server.heartbeat'));
+
+    heartbeatService.closeEvents(socket);
+    expect(stops[0]).toHaveBeenCalledOnce();
+
+    // A tick that cannot be sent closes the socket from the server side instead of leaving a
+    // dead connection subscribed.
+    const dying = { send: vi.fn(), close: vi.fn() };
+    await heartbeatService.openEvents(
+      dying,
+      heartbeatService.createTicket({ userId: 'user-1', username: 'ana' }),
+    );
+    dying.send.mockImplementation(() => {
+      throw new Error('send on a dead socket');
+    });
+    ticks[1]!();
+    expect(dying.close).toHaveBeenCalledOnce();
+    heartbeatService.closeEvents(dying);
   });
 
   it('closes sockets that never subscribed without touching the bus', () => {

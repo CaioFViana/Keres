@@ -8,6 +8,7 @@ import { CharacterRelationClientSyncHandler } from '../../src/services/entity-sy
 import { GalleryClientSyncHandler } from '../../src/services/entity-sync-handlers/GalleryClientSyncHandler';
 import { LocationRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationRelationClientSyncHandler';
 import { StorySchemaFieldClientSyncHandler } from '../../src/services/entity-sync-handlers/StorySchemaFieldClientSyncHandler';
+import { mediaFileService } from '../../src/services/MediaFileService';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = 'story-sync-specialties';
@@ -715,6 +716,60 @@ describe('GalleryClientSyncHandler', () => {
       localPath: null,
       downloadState: 'downloaded',
     });
+  });
+
+  it('clears the stale thumbnail and deletes files detached by a remote hash swap', async () => {
+    const handler = new GalleryClientSyncHandler();
+    handler.setDb(database.db);
+    const deleteLocal = jest.spyOn(mediaFileService, 'deleteLocal').mockImplementation(() => {});
+    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await database.db
+      .update(schema.galleries)
+      .set({
+        localPath: 'desktop-media:media/story/hash-one.png',
+        thumbnailPath: 'desktop-media:media/story/hash-one_thumb.jpg',
+        downloadState: 'downloaded',
+      })
+      .where(eq(schema.galleries.id, 'gallery-1'));
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Gallery', 'gallery-1', { hash: 'hash-two', version: 1 }),
+    );
+
+    // The old frame belongs to the old bytes: keeping it would show the wrong thumbnail with no
+    // regeneration ever triggered.
+    expect(await handler.getById('gallery-1')).toMatchObject({
+      hash: 'hash-two',
+      localPath: null,
+      thumbnailPath: null,
+      downloadState: 'pending',
+    });
+    expect(deleteLocal).toHaveBeenCalledWith('desktop-media:media/story/hash-one.png');
+    expect(deleteLocal).toHaveBeenCalledWith('desktop-media:media/story/hash-one_thumb.jpg');
+  });
+
+  it('keeps an abandoned file that another live medium still shares', async () => {
+    const handler = new GalleryClientSyncHandler();
+    handler.setDb(database.db);
+    const deleteLocal = jest.spyOn(mediaFileService, 'deleteLocal').mockImplementation(() => {});
+    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-1', media('gallery-1')));
+    await handler.applyCreate(STORY_ID, createUpdate('Gallery', 'gallery-2', media('gallery-2')));
+    await database.db
+      .update(schema.galleries)
+      .set({ localPath: 'shared.png', downloadState: 'downloaded' })
+      .where(eq(schema.galleries.id, 'gallery-2'));
+
+    await database.db
+      .update(schema.galleries)
+      .set({ localPath: 'shared.png', downloadState: 'downloaded' })
+      .where(eq(schema.galleries.id, 'gallery-1'));
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Gallery', 'gallery-1', { hash: 'hash-two', version: 1 }),
+    );
+
+    expect(deleteLocal).not.toHaveBeenCalledWith('shared.png');
   });
 
   it('soft-deletes the gallery row, keeping it so the tombstone survives', async () => {

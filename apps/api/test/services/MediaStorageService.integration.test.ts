@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { db } from '../../src/db';
 import { galleries, mediaBlobs, stories, users } from '../../src/db/schema';
-import { MediaStorageService } from '../../src/services/MediaStorageService';
+import {
+  MEDIA_BLOB_GRACE_PERIOD_MS,
+  MediaHashMismatchError,
+  MediaStorageService,
+} from '../../src/services/MediaStorageService';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -51,6 +55,10 @@ describe('MediaStorageService integration', () => {
     await expect(service.store(hash('a'), 'text/plain', bytes)).rejects.toThrow(
       /Media hash mismatch/i,
     );
+    // The type is the contract the upload route maps to 400; any other failure must stay a 500.
+    await expect(service.store(hash('a'), 'text/plain', bytes)).rejects.toThrow(
+      MediaHashMismatchError,
+    );
   });
 
   it('reports present blobs in batches and returns typed content only for registered storage', async () => {
@@ -88,7 +96,7 @@ describe('MediaStorageService integration', () => {
     expect(await service.read(hash('c'))).toBeNull();
   });
 
-  it('keeps referenced blobs and deletes metadata plus bytes once no live gallery references remain', async () => {
+  it('keeps referenced blobs and stamps (not deletes) newly orphaned ones', async () => {
     const userId = newId();
     const storyId = newId();
     const referencedHash = hash('d');
@@ -150,18 +158,99 @@ describe('MediaStorageService integration', () => {
     await service.deleteBlobIfUnreferenced(referencedHash);
     await service.deleteBlobIfUnreferenced(orphanHash);
     await service.deleteBlobIfUnreferenced(hash('f'));
-    expect(storage.delete).toHaveBeenCalledWith(`ee/${orphanHash}`);
+    // Nothing is deleted yet: the orphan only earns its grace stamp, and the bytes stay until
+    // the stamp expires without a resurrection.
+    expect(storage.delete).not.toHaveBeenCalled();
     expect(
       await db.query.mediaBlobs.findFirst({
         where: (fields, { eq }) => eq(fields.hash, referencedHash),
       }),
-    ).toBeTruthy();
+    ).toMatchObject({ unreferencedSince: null });
     expect(
       await db.query.mediaBlobs.findFirst({
         where: (fields, { eq }) => eq(fields.hash, orphanHash),
       }),
-    ).toBeUndefined();
+    ).toMatchObject({ unreferencedSince: expect.any(Date) });
     expect(await service.cleanupTemporaryFiles()).toBe(2);
+  });
+
+  it('reaps only expired orphans, and a re-reference clears the stamp first', async () => {
+    const userId = newId();
+    const storyId = newId();
+    const expiredHash = hash('g');
+    const freshHash = hash('h');
+    const resurrectedHash = hash('i');
+    const storage = { has: vi.fn(), put: vi.fn(), get: vi.fn(), delete: vi.fn() };
+    await db
+      .insert(users)
+      .values({ id: userId, username: 'ana', tag: 'ana', password: 'x' } as never);
+    await db.insert(stories).values({
+      id: storyId,
+      userId,
+      title: 'A Queda',
+      type: 'linear',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: 1,
+      isDeleted: false,
+    } as never);
+    const oldStamp = new Date(Date.now() - MEDIA_BLOB_GRACE_PERIOD_MS - 1_000);
+    await db.insert(mediaBlobs).values([
+      {
+        hash: expiredHash,
+        mimeType: 'image/png',
+        sizeBytes: 1,
+        storagePath: `gg/${expiredHash}`,
+        createdAt: new Date(),
+        unreferencedSince: oldStamp,
+      },
+      {
+        hash: freshHash,
+        mimeType: 'image/png',
+        sizeBytes: 1,
+        storagePath: `hh/${freshHash}`,
+        createdAt: new Date(),
+        unreferencedSince: new Date(),
+      },
+      {
+        hash: resurrectedHash,
+        mimeType: 'image/png',
+        sizeBytes: 1,
+        storagePath: `ii/${resurrectedHash}`,
+        createdAt: new Date(),
+        unreferencedSince: oldStamp,
+      },
+    ]);
+    await db.insert(galleries).values({
+      id: newId(),
+      storyId,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'back.png',
+      hash: resurrectedHash,
+      sizeBytes: 1,
+      title: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      version: 1,
+      isDeleted: false,
+    } as never);
+    const service = new MediaStorageService(storage as any);
+
+    const examined = await service.sweepExpiredUnreferencedBlobs();
+
+    // The expired orphan is gone, bytes and record; the fresh one keeps waiting out its grace;
+    // the re-referenced one survived the sweep with a cleared stamp.
+    expect(examined).toBe(2);
+    expect(storage.delete).toHaveBeenCalledTimes(1);
+    expect(storage.delete).toHaveBeenCalledWith(`gg/${expiredHash}`);
+    const byHash = async (wanted: string) =>
+      db.query.mediaBlobs.findFirst({ where: (fields, { eq }) => eq(fields.hash, wanted) });
+    expect(await byHash(expiredHash)).toBeUndefined();
+    expect(await byHash(freshHash)).toMatchObject({ unreferencedSince: expect.any(Date) });
+    expect(await byHash(resurrectedHash)).toMatchObject({ unreferencedSince: null });
   });
 
   it('reports zero cleanups on a backend with no temporary files', async () => {

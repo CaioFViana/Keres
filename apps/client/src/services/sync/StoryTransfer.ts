@@ -134,17 +134,26 @@ export async function uploadNewStoryToServer(
   if (!story) {
     return { success: false, reason: 'error', message: `Story ${storyId} not found locally.` };
   }
+  // The identity migration must precede the export: the server stores the snapshot verbatim
+  // (no operation rows, and `userId`/`authorUserId` are immutable afterwards), so exporting
+  // first would freeze the uploader's meaningless local id into every favorite/comment on the
+  // server while the local rows move to the server id - a second device would download
+  // ghost-owned rows it can never match, and public stories would show ghost favoritists.
+  await createFavoriteService(db).migrateUserIdentity(storyId, userId, server.idUser);
+  await createCommentService(db).migrateAuthorIdentity(storyId, userId, server.idUser);
   const storyExport = await storyService.exportFullStory(storyId);
 
   try {
     await client.post(`/stories/import?storyId=${encodeURIComponent(storyId)}`, storyExport);
   } catch (error) {
     console.log(`Error uploading story ${storyId} to ${server.url}:`, error);
+    // The story stays unlinked, so reads resolve to the local id again: migrate back so the
+    // owner's favorites/comments do not sit invisible under the server id after a failed
+    // upload. Best effort - a retry migrates forward again anyway.
+    await createFavoriteService(db).migrateUserIdentity(storyId, server.idUser, userId);
+    await createCommentService(db).migrateAuthorIdentity(storyId, server.idUser, userId);
     return { success: false, reason: 'error', message: (error as Error)?.message };
   }
-
-  await createFavoriteService(db).migrateUserIdentity(storyId, userId, server.idUser);
-  await createCommentService(db).migrateAuthorIdentity(storyId, userId, server.idUser);
   await db
     .update(schema.operationLogs)
     // The import is a snapshot: it already contains every local entity state represented by

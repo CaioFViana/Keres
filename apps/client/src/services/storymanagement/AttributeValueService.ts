@@ -76,6 +76,7 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
     },
 
     async saveValuesForEntity(currentUserId, storyId, entityType, entityId, values): Promise<void> {
+      await assertStoryIsWritable(db, storyId);
       const fieldIds = Object.keys(values);
       if (fieldIds.length === 0) {
         return;

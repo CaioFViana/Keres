@@ -3,7 +3,7 @@ import { STORY_OWNER_ONLY_FIELDS } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryInsert, StorySelect } from '../../db/schema';
-import { choices, favorites, plots, servers, stories } from '../../db/schema';
+import { choices, comments, favorites, plots, servers, stories } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -20,6 +20,7 @@ import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
 import { createServerService } from '../ServerService';
 import { createChoiceService } from './ChoiceService';
+import { createCommentService } from './CommentService';
 import { createFavoriteService } from './FavoriteService';
 import { createSceneService } from './SceneService';
 import { SQLiteStoryPackageExporter } from './story-packages/SQLiteStoryPackageExporter';
@@ -98,6 +99,7 @@ export interface StoryService {
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
   const serverService = createServerService(db);
   const favoriteService = createFavoriteService(db);
+  const commentService = createCommentService(db);
   const sceneService = createSceneService(db);
   const choiceService = createChoiceService(db);
   return {
@@ -491,6 +493,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // The server row itself is gone locally - nothing to notify, just drop the stale link.
         if (server?.idUser) {
           await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
+          await commentService.migrateAuthorIdentity(storyId, server.idUser, currentUserId);
         } else {
           // The downloaded story keeps only the account's own favourites. If the server
           // registration has vanished, those rows are the only remaining source for recovering the identity.
@@ -501,6 +504,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             .all();
           for (const { userId } of formerUserIds) {
             await favoriteService.migrateUserIdentity(storyId, userId, currentUserId);
+          }
+          const formerAuthorIds = await db
+            .selectDistinct({ authorUserId: comments.authorUserId })
+            .from(comments)
+            .where(eq(comments.storyId, storyId))
+            .all();
+          for (const { authorUserId } of formerAuthorIds) {
+            await commentService.migrateAuthorIdentity(storyId, authorUserId, currentUserId);
           }
         }
         await this.updateStory(currentUserId, storyId, {
@@ -551,6 +562,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
+      // Comments mirror favourites: without this the owner's own comments keep the server
+      // identity after unlinking, and authorship checks stop recognising them as theirs.
+      await commentService.migrateAuthorIdentity(storyId, server.idUser, currentUserId);
       await this.updateStory(currentUserId, storyId, { serverId: null, lastPublicFavoriteLog: 0 });
     },
 

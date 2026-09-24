@@ -165,6 +165,42 @@ describe('CharacterRelationService pair rule', () => {
     const logged = await operationsFor(created.id);
     expect(logged.map((operation) => operation.operationType).sort()).toEqual(['create', 'update']);
   });
+
+  it('restores a deleted relation instead of colliding on its id', async () => {
+    const service = createCharacterRelationService(database.db);
+    const created = await service.saveCharacterRelation(TEST_USER_ID, relationOf());
+    await service.deleteCharacterRelation(TEST_USER_ID, created.id);
+
+    const restored = await service.saveCharacterRelation(
+      TEST_USER_ID,
+      relationOf({ id: created.id, relationType: 'rival' }),
+    );
+
+    expect(restored.isDeleted).toBe(false);
+    expect(restored.version).toBe(3);
+    const logged = await operationsFor(created.id);
+    expect(logged.map((operation) => operation.operationType)).toEqual([
+      'create',
+      'delete',
+      'update',
+    ]);
+    const restorePayload =
+      typeof logged[2].payload === 'string' ? JSON.parse(logged[2].payload) : logged[2].payload;
+    expect(restorePayload.isDeleted).toBe(false);
+    expect(restorePayload.version).toBe(3);
+  });
+
+  it('refuses to restore onto a pair another relation holds now', async () => {
+    const service = createCharacterRelationService(database.db);
+    const first = await service.saveCharacterRelation(TEST_USER_ID, relationOf());
+    await service.deleteCharacterRelation(TEST_USER_ID, first.id);
+    // Same pair re-created under a new id while the first row is a tombstone.
+    await service.saveCharacterRelation(TEST_USER_ID, relationOf());
+
+    await expect(
+      service.saveCharacterRelation(TEST_USER_ID, relationOf({ id: first.id })),
+    ).rejects.toThrow('already exists');
+  });
 });
 
 describe('CharacterRelationService reads and delete', () => {

@@ -1,6 +1,6 @@
 import type { GalleryOwnerEntity, MediaType } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { GalleryInsert, GallerySelect, MediaTransferState } from '../../db/schema';
 import { galleries, galleryRelations } from '../../db/schema';
@@ -108,6 +108,17 @@ export interface GalleryService {
   getPendingUploads(storyId: string): Promise<GallerySelect[]>;
   /** Media that exists as metadata but whose file is not on the device yet. */
   getPendingDownloads(storyId: string): Promise<GallerySelect[]>;
+  /**
+   * Tombstoned media that still points at files on this device - the collection candidates.
+   * A local delete removes its files through the gallery screen, but a delete that arrives
+   * over sync only tombstones the row, so without collection the bytes leak forever.
+   */
+  getDeletedMediaWithLocalFiles(storyId: string): Promise<GallerySelect[]>;
+  /**
+   * Every file path a live medium of the story still references. Files are content-addressed,
+   * so a tombstone's path must only be removed when no live row points at it anymore.
+   */
+  getLiveMediaLocalPaths(storyId: string): Promise<string[]>;
 }
 
 export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
@@ -380,23 +391,56 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
     },
 
     async getPendingUploads(storyId): Promise<GallerySelect[]> {
-      return db.query.galleries.findMany({
+      const rows = await db.query.galleries.findMany({
         where: and(
           eq(galleries.storyId, storyId),
           eq(galleries.isDeleted, false),
           inArray(galleries.uploadState, ['pending', 'failed']),
         ),
       });
+      // Rows that never transferred sort before rows that already failed, so a permanently
+      // failing transfer cannot pin the whole queue behind it cycle after cycle.
+      return rows.sort(
+        (a, b) => Number(a.uploadState !== 'pending') - Number(b.uploadState !== 'pending'),
+      );
     },
 
     async getPendingDownloads(storyId): Promise<GallerySelect[]> {
-      return db.query.galleries.findMany({
+      const rows = await db.query.galleries.findMany({
         where: and(
           eq(galleries.storyId, storyId),
           eq(galleries.isDeleted, false),
           inArray(galleries.downloadState, ['pending', 'failed']),
         ),
       });
+      // Same never-starved ordering as uploads: fresh work goes before retries.
+      return rows.sort(
+        (a, b) => Number(a.downloadState !== 'pending') - Number(b.downloadState !== 'pending'),
+      );
+    },
+
+    async getDeletedMediaWithLocalFiles(storyId): Promise<GallerySelect[]> {
+      return db.query.galleries.findMany({
+        where: and(
+          eq(galleries.storyId, storyId),
+          eq(galleries.isDeleted, true),
+          or(isNotNull(galleries.localPath), isNotNull(galleries.thumbnailPath)),
+        ),
+      });
+    },
+
+    async getLiveMediaLocalPaths(storyId): Promise<string[]> {
+      const rows = await db
+        .select({ localPath: galleries.localPath, thumbnailPath: galleries.thumbnailPath })
+        .from(galleries)
+        .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)))
+        .all();
+      const paths = new Set<string>();
+      for (const row of rows) {
+        if (row.localPath) paths.add(row.localPath);
+        if (row.thumbnailPath) paths.add(row.thumbnailPath);
+      }
+      return [...paths];
     },
   };
 };

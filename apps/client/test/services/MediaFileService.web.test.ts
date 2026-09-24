@@ -79,6 +79,22 @@ it('uses desktop-media paths and delegates web file operations through the Elect
   expect(store.deleteDirectory).toHaveBeenCalledWith('media');
 });
 
+it('hashes a stored web file for verification, or answers null when unreadable', async () => {
+  store.readBytes.mockResolvedValue(new Uint8Array([1, 2]));
+  store.md5Hex.mockReturnValue('web-hash');
+
+  await expect(mediaFileService.md5OfLocalFile('desktop-media:media/story/hash.png')).resolves.toBe(
+    'web-hash',
+  );
+  expect(store.readBytes).toHaveBeenCalledWith('media/story/hash.png');
+
+  store.readBytes.mockRejectedValueOnce(new Error('gone'));
+  await expect(mediaFileService.md5OfLocalFile('desktop-media:media/story/hash.png')).resolves.toBe(
+    null,
+  );
+  await expect(mediaFileService.md5OfLocalFile('file://not-web')).resolves.toBe(null);
+});
+
 it('imports a picked blob once, skips the rewrite when the hash is already stored', async () => {
   store.md5Hex.mockReturnValue('web-hash');
   store.existsSync.mockReturnValue(false);

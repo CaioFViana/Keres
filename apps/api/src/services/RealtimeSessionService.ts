@@ -25,7 +25,11 @@ export type RealtimeSocket = {
   storyCallbacks?: Map<string, (event: { maxOperationVersion?: number }) => void>;
   realtimeCallback?: (event: RealtimeEvent) => void;
   realtimeUserId?: string;
+  stopHeartbeat?: () => void;
 };
+
+/** How often a live socket is reminded the server is still there. The client treats a socket silent for well over twice this as half-open and reconnects. */
+export const REALTIME_HEARTBEAT_MS = 30_000;
 
 interface RealtimeSessionDependencies {
   eventBus: EventBus;
@@ -34,6 +38,8 @@ interface RealtimeSessionDependencies {
   logInfo: (message: string, meta: Record<string, unknown>) => void;
   now?: () => number;
   createId?: () => string;
+  /** Starts the heartbeat ticks; returns a stop function. Injectable so tests drive ticks by hand. */
+  startHeartbeat?: (tick: () => void) => () => void;
 }
 
 /** Ticket and subscription logic, independent of Elysia's WebSocket adapter. */
@@ -124,12 +130,42 @@ export class RealtimeSessionService {
     // Every open socket owns its subscription registry, even before its first readable story:
     // a rejected subscribe must read as "not subscribed" instead of "no registry".
     socket.storyCallbacks = new Map();
-    for (const storyId of await this.dependencies.getReadableStoryIds(user.userId)) {
-      this.subscribeToStory(socket, user.userId, storyId);
+    try {
+      for (const storyId of await this.dependencies.getReadableStoryIds(user.userId)) {
+        this.subscribeToStory(socket, user.userId, storyId);
+      }
+    } catch {
+      // A half-subscribed socket is worse than none: the client's `onopen` already fired, so it
+      // believes it is live while story nudges never arrive. Roll the subscriptions back and close,
+      // so the client reconnects with a fresh ticket instead of waiting on a dead channel.
+      this.closeEvents(socket);
+      socket.close?.();
+      return;
     }
-    socket.send(
-      JSON.stringify({ type: 'server.heartbeat', sentAt: new Date(this.now()).toISOString() }),
-    );
+    const sendHeartbeat = () => {
+      socket.send(
+        JSON.stringify({ type: 'server.heartbeat', sentAt: new Date(this.now()).toISOString() }),
+      );
+    };
+    sendHeartbeat();
+    // A half-open socket (NAT timeout, a network drop with no FIN) otherwise looks alive forever
+    // while delivering nothing. The ticks let the client notice the silence and reconnect - and a
+    // tick that cannot even be sent reaps the socket from this side.
+    socket.stopHeartbeat?.();
+    const startHeartbeat =
+      this.dependencies.startHeartbeat ??
+      ((tick: () => void) => {
+        const timer = setInterval(tick, REALTIME_HEARTBEAT_MS);
+        return () => clearInterval(timer);
+      });
+    socket.stopHeartbeat = startHeartbeat(() => {
+      try {
+        sendHeartbeat();
+      } catch {
+        socket.stopHeartbeat?.();
+        socket.close?.();
+      }
+    });
   }
 
   async handleEventMessage(socket: RealtimeSocket, message: unknown): Promise<void> {
@@ -144,6 +180,9 @@ export class RealtimeSessionService {
     } catch {
       return;
     }
+    // A JSON `null` (or a primitive frame) is not an object: reading `.type` off it throws
+    // instead of being ignored like every other malformed message.
+    if (!request || typeof request !== 'object') return;
     if (request.type !== 'subscribe' || !request.storyId) return;
     if (!(await this.dependencies.canReadStory(userId, request.storyId, 'reader'))) return;
     this.subscribeToStory(socket, userId, request.storyId);
@@ -156,6 +195,14 @@ export class RealtimeSessionService {
     for (const [storyId, callback] of socket.storyCallbacks ?? new Map()) {
       this.dependencies.eventBus.off(`storyUpdate:${storyId}`, callback);
     }
+    // The registry dies with the socket: a subscription request arriving after the close must read
+    // as "never opened" instead of reusing the previous identity, and a second `openEvents` on the
+    // same object must not orphan the first one's listeners.
+    socket.realtimeCallback = undefined;
+    socket.realtimeUserId = undefined;
+    socket.storyCallbacks = undefined;
+    socket.stopHeartbeat?.();
+    socket.stopHeartbeat = undefined;
     if (userId) this.dependencies.logInfo('User left realtime channel', { userId });
   }
 }

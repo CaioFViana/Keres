@@ -17,8 +17,7 @@ import { ownerOnlyFieldsIn } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db, type CompatibleDb } from '../../db';
-import { chapters, galleries, stats, stories, storySchemaFields } from '../../db/schema';
-import { mediaStorageService } from '../MediaStorageService';
+import { chapters, stats, stories, storySchemaFields } from '../../db/schema';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,
@@ -374,17 +373,8 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     database: CompatibleDb = db,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity, database);
-
-    // The tombstone above is only the story's - it does not propagate to its Galleries (each entity
-    // synchronizes its own tombstone independently), so without this sweep every hash that story ever
-    // referenced would be orphaned on disk forever as soon as the story disappeared from everyone's view.
-    const referencedHashes = await database
-      .selectDistinct({ hash: galleries.hash })
-      .from(galleries)
-      .where(eq(galleries.storyId, update.id!));
-
-    for (const { hash } of referencedHashes) {
-      await mediaStorageService.deleteBlobIfUnreferenced(hash);
-    }
+    // No blob sweep here: it runs in the push coordinator after the commit (see
+    // `collectPushMediaGarbage`). Inside this transaction the check would read stale state - and
+    // bytes deleted first would stay deleted if the transaction then rolled back.
   }
 }

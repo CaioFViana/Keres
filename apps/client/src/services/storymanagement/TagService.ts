@@ -7,7 +7,11 @@ import type { FavoriteFilterState } from '../../types/entityFilters';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils'; // Import Create and prepareNewEntityData
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
@@ -126,6 +130,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
     },
 
     async createTag(currentUserId: string, tagData: Create<TagInsert>): Promise<TagSelect> {
+      await assertStoryIsWritable(db, tagData.storyId);
       let newTag = prepareNewEntityData<TagInsert>(tagData);
       const favorite = await normalizeFavoriteCreate(db, newTag.storyId, 'Tag', newTag);
       newTag = favorite.data;
@@ -167,6 +172,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       if (!originalTag) {
         throw new Error(`Tag with ID ${tagId} not found for update.`);
       }
+      await assertStoryIsWritable(db, originalTag.storyId);
       tagData = await normalizeFavoriteUpdate(
         db,
         originalTag.storyId,
@@ -220,6 +226,7 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         console.warn(`Attempted to delete non-existent tag ${tagId}.`);
         return;
       }
+      await assertStoryIsWritable(db, tagToDelete.storyId);
 
       const [updatedTag] = await db
         .update(tags)

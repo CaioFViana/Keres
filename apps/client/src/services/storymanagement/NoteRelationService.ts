@@ -6,7 +6,11 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export type NewNoteRelation = Omit<
@@ -98,6 +102,7 @@ export function createNoteRelationService(
       userId: string,
       relation: SaveNoteRelation,
     ): Promise<NoteRelationInterface> {
+      await assertStoryIsWritable(drizzleDb, relation.storyId);
       try {
         let resultRelation: NoteRelationInterface;
 
@@ -236,6 +241,7 @@ export function createNoteRelationService(
           console.warn(`NoteRelation with ID ${relationId} not found for deletion.`);
           return false;
         }
+        await assertStoryIsWritable(drizzleDb, existingRelation.storyId);
 
         const now = new Date();
         const [updatedRelation] = await drizzleDb

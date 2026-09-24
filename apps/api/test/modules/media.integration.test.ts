@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
 import { galleries, tiers, users } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
@@ -83,10 +83,23 @@ describe('POST /media/:storyId/blobs/status', () => {
 
   it('reports a hash as present once it was uploaded', async () => {
     await upload(ana.token, PNG_HASH, PNG_BYTES);
+    await referenceInGallery(PNG_HASH);
 
     const { data } = await blobStatus(ana.token, [PNG_HASH]);
 
     expect(data).toEqual({ present: [PNG_HASH], missing: [] });
+  });
+
+  it('reports a stored hash as missing when this story does not reference it', async () => {
+    // Storage is deduplicated globally: without the reference gate, any reader of any story
+    // could probe whether somebody else's bytes exist on the server just by knowing the hash.
+    await upload(ana.token, PNG_HASH, PNG_BYTES);
+    const outra = await uploadTestStory(ana.token, 'Outra');
+    await referenceInGallery(PNG_HASH, outra.id);
+
+    const { data } = await blobStatus(ana.token, [PNG_HASH]);
+
+    expect(data).toEqual({ present: [], missing: [PNG_HASH] });
   });
 
   it('rejects a hash that is not a 32-character digest', async () => {
@@ -150,6 +163,20 @@ describe('POST /media/:storyId/blobs/:hash', () => {
     const { status } = await upload(ana.token, 'hash-invalido', PNG_BYTES);
 
     expect(status).toBe(400);
+  });
+
+  it('answers 500 when storage fails, so the client retries instead of blaming its bytes', async () => {
+    const { mediaStorageService } = await import('../../src/services/MediaStorageService');
+    const failing = vi
+      .spyOn(mediaStorageService, 'store')
+      .mockRejectedValueOnce(new Error('disk on fire'));
+    try {
+      const { status } = await upload(ana.token, PNG_HASH, PNG_BYTES);
+
+      expect(status).toBe(500);
+    } finally {
+      failing.mockRestore();
+    }
   });
 
   it('rejects a media type the app cannot display', async () => {

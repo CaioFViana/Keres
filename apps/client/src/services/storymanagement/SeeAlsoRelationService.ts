@@ -5,7 +5,11 @@ import type { AppDrizzleClient, SeeAlsoRelationSelect } from '../../db';
 import { seeAlsoRelations } from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface SeeAlsoEntityRef {
@@ -112,6 +116,7 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
     },
 
     async addSeeAlsoLink(currentUserId, storyId, a, b) {
+      await assertStoryIsWritable(db, storyId);
       if (
         isSameEntity({ type: a.entityType, id: a.entityId }, { type: b.entityType, id: b.entityId })
       ) {
@@ -165,6 +170,7 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
       if (!relation || relation.isDeleted) {
         return false;
       }
+      await assertStoryIsWritable(db, relation.storyId);
 
       const [removed] = await db
         .update(seeAlsoRelations)

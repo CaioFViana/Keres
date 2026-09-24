@@ -25,6 +25,17 @@ import { createGalleryService } from './storymanagement/GalleryService';
 /** How many blobs to transfer per cycle, so a sync cycle does not become a long upload. */
 const MAX_TRANSFERS_PER_CYCLE = 5;
 
+/** How many tombstones to collect per cycle: local IO, but still bounded. */
+const MAX_COLLECTIONS_PER_CYCLE = 100;
+
+/**
+ * How many cycles a deterministically refused upload (400/413/415) is skipped before it is tried
+ * again. Resending a 50MB video the server will certainly refuse, every 30s, is pure waste - but
+ * the refusal may stop applying (the server's ceiling was raised), so the skip expires instead of
+ * sticking forever.
+ */
+const DETERMINISTIC_SKIP_CYCLES = 9;
+
 export interface MediaSyncSummary {
   uploaded: number;
   downloaded: number;
@@ -35,6 +46,8 @@ export interface MediaSyncSummary {
 
 export class MediaSyncService {
   private galleryService: GalleryService;
+  /** `${galleryId}:${hash}` → cycles skipped since the deterministic refusal. Session-scoped. */
+  private readonly deterministicSkips = new Map<string, number>();
 
   constructor(db: AppDrizzleClient) {
     this.galleryService = createGalleryService(db);
@@ -60,12 +73,57 @@ export class MediaSyncService {
     } catch (error) {
       if (isOfflineError(error)) {
         summary.offline = true;
-        return summary;
+      } else {
+        console.log(`MediaSyncService: media sync for story ${storyId} did not complete.`, error);
       }
-      console.log(`MediaSyncService: media sync for story ${storyId} did not complete.`, error);
     }
 
+    // Local-only, so it runs even when the transfers above could not reach the server.
+    await this.collectDeletedMedia(storyId);
+
     return summary;
+  }
+
+  /**
+   * Removes the device files of tombstoned media.
+   *
+   * A delete that arrives over sync only flips the row: without this step the bytes stay on
+   * disk forever, and a story that shares and deletes a lot of media slowly fills the device.
+   * A path is only removed when no live medium references it (files are content-addressed, so
+   * two media can share one file), and the tombstone is marked pending again so a later
+   * restore re-downloads instead of pointing at a file that is gone. It never throws: cleanup
+   * must not break synchronization.
+   */
+  private async collectDeletedMedia(storyId: string): Promise<void> {
+    try {
+      const tombstones = await this.galleryService.getDeletedMediaWithLocalFiles(storyId);
+      if (tombstones.length === 0) {
+        return;
+      }
+      const livePaths = new Set(await this.galleryService.getLiveMediaLocalPaths(storyId));
+      for (const media of tombstones.slice(0, MAX_COLLECTIONS_PER_CYCLE)) {
+        const removals: { localPath?: string | null; thumbnailPath?: string | null } = {};
+        if (media.localPath && !livePaths.has(media.localPath)) {
+          mediaFileService.deleteLocal(media.localPath);
+          removals.localPath = null;
+        }
+        if (media.thumbnailPath && !livePaths.has(media.thumbnailPath)) {
+          mediaFileService.deleteLocal(media.thumbnailPath);
+          removals.thumbnailPath = null;
+        }
+        if (removals.localPath !== undefined || removals.thumbnailPath !== undefined) {
+          await this.galleryService.setLocalFileState(media.id, {
+            ...removals,
+            downloadState: 'pending',
+          });
+        }
+      }
+    } catch (error) {
+      console.log(
+        `MediaSyncService: collecting deleted media for story ${storyId} did not complete.`,
+        error,
+      );
+    }
   }
 
   private async uploadPending(
@@ -73,9 +131,21 @@ export class MediaSyncService {
     storyId: string,
     summary: MediaSyncSummary,
   ): Promise<void> {
-    const pending = (await this.galleryService.getPendingUploads(storyId)).filter((media) =>
-      galleryHasFile(media.mediaType),
-    );
+    const pending = (await this.galleryService.getPendingUploads(storyId))
+      .filter((media) => galleryHasFile(media.mediaType))
+      .filter((media) => {
+        // A refusal that will certainly repeat is not worth a status call, let alone the bytes -
+        // until the skip expires and the upload earns one more attempt.
+        const key = `${media.id}:${media.hash}`;
+        const skips = this.deterministicSkips.get(key);
+        if (skips === undefined) return true;
+        if (skips >= DETERMINISTIC_SKIP_CYCLES) {
+          this.deterministicSkips.delete(key);
+          return true;
+        }
+        this.deterministicSkips.set(key, skips + 1);
+        return false;
+      });
     if (pending.length === 0) {
       return;
     }
@@ -146,6 +216,13 @@ export class MediaSyncService {
           throw error;
         }
         console.log(`MediaSyncService: failed to upload media ${media.id} (${media.hash}).`, error);
+        // 400 (hash mismatch), 413 (over the ceiling) and 415 (unsupported type) are verdicts on
+        // the bytes themselves: retrying next cycle changes nothing. Anything else (401/403/404
+        // that may heal, 5xx, timeouts) keeps retrying every cycle as before.
+        const status = (error as { response?: { status?: unknown } })?.response?.status;
+        if (status === 400 || status === 413 || status === 415) {
+          this.deterministicSkips.set(`${media.id}:${media.hash}`, 0);
+        }
         await this.galleryService.setLocalFileState(media.id, { uploadState: 'failed' });
         summary.failed += 1;
       }
@@ -170,13 +247,21 @@ export class MediaSyncService {
       // finished and never got marked.
       const existingPath = mediaFileService.localPathFor(storyId, media.hash, media.mimeType);
       if (mediaFileService.exists(existingPath)) {
-        await this.galleryService.setLocalFileState(media.id, {
-          localPath: existingPath,
-          downloadState: 'downloaded',
-          thumbnailPath: await this.ensureThumbnail(storyId, media, existingPath),
-        });
-        summary.downloaded += 1;
-        continue;
+        if ((await mediaFileService.md5OfLocalFile(existingPath)) === media.hash) {
+          await this.galleryService.setLocalFileState(media.id, {
+            localPath: existingPath,
+            downloadState: 'downloaded',
+            thumbnailPath: await this.ensureThumbnail(storyId, media, existingPath),
+          });
+          summary.downloaded += 1;
+          continue;
+        }
+        // A file is here but it is not these bytes (a truncated download, a corruption): drop it
+        // and fall through to a fresh download instead of adopting it as complete.
+        console.warn(
+          `MediaSyncService: local file for gallery ${media.id} does not match its hash; re-downloading.`,
+        );
+        mediaFileService.deleteLocal(existingPath);
       }
 
       try {
@@ -212,6 +297,14 @@ export class MediaSyncService {
           downloadedUri = downloaded.uri;
         }
 
+        if ((await mediaFileService.md5OfLocalFile(downloadedUri)) !== media.hash) {
+          // Truncated or corrupted in transit: never mark it, or every same-hash medium shares
+          // the bad bytes through the content address. It stays failed and retries next cycle.
+          mediaFileService.deleteLocal(downloadedUri);
+          throw new Error(
+            `Downloaded bytes for gallery ${media.id} do not match hash ${media.hash}.`,
+          );
+        }
         await this.galleryService.setLocalFileState(media.id, {
           localPath: downloadedUri,
           downloadState: 'downloaded',

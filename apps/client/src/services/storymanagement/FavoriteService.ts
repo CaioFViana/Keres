@@ -4,7 +4,8 @@ import type { AppDrizzleClient } from '../../db';
 import { favorites, stories } from '../../db/schema';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { recordLocalOperation } from '../../utils/syncUtils';
+import i18n from '../../utils/i18n';
+import { recordLocalOperation, StoryReadOnlyError } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 const FAVORITE_ENTITY_EVENTS: Partial<Record<FavoriteEntityType, string>> = {
@@ -133,6 +134,17 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
     },
 
     async setFavorite(storyId, entityId, entityType, localUserId, value) {
+      // Readers may write favourites (the server allows it), so the full
+      // `assertStoryIsWritable` gate does not apply - but a linked story whose role has
+      // not resolved yet still fails closed, like every other entity: queuing work while
+      // access is unknown is how orphan rows and perpetual push failures start.
+      const story = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+        columns: { serverId: true, myRole: true },
+      });
+      if (story?.serverId && !story.myRole) {
+        throw new StoryReadOnlyError(i18n.t('story_read_only_error'));
+      }
       const userId = await resolveUserId(storyId, localUserId);
       const existing = await db.query.favorites.findFirst({
         where: and(

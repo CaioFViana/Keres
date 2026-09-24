@@ -68,6 +68,125 @@ it('finds gallery work that is pending transfer without including deleted media'
   ]);
 });
 
+it('lists never-transferred media before retries, so failures cannot starve fresh work', async () => {
+  await database.db.insert(schema.galleries).values([
+    {
+      id: 'failed-upload',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'failed-upload.png',
+      hash: 'failed-upload-hash',
+      sizeBytes: 10,
+      uploadState: 'failed',
+      downloadState: 'downloaded',
+      ...entityBase,
+    },
+    {
+      id: 'fresh-upload',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'fresh-upload.png',
+      hash: 'fresh-upload-hash',
+      sizeBytes: 10,
+      uploadState: 'pending',
+      downloadState: 'downloaded',
+      ...entityBase,
+    },
+    {
+      id: 'failed-download',
+      storyId: TEST_STORY_ID,
+      mediaType: 'audio',
+      mimeType: 'audio/mpeg',
+      fileName: 'failed-download.mp3',
+      hash: 'failed-download-hash',
+      sizeBytes: 20,
+      uploadState: 'uploaded',
+      downloadState: 'failed',
+      ...entityBase,
+    },
+    {
+      id: 'fresh-download',
+      storyId: TEST_STORY_ID,
+      mediaType: 'audio',
+      mimeType: 'audio/mpeg',
+      fileName: 'fresh-download.mp3',
+      hash: 'fresh-download-hash',
+      sizeBytes: 20,
+      uploadState: 'uploaded',
+      downloadState: 'pending',
+      ...entityBase,
+    },
+  ]);
+
+  const service = createGalleryService(database.db);
+  expect((await service.getPendingUploads(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
+    'fresh-upload',
+    'failed-upload',
+  ]);
+  expect((await service.getPendingDownloads(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
+    'fresh-download',
+    'failed-download',
+  ]);
+});
+
+it('lists tombstone files for collection and the paths live media still holds', async () => {
+  await database.db.insert(schema.galleries).values([
+    {
+      id: 'gone',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'gone.png',
+      hash: 'gone-hash',
+      sizeBytes: 10,
+      localPath: '/local/gone.png',
+      uploadState: 'uploaded',
+      downloadState: 'downloaded',
+      ...entityBase,
+      isDeleted: true,
+    },
+    {
+      id: 'collected',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'collected.png',
+      hash: 'collected-hash',
+      sizeBytes: 10,
+      localPath: null,
+      uploadState: 'uploaded',
+      downloadState: 'pending',
+      ...entityBase,
+      isDeleted: true,
+    },
+    {
+      id: 'live',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'live.png',
+      hash: 'live-hash',
+      sizeBytes: 10,
+      localPath: '/local/live.png',
+      thumbnailPath: '/local/live.thumb',
+      uploadState: 'uploaded',
+      downloadState: 'downloaded',
+      ...entityBase,
+    },
+  ]);
+
+  const service = createGalleryService(database.db);
+  expect((await service.getDeletedMediaWithLocalFiles(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
+    'gone',
+  ]);
+  expect(await service.getLiveMediaLocalPaths(TEST_STORY_ID)).toEqual(
+    expect.arrayContaining(['/local/live.png', '/local/live.thumb']),
+  );
+  expect(await service.getLiveMediaLocalPaths(TEST_STORY_ID)).not.toContain('/local/gone.png');
+});
+
 it('filters gallery media, retrieves it through a live owner relation, and ignores deleted links', async () => {
   await database.db.insert(schema.galleries).values([
     {

@@ -171,6 +171,7 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
       if (!existing || existing.isDeleted) {
         throw new Error('Comment not found.');
       }
+      await assertCanWriteComment(existing.storyId);
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -214,6 +215,7 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
       if (!existing || existing.isDeleted) {
         return false;
       }
+      await assertCanWriteComment(existing.storyId);
 
       const userIdToLog = await getUserIdForOperation(
         db,

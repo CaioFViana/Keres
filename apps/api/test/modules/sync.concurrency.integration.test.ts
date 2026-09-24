@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
-import { characters, operationLog, stories } from '../../src/db/schema';
+import { characters, favorites, operationLog, stories } from '../../src/db/schema';
 import { SyncService, syncService } from '../../src/services/SyncService';
+import { ensurePublicFavoriteOperationLogs } from '../../src/services/sync/publicFavoriteRepair';
 import {
   TierLimitExceededError,
   tierEnforcementService,
@@ -134,6 +135,46 @@ describe('atomicity between the entity write and the operation log', () => {
   });
 });
 
+describe('concurrent public-favorite repairs', () => {
+  it('serializes instead of assigning the same operationVersion twice', async () => {
+    // A snapshot-imported story whose favorites have no history yet: the moment it
+    // goes public, every mismatched pull triggers the repair - two at once must not
+    // read the same counter and collide on the (storyId, operationVersion) unique
+    // index, turning one pull into a 500 the user has to stare at.
+    await db.insert(favorites).values([
+      {
+        id: newId(),
+        storyId,
+        entityId: newId(),
+        entityType: 'Character',
+        userId: ana.userId,
+      },
+      {
+        id: newId(),
+        storyId,
+        entityId: newId(),
+        entityType: 'Character',
+        userId: ana.userId,
+      },
+    ]);
+
+    const [first, second] = await Promise.all([
+      ensurePublicFavoriteOperationLogs(storyId),
+      ensurePublicFavoriteOperationLogs(storyId),
+    ]);
+
+    expect(first.count + second.count).toBe(2);
+    const rows = await db.query.operationLog.findMany({
+      where: eq(operationLog.storyId, storyId),
+      columns: { operationVersion: true },
+    });
+    const versions = rows.map((row) => row.operationVersion).sort((a, b) => a - b);
+    expect(versions).toEqual([1, 2]);
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    expect(story?.lastOperationVersion).toBe(2);
+  });
+});
+
 describe('operation-log allocation guard', () => {
   it('refuses to append an operation for a story that disappeared before the counter could advance', async () => {
     await expect(
@@ -197,7 +238,7 @@ describe('SyncService defensive protocol paths', () => {
     ]);
   });
 
-  it('uses safe fallback payloads when administrative recovery logs a delete or reorder without a handler', async () => {
+  it('uses safe fallback payloads for handlerless deletes/reorders but refuses a missing entity id', async () => {
     const isolatedService = new SyncService();
     (isolatedService.getEntityHandlers() as Map<string, unknown>).delete('Character');
     const deletedId = newId();
@@ -219,17 +260,22 @@ describe('SyncService defensive protocol paths', () => {
         reorderItems: [{ id: deletedId, newIndex: 1 }],
       } as never,
     });
-    const malformed = await isolatedService.appendOperationLog({
-      storyId,
-      userId: ana.userId,
-      entityId: '',
-      // A recovery import is trusted only at its boundary: an unknown operation kind must remain a
-      // non-destructive update in the persistent log, and an empty entity id must never be stored.
-      update: { type: 'not-a-sync-operation', entity: 'Character', id: '' } as never,
-    });
+    // A recovery import is trusted only at its boundary: an unknown operation kind stays a
+    // non-destructive update in the persistent log (see the coercion above), but an empty entity
+    // id is refused outright instead of being stored under an invented id. A row nobody can
+    // correlate would still poison later merges (its null entityVersion forces the
+    // changed-fields lookup to bail out), while refusing consumes no version at all.
+    await expect(
+      isolatedService.appendOperationLog({
+        storyId,
+        userId: ana.userId,
+        entityId: '',
+        update: { type: 'not-a-sync-operation', entity: 'Character', id: '' } as never,
+      }),
+    ).rejects.toThrow('without an entity id');
 
     const rows = await db.query.operationLog.findMany({
-      where: (table, { inArray }) => inArray(table.id, [deleted.id, reordered.id, malformed.id]),
+      where: (table, { inArray }) => inArray(table.id, [deleted.id, reordered.id]),
       orderBy: (table, { asc }) => [asc(table.operationVersion)],
     });
     expect(rows).toEqual([
@@ -242,13 +288,9 @@ describe('SyncService defensive protocol paths', () => {
         operationType: 'reorder',
         payload: expect.objectContaining({ reorderItems: [{ id: deletedId, newIndex: 1 }] }),
       }),
-      expect.objectContaining({
-        operationType: 'update',
-        entityId: expect.any(String),
-        payload: {},
-      }),
     ]);
-    expect(rows[2].entityId).not.toBe('');
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+    expect(story?.lastOperationVersion).toBe(2);
   });
 
   it('rejects missing stories before it can apply or expose any operation', async () => {

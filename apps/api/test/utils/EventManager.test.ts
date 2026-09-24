@@ -75,4 +75,19 @@ describe('eventManager', () => {
 
     expect(callback).toHaveBeenCalledTimes(2);
   });
+
+  it('delivers to every listener even when one of them throws', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      listen('story:updated', () => {
+        throw new Error('send on a dead socket');
+      });
+      const healthy = listen('story:updated', vi.fn());
+
+      expect(() => eventManager.emit('story:updated', { storyId: 'story-1' })).not.toThrow();
+      expect(healthy).toHaveBeenCalledWith({ storyId: 'story-1' });
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
 });

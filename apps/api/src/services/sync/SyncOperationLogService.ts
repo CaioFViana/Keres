@@ -24,6 +24,11 @@ export class SyncOperationLogService {
     database: CompatibleDb = db,
   ): Promise<{ id: string; operationVersion: number }> {
     const { storyId, userId, update, entityId, entityVersion } = args;
+    if (!entityId) {
+      // A log row with an invented entity id would never match an echo or twin check downstream;
+      // refuse instead of recording an operation nobody can correlate.
+      throw new Error('SyncService: cannot append an operation log without an entity id.');
+    }
     const handler = this.entityHandlers.get(update.entity);
     // The log row must carry enough to rebuild the operation on pull even when no handler is
     // registered for the entity: a delete needs only its id, a reorder its shared-encoded items.
@@ -56,7 +61,7 @@ export class SyncOperationLogService {
         ? (update.type as (typeof operationTypeEnum.enumValues)[number])
         : 'update',
       entityType: update.entity,
-      entityId: entityId || ulid(),
+      entityId,
       payload,
       entityVersion: entityVersion ?? null,
       createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),

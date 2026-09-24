@@ -1,6 +1,6 @@
 import { and, count, eq, max } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../../db';
+import { db, withWriteTransaction } from '../../db';
 import { lockStoryForUpdate } from '../../db/sqlOperators';
 import { favorites, operationLog, stories } from '../../db/schema';
 
@@ -39,61 +39,87 @@ export async function getFavoritesFingerprint(storyId: string): Promise<Favorite
  * pull of every public story, rereading the whole roster each time to (almost always)
  * find nothing to do.
  */
+const REPAIR_BUSY_ATTEMPTS = 8;
+const REPAIR_BUSY_BASE_DELAY_MS = 25;
+
+const isSqliteBusyError = (error: unknown): boolean =>
+  (error as { code?: unknown })?.code === 'SQLITE_BUSY' ||
+  /SQLITE_BUSY/i.test(error instanceof Error ? error.message : String(error ?? ''));
+
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function ensurePublicFavoriteOperationLogs(
   storyId: string,
 ): Promise<{ count: number; maxOperationVersion: number }> {
-  return db.transaction(async (tx) => {
-    await lockStoryForUpdate(tx, storyId);
+  // A write transaction, not a plain one: the version allocation below is read-modify-write,
+  // and two repairs racing (two pulls tripping over the same fresh publicity) must serialize
+  // instead of colliding on the (storyId, operationVersion) unique index. On SQLite the row
+  // lock below is a no-op, so the immediate-mode transaction is the entire serialisation -
+  // plus a bounded retry, because SQLITE_BUSY still escapes when two repairs overlap on one
+  // file-backed connection. Retrying is safe: every attempt recomputes the missing set, so a
+  // loser simply finds nothing left to do.
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await withWriteTransaction(async (tx) => {
+        await lockStoryForUpdate(tx, storyId);
 
-    const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
-      tx
-        .select()
-        .from(favorites)
-        .where(and(eq(favorites.storyId, storyId), eq(favorites.isDeleted, false))),
-      tx
-        .select({ entityId: operationLog.entityId })
-        .from(operationLog)
-        .where(
-          and(
-            eq(operationLog.storyId, storyId),
-            eq(operationLog.entityType, 'Favorite'),
-            eq(operationLog.operationType, 'create'),
-          ),
-        ),
-      tx
-        .select({ lastOperationVersion: stories.lastOperationVersion })
-        .from(stories)
-        .where(eq(stories.id, storyId)),
-    ]);
-    const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
-    const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
-    let nextOperationVersion = storyRow.at(0)?.lastOperationVersion || 0;
+        // Sequential, never Promise.all: concurrent statements on one transaction connection
+        // trip each other (SQLITE_BUSY) exactly when two repairs race, which is the case this
+        // function exists to survive.
+        const favoriteRows = await tx
+          .select()
+          .from(favorites)
+          .where(and(eq(favorites.storyId, storyId), eq(favorites.isDeleted, false)));
+        const loggedFavoriteRows = await tx
+          .select({ entityId: operationLog.entityId })
+          .from(operationLog)
+          .where(
+            and(
+              eq(operationLog.storyId, storyId),
+              eq(operationLog.entityType, 'Favorite'),
+              eq(operationLog.operationType, 'create'),
+            ),
+          );
+        const storyRow = await tx
+          .select({ lastOperationVersion: stories.lastOperationVersion })
+          .from(stories)
+          .where(eq(stories.id, storyId));
+        const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
+        const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
+        let nextOperationVersion = storyRow.at(0)?.lastOperationVersion || 0;
 
-    for (const favorite of missingFavorites) {
-      nextOperationVersion += 1;
-      await tx.insert(operationLog).values({
-        id: ulid(),
-        storyId,
-        userId: favorite.userId,
-        operationVersion: nextOperationVersion,
-        operationType: 'create',
-        entityType: 'Favorite',
-        entityId: favorite.id,
-        payload: {
-          entityId: favorite.entityId,
-          entityType: favorite.entityType,
-          userId: favorite.userId,
-        },
-        entityVersion: favorite.version,
-        createdAt: favorite.createdAt,
+        for (const favorite of missingFavorites) {
+          nextOperationVersion += 1;
+          await tx.insert(operationLog).values({
+            id: ulid(),
+            storyId,
+            userId: favorite.userId,
+            operationVersion: nextOperationVersion,
+            operationType: 'create',
+            entityType: 'Favorite',
+            entityId: favorite.id,
+            payload: {
+              entityId: favorite.entityId,
+              entityType: favorite.entityType,
+              userId: favorite.userId,
+            },
+            entityVersion: favorite.version,
+            createdAt: favorite.createdAt,
+          });
+        }
+        if (missingFavorites.length > 0) {
+          await tx
+            .update(stories)
+            .set({ lastOperationVersion: nextOperationVersion })
+            .where(eq(stories.id, storyId));
+        }
+        return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
       });
+    } catch (error) {
+      attempt += 1;
+      if (!isSqliteBusyError(error) || attempt >= REPAIR_BUSY_ATTEMPTS) throw error;
+      await delay(Math.min(REPAIR_BUSY_BASE_DELAY_MS * 2 ** (attempt - 1), 400));
     }
-    if (missingFavorites.length > 0) {
-      await tx
-        .update(stories)
-        .set({ lastOperationVersion: nextOperationVersion })
-        .where(eq(stories.id, storyId));
-    }
-    return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
-  });
+  }
 }

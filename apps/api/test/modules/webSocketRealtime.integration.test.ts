@@ -125,6 +125,29 @@ describe('realtime sessions over a real database', () => {
     expect(socket.storyCallbacks).toBeUndefined();
   });
 
+  it('keeps delivering to healthy sockets when another socket send throws', async () => {
+    const broken = fakeSocket();
+    const healthy = fakeSocket();
+    broken.send.mockImplementation((message: string) => {
+      // Connected fine (the heartbeat below goes through); dies before the nudge arrives.
+      if (String(message).includes('story.changed')) {
+        throw new Error('send on a dead socket');
+      }
+    });
+    try {
+      await openRealtimeEvents(broken, createWebSocketTicket(payload(ana)));
+      await openRealtimeEvents(healthy, createWebSocketTicket(payload(ana)));
+
+      expect(() =>
+        eventManager.emit(`storyUpdate:${storyId}`, { maxOperationVersion: 7 }),
+      ).not.toThrow();
+      expect(healthy.send).toHaveBeenCalledWith(expect.stringContaining('"type":"story.changed"'));
+    } finally {
+      closeRealtimeEvents(broken);
+      closeRealtimeEvents(healthy);
+    }
+  });
+
   it('stops delivering story events after close', async () => {
     const socket = fakeSocket();
     await openRealtimeEvents(socket, createWebSocketTicket(payload(ana)));

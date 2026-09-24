@@ -496,6 +496,32 @@ export const mediaFileService = {
     return destination.uri;
   },
 
+  /**
+   * The MD5 of a file already on the device, or null when it cannot be read. Used to verify a
+   * download before trusting it: on Android a failed download leaves a truncated file behind, and
+   * without this check the next cycle would adopt it as complete.
+   */
+  async md5OfLocalFile(localPath: string): Promise<string | null> {
+    if (isWeb) {
+      try {
+        if (!localPath.startsWith(webMediaStore.DESKTOP_MEDIA_URI_PREFIX)) {
+          return null;
+        }
+        const bytes = await webMediaStore.readBytes(
+          localPath.slice(webMediaStore.DESKTOP_MEDIA_URI_PREFIX.length),
+        );
+        return webMediaStore.md5Hex(bytes);
+      } catch {
+        return null;
+      }
+    }
+    try {
+      return new File(localPath).md5 ?? null;
+    } catch {
+      return null;
+    }
+  },
+
   /** Reads back the bytes of an already local file (used when uploading to the server). */
   async readBytes(localPath: string): Promise<Uint8Array> {
     if (isWeb) {

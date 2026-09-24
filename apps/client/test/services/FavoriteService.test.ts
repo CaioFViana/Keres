@@ -57,7 +57,9 @@ describe('FavoriteService', () => {
     });
     await database.db
       .update(schema.stories)
-      .set({ serverId: 'server-1' })
+      // A linked story with an unresolved role refuses writes, so the role is set: what this
+      // test pins is the identity keying, not the unresolved window.
+      .set({ serverId: 'server-1', myRole: 'owner' })
       .where(eq(schema.stories.id, TEST_STORY_ID));
     const service = createFavoriteService(database.db);
 

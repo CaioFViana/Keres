@@ -115,7 +115,7 @@ export class SyncService {
     });
 
     permittedStories.forEach((permission) => {
-      if (permission.story && !permission.story.isDeleted) {
+      if (permission.story && !permission.story.isDeleted && !storyMap.has(permission.story.id)) {
         storyMap.set(permission.story.id, {
           lastOperationVersion: permission.story.lastOperationVersion,
           role: permission.permissionType,

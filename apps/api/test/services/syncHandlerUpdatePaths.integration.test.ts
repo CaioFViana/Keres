@@ -1812,7 +1812,7 @@ describe('gallery media lifecycle', () => {
     expect(await handler.findByIdOrThrow(secondId)).toMatchObject({ hash, version: 1 });
   });
 
-  it('a Gallery delete drops its blob when nothing references it', async () => {
+  it('a Gallery delete tombstones without collecting: the push coordinator owns collection', async () => {
     const handler = new GallerySyncHandler();
     const hash = 'e'.repeat(32);
     const id = newId();
@@ -1837,10 +1837,14 @@ describe('gallery media lifecycle', () => {
     );
 
     expect(await handler.findByIdOrThrow(id)).toMatchObject({ isDeleted: true });
-    expect(await mediaStorageService.has(realHash)).toBe(false);
+    // The bytes stay: collecting here would read through the global connection while the push
+    // transaction is still uncommitted (seeing the row as live and skipping everything), and bytes
+    // deleted first would stay deleted if that transaction then rolled back. The push coordinator
+    // collects after the commit instead - see syncPushMediaGc.integration.test.ts.
+    expect(await mediaStorageService.has(realHash)).toBe(true);
     expect(
       await db.query.mediaBlobs.findFirst({ where: (f, { eq }) => eq(f.hash, realHash) }),
-    ).toBeUndefined();
+    ).toBeTruthy();
   });
 
   it('a Gallery delete keeps a blob another row still uses', async () => {

@@ -6,7 +6,11 @@ import type { AppDrizzleClient } from '../../db';
 import { characterRelations, characters } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils'; // Import for changed fields in update
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import for event emission
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Imports for logging operations
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils'; // Imports for logging operations
 import { createServerService } from '../ServerService'; // Import ServerService to get userId
 
 export type CharacterRelationWithNames = CharacterRelation & {
@@ -102,6 +106,7 @@ export const createCharacterRelationService = (
       relation: CharacterRelation,
     ): Promise<CharacterRelation> {
       // Added currentUserId
+      await assertStoryIsWritable(db, relation.storyId);
       try {
         console.log(
           'Attempting to save relation with ID:',
@@ -112,20 +117,75 @@ export const createCharacterRelationService = (
           relation,
         );
 
-        // Helper to check if a relation with this ID exists in the DB
-        const checkIfRelationExists = async (id: string): Promise<boolean> => {
-          const existing = await db.query.characterRelations.findFirst({
-            where: and(eq(characterRelations.id, id), eq(characterRelations.isDeleted, false)),
-          });
-          return !!existing;
-        };
-
         let resultRelation: CharacterRelation; // To store the final relation to return
 
         if (relation.id && relation.id !== '') {
-          const exists = await checkIfRelationExists(relation.id);
+          const rowById = await db.query.characterRelations.findFirst({
+            where: eq(characterRelations.id, relation.id),
+          });
 
-          if (exists) {
+          if (rowById?.isDeleted) {
+            // The row is a tombstone: restore it in place instead of falling through to the
+            // insert below, which would collide on the primary key. Endpoints stay immutable
+            // and the pair check still excludes this very row, exactly like a live update.
+            if (
+              rowById.character1Id !== relation.character1Id ||
+              rowById.character2Id !== relation.character2Id
+            ) {
+              throw new Error(`Character IDs (character1Id, character2Id) cannot be changed on an existing CharacterRelation.
+                                 Old: ${rowById.character1Id}, ${rowById.character2Id} | New: ${relation.character1Id}, ${relation.character2Id}`);
+            }
+            const restoreDuplicate = await getExistingRelationForPair(
+              db,
+              relation.storyId,
+              relation.character1Id,
+              relation.character2Id,
+              relation.id,
+            );
+            if (restoreDuplicate) {
+              throw new Error(
+                `A relation between character ${relation.character1Id} and ${relation.character2Id} already exists with ID ${restoreDuplicate.id}.`,
+              );
+            }
+            const [restoredRelation] = await db
+              .update(characterRelations)
+              .set({
+                relationType: relation.relationType,
+                isDeleted: false,
+                deletedAt: null,
+                updatedAt: new Date(),
+                version: sql`${characterRelations.version} + 1`,
+              })
+              .where(eq(characterRelations.id, relation.id))
+              .returning();
+            if (!restoredRelation) {
+              throw new Error('Failed to retrieve restored relation after update operation.');
+            }
+            const restoreFields = getChangedFields(rowById, restoredRelation);
+            const restoreUserId = await getUserIdForOperation(
+              db,
+              serverService,
+              restoredRelation.storyId,
+              currentUserId,
+            );
+            await recordLocalOperation(
+              db,
+              restoredRelation.storyId,
+              restoreUserId,
+              'update',
+              'CharacterRelation',
+              relation.id,
+              restoreFields,
+            );
+            entityEventEmitter.emit(
+              'character_relation_changed',
+              restoredRelation.storyId,
+              restoredRelation.id,
+            );
+            return restoredRelation;
+          }
+
+          if (!!rowById && !rowById.isDeleted) {
             // Fetch old relation for diffing
             const oldRelation = await db.query.characterRelations.findFirst({
               where: eq(characterRelations.id, relation.id),
@@ -292,15 +352,17 @@ export const createCharacterRelationService = (
 
     async deleteCharacterRelation(currentUserId: string, relationId: string): Promise<boolean> {
       // Added currentUserId
+      const relationToDelete = await db.query.characterRelations.findFirst({
+        where: eq(characterRelations.id, relationId),
+      });
+      if (!relationToDelete) {
+        console.warn(`Attempted to delete non-existent character relation ${relationId}.`);
+        return false; // Return false if not found
+      }
+      // Outside the try below: that catch swallows everything into `false`, which would
+      // turn a refused write into a silent no-op instead of an explicit error.
+      await assertStoryIsWritable(db, relationToDelete.storyId);
       try {
-        const relationToDelete = await db.query.characterRelations.findFirst({
-          where: eq(characterRelations.id, relationId),
-        });
-        if (!relationToDelete) {
-          console.warn(`Attempted to delete non-existent character relation ${relationId}.`);
-          return false; // Return false if not found
-        }
-
         const [updatedRelation] = await db
           .update(characterRelations)
           .set({

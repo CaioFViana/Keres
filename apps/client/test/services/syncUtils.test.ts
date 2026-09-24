@@ -358,8 +358,11 @@ describe('trimSyncedOperationLogs', () => {
       })
     ).map((row) => row.operationVersion);
 
-  beforeEach(() => {
+  beforeEach(async () => {
     sequence = 0;
+    // Caught-up cursors: these tests pin the keep-N budget and the ordering, so every row
+    // sits below the cursor and is eligible. Cursor gating itself is pinned below.
+    await seedStory({ lastServerSyncedLog: 1000, lastPublicFavoriteLog: 1000 });
   });
 
   it('keeps the newest synced operations and drops the rest', async () => {
@@ -452,6 +455,40 @@ describe('trimSyncedOperationLogs', () => {
   it('does nothing but complain when there is no database', async () => {
     await expect(trimSyncedOperationLogs(null as never, STORY_ID)).resolves.toBe(0);
     expect(console.error).toHaveBeenCalled();
+  });
+
+  it('keeps a synced op past the cursor: its echo has not arrived yet', async () => {
+    await database.db
+      .update(stories)
+      .set({ lastServerSyncedLog: 2 })
+      .where(eq(stories.id, STORY_ID));
+    await seedLog({ operationVersion: 1, serverOperationVersion: 1 });
+    await seedLog({ operationVersion: 2, serverOperationVersion: 2 });
+    await seedLog({ operationVersion: 3, serverOperationVersion: 3 });
+
+    // Budget 1 would drop two rows by recency alone - but row 3 sits past the cursor, so its
+    // echo is still outstanding and only row 1 may go.
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 1);
+
+    expect(removed).toBe(1);
+    expect(await remainingVersions()).toEqual([2, 3]);
+  });
+
+  it('holds favorites until the public-favorites cursor passes them too', async () => {
+    await database.db
+      .update(stories)
+      .set({ lastServerSyncedLog: 10, lastPublicFavoriteLog: 2 })
+      .where(eq(stories.id, STORY_ID));
+    await seedLog({ operationVersion: 1, entityType: 'Favorite', serverOperationVersion: 1 });
+    await seedLog({ operationVersion: 2, entityType: 'Favorite', serverOperationVersion: 5 });
+    await seedLog({ operationVersion: 3, entityType: 'Scene', serverOperationVersion: 5 });
+
+    // The scene row is below the main cursor and trims; the favorite at 5 is below the main
+    // cursor too, but the historical path can still deliver it (public cursor 2), so it stays.
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 0);
+
+    expect(removed).toBe(2);
+    expect(await remainingVersions()).toEqual([2]);
   });
 });
 

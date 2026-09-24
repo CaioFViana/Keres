@@ -171,10 +171,13 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
             .returning({ version: stories.version })
         ).at(0);
       });
+      if (!story) {
+        throw new Error(`Cannot reorder stats: story ${storyId} not found.`);
+      }
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
         reorderItems,
         reorderTarget: 'Stat',
-        version: story?.version,
+        version: story.version,
       });
       entityEventEmitter.emit('stat_changed', storyId);
     },

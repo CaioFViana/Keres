@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { db } from '../../src/db';
+import { storyPermissions } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -64,6 +66,21 @@ describe('POST /story-permissions/', () => {
     expect(after.data.storyPreviews).toEqual([
       expect.objectContaining({ storyId, role: 'reader' }),
     ]);
+  });
+
+  it('still reports the owner as owner when a stale permission row names them', async () => {
+    // The grant endpoint refuses the owner, so this row can only exist from legacy data or a
+    // manual insert - but if it does, it must not downgrade the owner's role.
+    await db.insert(storyPermissions).values({
+      id: newId(),
+      storyId,
+      userId: ana.userId,
+      permissionType: 'reader',
+    });
+
+    const { data } = await request('GET', '/sync/pullpreviews', { token: ana.token });
+
+    expect(data.storyPreviews).toEqual([expect.objectContaining({ storyId, role: 'owner' })]);
   });
 
   it.each(['reader', 'writer'])(

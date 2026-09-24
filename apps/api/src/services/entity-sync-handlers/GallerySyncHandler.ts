@@ -145,9 +145,8 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     database: CompatibleDb = db,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity, database);
-    // The row becomes a tombstone above, but the hash may be used by another Gallery (in the same story
-    // or another, since storage is deduplicated globally) - the blob only becomes ownerless when no live
-    // reference is left.
-    await mediaStorageService.deleteBlobIfUnreferenced(currentEntity.hash);
+    // No blob collection here: it runs in the push coordinator after the commit (see
+    // `collectPushMediaGarbage`). Inside this transaction the check would read stale state - and
+    // bytes deleted first would stay deleted if the transaction then rolled back.
   }
 }

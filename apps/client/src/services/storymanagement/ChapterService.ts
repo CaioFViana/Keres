@@ -430,13 +430,16 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
         .where(eq(stories.id, storyId))
         .returning({ version: stories.version });
+      if (!story) {
+        throw new Error(`Cannot reorder chapters: story ${storyId} not found.`);
+      }
 
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
         reorderItems: newOrder.map((item) => ({ id: item.id, newIndex: item.newIndex })),
         // Absent for chapters, which is what this operation meant before events existed - an old
         // server reads such a payload exactly as it always did.
         ...(type === 'event' ? { reorderTarget: 'Event' as const } : {}),
-        version: story?.version,
+        version: story.version,
       });
       entityEventEmitter.emit('chapter_changed', storyId, 'reorder');
     },

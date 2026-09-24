@@ -3,7 +3,11 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export type NewCharacterScene = Omit<
@@ -112,6 +116,7 @@ export function createCharacterSceneService(
       userId: string,
       relation: SaveCharacterScene,
     ): Promise<CharacterSceneInterface> {
+      await assertStoryIsWritable(drizzleDb, relation.storyId);
       try {
         let resultRelation: CharacterSceneInterface;
 
@@ -251,6 +256,7 @@ export function createCharacterSceneService(
           console.warn(`CharacterScene with ID ${relationId} not found for deletion.`);
           return false;
         }
+        await assertStoryIsWritable(drizzleDb, existingRelation.storyId);
 
         const now = new Date();
         const [updatedRelation] = await drizzleDb

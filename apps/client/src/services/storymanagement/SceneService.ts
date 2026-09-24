@@ -467,10 +467,13 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         .set({ version: sql`${chapters.version} + 1`, updatedAt: new Date() })
         .where(eq(chapters.id, chapterId))
         .returning({ version: chapters.version });
+      if (!chapter) {
+        throw new Error(`Cannot reorder scenes: chapter ${chapterId} not found.`);
+      }
 
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Chapter', chapterId, {
         reorderItems: newOrder.map((item) => ({ ...item })),
-        version: chapter?.version,
+        version: chapter.version,
       });
       entityEventEmitter.emit('scene_changed', storyId, 'reorder');
     },

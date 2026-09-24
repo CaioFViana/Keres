@@ -3,7 +3,11 @@ import { and, eq, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
 import { locationRelations } from '../../db';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperation,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 /** Same defensive limit as the server-side handler - see LocationRelationSyncHandler.ts (API). */
@@ -225,6 +229,7 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
     },
 
     async setParent(currentUserId, storyId, childId, newParentId) {
+      await assertStoryIsWritable(db, storyId);
       if (newParentId === childId) {
         throw new Error('Validation Error: a Location cannot be its own parent.');
       }
@@ -289,6 +294,7 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
     },
 
     async addConnection(currentUserId, storyId, locationAId, locationBId) {
+      await assertStoryIsWritable(db, storyId);
       if (locationAId === locationBId) {
         throw new Error('Validation Error: a Location cannot be connected to itself.');
       }
@@ -337,6 +343,7 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
       if (!relation || relation.isDeleted) {
         return false;
       }
+      await assertStoryIsWritable(db, relation.storyId);
 
       await softDeleteRelation(currentUserId, relation);
       entityEventEmitter.emit('location_relation_changed', relation.storyId, relation.locationAId);

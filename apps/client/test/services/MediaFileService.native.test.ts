@@ -186,6 +186,17 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe('MediaFileService on native storage', () => {
+  it('reports the native MD5 of a local file, or null when it cannot be read', async () => {
+    fsMock.files.set('file://media/story/hash.png', { exists: true, md5: 'file-hash', size: 40 });
+
+    await expect(mediaFileService.md5OfLocalFile('file://media/story/hash.png')).resolves.toBe(
+      'file-hash',
+    );
+    await expect(mediaFileService.md5OfLocalFile('file://media/story/absent.png')).resolves.toBe(
+      null,
+    );
+  });
+
   it('imports an image by extension, copies it once, and rejects unsupported content', async () => {
     fsMock.files.set('file://picked/map.png', { exists: true, md5: 'image-hash', size: 40 });
 

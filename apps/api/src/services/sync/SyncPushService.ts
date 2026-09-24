@@ -10,7 +10,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { sameReorderArrangement } from '@keres/shared';
-import { and, desc, eq, gt, max } from 'drizzle-orm';
+import { and, asc, eq, gt, max } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, withTransaction, type CompatibleDb } from '../../db';
 import { operationLog, stories } from '../../db/schema';
@@ -485,10 +485,17 @@ export class SyncPushService {
   }
 
   /**
-   * A logged reorder already carrying this op's exact arrangement, newest first. Only rows
+   * A logged reorder already carrying this op's exact arrangement, oldest first. Only rows
    * applied *past* the op's base qualify: an older twin means the world moved on since, and
    * the op is genuinely divergent. Rows without an entity version predate that column and
    * cannot prove anything, so the comparison excludes them.
+   *
+   * Oldest, not newest: the client keys its echo check on the returned version, absorbing
+   * that one operation and applying everything else. With X-Y-X in history, pointing the
+   * retry at the newest X would absorb it while applying the older X and the Y in between,
+   * leaving the client on Y while the server holds X. The oldest twin is the op's own
+   * original (or an equivalent one already pulled), so every later twin still applies in
+   * order and both sides land on the same arrangement.
    */
   private async findAppliedReorderTwin(
     tx: CompatibleDb,
@@ -517,7 +524,7 @@ export class SyncPushService {
           gt(operationLog.entityVersion, baseVersion),
         ),
       )
-      .orderBy(desc(operationLog.operationVersion));
+      .orderBy(asc(operationLog.operationVersion));
     for (const row of rows) {
       const payload = (row.payload ?? {}) as {
         reorderItems?: unknown;

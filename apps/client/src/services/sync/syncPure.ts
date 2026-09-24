@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, StoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import { omitClientProtectedFields } from '../entityTableRegistry';
+import { omitClientProtectedFields, toEntityColumns } from '../entityTableRegistry';
 
 /**
  * Pure sync helpers, free of database and network access so they stay unit-testable.
@@ -45,20 +45,26 @@ export function throwIfSyncAborted(signal: AbortSignal): void {
  * Strips local bookkeeping columns before a server update reaches a client handler.
  *
  * Without this, applying a remote create/update could overwrite the row's sync cursors
- * (`lastOperationLog`, `myRole`, ...) with whatever the server echoed back. Deletes and
- * reorders carry no entity fields, so they pass through untouched.
+ * (`lastOperationLog`, `myRole`, ...) with whatever the server echoed back. Keys that are
+ * not columns of the local table are dropped too: a newer server's extra field (or a junk
+ * key) would otherwise reach a handler's raw `.set()` spread, fail the apply, and block
+ * the pull cursor behind one unprocessable operation. Deletes and reorders carry no
+ * entity fields, so they pass through untouched.
  */
 export function protectRemoteUpdate(update: StoryUpdate): StoryUpdate {
   if (update.type === 'create') {
     return {
       ...update,
-      data: omitClientProtectedFields(update.entity, update.data),
+      data: toEntityColumns(update.entity, omitClientProtectedFields(update.entity, update.data)),
     } as CreateStoryUpdate;
   }
   if (update.type === 'update') {
     return {
       ...update,
-      changes: omitClientProtectedFields(update.entity, update.changes),
+      changes: toEntityColumns(
+        update.entity,
+        omitClientProtectedFields(update.entity, update.changes),
+      ),
     } as UpdateStoryUpdate;
   }
   return update;

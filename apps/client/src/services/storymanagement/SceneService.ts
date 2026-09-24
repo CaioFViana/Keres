@@ -445,22 +445,20 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       );
       if (problem) throw new Error(`Scene reorder is invalid. ${problem}`);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const currentById = new Map(current.map((scene) => [scene.id, scene]));
 
+      // Every row in the order bumps, even one whose index did not move: the server bumps all
+      // of them when it applies the reorder, and a row bumped on one side only would base its
+      // next edit on a version the other side never saw.
       await db.transaction(async (tx) => {
         for (const scene of newOrder) {
-          const originalScene = currentById.get(scene.id)!;
-
-          if (originalScene.index !== scene.newIndex) {
-            await tx
-              .update(scenes)
-              .set({
-                index: scene.newIndex,
-                updatedAt: new Date(),
-                version: sql`${scenes.version} + 1`,
-              })
-              .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)));
-          }
+          await tx
+            .update(scenes)
+            .set({
+              index: scene.newIndex,
+              updatedAt: new Date(),
+              version: sql`${scenes.version} + 1`,
+            })
+            .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)));
         }
       });
 

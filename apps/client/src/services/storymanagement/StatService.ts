@@ -151,9 +151,12 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
       const now = new Date();
+      // Every row in the order bumps, even one whose position did not move: the server bumps
+      // all of them when it applies the reorder, and a row bumped on one side only would base
+      // its next edit on a version the other side never saw.
       const story = await db.transaction(async (tx) => {
         await Promise.all(
-          changed.map((stat) =>
+          newOrder.map((stat) =>
             tx
               .update(stats)
               .set({ order: stat.order, updatedAt: now, version: sql`${stats.version} + 1` })

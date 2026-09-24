@@ -71,7 +71,11 @@ export interface SyncConflictService {
     currentUserId: string,
     cloneName: string,
   ): Promise<void>;
-  /** Gets the conflict out of the way without resolving it; the local operations stay blocked. */
+  /**
+   * Gets the conflict out of the way without resolving it: the local operations are abandoned
+   * (not left blocked - there would be no way back to them), and the row reverts to the
+   * server's copy so it stops showing values that will never sync.
+   */
   dismissConflict(conflictId: string): Promise<void>;
 }
 
@@ -96,9 +100,31 @@ export async function applyReorderToLocalDb(
   db: AppDrizzleClient,
   update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
   operationTime: Date,
+  options?: { bumpVersions?: boolean },
 ): Promise<void> {
   const { reorderItems } = update;
   if (!reorderItems || reorderItems.length === 0) return;
+  // Resolving keep-server re-applies the arrangement over rows the abandoned local op already
+  // bumped: bumping again would count the speculation twice, so the resolution applies the
+  // order without touching versions and aligns the container separately instead.
+  const bumpVersions = options?.bumpVersions !== false;
+
+  if (update.entity === 'Story') {
+    const target = (update as StoryReorderingStoryUpdate).reorderTarget;
+    if (
+      target !== undefined &&
+      target !== 'Event' &&
+      target !== 'StorySchemaField' &&
+      target !== 'Stat'
+    ) {
+      // A target this build does not reorder (a newer server's collection): the chapters
+      // branch below matches no rows by id, so this degrades to a no-op rather than
+      // corrupting anything - but it is worth one line in the log.
+      console.warn(
+        `applyReorderToLocalDb: unrecognised reorder target '${target}', skipping items.`,
+      );
+    }
+  }
 
   await db.transaction(async (tx) => {
     for (const item of reorderItems) {
@@ -109,7 +135,7 @@ export async function applyReorderToLocalDb(
           .set({
             index: item.newIndex,
             updatedAt: operationTime,
-            version: sql`${schema.scenes.version} + 1`,
+            version: bumpVersions ? sql`${schema.scenes.version} + 1` : undefined,
           })
           .where(eq(schema.scenes.id, item.id));
       } else if (
@@ -121,7 +147,7 @@ export async function applyReorderToLocalDb(
           .set({
             order: item.newIndex - 1,
             updatedAt: operationTime,
-            version: sql`${schema.storySchemaFields.version} + 1`,
+            version: bumpVersions ? sql`${schema.storySchemaFields.version} + 1` : undefined,
           })
           .where(eq(schema.storySchemaFields.id, item.id));
       } else if (
@@ -133,22 +159,62 @@ export async function applyReorderToLocalDb(
           .set({
             order: item.newIndex - 1,
             updatedAt: operationTime,
-            version: sql`${schema.stats.version} + 1`,
+            version: bumpVersions ? sql`${schema.stats.version} + 1` : undefined,
           })
           .where(eq(schema.stats.id, item.id));
       } else if (update.entity === 'Story') {
-        // Reordering chapters within a story
+        // Reordering chapters (or events, which share their table) within a story
         await tx
           .update(schema.chapters)
           .set({
             index: item.newIndex,
             updatedAt: operationTime,
-            version: sql`${schema.chapters.version} + 1`,
+            version: bumpVersions ? sql`${schema.chapters.version} + 1` : undefined,
           })
           .where(eq(schema.chapters.id, item.id));
       }
     }
+
+    // The container bumps with its rows: the server bumps it once per applied reorder, so an
+    // applier that skips this would base its next container edit on a stale version.
+    if (bumpVersions && update.id) {
+      if (update.entity === 'Chapter') {
+        await tx
+          .update(schema.chapters)
+          .set({
+            updatedAt: operationTime,
+            version: sql`${schema.chapters.version} + 1`,
+          })
+          .where(eq(schema.chapters.id, update.id));
+      } else if (update.entity === 'Story') {
+        await tx
+          .update(schema.stories)
+          .set({
+            updatedAt: operationTime,
+            version: sql`${schema.stories.version} + 1`,
+          })
+          .where(eq(schema.stories.id, update.id));
+      }
+    }
   });
+}
+
+/** Any local table holding a syncable entity. */
+type SyncTable = Exclude<ReturnType<typeof getEntityTable>, undefined>;
+
+/**
+ * Which table a reorder's items live in - the same dispatch as `applyReorderToLocalDb`.
+ * Needed separately because `resolveKeepLocal` anticipates versions on those rows without
+ * moving any indices.
+ */
+function reorderItemTable(entityType: string, reorderTarget: unknown): SyncTable | undefined {
+  if (entityType === 'Chapter') return schema.scenes;
+  if (entityType === 'Story' && reorderTarget === 'StorySchemaField') {
+    return schema.storySchemaFields;
+  }
+  if (entityType === 'Story' && reorderTarget === 'Stat') return schema.stats;
+  if (entityType === 'Story') return schema.chapters;
+  return undefined;
 }
 
 export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictService => {
@@ -289,6 +355,35 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       .where(eq((table as any).id, entityId));
   };
 
+  /**
+   * Applies the order the server holds, with the same logic used when applying an ordinary
+   * remote reorder (see `SyncEngineService`), except versions: the abandoned local op already
+   * bumped these rows speculatively, so the apply only moves indices and the container is
+   * aligned exactly instead. Shared by keep-server and dismiss - both abandon the local order.
+   */
+  const applyServerOrder = async (conflict: PendingConflict) => {
+    const reorderItems = conflict.serverValues?.reorderItems as
+      | { id: string; newIndex: number }[]
+      | undefined;
+    if (reorderItems && reorderItems.length > 0) {
+      await applyReorderToLocalDb(
+        db,
+        {
+          entity: conflict.entityType,
+          reorderItems,
+          reorderTarget: conflict.serverValues?.reorderTarget,
+        } as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+        new Date(),
+        { bumpVersions: false },
+      );
+    }
+    const serverVersion =
+      conflict.serverVersion ?? (conflict.serverValues?.version as number | undefined);
+    if (typeof serverVersion === 'number') {
+      await writeEntity(conflict.entityType, conflict.entityId, {}, serverVersion);
+    }
+  };
+
   const api: SyncConflictService = {
     async recordConflict(input: RecordConflictInput): Promise<void> {
       await blockOperations(input.localOperationIds);
@@ -397,17 +492,68 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // `abandonOperations`/`recordRebasedOperation` (which discard and recreate the operation): here the
         // same operation carries on, only with an updated base.
         const baseVersion = conflict.serverVersion ?? 0;
+        // Chain the released operations onto the server's version (the first rests on it, each
+        // next one on the following version), like the scalar rebase: giving every op the same
+        // base would make all but the first conflict again on push.
+        const ops = [];
         for (const opId of conflict.localOperationIds) {
           const op = await db.query.operationLogs.findFirst({
             where: eq(schema.operationLogs.id, opId),
           });
-          if (!op) continue;
+          if (op) ops.push(op);
+        }
+        ops.sort((left, right) => left.operationVersion - right.operationVersion);
+        let base = baseVersion;
+        let rebased = 0;
+        const itemIds = new Set<string>();
+        let reorderTarget: unknown;
+        for (const op of ops) {
           const payload = parseJson<Record<string, any>>(op.payload, {});
-          payload.version = baseVersion + 1;
+          payload.version = base + 1;
           await db
             .update(schema.operationLogs)
             .set({ payload: JSON.stringify(payload), conflictState: null })
-            .where(eq(schema.operationLogs.id, opId));
+            .where(eq(schema.operationLogs.id, op.id));
+          base += 1;
+          rebased += 1;
+          if (reorderTarget === undefined) reorderTarget = payload.reorderTarget;
+          const items = payload.reorderItems;
+          if (Array.isArray(items)) {
+            for (const item of items) {
+              if (item && typeof item.id === 'string') itemIds.add(item.id);
+            }
+          }
+        }
+        // Anticipate the push: the server bumps every touched row once per released op, so the
+        // rows rest at serverVersion + chain - the versions the server will hold once these land.
+        // Without this the next edit bases itself on a stale version and conflicts spuriously.
+        // Bump-up only: a row already past the target stays where it is rather than regressing.
+        if (rebased > 0) {
+          const target = baseVersion + rebased;
+          const bumpRowTo = async (table: SyncTable, id: string) => {
+            const rows = await db
+              .select()
+              .from(table)
+              .where(eq((table as any).id, id))
+              .limit(1);
+            const current = (rows.at(0) as Record<string, unknown> | undefined)?.version;
+            if (typeof current === 'number' && current < target) {
+              await db
+                .update(table)
+                .set({ version: target, updatedAt: new Date() })
+                .where(eq((table as any).id, id));
+            }
+          };
+          const itemTable = reorderItemTable(conflict.entityType, reorderTarget);
+          if (itemTable) {
+            for (const id of itemIds) {
+              await bumpRowTo(itemTable, id);
+            }
+          }
+          const containerTable = getEntityTable(conflict.entityType);
+          if (containerTable) {
+            await bumpRowTo(containerTable, conflict.entityId);
+          }
         }
         await closeConflict(conflictId, 'keep_local');
         entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
@@ -469,12 +615,6 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // server along with the values the user wrote.
         const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
         const nextValues = { ...values, ...restoreFields };
-        await writeEntity(
-          conflict.entityType,
-          conflict.entityId,
-          { ...nextValues, deletedAt: null },
-          baseVersion + 1,
-        );
         // It only resends the fields that genuinely differ from what the server holds now. Without this, "keep
         // mine" resent the whole value even when it already matched what is there (both sides renaming to the
         // same text, say) - a new operation in the log with no actually new information, just noise.
@@ -483,7 +623,17 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
             syncConflictValuesDiffer(value, conflict.serverValues?.[field]),
           ),
         );
-        if (Object.keys(changedValues).length > 0) {
+        // With nothing to resend there is no optimistic version to anticipate: the row aligns to
+        // the server's version instead of base + 1, or the next edit would base itself one ahead
+        // of the server and conflict spuriously.
+        const hasChanges = Object.keys(changedValues).length > 0;
+        await writeEntity(
+          conflict.entityType,
+          conflict.entityId,
+          { ...nextValues, deletedAt: null },
+          hasChanges ? baseVersion + 1 : baseVersion,
+        );
+        if (hasChanges) {
           await recordRebasedOperation(conflict, 'update', changedValues, baseVersion);
         }
       }
@@ -506,23 +656,8 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       await abandonOperations(conflict.localOperationIds);
 
       if (conflict.localOperationType === 'reorder') {
-        // Likewise: there is no entity row to write, it is the order of N other rows - it applies the order the
-        // server holds, with the same logic used when applying an ordinary remote reorder (see
-        // `SyncEngineService`).
-        const reorderItems = conflict.serverValues?.reorderItems as
-          | { id: string; newIndex: number }[]
-          | undefined;
-        if (reorderItems && reorderItems.length > 0) {
-          await applyReorderToLocalDb(
-            db,
-            {
-              entity: conflict.entityType,
-              reorderItems,
-              reorderTarget: conflict.serverValues?.reorderTarget,
-            } as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-            new Date(),
-          );
-        }
+        // Likewise: there is no entity row to write, it is the order of N other rows.
+        await applyServerOrder(conflict);
       } else if (!conflict.serverValues) {
         // The server does not have the entity. Accepting that means removing it here - and without recording an
         // operation, because there is nothing to tell whoever no longer has it.
@@ -577,6 +712,25 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       // left to resolve or retry them.
       if (conflict) {
         await abandonOperations(conflict.localOperationIds);
+        // Dismissing drops the local operations for good, so the row must stop showing their
+        // values: leaving them in place displays edits that will never sync (and quietly
+        // vanish on reinstall) as if they were saved. Reverting to the server's copy keeps the
+        // screen honest; without a server copy (a create that never landed) there is nothing
+        // to revert to, so the row stays as the only copy of the user's work.
+        if (conflict.serverValues) {
+          if (conflict.localOperationType === 'reorder') {
+            await applyServerOrder(conflict);
+          } else {
+            const serverVersion =
+              conflict.serverVersion ?? (conflict.serverValues?.version as number | undefined);
+            await writeEntity(
+              conflict.entityType,
+              conflict.entityId,
+              conflict.serverValues,
+              serverVersion ?? 1,
+            );
+          }
+        }
       }
       await db
         .update(schema.syncConflicts)

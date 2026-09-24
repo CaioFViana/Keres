@@ -1,3 +1,4 @@
+import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
@@ -982,6 +983,48 @@ describe('sync authorization hardening', () => {
       expect.arrayContaining([expect.objectContaining({ entity: 'Favorite', id: favoriteId })]),
     );
     expect(data.publicFavorites).toEqual([]);
+  });
+
+  it('pages past a full batch of invisible favorites instead of stalling the pull', async () => {
+    // A whole page of someone else's favorites on a private story: with LIMIT-before-filter
+    // the page held only invisible rows, the client received an empty list, stopped paging,
+    // and never advanced past them again. The invisible run is seeded straight into the log -
+    // the pull query is what's under test, not the pushes that wrote it.
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+    const before = (await pull(ana.token, storyId, 0)).data.serverMaxOperationVersion;
+    const now = new Date();
+    await db.insert(operationLog).values(
+      Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) => ({
+        id: newId(),
+        storyId,
+        userId: ana.userId,
+        operationVersion: before + index + 1,
+        operationType: 'create' as const,
+        entityType: 'Favorite',
+        entityId: newId(),
+        payload: { entityId: newId(), entityType: 'Character', userId: ana.userId },
+        entityVersion: 1,
+        createdAt: now,
+      })),
+    );
+    await db
+      .update(stories)
+      .set({ lastOperationVersion: before + MAX_SYNC_PULL_BATCH })
+      .where(eq(stories.id, storyId));
+    const characterId = newId();
+    const pushed = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    expect(pushed.data.conflicts).toEqual([]);
+
+    const { status, data } = await pull(bia.token, storyId);
+
+    expect(status).toBe(200);
+    expect(data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
+    );
+    expect(data.updates).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Favorite' })]),
+    );
   });
 
   it('rejects a pull from a user with no permission to read the story', async () => {

@@ -6,7 +6,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { decodePulledReorderOperation, MAX_SYNC_PULL_BATCH } from '@keres/shared';
-import { and, eq, gt, max, ne } from 'drizzle-orm';
+import { and, eq, gt, max, ne, or } from 'drizzle-orm';
 import { db } from '../../db';
 import { favorites, operationLog, stories } from '../../db/schema';
 import { eventManager } from '../../utils/EventManager';
@@ -78,18 +78,30 @@ export class SyncPullService {
       }
     }
 
-    const operationsAfterMainCursor = await db.query.operationLog.findMany({
+    // Visibility belongs in the query, not in a post-filter. With LIMIT-before-filter, a
+    // run of MAX_SYNC_PULL_BATCH invisible favorites (someone else's, on a story keeping them
+    // private) fills the whole page, the client receives an empty list, stops paging, and never
+    // advances past them - a silent permanent stall, with new history piling up above a window
+    // that never moves. Filtering in SQL makes every page carry visible progress, or be honestly
+    // empty only at the end of history.
+    // Visibility belongs in the query, not in a post-filter. With LIMIT-before-filter, a
+    // run of MAX_SYNC_PULL_BATCH invisible favorites (someone else's, on a story keeping them
+    // private) fills the whole page, the client receives an empty list, stops paging, and never
+    // advances past them - a silent permanent stall, with new history piling up above a window
+    // that never moves. Filtering in SQL makes every page carry visible progress, or be honestly
+    // empty only at the end of history.
+    const favoriteVisibility = publishesFavorites
+      ? undefined
+      : or(ne(operationLog.entityType, 'Favorite'), eq(operationLog.userId, userId));
+    const visibleOperations = await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
         gt(operationLog.operationVersion, lastOperationVersion),
+        favoriteVisibility,
       ),
       orderBy: [operationLog.operationVersion],
       limit: MAX_SYNC_PULL_BATCH,
     });
-    const visibleOperations = operationsAfterMainCursor.filter(
-      (operation) =>
-        operation.entityType !== 'Favorite' || publishesFavorites || operation.userId === userId,
-    );
 
     // A separate cursor exposes favourites which predate a change to public visibility.
     const historicalPublicFavorites = publishesFavorites

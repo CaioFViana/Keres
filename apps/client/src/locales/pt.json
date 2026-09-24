@@ -1991,6 +1991,7 @@
   "sync_failed": "Falha na sincronização",
   "sync_failed_to_apply_updates": "Falha ao aplicar algumas atualizações remotas: {{entities}}",
   "sync_push_failed": "Não foi possível enviar suas atualizações ao servidor",
+  "sync_protocol_mismatch": "Este servidor precisa de uma versão mais nova do aplicativo para continuar sincronizando",
   "sync_pushed_updates": "{{count}} atualização(ões) enviada(s) ao servidor",
   "sync_status": "Status de Sincronização",
   "sync_updates_received": "{{count}} nova(s) atualização(ões) do servidor: {{entities}}",

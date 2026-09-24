@@ -42,6 +42,18 @@ export function isOfflineError(error: unknown): boolean {
   );
 }
 
+/**
+ * True when the server refused the sync protocol version this build speaks (HTTP 426). The
+ * server is reachable and fine - the app (or, for a self-hosted server, the server) is simply
+ * behind, so the user gets an "update" message instead of a generic sync failure.
+ */
+export function isProtocolMismatchError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  return (error as AxiosError).response?.status === 426;
+}
+
 /** True when a request or sync cycle was cancelled via AbortSignal. */
 export function isAbortError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {

@@ -80,6 +80,7 @@ beforeEach(async () => {
           pushedUpdates: jest.fn(),
           pushFailed: jest.fn(),
           syncFailed: jest.fn(),
+          protocolMismatch: jest.fn(),
           message: jest.fn(),
         }) as never,
     },
@@ -463,6 +464,11 @@ describe('reconciliation decisions', () => {
       { id: 'scene-2', index: 1 },
       { id: 'scene-1', index: 2 },
     ]);
+    // The apply bumps every touched row and the chapter, exactly like the server did: the next
+    // edit of any of them must rest on the post-reorder version.
+    expect(scenes.map(({ version }) => version).sort()).toEqual([2, 2]);
+    const chapter = await database.db.query.chapters.findFirst();
+    expect(chapter!.version).toBe(2);
   });
 
   it('absorbs a remote reorder that restates the pending local one', async () => {

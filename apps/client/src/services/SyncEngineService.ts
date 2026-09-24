@@ -11,7 +11,7 @@ import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { ServerSelect } from '../db/schema';
 import type { KeresAxiosInstance, TokenProvider } from './apiClient';
-import { isAbortError, isOfflineError } from './apiClient';
+import { isAbortError, isOfflineError, isProtocolMismatchError } from './apiClient';
 import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import type { ServerService } from './ServerService';
 import type { SyncConflictService } from './SyncConflictService';
@@ -439,7 +439,11 @@ export class SyncEngineService {
           const update = protectRemoteUpdate(rawUpdate);
           const handler = this.entityHandlers.get(update.entity);
           if (!handler) {
+            // An entity this build cannot store: the server is newer than the app. The pull
+            // stays blocked (skipping would lose these operations below the cursor, even after
+            // an upgrade), but loudly - as a protocol mismatch, not a silent stall.
             console.log(`No client sync handler registered for entity type: ${update.entity}`);
+            this.dependencies.notifier.protocolMismatch();
             pullBlocked = true;
             break;
           }
@@ -642,11 +646,16 @@ export class SyncEngineService {
           console.log(`Push skipped for story ${storyId}: server unreachable.`);
           return true;
         }
-        console.log(
-          `Error pushing local operations for story ${storyId}:`,
-          pushError?.message || pushError,
-        );
-        this.dependencies.notifier.pushFailed();
+        if (isProtocolMismatchError(pushError)) {
+          console.log(`Push refused for story ${storyId}: the server needs a newer sync protocol.`);
+          this.dependencies.notifier.protocolMismatch();
+        } else {
+          console.log(
+            `Error pushing local operations for story ${storyId}:`,
+            pushError?.message || pushError,
+          );
+          this.dependencies.notifier.pushFailed();
+        }
       }
 
       this.throwIfCycleAborted(signal);
@@ -687,6 +696,11 @@ export class SyncEngineService {
         // interrupting the user for. Retried on a shorter delay.
         console.log(`Sync skipped for story ${storyId}: server unreachable.`);
         return true;
+      }
+      if (isProtocolMismatchError(error)) {
+        console.log(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
+        this.dependencies.notifier.protocolMismatch();
+        return false;
       }
       console.log('Error during sync operation:', error?.message || error);
       this.dependencies.notifier.syncFailed();

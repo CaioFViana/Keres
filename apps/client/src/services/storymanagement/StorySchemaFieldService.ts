@@ -192,23 +192,30 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       if (changedFields.length === 0) return;
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      for (const field of changedFields) {
-        await db
-          .update(storySchemaFields)
-          .set({
-            order: field.order,
-            updatedAt: new Date(),
-            version: sql`${storySchemaFields.version} + 1`,
-          })
-          .where(eq(storySchemaFields.id, field.id))
-          .run();
-      }
+      const now = new Date();
+      // Every row in the order bumps, even one whose position did not move: the server bumps
+      // all of them when it applies the reorder, and a row bumped on one side only would base
+      // its next edit on a version the other side never saw. One transaction, so a crash
+      // cannot leave half the rows bumped with the container behind them.
+      const [story] = await db.transaction(async (tx) => {
+        for (const field of newOrder) {
+          await tx
+            .update(storySchemaFields)
+            .set({
+              order: field.order,
+              updatedAt: now,
+              version: sql`${storySchemaFields.version} + 1`,
+            })
+            .where(eq(storySchemaFields.id, field.id))
+            .run();
+        }
 
-      const [story] = await db
-        .update(stories)
-        .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
-        .where(eq(stories.id, storyId))
-        .returning({ version: stories.version });
+        return tx
+          .update(stories)
+          .set({ version: sql`${stories.version} + 1`, updatedAt: now })
+          .where(eq(stories.id, storyId))
+          .returning({ version: stories.version });
+      });
 
       await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
         reorderItems,

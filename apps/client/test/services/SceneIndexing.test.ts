@@ -189,6 +189,25 @@ describe('SceneService index handling', () => {
     expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2']);
     expect(await database.db.query.operationLogs.findMany()).toEqual([]);
   });
+
+  it('bumps every scene in the order, even one that did not move, like the server does', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+    await seedScene('c', 'chapter-1', 3);
+
+    await service.reorderScenes(TEST_USER_ID, TEST_STORY_ID, 'chapter-1', [
+      { id: 'a', newIndex: 1 },
+      { id: 'c', newIndex: 2 },
+      { id: 'b', newIndex: 3 },
+    ]);
+
+    const rows = await database.db.query.scenes.findMany();
+    const versionOf = (id: string) => rows.find((row) => row.id === id)?.version;
+    expect(versionOf('a')).toBe(2);
+    expect(versionOf('b')).toBe(2);
+    expect(versionOf('c')).toBe(2);
+  });
 });
 
 describe('StoryIndexService', () => {

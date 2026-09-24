@@ -60,6 +60,8 @@ let pushResponse: any;
 let offlineOn: 'pull' | 'push' | null;
 /** A reachable server can still reject a request; that is not an offline retry. */
 let serverFailureOn: 'pull' | 'push' | null;
+/** When set, the adapter refuses the sync protocol version (HTTP 426) instead. */
+let protocolMismatchOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
 let echoPushApplied: boolean;
 /** When set, the adapter throws a raw string instead of an Error, to exercise message fallbacks. */
@@ -102,6 +104,16 @@ function installAdapter() {
       error.config = config;
       error.request = {};
       error.response = { status: 500, data: { message: 'server error' }, config, headers: {} };
+      throw error;
+    }
+    if (
+      (isPull && protocolMismatchOn === 'pull') ||
+      (!isPull && method === 'POST' && protocolMismatchOn === 'push')
+    ) {
+      const error: any = new Error('Request failed with status code 426');
+      error.config = config;
+      error.request = {};
+      error.response = { status: 426, data: { message: 'update the app' }, config, headers: {} };
       throw error;
     }
     if (
@@ -230,6 +242,7 @@ beforeEach(async () => {
   };
   offlineOn = null;
   serverFailureOn = null;
+  protocolMismatchOn = null;
   pullPages = null;
   pullPageIndex = 0;
   echoPushApplied = false;
@@ -860,9 +873,13 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await runOneCycle();
 
     expect(await database.db.query.syncConflicts.findMany()).toEqual([]);
+    // The row carries the merge of both sides (the server's title, the local motivation), at the
+    // version the server will hold once the rebased operation pushes - not the server's current
+    // one, which would base the next edit stale.
     expect(await readCharacter()).toMatchObject({
       title: 'Título Novo do Servidor',
-      version: 2,
+      motivation: 'Nova Motivação',
+      version: 3,
     });
 
     const log = await database.db.query.operationLogs.findFirst({
@@ -922,7 +939,8 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await runOneCycle();
 
     expect(await database.db.query.syncConflicts.findMany()).toEqual([]);
-    expect(await readCharacter()).toMatchObject({ title: 'Título Novo do Servidor', version: 2 });
+    // At the version the server will hold once the rebased operation pushes, not its current one.
+    expect(await readCharacter()).toMatchObject({ title: 'Título Novo do Servidor', version: 3 });
 
     const log = await database.db.query.operationLogs.findFirst({
       where: eq(schema.operationLogs.id, operation.id),
@@ -1080,6 +1098,54 @@ describe('when the server cannot be reached', () => {
     await expect(runOneCycle()).resolves.toBe(false);
 
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
+  });
+
+  it('tells the user to update the app when the server refuses the sync protocol', async () => {
+    await seedStory();
+    protocolMismatchOn = 'pull';
+
+    await expect(runOneCycle()).resolves.toBe(false);
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('newer version'),
+      'error',
+    );
+  });
+
+  it('treats an entity it cannot store as a protocol mismatch, still blocking the pull', async () => {
+    await seedStory();
+    pullResponse = {
+      updates: [
+        {
+          type: 'update',
+          entity: 'SomethingFromTheFuture',
+          id: 'future-1',
+          operationVersion: 1,
+          operationId: 'srv-1',
+          changes: { name: 'A newer server knows this' },
+        },
+        remoteCreate('char-after', 'Depois', 2),
+      ],
+      publicFavorites: [],
+      serverMaxOperationVersion: 2,
+      role: 'owner',
+    };
+
+    await runOneCycle();
+
+    // Loud, not silent: the user learns the app is behind. The cursor still does not advance
+    // past the unknown operation - skipping it would lose it below the cursor, even after an
+    // upgrade - so the story behind it waits too.
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('newer version'),
+      'error',
+    );
+    expect((await readStory())!.lastServerSyncedLog).toBe(0);
+    expect(
+      await database.db.query.characters.findFirst({
+        where: eq(schema.characters.id, 'char-after'),
+      }),
+    ).toBeUndefined();
   });
 
   it('keeps the pull result but reports a rejected push without claiming the operation was sent', async () => {

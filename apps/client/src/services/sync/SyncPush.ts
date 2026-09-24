@@ -229,6 +229,23 @@ export class SyncPush {
         .where(eq(schema.operationLogs.id, op.id));
       base += 1;
     }
+
+    // Restore the optimistic invariant (row version = last base + 1): the merge wrote the
+    // server's version into the row, but the rebased operations will advance the server past
+    // it on push. Without this the next edit bases itself on the stale version and conflicts
+    // spuriously. All operations here belong to one entity, so the row follows the chain's
+    // end; an entity this build does not store has no row to advance.
+    const first = pendingLocalOps[0];
+    if (first) {
+      const table = getEntityTable(first.entityType);
+      if (table) {
+        await this.context
+          .db()!
+          .update(table)
+          .set({ version: newEntityVersion + pendingLocalOps.length })
+          .where(eq((table as any).id, first.entityId));
+      }
+    }
   }
 
   /**
@@ -344,8 +361,11 @@ export class SyncPush {
         );
         if (contestedFields.length === 0) {
           // Every field merges: the contested set is empty by the check above, so there is
-          // nothing to exclude.
-          const mergeableValues: Record<string, any> = { ...first.serverEntity };
+          // nothing to exclude - but the local edits still have to be overlaid. Writing the
+          // bare server row would clobber them in the local copy (the server's stale values
+          // winning visually) while the pending operation still carries them to the server,
+          // leaving the row and the server diverged after the push succeeds.
+          const mergeableValues: Record<string, any> = { ...first.serverEntity, ...localValues };
           const table = getEntityTable(first.entity);
           if (table) {
             const columns = toEntityColumns(first.entity, mergeableValues);

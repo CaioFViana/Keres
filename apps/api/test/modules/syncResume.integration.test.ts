@@ -555,4 +555,77 @@ describe('resending an applied reorder', () => {
     expect(statRows.find((row) => row.id === statA)).toMatchObject({ order: 1, version: 2 });
     expect(statRows.find((row) => row.id === statB)).toMatchObject({ order: 0, version: 2 });
   });
+
+  it('keys an X-Y-X resend on the oldest twin so the later twin still applies', async () => {
+    // X lands, Y intervenes, X lands again; then the first X's response-less resend arrives
+    // with its stale base. The client absorbs exactly the reported version as its echo and
+    // applies everything else: reporting the newest X would absorb it while applying the
+    // older X and the Y in between, stranding the client on Y while the server holds X.
+    const chapterId = newId();
+    const sceneA = newId();
+    const sceneB = newId();
+    const now = new Date();
+    await db.insert(chapters).values([
+      {
+        id: chapterId,
+        storyId,
+        name: 'Um',
+        index: 1,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+    ] as never);
+    await db.insert(scenes).values(
+      [
+        { id: sceneA, index: 1 },
+        { id: sceneB, index: 2 },
+      ].map((scene) => ({
+        ...scene,
+        storyId,
+        chapterId,
+        name: scene.id,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      })),
+    );
+    const arrangementX = [
+      { id: sceneA, newIndex: 2 },
+      { id: sceneB, newIndex: 1 },
+    ];
+    const arrangementY = [
+      { id: sceneA, newIndex: 1 },
+      { id: sceneB, newIndex: 2 },
+    ];
+    const reorder = (items: { id: string; newIndex: number }[], base: number, tag: string) => ({
+      type: 'reorder' as const,
+      entity: 'Chapter',
+      id: chapterId,
+      version: base,
+      reorderItems: items,
+      clientOperationId: `chapter-reorder-${tag}`,
+    });
+
+    const firstX = await push(ana.token, storyId, [reorder(arrangementX, 1, 'x-1')]);
+    expect(firstX.data.conflicts).toEqual([]);
+    const oldestTwin = firstX.data.applied[0].operationVersion;
+    const middleY = await push(ana.token, storyId, [reorder(arrangementY, 2, 'y')]);
+    expect(middleY.data.conflicts).toEqual([]);
+    const newestX = await push(ana.token, storyId, [reorder(arrangementX, 3, 'x-2')]);
+    expect(newestX.data.conflicts).toEqual([]);
+    expect(newestX.data.applied[0].operationVersion).not.toBe(oldestTwin);
+
+    // The first X's push response was lost, so the arrangement comes back with base 1
+    // under a fresh id: only the history comparison can recognise it, not id dedup.
+    const resend = await push(ana.token, storyId, [reorder(arrangementX, 1, 'x-1-retry')]);
+
+    expect(resend.data.conflicts).toEqual([]);
+    expect(resend.data.applied).toHaveLength(1);
+    expect(resend.data.applied[0].operationId).toBeUndefined();
+    expect(resend.data.applied[0].operationVersion).toBe(oldestTwin);
+    expect(resend.data.serverMaxOperationVersion).toBe(newestX.data.serverMaxOperationVersion);
+  });
 });

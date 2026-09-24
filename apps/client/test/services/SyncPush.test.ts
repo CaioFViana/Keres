@@ -64,6 +64,7 @@ beforeEach(async () => {
     pushedUpdates: jest.fn(),
     pushFailed: jest.fn(),
     syncFailed: jest.fn(),
+    protocolMismatch: jest.fn(),
     message: jest.fn(),
   };
   push = new SyncPush({
@@ -185,6 +186,15 @@ describe('pending operations and rebasing', () => {
     const second = operation('second', 'update');
     await seedOperation(first);
     await seedOperation(second);
+    await database.db.insert(schema.characters).values({
+      id: 'character-1',
+      storyId: STORY_ID,
+      name: 'Local',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+      isDeleted: false,
+    });
 
     await push.rebasePendingOperations([first, second], undefined);
     expect(
@@ -200,6 +210,9 @@ describe('pending operations and rebasing', () => {
     expect(
       rows.map((row) => JSON.parse(row.payload).version).sort((left, right) => left - right),
     ).toEqual([9, 10]);
+    // The row follows the chain's end (last base + 1), so the next edit rests on a base the
+    // server will actually hold once these operations push.
+    expect(await database.db.query.characters.findFirst()).toMatchObject({ version: 10 });
   });
 });
 
@@ -389,7 +402,8 @@ describe('push result handling', () => {
     expect(recordConflict).not.toHaveBeenCalled();
     expect(await database.db.query.characters.findFirst()).toMatchObject({
       name: 'New server name',
-      description: 'Old description',
+      description: 'Local description',
+      version: 8,
     });
     expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
       8,
@@ -639,10 +653,10 @@ describe('push result handling', () => {
 
   /**
    * A silent merge whose server side carries nothing this build stores (only fields from a newer
-   * schema). Writing an empty column set would be a no-op at best; the merge must skip the write
-   * and still rebase the operation.
+   * schema): the local edits still overlay, so the row keeps showing them instead of being left
+   * on whatever it held before.
    */
-  it('skips the write when the merged values map to no local column', async () => {
+  it('overlays the local edits when the server side maps to no local column', async () => {
     await database.db.insert(schema.characters).values({
       id: 'character-1',
       storyId: STORY_ID,
@@ -679,12 +693,56 @@ describe('push result handling', () => {
     expect(result).toEqual({ applied: 0, conflicts: 0 });
     expect(recordConflict).not.toHaveBeenCalled();
     expect(await database.db.query.characters.findFirst()).toMatchObject({
-      name: 'Original',
-      version: 1,
+      name: 'A',
+      version: 6,
     });
     expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
       6,
     );
+  });
+
+  /**
+   * A silent merge with nothing writable on either side (unknown server fields, no local
+   * operations for the entity). Writing an empty column set would be a no-op at best; the
+   * merge must skip the write and still count the conflict as handled.
+   */
+  it('skips the write when neither side maps to a local column', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'character-1',
+      storyId: STORY_ID,
+      name: 'Original',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'character-1',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: [],
+            serverEntity: { someFutureField: 1 },
+            serverVersion: 5,
+            attemptedChanges: {},
+          },
+        ],
+      } as never,
+      [],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(await database.db.query.characters.findFirst()).toMatchObject({
+      name: 'Original',
+      version: 1,
+    });
   });
 });
 

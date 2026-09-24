@@ -274,7 +274,12 @@ describe('reordering chapters', () => {
     expect(payloadOf(await lastOperation()).version).toBe(story?.version);
   });
 
-  it('bumps the version only of the chapters that actually moved', async () => {
+  /**
+   * Every chapter in the order bumps, including one whose index did not move: the server
+   * bumps all of them when it applies the reorder, so bumping only the moved ones here
+   * would leave the others basing their next edit on a version the server never saw.
+   */
+  it('bumps the version of every chapter in the order, even one that did not move', async () => {
     await chapterService().reorderChapters(TEST_USER_ID, TEST_STORY_ID, [
       { id: 'chapter-1', newIndex: 1 },
       { id: 'chapter-3', newIndex: 2 },
@@ -283,7 +288,7 @@ describe('reordering chapters', () => {
 
     const rows = await database.db.select().from(schema.chapters).all();
     const versionOf = (id: string) => rows.find((row) => row.id === id)?.version;
-    expect(versionOf('chapter-1')).toBe(1);
+    expect(versionOf('chapter-1')).toBe(2);
     expect(versionOf('chapter-2')).toBe(2);
     expect(versionOf('chapter-3')).toBe(2);
   });

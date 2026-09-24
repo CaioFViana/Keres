@@ -1991,6 +1991,7 @@
   "sync_failed": "Sync failed",
   "sync_failed_to_apply_updates": "Failed to apply some remote updates: {{entities}}",
   "sync_push_failed": "Could not send your updates to the server",
+  "sync_protocol_mismatch": "This server needs a newer version of the app to keep syncing",
   "sync_pushed_updates": "Sent {{count}} update(s) to the server",
   "sync_status": "Sync Status",
   "sync_updates_received": "{{count}} new update(s) from the server: {{entities}}",

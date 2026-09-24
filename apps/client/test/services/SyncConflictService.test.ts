@@ -228,9 +228,10 @@ describe('resolveKeepLocal', () => {
   /**
    * Regression: if the value the user wants to keep is already exactly what the server holds (both sides
    * renaming to the same text, say, or a late operation resending something already applied), resending
-   * it anyway only creates a new log entry with no actually new information. The local version still has
-   * to advance (so it does not conflict again on the next edit), it is only the new operation that should
-   * not exist.
+   * it anyway only creates a new log entry with no actually new information. And with no operation
+   * queued, the row must align to the server's version rather than advancing past it: bumping to
+   * base + 1 with nothing to push would base the *next* edit one ahead of the server, conflicting
+   * spuriously.
    */
   it('does not queue an operation when the kept value already matches the server', async () => {
     await seedCharacter({ name: 'Original' });
@@ -246,7 +247,7 @@ describe('resolveKeepLocal', () => {
     await service.resolveKeepLocal(pending.id);
 
     expect(await pushableOperations()).toEqual([]);
-    expect(await readCharacter()).toMatchObject({ name: 'Mesmo Nome', version: 4 });
+    expect(await readCharacter()).toMatchObject({ name: 'Mesmo Nome', version: 3 });
   });
 
   it('only resends the fields that genuinely differ from the server, not the whole value set', async () => {
@@ -519,12 +520,15 @@ describe('resolveKeepServer', () => {
 /**
  * A reorder has no entity row for "the order" - the disputed value is `reorderItems`, which touches N
  * rows of another table (a Chapter's Scenes). That is why both resolutions bypass the generic
- * `writeEntity`/`recordRebasedOperation` path.
+ * `recordRebasedOperation` path (keep-server still aligns the container row via `writeEntity`).
  */
 describe('reorder conflicts', () => {
   const CHAPTER_ID = 'chapter-1';
 
   async function seedChapterWithScenes() {
+    // Version 2 everywhere: the local reorder authoring already bumped these rows once when it
+    // logged the still-pending operation - the conflict is between that pending op (base 1)
+    // and the server's own reorder (now at version 2).
     await database.db.insert(schema.chapters).values({
       id: CHAPTER_ID,
       storyId: STORY_ID,
@@ -532,7 +536,7 @@ describe('reorder conflicts', () => {
       index: 1,
       createdAt: NOW,
       updatedAt: NOW,
-      version: 1,
+      version: 2,
       isDeleted: false,
     });
     await database.db.insert(schema.scenes).values([
@@ -545,7 +549,7 @@ describe('reorder conflicts', () => {
         index: 2,
         createdAt: NOW,
         updatedAt: NOW,
-        version: 1,
+        version: 2,
         isDeleted: false,
       },
       {
@@ -557,7 +561,7 @@ describe('reorder conflicts', () => {
         index: 1,
         createdAt: NOW,
         updatedAt: NOW,
-        version: 1,
+        version: 2,
         isDeleted: false,
       },
     ]);
@@ -614,12 +618,81 @@ describe('reorder conflicts', () => {
     expect(op!.isSynced).toBe(false);
     expect(JSON.parse(op!.payload).version).toBe(3); // serverVersion (2) + 1
 
-    // The local order was untouched - "keep mine" for a reorder writes nothing to the Scenes, it only
-    // releases the pending operation to be resent.
+    // The local order was untouched - "keep mine" for a reorder moves no indices, it only
+    // releases the pending operation to be resent. But the rows anticipate the push: the server
+    // will bump everything once per released op, so they rest at serverVersion + chain (2 + 1).
     const sceneA = await database.db.query.scenes.findFirst({
       where: eq(schema.scenes.id, 'scene-a'),
     });
     expect(sceneA!.index).toBe(2);
+    const scenes = await database.db.query.scenes.findMany();
+    expect(scenes.map(({ version }) => version).sort()).toEqual([3, 3]);
+    const chapter = await database.db.query.chapters.findFirst({
+      where: eq(schema.chapters.id, CHAPTER_ID),
+    });
+    expect(chapter!.version).toBe(3);
+  });
+
+  it('chains several pending reorders onto the server version and anticipates every row', async () => {
+    await seedChapterWithScenes();
+    const first = await seedOperation('op-reorder-1', {
+      operationType: 'reorder',
+      operationVersion: 1,
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      payload: JSON.stringify({
+        reorderItems: [
+          { id: 'scene-a', newIndex: 1 },
+          { id: 'scene-b', newIndex: 2 },
+        ],
+        version: 2,
+      }),
+    });
+    const second = await seedOperation('op-reorder-2', {
+      operationType: 'reorder',
+      operationVersion: 2,
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      payload: JSON.stringify({
+        reorderItems: [
+          { id: 'scene-b', newIndex: 1 },
+          { id: 'scene-a', newIndex: 2 },
+        ],
+        version: 3,
+      }),
+    });
+    await service.recordConflict({
+      storyId: STORY_ID,
+      entityType: 'Chapter',
+      entityId: CHAPTER_ID,
+      reason: 'concurrent_edit',
+      localOperationType: 'reorder',
+      localOperationIds: [first, second],
+      localValues: { reorderItems: [] },
+      serverValues: {
+        reorderItems: [
+          { id: 'scene-a', newIndex: 1 },
+          { id: 'scene-b', newIndex: 2 },
+        ],
+      },
+      clientVersion: 2,
+      serverVersion: 5,
+    });
+
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepLocal(pending.id);
+
+    // Chained bases: the first rests on 5, the second on 6. Giving both the same base would
+    // make the second conflict again on push.
+    expect(JSON.parse((await readOperation(first))!.payload).version).toBe(6);
+    expect(JSON.parse((await readOperation(second))!.payload).version).toBe(7);
+    expect(await pushableOperations()).toHaveLength(2);
+    const scenes = await database.db.query.scenes.findMany();
+    expect(scenes.map(({ version }) => version).sort()).toEqual([7, 7]);
+    const chapter = await database.db.query.chapters.findFirst({
+      where: eq(schema.chapters.id, CHAPTER_ID),
+    });
+    expect(chapter!.version).toBe(7);
   });
 
   it('shows no field-by-field picker for a reorder conflict, since reorderItems is not a scalar field', async () => {
@@ -683,6 +756,15 @@ describe('reorder conflicts', () => {
     });
     expect(sceneA!.index).toBe(2);
     expect(sceneB!.index).toBe(1);
+    // The apply moved indices but bumped nothing: the abandoned local op already counted its
+    // bump, so bumping again would run the rows ahead of the server. The chapter is aligned
+    // exactly to the version the server holds.
+    expect(sceneA!.version).toBe(2);
+    expect(sceneB!.version).toBe(2);
+    const chapter = await database.db.query.chapters.findFirst({
+      where: eq(schema.chapters.id, CHAPTER_ID),
+    });
+    expect(chapter!.version).toBe(2);
     expect(await service.getPendingConflicts()).toEqual([]);
   });
 });
@@ -696,6 +778,8 @@ describe('reorder conflicts', () => {
  * fourth target sharing this code (see `docs/events_feature_plan.md` section 4).
  */
 describe('story-level reorder conflicts', () => {
+  // Version 2 everywhere: the local reorder authoring already bumped these rows once when it
+  // logged the still-pending operation.
   const seedChapters = async () =>
     database.db.insert(schema.chapters).values([
       {
@@ -707,7 +791,7 @@ describe('story-level reorder conflicts', () => {
         index: 2,
         createdAt: NOW,
         updatedAt: NOW,
-        version: 1,
+        version: 2,
         isDeleted: false,
       },
       {
@@ -717,7 +801,7 @@ describe('story-level reorder conflicts', () => {
         index: 1,
         createdAt: NOW,
         updatedAt: NOW,
-        version: 1,
+        version: 2,
         isDeleted: false,
       },
     ]);
@@ -736,7 +820,7 @@ describe('story-level reorder conflicts', () => {
     order,
     createdAt: NOW,
     updatedAt: NOW,
-    version: 1,
+    version: 2,
     isDeleted: false,
   });
 
@@ -755,7 +839,7 @@ describe('story-level reorder conflicts', () => {
         order: 1,
         createdAt: NOW,
         updatedAt: NOW,
-        version: 1,
+        version: 2,
         isDeleted: false,
       },
       {
@@ -766,7 +850,7 @@ describe('story-level reorder conflicts', () => {
         order: 0,
         createdAt: NOW,
         updatedAt: NOW,
-        version: 1,
+        version: 2,
         isDeleted: false,
       },
     ]);
@@ -821,6 +905,14 @@ describe('story-level reorder conflicts', () => {
     // Both rows moved: they were seeded at a:2 / b:1.
     expect(await chapterIndexes()).toEqual({ 'chapter-a': 1, 'chapter-b': 2 });
     expect((await readOperation(opId))!.conflictState).toBe('abandoned');
+    // The apply moved indices but bumped nothing (the abandoned op's bump already counted);
+    // the story is aligned exactly to the version the server holds.
+    const chapterVersions = await database.db.query.chapters.findMany();
+    expect(chapterVersions.map(({ version }) => version).sort()).toEqual([2, 2]);
+    const story = await database.db.query.stories.findFirst({
+      where: eq(schema.stories.id, STORY_ID),
+    });
+    expect(story!.version).toBe(2);
   });
 
   /** Keeping mine writes nothing locally: the pending reorder is simply rebased and resent. */
@@ -838,6 +930,13 @@ describe('story-level reorder conflicts', () => {
     const op = await readOperation(opId);
     expect(op!.conflictState).toBeNull();
     expect(JSON.parse(op!.payload).version).toBe(3);
+    // ...but the rows anticipate the push at serverVersion + chain (2 + 1).
+    const chapterVersions = await database.db.query.chapters.findMany();
+    expect(chapterVersions.map(({ version }) => version).sort()).toEqual([3, 3]);
+    const story = await database.db.query.stories.findFirst({
+      where: eq(schema.stories.id, STORY_ID),
+    });
+    expect(story!.version).toBe(3);
   });
 
   /**
@@ -863,6 +962,11 @@ describe('story-level reorder conflicts', () => {
       'field-a': 0,
       'field-b': 1,
     });
+    expect(rows.map(({ version }) => version).sort()).toEqual([2, 2]);
+    const story = await database.db.query.stories.findFirst({
+      where: eq(schema.stories.id, STORY_ID),
+    });
+    expect(story!.version).toBe(2);
   });
 
   /** The reorder target decides the table; a schema-field reorder must not touch the chapters. */
@@ -902,7 +1006,14 @@ describe('story-level reorder conflicts', () => {
       'stat-a': 0,
       'stat-b': 1,
     });
+    expect(rows.map(({ version }) => version).sort()).toEqual([2, 2]);
     expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+    const chapters = await database.db.query.chapters.findMany();
+    expect(chapters.map(({ version }) => version).sort()).toEqual([2, 2]);
+    const story = await database.db.query.stories.findFirst({
+      where: eq(schema.stories.id, STORY_ID),
+    });
+    expect(story!.version).toBe(2);
   });
 
   it('does nothing at all when the server sent no items', async () => {
@@ -930,6 +1041,62 @@ describe('story-level reorder conflicts', () => {
     await service.resolveKeepServer(pending.id);
 
     expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+  });
+
+  it('bumps the container with the items when applying a remote reorder directly', async () => {
+    await seedChapters();
+
+    await applyReorderToLocalDb(
+      database.db,
+      {
+        entity: 'Story',
+        id: STORY_ID,
+        reorderItems: [
+          { id: 'chapter-a', newIndex: 1 },
+          { id: 'chapter-b', newIndex: 2 },
+        ],
+      } as never,
+      NOW,
+    );
+
+    // The server bumps the container once per applied reorder; an applier that skips this
+    // would base its next container edit on a stale version.
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 1, 'chapter-b': 2 });
+    const chapters = await database.db.query.chapters.findMany();
+    expect(chapters.map(({ version }) => version).sort()).toEqual([3, 3]);
+    const story = await database.db.query.stories.findFirst({
+      where: eq(schema.stories.id, STORY_ID),
+    });
+    expect(story!.version).toBe(2);
+  });
+
+  it('leaves every row alone, with one warning, for a reorder target it does not know', async () => {
+    await seedChapters();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await applyReorderToLocalDb(
+      database.db,
+      {
+        entity: 'Story',
+        id: STORY_ID,
+        reorderTarget: 'Milestone',
+        reorderItems: [{ id: 'milestone-1', newIndex: 1 }],
+      } as never,
+      NOW,
+    );
+
+    // Foreign ids match no chapter, so the chapters branch degrades to a no-op - but the
+    // container still deterministically follows the server's bump for this operation.
+    expect(await chapterIndexes()).toEqual({ 'chapter-a': 2, 'chapter-b': 1 });
+    const chapters = await database.db.query.chapters.findMany();
+    expect(chapters.map(({ version }) => version).sort()).toEqual([2, 2]);
+    const story = await database.db.query.stories.findFirst({
+      where: eq(schema.stories.id, STORY_ID),
+    });
+    expect(story!.version).toBe(2);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("unrecognised reorder target 'Milestone'"),
+    );
   });
 });
 
@@ -990,6 +1157,40 @@ describe('dismissConflict', () => {
 
   it('is safe for a conflict that is not there', async () => {
     await expect(service.dismissConflict('nao-existe')).resolves.toBeUndefined();
+  });
+
+  it('reverts the row to the server copy so it stops showing values that will never sync', async () => {
+    await seedCharacter({ name: 'Local unsynced edit', version: 2 });
+    await service.recordConflict(
+      baseConflict({
+        localValues: { name: 'Local unsynced edit' },
+        serverValues: { name: 'Nome do servidor' },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.dismissConflict(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ name: 'Nome do servidor', version: 3 });
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
+  it('leaves the row alone when there is no server copy to revert to', async () => {
+    await seedCharacter({ name: 'Only local copy', version: 1 });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'not_found',
+        localValues: { name: 'Only local copy' },
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.dismissConflict(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ name: 'Only local copy', version: 1 });
   });
 });
 

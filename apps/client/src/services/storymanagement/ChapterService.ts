@@ -409,22 +409,20 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       );
       if (problem) throw new Error(`Chapter reorder is invalid. ${problem}`);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const currentById = new Map(current.map((chapter) => [chapter.id, chapter]));
 
+      // Every row in the order bumps, even one whose index did not move: the server bumps all
+      // of them when it applies the reorder, and a row bumped on one side only would base its
+      // next edit on a version the other side never saw.
       await db.transaction(async (tx) => {
         for (const chapter of newOrder) {
-          const originalChapter = currentById.get(chapter.id)!;
-
-          if (originalChapter.index !== chapter.newIndex) {
-            await tx
-              .update(chapters)
-              .set({
-                index: chapter.newIndex,
-                updatedAt: new Date(),
-                version: sql`${chapters.version} + 1`,
-              })
-              .where(eq(chapters.id, chapter.id));
-          }
+          await tx
+            .update(chapters)
+            .set({
+              index: chapter.newIndex,
+              updatedAt: new Date(),
+              version: sql`${chapters.version} + 1`,
+            })
+            .where(eq(chapters.id, chapter.id));
         }
       });
       const [story] = await db

@@ -488,9 +488,23 @@ describe('StorySchemaFieldService', () => {
       order: 0,
     });
 
+    const third = await service.createField(USER_ID, {
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'Third',
+      key: 'third',
+      description: null,
+      type: AttributeType.TEXT,
+      targetEntityType: null,
+      isRequired: false,
+      defaultValue: null,
+      order: 2,
+    });
+
     await service.reorderFields(USER_ID, STORY_ID, 'Character', [
       { id: second.id, order: 0 },
       { id: first.id, order: 1 },
+      { id: third.id, order: 2 },
     ]);
 
     expect(
@@ -501,8 +515,16 @@ describe('StorySchemaFieldService', () => {
     ).toEqual([
       { id: second.id, order: 0 },
       { id: first.id, order: 1 },
+      { id: third.id, order: 2 },
     ]);
     expect((await service.getById(locationField.id))?.order).toBe(0);
+    // Every row bumps, even the one that did not move: the server bumps all of them when it
+    // applies the reorder.
+    expect(
+      (await service.getFieldsByStoryAndEntityType(STORY_ID, 'Character')).map(
+        ({ version }) => version,
+      ),
+    ).toEqual([2, 2, 2]);
 
     const operations = await database.db.select().from(schema.operationLogs).all();
     const reorders = operations.filter(
@@ -515,6 +537,7 @@ describe('StorySchemaFieldService', () => {
       reorderItems: [
         { id: second.id, newIndex: 1 },
         { id: first.id, newIndex: 2 },
+        { id: third.id, newIndex: 3 },
       ],
     });
   });
@@ -533,18 +556,27 @@ describe('StatService', () => {
       name: 'Wisdom',
       order: 1,
     });
+    const strength = await service.createStat(USER_ID, {
+      storyId: STORY_ID,
+      name: 'Strength',
+      order: 2,
+    });
 
     await service.reorderStats(USER_ID, STORY_ID, [
       { id: wisdom.id, order: 0 },
       { id: courage.id, order: 1 },
+      { id: strength.id, order: 2 },
     ]);
 
-    expect(
-      (await service.getStatsByStoryId(STORY_ID)).map(({ id, order }) => ({ id, order })),
-    ).toEqual([
+    const stats = await service.getStatsByStoryId(STORY_ID);
+    expect(stats.map(({ id, order }) => ({ id, order }))).toEqual([
       { id: wisdom.id, order: 0 },
       { id: courage.id, order: 1 },
+      { id: strength.id, order: 2 },
     ]);
+    // Every row bumps, even the one that did not move: the server bumps all of them when it
+    // applies the reorder.
+    expect(stats.map(({ version }) => version)).toEqual([2, 2, 2]);
     const operations = await database.db.select().from(schema.operationLogs).all();
     const reorders = operations.filter(
       (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
@@ -555,6 +587,7 @@ describe('StatService', () => {
       reorderItems: [
         { id: wisdom.id, newIndex: 1 },
         { id: courage.id, newIndex: 2 },
+        { id: strength.id, newIndex: 3 },
       ],
     });
   });

@@ -854,4 +854,30 @@ describe('push loop', () => {
     expect(notifier.conflictsDetected).toHaveBeenCalledWith(1);
     expect(notifier.pushedUpdates).not.toHaveBeenCalled();
   });
+
+  it('keeps operations pending when the push response is lost, and lands them on resend', async () => {
+    await seedOperation(operation('lost', 'update'));
+    // First attempt: the server applies it, but the response never arrives.
+    post.mockRejectedValueOnce(new Error('socket hang up'));
+    post.mockResolvedValue({
+      data: {
+        applied: [{ clientOperationId: 'lost', operationVersion: 5 }],
+        conflicts: [],
+      },
+    });
+
+    await expect(push.pushPendingOperations()).rejects.toThrow('socket hang up');
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({ isSynced: false });
+
+    await expect(push.pushPendingOperations()).resolves.toEqual({ offline: false });
+
+    expect(post).toHaveBeenCalledTimes(2);
+    // The resend carries the identical envelope, so the server recognises its own work.
+    expect(post.mock.calls[1][1]).toEqual(post.mock.calls[0][1]);
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 5,
+    });
+    expect(recordConflict).not.toHaveBeenCalled();
+  });
 });

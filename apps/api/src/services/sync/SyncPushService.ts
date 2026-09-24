@@ -172,8 +172,14 @@ export class SyncPushService {
             : update.version,
       });
 
-      /** Already applied: nothing to write, but the client needs to know it went through. */
-      let alreadyApplied = false;
+      /**
+       * Already applied: nothing to write, but the client needs to know it went through - and
+       * at WHICH server version. Reporting the batch's current max here (rather than the
+       * version that actually holds the effect, or 0 when no row holds it) makes the client
+       * mark its op with a version that belongs to somebody else's operation, and its echo
+       * check then skips that operation on the next pull: a silent, permanent data loss.
+       */
+      let alreadyAppliedVersion: number | null = null;
       /** Filled in inside the transaction when the operation writes something new. */
       let writeResult: {
         logged: { id: string; operationVersion: number };
@@ -213,7 +219,10 @@ export class SyncPushService {
               // the correct reference for a retried create. The server's operation log preserves
               // the original accepted create payload and is the authoritative idempotency record.
               const [recordedCreate] = await tx
-                .select({ payload: operationLog.payload })
+                .select({
+                  payload: operationLog.payload,
+                  operationVersion: operationLog.operationVersion,
+                })
                 .from(operationLog)
                 .where(
                   and(
@@ -237,7 +246,10 @@ export class SyncPushService {
                   `An entity with ID ${entityId} already exists with different data.`,
                 );
               }
-              alreadyApplied = true;
+              // The recorded row's own version: the echo check on the client keys on it, and a
+              // fresher number would mask whatever operation actually sits there. Zero when no
+              // recorded row exists (the row came from outside sync): no pull ever carries 0.
+              alreadyAppliedVersion = recordedCreate?.operationVersion ?? 0;
             } else {
               if (handler.tierLimitScope === 'story') {
                 await tierEnforcementService.assertCanCreateStory(userId);
@@ -254,10 +266,21 @@ export class SyncPushService {
               );
             }
             await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
+            if (update.type === 'reorder') {
+              // A reorder whose arrangement already holds is a no-op resend: the handler applied
+              // nothing (reorder branches always bump the container version when they write), so
+              // logging it again would only churn versions and the pull stream. Report it as the
+              // idempotent success it is, with no version of its own.
+              const afterReorder = await handler.findById(entityId, tx).catch(() => undefined);
+              if (afterReorder && afterReorder.version === currentEntity.version) {
+                alreadyAppliedVersion = 0;
+              }
+            }
           } else if (update.type === 'delete') {
-            if (!currentEntity) {
-              // Deleting something the server does not have is the desired outcome, not an error.
-              alreadyApplied = true;
+            if (!currentEntity || handler.isDeletedRow(currentEntity)) {
+              // Deleting something the server does not have - or already tombstoned - is the
+              // desired outcome, not an error, and logging it again would only churn versions.
+              alreadyAppliedVersion = 0;
             } else {
               const deleteUpdate = handler.prepareDelete(
                 { ...policyContext, currentEntity },
@@ -267,7 +290,7 @@ export class SyncPushService {
             }
           }
 
-          if (alreadyApplied) return;
+          if (alreadyAppliedVersion !== null) return;
 
           // The entity's version *after* the operation, read back so the client knows which base its next
           // edits rest on.
@@ -330,10 +353,10 @@ export class SyncPushService {
         continue;
       }
 
-      if (alreadyApplied) {
+      if (alreadyAppliedVersion !== null) {
         applied.push({
           clientOperationId: update.clientOperationId,
-          operationVersion: lastOperationVersion,
+          operationVersion: alreadyAppliedVersion,
           entityVersion: currentEntity?.version,
           entity: update.entity,
           entityId,

@@ -7,7 +7,11 @@ import type {
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { encodeReorderOperationPayload, MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import {
+  encodeReorderOperationPayload,
+  MAX_SYNC_PULL_BATCH,
+  sameReorderArrangement,
+} from '@keres/shared';
 import type { FavoriteBehavior } from '@keres/shared/entities/Story';
 import { and, eq } from 'drizzle-orm';
 import * as schema from '../../db/schema';
@@ -128,11 +132,16 @@ export class SyncPull {
     if (!update.operationVersion) {
       return false;
     }
+    // Entity-scoped, not version-only: a synced op carrying a stale or foreign version must
+    // never mask a concurrent operation that happens to sit at that version - versions are
+    // unique per story, so a true echo always matches the entity too.
     const existing = await this.context.db()!.query.operationLogs.findFirst({
       where: and(
         eq(schema.operationLogs.storyId, this.context.storyId()!),
         eq(schema.operationLogs.serverOperationVersion, update.operationVersion),
         eq(schema.operationLogs.isSynced, true),
+        eq(schema.operationLogs.entityType, update.entity),
+        eq(schema.operationLogs.entityId, update.id ?? ''),
       ),
       columns: { id: true },
     });
@@ -328,6 +337,24 @@ export class SyncPull {
       // What is pending on this entity is of another kind (renaming a chapter, say) - it does not conflict
       // with the order coming from the server, which can be applied directly.
       await applyReorderToLocalDb(this.context.db()!, update, new Date(update.operationTime!));
+      return { conflicted: false };
+    }
+
+    // The remote order restates a pending local reorder - typically our own op coming back
+    // after its push response was lost. Absorbing it (rather than recording a conflict the
+    // user would have to dismiss for their own echo) is what lets the push resend succeed
+    // idempotently on the server; the op stays pending so that resend still happens.
+    //
+    // Absorbing applies nothing: the local rows already hold this arrangement (the pending
+    // op was applied locally when the user acted) or a newer one (a chained reorder still
+    // queued behind it) - writing the remote order here would either churn versions for no
+    // effect or silently regress the newer local order, which no later echo would repair.
+    const restatesPendingOrder = pendingLocalOps.some((op) => {
+      if (op.operationType !== 'reorder') return false;
+      const items = (JSON.parse(op.payload) as { reorderItems?: unknown }).reorderItems;
+      return Array.isArray(items) && sameReorderArrangement(items, update.reorderItems ?? []);
+    });
+    if (restatesPendingOrder) {
       return { conflicted: false };
     }
 

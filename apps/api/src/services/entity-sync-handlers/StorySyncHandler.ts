@@ -10,6 +10,7 @@ import {
   CreateStoryDataSchema,
   PartialStorySchema,
   completeReorderProblem,
+  sameReorderArrangement,
   StoryReorderingStoryUpdateSchema,
 } from '@keres/shared';
 import { ownerOnlyFieldsIn } from '@keres/shared';
@@ -140,6 +141,74 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     if (update.type === 'reorder' && update.entity === 'Story') {
       const validatedReorderUpdate: StoryReorderingStoryUpdate =
         StoryReorderingStoryUpdateSchema.parse(update);
+
+      // Idempotent resend, and ONLY on a stale base (see ChapterSyncHandler for why a
+      // fresh base always flows through): per target below, when the rows already sit exactly
+      // where the items want them, there is nothing to apply - succeeding here (rather than
+      // version-conflicting below) is what lets a client retry a reorder whose response was
+      // lost. Matching the live arrangement means the items name exactly the live rows, and
+      // this path writes nothing either way, so no validation is skipped that could matter.
+      // Stats and schema fields persist 0-based `order` while chapters persist the 1-based
+      // wire `index` - each comparison mirrors its own write mapping.
+      const reorderBaseStale = validatedReorderUpdate.version! !== currentEntity.version;
+      if (reorderBaseStale && validatedReorderUpdate.reorderTarget === 'Stat') {
+        const currentStats = await database.query.stats.findMany({
+          where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
+          columns: { id: true, order: true },
+        });
+        if (
+          sameReorderArrangement(
+            currentStats.map((stat) => ({ id: stat.id, newIndex: stat.order + 1 })),
+            validatedReorderUpdate.reorderItems,
+          )
+        ) {
+          return;
+        }
+      } else if (
+        reorderBaseStale &&
+        validatedReorderUpdate.reorderTarget === 'StorySchemaField' &&
+        validatedReorderUpdate.schemaEntityType
+      ) {
+        const currentFields = await database.query.storySchemaFields.findMany({
+          where: and(
+            eq(storySchemaFields.storyId, validatedReorderUpdate.id!),
+            eq(storySchemaFields.entityType, validatedReorderUpdate.schemaEntityType),
+            eq(storySchemaFields.isDeleted, false),
+          ),
+          columns: { id: true, order: true },
+        });
+        if (
+          sameReorderArrangement(
+            currentFields.map((field) => ({ id: field.id, newIndex: field.order + 1 })),
+            validatedReorderUpdate.reorderItems,
+          )
+        ) {
+          return;
+        }
+      } else if (
+        reorderBaseStale &&
+        (validatedReorderUpdate.reorderTarget === undefined ||
+          validatedReorderUpdate.reorderTarget === 'Event')
+      ) {
+        const reorderedType: ChapterType =
+          validatedReorderUpdate.reorderTarget === 'Event' ? 'event' : 'chapter';
+        const currentChapters = await database.query.chapters.findMany({
+          where: and(
+            eq(chapters.storyId, validatedReorderUpdate.id!),
+            eq(chapters.type, reorderedType),
+            eq(chapters.isDeleted, false),
+          ),
+          columns: { id: true, index: true },
+        });
+        if (
+          sameReorderArrangement(
+            currentChapters.map((chapter) => ({ id: chapter.id, newIndex: chapter.index })),
+            validatedReorderUpdate.reorderItems,
+          )
+        ) {
+          return;
+        }
+      }
 
       // Perform version check for the Story itself
       this.checkVersionConflict(

@@ -146,16 +146,19 @@ describe('reordering the scenes of a chapter', () => {
     ).rejects.toThrow(/sequential starting from 1/);
   });
 
-  it('refuses a reorder built on a stale chapter version', async () => {
+  it('refuses a divergent reorder built on a stale chapter version', async () => {
     const chapter = await chapterHandler.findByIdOrThrow(chapterId);
 
+    // Deliberately divergent: a stale base that merely restates the current arrangement is
+    // an idempotent resend and succeeds (see syncResume); only a stale base that wants a
+    // different order is a genuine conflict.
     await expect(
       chapterHandler.update(
         userId,
         storyId,
         reorder('Chapter', chapterId, chapter.version - 1, [
-          { id: sceneIds[0], newIndex: 1 },
-          { id: sceneIds[1], newIndex: 2 },
+          { id: sceneIds[0], newIndex: 2 },
+          { id: sceneIds[1], newIndex: 1 },
           { id: sceneIds[2], newIndex: 3 },
         ]),
         chapter,

@@ -120,6 +120,28 @@ describe('echo and create handling', () => {
     await expect(pull.isOwnEchoedOperation(update())).resolves.toBe(true);
   });
 
+  it('does not mistake a concurrent operation at the same version for an echo', async () => {
+    await database.db.insert(schema.operationLogs).values({
+      id: 'already-seen',
+      storyId: STORY_ID,
+      userId: 'remote-user',
+      operationVersion: 1,
+      operationType: 'update',
+      entityType: 'Character',
+      entityId: 'character-1',
+      payload: '{}',
+      createdAt: NOW,
+      isSynced: true,
+      serverOperationVersion: 4,
+    });
+
+    // Same version, another entity: skipping it would drop someone else's op forever.
+    await expect(
+      pull.isOwnEchoedOperation(update({ entity: 'Location', id: 'location-9' })),
+    ).resolves.toBe(false);
+    await expect(pull.isOwnEchoedOperation(update({ id: 'character-2' }))).resolves.toBe(false);
+  });
+
   it('creates a remote entity that is not present locally', async () => {
     handler.getById.mockResolvedValue(undefined);
     const create = update({ type: 'create', data: { name: 'Created' } } as never);
@@ -440,6 +462,156 @@ describe('reconciliation decisions', () => {
     ).toEqual([
       { id: 'scene-2', index: 1 },
       { id: 'scene-1', index: 2 },
+    ]);
+  });
+
+  it('absorbs a remote reorder that restates the pending local one', async () => {
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: STORY_ID,
+      name: 'Chapter',
+      index: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+    await database.db.insert(schema.scenes).values([
+      {
+        id: 'scene-1',
+        storyId: STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'location-1',
+        name: 'One',
+        index: 2,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'scene-2',
+        storyId: STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'location-1',
+        name: 'Two',
+        index: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+    // Our own reorder coming back after its push response was lost: same arrangement the
+    // pending op wants. Absorbed silently; the pending op stays queued so the push resend
+    // still lands it idempotently on the server.
+    const items = [
+      { id: 'scene-2', newIndex: 1 },
+      { id: 'scene-1', newIndex: 2 },
+    ];
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Chapter',
+        id: 'chapter-1',
+        operationTime: NOW.toISOString(),
+        reorderItems: items,
+      } as never),
+      [pending('reorder', { reorderItems: items, version: 3 })],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: false });
+    expect(recordConflict).not.toHaveBeenCalled();
+    const scenes = await database.db.query.scenes.findMany();
+    expect(
+      scenes.map(({ id, index }) => ({ id, index })).sort((a, b) => a.index - b.index),
+    ).toEqual([
+      { id: 'scene-2', index: 1 },
+      { id: 'scene-1', index: 2 },
+    ]);
+    // Absorbing writes nothing: the rows already hold this arrangement, so there is no
+    // version to bump.
+    expect(scenes.every((scene) => scene.version === 1)).toBe(true);
+  });
+
+  it('absorbs an older echo without regressing a chained local reorder', async () => {
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-1',
+      storyId: STORY_ID,
+      name: 'Chapter',
+      index: 1,
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 3,
+      isDeleted: false,
+    });
+    // Local truth is the NEWER reorder R2 (original order), still queued behind R1.
+    await database.db.insert(schema.scenes).values([
+      {
+        id: 'scene-1',
+        storyId: STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'location-1',
+        name: 'One',
+        index: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 2,
+        isDeleted: false,
+      },
+      {
+        id: 'scene-2',
+        storyId: STORY_ID,
+        chapterId: 'chapter-1',
+        locationId: 'location-1',
+        name: 'Two',
+        index: 2,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 2,
+        isDeleted: false,
+      },
+    ]);
+    const older = [
+      { id: 'scene-2', newIndex: 1 },
+      { id: 'scene-1', newIndex: 2 },
+    ];
+    const newer = [
+      { id: 'scene-1', newIndex: 1 },
+      { id: 'scene-2', newIndex: 2 },
+    ];
+    const first = pending('reorder', { reorderItems: older, version: 2 });
+    const second = {
+      ...pending('reorder', { reorderItems: newer, version: 3 }),
+      id: 'local-reorder-2',
+    };
+
+    // R1's echo arrives while R2 is still queued: no conflict, and the local rows keep
+    // R2's newer arrangement - applying R1 here would regress them with no later echo
+    // able to repair it (R2's own echo is skipped once R2 is synced).
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Chapter',
+        id: 'chapter-1',
+        operationTime: NOW.toISOString(),
+        reorderItems: older,
+      } as never),
+      [first, second],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: false });
+    expect(recordConflict).not.toHaveBeenCalled();
+    const scenes = await database.db.query.scenes.findMany();
+    expect(
+      scenes
+        .map(({ id, index, version }) => ({ id, index, version }))
+        .sort((a, b) => a.index - b.index),
+    ).toEqual([
+      { id: 'scene-1', index: 1, version: 2 },
+      { id: 'scene-2', index: 2, version: 2 },
     ]);
   });
 

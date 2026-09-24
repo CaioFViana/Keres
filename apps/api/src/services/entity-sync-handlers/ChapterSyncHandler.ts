@@ -4,7 +4,11 @@ import type {
   CreateStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { ChapterReorderingStoryUpdateSchema, completeReorderProblem } from '@keres/shared';
+import {
+  ChapterReorderingStoryUpdateSchema,
+  completeReorderProblem,
+  sameReorderArrangement,
+} from '@keres/shared';
 import type { CreateChapterDataType } from '@keres/shared/';
 import { CreateChapterDataSchema, PartialChapterSchema } from '@keres/shared/';
 import { and, eq } from 'drizzle-orm';
@@ -78,6 +82,32 @@ export class ChapterSyncHandler extends BaseSyncEntityHandler<
     if (update.type === 'reorder' && update.entity === 'Chapter') {
       const validatedReorderUpdate: ChapterReorderingStoryUpdate =
         ChapterReorderingStoryUpdateSchema.parse(update);
+
+      // Idempotent resend, and ONLY on a stale base: when the scenes already sit exactly
+      // where the items want them, there is nothing to apply - succeeding here (rather than
+      // version-conflicting below) is what lets a client retry a reorder whose response was
+      // lost. A fresh base always flows through the normal path below, because chained local
+      // reorders rest on the version bump each application produces, redundant or not.
+      // Matching the live arrangement means the items name exactly the live rows, and this
+      // path writes nothing either way, so no validation is skipped that could matter.
+      if (validatedReorderUpdate.version! !== currentEntity.version) {
+        const currentScenes = await database.query.scenes.findMany({
+          where: and(
+            eq(scenes.chapterId, validatedReorderUpdate.id!),
+            eq(scenes.storyId, storyId),
+            eq(scenes.isDeleted, false),
+          ),
+          columns: { id: true, index: true },
+        });
+        if (
+          sameReorderArrangement(
+            currentScenes.map((scene) => ({ id: scene.id, newIndex: scene.index })),
+            validatedReorderUpdate.reorderItems,
+          )
+        ) {
+          return;
+        }
+      }
 
       // Perform version check for the Chapter itself
       this.checkVersionConflict(

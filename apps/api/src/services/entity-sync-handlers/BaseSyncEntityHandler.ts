@@ -125,6 +125,8 @@ export interface SyncEntityHandler {
   sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): SyncPayload;
   /** A resent create: does the sanitised payload describe the same row that already exists? */
   createPayloadMatches(existing: SyncPayload, incomingData: SyncPayload): boolean;
+  /** Whether this row is already a tombstone, so a retried delete reports idempotent success. */
+  isDeletedRow(entity: SyncEntityRow): boolean;
   /** Counts non-deleted rows of this entity in the given stories. Used by TierEnforcementService. */
   countForStoryIds(storyIds: string[], database?: CompatibleDb): Promise<number>;
   allowsReaderWrite(context: SyncOperationPolicyContext): boolean;
@@ -285,6 +287,16 @@ export abstract class BaseSyncEntityHandler<
         row,
       };
     });
+  }
+
+  /**
+   * Whether this row is already a tombstone. The push service reads it before
+   * deleting so a retried delete reports idempotent success without appending
+   * another log row for a deletion that already took effect.
+   */
+  isDeletedRow(entity: SyncEntityRow): boolean {
+    if (!this.isDeletedColumnName) return false;
+    return !!(entity as Record<string, unknown>)[this.isDeletedColumnName];
   }
 
   abstract create(

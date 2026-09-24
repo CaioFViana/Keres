@@ -4,6 +4,7 @@ import {
   completeReorderProblem,
   inspectContiguousOneBasedIndexes,
   reorderIndicesProblem,
+  sameReorderArrangement,
 } from '../../rules/reorderIndices';
 
 describe('reorder index rules', () => {
@@ -28,5 +29,43 @@ describe('reorder index rules', () => {
     expect(completeReorderProblem(['a', 'b'], [{ id: 'a', newIndex: 1 }])).toMatch(
       /every expected/,
     );
+  });
+
+  it('recognizes the same arrangement whatever order the lists arrive in', () => {
+    const first = [
+      { id: 'a', newIndex: 1 },
+      { id: 'b', newIndex: 2 },
+    ];
+    expect(sameReorderArrangement(first, first)).toBe(true);
+    expect(
+      sameReorderArrangement(first, [
+        { id: 'b', newIndex: 2 },
+        { id: 'a', newIndex: 1 },
+      ]),
+    ).toBe(true);
+    expect(sameReorderArrangement(first, [{ id: 'a', newIndex: 1 }])).toBe(false);
+    expect(
+      sameReorderArrangement(first, [
+        { id: 'a', newIndex: 2 },
+        { id: 'b', newIndex: 1 },
+      ]),
+    ).toBe(false);
+    expect(
+      sameReorderArrangement(
+        [
+          { id: 'a', newIndex: 1 },
+          { id: 'a', newIndex: 1 },
+        ],
+        first,
+      ),
+    ).toBe(false);
+    // Duplicates on the right match one entry twice while dropping another: the same
+    // length, a different arrangement - and the wire side is the untrusted one.
+    expect(
+      sameReorderArrangement(first, [
+        { id: 'a', newIndex: 1 },
+        { id: 'a', newIndex: 1 },
+      ]),
+    ).toBe(false);
   });
 });

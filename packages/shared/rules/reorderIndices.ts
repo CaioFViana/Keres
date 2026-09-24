@@ -59,6 +59,29 @@ export function reorderIndicesProblem(indices: readonly number[]): string | null
  * exactly once and give those rows a contiguous wire index. Hosts load the live IDs themselves;
  * this pure rule keeps their client and API checks identical without coupling it to a database.
  */
+/**
+ * Whether two reorder item lists describe the same arrangement: the same ids,
+ * each at the same `newIndex`, whatever order the lists themselves arrive in.
+ *
+ * The server reads it as "this reorder would change nothing" (an idempotent
+ * resend after a lost response succeeds instead of conflicting), and the client
+ * reads it as "this remote reorder is my own pending one coming back" (absorbed
+ * instead of recorded as a conflict). One rule for both sides, so they can
+ * never disagree about what "already applied" means.
+ */
+export function sameReorderArrangement(
+  left: readonly ReorderItem[],
+  right: readonly ReorderItem[],
+): boolean {
+  if (left.length !== right.length) return false;
+  const wanted = new Map(left.map((item) => [item.id, item.newIndex]));
+  if (wanted.size !== left.length) return false;
+  // Both sides: a duplicated id on the right would otherwise match one entry twice while
+  // silently dropping another, and the wire side is exactly the untrusted one.
+  if (new Set(right.map((item) => item.id)).size !== right.length) return false;
+  return right.every((item) => wanted.get(item.id) === item.newIndex);
+}
+
 export function completeReorderProblem(
   expectedIds: Iterable<string>,
   reorderItems: readonly ReorderItem[],

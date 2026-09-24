@@ -292,6 +292,94 @@ describe('POST /sync/:storyId', () => {
     ).toBe('Keres');
   });
 
+  it('still judges a reorder on its merits after an earlier reorder on its entity conflicted', async () => {
+    const chapterId = newId();
+    const sceneA = newId();
+    const sceneB = newId();
+    const now = new Date();
+    await db.insert(chapters).values([
+      {
+        id: chapterId,
+        storyId,
+        name: 'Um',
+        index: 1,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      },
+    ] as never);
+    await db.insert(scenes).values(
+      [
+        { id: sceneA, index: 1 },
+        { id: sceneB, index: 2 },
+      ].map((scene) => ({
+        ...scene,
+        storyId,
+        chapterId,
+        name: scene.id,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+      })),
+    );
+    // Move the chapter to version 2 so the first reorder below is genuinely stale.
+    const setup = await push(ana.token, storyId, [
+      {
+        type: 'reorder' as const,
+        entity: 'Chapter',
+        id: chapterId,
+        version: 1,
+        reorderItems: [
+          { id: sceneA, newIndex: 2 },
+          { id: sceneB, newIndex: 1 },
+        ],
+        clientOperationId: 'setup-reorder',
+      },
+    ]);
+    expect(setup.data.conflicts).toEqual([]);
+
+    // A reorder carries an absolute arrangement validated against the live rows, so unlike a
+    // chained field edit it cannot merge onto refused content: the stale divergent one
+    // conflicts on its own merits, and the fresh one still applies instead of being skipped.
+    const { data } = await push(ana.token, storyId, [
+      {
+        type: 'reorder' as const,
+        entity: 'Chapter',
+        id: chapterId,
+        version: 1,
+        reorderItems: [
+          { id: sceneA, newIndex: 1 },
+          { id: sceneB, newIndex: 2 },
+        ],
+        clientOperationId: 'stale-divergent',
+      },
+      {
+        type: 'reorder' as const,
+        entity: 'Chapter',
+        id: chapterId,
+        version: 2,
+        reorderItems: [
+          { id: sceneA, newIndex: 1 },
+          { id: sceneB, newIndex: 2 },
+        ],
+        clientOperationId: 'fresh-second',
+      },
+    ]);
+
+    expect(data.applied).toHaveLength(1);
+    expect(data.applied[0].clientOperationId).toBe('fresh-second');
+    expect(data.conflicts).toHaveLength(1);
+    expect(data.conflicts[0]).toMatchObject({
+      clientOperationId: 'stale-divergent',
+      reason: 'version_conflict',
+    });
+    expect(data.conflicts[0].message).not.toContain('Skipped: an earlier operation');
+    const chapterRow = await db.query.chapters.findFirst({ where: eq(chapters.id, chapterId) });
+    expect(chapterRow?.version).toBe(3);
+  });
+
   it('accepts a resent create after later edits by comparing it with the recorded create payload', async () => {
     const characterId = newId();
     const original = createCharacter(characterId, 'Keres');

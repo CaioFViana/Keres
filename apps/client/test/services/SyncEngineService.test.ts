@@ -301,8 +301,10 @@ describe('pull', () => {
     );
   });
 
-  /** A partial reorder is unsafe to apply: it has to remain on the server for a later, valid retry. */
-  it('does not move the cursor past a reorder without its complete item list', async () => {
+  /** An order with no items carries nothing to apply - and log rows are immutable, so no "later,
+   * valid retry" of the same version will ever arrive. Skipping past it (recorded, cursor advanced)
+   * instead of blocking keeps one such row from stalling the story's pull forever. */
+  it('skips past a reorder without items instead of stalling the pull', async () => {
     await seedStory();
     pullResponse = {
       updates: [
@@ -315,14 +317,19 @@ describe('pull', () => {
           operationTime: NOW.toISOString(),
           reorderItems: [],
         },
+        remoteCreate('char-after', 'After', 8),
       ],
-      serverMaxOperationVersion: 7,
+      serverMaxOperationVersion: 8,
       role: 'owner',
     };
 
     await runOneCycle();
 
-    expect((await readStory())!.lastServerSyncedLog).toBe(0);
+    expect((await readStory())!.lastServerSyncedLog).toBe(8);
+    const character = await database.db.query.characters.findFirst({
+      where: eq(schema.characters.id, 'char-after'),
+    });
+    expect(character?.name).toBe('After');
   });
 
   it('imports a changed public favorite snapshot and announces it to its target entity', async () => {
@@ -1598,7 +1605,7 @@ describe('direct apply paths', () => {
     expect((await readStory())?.lastServerSyncedLog).toBe(1);
   });
 
-  it('blocks the pull when a reorder arrives with an empty item list', async () => {
+  it('skips a reorder with an empty item list and keeps applying what follows', async () => {
     await seedStory();
     pullResponse = {
       updates: [
@@ -1621,12 +1628,14 @@ describe('direct apply paths', () => {
     await runOneCycle();
 
     expect(
-      await database.db.query.characters.findFirst({
-        where: eq(schema.characters.id, 'char-after'),
-      }),
-    ).toBeUndefined();
-    expect((await readStory())?.lastServerSyncedLog).toBe(0);
-    expect(mockShowNotification).not.toHaveBeenCalled();
+      (
+        await database.db.query.characters.findFirst({
+          where: eq(schema.characters.id, 'char-after'),
+        })
+      )?.name,
+    ).toBe('Depois');
+    expect((await readStory())?.lastServerSyncedLog).toBe(2);
+    expect(mockShowNotification).not.toHaveBeenCalledWith(expect.any(String), 'error');
   });
 
   it('applies a remote scene reorder to the local chapters', async () => {

@@ -488,12 +488,17 @@ export class SyncEngineService {
                 | ChapterReorderingStoryUpdate
                 | StoryReorderingStoryUpdate;
 
+              // An order with no items carries no information: the server refuses to log new
+              // ones, so anything arriving here is foreign or legacy history. Skipping past it
+              // (recorded, cursor advanced) instead of blocking keeps one such row from
+              // stalling this story's pull forever.
               if (!reorderUpdate.reorderItems || reorderUpdate.reorderItems.length === 0) {
                 console.warn(
-                  `Reorder update for entity ${update.entity} ID ${update.id} has no reorderItems.`,
+                  `Reorder update for entity ${update.entity} ID ${update.id} has no reorderItems; skipping.`,
                 );
-                pullBlocked = true;
-                break;
+                await this.pull.recordRemoteOperationLocally(rawUpdate);
+                markRemoteOperationApplied(rawUpdate);
+                continue;
               }
 
               await applyReorderToLocalDb(db, reorderUpdate, new Date(update.operationTime!));

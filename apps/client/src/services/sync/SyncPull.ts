@@ -61,6 +61,30 @@ interface PullPageResponse {
   favoritesFingerprint?: FavoritesFingerprint;
 }
 
+/**
+ * Which row set a reorder disputes. Two reorders overlap only when their keys match: chapters
+ * and events own independent index spaces, stats and schema fields own their own tables, and a
+ * schema-field order is per entity type. Chapters reorder scenes only.
+ *
+ * `null` means "cannot tell" (an unrecognised target, or a schema-field order without its entity
+ * type) and always disputes, fail-closed: an order that cannot be proven disjoint must not slip
+ * past as one.
+ */
+function reorderDisputeKey(
+  entity: string,
+  reorderTarget: unknown,
+  schemaEntityType: unknown,
+): string | null {
+  if (entity !== 'Story') return 'scenes';
+  if (reorderTarget === 'StorySchemaField') {
+    return typeof schemaEntityType === 'string' && schemaEntityType.length > 0
+      ? `schema-field:${schemaEntityType}`
+      : null;
+  }
+  if (reorderTarget === undefined) return 'chapters';
+  return reorderTarget === 'Stat' || reorderTarget === 'Event' ? reorderTarget : null;
+}
+
 /** Applies remote operations while preserving and surfacing unsent local edits. */
 export class SyncPull {
   private readonly context: SyncContext;
@@ -331,11 +355,43 @@ export class SyncPull {
     entityId: string,
     pendingLocalOps: OperationLogSelect[],
   ): Promise<{ conflicted: boolean }> {
-    const localReorderOp = pendingLocalOps.find((op) => op.operationType === 'reorder');
+    // A remote order with no items disputes nothing: it is vacuous history (the server
+    // refuses to log new ones), not a competing arrangement, so there is no conflict to
+    // record and nothing to apply. The pending ops stay queued untouched.
+    if (!update.reorderItems || update.reorderItems.length === 0) {
+      return { conflicted: false };
+    }
+
+    // Only pending reorders over the SAME row set dispute this one: a queued Stat order
+    // and an incoming chapter order touch disjoint rows, so the remote one applies directly
+    // and the queued one still pushes normally (the server's stale-base resend accepts it,
+    // since the remote order left its rows alone). Anything unrecognised disputes,
+    // fail-closed.
+    const remoteKey = reorderDisputeKey(
+      update.entity,
+      (update as StoryReorderingStoryUpdate).reorderTarget,
+      (update as StoryReorderingStoryUpdate).schemaEntityType,
+    );
+    const disputingReorderOps = pendingLocalOps.filter((op) => {
+      if (op.operationType !== 'reorder') return false;
+      if (remoteKey === null) return true;
+      const payload = JSON.parse(op.payload) as {
+        reorderTarget?: unknown;
+        schemaEntityType?: unknown;
+      };
+      const localKey = reorderDisputeKey(
+        op.entityType,
+        payload.reorderTarget,
+        payload.schemaEntityType,
+      );
+      return localKey === null || localKey === remoteKey;
+    });
+    const localReorderOp = disputingReorderOps[0];
 
     if (!localReorderOp) {
-      // What is pending on this entity is of another kind (renaming a chapter, say) - it does not conflict
-      // with the order coming from the server, which can be applied directly.
+      // What is pending on this entity is of another kind (renaming a chapter, say) or an
+      // order over a disjoint row set - it does not conflict with the order coming from the
+      // server, which can be applied directly.
       await applyReorderToLocalDb(this.context.db()!, update, new Date(update.operationTime!));
       return { conflicted: false };
     }
@@ -349,8 +405,7 @@ export class SyncPull {
     // op was applied locally when the user acted) or a newer one (a chained reorder still
     // queued behind it) - writing the remote order here would either churn versions for no
     // effect or silently regress the newer local order, which no later echo would repair.
-    const restatesPendingOrder = pendingLocalOps.some((op) => {
-      if (op.operationType !== 'reorder') return false;
+    const restatesPendingOrder = disputingReorderOps.some((op) => {
       const items = (JSON.parse(op.payload) as { reorderItems?: unknown }).reorderItems;
       return Array.isArray(items) && sameReorderArrangement(items, update.reorderItems ?? []);
     });

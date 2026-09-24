@@ -373,6 +373,22 @@ describe('trimSyncedOperationLogs', () => {
     expect(await remainingVersions()).toEqual([3, 4, 5]);
   });
 
+  it('orders by the server version, so a late-synced op survives and no-op 0s trim first', async () => {
+    // The local counter and the server's versions are different spaces: row 1 synced late
+    // (its echo still matters to the next pull) while row 4 is an idempotent no-op at
+    // version 0 (no pull can ever carry 0). Ordering by the counter would keep the
+    // worse pair.
+    await seedLog({ operationVersion: 1, serverOperationVersion: 100 });
+    await seedLog({ operationVersion: 2, serverOperationVersion: 2 });
+    await seedLog({ operationVersion: 3, serverOperationVersion: 3 });
+    await seedLog({ operationVersion: 4, serverOperationVersion: 0 });
+
+    const removed = await trimSyncedOperationLogs(database.db, STORY_ID, 2);
+
+    expect(removed).toBe(2);
+    expect(await remainingVersions()).toEqual([1, 3]);
+  });
+
   it('keeps every operation that is still waiting for the server', async () => {
     await seedLog({ operationVersion: 1, isSynced: false });
     await seedLog({ operationVersion: 2, isSynced: true });

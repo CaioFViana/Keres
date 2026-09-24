@@ -140,8 +140,14 @@ export const MAX_RETAINED_SYNCED_OPERATIONS = 100;
  * Runs after a successful push; without it the local log grows forever (one row per save), and
  * with scene prose in the payloads that growth stops being negligible.
  *
- * Ordered by `operationVersion` (strictly monotonic per story), never `createdAt`: the SQLite
- * timestamp column only has second precision, so two saves in the same second could tie.
+ * Ordered by `serverOperationVersion` - when the server accepted the row - never by the local
+ * `operationVersion` or `createdAt`. The local counter and the server's versions are different
+ * spaces (a resend can sync an old counter late, and idempotent no-ops report version 0), so
+ * ordering by the counter could trim an op the next pull still needs for its echo check while
+ * keeping a newer-looking but older-accepted one. The server version is the comparable recency
+ * key; no-op 0s (which no pull can ever carry) and version-less rows sort first and trim first,
+ * and the local counter only breaks ties deterministically. `createdAt` stays out because the
+ * SQLite timestamp column only has second precision, so two saves in the same second could tie.
  *
  * @returns how many rows were removed.
  */
@@ -162,7 +168,10 @@ export async function trimSyncedOperationLogs(
       isNull(schema.operationLogs.conflictState),
     ),
     columns: { id: true },
-    orderBy: [desc(schema.operationLogs.operationVersion)],
+    orderBy: [
+      desc(schema.operationLogs.serverOperationVersion),
+      desc(schema.operationLogs.operationVersion),
+    ],
   });
   const stale = synced.slice(keep);
   if (stale.length === 0) {

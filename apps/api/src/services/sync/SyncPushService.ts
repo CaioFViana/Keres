@@ -1,15 +1,18 @@
 import type {
+  ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   DeleteStoryUpdate,
   EffectiveStoryRole,
+  StoryReorderingStoryUpdate,
   StoryUpdate,
   SyncAppliedOperation,
   SyncConflict,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq, max } from 'drizzle-orm';
+import { sameReorderArrangement } from '@keres/shared';
+import { and, desc, eq, gt, max } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, withTransaction } from '../../db';
+import { db, withTransaction, type CompatibleDb } from '../../db';
 import { operationLog, stories } from '../../db/schema';
 import { AppError } from '../../utils/errors';
 import { eventManager } from '../../utils/EventManager';
@@ -26,6 +29,29 @@ import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflic
 import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
 import type { SyncOperationLogService } from './SyncOperationLogService';
 import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
+
+/**
+ * Whether a logged reorder row disputes the same row set as the incoming op. Chapters reorder
+ * scenes only; a Story reorder is scoped by its target (absent means chapters), and a
+ * schema-field order additionally by its entity type. Anything unrecognised fails closed.
+ */
+function reorderTwinTargetMatches(
+  entity: string,
+  logged: { reorderTarget?: unknown; schemaEntityType?: unknown },
+  incoming: { reorderTarget?: unknown; schemaEntityType?: unknown },
+): boolean {
+  if (entity !== 'Story') return true;
+  const loggedTarget = logged.reorderTarget ?? undefined;
+  const incomingTarget = incoming.reorderTarget ?? undefined;
+  if (loggedTarget !== incomingTarget) return false;
+  if (incomingTarget === 'StorySchemaField') {
+    return (
+      typeof logged.schemaEntityType === 'string' &&
+      logged.schemaEntityType === incoming.schemaEntityType
+    );
+  }
+  return true;
+}
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates
@@ -87,7 +113,8 @@ export class SyncPushService {
     /**
      * Entities that already conflicted in this batch. The following operations on them were built on
      * top of a base we have just refused, so applying them would corrupt the state - they are refused
-     * along with it, and the conflict screen treats the entity as a single case.
+     * along with it, and the conflict screen treats the entity as a single case. Reorders are exempt:
+     * an absolute arrangement judged against the live rows cannot merge onto refused content.
      */
     const blockedEntities = new Set<string>();
 
@@ -146,7 +173,11 @@ export class SyncPushService {
         throw error;
       }
 
-      if (blockedEntities.has(entityKey)) {
+      // A refused operation blocks what follows on its entity - except reorders. A reorder carries
+      // an absolute arrangement validated against the live rows at apply time, so judging it on
+      // its own merits can never merge onto refused content the way a chained field edit would;
+      // skipping it would only manufacture a conflict for an op that could have been decided.
+      if (blockedEntities.has(entityKey) && update.type !== 'reorder') {
         recordConflict(
           'version_conflict',
           `Skipped: an earlier operation on ${entityKey} in this batch conflicted.`,
@@ -265,8 +296,31 @@ export class SyncPushService {
                 `${update.entity} with ID ${entityId} does not exist on the server.`,
               );
             }
-            await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
-            if (update.type === 'reorder') {
+            if (
+              update.type === 'reorder' &&
+              typeof update.version === 'number' &&
+              update.version !== currentEntity.version
+            ) {
+              // Stale base: the arrangement may still have landed - under a LATER version than
+              // this op can see, when a chained reorder was applied after it. The live-row
+              // comparison in the handler cannot recognise that (the rows moved on), but history
+              // can: a twin applied past this base proves the intent already took effect, and its
+              // own version is what the client's echo check must key on.
+              const twin = await this.findAppliedReorderTwin(
+                tx,
+                storyId,
+                update,
+                entityId,
+                update.version,
+              );
+              if (twin) {
+                alreadyAppliedVersion = twin.operationVersion;
+              }
+            }
+            if (alreadyAppliedVersion === null) {
+              await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
+            }
+            if (update.type === 'reorder' && alreadyAppliedVersion === null) {
               // A reorder whose arrangement already holds is a no-op resend: the handler applied
               // nothing (reorder branches always bump the container version when they write), so
               // logging it again would only churn versions and the pull stream. Report it as the
@@ -428,6 +482,61 @@ export class SyncPushService {
       .from(operationLog)
       .where(eq(operationLog.storyId, storyId));
     return result.at(0)?.maxVersion || 0;
+  }
+
+  /**
+   * A logged reorder already carrying this op's exact arrangement, newest first. Only rows
+   * applied *past* the op's base qualify: an older twin means the world moved on since, and
+   * the op is genuinely divergent. Rows without an entity version predate that column and
+   * cannot prove anything, so the comparison excludes them.
+   */
+  private async findAppliedReorderTwin(
+    tx: CompatibleDb,
+    storyId: string,
+    update: StoryUpdate,
+    entityId: string,
+    baseVersion: number,
+  ): Promise<{ operationVersion: number } | undefined> {
+    const reorder = update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate;
+    if (!Array.isArray(reorder.reorderItems) || reorder.reorderItems.length === 0) {
+      return undefined;
+    }
+    const rows = await tx
+      .select({
+        operationVersion: operationLog.operationVersion,
+        entityVersion: operationLog.entityVersion,
+        payload: operationLog.payload,
+      })
+      .from(operationLog)
+      .where(
+        and(
+          eq(operationLog.storyId, storyId),
+          eq(operationLog.entityType, update.entity),
+          eq(operationLog.entityId, entityId),
+          eq(operationLog.operationType, 'reorder'),
+          gt(operationLog.entityVersion, baseVersion),
+        ),
+      )
+      .orderBy(desc(operationLog.operationVersion));
+    for (const row of rows) {
+      const payload = (row.payload ?? {}) as {
+        reorderItems?: unknown;
+        reorderTarget?: unknown;
+        schemaEntityType?: unknown;
+      };
+      const incomingTarget = reorder as {
+        reorderTarget?: unknown;
+        schemaEntityType?: unknown;
+      };
+      if (!reorderTwinTargetMatches(update.entity, payload, incomingTarget)) continue;
+      if (
+        Array.isArray(payload.reorderItems) &&
+        sameReorderArrangement(payload.reorderItems, reorder.reorderItems)
+      ) {
+        return { operationVersion: row.operationVersion };
+      }
+    }
+    return undefined;
   }
 
   /** Reject malformed or materially future client clocks for every operation kind, including creates. */

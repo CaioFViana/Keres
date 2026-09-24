@@ -142,6 +142,14 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       const validatedReorderUpdate: StoryReorderingStoryUpdate =
         StoryReorderingStoryUpdateSchema.parse(update);
 
+      // Empty is malformed, never an idempotent resend: there is no arrangement to compare
+      // against the live rows, and logging one would store a row no other client can apply.
+      const emptyProblem =
+        validatedReorderUpdate.reorderItems.length === 0 ? completeReorderProblem([], []) : null;
+      if (emptyProblem) {
+        throw new SyncConflictError('validation', emptyProblem);
+      }
+
       // Idempotent resend, and ONLY on a stale base (see ChapterSyncHandler for why a
       // fresh base always flows through): per target below, when the rows already sit exactly
       // where the items want them, there is nothing to apply - succeeding here (rather than

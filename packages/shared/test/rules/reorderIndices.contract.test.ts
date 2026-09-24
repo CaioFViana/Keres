@@ -29,6 +29,9 @@ describe('reorder index rules', () => {
     expect(completeReorderProblem(['a', 'b'], [{ id: 'a', newIndex: 1 }])).toMatch(
       /every expected/,
     );
+    // Empty is never an order, not even for an empty container: accepting it would log a
+    // row no other client can apply.
+    expect(completeReorderProblem([], [])).toMatch(/must not be empty/);
   });
 
   it('recognizes the same arrangement whatever order the lists arrive in', () => {

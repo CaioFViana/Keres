@@ -58,6 +58,10 @@ export function reorderIndicesProblem(indices: readonly number[]): string | null
  * Verifies the complete semantic contract of a persisted reorder: it must name every live row
  * exactly once and give those rows a contiguous wire index. Hosts load the live IDs themselves;
  * this pure rule keeps their client and API checks identical without coupling it to a database.
+ *
+ * An empty item list is never valid, not even for an empty container: there is no order to
+ * persist, and accepting one would log a row that carries no information for other clients
+ * to apply.
  */
 /**
  * Whether two reorder item lists describe the same arrangement: the same ids,
@@ -86,6 +90,9 @@ export function completeReorderProblem(
   expectedIds: Iterable<string>,
   reorderItems: readonly ReorderItem[],
 ): string | null {
+  if (reorderItems.length === 0) {
+    return 'Validation Error: Reorder items must not be empty.';
+  }
   const expected = new Set(expectedIds);
   const received = new Set(reorderItems.map((item) => item.id));
   if (

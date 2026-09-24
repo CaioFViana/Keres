@@ -1,3 +1,4 @@
+import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
@@ -64,9 +65,7 @@ describe('two devices sharing one story', () => {
     const bCursor = Math.max(
       ...bFirst.data.updates.map((op: { operationVersion: number }) => op.operationVersion),
     );
-    const yBase = bFirst.data.updates.find(
-      (op: { entityId?: string; id?: string }) => op.entityId === charY || op.id === charY,
-    );
+    const yBase = bFirst.data.updates.find((op: { id?: string }) => op.id === charY);
     expect(yBase).toBeDefined();
 
     // Device B edits on top of what it pulled.
@@ -133,7 +132,7 @@ describe('pulling past one page', () => {
         cursor,
         ...response.data.updates.map((op: { operationVersion: number }) => op.operationVersion),
       );
-      if (response.data.updates.length < 500) break;
+      if (response.data.updates.length < MAX_SYNC_PULL_BATCH) break;
     }
 
     expect(seen).toHaveLength(501);
@@ -174,10 +173,7 @@ describe('pulling after history compaction', () => {
     // A client that never pulled anything still converges: the create plus one merged
     // update carrying the final state.
     const pulled = await pull(ana.token, storyId, before);
-    const entityOps = pulled.data.updates.filter(
-      (op: { id?: string; entityId?: string }) =>
-        op.id === characterId || op.entityId === characterId,
-    );
+    const entityOps = pulled.data.updates.filter((op: { id?: string }) => op.id === characterId);
     expect(entityOps.length).toBeLessThan(26);
     expect(entityOps[0]).toMatchObject({ type: 'create' });
     const last = entityOps[entityOps.length - 1];

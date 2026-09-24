@@ -615,14 +615,206 @@ describe('reconciliation decisions', () => {
     ]);
   });
 
-  it('uses empty local order and null versions when reorder metadata is absent', async () => {
+  it('treats a remote reorder without items as vacuous, not as a competing order', async () => {
+    // An empty remote order disputes nothing - not even against a pending reorder - so it
+    // is absorbed without touching the rows or the queued op.
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Chapter',
+        id: 'chapter-1',
+        operationTime: NOW.toISOString(),
+        reorderItems: [],
+      } as never),
+      [
+        pending('reorder', {
+          reorderItems: [{ id: 'scene-1', newIndex: 1 }],
+          version: 2,
+        }),
+      ],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: false });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(rebase).not.toHaveBeenCalled();
+  });
+
+  it('applies a remote order over a disjoint row set without conflicting the queued one', async () => {
+    await database.db.insert(schema.chapters).values([
+      {
+        id: 'chapter-1',
+        storyId: STORY_ID,
+        name: 'One',
+        index: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'chapter-2',
+        storyId: STORY_ID,
+        name: 'Two',
+        index: 2,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+    await database.db.insert(schema.stats).values([
+      {
+        id: 'stat-1',
+        storyId: STORY_ID,
+        name: 'One',
+        order: 1,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+      {
+        id: 'stat-2',
+        storyId: STORY_ID,
+        name: 'Two',
+        order: 0,
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+    // Queued Stat order, incoming chapter order: disjoint rows, no dispute. The remote
+    // chapters apply; the stats (and the queued op) are left alone to push normally.
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Story',
+        id: STORY_ID,
+        operationTime: NOW.toISOString(),
+        reorderItems: [
+          { id: 'chapter-2', newIndex: 1 },
+          { id: 'chapter-1', newIndex: 2 },
+        ],
+      } as never),
+      [
+        {
+          ...pending('reorder', {
+            reorderItems: [
+              { id: 'stat-2', newIndex: 1 },
+              { id: 'stat-1', newIndex: 2 },
+            ],
+            reorderTarget: 'Stat',
+            version: 2,
+          }),
+          entityType: 'Story',
+          entityId: STORY_ID,
+        },
+      ],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: false });
+    expect(recordConflict).not.toHaveBeenCalled();
+    const chapters = await database.db.query.chapters.findMany();
+    expect(
+      chapters
+        .map(({ id, index, version }) => ({ id, index, version }))
+        .sort((a, b) => a.index - b.index),
+    ).toEqual([
+      { id: 'chapter-2', index: 1, version: 2 },
+      { id: 'chapter-1', index: 2, version: 2 },
+    ]);
+    const stats = await database.db.query.stats.findMany();
+    expect(
+      stats
+        .map(({ id, order, version }) => ({ id, order, version }))
+        .sort((a, b) => a.order - b.order),
+    ).toEqual([
+      { id: 'stat-2', order: 0, version: 1 },
+      { id: 'stat-1', order: 1, version: 1 },
+    ]);
+  });
+
+  it('still conflicts when the queued and remote orders dispute the same row set', async () => {
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Story',
+        id: STORY_ID,
+        operationTime: NOW.toISOString(),
+        reorderTarget: 'Stat',
+        reorderItems: [
+          { id: 'stat-1', newIndex: 1 },
+          { id: 'stat-2', newIndex: 2 },
+        ],
+      } as never),
+      [
+        {
+          ...pending('reorder', {
+            reorderItems: [
+              { id: 'stat-2', newIndex: 1 },
+              { id: 'stat-1', newIndex: 2 },
+            ],
+            reorderTarget: 'Stat',
+            version: 2,
+          }),
+          entityType: 'Story',
+          entityId: STORY_ID,
+        },
+      ],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: true });
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({ localOperationType: 'reorder' }),
+    );
+  });
+
+  it('treats schema-field orders of different entity types as disjoint', async () => {
+    // Same target, different entity types: independent index spaces, no dispute.
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Story',
+        id: STORY_ID,
+        operationTime: NOW.toISOString(),
+        reorderTarget: 'StorySchemaField',
+        schemaEntityType: 'Location',
+        reorderItems: [{ id: 'field-1', newIndex: 1 }],
+      } as never),
+      [
+        {
+          ...pending('reorder', {
+            reorderItems: [{ id: 'field-9', newIndex: 1 }],
+            reorderTarget: 'StorySchemaField',
+            schemaEntityType: 'Character',
+            version: 2,
+          }),
+          entityType: 'Story',
+          entityId: STORY_ID,
+        },
+      ],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: false });
+    expect(recordConflict).not.toHaveBeenCalled();
+  });
+
+  it('uses empty local order and null versions when pending reorder metadata is absent', async () => {
+    // A pending op without items cannot be compared, so a genuine remote order still
+    // conflicts - tolerating the missing metadata with empty/null fields instead of
+    // crashing. (A remote order without items is itself vacuous; see the test above.)
     await pull.reconcileRemoteUpdate(
       update({
         type: 'reorder',
         entity: 'Chapter',
         id: 'chapter-1',
         version: undefined,
-        reorderItems: [],
+        reorderItems: [{ id: 'scene-9', newIndex: 1 }],
       } as never),
       [pending('reorder', {})],
       handler,

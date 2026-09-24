@@ -4,7 +4,11 @@ import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/Icon
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { Ionicons } from '@expo/vector-icons';
-import { MAP_ICON_OPTIONS } from '@keres/shared';
+import {
+  MAP_ICON_OPTIONS,
+  MAX_LOCATION_MAP_NOTE_LENGTH,
+  MAX_LOCATION_MAP_TITLE_LENGTH,
+} from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -114,6 +118,7 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
           value={title}
           editable={canEdit}
           onChangeText={(value) => onChange({ title: value })}
+          maxLength={MAX_LOCATION_MAP_TITLE_LENGTH}
           style={styles.input}
         />
         <Text style={styles.label}>{t('location_map_marker_note')}</Text>
@@ -122,6 +127,7 @@ const LocationMapMarkerSheet: React.FC<Props> = ({
           editable={canEdit}
           multiline
           onChangeText={(value) => onChange({ note: value || null })}
+          maxLength={MAX_LOCATION_MAP_NOTE_LENGTH}
           style={[styles.input, styles.note]}
         />
         {canEdit && (

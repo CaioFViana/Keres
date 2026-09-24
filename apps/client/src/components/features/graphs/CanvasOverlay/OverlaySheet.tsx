@@ -1,5 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { MAP_ICON_OPTIONS, type CanvasOverlayType } from '@keres/shared';
+import {
+  MAP_ICON_OPTIONS,
+  MAX_CANVAS_OVERLAY_LABEL_LENGTH,
+  type CanvasOverlayType,
+} from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -85,6 +89,7 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
           onChangeText={(value) => onChange({ label: value || null })}
           placeholder={t('overlay_sheet_label_placeholder')}
           placeholderTextColor={colors.textSecondary}
+          maxLength={MAX_CANVAS_OVERLAY_LABEL_LENGTH}
           style={styles.input}
         />
         {canEdit && (

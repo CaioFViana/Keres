@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { BoardContentType } from '@keres/shared';
+import { MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React from 'react';
 import BoardCanvasHeaderActions from '../../src/components/features/boards/BoardCanvasHeaderActions';
 import BoardConnectionModal from '../../src/components/features/boards/BoardConnectionModal';
@@ -215,7 +216,12 @@ describe('BoardConnectionModal', () => {
     );
 
     expect(mockGraphConnectionModal).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceName: 'Alpha', targetName: 'missing', labelEnabled: true }),
+      expect.objectContaining({
+        sourceName: 'Alpha',
+        targetName: 'missing',
+        labelEnabled: true,
+        labelMaxLength: MAX_BOARD_TITLE_LENGTH,
+      }),
     );
   });
 

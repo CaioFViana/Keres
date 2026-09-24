@@ -35,6 +35,10 @@ export const BOARD_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 
 export const MAX_BOARD_NODES = 500;
 export const MAX_BOARD_EDGES = 1000;
+/** Note titles, edge labels and pin labels. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_BOARD_TITLE_LENGTH = 200;
+/** Note bodies and pin card notes. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_BOARD_BODY_LENGTH = 8000;
 const BOARD_MAX_NODE_EXTENT = 720;
 export const BOARD_CARD_DISPLAY_MODES = ['compact', 'summary', 'note', 'summary-and-note'] as const;
 export type BoardCardDisplayMode = (typeof BOARD_CARD_DISPLAY_MODES)[number];
@@ -62,11 +66,11 @@ const BoardEntityNodeSchema = z.object({
   y: z.number().finite(),
   entityType: z.enum(BOARD_PIN_ENTITIES),
   entityId: z.string().min(1),
-  labelAtPin: z.string().max(200),
+  labelAtPin: z.string().max(MAX_BOARD_TITLE_LENGTH),
   /** Presentation belongs to this Board pin, not to the linked story entity. */
   displayMode: z.enum(BOARD_CARD_DISPLAY_MODES).default('compact'),
   /** A contextual note for this pin; it deliberately does not create a Note entity. */
-  cardNote: z.string().max(8000).nullable().default(null),
+  cardNote: z.string().max(MAX_BOARD_BODY_LENGTH).nullable().default(null),
   /** Optional manual dimensions keep older compact pins visually unchanged. */
   width: z.number().finite().min(148).max(720).optional(),
   height: z.number().finite().min(86).max(720).optional(),
@@ -79,8 +83,8 @@ const BoardNoteNodeSchema = z.object({
   kind: z.literal('note'),
   x: z.number().finite(),
   y: z.number().finite(),
-  title: z.string().max(200),
-  body: z.string().max(8000).nullable(),
+  title: z.string().max(MAX_BOARD_TITLE_LENGTH),
+  body: z.string().max(MAX_BOARD_BODY_LENGTH).nullable(),
   width: z.number().finite().min(148).max(720).optional(),
   height: z.number().finite().min(86).max(720).optional(),
   zIndex: z.number().finite().optional(),
@@ -96,7 +100,7 @@ export const BoardEdgeSchema = z.object({
   from: BoardLocalIdSchema,
   to: BoardLocalIdSchema,
   directed: z.boolean(),
-  label: z.string().max(200).nullable(),
+  label: z.string().max(MAX_BOARD_TITLE_LENGTH).nullable(),
 });
 
 export const EMPTY_BOARD_CONTENT = { nodes: [], edges: [] } as const;

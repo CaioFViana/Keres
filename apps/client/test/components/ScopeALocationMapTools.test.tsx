@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import type { LocationMapContentType } from '@keres/shared';
+import { MAX_LOCATION_MAP_ANNOTATION_LENGTH } from '@keres/shared';
 import React from 'react';
 import LocationMapConnectionModal from '../../src/components/features/location-maps/LocationMapConnectionModal';
 import LocationMapMarkerConnectionModal from '../../src/components/features/location-maps/LocationMapMarkerConnectionModal';
@@ -331,6 +332,7 @@ describe('LocationMapConnectionModal', () => {
       sourceName: 'Alpha',
       targetName: 'missing',
       labelEnabled: true,
+      labelMaxLength: MAX_LOCATION_MAP_ANNOTATION_LENGTH,
       directionHint: 'location_map_connection_direction_hint',
     });
   });
@@ -434,6 +436,7 @@ describe('LocationMapMarkerConnectionModal', () => {
       sourceName: 'Harbor',
       targetName: 'Camp',
       labelEnabled: true,
+      labelMaxLength: MAX_LOCATION_MAP_ANNOTATION_LENGTH,
     });
   });
 

@@ -1,3 +1,4 @@
+import { MAX_LOCATION_MAP_NOTE_LENGTH, MAX_LOCATION_MAP_TITLE_LENGTH } from '@keres/shared';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 import LocationMapMarkerSheet, {
@@ -67,4 +68,28 @@ it('keeps inner padding around marker-sheet controls so input borders can render
     paddingTop: LOCATION_MAP_MARKER_SHEET_INNER_PADDING,
   });
   expect(view.getByTestId('location-map-marker-destination-actions')).toHaveStyle({ gap: 8 });
+});
+
+it('clamps the title and note to the schema limits', async () => {
+  const view = await render(
+    <LocationMapMarkerSheet
+      title="Gate"
+      note="Knock twice"
+      icon="flag"
+      color="#8BC34A"
+      destinationUnavailable={false}
+      destinationOptions={[]}
+      canEdit
+      onChange={jest.fn()}
+      onCreateDestination={jest.fn()}
+      onOpenDestination={jest.fn()}
+      onClearDestination={jest.fn()}
+      onChangeDestination={jest.fn()}
+      onRemove={jest.fn()}
+      onClose={jest.fn()}
+    />,
+  );
+
+  expect(view.getByDisplayValue('Gate').props.maxLength).toBe(MAX_LOCATION_MAP_TITLE_LENGTH);
+  expect(view.getByDisplayValue('Knock twice').props.maxLength).toBe(MAX_LOCATION_MAP_NOTE_LENGTH);
 });

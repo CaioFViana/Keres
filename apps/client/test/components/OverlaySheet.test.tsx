@@ -1,3 +1,4 @@
+import { MAX_CANVAS_OVERLAY_LABEL_LENGTH } from '@keres/shared';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import OverlaySheet from '../../src/components/features/graphs/CanvasOverlay/OverlaySheet';
@@ -193,5 +194,22 @@ describe('OverlaySheet', () => {
     );
     expect(stamp.queryByTestId('sheet-switch-overlay_sheet_dashed')).toBeNull();
     expect(stamp.queryByTestId('sheet-switch-overlay_sheet_filled')).toBeNull();
+  });
+
+  it('clamps the label to the schema limit', async () => {
+    const view = await render(
+      <OverlaySheet
+        overlay={{ id: 'ov-1', kind: 'polygon', points: [] }}
+        canEdit
+        defaultColor="#85f"
+        onChange={jest.fn()}
+        onRemove={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    );
+
+    expect(view.getByPlaceholderText('overlay_sheet_label_placeholder').props.maxLength).toBe(
+      MAX_CANVAS_OVERLAY_LABEL_LENGTH,
+    );
   });
 });

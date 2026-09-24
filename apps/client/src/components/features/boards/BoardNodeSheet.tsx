@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardCardDisplayMode, BoardContentType, BoardNodeType } from '@keres/shared';
-import { generateBoardLocalId } from '@keres/shared';
+import { generateBoardLocalId, MAX_BOARD_BODY_LENGTH, MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -280,7 +280,12 @@ const BoardNodeSheet: React.FC<Props> = ({
           <>
             <Text style={styles.section}>{t('board_note')}</Text>
             <View style={styles.field}>
-              <TextInput value={noteTitle} onChangeText={setNoteTitle} placeholder={t('title')} />
+              <TextInput
+                value={noteTitle}
+                onChangeText={setNoteTitle}
+                placeholder={t('title')}
+                maxLength={MAX_BOARD_TITLE_LENGTH}
+              />
             </View>
             <View style={styles.field}>
               <TextInput
@@ -288,6 +293,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                 onChangeText={setNoteBody}
                 placeholder={t('board_note_body')}
                 multiline
+                maxLength={MAX_BOARD_BODY_LENGTH}
                 style={{ minHeight: 140, textAlignVertical: 'top' }}
               />
             </View>
@@ -335,6 +341,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                   }
                   placeholder={t('board_card_note_placeholder')}
                   multiline
+                  maxLength={MAX_BOARD_BODY_LENGTH}
                   style={{ minHeight: 100, textAlignVertical: 'top' }}
                 />
               </View>
@@ -391,6 +398,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                   value={edgeLabel}
                   onChangeText={setEdgeLabel}
                   placeholder={t('board_edge_label')}
+                  maxLength={MAX_BOARD_TITLE_LENGTH}
                 />
               </View>
               <Button

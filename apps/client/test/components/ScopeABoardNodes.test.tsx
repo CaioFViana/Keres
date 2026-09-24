@@ -1,5 +1,6 @@
 import { act, fireEvent, render, type RenderResult } from '@testing-library/react-native';
 import type { BoardContentType, BoardNodeType } from '@keres/shared';
+import { MAX_BOARD_BODY_LENGTH, MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import BoardNode from '../../src/components/features/boards/BoardNode';
@@ -493,6 +494,31 @@ describe('BoardNodeSheet', () => {
     );
     expect(view.getByPlaceholderText('title').props.value).toBe('Other');
     expect(view.getByPlaceholderText('board_note_body').props.value).toBe('Else');
+  });
+
+  it('clamps text fields to the schema limits', async () => {
+    const note = await render(
+      <BoardNodeSheet {...sheetProps} node={noteNode()} content={content()} />,
+    );
+
+    expect(note.getByPlaceholderText('title').props.maxLength).toBe(MAX_BOARD_TITLE_LENGTH);
+    expect(note.getByPlaceholderText('board_note_body').props.maxLength).toBe(
+      MAX_BOARD_BODY_LENGTH,
+    );
+    expect(note.getByPlaceholderText('board_edge_label').props.maxLength).toBe(
+      MAX_BOARD_TITLE_LENGTH,
+    );
+
+    const entity = await render(
+      <BoardNodeSheet
+        {...sheetProps}
+        node={entityNode({ displayMode: 'note', cardNote: 'Hi' })}
+        content={content()}
+      />,
+    );
+    expect(entity.getByPlaceholderText('board_card_note_placeholder').props.maxLength).toBe(
+      MAX_BOARD_BODY_LENGTH,
+    );
   });
 
   it('shows the entity summary or its absence', async () => {

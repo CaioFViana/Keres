@@ -322,6 +322,21 @@ describe('GraphConnectionModal', () => {
     });
   });
 
+  it('clamps the label to the caller-provided limit', async () => {
+    const view = await render(
+      <GraphConnectionModal
+        {...baseProps}
+        labelEnabled
+        labelMaxLength={500}
+        onConfirm={jest.fn()}
+      />,
+    );
+
+    expect(view.getByPlaceholderText('graph_connection_label_placeholder').props.maxLength).toBe(
+      500,
+    );
+  });
+
   it('closes without confirming', async () => {
     const onClose = jest.fn();
     const view = await render(<GraphConnectionModal {...baseProps} onClose={onClose} />);

@@ -47,6 +47,7 @@ import StoryDevicesStackNavigator from './StoryDevicesStack';
 import {
   ArcContextDrawerScreen,
   drawerIcon,
+  drawerStoredIcon,
   DrawerToggleButton,
   type MainDashboardScreenNavigationProp,
   mainSystemStackRootScreens,
@@ -291,9 +292,7 @@ const MainSystemNavigator = () => {
           component={ArcContextDrawerScreen}
           options={{
             title: activeArc?.title || t('all_arcs', { arcs: term('Arc', true) }),
-            drawerIcon: drawerIcon(
-              (activeArc?.icon as keyof typeof Ionicons.glyphMap) || 'library-outline',
-            ),
+            drawerIcon: drawerStoredIcon(activeArc?.icon, 'library-outline'),
             drawerLabel: () => (
               <Text style={{ fontSize: 15, color: colors.text }} numberOfLines={1}>
                 {activeArc?.title || t('all_arcs', { arcs: term('Arc', true) })}

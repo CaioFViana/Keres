@@ -6,7 +6,8 @@ import { useTheme } from '@/src/theme';
 export interface EntityRelationListItem {
   id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  /** The Ionicons glyph; omit it when `leading` draws the row's icon instead. */
+  icon?: keyof typeof Ionicons.glyphMap;
   color: string;
   leading?: React.ReactNode;
   details?: React.ReactNode;
@@ -43,9 +44,10 @@ const EntityRelationList: React.FC<Props> = ({ items, emptyText }) => {
       {items.map((item, index) => {
         const content = (
           <>
-            {item.leading ?? (
-              <Ionicons name={item.icon} size={20} color={item.color} style={styles.icon} />
-            )}
+            {item.leading ??
+              (item.icon ? (
+                <Ionicons name={item.icon} size={20} color={item.color} style={styles.icon} />
+              ) : null)}
             <View style={styles.textWrap}>
               {item.title ? (
                 <Text style={styles.text} numberOfLines={item.details ? undefined : 1}>

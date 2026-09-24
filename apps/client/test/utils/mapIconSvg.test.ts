@@ -23,8 +23,16 @@ it('falls back to the solid name for older outline picks', () => {
   expect(shapes).toContain('<path');
 });
 
-it('renders nothing for future, foreign and empty names', () => {
-  expect(renderMapIconSvg('keres:castle', 100, 100, '#8BC34A')).toBe('');
+it('draws keres pack icons from the vendored silhouettes', () => {
+  const shapes = renderMapIconSvg('keres:castle', 100, 100, '#8BC34A');
+
+  expect(shapes).toContain('<path');
+  expect(shapes).toContain('fill="#8BC34A"');
+  expect(shapes).toContain('transform="translate(84 84) scale(0.0625)"');
+  expect(renderMapIconSvg('keres:nope', 100, 100, '#8BC34A')).toBe('');
+});
+
+it('renders nothing for foreign and empty names', () => {
   expect(renderMapIconSvg('fa:flag', 100, 100, '#8BC34A')).toBe('');
   expect(renderMapIconSvg('', 100, 100, '#8BC34A')).toBe('');
   expect(renderMapIconSvg('no-such-icon', 100, 100, '#8BC34A')).toBe('');

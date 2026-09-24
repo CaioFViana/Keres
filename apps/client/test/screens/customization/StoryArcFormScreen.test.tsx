@@ -120,6 +120,27 @@ jest.mock('@/src/components/common/forms/FormField/FormField', () => ({
     );
   },
 }));
+jest.mock('@/src/components/common/inputs/IconPickerInput/IconPickerInput', () => ({
+  __esModule: true,
+  default: (props: { currentIcon: string | null; onSelectIcon: (icon: string) => void }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.View,
+      { testID: 'icon-picker' },
+      react.createElement(
+        native.Text,
+        { testID: 'picker-current-icon' },
+        props.currentIcon ?? 'none',
+      ),
+      react.createElement(
+        native.Text,
+        { testID: 'picker-pick', onPress: () => props.onSelectIcon('keres:castle') },
+        'pick',
+      ),
+    );
+  },
+}));
 jest.mock('@/src/components/common/controls/FormActions/FormActions', () => ({
   __esModule: true,
   default: ({ children }: { children?: React.ReactNode }) => {
@@ -209,6 +230,7 @@ it('renders a blank creation form with the inherited theme', async () => {
 
   expect(view.getByTestId('field-name')).toBeTruthy();
   expect(view.getByTestId('field-description')).toBeTruthy();
+  expect(view.getByTestId('field-arc_icon')).toBeTruthy();
   expect(view.getByText('arc_theme_inherited')).toBeTruthy();
   expect(view.queryByTestId('btn-arc_theme_inherit')).toBeNull();
   expect(mockGetArcById).not.toHaveBeenCalled();
@@ -308,6 +330,44 @@ it('creates an arc on save and goes back', async () => {
   expect(mockGoBack).toHaveBeenCalled();
 });
 
+it('saves the picked icon on create', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Rising');
+  await fireEvent.press(view.getByTestId('picker-pick'));
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockCreateArc).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ title: 'Rising', icon: 'keres:castle' }),
+    ),
+  );
+});
+
+it('hydrates the picked icon and updates it on save', async () => {
+  mockArcId = 'arc-1';
+  mockGetArcById.mockResolvedValue({
+    title: 'Prologue',
+    description: null,
+    icon: 'flag',
+    themeOverride: null,
+  });
+  const view = await render(<StoryArcFormScreen />);
+
+  await waitFor(() => expect(view.getByTestId('picker-current-icon')).toBeTruthy());
+  expect(view.getByTestId('picker-current-icon').props.children).toBe('flag');
+
+  await fireEvent.press(view.getByTestId('picker-pick'));
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockUpdateArc).toHaveBeenCalledWith(
+      'user-1',
+      'arc-1',
+      expect.objectContaining({ title: 'Prologue', icon: 'keres:castle' }),
+    ),
+  );
+});
+
 it('refuses to save without a title, story or user', async () => {
   const view = await render(<StoryArcFormScreen />);
 
@@ -405,9 +465,11 @@ it('cancels back and hides actions when read-only', async () => {
   expect(view.getByText('story_read_only_error')).toBeTruthy();
   expect(view.queryByTestId('form-actions')).toBeNull();
   expect(view.queryByTestId('btn-select_theme')).toBeNull();
+  expect(view.queryByTestId('icon-picker')).toBeNull();
 
   mockCanEdit = true;
   const editable = await render(<StoryArcFormScreen />);
+  expect(editable.getByTestId('icon-picker')).toBeTruthy();
   await fireEvent.press(editable.getByTestId('btn-cancel'));
   expect(mockGoBack).toHaveBeenCalled();
 });

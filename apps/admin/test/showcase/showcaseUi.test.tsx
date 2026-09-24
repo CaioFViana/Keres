@@ -2,6 +2,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryCard, ShowcaseStoryDetail } from '@keres/shared';
 import { ShowcaseApp } from '../../src/showcase/App';
+import avatarIcons from 'virtual:keres-avatar-icons';
 import { changeInput, click, flush, render, submit } from '../helpers/react';
 
 const mocks = vi.hoisted(() => ({
@@ -305,6 +306,22 @@ describe('owner avatar', () => {
     expect(avatar.style.background).not.toBe('');
     // It still draws an icon: the default one, since the person picked none.
     expect(avatar.querySelector('svg')).not.toBeNull();
+    await unmount();
+  });
+
+  it('draws a Keres pack icon the person picked in the app', async () => {
+    mocks.fetchStories.mockResolvedValue({
+      stories: [{ ...card, owner: { ...card.owner, avatarIcon: 'keres:castle' } }],
+      etag: null,
+    });
+
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    const svg = container.querySelector('.avatar svg');
+    // The castle glyph itself, not the Ionicons fallback: `innerHTML` serializes the
+    // self-closing path with an explicit end tag, so the source's `/>` is dropped first.
+    expect(svg?.innerHTML).toContain(avatarIcons['keres:castle'].replace(/\/>$/, ''));
     await unmount();
   });
 });

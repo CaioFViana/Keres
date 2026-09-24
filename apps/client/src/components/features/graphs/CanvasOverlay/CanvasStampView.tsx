@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { CANVAS_OVERLAY_STAMP_DEFAULT_SIZE, type CanvasOverlayType } from '@keres/shared';
 import React, { useMemo } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useTheme } from '../../../../theme';
-import { mapIconGlyph } from '../../../../utils/mapIconGlyph';
 
 type StampOverlay = Extract<CanvasOverlayType, { kind: 'stamp' }>;
 
@@ -55,11 +54,7 @@ const CanvasStampView: React.FC<{ stamp: StampOverlay }> = ({ stamp }) => {
   return (
     <View style={styles.stamp}>
       <View style={styles.circle}>
-        <Ionicons
-          name={mapIconGlyph(stamp.icon)}
-          size={size * 0.55}
-          color={stamp.color ?? colors.primary}
-        />
+        <MapIcon name={stamp.icon} size={size * 0.55} color={stamp.color ?? colors.primary} />
       </View>
       {!!stamp.label && <Text style={styles.label}>{stamp.label}</Text>}
     </View>

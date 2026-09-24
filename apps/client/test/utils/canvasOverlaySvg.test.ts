@@ -225,7 +225,7 @@ it('draws a stamp as a circle with its icon and a label below', () => {
 
 it('renders stamps without a matching icon as a circle only', () => {
   const { stamps } = render([
-    { id: 'ov-1', kind: 'stamp', x: 0, y: 0, icon: 'keres:castle', color: '#123456' },
+    { id: 'ov-1', kind: 'stamp', x: 0, y: 0, icon: 'fa:castle', color: '#123456' },
   ]);
   expect(stamps[0]).toContain('<circle ');
   expect(stamps[0]).not.toContain('<path');

@@ -11,7 +11,8 @@ import avatarIconNames from './avatarIcons.json';
 
 /**
  * A small, hand-picked set, not a search across thousands of icons - the request was for a
- * "simple and light" system, and the app uses only Ionicons everywhere else.
+ * "simple and light" system. These are the picker's essentials; the Keres pack
+ * (`keresIcons.ts`) extends the same screens with genre icons Ionicons does not cover.
  *
  * The names are Ionicons' own: they work both as a font glyph (app) and as an `.svg` file name
  * (Showcase). The list lives in a `.json` next door because the Showcase build has to read it

@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useTheme } from '../../../theme';
-import { mapIconGlyph } from '../../../utils/mapIconGlyph';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
 const DRAG_THRESHOLD = 5;
@@ -331,7 +331,7 @@ const LocationMapNodeView: React.FC<Props> = ({
   return (
     <View style={styles.node} {...pan.panHandlers}>
       <View style={styles.circle} pointerEvents="none">
-        <Ionicons name={mapIconGlyph(node.icon)} size={22} color={node.color} />
+        <MapIcon name={node.icon} size={22} color={node.color} />
       </View>
       {!!node.destinationMapId && (
         <View pointerEvents="none" style={styles.destinationBadge}>

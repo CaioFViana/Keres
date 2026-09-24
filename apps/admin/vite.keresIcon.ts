@@ -46,6 +46,26 @@ const AVATAR_ICON_NAMES_SOURCE = path.resolve(
   'avatarIcons.json',
 );
 
+/** The Keres pack manifest and its vendored SVGs (CC BY 3.0, see `keres/NOTICE.md`). */
+const KERES_ICON_MANIFEST_SOURCE = path.resolve(
+  adminDirectory,
+  '..',
+  '..',
+  'packages',
+  'shared',
+  'metadata',
+  'keresIcons.json',
+);
+const KERES_ICON_ARTWORK_SOURCE = path.resolve(
+  adminDirectory,
+  '..',
+  '..',
+  'packages',
+  'shared',
+  'metadata',
+  'keres',
+);
+
 /**
  * Downscales a square PNG by block averaging.
  *
@@ -152,12 +172,17 @@ export const KERES_AVATAR_ICONS_MODULE_ID = 'virtual:keres-avatar-icons';
 const RESOLVED_AVATAR_ICONS_MODULE_ID = `\0${KERES_AVATAR_ICONS_MODULE_ID}`;
 
 /**
- * The inner content of the Ionicons SVGs, only for the icons a person can choose as an avatar
- * (`AVATAR_ICON_OPTIONS`).
+ * The inner content of the avatar SVGs, only for the icons a person can choose as an avatar
+ * (`AVATAR_ICON_OPTIONS` plus the Keres pack).
  *
  * Cut out at build time instead of shipping the whole Ionicons font: 28 drawings against 1357
  * glyphs, a few KB against ~380 KB. The outer `<svg>` is discarded because the component builds
  * its own, with the size and colour it needs.
+ *
+ * Keres entries are keyed by stored value (`keres:<name>`), like the app stores them. Their
+ * sources carry a black background path plus a white glyph; the background is dropped and the
+ * glyph fill stripped so the shapes inherit the component's tint, exactly like the Ionicons
+ * artwork does.
  */
 async function buildAvatarIconPaths(): Promise<Record<string, string>> {
   const { readFile } = await import('node:fs/promises');
@@ -171,22 +196,37 @@ async function buildAvatarIconPaths(): Promise<Record<string, string>> {
   // does not load that package's `.ts` files (it is consumed as source, by bundlers).
   const iconNames: string[] = JSON.parse(await readFile(AVATAR_ICON_NAMES_SOURCE, 'utf8'));
 
-  const entries = await Promise.all(
+  const ionEntries = await Promise.all(
     iconNames.map(async (name) => {
       const markup = await readFile(path.join(iconDirectory, `${name}.svg`), 'utf8');
       const inner = markup.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
       return [name, inner.trim()] as const;
     }),
   );
-  return Object.fromEntries(entries);
+  const keresManifest: { name: string }[] = JSON.parse(
+    await readFile(KERES_ICON_MANIFEST_SOURCE, 'utf8'),
+  );
+  const keresEntries = await Promise.all(
+    keresManifest.map(async ({ name }) => {
+      const markup = await readFile(path.join(KERES_ICON_ARTWORK_SOURCE, `${name}.svg`), 'utf8');
+      const inner = markup
+        .replace(/^[\s\S]*?<svg[^>]*>/, '')
+        .replace(/<\/svg>\s*$/, '')
+        .replace('<path d="M0 0h512v512H0z"/>', '')
+        .replace(/\sfill="[^"]*"/g, '');
+      return [`keres:${name}`, inner.trim()] as const;
+    }),
+  );
+  return Object.fromEntries([...ionEntries, ...keresEntries]);
 }
 
 /**
  * Publishes the avatar icons as `virtual:keres-avatar-icons`.
  *
- * The SVGs come from the `ionicons` package, which is the same source of artwork that the app's
- * `@expo/vector-icons` bundles as a font - so the avatar on the site is the same drawing the
- * person picked in the application, not an approximation.
+ * The ionicons SVGs come from the `ionicons` package, which is the same source of artwork that
+ * the app's `@expo/vector-icons` bundles as a font; the keres SVGs come from the vendored pack -
+ * so the avatar on the site is the same drawing the person picked in the application, not an
+ * approximation.
  */
 export function keresAvatarIcons(): Plugin {
   let iconsPromise: Promise<Record<string, string>> | null = null;

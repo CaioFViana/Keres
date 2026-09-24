@@ -102,6 +102,14 @@ describe('Avatar', () => {
     expect(backgroundOf(second)).toBe(backgroundOf(first));
   });
 
+  it('draws keres picks through the pack renderer', async () => {
+    const screen = await render(<Avatar color="#123456" icon="keres:castle" seed="u1" />);
+
+    const images = screen.container.queryAll((node) => node.type === 'SkiaImageSVG');
+    expect(images).toHaveLength(1);
+    expect(images[0].props.svg.__mockSvg).toContain('fill="rgba(255, 255, 255, 0.75)"');
+  });
+
   it('tints the icon for contrast on light and dark backgrounds', async () => {
     const light = await render(<Avatar color="#ffffff" seed="u1" />);
     expect(light.container.queryAll((node) => node.type === 'Icon')[0].props.color).toBe(
@@ -257,6 +265,20 @@ describe('EntityRelationList', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('row-a')).toBeTruthy();
     expect(screen.getByTestId('row-b')).toBeTruthy();
+  });
+
+  it('renders a custom leading with no icon at all', async () => {
+    const screen = await render(
+      <EntityRelationList
+        emptyText="Nothing here"
+        items={[
+          { id: 'a', title: 'Lyra', color: '#123456', leading: <Text>custom leading</Text> },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('custom leading')).toBeTruthy();
+    expect(screen.container.queryAll((node) => node.type === 'Icon')).toHaveLength(0);
   });
 
   it('drops the divider on the last row only', async () => {

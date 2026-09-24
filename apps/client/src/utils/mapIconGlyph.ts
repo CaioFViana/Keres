@@ -3,8 +3,8 @@ import { resolveMapIcon } from '@keres/shared';
 
 /**
  * The Ionicons glyph for a stored map-icon name: Ionicons names render as-is, while
- * `keres:`, unknown-namespace and empty names fall back to `location` - the pack and
- * its renderer arrive later, but stored data already reserves the namespace.
+ * `keres:`, unknown-namespace and empty names fall back to `location`. `MapIcon` only
+ * calls this on its Ionicons branch - the pack renders through Skia instead.
  */
 export function mapIconGlyph(name: string | null | undefined): keyof typeof Ionicons.glyphMap {
   const resolved = resolveMapIcon(name ?? '');

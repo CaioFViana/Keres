@@ -85,20 +85,36 @@ describe('AppearsInArcsSection', () => {
   it('maps arcs to relation rows with icon and color fallbacks', async () => {
     await render(
       <AppearsInArcsSection
-        arcs={[arc(), arc({ id: 'arc-2', title: 'Second', icon: 'not-a-real-icon', color: null })]}
+        arcs={[
+          arc(),
+          arc({ id: 'arc-2', title: 'Second', icon: 'keres:castle', color: null }),
+          arc({ id: 'arc-3', title: 'Third', icon: null, color: null }),
+        ]}
       />,
     );
 
     expect(mockCollapsibleCard).toHaveBeenCalledWith('appears_in_arcs');
     const props = mockRelationList.mock.calls[0][0] as {
-      items: { id: string; title: string; icon: string; color: string }[];
+      items: {
+        id: string;
+        title: string;
+        color: string;
+        leading: { props: { children: { props: Record<string, unknown> } } };
+      }[];
       emptyText: string;
     };
     expect(props.emptyText).toBe('appears_in_arcs_empty');
-    expect(props.items).toEqual([
-      { id: 'arc-1', title: 'First Arc', icon: 'library', color: '#123456' },
-      { id: 'arc-2', title: 'Second', icon: 'library', color: '#00f' },
+    expect(props.items.map((item) => [item.id, item.title, item.color])).toEqual([
+      ['arc-1', 'First Arc', '#123456'],
+      ['arc-2', 'Second', '#00f'],
+      ['arc-3', 'Third', '#00f'],
     ]);
+    // Each row draws the arc's stored icon through MapIcon - the Keres pick passes
+    // through, while a missing icon falls back to the library.
+    const icons = props.items.map((item) => item.leading.props.children.props);
+    expect(icons[0]).toMatchObject({ name: 'library', color: '#123456' });
+    expect(icons[1]).toMatchObject({ name: 'keres:castle', color: '#00f' });
+    expect(icons[2]).toMatchObject({ name: 'library', color: '#00f' });
   });
 });
 

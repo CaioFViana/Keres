@@ -45,6 +45,7 @@ describe('component barrels', () => {
     expect(display.CollapsibleCard).toBeDefined();
     expect(display.DetailField).toBeDefined();
     expect(display.EntityMetadata).toBeDefined();
+    expect(display.MapIcon).toBeDefined();
     expect(display.SummaryCard).toBeDefined();
     expect(display.TagList).toBeDefined();
   });

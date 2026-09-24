@@ -116,17 +116,27 @@ jest.mock('../../src/help/contextualHelp', () => ({
   __esModule: true,
   screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));
+const mockStoryArcs = {
+  arcs: [] as Array<{ id: string; title: string; icon: string | null }>,
+  activeArc: null as null | { id: string; title: string; icon: string | null },
+  activeArcId: null as string | null,
+  setActiveArcId: jest.fn(),
+  showSelector: false,
+  reload: jest.fn(),
+};
 jest.mock('../../src/hooks/useStoryArcs', () => ({
   __esModule: true,
-  useStoryArcs: () => ({
-    arcs: [],
-    activeArc: null,
-    activeArcId: null,
-    setActiveArcId: jest.fn(),
-    showSelector: false,
-    reload: jest.fn(),
-  }),
+  useStoryArcs: () => mockStoryArcs,
 }));
+jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({ name, color, size }: { name: string; color: string; size: number }) => (
+      <View testID="arc-context-icon" accessibilityLabel={`${name}:${color}:${size}`} />
+    ),
+  };
+});
 
 jest.mock('../../src/screens/narrative-elements/chapters/ChapterDetailScreen', () => ({
   __esModule: true,
@@ -389,6 +399,10 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDrawerScreens.length = 0;
   mockDrawerNavigatorProps.length = 0;
+  mockStoryArcs.arcs = [];
+  mockStoryArcs.activeArc = null;
+  mockStoryArcs.activeArcId = null;
+  mockStoryArcs.showSelector = false;
   mockResponsiveLayout.isCompact = false;
   mockResponsiveLayout.isWide = false;
   mockResponsiveLayout.width = 1000;
@@ -424,6 +438,35 @@ it('configures a compact, front drawer and preserves the current story as its da
     drawerItemStyle: { height: 0, overflow: 'hidden' },
   });
   expect(drawerScreen('ChoicesStack')).toBeUndefined();
+});
+
+it('draws the arc context entry with the active arc picked icon', async () => {
+  mockStoryArcs.activeArc = { id: 'arc-1', title: 'War', icon: 'keres:castle' };
+  mockStoryArcs.activeArcId = 'arc-1';
+  mockStoryArcs.showSelector = true;
+  await renderDrawer();
+
+  const options = drawerScreen('ArcContext')?.options as {
+    drawerIcon: (props: { color: string; size: number }) => React.ReactNode;
+  };
+  const view = await render(<>{options.drawerIcon({ color: '#123456', size: 24 })}</>);
+  expect(view.getByTestId('arc-context-icon')).toHaveProp(
+    'accessibilityLabel',
+    'keres:castle:#123456:24',
+  );
+});
+
+it('falls back to the library icon with no active arc', async () => {
+  await renderDrawer();
+
+  const options = drawerScreen('ArcContext')?.options as {
+    drawerIcon: (props: { color: string; size: number }) => React.ReactNode;
+  };
+  const view = await render(<>{options.drawerIcon({ color: '#123456', size: 24 })}</>);
+  expect(view.getByTestId('arc-context-icon')).toHaveProp(
+    'accessibilityLabel',
+    'library-outline:#123456:24',
+  );
 });
 
 it('keeps both back and menu controls on a nested compact screen', async () => {

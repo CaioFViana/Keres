@@ -15,6 +15,7 @@ import DatePickerInput from '../../../src/components/common/inputs/DatePickerInp
 import StoryDateInput from '../../../src/components/common/inputs/StoryDateInput/StoryDateInput';
 import ThemePickerModal from '../../../src/components/common/inputs/ThemePickerModal/ThemePickerModal';
 import { useStoryCalendar } from '../../../src/hooks/useStoryCalendar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('../../../src/theme', () => {
   const actual = jest.requireActual('../../../src/theme');
@@ -269,6 +270,67 @@ describe('IconPickerModal', () => {
 
     await fireEvent.press(screen.getByText('cancel'));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters by search text across names and synonyms', async () => {
+    const screen = await render(
+      <IconPickerModal
+        currentIcon={null}
+        onSelectIcon={() => {}}
+        onClose={() => {}}
+        options={options}
+      />,
+    );
+
+    await fireEvent.changeText(screen.getByTestId('icon-picker-search'), 'cast');
+    expect(screen.getByTestId('icon-cell-keres:castle')).toBeTruthy();
+    expect(screen.queryByTestId('icon-cell-planet')).toBeNull();
+
+    await fireEvent.changeText(screen.getByTestId('icon-picker-search'), 'nope-nothing');
+    expect(screen.getByText('icon_picker_empty')).toBeTruthy();
+  });
+
+  it('narrows to one category through the chips', async () => {
+    const screen = await render(
+      <IconPickerModal
+        currentIcon={null}
+        onSelectIcon={() => {}}
+        onClose={() => {}}
+        options={options}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('icon-category-magic'));
+    expect(screen.getByTestId('icon-cell-keres:staff')).toBeTruthy();
+    expect(screen.queryByTestId('icon-cell-planet')).toBeNull();
+    expect(
+      screen.container.queryAll((node) => node.type === 'SkiaImageSVG'),
+    ).toHaveLength(7);
+
+    await fireEvent.press(screen.getByTestId('icon-category-essentials'));
+    expect(screen.getByTestId('icon-cell-planet')).toBeTruthy();
+    expect(screen.queryByTestId('icon-cell-keres:staff')).toBeNull();
+  });
+
+  it('selects a keres icon with its stored value and surfaces recents', async () => {
+    await AsyncStorage.clear();
+    const onSelectIcon = jest.fn();
+    const screen = await render(
+      <IconPickerModal
+        currentIcon={null}
+        onSelectIcon={onSelectIcon}
+        onClose={() => {}}
+        options={options}
+      />,
+    );
+    expect(screen.queryByTestId('icon-picker-recents')).toBeNull();
+
+    await fireEvent.changeText(screen.getByTestId('icon-picker-search'), 'castle');
+    await fireEvent.press(screen.getByTestId('icon-cell-keres:castle'));
+    expect(onSelectIcon).toHaveBeenCalledWith('keres:castle');
+
+    await fireEvent.changeText(screen.getByTestId('icon-picker-search'), '');
+    expect(screen.getByTestId('icon-picker-recents')).toBeTruthy();
   });
 });
 

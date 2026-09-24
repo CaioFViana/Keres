@@ -144,6 +144,7 @@ export * from './metadata/SeeAlsoEntityType';
 export * from './metadata/CommentEntityType';
 export * from './metadata/entityFields';
 export * from './metadata/avatar';
+export * from './metadata/keresIcons';
 export * from './metadata/mapIcons';
 export * from './utils/attributeKey';
 export * from './utils/excerptHighlight';

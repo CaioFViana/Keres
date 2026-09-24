@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import React from 'react';
+import MapIcon from '../components/common/display/MapIcon/MapIcon';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import type { MainSystemDrawerParamList } from './MainSystemStack';
 
@@ -35,6 +36,15 @@ export type MainDashboardScreenNavigationProp = DrawerNavigationProp<MainSystemD
 export const drawerIcon = (name: keyof typeof Ionicons.glyphMap) =>
   function DrawerMenuIcon({ color, size }: { color: string; size: number }) {
     return <Ionicons name={name} color={color} size={size} />;
+  };
+
+/**
+ * A drawer icon from a stored icon name (plain/`ion:`/`keres:`), for the arc context
+ * entry: the active arc's picked icon, or the fallback when no arc (or no icon) is set.
+ */
+export const drawerStoredIcon = (name: string | null | undefined, fallback: string) =>
+  function DrawerStoredMenuIcon({ color, size }: { color: string; size: number }) {
+    return <MapIcon name={name || fallback} size={size} color={color} />;
   };
 
 export const DrawerToggleButton = ({

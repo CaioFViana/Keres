@@ -9,8 +9,9 @@ declare module 'virtual:keres-logo' {
 }
 
 /**
- * The avatar icons' artwork, cut out of the `ionicons` package at build time by the
- * `keresAvatarIcons` plugin - the inner content of each `<svg>`, indexed by icon name.
+ * The avatar icons' artwork, cut out of the `ionicons` package and the vendored Keres pack at
+ * build time by the `keresAvatarIcons` plugin - the inner content of each `<svg>`, indexed by
+ * stored icon value (`keres:`-prefixed for the Keres pack).
  */
 declare module 'virtual:keres-avatar-icons' {
   const icons: Record<string, string>;

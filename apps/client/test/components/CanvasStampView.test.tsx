@@ -17,7 +17,6 @@ describe('CanvasStampView', () => {
   it.each([
     ['flag', 'flag'],
     ['ion:flag', 'flag'],
-    ['keres:castle', 'location'],
     ['fa:flag', 'location'],
     ['', 'location'],
   ])('resolves the icon %p to the glyph %p', async (icon, glyph) => {
@@ -25,6 +24,14 @@ describe('CanvasStampView', () => {
       <CanvasStampView stamp={{ id: 'ov-1', kind: 'stamp', x: 10, y: 20, icon }} />,
     );
     expect(view.getByTestId('stamp-glyph').props.children).toBe(glyph);
+  });
+
+  it('renders Keres pack icons through Skia instead of the font fallback', async () => {
+    const view = await render(
+      <CanvasStampView stamp={{ id: 'ov-1', kind: 'stamp', x: 10, y: 20, icon: 'keres:castle' }} />,
+    );
+    expect(view.container.queryAll((node) => node.type === 'SkiaImageSVG')).toHaveLength(1);
+    expect(view.queryByTestId('stamp-glyph')).toBeNull();
   });
 
   it('renders the stamp label', async () => {

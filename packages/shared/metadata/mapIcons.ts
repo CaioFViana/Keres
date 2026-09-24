@@ -16,7 +16,7 @@ export type MapIconName = string;
 /**
  * Which icon family a stored map-icon name belongs to. Plain names are Ionicons (and
  * stay valid as `.svg` file names for the Showcase build); the `ion:` prefix says the
- * same explicitly, `keres:` reserves names for the future Keres SVG pack, and anything
+ * same explicitly, `keres:` names the vendored Keres pack, and anything
  * else renders as the fallback glyph instead of guessing.
  */
 export type MapIconFamily = 'ion' | 'keres' | 'unknown';

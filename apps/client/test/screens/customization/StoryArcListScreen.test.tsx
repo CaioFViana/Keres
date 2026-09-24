@@ -23,6 +23,15 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
+jest.mock('@/src/components/common/display/MapIcon/MapIcon', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({ name }: { name: string }) => (
+      <View testID={`arc-icon-${name}`} accessibilityLabel={name} />
+    ),
+  };
+});
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (...args: unknown[]) => mockUseScreenHeader(...args),
@@ -145,6 +154,18 @@ it('renders arc cards and opens the form on press', async () => {
   await waitFor(() => expect(view.getByText('Prologue')).toBeTruthy());
   await fireEvent.press(view.getByText('Prologue'));
   expect(mockNavigate).toHaveBeenCalledWith('StoryArcForm', { arcId: 'arc-1' });
+});
+
+it('draws each arc with its picked icon or the library fallback', async () => {
+  mockGetArcsForStory.mockResolvedValue([
+    makeArc({ id: 'arc-1', title: 'Prologue', icon: 'keres:castle' }),
+    makeArc({ id: 'arc-2', title: 'Rising', icon: null }),
+  ]);
+  const view = await render(<StoryArcListScreen />);
+
+  await waitFor(() => expect(view.getByText('Rising')).toBeTruthy());
+  expect(view.getByTestId('arc-icon-keres:castle')).toBeTruthy();
+  expect(view.getByTestId('arc-icon-library')).toBeTruthy();
 });
 
 it('does not navigate when read-only', async () => {

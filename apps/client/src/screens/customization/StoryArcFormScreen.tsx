@@ -5,6 +5,7 @@ import { useDurableFormDraft } from '@/src/hooks/useDurableFormDraft';
 import { useFormResetHeaderAction } from '@/src/hooks/useFormResetHeaderAction';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Button, TextInput, ThemePickerModal } from '@/src/components/common';
+import IconPickerInput from '@/src/components/common/inputs/IconPickerInput/IconPickerInput';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useStoryArcs } from '@/src/hooks/useStoryArcs';
@@ -29,13 +30,24 @@ import { StyleSheet, Text, View } from 'react-native';
 
 type Nav = NativeStackNavigationProp<CustomizationStackParamList, 'StoryArcForm'>;
 
-type ArcFormDraftFields = { title: string; description: string; themeOverride: string | null };
+type ArcFormDraftFields = {
+  title: string;
+  description: string;
+  icon: string | null;
+  themeOverride: string | null;
+};
 
-const CREATE_PRISTINE: ArcFormDraftFields = { title: '', description: '', themeOverride: null };
+const CREATE_PRISTINE: ArcFormDraftFields = {
+  title: '',
+  description: '',
+  icon: null,
+  themeOverride: null,
+};
 
 const isArcFormDraftFields = (fields: ArcFormDraftFields): boolean =>
   typeof fields.title === 'string' &&
   typeof fields.description === 'string' &&
+  (fields.icon === null || typeof fields.icon === 'string') &&
   (fields.themeOverride === null || typeof fields.themeOverride === 'string');
 
 const StoryArcFormScreen = () => {
@@ -55,6 +67,7 @@ const StoryArcFormScreen = () => {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [icon, setIcon] = useState<string | null>(null);
   const [themeOverride, setThemeOverride] = useState<string | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,10 +92,12 @@ const StoryArcFormScreen = () => {
         if (!arc) return;
         setTitle(arc.title);
         setDescription(arc.description ?? '');
+        setIcon(arc.icon ?? null);
         setThemeOverride(arc.themeOverride);
         setLoadedPristine({
           title: arc.title,
           description: arc.description ?? '',
+          icon: arc.icon ?? null,
           themeOverride: arc.themeOverride,
         });
         setLoadedUpdatedAt(arc.updatedAt?.toISOString?.() ?? null);
@@ -97,6 +112,7 @@ const StoryArcFormScreen = () => {
     }
     setTitle(fields.title);
     setDescription(fields.description);
+    setIcon(fields.icon);
     setThemeOverride(fields.themeOverride);
   }, []);
 
@@ -105,7 +121,7 @@ const StoryArcFormScreen = () => {
     entityType: 'StoryArc',
     entityId: arcId,
     enabled: !!story?.id && loaded,
-    snapshot: { title, description, themeOverride },
+    snapshot: { title, description, icon, themeOverride },
     pristine: loadedPristine ?? CREATE_PRISTINE,
     baseUpdatedAt: arcId ? loadedUpdatedAt : undefined,
     onRestore: restoreDraftFields,
@@ -113,7 +129,7 @@ const StoryArcFormScreen = () => {
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
   const isDirty =
-    JSON.stringify({ title, description, themeOverride }) !== JSON.stringify(pristineFields);
+    JSON.stringify({ title, description, icon, themeOverride }) !== JSON.stringify(pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -123,6 +139,7 @@ const StoryArcFormScreen = () => {
     const target = loadedPristine ?? CREATE_PRISTINE;
     setTitle(target.title);
     setDescription(target.description);
+    setIcon(target.icon);
     setThemeOverride(target.themeOverride);
     await deleteStoredDraft();
   }, [loadedPristine, deleteStoredDraft]);
@@ -150,6 +167,7 @@ const StoryArcFormScreen = () => {
         await service.updateArc(userId, arcId, {
           title: title.trim(),
           description: description.trim() || null,
+          icon,
           themeOverride,
         });
       else
@@ -159,7 +177,7 @@ const StoryArcFormScreen = () => {
           description: description.trim() || null,
           sortOrder: 0,
           color: null,
-          icon: null,
+          icon,
           themeOverride,
           isDefault: false,
         });
@@ -223,6 +241,11 @@ const StoryArcFormScreen = () => {
           />
         )}
       </FormField>
+      {canEdit ? (
+        <FormField label={t('arc_icon')}>
+          <IconPickerInput currentIcon={icon} onSelectIcon={setIcon} placeholder={t('arc_icon')} />
+        </FormField>
+      ) : null}
       <View style={styles.card}>
         <View style={styles.cardHeading}>
           <Ionicons name="color-palette-outline" size={24} color={colors.primary} />

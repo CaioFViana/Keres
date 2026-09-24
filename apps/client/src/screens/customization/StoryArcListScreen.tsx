@@ -1,5 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
@@ -121,11 +122,7 @@ const StoryArcListScreen = () => {
           style={styles.card}
           onPress={() => canEdit && navigation.navigate('StoryArcForm', { arcId: arc.id })}
         >
-          <Ionicons
-            name={(arc.icon as keyof typeof Ionicons.glyphMap) || 'library'}
-            size={22}
-            color={arc.color || colors.primary}
-          />
+          <MapIcon name={arc.icon || 'library'} size={22} color={arc.color || colors.primary} />
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{arc.title}</Text>
           </View>

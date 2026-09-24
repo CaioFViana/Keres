@@ -1,16 +1,26 @@
-import { AVATAR_ICON_OPTIONS as SHARED_AVATAR_ICON_OPTIONS } from '@keres/shared';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import {
+  AVATAR_ICON_OPTIONS as SHARED_AVATAR_ICON_OPTIONS,
+  KERES_ICON_CATEGORIES,
+  KERES_ICONS,
+} from '@keres/shared';
+import type { KeresIconCategory } from '@keres/shared';
+import type { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   FlatList,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
+import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
+import { useIconRecents } from '../../../../hooks/useIconRecents';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 
@@ -22,21 +32,44 @@ import Button from '@/src/components/common/controls/Button/Button';
 export const AVATAR_ICON_OPTIONS =
   SHARED_AVATAR_ICON_OPTIONS as readonly (keyof typeof Ionicons.glyphMap)[];
 
+type IconCategory = 'essentials' | KeresIconCategory;
+
+interface PickerOption {
+  /** Stored value: a plain Ionicons name, or `keres:<name>`. */
+  value: string;
+  category: IconCategory;
+  /** Lowercase haystack of the name plus search synonyms. */
+  keywords: string;
+}
+
 interface IconPickerModalProps {
   currentIcon: string | null;
   onSelectIcon: (icon: string) => void;
   onClose: () => void;
   title?: string;
-  /** The icon list to pick from - defaults to the avatar set; maps use `MAP_ICON_OPTIONS`. */
-  options?: readonly (keyof typeof Ionicons.glyphMap)[];
+  /** The Ionicons list to pick from - defaults to the avatar set; maps use `MAP_ICON_OPTIONS`. The Keres pack is always appended. */
+  options?: readonly string[];
 }
 
 const CELL_MARGIN = 4;
+
+/** `keres:bow-arrow` reads as "Bow arrow" for labels and screen readers. */
+function prettyName(value: string): string {
+  const name = value
+    .replace(/^keres:/, '')
+    .replace(/-/g, ' ')
+    .trim();
+  return name ? name.charAt(0).toUpperCase() + name.slice(1) : value;
+}
 
 /**
  * The grid changes both its size and column count with the available window. Mobile keeps four
  * columns for comfortable touch targets; wider windows use five or six columns so the picker
  * does not remain a narrow phone-sized strip in the middle of a desktop modal.
+ *
+ * Past ~40 icons a bare grid stops working, so the ~90 live behind search plus category
+ * chips: the query matches names and synonyms, chips narrow to one genre, and recent picks
+ * sit above the grid whenever nothing filters it.
  */
 const IconPickerModal: React.FC<IconPickerModalProps> = ({
   currentIcon,
@@ -49,6 +82,9 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { breakpoint } = useResponsiveLayout();
+  const { recents, remember } = useIconRecents();
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<IconCategory | 'all'>('all');
   const numColumns = breakpoint === 'wide' ? 6 : breakpoint === 'medium' ? 5 : 4;
   const iconGridSize =
     breakpoint === 'wide'
@@ -58,6 +94,54 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
         : Math.min(screenWidth * 0.7, 320);
   const iconCellSize = iconGridSize / numColumns - CELL_MARGIN * 2;
   const iconSize = breakpoint === 'wide' ? 32 : breakpoint === 'medium' ? 29 : 26;
+
+  const categoryLabels: Record<IconCategory, string> = {
+    essentials: t('icon_category_essentials'),
+    kingdoms: t('icon_category_kingdoms'),
+    adventure: t('icon_category_adventure'),
+    war: t('icon_category_war'),
+    magic: t('icon_category_magic'),
+    creatures: t('icon_category_creatures'),
+    sea: t('icon_category_sea'),
+    terrain: t('icon_category_terrain'),
+    'scifi-places': t('icon_category_scifi_places'),
+    'scifi-tech': t('icon_category_scifi_tech'),
+    mystery: t('icon_category_mystery'),
+  };
+  const categories: (IconCategory | 'all')[] = ['all', 'essentials', ...KERES_ICON_CATEGORIES];
+  const allOptions = useMemo<PickerOption[]>(
+    () => [
+      ...options.map((name) => ({
+        value: name,
+        category: 'essentials' as IconCategory,
+        keywords: name.toLowerCase(),
+      })),
+      ...KERES_ICONS.map((entry) => ({
+        value: `keres:${entry.name}`,
+        category: entry.category,
+        keywords: `${entry.name} ${entry.keywords.join(' ')}`.toLowerCase(),
+      })),
+    ],
+    [options],
+  );
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return allOptions.filter(
+      (option) =>
+        (category === 'all' || option.category === category) &&
+        (needle === '' || option.keywords.includes(needle)),
+    );
+  }, [allOptions, category, query]);
+  const visibleRecents = useMemo(() => {
+    if (query.trim() !== '' || category !== 'all') return [];
+    const values = new Set(allOptions.map((option) => option.value));
+    return recents.filter((value) => values.has(value));
+  }, [allOptions, category, query, recents]);
+
+  const handleSelect = (value: string) => {
+    remember(value);
+    onSelectIcon(value);
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -69,10 +153,30 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 20,
+      marginBottom: 12,
       color: colors.text,
       textAlign: 'center',
     },
+    search: { width: '100%', marginBottom: 12 },
+    chips: { marginBottom: 12, maxHeight: 40 },
+    chip: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: 8,
+      backgroundColor: colors.surface,
+    },
+    chipSelected: { borderColor: colors.primary },
+    chipLabel: { color: colors.textSecondary },
+    chipLabelSelected: { color: colors.primary },
+    sectionLabel: {
+      alignSelf: 'flex-start',
+      color: colors.textSecondary,
+      marginBottom: 8,
+    },
+    recents: { marginBottom: 12, maxHeight: iconCellSize + CELL_MARGIN * 2 },
     grid: {
       justifyContent: 'center',
     },
@@ -90,33 +194,86 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
     cellSelected: {
       borderColor: colors.primary,
     },
+    empty: { color: colors.textSecondary, textAlign: 'center', paddingVertical: 24 },
     buttonWrapper: {
       marginTop: 20,
       width: '60%',
     },
     iconList: {
-      maxHeight: Math.max(220, screenHeight * 0.62),
+      maxHeight: Math.max(220, screenHeight * 0.5),
     },
   });
+
+  const renderCell = (value: string) => (
+    <TouchableOpacity
+      testID={`icon-cell-${value}`}
+      accessibilityRole="button"
+      accessibilityLabel={prettyName(value)}
+      style={[styles.cell, value === currentIcon && styles.cellSelected]}
+      onPress={() => handleSelect(value)}
+    >
+      <MapIcon name={value} size={iconSize} color={colors.text} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       {title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.search}>
+        <TextInput
+          testID="icon-picker-search"
+          value={query}
+          onChangeText={setQuery}
+          placeholder={t('icon_picker_search')}
+          returnKeyType="search"
+          autoFocus={Platform.OS === 'web'}
+        />
+      </View>
+      <ScrollView
+        testID="icon-picker-categories"
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chips}
+      >
+        {categories.map((id) => (
+          <TouchableOpacity
+            key={id}
+            testID={`icon-category-${id}`}
+            accessibilityRole="button"
+            style={[styles.chip, id === category && styles.chipSelected]}
+            onPress={() => setCategory(id)}
+          >
+            <Text style={[styles.chipLabel, id === category && styles.chipLabelSelected]}>
+              {id === 'all' ? t('icon_picker_all') : categoryLabels[id]}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+      {visibleRecents.length > 0 && (
+        <>
+          <Text style={styles.sectionLabel}>{t('icon_picker_recents')}</Text>
+          <ScrollView
+            testID="icon-picker-recents"
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.recents}
+          >
+            {visibleRecents.map((value) => (
+              <React.Fragment key={value}>{renderCell(value)}</React.Fragment>
+            ))}
+          </ScrollView>
+        </>
+      )}
       <FlatList
         key={`icon-grid-${numColumns}`}
-        data={options}
-        keyExtractor={(item) => item}
+        data={visible}
+        keyExtractor={(item) => item.value}
         numColumns={numColumns}
         style={styles.iconList}
         contentContainerStyle={styles.grid}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.cell, item === currentIcon && styles.cellSelected]}
-            onPress={() => onSelectIcon(item)}
-          >
-            <Ionicons name={item} size={iconSize} color={colors.text} />
-          </TouchableOpacity>
-        )}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={<Text style={styles.empty}>{t('icon_picker_empty')}</Text>}
+        renderItem={({ item }) => renderCell(item.value)}
       />
       <View style={styles.buttonWrapper}>
         <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>

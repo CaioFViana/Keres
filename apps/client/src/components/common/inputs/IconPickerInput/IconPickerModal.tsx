@@ -4,7 +4,7 @@ import {
   KERES_ICONS,
 } from '@keres/shared';
 import type { KeresIconCategory } from '@keres/shared';
-import type { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -22,7 +22,6 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import { useIconRecents } from '../../../../hooks/useIconRecents';
 import { useTheme } from '../../../../theme';
-import Button from '@/src/components/common/controls/Button/Button';
 
 /**
  * The list lives in `@keres/shared` because the public site draws the same avatar - see
@@ -81,7 +80,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const { breakpoint } = useResponsiveLayout();
+  const { breakpoint, isCompact } = useResponsiveLayout();
   const { recents, remember } = useIconRecents();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<IconCategory | 'all'>('all');
@@ -146,37 +145,70 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
   const styles = StyleSheet.create({
     container: {
       width: iconGridSize + 40,
+      // The wrapped chips grow vertically on narrow windows; the cap keeps the whole
+      // modal on screen while the grid below yields the room.
+      maxHeight: screenHeight - 120,
       alignItems: 'center',
       padding: 20,
       backgroundColor: colors.background,
     },
+    // The close control lives in the header, not below the grid: on short windows the
+    // grid yields its room to the wrapped chips, and a bottom button would clip away
+    // with no scroll to reach it. Every fixed row carries flexShrink 0 - the web
+    // shrinks flex items by default, which would squeeze e.g. the recents scroller
+    // (a squeezed scroller clips its cells); only the grid below may yield.
+    header: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 0,
+      marginBottom: 12,
+    },
     title: {
+      flex: 1,
       fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 12,
       color: colors.text,
       textAlign: 'center',
     },
-    search: { width: '100%', marginBottom: 12 },
-    chips: { marginBottom: 12, maxHeight: 40 },
+    closeButton: {
+      padding: 5,
+    },
+    search: { width: '100%', flexShrink: 0, marginBottom: 12 },
+    // Width-bound like the search: on web an unbounded child of a centered column sizes
+    // to its content and spills past the modal instead of scrolling. The chips wrap
+    // instead of scrolling horizontally, denser on compact windows.
+    chips: {
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      flexShrink: 0,
+      gap: 8,
+      marginBottom: 12,
+    },
     chip: {
-      paddingHorizontal: 14,
-      paddingVertical: 8,
+      paddingHorizontal: isCompact ? 10 : 14,
+      paddingVertical: isCompact ? 6 : 8,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.border,
-      marginRight: 8,
       backgroundColor: colors.surface,
     },
     chipSelected: { borderColor: colors.primary },
-    chipLabel: { color: colors.textSecondary },
+    chipLabel: { color: colors.textSecondary, fontSize: isCompact ? 12 : 14 },
     chipLabelSelected: { color: colors.primary },
     sectionLabel: {
       alignSelf: 'flex-start',
+      flexShrink: 0,
       color: colors.textSecondary,
       marginBottom: 8,
     },
-    recents: { marginBottom: 12, maxHeight: iconCellSize + CELL_MARGIN * 2 },
+    recents: {
+      width: '100%',
+      flexShrink: 0,
+      marginBottom: 12,
+      maxHeight: iconCellSize + CELL_MARGIN * 2,
+    },
     grid: {
       justifyContent: 'center',
     },
@@ -195,11 +227,13 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
       borderColor: colors.primary,
     },
     empty: { color: colors.textSecondary, textAlign: 'center', paddingVertical: 24 },
-    buttonWrapper: {
-      marginTop: 20,
-      width: '60%',
-    },
     iconList: {
+      width: '100%',
+      // The only row allowed to yield: grows with its content up to the cap, and
+      // shrinks when the container's cap bites (tall wrapped chips on short
+      // windows) - the grid scrolls either way.
+      flexGrow: 1,
+      flexShrink: 1,
       maxHeight: Math.max(220, screenHeight * 0.5),
     },
   });
@@ -218,7 +252,18 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
 
   return (
     <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.header}>
+        {title ? <Text style={styles.title}>{title}</Text> : <View style={{ flex: 1 }} />}
+        <TouchableOpacity
+          testID="icon-picker-close"
+          accessibilityRole="button"
+          accessibilityLabel={t('close')}
+          onPress={onClose}
+          style={styles.closeButton}
+        >
+          <Ionicons name="close" size={24} color={colors.text} />
+        </TouchableOpacity>
+      </View>
       <View style={styles.search}>
         <TextInput
           testID="icon-picker-search"
@@ -229,12 +274,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
           autoFocus={Platform.OS === 'web'}
         />
       </View>
-      <ScrollView
-        testID="icon-picker-categories"
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.chips}
-      >
+      <View testID="icon-picker-categories" style={styles.chips}>
         {categories.map((id) => (
           <TouchableOpacity
             key={id}
@@ -248,7 +288,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
       {visibleRecents.length > 0 && (
         <>
           <Text style={styles.sectionLabel}>{t('icon_picker_recents')}</Text>
@@ -266,6 +306,7 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
       )}
       <FlatList
         key={`icon-grid-${numColumns}`}
+        testID="icon-picker-grid"
         data={visible}
         keyExtractor={(item) => item.value}
         numColumns={numColumns}
@@ -275,11 +316,6 @@ const IconPickerModal: React.FC<IconPickerModalProps> = ({
         ListEmptyComponent={<Text style={styles.empty}>{t('icon_picker_empty')}</Text>}
         renderItem={({ item }) => renderCell(item.value)}
       />
-      <View style={styles.buttonWrapper}>
-        <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
-          {t('cancel')}
-        </Button>
-      </View>
     </View>
   );
 };

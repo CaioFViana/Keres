@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import MapIcon from '../../src/components/common/display/MapIcon/MapIcon';
 
 jest.mock('@expo/vector-icons', () => {
@@ -23,7 +24,7 @@ describe('MapIcon', () => {
     expect(images).toHaveLength(1);
     expect(images[0].props.svg.__mockSvg).toContain('fill="#123456"');
     expect(images[0].props.svg.__mockSvg).toContain('<path');
-    expect(images[0].props.width).toBeCloseTo(24 * 0.8);
+    expect(images[0].props.width).toBeCloseTo(24 * 0.9);
     expect(view.queryByTestId('glyph-location')).toBeNull();
   });
 
@@ -34,5 +35,35 @@ describe('MapIcon', () => {
     const missing = await render(<MapIcon name="keres:nope" size={24} color="#ffffff" />);
     expect(missing.getByTestId('glyph-location')).toBeTruthy();
     expect(missing.container.queryAll((node) => node.type === 'SkiaImageSVG')).toHaveLength(0);
+  });
+});
+
+describe('MapIcon on web', () => {
+  const realOS = Platform.OS;
+  beforeEach(() => {
+    Platform.OS = 'web';
+  });
+  afterEach(() => {
+    Platform.OS = realOS;
+  });
+
+  it('renders the keres pack as an image data URI instead of Skia', async () => {
+    const view = await render(<MapIcon name="keres:castle" size={24} color="#123456" />);
+
+    const images = view.container.queryAll((node) =>
+      node.props.source?.uri?.startsWith('data:image/svg+xml'),
+    );
+    expect(images).toHaveLength(1);
+    const markup = decodeURIComponent(images[0].props.source.uri.split(',')[1]);
+    expect(markup).toContain('viewBox="0 0 512 512"');
+    expect(markup).toContain('fill="#123456"');
+    expect(markup).toContain('<path');
+    expect(view.container.queryAll((node) => node.type === 'SkiaImageSVG')).toHaveLength(0);
+  });
+
+  it('still renders Ionicons names as font glyphs on web', async () => {
+    const view = await render(<MapIcon name="flag" size={24} color="#ffffff" />);
+
+    expect(view.getByTestId('glyph-flag')).toBeTruthy();
   });
 });

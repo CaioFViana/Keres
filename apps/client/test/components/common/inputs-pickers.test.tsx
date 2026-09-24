@@ -1,6 +1,7 @@
 import {
   formatAttributeDateForDisplay,
   formatCalendarDate,
+  getContrastTextColor,
   partsToDayNumber,
   themeDisplayOptions,
   type CalendarDefinitionType,
@@ -143,7 +144,14 @@ describe('ColorPickerInput', () => {
     expect(swatches.length).toBe(32);
     await fireEvent.press(swatches[0]);
     const previewText = screen.getByText(/#[0-9A-F]{6}/).props.children as string;
-    await fireEvent.press(screen.getByText('select'));
+    // The confirm button doubles as the live preview, with a contrasting glyph.
+    const confirmStyle = StyleSheet.flatten(screen.getByTestId('color-picker-confirm').props.style);
+    expect(confirmStyle.backgroundColor).toBe(previewText.toLowerCase());
+    const checks = screen.container.queryAll(
+      (node) => node.type === 'Icon' && node.props.name === 'checkmark',
+    );
+    expect(checks[0].props.color).toBe(getContrastTextColor(previewText.toLowerCase()));
+    await fireEvent.press(screen.getByTestId('color-picker-confirm'));
     expect(onSelectColor).toHaveBeenCalledWith(previewText.toLowerCase());
     expect(screen.queryByText(/#[0-9A-F]{6}/)).toBeNull();
   });
@@ -155,7 +163,7 @@ describe('ColorPickerInput', () => {
     );
 
     await pressIcon(screen, 'color-palette');
-    await fireEvent.press(screen.getByText('cancel'));
+    await fireEvent.press(screen.getByTestId('color-picker-close'));
     expect(onSelectColor).not.toHaveBeenCalled();
     expect(screen.queryByText(/#[0-9A-F]{6}/)).toBeNull();
   });
@@ -184,9 +192,9 @@ describe('ColorPickerModal', () => {
     );
 
     expect(screen.queryByText('Pick a color')).toBeNull();
-    await fireEvent.press(screen.getByText('select'));
+    await fireEvent.press(screen.getByTestId('color-picker-confirm'));
     expect(onSelectColor).toHaveBeenCalledWith('#00ff00');
-    await fireEvent.press(screen.getByText('cancel'));
+    await fireEvent.press(screen.getByTestId('color-picker-close'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
@@ -226,7 +234,7 @@ describe('IconPickerInput', () => {
 
     expect(screen.getByText('star')).toBeTruthy();
     await pressIcon(screen, 'star');
-    await fireEvent.press(screen.getByText('cancel'));
+    await fireEvent.press(screen.getByTestId('icon-picker-close'));
     expect(onSelectIcon).not.toHaveBeenCalled();
     expect(screen.queryByText('Avatar icon')).toBeNull();
   });
@@ -257,7 +265,7 @@ describe('IconPickerModal', () => {
     expect(onSelectIcon).toHaveBeenCalledWith('planet');
   });
 
-  it('closes through the cancel button', async () => {
+  it('closes through the header button', async () => {
     const onClose = jest.fn();
     const screen = await render(
       <IconPickerModal
@@ -268,7 +276,7 @@ describe('IconPickerModal', () => {
       />,
     );
 
-    await fireEvent.press(screen.getByText('cancel'));
+    await fireEvent.press(screen.getByTestId('icon-picker-close'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -303,9 +311,7 @@ describe('IconPickerModal', () => {
     await fireEvent.press(screen.getByTestId('icon-category-magic'));
     expect(screen.getByTestId('icon-cell-keres:staff')).toBeTruthy();
     expect(screen.queryByTestId('icon-cell-planet')).toBeNull();
-    expect(
-      screen.container.queryAll((node) => node.type === 'SkiaImageSVG'),
-    ).toHaveLength(7);
+    expect(screen.container.queryAll((node) => node.type === 'SkiaImageSVG')).toHaveLength(7);
 
     await fireEvent.press(screen.getByTestId('icon-category-essentials'));
     expect(screen.getByTestId('icon-cell-planet')).toBeTruthy();
@@ -331,6 +337,40 @@ describe('IconPickerModal', () => {
 
     await fireEvent.changeText(screen.getByTestId('icon-picker-search'), '');
     expect(screen.getByTestId('icon-picker-recents')).toBeTruthy();
+  });
+
+  it('bounds the scrollers and grid to the modal width', async () => {
+    await AsyncStorage.clear();
+    const screen = await render(
+      <IconPickerModal
+        currentIcon={null}
+        onSelectIcon={() => {}}
+        onClose={() => {}}
+        options={options}
+      />,
+    );
+
+    await fireEvent.changeText(screen.getByTestId('icon-picker-search'), 'castle');
+    await fireEvent.press(screen.getByTestId('icon-cell-keres:castle'));
+    await fireEvent.changeText(screen.getByTestId('icon-picker-search'), '');
+
+    // On web an unbounded child of a centered column sizes to its content and spills
+    // past the modal instead of scrolling.
+    const categoriesStyle = StyleSheet.flatten(
+      screen.getByTestId('icon-picker-categories').props.style,
+    );
+    expect(categoriesStyle.width).toBe('100%');
+    // The category chips wrap instead of scrolling horizontally.
+    expect(categoriesStyle.flexWrap).toBe('wrap');
+    const recentsStyle = StyleSheet.flatten(screen.getByTestId('icon-picker-recents').props.style);
+    expect(recentsStyle.width).toBe('100%');
+    const gridStyle = StyleSheet.flatten(screen.getByTestId('icon-picker-grid').props.style);
+    expect(gridStyle.width).toBe('100%');
+    // Only the grid may yield when the capped modal runs out of room: the web shrinks
+    // flex items by default, and a squeezed recents scroller clips its cells.
+    expect(categoriesStyle.flexShrink).toBe(0);
+    expect(recentsStyle.flexShrink).toBe(0);
+    expect(gridStyle.flexShrink).toBe(1);
   });
 });
 

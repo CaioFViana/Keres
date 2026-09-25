@@ -2,7 +2,11 @@ const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockDispatch = jest.fn();
-const mockNavigation = { dispatch: (...args: unknown[]) => mockDispatch(...args) };
+const mockNavigate = jest.fn();
+const mockNavigation = {
+  dispatch: (...args: unknown[]) => mockDispatch(...args),
+  navigate: (...args: unknown[]) => mockNavigate(...args),
+};
 const mockSelectAll = jest.fn();
 const mockDrizzle = {
   select: () => ({ from: () => ({ all: (...args: unknown[]) => mockSelectAll(...args) }) }),
@@ -239,6 +243,15 @@ describe('AppSettingsScreen', () => {
     expect(view.getByText('reset_application')).toBeTruthy();
     expect(view.getByText(/Keres/)).toBeTruthy();
     expect(view.getByTestId('pill-select_language').props.children).toBe('select_language:en');
+  });
+
+  it('opens the credits screen from the Keres emblem', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByLabelText('credits_open_credits');
+
+    await fireEvent.press(view.getByLabelText('credits_open_credits'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('Credits');
   });
 
   it('updates the username', async () => {

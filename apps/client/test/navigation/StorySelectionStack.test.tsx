@@ -112,6 +112,10 @@ jest.mock('../../src/screens/enterstack/ChangePasswordScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/enterstack/CreditsScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/enterstack/FriendDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -205,6 +209,7 @@ it.each([
   ['ServerManagementDrawer', 'ServerManagement'],
   ['FriendshipDrawer', 'FriendshipList'],
   ['PacksDrawer', 'PackList'],
+  ['Settings', 'Settings'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {
@@ -222,7 +227,7 @@ it.each([
   expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
 
-it.each([['ImportExport'], ['PublishStory'], ['ExampleStories'], ['Settings']])(
+it.each([['ImportExport'], ['PublishStory'], ['ExampleStories']])(
   'closes the drawer when the plain entry %s is tapped while focused',
   async (drawerName) => {
     await renderDrawer();

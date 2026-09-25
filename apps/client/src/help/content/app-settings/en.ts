@@ -4,7 +4,7 @@ const page: HelpPage = {
   id: 'app-settings',
   title: 'App settings',
   summary: 'Adjust your local name, language, and Keres appearance on this device.',
-  keywords: ['dark mode', 'language', 'local username', 'reset application'],
+  keywords: ['dark mode', 'language', 'local username', 'reset application', 'credits'],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
@@ -34,6 +34,10 @@ const page: HelpPage = {
     {
       type: 'paragraph',
       text: 'Language and appearance apply throughout this device. Show help controls the contextual help shortcut in supported page headers. Suggest literary devices only shows or hides that menu item; nothing is deleted. The local name is not the same as a server account name, @tag, or profile. Resetting removes local stories, media, and saved connections from this device.',
+    },
+    {
+      type: 'paragraph',
+      text: 'The Keres emblem at the bottom of the screen opens the credits, with this release’s version and the licenses of the bundled icons and fonts.',
     },
     {
       type: 'seeAlso',

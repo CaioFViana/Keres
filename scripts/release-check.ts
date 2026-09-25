@@ -8,6 +8,8 @@ import {
   RELEASE_VERSIONS_FILE,
   assertSemver,
   readJson,
+  readReleaseName,
+  readReleasePhrase,
   readReleaseVersion,
   VERSIONED_JSON_FILES,
 } from './lib/version';
@@ -74,6 +76,14 @@ function reportReleaseVersions(): void {
   const source = readFileSync(join(repoRoot, RELEASE_VERSIONS_FILE), 'utf8');
   const read = (name: string) =>
     new RegExp(`export const ${name} = (\\d+);`).exec(source)?.[1] ?? '<missing>';
+
+  const phrase = readReleasePhrase()?.trim();
+  if (!phrase) {
+    throw new Error(
+      `The release phrase is missing from ${APP_RELEASE_FILE}: the credits screen would ship an empty quote.`,
+    );
+  }
+  console.log(`  Release: ${readReleaseName()} - "${phrase}"`);
 
   console.log(`  Story export format: ${read('CURRENT_STORY_FORMAT_VERSION')}`);
   console.log(

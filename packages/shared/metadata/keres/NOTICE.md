@@ -17,7 +17,8 @@ repository's license:
   - Carl Olsen — <https://twitter.com/unstoppableCarl>
   - Skoll — <https://game-icons.net> (no personal link published upstream)
 - Per-icon author and upstream slug live in `../keresIcons.json`
-  (`author` / `source`); the in-app credits screen reads that manifest.
+  (`author` / `source`); the credits-screen entry in `../AppRelease.ts` mirrors these
+  authors, pinned to the manifest by `test/metadata/appRelease.test.ts`.
 
 Adaptation note (CC BY): at build/render time Keres drops the source files'
 black background path and recolors the white glyph path with the icon's tint.

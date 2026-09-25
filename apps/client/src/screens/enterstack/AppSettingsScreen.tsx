@@ -5,17 +5,17 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
 import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
-import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
+import type { SettingsStackParamList } from '../../navigation/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { setEditorDraftDb } from '../../services/EditorDraftService';
 import { mediaFileService } from '../../services/MediaFileService';
@@ -31,12 +31,12 @@ import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
-type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
+type SettingsScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'Settings'>;
 
 const SettingsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  useScreenHeader({ target: 'self', title: t('settings_title') });
+  useScreenHeader({ target: 'parent', title: t('settings_title') });
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -324,12 +324,18 @@ const SettingsScreen = () => {
       </View>
 
       <View style={styles.branding}>
-        <Image
-          source={require('../../../assets/images/desktop_icon.png')}
-          style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
-          resizeMode="contain"
-          accessibilityLabel="Keres"
-        />
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Credits')}
+          accessibilityLabel={t('credits_open_credits')}
+          accessibilityRole="button"
+        >
+          <Image
+            source={require('../../../assets/images/desktop_icon.png')}
+            style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
+            resizeMode="contain"
+            accessibilityLabel="Keres"
+          />
+        </TouchableOpacity>
         <Text style={[styles.brandVersion, { color: colors.textSecondary }]}>
           Keres {APP_RELEASE.version} {APP_RELEASE.name}
         </Text>

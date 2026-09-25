@@ -18,6 +18,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   ImportExport: 'import-export',
   PublishStory: 'publish-story',
   Settings: 'app-settings',
+  Credits: 'app-settings',
   ServerManagementDrawer: 'what-is-a-server',
   ServerManagement: 'what-is-a-server',
   ServerRegistration: 'add-server',

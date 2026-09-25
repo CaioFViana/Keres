@@ -4,7 +4,7 @@ const page: HelpPage = {
   id: 'app-settings',
   title: 'Configurações do aplicativo',
   summary: 'Ajuste seu nome local, idioma e aparência do Keres neste aparelho.',
-  keywords: ['tema escuro', 'idioma', 'nome de usuário', 'redefinir aplicativo'],
+  keywords: ['tema escuro', 'idioma', 'nome de usuário', 'redefinir aplicativo', 'créditos'],
   blocks: [
     { type: 'heading', level: 2, text: 'O que é' },
     {
@@ -38,6 +38,10 @@ const page: HelpPage = {
     {
       type: 'paragraph',
       text: 'Mostrar ajuda controla o atalho de ajuda contextual nos cabeçalhos das páginas compatíveis. Sugerir recursos literários apenas mostra ou oculta aquele item do menu; nada é apagado.',
+    },
+    {
+      type: 'paragraph',
+      text: 'O emblema Keres no fim da tela abre os créditos, com a versão desta release e as licenças dos ícones e fontes incluídos.',
     },
     {
       type: 'seeAlso',

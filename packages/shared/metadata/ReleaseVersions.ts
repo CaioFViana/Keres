@@ -7,10 +7,10 @@
  * as a literal `6` and quietly fell a version behind, and the only thing that noticed was a guard
  * that fires after the packages are already stale.
  *
- * **Not in `AppRelease.ts`**, deliberately. That file is machine-written: `bun run version:set`
- * rewrites it whole from a template, so anything added to it disappears at the next release. It
- * holds the app's identity, which the tool owns; this holds the compatibility numbers, which people
- * own.
+ * **Not in `AppRelease.ts`**, deliberately. That file holds the app's identity, which the
+ * tool owns (`bun run version:set` stamps its `name` and `version` fields in place), next to the
+ * release phrase and the credits, which people own; this holds the compatibility numbers, which
+ * people own too but for a different reason - the format and the wire, not the release's face.
  *
  * Each is re-exported from the module that explains what it means - `StoryExportVersion.ts`,
  * `SyncProtocol.ts` and `PackSchemas.ts` - so call sites keep importing from the place that

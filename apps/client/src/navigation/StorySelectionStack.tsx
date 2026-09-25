@@ -22,6 +22,7 @@ import { useHasRegisteredServer } from '../hooks/useHasRegisteredServer';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
+import CreditsScreen from '../screens/enterstack/CreditsScreen';
 import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
@@ -84,6 +85,15 @@ export type PacksStackParamList = {
   ShippedPacks: undefined;
 };
 
+/**
+ * The settings stack: the credits screen is reached *from* Settings (tapping the Keres emblem)
+ * and belongs behind it, so it gets a back arrow instead of a hamburger.
+ */
+export type SettingsStackParamList = {
+  Settings: undefined;
+  Credits: undefined;
+};
+
 export type StorySelectionDrawerParamList = {
   StorySelectionMain: NavigatorScreenParams<StorySelectionMainStackParamList>;
   ServerManagementDrawer: NavigatorScreenParams<ServerManagementStackParamList>;
@@ -92,7 +102,7 @@ export type StorySelectionDrawerParamList = {
   PublishStory: undefined;
   ExampleStories: undefined;
   PacksDrawer: NavigatorScreenParams<PacksStackParamList>;
-  Settings: undefined;
+  Settings: NavigatorScreenParams<SettingsStackParamList>;
   StoryDevicesDrawer: NavigatorScreenParams<StoryDevicesStackParamList>;
   HelpDrawer: NavigatorScreenParams<HelpStackParamList>;
 };
@@ -102,6 +112,7 @@ const StorySelectionMainStack = createNativeStackNavigator<StorySelectionMainSta
 const ServerManagementStack = createNativeStackNavigator<ServerManagementStackParamList>();
 const FriendshipStack = createNativeStackNavigator<FriendshipStackParamList>();
 const PacksStack = createNativeStackNavigator<PacksStackParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 const storySelectionStackRootScreens = new Set([
   'StorySelectionScreen',
@@ -237,6 +248,29 @@ const PacksStackNavigator = () => {
         options={{ headerTitle: t('shipped_packs_title') }}
       />
     </PacksStack.Navigator>
+  );
+};
+
+const SettingsStackNavigator = () => {
+  const { t } = useTranslation();
+
+  return (
+    <SettingsStack.Navigator
+      screenOptions={{
+        headerShown: false, // Header is managed by the Drawer Navigator
+      }}
+    >
+      <SettingsStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ headerTitle: t('settings_title') }}
+      />
+      <SettingsStack.Screen
+        name="Credits"
+        component={CreditsScreen}
+        options={{ headerTitle: t('credits_title') }}
+      />
+    </SettingsStack.Navigator>
   );
 };
 
@@ -483,13 +517,13 @@ const StorySelectionNavigator = () => {
         />
         <Drawer.Screen
           name="Settings"
-          component={SettingsScreen}
+          component={SettingsStackNavigator}
           options={{
             title: t('settings_title'),
             drawerLabel: t('settings_title'),
             drawerIcon: drawerIcon('settings-outline'),
           }}
-          listeners={drawerItemListeners('Settings')}
+          listeners={drawerItemListeners('Settings', 'Settings')}
         />
       </Drawer.Navigator>
       <ShippedPacksInstallerOverlay />

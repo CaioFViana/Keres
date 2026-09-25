@@ -1,19 +1,19 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import type { WorldRule } from '@keres/shared/entities/WorldRule'; // Import the WorldRule entity interface
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class WorldRuleClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'WorldRule';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(dbInstance: AppDrizzleClient): void {
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = dbInstance;
   }
 
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) {
       throw new Error('WorldRuleClientSyncHandler: Drizzle client (db) not set.');
     }

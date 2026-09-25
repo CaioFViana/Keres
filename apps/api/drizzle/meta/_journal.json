@@ -302,6 +302,13 @@
       "when": 1790283825859,
       "tag": "0042_greedy_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790289285756,
+      "tag": "0043_optimal_misty_knight",
+      "breakpoints": true
     }
   ]
 }

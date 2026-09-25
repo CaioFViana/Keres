@@ -366,7 +366,7 @@ describe('uploadNewStoryToServer', () => {
     await seedOperation('op-favorite', { entityType: 'Favorite', operationVersion: 2 });
     await seedOperation('op-comment', { entityType: 'Comment', operationVersion: 3 });
     await seedOperation('op-character', { entityType: 'Character', operationVersion: 4 });
-    await seedOperation('op-board', { entityType: 'Board', operationVersion: 4 });
+    await seedOperation('op-board', { entityType: 'Board', operationVersion: 1 });
 
     await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
 

@@ -28,6 +28,13 @@ export const operationLog = table(
      * Null on rows written before this column existed.
      */
     entityVersion: integer('entity_version'),
+    /**
+     * The client's idempotency key: the ULID of the row in the *client's* op log that produced
+     * this operation. Globally unique, so the (storyId, clientOperationId) unique index below is
+     * safe. Null on rows from clients too old to send it - and NULLs never collide under a
+     * unique index on either engine.
+     */
+    clientOperationId: text('client_operation_id'),
     createdAt: timestampNow('created_at'),
   },
   (table) => [
@@ -56,6 +63,12 @@ export const operationLog = table(
       table.entityType,
       table.entityId,
       table.entityVersion,
+    ),
+    // Push idempotency: a resend after a lost response finds its original row here instead of
+    // hitting a false `version_conflict` against its own already-applied work.
+    uniqueIndex('operation_log_story_id_client_operation_id_idx').on(
+      table.storyId,
+      table.clientOperationId,
     ),
   ],
 );

@@ -46,9 +46,8 @@ export const CURRENT_PACK_FORMAT_VERSION = 2;
  * payload, a column that starts arriving null, a rule the server begins to enforce. Most releases
  * do not touch it, which is the whole reason it is separate from the app's version.
  *
- * These two numbers move **only in an official release**, never in ordinary development. Schema
- * work on this branch (nullable `Scene.chapterId`, Gallery `document`/`link` + `sourceUrl`) waits
- * for that bump; raising them here would cut off peers and invalidate example stories mid-cycle.
+ * These two numbers move **only in an official release**, never in ordinary development:
+ * raising them mid-cycle cuts off peers and invalidates example stories.
  *
  * **2** - `Scene.locationId` became nullable. A client on 1 declares `location_id TEXT NOT NULL`
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a

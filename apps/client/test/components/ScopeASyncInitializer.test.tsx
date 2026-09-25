@@ -16,6 +16,7 @@ const mockApiClient = {
   setTokenProvider: jest.fn(),
   setActiveServer: jest.fn(),
   setBaseUrl: jest.fn(),
+  get: jest.fn(async (): Promise<any> => null),
 };
 jest.mock('../../src/services/apiClient', () => ({
   __esModule: true,
@@ -25,6 +26,7 @@ jest.mock('../../src/services/apiClient', () => ({
     return mockApiClient;
   },
   isOfflineError: (error: { isOffline?: boolean }) => error?.isOffline === true,
+  apiUrl: (url: string, endpoint: string) => `${url}${endpoint}`,
 }));
 
 const mockAuthTokenManager = { name: 'auth-token-manager' };
@@ -235,7 +237,7 @@ describe('SyncInitializer', () => {
     expect(mockSetAuthDb).toHaveBeenCalledWith(mockDrizzle);
     expect(mockApiClient.setActiveServer).not.toHaveBeenCalled();
     expect(mockRealtimeClass).toHaveBeenCalledTimes(1);
-    expect(mockRtStart).toHaveBeenCalledWith(undefined);
+    expect(mockRtStart).toHaveBeenCalledWith();
   });
 
   it('imports stories missing locally and refreshes the list', async () => {
@@ -285,6 +287,41 @@ describe('SyncInitializer', () => {
     expect(mockShowNotification).toHaveBeenCalledWith('failed_to_sync_with_server: Home', 'error');
   });
 
+  it('skips a server whose sync protocol the app outgrew, with a clear message', async () => {
+    mockGetAllServers.mockResolvedValue([server]);
+    mockApiClient.get.mockResolvedValueOnce({
+      status: 200,
+      data: { version: '0.1', syncProtocol: { current: 1, minSupported: 1 } },
+    });
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+
+    expect(mockShowNotification).toHaveBeenCalledWith('server_version_mismatch', 'error');
+    expect(mockSyncFriendships).not.toHaveBeenCalled();
+    expect(mockSyncEngine.fetchServerStoryPreviews).not.toHaveBeenCalled();
+  });
+
+  it('syncs with a server whose protocol still covers the app', async () => {
+    mockGetAllServers.mockResolvedValue([server]);
+    mockApiClient.get.mockResolvedValueOnce({
+      status: 200,
+      data: { version: '9.9', syncProtocol: { current: 99, minSupported: 1 } },
+    });
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+
+    expect(mockShowNotification).not.toHaveBeenCalledWith('server_version_mismatch', 'error');
+    expect(mockSyncFriendships).toHaveBeenCalledWith('user-1', server);
+  });
+
   it('reports stories that fail to download', async () => {
     mockGetAllServers.mockResolvedValue([server]);
     mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue([
@@ -314,11 +351,63 @@ describe('SyncInitializer', () => {
     await flush();
 
     expect(mockSyncEngine.activateStory).toHaveBeenCalledWith('story-1', server);
-    expect(mockSyncEngine.requestSync).toHaveBeenCalledWith('initial');
+    expect(mockSyncEngine.requestSync).not.toHaveBeenCalled();
     expect(mockSyncEngine.startSync).toHaveBeenCalledTimes(1);
     expect(mockUserSettings.current.setActiveServer).toHaveBeenCalledWith(server);
-    expect(mockRtStart).toHaveBeenCalledWith('story-1');
+    expect(mockRtStart).toHaveBeenCalledWith();
     expect(mockRtSubscribe).toHaveBeenCalledWith('story-1');
+  });
+
+  it('keeps the realtime connections up across story switches, re-pointing the subscription', async () => {
+    mockStoryState.current = { selectedStory: { id: 'story-1', serverId: 'srv-1' } };
+    mockGetAllServers.mockResolvedValue([server]);
+    mockGetServerById.mockResolvedValue(server);
+    const view = await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+    await flush();
+
+    expect(mockRealtimeClass).toHaveBeenCalledTimes(1);
+    expect(mockRtSubscribe).toHaveBeenCalledWith('story-1');
+    mockRealtimeClass.mockClear();
+    mockRtStop.mockClear();
+    mockRtSubscribe.mockClear();
+
+    mockStoryState.current = { selectedStory: { id: 'story-2', serverId: 'srv-1' } };
+    await view.rerender(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+    await flush();
+
+    expect(mockRealtimeClass).not.toHaveBeenCalled();
+    expect(mockRtStop).not.toHaveBeenCalled();
+    expect(mockRtSubscribe).toHaveBeenCalledWith('story-2');
+    expect(mockSyncEngine.activateStory).toHaveBeenCalledWith('story-2', server);
+  });
+
+  it('retries story activation once before giving up on it', async () => {
+    mockStoryState.current = { selectedStory: { id: 'story-1', serverId: 'srv-1' } };
+    mockGetAllServers.mockResolvedValue([server]);
+    mockGetServerById.mockResolvedValue(server);
+    mockSyncEngine.activateStory.mockRejectedValueOnce(new Error('timed out'));
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+    await flush();
+
+    expect(mockSyncEngine.activateStory).toHaveBeenCalledTimes(2);
+    expect(mockSyncEngine.startSync).toHaveBeenCalledTimes(1);
+    expect(mockShowNotification).not.toHaveBeenCalled();
+    expect(mockSyncEngine.deactivateStory).not.toHaveBeenCalled();
   });
 
   it('stops sync when the story leaves its server', async () => {

@@ -6,6 +6,7 @@ import { MAX_SYNC_PULL_BATCH, type StoryUpdate } from '@keres/shared';
 import * as schema from '../../src/db/schema';
 import type { OperationLogSelect } from '../../src/db/schema';
 import type { ClientSyncEntityHandler } from '../../src/services/entity-sync-handlers/ClientSyncEntityHandler';
+import { recordLocalOperation } from '../../src/utils/syncUtils';
 import { SyncPull, type FetchRemoteUpdatesInput } from '../../src/services/sync/SyncPull';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -81,6 +82,7 @@ beforeEach(async () => {
           pushFailed: jest.fn(),
           syncFailed: jest.fn(),
           protocolMismatch: jest.fn(),
+          storyNotFound: jest.fn(),
           message: jest.fn(),
         }) as never,
     },
@@ -264,7 +266,8 @@ describe('remote operation log', () => {
     const [stored] = await database.db.query.operationLogs.findMany();
     expect(stored).toMatchObject({
       userId: 'unknown',
-      operationVersion: 0,
+      // Local counter (was 0), not the missing server version - one sequence per story.
+      operationVersion: 1,
       serverOperationVersion: 0,
     });
     expect(stored.id).toBeTruthy();
@@ -320,24 +323,21 @@ describe('reconciliation decisions', () => {
   });
 
   /**
-   * Forward compatibility: a newer server may send an operation type this build has never heard
-   * of. With no remote values to compare, there is nothing disputed - the local edits stay and
-   * are rebased onto the new version, instead of being escalated into a conflict nobody can
-   * resolve.
+   * Fail-closed like the batch applier: an operation type this build has never heard of carries
+   * no interpretable values, so rebasing onto it would silently advance past the unknown
+   * operation. The applier stops such updates before dispatch; reconcile refuses them too, so
+   * no future direct caller can reintroduce the lenient path.
    */
-  it('preserves local edits when the remote operation type is unknown', async () => {
+  it('refuses to reconcile a remote operation type it does not know', async () => {
     const local = pending();
 
-    const result = await pull.reconcileRemoteUpdate(
-      update({ type: 'teleport' } as never),
-      [local],
-      handler,
-    );
+    await expect(
+      pull.reconcileRemoteUpdate(update({ type: 'teleport' } as never), [local], handler),
+    ).rejects.toThrow('cannot reconcile remote operation type');
 
-    expect(result).toEqual({ conflicted: false });
     expect(handler.applyUpdate).not.toHaveBeenCalled();
     expect(recordConflict).not.toHaveBeenCalled();
-    expect(rebase).toHaveBeenCalledWith([local], 4);
+    expect(rebase).not.toHaveBeenCalled();
   });
 
   it('applies disjoint server fields and rebases the local operation without a prompt', async () => {
@@ -398,6 +398,37 @@ describe('reconciliation decisions', () => {
         reason: 'concurrent_edit',
         localOperationType: 'reorder',
         localValues: { reorderItems: [{ id: 'scene-local', newIndex: 1 }] },
+      }),
+    );
+  });
+
+  it('attaches every disputing reorder to the conflict so one resolution settles all', async () => {
+    const first = {
+      ...pending('reorder', { reorderItems: [{ id: 'scene-a', newIndex: 1 }], version: 3 }),
+      id: 'local-reorder-1',
+      operationVersion: 2,
+    };
+    const second = {
+      ...pending('reorder', { reorderItems: [{ id: 'scene-b', newIndex: 2 }], version: 4 }),
+      id: 'local-reorder-2',
+      operationVersion: 3,
+    };
+
+    const result = await pull.reconcileRemoteUpdate(
+      update({
+        type: 'reorder',
+        entity: 'Chapter',
+        id: 'chapter-1',
+        reorderItems: [{ id: 'scene-server', newIndex: 1 }],
+      } as never),
+      [first, second],
+      handler,
+    );
+
+    expect(result).toEqual({ conflicted: true });
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationIds: ['local-reorder-1', 'local-reorder-2'],
       }),
     );
   });
@@ -931,5 +962,144 @@ describe('fetching remote updates', () => {
       name: 'AbortError',
     });
     expect(get).not.toHaveBeenCalled();
+  });
+
+  it('stops at maxPages and logs the remaining backlog instead of paging forever', async () => {
+    const fullPage = (base: number) =>
+      Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) =>
+        update({ operationVersion: base + index }),
+      );
+    const get = jest
+      .fn()
+      .mockResolvedValueOnce(page({ updates: fullPage(1) }))
+      .mockResolvedValueOnce(page({ updates: fullPage(501) }))
+      .mockResolvedValueOnce(page({ updates: fullPage(1001) }));
+    const fetcher = pullWithClient(get);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await fetcher.fetchRemoteUpdates(fetchInput({ maxPages: 2 }));
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(result.updates).toHaveLength(MAX_SYNC_PULL_BATCH * 2);
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('2-page ceiling'));
+    logSpy.mockRestore();
+  });
+
+  it('advances the favorites cursor per page instead of refetching the same rows', async () => {
+    const firstPage = Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) =>
+      update({ operationVersion: index + 1 }),
+    );
+    const favorite = (operationVersion: number) =>
+      update({ entity: 'Favorite', id: `fav-${operationVersion}`, operationVersion });
+    const get = jest
+      .fn()
+      .mockResolvedValueOnce(page({ updates: [...firstPage, favorite(501), favorite(502)] }))
+      .mockResolvedValueOnce(page({ updates: [update({ operationVersion: 503 })] }));
+    const fetcher = pullWithClient(get);
+
+    const result = await fetcher.fetchRemoteUpdates(fetchInput());
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[1][0]).toContain('lastOperationVersion=502');
+    expect(get.mock.calls[1][0]).toContain('lastPublicFavoriteVersion=502');
+    expect(result.updates).toHaveLength(MAX_SYNC_PULL_BATCH + 3);
+    const favoriteIds = result.updates
+      .filter((entry) => entry.entity === 'Favorite')
+      .map((entry) => entry.id);
+    expect(new Set(favoriteIds).size).toBe(favoriteIds.length);
+  });
+
+  it('stays silent when the last allowed page proves the backlog is drained', async () => {
+    const fullPage = Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) =>
+      update({ operationVersion: index + 1 }),
+    );
+    const get = jest
+      .fn()
+      .mockResolvedValueOnce(page({ updates: fullPage }))
+      .mockResolvedValueOnce(page({ updates: [update({ operationVersion: 501 })] }));
+    const fetcher = pullWithClient(get);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    const result = await fetcher.fetchRemoteUpdates(fetchInput({ maxPages: 2 }));
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(result.updates).toHaveLength(MAX_SYNC_PULL_BATCH + 1);
+    expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('-page ceiling'));
+    logSpy.mockRestore();
+  });
+});
+
+describe('remote record numbering', () => {
+  it('numbers recorded remote ops from the local counter, keeping the server version aside', async () => {
+    await pull.recordRemoteOperationLocally(update({ operationId: 'srv-4', operationVersion: 4 }));
+
+    const stored = await database.db.query.operationLogs.findFirst({
+      where: eq(schema.operationLogs.id, 'srv-4'),
+    });
+    // Local space (counter was 0), not the server's 4 - the two sequences must never share
+    // the column, or local writes collide with recorded rows once past the import point.
+    expect(stored).toMatchObject({ operationVersion: 1, serverOperationVersion: 4 });
+    expect(
+      (await database.db.query.stories.findFirst({
+        where: eq(schema.stories.id, STORY_ID),
+      }))!.lastOperationLog,
+    ).toBe(1);
+  });
+
+  it('keeps one dense sequence when local writes interleave with recorded remote ops', async () => {
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'local-user',
+      'update',
+      'Character',
+      'character-1',
+      {
+        name: 'Local',
+        version: 2,
+      },
+    );
+    await pull.recordRemoteOperationLocally(update({ operationId: 'srv-9', operationVersion: 9 }));
+    await recordLocalOperation(
+      database.db,
+      STORY_ID,
+      'local-user',
+      'update',
+      'Character',
+      'character-1',
+      {
+        name: 'Local again',
+        version: 3,
+      },
+    );
+
+    const rows = await database.db.query.operationLogs.findMany({
+      columns: { operationVersion: true, serverOperationVersion: true },
+    });
+    expect(rows.map((row) => row.operationVersion).sort((a, b) => a - b)).toEqual([1, 2, 3]);
+    expect(rows.find((row) => row.operationVersion === 2)).toMatchObject({
+      serverOperationVersion: 9,
+    });
+  });
+});
+
+describe('pending payloads that parse to a non-object value', () => {
+  it('records the conflict without a client version instead of crashing', async () => {
+    const nil = pending('update', {});
+    nil.id = 'local-nil';
+    nil.payload = 'null';
+    const num = pending('update', {});
+    num.id = 'local-num';
+    num.payload = '5';
+
+    for (const op of [nil, num]) {
+      const result = await pull.reconcileRemoteUpdate(
+        update({ changes: { name: 'Server', version: 4 } }),
+        [op],
+        handler,
+      );
+      expect(result).toEqual({ conflicted: false });
+    }
+    expect(rebase).toHaveBeenCalledTimes(2);
   });
 });

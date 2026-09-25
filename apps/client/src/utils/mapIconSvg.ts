@@ -34,10 +34,7 @@ export function tintIconShapes(shapes: string, color: string): string {
   return shapes
     .replace(/\sfill="[^"]*"/g, '')
     .replace(/\stransform="[^"]*"/g, '')
-    .replace(
-      /<(path|circle|rect|polygon)\b([^>]*?)\s*\/>/g,
-      `<$1$2 fill="${fill}"/>`,
-    );
+    .replace(/<(path|circle|rect|polygon)\b([^>]*?)\s*\/>/g, `<$1$2 fill="${fill}"/>`);
 }
 
 /**

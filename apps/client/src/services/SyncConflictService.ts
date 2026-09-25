@@ -4,14 +4,16 @@ import type {
   SyncConflictReason,
 } from '@keres/shared';
 import { findContestedFields, syncConflictValuesDiffer, validateBoardContent } from '@keres/shared';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, ne } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { SyncConflictSelect } from '../db/schema';
 import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { withOpLogLock } from '../utils/opLogMutex';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
 import { createBoardService } from './storymanagement/BoardService';
+import { applyReorderToLocalDb } from './sync/applyReorderToLocalDb';
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -89,115 +91,6 @@ function parseJson<T>(raw: string | null, fallback: T): T {
 }
 
 export { findContestedFields, mergeLocalOperationPayloads } from '@keres/shared';
-
-/**
- * Applies a remote reorder (or the server's version of one that conflicted) to the local database. It
- * lives here, and not in `SyncEngineService`, because `resolveKeepServer` also needs it for the reorder
- * case - and this file must not depend back on `SyncEngineService`, which already depends on this one
- * (see `conflictService` there).
- */
-export async function applyReorderToLocalDb(
-  db: AppDrizzleClient,
-  update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-  operationTime: Date,
-  options?: { bumpVersions?: boolean },
-): Promise<void> {
-  const { reorderItems } = update;
-  if (!reorderItems || reorderItems.length === 0) return;
-  // Resolving keep-server re-applies the arrangement over rows the abandoned local op already
-  // bumped: bumping again would count the speculation twice, so the resolution applies the
-  // order without touching versions and aligns the container separately instead.
-  const bumpVersions = options?.bumpVersions !== false;
-
-  if (update.entity === 'Story') {
-    const target = (update as StoryReorderingStoryUpdate).reorderTarget;
-    if (
-      target !== undefined &&
-      target !== 'Event' &&
-      target !== 'StorySchemaField' &&
-      target !== 'Stat'
-    ) {
-      // A target this build does not reorder (a newer server's collection): the chapters
-      // branch below matches no rows by id, so this degrades to a no-op rather than
-      // corrupting anything - but it is worth one line in the log.
-      console.warn(
-        `applyReorderToLocalDb: unrecognised reorder target '${target}', skipping items.`,
-      );
-    }
-  }
-
-  await db.transaction(async (tx) => {
-    for (const item of reorderItems) {
-      if (update.entity === 'Chapter') {
-        // Reordering scenes within a chapter
-        await tx
-          .update(schema.scenes)
-          .set({
-            index: item.newIndex,
-            updatedAt: operationTime,
-            version: bumpVersions ? sql`${schema.scenes.version} + 1` : undefined,
-          })
-          .where(eq(schema.scenes.id, item.id));
-      } else if (
-        update.entity === 'Story' &&
-        (update as StoryReorderingStoryUpdate).reorderTarget === 'StorySchemaField'
-      ) {
-        await tx
-          .update(schema.storySchemaFields)
-          .set({
-            order: item.newIndex - 1,
-            updatedAt: operationTime,
-            version: bumpVersions ? sql`${schema.storySchemaFields.version} + 1` : undefined,
-          })
-          .where(eq(schema.storySchemaFields.id, item.id));
-      } else if (
-        update.entity === 'Story' &&
-        (update as StoryReorderingStoryUpdate).reorderTarget === 'Stat'
-      ) {
-        await tx
-          .update(schema.stats)
-          .set({
-            order: item.newIndex - 1,
-            updatedAt: operationTime,
-            version: bumpVersions ? sql`${schema.stats.version} + 1` : undefined,
-          })
-          .where(eq(schema.stats.id, item.id));
-      } else if (update.entity === 'Story') {
-        // Reordering chapters (or events, which share their table) within a story
-        await tx
-          .update(schema.chapters)
-          .set({
-            index: item.newIndex,
-            updatedAt: operationTime,
-            version: bumpVersions ? sql`${schema.chapters.version} + 1` : undefined,
-          })
-          .where(eq(schema.chapters.id, item.id));
-      }
-    }
-
-    // The container bumps with its rows: the server bumps it once per applied reorder, so an
-    // applier that skips this would base its next container edit on a stale version.
-    if (bumpVersions && update.id) {
-      if (update.entity === 'Chapter') {
-        await tx
-          .update(schema.chapters)
-          .set({
-            updatedAt: operationTime,
-            version: sql`${schema.chapters.version} + 1`,
-          })
-          .where(eq(schema.chapters.id, update.id));
-      } else if (update.entity === 'Story') {
-        await tx
-          .update(schema.stories)
-          .set({
-            updatedAt: operationTime,
-            version: sql`${schema.stories.version} + 1`,
-          })
-          .where(eq(schema.stories.id, update.id));
-      }
-    }
-  });
-}
 
 /** Any local table holding a syncable entity. */
 type SyncTable = Exclude<ReturnType<typeof getEntityTable>, undefined>;
@@ -294,30 +187,34 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     values: Record<string, any>,
     baseVersion: number,
   ) => {
-    const story = await db.query.stories.findFirst({
-      where: eq(schema.stories.id, conflict.storyId),
-      columns: { lastOperationLog: true, userId: true },
-    });
-    const nextOperationVersion = (story?.lastOperationLog || 0) + 1;
+    // Same per-story lock as recordLocalOperation: both sequence operationVersion
+    // against stories.lastOperationLog, so they must never interleave.
+    await withOpLogLock(conflict.storyId, async () => {
+      const story = await db.query.stories.findFirst({
+        where: eq(schema.stories.id, conflict.storyId),
+        columns: { lastOperationLog: true, userId: true },
+      });
+      const nextOperationVersion = (story?.lastOperationLog || 0) + 1;
 
-    await db.insert(schema.operationLogs).values({
-      id: createULID(),
-      storyId: conflict.storyId,
-      userId: story?.userId || 'local_user',
-      operationVersion: nextOperationVersion,
-      operationType,
-      entityType: conflict.entityType,
-      entityId: conflict.entityId,
-      payload: JSON.stringify({ ...values, version: baseVersion + 1 }),
-      createdAt: new Date(),
-      isSynced: false,
-      conflictState: null,
-    });
+      await db.insert(schema.operationLogs).values({
+        id: createULID(),
+        storyId: conflict.storyId,
+        userId: story?.userId || 'local_user',
+        operationVersion: nextOperationVersion,
+        operationType,
+        entityType: conflict.entityType,
+        entityId: conflict.entityId,
+        payload: JSON.stringify({ ...values, version: baseVersion + 1 }),
+        createdAt: new Date(),
+        isSynced: false,
+        conflictState: null,
+      });
 
-    await db
-      .update(schema.stories)
-      .set({ lastOperationLog: nextOperationVersion })
-      .where(eq(schema.stories.id, conflict.storyId));
+      await db
+        .update(schema.stories)
+        .set({ lastOperationLog: nextOperationVersion })
+        .where(eq(schema.stories.id, conflict.storyId));
+    });
   };
 
   /** A generic read of the local entity, used when recreating something removed on the server. */
@@ -384,6 +281,40 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     }
   };
 
+  // A quarantined operation failed local validation, so there is no server snapshot to restore or
+  // rebase onto: a missing `serverValues` here means "unknown", not "absent". Neither "keep mine"
+  // (resend the unpushable payload) nor "keep server" (delete the local row) is well-defined, so
+  // the operation is discarded and the row stays as the user's only copy, at its current version.
+  // A discarded local delete is restored instead: the server still holds the row and no pull would
+  // repair the flags, so leaving them deleted would hide a live entity forever.
+  // Restores a discarded local delete: the server still holds the row and no pull would
+  // repair the flags, so leaving them deleted would hide a live entity forever. Only for
+  // validation quarantines - under any other reason a missing snapshot means the server lacks
+  // the row too, and the delete stands.
+  const restoreDiscardedDelete = async (conflict: PendingConflict): Promise<void> => {
+    const row = await readLocalEntity(conflict.entityType, conflict.entityId);
+    if (row) {
+      await writeEntity(
+        conflict.entityType,
+        conflict.entityId,
+        { isDeleted: false, deletedAt: null },
+        row.version,
+      );
+    }
+  };
+
+  const resolveUnpushable = async (conflict: PendingConflict): Promise<void> => {
+    await abandonOperations(conflict.localOperationIds);
+    // `isDeletedOnServer` cannot hold here (it needs a server snapshot to compare against), so
+    // every local delete in this path restores live flags unconditionally.
+    if (conflict.isLocalDelete) {
+      await restoreDiscardedDelete(conflict);
+    }
+    await closeConflict(conflict.id, 'discard');
+    entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
+    entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+  };
+
   const api: SyncConflictService = {
     async recordConflict(input: RecordConflictInput): Promise<void> {
       await blockOperations(input.localOperationIds);
@@ -406,23 +337,36 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
             ...input.localOperationIds,
           ]),
         );
+        // A validation quarantine carries no server information, only newly blocked operations:
+        // folded into a real conflict it contributes its operation ids and local values, never
+        // its reason or (absent) snapshot. Overwriting those would demote a decidable conflict
+        // into an unpushable discard, silently dropping the user's conflicting edit.
+        const contributesOpsOnly =
+          input.reason === 'validation' && existing.reason !== 'validation';
+        const incomingServerValues =
+          input.serverValues === undefined
+            ? existing.serverValues
+            : JSON.stringify(input.serverValues);
         await db
           .update(schema.syncConflicts)
           .set({
-            reason: input.reason,
-            localOperationType: input.localOperationType,
+            reason: contributesOpsOnly ? existing.reason : input.reason,
+            localOperationType: contributesOpsOnly
+              ? existing.localOperationType
+              : input.localOperationType,
             localOperationIds: JSON.stringify(mergedOperationIds),
             localValues: JSON.stringify({
               ...parseJson<Record<string, any>>(existing.localValues, {}),
               ...input.localValues,
             }),
-            serverValues:
-              input.serverValues === undefined
-                ? existing.serverValues
-                : JSON.stringify(input.serverValues),
-            clientVersion: input.clientVersion ?? existing.clientVersion,
-            serverVersion: input.serverVersion ?? existing.serverVersion,
-            message: input.message ?? existing.message,
+            serverValues: contributesOpsOnly ? existing.serverValues : incomingServerValues,
+            clientVersion: contributesOpsOnly
+              ? existing.clientVersion
+              : (input.clientVersion ?? existing.clientVersion),
+            serverVersion: contributesOpsOnly
+              ? existing.serverVersion
+              : (input.serverVersion ?? existing.serverVersion),
+            message: contributesOpsOnly ? existing.message : (input.message ?? existing.message),
           })
           .where(eq(schema.syncConflicts.id, existing.id));
         entityEventEmitter.emit('sync_conflicts_changed', input.storyId);
@@ -482,6 +426,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       const conflict = await getConflict(conflictId);
       if (!conflict) {
         console.log(`SyncConflictService: conflict ${conflictId} not found.`);
+        return;
+      }
+      if (conflict.reason === 'validation' && !conflict.serverValues) {
+        await resolveUnpushable(conflict);
         return;
       }
 
@@ -652,6 +600,10 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         console.log(`SyncConflictService: conflict ${conflictId} not found.`);
         return;
       }
+      if (conflict.reason === 'validation' && !conflict.serverValues) {
+        await resolveUnpushable(conflict);
+        return;
+      }
 
       await abandonOperations(conflict.localOperationIds);
 
@@ -695,12 +647,38 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       });
       const rawContent = conflict.localValues.content ?? original?.content;
       const content = validateBoardContent(rawContent ?? { nodes: [], edges: [] });
-      await createBoardService(db).createBoard(currentUserId, {
-        storyId: conflict.storyId,
-        name: cloneName.slice(0, 120),
-        description: original?.description ?? null,
-        content,
+      const name = cloneName.slice(0, 120);
+      // Idempotency: the clone commits before keepServer runs, so a failure between the two (or
+      // a retried tap) re-enters with the copy already saved. A live board with the same name
+      // and byte-identical content - other than the conflict's own row - is that copy: skip the
+      // create and finish the keepServer half. The entityId exclusion matters: naming the clone
+      // exactly like an unchanged original would otherwise match the original itself and lose
+      // the user's copy to the keepServer overwrite below.
+      const wanted = JSON.stringify(content);
+      const sameName = await db.query.boards.findMany({
+        where: and(
+          eq(schema.boards.storyId, conflict.storyId),
+          eq(schema.boards.name, name),
+          eq(schema.boards.isDeleted, false),
+          ne(schema.boards.id, conflict.entityId),
+        ),
+        columns: { id: true, content: true },
       });
+      const alreadyCloned = sameName.some((row) => {
+        try {
+          return JSON.stringify(row.content ?? null) === wanted;
+        } catch {
+          return false;
+        }
+      });
+      if (!alreadyCloned) {
+        await createBoardService(db).createBoard(currentUserId, {
+          storyId: conflict.storyId,
+          name,
+          description: original?.description ?? null,
+          content,
+        });
+      }
       await api.resolveKeepServer(conflictId);
     },
 
@@ -730,6 +708,11 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
               serverVersion ?? 1,
             );
           }
+        } else if (conflict.reason === 'validation' && conflict.localOperationType === 'delete') {
+          // A dismissed validation quarantine drops the delete with no server copy to revert
+          // to: restore live flags like the resolve paths do, or a live server-side row stays
+          // hidden here forever.
+          await restoreDiscardedDelete(conflict);
         }
       }
       await db

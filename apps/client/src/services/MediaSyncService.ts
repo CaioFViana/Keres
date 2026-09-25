@@ -312,6 +312,11 @@ export class MediaSyncService {
         });
         summary.downloaded += 1;
       } catch (error) {
+        // Like the upload side: an unreachable server aborts the phase as offline (fast retry),
+        // not as one failed item per row (which would only retry on the normal cadence).
+        if (isOfflineError(error)) {
+          throw error;
+        }
         console.log(
           `MediaSyncService: failed to download media ${media.id} (${media.hash}).`,
           error,

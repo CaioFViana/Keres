@@ -5,14 +5,14 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class RouteStepClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'RouteStep';
-  private dbInstance: AppDrizzleClient | null = null;
-  setDb(dbInstance: AppDrizzleClient) {
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction) {
     this.dbInstance = dbInstance;
   }
   private get db() {

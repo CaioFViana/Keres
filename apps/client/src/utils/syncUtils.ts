@@ -6,6 +6,7 @@ import type { ServerService } from '../services/ServerService';
 import { entityEventEmitter } from './EventEmitter';
 import i18n from './i18n';
 import { createULID } from './entityUtils';
+import { withOpLogLock } from './opLogMutex';
 
 /** Thrown when a story-content mutation is attempted by a user with only reader access. */
 export class StoryReadOnlyError extends Error {
@@ -88,34 +89,40 @@ export async function recordLocalOperation(
     return;
   }
 
-  // Get the current local max operation version for this story
-  const currentStory = await db.query.stories.findFirst({
-    where: (stories, { eq }) => eq(stories.id, storyId),
-    columns: { lastOperationLog: true },
+  // Serialized per story: without the lock two concurrent writers read the same
+  // counter and insert the same operationVersion (shared with recordRebasedOperation).
+  const nextOperationVersion = await withOpLogLock(storyId, async () => {
+    // Get the current local max operation version for this story
+    const currentStory = await db.query.stories.findFirst({
+      where: (stories, { eq }) => eq(stories.id, storyId),
+      columns: { lastOperationLog: true },
+    });
+
+    const next = (currentStory?.lastOperationLog || 0) + 1;
+
+    // Insert into operationLogs
+    await db.insert(schema.operationLogs).values({
+      id: createULID(),
+      storyId: storyId,
+      userId: userId,
+      operationVersion: next,
+      operationType: operationType,
+      entityType: entityType,
+      entityId: entityId,
+      payload: JSON.stringify(payload),
+      createdAt: new Date(),
+      isSynced: false,
+      serverOperationVersion: 0,
+    });
+
+    // Update the story's lastOperationLog
+    await db
+      .update(schema.stories)
+      .set({ lastOperationLog: next, updatedAt: new Date() })
+      .where(eq(schema.stories.id, storyId));
+
+    return next;
   });
-
-  const nextOperationVersion = (currentStory?.lastOperationLog || 0) + 1;
-
-  // Insert into operationLogs
-  await db.insert(schema.operationLogs).values({
-    id: createULID(),
-    storyId: storyId,
-    userId: userId,
-    operationVersion: nextOperationVersion,
-    operationType: operationType,
-    entityType: entityType,
-    entityId: entityId,
-    payload: JSON.stringify(payload),
-    createdAt: new Date(),
-    isSynced: false,
-    serverOperationVersion: 0,
-  });
-
-  // Update the story's lastOperationLog
-  await db
-    .update(schema.stories)
-    .set({ lastOperationLog: nextOperationVersion, updatedAt: new Date() })
-    .where(eq(schema.stories.id, storyId));
 
   // Without this, a local edit's own operation log row doesn't show up in the Operation Log
   // screen until it's unmounted and remounted (e.g. leaving and re-entering the story) - this

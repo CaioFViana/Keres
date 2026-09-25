@@ -19,6 +19,13 @@ import {
   type FavoritesFingerprint,
 } from './publicFavoriteRepair';
 
+/** A log row carrying an operation type this server does not know - legacy or future. */
+export class UnknownSyncOperationTypeError extends Error {
+  constructor(operationType: string, entityType: string) {
+    super(`Unknown sync operation: ${operationType}/${entityType}`);
+  }
+}
+
 /**
  * Read side of the API sync protocol. It authorizes access, applies operation-log visibility and
  * cursor rules (including public favourites), repairs legacy favourite history when needed, and
@@ -39,7 +46,9 @@ export class SyncPullService {
     favoritesFingerprint: FavoritesFingerprint | undefined;
   }> {
     const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
-    if (!story) throw new Error('Story not found.');
+    // 404, not 500: a deleted story is a settled fact, not a broken server. The client
+    // deactivates instead of retrying forever.
+    if (!story) throw new AppError(404, 'Story not found.');
 
     const role = await this.getReadRole(userId, storyId, story.userId);
     if (!role) {
@@ -84,12 +93,6 @@ export class SyncPullService {
     // advances past them - a silent permanent stall, with new history piling up above a window
     // that never moves. Filtering in SQL makes every page carry visible progress, or be honestly
     // empty only at the end of history.
-    // Visibility belongs in the query, not in a post-filter. With LIMIT-before-filter, a
-    // run of MAX_SYNC_PULL_BATCH invisible favorites (someone else's, on a story keeping them
-    // private) fills the whole page, the client receives an empty list, stops paging, and never
-    // advances past them - a silent permanent stall, with new history piling up above a window
-    // that never moves. Filtering in SQL makes every page carry visible progress, or be honestly
-    // empty only at the end of history.
     const favoriteVisibility = publishesFavorites
       ? undefined
       : or(ne(operationLog.entityType, 'Favorite'), eq(operationLog.userId, userId));
@@ -103,7 +106,9 @@ export class SyncPullService {
       limit: MAX_SYNC_PULL_BATCH,
     });
 
-    // A separate cursor exposes favourites which predate a change to public visibility.
+    // A separate cursor exposes favourites which predate a change to public visibility. It carries
+    // the same batch ceiling as the main query: when history exceeds it, the client's cursor simply
+    // continues on the next cycle instead of one pull loading the whole favourite history at once.
     const historicalPublicFavorites = publishesFavorites
       ? await db.query.operationLog.findMany({
           where: and(
@@ -112,10 +117,17 @@ export class SyncPullService {
             gt(operationLog.operationVersion, lastPublicFavoriteVersion),
           ),
           orderBy: [operationLog.operationVersion],
+          limit: MAX_SYNC_PULL_BATCH,
         })
       : [];
     // The same row can arrive through both cursors, so the merge dedupes by id and restores
     // version order: the client applies updates in sequence and must never see one twice.
+    // The merge joins two full cursors, so without the cap it can reach twice the batch size -
+    // and the client advances a SINGLE max-cursor per page, which is only valid when the page
+    // is prefix-closed. Favorites above the main page top would otherwise drag the cursor past
+    // undelivered main rows, skipping them forever. Keeping the lowest batch restores the
+    // invariant: versions are unique per story, so cut rows sort strictly above the page max
+    // and the next page picks them up.
     const operations = Array.from(
       new Map(
         [...visibleOperations, ...historicalPublicFavorites].map((operation) => [
@@ -123,9 +135,29 @@ export class SyncPullService {
           operation,
         ]),
       ).values(),
-    ).sort((left, right) => left.operationVersion - right.operationVersion);
+    )
+      .sort((left, right) => left.operationVersion - right.operationVersion)
+      .slice(0, MAX_SYNC_PULL_BATCH);
 
-    const updates = operations.map((operation) => this.toStoryUpdate(operation));
+    // A single legacy/future row must not poison the whole page: an unknown operation type is
+    // skipped with a warning and the rest of the page still goes out. Conversion failures for
+    // *known* types still throw - a corrupt row of a kind this server understands is a bug worth
+    // failing loudly on, not silent data loss.
+    const updates: StoryUpdate[] = [];
+    for (const operation of operations) {
+      try {
+        updates.push(this.toStoryUpdate(operation));
+      } catch (error) {
+        if (!(error instanceof UnknownSyncOperationTypeError)) throw error;
+        logger.warn('SyncPullService: skipping unknown sync operation type', {
+          storyId,
+          operationId: operation.id,
+          operationVersion: operation.operationVersion,
+          operationType: operation.operationType,
+          entityType: operation.entityType,
+        });
+      }
+    }
     const serverMaxOperationVersion = await this.getMaxOperationVersion(storyId);
     const publicFavorites = includeFavoritesSnapshot
       ? await db.query.favorites.findMany({
@@ -217,6 +249,6 @@ export class SyncPullService {
     if (operation.operationType === 'reorder') {
       return decodePulledReorderOperation(operation.entityType, payload, metadata);
     }
-    throw new Error(`Unknown sync operation: ${operation.operationType}/${operation.entityType}`);
+    throw new UnknownSyncOperationTypeError(operation.operationType, operation.entityType);
   }
 }

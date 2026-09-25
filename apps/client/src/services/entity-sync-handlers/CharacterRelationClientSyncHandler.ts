@@ -1,13 +1,13 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import { and, eq, or, sql } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 // Helper function to find an existing non-deleted relation for a given pair of characters
 const getExistingRelationForPair = async (
-  db: AppDrizzleClient,
+  db: AppDrizzleClient | AppDrizzleTransaction,
   storyId: string,
   charIdA: string,
   charIdB: string,
@@ -39,13 +39,13 @@ const getExistingRelationForPair = async (
 
 export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'CharacterRelation';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(dbInstance: AppDrizzleClient): void {
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = dbInstance;
   }
 
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) {
       throw new Error('CharacterRelationClientSyncHandler: Drizzle client (db) not set.');
     }

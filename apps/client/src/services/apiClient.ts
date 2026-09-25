@@ -54,6 +54,18 @@ export function isProtocolMismatchError(error: unknown): boolean {
   return (error as AxiosError).response?.status === 426;
 }
 
+/**
+ * True when the server has no such story (HTTP 404 on a sync endpoint). The story was deleted
+ * server-side: retrying changes nothing, so the engine deactivates the story instead of
+ * hammering a settled fact on every cycle.
+ */
+export function isNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  return (error as AxiosError).response?.status === 404;
+}
+
 /** True when a request or sync cycle was cancelled via AbortSignal. */
 export function isAbortError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {

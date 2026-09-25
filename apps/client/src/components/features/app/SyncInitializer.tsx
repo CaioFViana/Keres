@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { APP_RELEASE, canTalkToServer } from '@keres/shared';
 import { useDrizzle } from '../../../db';
-import apiClient, { isOfflineError } from '../../../services/apiClient';
+import apiClient, { apiUrl, isOfflineError } from '../../../services/apiClient';
 import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
 import { setEditorDraftDb } from '../../../services/EditorDraftService';
 import { createFriendshipService } from '../../../services/FriendshipService';
@@ -38,6 +39,21 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { selectedStory } = useStoryStore(); // Get selectedStory from useStoryStore
   const { t } = useTranslation();
   const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
+  // Connections outlive story switches, so the subscription applier reads the current story
+  // from a ref instead of closing over the render's value. Synced in an effect (not during
+  // render), and declared before the connection effects so it lands first every commit.
+  const selectedStoryRef = useRef(selectedStory);
+  useEffect(() => {
+    selectedStoryRef.current = selectedStory;
+  });
+
+  /** Points every live connection at the selected story (or none); the sockets stay up. */
+  const applyStorySubscription = useCallback(() => {
+    const current = selectedStoryRef.current;
+    for (const [serverId, realtime] of realtimeByServerRef.current) {
+      realtime.subscribeToStory(serverId === current?.serverId ? current.id : undefined);
+    }
+  }, []);
   const activeReconciliationsRef = useRef(new Set<Promise<unknown>>());
   const [serverRegistryRevision, setServerRegistryRevision] = useState(0);
 
@@ -101,6 +117,29 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
       console.log(`Checking server ${server.name} at ${server.url} for new stories...`);
       try {
         server = await serverService.refreshServerToken(server);
+        // The protocol was checked when this server was registered, but the app may have updated
+        // since: recheck before doing sync work, or an old server fails every call below with
+        // cryptic validation errors instead of one clear "update your server".
+        const check = await apiClient
+          .get(apiUrl(server.url, '/kerescheck'), { timeout: 5000, validateStatus: () => true })
+          .catch(() => null);
+        if (check && check.status === 200 && check.data?.version) {
+          if (!canTalkToServer(check.data.syncProtocol)) {
+            console.log(
+              `Server ${server.name} speaks sync protocol ${JSON.stringify(check.data.syncProtocol)}, too old for this app; skipping until it updates.`,
+            );
+            showNotification(
+              t('server_version_mismatch', {
+                serverVersion: check.data.version,
+                appVersion: APP_RELEASE.version,
+              }),
+              'error',
+            );
+            continue;
+          }
+        }
+        // Unreachable or unparsable: fall through to the normal calls below, whose own
+        // offline/failure handling already covers those cases.
         await friendshipService.syncFriendshipsWithServer(userId, server); // Call friendship sync
 
         const serverStoryPreviews = await syncEngine.fetchServerStoryPreviews(server);
@@ -191,7 +230,10 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   }, [startServerReconciliation]);
 
   // Friendship and permission events matter even when no story is open. Keep one
-  // WebSocket per configured server for the lifetime of the signed-in client.
+  // WebSocket per configured server for the lifetime of the signed-in client. Story switches
+  // only re-point the subscriptions (next effect): tearing every socket down and rebuilding it
+  // on each switch drops in-flight events and churns tickets for no delivery gain - the server
+  // pushes every readable story's events on each socket either way.
   useEffect(() => {
     if (!drizzleClient || !userId) return;
     let disposed = false;
@@ -207,8 +249,10 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           syncEngine,
         );
         realtimeConnections.set(server.id, realtime);
-        realtime.start(server.id === selectedStory?.serverId ? selectedStory.id : undefined);
+        realtime.start();
       }
+      // The subscription effect below may have run while the connections did not exist yet.
+      applyStorySubscription();
     };
     connectServers().catch((error) =>
       console.log('SyncInitializer: failed to start realtime connections.', error),
@@ -221,11 +265,15 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   }, [
     drizzleClient,
     userId,
-    selectedStory?.id,
-    selectedStory?.serverId,
     serverConnectionRevision,
     serverRegistryRevision,
+    applyStorySubscription,
   ]);
+
+  // The active story moves between renders; the sockets must not follow it down and up.
+  useEffect(() => {
+    applyStorySubscription();
+  }, [applyStorySubscription, selectedStory?.id, selectedStory?.serverId]);
 
   // A local operation is ready to push immediately. Remote application also emits
   // this event, but requestSync coalesces it into at most one follow-up pull.
@@ -289,14 +337,27 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
             console.log(
               `SyncInitializer: Configuring and starting sync for story ${selectedStory.id} with server ${server.name} (${server.url}).`,
             );
-            await syncEngine.activateStory(selectedStory.id, server);
+            try {
+              await syncEngine.activateStory(selectedStory.id, server);
+            } catch (activateError) {
+              // The switch waits for the running cycle to stop; on a wedged cycle it times out
+              // while the cycle is nearly always gone a moment later. One retry beats stranding
+              // sync off - a second failure falls through to the toast-and-deactivate below.
+              if (cancelled) throw activateError;
+              console.log(
+                `SyncInitializer: story activation failed, retrying once:`,
+                activateError,
+              );
+              await syncEngine.activateStory(selectedStory.id, server);
+            }
             if (cancelled) return;
-            syncEngine.requestSync('initial');
             // Without this, the only way to synchronize was a local event or a WebSocket
             // message - a missed disconnection or an app in the background for a while left
             // the local state stuck, with no periodic reconciliation to fall back on (see the
             // sync/conflicts fix plan). `startSync` is a no-op if it is already
-            // running, so it is safe to call again on every story/server change.
+            // running, so it is safe to call again on every story/server change. Its own
+            // immediate cycle makes a preceding `requestSync` pure duplication (the request
+            // would only coalesce a redundant second cycle), so there is none here.
             syncEngine.startSync();
             realtimeByServerRef.current.get(server.id)?.subscribeToStory(selectedStory.id);
             useUserSettingsStore.getState().setActiveServer(server); // Set the active server in the store

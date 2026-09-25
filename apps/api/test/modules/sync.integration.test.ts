@@ -1,4 +1,4 @@
-import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
@@ -404,7 +404,11 @@ describe('POST /sync/:storyId', () => {
     const characterId = newId();
     await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
 
-    const { data } = await push(ana.token, storyId, [createCharacter(characterId, 'Outra pessoa')]);
+    // A distinct operation carries its own idempotency key: reusing the first create's key
+    // would make this a resend (idempotent success), not a colliding second create.
+    const { data } = await push(ana.token, storyId, [
+      { ...createCharacter(characterId, 'Outra pessoa'), clientOperationId: 'local-impostor' },
+    ]);
 
     expect(data.applied).toEqual([]);
     expect(data.conflicts).toEqual([
@@ -544,6 +548,12 @@ describe('POST /sync/:storyId', () => {
       token: bia.token,
     });
     expect(reFetched.story.isDeleted).toBe(false);
+  });
+
+  it('answers 404 when the story does not exist', async () => {
+    const { status } = await push(ana.token, newId(), [createCharacter(newId(), 'Ghost')]);
+
+    expect(status).toBe(404);
   });
 });
 
@@ -844,6 +854,66 @@ describe('GET /sync/:storyId/pull', () => {
     });
 
     expect(status).toBe(401);
+  });
+
+  it('keeps a merged page prefix-closed so the client max-cursor cannot skip main rows', async () => {
+    await db
+      .update(stories)
+      .set({ favoriteBehavior: 'individual_public' })
+      .where(eq(stories.id, storyId));
+    const base = (await pull(ana.token, storyId)).data.serverMaxOperationVersion;
+
+    // A full main page, then favorites *above* the page top: without the cap the merge hands
+    // the client a page whose max sits past undelivered mains, and the client's single
+    // max-cursor skips them forever.
+    const characterIds = Array.from({ length: MAX_SYNC_PULL_BATCH + 100 }, () => newId());
+    for (let i = 0; i < characterIds.length; i += MAX_SYNC_BATCH_SIZE) {
+      const batch = characterIds
+        .slice(i, i + MAX_SYNC_BATCH_SIZE)
+        .map((id, j) => createCharacter(id, `C${i + j}`));
+      const pushed = await push(ana.token, storyId, batch);
+      expect(pushed.status).toBe(200);
+      expect(pushed.data.conflicts).toEqual([]);
+    }
+    const favoriteIds = Array.from({ length: 5 }, () => newId());
+    const favPushed = await push(
+      ana.token,
+      storyId,
+      favoriteIds.map((id, j) => ({
+        type: 'create',
+        entity: 'Favorite',
+        id,
+        data: { userId: ana.userId, entityId: characterIds[j], entityType: 'Character' },
+        clientOperationId: `fav-${id}`,
+      })),
+    );
+    expect(favPushed.status).toBe(200);
+    expect(favPushed.data.conflicts).toEqual([]);
+
+    const first = await pull(ana.token, storyId, base, 0);
+    expect(first.status).toBe(200);
+    expect(first.data.updates).toHaveLength(MAX_SYNC_PULL_BATCH);
+    const firstMax = Math.max(
+      ...first.data.updates.map((update: { operationVersion: number }) => update.operationVersion),
+    );
+    expect(firstMax).toBe(base + MAX_SYNC_PULL_BATCH);
+
+    const second = await pull(ana.token, storyId, firstMax, 0);
+    expect(second.status).toBe(200);
+    const secondVersions = second.data.updates.map(
+      (update: { operationVersion: number }) => update.operationVersion,
+    );
+    // The held-out mains plus the favorites above them, each exactly once.
+    expect(second.data.updates).toHaveLength(105);
+    expect(new Set(secondVersions).size).toBe(secondVersions.length);
+    expect(secondVersions).toContain(base + MAX_SYNC_PULL_BATCH + 50);
+    expect(secondVersions).toContain(base + MAX_SYNC_PULL_BATCH + 100 + 5);
+  });
+
+  it('answers 404 when the story does not exist', async () => {
+    const { status } = await pull(ana.token, newId());
+
+    expect(status).toBe(404);
   });
 });
 

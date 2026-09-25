@@ -1,5 +1,5 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 
 /**
  * Contract every entity's pull-path handler implements (see `registerClientSyncHandlers`).
@@ -11,7 +11,12 @@ import type { AppDrizzleClient } from '../../db';
  */
 export interface ClientSyncEntityHandler {
   entityName: string;
-  setDb(dbInstance: AppDrizzleClient): void;
+  /**
+   * Binds the database handle. The pull holds a transaction across each remote operation's
+   * apply and record steps, so it briefly rebinds the handler to that transaction (and back);
+   * both shapes expose the same query surface.
+   */
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void;
   /**
    * NOTE: the first parameter receives the active *story* id at every call site
    * (`SyncPull`/`SyncEngineService`), even though this interface names it `entityId`.

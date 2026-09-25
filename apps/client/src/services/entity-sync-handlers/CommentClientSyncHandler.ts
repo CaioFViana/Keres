@@ -5,18 +5,18 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import { comments } from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class CommentClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'Comment';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(db: AppDrizzleClient): void {
+  setDb(db: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = db;
   }
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) throw new Error('CommentClientSyncHandler: database not set.');
     return this.dbInstance;
   }

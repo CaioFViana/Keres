@@ -64,6 +64,7 @@ export class SyncOperationLogService {
       entityId,
       payload,
       entityVersion: entityVersion ?? null,
+      clientOperationId: update.clientOperationId || null,
       createdAt: update.operationTime ? new Date(update.operationTime) : new Date(),
     });
     return { id, operationVersion: nextOperationVersion };

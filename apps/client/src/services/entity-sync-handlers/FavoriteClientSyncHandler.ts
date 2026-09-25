@@ -5,18 +5,18 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import { favorites } from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class FavoriteClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'Favorite';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(db: AppDrizzleClient): void {
+  setDb(db: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = db;
   }
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) throw new Error('FavoriteClientSyncHandler: database not set.');
     return this.dbInstance;
   }

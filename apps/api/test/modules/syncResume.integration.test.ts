@@ -71,28 +71,23 @@ describe('resuming a batch whose response was lost', () => {
 
     expect(second.status).toBe(200);
     expect(second.data.processedUpdates).toBe(4);
-    // Creates and the tombstoned delete come back as already applied, without new log rows;
-    // the update cannot be proven a resend by versions alone, so it conflicts carrying the
-    // changed-fields evidence the client needs to merge it silently.
-    expect(second.data.applied).toHaveLength(3);
+    // Every op is recognized by its idempotency key and acknowledged without new log rows -
+    // including the update, which used to come back as a false `version_conflict` because a
+    // resend could not be proven by versions alone.
+    expect(second.data.applied).toHaveLength(4);
     expect(second.data.applied.every((entry: { operationId?: string }) => !entry.operationId)).toBe(
       true,
     );
-    // The tombstoned delete reports 0: no log row holds it now, and any fresher number
-    // would belong to somebody else's operation.
-    expect(
-      second.data.applied.find(
-        (entry: { clientOperationId?: string }) =>
-          entry.clientOperationId === `local-${charB}-delete`,
-      ).operationVersion,
-    ).toBe(0);
-    expect(second.data.conflicts).toHaveLength(1);
-    expect(second.data.conflicts[0]).toMatchObject({
-      entity: 'Character',
-      entityId: charA,
-      reason: 'version_conflict',
-    });
-    expect(second.data.conflicts[0].changedFields).toEqual(expect.arrayContaining(['name']));
+    expect(second.data.conflicts).toEqual([]);
+    // Each resend reports its ORIGINAL operation version, so the client's echo check keys on
+    // the row that actually holds the effect - never the current maximum.
+    for (const entry of second.data.applied) {
+      const original = first.data.applied.find(
+        (firstEntry: { clientOperationId?: string }) =>
+          firstEntry.clientOperationId === entry.clientOperationId,
+      );
+      expect(entry.operationVersion).toBe(original.operationVersion);
+    }
     expect(second.data.serverMaxOperationVersion).toBe(first.data.serverMaxOperationVersion);
 
     const rows = await db.query.characters.findMany({ where: eq(characters.storyId, storyId) });
@@ -140,7 +135,9 @@ describe('resuming a batch whose response was lost', () => {
     expect(retry.data.conflicts).toEqual([]);
     expect(retry.data.applied).toHaveLength(1);
     expect(retry.data.applied[0].operationId).toBeUndefined();
-    expect(retry.data.applied[0].operationVersion).toBe(0);
+    // The original delete log row holds the effect, so the retry reports its version (not 0)
+    // and the client's echo check can match it.
+    expect(retry.data.applied[0].operationVersion).toBe(deleted.data.applied[0].operationVersion);
     expect(retry.data.serverMaxOperationVersion).toBe(deleted.data.serverMaxOperationVersion);
 
     const row = await db.query.characters.findFirst({ where: eq(characters.id, characterId) });
@@ -154,9 +151,15 @@ describe('concurrent updates from the same base', () => {
     const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
     const base = created.data.applied[0].entityVersion;
 
+    // Two DISTINCT operations need distinct idempotency keys: sharing one key would make
+    // the second a resend of the first, not a concurrent edit.
     const [left, right] = await Promise.all([
-      push(ana.token, storyId, [updateCharacter(characterId, 'Left', base)]),
-      push(ana.token, storyId, [updateCharacter(characterId, 'Right', base)]),
+      push(ana.token, storyId, [
+        { ...updateCharacter(characterId, 'Left', base), clientOperationId: 'left-edit' },
+      ]),
+      push(ana.token, storyId, [
+        { ...updateCharacter(characterId, 'Right', base), clientOperationId: 'right-edit' },
+      ]),
     ]);
 
     const applied = [...left.data.applied, ...right.data.applied];

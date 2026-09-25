@@ -1,18 +1,15 @@
 import type {
-  ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   DeleteStoryUpdate,
   EffectiveStoryRole,
-  StoryReorderingStoryUpdate,
   StoryUpdate,
   SyncAppliedOperation,
   SyncConflict,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { sameReorderArrangement } from '@keres/shared';
-import { and, asc, eq, gt, max } from 'drizzle-orm';
+import { and, asc, eq, max } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, withWriteTransaction, type CompatibleDb } from '../../db';
+import { db, withWriteTransaction } from '../../db';
 import { operationLog, stories } from '../../db/schema';
 import { AppError } from '../../utils/errors';
 import { eventManager } from '../../utils/EventManager';
@@ -29,32 +26,10 @@ import { assertGalleryStorageQuota } from './pushGalleryQuota';
 import { collectPushMediaGarbage } from './pushMediaGc';
 import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflictDetails';
 import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
+import { findAppliedReorderTwin, findIdempotentHit } from './SyncPushIdempotency';
 import { shouldCompactStoryNow, storyUpdateFlipsFavorites } from './pushPolicy';
 import type { SyncOperationLogService } from './SyncOperationLogService';
 import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
-
-/**
- * Whether a logged reorder row disputes the same row set as the incoming op. Chapters reorder
- * scenes only; a Story reorder is scoped by its target (absent means chapters), and a
- * schema-field order additionally by its entity type. Anything unrecognised fails closed.
- */
-function reorderTwinTargetMatches(
-  entity: string,
-  logged: { reorderTarget?: unknown; schemaEntityType?: unknown },
-  incoming: { reorderTarget?: unknown; schemaEntityType?: unknown },
-): boolean {
-  if (entity !== 'Story') return true;
-  const loggedTarget = logged.reorderTarget ?? undefined;
-  const incomingTarget = incoming.reorderTarget ?? undefined;
-  if (loggedTarget !== incomingTarget) return false;
-  if (incomingTarget === 'StorySchemaField') {
-    return (
-      typeof logged.schemaEntityType === 'string' &&
-      logged.schemaEntityType === incoming.schemaEntityType
-    );
-  }
-  return true;
-}
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates
@@ -91,7 +66,9 @@ export class SyncPushService {
     });
 
     if (!story) {
-      throw new Error('Story not found.');
+      // 404, not 500: a deleted story is a settled fact, not a broken server. The client
+      // deactivates instead of retrying forever.
+      throw new AppError(404, 'Story not found.');
     }
 
     let role: EffectiveStoryRole | undefined;
@@ -127,6 +104,18 @@ export class SyncPushService {
     for (const update of updates) {
       const entityId = update.id || '';
       const entityKey = `${update.entity}:${entityId}`;
+
+      // Idempotency: when a push response is lost the client resends the same batch, and without
+      // this lookup the retry of an update hits a false `version_conflict` against its own
+      // already-applied work. Ops without a clientOperationId (old clients) keep the previous
+      // behaviour.
+      if (update.clientOperationId) {
+        const hit = await findIdempotentHit(storyId, update, entityId, this.entityHandlers);
+        if (hit) {
+          applied.push(hit);
+          continue;
+        }
+      }
 
       const recordConflict = (
         reason: SyncConflict['reason'],
@@ -315,7 +304,7 @@ export class SyncPushService {
               // comparison in the handler cannot recognise that (the rows moved on), but history
               // can: a twin applied past this base proves the intent already took effect, and its
               // own version is what the client's echo check must key on.
-              const twin = await this.findAppliedReorderTwin(
+              const twin = await findAppliedReorderTwin(
                 tx,
                 storyId,
                 update,
@@ -377,6 +366,17 @@ export class SyncPushService {
           continue;
         }
         if (error instanceof SyncConflictError) {
+          // A twin may have committed between this op's pre-check and its conflicting write
+          // (two tabs pushing the same batch): the key proves the effect already landed, so a
+          // `version_conflict` against it would be false. A genuine concurrent edit carries a
+          // different key, misses the lookup, and still conflicts below.
+          if (update.clientOperationId) {
+            const raced = await findIdempotentHit(storyId, update, entityId, this.entityHandlers);
+            if (raced) {
+              applied.push(raced);
+              continue;
+            }
+          }
           const context = conflictContext();
           const clientVersion = error.clientVersion ?? context.clientVersion;
           // It only makes sense for a `version_conflict` on an `update` of an entity that still exists - the
@@ -405,9 +405,20 @@ export class SyncPushService {
           );
           continue;
         }
-        // An unexpected failure while applying this operation. Recorded as a conflict rather than taking the
-        // batch down: the user's other operations can still be saved, and the client stops resending in a
-        // loop an operation that will never go through.
+        // An unexpected failure while applying this operation. Before calling it a conflict, check
+        // whether the op actually landed: a concurrent duplicate push (two tabs, retried batch)
+        // can lose the (storyId, clientOperationId) unique race after the twin committed, and
+        // reporting that as 'unknown' would manufacture a conflict for an applied op.
+        if (update.clientOperationId) {
+          const raced = await findIdempotentHit(storyId, update, entityId, this.entityHandlers);
+          if (raced) {
+            applied.push(raced);
+            continue;
+          }
+        }
+        // Recorded as a conflict rather than taking the batch down: the user's other operations
+        // can still be saved, and the client stops resending in a loop an operation that will
+        // never go through.
         logger.error(`SyncService: failed to apply ${update.type} on ${entityKey}`, error);
         recordConflict(
           'unknown',
@@ -501,68 +512,6 @@ export class SyncPushService {
       .from(operationLog)
       .where(eq(operationLog.storyId, storyId));
     return result.at(0)?.maxVersion || 0;
-  }
-
-  /**
-   * A logged reorder already carrying this op's exact arrangement, oldest first. Only rows
-   * applied *past* the op's base qualify: an older twin means the world moved on since, and
-   * the op is genuinely divergent. Rows without an entity version predate that column and
-   * cannot prove anything, so the comparison excludes them.
-   *
-   * Oldest, not newest: the client keys its echo check on the returned version, absorbing
-   * that one operation and applying everything else. With X-Y-X in history, pointing the
-   * retry at the newest X would absorb it while applying the older X and the Y in between,
-   * leaving the client on Y while the server holds X. The oldest twin is the op's own
-   * original (or an equivalent one already pulled), so every later twin still applies in
-   * order and both sides land on the same arrangement.
-   */
-  private async findAppliedReorderTwin(
-    tx: CompatibleDb,
-    storyId: string,
-    update: StoryUpdate,
-    entityId: string,
-    baseVersion: number,
-  ): Promise<{ operationVersion: number } | undefined> {
-    const reorder = update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate;
-    if (!Array.isArray(reorder.reorderItems) || reorder.reorderItems.length === 0) {
-      return undefined;
-    }
-    const rows = await tx
-      .select({
-        operationVersion: operationLog.operationVersion,
-        entityVersion: operationLog.entityVersion,
-        payload: operationLog.payload,
-      })
-      .from(operationLog)
-      .where(
-        and(
-          eq(operationLog.storyId, storyId),
-          eq(operationLog.entityType, update.entity),
-          eq(operationLog.entityId, entityId),
-          eq(operationLog.operationType, 'reorder'),
-          gt(operationLog.entityVersion, baseVersion),
-        ),
-      )
-      .orderBy(asc(operationLog.operationVersion));
-    for (const row of rows) {
-      const payload = (row.payload ?? {}) as {
-        reorderItems?: unknown;
-        reorderTarget?: unknown;
-        schemaEntityType?: unknown;
-      };
-      const incomingTarget = reorder as {
-        reorderTarget?: unknown;
-        schemaEntityType?: unknown;
-      };
-      if (!reorderTwinTargetMatches(update.entity, payload, incomingTarget)) continue;
-      if (
-        Array.isArray(payload.reorderItems) &&
-        sameReorderArrangement(payload.reorderItems, reorder.reorderItems)
-      ) {
-        return { operationVersion: row.operationVersion };
-      }
-    }
-    return undefined;
   }
 
   /** Reject malformed or materially future client clocks for every operation kind, including creates. */

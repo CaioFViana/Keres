@@ -433,6 +433,20 @@ describe('downloading', () => {
     expect(summary.failed).toBe(1);
   });
 
+  /** Like the upload side: an unreachable server aborts the phase as offline, fast-retrying. */
+  it('reports offline without marking downloads failed', async () => {
+    mockGalleryService.getPendingDownloads.mockResolvedValue([media('a', { localPath: null })]);
+    mockDownloadFileAsync.mockRejectedValueOnce(offlineError());
+
+    const summary = await service().syncStoryMedia(fakeClient(), SERVER, STORY_ID);
+
+    expect(summary.offline).toBe(true);
+    expect(summary.failed).toBe(0);
+    expect(mockGalleryService.setLocalFileState).not.toHaveBeenCalledWith('a', {
+      downloadState: 'failed',
+    });
+  });
+
   it('caps how many blobs it fetches in a single cycle', async () => {
     mockGalleryService.getPendingDownloads.mockResolvedValue(
       Array.from({ length: 9 }, (_, index) => media(`m${index}`, { localPath: null })),

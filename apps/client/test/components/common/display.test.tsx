@@ -271,9 +271,7 @@ describe('EntityRelationList', () => {
     const screen = await render(
       <EntityRelationList
         emptyText="Nothing here"
-        items={[
-          { id: 'a', title: 'Lyra', color: '#123456', leading: <Text>custom leading</Text> },
-        ]}
+        items={[{ id: 'a', title: 'Lyra', color: '#123456', leading: <Text>custom leading</Text> }]}
       />,
     );
 

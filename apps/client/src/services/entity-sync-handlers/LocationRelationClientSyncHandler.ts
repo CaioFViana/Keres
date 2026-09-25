@@ -5,7 +5,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { and, eq, or } from 'drizzle-orm';
-import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction, LocationRelationSelect } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
@@ -14,7 +14,7 @@ import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
  * either storage order. For 'contains' (single parent), use `getExistingParentEdge`.
  */
 const getExistingConnection = async (
-  db: AppDrizzleClient,
+  db: AppDrizzleClient | AppDrizzleTransaction,
   storyId: string,
   locationAId: string,
   locationBId: string,
@@ -45,7 +45,7 @@ const getExistingConnection = async (
 
 /** For 'contains': the child (locationBId) can only have one live parent at a time. */
 const getExistingParentEdge = async (
-  db: AppDrizzleClient,
+  db: AppDrizzleClient | AppDrizzleTransaction,
   storyId: string,
   childId: string,
   excludeRelationId?: string,
@@ -66,13 +66,13 @@ const getExistingParentEdge = async (
 
 export class LocationRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'LocationRelation';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(dbInstance: AppDrizzleClient): void {
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = dbInstance;
   }
 
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) {
       throw new Error('LocationRelationClientSyncHandler: Drizzle client (db) not set.');
     }

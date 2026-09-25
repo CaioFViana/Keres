@@ -10,6 +10,12 @@ import migrations from './migrations/index';
  * what is missing, so re-opening the database is a no-op once everything is applied.
  * A failing migration aborts startup (the error is rethrown) rather than leaving a
  * half-migrated schema behind.
+ *
+ * Each migration runs in its own transaction, journal insert included: without one, a
+ * mid-migration failure leaves partial effects behind while the journal stays empty, and
+ * the relaunch re-runs non-idempotent statements (CREATE INDEX et al) into a startup
+ * abort loop. (Plain BEGIN/COMMIT, not a driver helper, so the better-sqlite3 test fake
+ * executes the real thing.)
  */
 export async function migrate(expoDb: SQLiteDatabase) {
   console.log('migrate: Starting custom Drizzle client-side migrations...');
@@ -31,10 +37,17 @@ export async function migrate(expoDb: SQLiteDatabase) {
     if (!appliedMigrationNames.has(migration.name)) {
       console.log(`migrate: Applying migration: ${migration.name}`);
       try {
+        await expoDb.execAsync('BEGIN');
         await migration.run(expoDb);
         await expoDb.runAsync(`INSERT INTO _migrations (name) VALUES (?)`, migration.name);
+        await expoDb.execAsync('COMMIT');
         console.log(`migrate: Successfully applied migration: ${migration.name}`);
       } catch (error) {
+        try {
+          await expoDb.execAsync('ROLLBACK');
+        } catch {
+          // BEGIN itself failed: nothing to roll back.
+        }
         console.error(`migrate: Failed to apply migration ${migration.name}:`, error);
         throw error;
       }

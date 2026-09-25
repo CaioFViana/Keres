@@ -65,6 +65,7 @@ beforeEach(async () => {
     pushFailed: jest.fn(),
     syncFailed: jest.fn(),
     protocolMismatch: jest.fn(),
+    storyNotFound: jest.fn(),
     message: jest.fn(),
   };
   push = new SyncPush({
@@ -85,7 +86,8 @@ afterEach(() => {
 });
 
 describe('operation mapping', () => {
-  const build = (value: OperationLogSelect) => (push as any).buildStoryUpdateFromLocalOp(value);
+  const build = (value: OperationLogSelect) =>
+    (push as any).tryBuildStoryUpdateFromLocalOp(value).update;
 
   it('maps create, update and delete envelopes and strips local-only columns', () => {
     const create = build(
@@ -183,7 +185,7 @@ describe('pending operations and rebasing', () => {
 
   it('chains rebased versions and ignores a missing server version', async () => {
     const first = operation('first', 'update');
-    const second = operation('second', 'update');
+    const second = operation('second', 'update', { operationVersion: 2 });
     await seedOperation(first);
     await seedOperation(second);
     await database.db.insert(schema.characters).values({
@@ -476,6 +478,29 @@ describe('push result handling', () => {
     });
   });
 
+  it('stamps a legacy batch back from the max in batch order so echoes still match', async () => {
+    const first = operation('legacy-1', 'update', { operationVersion: 1 });
+    const second = operation('legacy-2', 'update', { operationVersion: 2 });
+    const third = operation('legacy-3', 'update', { operationVersion: 3 });
+    await seedOperation(first);
+    await seedOperation(second);
+    await seedOperation(third);
+
+    const result = await push.applyPushResult({ serverMaxOperationVersion: 9 } as SyncPushResult, [
+      first,
+      second,
+      third,
+    ]);
+
+    expect(result).toEqual({ applied: 3, conflicts: 0 });
+    const rows = await database.db.query.operationLogs.findMany();
+    expect(
+      rows
+        .sort((left, right) => left.id.localeCompare(right.id))
+        .map((row) => row.serverOperationVersion),
+    ).toEqual([7, 8, 9]);
+  });
+
   it('handles a response that omits the applied list', async () => {
     const local = operation('refused-only', 'update', {
       payload: JSON.stringify({ name: 'Mine', version: 2 }),
@@ -756,16 +781,19 @@ describe('push loop', () => {
     const plotScene = operation('plot-scene', 'create', {
       entityType: 'PlotScene',
       entityId: 'plot-scene-1',
+      operationVersion: 2,
       payload: JSON.stringify({ plotId: 'plot-1', sceneId: 'scene-1', note: null, version: 1 }),
     });
     const route = operation('route', 'create', {
       entityType: 'Route',
       entityId: 'route-1',
+      operationVersion: 3,
       payload: JSON.stringify({ name: 'Possible path', details: null, version: 1 }),
     });
     const routeStep = operation('route-step', 'create', {
       entityType: 'RouteStep',
       entityId: 'route-step-1',
+      operationVersion: 4,
       payload: JSON.stringify({
         routeId: 'route-1',
         position: 1,
@@ -836,6 +864,40 @@ describe('push loop', () => {
     await expect(push.pushPendingOperations()).resolves.toEqual({ offline: false });
 
     expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases a quarantined operation back to the queue when recording the conflict fails', async () => {
+    await seedOperation(
+      operation('bad', 'update', {
+        operationVersion: 1,
+        payload: JSON.stringify({ name: 'No version' }),
+      }),
+    );
+    await seedOperation(operation('good', 'update', { operationVersion: 2 }));
+    // An Error on the first round, a foreign non-Error throw on the retry: the release must
+    // not depend on the shape of what was thrown.
+    recordConflict
+      .mockRejectedValueOnce(new Error('disk I/O'))
+      .mockRejectedValue('plain string failure');
+    post.mockResolvedValue({
+      data: { applied: [{ clientOperationId: 'good', operationVersion: 3 }], conflicts: [] },
+    });
+
+    await expect(push.pushPendingOperations()).resolves.toEqual({ offline: false });
+
+    // The valid op still went out; the failed quarantine released its op for the next push
+    // instead of parking it conflicted with no conflict row to resolve it.
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(
+      await database.db.query.operationLogs.findFirst({
+        where: eq(schema.operationLogs.id, 'good'),
+      }),
+    ).toMatchObject({ isSynced: true });
+    expect(
+      await database.db.query.operationLogs.findFirst({
+        where: eq(schema.operationLogs.id, 'bad'),
+      }),
+    ).toMatchObject({ isSynced: false, conflictState: null });
   });
 
   it('reports accumulated accepted operations and conflicts once', async () => {

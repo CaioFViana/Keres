@@ -19,23 +19,68 @@ import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflic
 import type { SyncContext } from './SyncContext';
 import { deriveBaseVersion, syncEntityKey } from './syncPure';
 
+/** Rounds of push batches per cycle; a larger backlog continues on the next cycle. */
+export const PUSH_MAX_ROUNDS = 50;
+
 /** Builds and pushes local batches, then records the server's per-operation result. */
 export class SyncPush {
-  public constructor(private readonly context: SyncContext) {}
+  private readonly maxRounds: number;
+
+  public constructor(
+    private readonly context: SyncContext,
+    options?: { maxRounds?: number },
+  ) {
+    this.maxRounds = options?.maxRounds ?? PUSH_MAX_ROUNDS;
+  }
 
   public async pushPendingOperations(): Promise<{ offline: boolean }> {
     const notifier = this.context.notifier();
     let totalApplied = 0;
     let totalConflicts = 0;
+    const quarantinedEntities = new Set<string>();
+    let roundsRun = 0;
+    let lastRemaining = 0;
 
-    for (let chunk = 0; chunk < 50; chunk += 1) {
+    for (let chunk = 0; chunk < this.maxRounds; chunk += 1) {
+      roundsRun = chunk + 1;
       const pending = await this.getPushableOperations();
       const mapped: { op: OperationLogSelect; update: StoryUpdate }[] = [];
       for (const op of pending) {
-        const update = this.buildStoryUpdateFromLocalOp(op);
-        if (update) mapped.push({ op, update });
+        const built = this.tryBuildStoryUpdateFromLocalOp(op);
+        if (built.update) {
+          mapped.push({ op, update: built.update });
+        } else {
+          // Visible quarantine: an op the server could never accept becomes a conflict the user
+          // can discard, instead of sitting unsynced forever in silence. Leaving the queue counts
+          // as progress, so the loop below keeps draining the remaining valid ops.
+          try {
+            await this.quarantineUnpushableOperation(op, built.reason);
+          } catch (quarantineError: any) {
+            // The conflicted mark may already have committed while the conflict row did not: the
+            // op would sit out of every future queue with no conflict to resolve it, so release
+            // it back and retry the quarantine on the next push instead of aborting this one.
+            console.log(
+              `Quarantine failed for operation ${op.id}, retrying on the next push:`,
+              quarantineError?.message || quarantineError,
+            );
+            await this.context
+              .db()!
+              .update(schema.operationLogs)
+              .set({ conflictState: null })
+              .where(eq(schema.operationLogs.id, op.id));
+            continue;
+          }
+          quarantinedEntities.add(syncEntityKey(op.entityType, op.entityId));
+        }
       }
       const prepared = mapped.slice(0, MAX_SYNC_BATCH_SIZE);
+      if (mapped.length > prepared.length) {
+        console.log(
+          `Push batch capped at ${MAX_SYNC_BATCH_SIZE} for story ${this.context.storyId()}: ` +
+            `sending ${prepared.length} of ${mapped.length} ready operations, ` +
+            `${mapped.length - prepared.length} deferred to the next round.`,
+        );
+      }
       if (prepared.length === 0) break;
 
       if (chunk === 0) {
@@ -56,10 +101,19 @@ export class SyncPush {
       totalConflicts += summary.conflicts;
 
       const remaining = await this.getPushableOperations();
+      lastRemaining = remaining.length;
       if (remaining.length >= pending.length) {
         break;
       }
     }
+
+    if (roundsRun >= this.maxRounds && lastRemaining > 0) {
+      console.log(
+        `Push hit the ${this.maxRounds}-round ceiling for story ${this.context.storyId()} with ` +
+          `${lastRemaining} operations still queued; they continue on the next cycle.`,
+      );
+    }
+    totalConflicts += quarantinedEntities.size;
 
     if (totalApplied > 0) {
       notifier.pushedUpdates(totalApplied);
@@ -80,22 +134,44 @@ export class SyncPush {
     return { offline: false };
   }
 
-  private buildStoryUpdateFromLocalOp(op: OperationLogSelect): StoryUpdate | null {
-    const payloadData = JSON.parse(op.payload);
+  /**
+   * Builds the envelope, or explains why the op can never go to the server. The reason feeds the
+   * visible quarantine in `pushPendingOperations`; this never throws, so one corrupted row cannot
+   * abort the push of every other pending op.
+   */
+  private tryBuildStoryUpdateFromLocalOp(
+    op: OperationLogSelect,
+  ): { update: StoryUpdate; reason: null } | { update: null; reason: string } {
+    let payloadData: Record<string, any> | null = null;
+    try {
+      const parsed: unknown = JSON.parse(op.payload);
+      if (parsed && typeof parsed === 'object') payloadData = parsed as Record<string, any>;
+    } catch {
+      payloadData = null;
+    }
+    if (!payloadData) {
+      const reason =
+        `Local ${op.operationType} of ${op.entityType} ${op.entityId} has a corrupted payload ` +
+        `that cannot be parsed, so it can never be pushed.`;
+      console.warn(reason);
+      return { update: null, reason };
+    }
     const baseVersion = deriveBaseVersion(payloadData);
 
     if (
       (op.operationType === 'update' || op.operationType === 'delete') &&
       typeof baseVersion !== 'number'
     ) {
-      console.warn(
-        `Skipping ${op.operationType} ${op.entityType} ${op.entityId}: payload has no version, server would reject it as validation.`,
-      );
-      return null;
+      const reason =
+        `Local ${op.operationType} of ${op.entityType} ${op.entityId} has no version in its ` +
+        `payload, so the server would reject it as invalid.`;
+      console.warn(reason);
+      return { update: null, reason };
     }
     if (op.operationType === 'create' && !op.entityId) {
-      console.warn(`Skipping create of ${op.entityType}: missing entity id.`);
-      return null;
+      const reason = `Local create of ${op.entityType} has no entity id, so the server could never accept it.`;
+      console.warn(reason);
+      return { update: null, reason };
     }
 
     const baseUpdate: Omit<StoryUpdate, 'type'> = {
@@ -115,55 +191,123 @@ export class SyncPush {
     switch (op.operationType) {
       case 'create':
         return {
-          ...baseUpdate,
-          type: 'create',
-          data: filteredPayloadData,
-        } as CreateStoryUpdate;
+          update: {
+            ...baseUpdate,
+            type: 'create',
+            data: filteredPayloadData,
+          } as CreateStoryUpdate,
+          reason: null,
+        };
       case 'update':
         return {
-          ...baseUpdate,
-          type: 'update',
-          changes: {
-            ...filteredPayloadData,
-            version: baseVersion,
-          },
-        } as UpdateStoryUpdate;
+          update: {
+            ...baseUpdate,
+            type: 'update',
+            changes: {
+              ...filteredPayloadData,
+              version: baseVersion,
+            },
+          } as UpdateStoryUpdate,
+          reason: null,
+        };
       case 'delete':
         return {
-          ...baseUpdate,
-          type: 'delete',
-        } as DeleteStoryUpdate;
+          update: {
+            ...baseUpdate,
+            type: 'delete',
+          } as DeleteStoryUpdate,
+          reason: null,
+        };
       case 'reorder':
         if (op.entityType === 'Chapter' && Array.isArray(filteredPayloadData.reorderItems)) {
           return {
-            ...baseUpdate,
-            type: 'reorder',
-            entity: 'Chapter',
-            reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
-              ...item,
-            })),
-          } as ChapterReorderingStoryUpdate;
+            update: {
+              ...baseUpdate,
+              type: 'reorder',
+              entity: 'Chapter',
+              reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
+                ...item,
+              })),
+            } as ChapterReorderingStoryUpdate,
+            reason: null,
+          };
         }
         if (op.entityType === 'Story' && Array.isArray(filteredPayloadData.reorderItems)) {
           return {
-            ...baseUpdate,
-            type: 'reorder',
-            entity: 'Story',
-            reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
-              ...item,
-            })),
-            reorderTarget: filteredPayloadData.reorderTarget,
-            schemaEntityType: filteredPayloadData.schemaEntityType,
-          } as StoryReorderingStoryUpdate;
+            update: {
+              ...baseUpdate,
+              type: 'reorder',
+              entity: 'Story',
+              reorderItems: filteredPayloadData.reorderItems.map((item: any) => ({
+                ...item,
+              })),
+              reorderTarget: filteredPayloadData.reorderTarget,
+              schemaEntityType: filteredPayloadData.schemaEntityType,
+            } as StoryReorderingStoryUpdate,
+            reason: null,
+          };
         }
-        console.warn(
-          `Unhandled reorder operation type or entity: ${op.entityType}, ${op.operationType}`,
-        );
-        return null;
-      default:
-        console.warn(`Unhandled operation type: ${op.operationType}`);
-        return null;
+        const reason = `Local reorder of ${op.entityType} ${op.entityId} is not a shape this client can push.`;
+        console.warn(reason);
+        return { update: null, reason };
+      default: {
+        const reason = `Local operation ${op.id} has an unknown type '${op.operationType}' this client cannot push.`;
+        console.warn(reason);
+        return { update: null, reason };
+      }
     }
+  }
+
+  /**
+   * Parks an op that can never be pushed as a visible `validation` conflict. The direct update takes
+   * it out of the push queue even if the conflict service is stubbed; `recordConflict` marks it too
+   * and surfaces it on the review sheet, where keep-server/dismiss abandons the op - so this is never
+   * a silent loss, only a decision handed to the user.
+   */
+  private async quarantineUnpushableOperation(
+    op: OperationLogSelect,
+    reason: string,
+  ): Promise<void> {
+    let localValues: Record<string, any> = {};
+    let unparseable = false;
+    try {
+      const parsed: unknown = JSON.parse(op.payload);
+      if (parsed && typeof parsed === 'object') {
+        localValues = { ...(parsed as Record<string, any>) };
+      } else {
+        unparseable = true;
+      }
+    } catch {
+      unparseable = true;
+    }
+    // A legacy row can carry an operation type the schema no longer knows; the conflict still needs
+    // one of the four valid kinds, and `update` is the neutral fallback.
+    const localOperationType =
+      op.operationType === 'create' ||
+      op.operationType === 'update' ||
+      op.operationType === 'delete' ||
+      op.operationType === 'reorder'
+        ? op.operationType
+        : 'update';
+
+    await this.context
+      .db()!
+      .update(schema.operationLogs)
+      .set({ conflictState: 'conflicted' })
+      .where(eq(schema.operationLogs.id, op.id));
+    await this.context.conflictService().recordConflict({
+      storyId: this.context.storyId()!,
+      entityType: op.entityType,
+      entityId: op.entityId,
+      reason: 'validation',
+      localOperationType,
+      localOperationIds: [op.id],
+      localValues,
+      serverValues: null,
+      clientVersion: deriveBaseVersion(localValues) ?? null,
+      serverVersion: null,
+      message: unparseable ? `${reason} The stored payload could not be parsed.` : reason,
+    });
   }
 
   /**
@@ -182,7 +326,9 @@ export class SyncPush {
       // timestamp column only has second precision, so two writes in the same second (e.g. a
       // Gallery create immediately followed by its GalleryRelation create) could tie under
       // createdAt and push in the wrong order, making the server reject the dependent create.
-      orderBy: ({ operationVersion }) => [asc(operationVersion)],
+      // The id tiebreak keeps the order deterministic even if two rows ever share a version
+      // (legacy imports), instead of pushing them in whatever order the query returns.
+      orderBy: ({ operationVersion, id }) => [asc(operationVersion), asc(id)],
     });
   }
 
@@ -218,8 +364,22 @@ export class SyncPush {
     }
 
     let base = newEntityVersion;
+    let rebased = 0;
     for (const op of pendingLocalOps) {
-      const payload = JSON.parse(op.payload);
+      let payload: Record<string, any> | null = null;
+      try {
+        const parsed: unknown = JSON.parse(op.payload);
+        if (parsed && typeof parsed === 'object') payload = parsed as Record<string, any>;
+      } catch {
+        payload = null;
+      }
+      if (!payload) {
+        // A corrupted op cannot be rebased; the push quarantines it visibly instead. Skipping it
+        // here - without advancing the chain, since it will never push - keeps one bad row from
+        // aborting the rebase of every other op on the entity.
+        console.warn(`Skipping rebase of local operation ${op.id}: payload cannot be parsed.`);
+        continue;
+      }
       // The engine derives the base as `payload.version - 1`, so we write base + 1.
       payload.version = base + 1;
       await this.context
@@ -228,13 +388,15 @@ export class SyncPush {
         .set({ payload: JSON.stringify(payload) })
         .where(eq(schema.operationLogs.id, op.id));
       base += 1;
+      rebased += 1;
     }
 
     // Restore the optimistic invariant (row version = last base + 1): the merge wrote the
     // server's version into the row, but the rebased operations will advance the server past
     // it on push. Without this the next edit bases itself on the stale version and conflicts
     // spuriously. All operations here belong to one entity, so the row follows the chain's
-    // end; an entity this build does not store has no row to advance.
+    // end (skipped ops excluded - they will never push); an entity this build does not store
+    // has no row to advance.
     const first = pendingLocalOps[0];
     if (first) {
       const table = getEntityTable(first.entityType);
@@ -242,7 +404,7 @@ export class SyncPush {
         await this.context
           .db()!
           .update(table)
-          .set({ version: newEntityVersion + pendingLocalOps.length })
+          .set({ version: newEntityVersion + rebased })
           .where(eq((table as any).id, first.entityId));
       }
     }
@@ -263,16 +425,20 @@ export class SyncPush {
     const notifier = this.context.notifier();
 
     if (!Array.isArray(result?.applied) && !Array.isArray(result?.conflicts)) {
-      // A server predating this change: there is no per-operation result to inspect. We keep the old
-      // behaviour rather than stop synchronizing with it.
+      // A server predating per-operation results: all-or-nothing, versions assigned in batch
+      // order. Stamping every op with the batch max would miss every echo (each op's real
+      // version sits lower); counting back from the max restores the exact versions, since the
+      // server bumps once per applied op. A concurrent interleaving may still shift one, but
+      // that degrades to a bounded re-apply rather than missing every op of the batch.
       console.log(
         'SyncEngineService: server did not report per-operation results, assuming the whole batch was applied.',
       );
-      for (const op of pushedOperations) {
+      const firstVersion = (result?.serverMaxOperationVersion || 0) - pushedOperations.length + 1;
+      for (const [index, op] of pushedOperations.entries()) {
         await this.context
           .db()!
           .update(schema.operationLogs)
-          .set({ isSynced: true, serverOperationVersion: result?.serverMaxOperationVersion || 0 })
+          .set({ isSynced: true, serverOperationVersion: firstVersion + index })
           .where(eq(schema.operationLogs.id, op.id));
       }
       entityEventEmitter.emit('operation_log_updated', this.context.storyId());

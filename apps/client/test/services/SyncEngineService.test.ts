@@ -23,6 +23,7 @@ import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { OFFLINE_RETRY_MS, SYNC_INTERVAL_MS } from '../../src/services/SyncEngineService';
+import type { SyncCycleOutcome } from '../../src/services/sync/SyncScheduler';
 import type { SyncEngineService } from '../../src/services/SyncEngineService';
 import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
@@ -60,6 +61,8 @@ let pushResponse: any;
 let offlineOn: 'pull' | 'push' | null;
 /** A reachable server can still reject a request; that is not an offline retry. */
 let serverFailureOn: 'pull' | 'push' | null;
+/** When set, the adapter answers 404 as if the story had been deleted server-side. */
+let storyGoneOn: 'pull' | 'push' | null;
 /** When set, the adapter refuses the sync protocol version (HTTP 426) instead. */
 let protocolMismatchOn: 'pull' | 'push' | null;
 /** When true, a push is acknowledged for every operation in the request body. */
@@ -104,6 +107,16 @@ function installAdapter() {
       error.config = config;
       error.request = {};
       error.response = { status: 500, data: { message: 'server error' }, config, headers: {} };
+      throw error;
+    }
+    if (
+      (isPull && storyGoneOn === 'pull') ||
+      (!isPull && method === 'POST' && storyGoneOn === 'push')
+    ) {
+      const error: any = new Error('Request failed with status code 404');
+      error.config = config;
+      error.request = {};
+      error.response = { status: 404, data: { message: 'Story not found.' }, config, headers: {} };
       throw error;
     }
     if (
@@ -223,10 +236,10 @@ const readStory = () =>
   database.db.query.stories.findFirst({ where: eq(schema.stories.id, STORY_ID) });
 
 /**
- * A single synchronization cycle, without timers. The return value is the "server unreachable" signal
- * that `startSync` uses to choose between the normal cadence and the fast-retry one.
+ * A single synchronization cycle, without timers. The outcome drives the scheduler cadence:
+ * 'offline' retries fast, 'failed' backs off, 'ok' keeps the normal interval.
  */
-async function runOneCycle(): Promise<boolean> {
+async function runOneCycle(): Promise<SyncCycleOutcome> {
   return (engine as any).performSync(new AbortController().signal);
 }
 
@@ -242,6 +255,7 @@ beforeEach(async () => {
   };
   offlineOn = null;
   serverFailureOn = null;
+  storyGoneOn = null;
   protocolMismatchOn = null;
   pullPages = null;
   pullPageIndex = 0;
@@ -305,7 +319,7 @@ describe('pull', () => {
       role: 'owner',
     };
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect((await readStory())!.lastServerSyncedLog).toBe(0);
     expect(mockShowNotification).not.toHaveBeenCalledWith(
@@ -436,7 +450,7 @@ describe('pull', () => {
       role: 'owner',
     };
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect((await readStory())!.lastServerSyncedLog).toBe(0);
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
@@ -803,7 +817,7 @@ describe('push', () => {
     await seedPendingOperation();
     offlineOn = 'push';
 
-    await expect(runOneCycle()).resolves.toBe(true);
+    await expect(runOneCycle()).resolves.toBe('offline');
   });
 });
 
@@ -1095,7 +1109,7 @@ describe('when the server cannot be reached', () => {
     await seedStory();
     serverFailureOn = 'pull';
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
@@ -1104,12 +1118,46 @@ describe('when the server cannot be reached', () => {
     await seedStory();
     protocolMismatchOn = 'pull';
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect(mockShowNotification).toHaveBeenCalledWith(
       expect.stringContaining('newer version'),
       'error',
     );
+  });
+
+  it('deactivates the story instead of retrying a pull for a story the server deleted', async () => {
+    await seedStory();
+    storyGoneOn = 'pull';
+
+    await expect(runOneCycle()).resolves.toBe('failed');
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('no longer exists'),
+      'error',
+    );
+    expect((engine as any).storyId).toBeNull();
+  });
+
+  it('keeps the pull progress when the story is deleted between the pull and the push', async () => {
+    await seedStory();
+    await seedPendingOperation();
+    pullResponse = {
+      updates: [remoteCreate('char-remote', 'Remote', 1)],
+      publicFavorites: [],
+      serverMaxOperationVersion: 1,
+      role: 'owner',
+    };
+    storyGoneOn = 'push';
+
+    await expect(runOneCycle()).resolves.toBe('failed');
+
+    expect((await readStory())!.lastServerSyncedLog).toBe(1);
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('no longer exists'),
+      'error',
+    );
+    expect((engine as any).storyId).toBeNull();
   });
 
   it('treats an entity it cannot store as a protocol mismatch, still blocking the pull', async () => {
@@ -1131,7 +1179,7 @@ describe('when the server cannot be reached', () => {
       role: 'owner',
     };
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     // Loud, not silent: the user learns the app is behind. The cursor still does not advance
     // past the unknown operation - skipping it would lose it below the cursor, even after an
@@ -1153,7 +1201,7 @@ describe('when the server cannot be reached', () => {
     const operation = await seedPendingOperation();
     serverFailureOn = 'push';
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect(
       (
@@ -1170,12 +1218,12 @@ describe('guards before a cycle runs', () => {
   it('does nothing without a story', async () => {
     await engine.deactivateStory();
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     expect(seen).toEqual([]);
   });
 
   it('does nothing when the story is not in the local database', async () => {
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
   });
 
@@ -1183,7 +1231,7 @@ describe('guards before a cycle runs', () => {
     (engine as any).storyId = STORY_ID;
     (engine as any).client.defaults.baseURL = undefined;
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     expect((engine as any).storyId).toBeNull();
     expect(seen).toEqual([]);
   });
@@ -1191,7 +1239,7 @@ describe('guards before a cycle runs', () => {
   it('stops before reaching the network when its local database was cleared', async () => {
     (engine as any)._db = null;
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     expect((engine as any).storyId).toBeNull();
     expect(seen).toEqual([]);
   });
@@ -1321,7 +1369,7 @@ describe('startSync', () => {
   };
 
   beforeEach(() => {
-    performSyncSpy = jest.spyOn(engine as any, 'performSync').mockResolvedValue(false);
+    performSyncSpy = jest.spyOn(engine as any, 'performSync').mockResolvedValue('ok');
     jest.useFakeTimers();
   });
 
@@ -1359,7 +1407,7 @@ describe('startSync', () => {
   });
 
   it('reschedules sooner, at the offline retry interval, after an unreachable cycle', async () => {
-    performSyncSpy.mockResolvedValue(true); // true = server was unreachable this cycle
+    performSyncSpy.mockResolvedValue('offline'); // 'offline' = server was unreachable this cycle
     engine.startSync();
     await flush();
     performSyncSpy.mockClear();
@@ -1399,7 +1447,7 @@ describe('media reconciliation', () => {
     await seedStory();
     mockSyncStoryMedia.mockRejectedValueOnce(new Error('disco cheio'));
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
   });
 });
 
@@ -1444,10 +1492,11 @@ describe('remote-operation safety boundaries', () => {
       role: 'owner',
     };
     (engine as any).entityHandlers.set('Character', {
+      setDb: jest.fn(),
       applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
     });
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect((await readStory())?.lastServerSyncedLog).toBe(0);
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
@@ -1462,7 +1511,7 @@ describe('lifecycle and activation guards', () => {
   it('reports running while the scheduler chain is active', async () => {
     jest.useFakeTimers();
     try {
-      jest.spyOn(engine as any, 'performSync').mockResolvedValue(false);
+      jest.spyOn(engine as any, 'performSync').mockResolvedValue('ok');
       engine.startSync();
       expect(engine.lifecycle).toBe('running');
     } finally {
@@ -1547,7 +1596,7 @@ describe('pull response fallbacks', () => {
     await seedStory();
     delete (pullResponse as any).updates;
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     expect((await readStory())?.lastServerSyncedLog).toBe(0);
   });
 
@@ -1640,7 +1689,7 @@ describe('direct apply paths', () => {
     expect((await readStory())?.lastServerSyncedLog).toBe(3);
   });
 
-  it('records but does not apply an update type it does not know', async () => {
+  it('blocks the pull loudly on an update type it does not know', async () => {
     await seedStory();
     pullResponse = {
       updates: [
@@ -1657,8 +1706,10 @@ describe('direct apply paths', () => {
       role: 'owner',
     };
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
+    // Fail-closed like an unknown entity: skipping would lose the operation below the cursor,
+    // even after an upgrade.
     expect(
       await database.db.query.characters.findFirst({
         where: eq(schema.characters.id, 'char-x'),
@@ -1667,8 +1718,12 @@ describe('direct apply paths', () => {
     const logged = await database.db.query.operationLogs.findMany({
       where: eq(schema.operationLogs.entityId, 'char-x'),
     });
-    expect(logged).toHaveLength(1);
-    expect((await readStory())?.lastServerSyncedLog).toBe(1);
+    expect(logged).toHaveLength(0);
+    expect((await readStory())?.lastServerSyncedLog).toBe(0);
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('newer version'),
+      'error',
+    );
   });
 
   it('skips a reorder with an empty item list and keeps applying what follows', async () => {
@@ -1804,7 +1859,7 @@ describe('echoes and malformed updates', () => {
       role: 'owner',
     };
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
     expect((await readStory())?.lastServerSyncedLog).toBe(0);
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
@@ -1823,11 +1878,12 @@ describe('pull failure containment', () => {
       role: 'owner',
     };
     (engine as any).entityHandlers.set('Character', {
+      setDb: jest.fn(),
       getById: jest.fn().mockResolvedValue(undefined),
       applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
     });
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect(
       await database.db.query.characters.findFirst({
@@ -1841,23 +1897,44 @@ describe('pull failure containment', () => {
     await seedStory();
     pullResponse = {
       updates: [
-        remoteCreate('char-broken-1', 'Quebrado 1', 1),
-        remoteCreate('char-broken-2', 'Quebrado 2', 2),
+        remoteCreate('char-broken', 'Quebrado', 1),
+        {
+          type: 'create',
+          entity: 'CustomWidget',
+          id: 'widget-broken',
+          operationVersion: 2,
+          operationId: 'srv-2',
+          data: { id: 'widget-broken' },
+        },
       ],
       publicFavorites: [],
       serverMaxOperationVersion: 2,
       role: 'owner',
     };
-    (engine as any).entityHandlers.set('Character', {
+    const failingHandler = () => ({
+      setDb: jest.fn(),
       getById: jest.fn().mockResolvedValue(undefined),
       applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
     });
+    (engine as any).entityHandlers.set('Character', failingHandler());
+    (engine as any).entityHandlers.set('CustomWidget', failingHandler());
 
-    await runOneCycle();
+    // The batch stops at the first failure, so a single failing op cannot tell per-item from
+    // consolidated reporting. Two cycles burn the Character's retries; on the third it is
+    // retired and the batch reaches the widget, failing two entities in one cycle.
+    await expect(runOneCycle()).resolves.toBe('failed');
+    await expect(runOneCycle()).resolves.toBe('failed');
+    mockShowNotification.mockClear();
+
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect(mockShowNotification).toHaveBeenCalledTimes(1);
     expect(mockShowNotification).toHaveBeenCalledWith(
       expect.stringContaining('Character'),
+      'error',
+    );
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.stringContaining('CustomWidget'),
       'error',
     );
   });
@@ -1866,6 +1943,7 @@ describe('pull failure containment', () => {
     await seedStory();
     const applyCreate = jest.fn().mockResolvedValue(undefined);
     (engine as any).entityHandlers.set('CustomWidget', {
+      setDb: jest.fn(),
       getById: jest.fn().mockResolvedValue(undefined),
       applyCreate,
     });
@@ -1895,7 +1973,7 @@ describe('pull failure containment', () => {
     await seedStory();
     throwStringOn = 'pull';
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
 });
@@ -2012,11 +2090,12 @@ describe('favorites over the updates channel', () => {
       role: 'owner',
     };
     (engine as any).entityHandlers.set('Favorite', {
+      setDb: jest.fn(),
       getById: jest.fn().mockResolvedValue(undefined),
       applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
     });
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect((await readStory())?.lastPublicFavoriteLog).toBe(0);
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
@@ -2033,13 +2112,15 @@ describe('favorites over the updates channel', () => {
       role: 'owner',
     };
     (engine as any).entityHandlers.set('Favorite', {
+      setDb: jest.fn(),
       getById: jest.fn().mockResolvedValue(undefined),
       applyCreate: jest.fn().mockRejectedValue(new Error('disco indisponível')),
     });
 
-    await runOneCycle();
+    await expect(runOneCycle()).resolves.toBe('failed');
 
     expect((await readStory())?.lastPublicFavoriteLog).toBe(5);
+    expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
 
   it('throws a clear error when public favorites arrive with no Favorite handler', async () => {
@@ -2052,7 +2133,7 @@ describe('favorites over the updates channel', () => {
       role: 'owner',
     };
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
 
@@ -2085,7 +2166,7 @@ describe('push outcomes', () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect((engine as any).performSync(controller.signal)).resolves.toBe(false);
+    await expect((engine as any).performSync(controller.signal)).resolves.toBe('ok');
     expect(seen).toHaveLength(0);
   });
 
@@ -2094,7 +2175,7 @@ describe('push outcomes', () => {
     await seedPendingOperation();
     abortPush = true;
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
@@ -2103,7 +2184,7 @@ describe('push outcomes', () => {
     await seedPendingOperation();
     throwStringOn = 'push';
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('failed');
     expect(mockShowNotification).toHaveBeenCalledWith(expect.any(String), 'error');
   });
 });
@@ -2121,7 +2202,7 @@ describe('cycle binding', () => {
     pullGate.opened = true;
     pullGate.waiters.splice(0).forEach((release) => release());
 
-    await expect(cycle).resolves.toBe(false);
+    await expect(cycle).resolves.toBe('ok');
     expect((engine as any).cycleBinding).toBe(usurper);
   });
 
@@ -2129,7 +2210,7 @@ describe('cycle binding', () => {
     await seedStory();
     (engine as any).activeServer = null;
 
-    await expect(runOneCycle()).resolves.toBe(false);
+    await expect(runOneCycle()).resolves.toBe('ok');
     const server = await database.db.query.servers.findFirst({
       where: eq(schema.servers.id, SERVER.id),
     });
@@ -2189,6 +2270,7 @@ describe('pull-side auto-merge', () => {
 
   it('records one conflict per entity and keeps the rest of the story moving', async () => {
     await seedStory();
+    let seedVersion = 0;
     for (const id of ['char-a', 'char-b']) {
       await database.db.insert(schema.characters).values({
         id,
@@ -2196,10 +2278,12 @@ describe('pull-side auto-merge', () => {
         name: 'Local',
         ...base,
       });
+      seedVersion += 1;
       await seedPendingOperation({
         entityType: 'Character',
         entityId: id,
         operationType: 'update',
+        operationVersion: seedVersion,
         payload: JSON.stringify({ id, storyId: STORY_ID, name: 'Local', version: 2 }),
       });
     }
@@ -2218,7 +2302,8 @@ describe('pull-side auto-merge', () => {
       role: 'owner',
     };
 
-    await runOneCycle();
+    // Conflicts are decisions for the user, not a blocked batch: the cycle still reports ok.
+    await expect(runOneCycle()).resolves.toBe('ok');
 
     const conflicts = await database.db.query.syncConflicts.findMany();
     expect(conflicts).toHaveLength(2);

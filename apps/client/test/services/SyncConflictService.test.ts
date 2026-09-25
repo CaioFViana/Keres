@@ -5,12 +5,12 @@ import { AttributeType } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import {
-  applyReorderToLocalDb,
   createSyncConflictService,
   findContestedFields,
   mergeLocalOperationPayloads,
   type RecordConflictInput,
 } from '../../src/services/SyncConflictService';
+import { applyReorderToLocalDb } from '../../src/services/sync/applyReorderToLocalDb';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
@@ -137,7 +137,7 @@ describe('recordConflict', () => {
   /** A conflict is per entity: five offline edits of the same scene are a single decision. */
   it('folds a second conflict for the same entity into the existing one', async () => {
     await seedOperation('op-1');
-    await seedOperation('op-2');
+    await seedOperation('op-2', { operationVersion: 2 });
     await service.recordConflict(baseConflict({ localOperationIds: ['op-1'] }));
 
     await service.recordConflict(baseConflict({ localOperationIds: ['op-2'], serverVersion: 9 }));
@@ -287,6 +287,12 @@ describe('resolveKeepLocal', () => {
   it('releases the old operations instead of leaving them blocked forever', async () => {
     await seedCharacter();
     const operationId = await seedOperation('op-1');
+    // The seeded op bypassed the counter; align the cursor as production would have it so the
+    // rebased replacement takes version 2 instead of re-issuing 1.
+    await database.db
+      .update(schema.stories)
+      .set({ lastOperationLog: 1 })
+      .where(eq(schema.stories.id, STORY_ID));
     await service.recordConflict(baseConflict({ localOperationIds: [operationId] }));
     const [pending] = await service.getPendingConflicts();
 
@@ -1192,6 +1198,55 @@ describe('dismissConflict', () => {
 
     expect(await readCharacter()).toMatchObject({ name: 'Only local copy', version: 1 });
   });
+
+  it('restores live flags when the dismissed quarantine was a delete', async () => {
+    await seedCharacter({ version: 2, isDeleted: true, deletedAt: NOW });
+    await seedOperation('op-del', { operationType: 'delete' });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        localOperationType: 'delete',
+        localOperationIds: ['op-del'],
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.dismissConflict(pending.id);
+
+    expect(await readCharacter()).toMatchObject({
+      version: 2,
+      isDeleted: false,
+      deletedAt: null,
+    });
+    expect((await readOperation('op-del'))!.conflictState).toBe('abandoned');
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
+  it('leaves the row alone when the dismissed quarantine was not a delete', async () => {
+    await seedCharacter();
+    await seedOperation('op-q', { operationType: 'update' });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        localOperationType: 'update',
+        localOperationIds: ['op-q'],
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.dismissConflict(pending.id);
+
+    expect(await readCharacter()).toMatchObject({
+      name: 'Original',
+      version: 1,
+      isDeleted: false,
+    });
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
 });
 
 describe('findContestedFields', () => {
@@ -1352,6 +1407,12 @@ describe('resolveKeepServerAndCloneBoard', () => {
         },
       }),
     });
+    // The seeded op bypassed the counter; align the cursor as production would have it so the
+    // clone's replacement op takes version 2 instead of re-issuing 1.
+    await database.db
+      .update(schema.stories)
+      .set({ lastOperationLog: 1 })
+      .where(eq(schema.stories.id, STORY_ID));
     await service.recordConflict(
       baseConflict({
         entityType: 'Board',
@@ -1454,6 +1515,114 @@ describe('resolveKeepServerAndCloneBoard', () => {
    * another device and the delete already applied here). Cloning must still produce a valid empty
    * board, not crash on the missing content.
    */
+  it('creates no second copy when the resolution is retried after the clone committed', async () => {
+    await database.db.insert(schema.boards).values({
+      id: 'board-1',
+      storyId: STORY_ID,
+      name: 'Royal family',
+      description: null,
+      content: { nodes: [], edges: [] },
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+      isDeleted: false,
+    });
+    const operationId = await seedOperation('op-board', {
+      entityType: 'Board',
+      entityId: 'board-1',
+      payload: JSON.stringify({
+        content: {
+          nodes: [{ id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null }],
+          edges: [],
+        },
+      }),
+    });
+    await database.db
+      .update(schema.stories)
+      .set({ lastOperationLog: 1 })
+      .where(eq(schema.stories.id, STORY_ID));
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'Board',
+        entityId: 'board-1',
+        localOperationIds: [operationId],
+        localValues: {
+          content: {
+            nodes: [{ id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null }],
+            edges: [],
+          },
+        },
+        serverValues: { name: 'Royal family', content: { nodes: [], edges: [] }, version: 3 },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    // A failure between the clone and the keepServer half (or a retried tap) re-enters with
+    // the copy already saved: the second call must finish the resolution, not duplicate it.
+    await service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Royal family (copy)');
+    await service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Royal family (copy)');
+
+    const rows = await database.db.query.boards.findMany({
+      where: eq(schema.boards.storyId, STORY_ID),
+    });
+    expect(rows).toHaveLength(2);
+    expect(rows.filter((row) => row.id !== 'board-1')).toHaveLength(1);
+    expect(await service.getPendingConflicts()).toHaveLength(0);
+  });
+
+  it('still clones when the same-named board holds a different drawing', async () => {
+    await database.db.insert(schema.boards).values([
+      {
+        id: 'board-1',
+        storyId: STORY_ID,
+        name: 'Royal family',
+        description: null,
+        content: { nodes: [], edges: [] },
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 2,
+        isDeleted: false,
+      },
+      {
+        id: 'board-other',
+        storyId: STORY_ID,
+        name: 'Royal family (copy)',
+        description: null,
+        content: {
+          nodes: [{ id: 'OTHER', kind: 'note', x: 0, y: 0, title: 'Elsewhere', body: null }],
+          edges: [],
+        },
+        createdAt: NOW,
+        updatedAt: NOW,
+        version: 1,
+        isDeleted: false,
+      },
+    ]);
+    await service.recordConflict(
+      baseConflict({
+        entityType: 'Board',
+        entityId: 'board-1',
+        localValues: {
+          content: {
+            nodes: [{ id: '01ABCDEF', kind: 'note', x: 1, y: 2, title: 'Mine', body: null }],
+            edges: [],
+          },
+        },
+        serverValues: { name: 'Royal family', content: { nodes: [], edges: [] }, version: 3 },
+        serverVersion: 3,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServerAndCloneBoard(pending.id, 'local-user', 'Royal family (copy)');
+
+    const rows = await database.db.query.boards.findMany({
+      where: eq(schema.boards.storyId, STORY_ID),
+    });
+    expect(rows).toHaveLength(3);
+  });
+
   it('clones an empty board when the drawing exists nowhere', async () => {
     await service.recordConflict(
       baseConflict({
@@ -1626,6 +1795,108 @@ describe('folding a conflict that brings no server side', () => {
 });
 
 /**
+ * A validation quarantine carries no server information, only newly blocked operations. Folded
+ * into a real conflict it must contribute its operation ids and local values without demoting
+ * the decidable conflict into an unpushable discard.
+ */
+describe('folding a validation quarantine into a pending conflict', () => {
+  it('keeps the real conflict decidable when a quarantine joins it', async () => {
+    await seedOperation('op-real', { operationType: 'update', operationVersion: 1 });
+    await seedOperation('op-quarantined', { operationType: 'delete', operationVersion: 2 });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'version_conflict',
+        localOperationType: 'update',
+        localOperationIds: ['op-real'],
+        serverValues: { name: 'Nome do servidor' },
+        clientVersion: 1,
+        serverVersion: 3,
+      }),
+    );
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        localOperationType: 'delete',
+        localOperationIds: ['op-quarantined'],
+        localValues: { name: 'Quarantined edit' },
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+
+    const [pending] = await service.getPendingConflicts();
+    expect(pending).toMatchObject({
+      reason: 'version_conflict',
+      localOperationType: 'update',
+      serverValues: { name: 'Nome do servidor' },
+      clientVersion: 1,
+      serverVersion: 3,
+      localValues: { name: 'Quarantined edit' },
+    });
+    expect(pending.localOperationIds).toEqual(
+      expect.arrayContaining(['op-real', 'op-quarantined']),
+    );
+  });
+
+  it('upgrades a quarantine when a real conflict arrives for the same entity', async () => {
+    await seedOperation('op-quarantined', { operationType: 'update', operationVersion: 1 });
+    await seedOperation('op-real', { operationType: 'update', operationVersion: 2 });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        localOperationIds: ['op-quarantined'],
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+    await service.recordConflict(
+      baseConflict({
+        reason: 'version_conflict',
+        localOperationIds: ['op-real'],
+        serverValues: { name: 'Nome do servidor' },
+        serverVersion: 3,
+      }),
+    );
+
+    const [pending] = await service.getPendingConflicts();
+    expect(pending).toMatchObject({
+      reason: 'version_conflict',
+      serverValues: { name: 'Nome do servidor' },
+      serverVersion: 3,
+    });
+    expect(pending.localOperationIds).toEqual(
+      expect.arrayContaining(['op-quarantined', 'op-real']),
+    );
+  });
+
+  it('merges a second quarantine into the pending one', async () => {
+    await seedOperation('op-q1', { operationType: 'update', operationVersion: 1 });
+    await seedOperation('op-q2', { operationType: 'update', operationVersion: 2 });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        localOperationIds: ['op-q1'],
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        localOperationIds: ['op-q2'],
+        serverValues: null,
+        serverVersion: null,
+      }),
+    );
+
+    const pending = await service.getPendingConflicts();
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({ reason: 'validation', serverValues: null });
+    expect(pending[0].localOperationIds).toEqual(expect.arrayContaining(['op-q1', 'op-q2']));
+  });
+});
+
+/**
  * Falling back through the version chain.
  *
  * The server does not always send its version: on a bare refusal `serverVersion` is null and
@@ -1757,6 +2028,102 @@ describe('keeping local when the story row is gone', () => {
 
     const [queued] = await pushableOperations();
     expect(queued).toMatchObject({ userId: 'local_user', operationVersion: 1 });
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+});
+
+/**
+ * A validation quarantine has no server snapshot: `serverValues: null` means "unknown", not
+ * "absent". Neither resolution can resend an unpushable payload or restore a copy that was never
+ * fetched, so both discard the operation and leave the row untouched, at its current version.
+ */
+describe('validation quarantine without a server snapshot', () => {
+  const seedValidationConflict = async (overrides: Partial<RecordConflictInput> = {}) => {
+    await seedOperation('op-quarantined', {
+      operationType: overrides.localOperationType ?? 'update',
+    });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        serverValues: null,
+        serverVersion: null,
+        localOperationIds: ['op-quarantined'],
+        ...overrides,
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+    return pending;
+  };
+
+  it('keepServer discards the operation and leaves the row at its version', async () => {
+    await seedCharacter();
+    const pending = await seedValidationConflict();
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({
+      name: 'Original',
+      version: 1,
+      isDeleted: false,
+    });
+    expect(await pushableOperations()).toEqual([]);
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
+  it('keepLocal discards the operation instead of rebasing an unpushable payload', async () => {
+    await seedCharacter();
+    const pending = await seedValidationConflict();
+
+    await service.resolveKeepLocal(pending.id);
+
+    expect(await readCharacter()).toMatchObject({
+      name: 'Original',
+      version: 1,
+      isDeleted: false,
+    });
+    expect(await pushableOperations()).toEqual([]);
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
+  it('restores the live flags when the discarded operation was a delete', async () => {
+    await seedCharacter({ version: 2, isDeleted: true, deletedAt: NOW });
+    const pending = await seedValidationConflict({ localOperationType: 'delete' });
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({
+      version: 2,
+      isDeleted: false,
+      deletedAt: null,
+    });
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
+  it('resolves a delete quarantine whose row is already gone', async () => {
+    const pending = await seedValidationConflict({ localOperationType: 'delete' });
+
+    await service.resolveKeepLocal(pending.id);
+
+    expect(await readCharacter()).toBeUndefined();
+    expect(await service.getPendingConflicts()).toEqual([]);
+  });
+
+  it('still restores the server copy when a validation conflict carries one', async () => {
+    await seedCharacter();
+    await seedOperation('op-refused', { operationType: 'update' });
+    await service.recordConflict(
+      baseConflict({
+        reason: 'validation',
+        serverValues: { name: 'Server copy' },
+        serverVersion: 3,
+        localOperationIds: ['op-refused'],
+      }),
+    );
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServer(pending.id);
+
+    expect(await readCharacter()).toMatchObject({ name: 'Server copy', version: 3 });
     expect(await service.getPendingConflicts()).toEqual([]);
   });
 });

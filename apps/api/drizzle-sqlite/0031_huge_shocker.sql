@@ -1,0 +1,2 @@
+ALTER TABLE `operation_log` ADD `client_operation_id` text;--> statement-breakpoint
+CREATE UNIQUE INDEX `operation_log_story_id_client_operation_id_idx` ON `operation_log` (`story_id`,`client_operation_id`);

@@ -309,6 +309,20 @@
       "when": 1790289358431,
       "tag": "0043_neat_salo",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1790444516254,
+      "tag": "0044_absurd_mad_thinker",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1790462110436,
+      "tag": "0045_purple_iceman",
+      "breakpoints": true
     }
   ]
 }

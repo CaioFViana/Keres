@@ -45,6 +45,8 @@ import migration_41 from './0040_safe_annihilus';
 import migration_42 from './0041_whole_wendigo';
 import migration_43 from './0042_public_ogun';
 import migration_44 from './0043_neat_salo';
+import migration_45 from './0044_absurd_mad_thinker';
+import migration_46 from './0045_purple_iceman';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -91,6 +93,8 @@ const migrations = [
   { id: 42, name: '0041_whole_wendigo', run: migration_42 },
   { id: 43, name: '0042_public_ogun', run: migration_43 },
   { id: 44, name: '0043_neat_salo', run: migration_44 },
+  { id: 45, name: '0044_absurd_mad_thinker', run: migration_45 },
+  { id: 46, name: '0045_purple_iceman', run: migration_46 },
 ];
 
 export default migrations;

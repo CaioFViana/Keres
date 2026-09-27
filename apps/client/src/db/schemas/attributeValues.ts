@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { StorySchemaEntityType } from '@keres/shared';
 
 export const attributeValues = sqliteTable(
@@ -19,7 +19,9 @@ export const attributeValues = sqliteTable(
     isDeleted: integer('is_deleted', { mode: 'boolean' }).default(false).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
-  (table) => [unique('entity_field_unq').on(table.entityId, table.fieldId)],
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
+  (table) => [index('entity_field_idx').on(table.entityId, table.fieldId)],
 );
 
 export type AttributeValueInsert = InferInsertModel<typeof attributeValues>;

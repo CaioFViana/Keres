@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { AttributeType, StorySchemaEntityType } from '@keres/shared';
 
 export const storySchemaFields = sqliteTable(
@@ -18,17 +18,17 @@ export const storySchemaFields = sqliteTable(
     isRequired: integer('is_required', { mode: 'boolean' }).notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),
+    /** Place among its entity type's fields (see rules/rank.ts); a trigger derives the order. */
+    rank: text('rank').notNull().default(''),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
     version: integer('version').notNull(),
     isDeleted: integer('is_deleted', { mode: 'boolean' }).default(false).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
-  (table) => [
-    // Not filtered by isDeleted - see StorySchemaFieldService.deleteField, which mutates `key` on the
-    // soft-delete to free the slot, the same reason as on the API side (StorySchemaFieldSyncHandler).
-    unique('story_entitytype_key_unq').on(table.storyId, table.entityType, table.key),
-  ],
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
+  (table) => [index('story_entitytype_key_idx').on(table.storyId, table.entityType, table.key)],
 );
 
 export type StorySchemaFieldInsert = InferInsertModel<typeof storySchemaFields>;

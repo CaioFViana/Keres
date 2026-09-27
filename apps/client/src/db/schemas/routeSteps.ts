@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 export const routeSteps = sqliteTable(
@@ -17,10 +17,12 @@ export const routeSteps = sqliteTable(
     isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
   (table) => [
     index('route_step_story_idx').on(table.storyId),
     index('route_step_route_idx').on(table.routeId),
-    uniqueIndex('route_step_position_unique')
+    index('route_step_position_idx')
       .on(table.routeId, table.position)
       .where(sql`${table.isDeleted} = false`),
   ],

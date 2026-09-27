@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const tagRelations = sqliteTable(
   'tag_relations',
@@ -17,8 +17,10 @@ export const tagRelations = sqliteTable(
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
   // A tag applies to an entity once, as on the server. See migration 0015.
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
   (table) => [
-    uniqueIndex('tag_relation_target_unique')
+    index('tag_relation_target_idx')
       .on(table.storyId, table.tagId, table.relationId, table.relationType)
       .where(sql`${table.isDeleted} = 0`),
   ],

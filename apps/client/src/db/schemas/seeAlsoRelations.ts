@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import type { SeeAlsoEntityType } from '@keres/shared';
 
 export const seeAlsoRelations = sqliteTable(
@@ -17,10 +17,10 @@ export const seeAlsoRelations = sqliteTable(
     isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
     deletedAt: integer('deleted_at', { mode: 'timestamp' }),
   },
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
   (table) => [
-    // It only protects against duplicates if A/B are always canonicalized (sorted) before the
-    // insert - see SeeAlsoRelationService.sortEntityRefs.
-    unique('see_also_story_a_b_unq').on(
+    index('see_also_story_a_b_idx').on(
       table.storyId,
       table.entityAType,
       table.entityAId,

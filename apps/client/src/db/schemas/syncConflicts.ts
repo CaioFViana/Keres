@@ -22,7 +22,7 @@ export const syncConflicts = sqliteTable('sync_conflicts', {
   reason: text('reason').notNull(),
   /** What the user did locally and has not gone through yet. */
   localOperationType: text('local_operation_type', {
-    enum: ['create', 'update', 'delete', 'reorder'],
+    enum: ['create', 'update', 'delete'],
   }).notNull(),
   /** JSON: the ids of the `operation_logs` rows grouped in this conflict. */
   localOperationIds: text('local_operation_ids').notNull(),

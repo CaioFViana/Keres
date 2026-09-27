@@ -1,6 +1,6 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const characterRelations = sqliteTable(
   'character_relations',
@@ -19,8 +19,10 @@ export const characterRelations = sqliteTable(
   // One relation per pair of characters, whichever column each id sits in - the same rule
   // `CharacterRelationService` checks before writing, now also enforced by the database, so a bulk
   // import cannot get around it. See migration 0015.
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
   (table) => [
-    uniqueIndex('character_relation_pair_unique')
+    index('character_relation_pair_idx')
       .on(
         table.storyId,
         sql`MIN(${table.character1Id}, ${table.character2Id})`,

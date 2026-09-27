@@ -8,6 +8,8 @@ export const stats = sqliteTable('stats', {
   name: text('name').notNull(),
   isPrimary: integer('is_primary', { mode: 'boolean' }).notNull().default(true),
   order: integer('order').notNull().default(0),
+  /** Place in the story's list (see rules/rank.ts); a trigger derives the order from it. */
+  rank: text('rank').notNull().default(''),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

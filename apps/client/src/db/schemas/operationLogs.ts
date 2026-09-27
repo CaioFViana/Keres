@@ -22,7 +22,7 @@ export const operationLogs = sqliteTable(
     /** Strictly increasing within a story; defines the order operations are pushed in. */
     operationVersion: integer('operation_version').notNull(),
     operationType: text('operation_type', {
-      enum: ['create', 'update', 'delete', 'reorder'],
+      enum: ['create', 'update', 'delete'],
     }).notNull(),
     entityType: text('entity_type').notNull(),
     entityId: text('entity_id').notNull(),

@@ -1,4 +1,5 @@
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { locations } from './locations';
 import { stories } from './stories';
 import type { LocationRelationType } from '@keres/shared';
@@ -25,12 +26,9 @@ export const locationRelations = table(
   },
   (table) => {
     return {
-      unq: unique('story_loca_locb_type_unq').on(
-        table.storyId,
-        table.locationAId,
-        table.locationBId,
-        table.relationType,
-      ),
+      unq: uniqueIndex('story_loca_locb_type_unq')
+        .on(table.storyId, table.locationAId, table.locationBId, table.relationType)
+        .where(sql`${table.isDeleted} = false`),
     };
   },
 );

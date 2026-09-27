@@ -1,5 +1,5 @@
-import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { relations, sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 import type { SeeAlsoEntityType } from '@keres/shared';
 
@@ -25,13 +25,9 @@ export const seeAlsoRelations = table(
   (table) => ({
     // It only protects against duplicates if A/B are always canonicalised (sorted) before the insert -
     // see SeeAlsoRelationSyncHandler/SeeAlsoRelationService.
-    unq: unique('see_also_story_a_b_unq').on(
-      table.storyId,
-      table.entityAType,
-      table.entityAId,
-      table.entityBType,
-      table.entityBId,
-    ),
+    unq: uniqueIndex('see_also_story_a_b_unq')
+      .on(table.storyId, table.entityAType, table.entityAId, table.entityBType, table.entityBId)
+      .where(sql`${table.isDeleted} = false`),
   }),
 );
 

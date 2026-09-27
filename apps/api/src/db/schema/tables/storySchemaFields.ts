@@ -1,5 +1,5 @@
-import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { relations, sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 import type { StorySchemaEntityType } from '@keres/shared';
 
@@ -19,6 +19,8 @@ export const storySchemaFields = table(
     isRequired: boolean('is_required').notNull().default(false),
     defaultValue: text('default_value'),
     order: integer('order').notNull().default(0),
+    /** Place among its entity type's fields (see rules/rank.ts); the order is derived from it. */
+    rank: text('rank').notNull().default(''),
     createdAt: timestampNow('created_at'),
     updatedAt: timestampNow('updated_at'),
     version: integer('version').notNull().default(1),
@@ -27,9 +29,11 @@ export const storySchemaFields = table(
   },
   (table) => {
     return {
-      // Not filtered by isDeleted - see StorySchemaFieldSyncHandler.delete(), which mutates `key` on the
-      // soft delete to free the slot instead of relying on a partial index.
-      unq: unique('story_entitytype_key_unq').on(table.storyId, table.entityType, table.key),
+      // Live fields only: a deleted field never keeps another from taking its key (its delete also
+      // renames the key, for rows written before this index was partial).
+      unq: uniqueIndex('story_entitytype_key_unq')
+        .on(table.storyId, table.entityType, table.key)
+        .where(sql`${table.isDeleted} = false`),
     };
   },
 );

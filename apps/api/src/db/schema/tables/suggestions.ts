@@ -1,4 +1,5 @@
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 
 export const suggestions = table(
@@ -18,7 +19,9 @@ export const suggestions = table(
   },
   (table) => {
     return {
-      unq: unique('story_suggestion_type_value_unq').on(table.storyId, table.type, table.value),
+      unq: uniqueIndex('story_suggestion_type_value_unq')
+        .on(table.storyId, table.type, table.value)
+        .where(sql`${table.isDeleted} = false`),
     };
   },
 );

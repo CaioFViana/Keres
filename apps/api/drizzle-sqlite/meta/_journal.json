@@ -225,6 +225,20 @@
       "when": 1790289293454,
       "tag": "0031_huge_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1790444415315,
+      "tag": "0032_gray_agent_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1790462115870,
+      "tag": "0033_colossal_stark_industries",
+      "breakpoints": true
     }
   ]
 }

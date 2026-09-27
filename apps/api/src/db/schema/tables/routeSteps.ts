@@ -1,14 +1,5 @@
-import { relations, sql } from 'drizzle-orm';
-import {
-  boolean,
-  index,
-  integer,
-  table,
-  text,
-  timestamp,
-  timestampNow,
-  uniqueIndex,
-} from '../columns';
+import { relations } from 'drizzle-orm';
+import { boolean, index, integer, table, text, timestamp, timestampNow } from '../columns';
 import { choices } from './choices';
 import { routes } from './routes';
 import { scenes } from './scenes';
@@ -38,9 +29,8 @@ export const routeSteps = table(
   (table) => [
     index('route_step_story_idx').on(table.storyId),
     index('route_step_route_idx').on(table.routeId),
-    uniqueIndex('route_step_position_unique')
-      .on(table.routeId, table.position)
-      .where(sql`${table.isDeleted} = false`),
+    // No uniqueness on `position`: it is a place, which two devices can hand out alike offline -
+    // steps read by (position, id) instead, the same everywhere.
   ],
 );
 

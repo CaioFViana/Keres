@@ -18,6 +18,8 @@ export const scenes = table('scenes', {
   locationId: text('location_id').references(() => locations.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
+  /** Place among the chapter's scenes (see rules/rank.ts); the index is derived from it. */
+  rank: text('rank').notNull().default(''),
   summary: text('summary'),
   body: text('body'),
   gap: integer('gap'),

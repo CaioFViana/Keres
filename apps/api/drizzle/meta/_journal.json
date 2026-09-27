@@ -309,6 +309,27 @@
       "when": 1790289285756,
       "tag": "0043_optimal_misty_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790444408309,
+      "tag": "0044_sturdy_joseph",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1790462113336,
+      "tag": "0045_silent_toad_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1790524882751,
+      "tag": "0046_special_rocket_raccoon",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 
 export const tags = table(
@@ -20,7 +21,9 @@ export const tags = table(
   },
   (table) => {
     return {
-      unq: unique('story_name_unq').on(table.storyId, table.name),
+      unq: uniqueIndex('story_name_unq')
+        .on(table.storyId, table.name)
+        .where(sql`${table.isDeleted} = false`),
     };
   },
 );

@@ -50,15 +50,19 @@ describe('CharacterRelationClientSyncHandler', () => {
     deletedAt: null,
   });
 
-  it('maps the server character fields and lets a newer relation replace its duplicate', async () => {
+  /**
+   * The server refuses a second relation of one pair and the device that made it folds its row
+   * into the first: whatever a pull brings is the server's, and the device mirrors it.
+   */
+  it('maps the server character fields and takes every relation the server sends', async () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'old', relation('old')));
-
     await handler.applyCreate(
       STORY_ID,
-      createUpdate('CharacterRelation', 'new', relation('new', LATE)),
+      createUpdate('CharacterRelation', 'old', relation('old', LATE)),
     );
+
+    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'new', relation('new')));
 
     const rows = await database.db.select().from(schema.characterRelations).all();
     expect(rows).toEqual(
@@ -67,68 +71,19 @@ describe('CharacterRelationClientSyncHandler', () => {
           id: 'new',
           character1Id: 'character-a',
           character2Id: 'character-b',
+          isDeleted: false,
         }),
-        expect.objectContaining({ id: 'old', isDeleted: true, version: 2 }),
+        expect.objectContaining({ id: 'old', isDeleted: false, version: 1 }),
       ]),
     );
   });
 
-  it('discards a stale duplicate even when the character order is reversed', async () => {
+  it('applies an update as the server made it and tombstones on delete', async () => {
     const handler = new CharacterRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
       STORY_ID,
-      createUpdate('CharacterRelation', 'kept', relation('kept', LATE)),
-    );
-
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('CharacterRelation', 'stale', relation('stale')),
-    );
-
-    const rows = await database.db.select().from(schema.characterRelations).all();
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ id: 'kept', isDeleted: false });
-  });
-
-  it('lets a newer update replace a duplicate pair and maps the server character ids', async () => {
-    const handler = new CharacterRelationClientSyncHandler();
-    handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'old', relation('old')));
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('CharacterRelation', 'moving', {
-        ...relation('moving'),
-        character1Id: 'character-c',
-        character2Id: 'character-d',
-      }),
-    );
-
-    await handler.applyUpdate(
-      STORY_ID,
-      updateUpdate('CharacterRelation', 'moving', {
-        character1Id: 'character-a',
-        character2Id: 'character-b',
-        updatedAt: LATE,
-      }),
-    );
-
-    expect(await handler.getById('old')).toEqual(expect.objectContaining({ isDeleted: true }));
-    expect(await handler.getById('moving')).toEqual(
-      expect.objectContaining({
-        character1Id: 'character-a',
-        character2Id: 'character-b',
-        isDeleted: false,
-      }),
-    );
-  });
-
-  it('keeps the newer pair when an older update would collide and tombstones on delete', async () => {
-    const handler = new CharacterRelationClientSyncHandler();
-    handler.setDb(database.db);
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('CharacterRelation', 'kept', relation('kept', LATE)),
+      createUpdate('CharacterRelation', 'kept', relation('kept')),
     );
     await handler.applyCreate(
       STORY_ID,
@@ -141,21 +96,13 @@ describe('CharacterRelationClientSyncHandler', () => {
 
     await handler.applyUpdate(
       STORY_ID,
-      updateUpdate('CharacterRelation', 'moving', {
-        character1Id: 'character-a',
-        character2Id: 'character-b',
-        updatedAt: EARLY,
-      }),
+      updateUpdate('CharacterRelation', 'moving', { relationType: 'rival', updatedAt: EARLY }),
     );
     await handler.applyDelete(STORY_ID, deleteUpdate('CharacterRelation', 'moving'));
 
     expect(await handler.getById('kept')).toEqual(expect.objectContaining({ isDeleted: false }));
     expect(await handler.getById('moving')).toEqual(
-      expect.objectContaining({
-        character1Id: 'character-c',
-        character2Id: 'character-d',
-        isDeleted: true,
-      }),
+      expect.objectContaining({ relationType: 'rival', isDeleted: true }),
     );
   });
 
@@ -261,37 +208,6 @@ describe('CharacterRelationClientSyncHandler', () => {
     expect(row?.createdAt).toBeInstanceOf(Date);
     expect(row?.deletedAt).toBeInstanceOf(Date);
   });
-
-  it('wins a duplicate update by recency when the change carries no timestamp', async () => {
-    const handler = new CharacterRelationClientSyncHandler();
-    handler.setDb(database.db);
-    await handler.applyCreate(STORY_ID, createUpdate('CharacterRelation', 'old', relation('old')));
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('CharacterRelation', 'moving', {
-        ...relation('moving'),
-        character1Id: 'character-c',
-        character2Id: 'character-d',
-      }),
-    );
-
-    await handler.applyUpdate(
-      STORY_ID,
-      updateUpdate('CharacterRelation', 'moving', {
-        character1Id: 'character-a',
-        character2Id: 'character-b',
-      }),
-    );
-
-    expect(await handler.getById('old')).toEqual(expect.objectContaining({ isDeleted: true }));
-    expect(await handler.getById('moving')).toEqual(
-      expect.objectContaining({
-        character1Id: 'character-a',
-        character2Id: 'character-b',
-        isDeleted: false,
-      }),
-    );
-  });
 });
 
 describe('LocationRelationClientSyncHandler', () => {
@@ -313,47 +229,20 @@ describe('LocationRelationClientSyncHandler', () => {
     deletedAt: null,
   });
 
-  it('treats connected_to as an unordered edge during a pull', async () => {
+  it('takes a connection and a parent as the server sends them, next to any other', async () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
     await handler.applyCreate(
       STORY_ID,
-      createUpdate('LocationRelation', 'kept', relation('kept', 'connected_to', 'a', 'b')),
+      createUpdate('LocationRelation', 'first', relation('first', 'connected_to', 'a', 'b')),
     );
     await handler.applyCreate(
       STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'duplicate',
-        relation('duplicate', 'connected_to', 'b', 'a'),
-      ),
-    );
-
-    expect(await database.db.select().from(schema.locationRelations).all()).toHaveLength(1);
-  });
-
-  it('keeps only one live parent for a contains edge', async () => {
-    const handler = new LocationRelationClientSyncHandler();
-    handler.setDb(database.db);
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'first', relation('first', 'contains', 'parent-a', 'child')),
-    );
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'second', {
-        ...relation('second', 'contains', 'parent-b', 'child'),
-        updatedAt: LATE,
-      }),
+      createUpdate('LocationRelation', 'second', relation('second', 'contains', 'parent', 'child')),
     );
 
     const rows = await database.db.select().from(schema.locationRelations).all();
-    expect(rows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'first', isDeleted: true }),
-        expect.objectContaining({ id: 'second', isDeleted: false }),
-      ]),
-    );
+    expect(rows.map((row) => row.id).sort()).toEqual(['first', 'second']);
   });
 
   it('refuses location-relation work before a database is set', async () => {
@@ -392,24 +281,14 @@ describe('LocationRelationClientSyncHandler', () => {
     expect(await database.db.select().from(schema.locationRelations).all()).toEqual([]);
   });
 
-  it('wins a duplicate create by recency when it carries no timestamp', async () => {
+  it('stores a create that carries no timestamp with now', async () => {
     const handler = new LocationRelationClientSyncHandler();
     handler.setDb(database.db);
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'old', relation('old', 'connected_to', 'a', 'b')),
-    );
     const { updatedAt: _dropped, ...bare } = relation('new', 'connected_to', 'b', 'a');
 
     await handler.applyCreate(STORY_ID, createUpdate('LocationRelation', 'new', bare));
 
-    const rows = await database.db.select().from(schema.locationRelations).all();
-    expect(rows).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'old', isDeleted: true }),
-        expect.objectContaining({ id: 'new', isDeleted: false }),
-      ]),
-    );
+    expect((await handler.getById('new'))?.updatedAt).toBeInstanceOf(Date);
   });
 
   it('stores a tombstone edge with its deletion date revived', async () => {
@@ -477,29 +356,6 @@ describe('LocationRelationClientSyncHandler', () => {
     const row = await handler.getById('r-1');
     expect((row?.updatedAt as Date).getTime()).toBeGreaterThanOrEqual(before);
     expect(row?.createdAt).toBeInstanceOf(Date);
-  });
-
-  it('wins a conflicting update by recency when the change carries no timestamp', async () => {
-    const handler = new LocationRelationClientSyncHandler();
-    handler.setDb(database.db);
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'old', relation('old', 'connected_to', 'a', 'b')),
-    );
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'moving', relation('moving', 'connected_to', 'c', 'd')),
-    );
-
-    await handler.applyUpdate(
-      STORY_ID,
-      updateUpdate('LocationRelation', 'moving', { locationAId: 'a', locationBId: 'b' }),
-    );
-
-    expect(await handler.getById('old')).toEqual(expect.objectContaining({ isDeleted: true }));
-    expect(await handler.getById('moving')).toEqual(
-      expect.objectContaining({ locationAId: 'a', locationBId: 'b', isDeleted: false }),
-    );
   });
 
   it('soft-deletes the edge, keeping the row so the tombstone survives', async () => {

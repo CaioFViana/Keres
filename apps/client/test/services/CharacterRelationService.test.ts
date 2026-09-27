@@ -314,7 +314,8 @@ describe('CharacterRelationService story listing', () => {
       'char1Name',
       'desc',
     );
-    expect(byChar1.map((row) => row.char1Name)).toEqual(['Hopper', 'Ada']);
+    // The pair is stored sorted by id, as the server stores it: hopper-grace is grace-hopper.
+    expect(byChar1.map((row) => row.char1Name)).toEqual(['Grace', 'Ada']);
     const byChar2 = await service.getCharacterRelationsByStoryId(
       TEST_STORY_ID,
       undefined,

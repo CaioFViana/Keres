@@ -17,6 +17,7 @@ jest.mock('../../src/services/MediaSyncService', () => ({
   createMediaSyncService: () => ({ syncStoryMedia: mockSyncStoryMedia }),
 }));
 
+import { rankBetween } from '@keres/shared';
 import axios from 'axios';
 import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
@@ -51,6 +52,8 @@ let pullResponse: {
 let pushResponse: any;
 /** A reachable server can still reject a request; that is not an offline retry. */
 let serverFailureOn: 'pull' | 'push' | null;
+/** The status the failing request answers with. */
+let serverFailureStatus: number;
 /** When true, the pull fails as if the request had been cancelled mid-flight. */
 let abortPull: boolean;
 /** When true, the push POST is refused with HTTP 426. */
@@ -71,10 +74,15 @@ function installAdapter() {
       (isPull && serverFailureOn === 'pull') ||
       (!isPull && method === 'POST' && serverFailureOn === 'push')
     ) {
-      const error: any = new Error('Request failed with status code 500');
+      const error: any = new Error(`Request failed with status code ${serverFailureStatus}`);
       error.config = config;
       error.request = {};
-      error.response = { status: 500, data: { message: 'server error' }, config, headers: {} };
+      error.response = {
+        status: serverFailureStatus,
+        data: { message: 'server error' },
+        config,
+        headers: {},
+      };
       throw error;
     }
 
@@ -139,8 +147,13 @@ async function seedPendingOperation(
     operationVersion: 1,
     operationType: 'create' as const,
     entityType: 'Character',
-    entityId: 'char-local',
-    payload: JSON.stringify({ id: 'char-local', storyId: STORY_ID, name: 'Nyx', version: 1 }),
+    entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+    payload: JSON.stringify({
+      id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Nyx',
+      version: 1,
+    }),
     createdAt: NOW,
     isSynced: false,
     serverOperationVersion: 0,
@@ -188,6 +201,7 @@ beforeEach(async () => {
     conflicts: [],
   };
   serverFailureOn = null;
+  serverFailureStatus = 500;
   abortPull = false;
   protocolMismatchPush = false;
   offlinePush = false;
@@ -312,6 +326,26 @@ describe('pull failure containment', () => {
     expect((await readStory())!.lastServerSyncedLog).toBe(0);
   });
 
+  it.each([429, 503])(
+    'backs off quietly when the server answers %i, keeping the work queued',
+    async (status) => {
+      await seedStory({ lastOperationLog: 1 });
+      await seedPendingOperation();
+      serverFailureOn = 'push';
+      serverFailureStatus = status;
+
+      await expect(runOneCycle()).resolves.toBe('failed');
+      serverFailureOn = 'pull';
+      await expect(runOneCycle()).resolves.toBe('failed');
+
+      // A rate limit or a restart is nobody's error: no toast on every retry.
+      expect(mockShowNotification).not.toHaveBeenCalled();
+      expect((await database.db.query.operationLogs.findMany()).every((op) => !op.isSynced)).toBe(
+        true,
+      );
+    },
+  );
+
   it('persists the pull cursor even when the push is rejected', async () => {
     await seedStory({ lastOperationLog: 1 });
     await seedPendingOperation();
@@ -335,7 +369,10 @@ describe('unknown entities stay fail-closed', () => {
     await seedStory();
     pullResponse = {
       updates: [
-        { ...remoteCreate('future-1', 'From a newer client', 8), entity: 'FutureEntity' },
+        {
+          ...remoteCreate('FUTURE1ZZZZZZZZZZZZZZZZZZZ', 'From a newer client', 8),
+          entity: 'FutureEntity',
+        },
         remoteCreate('char-after', 'After', 9),
       ],
       publicFavorites: [],
@@ -431,7 +468,7 @@ describe('pull batch edge containment', () => {
   it('applies an update that arrives without an operation version', async () => {
     await seedStory();
     await database.db.insert(schema.characters).values({
-      id: 'char-1',
+      id: 'CHAR1ZZZZZZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Local',
       createdAt: NOW,
@@ -444,7 +481,7 @@ describe('pull batch edge containment', () => {
         {
           type: 'update',
           entity: 'Character',
-          id: 'char-1',
+          id: 'CHAR1ZZZZZZZZZZZZZZZZZZZZZ',
           version: 2,
           changes: { name: 'Remote', version: 2 },
         },
@@ -458,7 +495,7 @@ describe('pull batch edge containment', () => {
 
     expect(
       await database.db.query.characters.findFirst({
-        where: eq(schema.characters.id, 'char-1'),
+        where: eq(schema.characters.id, 'CHAR1ZZZZZZZZZZZZZZZZZZZZZ'),
       }),
     ).toMatchObject({ name: 'Remote' });
     expect((await readStory())!.lastServerSyncedLog).toBe(0);
@@ -554,7 +591,7 @@ describe('blocked pull reports failure', () => {
         {
           type: 'update',
           entity: 'SomethingFromTheFuture',
-          id: 'future-1',
+          id: 'FUTURE1ZZZZZZZZZZZZZZZZZZZ',
           operationVersion: 4,
           operationId: 'srv-4',
           changes: { name: 'A newer server knows this' },
@@ -588,7 +625,7 @@ describe('unknown operation types stay fail-closed', () => {
     await seedStory();
     pullResponse = {
       updates: [
-        { ...remoteCreate('char-x', 'X', 4), type: 'teleport' },
+        { ...remoteCreate('CHARXZZZZZZZZZZZZZZZZZZZZZ', 'X', 4), type: 'teleport' },
         remoteCreate('char-after', 'After', 5),
       ],
       publicFavorites: [],
@@ -612,9 +649,9 @@ describe('unknown operation types stay fail-closed', () => {
 
   it('holds the cursor even when local work is pending on the same entity', async () => {
     await seedStory({ lastOperationLog: 1 });
-    const operation = await seedPendingOperation({ entityId: 'char-x' });
+    const operation = await seedPendingOperation({ entityId: 'CHARXZZZZZZZZZZZZZZZZZZZZZ' });
     pullResponse = {
-      updates: [{ ...remoteCreate('char-x', 'X', 4), type: 'teleport' }],
+      updates: [{ ...remoteCreate('CHARXZZZZZZZZZZZZZZZZZZZZZ', 'X', 4), type: 'teleport' }],
       publicFavorites: [],
       serverMaxOperationVersion: 4,
       role: 'owner',
@@ -698,45 +735,62 @@ describe('apply and record atomicity', () => {
   it('rolls the apply back when the record fails, and bumps versions exactly once on recovery', async () => {
     await seedStory();
     await database.db.insert(schema.scenes).values([
-      { id: 'scene-1', storyId: STORY_ID, chapterId: 'chapter-1', name: 'A', index: 0, ...base },
-      { id: 'scene-2', storyId: STORY_ID, chapterId: 'chapter-1', name: 'B', index: 1, ...base },
+      {
+        id: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+        storyId: STORY_ID,
+        chapterId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+        name: 'A',
+        index: 0,
+        ...base,
+      },
+      {
+        id: 'SCENE2ZZZZZZZZZZZZZZZZZZZZ',
+        storyId: STORY_ID,
+        chapterId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+        name: 'B',
+        index: 1,
+        ...base,
+      },
     ]);
+    // A remote move of B ahead of A: an edit of B's rank, one version up.
+    const first = await readScene('SCENE1ZZZZZZZZZZZZZZZZZZZZ');
+    const ahead = rankBetween(null, first!.rank);
     pullResponse = {
       updates: [
         {
-          type: 'reorder',
-          entity: 'Chapter',
-          id: 'chapter-1',
+          type: 'update',
+          entity: 'Scene',
+          id: 'SCENE2ZZZZZZZZZZZZZZZZZZZZ',
+          version: 2,
           operationVersion: 4,
           operationId: 'srv-4',
           operationTime: NOW.toISOString(),
-          reorderItems: [
-            { id: 'scene-1', newIndex: 1 },
-            { id: 'scene-2', newIndex: 0 },
-          ],
+          changes: { rank: ahead, version: 2 },
         },
       ],
       publicFavorites: [],
       serverMaxOperationVersion: 4,
       role: 'owner',
     };
-    // The apply succeeds but the record does not: without the transaction the reorder's
-    // version bumps would stay while the cursor holds, and the retry would bump them again.
+    // The apply succeeds but the record does not: without the transaction the move would stay
+    // while the cursor holds, and the retry would apply it again.
     const record = jest
       .spyOn((engine as any).pull, 'recordRemoteOperationLocally')
       .mockRejectedValueOnce(new Error('disco cheio'));
 
     await expect(runOneCycle()).resolves.toBe('failed');
 
-    expect(await readScene('scene-1')).toMatchObject({ index: 0, version: 1 });
-    expect(await readScene('scene-2')).toMatchObject({ index: 1, version: 1 });
+    // Numbers derive from ranks (1-based), and nothing of the move stayed.
+    expect(await readScene('SCENE1ZZZZZZZZZZZZZZZZZZZZ')).toMatchObject({ index: 1, version: 1 });
+    expect(await readScene('SCENE2ZZZZZZZZZZZZZZZZZZZZ')).toMatchObject({ index: 2, version: 1 });
     expect((await readStory())!.lastServerSyncedLog).toBe(0);
     record.mockRestore();
 
     await expect(runOneCycle()).resolves.toBe('ok');
 
-    expect(await readScene('scene-1')).toMatchObject({ index: 1, version: 2 });
-    expect(await readScene('scene-2')).toMatchObject({ index: 0, version: 2 });
+    // B goes first, one version up, once; A only renumbers.
+    expect(await readScene('SCENE1ZZZZZZZZZZZZZZZZZZZZ')).toMatchObject({ index: 2, version: 1 });
+    expect(await readScene('SCENE2ZZZZZZZZZZZZZZZZZZZZ')).toMatchObject({ index: 1, version: 2 });
     expect((await readStory())!.lastServerSyncedLog).toBe(4);
   });
 });

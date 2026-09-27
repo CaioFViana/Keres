@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { asc, eq } from 'drizzle-orm';
-import { operationLogs, stories } from '../../src/db/schema';
+import { operationLogs, stories, syncConflicts } from '../../src/db/schema';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
 import {
   assertStoryIsOwned,
@@ -10,6 +10,8 @@ import {
   getUserIdForOperation,
   MAX_RETAINED_SYNCED_OPERATIONS,
   recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
   StoryOwnerOnlyError,
   StoryReadOnlyError,
   trimSyncedOperationLogs,
@@ -221,28 +223,96 @@ describe('recordLocalOperation', () => {
     expect(console.error).toHaveBeenCalled();
   });
 
-  it('starts numbering at 1 for a story it cannot find, rather than failing', async () => {
-    await recordLocalOperation(
-      database.db,
-      'nao-existe',
-      'user-1',
-      'create',
-      'Character',
-      'char-1',
-      {},
-    );
+  /** An operation for a story that is not here belongs to no sequence and could never push. */
+  it('refuses to record for a story it cannot find, queueing nothing', async () => {
+    await expect(
+      recordLocalOperation(
+        database.db,
+        'nao-existe',
+        'user-1',
+        'create',
+        'Character',
+        'char-1',
+        {},
+      ),
+    ).rejects.toThrow('is not here');
 
-    const [log] = await database.db.query.operationLogs.findMany();
-    expect(log.operationVersion).toBe(1);
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
   });
 });
 
 /**
- * This guard exists because the local write is optimistic: without it, a reader's edit enters the
- * database right away, is refused by the server on every synchronization cycle from then on, and never
- * goes away.
+ * An edit made while the entity's conflict is open rests on the held operations. Pushed on its own it
+ * would land before the decision, and the resolution would then write over it locally.
  */
-describe('assertStoryIsWritable', () => {
+describe('recordLocalOperation with a pending conflict on the entity', () => {
+  async function seedConflict(overrides: Partial<typeof syncConflicts.$inferInsert> = {}) {
+    await database.db.insert(syncConflicts).values({
+      id: 'conflict-1',
+      storyId: STORY_ID,
+      entityType: 'Character',
+      entityId: 'char-1',
+      reason: 'concurrent_edit',
+      localOperationType: 'update',
+      localOperationIds: JSON.stringify(['held-op']),
+      localValues: JSON.stringify({ name: 'Held' }),
+      serverValues: JSON.stringify({ name: 'Server' }),
+      clientVersion: 1,
+      serverVersion: 2,
+      status: 'pending',
+      detectedAt: new Date(),
+      ...overrides,
+    });
+  }
+  const record = (payload: Record<string, unknown>, type: 'update' | 'delete' = 'update') =>
+    recordLocalOperation(database.db, STORY_ID, 'user-1', type, 'Character', 'char-1', payload);
+  const readConflict = () =>
+    database.db.query.syncConflicts.findFirst({ where: eq(syncConflicts.id, 'conflict-1') });
+
+  it('holds the new edit in the conflict, so the decision covers the latest intent', async () => {
+    await seedStory();
+    await seedConflict();
+
+    await record({ description: 'Newer', version: 4 });
+
+    const [op] = await database.db.query.operationLogs.findMany();
+    expect(op).toMatchObject({ isSynced: false, conflictState: 'conflicted' });
+    const conflict = await readConflict();
+    expect(JSON.parse(conflict!.localOperationIds)).toEqual(['held-op', op!.id]);
+    expect(JSON.parse(conflict!.localValues)).toEqual({ name: 'Held', description: 'Newer' });
+    expect(conflict!.localOperationType).toBe('update');
+  });
+
+  it('turns the held decision into a deletion when the user deletes meanwhile', async () => {
+    await seedStory();
+    await seedConflict();
+
+    await record({ id: 'char-1', isDeleted: true, version: 4 }, 'delete');
+
+    expect((await readConflict())!.localOperationType).toBe('delete');
+  });
+
+  it('leaves the edit pushable next to a quarantine, whose resolution discards', async () => {
+    await seedStory();
+    await seedConflict({ reason: 'validation', serverValues: null });
+
+    await record({ description: 'Valid', version: 4 });
+
+    const [op] = await database.db.query.operationLogs.findMany();
+    expect(op!.conflictState).toBeNull();
+    expect(JSON.parse((await readConflict())!.localOperationIds)).toEqual(['held-op']);
+  });
+
+  it('leaves the edit pushable next to a resolved conflict', async () => {
+    await seedStory();
+    await seedConflict({ id: 'conflict-2', status: 'resolved' });
+
+    await record({ description: 'Valid', version: 4 });
+
+    const [op] = await database.db.query.operationLogs.findMany();
+    expect(op!.conflictState).toBeNull();
+  });
+
   it('allows a story that was never linked to a server', async () => {
     await seedStory({ serverId: null, myRole: null });
 
@@ -548,5 +618,96 @@ describe('getUserIdForOperation', () => {
     );
 
     expect(userId).toBe('local-user');
+  });
+});
+
+/**
+ * The entity write and the operation that syncs it are one unit: a failure (or the app dying)
+ * between them used to leave a changed row with nothing to send it.
+ */
+describe('runLocalWrite', () => {
+  const titleOf = async () => (await readStory())?.title;
+
+  it('commits the write and its operation together', async () => {
+    await seedStory();
+
+    await runLocalWrite(database.db, STORY_ID, () => {
+      database.db.update(stories).set({ title: 'Nova' }).where(eq(stories.id, STORY_ID)).run();
+      recordLocalOperationSync(database.db, STORY_ID, 'user-1', 'update', 'Story', STORY_ID, {
+        title: 'Nova',
+      });
+    });
+
+    expect(await titleOf()).toBe('Nova');
+    expect(await database.db.query.operationLogs.findMany()).toHaveLength(1);
+  });
+
+  it('rolls both back when anything in the unit fails', async () => {
+    await seedStory();
+
+    await expect(
+      runLocalWrite(database.db, STORY_ID, () => {
+        database.db.update(stories).set({ title: 'Meio' }).where(eq(stories.id, STORY_ID)).run();
+        recordLocalOperationSync(database.db, STORY_ID, 'user-1', 'update', 'Story', STORY_ID, {
+          title: 'Meio',
+        });
+        throw new Error('crash between the two');
+      }),
+    ).rejects.toThrow('crash between the two');
+
+    expect(await titleOf()).toBe('A Queda');
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+    expect((await readStory())?.lastOperationLog).toBe(0);
+  });
+
+  it('refuses to log an operation for a story that is not here, rolling the unit back', async () => {
+    await seedStory();
+
+    await expect(
+      runLocalWrite(database.db, STORY_ID, () => {
+        database.db.update(stories).set({ title: 'Órfã' }).where(eq(stories.id, STORY_ID)).run();
+        recordLocalOperationSync(database.db, 'elsewhere', 'user-1', 'update', 'Story', STORY_ID, {
+          title: 'Órfã',
+        });
+      }),
+    ).rejects.toThrow(/story elsewhere is not here/);
+
+    expect(await titleOf()).toBe('A Queda');
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+  });
+
+  it('refuses an asynchronous unit, rolling back what it already wrote', async () => {
+    await seedStory();
+
+    await expect(
+      runLocalWrite(database.db, STORY_ID, (async () => {
+        database.db.update(stories).set({ title: 'Async' }).where(eq(stories.id, STORY_ID)).run();
+      }) as never),
+    ).rejects.toThrow(/synchronous/);
+
+    expect(await titleOf()).toBe('A Queda');
+  });
+
+  it('announces the operation only after the unit committed', async () => {
+    await seedStory();
+    const seenInside: number[] = [];
+    const listener = async () => {
+      seenInside.push((await database.db.query.operationLogs.findMany()).length);
+    };
+    entityEventEmitter.on('operation_log_updated', listener);
+    try {
+      await expect(
+        runLocalWrite(database.db, STORY_ID, () => {
+          recordLocalOperationSync(database.db, STORY_ID, 'user-1', 'update', 'Story', STORY_ID, {
+            title: 'x',
+          });
+          throw new Error('rolled back');
+        }),
+      ).rejects.toThrow('rolled back');
+      // A rolled-back unit announced nothing.
+      expect(seenInside).toEqual([]);
+    } finally {
+      entityEventEmitter.off('operation_log_updated', listener);
+    }
   });
 });

@@ -163,7 +163,7 @@ describe('SceneService index handling', () => {
     expect(stored?.isDeleted).toBe(true);
   });
 
-  it('records the re-indexing as its own operations, so the server learns the new order', async () => {
+  it('records only the deletion: the chapter closes its gap by itself', async () => {
     const service = createSceneService(database.db);
     await seedScene('a', 'chapter-1', 1);
     await seedScene('b', 'chapter-1', 2);
@@ -171,26 +171,27 @@ describe('SceneService index handling', () => {
 
     await service.deleteScene(TEST_USER_ID, 'a');
 
-    const logged = (await database.db.query.operationLogs.findMany()).filter(
-      (operation) => operation.entityType === 'Scene' && operation.operationType === 'update',
-    );
-    expect(logged.map((operation) => operation.entityId).sort()).toEqual(['b', 'c']);
+    const logged = await database.db.query.operationLogs.findMany();
+    expect(logged.map((op) => [op.operationType, op.entityType, op.entityId])).toEqual([
+      ['delete', 'Scene', 'a'],
+    ]);
+    expect(await indexesOf('chapter-1')).toEqual(['b:1', 'c:2']);
   });
 
-  it('rejects an incomplete scene reorder before writing an operation the server would reject', async () => {
+  it('keeps the scenes an order leaves out after the ones it names', async () => {
     const service = createSceneService(database.db);
     await seedScene('a', 'chapter-1', 1);
     await seedScene('b', 'chapter-1', 2);
+    await seedScene('c', 'chapter-1', 3);
 
-    await expect(
-      service.reorderScenes(TEST_USER_ID, TEST_STORY_ID, 'chapter-1', [{ id: 'a', newIndex: 1 }]),
-    ).rejects.toThrow('exactly once');
+    await service.reorderScenes(TEST_USER_ID, TEST_STORY_ID, 'chapter-1', [
+      { id: 'c', newIndex: 1 },
+    ]);
 
-    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2']);
-    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+    expect(await indexesOf('chapter-1')).toEqual(['c:1', 'a:2', 'b:3']);
   });
 
-  it('bumps every scene in the order, even one that did not move, like the server does', async () => {
+  it('edits only the scene that moved, with its new rank', async () => {
     const service = createSceneService(database.db);
     await seedScene('a', 'chapter-1', 1);
     await seedScene('b', 'chapter-1', 2);
@@ -204,90 +205,181 @@ describe('SceneService index handling', () => {
 
     const rows = await database.db.query.scenes.findMany();
     const versionOf = (id: string) => rows.find((row) => row.id === id)?.version;
-    expect(versionOf('a')).toBe(2);
-    expect(versionOf('b')).toBe(2);
-    expect(versionOf('c')).toBe(2);
+    expect([versionOf('a'), versionOf('b'), versionOf('c')]).toEqual([1, 1, 2]);
+    const logged = await database.db.query.operationLogs.findMany();
+    expect(logged).toHaveLength(1);
+    expect(logged[0]).toMatchObject({
+      operationType: 'update',
+      entityType: 'Scene',
+      entityId: 'c',
+    });
+    expect(Object.keys(JSON.parse(logged[0]!.payload)).sort()).toEqual(['rank', 'version']);
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'c:2', 'b:3']);
   });
 });
 
 describe('StoryIndexService', () => {
-  it('reports a gap, a duplicate and a numbering that does not start at 1', async () => {
+  it('finds nothing to fix: every number derives from the ranks', async () => {
     await seedScene('a', 'chapter-1', 1);
     await seedScene('b', 'chapter-1', 3);
     await seedScene('c', 'chapter-2', 0);
     await seedScene('d', 'chapter-2', 0);
 
-    const problems = await createStoryIndexService(database.db).findIndexProblems(TEST_STORY_ID);
-
-    expect(problems).toEqual([
-      { scope: 'scenes', kind: 'gap', chapterId: 'chapter-1', chapterName: 'Capítulo 1' },
-      { scope: 'scenes', kind: 'duplicate', chapterId: 'chapter-2', chapterName: 'Capítulo 2' },
-    ]);
+    expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2']);
+    expect(await indexesOf('chapter-2')).toEqual(['c:1', 'd:2']);
+    expect(await createStoryIndexService(database.db).findIndexProblems(TEST_STORY_ID)).toEqual([]);
   });
 
-  it('reports chapters that do not start at 1', async () => {
+  it('re-derives a number a stray write bent, locally and without an operation', async () => {
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+    await database.db.update(schema.scenes).set({ index: 9 }).where(eq(schema.scenes.id, 'b'));
     await database.db
       .update(schema.chapters)
       .set({ index: 5 })
       .where(eq(schema.chapters.id, 'chapter-1'));
-
-    const problems = await createStoryIndexService(database.db).findIndexProblems(TEST_STORY_ID);
-
-    expect(problems).toContainEqual({ scope: 'chapters', kind: 'start' });
-  });
-
-  it('renumbers chapters and scenes to 1..N while preserving the current order', async () => {
-    await database.db
-      .update(schema.chapters)
-      .set({ index: 7 })
-      .where(eq(schema.chapters.id, 'chapter-2'));
-    await seedScene('a', 'chapter-1', 4);
-    await seedScene('b', 'chapter-1', 9);
-    await seedScene('c', 'chapter-2', 0);
-
-    const changed = await createStoryIndexService(database.db).normalizeIndexes(
-      TEST_USER_ID,
-      TEST_STORY_ID,
+    const service = createStoryIndexService(database.db);
+    expect(await service.findIndexProblems(TEST_STORY_ID)).toEqual(
+      expect.arrayContaining([
+        { scope: 'chapters', kind: 'start' },
+        { scope: 'scenes', kind: 'gap', chapterId: 'chapter-1', chapterName: 'Capítulo 1' },
+      ]),
     );
 
+    expect(await service.normalizeIndexes(TEST_USER_ID, TEST_STORY_ID)).toEqual({
+      chapters: 1,
+      scenes: 1,
+    });
     expect(await indexesOf('chapter-1')).toEqual(['a:1', 'b:2']);
-    expect(await indexesOf('chapter-2')).toEqual(['c:1']);
-    expect(
-      (await database.db.query.chapters.findMany())
-        .sort((first, second) => first.index - second.index)
-        .map((chapter) => `${chapter.id}:${chapter.index}`),
-    ).toEqual(['chapter-1:1', 'chapter-2:2']);
-    expect(changed).toEqual({ chapters: 1, scenes: 3 });
-    expect(await createStoryIndexService(database.db).findIndexProblems(TEST_STORY_ID)).toEqual([]);
-  });
-
-  it('leaves a story that already follows the convention untouched', async () => {
-    await seedScene('a', 'chapter-1', 1);
-    await seedScene('b', 'chapter-1', 2);
-
-    const changed = await createStoryIndexService(database.db).normalizeIndexes(
-      TEST_USER_ID,
-      TEST_STORY_ID,
-    );
-
-    expect(changed).toEqual({ chapters: 0, scenes: 0 });
+    expect(await service.findIndexProblems(TEST_STORY_ID)).toEqual([]);
     expect(await database.db.query.operationLogs.findMany()).toHaveLength(0);
   });
 
-  it('keeps event numbering separate from the chapter spine when normalizing', async () => {
+  it('keeps event numbering separate from the chapter spine', async () => {
     await seedChapter('event-1', 4, 'event');
-
-    expect(
-      await createStoryIndexService(database.db).findIndexProblems(TEST_STORY_ID),
-    ).toContainEqual({ scope: 'chapters', kind: 'start', chapterType: 'event' });
-
-    await expect(
-      createStoryIndexService(database.db).normalizeIndexes(TEST_USER_ID, TEST_STORY_ID),
-    ).resolves.toEqual({ chapters: 1, scenes: 0 });
 
     const rows = await database.db.query.chapters.findMany();
     expect(rows.find((chapter) => chapter.id === 'event-1')?.index).toBe(1);
     expect(rows.find((chapter) => chapter.id === 'chapter-1')?.index).toBe(1);
     expect(rows.find((chapter) => chapter.id === 'chapter-2')?.index).toBe(2);
+  });
+});
+
+/**
+ * A linear story has one start and one finish. Taking a flag records the loss on the scene that
+ * held it, as an edit of its own: the server only touches the row an operation names, so no other
+ * device would learn of it otherwise.
+ */
+describe('SceneService start and finish handoff', () => {
+  const flagsOf = async () =>
+    Object.fromEntries(
+      (await database.db.query.scenes.findMany()).map((scene) => [
+        scene.id,
+        { isStart: scene.isStart, isFinish: scene.isFinish, version: scene.version },
+      ]),
+    );
+
+  it('records the flag the previous holder loses, one version up', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+    await database.db.update(schema.scenes).set({ isStart: true }).where(eq(schema.scenes.id, 'a'));
+
+    await service.updateScene(TEST_USER_ID, 'b', { isStart: true });
+
+    expect(await flagsOf()).toEqual({
+      a: { isStart: false, isFinish: false, version: 2 },
+      b: { isStart: true, isFinish: false, version: 2 },
+    });
+    const logged = await database.db.query.operationLogs.findMany();
+    const loss = logged.find((op) => op.entityId === 'a');
+    expect(loss).toMatchObject({ operationType: 'update', entityType: 'Scene' });
+    expect(JSON.parse(loss!.payload)).toEqual({ isStart: false, version: 2 });
+  });
+
+  it('takes the flag on create too, and leaves a deleted holder alone', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('gone', 'chapter-1', 2);
+    await database.db
+      .update(schema.scenes)
+      .set({ isFinish: true })
+      .where(eq(schema.scenes.id, 'a'));
+    await database.db
+      .update(schema.scenes)
+      .set({ isFinish: true, isDeleted: true })
+      .where(eq(schema.scenes.id, 'gone'));
+
+    await service.createScene(TEST_USER_ID, {
+      id: 'c',
+      storyId: TEST_STORY_ID,
+      chapterId: 'chapter-1',
+      locationId: 'location-1',
+      name: 'Fim',
+      isFinish: true,
+    } as never);
+
+    const flags = await flagsOf();
+    expect(flags.a).toEqual({ isStart: false, isFinish: false, version: 2 });
+    expect(flags.gone).toMatchObject({ isFinish: true, version: 1 });
+    expect(flags.c).toMatchObject({ isFinish: true });
+  });
+
+  it('lets many scenes hold a flag in a story that is not linear', async () => {
+    await database.db
+      .update(schema.stories)
+      .set({ type: 'branching' })
+      .where(eq(schema.stories.id, TEST_STORY_ID));
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-1', 2);
+    await database.db.update(schema.scenes).set({ isStart: true }).where(eq(schema.scenes.id, 'a'));
+
+    await service.updateScene(TEST_USER_ID, 'b', { isStart: true });
+
+    expect((await flagsOf()).a).toEqual({ isStart: true, isFinish: false, version: 1 });
+    const logged = await database.db.query.operationLogs.findMany();
+    expect(logged.some((op) => op.entityId === 'a')).toBe(false);
+  });
+});
+
+/**
+ * Deleting a chapter - here, or on another device while this one placed a scene in it - never
+ * makes its scenes vanish: they read as unchaptered, and come back under the chapter if it is
+ * restored. Nothing is written for it, so every device shows the same thing from the same rows.
+ */
+describe('SceneService scenes of a deleted chapter', () => {
+  const deleteChapter = (isDeleted: boolean) =>
+    database.db
+      .update(schema.chapters)
+      .set({ isDeleted })
+      .where(eq(schema.chapters.id, 'chapter-1'));
+
+  it('reads them as unchaptered while the chapter is deleted, and back once it returns', async () => {
+    const service = createSceneService(database.db);
+    await seedScene('a', 'chapter-1', 1);
+    await seedScene('b', 'chapter-2', 1);
+    await deleteChapter(true);
+
+    const chapterOf = async () =>
+      Object.fromEntries(
+        (await service.getAllByStoryId(TEST_STORY_ID)).map((scene) => [scene.id, scene.chapterId]),
+      );
+    expect(await chapterOf()).toEqual({ a: null, b: 'chapter-2' });
+    expect((await service.getById('a'))?.chapterId).toBeNull();
+    const listed = await service.getScenesByStoryId(TEST_STORY_ID);
+    expect(listed.find((scene) => scene.id === 'a')?.chapterId).toBeNull();
+    expect(await service.getPreviousNextScenes(TEST_STORY_ID, 'a', null)).toEqual({
+      previousScene: undefined,
+      nextScene: undefined,
+    });
+    // The stored chapter is untouched and nothing is queued.
+    expect(
+      (await database.db.query.scenes.findFirst({ where: eq(schema.scenes.id, 'a') }))?.chapterId,
+    ).toBe('chapter-1');
+    expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+
+    await deleteChapter(false);
+    expect(await chapterOf()).toEqual({ a: 'chapter-1', b: 'chapter-2' });
   });
 });

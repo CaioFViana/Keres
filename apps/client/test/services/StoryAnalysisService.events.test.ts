@@ -102,6 +102,11 @@ describe('chapter numbering with events present', () => {
     await seedContainer('chapter-1', 1, 'chapter');
     await seedContainer('chapter-3', 3, 'chapter');
     await seedContainer('event-1', 1, 'event');
+    // Numbers derive from ranks, so only a stray write of the number itself leaves a hole.
+    await database.db
+      .update(schema.chapters)
+      .set({ index: 3 })
+      .where(eq(schema.chapters.id, 'chapter-3'));
 
     expect(await indexFindings()).not.toEqual([]);
   });
@@ -139,6 +144,10 @@ describe('scene numbering inside an event', () => {
     await seedContainer('event-1', 1, 'event');
     await seedScene('scene-a', 'event-1', 1);
     await seedScene('scene-b', 'event-1', 3);
+    await database.db
+      .update(schema.scenes)
+      .set({ index: 3 })
+      .where(eq(schema.scenes.id, 'scene-b'));
 
     expect(await sceneFindings()).not.toEqual([]);
   });
@@ -222,6 +231,10 @@ describe('a story with an empty spine', () => {
 
   it('catches a hole inside an era even with no chapters at all', async () => {
     await seedScene('scene-d', 'era-2', 9);
+    await database.db
+      .update(schema.scenes)
+      .set({ index: 9 })
+      .where(eq(schema.scenes.id, 'scene-d'));
     expect(await sceneFindings()).not.toEqual([]);
   });
 

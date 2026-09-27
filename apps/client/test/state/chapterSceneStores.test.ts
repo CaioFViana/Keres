@@ -126,9 +126,14 @@ describe('chapter store structure', () => {
 
   it('reports a failed reorder in state and rethrows a failed conversion', async () => {
     await seedChapter('a', 1);
+    // An order naming a chapter that is not there simply lands on the ones that are; a failing
+    // write is what the store has to report.
+    jest
+      .spyOn(useChapterStore.getState().service!, 'reorderChapters')
+      .mockRejectedValueOnce(new Error('Chapter reorder failed.'));
 
-    await useChapterStore.getState().reorderChapters([{ id: 'missing', newIndex: 1 }]);
-    expect(useChapterStore.getState().error).toMatch(/not found|reorder/i);
+    await useChapterStore.getState().reorderChapters([{ id: 'a', newIndex: 1 }]);
+    expect(useChapterStore.getState().error).toMatch(/reorder/i);
     expect(useChapterStore.getState().loading).toBe(false);
 
     await expect(useChapterStore.getState().convertChapterType('missing', 'event')).rejects.toThrow(
@@ -173,8 +178,12 @@ describe('scene store structure', () => {
   it('reports a failed reorder in state instead of throwing into the gesture', async () => {
     await seedChapter('chapter-1', 1);
     await seedScene('a', 1);
+    // A stale list lands on the scenes that are there; a failing write is what gets reported.
+    jest
+      .spyOn(useSceneStore.getState().service!, 'reorderScenes')
+      .mockRejectedValueOnce(new Error('Scene reorder failed.'));
 
-    await useSceneStore.getState().reorderScenes('chapter-1', [{ id: 'missing', newIndex: 1 }]);
+    await useSceneStore.getState().reorderScenes('chapter-1', [{ id: 'a', newIndex: 1 }]);
 
     expect(useSceneStore.getState().error).toMatch(/not found|reorder/i);
     expect(useSceneStore.getState().loading).toBe(false);

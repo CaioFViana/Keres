@@ -275,6 +275,14 @@ describe('global search attributes and scene context', () => {
   });
 
   it('pins every scene result to its chapter position', async () => {
+    // Numbers derive from the chapters' order: a chapter before it makes it the second.
+    await database.db.insert(schema.chapters).values({
+      id: 'chapter-0',
+      storyId: TEST_STORY_ID,
+      name: 'The Departure',
+      index: 1,
+      ...entityBase,
+    });
     await database.db.insert(schema.chapters).values({
       id: 'chapter-1',
       storyId: TEST_STORY_ID,

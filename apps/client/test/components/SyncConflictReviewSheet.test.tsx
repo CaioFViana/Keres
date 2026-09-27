@@ -148,6 +148,7 @@ const summaryOf = (overrides: Record<string, unknown> = {}): ConflictSummary =>
     detail: 'The name differs.',
     reason: 'test' as ConflictSummary['reason'],
     canQuickResolve: true,
+    canKeepMine: true,
     offerBoardClone: false,
     diffFields: [],
     ...overrides,

@@ -11,11 +11,8 @@ import { entityBase, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 /**
- * A reorder bases its operation on the container's bumped version. When the container
- * row is gone (a stale screen, a half-purged story), the bump returns no row - and logging
- * the operation anyway would queue a versionless op the push silently skips forever (for
- * updates/deletes) or that conflicts spuriously (for reorders). Fail fast instead, with
- * nothing queued.
+ * A reorder for a story that is not here (a stale screen, a half-purged story) must fail fast
+ * with nothing queued: an operation recorded for it would belong to no sequence and never push.
  */
 
 const GHOST_STORY_ID = 'ghost-story';

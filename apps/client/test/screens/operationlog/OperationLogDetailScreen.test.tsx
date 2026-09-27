@@ -145,16 +145,12 @@ it('maps every operation type to an icon', async () => {
     ['create', 'add-circle-outline'],
     ['update', 'create-outline'],
     ['delete', 'trash-outline'],
-    ['reorder', 'repeat-outline'],
     ['mystery', 'help-circle-outline'],
   ] as const) {
     mockGetOperationLogById.mockResolvedValueOnce(
       makeLog({
         operationType,
-        payload:
-          operationType === 'reorder'
-            ? JSON.stringify({ reorderItems: [{ id: 'ch-1', newIndex: 0 }] })
-            : JSON.stringify({ name: 'Aria' }),
+        payload: JSON.stringify({ name: 'Aria' }),
       }),
     );
     const view = await render(<OperationLogDetailScreen />);
@@ -237,34 +233,6 @@ it('displays suggestion values through the catalog formatter', async () => {
   const view = await render(<OperationLogDetailScreen />);
 
   await waitFor(() => expect(view.getByText('Fire')).toBeTruthy());
-});
-
-it('renders reorder payloads with resolved chapter names', async () => {
-  mockGetOperationLogById.mockResolvedValueOnce(
-    makeLog({
-      entityType: 'Story',
-      operationType: 'reorder',
-      payload: JSON.stringify({ reorderItems: [{ id: 'ch-1', newIndex: 0 }] }),
-    }),
-  );
-  const view = await render(<OperationLogDetailScreen />);
-
-  await waitFor(() => expect(view.getByText('resolved-ch-1')).toBeTruthy());
-  expect(mockGetEntityIdentifier).toHaveBeenCalledWith(mockDb, 'chapter', 'ch-1', 'story-1', mockT);
-});
-
-it('renders reorder payloads on chapters with resolved scene names', async () => {
-  mockGetOperationLogById.mockResolvedValueOnce(
-    makeLog({
-      entityType: 'Chapter',
-      operationType: 'reorder',
-      payload: JSON.stringify({ reorderItems: [{ id: 'sc-2', newIndex: 1 }] }),
-    }),
-  );
-  const view = await render(<OperationLogDetailScreen />);
-
-  await waitFor(() => expect(view.getByText('resolved-sc-2')).toBeTruthy());
-  expect(mockGetEntityIdentifier).toHaveBeenCalledWith(mockDb, 'scene', 'sc-2', 'story-1', mockT);
 });
 
 it('falls back to the raw id when resolution fails', async () => {

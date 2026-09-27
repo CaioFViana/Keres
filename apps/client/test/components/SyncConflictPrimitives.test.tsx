@@ -103,6 +103,7 @@ const summary = (overrides: Partial<ConflictSummary> = {}): ConflictSummary => (
   detail: 'The name differs.',
   reason: 'test' as ConflictSummary['reason'],
   canQuickResolve: true,
+  canKeepMine: true,
   offerBoardClone: false,
   diffFields: [],
   ...overrides,
@@ -213,6 +214,16 @@ describe('ConflictRow', () => {
 
     const plain = await render(<ConflictRow {...rowProps()} onCloneBoard={onCloneBoard} />);
     expect(plain.queryByLabelText('conflict_clone_board')).toBeNull();
+  });
+
+  /** Keeping mine cannot land when what the change points at was deleted: only discarding is offered. */
+  it('offers only discarding when keeping this device version cannot land', async () => {
+    const screen = await render(
+      <ConflictRow {...rowProps()} summary={summary({ canKeepMine: false })} />,
+    );
+
+    expect(screen.queryByLabelText('conflict_keep_mine')).toBeNull();
+    expect(screen.getByLabelText('conflict_keep_server')).toBeTruthy();
   });
 
   it('sends involved rows to the details instead of quick actions', async () => {

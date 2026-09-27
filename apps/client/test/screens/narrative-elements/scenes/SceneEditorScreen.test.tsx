@@ -251,6 +251,7 @@ function makeScene(overrides: Partial<SceneSelect> = {}): SceneSelect {
     locationId: null,
     name: 'Opening',
     index: 1,
+    rank: 'a1',
     summary: 'It begins',
     body: 'Saved prose.',
     gap: null,

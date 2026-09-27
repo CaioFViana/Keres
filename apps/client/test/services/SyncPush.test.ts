@@ -30,7 +30,7 @@ const operation = (
     operationVersion: 1,
     operationType,
     entityType: 'Character',
-    entityId: 'character-1',
+    entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
     payload: JSON.stringify({ name: 'Local', version: 2 }),
     createdAt: NOW,
     isSynced: false,
@@ -109,46 +109,15 @@ describe('operation mapping', () => {
     expect(deletion).toMatchObject({ type: 'delete', version: 1 });
   });
 
-  it('maps chapter and story reorder payloads', () => {
-    const reorderItems = [{ id: 'one', newIndex: 1 }];
-    const chapter = build(
-      operation('chapter', 'reorder', {
-        entityType: 'Chapter',
-        entityId: 'chapter-1',
-        payload: JSON.stringify({ reorderItems, version: 2 }),
-      }),
-    );
-    const story = build(
-      operation('story', 'reorder', {
-        entityType: 'Story',
-        entityId: STORY_ID,
-        payload: JSON.stringify({
-          reorderItems,
-          reorderTarget: 'schemaFields',
-          schemaEntityType: 'Character',
-          version: 2,
-        }),
-      }),
-    );
-
-    expect(chapter).toMatchObject({ type: 'reorder', entity: 'Chapter', reorderItems });
-    expect(story).toMatchObject({
-      type: 'reorder',
-      entity: 'Story',
-      reorderItems,
-      reorderTarget: 'schemaFields',
-    });
-  });
-
   it.each([
     operation('missing-version', 'update', { payload: JSON.stringify({ name: 'Invalid' }) }),
     operation('missing-delete-version', 'delete', {
       entityType: 'StoryArc',
-      entityId: 'arc-1',
-      payload: JSON.stringify({ id: 'arc-1', isDeleted: true }),
+      entityId: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ id: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ', isDeleted: true }),
     }),
     operation('missing-id', 'create', { entityId: '' }),
-    operation('bad-reorder', 'reorder', { entityType: 'Character' }),
+    operation('container-order', 'reorder' as never, { entityType: 'Chapter' }),
     operation('unknown', 'rename' as never),
   ])('skips an operation the server cannot safely accept', (value) => {
     expect(build(value)).toBeNull();
@@ -159,8 +128,8 @@ describe('operation mapping', () => {
     const deletion = build(
       operation('arc-delete', 'delete', {
         entityType: 'StoryArc',
-        entityId: 'arc-1',
-        payload: JSON.stringify({ id: 'arc-1', isDeleted: true, version: 2 }),
+        entityId: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ',
+        payload: JSON.stringify({ id: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ', isDeleted: true, version: 2 }),
       }),
     );
     expect(deletion).toMatchObject({ type: 'delete', entity: 'StoryArc', version: 1 });
@@ -168,19 +137,29 @@ describe('operation mapping', () => {
 });
 
 describe('pending operations and rebasing', () => {
-  it('groups only pushable operations by entity in operation-version order', async () => {
+  it('reads every unsynced operation of one entity in operation-version order, held ones included', async () => {
     await seedOperation(operation('second', 'update', { operationVersion: 2 }));
     await seedOperation(operation('first', 'update', { operationVersion: 1 }));
     await seedOperation(
       operation('blocked', 'update', { operationVersion: 3, conflictState: 'conflicted' }),
     );
+    await seedOperation(
+      operation('synced', 'update', {
+        operationVersion: 4,
+        isSynced: true,
+        serverOperationVersion: 9,
+      }),
+    );
+    await seedOperation(
+      operation('other', 'update', { operationVersion: 5, entityId: 'CHARACTER2ZZZZZZZZZZZZZZZZ' }),
+    );
 
-    const grouped = await push.getPendingOperationsByEntity();
+    const unsynced = await push.getUnsyncedOperationsForEntity(
+      'Character',
+      'CHARACTER1ZZZZZZZZZZZZZZZZ',
+    );
 
-    expect(grouped.get('Character:character-1')?.map((entry) => entry.id)).toEqual([
-      'first',
-      'second',
-    ]);
+    expect(unsynced.map((entry) => entry.id)).toEqual(['first', 'second', 'blocked']);
   });
 
   it('chains rebased versions and ignores a missing server version', async () => {
@@ -189,7 +168,7 @@ describe('pending operations and rebasing', () => {
     await seedOperation(first);
     await seedOperation(second);
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Local',
       createdAt: NOW,
@@ -270,7 +249,7 @@ describe('push result handling', () => {
     });
     const conflict = {
       entity: 'Character',
-      entityId: 'character-1',
+      entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       type: 'update',
       reason: 'concurrent_edit',
       message: 'conflict',
@@ -278,6 +257,8 @@ describe('push result handling', () => {
       serverVersion: 4,
     };
 
+    await seedOperation(first);
+    await seedOperation(second);
     const result = await push.applyPushResult(
       { applied: [], conflicts: [conflict, { ...conflict, message: 'again' }] } as never,
       [first, second],
@@ -297,12 +278,12 @@ describe('push result handling', () => {
   it('does not put an accepted create into a later update conflict for the same entity', async () => {
     const create = operation('board-create', 'create', {
       entityType: 'Board',
-      entityId: 'board-1',
+      entityId: 'BOARD1ZZZZZZZZZZZZZZZZZZZZ',
       payload: JSON.stringify({ name: 'Board', content: { nodes: [], edges: [] }, version: 1 }),
     });
     const update = operation('board-update', 'update', {
       entityType: 'Board',
-      entityId: 'board-1',
+      entityId: 'BOARD1ZZZZZZZZZZZZZZZZZZZZ',
       operationVersion: 2,
       payload: JSON.stringify({ content: { nodes: [], edges: [] }, version: 2 }),
     });
@@ -316,7 +297,7 @@ describe('push result handling', () => {
           {
             clientOperationId: 'board-update',
             entity: 'Board',
-            entityId: 'board-1',
+            entityId: 'BOARD1ZZZZZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'validation',
             message: 'invalid update',
@@ -365,9 +346,170 @@ describe('push result handling', () => {
     );
   });
 
+  it('keeps an operation skipped behind another refusal queued, deciding nothing', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Local name',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 4,
+      isDeleted: false,
+    });
+    const local = operation('skipped', 'update', {
+      payload: JSON.stringify({ name: 'Local name', version: 4 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: local.id,
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'Skipped: an earlier operation on this entity in this batch conflicted.',
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    // No snapshot is no judgement: recorded, it would read as "the server does not have it".
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: false,
+      conflictState: null,
+    });
+    expect(await database.db.query.characters.findFirst()).toMatchObject({ isDeleted: false });
+  });
+
+  /**
+   * A chapter and its scene go in one push; the chapter does not land (skipped here, folded or
+   * rewritten elsewhere) and the scene is refused for pointing at a chapter the server lacks. The
+   * chapter is on its way: the scene waits for it instead of asking the user about a reference
+   * that is about to exist.
+   */
+  it('keeps a refusal for a missing reference queued while a create of the push is on its way', async () => {
+    const chapter = operation('chapter', 'create', {
+      operationVersion: 1,
+      entityType: 'Chapter',
+      entityId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ name: 'Um', version: 1 }),
+    });
+    const scene = operation('scene', 'create', {
+      operationVersion: 2,
+      entityType: 'Scene',
+      entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({
+        name: 'Porto',
+        chapterId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+        version: 1,
+      }),
+    });
+    await seedOperation(chapter);
+    await seedOperation(scene);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: chapter.id,
+            entity: 'Chapter',
+            entityId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'version_conflict',
+            message: 'Skipped: an earlier operation on this entity in this batch conflicted.',
+          },
+          {
+            clientOperationId: scene.id,
+            entity: 'Scene',
+            entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'referenced_entity_deleted',
+            message: 'Chapter not found.',
+          },
+        ],
+      } as never,
+      [chapter, scene],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    for (const op of await database.db.query.operationLogs.findMany()) {
+      expect(op).toMatchObject({ isSynced: false, conflictState: null });
+    }
+  });
+
+  it('never lets two refusals for missing references wait on each other', async () => {
+    const first = operation('first', 'create', {
+      entityType: 'TagRelation',
+      entityId: 'RELATION1ZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ tagId: 'GONE', version: 1 }),
+    });
+    const second = operation('second', 'create', {
+      operationVersion: 2,
+      entityType: 'TagRelation',
+      entityId: 'RELATION2ZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ tagId: 'GONE', version: 1 }),
+    });
+    await seedOperation(first);
+    await seedOperation(second);
+
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [first, second].map((op) => ({
+          clientOperationId: op.id,
+          entity: 'TagRelation',
+          entityId: op.entityId,
+          type: 'create',
+          reason: 'referenced_entity_deleted',
+          message: 'Tag not found.',
+        })),
+      } as never,
+      [first, second],
+    );
+
+    expect(recordConflict).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks about a missing reference when nothing of the push is on its way', async () => {
+    const scene = operation('scene', 'create', {
+      entityType: 'Scene',
+      entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ name: 'Porto', chapterId: 'GONE', version: 1 }),
+    });
+    await seedOperation(scene);
+
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: scene.id,
+            entity: 'Scene',
+            entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'referenced_entity_deleted',
+            message: 'Chapter not found.',
+          },
+        ],
+      } as never,
+      [scene],
+    );
+
+    expect(recordConflict).toHaveBeenCalledTimes(1);
+  });
+
   it('silently merges disjoint stale fields and rebases the local edit', async () => {
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Old server name',
       description: 'Old description',
@@ -387,7 +529,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -414,7 +556,7 @@ describe('push result handling', () => {
 
   it('does not surface a conflict when both sides reached the same value', async () => {
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Same name',
       createdAt: NOW,
@@ -433,7 +575,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -511,7 +653,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'validation',
             message: 'bad',
@@ -553,6 +695,7 @@ describe('push result handling', () => {
     const create = operation('create-refused', 'create', {
       payload: JSON.stringify({ name: 'New', version: 1 }),
     });
+    await seedOperation(create);
 
     await push.applyPushResult(
       {
@@ -560,7 +703,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'create',
             reason: 'validation',
             message: 'bad create',
@@ -615,7 +758,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -645,7 +788,7 @@ describe('push result handling', () => {
   it('rebases without writing when the merged entity has no local table', async () => {
     const local = operation('future', 'update', {
       entityType: 'SomethingFromTheFuture',
-      entityId: 'x-1',
+      entityId: 'X1ZZZZZZZZZZZZZZZZZZZZZZZZ',
       payload: JSON.stringify({ name: 'A', version: 3 }),
     });
     await seedOperation(local);
@@ -656,7 +799,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'SomethingFromTheFuture',
-            entityId: 'x-1',
+            entityId: 'X1ZZZZZZZZZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -683,7 +826,7 @@ describe('push result handling', () => {
    */
   it('overlays the local edits when the server side maps to no local column', async () => {
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Original',
       createdAt: NOW,
@@ -702,7 +845,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -733,7 +876,7 @@ describe('push result handling', () => {
    */
   it('skips the write when neither side maps to a local column', async () => {
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Original',
       createdAt: NOW,
@@ -748,7 +891,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -775,29 +918,34 @@ describe('push loop', () => {
   it('pushes offline Plot membership and Route traversal creations without dropping their links', async () => {
     const plot = operation('plot', 'create', {
       entityType: 'Plot',
-      entityId: 'plot-1',
+      entityId: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
       payload: JSON.stringify({ name: 'The thread', details: null, version: 1 }),
     });
     const plotScene = operation('plot-scene', 'create', {
       entityType: 'PlotScene',
-      entityId: 'plot-scene-1',
+      entityId: 'PLOTSCENE1ZZZZZZZZZZZZZZZZ',
       operationVersion: 2,
-      payload: JSON.stringify({ plotId: 'plot-1', sceneId: 'scene-1', note: null, version: 1 }),
+      payload: JSON.stringify({
+        plotId: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
+        sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+        note: null,
+        version: 1,
+      }),
     });
     const route = operation('route', 'create', {
       entityType: 'Route',
-      entityId: 'route-1',
+      entityId: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
       operationVersion: 3,
       payload: JSON.stringify({ name: 'Possible path', details: null, version: 1 }),
     });
     const routeStep = operation('route-step', 'create', {
       entityType: 'RouteStep',
-      entityId: 'route-step-1',
+      entityId: 'ROUTESTEP1ZZZZZZZZZZZZZZZZ',
       operationVersion: 4,
       payload: JSON.stringify({
-        routeId: 'route-1',
+        routeId: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
         position: 1,
-        sceneId: 'scene-1',
+        sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
         selectedChoiceId: null,
         version: 1,
       }),
@@ -820,23 +968,29 @@ describe('push loop', () => {
       expect.arrayContaining([
         expect.objectContaining({
           entity: 'Plot',
-          id: 'plot-1',
+          id: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
           data: { name: 'The thread', details: null, version: 1 },
         }),
         expect.objectContaining({
           entity: 'PlotScene',
-          id: 'plot-scene-1',
-          data: expect.objectContaining({ plotId: 'plot-1', sceneId: 'scene-1' }),
+          id: 'PLOTSCENE1ZZZZZZZZZZZZZZZZ',
+          data: expect.objectContaining({
+            plotId: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
+            sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+          }),
         }),
         expect.objectContaining({
           entity: 'Route',
-          id: 'route-1',
+          id: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
           data: expect.objectContaining({ name: 'Possible path' }),
         }),
         expect.objectContaining({
           entity: 'RouteStep',
-          id: 'route-step-1',
-          data: expect.objectContaining({ routeId: 'route-1', sceneId: 'scene-1' }),
+          id: 'ROUTESTEP1ZZZZZZZZZZZZZZZZ',
+          data: expect.objectContaining({
+            routeId: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
+            sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+          }),
         }),
       ]),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
@@ -923,7 +1077,7 @@ describe('push loop', () => {
     const ops = Array.from({ length: 201 }, (_, index) =>
       operation(`bulk-${index}`, 'update', {
         operationVersion: index + 1,
-        entityId: `character-${index}`,
+        entityId: `CHAR${index}`.padEnd(26, 'Z'),
       }),
     );
     await database.db.insert(schema.operationLogs).values(ops);
@@ -958,7 +1112,7 @@ describe('push loop', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'validation',
             message: 'bad',

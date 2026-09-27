@@ -78,7 +78,7 @@ describe('push retention best-effort', () => {
       operationVersion: 1,
       operationType: 'update',
       entityType: 'Character',
-      entityId: 'character-1',
+      entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       payload: JSON.stringify({ name: 'Local', version: 2 }),
       createdAt: NOW,
       isSynced: false,

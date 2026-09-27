@@ -314,7 +314,11 @@ describe('collaboration sync handlers', () => {
     expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
   });
 
-  it('uses the story context and unique relation key to make see-also pulls repeatable', async () => {
+  /**
+   * The server refuses a second live relation of one pair, so a pulled twin is history the server
+   * holds (the first one deleted since, say): the device mirrors it rather than folding it away.
+   */
+  it('uses the story context and mirrors every see-also row the server sends', async () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
     const relation = {
@@ -343,6 +347,7 @@ describe('collaboration sync handlers', () => {
 
     expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([
       expect.objectContaining({ id: 'see-1', storyId: STORY_ID, entityBId: 'location-2' }),
+      expect.objectContaining({ id: 'see-2', storyId: STORY_ID, entityBId: 'location-1' }),
     ]);
   });
 
@@ -502,7 +507,13 @@ describe('collaboration sync handlers', () => {
   });
 });
 
-describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
+/**
+ * The server refuses a second connection of one pair or a second parent of one child, and the
+ * device that made it folds its own row into the first: whatever a pull brings is a row the
+ * server holds, and the device mirrors it - judging it here (by recency) dropped server rows or
+ * deleted local ones with nothing recorded, and the devices drifted apart.
+ */
+describe('LocationRelationClientSyncHandler mirroring', () => {
   const relation = (id: string, overrides: Record<string, unknown> = {}) => ({
     id,
     storyId: STORY_ID,
@@ -523,7 +534,7 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
     return handler;
   };
 
-  it('keeps the newer local connection when a duplicate arrives from the server', async () => {
+  it('takes every relation the server sends, whatever else this device holds', async () => {
     const handler = withHandler();
     await handler.applyCreate(
       STORY_ID,
@@ -536,69 +547,26 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
 
     await handler.applyCreate(
       STORY_ID,
-      createUpdate('LocationRelation', 'older-remote', relation('older-remote')),
+      createUpdate('LocationRelation', 'remote', relation('remote')),
+    );
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate(
+        'LocationRelation',
+        'parent',
+        relation('parent', { relationType: 'contains', locationBId: 'child' }),
+      ),
     );
 
-    expect(await database.db.select().from(schema.locationRelations).all()).toEqual([
-      expect.objectContaining({ id: 'local', isDeleted: false }),
+    const rows = await database.db.select().from(schema.locationRelations).all();
+    expect(rows.map((row) => [row.id, row.isDeleted]).sort()).toEqual([
+      ['local', false],
+      ['parent', false],
+      ['remote', false],
     ]);
   });
 
-  it('replaces an older local connection when the incoming duplicate is newer', async () => {
-    const handler = withHandler();
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'local', relation('local')),
-    );
-
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'newer-remote',
-        relation('newer-remote', { updatedAt: '2026-08-11T12:00:00.000Z' }),
-      ),
-    );
-
-    const byId = new Map(
-      (await database.db.select().from(schema.locationRelations).all()).map((row) => [row.id, row]),
-    );
-    expect(byId.get('local')).toMatchObject({ isDeleted: true, version: 2 });
-    expect(byId.get('newer-remote')).toMatchObject({ isDeleted: false });
-  });
-
-  it('treats a child with another contains parent as the same conflict class', async () => {
-    const handler = withHandler();
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'old-parent',
-        relation('old-parent', {
-          relationType: 'contains',
-          locationAId: 'parent-a',
-          locationBId: 'child',
-        }),
-      ),
-    );
-
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'new-parent',
-        relation('new-parent', {
-          relationType: 'contains',
-          locationAId: 'parent-b',
-          locationBId: 'child',
-        }),
-      ),
-    );
-
-    expect(await database.db.select().from(schema.locationRelations).all()).toHaveLength(1);
-  });
-
-  it('does not overwrite a local relation when an older update would make it duplicate', async () => {
+  it('applies an update as the server made it, never judging it against other rows', async () => {
     const handler = withHandler();
     await handler.applyCreate(
       STORY_ID,
@@ -610,25 +578,18 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
     );
     await handler.applyCreate(
       STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'existing',
-        relation('existing', { updatedAt: '2026-08-11T12:00:00.000Z' }),
-      ),
+      createUpdate('LocationRelation', 'other', relation('other')),
     );
 
     await handler.applyUpdate(
       STORY_ID,
-      updateUpdate('LocationRelation', 'target', {
-        locationAId: 'location-a',
-        locationBId: 'location-b',
-        updatedAt: CREATED_AT,
-      }),
+      updateUpdate('LocationRelation', 'target', { relationType: 'contains' }),
     );
 
     expect(await handler.getById('target')).toEqual(
-      expect.objectContaining({ locationAId: 'location-c', locationBId: 'location-d' }),
+      expect.objectContaining({ relationType: 'contains', locationAId: 'location-c' }),
     );
+    expect(await handler.getById('other')).toEqual(expect.objectContaining({ isDeleted: false }));
   });
 
   it('ignores malformed, misaddressed, and missing local operations without mutating a relation', async () => {

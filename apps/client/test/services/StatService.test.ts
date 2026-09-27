@@ -138,9 +138,10 @@ describe('StatService update and delete', () => {
     const service = createStatService(database.db);
     await seedStat('a', { name: 'Old', order: 0 });
 
+    // A form's order is never written: a stat's place is its rank (reorderStats).
     await service.updateStat(TEST_USER_ID, 'a', { name: 'New', order: 3 });
 
-    expect(await service.getById('a')).toMatchObject({ name: 'New', order: 3, version: 2 });
+    expect(await service.getById('a')).toMatchObject({ name: 'New', order: 0, version: 2 });
     const logged = await database.db.query.operationLogs.findMany();
     expect(logged).toHaveLength(1);
     expect(logged[0]).toMatchObject({ entityType: 'Stat', operationType: 'update' });

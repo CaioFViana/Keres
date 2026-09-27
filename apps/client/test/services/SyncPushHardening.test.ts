@@ -34,7 +34,7 @@ const operation = (
     operationVersion: 1,
     operationType,
     entityType: 'Character',
-    entityId: 'character-1',
+    entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
     payload: JSON.stringify({ name: 'Local', version: 2 }),
     createdAt: NOW,
     isSynced: false,
@@ -51,7 +51,7 @@ const remoteUpdate = (overrides: Partial<StoryUpdate> = {}): StoryUpdate =>
     originatingUser: 'remote-user',
     type: 'update',
     entity: 'Character',
-    id: 'character-1',
+    id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
     version: 4,
     changes: { name: 'Server name' },
     ...overrides,
@@ -60,6 +60,16 @@ const remoteUpdate = (overrides: Partial<StoryUpdate> = {}): StoryUpdate =>
 async function seedOperation(value: OperationLogSelect) {
   await database.db.insert(schema.operationLogs).values(value);
 }
+
+/** Ids of the operations still eligible for the next push (unsynced, not held by a conflict). */
+const pushableOperationIds = async () =>
+  (
+    await database.db.query.operationLogs.findMany({
+      columns: { id: true, isSynced: true, conflictState: true },
+    })
+  )
+    .filter((op) => !op.isSynced && op.conflictState === null)
+    .map((op) => op.id);
 
 const readOperation = (id: string) =>
   database.db.query.operationLogs.findFirst({ where: eq(schema.operationLogs.id, id) });
@@ -139,7 +149,7 @@ describe('quarantining unpushable operations', () => {
     expect(recordConflict).toHaveBeenCalledWith(
       expect.objectContaining({
         entityType: 'Character',
-        entityId: 'character-1',
+        entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
         reason: 'validation',
         localOperationType: 'update',
         localOperationIds: ['unsafe'],
@@ -153,8 +163,38 @@ describe('quarantining unpushable operations', () => {
       isSynced: false,
       conflictState: 'conflicted',
     });
-    expect(await push.getPendingOperationsByEntity()).toEqual(new Map());
+    expect(await pushableOperationIds()).toEqual([]);
     expect(notifier.conflictsDetected).toHaveBeenCalledWith(1);
+  });
+
+  it('quarantines an operation the protocol does not have instead of poisoning the batch', async () => {
+    // A row of a type this build does not know (a container order a development build left):
+    // sent, the server would refuse it; held back silently, it would sit in the queue forever.
+    await seedOperation(
+      operation('bad-order', 'reorder' as never, {
+        entityType: 'Chapter',
+        entityId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+        payload: JSON.stringify({ version: 2 }),
+      }),
+    );
+    await seedOperation(operation('valid', 'update', { operationVersion: 2 }));
+    post.mockResolvedValue({
+      data: { applied: [{ clientOperationId: 'valid', operationVersion: 3 }], conflicts: [] },
+    });
+
+    await expect(push.pushPendingOperations()).resolves.toEqual({ offline: false });
+
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post.mock.calls[0][1].map((entry: StoryUpdate) => entry.clientOperationId)).toEqual([
+      'valid',
+    ]);
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationIds: ['bad-order'],
+        reason: 'validation',
+        message: expect.stringContaining('unknown type'),
+      }),
+    );
   });
 
   it('quarantines a corrupted payload without aborting the push of the other operations', async () => {
@@ -203,7 +243,7 @@ describe('rebasing around corrupted payloads', () => {
     await seedOperation(valid);
     await seedOperation(corrupt);
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Local',
       createdAt: NOW,
@@ -243,9 +283,10 @@ describe('conflict versions within one pull batch', () => {
       handler,
     );
     expect(merged).toEqual({ conflicted: false });
+    // The remote version is not merged as a field: the rebase moves the row's version.
     expect(handler.applyUpdate).toHaveBeenCalledWith(
       STORY_ID,
-      expect.objectContaining({ changes: { name: 'Server name', version: 4 } }),
+      expect.objectContaining({ changes: { name: 'Server name' } }),
     );
 
     const conflicted = await pull.reconcileRemoteUpdate(
@@ -283,36 +324,6 @@ describe('conflict versions within one pull batch', () => {
     );
     expect(console.warn).toHaveBeenCalled();
   });
-
-  it('conflicts a remote reorder against a corrupted pending reorder with an empty local order', async () => {
-    const corrupt = operation('corrupt-reorder', 'reorder', {
-      entityType: 'Chapter',
-      entityId: 'chapter-1',
-      payload: '{not-json',
-    });
-
-    const result = await pull.reconcileRemoteUpdate(
-      remoteUpdate({
-        type: 'reorder',
-        entity: 'Chapter',
-        id: 'chapter-1',
-        reorderItems: [{ id: 'scene-server', newIndex: 1 }],
-      } as never),
-      [corrupt],
-      handler,
-    );
-
-    expect(result).toEqual({ conflicted: true });
-    expect(recordConflict).toHaveBeenCalledWith(
-      expect.objectContaining({
-        reason: 'concurrent_edit',
-        localOperationType: 'reorder',
-        localValues: { reorderItems: [] },
-        clientVersion: null,
-      }),
-    );
-    expect(console.warn).toHaveBeenCalled();
-  });
 });
 
 describe('payload shapes that cannot be pushed', () => {
@@ -325,7 +336,7 @@ describe('payload shapes that cannot be pushed', () => {
 
     expect(post).not.toHaveBeenCalled();
     expect(recordConflict).toHaveBeenCalledTimes(3);
-    expect(await push.getPendingOperationsByEntity()).toEqual(new Map());
+    expect(await pushableOperationIds()).toEqual([]);
   });
 
   it('records the quarantine under each operation kind', async () => {
@@ -336,12 +347,6 @@ describe('payload shapes that cannot be pushed', () => {
       operation('no-version', 'delete', {
         operationVersion: 2,
         payload: JSON.stringify({ name: 'X' }),
-      }),
-    );
-    await seedOperation(
-      operation('bad-reorder', 'reorder', {
-        operationVersion: 3,
-        payload: JSON.stringify({ name: 'X', version: 2 }),
       }),
     );
     await seedOperation(
@@ -357,8 +362,8 @@ describe('payload shapes that cannot be pushed', () => {
     const kinds = recordConflict.mock.calls.map(
       (call) => (call[0] as { localOperationType: string }).localOperationType,
     );
-    expect(kinds.sort()).toEqual(['create', 'delete', 'reorder', 'update']);
-    expect(await push.getPendingOperationsByEntity()).toEqual(new Map());
+    expect(kinds.sort()).toEqual(['create', 'delete', 'update']);
+    expect(await pushableOperationIds()).toEqual([]);
   });
 });
 
@@ -367,7 +372,7 @@ describe('push round ceiling', () => {
     const ops = Array.from({ length: 401 }, (_, index) =>
       operation(`bulk-${index}`, 'update', {
         operationVersion: index + 1,
-        entityId: `character-${index}`,
+        entityId: `CHAR${index}`.padEnd(26, 'Z'),
       }),
     );
     for (const op of ops) await seedOperation(op);
@@ -396,7 +401,7 @@ describe('push round ceiling', () => {
 
     expect(post).toHaveBeenCalledTimes(2);
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining('2-round ceiling'));
-    expect((await push.getPendingOperationsByEntity()).size).toBe(1);
+    expect(await pushableOperationIds()).toHaveLength(1);
   });
 });
 
@@ -411,7 +416,7 @@ describe('rebasing around non-object payloads', () => {
     await seedOperation(num);
     await seedOperation(nil);
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Local',
       createdAt: NOW,

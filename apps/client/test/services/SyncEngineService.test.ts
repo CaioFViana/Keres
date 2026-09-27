@@ -202,8 +202,13 @@ async function seedPendingOperation(
     operationVersion: 1,
     operationType: 'create' as const,
     entityType: 'Character',
-    entityId: 'char-local',
-    payload: JSON.stringify({ id: 'char-local', storyId: STORY_ID, name: 'Nyx', version: 1 }),
+    entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+    payload: JSON.stringify({
+      id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Nyx',
+      version: 1,
+    }),
     createdAt: NOW,
     isSynced: false,
     serverOperationVersion: 0,
@@ -314,7 +319,12 @@ describe('pull', () => {
   it('does not advance the pull cursor past an entity type this client cannot apply yet', async () => {
     await seedStory();
     pullResponse = {
-      updates: [{ ...remoteCreate('future-1', 'From a newer client', 8), entity: 'FutureEntity' }],
+      updates: [
+        {
+          ...remoteCreate('FUTURE1ZZZZZZZZZZZZZZZZZZZ', 'From a newer client', 8),
+          entity: 'FutureEntity',
+        },
+      ],
       serverMaxOperationVersion: 8,
       role: 'owner',
     };
@@ -328,37 +338,6 @@ describe('pull', () => {
     );
   });
 
-  /** An order with no items carries nothing to apply - and log rows are immutable, so no "later,
-   * valid retry" of the same version will ever arrive. Skipping past it (recorded, cursor advanced)
-   * instead of blocking keeps one such row from stalling the story's pull forever. */
-  it('skips past a reorder without items instead of stalling the pull', async () => {
-    await seedStory();
-    pullResponse = {
-      updates: [
-        {
-          type: 'reorder',
-          entity: 'Chapter',
-          id: 'chapter-1',
-          operationId: 'srv-reorder-7',
-          operationVersion: 7,
-          operationTime: NOW.toISOString(),
-          reorderItems: [],
-        },
-        remoteCreate('char-after', 'After', 8),
-      ],
-      serverMaxOperationVersion: 8,
-      role: 'owner',
-    };
-
-    await runOneCycle();
-
-    expect((await readStory())!.lastServerSyncedLog).toBe(8);
-    const character = await database.db.query.characters.findFirst({
-      where: eq(schema.characters.id, 'char-after'),
-    });
-    expect(character?.name).toBe('After');
-  });
-
   it('imports a changed public favorite snapshot and announces it to its target entity', async () => {
     await seedStory();
     const emit = jest.spyOn(entityEventEmitter, 'emit');
@@ -366,9 +345,9 @@ describe('pull', () => {
       updates: [],
       publicFavorites: [
         {
-          id: 'favorite-remote',
+          id: 'FAVORITEREMOTEZZZZZZZZZZZZ',
           storyId: STORY_ID,
-          entityId: 'character-remote',
+          entityId: 'CHARACTERREMOTEZZZZZZZZZZZ',
           entityType: 'Character',
           userId: 'other-user',
           createdAt: NOW.toISOString(),
@@ -386,10 +365,10 @@ describe('pull', () => {
 
     expect(
       await database.db.query.favorites.findFirst({
-        where: eq(schema.favorites.id, 'favorite-remote'),
+        where: eq(schema.favorites.id, 'FAVORITEREMOTEZZZZZZZZZZZZ'),
       }),
     ).toMatchObject({
-      entityId: 'character-remote',
+      entityId: 'CHARACTERREMOTEZZZZZZZZZZZ',
       userId: 'other-user',
       version: 3,
     });
@@ -397,18 +376,18 @@ describe('pull', () => {
       'favorite_changed',
       STORY_ID,
       'Character',
-      'character-remote',
+      'CHARACTERREMOTEZZZZZZZZZZZ',
       'other-user',
     );
-    expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'character-remote');
+    expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'CHARACTERREMOTEZZZZZZZZZZZ');
   });
 
   it('does not redraw entities again when the public favorite snapshot has not changed', async () => {
     await seedStory();
     const favorite = {
-      id: 'favorite-remote',
+      id: 'FAVORITEREMOTEZZZZZZZZZZZZ',
       storyId: STORY_ID,
-      entityId: 'character-remote',
+      entityId: 'CHARACTERREMOTEZZZZZZZZZZZ',
       entityType: 'Character',
       userId: 'other-user',
       createdAt: NOW.toISOString(),
@@ -432,7 +411,7 @@ describe('pull', () => {
       'favorite_changed',
       STORY_ID,
       'Character',
-      'character-remote',
+      'CHARACTERREMOTEZZZZZZZZZZZ',
       'other-user',
     );
   });
@@ -569,143 +548,6 @@ describe('pull', () => {
   });
 });
 
-/**
- * Before this fix, a remote reorder was always applied straight away, even with an unsent local
- * reordering on the same entity - and the reverse happened too
- * (the pending local reorder overwrote it back afterwards). It never became a `SyncConflict`,
- * so the person never found out they had lost their own reordering.
- */
-describe('reconciling a remote reorder against pending local changes', () => {
-  it('records a conflict instead of silently overwriting a pending local reorder', async () => {
-    await seedStory();
-    await seedPendingOperation({
-      operationType: 'reorder',
-      entityType: 'Chapter',
-      entityId: 'chapter-1',
-      payload: JSON.stringify({
-        reorderItems: [
-          { id: 'scene-a', newIndex: 1 },
-          { id: 'scene-b', newIndex: 2 },
-        ],
-        version: 1,
-      }),
-    });
-    await database.db.insert(schema.scenes).values([
-      {
-        id: 'scene-a',
-        storyId: STORY_ID,
-        chapterId: 'chapter-1',
-        locationId: 'location-1',
-        name: 'A',
-        index: 2,
-        ...base,
-      },
-      {
-        id: 'scene-b',
-        storyId: STORY_ID,
-        chapterId: 'chapter-1',
-        locationId: 'location-1',
-        name: 'B',
-        index: 1,
-        ...base,
-      },
-    ]);
-    pullResponse = {
-      updates: [
-        {
-          type: 'reorder',
-          entity: 'Chapter',
-          id: 'chapter-1',
-          operationVersion: 9,
-          operationId: 'srv-9',
-          operationTime: NOW.toISOString(),
-          reorderItems: [
-            { id: 'scene-b', newIndex: 1 },
-            { id: 'scene-a', newIndex: 2 },
-          ],
-          version: 2,
-        },
-      ],
-      serverMaxOperationVersion: 9,
-      role: 'owner',
-    };
-
-    await runOneCycle();
-
-    const conflicts = await database.db.query.syncConflicts.findMany({
-      where: eq(schema.syncConflicts.storyId, STORY_ID),
-    });
-    expect(conflicts).toHaveLength(1);
-    expect(conflicts[0]).toMatchObject({
-      entityType: 'Chapter',
-      entityId: 'chapter-1',
-      localOperationType: 'reorder',
-      reason: 'concurrent_edit',
-    });
-
-    // The local order was not touched - it stays exactly as the user left it, awaiting
-    // their decision on the conflict screen.
-    const sceneA = await database.db.query.scenes.findFirst({
-      where: eq(schema.scenes.id, 'scene-a'),
-    });
-    expect(sceneA!.index).toBe(2);
-  });
-
-  it('applies the remote reorder directly when nothing pending on that entity is a reorder', async () => {
-    await seedStory();
-    await database.db.insert(schema.chapters).values({
-      id: 'chapter-1',
-      storyId: STORY_ID,
-      name: 'Capítulo 1',
-      index: 1,
-      ...base,
-    });
-    await seedPendingOperation({
-      operationType: 'update',
-      entityType: 'Chapter',
-      entityId: 'chapter-1',
-      payload: JSON.stringify({ name: 'Novo nome', version: 1 }),
-    });
-    await database.db.insert(schema.scenes).values({
-      id: 'scene-a',
-      storyId: STORY_ID,
-      chapterId: 'chapter-1',
-      locationId: 'location-1',
-      name: 'A',
-      index: 1,
-      ...base,
-    });
-    pullResponse = {
-      updates: [
-        {
-          type: 'reorder',
-          entity: 'Chapter',
-          id: 'chapter-1',
-          operationVersion: 9,
-          operationId: 'srv-9',
-          operationTime: NOW.toISOString(),
-          reorderItems: [{ id: 'scene-a', newIndex: 5 }],
-          version: 2,
-        },
-      ],
-      serverMaxOperationVersion: 9,
-      role: 'owner',
-    };
-
-    await runOneCycle();
-
-    const conflicts = await database.db.query.syncConflicts.findMany({
-      where: eq(schema.syncConflicts.storyId, STORY_ID),
-    });
-    expect(conflicts).toEqual([]);
-
-    const sceneA = await database.db.query.scenes.findFirst({
-      where: eq(schema.scenes.id, 'scene-a'),
-    });
-    expect(sceneA!.index).toBe(5);
-  });
-});
-
 describe('push', () => {
   it('sends the operations that were never synced', async () => {
     await seedStory({ lastOperationLog: 1 });
@@ -716,7 +558,11 @@ describe('push', () => {
     const push = seen.find((request) => request.method === 'POST');
     expect(push).toBeDefined();
     expect(push!.body).toHaveLength(1);
-    expect(push!.body[0]).toMatchObject({ type: 'create', entity: 'Character', id: 'char-local' });
+    expect(push!.body[0]).toMatchObject({
+      type: 'create',
+      entity: 'Character',
+      id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+    });
   });
 
   it('splits a backlog larger than the server batch cap into multiple posts', async () => {
@@ -725,9 +571,9 @@ describe('push', () => {
       await seedPendingOperation({
         id: `op-batch-${index}`,
         operationVersion: index + 1,
-        entityId: `char-${index}`,
+        entityId: `CHAR${index}`.padEnd(26, 'Z'),
         payload: JSON.stringify({
-          id: `char-${index}`,
+          id: `CHAR${index}`.padEnd(26, 'Z'),
           storyId: STORY_ID,
           name: 'Nyx',
           version: 1,
@@ -789,7 +635,7 @@ describe('push', () => {
           operationVersion: 10,
           entityVersion: 1,
           entity: 'Character',
-          entityId: 'char-local',
+          entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
         },
       ],
       conflicts: [],
@@ -833,7 +679,7 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     overrides: Partial<typeof schema.characters.$inferInsert> = {},
   ) {
     await database.db.insert(schema.characters).values({
-      id: 'char-local',
+      id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Nyx',
       title: 'Old Title',
@@ -844,14 +690,20 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
   }
 
   const readCharacter = () =>
-    database.db.query.characters.findFirst({ where: eq(schema.characters.id, 'char-local') });
+    database.db.query.characters.findFirst({
+      where: eq(schema.characters.id, 'CHARLOCALZZZZZZZZZZZZZZZZZ'),
+    });
 
   it('merges silently and rebases the pending operation when the server changed a different field', async () => {
     await seedStory({ lastOperationLog: 1 });
     await seedLocalCharacter();
     const operation = await seedPendingOperation({
       operationType: 'update',
-      payload: JSON.stringify({ id: 'char-local', motivation: 'Nova Motivação', version: 1 }),
+      payload: JSON.stringify({
+        id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+        motivation: 'Nova Motivação',
+        version: 1,
+      }),
     });
     pushResponse = {
       message: 'ok',
@@ -861,14 +713,14 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
       conflicts: [
         {
           entity: 'Character',
-          entityId: 'char-local',
+          entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
           type: 'update',
           reason: 'version_conflict',
           message: 'stale',
           clientVersion: 1,
           serverVersion: 2,
           serverEntity: {
-            id: 'char-local',
+            id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
             storyId: STORY_ID,
             name: 'Nyx',
             title: 'Título Novo do Servidor',
@@ -917,7 +769,11 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await seedLocalCharacter();
     const operation = await seedPendingOperation({
       operationType: 'update',
-      payload: JSON.stringify({ id: 'char-local', title: 'Título Novo do Servidor', version: 1 }),
+      payload: JSON.stringify({
+        id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+        title: 'Título Novo do Servidor',
+        version: 1,
+      }),
     });
     pushResponse = {
       message: 'ok',
@@ -927,14 +783,14 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
       conflicts: [
         {
           entity: 'Character',
-          entityId: 'char-local',
+          entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
           type: 'update',
           reason: 'version_conflict',
           message: 'stale',
           clientVersion: 1,
           serverVersion: 2,
           serverEntity: {
-            id: 'char-local',
+            id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
             storyId: STORY_ID,
             name: 'Nyx',
             title: 'Título Novo do Servidor',
@@ -969,7 +825,11 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await seedLocalCharacter();
     await seedPendingOperation({
       operationType: 'update',
-      payload: JSON.stringify({ id: 'char-local', motivation: 'Minha Motivação', version: 1 }),
+      payload: JSON.stringify({
+        id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+        motivation: 'Minha Motivação',
+        version: 1,
+      }),
     });
     pushResponse = {
       message: 'ok',
@@ -979,14 +839,14 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
       conflicts: [
         {
           entity: 'Character',
-          entityId: 'char-local',
+          entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
           type: 'update',
           reason: 'version_conflict',
           message: 'stale',
           clientVersion: 1,
           serverVersion: 2,
           serverEntity: {
-            id: 'char-local',
+            id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
             storyId: STORY_ID,
             name: 'Nyx',
             title: 'Old Title',
@@ -1014,7 +874,11 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await seedLocalCharacter();
     await seedPendingOperation({
       operationType: 'update',
-      payload: JSON.stringify({ id: 'char-local', motivation: 'Nova Motivação', version: 1 }),
+      payload: JSON.stringify({
+        id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+        motivation: 'Nova Motivação',
+        version: 1,
+      }),
     });
     pushResponse = {
       message: 'ok',
@@ -1024,14 +888,14 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
       conflicts: [
         {
           entity: 'Character',
-          entityId: 'char-local',
+          entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
           type: 'update',
           reason: 'version_conflict',
           message: 'stale',
           clientVersion: 1,
           serverVersion: 2,
           serverEntity: {
-            id: 'char-local',
+            id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
             storyId: STORY_ID,
             name: 'Nyx',
             title: 'Título Novo do Servidor',
@@ -1058,7 +922,11 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
     await seedLocalCharacter();
     await seedPendingOperation({
       operationType: 'update',
-      payload: JSON.stringify({ id: 'char-local', title: 'Título Novo', version: 1 }),
+      payload: JSON.stringify({
+        id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+        title: 'Título Novo',
+        version: 1,
+      }),
     });
     pushResponse = {
       message: 'ok',
@@ -1068,13 +936,18 @@ describe('push - auto-merging non-overlapping field conflicts', () => {
       conflicts: [
         {
           entity: 'Character',
-          entityId: 'char-local',
+          entityId: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
           type: 'update',
           reason: 'deleted_on_server',
           message: 'deleted',
           clientVersion: 1,
           serverVersion: 2,
-          serverEntity: { id: 'char-local', storyId: STORY_ID, isDeleted: true, version: 2 },
+          serverEntity: {
+            id: 'CHARLOCALZZZZZZZZZZZZZZZZZ',
+            storyId: STORY_ID,
+            isDeleted: true,
+            version: 2,
+          },
           changedFields: ['isDeleted'],
         },
       ],
@@ -1167,7 +1040,7 @@ describe('when the server cannot be reached', () => {
         {
           type: 'update',
           entity: 'SomethingFromTheFuture',
-          id: 'future-1',
+          id: 'FUTURE1ZZZZZZZZZZZZZZZZZZZ',
           operationVersion: 1,
           operationId: 'srv-1',
           changes: { name: 'A newer server knows this' },
@@ -1463,14 +1336,20 @@ describe('remote-operation safety boundaries', () => {
     pullResponse.updates[0] = {
       ...pullResponse.updates[0],
       entity: 'Story',
-      id: 'story-outra',
-      data: { ...pullResponse.updates[0].data, id: 'story-outra', title: 'Outra história' },
+      id: 'STORYOUTRAZZZZZZZZZZZZZZZZ',
+      data: {
+        ...pullResponse.updates[0].data,
+        id: 'STORYOUTRAZZZZZZZZZZZZZZZZ',
+        title: 'Outra história',
+      },
     };
 
     await runOneCycle();
 
     expect(
-      await database.db.query.stories.findFirst({ where: eq(schema.stories.id, 'story-outra') }),
+      await database.db.query.stories.findFirst({
+        where: eq(schema.stories.id, 'STORYOUTRAZZZZZZZZZZZZZZZZ'),
+      }),
     ).toBeUndefined();
     const log = await database.db.query.operationLogs.findFirst({
       where: eq(schema.operationLogs.serverOperationVersion, 1),
@@ -1551,7 +1430,7 @@ describe('lifecycle and activation guards', () => {
   });
 
   it('delegates server story previews to the transfer module', async () => {
-    const previews = [{ id: 'story-remote', title: 'Remota' }];
+    const previews = [{ id: 'STORYREMOTEZZZZZZZZZZZZZZZ', title: 'Remota' }];
     (pullResponse as any).storyPreviews = previews;
     await expect(
       engine.fetchServerStoryPreviews({ ...SERVER, idUser: 'server-user' } as never),
@@ -1625,7 +1504,7 @@ describe('direct apply paths', () => {
   it('applies a remote update directly when nothing local is pending', async () => {
     await seedStory();
     await database.db.insert(schema.characters).values({
-      id: 'char-direct',
+      id: 'CHARDIRECTZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Antes',
       ...base,
@@ -1635,7 +1514,7 @@ describe('direct apply paths', () => {
         {
           type: 'update',
           entity: 'Character',
-          id: 'char-direct',
+          id: 'CHARDIRECTZZZZZZZZZZZZZZZZ',
           operationVersion: 2,
           operationId: 'srv-2',
           version: 2,
@@ -1650,7 +1529,7 @@ describe('direct apply paths', () => {
     await runOneCycle();
 
     const row = await database.db.query.characters.findFirst({
-      where: eq(schema.characters.id, 'char-direct'),
+      where: eq(schema.characters.id, 'CHARDIRECTZZZZZZZZZZZZZZZZ'),
     });
     expect(row?.name).toBe('Depois');
     expect((await readStory())?.lastServerSyncedLog).toBe(2);
@@ -1659,7 +1538,7 @@ describe('direct apply paths', () => {
   it('applies a remote delete directly when nothing local is pending', async () => {
     await seedStory();
     await database.db.insert(schema.characters).values({
-      id: 'char-gone',
+      id: 'CHARGONEZZZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Finado',
       ...base,
@@ -1669,7 +1548,7 @@ describe('direct apply paths', () => {
         {
           type: 'delete',
           entity: 'Character',
-          id: 'char-gone',
+          id: 'CHARGONEZZZZZZZZZZZZZZZZZZ',
           operationVersion: 3,
           operationId: 'srv-3',
           version: 2,
@@ -1683,7 +1562,7 @@ describe('direct apply paths', () => {
     await runOneCycle();
 
     const row = await database.db.query.characters.findFirst({
-      where: eq(schema.characters.id, 'char-gone'),
+      where: eq(schema.characters.id, 'CHARGONEZZZZZZZZZZZZZZZZZZ'),
     });
     expect(row?.isDeleted).toBe(true);
     expect((await readStory())?.lastServerSyncedLog).toBe(3);
@@ -1696,7 +1575,7 @@ describe('direct apply paths', () => {
         {
           type: 'rename',
           entity: 'Character',
-          id: 'char-x',
+          id: 'CHARXZZZZZZZZZZZZZZZZZZZZZ',
           operationVersion: 1,
           operationId: 'srv-1',
         },
@@ -1712,11 +1591,11 @@ describe('direct apply paths', () => {
     // even after an upgrade.
     expect(
       await database.db.query.characters.findFirst({
-        where: eq(schema.characters.id, 'char-x'),
+        where: eq(schema.characters.id, 'CHARXZZZZZZZZZZZZZZZZZZZZZ'),
       }),
     ).toBeUndefined();
     const logged = await database.db.query.operationLogs.findMany({
-      where: eq(schema.operationLogs.entityId, 'char-x'),
+      where: eq(schema.operationLogs.entityId, 'CHARXZZZZZZZZZZZZZZZZZZZZZ'),
     });
     expect(logged).toHaveLength(0);
     expect((await readStory())?.lastServerSyncedLog).toBe(0);
@@ -1725,78 +1604,6 @@ describe('direct apply paths', () => {
       'error',
     );
   });
-
-  it('skips a reorder with an empty item list and keeps applying what follows', async () => {
-    await seedStory();
-    pullResponse = {
-      updates: [
-        {
-          type: 'reorder',
-          entity: 'Chapter',
-          id: 'chapter-1',
-          operationVersion: 1,
-          operationId: 'srv-1',
-          operationTime: NOW.toISOString(),
-          reorderItems: [],
-        },
-        remoteCreate('char-after', 'Depois', 2),
-      ],
-      publicFavorites: [],
-      serverMaxOperationVersion: 2,
-      role: 'owner',
-    };
-
-    await runOneCycle();
-
-    expect(
-      (
-        await database.db.query.characters.findFirst({
-          where: eq(schema.characters.id, 'char-after'),
-        })
-      )?.name,
-    ).toBe('Depois');
-    expect((await readStory())?.lastServerSyncedLog).toBe(2);
-    expect(mockShowNotification).not.toHaveBeenCalledWith(expect.any(String), 'error');
-  });
-
-  it('applies a remote scene reorder to the local chapters', async () => {
-    await seedStory();
-    await database.db.insert(schema.scenes).values([
-      { id: 'scene-1', storyId: STORY_ID, chapterId: 'chapter-1', name: 'A', index: 0, ...base },
-      { id: 'scene-2', storyId: STORY_ID, chapterId: 'chapter-1', name: 'B', index: 1, ...base },
-    ]);
-    pullResponse = {
-      updates: [
-        {
-          type: 'reorder',
-          entity: 'Chapter',
-          id: 'chapter-1',
-          operationVersion: 4,
-          operationId: 'srv-4',
-          operationTime: NOW.toISOString(),
-          reorderItems: [
-            { id: 'scene-1', newIndex: 1 },
-            { id: 'scene-2', newIndex: 0 },
-          ],
-        },
-      ],
-      publicFavorites: [],
-      serverMaxOperationVersion: 4,
-      role: 'owner',
-    };
-
-    await runOneCycle();
-
-    const first = await database.db.query.scenes.findFirst({
-      where: eq(schema.scenes.id, 'scene-1'),
-    });
-    const second = await database.db.query.scenes.findFirst({
-      where: eq(schema.scenes.id, 'scene-2'),
-    });
-    expect(first?.index).toBe(1);
-    expect(second?.index).toBe(0);
-    expect((await readStory())?.lastServerSyncedLog).toBe(4);
-  });
 });
 
 describe('echoes and malformed updates', () => {
@@ -1804,9 +1611,14 @@ describe('echoes and malformed updates', () => {
     await seedStory();
     await seedPendingOperation({
       entityType: 'Character',
-      entityId: 'char-echo',
+      entityId: 'CHARECHOZZZZZZZZZZZZZZZZZZ',
       operationType: 'update',
-      payload: JSON.stringify({ id: 'char-echo', storyId: STORY_ID, name: 'Eco', version: 2 }),
+      payload: JSON.stringify({
+        id: 'CHARECHOZZZZZZZZZZZZZZZZZZ',
+        storyId: STORY_ID,
+        name: 'Eco',
+        version: 2,
+      }),
       isSynced: true,
       serverOperationVersion: 5,
     });
@@ -1815,7 +1627,7 @@ describe('echoes and malformed updates', () => {
         {
           type: 'update',
           entity: 'Character',
-          id: 'char-echo',
+          id: 'CHARECHOZZZZZZZZZZZZZZZZZZ',
           operationVersion: 5,
           operationId: 'srv-5',
           version: 2,
@@ -1835,7 +1647,7 @@ describe('echoes and malformed updates', () => {
     expect(logged).toHaveLength(1);
     expect(
       await database.db.query.characters.findFirst({
-        where: eq(schema.characters.id, 'char-echo'),
+        where: eq(schema.characters.id, 'CHARECHOZZZZZZZZZZZZZZZZZZ'),
       }),
     ).toBeUndefined();
     expect((await readStory())?.lastServerSyncedLog).toBe(5);
@@ -1901,10 +1713,10 @@ describe('pull failure containment', () => {
         {
           type: 'create',
           entity: 'CustomWidget',
-          id: 'widget-broken',
+          id: 'WIDGETBROKENZZZZZZZZZZZZZZ',
           operationVersion: 2,
           operationId: 'srv-2',
-          data: { id: 'widget-broken' },
+          data: { id: 'WIDGETBROKENZZZZZZZZZZZZZZ' },
         },
       ],
       publicFavorites: [],
@@ -1952,10 +1764,10 @@ describe('pull failure containment', () => {
         {
           type: 'create',
           entity: 'CustomWidget',
-          id: 'widget-1',
+          id: 'WIDGET1ZZZZZZZZZZZZZZZZZZZ',
           operationVersion: 1,
           operationId: 'srv-1',
-          data: { id: 'widget-1' },
+          data: { id: 'WIDGET1ZZZZZZZZZZZZZZZZZZZ' },
         },
       ],
       publicFavorites: [],
@@ -1965,7 +1777,10 @@ describe('pull failure containment', () => {
 
     await runOneCycle();
 
-    expect(applyCreate).toHaveBeenCalledWith(STORY_ID, expect.objectContaining({ id: 'widget-1' }));
+    expect(applyCreate).toHaveBeenCalledWith(
+      STORY_ID,
+      expect.objectContaining({ id: 'WIDGET1ZZZZZZZZZZZZZZZZZZZ' }),
+    );
     expect((await readStory())?.lastServerSyncedLog).toBe(1);
   });
 
@@ -1980,9 +1795,9 @@ describe('pull failure containment', () => {
 
 describe('favorites over the updates channel', () => {
   const favoriteData = {
-    id: 'fav-1',
+    id: 'FAV1ZZZZZZZZZZZZZZZZZZZZZZ',
     storyId: STORY_ID,
-    entityId: 'char-1',
+    entityId: 'CHAR1ZZZZZZZZZZZZZZZZZZZZZ',
     entityType: 'Character',
     userId: 'other-user',
     createdAt: NOW.toISOString(),
@@ -1994,7 +1809,7 @@ describe('favorites over the updates channel', () => {
   const favoriteCreate = (overrides: Record<string, any> = {}) => ({
     type: 'create',
     entity: 'Favorite',
-    id: 'fav-1',
+    id: 'FAV1ZZZZZZZZZZZZZZZZZZZZZZ',
     operationVersion: 3,
     operationId: 'srv-3',
     data: { ...favoriteData, ...overrides },
@@ -2014,7 +1829,7 @@ describe('favorites over the updates channel', () => {
 
     expect(
       await database.db.query.favorites.findFirst({
-        where: eq(schema.favorites.id, 'fav-1'),
+        where: eq(schema.favorites.id, 'FAV1ZZZZZZZZZZZZZZZZZZZZZZ'),
       }),
     ).toBeDefined();
     expect((await readStory())?.lastPublicFavoriteLog).toBe(3);
@@ -2022,17 +1837,17 @@ describe('favorites over the updates channel', () => {
       'favorite_changed',
       STORY_ID,
       'Character',
-      'char-1',
+      'CHAR1ZZZZZZZZZZZZZZZZZZZZZ',
       'other-user',
     );
-    expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'char-1');
+    expect(emit).toHaveBeenCalledWith('character_changed', STORY_ID, 'CHAR1ZZZZZZZZZZZZZZZZZZZZZ');
   });
 
   it('emits no target event for a favorite whose type has none', async () => {
     await seedStory();
     const emit = jest.spyOn(entityEventEmitter, 'emit');
     pullResponse = {
-      updates: [favoriteCreate({ entityType: 'Choice', entityId: 'choice-1' })],
+      updates: [favoriteCreate({ entityType: 'Choice', entityId: 'CHOICE1ZZZZZZZZZZZZZZZZZZZ' })],
       publicFavorites: [],
       serverMaxOperationVersion: 3,
       role: 'owner',
@@ -2044,10 +1859,10 @@ describe('favorites over the updates channel', () => {
       'favorite_changed',
       STORY_ID,
       'Choice',
-      'choice-1',
+      'CHOICE1ZZZZZZZZZZZZZZZZZZZ',
       'other-user',
     );
-    expect(emit).not.toHaveBeenCalledWith('choice_changed', STORY_ID, 'choice-1');
+    expect(emit).not.toHaveBeenCalledWith('choice_changed', STORY_ID, 'CHOICE1ZZZZZZZZZZZZZZZZZZZ');
   });
 
   it('closes a favorite delete without re-reading the removed row', async () => {
@@ -2058,7 +1873,7 @@ describe('favorites over the updates channel', () => {
         {
           type: 'delete',
           entity: 'Favorite',
-          id: 'fav-ghost',
+          id: 'FAVGHOSTZZZZZZZZZZZZZZZZZZ',
           operationVersion: 2,
           operationId: 'srv-2',
           version: 1,
@@ -2075,7 +1890,7 @@ describe('favorites over the updates channel', () => {
       'favorite_changed',
       STORY_ID,
       expect.anything(),
-      'fav-ghost',
+      'FAVGHOSTZZZZZZZZZZZZZZZZZZ',
       expect.anything(),
     );
     expect((await readStory())?.lastServerSyncedLog).toBe(2);
@@ -2142,7 +1957,9 @@ describe('favorites over the updates channel', () => {
     const emit = jest.spyOn(entityEventEmitter, 'emit');
     pullResponse = {
       updates: [],
-      publicFavorites: [{ ...favoriteData, entityType: 'Choice', entityId: 'choice-1' }],
+      publicFavorites: [
+        { ...favoriteData, entityType: 'Choice', entityId: 'CHOICE1ZZZZZZZZZZZZZZZZZZZ' },
+      ],
       serverMaxOperationVersion: 0,
       role: 'owner',
     };
@@ -2153,10 +1970,10 @@ describe('favorites over the updates channel', () => {
       'favorite_changed',
       STORY_ID,
       'Choice',
-      'choice-1',
+      'CHOICE1ZZZZZZZZZZZZZZZZZZZ',
       'other-user',
     );
-    expect(emit).not.toHaveBeenCalledWith('choice_changed', STORY_ID, 'choice-1');
+    expect(emit).not.toHaveBeenCalledWith('choice_changed', STORY_ID, 'CHOICE1ZZZZZZZZZZZZZZZZZZZ');
   });
 });
 
@@ -2222,17 +2039,17 @@ describe('pull-side auto-merge', () => {
   it('rebases a pending edit silently when the server touched a different field', async () => {
     await seedStory();
     await database.db.insert(schema.characters).values({
-      id: 'char-merge',
+      id: 'CHARMERGEZZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Local',
       ...base,
     });
     await seedPendingOperation({
       entityType: 'Character',
-      entityId: 'char-merge',
+      entityId: 'CHARMERGEZZZZZZZZZZZZZZZZZ',
       operationType: 'update',
       payload: JSON.stringify({
-        id: 'char-merge',
+        id: 'CHARMERGEZZZZZZZZZZZZZZZZZ',
         storyId: STORY_ID,
         name: 'Local',
         version: 2,
@@ -2243,7 +2060,7 @@ describe('pull-side auto-merge', () => {
         {
           type: 'update',
           entity: 'Character',
-          id: 'char-merge',
+          id: 'CHARMERGEZZZZZZZZZZZZZZZZZ',
           operationVersion: 1,
           operationId: 'srv-1',
           version: 2,
@@ -2259,7 +2076,7 @@ describe('pull-side auto-merge', () => {
 
     expect(await database.db.query.syncConflicts.findMany()).toHaveLength(0);
     const row = await database.db.query.characters.findFirst({
-      where: eq(schema.characters.id, 'char-merge'),
+      where: eq(schema.characters.id, 'CHARMERGEZZZZZZZZZZZZZZZZZ'),
     });
     expect(row?.description).toBe('Remota');
     const stillPending = await database.db.query.operationLogs.findMany({

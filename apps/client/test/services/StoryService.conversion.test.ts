@@ -180,7 +180,7 @@ describe('StoryService type conversion', () => {
     ).toEqual([{ count: 2 }]);
   });
 
-  it('restores the choice order inside a chapter even when its stored indexes are stale', async () => {
+  it('restores the choice order inside a chapter even when its stored order is stale', async () => {
     await database.db
       .update(schema.stories)
       .set({ type: 'branching' })
@@ -189,13 +189,14 @@ describe('StoryService type conversion', () => {
       .update(schema.scenes)
       .set({ isDeleted: true })
       .where(eq(schema.scenes.chapterId, SECOND_CHAPTER_ID));
+    // The chapter holds the two scenes the other way round from the choice between them.
     await database.db
       .update(schema.scenes)
-      .set({ index: 2 })
+      .set({ rank: 'a2' })
       .where(eq(schema.scenes.id, FIRST_SCENE_ID));
     await database.db
       .update(schema.scenes)
-      .set({ index: 1 })
+      .set({ rank: 'a1' })
       .where(eq(schema.scenes.id, SECOND_SCENE_ID));
     await database.db.insert(schema.choices).values({
       id: 'choice-first-second',

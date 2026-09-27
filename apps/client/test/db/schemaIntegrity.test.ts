@@ -24,45 +24,32 @@ describe('production SQLite schema integrity', () => {
     ).toThrow(/FOREIGN KEY constraint failed/);
   });
 
-  it('enforces one attribute value per entity and schema field', () => {
-    database.raw
-      .prepare(
-        `INSERT INTO attribute_values
-          (id, story_id, entity_type, entity_id, field_id, value, created_at, updated_at, version, is_deleted)
-         VALUES ('first', 'story', 'Character', 'character', 'rank', '7', 0, 0, 1, 0)`,
-      )
-      .run();
-
-    expect(() =>
-      database.raw
-        .prepare(
-          `INSERT INTO attribute_values
-            (id, story_id, entity_type, entity_id, field_id, value, created_at, updated_at, version, is_deleted)
-           VALUES ('duplicate', 'story', 'Character', 'character', 'rank', '8', 0, 0, 1, 0)`,
-        )
-        .run(),
-    ).toThrow(/UNIQUE constraint failed: attribute_values.entity_id, attribute_values.field_id/);
-  });
-
-  it('enforces one schema key per story and entity type', () => {
-    database.raw
-      .prepare(
-        `INSERT INTO story_schema_fields
-          (id, story_id, entity_type, name, key, type, is_required, "order", created_at, updated_at, version, is_deleted)
-         VALUES ('first-field', 'story', 'Character', 'Rank', 'rank', 'number', 0, 0, 0, 0, 1, 0)`,
-      )
-      .run();
-
-    expect(() =>
-      database.raw
-        .prepare(
-          `INSERT INTO story_schema_fields
-            (id, story_id, entity_type, name, key, type, is_required, "order", created_at, updated_at, version, is_deleted)
-           VALUES ('duplicate-field', 'story', 'Character', 'Outro Rank', 'rank', 'number', 0, 1, 0, 0, 1, 0)`,
-        )
-        .run(),
-    ).toThrow(
-      /UNIQUE constraint failed: story_schema_fields.story_id, story_schema_fields.entity_type, story_schema_fields.key/,
-    );
+  /**
+   * A synced table takes every row the server holds. Two devices can each write the same entity's
+   * value for one field offline: the server keeps one and answers the other with `duplicate`, which
+   * that device folds away - but until then this device must be able to hold both. A local unique
+   * constraint refused the pulled twin, and after three failures the pull dropped it for good.
+   */
+  it.each([
+    [
+      'attribute values of one entity and field',
+      `INSERT INTO attribute_values
+        (id, story_id, entity_type, entity_id, field_id, value, created_at, updated_at, version, is_deleted)
+       VALUES (?, 'story', 'Character', 'character', 'rank', '7', 0, 0, 1, 0)`,
+    ],
+    [
+      'schema fields with one key',
+      `INSERT INTO story_schema_fields
+        (id, story_id, entity_type, name, key, type, is_required, "order", created_at, updated_at, version, is_deleted)
+       VALUES (?, 'story', 'Character', 'Rank', 'rank', 'number', 0, 0, 0, 0, 1, 0)`,
+    ],
+    [
+      'tags with one name',
+      `INSERT INTO tags (id, story_id, name, created_at, updated_at, version, is_deleted)
+       VALUES (?, 'story', 'Vilão', 0, 0, 1, 0)`,
+    ],
+  ])('holds two live rows of %s until the push folds one', (_label, insert) => {
+    database.raw.prepare(insert).run('first');
+    expect(() => database.raw.prepare(insert).run('twin')).not.toThrow();
   });
 });

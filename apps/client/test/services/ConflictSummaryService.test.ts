@@ -712,3 +712,68 @@ describe('stat value conflicts', () => {
     );
   });
 });
+
+describe('buildConflictSummaries - whether keeping mine can land', () => {
+  const t = ((key: string) => key) as never;
+
+  it('offers keeping mine only where resending could land', () => {
+    const [ordinary, missingReference, unsendable, refused] = buildConflictSummaries(
+      [
+        conflict({ id: 'a' }),
+        conflict({ id: 'b', reason: 'referenced_entity_deleted', serverValues: null }),
+        conflict({ id: 'c', reason: 'validation', serverValues: null }),
+        conflict({ id: 'd', reason: 'validation', serverValues: { name: 'Server' } }),
+      ],
+      new Map(),
+      new Map(),
+      t,
+    );
+
+    expect(ordinary!.canKeepMine).toBe(true);
+    expect(missingReference!.canKeepMine).toBe(false);
+    expect(unsendable!.canKeepMine).toBe(false);
+    expect(refused!.canKeepMine).toBe(true);
+  });
+});
+
+describe('buildConflictSummaries - a route path', () => {
+  it('names the scenes of both paths in order', () => {
+    const route = conflict({
+      entityType: 'Route',
+      entityId: 'route-1',
+      localValues: { steps: [{ sceneId: 's-1', selectedChoiceId: null }] },
+      serverValues: {
+        name: 'Fuga',
+        steps: [
+          { sceneId: 's-2', selectedChoiceId: 'c-1' },
+          { sceneId: 's-1', selectedChoiceId: null },
+        ],
+      },
+      contestedFields: ['steps'],
+    });
+    expect(collectEntityRefs([route], new Map())).toEqual(
+      expect.arrayContaining([
+        { entityType: 'Scene', entityId: 's-1' },
+        { entityType: 'Scene', entityId: 's-2' },
+      ]),
+    );
+
+    const [summary] = buildConflictSummaries(
+      [route],
+      new Map(),
+      new Map([
+        ['Scene:s-1', 'Porto'],
+        ['Scene:s-2', 'Farol'],
+      ]),
+      ((key: string) => key) as never,
+    );
+
+    expect(summary!.diffFields).toEqual([
+      expect.objectContaining({
+        field: 'steps',
+        localDisplay: 'Porto',
+        serverDisplay: 'Farol → Porto',
+      }),
+    ]);
+  });
+});

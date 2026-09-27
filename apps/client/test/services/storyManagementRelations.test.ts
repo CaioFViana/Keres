@@ -408,7 +408,8 @@ describe('StorySchemaFieldService', () => {
       targetEntityType: null,
       isRequired: false,
       defaultValue: null,
-      order: 1,
+      // The place it takes among the fields already there: the front.
+      order: 0,
     });
     await database.db.insert(schema.attributeValues).values({
       id: 'rank-value',
@@ -449,7 +450,7 @@ describe('StorySchemaFieldService', () => {
     ).toBe(true);
   });
 
-  it('reorders only fields of the selected entity type in one sync operation', async () => {
+  it('reorders only fields of the selected entity type, editing only the one that moved', async () => {
     const service = createStorySchemaFieldService(database.db);
     const first = await service.createField(USER_ID, {
       storyId: STORY_ID,
@@ -518,33 +519,24 @@ describe('StorySchemaFieldService', () => {
       { id: third.id, order: 2 },
     ]);
     expect((await service.getById(locationField.id))?.order).toBe(0);
-    // Every row bumps, even the one that did not move: the server bumps all of them when it
-    // applies the reorder.
+    // Only the field that moved is edited: its rank, one version up.
     expect(
       (await service.getFieldsByStoryAndEntityType(STORY_ID, 'Character')).map(
         ({ version }) => version,
       ),
-    ).toEqual([2, 2, 2]);
+    ).toEqual([2, 1, 1]);
 
     const operations = await database.db.select().from(schema.operationLogs).all();
-    const reorders = operations.filter(
-      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
-    );
-    expect(reorders).toHaveLength(1);
-    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
-      reorderTarget: 'StorySchemaField',
-      schemaEntityType: 'Character',
-      reorderItems: [
-        { id: second.id, newIndex: 1 },
-        { id: first.id, newIndex: 2 },
-        { id: third.id, newIndex: 3 },
-      ],
-    });
+    const moves = operations.filter((operation) => operation.operationType === 'update');
+    expect(moves.map((operation) => [operation.entityType, operation.entityId])).toEqual([
+      ['StorySchemaField', second.id],
+    ]);
+    expect(Object.keys(JSON.parse(moves[0]!.payload)).sort()).toEqual(['rank', 'version']);
   });
 });
 
 describe('StatService', () => {
-  it('reorders all stats through one story-level sync operation', async () => {
+  it('reorders stats by editing only the one that moved', async () => {
     const service = createStatService(database.db);
     const courage = await service.createStat(USER_ID, {
       storyId: STORY_ID,
@@ -574,22 +566,13 @@ describe('StatService', () => {
       { id: courage.id, order: 1 },
       { id: strength.id, order: 2 },
     ]);
-    // Every row bumps, even the one that did not move: the server bumps all of them when it
-    // applies the reorder.
-    expect(stats.map(({ version }) => version)).toEqual([2, 2, 2]);
+    // Only the stat that moved is edited: its rank, one version up.
+    expect(stats.map(({ version }) => version)).toEqual([2, 1, 1]);
     const operations = await database.db.select().from(schema.operationLogs).all();
-    const reorders = operations.filter(
-      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
-    );
-    expect(reorders).toHaveLength(1);
-    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
-      reorderTarget: 'Stat',
-      reorderItems: [
-        { id: wisdom.id, newIndex: 1 },
-        { id: courage.id, newIndex: 2 },
-        { id: strength.id, newIndex: 3 },
-      ],
-    });
+    const moves = operations.filter((operation) => operation.operationType === 'update');
+    expect(moves.map((operation) => [operation.entityType, operation.entityId])).toEqual([
+      ['Stat', wisdom.id],
+    ]);
   });
 });
 

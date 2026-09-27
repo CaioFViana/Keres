@@ -1,8 +1,8 @@
 name: GitHub Pages
 
-# The landing page in apps/site. It only publishes from `master` (the repository's default
-# branch). The `github-pages` environment rejects any other branch - a push on ouroboros with
-# this workflow firing only produced a red X.
+# The landing page in apps/site, with the serverless web client under /client. It only publishes
+# from `master` (the repository's default branch). The `github-pages` environment rejects any
+# other branch - a push on ouroboros with this workflow firing only produced a red X.
 on:
   push:
     branches: [master]
@@ -36,6 +36,14 @@ jobs:
           # letters (`Keres`), and Vite needs the same prefix on the assets - otherwise the site opens
           # with no CSS.
           VITE_BASE: /${{ github.event.repository.name }}/
+      - name: Build web client
+        # Its own export, apart from the desktop one: a dist built for a subpath only works there.
+        # Serverless: the page runs on the visitor's device alone, with no server features.
+        run: bun run --cwd apps/client build:pages
+        env:
+          KERES_WEB_BASE_URL: /${{ github.event.repository.name }}/client
+      - name: Compose client into the site
+        run: cp -r apps/client/dist-pages apps/site/dist/client
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -11,10 +11,7 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import type { ManuscriptSection, TextRange } from '@keres/shared';
 import {
-  compileLinearManuscript,
-  compileRouteManuscript,
   findFirstExcerptMatch,
-  isLooseScene,
   linearManuscriptSections,
   routeManuscriptSections,
 } from '@keres/shared';
@@ -23,25 +20,17 @@ import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectP
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { ManuscriptReviewTools } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
 import { ManuscriptSearchToolbar } from '../../../components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
-import ManuscriptExportModal, {
-  type ManuscriptExportChoices,
-} from '../../../components/features/manuscript/ManuscriptExportModal/ManuscriptExportModal';
 import ManuscriptIndexModal from '../../../components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
-import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
-import { exportFileLanguage } from '../../../utils/storyTransfer';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';
-import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useManuscriptData } from '../../../hooks/useManuscriptData';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import { useStoryArcs } from '../../../hooks/useStoryArcs';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
-import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
+import { sceneBelongsToActiveArc } from '../../../utils/storyArcFilter';
 import {
   manuscriptModeHeaderActions,
   useManuscriptReview,
@@ -70,24 +59,19 @@ const ManuscriptScreen = () => {
   const searchAnchorRef = useScreenAnchor('Manuscript', 'search');
   const listAnchorRef = useScreenAnchor('Manuscript', 'list');
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<ManuscriptNavigation>();
   const route = useRoute<ManuscriptScreenRouteProp>();
   const { selectedStory } = useStoryStore();
   const activeArcId = useStoryStore((state) => state.activeArcId);
-  const { arcs } = useStoryArcs();
-  const { showNotification } = useNotificationStore();
-  const { pending: exporting, run: runExport } = useAsyncOperation();
 
   const storyId = selectedStory?.id;
   const isBranching = selectedStory?.type === 'branching';
-  const { chapters, scenes, routes, choices, stepsByRouteId, loading, loadChoiceAnnotations } =
-    useManuscriptData(storyId ?? null);
+  const { chapters, scenes, routes, stepsByRouteId, loading } = useManuscriptData(storyId ?? null);
 
   const [routeId, setRouteId] = useState<string | null>(route.params?.routeId ?? null);
   const effectiveRouteId = routeId ?? routes[0]?.id ?? null;
   const [mode, setMode] = useState<ManuscriptReviewMode>('read');
-  const [exportVisible, setExportVisible] = useState(false);
   const [indexVisible, setIndexVisible] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number | null>(null);
 
@@ -204,130 +188,10 @@ const ManuscriptScreen = () => {
     [scrollToSectionIndex],
   );
 
-  const looseCount = useMemo(() => {
-    if (isBranching) return 0;
-    // The count follows the visible manuscript: other-arc containers are gone, and
-    // their scenes went with them, so nothing hidden leaks into the loose switch.
-    const visibleById = new Map(
-      chapters
-        .filter((chapter) => chapterBelongsToArc(chapter, activeArcId))
-        .map((chapter) => [chapter.id, chapter]),
-    );
-    return visibleScenes.filter((scene) => !scene.isDeleted && isLooseScene(scene, visibleById))
-      .length;
-  }, [isBranching, chapters, visibleScenes, activeArcId]);
-
-  const exportRouteName = isBranching
-    ? (routes.find((entry) => entry.id === effectiveRouteId)?.name ?? null)
-    : null;
-
-  // Export pipeline: compile the in-memory read model into format-neutral blocks, then
-  // hand the manuscript to the shared delivery path (share sheet, or a browser download on
-  // web). A delivered file notifies success; a build with no share target reports where the
-  // file is instead of claiming success; anything thrown notifies failure.
-  const runExportChoices = useCallback(
-    ({
-      format,
-      includeSceneNames,
-      includeLooseScenes,
-      resetSceneNumbers,
-      includeIndex,
-      arcId: exportArcId,
-    }: ManuscriptExportChoices) => {
-      void runExport(async () => {
-        try {
-          const labels = {
-            goToPage: t('export_manuscript_go_to_page'),
-            goToScene: t('export_manuscript_go_to_scene'),
-            tocHeading: t('export_manuscript_index_heading'),
-          };
-          // A specific arc exports as its own book: the arc title replaces the story
-          // title on the cover and in the file name, and only its scenes ship. The
-          // export arc is the modal's own pick, independent of the reading filter.
-          const exportArc = exportArcId
-            ? (arcs.find((arc) => arc.id === exportArcId) ?? null)
-            : null;
-          const exportTitle = exportArc?.title ?? selectedStory?.title ?? '';
-          const exportScenes = exportArcId
-            ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, exportArcId))
-            : scenes;
-          // Check and effect lines resolve here, at export time: reading never pays for them.
-          const annotations = await loadChoiceAnnotations(t);
-          const annotatedChoices = choices.map((choice) => {
-            const lines = annotations.get(choice.id);
-            return lines ? { ...choice, ...lines } : choice;
-          });
-          const manuscript = isBranching
-            ? compileRouteManuscript({
-                title: exportTitle,
-                routeName: exportRouteName ?? '',
-                steps: effectiveRouteId ? (stepsByRouteId.get(effectiveRouteId) ?? []) : [],
-                scenes: exportScenes,
-                choices: annotatedChoices,
-                looseHeadingLabel: t('export_manuscript_loose_heading'),
-                includeSceneNames,
-                resetSceneNumbersPerChapter: resetSceneNumbers,
-              })
-            : compileLinearManuscript({
-                title: exportTitle,
-                chapters,
-                scenes,
-                choices: annotatedChoices,
-                includeLooseScenes,
-                looseHeadingLabel: t('export_manuscript_loose_heading'),
-                includeSceneNames,
-                resetSceneNumbersPerChapter: resetSceneNumbers,
-                arcId: exportArcId,
-              });
-          const result = await exportManuscript({
-            storyTitle: exportTitle,
-            manuscript,
-            format,
-            labels,
-            options: { includeToc: includeIndex },
-            language: exportFileLanguage(i18n.language),
-          });
-          if (result.delivered) {
-            showNotification(
-              t('export_manuscript_success', { fileName: result.fileName }),
-              'success',
-            );
-          } else {
-            showNotification(
-              t('export_story_no_share_target', { path: result.uri || result.fileName }),
-              'warning',
-            );
-          }
-        } catch (error) {
-          console.log('ManuscriptScreen: manuscript export failed.', error);
-          showNotification(t('export_manuscript_failed_body'), 'error');
-        }
-      });
-    },
-    [
-      runExport,
-      isBranching,
-      selectedStory,
-      arcs,
-      chaptersById,
-      exportRouteName,
-      effectiveRouteId,
-      stepsByRouteId,
-      scenes,
-      choices,
-      chapters,
-      t,
-      i18n,
-      showNotification,
-      loadChoiceAnnotations,
-    ],
-  );
-
-  // The modal owns format and switches; re-entrant presses while an export runs are ignored.
+  // The export is its own screen; it compiles the same route this one reads.
   const handleExportPress = useCallback(() => {
-    if (exporting) return;
-    setExportVisible(true);
-  }, [exporting]);
+    navigation.navigate('ManuscriptExport', { routeId: effectiveRouteId });
+  }, [navigation, effectiveRouteId]);
 
   const openScene = useCallback(
     (sceneId: string) => {
@@ -588,16 +452,6 @@ const ManuscriptScreen = () => {
           testID="manuscript-review-tools"
         />
       )}
-      <ManuscriptExportModal
-        visible={exportVisible}
-        routeName={isBranching ? exportRouteName : null}
-        showLooseSwitch={!isBranching && looseCount > 0}
-        looseCount={looseCount}
-        chapterNumberingAvailable={!isBranching}
-        arcs={arcs}
-        onExport={runExportChoices}
-        onClose={() => setExportVisible(false)}
-      />
       <ManuscriptIndexModal
         visible={indexVisible}
         sections={sections}

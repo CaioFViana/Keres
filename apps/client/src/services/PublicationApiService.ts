@@ -1,6 +1,7 @@
 import type {
   ManuscriptFormat,
   ManuscriptLabels,
+  ManuscriptStyle,
   PublicationLabelMode,
   ShowcaseVisibility,
   StoryPublication,
@@ -17,19 +18,35 @@ export interface StoryShowcaseState {
   publications: StoryPublication[];
 }
 
-/** Manuscript renditions the server can build. PDF stays local-only (expo-print). */
-export const SERVER_MANUSCRIPT_FORMATS: ManuscriptFormat[] = ['docx', 'md', 'txt', 'html'];
+/** Manuscript renditions the server can build: every one, in pure TypeScript. */
+export const SERVER_MANUSCRIPT_FORMATS: ManuscriptFormat[] = [
+  'docx',
+  'pdf',
+  'epub',
+  'html',
+  'md',
+  'txt',
+];
 
 /**
  * How the server should render the story's manuscript for this version. Options
  * only - no bytes leave the device; the server compiles from its own copy.
  */
+/** What the server compiles from its own copy: the same choices as the device export. */
 export interface PublishManuscriptOptions {
   format: ManuscriptFormat;
   includeLooseScenes: boolean;
+  includeSceneNames: boolean;
+  includeToc: boolean;
+  resetSceneNumbers: boolean;
+  style: ManuscriptStyle;
   /** When set, the manuscript follows this route instead of the linear order. */
   routeId?: string;
+  /** When set, only this arc ships, under its title. */
+  arcId?: string;
   labels: ManuscriptLabels;
+  author: string | null;
+  language: string;
 }
 
 /**

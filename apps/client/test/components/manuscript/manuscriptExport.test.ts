@@ -4,9 +4,6 @@ import { Platform } from 'react-native';
 import { exportManuscript } from '../../../src/components/features/manuscript/export/manuscriptExport';
 
 const mockDeliverFile = jest.fn();
-const mockBuildDocxBytes = jest.fn();
-const mockPrintToFile = jest.fn();
-const mockReadBytes = jest.fn();
 const mockBuildManuscriptFileName = jest.fn(
   (...args: unknown[]) => `${args[0] as string}.${args[1] as string}`,
 );
@@ -17,28 +14,7 @@ jest.mock('../../../src/utils/storyTransfer', () => ({
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
 }));
 
-// Only the zip packer is doubled: md/txt/html run through the real shared
-// renderers, so this file also guards the shared wiring.
-jest.mock('@keres/shared', () => {
-  const actual = jest.requireActual('@keres/shared');
-  return {
-    ...actual,
-    buildManuscriptDocxBytes: (...args: unknown[]) => mockBuildDocxBytes(...args),
-  };
-});
-
-jest.mock('expo-print', () => ({
-  __esModule: true,
-  printToFileAsync: (...args: unknown[]) => mockPrintToFile(...args),
-}));
-
-jest.mock('expo-file-system', () => ({
-  __esModule: true,
-  File: jest
-    .fn()
-    .mockImplementation(() => ({ bytes: (...args: unknown[]) => mockReadBytes(...args) })),
-}));
-
+// Every format runs through the real shared renderers, so this file also guards the wiring.
 const manuscript = {
   title: 'My Story',
   blocks: [{ kind: 'title', text: 'My Story' }],
@@ -48,44 +24,27 @@ const labels = { goToPage: 'Go to page', goToScene: 'See', tocHeading: 'Contents
 beforeEach(() => {
   jest.clearAllMocks();
   mockDeliverFile.mockResolvedValue({ delivered: true, fileName: 'x' });
-  mockBuildDocxBytes.mockResolvedValue(new Uint8Array([80, 75, 3, 4]));
-  mockPrintToFile.mockResolvedValue({ uri: 'file:///tmp/out.pdf' });
-  mockReadBytes.mockResolvedValue(new Uint8Array([37, 80, 68, 70]));
 });
 
 describe('exportManuscript', () => {
   it('delivers docx bytes from the shared builder', async () => {
     await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'docx', labels });
 
-    expect(mockBuildDocxBytes).toHaveBeenCalledWith(manuscript, labels, {});
-    expect(mockDeliverFile).toHaveBeenCalledWith(
-      new Uint8Array([80, 75, 3, 4]),
-      'My Story.docx',
+    const [bytes, fileName, mimeType, uti] = mockDeliverFile.mock.calls[0];
+    expect(Array.from((bytes as Uint8Array).slice(0, 2))).toEqual([0x50, 0x4b]);
+    expect(fileName).toBe('My Story.docx');
+    expect(mimeType).toBe(
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'org.openxmlformats.wordprocessingml.document',
     );
+    expect(uti).toBe('org.openxmlformats.wordprocessingml.document');
   });
 
-  it('prints pdf to a temp file and delivers its bytes', async () => {
-    await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'pdf', labels });
-
-    expect(mockPrintToFile).toHaveBeenCalledWith({
-      html: expect.stringContaining('<title>My Story</title>'),
-    });
-    expect(mockDeliverFile).toHaveBeenCalledWith(
-      new Uint8Array([37, 80, 68, 70]),
-      'My Story.pdf',
-      'application/pdf',
-      'com.adobe.pdf',
-    );
-  });
-
-  it('draws pdf bytes directly on web, where there is no print pipeline', async () => {
-    const restorePlatform = jest.replaceProperty(Platform, 'OS', 'web');
+  /** One pipeline everywhere: the pure-TypeScript renderer, on native as on web. */
+  it.each(['ios', 'android', 'web'] as const)('draws pdf bytes directly on %s', async (os) => {
+    const restorePlatform = jest.replaceProperty(Platform, 'OS', os);
     try {
       await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'pdf', labels });
 
-      expect(mockPrintToFile).not.toHaveBeenCalled();
       expect(mockDeliverFile).toHaveBeenCalledTimes(1);
       const [bytes, fileName, mimeType, uti] = mockDeliverFile.mock.calls[0];
       expect((bytes as Uint8Array).slice(0, 5)).toEqual(
@@ -97,6 +56,35 @@ describe('exportManuscript', () => {
     } finally {
       restorePlatform.restore();
     }
+  });
+
+  it('packs an epub whose first entry is its stored mimetype', async () => {
+    await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript,
+      format: 'epub',
+      labels,
+      metadata: { author: 'Ana', language: 'pt-BR' },
+    });
+
+    const [bytes, fileName, mimeType, uti] = mockDeliverFile.mock.calls[0];
+    const head = Buffer.from(bytes as Uint8Array).toString('latin1');
+    expect(head.startsWith('PK')).toBe(true);
+    expect(head.slice(30, 58)).toBe('mimetypeapplication/epub+zip');
+    expect(fileName).toBe('My Story.epub');
+    expect(mimeType).toBe('application/epub+zip');
+    expect(uti).toBe('org.idpf.epub-container');
+  });
+
+  it('delivers html from the shared renderer', async () => {
+    await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'html', labels });
+
+    expect(mockDeliverFile).toHaveBeenCalledWith(
+      expect.stringContaining('<title>My Story</title>'),
+      'My Story.html',
+      'text/html',
+      'public.html',
+    );
   });
 
   it('passes strikethrough spans through to the shared text builder', async () => {
@@ -137,16 +125,30 @@ describe('exportManuscript', () => {
     );
   });
 
-  it('forwards render options to the shared builders', async () => {
+  it('presents the manuscript as the style asks before drawing it', async () => {
+    const withChapter = {
+      title: 'My Story',
+      blocks: [
+        { kind: 'title', text: 'My Story' },
+        { kind: 'chapter', id: 'ch-1', number: 4, name: 'Arrival', bookmarkId: 'chapter-ch1' },
+      ],
+    } as unknown as CompiledManuscript;
+
     await exportManuscript({
       storyTitle: 'My Story',
-      manuscript,
-      format: 'docx',
+      manuscript: withChapter,
+      format: 'html',
       labels,
-      options: { includeToc: true },
+      style: {
+        chapterNumbering: 'roman',
+        frontMatter: ['by <$author>'],
+        placeholders: { author: 'Ana' },
+      },
     });
 
-    expect(mockBuildDocxBytes).toHaveBeenCalledWith(manuscript, labels, { includeToc: true });
+    const [html] = mockDeliverFile.mock.calls[0];
+    expect(html).toContain('IV. Arrival');
+    expect(html).toContain('<p class="subtitle">by Ana</p>');
   });
 
   it('renders the shared markdown index when enabled', async () => {

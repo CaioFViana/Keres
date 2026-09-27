@@ -27,6 +27,7 @@ const mockIsOffline = jest.fn();
 const mockGetChapters = jest.fn();
 const mockGetScenes = jest.fn();
 const mockGetRoutes = jest.fn();
+const mockGetArcs = jest.fn();
 const mockNotify = jest.fn();
 const mockSetTheme = jest.fn();
 const mockConnectivity = { isOffline: (...args: unknown[]) => mockIsOffline(...args) };
@@ -126,7 +127,7 @@ jest.mock('../../../src/services/PublicationApiService', () => ({
     deletePublication: (...args: unknown[]) => mockDeletePublication(...args),
     unpublish: (...args: unknown[]) => mockUnpublish(...args),
   },
-  SERVER_MANUSCRIPT_FORMATS: ['docx', 'md', 'txt', 'html'],
+  SERVER_MANUSCRIPT_FORMATS: ['docx', 'pdf', 'epub', 'html', 'md', 'txt'],
 }));
 
 jest.mock('../../../src/services/storymanagement/ChapterService', () => ({
@@ -144,6 +145,12 @@ jest.mock('../../../src/services/storymanagement/SceneService', () => ({
 jest.mock('../../../src/services/storymanagement/RouteService', () => ({
   createRouteService: () => ({
     getAllByStoryId: (...args: unknown[]) => mockGetRoutes(...args),
+  }),
+}));
+
+jest.mock('../../../src/services/storymanagement/StoryArcService', () => ({
+  createStoryArcService: () => ({
+    getArcsForStory: (...args: unknown[]) => mockGetArcs(...args),
   }),
 }));
 
@@ -212,6 +219,21 @@ const manuscriptLabels = {
   looseHeading: 'export_manuscript_loose_heading',
   tocHeading: 'export_manuscript_index_heading',
 };
+/** The device export's defaults, as the publish screen sends them. */
+function manuscriptPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    format: 'docx',
+    includeLooseScenes: false,
+    includeSceneNames: false,
+    includeToc: false,
+    resetSceneNumbers: false,
+    style: { placeholders: { year: expect.any(String), date: expect.any(String) } },
+    labels: manuscriptLabels,
+    author: null,
+    language: 'en',
+    ...overrides,
+  };
+}
 const remoteUnpublished = {
   isPublished: false,
   visibility: 'public',
@@ -254,6 +276,7 @@ describe('PublishStoryScreen', () => {
     mockGetChapters.mockResolvedValue([]);
     mockGetScenes.mockResolvedValue([]);
     mockGetRoutes.mockResolvedValue([]);
+    mockGetArcs.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -524,53 +547,73 @@ describe('PublishStoryScreen', () => {
 
     expect(mockGetChapters).toHaveBeenCalledWith('story-1', null);
     expect(mockGetScenes).toHaveBeenCalledWith('story-1');
-    expect(view.queryByText('publish_manuscript_format')).toBeNull();
+    expect(mockGetArcs).toHaveBeenCalledWith('story-1');
+    expect(view.queryByTestId('publish-manuscript-options-story-1')).toBeNull();
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
-    await view.findByText('publish_manuscript_format');
-    expect(view.getByText('export_manuscript_format_docx')).toBeTruthy();
-    expect(view.getByText('export_manuscript_format_md')).toBeTruthy();
-    expect(view.getByText('export_manuscript_format_txt')).toBeTruthy();
-    expect(view.getByText('export_manuscript_format_html')).toBeTruthy();
-    expect(view.getByTestId('publish-loose-switch-story-1').props.accessibilityState).toMatchObject(
-      { checked: true },
-    );
+    await view.findByTestId('publish-manuscript-options-story-1');
+    for (const format of ['docx', 'pdf', 'epub', 'html', 'md', 'txt']) {
+      expect(view.getByTestId(`export-format-${format}`)).toBeTruthy();
+    }
+    expect(view.getByTestId('export-loose').props.accessibilityState).toMatchObject({
+      checked: false,
+    });
 
-    await fireEvent.press(view.getByText('export_manuscript_format_md'));
+    await fireEvent.press(view.getByTestId('export-format-md'));
     await fireEvent.press(view.getByText('publish_create_version'));
     await waitFor(() =>
-      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'public', undefined, {
-        format: 'md',
-        includeLooseScenes: true,
-        labels: manuscriptLabels,
-      }),
+      expect(mockPublish).toHaveBeenCalledWith(
+        server,
+        'story-1',
+        5,
+        'both',
+        'public',
+        undefined,
+        manuscriptPayload({ format: 'md' }),
+      ),
     );
     const sent = mockPublish.mock.calls[0][6];
     expect(sent.routeId).toBeUndefined();
     expect(JSON.stringify(sent)).not.toContain('Uint8Array');
   });
 
-  it('excludes loose scenes from the manuscript when toggled off', async () => {
+  it('sends the same options the device export offers', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, author: 'Ana' }]);
+    mockGetChapters.mockResolvedValue([{ id: 'ch-1', type: 'chapter' }]);
+    mockGetScenes.mockResolvedValue([{ id: 's-2', chapterId: null, isDeleted: false }]);
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'One' },
+      { id: 'arc-2', title: 'Two' },
+    ]);
     const view = await render(<PublishStoryScreen />);
     await view.findByText('Epic');
     await fireEvent.press(view.getByText('Epic'));
     await view.findByText('publish_create_version');
 
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
-    await view.findByText('publish_manuscript_format');
-    await fireEvent.press(view.getByTestId('publish-loose-switch-story-1'));
-    expect(view.getByTestId('publish-loose-switch-story-1').props.accessibilityState).toMatchObject(
-      { checked: false },
-    );
-
+    await view.findByTestId('publish-manuscript-options-story-1');
+    // The preset list follows the server formats: all three have theirs there.
+    await fireEvent.press(view.getByTestId('export-preset-ebook'));
+    await fireEvent.press(view.getByTestId('export-arc-arc-2'));
+    await fireEvent(view.getByTestId('export-loose'), 'valueChange', true);
     await fireEvent.press(view.getByText('publish_create_version'));
-    await waitFor(() =>
-      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'public', undefined, {
-        format: 'docx',
-        includeLooseScenes: false,
-        labels: manuscriptLabels,
-      }),
-    );
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    const sent = mockPublish.mock.calls[0][6];
+    expect(sent).toMatchObject({
+      format: 'epub',
+      includeToc: true,
+      includeSceneNames: false,
+      includeLooseScenes: true,
+      arcId: 'arc-2',
+      author: 'Ana',
+      language: 'en',
+    });
+    expect(sent.style).toMatchObject({
+      quotes: 'curly',
+      frontMatter: ['export_manuscript_title_page_by', 'export_manuscript_title_page_copyright'],
+      placeholders: { author: 'Ana' },
+    });
   });
 
   it('sends the picked route for branching stories, defaulting to the first', async () => {
@@ -589,17 +632,21 @@ describe('PublishStoryScreen', () => {
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
     await view.findByText('publish_manuscript_route');
     expect(view.getByTestId('route-picker-value').props.children).toBe('r-1');
-    expect(view.queryByTestId('publish-loose-switch-story-1')).toBeNull();
+    expect(view.queryByTestId('export-loose')).toBeNull();
+    expect(view.queryByTestId('export-reset-numbers')).toBeNull();
 
     await fireEvent.press(view.getByTestId('route-option-r-2'));
     await fireEvent.press(view.getByText('publish_create_version'));
     await waitFor(() =>
-      expect(mockPublish).toHaveBeenCalledWith(server, 'story-1', 5, 'both', 'public', undefined, {
-        format: 'docx',
-        includeLooseScenes: true,
-        routeId: 'r-2',
-        labels: manuscriptLabels,
-      }),
+      expect(mockPublish).toHaveBeenCalledWith(
+        server,
+        'story-1',
+        5,
+        'both',
+        'public',
+        undefined,
+        manuscriptPayload({ routeId: 'r-2' }),
+      ),
     );
   });
 

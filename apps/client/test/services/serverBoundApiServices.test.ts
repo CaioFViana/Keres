@@ -13,7 +13,10 @@ jest.mock('../../src/services/apiClient', () => ({ createKeresAxiosInstance: jes
 jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
 
 import { FriendshipApiService } from '../../src/services/FriendshipApiService';
-import { PublicationApiService } from '../../src/services/PublicationApiService';
+import {
+  PublicationApiService,
+  type PublishManuscriptOptions,
+} from '../../src/services/PublicationApiService';
 import { createKeresAxiosInstance } from '../../src/services/apiClient';
 import { storyPermissionApi } from '../../src/services/StoryPermissionService';
 import { UserApiService } from '../../src/services/UserApiService';
@@ -201,9 +204,13 @@ describe('server-bound API services', () => {
     });
 
     // The manuscript travels as render options only: no bytes leave the device.
-    const manuscript = {
+    const manuscript: PublishManuscriptOptions = {
       format: 'md',
       includeLooseScenes: false,
+      includeSceneNames: true,
+      includeToc: false,
+      resetSceneNumbers: false,
+      style: { quotes: 'curly' },
       routeId: 'route-1',
       labels: {
         goToPage: 'Go to page',
@@ -211,7 +218,9 @@ describe('server-bound API services', () => {
         looseHeading: 'Loose scenes',
         tocHeading: 'Contents',
       },
-    } as const;
+      author: null,
+      language: 'en',
+    };
     await service.publish(server, 'story', 7, 'both', 'public', undefined, manuscript);
     expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {
       operationVersion: 7,

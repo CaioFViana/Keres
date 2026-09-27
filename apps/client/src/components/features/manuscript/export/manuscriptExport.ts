@@ -1,14 +1,11 @@
-import type { CompiledManuscript, ManuscriptRenderOptions } from '@keres/shared';
-import {
-  buildManuscriptDocxBytes,
-  buildManuscriptHtml,
-  buildManuscriptMarkdown,
-  buildManuscriptPdf,
-  buildManuscriptText,
+import type {
+  CompiledManuscript,
+  ManuscriptEpubMetadata,
+  ManuscriptFormat,
+  ManuscriptRenderOptions,
+  ManuscriptStyle,
 } from '@keres/shared';
-import { File } from 'expo-file-system';
-import * as Print from 'expo-print';
-import { Platform } from 'react-native';
+import { presentManuscript, renderManuscript, renderOptionsOf } from '@keres/shared';
 import {
   buildManuscriptFileName,
   deliverFile,
@@ -16,10 +13,17 @@ import {
   type ExportFileLanguage,
 } from '../../../../utils/storyTransfer';
 
-export type ManuscriptExportFormat = 'docx' | 'pdf' | 'md' | 'txt';
+export type ManuscriptExportFormat = ManuscriptFormat;
 
-/** Every platform offers every format: on web, PDF is drawn in pure TypeScript. */
-export const MANUSCRIPT_EXPORT_FORMATS: ManuscriptExportFormat[] = ['docx', 'pdf', 'md', 'txt'];
+/** Every platform offers every format: every renderer is pure TypeScript. */
+export const MANUSCRIPT_EXPORT_FORMATS: ManuscriptExportFormat[] = [
+  'docx',
+  'pdf',
+  'epub',
+  'html',
+  'md',
+  'txt',
+];
 
 const FORMAT_FILES: Record<
   ManuscriptExportFormat,
@@ -31,6 +35,12 @@ const FORMAT_FILES: Record<
     uti: 'org.openxmlformats.wordprocessingml.document',
   },
   pdf: { extension: 'pdf', mimeType: 'application/pdf', uti: 'com.adobe.pdf' },
+  epub: {
+    extension: 'epub',
+    mimeType: 'application/epub+zip',
+    uti: 'org.idpf.epub-container',
+  },
+  html: { extension: 'html', mimeType: 'text/html', uti: 'public.html' },
   md: { extension: 'md', mimeType: 'text/markdown', uti: 'public.plain-text' },
   txt: { extension: 'txt', mimeType: 'text/plain', uti: 'public.plain-text' },
 };
@@ -42,10 +52,9 @@ export type ManuscriptExportLabels = {
 };
 
 /**
- * Builds the manuscript in the requested format and hands it to the share sheet
- * (or a browser download on web). Native PDF prints to a temp file first and is
- * re-read as bytes so it travels the same delivery path; web PDF has no print
- * pipeline, so the pure-TypeScript renderer draws real PDF bytes instead.
+ * Presents the manuscript as the style asks, draws it in the requested format and hands it to
+ * the share sheet (or a browser download on web). The same presentation and renderers the
+ * server uses to publish, so a file reads the same wherever it was made.
  */
 export async function exportManuscript({
   storyTitle,
@@ -53,6 +62,8 @@ export async function exportManuscript({
   format,
   labels,
   options = {},
+  style = {},
+  metadata = {},
   language = 'en',
 }: {
   storyTitle: string;
@@ -60,29 +71,22 @@ export async function exportManuscript({
   format: ManuscriptExportFormat;
   labels: ManuscriptExportLabels;
   options?: ManuscriptRenderOptions;
+  /** Typography and presentation (numbering, quotes, title page...). */
+  style?: ManuscriptStyle;
+  /** Book metadata for the EPUB (author, language...). */
+  metadata?: ManuscriptEpubMetadata;
   /** App language for the file-name slug; never the system language. */
   language?: ExportFileLanguage;
 }): Promise<ExportDeliveryResult> {
   const file = FORMAT_FILES[format];
   const fileName = buildManuscriptFileName(storyTitle, file.extension, new Date(), language);
-  if (format === 'docx') {
-    const bytes = await buildManuscriptDocxBytes(manuscript, labels, options);
-    return deliverFile(bytes, fileName, file.mimeType, file.uti);
-  }
-  if (format === 'pdf') {
-    if (Platform.OS === 'web') {
-      const bytes = await buildManuscriptPdf(manuscript, labels, options);
-      return deliverFile(bytes, fileName, file.mimeType, file.uti);
-    }
-    const { uri } = await Print.printToFileAsync({
-      html: buildManuscriptHtml(manuscript, labels, options),
-    });
-    const bytes = await new File(uri).bytes();
-    return deliverFile(bytes, fileName, file.mimeType, file.uti);
-  }
-  const text =
-    format === 'md'
-      ? buildManuscriptMarkdown(manuscript, labels, options)
-      : buildManuscriptText(manuscript, labels);
-  return deliverFile(text, fileName, file.mimeType, file.uti);
+  const presented = presentManuscript(manuscript, style, language === 'pt' ? 'pt' : 'en');
+  const rendered = await renderManuscript(
+    presented,
+    format,
+    labels,
+    { ...renderOptionsOf(style), ...options },
+    { modified: new Date(), ...metadata },
+  );
+  return deliverFile(rendered, fileName, file.mimeType, file.uti);
 }

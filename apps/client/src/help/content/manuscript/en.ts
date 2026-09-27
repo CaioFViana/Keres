@@ -29,12 +29,13 @@ const page: HelpPage = {
         'Switch to Read to preview the formatted page, or to Review to read and answer scene comments.',
         'Open the Manuscript from the narrative elements header (book icon) to read everything in order, search the full text, or export.',
         'In the manuscript, tap a scene title to open the scene, or the pencil beside it to edit its prose. The eye icon toggles pure reading: titles and buttons disappear so nothing steals a tap.',
+        'Export (share icon) opens the export screen: start from a preset (e-book, paperback, submission) or pick the format, contents, title page, layout and text treatment yourself. Options a format cannot use are not shown for it.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Prose travels with the scene in sync and backups. Export builds Word, PDF, Markdown or plain-text files; in branching stories each route exports separately, with choices pointing at the page of their target scene. Fragments without a chapter and scenes of event containers can be included as an appendix or left out of the export.',
+      text: 'Prose travels with the scene in sync and backups. Export builds Word, PDF, EPUB, HTML, Markdown or plain-text files - the same on every device and when publishing to the showcase. PDF uses a standard serif font, so text outside Western alphabets (Chinese, Arabic, emoji) does not show in it; EPUB and Word keep it; in branching stories each route exports separately, with choices pointing at the page of their target scene. Fragments without a chapter and scenes of event containers can be included as an appendix or left out of the export.',
     },
     {
       type: 'seeAlso',

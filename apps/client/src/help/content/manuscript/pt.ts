@@ -38,12 +38,13 @@ const page: HelpPage = {
         'Troque para Ler para ver a página formatada, ou para Revisar para ler e responder os comentários da cena.',
         'Abra o Manuscrito pelo header dos elementos narrativos (ícone de livro) para ler tudo em ordem, buscar no texto completo ou exportar.',
         'No manuscrito, toque o título da cena para abri-la, ou o lápis ao lado para editar sua prosa. O ícone de olho alterna a leitura pura: títulos e botões somem para que nenhum toque acidental o tire de lá.',
+        'Exportar (ícone de compartilhar) abre a tela de exportação: comece de um modelo (e-book, livro impresso, envio a editoras) ou escolha você mesmo formato, conteúdo, folha de rosto, diagramação e tratamento do texto. Opções que um formato não usa não aparecem para ele.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A prosa viaja com a cena no sync e nos backups. A exportação gera arquivos Word, PDF, Markdown ou texto puro; em histórias ramificadas cada rota exporta separadamente, com as escolhas apontando para a página da cena de destino. Fragmentos sem capítulo e cenas de eventos podem entrar como apêndice ou ficar fora da exportação.',
+      text: 'A prosa viaja com a cena no sync e nos backups. A exportação gera arquivos Word, PDF, EPUB, HTML, Markdown ou texto puro - iguais em todo dispositivo e ao publicar no showcase. O PDF usa uma fonte serifada padrão, então texto fora dos alfabetos ocidentais (chinês, árabe, emoji) não aparece nele; EPUB e Word o mantêm; em histórias ramificadas cada rota exporta separadamente, com as escolhas apontando para a página da cena de destino. Fragmentos sem capítulo e cenas de eventos podem entrar como apêndice ou ficar fora da exportação.',
     },
     {
       type: 'seeAlso',

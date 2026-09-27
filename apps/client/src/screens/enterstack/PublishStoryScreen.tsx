@@ -72,7 +72,7 @@ export function buildStoryPublicUrl(serverUrl: string, storyId: string): string 
 }
 
 const PublishStoryScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useScreenHeader({ target: 'self', title: t('publish_story_title') });
   const { colors } = useTheme();
   useBackButtonHandler();
@@ -204,7 +204,7 @@ const PublishStoryScreen = () => {
           labelMode,
           usePassword ? 'password' : 'public',
           usePassword ? password.trim() : undefined,
-          manuscript.buildOptions(row.story, t),
+          manuscript.buildOptions(row.story, t, i18n.language),
         );
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
 
@@ -240,7 +240,7 @@ const PublishStoryScreen = () => {
         setBusyStoryId(null);
       }
     },
-    [drizzleDb, labelMode, load, manuscript, password, showNotification, t, usePassword],
+    [drizzleDb, i18n, labelMode, load, manuscript, password, showNotification, t, usePassword],
   );
 
   const handlePublish = useCallback(

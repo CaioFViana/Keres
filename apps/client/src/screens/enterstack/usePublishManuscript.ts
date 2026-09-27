@@ -1,34 +1,45 @@
-import type { ManuscriptFormat } from '@keres/shared';
 import { isLooseScene } from '@keres/shared';
 import { useCallback, useState } from 'react';
+import {
+  defaultExportSettings,
+  FORMAT_CAPABILITIES,
+  styleForExport,
+  type ManuscriptExportSettings,
+} from '../../components/features/manuscript/export/manuscriptExportSettings';
 import type { AppDrizzleClient } from '../../db';
 import type { RouteSelect, StorySelect } from '../../db/schema';
 import type { PublishManuscriptOptions } from '../../services/PublicationApiService';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createRouteService } from '../../services/storymanagement/RouteService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
+import { createStoryArcService } from '../../services/storymanagement/StoryArcService';
 
-/** The manuscript choice of one expanded story on the publish screen. */
+/**
+ * The manuscript choice of one expanded story on the publish screen: the same settings the device
+ * export asks (`ManuscriptExportOptions`), plus the attach switch and, for a branching story, the route.
+ */
 export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   const [attachManuscript, setAttachManuscript] = useState(false);
-  const [manuscriptFormat, setManuscriptFormat] = useState<ManuscriptFormat>('docx');
-  const [includeLooseScenes, setIncludeLooseScenes] = useState(true);
+  const [settings, setSettings] = useState<ManuscriptExportSettings>(() => defaultExportSettings());
   const [manuscriptRouteId, setManuscriptRouteId] = useState<string | null>(null);
   const [manuscriptRoutes, setManuscriptRoutes] = useState<RouteSelect[]>([]);
   const [manuscriptLooseCount, setManuscriptLooseCount] = useState(0);
+  const [manuscriptArcs, setManuscriptArcs] = useState<{ id: string; title: string }[]>([]);
 
   // What the manuscript section needs: branching picks one of the story's routes,
   // linear counts its loose scenes the same way the manuscript screen does.
   const resetForStory = useCallback(
     (story: StorySelect) => {
       setAttachManuscript(false);
-      setManuscriptFormat('docx');
-      setIncludeLooseScenes(true);
+      setSettings(defaultExportSettings(story.author ?? ''));
       setManuscriptRouteId(null);
       setManuscriptRoutes([]);
       setManuscriptLooseCount(0);
+      setManuscriptArcs([]);
       void (async () => {
         try {
+          const arcs = await createStoryArcService(drizzleDb).getArcsForStory(story.id);
+          setManuscriptArcs(arcs.map((arc) => ({ id: arc.id, title: arc.title })));
           if (story.type === 'branching') {
             const storyRoutes = await createRouteService(drizzleDb).getAllByStoryId(story.id);
             setManuscriptRoutes(storyRoutes);
@@ -55,38 +66,56 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   // Render options, never bytes: the server compiles from its own copy in the
   // publisher's language. A branching story without a route sends nothing.
   const buildOptions = useCallback(
-    (story: StorySelect, t: (key: string) => string): PublishManuscriptOptions | undefined => {
+    (
+      story: StorySelect,
+      t: (key: string) => string,
+      language: string,
+    ): PublishManuscriptOptions | undefined => {
       const effectiveRouteId =
         story.type === 'branching' ? (manuscriptRouteId ?? manuscriptRoutes[0]?.id ?? null) : null;
       if (!attachManuscript || (story.type === 'branching' && !effectiveRouteId)) {
         return undefined;
       }
+      const branching = story.type === 'branching';
       return {
-        format: manuscriptFormat,
-        includeLooseScenes: story.type === 'linear' ? includeLooseScenes : true,
+        format: settings.format,
+        includeLooseScenes: !branching && settings.includeLooseScenes,
+        includeSceneNames: settings.includeSceneNames,
+        includeToc: FORMAT_CAPABILITIES[settings.format].index && settings.includeIndex,
+        resetSceneNumbers: !branching && settings.includeSceneNames && settings.resetSceneNumbers,
+        style: styleForExport(
+          settings,
+          {
+            byLine: t('export_manuscript_title_page_by'),
+            copyright: t('export_manuscript_title_page_copyright'),
+          },
+          new Date(),
+        ),
         ...(effectiveRouteId ? { routeId: effectiveRouteId } : {}),
+        ...(settings.arcId ? { arcId: settings.arcId } : {}),
         labels: {
           goToPage: t('export_manuscript_go_to_page'),
           goToScene: t('export_manuscript_go_to_scene'),
           looseHeading: t('export_manuscript_loose_heading'),
           tocHeading: t('export_manuscript_index_heading'),
         },
+        author: settings.author.trim() || null,
+        language,
       };
     },
-    [attachManuscript, includeLooseScenes, manuscriptFormat, manuscriptRouteId, manuscriptRoutes],
+    [attachManuscript, settings, manuscriptRouteId, manuscriptRoutes],
   );
 
   return {
     attachManuscript,
     setAttachManuscript,
-    manuscriptFormat,
-    setManuscriptFormat,
-    includeLooseScenes,
-    setIncludeLooseScenes,
+    settings,
+    setSettings,
     manuscriptRouteId,
     setManuscriptRouteId,
     manuscriptRoutes,
     manuscriptLooseCount,
+    manuscriptArcs,
     resetForStory,
     buildOptions,
   };

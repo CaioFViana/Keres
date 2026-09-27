@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
+import { decodeTime } from 'ulid';
 import { db, type CompatibleDb } from '../../db';
 import { operationLog } from '../../db/schema';
 
@@ -17,9 +18,9 @@ import { operationLog } from '../../db/schema';
  * What is never squashed:
  * - `create` rows: they are the authoritative idempotency record for retried creates (see
  *   `SyncPushService`), and the full data a client pulling from zero needs first.
- * - `delete` / `reorder` rows: structural operations define existence and order. A squash run
- *   never crosses one, so entity-version ranges (used by `getChangedFieldsSinceVersion`) and
- *   the recovery narrative stay truthful.
+ * - `delete` rows: structural operations define existence. A squash run never crosses one, so
+ *   entity-version ranges (used by `getChangedFieldsSinceVersion`) and the recovery narrative stay
+ *   truthful.
  * - the newest K updates per entity and anything recent: granular history is what conflict
  *   review reads.
  * - across users for `Favorite`: pulls filter favourites by `userId` in individual mode, so a
@@ -65,6 +66,20 @@ const entityKey = (op: Pick<CompactableOperation, 'entityType' | 'entityId'>): s
   `${op.entityType}\n${op.entityId}`;
 
 /**
+ * When the SERVER recorded the row: its id is a ULID minted at append time, so it carries the
+ * server's clock. `createdAt` is the client's operation time - a device whose clock ran days
+ * behind made its history "old" the moment it landed, squashing edits other devices had not
+ * pulled yet. Rows whose id is not a ULID fall back to `createdAt`.
+ */
+export function recordedAt(op: Pick<CompactableOperation, 'id' | 'createdAt'>): number {
+  try {
+    return decodeTime(op.id);
+  } catch {
+    return op.createdAt.getTime();
+  }
+}
+
+/**
  * Plans which update runs collapse, without touching the database. Input order does not matter;
  * everything is decided in `operationVersion` order.
  */
@@ -90,7 +105,8 @@ export function planUpdateSquash(
     }
   }
 
-  // A run never crosses an entity, a structural op, or (for favourites) an author.
+  // A run never crosses an entity, a structural op, or (for favourites) an author. Every write of a
+  // row is logged on that row - its place (`rank`) included - so its history is its own.
   const segments: CompactableOperation[][] = [];
   const openByEntity = new Map<string, CompactableOperation[]>();
   for (const op of sorted) {
@@ -116,8 +132,8 @@ export function planUpdateSquash(
 
   const runs: UpdateSquashRun[] = [];
   for (const segment of segments) {
-    // `createdAt` comes from client clocks (bounded only against the future), so it can disagree
-    // with version order: squash maximal contiguous runs of eligible rows, whatever shape that is.
+    // Age comes from the server clock (`recordedAt`), but retention still protects the newest rows
+    // per entity: squash maximal contiguous runs of eligible rows, whatever shape that is.
     let current: CompactableOperation[] = [];
     const flush = () => {
       if (current.length >= 2) {
@@ -131,7 +147,7 @@ export function planUpdateSquash(
       current = [];
     };
     for (const op of segment) {
-      if (op.createdAt.getTime() < policy.olderThan.getTime() && !protectedIds.has(op.id)) {
+      if (recordedAt(op) < policy.olderThan.getTime() && !protectedIds.has(op.id)) {
         current.push(op);
       } else {
         flush();

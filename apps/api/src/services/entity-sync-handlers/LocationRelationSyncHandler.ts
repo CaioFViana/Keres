@@ -1,4 +1,4 @@
-import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
+import type { SyncEntityRow, SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateLocationRelationDataType,
   CreateStoryUpdate,
@@ -9,7 +9,7 @@ import { CreateLocationRelationDataSchema, PartialLocationRelationSchema } from 
 import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { locationRelations, locations } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 /**
  * A defensive limit against an infinite loop if the data somehow becomes corrupted - in a valid
@@ -22,6 +22,8 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
   typeof PartialLocationRelationSchema
 > {
   entityName = 'LocationRelation';
+  // What names a relation; `findLiveTwin` reads it as a pair or as a child's one parent.
+  readonly naturalKey = ['locationAId', 'locationBId', 'relationType'] as const;
 
   constructor() {
     super('id', 'version', CreateLocationRelationDataSchema, PartialLocationRelationSchema, {
@@ -116,6 +118,30 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
   }
 
   /** For 'contains': the child (locationBId) can only have one live parent at a time. */
+  /**
+   * A connection is one unordered pair; a containment is one parent per child. Either can be
+   * made twice offline, and the second is the first's twin.
+   */
+  override async findLiveTwin(
+    storyId: string,
+    row: SyncEntityRow,
+    database: CompatibleDb = db,
+  ): Promise<SyncEntityRow | undefined> {
+    const fields = row as Record<string, unknown>;
+    const id = String(fields.id ?? '');
+    const locationAId = String(fields.locationAId ?? '');
+    const locationBId = String(fields.locationBId ?? '');
+    if (fields.relationType === 'connected_to') {
+      const [sortedA, sortedB] = this.sortLocationIds(locationAId, locationBId);
+      return this.findExistingConnection(storyId, sortedA, sortedB, id, database) as Promise<
+        SyncEntityRow | undefined
+      >;
+    }
+    return this.findExistingParentEdge(storyId, locationBId, id, database) as Promise<
+      SyncEntityRow | undefined
+    >;
+  }
+
   private async findExistingParentEdge(
     storyId: string,
     childId: string,
@@ -181,7 +207,8 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
         database,
       );
       if (existingConnection) {
-        throw new Error(
+        throw duplicateOf(
+          existingConnection,
           `Conflict: LocationRelation (connected_to) between ${locationAId} and ${locationBId} already exists and is not deleted.`,
         );
       }
@@ -196,7 +223,10 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
         database,
       );
       if (existingParentEdge) {
-        throw new Error(`Conflict: Location ${locationBId} already has a parent Location.`);
+        throw duplicateOf(
+          existingParentEdge,
+          `Conflict: Location ${locationBId} already has a parent Location.`,
+        );
       }
 
       await this.validateNoCycle(storyId, locationBId, locationAId, database);
@@ -248,7 +278,8 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
           database,
         );
         if (existingConnection) {
-          throw new Error(
+          throw duplicateOf(
+            existingConnection,
             `Conflict: LocationRelation (connected_to) between ${newLocationAId} and ${newLocationBId} already exists and is not deleted.`,
           );
         }
@@ -262,7 +293,10 @@ export class LocationRelationSyncHandler extends BaseSyncEntityHandler<
           database,
         );
         if (existingParentEdge) {
-          throw new Error(`Conflict: Location ${newLocationBId} already has a parent Location.`);
+          throw duplicateOf(
+            existingParentEdge,
+            `Conflict: Location ${newLocationBId} already has a parent Location.`,
+          );
         }
 
         await this.validateNoCycle(storyId, newLocationBId, newLocationAId, database);

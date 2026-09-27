@@ -18,7 +18,7 @@ import {
   scenes,
   worldRules,
 } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 /**
  * Synchronizes the link between a media file and an entity of the story.
@@ -31,6 +31,7 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
   typeof PartialGalleryRelationSchema
 > {
   entityName = 'GalleryRelation';
+  readonly naturalKey = ['galleryId', 'ownerId', 'ownerType'] as const;
 
   constructor() {
     super('id', 'version', CreateGalleryRelationDataSchema, PartialGalleryRelationSchema, {
@@ -186,7 +187,8 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
       database,
     );
     if (duplicate) {
-      throw new Error(
+      throw duplicateOf(
+        duplicate,
         `Conflict: Gallery ${validatedData.galleryId} is already linked to ${validatedData.ownerType} ${validatedData.ownerId} in story ${storyId}.`,
       );
     }
@@ -234,7 +236,8 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
         database,
       );
       if (duplicate && duplicate.id !== update.id) {
-        throw new Error(
+        throw duplicateOf(
+          duplicate,
           `Conflict: Gallery ${newGalleryId} is already linked to ${newOwnerType} ${newOwnerId} in story ${storyId}.`,
         );
       }

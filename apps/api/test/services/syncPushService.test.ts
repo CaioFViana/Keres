@@ -47,15 +47,6 @@ describe('storyUpdateFlipsFavorites', () => {
     ).toBe(false);
     expect(
       storyUpdateFlipsFavorites({
-        type: 'reorder',
-        entity: 'Story',
-        id: 'story-1',
-        version: 2,
-        reorderItems: [],
-      } as never),
-    ).toBe(false);
-    expect(
-      storyUpdateFlipsFavorites({
         type: 'create',
         entity: 'Story',
         id: 'story-1',

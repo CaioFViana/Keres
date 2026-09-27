@@ -9,13 +9,14 @@ import { CreatePlotSceneDataSchema, PartialPlotSceneSchema } from '@keres/shared
 import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { plots, plotScenes, scenes, stories } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, duplicateOf, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
   typeof CreatePlotSceneDataSchema,
   typeof PartialPlotSceneSchema
 > {
   entityName = 'PlotScene';
+  readonly naturalKey = ['plotId', 'sceneId'] as const;
   constructor() {
     super('id', 'version', CreatePlotSceneDataSchema, PartialPlotSceneSchema, {
       storyIdColumnName: 'storyId',
@@ -70,8 +71,11 @@ export class PlotSceneSyncHandler extends BaseSyncEntityHandler<
         eq(plotScenes.isDeleted, false),
       ),
     });
-    if (duplicate || (await this.findById(update.id!, database)))
-      throw new Error('Conflict: this scene is already part of the plot.');
+    if (duplicate)
+      throw duplicateOf(duplicate, 'Conflict: this scene is already part of the plot.');
+    if (await this.findById(update.id!, database)) {
+      throw new Error(`Conflict: PlotScene with ID ${update.id} already exists.`);
+    }
     await database.insert(plotScenes).values({
       id: update.id!,
       storyId,

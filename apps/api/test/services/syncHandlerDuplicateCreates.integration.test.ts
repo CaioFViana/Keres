@@ -454,10 +454,11 @@ describe('duplicate sync creates', () => {
 
     await expect(
       handler.create(userId, linearStoryId, create('Tag', newId(), data())),
-    ).rejects.toThrow(/already exists/i);
+    ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
-  it('an Item refuses a second live row with the same name', async () => {
+  /** Two items are two things, whatever they are called: two devices can name one alike. */
+  it('an Item takes a second live row with the same name', async () => {
     const handler = new ItemSyncHandler();
     const data = () => ({
       characterOwnerId: null,
@@ -472,7 +473,7 @@ describe('duplicate sync creates', () => {
 
     await expect(
       handler.create(userId, linearStoryId, create('Item', newId(), data())),
-    ).rejects.toThrow(/already exists/i);
+    ).resolves.toBeUndefined();
   });
 
   it('a Suggestion refuses a second live row with the same type and value', async () => {
@@ -482,7 +483,7 @@ describe('duplicate sync creates', () => {
 
     await expect(
       handler.create(userId, linearStoryId, create('Suggestion', newId(), data)),
-    ).rejects.toThrow(/already exists/i);
+    ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
   it('a StorySchemaField refuses a second live field with the same entity type and key', async () => {
@@ -501,7 +502,7 @@ describe('duplicate sync creates', () => {
 
     await expect(
       handler.create(userId, linearStoryId, create('StorySchemaField', newId(), data())),
-    ).rejects.toThrow(/already exists/i);
+    ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
   it('an AttributeValue refuses a second live value for the same entity and field', async () => {
@@ -516,7 +517,7 @@ describe('duplicate sync creates', () => {
 
     await expect(
       handler.create(userId, linearStoryId, create('AttributeValue', newId(), data)),
-    ).rejects.toThrow(/already exists/i);
+    ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 
   it('a CharacterRelation refuses a second live relation for the same pair', async () => {
@@ -526,25 +527,26 @@ describe('duplicate sync creates', () => {
 
     await expect(
       handler.create(userId, linearStoryId, create('CharacterRelation', newId(), data)),
-    ).rejects.toThrow(/already exists/i);
+    ).rejects.toMatchObject({ reason: 'duplicate', existing: { id: expect.any(String) } });
   });
 });
 
 describe('create-path reference validation', () => {
-  it('a Story refuses an operation time in the future', async () => {
+  it('a Story clamps an operation time in the future to the server clock', async () => {
     const handler = new StorySyncHandler();
     const storyId = newId();
 
-    await expect(
-      handler.create(userId, storyId, {
-        type: 'create',
-        entity: 'Story',
-        id: storyId,
-        data: { title: 'Amanha', type: 'linear' },
-        operationTime: new Date(Date.now() + 60_000).toISOString(),
-      } as CreateStoryUpdate),
-    ).rejects.toThrow(/cannot be in the future/i);
-    expect(await handler.findById(storyId)).toBeUndefined();
+    await handler.create(userId, storyId, {
+      type: 'create',
+      entity: 'Story',
+      id: storyId,
+      data: { title: 'Amanha', type: 'linear' },
+      operationTime: new Date(Date.now() + 60_000).toISOString(),
+    } as CreateStoryUpdate);
+
+    const created = await handler.findById(storyId);
+    expect(created).toBeDefined();
+    expect((created!.createdAt as Date).getTime()).toBeLessThanOrEqual(Date.now());
   });
 
   it('a StorySchemaField refuses an ENTITY attribute without a target entity type', async () => {
@@ -605,7 +607,8 @@ describe('create-path reference validation', () => {
           arcId: newId(),
         }),
       ),
-    ).rejects.toMatchObject({ reason: 'validation' });
+      // A missing arc is a missing reference: deleted, or still on its way from the device.
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
   });
 
   it('a PlotScene refuses to link when the story itself is gone', async () => {

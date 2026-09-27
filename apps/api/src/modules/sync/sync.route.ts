@@ -1,18 +1,31 @@
 import {
   isProtocolSupported,
+  MAX_SYNC_BATCH_SIZE,
   MIN_SUPPORTED_SYNC_PROTOCOL,
   SYNC_PROTOCOL_HEADER,
   SYNC_PROTOCOL_VERSION,
 } from '@keres/shared';
-import { StoryUpdatesArraySchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
+import { z } from 'zod';
+import { env } from '../../config/env';
 import type { JWTPayload } from '../../index';
 import { syncService } from '../../services/SyncService';
 import { logger } from '../../utils/logger';
 import { AppError } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 
-const syncAttemptLimiter = createAttemptLimiter({ maxAttempts: 120, windowMs: 60 * 1000 });
+const syncAttemptLimiter = createAttemptLimiter({
+  maxAttempts: env.SYNC_REQUESTS_PER_MINUTE,
+  windowMs: 60 * 1000,
+});
+
+/**
+ * Only the batch ceiling is enforced at the edge. Each element is validated inside the push
+ * service, where a malformed one becomes a per-operation `validation` conflict: rejecting the
+ * whole array here (422) failed every valid operation queued behind a single bad one, on every
+ * retry, forever.
+ */
+const PushBodySchema = z.array(z.unknown()).max(MAX_SYNC_BATCH_SIZE);
 
 /** Mirrors SyncConflictSchema (packages/shared) - not the Zod schema itself, same reasoning
  *  as the body comment below: Elysia's OpenAPI output from a Zod schema isn't valid JSON
@@ -27,8 +40,10 @@ const SyncConflictResponseSchema = t.Object({
   clientVersion: t.Optional(t.Number()),
   serverVersion: t.Optional(t.Number()),
   serverEntity: t.Optional(t.Nullable(t.Record(t.String(), t.Any()))),
+  ownEntity: t.Optional(t.Nullable(t.Record(t.String(), t.Any()))),
   attemptedChanges: t.Optional(t.Record(t.String(), t.Any())),
   changedFields: t.Optional(t.Array(t.String())),
+  entityOperationVersion: t.Optional(t.Number()),
 });
 
 /** Mirrors SyncAppliedOperationSchema (packages/shared). */
@@ -86,7 +101,7 @@ export const syncRoute = new Elysia()
       }
 
       const { storyId } = params;
-      const parsedUpdates = StoryUpdatesArraySchema.parse(body);
+      const parsedUpdates = PushBodySchema.parse(body);
 
       const { lastOperationVersion, applied, conflicts } =
         await syncService.processAndRecordUpdates(user.userId, storyId, parsedUpdates);
@@ -112,12 +127,12 @@ export const syncRoute = new Elysia()
       params: t.Object({
         storyId: t.String(), // ULID for the story
       }),
-      // Confirmed: Elysia does run this Zod schema at request time (a malformed body 422s
+      // Confirmed: Elysia does run this Zod schema at request time (a non-array or oversized body 422s
       // before the handler runs, same as a TypeBox schema would). What it does NOT do well is
       // feed swagger's OpenAPI output - the generated spec for this field is Zod's own internal
       // `_def` AST, not valid JSON Schema, so it won't render meaningfully in Swagger UI or
       // work with any codegen tool that expects a real OpenAPI schema.
-      body: StoryUpdatesArraySchema,
+      body: PushBodySchema,
       response: {
         200: t.Object({
           message: t.String(),
@@ -131,17 +146,17 @@ export const syncRoute = new Elysia()
       detail: {
         summary: 'Synchronize local story updates with the server',
         description:
-          'Receives an array of story updates (create, update, delete, reorder) from a client ' +
+          'Receives an array of story updates (create, update, delete) from a client ' +
           'and applies them to the server database, handling conflict resolution. The request ' +
           'body is a JSON array; every element shares this envelope: `type` ' +
-          '("create"|"update"|"delete"|"reorder"), `entity` (one of ~25 registered sync entity ' +
+          '("create"|"update"|"delete"), `entity` (one of ~25 registered sync entity ' +
           'names, e.g. "Character", "Scene", "TagRelation" - see SyncService.getEntityHandlers), ' +
           '`id`, `operationVersion`, `operationTime` (ISO string), `originatingUser`, and an ' +
           'optional `clientOperationId` used to correlate this operation with its result in the ' +
           "response. On top of that envelope: a `create` carries `data` (the new entity's " +
           'fields), an `update` carries `changes` (a partial patch) plus the base `version` it ' +
-          'was built on, a `delete` carries just that base `version`, and a `reorder` carries ' +
-          '`reorderItems` (id + newIndex pairs) instead of `data`/`changes`. The exact required ' +
+          "was built on, and a `delete` carries just that base `version`. A row's place is its " +
+          'own `rank` field, moved by an `update` like any other. The exact required ' +
           'fields of `data`/`changes` differ per entity - this is a true union of ~25 shapes, ' +
           'which is why the request body below is documented as an opaque schema rather than ' +
           'a precise one: TypeBox (what would normally render a real shape in swagger for this ' +

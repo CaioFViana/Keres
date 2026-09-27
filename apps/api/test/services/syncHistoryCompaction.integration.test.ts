@@ -1,7 +1,9 @@
 import { asc, eq } from 'drizzle-orm';
+import { ulid } from 'ulid';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { operationLog } from '../../src/db/schema';
+import { compactStoryUpdateHistory } from '../../src/services/sync/SyncHistoryCompaction';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
@@ -18,7 +20,26 @@ const pull = (token: string, story: string, lastOperationVersion = 0) =>
   });
 
 /** Eight days ago: old enough for the default 7-day compaction policy. */
-const OLD_TIME = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+const OLD_MS = Date.now() - 8 * 24 * 60 * 60 * 1000;
+const OLD_TIME = new Date(OLD_MS).toISOString();
+
+/**
+ * Makes the story's history look recorded by the server eight days ago. Age is read from the
+ * server clock the row id carries (a ULID minted at append), never from the client's operation
+ * time - so this rewrites the ids, which is what time passing would have produced.
+ */
+async function ageRecordedHistory() {
+  const rows = await db.query.operationLog.findMany({
+    where: eq(operationLog.storyId, storyId),
+    columns: { id: true },
+  });
+  for (const row of rows) {
+    await db
+      .update(operationLog)
+      .set({ id: ulid(OLD_MS) })
+      .where(eq(operationLog.id, row.id));
+  }
+}
 
 /** A create plus 22 chained updates, all "written" 8 days ago. */
 function agedCharacterHistory(characterId: string, baseName: string): unknown[] {
@@ -63,7 +84,7 @@ beforeEach(async () => {
 });
 
 describe('history compaction', () => {
-  it('squashes old update runs at the end of a push, keeping the merged final state', async () => {
+  it('squashes old update runs, keeping the merged final state', async () => {
     const characterId = newId();
 
     const { status, data } = await push(
@@ -75,6 +96,8 @@ describe('history compaction', () => {
     expect(status).toBe(200);
     expect(data.conflicts).toEqual([]);
     expect(data.applied).toHaveLength(23);
+    await ageRecordedHistory();
+    await compactStoryUpdateHistory(storyId);
 
     // 22 updates, all old, but the newest 20 stay granular: only #1+#2 collapse into #2's row.
     const ops = await characterOps();
@@ -98,6 +121,8 @@ describe('history compaction', () => {
   it('lets a client pulling from inside the squashed range converge on the final state', async () => {
     const characterId = newId();
     await push(ana.token, storyId, agedCharacterHistory(characterId, 'Nome'));
+    await ageRecordedHistory();
+    await compactStoryUpdateHistory(storyId);
 
     // This client synced through version 2 - a row that no longer exists.
     const { status, data } = await pull(ana.token, storyId, 2);
@@ -117,15 +142,13 @@ describe('history compaction', () => {
     expect(characterUpdates.at(-1).changes).toMatchObject({ name: 'Nome 22' });
   });
 
-  it('does not touch recent history, whatever its size', async () => {
+  it('does not touch history the server recorded recently, whatever the client clock said', async () => {
     const characterId = newId();
-    const fresh = agedCharacterHistory(characterId, 'Fresco').map((update) => {
-      const copy = { ...(update as Record<string, unknown>) };
-      delete copy.operationTime;
-      return copy;
-    });
 
-    await push(ana.token, storyId, fresh);
+    // Every operation claims to be eight days old (a device whose clock lags): the push also
+    // runs compaction, and it must leave what the server only just recorded alone.
+    await push(ana.token, storyId, agedCharacterHistory(characterId, 'Fresco'));
+    await compactStoryUpdateHistory(storyId);
 
     const ops = await characterOps();
     expect(ops).toHaveLength(23);

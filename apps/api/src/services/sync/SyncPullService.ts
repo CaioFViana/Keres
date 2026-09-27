@@ -5,7 +5,7 @@ import type {
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { decodePulledReorderOperation, MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { and, eq, gt, max, ne, or } from 'drizzle-orm';
 import { db } from '../../db';
 import { favorites, operationLog, stories } from '../../db/schema';
@@ -206,6 +206,9 @@ export class SyncPullService {
       operationTime,
       originatingUser: operation.userId,
       operationId: operation.id,
+      // The pushing device's own id for the operation: a device whose push answer was lost
+      // recognises it here as its own, already applied, instead of as someone else's edit.
+      ...(operation.clientOperationId ? { clientOperationId: operation.clientOperationId } : {}),
     };
 
     if (operation.operationType === 'create') {
@@ -240,14 +243,17 @@ export class SyncPullService {
       } as UpdateStoryUpdate;
     }
     if (operation.operationType === 'delete') {
+      // Deletions recorded since they carry the tombstone relay it (see `wholeRowPayload`);
+      // older ones hold only the id and go out exactly as before.
+      const tombstone: Record<string, unknown> = { ...payload };
+      delete tombstone.id;
+      delete tombstone.storyId;
       return {
         type: 'delete',
         entity: operation.entityType,
         ...metadata,
+        ...(Object.keys(tombstone).length > 0 ? { data: tombstone } : {}),
       } as DeleteStoryUpdate;
-    }
-    if (operation.operationType === 'reorder') {
-      return decodePulledReorderOperation(operation.entityType, payload, metadata);
     }
     throw new UnknownSyncOperationTypeError(operation.operationType, operation.entityType);
   }

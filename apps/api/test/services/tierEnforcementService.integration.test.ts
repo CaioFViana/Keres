@@ -4,12 +4,14 @@ import { db } from '../../src/db';
 import {
   characters,
   galleries,
+  mediaBlobs,
   registrationSettings,
   stories,
   tiers,
   users,
 } from '../../src/db/schema';
 import {
+  BlobNotReferencedError,
   TierLimitExceededError,
   tierEnforcementService,
 } from '../../src/services/TierEnforcementService';
@@ -274,5 +276,76 @@ describe('TierEnforcementService storage limits', () => {
     await expect(
       tierEnforcementService.assertCanUploadMedia(userId, storyId, 1),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe('TierEnforcementService honest storage ledger', () => {
+  const HASH = 'a'.repeat(32);
+
+  async function seedRow(hash: string, sizeBytes: number) {
+    const now = new Date();
+    await db.insert(galleries).values({
+      id: newId(),
+      storyId,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: `${newId()}.png`,
+      hash,
+      sizeBytes,
+      title: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    } as never);
+  }
+
+  async function seedBlob(hash: string, sizeBytes: number) {
+    await db
+      .insert(mediaBlobs)
+      .values({ hash, mimeType: 'image/png', sizeBytes, storagePath: `x/${hash}` } as never);
+  }
+
+  it('counts a stored blob at its true size, whatever its row declared', async () => {
+    await assignTier(await seedTier({ maxStorageBytesPerStory: 100 }));
+    await seedRow(HASH, 0);
+    await seedBlob(HASH, 90);
+
+    await expect(tierEnforcementService.assertCanUploadMedia(userId, storyId, 20)).rejects.toThrow(
+      TierLimitExceededError,
+    );
+  });
+
+  it('refuses to store bytes no live media file of the story refers to', async () => {
+    await expect(
+      tierEnforcementService.assertCanStoreBlob(userId, storyId, HASH, 10),
+    ).rejects.toBeInstanceOf(BlobNotReferencedError);
+  });
+
+  it('charges an upload at its real size in place of the declared one', async () => {
+    await assignTier(await seedTier({ maxStorageBytesPerStory: 100 }));
+    await seedRow(HASH, 0);
+
+    await expect(
+      tierEnforcementService.assertCanStoreBlob(userId, storyId, HASH, 101),
+    ).rejects.toBeInstanceOf(TierLimitExceededError);
+    await expect(
+      tierEnforcementService.assertCanStoreBlob(userId, storyId, HASH, 100),
+    ).resolves.toBeUndefined();
+  });
+
+  it("holds a collaborator's writes to the story owner's plan", async () => {
+    const writerId = newId();
+    await db
+      .insert(users)
+      .values({ id: writerId, username: 'bia', tag: 'bia', password: 'x' } as never);
+    await assignTier(await seedTier({ maxEntitiesPerStory: 0 }));
+    // The writer has no tier at all (unlimited) - it must not matter in the owner's story.
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(writerId, storyId),
+    ).rejects.toBeInstanceOf(TierLimitExceededError);
   });
 });

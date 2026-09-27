@@ -223,13 +223,14 @@ beforeEach(async () => {
     isDefault: true,
   } as never);
   await db.insert(chapters).values([
-    { id: id.chapter, storyId, name: 'Primeira noite', index: 1, arcId: id.storyArc },
+    { id: id.chapter, storyId, name: 'Primeira noite', index: 1, rank: 'a1', arcId: id.storyArc },
     // An event, so the package carries both kinds of container and a chronology between them.
     {
       id: id.event,
       storyId,
       name: 'A guerra de trezentos anos',
       index: 1,
+      rank: 'a1',
       type: 'event',
       arcId: id.storyArc,
     },
@@ -254,6 +255,7 @@ beforeEach(async () => {
       locationId: id.location,
       name: 'A luz apaga',
       index: 1,
+      rank: 'a1',
       isStart: true,
     },
     {
@@ -263,6 +265,7 @@ beforeEach(async () => {
       locationId: id.otherLocation,
       name: 'A maré sobe',
       index: 2,
+      rank: 'a2',
     },
   ] as never);
   // The event is placed against the spine, which is what the anchor is for.
@@ -500,6 +503,7 @@ beforeEach(async () => {
     entityType: 'Character',
     name: 'Ofício',
     key: 'oficio',
+    rank: 'a1',
     type: 'text',
   } as never);
   await db.insert(attributeValues).values({
@@ -528,8 +532,8 @@ beforeEach(async () => {
     criticality: 2,
   } as never);
   await db.insert(stats).values([
-    { id: id.stat, storyId, name: 'Coragem', isPrimary: true, order: 0 },
-    { id: id.secondaryStat, storyId, name: 'Reputação', isPrimary: false, order: 1 },
+    { id: id.stat, storyId, name: 'Coragem', isPrimary: true, order: 0, rank: 'a1' },
+    { id: id.secondaryStat, storyId, name: 'Reputação', isPrimary: false, order: 1, rank: 'a2' },
   ] as never);
   await db.insert(statStrengths).values([
     // A null statId is the story's default ladder; the other row is the stat's override.

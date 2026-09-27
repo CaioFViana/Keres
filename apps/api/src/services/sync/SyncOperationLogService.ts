@@ -1,4 +1,4 @@
-import { encodeReorderOperationPayload, type StoryUpdate } from '@keres/shared';
+import type { StoryUpdate } from '@keres/shared';
 import { eq, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db, type CompatibleDb } from '../../db';
@@ -20,6 +20,8 @@ export class SyncOperationLogService {
       update: StoryUpdate;
       entityId: string;
       entityVersion?: number;
+      /** Replaces the handler's sanitised payload (a restore records the whole restored row). */
+      payload?: Record<string, unknown>;
     },
     database: CompatibleDb = db,
   ): Promise<{ id: string; operationVersion: number }> {
@@ -31,15 +33,15 @@ export class SyncOperationLogService {
     }
     const handler = this.entityHandlers.get(update.entity);
     // The log row must carry enough to rebuild the operation on pull even when no handler is
-    // registered for the entity: a delete needs only its id, a reorder its shared-encoded items.
+    // registered for the entity: a delete needs only its id.
     // With a handler, the payload is what was written, never the client's raw JSON.
     let payload: Record<string, unknown> = {};
-    if (handler) {
+    if (args.payload) {
+      payload = args.payload;
+    } else if (handler) {
       payload = handler.sanitizePayloadForLog(update, userId);
     } else if (update.type === 'delete') {
       payload = { id: entityId };
-    } else if (update.type === 'reorder') {
-      payload = encodeReorderOperationPayload(update);
     }
 
     const [{ nextOperationVersion } = { nextOperationVersion: undefined }] = await database

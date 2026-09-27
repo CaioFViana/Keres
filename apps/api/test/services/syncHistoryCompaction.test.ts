@@ -1,3 +1,4 @@
+import { ulid } from 'ulid';
 import { describe, expect, it } from 'vitest';
 import {
   defaultCompactionPolicy,
@@ -5,6 +6,7 @@ import {
   DEFAULT_SQUASH_AGE_MS,
   mergeRunPayloads,
   planUpdateSquash,
+  recordedAt,
   type CompactableOperation,
 } from '../../src/services/sync/SyncHistoryCompaction';
 
@@ -64,7 +66,7 @@ describe('planUpdateSquash', () => {
     expect(runs).toEqual([]);
   });
 
-  it('never crosses a create, delete or reorder', () => {
+  it('never crosses a create or a delete', () => {
     sequence = 0;
     const rows = [
       op({ operationType: 'create' }),
@@ -155,5 +157,22 @@ describe('defaultCompactionPolicy', () => {
       olderThan: new Date('2026-09-12T12:00:00.000Z'),
       keepRecentPerEntity: 20,
     });
+  });
+});
+
+describe('age by the server clock', () => {
+  it("judges a row's age by when the server recorded it, not by the client's clock", () => {
+    // Recorded recently by the server, but stamped months back by a device whose clock lagged.
+    const lagging = op({ id: ulid(RECENT.getTime()), createdAt: OLD });
+    const next = op({ id: ulid(RECENT.getTime()), createdAt: OLD });
+
+    expect(recordedAt(lagging)).toBe(RECENT.getTime());
+    expect(
+      planUpdateSquash([lagging, next], { olderThan: CUTOFF, keepRecentPerEntity: 0 }),
+    ).toEqual([]);
+  });
+
+  it('falls back to the operation time for ids that are not ULIDs', () => {
+    expect(recordedAt(op({ id: 'legacy-row', createdAt: OLD }))).toBe(OLD.getTime());
   });
 });

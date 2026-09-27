@@ -34,7 +34,7 @@ export class SyncService {
   }
 
   /** Delegates transactional batch application to the sync protocol write coordinator. */
-  async processAndRecordUpdates(userId: string, storyId: string, updates: StoryUpdate[]) {
+  async processAndRecordUpdates(userId: string, storyId: string, updates: readonly unknown[]) {
     return this.pushService.processAndRecordUpdates(userId, storyId, updates);
   }
 

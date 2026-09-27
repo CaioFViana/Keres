@@ -2,7 +2,6 @@ import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
 import type {
   CreateStorySchemaFieldDataType,
   CreateStoryUpdate,
-  DeleteStoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
 import {
@@ -10,17 +9,17 @@ import {
   CreateStorySchemaFieldDataSchema,
   PartialStorySchemaFieldSchema,
 } from '@keres/shared';
-import { and, eq, sql } from 'drizzle-orm';
-import { ulid } from 'ulid';
+import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { storySchemaFields } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
 export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
   typeof CreateStorySchemaFieldDataSchema,
   typeof PartialStorySchemaFieldSchema
 > {
   entityName = 'StorySchemaField';
+  readonly naturalKey = ['entityType', 'key'] as const;
 
   constructor() {
     super('id', 'version', CreateStorySchemaFieldDataSchema, PartialStorySchemaFieldSchema, {
@@ -48,7 +47,8 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingField) {
-      throw new Error(
+      throw duplicateOf(
+        existingField,
         `Conflict: Attribute with key "${validatedData.key}" already exists for ${validatedData.entityType} in story ${storyId}.`,
       );
     }
@@ -69,6 +69,8 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
       isRequired: validatedData.isRequired,
       defaultValue: validatedData.defaultValue,
       order: validatedData.order,
+      // Always set by the push (normalizeArrangedUpdate); empty would take its order's legacy rank.
+      rank: validatedData.rank ?? '',
       createdAt: new Date(),
       updatedAt: new Date(),
       version: 1,
@@ -96,36 +98,5 @@ export class StorySchemaFieldSyncHandler extends BaseSyncEntityHandler<
     delete changes.targetEntityType;
 
     await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
-  }
-
-  async delete(
-    userId: string,
-    storyId: string,
-    update: DeleteStoryUpdate,
-    currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
-    database: CompatibleDb = db,
-  ): Promise<void> {
-    const alreadyDeleted = !!currentEntity.isDeleted;
-    await super.delete(userId, storyId, update, currentEntity, database);
-
-    if (alreadyDeleted) {
-      // An idempotent resend of the same deletion - the key mutation already ran the first time.
-      return;
-    }
-
-    // It frees the slot of the unique(storyId, entityType, key) constraint, which is not filtered by
-    // isDeleted - without that, recreating an attribute with the same key after deleting the old one would
-    // fail against the tombstone row. It only affects this very row (never read back by anyone other than
-    // that constraint), so it does not need to be propagated to other clients.
-    //
-    // Cascading to AttributeValue is the CLIENT's responsibility (StorySchemaFieldService.deleteField), not
-    // this file's: a direct SQL mutation on this table does not go through the operationLog, so other
-    // devices would never learn about the cascade through a pull - the client has to send explicit
-    // AttributeValue deletions in the same batch, each following the normal path
-    // (AttributeValueSyncHandler.delete), for it to synchronize correctly.
-    await database
-      .update(storySchemaFields)
-      .set({ key: sql`${storySchemaFields.key} || '__deleted_' || ${ulid()}` })
-      .where(eq(storySchemaFields.id, update.id!));
   }
 }

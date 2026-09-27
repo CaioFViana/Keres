@@ -19,13 +19,14 @@ import {
   scenes,
   worldRules,
 } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateNoteRelationDataSchema,
   typeof PartialNoteRelationSchema
 > {
   entityName = 'NoteRelation';
+  readonly naturalKey = ['noteId', 'relationId', 'relationType'] as const;
 
   constructor() {
     super('id', 'version', CreateNoteRelationDataSchema, PartialNoteRelationSchema, {
@@ -181,7 +182,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingRelation) {
-      throw new Error(
+      throw duplicateOf(
+        existingRelation,
         `Conflict: NoteRelation for note ${validatedData.noteId} and entity ${validatedData.relationId} (${validatedData.relationType}) already exists and is not deleted.`,
       );
     }

@@ -1,23 +1,10 @@
 import type { SyncStoredEntityFor } from './BaseSyncEntityHandler';
-import type {
-  CreateStoryUpdate,
-  DeleteStoryUpdate,
-  StoryReorderingStoryUpdate,
-  UpdateStoryUpdate,
-} from '@keres/shared';
-import type { ChapterType } from '@keres/shared';
-import {
-  CreateStoryDataSchema,
-  PartialStorySchema,
-  completeReorderProblem,
-  sameReorderArrangement,
-  StoryReorderingStoryUpdateSchema,
-} from '@keres/shared';
+import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
+import { CreateStoryDataSchema, PartialStorySchema } from '@keres/shared';
 import { ownerOnlyFieldsIn } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db, type CompatibleDb } from '../../db';
-import { chapters, stats, stories, storySchemaFields } from '../../db/schema';
+import { stories } from '../../db/schema';
 import {
   BaseSyncEntityHandler,
   SyncConflictError,
@@ -27,7 +14,7 @@ import {
 } from './BaseSyncEntityHandler';
 
 /**
- * Sync handler for the story root. Besides persisting the Story row and its reorder operations, it
+ * Sync handler for the story root. Besides persisting the Story row, it
  * owns the root-only policy: a sync endpoint may only target its own story and identity/policy
  * changes or deletion require the story owner.
  */
@@ -110,12 +97,9 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
       update.data,
     );
 
-    // Validate operationTime is not in the future
-    const clientOperationTime = new Date(update.operationTime!);
-    if (clientOperationTime.getTime() > new Date().getTime() + 1000) {
-      // Allow 1 second clock skew
-      throw new Error(`Operation time ${update.operationTime} cannot be in the future.`);
-    }
+    // Clamped to the server's clock; an absent time (it is optional on the wire) means "now"
+    // instead of an Invalid Date reaching the insert.
+    const clientOperationTime = this.parseOperationTime(update.operationTime);
 
     await database.insert(stories).values({
       id: update.id!,
@@ -129,240 +113,15 @@ export class StorySyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  // Override the update method to handle StoryReorderingStoryUpdate
   async update(
     userId: string,
     storyId: string,
-    update: UpdateStoryUpdate | StoryReorderingStoryUpdate,
+    update: UpdateStoryUpdate,
     currentEntity: SyncStoredEntityFor<typeof this.createSchema>,
     database: CompatibleDb = db,
   ): Promise<void> {
-    if (update.type === 'reorder' && update.entity === 'Story') {
-      const validatedReorderUpdate: StoryReorderingStoryUpdate =
-        StoryReorderingStoryUpdateSchema.parse(update);
-
-      // Empty is malformed, never an idempotent resend: there is no arrangement to compare
-      // against the live rows, and logging one would store a row no other client can apply.
-      const emptyProblem =
-        validatedReorderUpdate.reorderItems.length === 0 ? completeReorderProblem([], []) : null;
-      if (emptyProblem) {
-        throw new SyncConflictError('validation', emptyProblem);
-      }
-
-      // Idempotent resend, and ONLY on a stale base (see ChapterSyncHandler for why a
-      // fresh base always flows through): per target below, when the rows already sit exactly
-      // where the items want them, there is nothing to apply - succeeding here (rather than
-      // version-conflicting below) is what lets a client retry a reorder whose response was
-      // lost. Matching the live arrangement means the items name exactly the live rows, and
-      // this path writes nothing either way, so no validation is skipped that could matter.
-      // Stats and schema fields persist 0-based `order` while chapters persist the 1-based
-      // wire `index` - each comparison mirrors its own write mapping.
-      const reorderBaseStale = validatedReorderUpdate.version! !== currentEntity.version;
-      if (reorderBaseStale && validatedReorderUpdate.reorderTarget === 'Stat') {
-        const currentStats = await database.query.stats.findMany({
-          where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
-          columns: { id: true, order: true },
-        });
-        if (
-          sameReorderArrangement(
-            currentStats.map((stat) => ({ id: stat.id, newIndex: stat.order + 1 })),
-            validatedReorderUpdate.reorderItems,
-          )
-        ) {
-          return;
-        }
-      } else if (
-        reorderBaseStale &&
-        validatedReorderUpdate.reorderTarget === 'StorySchemaField' &&
-        validatedReorderUpdate.schemaEntityType
-      ) {
-        const currentFields = await database.query.storySchemaFields.findMany({
-          where: and(
-            eq(storySchemaFields.storyId, validatedReorderUpdate.id!),
-            eq(storySchemaFields.entityType, validatedReorderUpdate.schemaEntityType),
-            eq(storySchemaFields.isDeleted, false),
-          ),
-          columns: { id: true, order: true },
-        });
-        if (
-          sameReorderArrangement(
-            currentFields.map((field) => ({ id: field.id, newIndex: field.order + 1 })),
-            validatedReorderUpdate.reorderItems,
-          )
-        ) {
-          return;
-        }
-      } else if (
-        reorderBaseStale &&
-        (validatedReorderUpdate.reorderTarget === undefined ||
-          validatedReorderUpdate.reorderTarget === 'Event')
-      ) {
-        const reorderedType: ChapterType =
-          validatedReorderUpdate.reorderTarget === 'Event' ? 'event' : 'chapter';
-        const currentChapters = await database.query.chapters.findMany({
-          where: and(
-            eq(chapters.storyId, validatedReorderUpdate.id!),
-            eq(chapters.type, reorderedType),
-            eq(chapters.isDeleted, false),
-          ),
-          columns: { id: true, index: true },
-        });
-        if (
-          sameReorderArrangement(
-            currentChapters.map((chapter) => ({ id: chapter.id, newIndex: chapter.index })),
-            validatedReorderUpdate.reorderItems,
-          )
-        ) {
-          return;
-        }
-      }
-
-      // Perform version check for the Story itself
-      this.checkVersionConflict(
-        validatedReorderUpdate.version!,
-        currentEntity.version,
-        validatedReorderUpdate.id!,
-      );
-
-      if (validatedReorderUpdate.reorderTarget === 'Stat') {
-        await database.transaction(async (tx) => {
-          const existingStats = await tx.query.stats.findMany({
-            where: and(eq(stats.storyId, validatedReorderUpdate.id!), eq(stats.isDeleted, false)),
-            columns: { id: true, version: true },
-          });
-          const problem = completeReorderProblem(
-            existingStats.map((stat) => stat.id),
-            validatedReorderUpdate.reorderItems,
-          );
-          if (problem) throw new SyncConflictError('validation', problem);
-          await Promise.all(
-            validatedReorderUpdate.reorderItems.map((item) => {
-              const stat = existingStats.find((candidate) => candidate.id === item.id)!;
-              return tx
-                .update(stats)
-                .set({ order: item.newIndex - 1, updatedAt: new Date(), version: stat.version + 1 })
-                .where(eq(stats.id, item.id));
-            }),
-          );
-          await tx
-            .update(stories)
-            .set({ updatedAt: new Date(), version: currentEntity.version + 1 })
-            .where(eq(stories.id, validatedReorderUpdate.id!));
-        });
-        return;
-      }
-
-      if (validatedReorderUpdate.reorderTarget === 'StorySchemaField') {
-        if (!validatedReorderUpdate.schemaEntityType) {
-          throw new SyncConflictError(
-            'validation',
-            'Validation Error: Attribute reorders require a schema entity type.',
-          );
-        }
-        const existingFields = await database.query.storySchemaFields.findMany({
-          where: and(
-            eq(storySchemaFields.storyId, validatedReorderUpdate.id!),
-            eq(storySchemaFields.entityType, validatedReorderUpdate.schemaEntityType),
-            eq(storySchemaFields.isDeleted, false),
-          ),
-          columns: { id: true, version: true },
-        });
-        const problem = completeReorderProblem(
-          existingFields.map((field) => field.id),
-          validatedReorderUpdate.reorderItems,
-        );
-        if (problem) throw new SyncConflictError('validation', problem);
-
-        await database.transaction(async (tx) => {
-          await Promise.all(
-            validatedReorderUpdate.reorderItems.map((item) => {
-              const field = existingFields.find((candidate) => candidate.id === item.id)!;
-              return tx
-                .update(storySchemaFields)
-                .set({
-                  order: item.newIndex - 1,
-                  updatedAt: new Date(),
-                  version: field.version + 1,
-                })
-                .where(eq(storySchemaFields.id, item.id));
-            }),
-          );
-          await tx
-            .update(stories)
-            .set({ updatedAt: new Date(), version: currentEntity.version + 1 })
-            .where(eq(stories.id, validatedReorderUpdate.id!));
-        });
-        return;
-      }
-
-      /**
-       * Chapters and events share the `chapters` table and each owns an independent 1..N space.
-       *
-       * The scope has to reach the query, not just the validation: a payload listing every event is
-       * complete for the events and short for the chapters, so a handler that looked at the whole
-       * table would call one of the two a validation error whichever way it was sent. Absent means
-       * chapters, which is what this operation meant before events existed.
-       */
-      const reorderedType: ChapterType =
-        validatedReorderUpdate.reorderTarget === 'Event' ? 'event' : 'chapter';
-
-      await database.transaction(async (tx) => {
-        // 1. Validate reorderItems against the containers of this kind in the story
-        const existingChapters = await tx.query.chapters.findMany({
-          where: and(
-            eq(chapters.storyId, validatedReorderUpdate.id!),
-            eq(chapters.type, reorderedType),
-            eq(chapters.isDeleted, false),
-          ),
-          columns: {
-            id: true,
-            index: true,
-            version: true,
-          },
-        });
-
-        const problem = completeReorderProblem(
-          existingChapters.map((chapter) => chapter.id),
-          validatedReorderUpdate.reorderItems,
-        );
-        if (problem) {
-          throw new SyncConflictError('validation', problem);
-        }
-
-        // 2. Batch Update Chapter Indices
-        const updatePromises = validatedReorderUpdate.reorderItems.map((item) => {
-          const chapterToUpdate = existingChapters.find((c) => c.id === item.id);
-          if (!chapterToUpdate) {
-            // This case should ideally be caught by the earlier validation, but as a safeguard
-            throw new Error(`Chapter with ID ${item.id} not found in story during batch update.`);
-          }
-          // Increment chapter version, and update index and updatedAt
-          return tx
-            .update(chapters)
-            .set({
-              index: item.newIndex,
-              updatedAt: new Date(),
-              version: chapterToUpdate.version + 1,
-            })
-            .where(eq(chapters.id, item.id));
-        });
-
-        await Promise.all(updatePromises);
-
-        // 3. Increment Story Version
-        await tx
-          .update(stories)
-          .set({
-            updatedAt: new Date(),
-            version: currentEntity.version + 1,
-          })
-          .where(eq(stories.id, validatedReorderUpdate.id!));
-      });
-    } else {
-      // If it's not a story reorder update, delegate to the base class's update method
-      this.updateSchema.parse((update as UpdateStoryUpdate).changes);
-      await super.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, database);
-    }
+    this.updateSchema.parse(update.changes);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 
   async delete(

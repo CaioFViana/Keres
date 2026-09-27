@@ -70,6 +70,8 @@ export class StatSyncHandler extends BaseSyncEntityHandler<
       name: validatedData.name,
       isPrimary: validatedData.isPrimary,
       order: validatedData.order,
+      // Always set by the push (normalizeArrangedUpdate); empty would take its order's legacy rank.
+      rank: validatedData.rank ?? '',
       createdAt: new Date(),
       updatedAt: new Date(),
       version: 1,

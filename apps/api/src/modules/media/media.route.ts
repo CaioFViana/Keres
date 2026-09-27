@@ -5,6 +5,7 @@ import type { JWTPayload } from '../../index';
 import { MediaHashMismatchError, mediaStorageService } from '../../services/MediaStorageService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import {
+  BlobNotReferencedError,
   TierLimitExceededError,
   tierEnforcementService,
 } from '../../services/TierEnforcementService';
@@ -95,10 +96,20 @@ export const mediaRoutes = new Elysia()
       }
 
       try {
-        await tierEnforcementService.assertCanUploadMedia(user!.userId, params.storyId, file.size);
+        await tierEnforcementService.assertCanStoreBlob(
+          user!.userId,
+          params.storyId,
+          params.hash,
+          file.size,
+        );
       } catch (error) {
         if (error instanceof TierLimitExceededError) {
           throw new AppError(403, error.message);
+        }
+        // 409, not 400: the metadata may simply not have landed yet, and the client retries an
+        // upload on the next cycle for anything that is not a verdict on the bytes themselves.
+        if (error instanceof BlobNotReferencedError) {
+          throw new AppError(409, error.message);
         }
         throw error;
       }

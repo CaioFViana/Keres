@@ -122,29 +122,13 @@ describe('idempotent create comparison and log payloads', () => {
     expect(handler.createPayloadMatches(row, { name: '' })).toBe(false);
   });
 
-  it('serializes deletes and reorders into the minimal operation-log payload', () => {
+  it('serializes a delete into the minimal operation-log payload', () => {
     expect(
       handler.sanitizePayloadForLog(
         { type: 'delete', entity: 'Character', id: 'char-1', version: 1 } as DeleteStoryUpdate,
         USER_ID,
       ),
     ).toEqual({ id: 'char-1' });
-    expect(
-      handler.sanitizePayloadForLog(
-        {
-          type: 'reorder',
-          entity: 'Story',
-          id: STORY_ID,
-          reorderItems: [{ id: 'chapter-1', newIndex: 1 }],
-          reorderTarget: 'Event',
-        } as any,
-        USER_ID,
-      ),
-    ).toEqual({
-      reorderItems: [{ id: 'chapter-1', newIndex: 1 }],
-      reorderTarget: 'Event',
-      schemaEntityType: undefined,
-    });
   });
 });
 
@@ -304,12 +288,15 @@ describe('update', () => {
     expect((await handler.findByIdOrThrow(entity.id)).updatedAt.toISOString()).toBe(operationTime);
   });
 
-  /** A client clock running fast must not push the entity into the future. */
-  it('refuses an operation time in the future', async () => {
+  /**
+   * A client clock running fast must not push the entity into the future - nor cost the edit:
+   * refusing it turned every edit of a drifting device into a conflict.
+   */
+  it('clamps an operation time in the future to the server clock and applies the edit', async () => {
     const entity = await createCharacter();
     const operationTime = new Date(Date.now() + 60_000).toISOString();
 
-    const edit = handler.update(
+    await handler.update(
       USER_ID,
       STORY_ID,
       {
@@ -319,10 +306,28 @@ describe('update', () => {
       entity,
     );
 
+    const saved = await handler.findByIdOrThrow(entity.id);
+    expect(saved.name).toBe('Nyx');
+    expect(saved.updatedAt.getTime()).toBeLessThanOrEqual(Date.now());
+  });
+
+  it('refuses a malformed operation time', async () => {
+    const entity = await createCharacter();
+
+    const edit = handler.update(
+      USER_ID,
+      STORY_ID,
+      {
+        ...updateUpdate(entity.id, { name: 'Nyx', version: 1 }),
+        operationTime: 'not-a-date',
+      } as UpdateStoryUpdate,
+      entity,
+    );
+
     await expect(edit).rejects.toMatchObject({ reason: 'validation' });
   });
 
-  it('allows a second of slack for clock drift', async () => {
+  it('keeps a slightly early operation time exactly as sent', async () => {
     const entity = await createCharacter();
     const operationTime = new Date(Date.now() + 500).toISOString();
 

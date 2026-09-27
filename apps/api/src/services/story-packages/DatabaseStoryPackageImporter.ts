@@ -10,6 +10,7 @@ import { db } from '../../db';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
 import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { renumberAllArranged } from '../sync/arrangedRanks';
 import { ensurePublicFavoriteOperationLogs } from '../sync/publicFavoriteRepair';
 import { importStoryAssets } from './DatabaseStoryPackageAssetsImport';
 import { importStoryCore } from './DatabaseStoryPackageCoreImport';
@@ -117,6 +118,9 @@ export class DatabaseStoryPackageImporter {
       await importStoryAssets(context);
       await importStoryInteractions(context);
       await importStoryFinalCollections(context);
+      // Rows land with the ranks the package carries (older packages: none, so their positions
+      // imply them); the positions are then derived from those ranks, as every write does.
+      await renumberAllArranged(tx, targetStoryId);
     });
 
     // Imported rows carry no operation logs by design, which would leave a public story's

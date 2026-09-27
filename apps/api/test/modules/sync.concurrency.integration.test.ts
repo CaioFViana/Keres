@@ -238,7 +238,7 @@ describe('SyncService defensive protocol paths', () => {
     ]);
   });
 
-  it('uses safe fallback payloads for handlerless deletes/reorders but refuses a missing entity id', async () => {
+  it('uses a safe fallback payload for a handlerless delete but refuses a missing entity id', async () => {
     const isolatedService = new SyncService();
     (isolatedService.getEntityHandlers() as Map<string, unknown>).delete('Character');
     const deletedId = newId();
@@ -248,17 +248,6 @@ describe('SyncService defensive protocol paths', () => {
       userId: ana.userId,
       entityId: deletedId,
       update: { type: 'delete', entity: 'Character', id: deletedId, version: 1 } as never,
-    });
-    const reordered = await isolatedService.appendOperationLog({
-      storyId,
-      userId: ana.userId,
-      entityId: storyId,
-      update: {
-        type: 'reorder',
-        entity: 'Character',
-        id: storyId,
-        reorderItems: [{ id: deletedId, newIndex: 1 }],
-      } as never,
     });
     // A recovery import is trusted only at its boundary: an unknown operation kind stays a
     // non-destructive update in the persistent log (see the coercion above), but an empty entity
@@ -275,7 +264,7 @@ describe('SyncService defensive protocol paths', () => {
     ).rejects.toThrow('without an entity id');
 
     const rows = await db.query.operationLog.findMany({
-      where: (table, { inArray }) => inArray(table.id, [deleted.id, reordered.id]),
+      where: (table, { inArray }) => inArray(table.id, [deleted.id]),
       orderBy: (table, { asc }) => [asc(table.operationVersion)],
     });
     expect(rows).toEqual([
@@ -284,13 +273,9 @@ describe('SyncService defensive protocol paths', () => {
         entityId: deletedId,
         payload: { id: deletedId },
       }),
-      expect.objectContaining({
-        operationType: 'reorder',
-        payload: expect.objectContaining({ reorderItems: [{ id: deletedId, newIndex: 1 }] }),
-      }),
     ]);
     const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
-    expect(story?.lastOperationVersion).toBe(2);
+    expect(story?.lastOperationVersion).toBe(1);
   });
 
   it('rejects missing stories before it can apply or expose any operation', async () => {
@@ -320,12 +305,12 @@ describe('SyncService defensive protocol paths', () => {
       expect.objectContaining({
         entityId: characterId,
         reason: 'validation',
-        message: expect.stringContaining('invalid'),
+        message: expect.stringMatching(/operationTime/),
       }),
     ]);
   });
 
-  it('treats an update without an id as a lookup for nothing rather than crashing', async () => {
+  it('refuses an update without an id as invalid rather than crashing', async () => {
     const isolatedService = new SyncService();
 
     const result = await isolatedService.processAndRecordUpdates(ana.userId, storyId, [
@@ -339,7 +324,11 @@ describe('SyncService defensive protocol paths', () => {
 
     expect(result.applied).toEqual([]);
     expect(result.conflicts).toEqual([
-      expect.objectContaining({ entityId: '', reason: 'not_found' }),
+      expect.objectContaining({
+        clientOperationId: 'local-sem-id',
+        entityId: '',
+        reason: 'validation',
+      }),
     ]);
   });
 
@@ -380,24 +369,5 @@ describe('SyncService defensive protocol paths', () => {
     } finally {
       limit.mockRestore();
     }
-  });
-
-  it('fails loudly when persisted history contains a reorder for an unsupported entity', async () => {
-    await db.insert(operationLog).values({
-      id: newId(),
-      storyId,
-      userId: ana.userId,
-      operationVersion: 1,
-      operationType: 'reorder',
-      entityType: 'Character',
-      entityId: newId(),
-      payload: { reorderItems: [] },
-      entityVersion: 1,
-      createdAt: new Date(),
-    } as never);
-
-    await expect(syncService.getUpdatesForStory(ana.userId, storyId, 0)).rejects.toThrow(
-      'Unhandled reorder entity type: Character',
-    );
   });
 });

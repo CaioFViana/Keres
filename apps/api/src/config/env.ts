@@ -71,6 +71,11 @@ const envSchema = z.object({
    * Both are optional - if they are not set, the reconciliation is simply skipped.
    */
   ROOT_ADMIN_USERNAME: z.string().min(1).optional(),
+  /**
+   * Pulls plus pushes one user may make per minute. A device syncs a few times a minute at most;
+   * the ceiling only stops a runaway client. Raised for load and convergence tests.
+   */
+  SYNC_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().optional().default(120),
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
 });
 

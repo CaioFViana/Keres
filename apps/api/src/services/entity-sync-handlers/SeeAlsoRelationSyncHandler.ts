@@ -26,7 +26,7 @@ import {
   seeAlsoRelations,
   worldRules,
 } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 type EntityRef = { type: SeeAlsoEntityType; id: string };
 
@@ -41,6 +41,7 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
   typeof PartialSeeAlsoRelationSchema
 > {
   entityName = 'SeeAlsoRelation';
+  readonly naturalKey = ['entityAType', 'entityAId', 'entityBType', 'entityBId'] as const;
 
   constructor() {
     super('id', 'version', CreateSeeAlsoRelationDataSchema, PartialSeeAlsoRelationSchema, {
@@ -190,7 +191,8 @@ export class SeeAlsoRelationSyncHandler extends BaseSyncEntityHandler<
 
     const existing = await this.findExistingPair(storyId, entityA, entityB, undefined, database);
     if (existing) {
-      throw new Error(
+      throw duplicateOf(
+        existing,
         `Conflict: SeeAlsoRelation between ${entityA.type}:${entityA.id} and ${entityB.type}:${entityB.id} already exists and is not deleted.`,
       );
     }

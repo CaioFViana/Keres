@@ -5,7 +5,6 @@ import { stories, users } from '../../src/db/schema';
 import { ChapterSyncHandler } from '../../src/services/entity-sync-handlers/ChapterSyncHandler';
 import { LocationSyncHandler } from '../../src/services/entity-sync-handlers/LocationSyncHandler';
 import { StoryArcSyncHandler } from '../../src/services/entity-sync-handlers/StoryArcSyncHandler';
-import { ItemSyncHandler } from '../../src/services/entity-sync-handlers/ItemSyncHandler';
 import { NoteSyncHandler } from '../../src/services/entity-sync-handlers/NoteSyncHandler';
 import { PlotSyncHandler } from '../../src/services/entity-sync-handlers/PlotSyncHandler';
 import { SuggestionSyncHandler } from '../../src/services/entity-sync-handlers/SuggestionSyncHandler';
@@ -122,7 +121,8 @@ const cases: Array<
  * `ne(id, update.id)` - the query only ever matched the row being updated, so it could never
  * find "another" row with the same name, and the duplicate-prevention check was dead code.
  * These prove a rename that would collide with a *different*, already-existing row is
- * actually rejected now (Tag and Item both key uniqueness on `name` within a story).
+ * actually rejected now (a Tag keys uniqueness on `name` within a story; an Item no longer does -
+ * two items are two things, whatever they are called).
  */
 const renameCollisionCases: Array<
   [string, () => Handler, Record<string, unknown>, Record<string, unknown>]
@@ -132,28 +132,6 @@ const renameCollisionCases: Array<
     () => new TagSyncHandler(),
     { name: 'Vilões', color: null, isFavorite: false, extraNotes: null },
     { name: 'Heróis', color: null, isFavorite: false, extraNotes: null },
-  ],
-  [
-    'Item',
-    () => new ItemSyncHandler(),
-    {
-      characterOwnerId: null,
-      name: 'Espada',
-      category: null,
-      description: null,
-      initialState: null,
-      isFavorite: false,
-      extraNotes: null,
-    },
-    {
-      characterOwnerId: null,
-      name: 'Escudo',
-      category: null,
-      description: null,
-      initialState: null,
-      isFavorite: false,
-      extraNotes: null,
-    },
   ],
 ];
 

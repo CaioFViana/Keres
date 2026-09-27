@@ -6,6 +6,7 @@ import { env } from '../../src/config/env';
 import { db } from '../../src/db';
 import {
   friendships,
+  galleries,
   stories,
   storyPublications,
   tiers,
@@ -180,6 +181,28 @@ describe('media routes', () => {
     return request('POST', `/media/${story}/blobs/${hash}`, { token, body: form });
   };
 
+  /** The metadata a client synchronizes before any bytes: the server only takes referenced hashes. */
+  const declareMedia = async (story: string, hash: string, sizeBytes = 0) => {
+    const now = new Date();
+    await db.insert(galleries).values({
+      id: newId(),
+      storyId: story,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'retrato.png',
+      hash,
+      sizeBytes,
+      title: null,
+      isFavorite: false,
+      extraNotes: null,
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    } as never);
+  };
+
   it('refuses a blob bigger than the server allows', async () => {
     const story = await uploadTestStory(ana.token);
     const previous = env.MEDIA_MAX_BYTES;
@@ -206,6 +229,7 @@ describe('media routes', () => {
       maxStorageBytesTotal: null,
     } as never);
     await db.update(users).set({ tierId }).where(eq(users.id, ana.userId));
+    await declareMedia(story.id, md5(PNG_BYTES));
 
     const { status } = await upload(ana.token, story.id, md5(PNG_BYTES), PNG_BYTES);
     expect(status).toBe(403);
@@ -213,6 +237,7 @@ describe('media routes', () => {
 
   it('takes the MIME type from the file itself when the field is missing', async () => {
     const story = await uploadTestStory(ana.token);
+    await declareMedia(story.id, md5(PNG_BYTES), PNG_BYTES.length);
 
     const { status } = await upload(ana.token, story.id, md5(PNG_BYTES), PNG_BYTES, null);
     expect(status).toBe(200);

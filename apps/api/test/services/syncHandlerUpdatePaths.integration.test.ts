@@ -37,6 +37,7 @@ import { mediaStorageService } from '../../src/services/MediaStorageService';
 import { installBunShim } from '../helpers/bunShim';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
+import { renumberArranged } from '../../src/services/sync/arrangedRanks';
 
 installBunShim();
 
@@ -1023,7 +1024,12 @@ describe('tag and scene update paths', () => {
     });
   });
 
-  it('a Scene taking the start flag clears it elsewhere in a linear story', async () => {
+  /**
+   * The operation writes its own row and nothing else: a linear story's single start and finish
+   * are kept by the client, which records each other scene's loss of the flag as its own edit.
+   * Changed here unlogged, no other device would ever learn of it.
+   */
+  it('a Scene taking the start or finish flag touches no other scene', async () => {
     const handler = new SceneSyncHandler();
 
     await handler.update(
@@ -1032,14 +1038,6 @@ describe('tag and scene update paths', () => {
       change('Scene', fx.Lscene2, { isStart: true, version: 1 }),
       await handler.findByIdOrThrow(fx.Lscene2),
     );
-
-    expect(await handler.findByIdOrThrow(fx.Lscene2)).toMatchObject({ isStart: true, version: 2 });
-    expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({ isStart: false, version: 2 });
-  });
-
-  it('a Scene taking the finish flag clears it elsewhere in a linear story', async () => {
-    const handler = new SceneSyncHandler();
-
     await handler.update(
       userId,
       linearStoryId,
@@ -1047,11 +1045,8 @@ describe('tag and scene update paths', () => {
       await handler.findByIdOrThrow(fx.Lscene),
     );
 
+    expect(await handler.findByIdOrThrow(fx.Lscene2)).toMatchObject({ isStart: true, version: 2 });
     expect(await handler.findByIdOrThrow(fx.Lscene)).toMatchObject({ isFinish: true, version: 2 });
-    expect(await handler.findByIdOrThrow(fx.Lscene2)).toMatchObject({
-      isFinish: false,
-      version: 2,
-    });
   });
 
   it('a Scene edits its name without touching flags and deletes through the base path', async () => {
@@ -1706,7 +1701,8 @@ describe('relation update paths', () => {
     });
   });
 
-  it('a StorySchemaField delete resend does not sweep the key twice', async () => {
+  /** Uniqueness holds among live fields only: a tombstone keeps its key and blocks nothing. */
+  it('a StorySchemaField delete keeps its key, and a new field may take it', async () => {
     const handler = new StorySchemaFieldSyncHandler();
     const id = newId();
     await handler.create(
@@ -1730,16 +1726,24 @@ describe('relation update paths', () => {
       remove('StorySchemaField', id, 1),
       await handler.findByIdOrThrow(id),
     );
-    const sweptKey = (await handler.findByIdOrThrow(id)).key;
-    expect(sweptKey).toMatch(/^lar__deleted_/);
+    expect(await handler.findByIdOrThrow(id)).toMatchObject({ key: 'lar', isDeleted: true });
 
-    await handler.delete(
+    const next = newId();
+    await handler.create(
       userId,
       linearStoryId,
-      remove('StorySchemaField', id, 2),
-      await handler.findByIdOrThrow(id),
+      create('StorySchemaField', next, {
+        entityType: 'Character',
+        name: 'Lar',
+        key: 'lar',
+        description: null,
+        type: 'text',
+        isRequired: false,
+        defaultValue: null,
+        order: 1,
+      }),
     );
-    expect((await handler.findByIdOrThrow(id)).key).toBe(sweptKey);
+    expect(await handler.findByIdOrThrow(next)).toMatchObject({ key: 'lar', isDeleted: false });
   });
 });
 
@@ -1878,16 +1882,16 @@ describe('story root paths', () => {
       operationTime: new Date().toISOString(),
     }) as CreateStoryUpdate;
 
-  it('a Story reorders its schema fields', async () => {
+  it('a schema field moves by its own rank, the story untouched', async () => {
     const stories = new StorySyncHandler();
     const fields = new StorySchemaFieldSyncHandler();
     const storyId = newId();
     await stories.create(userId, storyId, storyCreate(storyId, { title: 'Attrs', type: 'linear' }));
     const firstId = newId();
     const secondId = newId();
-    for (const [id, key, order] of [
-      [firstId, 'origem', 0],
-      [secondId, 'lar', 1],
+    for (const [id, key, order, rank] of [
+      [firstId, 'origem', 0, 'a1'],
+      [secondId, 'lar', 1, 'a2'],
     ] as const) {
       await fields.create(
         userId,
@@ -1901,87 +1905,28 @@ describe('story root paths', () => {
           isRequired: false,
           defaultValue: null,
           order,
+          rank,
         }),
       );
     }
 
-    await stories.update(
+    await fields.update(
       userId,
       storyId,
       {
-        type: 'reorder',
-        entity: 'Story',
-        id: storyId,
+        type: 'update',
+        entity: 'StorySchemaField',
+        id: secondId,
         version: 1,
-        reorderTarget: 'StorySchemaField',
-        schemaEntityType: 'Character',
-        reorderItems: [
-          { id: firstId, newIndex: 2 },
-          { id: secondId, newIndex: 1 },
-        ],
+        changes: { rank: 'a0', version: 1 },
       } as never,
-      await stories.findByIdOrThrow(storyId),
+      await fields.findByIdOrThrow(secondId),
     );
+    await renumberArranged(db, storyId, 'StorySchemaField');
 
-    expect(await fields.findByIdOrThrow(firstId)).toMatchObject({ order: 1, version: 2 });
+    expect(await fields.findByIdOrThrow(firstId)).toMatchObject({ order: 1, version: 1 });
     expect(await fields.findByIdOrThrow(secondId)).toMatchObject({ order: 0, version: 2 });
-    expect(await stories.findByIdOrThrow(storyId)).toMatchObject({ version: 2 });
-  });
-
-  it('a Story refuses an attribute reorder without an entity type and a partial batch', async () => {
-    const stories = new StorySyncHandler();
-    const fields = new StorySchemaFieldSyncHandler();
-    const storyId = newId();
-    await stories.create(userId, storyId, storyCreate(storyId, { title: 'Attrs', type: 'linear' }));
-    const fieldId = newId();
-    await fields.create(
-      userId,
-      storyId,
-      create('StorySchemaField', fieldId, {
-        entityType: 'Character',
-        name: 'Origem',
-        key: 'origem',
-        description: null,
-        type: 'text',
-        isRequired: false,
-        defaultValue: null,
-        order: 0,
-      }),
-    );
-    const current = await stories.findByIdOrThrow(storyId);
-
-    await expect(
-      stories.update(
-        userId,
-        storyId,
-        {
-          type: 'reorder',
-          entity: 'Story',
-          id: storyId,
-          version: 1,
-          reorderTarget: 'StorySchemaField',
-          reorderItems: [{ id: fieldId, newIndex: 1 }],
-        } as never,
-        current,
-      ),
-    ).rejects.toThrow(/schema entity type/i);
-
-    await expect(
-      stories.update(
-        userId,
-        storyId,
-        {
-          type: 'reorder',
-          entity: 'Story',
-          id: storyId,
-          version: 1,
-          reorderTarget: 'StorySchemaField',
-          schemaEntityType: 'Location',
-          reorderItems: [{ id: fieldId, newIndex: 1 }],
-        } as never,
-        current,
-      ),
-    ).rejects.toMatchObject({ reason: 'validation' });
+    expect(await stories.findByIdOrThrow(storyId)).toMatchObject({ version: 1 });
   });
 
   it('a Story delete sweeps the hashes only it referenced', async () => {

@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, max } from 'drizzle-orm';
 import { db } from '../../db';
 import { operationLog } from '../../db/schema';
 
@@ -46,6 +46,27 @@ export async function getChangedFieldsSinceVersion(
     }
   }
   return Array.from(fields);
+}
+
+/** The server operation that last wrote the entity (its own log only, not a container's orders). */
+export async function getEntityLastOperationVersion(
+  storyId: string,
+  entityType: string,
+  entityId: string,
+): Promise<number | undefined> {
+  const [row] = await db
+    .select({ last: max(operationLog.operationVersion) })
+    .from(operationLog)
+    .where(
+      and(
+        eq(operationLog.storyId, storyId),
+        eq(operationLog.entityType, entityType),
+        eq(operationLog.entityId, entityId),
+      ),
+    );
+  // Postgres answers an aggregate of a bigint column as text.
+  const last = row?.last === null || row?.last === undefined ? undefined : Number(row.last);
+  return last !== undefined && Number.isFinite(last) ? last : undefined;
 }
 
 /** Converts database Date values before they are shown in the client's conflict comparison. */

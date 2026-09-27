@@ -4,66 +4,16 @@ import type {
   LocationRelation,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq, or } from 'drizzle-orm';
-import type { AppDrizzleClient, AppDrizzleTransaction, LocationRelationSelect } from '../../db';
+import { eq } from 'drizzle-orm';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /**
- * For 'connected_to' (an unordered pair): it finds an active relation between the two Locations, in
- * either storage order. For 'contains' (single parent), use `getExistingParentEdge`.
+ * Mirrors the server's location relations. The server refuses a second connection of one pair
+ * or a second parent of one child (`duplicate`), and the device that made it folds its own row
+ * into the first: a relation arriving here is one the server holds, never one to judge.
  */
-const getExistingConnection = async (
-  db: AppDrizzleClient | AppDrizzleTransaction,
-  storyId: string,
-  locationAId: string,
-  locationBId: string,
-  excludeRelationId?: string,
-): Promise<LocationRelationSelect | undefined> => {
-  const candidate = await db.query.locationRelations.findFirst({
-    where: and(
-      eq(schema.locationRelations.storyId, storyId),
-      eq(schema.locationRelations.relationType, 'connected_to'),
-      eq(schema.locationRelations.isDeleted, false),
-      or(
-        and(
-          eq(schema.locationRelations.locationAId, locationAId),
-          eq(schema.locationRelations.locationBId, locationBId),
-        ),
-        and(
-          eq(schema.locationRelations.locationAId, locationBId),
-          eq(schema.locationRelations.locationBId, locationAId),
-        ),
-      ),
-    ),
-  });
-  if (candidate && candidate.id !== excludeRelationId) {
-    return candidate;
-  }
-  return undefined;
-};
-
-/** For 'contains': the child (locationBId) can only have one live parent at a time. */
-const getExistingParentEdge = async (
-  db: AppDrizzleClient | AppDrizzleTransaction,
-  storyId: string,
-  childId: string,
-  excludeRelationId?: string,
-): Promise<LocationRelationSelect | undefined> => {
-  const candidate = await db.query.locationRelations.findFirst({
-    where: and(
-      eq(schema.locationRelations.storyId, storyId),
-      eq(schema.locationRelations.locationBId, childId),
-      eq(schema.locationRelations.relationType, 'contains'),
-      eq(schema.locationRelations.isDeleted, false),
-    ),
-  });
-  if (candidate && candidate.id !== excludeRelationId) {
-    return candidate;
-  }
-  return undefined;
-};
-
 export class LocationRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'LocationRelation';
   private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
@@ -79,43 +29,6 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     return this.dbInstance;
   }
 
-  /**
-   * It resolves a duplicate conflict (a 'connected_to' pair or a 'contains' single parent): whichever has
-   * the newer `updatedAt` wins, the other is soft-deleted. It returns `true` if the received operation
-   * should be discarded (it lost to a newer local row).
-   */
-  private async resolveDuplicate(
-    existing: LocationRelationSelect,
-    incomingUpdatedAt: Date,
-  ): Promise<boolean> {
-    if (incomingUpdatedAt > existing.updatedAt) {
-      await this.db
-        .update(schema.locationRelations)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: existing.version + 1,
-        })
-        .where(eq(schema.locationRelations.id, existing.id));
-      return false;
-    }
-    return true;
-  }
-
-  private async findConflict(
-    storyId: string,
-    relationType: string,
-    locationAId: string,
-    locationBId: string,
-    excludeRelationId?: string,
-  ): Promise<LocationRelationSelect | undefined> {
-    if (relationType === 'contains') {
-      return getExistingParentEdge(this.db, storyId, locationBId, excludeRelationId);
-    }
-    return getExistingConnection(this.db, storyId, locationAId, locationBId, excludeRelationId);
-  }
-
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
@@ -126,32 +39,12 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
 
     const relationData = update.data as LocationRelation;
 
-    const conflict = await this.findConflict(
-      storyId,
-      relationData.relationType,
-      relationData.locationAId,
-      relationData.locationBId,
-    );
-    if (conflict) {
-      const incomingUpdatedAt = relationData.updatedAt
-        ? new Date(relationData.updatedAt)
-        : new Date();
-      const shouldDiscard = await this.resolveDuplicate(conflict, incomingUpdatedAt);
-      if (shouldDiscard) {
-        console.log(
-          `Sync conflict (create): Existing LocationRelation ${conflict.id} wins over incoming ${update.id}. Discarding.`,
-        );
-        return;
-      }
-    }
-
     await this.db.insert(schema.locationRelations).values({
       ...relationData,
       id: update.id,
       storyId,
       createdAt: new Date(relationData.createdAt),
-      // A create without a timestamp still wins recency by "now" above; the row must store the
-      // same fallback instead of crashing on the missing date.
+      // A create without a timestamp stores "now" instead of crashing on the missing date.
       updatedAt: relationData.updatedAt ? new Date(relationData.updatedAt) : new Date(),
       deletedAt: relationData.deletedAt ? new Date(relationData.deletedAt) : null,
     });
@@ -176,27 +69,6 @@ export class LocationRelationClientSyncHandler implements ClientSyncEntityHandle
     }
 
     const changes = update.changes as Partial<LocationRelation>;
-    const effectiveRelationType = changes.relationType || localRelation.relationType;
-    const effectiveLocationAId = changes.locationAId || localRelation.locationAId;
-    const effectiveLocationBId = changes.locationBId || localRelation.locationBId;
-
-    const conflict = await this.findConflict(
-      storyId,
-      effectiveRelationType,
-      effectiveLocationAId,
-      effectiveLocationBId,
-      update.id,
-    );
-    if (conflict) {
-      const incomingUpdatedAt = changes.updatedAt ? new Date(changes.updatedAt) : new Date();
-      const shouldDiscard = await this.resolveDuplicate(conflict, incomingUpdatedAt);
-      if (shouldDiscard) {
-        console.warn(
-          `Sync conflict (update): Existing LocationRelation ${conflict.id} wins over incoming ${update.id}. Discarding.`,
-        );
-        return;
-      }
-    }
 
     await this.db
       .update(schema.locationRelations)

@@ -1,42 +1,15 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, UpdateStoryUpdate } from '@keres/shared';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import { and, eq, or, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
-// Helper function to find an existing non-deleted relation for a given pair of characters
-const getExistingRelationForPair = async (
-  db: AppDrizzleClient | AppDrizzleTransaction,
-  storyId: string,
-  charIdA: string,
-  charIdB: string,
-  excludeRelationId?: string,
-): Promise<CharacterRelation | undefined> => {
-  const conditions = [
-    eq(schema.characterRelations.storyId, storyId),
-    eq(schema.characterRelations.isDeleted, false),
-    or(
-      and(
-        eq(schema.characterRelations.character1Id, charIdA),
-        eq(schema.characterRelations.character2Id, charIdB),
-      ),
-      and(
-        eq(schema.characterRelations.character1Id, charIdB),
-        eq(schema.characterRelations.character2Id, charIdA),
-      ),
-    ),
-  ];
-
-  if (excludeRelationId) {
-    conditions.push(sql`${schema.characterRelations.id} != ${excludeRelationId}`);
-  }
-
-  return db.query.characterRelations.findFirst({
-    where: and(...conditions),
-  });
-};
-
+/**
+ * Mirrors the server's character relations. The server refuses a second relation of one pair
+ * (`duplicate`), and the device that made it folds its own row into the first: a relation
+ * arriving here is one the server holds, never one to judge.
+ */
 export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'CharacterRelation';
   private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
@@ -61,42 +34,6 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
     }
 
     const relationData = update.data as CharacterRelation;
-
-    // Handle duplicate CharacterRelations during sync - applyCreate ---
-    const existingDuplicate = await getExistingRelationForPair(
-      this.db,
-      storyId,
-      relationData.character1Id,
-      relationData.character2Id,
-    );
-
-    if (existingDuplicate) {
-      // If the incoming data is newer, mark the existing one as deleted and apply the new one.
-      // Otherwise, the existing one wins, and we discard the incoming create.
-      if (
-        relationData.updatedAt &&
-        existingDuplicate.updatedAt &&
-        new Date(relationData.updatedAt) > existingDuplicate.updatedAt
-      ) {
-        console.log(
-          `Sync conflict (create): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`,
-        );
-        await this.db
-          .update(schema.characterRelations)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: existingDuplicate.version + 1,
-          })
-          .where(eq(schema.characterRelations.id, existingDuplicate.id));
-      } else {
-        console.log(
-          `Sync conflict (create): Existing CharacterRelation ${existingDuplicate.id} is newer or same as incoming ${update.id}. Discarding incoming create.`,
-        );
-        return; // Discard the incoming create
-      }
-    }
 
     await this.db.insert(schema.characterRelations).values({
       ...relationData,
@@ -127,47 +64,6 @@ export class CharacterRelationClientSyncHandler implements ClientSyncEntityHandl
     }
 
     const relationChanges = update.changes as Partial<CharacterRelation>;
-
-    // Determine the effective character ids after this update, for duplicate checking
-    const effectiveCharacter1Id = relationChanges.character1Id || localRelation.character1Id;
-    const effectiveCharacter2Id = relationChanges.character2Id || localRelation.character2Id;
-
-    // Handle duplicate CharacterRelations during sync - applyUpdate ---
-    // Check if applying this update would create a duplicate with another *active* relation
-    const existingDuplicate = await getExistingRelationForPair(
-      this.db,
-      storyId,
-      effectiveCharacter1Id,
-      effectiveCharacter2Id,
-      update.id, // Exclude the relation currently being updated
-    );
-
-    if (existingDuplicate) {
-      // Assuming the incoming update carries an 'updatedAt' timestamp or we use current time
-      const incomingUpdatedAt = relationChanges.updatedAt
-        ? new Date(relationChanges.updatedAt)
-        : new Date();
-
-      if (incomingUpdatedAt > existingDuplicate.updatedAt) {
-        console.log(
-          `Sync conflict (update): Incoming CharacterRelation ${update.id} is newer than existing duplicate ${existingDuplicate.id}. Marking existing as deleted.`,
-        );
-        await this.db
-          .update(schema.characterRelations)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: existingDuplicate.version + 1,
-          })
-          .where(eq(schema.characterRelations.id, existingDuplicate.id));
-      } else {
-        console.warn(
-          `Sync conflict (update): Existing CharacterRelation ${existingDuplicate.id} is newer or same as incoming ${update.id}. Discarding incoming update for ${update.id} as it would create a duplicate.`,
-        );
-        return; // Discard the incoming update
-      }
-    }
 
     await this.db
       .update(schema.characterRelations)

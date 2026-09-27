@@ -9,6 +9,7 @@ import {
   isNotFoundError,
   isOfflineError,
   isProtocolMismatchError,
+  isTransientServerError,
 } from './apiClient';
 import type { ClientSyncEntityHandler } from './entity-sync-handlers/ClientSyncEntityHandler';
 import type { ServerService } from './ServerService';
@@ -123,7 +124,8 @@ export class SyncEngineService {
     });
     this.pullApply = new SyncPullApply({
       pull: this.pull,
-      getPendingOperationsByEntity: () => this.push.getPendingOperationsByEntity(),
+      getUnsyncedOperationsForEntity: (entityType, entityId) =>
+        this.push.getUnsyncedOperationsForEntity(entityType, entityId),
       entityHandlers: this.entityHandlers,
       notifier: dependencies.notifier,
       events: dependencies.events,
@@ -321,10 +323,6 @@ export class SyncEngineService {
     this.clearStoryContext();
   }
 
-  private throwIfCycleAborted(signal: AbortSignal): void {
-    throwIfSyncAborted(signal);
-  }
-
   /**
    * Runs one full pull/push cycle: 'offline' when the server was unreachable, 'failed' when the
    * pull or the push failed, 'ok' when both phases ran (even with conflicts or skipped operations).
@@ -363,7 +361,7 @@ export class SyncEngineService {
     const { storyId, db } = binding;
 
     try {
-      this.throwIfCycleAborted(signal);
+      throwIfSyncAborted(signal);
       // 1. Get local story details and initial server max operation version
       const localStory = await db.query.stories.findFirst({
         where: eq(schema.stories.id, storyId),
@@ -519,6 +517,9 @@ export class SyncEngineService {
         if (isProtocolMismatchError(pullError)) {
           console.log(`Sync refused for story ${storyId}: the server needs a newer sync protocol.`);
           this.dependencies.notifier.protocolMismatch();
+        } else if (isTransientServerError(pullError)) {
+          // Rate limited or restarting: the backoff retries, and there is nothing to tell the user.
+          console.log(`Pull deferred for story ${storyId}: ${pullError?.message || pullError}`);
         } else {
           console.log('Error during sync pull phase:', pullError?.message || pullError);
           this.dependencies.notifier.syncFailed();
@@ -527,7 +528,7 @@ export class SyncEngineService {
       }
 
       // 3-4. Push pending local operations in batches the server will accept.
-      this.throwIfCycleAborted(signal);
+      throwIfSyncAborted(signal);
       let pushFailed = false;
       try {
         await this.push.pushPendingOperations();
@@ -552,6 +553,9 @@ export class SyncEngineService {
         if (isProtocolMismatchError(pushError)) {
           console.log(`Push refused for story ${storyId}: the server needs a newer sync protocol.`);
           this.dependencies.notifier.protocolMismatch();
+        } else if (isTransientServerError(pushError)) {
+          // Rate limited or restarting: the operations stay queued and the backoff retries them.
+          console.log(`Push deferred for story ${storyId}: ${pushError?.message || pushError}`);
         } else {
           console.log(
             `Error pushing local operations for story ${storyId}:`,
@@ -561,7 +565,7 @@ export class SyncEngineService {
         }
       }
 
-      this.throwIfCycleAborted(signal);
+      throwIfSyncAborted(signal);
       // 5. Update local story's lastServerSyncedLog and cached role.
       await persistPullProgress();
 
@@ -573,7 +577,7 @@ export class SyncEngineService {
         await serverService.updateServer(binding.activeServer.id, { lastSyncDate: new Date() });
       }
 
-      this.throwIfCycleAborted(signal);
+      throwIfSyncAborted(signal);
       // 6. Reconcile media files. It runs after the metadata on purpose: a media file can only be downloaded
       // after the row describing it has arrived, and can only be uploaded after the server has accepted that
       // same row.

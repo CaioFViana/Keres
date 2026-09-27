@@ -1,31 +1,31 @@
 import type {
-  ChapterReorderingStoryUpdate,
   CreateStoryUpdate,
   DeleteStoryUpdate,
   Favorite,
-  StoryReorderingStoryUpdate,
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import {
-  encodeReorderOperationPayload,
-  MAX_SYNC_PULL_BATCH,
-  sameReorderArrangement,
-} from '@keres/shared';
+import { MAX_SYNC_PULL_BATCH, syncConflictValuesDiffer } from '@keres/shared';
 import type { FavoriteBehavior } from '@keres/shared/entities/Story';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { OperationLogSelect } from '../../db/schema';
 import { createULID } from '../../utils/entityUtils';
+import { entityEventEmitter } from '../../utils/EventEmitter';
 import { withOpLogLock } from '../../utils/opLogMutex';
 import type { ClientSyncEntityHandler } from '../entity-sync-handlers/ClientSyncEntityHandler';
+import { getEntityTable, toEntityColumns } from '../entityTableRegistry';
 import { findContestedFields, mergeLocalOperationPayloads } from '../SyncConflictService';
-import { applyReorderToLocalDb } from './applyReorderToLocalDb';
+import {
+  detachLandedOperation,
+  raiseConflictsServerVersion,
+  withoutDerivedPosition,
+} from './syncConflictHelpers';
 import type { SyncContext } from './SyncContext';
 import type { FavoritesFingerprint } from './syncFavoritesFingerprint';
 import { computeLocalFavoritesFingerprint } from './syncFavoritesFingerprint';
-import { deriveBaseVersion, throwIfSyncAborted } from './syncPure';
+import { deriveBaseVersion, onlyMoves, onlyPlaces, throwIfSyncAborted } from './syncPure';
 
 interface SyncPullOptions {
   context: SyncContext;
@@ -63,30 +63,6 @@ interface PullPageResponse {
   serverMaxOperationVersion: number;
   role: 'owner' | 'writer' | 'reader';
   favoritesFingerprint?: FavoritesFingerprint;
-}
-
-/**
- * Which row set a reorder disputes. Two reorders overlap only when their keys match: chapters
- * and events own independent index spaces, stats and schema fields own their own tables, and a
- * schema-field order is per entity type. Chapters reorder scenes only.
- *
- * `null` means "cannot tell" (an unrecognised target, or a schema-field order without its entity
- * type) and always disputes, fail-closed: an order that cannot be proven disjoint must not slip
- * past as one.
- */
-function reorderDisputeKey(
-  entity: string,
-  reorderTarget: unknown,
-  schemaEntityType: unknown,
-): string | null {
-  if (entity !== 'Story') return 'scenes';
-  if (reorderTarget === 'StorySchemaField') {
-    return typeof schemaEntityType === 'string' && schemaEntityType.length > 0
-      ? `schema-field:${schemaEntityType}`
-      : null;
-  }
-  if (reorderTarget === undefined) return 'chapters';
-  return reorderTarget === 'Stat' || reorderTarget === 'Event' ? reorderTarget : null;
 }
 
 /** Parses a local op payload without ever throwing; null means corrupted or not an object. */
@@ -195,10 +171,26 @@ export class SyncPull {
     return { updates: remoteUpdates, publicFavorites, role };
   }
 
+  /**
+   * A remote operation moved the entity's version: conflicts still pending on the entity must
+   * know, or resolving them would align the row to a version the server has left.
+   */
+  public async foldVersionIntoConflicts(update: StoryUpdate): Promise<void> {
+    if (!update.id) return;
+    await raiseConflictsServerVersion(
+      this.context.db()!,
+      this.context.storyId()!,
+      update.entity,
+      update.id,
+      update.version,
+    );
+  }
+
   public async isOwnEchoedOperation(update: StoryUpdate): Promise<boolean> {
     if (!update.operationVersion) {
       return false;
     }
+    if (update.clientOperationId && (await this.settleLostAck(update))) return true;
     // Entity-scoped, not version-only: a synced op carrying a stale or foreign version must
     // never mask a concurrent operation that happens to sit at that version - versions are
     // unique per story, so a true echo always matches the entity too.
@@ -216,6 +208,42 @@ export class SyncPull {
   }
 
   /**
+   * An operation of this device the server applied although its push answer never arrived: the
+   * pull carries the device's own id for it. It is settled as its ack would have (synced, with
+   * the server's version) and then skipped as an echo - reconciled as someone else's edit, it
+   * would rebase the very operation it is, one version past the server.
+   */
+  private async settleLostAck(update: StoryUpdate): Promise<boolean> {
+    const db = this.context.db()!;
+    const op = await db.query.operationLogs.findFirst({
+      where: and(
+        eq(schema.operationLogs.id, update.clientOperationId!),
+        eq(schema.operationLogs.storyId, this.context.storyId()!),
+        eq(schema.operationLogs.isSynced, false),
+      ),
+    });
+    if (!op) return false;
+    await db
+      .update(schema.operationLogs)
+      .set({
+        isSynced: true,
+        serverOperationVersion: update.operationVersion,
+        conflictState: null,
+      })
+      .where(eq(schema.operationLogs.id, op.id));
+    // Held in a conflict meanwhile: that conflict was about whether it could land, and it did.
+    if (
+      op.conflictState !== null &&
+      (await detachLandedOperation(db, this.context.storyId()!, op.id))
+    ) {
+      entityEventEmitter.emit('sync_conflicts_changed', this.context.storyId());
+    }
+    // As its ack would have: whatever still waits on the entity learns the server's version.
+    await this.foldVersionIntoConflicts(update);
+    return true;
+  }
+
+  /**
    * Applies a remote create tolerating that the entity may already exist.
    *
    * A raw `insert` would fail when repeating the operation (for instance if an earlier push's response
@@ -230,7 +258,20 @@ export class SyncPull {
     const existing = update.id ? await handler.getById(update.id) : undefined;
 
     if (!existing) {
-      await handler.applyCreate(this.context.storyId()!, createUpdate);
+      // The pull never carries `storyId` (the server strips it, and so does
+      // `protectRemoteUpdate`), and a dozen handlers insert `data` as it comes: every remote
+      // create of a scene, choice, item, route... failed its NOT NULL `story_id` - three
+      // failures, then retired, so another device's new scenes never appeared here. The story
+      // is known: the one being synchronized.
+      const table = getEntityTable(update.entity);
+      const scoped =
+        table && 'storyId' in table
+          ? ({
+              ...createUpdate,
+              data: { ...createUpdate.data, storyId: this.context.storyId() },
+            } as CreateStoryUpdate)
+          : createUpdate;
+      await handler.applyCreate(this.context.storyId()!, scoped);
       return;
     }
 
@@ -239,12 +280,84 @@ export class SyncPull {
       type: 'update',
       id: update.id!,
       changes: {
-        ...createUpdate.data,
+        // An arranged row's position follows its rank here; the create's copy is not written.
+        ...withoutDerivedPosition(update.entity, createUpdate.data ?? {}),
         version:
           typeof createUpdate.data?.version === 'number'
             ? createUpdate.data.version
             : (createUpdate.version ?? 0),
       },
+    } as UpdateStoryUpdate);
+  }
+
+  /**
+   * Applies a remote deletion and brings the tombstone up to the server's: its content, when the
+   * deletion carries it, and its version. The entity handlers only flip the flags - without this
+   * the local row stayed one version behind the server's after every remote delete (a later
+   * restore or edit rested on a stale base), and its fields kept whatever this device last had.
+   * The version only ever moves up (`max`), so replaying an older deletion cannot drag it back.
+   */
+  public async applyRemoteDelete(
+    update: DeleteStoryUpdate,
+    handler: ClientSyncEntityHandler,
+    runner: AppDrizzleClient | AppDrizzleTransaction = this.context.db(),
+  ): Promise<void> {
+    await handler.applyDelete(this.context.storyId(), update);
+    const table = getEntityTable(update.entity);
+    if (!table || !update.id) return;
+    const tombstone = toEntityColumns(update.entity, update.data ?? {});
+    delete tombstone.isDeleted;
+    delete tombstone.deletedAt;
+    // Exactly the server's (an older deletion replayed after a restore never reaches here -
+    // `maskSupersededUpdate` drops it).
+    const version = typeof update.version === 'number' ? { version: update.version } : {};
+    if (Object.keys(tombstone).length === 0 && !('version' in version)) return;
+    await runner
+      .update(table)
+      .set({ ...tombstone, ...version } as never)
+      .where(eq((table as any).id, update.id));
+  }
+
+  /**
+   * Brings a row's content in line with this device's own operation as the server recorded it.
+   * Its version already holds - this device made the operation - but its fields may not: the
+   * server records what it stored, which it may have normalized (a pair of ids sorted), a
+   * keep-local deletion abandons the edits made before it, and a tombstone keeps whatever it had
+   * while deleted. Only fields that differ are written. Only called with no local operation
+   * pending on the entity, and with fields later history rewrote already masked out.
+   */
+  public async alignEchoedWholeRow(
+    update: StoryUpdate,
+    handler: ClientSyncEntityHandler,
+  ): Promise<void> {
+    if (update.type === 'delete') {
+      if ((update as DeleteStoryUpdate).data) {
+        await this.applyRemoteDelete(update as DeleteStoryUpdate, handler);
+      }
+      return;
+    }
+    if (update.type !== 'update' && update.type !== 'create') return;
+    const written = withoutDerivedPosition(
+      update.entity,
+      update.type === 'create'
+        ? { ...((update as CreateStoryUpdate).data ?? {}) }
+        : { ...((update as UpdateStoryUpdate).changes ?? {}) },
+    );
+    const local = (await handler.getById(update.id ?? '')) as Record<string, unknown> | undefined;
+    if (!local) return;
+    const changes = Object.fromEntries(
+      Object.entries(written).filter(
+        ([field, value]) =>
+          !['version', 'updatedAt', 'createdAt', 'id', 'storyId'].includes(field) &&
+          field in local &&
+          syncConflictValuesDiffer(value, local[field]),
+      ),
+    );
+    if (Object.keys(changes).length === 0) return;
+    await handler.applyUpdate(this.context.storyId(), {
+      ...update,
+      type: 'update',
+      changes,
     } as UpdateStoryUpdate);
   }
 
@@ -271,9 +384,7 @@ export class SyncPull {
         ? update.data
         : update.type === 'update'
           ? update.changes
-          : update.type === 'reorder'
-            ? encodeReorderOperationPayload(update)
-            : { id: update.id }; // For delete, just store the ID
+          : { id: update.id }; // For delete, just store the ID
 
     const storyId = this.context.storyId()!;
     // The insert and the counter bump commit together: a crash between them re-issues a taken
@@ -334,6 +445,11 @@ export class SyncPull {
    * The rule is to preserve what the person did: fields only the server changed are applied, fields the
    * person also changed keep their value and become a conflict for them to decide. Before, the remote
    * update was written on top and the offline edit disappeared with no warning.
+   *
+   * `pendingLocalOps` holds every unsynchronized operation of the entity, including the ones already
+   * parked in a pending conflict: a remote operation arriving while that conflict is open must fold
+   * into it (`refreshServerSnapshot`), or resolving later would write back the snapshot taken when
+   * the conflict opened - a server state that no longer exists.
    */
   public async reconcileRemoteUpdate(
     update: StoryUpdate,
@@ -341,28 +457,58 @@ export class SyncPull {
     handler: ClientSyncEntityHandler,
   ): Promise<{ conflicted: boolean }> {
     const entityId = update.id!;
-
-    // Reorder does not fit the rest of this function: the disputed value is the whole order
-    // (`reorderItems`), not an entity's scalar fields - `mergeLocalOperationPayloads`/`findContestedFields`
-    // make no sense for it.
-    if (update.type === 'reorder') {
-      return this.reconcileRemoteReorder(
-        update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
+    const fieldOps = pendingLocalOps;
+    const pushableOps = fieldOps.filter((op) => op.conflictState === null);
+    const hasOpenConflict = pushableOps.length < fieldOps.length;
+    const refreshOpenConflict = async (serverValues: Record<string, any>) => {
+      if (!hasOpenConflict) return;
+      await this.context.conflictService().refreshServerSnapshot({
+        storyId: this.context.storyId()!,
+        entityType: update.entity,
         entityId,
-        pendingLocalOps,
-      );
-    }
+        serverValues: withoutDerivedPosition(update.entity, serverValues),
+        serverVersion: update.version ?? null,
+      });
+    };
 
-    const localWantsDelete = pendingLocalOps.some((op) => op.operationType === 'delete');
-    const localValues = mergeLocalOperationPayloads(pendingLocalOps);
-    const localOperationIds = pendingLocalOps.map((op) => op.id);
+    // The pending chain rests on the server version its first operation names, and every path that
+    // sets that base (a pull, a silent merge, a resolution) brought the row to the server's state at
+    // it. A remote operation at or below the base is history this row already holds - typically one a
+    // lagging pull delivers after a silent merge absorbed it from the server's row. Reconciling it
+    // again would dispute the user's own newer edits with a value they already saw and replaced.
+    // Deletions excepted: a deletion skipped as history is lost for good (its tombstone never lands,
+    // or the row stays alive), while held here already it settles harmlessly below.
+    const pushableBase = pushableOps[0]
+      ? deriveBaseVersion(parseLocalOpPayload(pushableOps[0].payload) ?? {})
+      : undefined;
+    if (
+      !hasOpenConflict &&
+      update.type !== 'delete' &&
+      typeof update.version === 'number' &&
+      typeof pushableBase === 'number' &&
+      update.version <= pushableBase
+    ) {
+      return { conflicted: false };
+    }
+    const rebaseOnto = async (version: number | undefined) => {
+      // The rebase only ever moves forward: a remote operation older than the local base (history
+      // the device already absorbed, see `maskSupersededUpdate`) must not drag the chain back.
+      // Operations parked in a conflict are not rebased - the resolution rebases what it keeps.
+      if (typeof version === 'number' && (pushableBase === undefined || version > pushableBase)) {
+        await this.rebasePendingOperations(pushableOps, version);
+      }
+    };
+
+    const localWantsDelete = fieldOps.some((op) => op.operationType === 'delete');
+    const localValues = mergeLocalOperationPayloads(fieldOps);
+    const localOperationIds = fieldOps.map((op) => op.id);
     const localOperationType = localWantsDelete
       ? 'delete'
-      : pendingLocalOps.some((op) => op.operationType === 'create')
+      : fieldOps.some((op) => op.operationType === 'create')
         ? 'create'
         : 'update';
 
-    const firstOpSnapshot = parseLocalOpPayload(pendingLocalOps[0].payload);
+    const firstOpSnapshot = fieldOps[0] ? parseLocalOpPayload(fieldOps[0].payload) : null;
     const recordConflict = async (
       reason: 'deleted_on_server' | 'edited_on_server' | 'concurrent_edit',
       serverValues: Record<string, any> | null,
@@ -375,8 +521,10 @@ export class SyncPull {
         localOperationType,
         localOperationIds,
         localValues,
-        serverValues,
-        clientVersion: await this.deriveFreshClientVersion(pendingLocalOps[0], firstOpSnapshot),
+        serverValues: serverValues ? withoutDerivedPosition(update.entity, serverValues) : null,
+        clientVersion: fieldOps[0]
+          ? await this.deriveFreshClientVersion(fieldOps[0], firstOpSnapshot)
+          : null,
         serverVersion: update.version ?? null,
         message:
           update.type === 'delete'
@@ -387,19 +535,37 @@ export class SyncPull {
     if (update.type === 'delete') {
       if (localWantsDelete) {
         // Both sides deleted: the same intent, nothing to decide.
-        await handler.applyDelete(this.context.storyId()!, update as DeleteStoryUpdate);
+        await this.applyRemoteDelete(update as DeleteStoryUpdate, handler);
+        await refreshOpenConflict({ ...(update as DeleteStoryUpdate).data, isDeleted: true });
+        return { conflicted: false };
+      }
+      if (!hasOpenConflict && onlyMoves(update.entity, localValues)) {
+        // Only a move of the row waited here: the deletion loses nothing of it, so it lands and
+        // the move is dropped - asking about the place of something gone would decide nothing.
+        await this.context
+          .db()!
+          .update(schema.operationLogs)
+          .set({ conflictState: 'abandoned', isSynced: true })
+          .where(inArray(schema.operationLogs.id, localOperationIds));
+        await this.applyRemoteDelete(update as DeleteStoryUpdate, handler);
         return { conflicted: false };
       }
       // The remote deletion is deliberately not applied: discarding what the person wrote here would take
       // away their chance to recover the entity.
-      await recordConflict('deleted_on_server', { isDeleted: true, version: update.version });
+      // The tombstone the deletion carries is the snapshot: accepting the deletion then leaves
+      // this row equal to the server's, not holding the abandoned local values.
+      await recordConflict('deleted_on_server', {
+        ...(update as DeleteStoryUpdate).data,
+        isDeleted: true,
+        version: update.version,
+      });
       return { conflicted: true };
     }
 
-    // Only scalar types reach the merge below: reorder returns earlier, delete is handled
-    // above. An unknown type carries no interpretable values - rebasing onto nothing would
-    // silently advance past it, so fail closed instead. Unreachable through the batch applier
-    // (it stops unknown types before dispatch); this guards future direct callers.
+    // Only scalar types reach the merge below: delete is handled above. An unknown type carries no
+    // interpretable values - rebasing onto nothing would silently advance past it, so fail closed
+    // instead. Unreachable through the batch applier (it stops unknown types before dispatch);
+    // this guards future direct callers.
     // (Hoisted: after the checks below, the type union narrows `update` to `never` - which is
     // exactly the point, since only foreign runtime data can arrive here.)
     const remoteType: string = update.type;
@@ -415,13 +581,42 @@ export class SyncPull {
         : { ...(update as UpdateStoryUpdate).changes };
 
     if (localWantsDelete) {
+      // A remote edit that only moved the row changes nothing the deletion would lose. The row
+      // still takes the new place: should the deletion be given up later, it comes back where the
+      // server has it.
+      if (onlyPlaces(update.entity, remoteValues)) {
+        const placement = Object.fromEntries(
+          Object.entries(remoteValues).filter(([key]) => key !== 'version'),
+        );
+        if (Object.keys(placement).length > 0) {
+          await handler.applyUpdate(this.context.storyId()!, {
+            ...update,
+            type: 'update',
+            id: entityId,
+            changes: placement,
+          } as UpdateStoryUpdate);
+        }
+        await rebaseOnto(update.version);
+        await refreshOpenConflict(remoteValues);
+        return { conflicted: false };
+      }
       await recordConflict('edited_on_server', remoteValues);
       return { conflicted: true };
     }
 
-    const contestedFields = findContestedFields(localValues, remoteValues);
+    // A place is never a dispute: this device's rank reaches the server after the remote one, and
+    // the last move to land is the row's place everywhere - so a pending local rank stays.
+    const contestedFields = findContestedFields(localValues, remoteValues).filter(
+      (field) => field !== 'rank',
+    );
+    // `version` is not merged as a field: with local work pending, the row's version belongs to the
+    // local chain, and the rebase below is what moves it (to the remote version plus the chain).
+    // Writing the remote version here regressed the row whenever the rebase rightly did not run.
     const mergeableEntries = Object.entries(remoteValues).filter(
-      ([key]) => !contestedFields.includes(key),
+      ([key]) =>
+        key !== 'version' &&
+        !contestedFields.includes(key) &&
+        !(key === 'rank' && 'rank' in localValues),
     );
 
     if (mergeableEntries.length > 0) {
@@ -436,7 +631,8 @@ export class SyncPull {
     if (contestedFields.length === 0) {
       // The two edits fit together. The local one only has to be rebased onto the new version, and then it
       // goes through on the next push without bothering the user with a decision.
-      await this.rebasePendingOperations(pendingLocalOps, update.version);
+      await rebaseOnto(update.version);
+      await refreshOpenConflict(remoteValues);
       return { conflicted: false };
     }
 
@@ -474,123 +670,4 @@ export class SyncPull {
     }
     return deriveBaseVersion(snapshot) ?? null;
   }
-
-  /**
-   * The counterpart of `reconcileRemoteUpdate` for reorder alone - extracted separately because the
-   * disputed value (`reorderItems`) is not a set of one entity's fields, it is the whole order of N other
-   * rows (a Chapter's Scenes, or a Story's Chapters).
-   */
-  private async reconcileRemoteReorder(
-    update: ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-    entityId: string,
-    pendingLocalOps: OperationLogSelect[],
-  ): Promise<{ conflicted: boolean }> {
-    // A remote order with no items disputes nothing: it is vacuous history (the server
-    // refuses to log new ones), not a competing arrangement, so there is no conflict to
-    // record and nothing to apply. The pending ops stay queued untouched.
-    if (!update.reorderItems || update.reorderItems.length === 0) {
-      return { conflicted: false };
-    }
-
-    // Only pending reorders over the SAME row set dispute this one: a queued Stat order
-    // and an incoming chapter order touch disjoint rows, so the remote one applies directly
-    // and the queued one still pushes normally (the server's stale-base resend accepts it,
-    // since the remote order left its rows alone). Anything unrecognised disputes,
-    // fail-closed.
-    const remoteKey = reorderDisputeKey(
-      update.entity,
-      (update as StoryReorderingStoryUpdate).reorderTarget,
-      (update as StoryReorderingStoryUpdate).schemaEntityType,
-    );
-    const disputingReorderOps = pendingLocalOps.filter((op) => {
-      if (op.operationType !== 'reorder') return false;
-      if (remoteKey === null) return true;
-      const payload = parseLocalOpPayload(op.payload);
-      if (!payload) {
-        // Fail closed: an unreadable order cannot be proven disjoint.
-        console.warn(
-          `Local reorder operation ${op.id} has a payload that cannot be parsed; treating it as disputing the remote order.`,
-        );
-        return true;
-      }
-      const localKey = reorderDisputeKey(
-        op.entityType,
-        payload.reorderTarget,
-        payload.schemaEntityType,
-      );
-      return localKey === null || localKey === remoteKey;
-    });
-    const localReorderOp = disputingReorderOps[0];
-
-    if (!localReorderOp) {
-      // What is pending on this entity is of another kind (renaming a chapter, say) or an
-      // order over a disjoint row set - it does not conflict with the order coming from the
-      // server, which can be applied directly.
-      await applyReorderToLocalDb(this.context.db()!, update, new Date(update.operationTime!));
-      return { conflicted: false };
-    }
-
-    // The remote order restates a pending local reorder - typically our own op coming back
-    // after its push response was lost. Absorbing it (rather than recording a conflict the
-    // user would have to dismiss for their own echo) is what lets the push resend succeed
-    // idempotently on the server; the op stays pending so that resend still happens.
-    //
-    // Absorbing applies nothing: the local rows already hold this arrangement (the pending
-    // op was applied locally when the user acted) or a newer one (a chained reorder still
-    // queued behind it) - writing the remote order here would either churn versions for no
-    // effect or silently regress the newer local order, which no later echo would repair.
-    const restatesPendingOrder = disputingReorderOps.some((op) => {
-      const payload = parseLocalOpPayload(op.payload);
-      if (!payload) {
-        // An unreadable order cannot be proven an echo of the remote one.
-        console.warn(
-          `Local reorder operation ${op.id} has a payload that cannot be parsed; skipping the echo comparison.`,
-        );
-        return false;
-      }
-      const items = (payload as { reorderItems?: unknown }).reorderItems;
-      return Array.isArray(items) && sameReorderArrangement(items, update.reorderItems ?? []);
-    });
-    if (restatesPendingOrder) {
-      return { conflicted: false };
-    }
-
-    const parsedLocalPayload = parseLocalOpPayload(localReorderOp.payload);
-    if (!parsedLocalPayload) {
-      console.warn(
-        `Local reorder operation ${localReorderOp.id} has a payload that cannot be parsed; recording the conflict with an empty local order.`,
-      );
-    }
-    const localPayload = parsedLocalPayload ?? {};
-    // Every disputing reorder joins the conflict, not just the first: the resolvers already
-    // chain multiple ids (rebase in version order, or abandon all), so one resolution settles
-    // the whole dispute instead of leaving the rest to conflict again on the next push. The
-    // recorded values stay representative of the first dispute - reorder item lists do not
-    // merge by field, and the resolvers work from the operation payloads, not these values.
-    await this.context.conflictService().recordConflict({
-      storyId: this.context.storyId()!,
-      entityType: update.entity,
-      entityId,
-      reason: 'concurrent_edit',
-      localOperationType: 'reorder',
-      localOperationIds: disputingReorderOps.map((op) => op.id),
-      localValues: { reorderItems: localPayload.reorderItems ?? [] },
-      serverValues: {
-        reorderItems: update.reorderItems,
-        reorderTarget: (update as StoryReorderingStoryUpdate).reorderTarget,
-      },
-      // The parsed payload (already warned about above when unreadable) is the snapshot fallback;
-      // the re-read from the DB wins whenever an earlier update in this batch rebased it.
-      clientVersion: await this.deriveFreshClientVersion(localReorderOp, parsedLocalPayload),
-      serverVersion: update.version ?? null,
-      message: `Server and local changes overlap on ordering ${update.entity} ${entityId}.`,
-    });
-    return { conflicted: true };
-  }
-
-  /**
-   * Rewrites the base of the pending local operations to the version the entity holds now, chaining them
-   * (the first rests on the new version, the second on the following one, and so on) so the server accepts
-   * them in sequence.
-   */
 }

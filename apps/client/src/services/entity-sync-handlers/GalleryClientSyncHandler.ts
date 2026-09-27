@@ -109,7 +109,7 @@ export class GalleryClientSyncHandler implements ClientSyncEntityHandler {
    * row points at it - files are content-addressed, so two media can share one file. Best-effort:
    * leftovers are wasted space, never corruption, and must not fail the sync that triggered them.
    */
-  private async deleteAbandonedFiles(storyId: string, paths: Array<string | null>): Promise<void> {
+  private async deleteAbandonedFiles(storyId: string, paths: (string | null)[]): Promise<void> {
     const candidates = [...new Set(paths.filter((path): path is string => !!path))];
     if (candidates.length === 0) {
       return;

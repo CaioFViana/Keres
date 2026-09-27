@@ -66,6 +66,20 @@ export function isNotFoundError(error: unknown): boolean {
   return (error as AxiosError).response?.status === 404;
 }
 
+/**
+ * True when a reachable server said "not right now": rate limited (429) or momentarily unable to
+ * answer (502/503/504 - a restart, a proxy with no upstream). Nothing is wrong with the request and
+ * nothing the user can do helps, so the sync backs off quietly instead of announcing a failure on
+ * every retry the way a genuine error deserves.
+ */
+export function isTransientServerError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const status = (error as AxiosError).response?.status;
+  return status === 429 || status === 502 || status === 503 || status === 504;
+}
+
 /** True when a request or sync cycle was cancelled via AbortSignal. */
 export function isAbortError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {

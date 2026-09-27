@@ -1,19 +1,21 @@
-import type {
-  ChapterReorderingStoryUpdate,
-  StoryReorderingStoryUpdate,
-  StoryUpdate,
-} from '@keres/shared';
-import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { StoryUpdate } from '@keres/shared';
+import { and, eq, gt, isNull } from 'drizzle-orm';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { OperationLogSelect } from '../../db/schema';
 import type { ClientSyncEntityHandler } from '../entity-sync-handlers/ClientSyncEntityHandler';
 import { withOpLogLock } from '../../utils/opLogMutex';
-import { applyReorderToLocalDb } from './applyReorderToLocalDb';
 import type { SyncNotifier } from './SyncNotifier';
 import type { SyncPull } from './SyncPull';
 import { FAVORITE_TARGET_EVENTS, SYNC_ENTITY_EVENTS } from './syncEvents';
-import { protectRemoteUpdate, syncEntityKey } from './syncPure';
+import {
+  describeIncorporatedOperation,
+  type IncorporatedOperation,
+  maskSupersededUpdate,
+  protectRemoteUpdate,
+  syncEntityKey,
+  withRankProtocol,
+} from './syncPure';
 
 /**
  * Consecutive apply-failures after which a poisoned remote operation is skipped (recorded, cursor
@@ -23,12 +25,7 @@ import { protectRemoteUpdate, syncEntityKey } from './syncPure';
 const MAX_REMOTE_OPERATION_FAILURES = 3;
 
 /** Operation types this build can interpret; anything else is a newer server talking past the app. */
-const KNOWN_OPERATION_TYPES: ReadonlySet<string> = new Set([
-  'create',
-  'update',
-  'delete',
-  'reorder',
-]);
+const KNOWN_OPERATION_TYPES: ReadonlySet<string> = new Set(['create', 'update', 'delete']);
 
 /**
  * Counts apply-failures per remote operation. The per-story operation version identifies it; an
@@ -40,7 +37,11 @@ const remoteFailureKey = (update: StoryUpdate): number | string =>
 
 export interface SyncPullApplyDependencies {
   pull: SyncPull;
-  getPendingOperationsByEntity: () => Promise<Map<string, OperationLogSelect[]>>;
+  /** Every unsynchronized local operation of one entity (pushable or held in a conflict). */
+  getUnsyncedOperationsForEntity: (
+    entityType: string,
+    entityId: string,
+  ) => Promise<OperationLogSelect[]>;
   entityHandlers: Map<string, ClientSyncEntityHandler>;
   notifier: SyncNotifier;
   events: { emit(event: string, ...args: unknown[]): void };
@@ -69,6 +70,115 @@ export class SyncPullApply {
     this.failureCounts.clear();
   }
 
+  /**
+   * Synchronized operations past the first one of this batch in server order, by entity: what
+   * `maskSupersededUpdate` needs to keep a lagging pull from rolling back history this device
+   * already holds. Loaded once per batch - the set is small (what was pushed or applied since the
+   * cursor), and rows this batch records sit below the operation being applied, so they never
+   * matter for it.
+   */
+  private async loadIncorporatedOperations(
+    db: AppDrizzleClient,
+    storyId: string,
+    remoteUpdates: StoryUpdate[],
+  ): Promise<Map<string, IncorporatedOperation[]>> {
+    const byEntity = new Map<string, IncorporatedOperation[]>();
+    const versions = remoteUpdates.map((update) => update.operationVersion ?? 0);
+    if (versions.length === 0) return byEntity;
+    const rows = await db.query.operationLogs.findMany({
+      where: and(
+        eq(schema.operationLogs.storyId, storyId),
+        eq(schema.operationLogs.isSynced, true),
+        isNull(schema.operationLogs.conflictState),
+        gt(schema.operationLogs.serverOperationVersion, Math.min(...versions)),
+      ),
+      columns: {
+        entityType: true,
+        entityId: true,
+        operationType: true,
+        payload: true,
+        serverOperationVersion: true,
+      },
+    });
+    const add = (key: string, entry: IncorporatedOperation) => {
+      const bucket = byEntity.get(key);
+      if (bucket) bucket.push(entry);
+      else byEntity.set(key, [entry]);
+    };
+    for (const row of rows) {
+      const described = describeIncorporatedOperation(row);
+      if (described) add(syncEntityKey(row.entityType, row.entityId), described);
+    }
+    return byEntity;
+  }
+
+  /**
+   * One remote operation, under the story's op-log lock: masked by the history this device already
+   * holds, reconciled with the entity's unsynchronized operations when it has any, applied directly
+   * otherwise. `record` writes it to the local log in the same transaction as its effect. Returns
+   * whether a conflict was recorded.
+   */
+  private async applyRemoteOperation(
+    db: AppDrizzleClient,
+    storyId: string,
+    incoming: StoryUpdate,
+    handler: ClientSyncEntityHandler,
+    incorporatedByEntity: Map<string, IncorporatedOperation[]>,
+    markEntityUpdated: (entity: string, entityId?: string) => void,
+    record: (tx: AppDrizzleTransaction) => Promise<void>,
+  ): Promise<boolean> {
+    const { pull } = this.dependencies;
+    let update = incoming;
+    const incorporated = incorporatedByEntity.get(syncEntityKey(update.entity, update.id || ''));
+    if (incorporated && incorporated.length > 0) {
+      const exists =
+        update.type === 'create' && update.id ? !!(await handler.getById(update.id)) : true;
+      const masked = maskSupersededUpdate(update, incorporated, exists);
+      if (!masked) {
+        // Everything it wrote was superseded by history this device already holds.
+        await db.transaction(record);
+        return false;
+      }
+      update = masked;
+    }
+
+    const pendingLocalOps = await this.dependencies.getUnsyncedOperationsForEntity(
+      update.entity,
+      update.id || '',
+    );
+    if (pendingLocalOps.length > 0) {
+      const outcome = await pull.reconcileRemoteUpdate(update, pendingLocalOps, handler);
+      markEntityUpdated(update.entity, update.id);
+      await db.transaction(record);
+      return outcome.conflicted;
+    }
+
+    // The apply and its record commit as one unit. Applied but unrecorded is the worst split: the
+    // next launch re-applies while the cursor already moved on. The lock held around the
+    // transaction keeps a concurrent local write from joining it and being rolled back with an
+    // apply failure.
+    await db.transaction(async (tx) => {
+      // Handlers hold the database from bind time; rebind to the transaction for the apply so the
+      // entity write joins it. The engine runs one cycle at a time and the binding is restored
+      // below, so no other applier can observe the swap.
+      handler.setDb(tx);
+      try {
+        if (update.type === 'create') {
+          await pull.applyRemoteCreate(update, handler);
+        } else if (update.type === 'update') {
+          await handler.applyUpdate(storyId, update);
+        } else if (update.type === 'delete') {
+          await pull.applyRemoteDelete(update, handler, tx);
+        }
+        await record(tx);
+        markEntityUpdated(update.entity, update.id);
+      } finally {
+        handler.setDb(db);
+      }
+    });
+    return false;
+  }
+
   public async applyBatch(input: SyncPullApplyInput): Promise<{ blocked: boolean }> {
     const { db, storyId, remoteUpdates, markApplied } = input;
     const { pull, entityHandlers, notifier, events } = this.dependencies;
@@ -91,9 +201,7 @@ export class SyncPullApply {
 
     console.log(`Received ${totalUpdates} remote updates. Applying to local DB...`);
 
-    // Local operations not yet accepted by the server, indexed by entity. They are what remote updates can
-    // collide with: applying the remote version on top would silently erase what the user wrote offline.
-    const pendingByEntity = await this.dependencies.getPendingOperationsByEntity();
+    const incorporatedByEntity = await this.loadIncorporatedOperations(db, storyId, remoteUpdates);
     let conflictsDetected = 0;
     let pullBlocked = false;
 
@@ -106,7 +214,7 @@ export class SyncPullApply {
     for (const rawUpdate of remoteUpdates) {
       if (pullBlocked) break;
 
-      const update = protectRemoteUpdate(rawUpdate);
+      const update = withRankProtocol(protectRemoteUpdate(rawUpdate));
       const handler = entityHandlers.get(update.entity);
       if (!handler) {
         // An entity this build cannot store: the server is newer than the app. The pull
@@ -126,8 +234,26 @@ export class SyncPullApply {
       }
 
       // An operation this very client sent and the server is handing back. It is already applied here;
-      // reapplying it would only duplicate the row in the local log.
+      // reapplying it would only duplicate the row in the local log. The row's content still aligns
+      // with what the server recorded: it may have normalized a value, and a deletion or restore
+      // carries the whole row, whose fields this device may never have sent - see
+      // `alignEchoedWholeRow`.
       if (await pull.isOwnEchoedOperation(rawUpdate)) {
+        // Hygiene, never a reason to stall the pull: a failure leaves the row as it was.
+        await withOpLogLock(storyId, async () => {
+          const pending = await this.dependencies.getUnsyncedOperationsForEntity(
+            update.entity,
+            update.id || '',
+          );
+          if (pending.length > 0) return;
+          const incorporated =
+            incorporatedByEntity.get(syncEntityKey(update.entity, update.id || '')) ?? [];
+          const masked =
+            incorporated.length > 0 ? maskSupersededUpdate(update, incorporated, true) : update;
+          if (masked) await pull.alignEchoedWholeRow(masked, handler);
+        }).catch((alignError) => {
+          console.warn(`Could not align ${update.entity} ${update.id} with its echo:`, alignError);
+        });
         markSuccess(rawUpdate);
         continue;
       }
@@ -143,74 +269,22 @@ export class SyncPullApply {
         break;
       }
 
-      const pendingLocalOps =
-        pendingByEntity.get(syncEntityKey(update.entity, update.id || '')) || [];
-
       try {
-        if (pendingLocalOps.length > 0) {
-          const outcome = await pull.reconcileRemoteUpdate(update, pendingLocalOps, handler);
-          if (outcome.conflicted) {
-            conflictsDetected += 1;
-          }
-          markEntityUpdated(update.entity, update.id);
-          await pull.recordRemoteOperationLocally(rawUpdate);
-          markSuccess(rawUpdate);
-          continue;
-        }
-
-        if (update.type === 'reorder') {
-          const reorderUpdate = update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate;
-
-          // An order with no items carries no information: the server refuses to log new
-          // ones, so anything arriving here is foreign or legacy history. Skipping past it
-          // (recorded, cursor advanced) instead of blocking keeps one such row from
-          // stalling this story's pull forever.
-          if (!reorderUpdate.reorderItems || reorderUpdate.reorderItems.length === 0) {
-            console.warn(
-              `Reorder update for entity ${update.entity} ID ${update.id} has no reorderItems; skipping.`,
-            );
-            await pull.recordRemoteOperationLocally(rawUpdate);
-            markSuccess(rawUpdate);
-            continue;
-          }
-        }
-
-        // The apply and its record commit as one unit under the story's op-log lock. Applied
-        // but unrecorded is the worst split: the next launch re-applies (a reorder bumps every
-        // touched version a second time) while the cursor already moved on. The lock is held
-        // across the transaction so a concurrent local write cannot join it and be rolled back
-        // with an apply failure.
-        await withOpLogLock(storyId, async () => {
-          await db.transaction(async (tx) => {
-            // Handlers hold the database from bind time; rebind to the transaction for the
-            // apply so the entity write joins it. The engine runs one cycle at a time and the
-            // binding is restored below, so no other applier can observe the swap.
-            handler.setDb(tx);
-            try {
-              if (update.type === 'create') {
-                await pull.applyRemoteCreate(update, handler);
-              } else if (update.type === 'update') {
-                await handler.applyUpdate(storyId, update);
-              } else if (update.type === 'delete') {
-                await handler.applyDelete(storyId, update);
-              } else {
-                // Only 'reorder' reaches here: unknown types are stopped before dispatch, so
-                // this `else` needs no further check - and no silent fall-through may ever
-                // skip an op.
-                await applyReorderToLocalDb(
-                  db,
-                  update as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-                  new Date(update.operationTime!),
-                  { tx },
-                );
-              }
-              await pull.recordRemoteOperationLocally(rawUpdate, tx);
-              markEntityUpdated(update.entity, update.id);
-            } finally {
-              handler.setDb(db);
-            }
-          });
-        });
+        // Everything below runs under the story's op-log lock, and the entity's unsynchronized
+        // operations are read inside it: a decision made on a list read earlier would miss an edit
+        // recorded in between and overwrite it as if it did not exist.
+        const conflicted = await withOpLogLock(storyId, async () =>
+          this.applyRemoteOperation(
+            db,
+            storyId,
+            update,
+            handler,
+            incorporatedByEntity,
+            markEntityUpdated,
+            (tx) => pull.recordRemoteOperationLocally(rawUpdate, tx),
+          ),
+        );
+        if (conflicted) conflictsDetected += 1;
         markSuccess(rawUpdate);
       } catch (handlerError) {
         const failureKey = remoteFailureKey(update);
@@ -275,6 +349,10 @@ export class SyncPullApply {
           events.emit(eventName, storyId, entityId);
         }
       }
+    }
+    // A scene reads as unchaptered while its chapter is deleted: chapter changes reach scene lists.
+    if (changedEntityIds.has('Chapter') && !changedEntityIds.has('Scene')) {
+      events.emit('scene_changed', storyId);
     }
     events.emit('story_data_changed', {
       storyId,

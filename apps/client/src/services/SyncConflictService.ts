@@ -1,10 +1,6 @@
-import type {
-  ChapterReorderingStoryUpdate,
-  StoryReorderingStoryUpdate,
-  SyncConflictReason,
-} from '@keres/shared';
-import { findContestedFields, syncConflictValuesDiffer, validateBoardContent } from '@keres/shared';
-import { and, asc, eq, inArray, ne } from 'drizzle-orm';
+import type { SyncConflictReason } from '@keres/shared';
+import { findContestedFields, syncConflictValuesDiffer } from '@keres/shared';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import * as schema from '../db/schema';
 import type { SyncConflictSelect } from '../db/schema';
@@ -12,8 +8,15 @@ import { createULID } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { withOpLogLock } from '../utils/opLogMutex';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
-import { createBoardService } from './storymanagement/BoardService';
-import { applyReorderToLocalDb } from './sync/applyReorderToLocalDb';
+import { cloneConflictBoard } from './sync/boardConflictClone';
+import { isRoutePathConflict, landRoutePath } from './sync/routePathDecision';
+import {
+  raiseConflictsServerVersion,
+  foldServerSnapshot,
+  parseJson,
+  SNAPSHOT_BOOKKEEPING,
+  withoutDerivedPosition,
+} from './sync/syncConflictHelpers';
 
 export type ConflictResolution = 'keep_local' | 'keep_server' | 'merge' | 'restore' | 'discard';
 
@@ -24,7 +27,7 @@ export interface PendingConflict {
   entityType: string;
   entityId: string;
   reason: SyncConflictReason;
-  localOperationType: 'create' | 'update' | 'delete' | 'reorder';
+  localOperationType: 'create' | 'update' | 'delete';
   localOperationIds: string[];
   /** Fields the user changed that have not been accepted by the server yet. */
   localValues: Record<string, any>;
@@ -47,7 +50,7 @@ export interface RecordConflictInput {
   entityType: string;
   entityId: string;
   reason: SyncConflictReason;
-  localOperationType: 'create' | 'update' | 'delete' | 'reorder';
+  localOperationType: 'create' | 'update' | 'delete';
   localOperationIds: string[];
   localValues: Record<string, any>;
   serverValues?: Record<string, any> | null;
@@ -56,8 +59,23 @@ export interface RecordConflictInput {
   message?: string | null;
 }
 
+export interface RefreshServerSnapshotInput {
+  storyId: string;
+  entityType: string;
+  entityId: string;
+  /** What a remote operation arriving after the conflict opened set on the server. */
+  serverValues: Record<string, any>;
+  serverVersion: number | null;
+}
+
 export interface SyncConflictService {
   recordConflict(input: RecordConflictInput): Promise<void>;
+  /**
+   * Folds a remote operation that arrived while the entity's conflict was pending into its
+   * server snapshot, so resolving later accepts the server as it is now - not as it was when the
+   * conflict opened. No-op without a pending conflict, for a quarantine, or for an older snapshot.
+   */
+  refreshServerSnapshot(input: RefreshServerSnapshotInput): Promise<void>;
   getPendingConflicts(storyId?: string): Promise<PendingConflict[]>;
   countPendingConflicts(storyId?: string): Promise<number>;
   /** Preserves the user's work, rebased onto the server's current version. */
@@ -81,34 +99,7 @@ export interface SyncConflictService {
   dismissConflict(conflictId: string): Promise<void>;
 }
 
-function parseJson<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
 export { findContestedFields, mergeLocalOperationPayloads } from '@keres/shared';
-
-/** Any local table holding a syncable entity. */
-type SyncTable = Exclude<ReturnType<typeof getEntityTable>, undefined>;
-
-/**
- * Which table a reorder's items live in - the same dispatch as `applyReorderToLocalDb`.
- * Needed separately because `resolveKeepLocal` anticipates versions on those rows without
- * moving any indices.
- */
-function reorderItemTable(entityType: string, reorderTarget: unknown): SyncTable | undefined {
-  if (entityType === 'Chapter') return schema.scenes;
-  if (entityType === 'Story' && reorderTarget === 'StorySchemaField') {
-    return schema.storySchemaFields;
-  }
-  if (entityType === 'Story' && reorderTarget === 'Stat') return schema.stats;
-  if (entityType === 'Story') return schema.chapters;
-  return undefined;
-}
 
 export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictService => {
   const toPendingConflict = (row: SyncConflictSelect): PendingConflict => {
@@ -129,12 +120,12 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       serverVersion: row.serverVersion,
       message: row.message,
       detectedAt: row.detectedAt,
-      // A reorder has no "fields" in the sense the rest of the conflict machinery understands - the disputed
-      // value is the whole order (`reorderItems`), not something to compare item by item. Forcing it empty
-      // here makes the screen fall back to the binary choice (keep my order / use the server's) instead of
-      // trying to build a field picker with raw JSON inside.
-      contestedFields:
-        row.localOperationType === 'reorder' ? [] : findContestedFields(localValues, serverValues),
+      // A row's place (its rank, and the position derived from it) is never asked about - the last
+      // move pushed is the row's place.
+      contestedFields: findContestedFields(
+        withoutDerivedPosition(row.entityType, localValues),
+        serverValues ? withoutDerivedPosition(row.entityType, serverValues) : serverValues,
+      ).filter((field) => field !== 'rank'),
       isDeletedOnServer: row.reason === 'deleted_on_server' || !!serverValues?.isDeleted,
       isLocalDelete: row.localOperationType === 'delete',
     };
@@ -187,34 +178,136 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     values: Record<string, any>,
     baseVersion: number,
   ) => {
-    // Same per-story lock as recordLocalOperation: both sequence operationVersion
-    // against stories.lastOperationLog, so they must never interleave.
-    await withOpLogLock(conflict.storyId, async () => {
-      const story = await db.query.stories.findFirst({
-        where: eq(schema.stories.id, conflict.storyId),
-        columns: { lastOperationLog: true, userId: true },
-      });
-      const nextOperationVersion = (story?.lastOperationLog || 0) + 1;
-
-      await db.insert(schema.operationLogs).values({
-        id: createULID(),
-        storyId: conflict.storyId,
-        userId: story?.userId || 'local_user',
-        operationVersion: nextOperationVersion,
-        operationType,
-        entityType: conflict.entityType,
-        entityId: conflict.entityId,
-        payload: JSON.stringify({ ...values, version: baseVersion + 1 }),
-        createdAt: new Date(),
-        isSynced: false,
-        conflictState: null,
-      });
-
-      await db
-        .update(schema.stories)
-        .set({ lastOperationLog: nextOperationVersion })
-        .where(eq(schema.stories.id, conflict.storyId));
+    // Runs inside `withResolutionLock`, which holds the same per-story lock as
+    // recordLocalOperation: both sequence operationVersion against stories.lastOperationLog.
+    const story = await db.query.stories.findFirst({
+      where: eq(schema.stories.id, conflict.storyId),
+      columns: { lastOperationLog: true, userId: true },
     });
+    const nextOperationVersion = (story?.lastOperationLog || 0) + 1;
+
+    await db.insert(schema.operationLogs).values({
+      id: createULID(),
+      storyId: conflict.storyId,
+      userId: story?.userId || 'local_user',
+      operationVersion: nextOperationVersion,
+      operationType,
+      entityType: conflict.entityType,
+      entityId: conflict.entityId,
+      payload: JSON.stringify({ ...values, version: baseVersion + 1 }),
+      createdAt: new Date(),
+      isSynced: false,
+      conflictState: null,
+    });
+
+    await db
+      .update(schema.stories)
+      .set({ lastOperationLog: nextOperationVersion })
+      .where(eq(schema.stories.id, conflict.storyId));
+  };
+
+  /**
+   * Runs a resolution under the story's op-log lock, against the conflict as it is NOW. The pull
+   * folds later remote operations into a pending conflict under the same lock, so a resolution
+   * can neither interleave with a fold (acting on a snapshot the fold just replaced) nor be
+   * applied twice: a second tap - or a retry after a failure that already closed it - finds the
+   * conflict no longer pending and does nothing, instead of resending the local values again.
+   */
+  const withResolutionLock = async (
+    conflictId: string,
+    resolve: (conflict: PendingConflict) => Promise<void>,
+  ): Promise<void> => {
+    const initial = await db.query.syncConflicts.findFirst({
+      where: eq(schema.syncConflicts.id, conflictId),
+      columns: { storyId: true },
+    });
+    if (!initial) {
+      console.log(`SyncConflictService: conflict ${conflictId} not found.`);
+      return;
+    }
+    await withOpLogLock(initial.storyId, async () => {
+      const row = await db.query.syncConflicts.findFirst({
+        where: eq(schema.syncConflicts.id, conflictId),
+      });
+      if (!row || row.status !== 'pending') {
+        console.log(`SyncConflictService: conflict ${conflictId} is no longer pending.`);
+        return;
+      }
+      await resolve(toPendingConflict(row));
+    });
+  };
+
+  /**
+   * Local fields the server snapshot says nothing about: never sent, so the server still holds
+   * whatever it had before the local edit - a value this device does not know. Abandoning the
+   * operations would leave them showing locally forever (and never syncing); the only convergent
+   * choice is to send them on, rebased onto the accepted server state. Push-side conflicts carry
+   * the whole server row, so this is empty for them; pull-side ones carry only the remote delta.
+   */
+  const uncontestedLocalValues = (conflict: PendingConflict): Record<string, any> => {
+    if (conflict.isDeletedOnServer || !conflict.serverValues) return {};
+    const serverValues = conflict.serverValues;
+    return Object.fromEntries(
+      Object.entries(conflict.localValues).filter(
+        ([field]) => !SNAPSHOT_BOOKKEEPING.has(field) && !(field in serverValues),
+      ),
+    );
+  };
+
+  /**
+   * Keep-server and dismiss both end with the row equal to the server: the snapshot's values
+   * at the snapshot's version, a local deletion undone when the server still has the entity,
+   * and the uncontested local fields (see `uncontestedLocalValues`) sent on as a fresh edit.
+   */
+  const acceptServerState = async (conflict: PendingConflict): Promise<void> => {
+    if (!conflict.serverValues && conflict.reason === 'version_conflict') {
+      // A stale-base refusal that came with nothing (skipped behind another refusal in its batch,
+      // recorded by an older build): there is no server state to accept, and none of it says the
+      // entity is gone. The edits go again instead of the row being deleted here.
+      await db
+        .update(schema.operationLogs)
+        .set({ conflictState: null })
+        .where(inArray(schema.operationLogs.id, conflict.localOperationIds));
+      return;
+    }
+    await abandonOperations(conflict.localOperationIds);
+    if (!conflict.serverValues) {
+      // The server does not have the entity. Accepting that means removing it here - and without
+      // recording an operation, because there is nothing to tell whoever no longer has it.
+      await writeEntity(
+        conflict.entityType,
+        conflict.entityId,
+        { isDeleted: true, deletedAt: new Date() },
+        (conflict.serverVersion ?? 0) + 1,
+      );
+      return;
+    }
+    const serverVersion = conflict.serverVersion ?? conflict.serverValues.version ?? 1;
+    const revived =
+      conflict.isLocalDelete && !conflict.isDeletedOnServer
+        ? { isDeleted: false, deletedAt: null }
+        : {};
+    const carried = uncontestedLocalValues(conflict);
+    const carriesLocalWork = Object.keys(carried).length > 0;
+    await writeEntity(
+      conflict.entityType,
+      conflict.entityId,
+      { ...writableSnapshot(conflict), ...revived },
+      carriesLocalWork ? serverVersion + 1 : serverVersion,
+    );
+    if (carriesLocalWork) {
+      await recordRebasedOperation(conflict, 'update', carried, serverVersion);
+    }
+  };
+
+  /**
+   * The conflict's server snapshot as it may be written over the row: without the position an
+   * arranged row derives from its rank, and without the bookkeeping older builds stamped on it.
+   */
+  const writableSnapshot = (conflict: PendingConflict): Record<string, any> => {
+    if (!conflict.serverValues) return {};
+    const { asOf: _asOf, positionAsOf: _positionAsOf, ...snapshot } = conflict.serverValues;
+    return withoutDerivedPosition(conflict.entityType, snapshot);
   };
 
   /** A generic read of the local entity, used when recreating something removed on the server. */
@@ -245,48 +338,19 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       return;
     }
 
-    const columns = toEntityColumns(entityType, values);
+    // An arranged row's position follows its rank here (the rank triggers); it is never written.
+    const columns = toEntityColumns(entityType, withoutDerivedPosition(entityType, values));
     await db
       .update(table)
       .set({ ...columns, version, updatedAt: new Date() })
       .where(eq((table as any).id, entityId));
   };
 
-  /**
-   * Applies the order the server holds, with the same logic used when applying an ordinary
-   * remote reorder (see `SyncEngineService`), except versions: the abandoned local op already
-   * bumped these rows speculatively, so the apply only moves indices and the container is
-   * aligned exactly instead. Shared by keep-server and dismiss - both abandon the local order.
-   */
-  const applyServerOrder = async (conflict: PendingConflict) => {
-    const reorderItems = conflict.serverValues?.reorderItems as
-      | { id: string; newIndex: number }[]
-      | undefined;
-    if (reorderItems && reorderItems.length > 0) {
-      await applyReorderToLocalDb(
-        db,
-        {
-          entity: conflict.entityType,
-          reorderItems,
-          reorderTarget: conflict.serverValues?.reorderTarget,
-        } as ChapterReorderingStoryUpdate | StoryReorderingStoryUpdate,
-        new Date(),
-        { bumpVersions: false },
-      );
-    }
-    const serverVersion =
-      conflict.serverVersion ?? (conflict.serverValues?.version as number | undefined);
-    if (typeof serverVersion === 'number') {
-      await writeEntity(conflict.entityType, conflict.entityId, {}, serverVersion);
-    }
-  };
-
   // A quarantined operation failed local validation, so there is no server snapshot to restore or
   // rebase onto: a missing `serverValues` here means "unknown", not "absent". Neither "keep mine"
   // (resend the unpushable payload) nor "keep server" (delete the local row) is well-defined, so
   // the operation is discarded and the row stays as the user's only copy, at its current version.
-  // A discarded local delete is restored instead: the server still holds the row and no pull would
-  // repair the flags, so leaving them deleted would hide a live entity forever.
+  // A discarded local delete is restored instead.
   // Restores a discarded local delete: the server still holds the row and no pull would
   // repair the flags, so leaving them deleted would hide a live entity forever. Only for
   // validation quarantines - under any other reason a missing snapshot means the server lacks
@@ -303,8 +367,24 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     }
   };
 
+  /**
+   * A create the server never took (it refused it, or it could not be sent) and that is being let
+   * go: kept, the row would live on this device alone, never to sync. It goes, as the server never
+   * had it - without an operation, as there is no one to tell.
+   */
+  const forgetUnlandedCreate = async (conflict: PendingConflict): Promise<void> => {
+    if (conflict.localOperationType !== 'create') return;
+    await writeEntity(
+      conflict.entityType,
+      conflict.entityId,
+      { isDeleted: true, deletedAt: new Date() },
+      (conflict.serverVersion ?? 0) + 1,
+    );
+  };
+
   const resolveUnpushable = async (conflict: PendingConflict): Promise<void> => {
     await abandonOperations(conflict.localOperationIds);
+    await forgetUnlandedCreate(conflict);
     // `isDeletedOnServer` cannot hold here (it needs a server snapshot to compare against), so
     // every local delete in this path restores live flags unconditionally.
     if (conflict.isLocalDelete) {
@@ -315,11 +395,170 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
     entityEventEmitter.emit('operation_log_updated', conflict.storyId);
   };
 
+  /**
+   * A route's whole path (`sync/routePaths.ts`): this device's path already went, so keeping the
+   * server's only closes the decision. Keeping mine replaces the path with this device's again,
+   * after the conflict closed and outside the op-log lock (the replace takes it). A path no longer
+   * valid (a scene of it deleted meanwhile) cannot land, and the decision stays closed.
+   */
+  const resolveRoutePath = async (
+    conflictId: string,
+    resolution: 'keep_local' | 'keep_server' | 'dismissed',
+  ): Promise<void> => {
+    let decided: PendingConflict | undefined;
+    await withResolutionLock(conflictId, async (conflict) => {
+      if (resolution === 'dismissed') {
+        await db
+          .update(schema.syncConflicts)
+          .set({ status: 'dismissed', resolvedAt: new Date() })
+          .where(eq(schema.syncConflicts.id, conflict.id));
+      } else {
+        await closeConflict(conflict.id, resolution);
+      }
+      decided = conflict;
+    });
+    if (!decided) return;
+    if (resolution === 'keep_local') await landRoutePath(db, decided);
+    entityEventEmitter.emit('sync_conflicts_changed', decided.storyId);
+    entityEventEmitter.emit('operation_log_updated', decided.storyId);
+  };
+
+  /** "Keep mine": the local values, rebased onto the snapshot the conflict holds now. */
+  const keepLocal = async (
+    conflict: PendingConflict,
+    chosenValues?: Record<string, any>,
+  ): Promise<void> => {
+    const conflictId = conflict.id;
+    if (conflict.reason === 'validation' && !conflict.serverValues) {
+      await resolveUnpushable(conflict);
+      return;
+    }
+
+    // With no server version there is nothing to rebase onto. 0 only works when the entity does not exist
+    // there yet (a create); on an update/delete against a live row that comes back as `version_conflict`
+    // rather than last-write-wins.
+    const baseVersion = conflict.serverVersion ?? 0;
+    const values = chosenValues ?? conflict.localValues;
+
+    await abandonOperations(conflict.localOperationIds);
+
+    if (conflict.isLocalDelete && conflict.isDeletedOnServer) {
+      // Both sides deleted: the decision already holds on the server. Resending would be an idempotent
+      // no-op there while this row ran one version ahead of it, so the tombstone simply aligns.
+      await writeEntity(
+        conflict.entityType,
+        conflict.entityId,
+        { ...writableSnapshot(conflict), isDeleted: true },
+        baseVersion,
+      );
+    } else if (conflict.isLocalDelete) {
+      // The user deleted; keeping their decision means resending the deletion on top of the server's current
+      // version - and the edits they made before deleting go first. Abandoning those left their values in the
+      // local tombstone while the server's kept its own: a later restore (or a resolution reviving the row)
+      // then brought back a row that disagreed with every other device. Sent, both tombstones match.
+      const edits = Object.fromEntries(
+        Object.entries(values).filter(([field]) => !SNAPSHOT_BOOKKEEPING.has(field)),
+      );
+      const sendsEdits = Object.keys(edits).length > 0;
+      if (sendsEdits) {
+        await recordRebasedOperation(conflict, 'update', edits, baseVersion);
+      }
+      const deleteBase = sendsEdits ? baseVersion + 1 : baseVersion;
+      // The snapshot goes under the tombstone: its content stays in step with the server's.
+      await writeEntity(
+        conflict.entityType,
+        conflict.entityId,
+        { ...writableSnapshot(conflict), ...edits, isDeleted: true, deletedAt: new Date() },
+        deleteBase + 1,
+      );
+      await recordRebasedOperation(
+        conflict,
+        'delete',
+        { id: conflict.entityId, isDeleted: true },
+        deleteBase,
+      );
+    } else if (
+      conflict.localOperationType === 'create' ||
+      conflict.reason === 'not_found' ||
+      conflict.reason === 'limit_exceeded'
+    ) {
+      // The entity does not exist on the server - either because the original local operation was already a
+      // `create` (whatever the refusal reason - `not_found` from a missing dependency, `limit_exceeded` from
+      // the plan's ceiling, or even `unknown` from a validation failure on the server), or because it was
+      // removed there afterwards (`not_found` on an operation that was an `update`/`reorder`). In all those
+      // cases "keep my version" has to resend as a `create`, not an `update`: an `update` against an entity
+      // the server never had would come back as a new `not_found` conflict rather than giving the attempt a
+      // real chance to go through - exactly the loop that kept a GalleryRelation stuck forever when its owner
+      // did not exist on the server yet.
+      const local = await readLocalEntity(conflict.entityType, conflict.entityId);
+      await recordRebasedOperation(
+        conflict,
+        'create',
+        { ...(local ?? {}), ...values, isDeleted: false },
+        0,
+      );
+      await writeEntity(
+        conflict.entityType,
+        conflict.entityId,
+        { ...values, isDeleted: false, deletedAt: null },
+        1,
+      );
+    } else {
+      // It includes the `deleted_on_server` case: sending `isDeleted: false` restores the entity on the
+      // server along with the values the user wrote.
+      const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
+      const nextValues = { ...values, ...restoreFields };
+      // It only resends the fields that genuinely differ from what the server holds now. Without this, "keep
+      // mine" resent the whole value even when it already matched what is there (both sides renaming to the
+      // same text, say) - a new operation in the log with no actually new information, just noise.
+      const changedValues = Object.fromEntries(
+        Object.entries(nextValues).filter(([field, value]) =>
+          syncConflictValuesDiffer(value, conflict.serverValues?.[field]),
+        ),
+      );
+      // With nothing to resend there is no optimistic version to anticipate: the row aligns to
+      // the server's version instead of base + 1, or the next edit would base itself one ahead
+      // of the server and conflict spuriously.
+      const hasChanges = Object.keys(changedValues).length > 0;
+      // The snapshot goes under the local values: the base version claims the server's state,
+      // and a push-side snapshot may carry fields this device never pulled. Leaving them stale
+      // under a version that says otherwise is how a device silently drifts from the server.
+      await writeEntity(
+        conflict.entityType,
+        conflict.entityId,
+        {
+          ...writableSnapshot(conflict),
+          ...nextValues,
+          deletedAt: null,
+        },
+        hasChanges ? baseVersion + 1 : baseVersion,
+      );
+      if (hasChanges) {
+        await recordRebasedOperation(conflict, 'update', changedValues, baseVersion);
+      }
+    }
+
+    await closeConflict(
+      conflictId,
+      chosenValues ? 'merge' : conflict.isDeletedOnServer ? 'restore' : 'keep_local',
+    );
+    entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
+    entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+  };
+
   const api: SyncConflictService = {
     async recordConflict(input: RecordConflictInput): Promise<void> {
       await blockOperations(input.localOperationIds);
+      // Every other conflict on the entity learns the version too (see the helper).
+      await raiseConflictsServerVersion(
+        db,
+        input.storyId,
+        input.entityType,
+        input.entityId,
+        input.serverVersion,
+      );
 
-      // One conflict per entity: if there is already one pending for it, the new push only brings fresher
+      // One conflict per entity: if there is already one pending, the new refusal only brings fresher
       // information from the server, not a second decision to take.
       const existing = await db.query.syncConflicts.findFirst({
         where: and(
@@ -341,12 +580,12 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         // folded into a real conflict it contributes its operation ids and local values, never
         // its reason or (absent) snapshot. Overwriting those would demote a decidable conflict
         // into an unpushable discard, silently dropping the user's conflicting edit.
+        // A snapshot older than the one already held (a lagging pull delivering history the
+        // push already reported past) contributes operations only, like a quarantine: its
+        // values would roll the snapshot back.
+        const snapshot = foldServerSnapshot(existing, input.serverValues, input.serverVersion);
         const contributesOpsOnly =
-          input.reason === 'validation' && existing.reason !== 'validation';
-        const incomingServerValues =
-          input.serverValues === undefined
-            ? existing.serverValues
-            : JSON.stringify(input.serverValues);
+          (input.reason === 'validation' && existing.reason !== 'validation') || snapshot.stale;
         await db
           .update(schema.syncConflicts)
           .set({
@@ -359,13 +598,11 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
               ...parseJson<Record<string, any>>(existing.localValues, {}),
               ...input.localValues,
             }),
-            serverValues: contributesOpsOnly ? existing.serverValues : incomingServerValues,
+            serverValues: contributesOpsOnly ? existing.serverValues : snapshot.serverValues,
             clientVersion: contributesOpsOnly
               ? existing.clientVersion
               : (input.clientVersion ?? existing.clientVersion),
-            serverVersion: contributesOpsOnly
-              ? existing.serverVersion
-              : (input.serverVersion ?? existing.serverVersion),
+            serverVersion: contributesOpsOnly ? existing.serverVersion : snapshot.serverVersion,
             message: contributesOpsOnly ? existing.message : (input.message ?? existing.message),
           })
           .where(eq(schema.syncConflicts.id, existing.id));
@@ -396,6 +633,33 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       entityEventEmitter.emit('sync_conflicts_changed', input.storyId);
     },
 
+    async refreshServerSnapshot(input: RefreshServerSnapshotInput): Promise<void> {
+      // Every pending conflict of the entity: whatever its kind, its snapshot and the version its
+      // resolution rebases onto must follow the server.
+      const pending = await db.query.syncConflicts.findMany({
+        where: and(
+          eq(schema.syncConflicts.storyId, input.storyId),
+          eq(schema.syncConflicts.entityType, input.entityType),
+          eq(schema.syncConflicts.entityId, input.entityId),
+          eq(schema.syncConflicts.status, 'pending'),
+        ),
+      });
+      let changed = false;
+      for (const existing of pending) {
+        // A quarantine's missing snapshot is what routes it to the discard resolution; giving it
+        // one would turn "keep mine" into a resend of the unpushable payload.
+        if (existing.reason === 'validation' && !existing.serverValues) continue;
+        const snapshot = foldServerSnapshot(existing, input.serverValues, input.serverVersion);
+        if (snapshot.stale) continue;
+        await db
+          .update(schema.syncConflicts)
+          .set({ serverValues: snapshot.serverValues, serverVersion: snapshot.serverVersion })
+          .where(eq(schema.syncConflicts.id, existing.id));
+        changed = true;
+      }
+      if (changed) entityEventEmitter.emit('sync_conflicts_changed', input.storyId);
+    },
+
     async getPendingConflicts(storyId?: string): Promise<PendingConflict[]> {
       const rows = await db.query.syncConflicts.findMany({
         where: storyId
@@ -424,213 +688,27 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
 
     async resolveKeepLocal(conflictId: string, chosenValues?: Record<string, any>): Promise<void> {
       const conflict = await getConflict(conflictId);
-      if (!conflict) {
-        console.log(`SyncConflictService: conflict ${conflictId} not found.`);
-        return;
+      if (conflict && isRoutePathConflict(conflict)) {
+        return resolveRoutePath(conflictId, 'keep_local');
       }
-      if (conflict.reason === 'validation' && !conflict.serverValues) {
-        await resolveUnpushable(conflict);
-        return;
-      }
-
-      if (conflict.localOperationType === 'reorder') {
-        // Unlike the other types, there is no entity row for "the order" - the pending reorder operation
-        // already holds the right indices, it only has to be rebased onto the server's current version and
-        // released to go in the next push. It does not go through
-        // `abandonOperations`/`recordRebasedOperation` (which discard and recreate the operation): here the
-        // same operation carries on, only with an updated base.
-        const baseVersion = conflict.serverVersion ?? 0;
-        // Chain the released operations onto the server's version (the first rests on it, each
-        // next one on the following version), like the scalar rebase: giving every op the same
-        // base would make all but the first conflict again on push.
-        const ops = [];
-        for (const opId of conflict.localOperationIds) {
-          const op = await db.query.operationLogs.findFirst({
-            where: eq(schema.operationLogs.id, opId),
-          });
-          if (op) ops.push(op);
-        }
-        ops.sort((left, right) => left.operationVersion - right.operationVersion);
-        let base = baseVersion;
-        let rebased = 0;
-        const itemIds = new Set<string>();
-        let reorderTarget: unknown;
-        for (const op of ops) {
-          const payload = parseJson<Record<string, any>>(op.payload, {});
-          payload.version = base + 1;
-          await db
-            .update(schema.operationLogs)
-            .set({ payload: JSON.stringify(payload), conflictState: null })
-            .where(eq(schema.operationLogs.id, op.id));
-          base += 1;
-          rebased += 1;
-          if (reorderTarget === undefined) reorderTarget = payload.reorderTarget;
-          const items = payload.reorderItems;
-          if (Array.isArray(items)) {
-            for (const item of items) {
-              if (item && typeof item.id === 'string') itemIds.add(item.id);
-            }
-          }
-        }
-        // Anticipate the push: the server bumps every touched row once per released op, so the
-        // rows rest at serverVersion + chain - the versions the server will hold once these land.
-        // Without this the next edit bases itself on a stale version and conflicts spuriously.
-        // Bump-up only: a row already past the target stays where it is rather than regressing.
-        if (rebased > 0) {
-          const target = baseVersion + rebased;
-          const bumpRowTo = async (table: SyncTable, id: string) => {
-            const rows = await db
-              .select()
-              .from(table)
-              .where(eq((table as any).id, id))
-              .limit(1);
-            const current = (rows.at(0) as Record<string, unknown> | undefined)?.version;
-            if (typeof current === 'number' && current < target) {
-              await db
-                .update(table)
-                .set({ version: target, updatedAt: new Date() })
-                .where(eq((table as any).id, id));
-            }
-          };
-          const itemTable = reorderItemTable(conflict.entityType, reorderTarget);
-          if (itemTable) {
-            for (const id of itemIds) {
-              await bumpRowTo(itemTable, id);
-            }
-          }
-          const containerTable = getEntityTable(conflict.entityType);
-          if (containerTable) {
-            await bumpRowTo(containerTable, conflict.entityId);
-          }
-        }
-        await closeConflict(conflictId, 'keep_local');
-        entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
-        entityEventEmitter.emit('operation_log_updated', conflict.storyId);
-        return;
-      }
-
-      // With no server version there is nothing to rebase onto. 0 only works when the entity does not exist
-      // there yet (a create); on an update/delete against a live row that comes back as `version_conflict`
-      // rather than last-write-wins.
-      const baseVersion = conflict.serverVersion ?? 0;
-      const values = chosenValues ?? conflict.localValues;
-
-      await abandonOperations(conflict.localOperationIds);
-
-      if (conflict.isLocalDelete) {
-        // The user deleted; keeping their decision means resending the deletion on top of the server's current
-        // version.
-        await writeEntity(
-          conflict.entityType,
-          conflict.entityId,
-          { isDeleted: true, deletedAt: new Date() },
-          baseVersion + 1,
-        );
-        await recordRebasedOperation(
-          conflict,
-          'delete',
-          { id: conflict.entityId, isDeleted: true },
-          baseVersion,
-        );
-      } else if (
-        conflict.localOperationType === 'create' ||
-        conflict.reason === 'not_found' ||
-        conflict.reason === 'limit_exceeded'
-      ) {
-        // The entity does not exist on the server - either because the original local operation was already a
-        // `create` (whatever the refusal reason - `not_found` from a missing dependency, `limit_exceeded` from
-        // the plan's ceiling, or even `unknown` from a validation failure on the server), or because it was
-        // removed there afterwards (`not_found` on an operation that was an `update`/`reorder`). In all those
-        // cases "keep my version" has to resend as a `create`, not an `update`: an `update` against an entity
-        // the server never had would come back as a new `not_found` conflict rather than giving the attempt a
-        // real chance to go through - exactly the loop that kept a GalleryRelation stuck forever when its owner
-        // did not exist on the server yet.
-        const local = await readLocalEntity(conflict.entityType, conflict.entityId);
-        await recordRebasedOperation(
-          conflict,
-          'create',
-          { ...(local ?? {}), ...values, isDeleted: false },
-          0,
-        );
-        await writeEntity(
-          conflict.entityType,
-          conflict.entityId,
-          { ...values, isDeleted: false, deletedAt: null },
-          1,
-        );
-      } else {
-        // It includes the `deleted_on_server` case: sending `isDeleted: false` restores the entity on the
-        // server along with the values the user wrote.
-        const restoreFields = conflict.isDeletedOnServer ? { isDeleted: false } : {};
-        const nextValues = { ...values, ...restoreFields };
-        // It only resends the fields that genuinely differ from what the server holds now. Without this, "keep
-        // mine" resent the whole value even when it already matched what is there (both sides renaming to the
-        // same text, say) - a new operation in the log with no actually new information, just noise.
-        const changedValues = Object.fromEntries(
-          Object.entries(nextValues).filter(([field, value]) =>
-            syncConflictValuesDiffer(value, conflict.serverValues?.[field]),
-          ),
-        );
-        // With nothing to resend there is no optimistic version to anticipate: the row aligns to
-        // the server's version instead of base + 1, or the next edit would base itself one ahead
-        // of the server and conflict spuriously.
-        const hasChanges = Object.keys(changedValues).length > 0;
-        await writeEntity(
-          conflict.entityType,
-          conflict.entityId,
-          { ...nextValues, deletedAt: null },
-          hasChanges ? baseVersion + 1 : baseVersion,
-        );
-        if (hasChanges) {
-          await recordRebasedOperation(conflict, 'update', changedValues, baseVersion);
-        }
-      }
-
-      await closeConflict(
-        conflictId,
-        chosenValues ? 'merge' : conflict.isDeletedOnServer ? 'restore' : 'keep_local',
-      );
-      entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
-      entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+      return withResolutionLock(conflictId, (current) => keepLocal(current, chosenValues));
     },
 
     async resolveKeepServer(conflictId: string): Promise<void> {
-      const conflict = await getConflict(conflictId);
-      if (!conflict) {
-        console.log(`SyncConflictService: conflict ${conflictId} not found.`);
-        return;
+      const pending = await getConflict(conflictId);
+      if (pending && isRoutePathConflict(pending)) {
+        return resolveRoutePath(conflictId, 'keep_server');
       }
-      if (conflict.reason === 'validation' && !conflict.serverValues) {
-        await resolveUnpushable(conflict);
-        return;
-      }
-
-      await abandonOperations(conflict.localOperationIds);
-
-      if (conflict.localOperationType === 'reorder') {
-        // Likewise: there is no entity row to write, it is the order of N other rows.
-        await applyServerOrder(conflict);
-      } else if (!conflict.serverValues) {
-        // The server does not have the entity. Accepting that means removing it here - and without recording an
-        // operation, because there is nothing to tell whoever no longer has it.
-        await writeEntity(
-          conflict.entityType,
-          conflict.entityId,
-          { isDeleted: true, deletedAt: new Date() },
-          (conflict.serverVersion ?? 0) + 1,
-        );
-      } else {
-        await writeEntity(
-          conflict.entityType,
-          conflict.entityId,
-          conflict.serverValues,
-          conflict.serverVersion ?? conflict.serverValues.version ?? 1,
-        );
-      }
-
-      await closeConflict(conflictId, conflict.isDeletedOnServer ? 'discard' : 'keep_server');
-      entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
-      entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+      return withResolutionLock(conflictId, async (conflict) => {
+        if (conflict.reason === 'validation' && !conflict.serverValues) {
+          await resolveUnpushable(conflict);
+          return;
+        }
+        await acceptServerState(conflict);
+        await closeConflict(conflict.id, conflict.isDeletedOnServer ? 'discard' : 'keep_server');
+        entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
+        entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+      });
     },
 
     async resolveKeepServerAndCloneBoard(
@@ -642,86 +720,38 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
       if (!conflict || conflict.entityType !== 'Board') {
         throw new Error('Board clone is only available for a Board content conflict.');
       }
-      const original = await db.query.boards.findFirst({
-        where: eq(schema.boards.id, conflict.entityId),
-      });
-      const rawContent = conflict.localValues.content ?? original?.content;
-      const content = validateBoardContent(rawContent ?? { nodes: [], edges: [] });
-      const name = cloneName.slice(0, 120);
-      // Idempotency: the clone commits before keepServer runs, so a failure between the two (or
-      // a retried tap) re-enters with the copy already saved. A live board with the same name
-      // and byte-identical content - other than the conflict's own row - is that copy: skip the
-      // create and finish the keepServer half. The entityId exclusion matters: naming the clone
-      // exactly like an unchanged original would otherwise match the original itself and lose
-      // the user's copy to the keepServer overwrite below.
-      const wanted = JSON.stringify(content);
-      const sameName = await db.query.boards.findMany({
-        where: and(
-          eq(schema.boards.storyId, conflict.storyId),
-          eq(schema.boards.name, name),
-          eq(schema.boards.isDeleted, false),
-          ne(schema.boards.id, conflict.entityId),
-        ),
-        columns: { id: true, content: true },
-      });
-      const alreadyCloned = sameName.some((row) => {
-        try {
-          return JSON.stringify(row.content ?? null) === wanted;
-        } catch {
-          return false;
-        }
-      });
-      if (!alreadyCloned) {
-        await createBoardService(db).createBoard(currentUserId, {
-          storyId: conflict.storyId,
-          name,
-          description: original?.description ?? null,
-          content,
-        });
-      }
+      await cloneConflictBoard(db, conflict, currentUserId, cloneName);
       await api.resolveKeepServer(conflictId);
     },
 
     async dismissConflict(conflictId: string): Promise<void> {
-      const conflict = await getConflict(conflictId);
-      // Without this, dismissing just hides the conflict from the pending list while its
-      // operations stay `conflictState: 'conflicted'` forever - excluded from every future
-      // push batch (see `getPushableOperations`'s `isNull(conflictState)` filter) with no way
-      // left to resolve or retry them.
-      if (conflict) {
-        await abandonOperations(conflict.localOperationIds);
-        // Dismissing drops the local operations for good, so the row must stop showing their
-        // values: leaving them in place displays edits that will never sync (and quietly
-        // vanish on reinstall) as if they were saved. Reverting to the server's copy keeps the
-        // screen honest; without a server copy (a create that never landed) there is nothing
-        // to revert to, so the row stays as the only copy of the user's work.
-        if (conflict.serverValues) {
-          if (conflict.localOperationType === 'reorder') {
-            await applyServerOrder(conflict);
-          } else {
-            const serverVersion =
-              conflict.serverVersion ?? (conflict.serverValues?.version as number | undefined);
-            await writeEntity(
-              conflict.entityType,
-              conflict.entityId,
-              conflict.serverValues,
-              serverVersion ?? 1,
-            );
-          }
-        } else if (conflict.reason === 'validation' && conflict.localOperationType === 'delete') {
-          // A dismissed validation quarantine drops the delete with no server copy to revert
-          // to: restore live flags like the resolve paths do, or a live server-side row stays
-          // hidden here forever.
-          await restoreDiscardedDelete(conflict);
+      const pending = await getConflict(conflictId);
+      if (pending && isRoutePathConflict(pending)) {
+        return resolveRoutePath(conflictId, 'dismissed');
+      }
+      return withResolutionLock(conflictId, async (conflict) => {
+        // Without this, dismissing just hides the conflict from the pending list while its
+        // operations stay `conflictState: 'conflicted'` forever - excluded from every future
+        // push batch (see `getPushableOperations`'s `isNull(conflictState)` filter) with no way
+        // left to resolve or retry them.
+        if (conflict.reason === 'validation' && !conflict.serverValues) {
+          // An operation this device could never send: its quarantine goes as a discard does.
+          await abandonOperations(conflict.localOperationIds);
+          if (conflict.isLocalDelete) await restoreDiscardedDelete(conflict);
+          await forgetUnlandedCreate(conflict);
+        } else {
+          // Dismissing drops the local operations, so the row converges on the server's state
+          // exactly as keep-server does - a create the server refused (its reference deleted
+          // meanwhile) goes too: kept here, it would live on this device alone, never to sync.
+          await acceptServerState(conflict);
         }
-      }
-      await db
-        .update(schema.syncConflicts)
-        .set({ status: 'dismissed', resolvedAt: new Date() })
-        .where(eq(schema.syncConflicts.id, conflictId));
-      if (conflict) {
+        await db
+          .update(schema.syncConflicts)
+          .set({ status: 'dismissed', resolvedAt: new Date() })
+          .where(eq(schema.syncConflicts.id, conflictId));
         entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId);
-      }
+        entityEventEmitter.emit('operation_log_updated', conflict.storyId);
+      });
     },
   };
   return api;

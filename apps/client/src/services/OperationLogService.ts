@@ -5,7 +5,7 @@ import type { OperationLogSelect } from '../db/schema';
 import { operationLogs } from '../db/schema';
 import { createFavoriteService } from './storymanagement/FavoriteService';
 
-export type OperationType = 'create' | 'update' | 'delete' | 'reorder';
+export type OperationType = 'create' | 'update' | 'delete';
 export type EntityType = string; // e.g., 'Story', 'Character', etc.
 
 /**

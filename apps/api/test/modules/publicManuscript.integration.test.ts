@@ -5,6 +5,7 @@ import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showc
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
+import { publicationStorageService } from '../../src/services/PublicationStorageService';
 
 // Packaging a publication writes the .zip through the local blob backend, which uses `Bun.write`.
 installBunShim();
@@ -107,6 +108,33 @@ describe('GET /public/stories/:storyId/publications/:publicationId/manuscript/do
       `a-queda-${publication.label}-manuscript.md`,
     );
     expect(headers.get('cache-control')).toContain('immutable');
+  });
+
+  /** Every renderer is pure TypeScript: the server compiles PDF and EPUB like any other format. */
+  it.each([
+    ['pdf', 'application/pdf', (body: string) => body.startsWith('%PDF-')],
+    [
+      'epub',
+      'application/epub+zip',
+      // The first entry of the archive, stored: `mimetype` holding exactly the EPUB media type.
+      (body: string) =>
+        body.startsWith('PK') && body.slice(30, 58) === 'mimetypeapplication/epub+zip',
+    ],
+  ] as const)('publishes and serves a %s manuscript', async (format, mimeType, looksRight) => {
+    const { story, publication } = await publishedStory(ana.token, 'A Queda', { format });
+    expect(publication.manuscriptFormat).toBe(format);
+
+    const { status, headers } = await request(
+      'GET',
+      `/public/stories/${story.id}/publications/${publication.id}/manuscript/download`,
+    );
+    expect(status).toBe(200);
+    expect(headers.get('content-type')).toContain(mimeType);
+    expect(headers.get('content-disposition')).toContain(`manuscript.${format}`);
+    // The stored bytes themselves (the route streams the blob; under Node the blob is a shim).
+    const blob = await publicationStorageService.readManuscript(story.id, publication.id, format);
+    const body = Buffer.from(await (blob as Blob).arrayBuffer()).toString('latin1');
+    expect(looksRight(body)).toBe(true);
   });
 
   it('404s for a version published without a manuscript', async () => {

@@ -22,10 +22,24 @@ const PublicationResponseSchema = t.Object({
 
 /** Manuscript rendition to publish alongside the package. Mirrors shared `ManuscriptOptionsSchema`. */
 const ManuscriptRequestSchema = t.Object({
-  format: t.Union([t.Literal('docx'), t.Literal('md'), t.Literal('txt'), t.Literal('html')]),
+  format: t.Union([
+    t.Literal('docx'),
+    t.Literal('md'),
+    t.Literal('txt'),
+    t.Literal('html'),
+    t.Literal('pdf'),
+    t.Literal('epub'),
+  ]),
   includeLooseScenes: t.Optional(t.Boolean()),
+  includeSceneNames: t.Optional(t.Boolean()),
+  includeToc: t.Optional(t.Boolean()),
+  resetSceneNumbers: t.Optional(t.Boolean()),
+  /** Typography and presentation; its fields are validated by the shared `ManuscriptStyleSchema`. */
+  style: t.Optional(t.Record(t.String(), t.Unknown())),
   /** Required for branching stories, refused for linear ones; must belong to the story. */
   routeId: t.Optional(t.String()),
+  /** Keeps only this arc's containers and scenes; must belong to the story. */
+  arcId: t.Optional(t.String()),
   labels: t.Optional(
     t.Object({
       goToPage: t.Optional(t.String({ maxLength: 80 })),
@@ -34,6 +48,10 @@ const ManuscriptRequestSchema = t.Object({
       tocHeading: t.Optional(t.String({ maxLength: 80 })),
     }),
   ),
+  /** Book metadata (EPUB). */
+  author: t.Optional(t.Nullable(t.String({ maxLength: 200 }))),
+  identifier: t.Optional(t.String({ maxLength: 200 })),
+  language: t.Optional(t.String({ maxLength: 35 })),
 });
 
 /**

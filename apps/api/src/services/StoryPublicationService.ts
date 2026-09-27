@@ -127,8 +127,9 @@ export class StoryPublicationService {
    * Validates the requested manuscript options against the story, without compiling anything.
    *
    * A branching story has no linear order, so its manuscript must follow a route - and a linear story
-   * has no routes worth following, so `routeId` is refused there. The route must be one of this
-   * story's live routes, read from the same export the manuscript will be compiled from.
+   * has no routes worth following, so `routeId` is refused there. The route (and the arc, when one is
+   * asked) must be one of this story's live ones, read from the same export the manuscript will be
+   * compiled from.
    */
   private parseManuscriptOptions(
     storyType: string,
@@ -158,6 +159,14 @@ export class StoryPublicationService {
       );
       if (!belongs) {
         throw new AppError(400, `Route "${options.routeId}" does not belong to this story.`);
+      }
+    }
+    if (options.arcId) {
+      const belongs = (storyExport.storyArcs ?? []).some(
+        (arc) => arc.id === options.arcId && arc.storyId === storyExport.story.id && !arc.isDeleted,
+      );
+      if (!belongs) {
+        throw new AppError(400, `Arc "${options.arcId}" does not belong to this story.`);
       }
     }
     return options;
@@ -192,6 +201,7 @@ export class StoryPublicationService {
             name: chapter.name,
             index: chapter.index,
             type: chapter.type,
+            arcId: chapter.arcId,
           })),
           scenes: (storyExport.scenes ?? []).map((scene) => ({
             id: scene.id,
@@ -216,8 +226,13 @@ export class StoryPublicationService {
             sceneId: step.sceneId,
             isDeleted: step.isDeleted,
           })),
+          arcs: (storyExport.storyArcs ?? []).map((arc) => ({ id: arc.id, title: arc.title })),
         },
-        options,
+        // The book's author defaults to the story's, as on the device.
+        {
+          ...options,
+          author: options.author === undefined ? storyExport.story.author : options.author,
+        },
       );
       return { bytes: compiled.bytes, format: options.format };
     } catch (error) {

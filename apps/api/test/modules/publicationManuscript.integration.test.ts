@@ -14,6 +14,7 @@ import {
   routeSteps,
   scenes,
   showcaseSettings,
+  storyArcs,
   storyPublications,
 } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
@@ -157,7 +158,7 @@ describe('publishing with a manuscript', () => {
     expect(await storedPublicationFiles(story.id)).toHaveLength(1);
   });
 
-  it('publishes a linear manuscript with loose scenes by default', async () => {
+  it('publishes a linear manuscript', async () => {
     const story = await uploadTestStory(ana.token);
     await seedLinearContent(story.id);
 
@@ -177,22 +178,105 @@ describe('publishing with a manuscript', () => {
     expect(listed.data.publications[0].manuscriptByteSize).toBe(data.manuscriptByteSize);
   });
 
-  it('omits loose scenes from a linear manuscript when asked', async () => {
+  it('leaves loose scenes out by default, like the device export, and adds them when asked', async () => {
     const story = await uploadTestStory(ana.token);
     await seedLinearContent(story.id);
 
-    const withLoose = await publish(ana.token, story.id, {
+    const withoutLoose = await publish(ana.token, story.id, {
       manuscript: { format: 'md' },
       labelMode: 'date',
     });
-    const withoutLoose = await publish(ana.token, story.id, {
-      manuscript: { format: 'md', includeLooseScenes: false },
+    const withLoose = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeLooseScenes: true },
       labelMode: 'date',
     });
 
     expect(withLoose.status).toBe(200);
     expect(withoutLoose.status).toBe(200);
     expect(withoutLoose.data.manuscriptByteSize).toBeLessThan(withLoose.data.manuscriptByteSize);
+  });
+
+  it('publishes the same shape the device exports', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedLinearContent(story.id);
+    await db
+      .insert(scenes)
+      .values({ id: newId(), storyId: story.id, chapterId: null, name: 'Tail', index: 3 });
+    const [chapter] = await db.select().from(chapters).where(eq(chapters.storyId, story.id));
+    await db.update(scenes).set({ chapterId: chapter.id }).where(eq(scenes.name, 'Tail'));
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'md',
+        includeSceneNames: true,
+        includeToc: true,
+        style: { sceneSeparator: 'asterisks', chapterNumbering: 'roman', quotes: 'curly' },
+      },
+    });
+
+    expect(status).toBe(200);
+    const manuscript = await storedManuscript(story.id);
+    expect(manuscript).toContain('## Contents');
+    expect(manuscript).toContain('## I. One');
+    expect(manuscript).toContain('### 1. Filed');
+    expect(manuscript).toContain('\n* * *\n');
+    expect(manuscript).not.toContain('Loose body.');
+  });
+
+  it('refuses a style the shared schema rejects', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedLinearContent(story.id);
+
+    const { status, data } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', style: { fontSize: 99 } },
+    });
+
+    expect(status).toBe(400);
+    expect(data.message).toMatch(/style\.fontSize/);
+    expect(await storedPublicationFiles(story.id)).toEqual([]);
+  });
+
+  it('publishes one arc under its title', async () => {
+    const story = await uploadTestStory(ana.token);
+    const arcId = newId();
+    await db.insert(storyArcs).values({ id: arcId, storyId: story.id, title: 'Book Two' });
+    const chapterId = newId();
+    await db
+      .insert(chapters)
+      .values({ id: chapterId, storyId: story.id, name: 'Two', index: 2, arcId });
+    await db.insert(scenes).values({
+      id: newId(),
+      storyId: story.id,
+      chapterId,
+      name: 'Second',
+      index: 1,
+      body: 'Second book body.',
+    });
+    await seedLinearContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'md', arcId } });
+
+    expect(status).toBe(200);
+    const manuscript = await storedManuscript(story.id);
+    expect(manuscript.startsWith('# Book Two')).toBe(true);
+    expect(manuscript).toContain('Second book body.');
+    expect(manuscript).not.toContain('Filed body.');
+  });
+
+  it('refuses an arc from another story', async () => {
+    const first = await uploadTestStory(ana.token, 'First');
+    const arcId = newId();
+    await db.insert(storyArcs).values({ id: arcId, storyId: first.id, title: 'Elsewhere' });
+    const second = await uploadTestStory(ana.token, 'Second');
+    await seedLinearContent(second.id);
+
+    const { status, data } = await publish(ana.token, second.id, {
+      manuscript: { format: 'md', arcId },
+    });
+
+    expect(status).toBe(400);
+    expect(data.message).toMatch(/Arc .* does not belong/);
+    expect(await storedPublicationFiles(second.id)).toEqual([]);
   });
 
   it('publishes a branching manuscript along its route, ignoring includeLooseScenes', async () => {
@@ -283,7 +367,7 @@ describe('publishing with a manuscript', () => {
     }
 
     const { status, data } = await publish(ana.token, story.id, {
-      manuscript: { format: 'md' },
+      manuscript: { format: 'md', includeLooseScenes: true },
     });
 
     expect(status).toBe(400);

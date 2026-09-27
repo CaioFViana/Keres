@@ -71,9 +71,12 @@ function textOf(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes);
 }
 
+/** Everything in: scene headings (and the choice references they carry) and the appendix. */
+const FULL = { includeSceneNames: true, includeLooseScenes: true } as const;
+
 describe('compileStoryManuscript formats', () => {
   it('renders markdown with its delivery metadata', async () => {
-    const result = await compileStoryManuscript(input(), { format: 'md' });
+    const result = await compileStoryManuscript(input(), { format: 'md', ...FULL });
 
     expect(result.bytes).toBeInstanceOf(Uint8Array);
     expect(result.extension).toBe('md');
@@ -108,7 +111,7 @@ describe('compileStoryManuscript formats', () => {
   });
 
   it('renders a docx zip carrying the manuscript', async () => {
-    const result = await compileStoryManuscript(input(), { format: 'docx' });
+    const result = await compileStoryManuscript(input(), { format: 'docx', ...FULL });
 
     expect(result.bytes).toBeInstanceOf(Uint8Array);
     expect(result.extension).toBe('docx');
@@ -136,7 +139,7 @@ describe('compileStoryManuscript routes', () => {
   it('follows the selected route and ignores other routes steps', async () => {
     const result = await compileStoryManuscript(
       input({ storyType: 'branching', routes, routeSteps }),
-      { format: 'md', routeId: 'route-1' },
+      { format: 'md', routeId: 'route-1', includeSceneNames: true },
     );
 
     const md = textOf(result.bytes);
@@ -157,15 +160,31 @@ describe('compileStoryManuscript routes', () => {
 });
 
 describe('compileStoryManuscript loose scenes and labels', () => {
-  it('includes loose scenes by default and drops them on request', async () => {
-    const included = textOf((await compileStoryManuscript(input(), { format: 'md' })).bytes);
+  it('leaves loose scenes out by default, like the device export, and adds them on request', async () => {
+    const excluded = textOf((await compileStoryManuscript(input(), { format: 'md' })).bytes);
+    expect(excluded).not.toContain('Aside.');
+
+    const included = textOf(
+      (await compileStoryManuscript(input(), { format: 'md', includeLooseScenes: true })).bytes,
+    );
     expect(included).toContain(`## ${DEFAULT_MANUSCRIPT_LABELS.looseHeading}`);
     expect(included).toContain('Aside.');
+  });
 
-    const excluded = textOf(
-      (await compileStoryManuscript(input(), { format: 'md', includeLooseScenes: false })).bytes,
+  it('titles an arc export after its arc', async () => {
+    const md = textOf(
+      (
+        await compileStoryManuscript(
+          input({
+            arcs: [{ id: 'arc-1', title: 'Book One' }],
+            chapters: input().chapters.map((chapter) => ({ ...chapter, arcId: 'arc-1' })),
+          }),
+          { format: 'md', arcId: 'arc-1' },
+        )
+      ).bytes,
     );
-    expect(excluded).not.toContain('Aside.');
+    expect(md.startsWith('# Book One')).toBe(true);
+    expect(md).toContain('First **bold** line.');
   });
 
   it('merges partial label overrides over the defaults', async () => {
@@ -173,6 +192,7 @@ describe('compileStoryManuscript loose scenes and labels', () => {
       (
         await compileStoryManuscript(input(), {
           format: 'md',
+          ...FULL,
           labels: { goToScene: 'Ver', looseHeading: 'Avulsas' },
         })
       ).bytes,
@@ -185,7 +205,19 @@ describe('compileStoryManuscript loose scenes and labels', () => {
 
 describe('compileStoryManuscript limits', () => {
   it('rejects an unknown format', async () => {
-    await expect(compileStoryManuscript(input(), { format: 'pdf' as never })).rejects.toThrow();
+    await expect(compileStoryManuscript(input(), { format: 'odt' as never })).rejects.toThrow();
+  });
+
+  /** Every renderer is pure TypeScript, so the server builds PDF and EPUB like any other. */
+  it.each([
+    ['pdf', 'application/pdf', [0x25, 0x50, 0x44, 0x46]],
+    ['epub', 'application/epub+zip', [0x50, 0x4b, 0x03, 0x04]],
+  ] as const)('renders %s', async (format, mimeType, magic) => {
+    const result = await compileStoryManuscript(input(), { format });
+
+    expect(result.mimeType).toBe(mimeType);
+    expect(result.extension).toBe(format);
+    expect(Array.from(result.bytes.slice(0, 4))).toEqual(magic);
   });
 
   it('throws past the byte budget', async () => {

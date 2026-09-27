@@ -22,21 +22,49 @@ export type ManuscriptPdfLabels = {
 };
 
 /**
- * A4 in points, with the print stylesheet's 2cm margins. Both stages share the
- * one geometry: layout wraps and paginates against it, the serializer draws
- * and links against it.
+ * The page and the body a manuscript is set on. Both stages share it: layout wraps and paginates
+ * against it, the serializer draws and links against it. The defaults are A4 with the print
+ * stylesheet's 2cm margins and an 11pt body - the renderer's long-standing look; a trade
+ * paperback is 6"x9" with 0.75" margins.
  */
-export const PAGE_WIDTH = 595.28;
-export const PAGE_HEIGHT = 841.89;
-export const MARGIN = 56.7;
-export const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const TOP_Y = PAGE_HEIGHT - MARGIN;
-const BOTTOM_Y = MARGIN;
-export const FOOTER_Y = MARGIN - 24;
+export type PdfGeometry = {
+  pageWidth: number;
+  pageHeight: number;
+  margin: number;
+  contentWidth: number;
+  topY: number;
+  bottomY: number;
+  footerY: number;
+  bodySize: number;
+  bodyLeading: number;
+  firstLineIndent: number;
+  /** Space after a paragraph. */
+  paragraphGap: number;
+};
 
-const BODY_SIZE = 11;
-const BODY_LEADING = 16.5;
-const FIRST_LINE_INDENT = 22;
+const PAGE_SIZES = {
+  a4: { pageWidth: 595.28, pageHeight: 841.89, margin: 56.7 },
+  '6x9': { pageWidth: 432, pageHeight: 648, margin: 54 },
+} as const;
+
+export function pdfGeometry(options: ManuscriptRenderOptions = {}): PdfGeometry {
+  const page = PAGE_SIZES[options.pageSize ?? 'a4'];
+  const bodySize = options.fontSize ?? 11;
+  const bodyLeading = bodySize * (options.lineSpacing ?? 1.5);
+  const block = options.paragraphStyle === 'block';
+  return {
+    ...page,
+    contentWidth: page.pageWidth - page.margin * 2,
+    topY: page.pageHeight - page.margin,
+    bottomY: page.margin,
+    footerY: page.margin - 24,
+    bodySize,
+    bodyLeading,
+    firstLineIndent: block ? 0 : 22,
+    paragraphGap: block ? Math.round(bodyLeading * 0.6) : 7,
+  };
+}
+
 const CHOICE_INDENT = 18;
 const TOC_INDENT = 18;
 
@@ -232,6 +260,8 @@ export function flattenRuns(
   anchors: Map<string, PdfAnchor>,
   options: ManuscriptRenderOptions,
 ): LineRun[] {
+  const geometry = pdfGeometry(options);
+  const { contentWidth: CONTENT_WIDTH, bodySize: BODY_SIZE, bodyLeading: BODY_LEADING } = geometry;
   const runs: LineRun[] = [];
   const pushHeading = (
     text: string,
@@ -383,7 +413,7 @@ export function flattenRuns(
             group,
             BODY_SIZE,
             CONTENT_WIDTH,
-            firstLine ? FIRST_LINE_INDENT : 0,
+            firstLine ? geometry.firstLineIndent : 0,
             0,
           );
           lines.forEach((words, index) => {
@@ -395,7 +425,7 @@ export function flattenRuns(
               leading: BODY_LEADING,
               indent: indents[index],
               spaceBefore: 0,
-              spaceAfter: lastOfParagraph ? 7 : 0,
+              spaceAfter: lastOfParagraph ? geometry.paragraphGap : 0,
               centered: false,
               gray: INK,
               bookmarkId: null,
@@ -408,6 +438,14 @@ export function flattenRuns(
         });
         break;
       }
+      case 'scene-break':
+        pushHeading(block.text, 'times', BODY_SIZE, BODY_LEADING, {
+          spaceBefore: 4,
+          spaceAfter: 11,
+          centered: true,
+          keepWithNext: true,
+        });
+        break;
       case 'choice': {
         const page = block.targetBookmarkId
           ? (anchors.get(block.targetBookmarkId)?.page ?? null)
@@ -468,10 +506,14 @@ export type PlacedRun = { run: LineRun; y: number };
 /** Where a heading landed: page numbers resolve choices, coordinates aim index links. */
 export type PdfAnchor = { page: number; y: number };
 
-export function paginate(runs: LineRun[]): {
+export function paginate(
+  runs: LineRun[],
+  geometry: PdfGeometry = pdfGeometry(),
+): {
   pages: PlacedRun[][];
   anchors: Map<string, PdfAnchor>;
 } {
+  const { topY: TOP_Y, bottomY: BOTTOM_Y } = geometry;
   const pages: PlacedRun[][] = [[]];
   const anchors = new Map<string, PdfAnchor>();
   let y = TOP_Y;

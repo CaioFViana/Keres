@@ -1,0 +1,10 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`byte stability without options > keeps the text formats and the PDF unchanged 1`] = `
+{
+  "html": "dc47cdf18b1eae77",
+  "md": "3d6589ec97a268c8",
+  "pdf": "3f4fa3f95c32c740",
+  "txt": "3274b2f944f19885",
+}
+`;

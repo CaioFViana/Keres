@@ -12,7 +12,8 @@ export type ManuscriptHtmlLabels = {
   tocHeading: string;
 };
 
-function escapeHtml(text: string): string {
+/** Escapes text for HTML and XHTML alike (the EPUB renderer shares it). */
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -20,7 +21,8 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function spansToHtml(spans: CompiledSpan[]): string {
+/** Inline marks as HTML elements; well-formed XHTML too (`<br />`). */
+export function spansToHtml(spans: CompiledSpan[]): string {
   return spans
     .map((span) => {
       const text = escapeHtml(span.text).replace(/\n/g, '<br />');
@@ -39,11 +41,34 @@ function spansToHtml(spans: CompiledSpan[]): string {
 }
 
 /**
- * The compiled manuscript as a self-contained print document. Chapters break pages;
- * choices link to their target scene's anchor by name. Page counters ride on print CSS
- * where the platform renderer honors them - unlike the DOCX, the PDF never promises
- * real "page X" cross-references because the print pipeline reports no layout mapping.
- * (Printing itself stays in the client: expo-print is device-only.)
+ * CSS for what the writer asked beyond the defaults: body face, size and line height, block
+ * paragraphs, and centered scene separators. Empty when nothing was asked, so a document without
+ * options keeps its long-standing stylesheet byte for byte. HTML and EPUB share it.
+ */
+export function typographyCss(options: ManuscriptRenderOptions, hasSceneBreaks: boolean): string {
+  const rules: string[] = [];
+  const body = [
+    options.fontFamily === 'sans'
+      ? "font-family: 'Helvetica Neue', Arial, sans-serif;"
+      : options.fontFamily === 'serif'
+        ? "font-family: Georgia, 'Times New Roman', serif;"
+        : '',
+    options.fontSize ? `font-size: ${options.fontSize}pt;` : '',
+    options.lineSpacing ? `line-height: ${options.lineSpacing};` : '',
+  ].filter(Boolean);
+  if (body.length > 0) rules.push(`body { ${body.join(' ')} }`);
+  if (options.paragraphStyle === 'block') rules.push('p { text-indent: 0; margin: 0 0 1em; }');
+  if (hasSceneBreaks) {
+    rules.push('p.scene-break { text-align: center; text-indent: 0; margin: 1em 0; }');
+  }
+  return rules.join('\n');
+}
+
+/**
+ * The compiled manuscript as a self-contained HTML document. Chapters break pages when
+ * printed; choices link to their target scene's anchor by name, and page counters ride on
+ * print CSS where the browser honors them. (The PDF is drawn by `manuscriptPdf.ts`, with real
+ * page numbers.)
  */
 export function buildManuscriptHtml(
   manuscript: CompiledManuscript,
@@ -95,6 +120,9 @@ export function buildManuscriptHtml(
       case 'paragraph':
         parts.push(`<p>${spansToHtml(block.spans)}</p>`);
         break;
+      case 'scene-break':
+        parts.push(`<p class="scene-break">${escapeHtml(block.text)}</p>`);
+        break;
       case 'choice': {
         const lead = `• ${escapeHtml(block.text)}`;
         if (block.targetBookmarkId && block.targetSceneName) {
@@ -113,6 +141,10 @@ export function buildManuscriptHtml(
       }
     }
   }
+  const extraCss = typographyCss(
+    options,
+    manuscript.blocks.some((block) => block.kind === 'scene-break'),
+  );
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -131,7 +163,7 @@ export function buildManuscriptHtml(
   .choice { margin-left: 1rem; }
   .choice-detail { margin-left: 2.5rem; color: #444; }
   a { color: #1a56db; }${options.includeToc ? '\n  .toc ul { list-style: none; padding: 0; }\n  .toc-scene { margin-left: 1.5rem; }\n  nav.toc + * { page-break-before: always; break-before: page; }' : ''}
-  @page { margin: 2cm; @bottom-center { content: counter(page); } }
+  @page { margin: 2cm; @bottom-center { content: counter(page); } }${extraCss ? `\n  ${extraCss.split('\n').join('\n  ')}` : ''}
 </style>
 </head>
 <body>

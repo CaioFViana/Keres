@@ -137,6 +137,10 @@ export function buildManuscriptMarkdown(
         // A literal leading hash would read as a heading; escape it per line.
         lines.push(spansToMarkdown(block.spans).replace(/^(#{1,3} )/gm, '\\$1'), '');
         break;
+      case 'scene-break':
+        // A bare `#` would read as a heading; asterisks and dashes read as a rule, as meant.
+        lines.push(block.text.replace(/^#/, '\\#'), '');
+        break;
       case 'choice': {
         const lead = `- ${block.text}`;
         lines.push(
@@ -181,6 +185,9 @@ export function buildManuscriptText(
         break;
       case 'paragraph':
         lines.push(spansToText(block.spans), '');
+        break;
+      case 'scene-break':
+        lines.push(block.text, '');
         break;
       case 'choice': {
         const lead = `* ${block.text}`;

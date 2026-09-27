@@ -33,8 +33,37 @@ export type ManuscriptDocxLabels = {
 /** Half an inch, the manuscript first-line convention, in twentieths of a point. */
 const FIRST_LINE_INDENT_TWIPS = 720;
 const PARAGRAPH_SPACING_AFTER = 120;
+/** Block paragraphs: no indent, a full line of space between them. */
+const BLOCK_SPACING_AFTER = 240;
 /** Index page numbers flush right: A4 (11906 twips) minus 1" margins on both sides. */
 const TOC_TAB_TWIPS = 9026;
+
+/**
+ * Body face, size and line height as document defaults - only when asked for, so a document
+ * without them keeps Word's own defaults byte for byte.
+ */
+function documentStyles(options: ManuscriptRenderOptions) {
+  const run = {
+    ...(options.fontFamily
+      ? { font: options.fontFamily === 'sans' ? 'Arial' : 'Times New Roman' }
+      : {}),
+    ...(options.fontSize ? { size: Math.round(options.fontSize * 2) } : {}),
+  };
+  const paragraph = options.lineSpacing
+    ? { spacing: { line: Math.round(240 * options.lineSpacing) } }
+    : undefined;
+  if (Object.keys(run).length === 0 && !paragraph) return {};
+  return {
+    styles: {
+      default: {
+        document: {
+          ...(Object.keys(run).length > 0 ? { run } : {}),
+          ...(paragraph ? { paragraph } : {}),
+        },
+      },
+    },
+  };
+}
 
 function spansToRuns(spans: CompiledSpan[]): TextRun[] {
   return spans.map(
@@ -163,10 +192,23 @@ export function buildManuscriptDocument(
       }
       case 'paragraph':
         children.push(
+          new Paragraph(
+            options.paragraphStyle === 'block'
+              ? { spacing: { after: BLOCK_SPACING_AFTER }, children: spansToRuns(block.spans) }
+              : {
+                  indent: { firstLine: FIRST_LINE_INDENT_TWIPS },
+                  spacing: { after: PARAGRAPH_SPACING_AFTER },
+                  children: spansToRuns(block.spans),
+                },
+          ),
+        );
+        break;
+      case 'scene-break':
+        children.push(
           new Paragraph({
-            indent: { firstLine: FIRST_LINE_INDENT_TWIPS },
-            spacing: { after: PARAGRAPH_SPACING_AFTER },
-            children: spansToRuns(block.spans),
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 240, after: 240 },
+            children: [new TextRun(block.text)],
           }),
         );
         break;
@@ -204,6 +246,7 @@ export function buildManuscriptDocument(
     // PAGEREF fields (index numbers, "go to page" choices) carry no cached
     // result: readers resolve them on open instead of showing blanks.
     features: { updateFields: true },
+    ...documentStyles(options),
     sections: [
       {
         children,

@@ -4,19 +4,16 @@ import {
   type CompiledManuscript,
   type ManuscriptChoice,
 } from './export/manuscriptCompiler';
-import { buildManuscriptDocxBytes } from './export/manuscriptDocx';
-import { buildManuscriptHtml } from './export/manuscriptHtml';
-import { buildManuscriptMarkdown, buildManuscriptText } from './export/manuscriptText';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
   FORMAT_META,
   MAX_MANUSCRIPT_BYTES,
   ManuscriptOptionsSchema,
-  type ManuscriptFormat,
-  type ManuscriptLabels,
   type ManuscriptOptionsInput,
 } from './manuscriptContracts';
+import { renderManuscript } from './manuscriptRender';
 import { sceneMatchesArc } from './manuscriptSections';
+import { presentManuscript, renderOptionsOf, sceneSeparatorText } from './manuscriptStyle';
 import type { ManuscriptChapter, ManuscriptRouteStep, ManuscriptScene } from './manuscriptSections';
 
 /** The minimum the entry needs to know about a route. */
@@ -33,6 +30,8 @@ export type CompileStoryManuscriptInput = {
   choices: ManuscriptChoice[];
   routes?: ManuscriptRoute[];
   routeSteps?: ManuscriptRouteStep[];
+  /** The story's arcs: an arc export is titled after its arc, as on the device. */
+  arcs?: { id: string; title: string }[];
 };
 
 export type CompiledStoryManuscript = {
@@ -41,31 +40,10 @@ export type CompiledStoryManuscript = {
   mimeType: string;
 };
 
-function encodeText(text: string): Uint8Array {
-  return new TextEncoder().encode(text);
-}
-
-async function renderBytes(
-  compiled: CompiledManuscript,
-  format: ManuscriptFormat,
-  labels: ManuscriptLabels,
-): Promise<Uint8Array> {
-  switch (format) {
-    case 'docx':
-      return buildManuscriptDocxBytes(compiled, labels);
-    case 'md':
-      return encodeText(buildManuscriptMarkdown(compiled, labels));
-    case 'txt':
-      return encodeText(buildManuscriptText(compiled, labels));
-    case 'html':
-      return encodeText(buildManuscriptHtml(compiled, labels));
-  }
-}
-
 /**
  * Compiles a story's manuscript and renders it to bytes. A `routeId` selects
  * the route order (branching stories); without one the linear order is used.
- * An `arcId` keeps only that arc's containers and scenes in either order.
+ * An `arcId` keeps only that arc's containers and scenes in either order, under the arc's title.
  * Throws on an unknown route or past `MAX_MANUSCRIPT_BYTES`.
  */
 export async function compileStoryManuscript(
@@ -74,6 +52,8 @@ export async function compileStoryManuscript(
 ): Promise<CompiledStoryManuscript> {
   const parsed = ManuscriptOptionsSchema.parse(options);
   const labels = { ...DEFAULT_MANUSCRIPT_LABELS, ...parsed.labels };
+  const title =
+    (parsed.arcId && input.arcs?.find((arc) => arc.id === parsed.arcId)?.title) || input.storyTitle;
   let compiled: CompiledManuscript;
   if (parsed.routeId !== undefined) {
     const route = (input.routes ?? []).find((candidate) => candidate.id === parsed.routeId);
@@ -83,25 +63,48 @@ export async function compileStoryManuscript(
     // pointing at a filtered-out scene vanish, like steps pointing at a deleted one.
     const chaptersById = new Map(input.chapters.map((chapter) => [chapter.id, chapter]));
     compiled = compileRouteManuscript({
-      title: input.storyTitle,
+      title,
       routeName: route.name,
       steps,
       scenes: input.scenes.filter((scene) => sceneMatchesArc(scene, chaptersById, parsed.arcId)),
       choices: input.choices,
       looseHeadingLabel: labels.looseHeading,
+      includeSceneNames: parsed.includeSceneNames,
+      resetSceneNumbersPerChapter: parsed.resetSceneNumbers,
+      sceneSeparator: sceneSeparatorText(parsed.style),
     });
   } else {
     compiled = compileLinearManuscript({
-      title: input.storyTitle,
+      title,
       chapters: input.chapters,
       scenes: input.scenes,
       choices: input.choices,
       includeLooseScenes: parsed.includeLooseScenes,
       looseHeadingLabel: labels.looseHeading,
       arcId: parsed.arcId,
+      includeSceneNames: parsed.includeSceneNames,
+      resetSceneNumbersPerChapter: parsed.resetSceneNumbers,
+      sceneSeparator: sceneSeparatorText(parsed.style),
     });
   }
-  const bytes = await renderBytes(compiled, parsed.format, labels);
+  const presented = presentManuscript(
+    compiled,
+    parsed.style,
+    parsed.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en',
+  );
+  const rendered = await renderManuscript(
+    presented,
+    parsed.format,
+    labels,
+    renderOptionsOf(parsed.style, parsed.includeToc),
+    {
+      author: parsed.author,
+      identifier: parsed.identifier,
+      language: parsed.language,
+      modified: new Date(),
+    },
+  );
+  const bytes = typeof rendered === 'string' ? new TextEncoder().encode(rendered) : rendered;
   if (bytes.length > MAX_MANUSCRIPT_BYTES) {
     throw new Error(
       `Manuscript exceeds the ${MAX_MANUSCRIPT_BYTES}-byte limit (${bytes.length} bytes).`,

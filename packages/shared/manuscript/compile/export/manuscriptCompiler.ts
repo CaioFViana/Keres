@@ -46,6 +46,8 @@ export type CompiledBlock =
     }
   | { kind: 'loose-heading'; label: string; bookmarkId: string }
   | { kind: 'paragraph'; spans: CompiledSpan[] }
+  /** Between two scenes of one chapter, when a separator is asked for: drawn centered. */
+  | { kind: 'scene-break'; text: string }
   | {
       kind: 'choice';
       id: string;
@@ -100,6 +102,7 @@ type SectionsInput = {
   looseHeadingLabel: string;
   includeSceneNames: boolean;
   resetSceneNumbersPerChapter: boolean;
+  sceneSeparator: string | null;
 };
 
 function sectionsToBlocks({
@@ -109,6 +112,7 @@ function sectionsToBlocks({
   looseHeadingLabel,
   includeSceneNames,
   resetSceneNumbersPerChapter,
+  sceneSeparator,
 }: SectionsInput): CompiledBlock[] {
   // First occurrence wins: a looping route bookmarks the scene once, and every choice
   // points at that bookmark.
@@ -148,6 +152,11 @@ function sectionsToBlocks({
     }
     const groupNumber = (groupCounts.get(groupKey) ?? 0) + 1;
     groupCounts.set(groupKey, groupNumber);
+    // A separator marks where one scene ends and the next begins inside a chapter - never
+    // before a chapter's first scene, which its heading already opens.
+    if (sceneSeparator !== null && groupNumber > 1) {
+      blocks.push({ kind: 'scene-break', text: sceneSeparator });
+    }
     const bookmarkId = bookmarkFor.get(section.scene.id) ?? null;
     // Without scene names there is no heading to hang the bookmark on, so
     // choices degrade to bare text: any reference would name a scene.
@@ -228,6 +237,8 @@ export type CompileLinearOptions = {
   resetSceneNumbersPerChapter?: boolean;
   /** Only this arc's containers and scenes; unchaptered and orphan scenes stay. Defaults to all. */
   arcId?: string | null;
+  /** Text drawn between two scenes of a chapter (`#`, `* * *`...). Defaults to none. */
+  sceneSeparator?: string | null;
 };
 
 /**
@@ -254,6 +265,7 @@ export function compileLinearManuscript({
   includeSceneNames = true,
   resetSceneNumbersPerChapter = false,
   arcId = null,
+  sceneSeparator = null,
 }: CompileLinearOptions): CompiledManuscript {
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   let sections = linearManuscriptSections(chapters, scenes, { arcId });
@@ -270,6 +282,7 @@ export function compileLinearManuscript({
         looseHeadingLabel,
         includeSceneNames,
         resetSceneNumbersPerChapter,
+        sceneSeparator,
       }),
     ],
   };
@@ -286,6 +299,8 @@ export type CompileRouteOptions = {
   includeSceneNames?: boolean;
   /** Accepted for uniformity; routes have a single group, so it changes nothing. */
   resetSceneNumbersPerChapter?: boolean;
+  /** Text drawn between two consecutive scenes of the route. Defaults to none. */
+  sceneSeparator?: string | null;
 };
 
 export function compileRouteManuscript({
@@ -297,6 +312,7 @@ export function compileRouteManuscript({
   looseHeadingLabel,
   includeSceneNames = true,
   resetSceneNumbersPerChapter = false,
+  sceneSeparator = null,
 }: CompileRouteOptions): CompiledManuscript {
   return {
     title,
@@ -310,6 +326,7 @@ export function compileRouteManuscript({
         looseHeadingLabel,
         includeSceneNames,
         resetSceneNumbersPerChapter,
+        sceneSeparator,
       }),
     ],
   };
@@ -349,8 +366,21 @@ export function manuscriptTocEntries(blocks: CompiledBlock[]): ManuscriptTocEntr
   return entries;
 }
 
-/** Writer flags shared by every renderer. Plain text reads none of them. */
+/**
+ * Writer flags shared by the renderers; each reads the ones its format can honor and ignores the
+ * rest (plain text reads none). Every one defaults to the renderer's own long-standing look.
+ */
 export type ManuscriptRenderOptions = {
   /** Clickable index after the title block. Defaults to off. */
   includeToc?: boolean;
+  /** First-line indents, or blocks separated by space. */
+  paragraphStyle?: 'indent' | 'block';
+  /** Body size in points. */
+  fontSize?: number;
+  /** Line height as a multiple of the body size. */
+  lineSpacing?: number;
+  /** Body face (DOCX, HTML, EPUB); the PDF is always set in Times. */
+  fontFamily?: 'serif' | 'sans';
+  /** Page geometry (PDF). */
+  pageSize?: 'a4' | '6x9';
 };

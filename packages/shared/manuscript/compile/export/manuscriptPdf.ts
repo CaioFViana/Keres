@@ -1,11 +1,7 @@
 import type { CompiledManuscript, ManuscriptRenderOptions } from './manuscriptCompiler';
 import {
-  CONTENT_WIDTH,
-  FOOTER_Y,
-  MARGIN,
-  PAGE_HEIGHT,
-  PAGE_WIDTH,
   flattenRuns,
+  pdfGeometry,
   paginate,
   sameAnchorPages,
   widthOfTextAtSize,
@@ -14,6 +10,7 @@ import {
   type ManuscriptPdfLabels,
   type PdfAnchor,
   type PdfFont,
+  type PdfGeometry,
   type PlacedRun,
   type Word,
 } from './manuscriptPdfLayout';
@@ -124,15 +121,15 @@ class PdfWriter {
   }
 }
 
-function drawLine(run: LineRun, y: number, writer: PdfWriter): void {
+function drawLine(run: LineRun, y: number, writer: PdfWriter, geometry: PdfGeometry): void {
   const fontIndex = (font: PdfFont): number => FONT_KEYS.indexOf(font) + 1;
-  let x = MARGIN + run.indent;
+  let x = geometry.margin + run.indent;
   if (run.centered) {
     const width = run.words.reduce((sum, word) => sum + word.width, 0);
     const gaps = run.words
       .slice(1)
       .reduce((sum, word) => sum + widthOfTextAtSize(' ', word.font, run.size), 0);
-    x = MARGIN + (CONTENT_WIDTH - (width + gaps)) / 2;
+    x = geometry.margin + (geometry.contentWidth - (width + gaps)) / 2;
   }
   const gray = run.gray.toFixed(2);
   const placed: { word: Word; x: number }[] = [];
@@ -205,10 +202,11 @@ export function buildManuscriptPdf(
   labels: ManuscriptPdfLabels,
   options: ManuscriptRenderOptions = {},
 ): Uint8Array {
+  const geometry = pdfGeometry(options);
   let anchors = new Map<string, PdfAnchor>();
   let pages: PlacedRun[][] = [[]];
   for (let pass = 0; pass < 3; pass += 1) {
-    const laid = paginate(flattenRuns(manuscript, labels, anchors, options));
+    const laid = paginate(flattenRuns(manuscript, labels, anchors, options), geometry);
     pages = laid.pages;
     if (sameAnchorPages(anchors, laid.anchors)) {
       anchors = laid.anchors;
@@ -222,13 +220,18 @@ export function buildManuscriptPdf(
   const streams = pages.map((runs, pageIndex) => {
     const content = new PdfWriter();
     for (const { run, y } of runs) {
-      drawLine(run, y, content);
+      drawLine(run, y, content, geometry);
       if (run.linkTarget) {
         const anchor = anchors.get(run.linkTarget);
         if (anchor) {
           annots.push({
             pageIndex,
-            rect: [MARGIN, y - run.leading + 2, MARGIN + CONTENT_WIDTH, y],
+            rect: [
+              geometry.margin,
+              y - run.leading + 2,
+              geometry.margin + geometry.contentWidth,
+              y,
+            ],
             destPageIndex: anchor.page - 1,
             destY: anchor.y,
           });
@@ -259,8 +262,9 @@ export function buildManuscriptPdf(
         keepWithNext: false,
         forcePageBreak: false,
       },
-      FOOTER_Y + 9,
+      geometry.footerY + 9,
       content,
+      geometry,
     );
     return content.snapshot();
   });
@@ -295,7 +299,7 @@ export function buildManuscriptPdf(
     const annotsEntry = annotRefs === '' ? '' : ` /Annots [${annotRefs}]`;
     writer.object((body) => {
       body.ascii(
-        `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}]` +
+        `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${geometry.pageWidth} ${geometry.pageHeight}]` +
           ` /Contents ${contentId} 0 R${annotsEntry} /Resources << /Font <<` +
           ` /F1 ${fontBase} 0 R /F2 ${fontBase + 1} 0 R` +
           ` /F3 ${fontBase + 2} 0 R /F4 ${fontBase + 3} 0 R >> >> >>\n`,

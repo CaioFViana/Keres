@@ -10,11 +10,11 @@ import {
 } from '../../../manuscript/compile/manuscriptContracts';
 
 describe('ManuscriptFormatSchema', () => {
-  it('accepts the four pipeline formats and rejects the client-only pdf', () => {
-    for (const format of ['docx', 'md', 'txt', 'html']) {
+  it('accepts every pipeline format and nothing else', () => {
+    for (const format of ['docx', 'md', 'txt', 'html', 'pdf', 'epub']) {
       expect(ManuscriptFormatSchema.parse(format)).toBe(format);
     }
-    expect(() => ManuscriptFormatSchema.parse('pdf')).toThrow();
+    expect(() => ManuscriptFormatSchema.parse('odt')).toThrow();
   });
 });
 
@@ -34,6 +34,8 @@ describe('FORMAT_META', () => {
       md: { extension: 'md', mimeType: 'text/markdown' },
       txt: { extension: 'txt', mimeType: 'text/plain' },
       html: { extension: 'html', mimeType: 'text/html' },
+      pdf: { extension: 'pdf', mimeType: 'application/pdf' },
+      epub: { extension: 'epub', mimeType: 'application/epub+zip' },
     });
   });
 });
@@ -50,10 +52,14 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
 });
 
 describe('ManuscriptOptionsSchema', () => {
-  it('defaults includeLooseScenes to true', () => {
+  /** The device export's defaults: a publication without them reads like a default local file. */
+  it('defaults the content switches', () => {
     expect(ManuscriptOptionsSchema.parse({ format: 'md' })).toEqual({
       format: 'md',
-      includeLooseScenes: true,
+      includeLooseScenes: false,
+      includeSceneNames: false,
+      includeToc: false,
+      resetSceneNumbers: false,
     });
   });
 
@@ -72,7 +78,7 @@ describe('ManuscriptOptionsSchema', () => {
   });
 
   it('rejects unknown formats', () => {
-    expect(() => ManuscriptOptionsSchema.parse({ format: 'pdf' })).toThrow();
+    expect(() => ManuscriptOptionsSchema.parse({ format: 'odt' })).toThrow();
   });
 });
 

@@ -32,6 +32,7 @@
     "test:coverage": "bun scripts/run-all.ts test:coverage",
     "test:integration": "bun run --cwd apps/api test:integration && bun run --cwd apps/api test:integration:sqlite",
     "test:report": "bun scripts/test-report.ts",
+    "test:sync-fuzz-api": "bun scripts/sync-fuzz-api.ts",
     "coverage:update": "bun scripts/coverage-update.ts",
     "locales:audit": "bun scripts/verify-translations.ts",
     "format": "biome format --write .",

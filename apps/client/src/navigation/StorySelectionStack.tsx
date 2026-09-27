@@ -19,6 +19,7 @@ import ResizableDrawerContent, {
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
 import { screenHelpPage } from '../help/contextualHelp';
 import { useHasRegisteredServer } from '../hooks/useHasRegisteredServer';
+import { isServerless } from '../utils/serverless';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
@@ -237,11 +238,14 @@ const PacksStackNavigator = () => {
           headerTitle: route.params?.packId ? t('packs_reextract') : t('packs_create'),
         })}
       />
-      <PacksStack.Screen
-        name="PackBrowse"
-        component={PackBrowseScreen}
-        options={{ headerTitle: t('packs_browse_title') }}
-      />
+      {/* Browsing lists other people's packs on a server; a serverless build has none. */}
+      {isServerless() ? null : (
+        <PacksStack.Screen
+          name="PackBrowse"
+          component={PackBrowseScreen}
+          options={{ headerTitle: t('packs_browse_title') }}
+        />
+      )}
       <PacksStack.Screen
         name="ShippedPacks"
         component={ShippedPacksScreen}
@@ -405,26 +409,31 @@ const StorySelectionNavigator = () => {
           }}
           listeners={drawerItemListeners('StorySelectionMain', 'StorySelectionScreen')}
         />
-        <Drawer.Screen
-          name="ServerManagementDrawer"
-          component={ServerManagementStackNavigator}
-          options={{
-            title: t('manage_servers'),
-            drawerLabel: t('manage_servers'),
-            drawerIcon: drawerIcon('server-outline'),
-          }}
-          listeners={drawerItemListeners('ServerManagementDrawer', 'ServerManagement')}
-        />
-        <Drawer.Screen
-          name="FriendshipDrawer"
-          component={FriendshipStackNavigator}
-          options={{
-            title: t('manage_friendships'),
-            drawerLabel: t('manage_friendships'),
-            drawerIcon: drawerIcon('people-outline'),
-          }}
-          listeners={drawerItemListeners('FriendshipDrawer', 'FriendshipList')}
-        />
+        {/* Servers and friends only exist with a server: a serverless build registers neither. */}
+        {isServerless() ? null : (
+          <>
+            <Drawer.Screen
+              name="ServerManagementDrawer"
+              component={ServerManagementStackNavigator}
+              options={{
+                title: t('manage_servers'),
+                drawerLabel: t('manage_servers'),
+                drawerIcon: drawerIcon('server-outline'),
+              }}
+              listeners={drawerItemListeners('ServerManagementDrawer', 'ServerManagement')}
+            />
+            <Drawer.Screen
+              name="FriendshipDrawer"
+              component={FriendshipStackNavigator}
+              options={{
+                title: t('manage_friendships'),
+                drawerLabel: t('manage_friendships'),
+                drawerIcon: drawerIcon('people-outline'),
+              }}
+              listeners={drawerItemListeners('FriendshipDrawer', 'FriendshipList')}
+            />
+          </>
+        )}
         {/*
         Import/export lives in the main menu, not in a story's menu: importing creates
         a new story (there is no active story at that point) and exporting must reach
@@ -445,21 +454,24 @@ const StorySelectionNavigator = () => {
         nowhere to be published. The item is hidden by height, as the Choices one in
         MainSystemStack does with linear stories - the screen stays registered, so a
         direct navigation (or the help link) does not break when the server is removed.
+        A serverless build can never have a server, so there it is not registered at all.
       */}
-        <Drawer.Screen
-          name="PublishStory"
-          component={PublishStoryScreen}
-          options={{
-            title: t('publish_story_title'),
-            drawerLabel: t('publish_story_title'),
-            drawerIcon: drawerIcon('cloud-upload-outline'),
-            drawerItemStyle: {
-              height: hasServers ? undefined : 0,
-              overflow: 'hidden',
-            },
-          }}
-          listeners={drawerItemListeners('PublishStory')}
-        />
+        {isServerless() ? null : (
+          <Drawer.Screen
+            name="PublishStory"
+            component={PublishStoryScreen}
+            options={{
+              title: t('publish_story_title'),
+              drawerLabel: t('publish_story_title'),
+              drawerIcon: drawerIcon('cloud-upload-outline'),
+              drawerItemStyle: {
+                height: hasServers ? undefined : 0,
+                overflow: 'hidden',
+              },
+            }}
+            listeners={drawerItemListeners('PublishStory')}
+          />
+        )}
         {/*
         Same reasoning as Import/Export and the examples above: a pack is made from a story and
         applied when a new one is created, so it belongs to the app's menu rather than to any single

@@ -25,6 +25,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
+import { isServerless } from '../../utils/serverless';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -361,12 +362,15 @@ const StorySettingsScreen = () => {
         </View>
       </View>
 
-      <StoryCollaborationSection
-        storyId={storyId}
-        allowReaderComments={allowReaderComments}
-        onAllowReaderCommentsChange={setAllowReaderComments}
-        canManageStoryPolicy={canManageStoryPolicy}
-      />
+      {/* Collaboration is linking the story to a server and its people; a serverless build has neither. */}
+      {isServerless() ? null : (
+        <StoryCollaborationSection
+          storyId={storyId}
+          allowReaderComments={allowReaderComments}
+          onAllowReaderCommentsChange={setAllowReaderComments}
+          canManageStoryPolicy={canManageStoryPolicy}
+        />
+      )}
     </EntityFormContainer>
   );
 };

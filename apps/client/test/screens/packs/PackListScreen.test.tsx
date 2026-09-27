@@ -161,6 +161,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  delete process.env.EXPO_PUBLIC_SERVERLESS;
 });
 
 it('requests its guided tour', async () => {
@@ -181,6 +182,18 @@ it('renders the header buttons and navigates', async () => {
   expect(mockNavigate).toHaveBeenCalledWith('PackBrowse');
   await fireEvent.press(view.getByTestId('shipped-packs'));
   expect(mockNavigate).toHaveBeenCalledWith('ShippedPacks');
+});
+
+it('keeps packs local in a serverless build: no browsing, no sharing', async () => {
+  process.env.EXPO_PUBLIC_SERVERLESS = '1';
+  mockListPacks.mockResolvedValue([makePack()]);
+  const view = await render(<PackListScreen />);
+
+  await waitFor(() => expect(view.getByTestId('create-pack')).toBeTruthy());
+  expect(view.queryByTestId('browse-packs')).toBeNull();
+  expect(view.getByTestId('shipped-packs')).toBeTruthy();
+  await waitFor(() => expect(view.getByText('Starter')).toBeTruthy());
+  expect(view.queryByLabelText('packs_share_title')).toBeNull();
 });
 
 it('renders pack cards with content chips', async () => {

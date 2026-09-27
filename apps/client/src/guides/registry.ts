@@ -1,5 +1,6 @@
 import { drawerAnchorId, screenAnchorId } from './anchorRegistry';
 import type { Guide, GuideDrawerId } from './types';
+import { isServerless } from '../utils/serverless';
 
 const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string[] =>
   routes.map((route) => drawerAnchorId(drawerId, route));
@@ -41,18 +42,23 @@ export const screenGuides: Record<string, Guide> = {
         titleKey: 'tour_selection_group_create_title',
         bodyKey: 'tour_selection_group_create_body',
       },
-      {
-        id: 'drawer-servers',
-        drawerId: 'story-selection',
-        anchors: drawerGroup('story-selection', [
-          'ServerManagementDrawer',
-          'FriendshipDrawer',
-          'ImportExport',
-          'PublishStory',
-        ]),
-        titleKey: 'tour_selection_group_servers_title',
-        bodyKey: 'tour_selection_group_servers_body',
-      },
+      // A serverless build has no servers, friends or publishing to walk through.
+      ...(isServerless()
+        ? []
+        : [
+            {
+              id: 'drawer-servers',
+              drawerId: 'story-selection' as const,
+              anchors: drawerGroup('story-selection', [
+                'ServerManagementDrawer',
+                'FriendshipDrawer',
+                'ImportExport',
+                'PublishStory',
+              ]),
+              titleKey: 'tour_selection_group_servers_title',
+              bodyKey: 'tour_selection_group_servers_body',
+            },
+          ]),
       {
         id: 'drawer-system',
         drawerId: 'story-selection',

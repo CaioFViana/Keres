@@ -7,7 +7,8 @@
  * A failed or stalled boot (30s) still boots the app: canvases degrade to nodes without
  * edge lines via `useCanvasKitReady`, instead of wedging on the splash screen. Native
  * boots synchronously, exactly as before - the web loader never ships there (see the
- * platform split in `canvasKitBoot`).
+ * platform split in `canvasKitBoot`). The serverless web build first makes the page
+ * cross-origin isolated (`crossOriginIsolation`), which may cost one reload on a first visit.
  *
  * All real navigation is React Navigation (see src/navigation/AppNavigator.tsx); there is
  * no file-based routing, so the entry registers <App /> directly instead of going
@@ -22,9 +23,7 @@ function boot() {
   registerRootComponent(App);
 }
 
-if (Platform.OS !== 'web') {
-  boot();
-} else {
+function bootWeb() {
   const {
     ensureCanvasKit,
   } = require('./src/components/features/graphs/SkiaEdgeCanvas/canvasKitBoot');
@@ -33,4 +32,15 @@ if (Platform.OS !== 'web') {
     console.error('[SkiaEdgeCanvas] CanvasKit failed to load; booting without edge lines.', error);
     boot();
   });
+}
+
+if (Platform.OS !== 'web') {
+  boot();
+} else {
+  // The serverless build (GitHub Pages) gets its COOP/COEP from a service worker, installed
+  // before anything opens the database; everywhere else this resolves at once.
+  const { ensureCrossOriginIsolation } = require('./src/utils/crossOriginIsolation');
+  ensureCrossOriginIsolation().then((ready) => {
+    if (ready) bootWeb();
+  }, bootWeb);
 }

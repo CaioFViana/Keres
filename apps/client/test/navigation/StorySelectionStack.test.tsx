@@ -28,7 +28,10 @@ function mockStackNavigator({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function mockStackScreen() {
+const mockStackScreens: string[] = [];
+
+function mockStackScreen({ name }: { name: string }) {
+  mockStackScreens.push(name);
   return null;
 }
 
@@ -173,6 +176,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDrawerScreens.length = 0;
   mockDrawerNavigatorProps.length = 0;
+  mockStackScreens.length = 0;
+  delete process.env.EXPO_PUBLIC_SERVERLESS;
   mockResponsiveLayout.isCompact = false;
   mockResponsiveLayout.isWide = true;
   mockResponsiveLayout.width = 1200;
@@ -281,6 +286,39 @@ describe('the publish entry', () => {
       height: 0,
       overflow: 'hidden',
     });
+  });
+});
+
+describe('a serverless build', () => {
+  // The web build on GitHub Pages runs on the device alone: what only talks to a server is not
+  // registered at all, so nothing can navigate there.
+  it('registers no server, friend or publish entry', async () => {
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    await render(<StorySelectionStack />);
+
+    expect(mockDrawerScreens.map((screen) => screen.name)).toEqual([
+      'StorySelectionMain',
+      'ImportExport',
+      'PacksDrawer',
+      'ExampleStories',
+      'StoryDevicesDrawer',
+      'HelpDrawer',
+      'Settings',
+    ]);
+  });
+
+  it('keeps local packs but drops browsing the server ones', async () => {
+    const Packs = async () => {
+      await render(<StorySelectionStack />);
+      const PacksStack = drawerScreen('PacksDrawer')?.component;
+      mockStackScreens.length = 0;
+      await render(<PacksStack />);
+      return [...mockStackScreens];
+    };
+
+    expect(await Packs()).toEqual(['PackList', 'PackForm', 'PackBrowse', 'ShippedPacks']);
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    expect(await Packs()).toEqual(['PackList', 'PackForm', 'ShippedPacks']);
   });
 });
 

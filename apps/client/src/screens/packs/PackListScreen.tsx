@@ -26,6 +26,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { isServerless } from '../../utils/serverless';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -249,14 +250,17 @@ const PackListScreen = () => {
           )}
         </View>
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleShare(item)}
-            accessibilityLabel={t('packs_share_title')}
-            disabled={busyPackId === item.id}
-          >
-            <Ionicons name="cloud-upload-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
+          {/* Sharing uploads the pack to a server; a serverless build has nowhere to send it. */}
+          {isServerless() ? null : (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleShare(item)}
+              accessibilityLabel={t('packs_share_title')}
+              disabled={busyPackId === item.id}
+            >
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
+          )}
           {/* Re-extraction is the only way to edit a pack, and it needs the source story present. */}
           {item.sourceStoryId ? (
             <TouchableOpacity
@@ -309,16 +313,18 @@ const PackListScreen = () => {
                   <Ionicons name="add" size={20} color={colors.onPrimary} />
                   <Text style={styles.createButtonText}>{t('packs_create')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.createButton, styles.browseButton]}
-                  onPress={() => navigation.navigate('PackBrowse')}
-                  testID="browse-packs"
-                >
-                  <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
-                  <Text style={[styles.createButtonText, { color: colors.text }]}>
-                    {t('packs_browse_title')}
-                  </Text>
-                </TouchableOpacity>
+                {isServerless() ? null : (
+                  <TouchableOpacity
+                    style={[styles.createButton, styles.browseButton]}
+                    onPress={() => navigation.navigate('PackBrowse')}
+                    testID="browse-packs"
+                  >
+                    <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
+                    <Text style={[styles.createButtonText, { color: colors.text }]}>
+                      {t('packs_browse_title')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   style={[styles.createButton, styles.browseButton]}
                   onPress={() => navigation.navigate('ShippedPacks')}
@@ -336,7 +342,7 @@ const PackListScreen = () => {
         />
       </View>
       <SharePackModal
-        visible={sharingPack !== null}
+        visible={!isServerless() && sharingPack !== null}
         packName={sharingPack?.name ?? ''}
         servers={servers}
         onCancel={() => setSharingPack(null)}

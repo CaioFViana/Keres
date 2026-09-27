@@ -338,6 +338,17 @@ describe('StorySettingsScreen', () => {
     expect(view.getByTestId('btn-update_story').props.children).toBe('update_story:enabled');
   });
 
+  it('offers no collaboration in a serverless build', async () => {
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    try {
+      const view = await render(<StorySettingsScreen />);
+      await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
+      expect(view.queryByTestId('collab-marker')).toBeNull();
+    } finally {
+      delete process.env.EXPO_PUBLIC_SERVERLESS;
+    }
+  });
+
   it('saves the edited settings and goes back', async () => {
     const view = await render(<StorySettingsScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());

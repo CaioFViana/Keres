@@ -75,4 +75,20 @@ describe('screenGuides', () => {
       }
     }
   });
+
+  it('skips the servers step of story selection in a serverless build', () => {
+    const stepIds = (guides: typeof screenGuides) =>
+      guides.StorySelectionMain.steps.map((step) => step.id);
+    expect(stepIds(screenGuides)).toContain('drawer-servers');
+
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    try {
+      jest.isolateModules(() => {
+        const serverless: typeof screenGuides = require('../../src/guides/registry').screenGuides;
+        expect(stepIds(serverless)).toEqual(['stories', 'drawer-create', 'drawer-system']);
+      });
+    } finally {
+      delete process.env.EXPO_PUBLIC_SERVERLESS;
+    }
+  });
 });

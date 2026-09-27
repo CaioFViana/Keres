@@ -60,8 +60,11 @@ export const CURRENT_PACK_FORMAT_VERSION = 2;
  * **4** - Arc added, that alone is worth raising, but minimum is also raised as some internal code
  * for API/Syncing changed way too much. fully reworked. Just this once and to be safe, Version 4
  *
+ * **5** - Positions became per-row ranks (`rules/rank.ts`): a move is an ordinary edit of the row
+ * that moved, and `index`/`order` are derived on each side. The protocol has no container order
+ * any more; a peer on 4 would send one and never see a rank change, so it cannot share a story.
  */
-export const SYNC_PROTOCOL_VERSION = 4;
+export const SYNC_PROTOCOL_VERSION = 5;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -70,6 +73,6 @@ export const SYNC_PROTOCOL_VERSION = 4;
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
  *
- * Raised to **4** with the lines above.
+ * Raised to **4** with the lines above, and to **5** with ranks: a peer on 4 would diverge.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 4;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 5;

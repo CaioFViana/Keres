@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANK_FIELD_MAX, RankFieldSchema } from './RankSchemas';
 import { AttributeType } from '../metadata/AttributeType';
 import { STORY_SCHEMA_ENTITY_TYPES } from '../metadata/StorySchemaEntityType';
 
@@ -56,6 +57,8 @@ const StorySchemaFieldBaseSchema = z.object({
   isRequired: z.boolean(),
   defaultValue: z.string().nullable(),
   order: z.number().int(),
+  /** The field's place among its entity type's (see `SceneSchema.rank`); `order` is derived. */
+  rank: z.string().max(RANK_FIELD_MAX).default(''),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -81,6 +84,8 @@ export const CreateStorySchemaFieldDataSchema = StorySchemaFieldBaseSchema.omit(
     isRequired: z.boolean().default(false),
     defaultValue: z.string().nullable().default(null),
     order: z.number().int().default(0),
+    // Optional with no default, like `CreateSceneDataSchema.rank`.
+    rank: RankFieldSchema.optional(),
   })
   .superRefine(validateEntityAttribute);
 
@@ -98,6 +103,7 @@ export const PartialStorySchemaFieldSchema = StorySchemaFieldBaseSchema.omit({
   .partial()
   .extend({
     targetEntityType: StorySchemaEntityTypeSchema.nullable().optional(),
+    rank: RankFieldSchema.optional(),
   });
 
 export type CreateStorySchemaFieldDataType = z.infer<typeof CreateStorySchemaFieldDataSchema>;

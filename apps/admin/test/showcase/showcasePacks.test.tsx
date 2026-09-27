@@ -113,6 +113,7 @@ const field = (over: {
   isRequired: over.isRequired ?? false,
   defaultValue: null,
   order: 0,
+  rank: '',
   ...over,
   ...rowDates,
 });
@@ -176,6 +177,7 @@ const detail: ShowcasePackDetail = {
         name: 'Strength',
         isPrimary: true,
         order: 0,
+        rank: '',
         createdAt: rowDates.createdAt,
         updatedAt: rowDates.updatedAt,
         version: 1,

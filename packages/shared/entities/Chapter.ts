@@ -3,6 +3,8 @@ export interface Chapter {
   storyId: string;
   name: string;
   index: number;
+  /** Place among the container's rows; `index` is derived from it (see `rules/rank.ts`). */
+  rank: string;
   summary: string | null;
   isFavorite: boolean;
   extraNotes: string | null;

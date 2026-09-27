@@ -7,6 +7,8 @@ export interface Scene {
   locationId: string | null;
   name: string;
   index: number;
+  /** Place among the container's rows; `index` is derived from it (see `rules/rank.ts`). */
+  rank: string;
   summary: string | null;
   /** The scene's manuscript prose (markdown), edited in the scene Editor. Null until written. */
   body: string | null;

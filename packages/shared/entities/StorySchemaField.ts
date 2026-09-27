@@ -24,6 +24,8 @@ export interface StorySchemaField {
   defaultValue: string | null;
   /** Display order in forms/details, ascending. Not editable. Not important enough to reorder! */
   order: number;
+  /** Place among the container's rows; `order` is derived from it (see `rules/rank.ts`). */
+  rank: string;
   createdAt: Date;
   updatedAt: Date;
   version: number;

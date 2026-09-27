@@ -13,7 +13,7 @@ export const AdminOperationLogQuerySchema = z.object({
   storyId: z.string().optional(),
   entityType: z.string().optional(),
   userId: z.string().optional(),
-  operationType: z.enum(['create', 'update', 'delete', 'reorder']).optional(),
+  operationType: z.enum(['create', 'update', 'delete']).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
   page: z.coerce.number().int().min(1).default(1),

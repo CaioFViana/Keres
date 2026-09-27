@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { STORY_SCHEMA_ENTITY_TYPES } from '../metadata/StorySchemaEntityType';
 
 export const UlidSchema = z.string().regex(/^[0-9A-Z]{26}$/, 'Invalid ULID format');
 
@@ -43,7 +42,11 @@ export function omitSyncImmutableFields<T extends Record<string, unknown>>(
 }
 
 // 1. Defines the kind of synchronization operation
-export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete', 'reorder']);
+/**
+ * There is no container order: a row's place is its own `rank`, moved by an ordinary update of that
+ * row (`rules/rank.ts`).
+ */
+export const StoryUpdateTypeSchema = z.enum(['create', 'update', 'delete']);
 export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 
 // 2. Base schema for any StoryUpdate
@@ -51,7 +54,7 @@ export type StoryUpdateType = z.infer<typeof StoryUpdateTypeSchema>;
 export const BaseStoryUpdateSchema = z
   .object({
     entity: z.string().min(1, 'Entity name cannot be empty'), // Entity name (e.g. 'Story', 'Character')
-    // Create, update, delete and reorder all require the ULID; the envelope leaves it optional and each
+    // Create, update and delete all require the ULID; the envelope leaves it optional and each
     // concrete variant re-declares it where it is mandatory.
     id: UlidSchema.optional(),
     /**
@@ -122,56 +125,53 @@ export const DeleteStoryUpdateSchema = BaseStoryUpdateSchema.extend({
   // accepts deleting the Story itself when the caller is the owner (it forces the tombstone at the
   // current version). Other entities still require the base in the handler.
   version: z.number().int().min(0).optional(),
+  /**
+   * Pull only: the tombstone's content as the server holds it. Devices do not keep a deleted
+   * entity's fields in step on their own (one accepted the deletion with unsent edits still in
+   * its row), so the deletion carries them - a later restore then brings back the same row
+   * everywhere. Absent on history recorded before it existed; ignored on push.
+   */
+  data: z.record(z.string(), z.any()).optional(),
 });
 export type DeleteStoryUpdate = z.infer<typeof DeleteStoryUpdateSchema>;
 
-export const ReorderItemSchema = z.object({
-  id: UlidSchema,
-  newIndex: z.number().int().min(1),
-});
-
-// 6. Schema for reordering scenes within a chapter
-export const ChapterReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
-  type: z.literal('reorder'),
-  entity: z.literal('Chapter'), // Entity to which reorderItems belong
-  id: UlidSchema, // ID of the Chapter whose scenes are being reordered
-  reorderItems: z.array(ReorderItemSchema), // Array of scene IDs and their new indices
-});
-export type ChapterReorderingStoryUpdate = z.infer<typeof ChapterReorderingStoryUpdateSchema>;
-
-// 7. Schema for reordering chapters within a story
-export const StoryReorderingStoryUpdateSchema = BaseStoryUpdateSchema.extend({
-  type: z.literal('reorder'),
-  entity: z.literal('Story'), // Entity to which reorderItems belong
-  id: UlidSchema, // ID of the Story whose chapters are being reordered
-  reorderItems: z.array(ReorderItemSchema), // Array of chapter IDs and their new indices
-  /**
-   * Which of the story's collections is being reordered.
-   *
-   * Absent means its chapters, which is what this operation meant before anything else shared it.
-   * Each target owns an independent 1..N space inside its table - `StorySchemaField` has one per
-   * entity type; `Event` has one of its own inside `chapters`, because a chapter's index is
-   * narrative order and an event's is not; and `Stat` is stored zero-based even though this wire
-   * format consistently remains one-based.
-   */
-  reorderTarget: z.enum(['StorySchemaField', 'Event', 'Stat']).optional(),
-  // The closed set, and not `z.string()`: the column stores exactly these values, and an unknown type
-  // would only produce a query that finds nothing - silently.
-  schemaEntityType: z.enum(STORY_SCHEMA_ENTITY_TYPES).optional(),
-});
-export type StoryReorderingStoryUpdate = z.infer<typeof StoryReorderingStoryUpdateSchema>;
-
-// 8. Union type for every StoryUpdate operation
+// 6. Union type for every StoryUpdate operation
 export const StoryUpdateSchema = z.union([
   CreateStoryUpdateSchema,
   UpdateStoryUpdateSchema,
   DeleteStoryUpdateSchema,
-  ChapterReorderingStoryUpdateSchema,
-  StoryReorderingStoryUpdateSchema,
 ]);
 export type StoryUpdate = z.infer<typeof StoryUpdateSchema>;
 
-// 9. Schema for an array of StoryUpdates (what the server will receive)
+/**
+ * Validates ONE operation against the variant its own `type` selects. Same acceptance as `StoryUpdateSchema`, but the refusal names the exact field instead
+ * of dumping every union branch - it ends up in a conflict message the user may read. Shared so
+ * the client refuses locally exactly what the server would refuse, before it poisons a batch.
+ */
+export function safeParseStoryUpdate(
+  raw: unknown,
+): { success: true; data: StoryUpdate } | { success: false; error: string } {
+  const value = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const schema =
+    value.type === 'create'
+      ? CreateStoryUpdateSchema
+      : value.type === 'update'
+        ? UpdateStoryUpdateSchema
+        : value.type === 'delete'
+          ? DeleteStoryUpdateSchema
+          : null;
+  if (!schema) {
+    return { success: false, error: `Unknown operation type '${String(value.type)}'.` };
+  }
+  const parsed = schema.safeParse(raw);
+  if (parsed.success) return { success: true, data: parsed.data };
+  const issues = parsed.error.issues
+    .slice(0, 5)
+    .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`);
+  return { success: false, error: issues.join('; ') };
+}
+
+// 7. Schema for an array of StoryUpdates (what the server will receive)
 export const StoryUpdatesArraySchema = z.array(StoryUpdateSchema).max(MAX_SYNC_BATCH_SIZE);
 export type StoryUpdatesArray = z.infer<typeof StoryUpdatesArraySchema>;
 
@@ -210,6 +210,13 @@ export const SyncConflictReasonSchema = z.enum([
    * operation - it is informational only and does not open the conflict screen.
    */
   'limit_exceeded',
+  /**
+   * A create (or an edit of its identifying fields) names what a live row of another id already is:
+   * the same tag name, the same pair of related characters, the same entity's value for one field...
+   * Two devices made it offline. `serverEntity` is that existing row, and the client folds its own
+   * into it - nothing to ask unless their contents differ.
+   */
+  'duplicate',
   /** Any other failure while applying the operation. */
   'unknown',
 ]);
@@ -228,8 +235,17 @@ export const SyncConflictSchema = z.object({
   clientVersion: z.number().int().optional(),
   /** The entity's current version on the server. */
   serverVersion: z.number().int().optional(),
-  /** Current state of the entity on the server, so the screen can show the comparison. */
+  /**
+   * Current state of the entity on the server, so the screen can show the comparison. For a
+   * `duplicate`, the live row the operation would duplicate (its twin) instead.
+   */
   serverEntity: z.record(z.string(), z.any()).nullable().optional(),
+  /**
+   * Only for a `duplicate` of a row the server already holds (a restore, an edit of its identifying
+   * fields): that row as the server holds it - a tombstone the client returns to, or a live row it
+   * deletes as it folds into the twin.
+   */
+  ownEntity: z.record(z.string(), z.any()).nullable().optional(),
   /** What the client tried to write, so the screen can show the comparison. */
   attemptedChanges: z.record(z.string(), z.any()).optional(),
   /**
@@ -242,6 +258,12 @@ export const SyncConflictSchema = z.object({
    * always looks "different" from the new value, whether the server touched it or not.
    */
   changedFields: z.array(z.string()).optional(),
+  /**
+   * Only present for `reason: 'version_conflict'` on an `update` or `delete`: the server operation
+   * that last wrote the entity. A client already holding it has seen every change to the entity, so
+   * its base is behind only in version bookkeeping and its operation rebases with nothing to decide.
+   */
+  entityOperationVersion: z.number().int().optional(),
 });
 export type SyncConflict = z.infer<typeof SyncConflictSchema>;
 

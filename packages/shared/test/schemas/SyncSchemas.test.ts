@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ChapterReorderingStoryUpdateSchema,
   CreateStoryUpdateSchema,
   DeleteStoryUpdateSchema,
-  StoryReorderingStoryUpdateSchema,
   StoryUpdateSchema,
   StoryUpdatesArraySchema,
   SyncConflictSchema,
@@ -121,39 +119,16 @@ describe('StoryUpdateSchema', () => {
     );
   });
 
-  it('pins a chapter reorder to the Chapter entity and 1-based indices', () => {
-    const reorder = {
-      type: 'reorder' as const,
-      entity: 'Chapter' as const,
-      id: CHAPTER_ID,
-      reorderItems: [{ id: ulid('scene1'), newIndex: 1 }],
-    };
-
-    expect(ChapterReorderingStoryUpdateSchema.parse(reorder)).toMatchObject(reorder);
+  /** A place is a row's own rank, moved by an update: the protocol has no container order. */
+  it('has no container order', () => {
     expect(
-      ChapterReorderingStoryUpdateSchema.safeParse({
-        ...reorder,
-        reorderItems: [{ id: ulid('scene1'), newIndex: 0 }],
+      StoryUpdateSchema.safeParse({
+        type: 'reorder',
+        entity: 'Chapter',
+        id: CHAPTER_ID,
+        reorderItems: [{ id: ulid('scene1'), newIndex: 1 }],
       }).success,
     ).toBe(false);
-    expect(
-      ChapterReorderingStoryUpdateSchema.safeParse({ ...reorder, entity: 'Scene' }).success,
-    ).toBe(false);
-  });
-
-  it('accepts stats as a story-level reorder target', () => {
-    const reorder = {
-      type: 'reorder' as const,
-      entity: 'Story' as const,
-      id: STORY_ID,
-      reorderTarget: 'Stat' as const,
-      reorderItems: [
-        { id: ulid('stat1'), newIndex: 1 },
-        { id: ulid('stat2'), newIndex: 2 },
-      ],
-    };
-
-    expect(StoryReorderingStoryUpdateSchema.parse(reorder)).toMatchObject(reorder);
   });
 
   it('rejects an operation type outside the union', () => {

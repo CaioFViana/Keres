@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANK_FIELD_MAX, RankFieldSchema } from './RankSchemas';
 
 // PostgreSQL `integer` is the narrowest persistence target; keeping this bound in the shared
 // contract prevents a local SQLite value from becoming impossible to synchronize later.
@@ -43,6 +44,11 @@ export const SceneSchema = z.object({
   locationId: z.string().nullable(),
   name: z.string(),
   index: z.number(),
+  /**
+   * The scene's place among its chapter's scenes (see `rules/rank.ts`); `index` is derived from
+   * it. Defaulted for packages written before ranks: an empty rank takes the one its index implies.
+   */
+  rank: z.string().max(RANK_FIELD_MAX).default(''),
   summary: z.string().nullable(),
   // `.default(null)` like calendarDateOverrideCalendarId below: packages exported before the
   // Editor existed carry no `body` key and must still parse, with no format bump.
@@ -78,6 +84,9 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   // 1..N within the chapter, like the chapter index: it is what the API requires when reordering, and
   // accepting 0 here is what left creation and reordering with incompatible contracts.
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
+  // Optional, with no default: `.partial()` keeps defaults alive, and an update that says nothing
+  // about the place must not move the row. A create without one takes its index's legacy rank.
+  rank: RankFieldSchema.optional(),
   isFavorite: z.boolean().default(false),
   isStart: z.boolean().default(false),
   isFinish: z.boolean().default(false),

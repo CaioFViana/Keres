@@ -126,6 +126,7 @@ const unorderedPack: ShowcasePackDetail = {
         isRequired: false,
         defaultValue: null,
         order: 1,
+        rank: '',
         ...rowDates,
       },
       {
@@ -140,6 +141,7 @@ const unorderedPack: ShowcasePackDetail = {
         isRequired: false,
         defaultValue: null,
         order: 0,
+        rank: '',
         ...rowDates,
       },
     ],
@@ -152,6 +154,7 @@ const unorderedPack: ShowcasePackDetail = {
         name: 'Zulu',
         isPrimary: true,
         order: 1,
+        rank: '',
         ...rowDates,
       },
       {
@@ -160,6 +163,7 @@ const unorderedPack: ShowcasePackDetail = {
         name: 'Alpha',
         isPrimary: true,
         order: 0,
+        rank: '',
         ...rowDates,
       },
     ],

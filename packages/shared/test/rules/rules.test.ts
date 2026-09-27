@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isSameEntity, SELF_LINK_ERROR, sortEntityPair } from '../../rules/entityPair';
 import { scenesToUnflag } from '../../rules/linearStoryScenes';
-import {
-  buildReorderItems,
-  completeReorderProblem,
-  reorderIndicesProblem,
-} from '../../rules/reorderIndices';
+import { buildReorderItems } from '../../rules/reorderIndices';
 import { ownerOnlyFieldsIn, STORY_OWNER_ONLY_FIELDS } from '../../rules/storyOwnerFields';
 
 /**
@@ -51,59 +47,12 @@ describe('start and end scenes in a linear story', () => {
 });
 
 describe('reorder indices', () => {
-  it('accepts a contiguous 1..N', () => {
-    expect(reorderIndicesProblem([1, 2, 3])).toBeNull();
-    expect(reorderIndicesProblem([3, 1, 2])).toBeNull();
-  });
-
-  it('refuses a repeated index', () => {
-    expect(reorderIndicesProblem([1, 2, 2])).toContain('Duplicate');
-  });
-
-  it('refuses a list that does not start at 1', () => {
-    expect(reorderIndicesProblem([0, 1, 2])).toContain('sequential');
-    expect(reorderIndicesProblem([2, 3, 4])).toContain('sequential');
-  });
-
-  it('refuses a hole in the middle', () => {
-    expect(reorderIndicesProblem([1, 2, 4, 5])).toContain('sequential');
-  });
-
-  it('has nothing to complain about in an empty list', () => {
-    expect(reorderIndicesProblem([])).toBeNull();
-  });
-
-  /** The producer and the validator have to agree: that is the point of having both here. */
-  it('produces a list the validator itself accepts', () => {
-    const items = buildReorderItems(['x', 'y', 'z'], (id) => id);
-
-    expect(items).toEqual([
+  it('numbers a dragged list 1..N in its final order', () => {
+    expect(buildReorderItems(['x', 'y', 'z'], (id) => id)).toEqual([
       { id: 'x', newIndex: 1 },
       { id: 'y', newIndex: 2 },
       { id: 'z', newIndex: 3 },
     ]);
-    expect(reorderIndicesProblem(items.map((item) => item.newIndex))).toBeNull();
-  });
-
-  it('requires every expected ID exactly once as well as contiguous indices', () => {
-    expect(
-      completeReorderProblem(
-        ['a', 'b'],
-        [
-          { id: 'a', newIndex: 1 },
-          { id: 'b', newIndex: 2 },
-        ],
-      ),
-    ).toBeNull();
-    expect(
-      completeReorderProblem(
-        ['a'],
-        [
-          { id: 'a', newIndex: 1 },
-          { id: 'a', newIndex: 2 },
-        ],
-      ),
-    ).toContain('exactly once');
   });
 });
 

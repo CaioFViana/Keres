@@ -56,7 +56,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   Character: {
     documented: [
@@ -177,7 +177,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   Stat: {
     documented: ['name', 'isPrimary', 'createdAt', 'updatedAt'],
-    invisible: ['id', 'storyId', 'order', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'order', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   StatStrength: {
     documented: ['label', 'minValue', 'createdAt', 'updatedAt'],
@@ -354,7 +354,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   SeeAlsoRelation: {
     documented: ['entityAType', 'entityAId', 'entityBType', 'entityBId', 'createdAt', 'updatedAt'],
@@ -464,7 +464,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   Suggestion: {
     documented: ['type', 'value', 'createdAt', 'updatedAt'],

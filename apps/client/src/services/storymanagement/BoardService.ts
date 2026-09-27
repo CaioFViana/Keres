@@ -10,7 +10,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -36,16 +37,18 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
   const liveInStory = (storyId: string) =>
     and(eq(boards.storyId, storyId), eq(boards.isDeleted, false));
 
-  const logOperation = async (
-    currentUserId: string,
+  const userIdFor = (currentUserId: string, storyId: string) =>
+    getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+  /** Inside a unit. */
+  const logOperation = (
+    userIdToLog: string,
     storyId: string,
     type: 'create' | 'update' | 'delete',
     boardId: string,
     payload: Record<string, unknown>,
   ) => {
-    const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-    await recordLocalOperation(db, storyId, userIdToLog, type, 'Board', boardId, payload);
-    entityEventEmitter.emit('board_changed', storyId, boardId);
+    recordLocalOperationSync(db, storyId, userIdToLog, type, 'Board', boardId, payload);
   };
 
   return {
@@ -61,8 +64,13 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
       await assertStoryIsWritable(db, data.storyId);
       const content = validateBoardContent(data.content ?? { nodes: [], edges: [] });
       const board = prepareNewEntityData<BoardInsert>({ ...data, content });
-      const result = await db.insert(boards).values(board).returning().get();
-      await logOperation(currentUserId, board.storyId, 'create', board.id, { ...result });
+      const userIdToLog = await userIdFor(currentUserId, board.storyId);
+      const result = await runLocalWrite(db, board.storyId, () => {
+        const inserted = db.insert(boards).values(board).returning().get();
+        logOperation(userIdToLog, board.storyId, 'create', board.id, { ...inserted });
+        return inserted;
+      });
+      entityEventEmitter.emit('board_changed', board.storyId, board.id);
       return result;
     },
 
@@ -82,25 +90,30 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
       delete changed.updatedAt;
       if (Object.keys(changed).length === 0) return original;
 
-      await db
-        .update(boards)
-        .set({ ...normalised, updatedAt: new Date(), version: sql`${boards.version} + 1` })
-        .where(eq(boards.id, boardId));
+      const userIdToLog = await userIdFor(currentUserId, original.storyId);
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        db.update(boards)
+          .set({ ...normalised, updatedAt: new Date(), version: sql`${boards.version} + 1` })
+          .where(eq(boards.id, boardId))
+          .run();
 
-      const updated = await db.query.boards.findFirst({ where: eq(boards.id, boardId) });
-      if (!updated) throw new Error(`Failed to retrieve updated Board ${boardId}.`);
+        const row = db.select().from(boards).where(eq(boards.id, boardId)).get();
+        if (!row) throw new Error(`Failed to retrieve updated Board ${boardId}.`);
 
-      const operationChanges = getChangedFields(original, updated);
-      // `content` is one validated document on the wire, not a patchable object. The generic
-      // diff descends into objects and would turn a change to it into a fragment such as
-      // `{ content: { nodes: [...] } }`, omitting the required `edges` array. Besides being
-      // rejected by the server, that left the original create queued beside the refused update.
-      // Always record the complete document when it changed.
-      if (operationChanges.content !== undefined) {
-        operationChanges.content = updated.content;
-      }
+        const operationChanges = getChangedFields(original, row);
+        // `content` is one validated document on the wire, not a patchable object. The generic
+        // diff descends into objects and would turn a change to it into a fragment such as
+        // `{ content: { nodes: [...] } }`, omitting the required `edges` array. Besides being
+        // rejected by the server, that left the original create queued beside the refused update.
+        // Always record the complete document when it changed.
+        if (operationChanges.content !== undefined) {
+          operationChanges.content = row.content;
+        }
 
-      await logOperation(currentUserId, updated.storyId, 'update', boardId, operationChanges);
+        logOperation(userIdToLog, row.storyId, 'update', boardId, operationChanges);
+        return row;
+      });
+      entityEventEmitter.emit('board_changed', updated.storyId, boardId);
       return updated;
     },
 
@@ -112,29 +125,35 @@ export const createBoardService = (db: AppDrizzleClient): BoardService => {
       }
       await assertStoryIsWritable(db, original.storyId);
 
-      const [updated] = await db
-        .update(boards)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${boards.version} + 1`,
-        })
-        .where(eq(boards.id, boardId))
-        .returning({
-          id: boards.id,
-          storyId: boards.storyId,
-          isDeleted: boards.isDeleted,
-          version: boards.version,
+      const userIdToLog = await userIdFor(currentUserId, original.storyId);
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const deleted = db
+          .update(boards)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${boards.version} + 1`,
+          })
+          .where(eq(boards.id, boardId))
+          .returning({
+            id: boards.id,
+            storyId: boards.storyId,
+            isDeleted: boards.isDeleted,
+            version: boards.version,
+          })
+          .get();
+
+        if (!deleted) throw new Error(`Failed to delete board ${boardId}.`);
+
+        logOperation(userIdToLog, deleted.storyId, 'delete', boardId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
         });
-
-      if (!updated) throw new Error(`Failed to delete board ${boardId}.`);
-
-      await logOperation(currentUserId, updated.storyId, 'delete', boardId, {
-        id: updated.id,
-        isDeleted: updated.isDeleted,
-        version: updated.version,
+        return deleted;
       });
+      entityEventEmitter.emit('board_changed', updated.storyId, boardId);
     },
   };
 };

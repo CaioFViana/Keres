@@ -12,7 +12,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
@@ -233,7 +234,20 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       let newNote = prepareNewEntityData<NoteInsert>(noteData);
       const favorite = await normalizeFavoriteCreate(db, newNote.storyId, 'Note', newNote);
       newNote = favorite.data;
-      const result = await db.insert(notes).values(newNote).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newNote.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newNote.storyId, () => {
+        const inserted = db.insert(notes).values(newNote).returning().get();
+        recordLocalOperationSync(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, {
+          ...inserted,
+        });
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newNote.storyId,
@@ -242,16 +256,6 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         currentUserId,
         favorite.individualFavorite,
       );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newNote.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(db, newNote.storyId, userIdToLog, 'create', 'Note', newNote.id, {
-        ...result,
-      });
       entityEventEmitter.emit('note_changed', newNote.storyId, newNote.id);
 
       return result;
@@ -296,27 +300,31 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
         return; // Return early if no significant changes
       }
 
-      const [updatedNote] = await db
-        .update(notes)
-        .set({ ...noteData, updatedAt: new Date(), version: sql`${notes.version} + 1` })
-        .where(eq(notes.id, noteId))
-        .returning({ id: notes.id, storyId: notes.storyId, version: notes.version });
-
-      if (!updatedNote) {
-        throw new Error(`Failed to update note ${noteId} or note not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedNote.storyId,
+        originalNote.storyId,
         currentUserId,
       );
-      // Log the diff already computed above, not the raw `noteData` input - the input has
-      // every field the form sends, changed or not.
-      await recordLocalOperation(db, updatedNote.storyId, userIdToLog, 'update', 'Note', noteId, {
-        ...changes,
-        version: updatedNote.version,
+      const updatedNote = await runLocalWrite(db, originalNote.storyId, () => {
+        const updated = db
+          .update(notes)
+          .set({ ...noteData, updatedAt: new Date(), version: sql`${notes.version} + 1` })
+          .where(eq(notes.id, noteId))
+          .returning({ id: notes.id, storyId: notes.storyId, version: notes.version })
+          .get();
+
+        if (!updated) {
+          throw new Error(`Failed to update note ${noteId} or note not found.`);
+        }
+
+        // Log the diff already computed above, not the raw `noteData` input - the input has
+        // every field the form sends, changed or not.
+        recordLocalOperationSync(db, updated.storyId, userIdToLog, 'update', 'Note', noteId, {
+          ...changes,
+          version: updated.version,
+        });
+        return updated;
       });
       entityEventEmitter.emit('note_changed', updatedNote.storyId, updatedNote.id);
     },
@@ -329,36 +337,40 @@ export const createNoteService = (db: AppDrizzleClient): NoteService => {
       }
       await assertStoryIsWritable(db, noteToDelete.storyId);
 
-      const [updatedNote] = await db
-        .update(notes)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${notes.version} + 1`,
-        })
-        .where(eq(notes.id, noteId))
-        .returning({
-          id: notes.id,
-          storyId: notes.storyId,
-          isDeleted: notes.isDeleted,
-          version: notes.version,
-        });
-
-      if (!updatedNote) {
-        throw new Error(`Failed to delete note ${noteId} or note not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedNote.storyId,
+        noteToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, updatedNote.storyId, userIdToLog, 'delete', 'Note', noteId, {
-        id: updatedNote.id,
-        isDeleted: updatedNote.isDeleted,
-        version: updatedNote.version,
+      const updatedNote = await runLocalWrite(db, noteToDelete.storyId, () => {
+        const deleted = db
+          .update(notes)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${notes.version} + 1`,
+          })
+          .where(eq(notes.id, noteId))
+          .returning({
+            id: notes.id,
+            storyId: notes.storyId,
+            isDeleted: notes.isDeleted,
+            version: notes.version,
+          })
+          .get();
+
+        if (!deleted) {
+          throw new Error(`Failed to delete note ${noteId} or note not found.`);
+        }
+
+        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Note', noteId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
       });
       entityEventEmitter.emit('note_changed', updatedNote.storyId, updatedNote.id);
     },

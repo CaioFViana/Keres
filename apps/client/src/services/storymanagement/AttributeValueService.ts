@@ -9,7 +9,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -82,70 +83,111 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
         return;
       }
 
-      const existingRows = await db
+      // Tombstones too: (entityId, fieldId) is unique across deleted rows, so a value set again
+      // after its field's values were removed must revive the old row, not insert a second one.
+      const rows = await db
         .select()
         .from(attributeValues)
-        .where(and(eq(attributeValues.entityId, entityId), eq(attributeValues.isDeleted, false)))
+        .where(eq(attributeValues.entityId, entityId))
         .all();
-      const existingByFieldId = new Map(existingRows.map((row) => [row.fieldId, row]));
+      const existingByFieldId = new Map(
+        rows.filter((row) => !row.isDeleted).map((row) => [row.fieldId, row]),
+      );
+      const tombstoneByFieldId = new Map(
+        rows.filter((row) => row.isDeleted).map((row) => [row.fieldId, row]),
+      );
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      let changed = false;
 
-      for (const fieldId of fieldIds) {
-        const rawValue = values[fieldId];
-        const existing = existingByFieldId.get(fieldId);
+      const changed = await runLocalWrite(db, storyId, () => {
+        let anyChanged = false;
+        for (const fieldId of fieldIds) {
+          const rawValue = values[fieldId];
+          const existing = existingByFieldId.get(fieldId);
 
-        if (existing) {
-          if (existing.value === rawValue) {
-            continue;
-          }
-          const [updated] = await db
-            .update(attributeValues)
-            .set({
+          if (existing) {
+            if (existing.value === rawValue) {
+              continue;
+            }
+            const updated = db
+              .update(attributeValues)
+              .set({
+                value: rawValue,
+                updatedAt: new Date(),
+                version: sql`${attributeValues.version} + 1`,
+              })
+              .where(eq(attributeValues.id, existing.id))
+              .returning({ id: attributeValues.id, version: attributeValues.version })
+              .get();
+            if (!updated) {
+              continue;
+            }
+            recordLocalOperationSync(
+              db,
+              storyId,
+              userIdToLog,
+              'update',
+              'AttributeValue',
+              existing.id,
+              {
+                value: rawValue,
+                version: updated.version,
+              },
+            );
+            anyChanged = true;
+          } else if (rawValue !== null && rawValue !== '') {
+            const tombstone = tombstoneByFieldId.get(fieldId);
+            if (tombstone) {
+              const revived = db
+                .update(attributeValues)
+                .set({
+                  value: rawValue,
+                  isDeleted: false,
+                  deletedAt: null,
+                  updatedAt: new Date(),
+                  version: sql`${attributeValues.version} + 1`,
+                })
+                .where(eq(attributeValues.id, tombstone.id))
+                .returning({ id: attributeValues.id, version: attributeValues.version })
+                .get();
+              if (!revived) {
+                continue;
+              }
+              // isDeleted: false on a deleted row is what the server applies as a restore.
+              recordLocalOperationSync(
+                db,
+                storyId,
+                userIdToLog,
+                'update',
+                'AttributeValue',
+                tombstone.id,
+                { value: rawValue, isDeleted: false, version: revived.version },
+              );
+              anyChanged = true;
+              continue;
+            }
+            const newRow = prepareNewEntityData<AttributeValueInsert>({
+              storyId,
+              entityType,
+              entityId,
+              fieldId,
               value: rawValue,
-              updatedAt: new Date(),
-              version: sql`${attributeValues.version} + 1`,
-            })
-            .where(eq(attributeValues.id, existing.id))
-            .returning({ id: attributeValues.id, version: attributeValues.version });
-          if (!updated) {
-            continue;
+            });
+            const result = db.insert(attributeValues).values(newRow).returning().get();
+            recordLocalOperationSync(
+              db,
+              storyId,
+              userIdToLog,
+              'create',
+              'AttributeValue',
+              newRow.id,
+              { ...result },
+            );
+            anyChanged = true;
           }
-          await recordLocalOperation(
-            db,
-            storyId,
-            userIdToLog,
-            'update',
-            'AttributeValue',
-            existing.id,
-            {
-              value: rawValue,
-              version: updated.version,
-            },
-          );
-          changed = true;
-        } else if (rawValue !== null && rawValue !== '') {
-          const newRow = prepareNewEntityData<AttributeValueInsert>({
-            storyId,
-            entityType,
-            entityId,
-            fieldId,
-            value: rawValue,
-          });
-          const result = await db.insert(attributeValues).values(newRow).returning().get();
-          await recordLocalOperation(
-            db,
-            storyId,
-            userIdToLog,
-            'create',
-            'AttributeValue',
-            newRow.id,
-            { ...result },
-          );
-          changed = true;
         }
-      }
+        return anyChanged;
+      });
 
       if (changed) {
         entityEventEmitter.emit('attribute_value_changed', storyId, entityId);
@@ -169,24 +211,32 @@ export const createAttributeValueService = (db: AppDrizzleClient): AttributeValu
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
       const now = new Date();
-      for (const value of values) {
-        const [updated] = await db
-          .update(attributeValues)
-          .set({
+      const deletedEntityIds = await runLocalWrite(db, storyId, () => {
+        const entityIds: string[] = [];
+        for (const value of values) {
+          const updated = db
+            .update(attributeValues)
+            .set({
+              isDeleted: true,
+              deletedAt: now,
+              updatedAt: now,
+              version: sql`${attributeValues.version} + 1`,
+            })
+            .where(eq(attributeValues.id, value.id))
+            .returning({ id: attributeValues.id, version: attributeValues.version })
+            .get();
+          if (!updated) continue;
+          recordLocalOperationSync(db, storyId, userIdToLog, 'delete', 'AttributeValue', value.id, {
+            id: value.id,
             isDeleted: true,
-            deletedAt: now,
-            updatedAt: now,
-            version: sql`${attributeValues.version} + 1`,
-          })
-          .where(eq(attributeValues.id, value.id))
-          .returning({ id: attributeValues.id, version: attributeValues.version });
-        if (!updated) continue;
-        await recordLocalOperation(db, storyId, userIdToLog, 'delete', 'AttributeValue', value.id, {
-          id: value.id,
-          isDeleted: true,
-          version: updated.version,
-        });
-        entityEventEmitter.emit('attribute_value_changed', storyId, value.entityId);
+            version: updated.version,
+          });
+          entityIds.push(value.entityId);
+        }
+        return entityIds;
+      });
+      for (const entityId of deletedEntityIds) {
+        entityEventEmitter.emit('attribute_value_changed', storyId, entityId);
       }
       return values.length;
     },

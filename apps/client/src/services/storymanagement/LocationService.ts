@@ -9,7 +9,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
@@ -195,7 +196,26 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         newLocation,
       );
       newLocation = favorite.data;
-      const result = await db.insert(locations).values(newLocation).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newLocation.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newLocation.storyId, () => {
+        const inserted = db.insert(locations).values(newLocation).returning().get();
+        recordLocalOperationSync(
+          db,
+          newLocation.storyId,
+          userIdToLog,
+          'create',
+          'Location',
+          newLocation.id,
+          { ...inserted },
+        );
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newLocation.storyId,
@@ -203,22 +223,6 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         'Location',
         currentUserId,
         favorite.individualFavorite,
-      );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newLocation.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newLocation.storyId,
-        userIdToLog,
-        'create',
-        'Location',
-        newLocation.id,
-        { ...result },
       );
       entityEventEmitter.emit('location_changed', newLocation.storyId, newLocation.id);
 
@@ -258,36 +262,32 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
         return oldLocation;
       }
 
-      await db
-        .update(locations)
-        .set({ ...updatedFields, updatedAt: new Date(), version: sql`${locations.version} + 1` })
-        .where(eq(locations.id, locationId))
-        .run();
-
-      const updatedLocation = await db.query.locations.findFirst({
-        where: eq(locations.id, locationId),
-      });
-      if (!updatedLocation) {
-        throw new Error(`Failed to retrieve updated location ${locationId}.`);
-      }
-
-      const changedFields = getChangedFields(oldLocation, updatedLocation);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedLocation.storyId,
+        oldLocation.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedLocation.storyId,
-        userIdToLog,
-        'update',
-        'Location',
-        locationId,
-        changedFields,
-      );
+      const updatedLocation = await runLocalWrite(db, oldLocation.storyId, () => {
+        db.update(locations)
+          .set({ ...updatedFields, updatedAt: new Date(), version: sql`${locations.version} + 1` })
+          .where(eq(locations.id, locationId))
+          .run();
+        const updated = db.select().from(locations).where(eq(locations.id, locationId)).get();
+        if (!updated) {
+          throw new Error(`Failed to retrieve updated location ${locationId}.`);
+        }
+        recordLocalOperationSync(
+          db,
+          updated.storyId,
+          userIdToLog,
+          'update',
+          'Location',
+          locationId,
+          getChangedFields(oldLocation, updated),
+        );
+        return updated;
+      });
       entityEventEmitter.emit('location_changed', updatedLocation.storyId, updatedLocation.id);
 
       return updatedLocation;
@@ -303,100 +303,107 @@ export const createLocationService = (db: AppDrizzleClient): LocationService => 
       }
       await assertStoryIsWritable(db, locationToDelete.storyId);
 
-      const [updatedLocation] = await db
-        .update(locations)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${locations.version} + 1`,
-        })
-        .where(eq(locations.id, locationId))
-        .returning({
-          id: locations.id,
-          storyId: locations.storyId,
-          isDeleted: locations.isDeleted,
-          version: locations.version,
-        });
-
-      if (!updatedLocation) {
-        throw new Error(`Failed to delete location ${locationId} or location not found.`);
-      }
-
-      const changedFields = {
-        id: updatedLocation.id,
-        isDeleted: updatedLocation.isDeleted,
-        version: updatedLocation.version,
-      };
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedLocation.storyId,
+        locationToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
+
+      const { updatedLocation, cascadedRelations } = await runLocalWrite(
         db,
-        updatedLocation.storyId,
-        userIdToLog,
-        'delete',
-        'Location',
-        locationId,
-        changedFields,
+        locationToDelete.storyId,
+        () => {
+          const deleted = db
+            .update(locations)
+            .set({
+              isDeleted: true,
+              deletedAt: new Date(),
+              updatedAt: new Date(),
+              version: sql`${locations.version} + 1`,
+            })
+            .where(eq(locations.id, locationId))
+            .returning({
+              id: locations.id,
+              storyId: locations.storyId,
+              isDeleted: locations.isDeleted,
+              version: locations.version,
+            })
+            .get();
+
+          if (!deleted) {
+            throw new Error(`Failed to delete location ${locationId} or location not found.`);
+          }
+
+          recordLocalOperationSync(
+            db,
+            deleted.storyId,
+            userIdToLog,
+            'delete',
+            'Location',
+            locationId,
+            {
+              id: deleted.id,
+              isDeleted: deleted.isDeleted,
+              version: deleted.version,
+            },
+          );
+
+          // A cascade: a LocationRelation pointing at a deleted Location has nowhere to
+          // navigate - unlike the other reverse relations in this file (LocationCharacterManager
+          // etc.), which are left orphaned inertly without a problem. Each relation needs its OWN
+          // operation recorded (not a direct SQL mutation) so that other devices' pull
+          // learns of the deletion - the same reason as the AttributeValue cascade in StorySchemaFieldService.
+          const liveRelations = db
+            .select({ id: locationRelations.id, version: locationRelations.version })
+            .from(locationRelations)
+            .where(
+              and(
+                eq(locationRelations.isDeleted, false),
+                or(
+                  eq(locationRelations.locationAId, locationId),
+                  eq(locationRelations.locationBId, locationId),
+                ),
+              ),
+            )
+            .all();
+
+          for (const relation of liveRelations) {
+            const updatedRelation = db
+              .update(locationRelations)
+              .set({
+                isDeleted: true,
+                deletedAt: new Date(),
+                updatedAt: new Date(),
+                version: sql`${locationRelations.version} + 1`,
+              })
+              .where(eq(locationRelations.id, relation.id))
+              .returning({ id: locationRelations.id, version: locationRelations.version })
+              .get();
+
+            if (!updatedRelation) {
+              continue;
+            }
+
+            recordLocalOperationSync(
+              db,
+              deleted.storyId,
+              userIdToLog,
+              'delete',
+              'LocationRelation',
+              relation.id,
+              {
+                id: relation.id,
+                isDeleted: true,
+                version: updatedRelation.version,
+              },
+            );
+          }
+          return { updatedLocation: deleted, cascadedRelations: liveRelations.length };
+        },
       );
       entityEventEmitter.emit('location_changed', updatedLocation.storyId, updatedLocation.id);
-
-      // A cascade: a LocationRelation pointing at a deleted Location has nowhere to
-      // navigate - unlike the other reverse relations in this file (LocationCharacterManager
-      // etc.), which are left orphaned inertly without a problem. Each relation needs its OWN
-      // operation recorded (not a direct SQL mutation) so that other devices' pull
-      // learns of the deletion - the same reason as the AttributeValue cascade in StorySchemaFieldService.
-      const liveRelations = await db
-        .select({ id: locationRelations.id, version: locationRelations.version })
-        .from(locationRelations)
-        .where(
-          and(
-            eq(locationRelations.isDeleted, false),
-            or(
-              eq(locationRelations.locationAId, locationId),
-              eq(locationRelations.locationBId, locationId),
-            ),
-          ),
-        )
-        .all();
-
-      for (const relation of liveRelations) {
-        const [updatedRelation] = await db
-          .update(locationRelations)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${locationRelations.version} + 1`,
-          })
-          .where(eq(locationRelations.id, relation.id))
-          .returning({ id: locationRelations.id, version: locationRelations.version });
-
-        if (!updatedRelation) {
-          continue;
-        }
-
-        await recordLocalOperation(
-          db,
-          updatedLocation.storyId,
-          userIdToLog,
-          'delete',
-          'LocationRelation',
-          relation.id,
-          {
-            id: relation.id,
-            isDeleted: true,
-            version: updatedRelation.version,
-          },
-        );
-      }
-
-      if (liveRelations.length > 0) {
+      if (cascadedRelations > 0) {
         entityEventEmitter.emit('location_relation_changed', updatedLocation.storyId, locationId);
       }
     },

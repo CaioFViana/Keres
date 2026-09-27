@@ -483,7 +483,7 @@
   "conflict_reason_edited_on_server": "Você excluiu este(a) {{entity}} offline, mas ele(a) foi editado(a) no servidor nesse meio-tempo.",
   "conflict_reason_limit_exceeded": "Seu plano não permite mais {{entity}} no momento. Libere espaço, exclua outra coisa ou faça upgrade do plano, depois tente de novo.",
   "conflict_reason_not_found": "Este(a) {{entity}} não existe mais no servidor. Manter a sua versão vai recriá-lo(a) lá.",
-  "conflict_reason_referenced_entity_deleted": "Esta alteração aponta para outra coisa (um personagem, cena, item...) que foi excluída no servidor. Manter a sua versão não vai funcionar até isso ser resolvido.",
+  "conflict_reason_referenced_entity_deleted": "Esta alteração aponta para outra coisa (um personagem, cena, item...) que foi excluída em outro dispositivo. Ela não pode mais ser salva: descarte-a e, se quiser, refaça a partir do que existe agora.",
   "conflict_reason_unauthorized": "O servidor recusou esta alteração: você não tem permissão para fazê-la.",
   "conflict_reason_unknown": "O servidor não conseguiu aplicar esta alteração.",
   "conflict_reason_validation": "O servidor recusou esta alteração porque os dados não são válidos.",

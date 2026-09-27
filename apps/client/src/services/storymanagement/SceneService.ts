@@ -1,18 +1,25 @@
-import { completeReorderProblem, type Scene } from '@keres/shared';
+import type { Scene } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { SceneInsert, SceneSelect } from '../../db/schema';
-import { chapters, scenes } from '../../db/schema';
+import { chapters, scenes, stories } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import {
+  arrangedRowsSync,
+  planContainerOrderSync,
+  planPlacementSync,
+  writeRankChangesSync,
+} from './arrangedWrites';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import type { FavoriteFilterState } from '../../types/entityFilters';
@@ -59,6 +66,12 @@ export interface SceneService {
     chapterId: string,
     newOrder: { id: string; newIndex: number }[],
   ): Promise<void>;
+  /** Several chapters' orders as one write: all of them, or none. */
+  reorderScenesInChapters(
+    currentUserId: string,
+    storyId: string,
+    orders: { chapterId: string; newOrder: { id: string; newIndex: number }[] }[],
+  ): Promise<void>;
   batchUpdateScenes(
     currentUserId: string,
     storyId: string,
@@ -75,74 +88,100 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
   const serverService = createServerService(db);
 
   /**
-   * A scene's index is 1..N **within the chapter**, with no holes - the same convention as the chapters,
-   * and the only one the API accepts when reordering (it refuses a reorder whose lowest index is not 1 or
-   * which does not end at N).
+   * A scene shows under its chapter only while the chapter lives. Deleting a chapter - here, or on
+   * another device while this one placed a scene in it - leaves its scenes pointing at a
+   * tombstone: they read as unchaptered instead of vanishing, on every device alike, and return
+   * under the chapter if it is restored. Nothing is written - the stored chapter stays the one the
+   * server holds, until the user moves the scene.
    */
-  const nextIndexInChapter = async (storyId: string, chapterId: string | null): Promise<number> => {
-    const siblings = await db
-      .select({ index: scenes.index })
-      .from(scenes)
-      .where(
-        and(
-          eq(scenes.storyId, storyId),
-          chapterId ? eq(scenes.chapterId, chapterId) : isNull(scenes.chapterId),
-          eq(scenes.isDeleted, false),
-        ),
-      )
-      .all();
-    return siblings.reduce((highest, scene) => Math.max(highest, scene.index), 0) + 1;
+  const withLiveChapters = async <T extends SceneSelect | undefined>(rows: T[]): Promise<T[]> => {
+    const chapterIds = [...new Set(rows.flatMap((row) => (row?.chapterId ? [row.chapterId] : [])))];
+    if (chapterIds.length === 0) return rows;
+    const live = new Set(
+      (
+        await db
+          .select({ id: chapters.id })
+          .from(chapters)
+          .where(and(inArray(chapters.id, chapterIds), eq(chapters.isDeleted, false)))
+          .all()
+      ).map((chapter) => chapter.id),
+    );
+    return rows.map((row) =>
+      row?.chapterId && !live.has(row.chapterId) ? ({ ...row, chapterId: null } as T) : row,
+    );
   };
 
   /**
-   * Renumbers a chapter's live scenes to 1..N, preserving the current order.
-   *
-   * Called when a scene leaves the chapter (deleted or moved): without it a hole is left in the
-   * numbering, and one hole is enough to make the next reorder a validation conflict on the server. It
-   * lives in the service, and not in the screen that moves the scene, because import and automatic
-   * correction come through here too.
+   * A linear story has at most one start and one finish scene: the scene taking a flag takes it
+   * from the others here, each one's loss recorded as its own edit. Every row an operation changes
+   * is recorded, so no device learns of it any other way - the server never touches rows besides
+   * the one an operation names.
    */
-  const renumberChapterScenes = async (
+  const takeStartFinishSync = (
     storyId: string,
-    chapterId: string | null,
+    sceneId: string,
+    flags: { isStart?: boolean | null; isFinish?: boolean | null },
     userIdToLog: string,
-  ): Promise<void> => {
-    if (!chapterId) return;
-    const living = await db
-      .select({ id: scenes.id, index: scenes.index, createdAt: scenes.createdAt })
-      .from(scenes)
-      .where(
-        and(
-          eq(scenes.storyId, storyId),
-          eq(scenes.chapterId, chapterId),
-          eq(scenes.isDeleted, false),
-        ),
-      )
-      .all();
-
-    const ordered = [...living].sort(
-      (a, b) =>
-        a.index - b.index ||
-        a.createdAt.getTime() - b.createdAt.getTime() ||
-        a.id.localeCompare(b.id),
-    );
-
-    for (const [position, scene] of ordered.entries()) {
-      const newIndex = position + 1;
-      if (scene.index === newIndex) continue;
-      const [updated] = await db
-        .update(scenes)
-        .set({ index: newIndex, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-        .where(eq(scenes.id, scene.id))
-        .returning({ version: scenes.version });
-      // One `update` per scene, rather than a chapter `reorder`: the operation has to stand on its own,
-      // without depending on the server having already applied the deletion or the chapter change that
-      // prompted it.
-      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Scene', scene.id, {
-        index: newIndex,
-        version: updated?.version,
-      });
+  ): void => {
+    const story = db
+      .select({ type: stories.type })
+      .from(stories)
+      .where(eq(stories.id, storyId))
+      .get();
+    if (story?.type !== 'linear') return;
+    for (const flag of ['isStart', 'isFinish'] as const) {
+      if (flags[flag] !== true) continue;
+      const holders = db
+        .select({ id: scenes.id })
+        .from(scenes)
+        .where(
+          and(
+            eq(scenes.storyId, storyId),
+            eq(scenes.isDeleted, false),
+            eq(scenes[flag], true),
+            ne(scenes.id, sceneId),
+          ),
+        )
+        .all();
+      for (const holder of holders) {
+        const row = db
+          .update(scenes)
+          .set({ [flag]: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
+          .where(eq(scenes.id, holder.id))
+          .returning({ version: scenes.version })
+          .get();
+        if (!row) continue;
+        recordLocalOperationSync(db, storyId, userIdToLog, 'update', 'Scene', holder.id, {
+          [flag]: false,
+          version: row.version,
+        });
+      }
     }
+  };
+
+  /**
+   * Chapters' orders as one unit: each chapter's scenes take the ranks that put them in the given
+   * order - only the scenes that actually moved are edited. An order naming a scene no longer in
+   * the chapter (a list gone stale) still lands on the scenes that are there.
+   */
+  const reorderInChapters: SceneService['reorderScenesInChapters'] = async (
+    currentUserId,
+    storyId,
+    orders,
+  ) => {
+    if (orders.length === 0) return;
+    await assertStoryIsWritable(db, storyId);
+    const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+    await runLocalWrite(db, storyId, () => {
+      for (const { chapterId, newOrder } of orders) {
+        const orderedIds = [...newOrder]
+          .sort((left, right) => left.newIndex - right.newIndex)
+          .map((item) => item.id);
+        const changes = planContainerOrderSync(db, 'Scene', storyId, { chapterId }, orderedIds);
+        writeRankChangesSync(db, storyId, userIdToLog, 'Scene', changes);
+      }
+    });
+    entityEventEmitter.emit('scene_changed', storyId, 'reorder');
   };
 
   return {
@@ -215,14 +254,15 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         query = query.orderBy(asc(scenes.index)); // Default sort by index
       }
 
-      return query.all();
+      return withLiveChapters(await query.all());
     },
 
     async getById(sceneId: string): Promise<SceneSelect | undefined> {
       const scene = await db.query.scenes.findFirst({
         where: and(eq(scenes.id, sceneId), eq(scenes.isDeleted, false)),
       });
-      return decorateFavorite(db, 'Scene', scene);
+      const [shown] = await withLiveChapters([scene]);
+      return decorateFavorite(db, 'Scene', shown);
     },
 
     async createScene(
@@ -230,13 +270,49 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       sceneData: Omit<Create<SceneInsert>, 'index'>,
     ): Promise<SceneSelect> {
       await assertStoryIsWritable(db, sceneData.storyId);
-      let newScene = prepareNewEntityData<SceneInsert>({
-        ...sceneData,
-        index: await nextIndexInChapter(sceneData.storyId, sceneData.chapterId ?? null),
-      });
+      let newScene = prepareNewEntityData<SceneInsert>({ ...sceneData, index: 1, rank: '' });
       const favorite = await normalizeFavoriteCreate(db, newScene.storyId, 'Scene', newScene);
       newScene = favorite.data;
-      const result = await db.insert(scenes).values(newScene).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newScene.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newScene.storyId, () => {
+        // A new scene enters at the end of its chapter; the database numbers it from its rank.
+        const container = { chapterId: newScene.chapterId ?? null };
+        const placement = planPlacementSync(db, 'Scene', newScene.storyId, container, newScene.id);
+        db.insert(scenes)
+          .values({
+            ...newScene,
+            rank: placement.get(newScene.id)!,
+            index: arrangedRowsSync(db, 'Scene', newScene.storyId, container).length + 1,
+          })
+          .run();
+        // Recorded as the database holds it: its number already derived from its rank.
+        const inserted = db.select().from(scenes).where(eq(scenes.id, newScene.id)).get()!;
+        recordLocalOperationSync(
+          db,
+          newScene.storyId,
+          userIdToLog,
+          'create',
+          'Scene',
+          newScene.id,
+          { ...inserted },
+        );
+        writeRankChangesSync(
+          db,
+          newScene.storyId,
+          userIdToLog,
+          'Scene',
+          placement,
+          new Set([newScene.id]),
+        );
+        takeStartFinishSync(newScene.storyId, newScene.id, newScene, userIdToLog);
+        return db.select().from(scenes).where(eq(scenes.id, newScene.id)).get()!;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newScene.storyId,
@@ -244,22 +320,6 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         'Scene',
         currentUserId,
         favorite.individualFavorite,
-      );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newScene.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newScene.storyId,
-        userIdToLog,
-        'create',
-        'Scene',
-        newScene.id,
-        { ...result },
       );
       entityEventEmitter.emit('scene_changed', newScene.storyId, newScene.id);
 
@@ -290,18 +350,13 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         sceneData,
       );
 
-      // Changing chapter means changing queue: the scene enters at the end of the new one and the hole it
-      // leaves in the old one is closed just below. Here, and not on the form screen, so that any path that
-      // moves a scene keeps both numberings intact.
+      // A place is the scene's rank, and its number derives from it: neither is set by a form.
+      const { index: _index, rank: _rank, ...placeless } = sceneData;
+      sceneData = placeless;
+      // Changing chapter means changing queue: the scene enters at the end of the new one (the
+      // rank is taken inside the write below), and the old one closes its gap by itself.
       const chapterChanging =
         sceneData.chapterId !== undefined && sceneData.chapterId !== originalScene.chapterId;
-      const movedFromChapterId = chapterChanging ? originalScene.chapterId : null;
-      if (chapterChanging && sceneData.chapterId) {
-        sceneData = {
-          ...sceneData,
-          index: await nextIndexInChapter(originalScene.storyId, sceneData.chapterId),
-        };
-      }
 
       const potentialNewState = { ...originalScene, ...sceneData };
 
@@ -316,36 +371,56 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         return originalScene;
       }
 
-      await db
-        .update(scenes)
-        .set({ ...sceneData, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-        .where(eq(scenes.id, sceneId));
-
-      const updatedScene = await db.query.scenes.findFirst({ where: eq(scenes.id, sceneId) });
-      if (!updatedScene) {
-        throw new Error(`Failed to retrieve updated scene ${sceneId}.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedScene.storyId,
+        originalScene.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedScene.storyId,
-        userIdToLog,
-        'update',
-        'Scene',
-        sceneId,
-        getChangedFields(originalScene, updatedScene),
-      );
-      entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
+      const updatedScene = await runLocalWrite(db, originalScene.storyId, () => {
+        const placement = chapterChanging
+          ? planPlacementSync(
+              db,
+              'Scene',
+              originalScene.storyId,
+              { chapterId: sceneData.chapterId ?? null },
+              sceneId,
+            )
+          : undefined;
+        db.update(scenes)
+          .set({
+            ...sceneData,
+            ...(placement ? { rank: placement.get(sceneId)! } : {}),
+            updatedAt: new Date(),
+            version: sql`${scenes.version} + 1`,
+          })
+          .where(eq(scenes.id, sceneId))
+          .run();
 
-      if (movedFromChapterId) {
-        await renumberChapterScenes(updatedScene.storyId, movedFromChapterId, userIdToLog);
-      }
+        const updated = db.select().from(scenes).where(eq(scenes.id, sceneId)).get();
+        if (!updated) {
+          throw new Error(`Failed to retrieve updated scene ${sceneId}.`);
+        }
+        recordLocalOperationSync(db, updated.storyId, userIdToLog, 'update', 'Scene', sceneId, {
+          ...getChangedFields(originalScene, updated),
+          // A move states its rank in the new chapter even when it equals the old one: the
+          // rank places it among that chapter's scenes on every device.
+          ...(placement ? { rank: updated.rank } : {}),
+        });
+        if (placement) {
+          writeRankChangesSync(
+            db,
+            updated.storyId,
+            userIdToLog,
+            'Scene',
+            placement,
+            new Set([sceneId]),
+          );
+        }
+        takeStartFinishSync(updated.storyId, sceneId, sceneData, userIdToLog);
+        return updated;
+      });
+      entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
 
       return updatedScene;
     },
@@ -357,49 +432,42 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
         return;
       }
       await assertStoryIsWritable(db, sceneToDelete.storyId);
-
-      const [updatedScene] = await db
-        .update(scenes)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${scenes.version} + 1`,
-        })
-        .where(eq(scenes.id, sceneId))
-        .returning({
-          id: scenes.id,
-          storyId: scenes.storyId,
-          isDeleted: scenes.isDeleted,
-          version: scenes.version,
-        });
-
-      if (!updatedScene) {
-        throw new Error(`Failed to delete scene ${sceneId} or scene not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedScene.storyId,
+        sceneToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedScene.storyId,
-        userIdToLog,
-        'delete',
-        'Scene',
-        sceneId,
-        {
-          id: updatedScene.id,
-          isDeleted: updatedScene.isDeleted,
-          version: updatedScene.version,
-        },
-      );
-      entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
 
-      await renumberChapterScenes(sceneToDelete.storyId, sceneToDelete.chapterId, userIdToLog);
+      const updatedScene = await runLocalWrite(db, sceneToDelete.storyId, () => {
+        const deleted = db
+          .update(scenes)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${scenes.version} + 1`,
+          })
+          .where(eq(scenes.id, sceneId))
+          .returning({
+            id: scenes.id,
+            storyId: scenes.storyId,
+            isDeleted: scenes.isDeleted,
+            version: scenes.version,
+          })
+          .get();
+        if (!deleted) {
+          throw new Error(`Failed to delete scene ${sceneId} or scene not found.`);
+        }
+        // The chapter closes the gap by itself: its numbers derive from the live scenes' ranks.
+        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Scene', sceneId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
+      });
+      entityEventEmitter.emit('scene_changed', updatedScene.storyId, updatedScene.id);
     },
 
     async getAllByStoryId(storyId: string): Promise<SceneSelect[]> {
@@ -414,69 +482,18 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
           .where(and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)))
           .orderBy(asc(scenes.index))
           .all();
-        return allScenes;
+        return withLiveChapters(allScenes);
       } catch (error) {
         console.error(`Error fetching all scenes for story ${storyId}:`, error);
         return [];
       }
     },
 
-    async reorderScenes(
-      currentUserId: string,
-      storyId: string,
-      chapterId: string,
-      newOrder: { id: string; newIndex: number }[],
-    ): Promise<void> {
-      await assertStoryIsWritable(db, storyId);
-      const current = await db
-        .select({ id: scenes.id, index: scenes.index })
-        .from(scenes)
-        .where(
-          and(
-            eq(scenes.storyId, storyId),
-            eq(scenes.chapterId, chapterId),
-            eq(scenes.isDeleted, false),
-          ),
-        )
-        .all();
-      const problem = completeReorderProblem(
-        current.map((scene) => scene.id),
-        newOrder,
-      );
-      if (problem) throw new Error(`Scene reorder is invalid. ${problem}`);
-      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-
-      // Every row in the order bumps, even one whose index did not move: the server bumps all
-      // of them when it applies the reorder, and a row bumped on one side only would base its
-      // next edit on a version the other side never saw.
-      await db.transaction(async (tx) => {
-        for (const scene of newOrder) {
-          await tx
-            .update(scenes)
-            .set({
-              index: scene.newIndex,
-              updatedAt: new Date(),
-              version: sql`${scenes.version} + 1`,
-            })
-            .where(and(eq(scenes.id, scene.id), eq(scenes.chapterId, chapterId)));
-        }
-      });
-
-      const [chapter] = await db
-        .update(chapters)
-        .set({ version: sql`${chapters.version} + 1`, updatedAt: new Date() })
-        .where(eq(chapters.id, chapterId))
-        .returning({ version: chapters.version });
-      if (!chapter) {
-        throw new Error(`Cannot reorder scenes: chapter ${chapterId} not found.`);
-      }
-
-      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Chapter', chapterId, {
-        reorderItems: newOrder.map((item) => ({ ...item })),
-        version: chapter.version,
-      });
-      entityEventEmitter.emit('scene_changed', storyId, 'reorder');
+    reorderScenes(currentUserId, storyId, chapterId, newOrder) {
+      return reorderInChapters(currentUserId, storyId, [{ chapterId, newOrder }]);
     },
+
+    reorderScenesInChapters: reorderInChapters,
 
     async batchUpdateScenes(
       currentUserId: string,
@@ -486,32 +503,32 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
 
-      await db.transaction(async (tx) => {
+      const changedSceneIds = await runLocalWrite(db, storyId, () => {
+        const changed: string[] = [];
         for (const update of updates) {
-          const { sceneId, changes } = update;
+          // A scene's number derives from its rank; a batch of field edits never sets it.
+          const { sceneId } = update;
+          const { index: _index, ...changes } = update.changes;
 
-          const originalScene = await tx.query.scenes.findFirst({
-            where: eq(scenes.id, sceneId),
-          });
+          const originalScene = db.select().from(scenes).where(eq(scenes.id, sceneId)).get();
 
           if (!originalScene) {
             console.warn(`Scene with ID ${sceneId} not found during batch update.`);
             continue; // or throw? continue is safer for a batch.
           }
 
-          const [updatedScene] = await tx
+          const updatedScene = db
             .update(scenes)
             .set({ ...changes, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
             .where(eq(scenes.id, sceneId))
-            .returning();
+            .returning()
+            .get();
 
           if (updatedScene) {
             const actualChanges = getChangedFields(originalScene, updatedScene);
 
             if (Object.keys(actualChanges).length > 0) {
-              // Pass 'tx' to recordLocalOperation if it supports transactions, otherwise use 'db'
-              // For now, using 'db' as per existing patterns in the file.
-              await recordLocalOperation(
+              recordLocalOperationSync(
                 db,
                 storyId,
                 userIdToLog,
@@ -520,11 +537,15 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
                 sceneId,
                 actualChanges,
               );
-              entityEventEmitter.emit('scene_changed', storyId, sceneId);
+              changed.push(sceneId);
             }
           }
         }
+        return changed;
       });
+      for (const sceneId of changedSceneIds) {
+        entityEventEmitter.emit('scene_changed', storyId, sceneId);
+      }
     },
 
     async getPreviousNextScenes(
@@ -532,14 +553,24 @@ export const createSceneService = (db: AppDrizzleClient): SceneService => {
       currentSceneId: string,
       chapterId: string | null,
     ): Promise<{ previousScene: SceneSelect | undefined; nextScene: SceneSelect | undefined }> {
-      const allScenesInChapter = await db.query.scenes.findMany({
-        where: and(
-          eq(scenes.storyId, storyId),
-          chapterId ? eq(scenes.chapterId, chapterId) : isNull(scenes.chapterId),
-          eq(scenes.isDeleted, false),
-        ),
-        orderBy: chapterId ? asc(scenes.index) : asc(scenes.name),
-      });
+      // Unchaptered includes the scenes of a deleted chapter, as the lists show them.
+      const allScenesInChapter = chapterId
+        ? await db.query.scenes.findMany({
+            where: and(
+              eq(scenes.storyId, storyId),
+              eq(scenes.chapterId, chapterId),
+              eq(scenes.isDeleted, false),
+            ),
+            orderBy: asc(scenes.index),
+          })
+        : (
+            await withLiveChapters(
+              await db.query.scenes.findMany({
+                where: and(eq(scenes.storyId, storyId), eq(scenes.isDeleted, false)),
+                orderBy: asc(scenes.name),
+              }),
+            )
+          ).filter((scene) => !scene.chapterId);
 
       const currentSceneIndex = allScenesInChapter.findIndex(
         (scene) => scene.id === currentSceneId,

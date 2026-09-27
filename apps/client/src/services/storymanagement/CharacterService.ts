@@ -9,8 +9,9 @@ import { entityEventEmitter } from '../../utils/EventEmitter'; // Import charact
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
-} from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
@@ -212,7 +213,26 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         newCharacter,
       );
       newCharacter = favorite.data;
-      const result = await db.insert(characters).values(newCharacter).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newCharacter.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newCharacter.storyId, () => {
+        const inserted = db.insert(characters).values(newCharacter).returning().get();
+        recordLocalOperationSync(
+          db,
+          newCharacter.storyId,
+          userIdToLog,
+          'create',
+          'Character',
+          newCharacter.id,
+          { ...inserted },
+        );
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newCharacter.storyId,
@@ -220,22 +240,6 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         'Character',
         currentUserId,
         favorite.individualFavorite,
-      );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newCharacter.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newCharacter.storyId,
-        userIdToLog,
-        'create',
-        'Character',
-        newCharacter.id,
-        { ...result },
       );
       entityEventEmitter.emit('character_changed', newCharacter.storyId, newCharacter.id);
 
@@ -279,36 +283,32 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         return oldCharacter; // Return the original character as no update occurred
       }
 
-      await db
-        .update(characters)
-        .set({ ...updatedFields, updatedAt: new Date(), version: sql`${characters.version} + 1` })
-        .where(eq(characters.id, characterId))
-        .run();
-
-      const updatedCharacter = await db.query.characters.findFirst({
-        where: eq(characters.id, characterId),
-      });
-      if (!updatedCharacter) {
-        throw new Error(`Failed to retrieve updated character ${characterId}.`);
-      }
-
-      const changedFields = getChangedFields(oldCharacter, updatedCharacter);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedCharacter.storyId,
+        oldCharacter.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedCharacter.storyId,
-        userIdToLog,
-        'update',
-        'Character',
-        characterId,
-        changedFields,
-      );
+      const updatedCharacter = await runLocalWrite(db, oldCharacter.storyId, () => {
+        db.update(characters)
+          .set({ ...updatedFields, updatedAt: new Date(), version: sql`${characters.version} + 1` })
+          .where(eq(characters.id, characterId))
+          .run();
+        const updated = db.select().from(characters).where(eq(characters.id, characterId)).get();
+        if (!updated) {
+          throw new Error(`Failed to retrieve updated character ${characterId}.`);
+        }
+        recordLocalOperationSync(
+          db,
+          updated.storyId,
+          userIdToLog,
+          'update',
+          'Character',
+          characterId,
+          getChangedFields(oldCharacter, updated),
+        );
+        return updated;
+      });
       entityEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after update
 
       return updatedCharacter; // Return the updated character
@@ -323,48 +323,48 @@ export const createCharacterService = (db: AppDrizzleClient): CharacterService =
         return;
       }
       await assertStoryIsWritable(db, characterToDelete.storyId);
-
-      const [updatedCharacter] = await db
-        .update(characters)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${characters.version} + 1`,
-        })
-        .where(eq(characters.id, characterId))
-        .returning({
-          id: characters.id,
-          storyId: characters.storyId,
-          isDeleted: characters.isDeleted,
-          version: characters.version,
-        });
-
-      if (!updatedCharacter) {
-        throw new Error(`Failed to delete character ${characterId} or character not found.`);
-      }
-
-      const changedFields = {
-        id: updatedCharacter.id,
-        isDeleted: updatedCharacter.isDeleted,
-        version: updatedCharacter.version,
-      };
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedCharacter.storyId,
+        characterToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedCharacter.storyId,
-        userIdToLog,
-        'delete',
-        'Character',
-        characterId,
-        changedFields,
-      );
+
+      const updatedCharacter = await runLocalWrite(db, characterToDelete.storyId, () => {
+        const deleted = db
+          .update(characters)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${characters.version} + 1`,
+          })
+          .where(eq(characters.id, characterId))
+          .returning({
+            id: characters.id,
+            storyId: characters.storyId,
+            isDeleted: characters.isDeleted,
+            version: characters.version,
+          })
+          .get();
+        if (!deleted) {
+          throw new Error(`Failed to delete character ${characterId} or character not found.`);
+        }
+        recordLocalOperationSync(
+          db,
+          deleted.storyId,
+          userIdToLog,
+          'delete',
+          'Character',
+          characterId,
+          {
+            id: deleted.id,
+            isDeleted: deleted.isDeleted,
+            version: deleted.version,
+          },
+        );
+        return deleted;
+      });
       entityEventEmitter.emit('character_changed', updatedCharacter.storyId, updatedCharacter.id); // Emit event after delete
     },
 

@@ -6,9 +6,11 @@ import type { Create } from '../../utils/entityUtils';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
+  afterLocalWrite,
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -63,38 +65,33 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
 
   // Raw writes, without the repeated floor guard. `replaceLadder` validates the final set in
   // one go and needs them: checking row by row would refuse a legitimate swap of floors between
-  // two tiers just because the intermediate state collides.
-  const writeCreate = async (currentUserId: string, data: Create<StatStrengthInsert>) => {
+  // two tiers just because the intermediate state collides. Synchronous, to run inside a
+  // `runLocalWrite` unit - the whole ladder is one unit, so a save never lands half-applied.
+  const writeCreate = (userIdToLog: string, data: Create<StatStrengthInsert>) => {
     const row = prepareNewEntityData<StatStrengthInsert>(data);
-    const result = await db.insert(statStrengths).values(row).returning().get();
+    const result = db.insert(statStrengths).values(row).returning().get();
 
-    const userIdToLog = await getUserIdForOperation(db, serverService, row.storyId, currentUserId);
-    await recordLocalOperation(db, row.storyId, userIdToLog, 'create', 'StatStrength', row.id, {
+    recordLocalOperationSync(db, row.storyId, userIdToLog, 'create', 'StatStrength', row.id, {
       ...result,
     });
-    entityEventEmitter.emit('stat_strength_changed', row.storyId);
+    afterLocalWrite(() => entityEventEmitter.emit('stat_strength_changed', row.storyId));
     return result;
   };
 
-  const writeUpdate = async (
-    currentUserId: string,
+  const writeUpdate = (
+    userIdToLog: string,
     strengthId: string,
     data: Partial<Pick<StatStrengthInsert, 'label' | 'minValue'>>,
   ) => {
-    const [updated] = await db
+    const updated = db
       .update(statStrengths)
       .set({ ...data, updatedAt: new Date(), version: sql`${statStrengths.version} + 1` })
       .where(eq(statStrengths.id, strengthId))
-      .returning({ storyId: statStrengths.storyId, version: statStrengths.version });
+      .returning({ storyId: statStrengths.storyId, version: statStrengths.version })
+      .get();
     if (!updated) throw new Error(`Failed to update stat tier ${strengthId}.`);
 
-    const userIdToLog = await getUserIdForOperation(
-      db,
-      serverService,
-      updated.storyId,
-      currentUserId,
-    );
-    await recordLocalOperation(
+    recordLocalOperationSync(
       db,
       updated.storyId,
       userIdToLog,
@@ -103,18 +100,15 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
       strengthId,
       { ...data, version: updated.version },
     );
-    entityEventEmitter.emit('stat_strength_changed', updated.storyId);
+    afterLocalWrite(() => entityEventEmitter.emit('stat_strength_changed', updated.storyId));
   };
 
-  const writeDelete = async (currentUserId: string, strengthId: string) => {
-    const row = await db.query.statStrengths.findFirst({
-      where: eq(statStrengths.id, strengthId),
-    });
+  const writeDelete = (userIdToLog: string, strengthId: string) => {
+    const row = db.select().from(statStrengths).where(eq(statStrengths.id, strengthId)).get();
     if (!row || row.isDeleted) return;
-    await assertStoryIsWritable(db, row.storyId);
 
     const now = new Date();
-    const [updated] = await db
+    const updated = db
       .update(statStrengths)
       .set({
         isDeleted: true,
@@ -123,13 +117,13 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
         version: sql`${statStrengths.version} + 1`,
       })
       .where(eq(statStrengths.id, strengthId))
-      .returning({ version: statStrengths.version });
+      .returning({ version: statStrengths.version })
+      .get();
 
-    const userIdToLog = await getUserIdForOperation(db, serverService, row.storyId, currentUserId);
-    await recordLocalOperation(db, row.storyId, userIdToLog, 'delete', 'StatStrength', strengthId, {
+    recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'StatStrength', strengthId, {
       version: updated?.version,
     });
-    entityEventEmitter.emit('stat_strength_changed', row.storyId);
+    afterLocalWrite(() => entityEventEmitter.emit('stat_strength_changed', row.storyId));
   };
 
   return {
@@ -154,7 +148,13 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
     async createStrength(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
       await assertNoDuplicateFloor(data.storyId, data.statId ?? null, data.minValue);
-      return writeCreate(currentUserId, data);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        data.storyId,
+        currentUserId,
+      );
+      return runLocalWrite(db, data.storyId, () => writeCreate(userIdToLog, data));
     },
 
     async updateStrength(currentUserId, strengthId, data) {
@@ -167,11 +167,28 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
       if (data.minValue !== undefined && data.minValue !== original.minValue) {
         await assertNoDuplicateFloor(original.storyId, original.statId, data.minValue, strengthId);
       }
-      await writeUpdate(currentUserId, strengthId, data);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        original.storyId,
+        currentUserId,
+      );
+      await runLocalWrite(db, original.storyId, () => writeUpdate(userIdToLog, strengthId, data));
     },
 
     async deleteStrength(currentUserId, strengthId) {
-      await writeDelete(currentUserId, strengthId);
+      const row = await db.query.statStrengths.findFirst({
+        where: eq(statStrengths.id, strengthId),
+      });
+      if (!row || row.isDeleted) return;
+      await assertStoryIsWritable(db, row.storyId);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        row.storyId,
+        currentUserId,
+      );
+      await runLocalWrite(db, row.storyId, () => writeDelete(userIdToLog, strengthId));
     },
 
     async replaceLadder(currentUserId, storyId, statId, tiers) {
@@ -196,27 +213,30 @@ export const createStatStrengthService = (db: AppDrizzleClient): StatStrengthSer
       const existingById = new Map(existing.map((row) => [row.id, row]));
       const keptIds = new Set(tiers.map((tier) => tier.id).filter(Boolean) as string[]);
 
-      for (const row of existing) {
-        if (!keptIds.has(row.id)) await writeDelete(currentUserId, row.id);
-      }
-      for (const tier of tiers) {
-        const current = tier.id ? existingById.get(tier.id) : undefined;
-        if (!current) {
-          await writeCreate(currentUserId, {
-            storyId,
-            statId,
-            label: tier.label,
-            minValue: tier.minValue,
-          } as Create<StatStrengthInsert>);
-          continue;
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      await runLocalWrite(db, storyId, () => {
+        for (const row of existing) {
+          if (!keptIds.has(row.id)) writeDelete(userIdToLog, row.id);
         }
-        if (current.label !== tier.label || current.minValue !== tier.minValue) {
-          await writeUpdate(currentUserId, current.id, {
-            label: tier.label,
-            minValue: tier.minValue,
-          });
+        for (const tier of tiers) {
+          const current = tier.id ? existingById.get(tier.id) : undefined;
+          if (!current) {
+            writeCreate(userIdToLog, {
+              storyId,
+              statId,
+              label: tier.label,
+              minValue: tier.minValue,
+            } as Create<StatStrengthInsert>);
+            continue;
+          }
+          if (current.label !== tier.label || current.minValue !== tier.minValue) {
+            writeUpdate(userIdToLog, current.id, {
+              label: tier.label,
+              minValue: tier.minValue,
+            });
+          }
         }
-      }
+      });
     },
   };
 };

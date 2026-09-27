@@ -8,7 +8,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -58,16 +59,18 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
   const liveInStory = (storyId: string) =>
     and(eq(storyArcs.storyId, storyId), eq(storyArcs.isDeleted, false));
 
-  const logOperation = async (
-    currentUserId: string,
+  const userIdFor = (currentUserId: string, storyId: string) =>
+    getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+  /** Inside a unit. */
+  const logOperation = (
+    userIdToLog: string,
     storyId: string,
     type: 'create' | 'update' | 'delete',
     arcId: string,
     payload: Record<string, unknown>,
   ) => {
-    const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-    await recordLocalOperation(db, storyId, userIdToLog, type, 'StoryArc', arcId, payload);
-    entityEventEmitter.emit('story_arc_changed', storyId, arcId);
+    recordLocalOperationSync(db, storyId, userIdToLog, type, 'StoryArc', arcId, payload);
   };
 
   const service: StoryArcService = {
@@ -112,8 +115,13 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         sortOrder: existing.length,
         isDefault: existing.length === 0,
       });
-      const result = await db.insert(storyArcs).values(row).returning().get();
-      await logOperation(currentUserId, data.storyId, 'create', result.id, { ...result });
+      const userIdToLog = await userIdFor(currentUserId, data.storyId);
+      const result = await runLocalWrite(db, data.storyId, () => {
+        const inserted = db.insert(storyArcs).values(row).returning().get();
+        logOperation(userIdToLog, data.storyId, 'create', inserted.id, { ...inserted });
+        return inserted;
+      });
+      entityEventEmitter.emit('story_arc_changed', data.storyId, result.id);
       return result;
     },
 
@@ -126,20 +134,25 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
       delete diff.version;
       delete diff.updatedAt;
       if (Object.keys(diff).length === 0) return current;
-      const result = await db
-        .update(storyArcs)
-        .set({ ...diff, updatedAt: new Date(), version: current.version + 1 })
-        .where(eq(storyArcs.id, arcId))
-        .returning()
-        .get();
-      // Log the post-bump row diff (includes `version`) so push can derive OCC baseVersion.
-      await logOperation(
-        currentUserId,
-        current.storyId,
-        'update',
-        arcId,
-        getChangedFields(current, result),
-      );
+      const userIdToLog = await userIdFor(currentUserId, current.storyId);
+      const result = await runLocalWrite(db, current.storyId, () => {
+        const updated = db
+          .update(storyArcs)
+          .set({ ...diff, updatedAt: new Date(), version: current.version + 1 })
+          .where(eq(storyArcs.id, arcId))
+          .returning()
+          .get();
+        // Log the post-bump row diff (includes `version`) so push can derive OCC baseVersion.
+        logOperation(
+          userIdToLog,
+          current.storyId,
+          'update',
+          arcId,
+          getChangedFields(current, updated),
+        );
+        return updated;
+      });
+      entityEventEmitter.emit('story_arc_changed', current.storyId, arcId);
       return result;
     },
 
@@ -151,36 +164,65 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         throw new Error('The default arc cannot be deleted.');
       }
       const fallback = await service.getDefault(current.storyId);
-      if (fallback && fallback.id !== arcId) {
-        await db
-          .update(chapters)
-          .set({ arcId: fallback.id, updatedAt: new Date() })
-          .where(and(eq(chapters.storyId, current.storyId), eq(chapters.arcId, arcId)));
-      }
-      // Bump version and log the *resulting* version so push can derive the OCC base
-      // (`version - 1`), matching Character/Plot/Board deletes. Without it the server
-      // returns `validation` ("data is not valid") and the delete never syncs.
-      const [deleted] = await db
-        .update(storyArcs)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${storyArcs.version} + 1`,
-        })
-        .where(eq(storyArcs.id, arcId))
-        .returning({
-          id: storyArcs.id,
-          storyId: storyArcs.storyId,
-          isDeleted: storyArcs.isDeleted,
-          version: storyArcs.version,
+      const userIdToLog = await userIdFor(currentUserId, current.storyId);
+      const deleted = await runLocalWrite(db, current.storyId, () => {
+        if (fallback && fallback.id !== arcId) {
+          // Each chapter's move is an edit of that chapter, recorded like one: rewritten here
+          // alone, every other device and the server kept the chapters under the deleted arc.
+          const moved = db
+            .update(chapters)
+            .set({
+              arcId: fallback.id,
+              updatedAt: new Date(),
+              version: sql`${chapters.version} + 1`,
+            })
+            .where(and(eq(chapters.storyId, current.storyId), eq(chapters.arcId, arcId)))
+            .returning({ id: chapters.id, version: chapters.version })
+            .all();
+          for (const chapter of moved) {
+            recordLocalOperationSync(
+              db,
+              current.storyId,
+              userIdToLog,
+              'update',
+              'Chapter',
+              chapter.id,
+              {
+                arcId: fallback.id,
+                version: chapter.version,
+              },
+            );
+          }
+        }
+        // Bump version and log the *resulting* version so push can derive the OCC base
+        // (`version - 1`), matching Character/Plot/Board deletes. Without it the server
+        // returns `validation` ("data is not valid") and the delete never syncs.
+        const row = db
+          .update(storyArcs)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${storyArcs.version} + 1`,
+          })
+          .where(eq(storyArcs.id, arcId))
+          .returning({
+            id: storyArcs.id,
+            storyId: storyArcs.storyId,
+            isDeleted: storyArcs.isDeleted,
+            version: storyArcs.version,
+          })
+          .get();
+        if (!row) return undefined;
+        logOperation(userIdToLog, row.storyId, 'delete', arcId, {
+          id: row.id,
+          isDeleted: row.isDeleted,
+          version: row.version,
         });
-      if (!deleted) return;
-      await logOperation(currentUserId, deleted.storyId, 'delete', arcId, {
-        id: deleted.id,
-        isDeleted: deleted.isDeleted,
-        version: deleted.version,
+        return row;
       });
+      if (!deleted) return;
+      entityEventEmitter.emit('story_arc_changed', deleted.storyId, arcId);
     },
 
     async listArcsForCharacter(storyId, characterId) {

@@ -39,8 +39,6 @@ const getOperationIcon = (operationType: string): keyof typeof Ionicons.glyphMap
       return 'create-outline';
     case 'delete':
       return 'trash-outline';
-    case 'reorder':
-      return 'repeat-outline';
     default:
       return 'help-circle-outline';
   }
@@ -221,18 +219,6 @@ const OperationLogDetailScreen: React.FC = () => {
       textAlign: 'center',
       marginTop: 20,
     },
-    reorderItemRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 6,
-      paddingLeft: 6,
-    },
-    reorderIndex: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.primary,
-      width: 28,
-    },
   });
 
   if (loading || mainEntityLoading) {
@@ -311,28 +297,7 @@ const OperationLogDetailScreen: React.FC = () => {
         {payload && (
           <View>
             <ScreenSection title={t('operation_log_changes_title')} />
-            {operationLog.operationType === 'reorder' ? (
-              <View style={styles.changeCard}>
-                {payload.reorderItems.map((item: { id: string; newIndex: number }) => (
-                  <View key={item.id} style={styles.reorderItemRow}>
-                    <Text style={styles.reorderIndex}>{item.newIndex}.</Text>
-                    <ResolvedFieldValue
-                      // A 'reorder' recorded on 'Story' reorders Chapters; recorded on
-                      // 'Chapter' it reorders that chapter's Scenes (see
-                      // ChapterService.reorderChapters / SceneService.reorderScenes).
-                      entityType={
-                        operationLog.entityType === OperationLogEntityType.Story
-                          ? OperationLogEntityType.Chapter
-                          : OperationLogEntityType.Scene
-                      }
-                      entityId={item.id}
-                      storyId={operationLog.storyId}
-                      style={styles.changeValue}
-                    />
-                  </View>
-                ))}
-              </View>
-            ) : Object.keys(payload).length === 0 ? (
+            {Object.keys(payload).length === 0 ? (
               <Text style={styles.emptyValue}>{t('operation_log_no_changes')}</Text>
             ) : (
               // Every payload field is already a genuine change (see the services in

@@ -1,19 +1,15 @@
 import { inspectContiguousOneBasedIndexes, type ChapterType } from '@keres/shared';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChapterSelect, SceneSelect } from '../../db/schema';
 import { chapters, scenes } from '../../db/schema';
-import { createChapterService } from './ChapterService';
-import { createSceneService } from './SceneService';
 
 /**
  * The numbering of chapters and scenes: chapters 1..N in the story, scenes 1..M within the chapter,
  * with no holes and no repeats.
  *
- * The convention is not aesthetic: the API refuses a reorder whose indices do not form a contiguous
- * 1..N, so a crooked local numbering becomes a synchronization conflict the first time the person drags
- * a scene. Old deletions, imports and stories born before the convention leave exactly that crooked
- * numbering behind.
+ * Numbers derive from ranks on every write (see rules/rank.ts), so a crooked numbering can only come
+ * from a stray write of a number itself; this finds one and re-derives it.
  */
 
 export type StoryIndexProblemKind = 'gap' | 'duplicate' | 'start';
@@ -40,10 +36,6 @@ export interface StoryIndexService {
     storyId: string,
   ): Promise<{ chapters: number; scenes: number }>;
 }
-
-/** The current order, with stable tie-breaks for two records currently fighting over the same number. */
-const byCurrentOrder = <T extends { index: number; createdAt: Date; id: string }>(a: T, b: T) =>
-  a.index - b.index || a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id);
 
 /** `null` when the list is already 1..N; otherwise, the first problem found. */
 export function inspectIndexSequence(indexes: number[]): StoryIndexProblemKind | null {
@@ -102,53 +94,37 @@ export const createStoryIndexService = (db: AppDrizzleClient): StoryIndexService
       return problems;
     },
 
-    async normalizeIndexes(currentUserId: string, storyId: string) {
-      const [storyChapters, storyScenes] = await Promise.all([
+    async normalizeIndexes(_currentUserId: string, storyId: string) {
+      const before = await Promise.all([livingChapters(storyId), livingScenes(storyId)]);
+      // Numbers derive from ranks (the local rank triggers), and a rank edit of any row of a
+      // container renumbers it. Touching each container's first row with its own rank re-derives
+      // every number a stray write may have bent - locally only: numbers are never synchronized, so
+      // there is nothing to record or send.
+      const touch = (table: typeof chapters | typeof scenes, id: string) =>
+        db
+          .update(table)
+          .set({ rank: sql`${table.rank}` })
+          .where(eq(table.id, id))
+          .run();
+      const firstOf = new Map<string, string>();
+      for (const chapter of before[0]) firstOf.set(`chapter:${chapter.type}`, chapter.id);
+      for (const id of firstOf.values()) touch(chapters, id);
+      const firstScene = new Map<string, string>();
+      for (const scene of before[1]) firstScene.set(`${scene.chapterId}`, scene.id);
+      for (const id of firstScene.values()) touch(scenes, id);
+
+      const [afterChapters, afterScenes] = await Promise.all([
         livingChapters(storyId),
         livingScenes(storyId),
       ]);
-
-      // It reuses the existing reorder paths instead of writing index by index: they record the `reorder`
-      // operation the server understands, so normalising also pushes the correct order over there - which is
-      // how an already-divergent story heals.
-      const orderedChapters = [...storyChapters].sort(byCurrentOrder);
-      const chapterService = createChapterService(db);
-      let changedChapters = 0;
-      for (const chapterType of ['chapter', 'event'] as const) {
-        const rows = orderedChapters.filter(
-          (chapter) => (chapter.type ?? 'chapter') === chapterType,
-        );
-        const reorder = rows.map((chapter, position) => ({
-          id: chapter.id,
-          newIndex: position + 1,
-        }));
-        const changed = reorder.filter(
-          (entry, position) => rows[position]!.index !== entry.newIndex,
-        ).length;
-        if (changed === 0) continue;
-        await chapterService.reorderChapters(currentUserId, storyId, reorder, chapterType);
-        changedChapters += changed;
-      }
-
-      const sceneService = createSceneService(db);
-      let changedScenes = 0;
-      for (const chapter of orderedChapters) {
-        const orderedScenes = storyScenes
-          .filter((scene) => scene.chapterId === chapter.id)
-          .sort(byCurrentOrder);
-        const sceneOrder = orderedScenes.map((scene, position) => ({
-          id: scene.id,
-          newIndex: position + 1,
-        }));
-        const changed = sceneOrder.filter(
-          (entry, position) => orderedScenes[position]!.index !== entry.newIndex,
-        ).length;
-        if (changed === 0) continue;
-        await sceneService.reorderScenes(currentUserId, storyId, chapter.id, sceneOrder);
-        changedScenes += changed;
-      }
-
-      return { chapters: changedChapters, scenes: changedScenes };
+      const moved = <T extends { id: string; index: number }>(was: T[], now: T[]) => {
+        const previous = new Map(was.map((row) => [row.id, row.index]));
+        return now.filter((row) => previous.get(row.id) !== row.index).length;
+      };
+      return {
+        chapters: moved(before[0], afterChapters),
+        scenes: moved(before[1], afterScenes),
+      };
     },
   };
 };

@@ -483,7 +483,7 @@
   "conflict_reason_edited_on_server": "You deleted this {{entity}} offline, but it was edited on the server in the meantime.",
   "conflict_reason_limit_exceeded": "Your plan doesn't allow any more {{entity}}s right now. Free up space, delete something else, or upgrade your plan, then retry.",
   "conflict_reason_not_found": "This {{entity}} no longer exists on the server. Keeping your version will recreate it there.",
-  "conflict_reason_referenced_entity_deleted": "This change points to something else (a character, scene, item...) that was deleted on the server. Keeping your version won't work until that's resolved.",
+  "conflict_reason_referenced_entity_deleted": "This change points to something else (a character, scene, item...) that was deleted on another device. It can no longer be saved: discard it and, if you want, redo it from what exists now.",
   "conflict_reason_unauthorized": "The server refused this change: you do not have permission to make it.",
   "conflict_reason_unknown": "The server could not apply this change.",
   "conflict_reason_validation": "The server rejected this change because the data is not valid.",

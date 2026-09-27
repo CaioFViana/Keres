@@ -5,7 +5,7 @@ import { favorites, stories } from '../../db/schema';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n from '../../utils/i18n';
-import { recordLocalOperation, StoryReadOnlyError } from '../../utils/syncUtils';
+import { recordLocalOperationSync, runLocalWrite, StoryReadOnlyError } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 const FAVORITE_ENTITY_EVENTS: Partial<Record<FavoriteEntityType, string>> = {
@@ -146,75 +146,87 @@ export const createFavoriteService = (db: AppDrizzleClient): FavoriteService => 
         throw new StoryReadOnlyError(i18n.t('story_read_only_error'));
       }
       const userId = await resolveUserId(storyId, localUserId);
-      const existing = await db.query.favorites.findFirst({
-        where: and(
-          eq(favorites.storyId, storyId),
-          eq(favorites.entityId, entityId),
-          eq(favorites.entityType, entityType),
-          eq(favorites.userId, userId),
-        ),
-      });
+      // The row is read inside the unit: two quick toggles would otherwise both see "no
+      // favourite yet" and insert twice, and the server refuses the second (user, entity) row.
+      const changed = await runLocalWrite(db, storyId, () => {
+        const existing = db
+          .select()
+          .from(favorites)
+          .where(
+            and(
+              eq(favorites.storyId, storyId),
+              eq(favorites.entityId, entityId),
+              eq(favorites.entityType, entityType),
+              eq(favorites.userId, userId),
+            ),
+          )
+          .get();
 
-      if (value) {
-        if (existing && !existing.isDeleted) return;
-        if (existing) {
-          const [restored] = await db
-            .update(favorites)
-            .set({
+        if (value) {
+          if (existing && !existing.isDeleted) return false;
+          if (existing) {
+            const restored = db
+              .update(favorites)
+              .set({
+                isDeleted: false,
+                deletedAt: null,
+                updatedAt: new Date(),
+                version: sql`${favorites.version} + 1`,
+              })
+              .where(eq(favorites.id, existing.id))
+              .returning({ version: favorites.version })
+              .get();
+            recordLocalOperationSync(db, storyId, userId, 'update', 'Favorite', existing.id, {
               isDeleted: false,
               deletedAt: null,
+              version: restored?.version,
+            });
+          } else {
+            const now = new Date();
+            const inserted = {
+              id: createULID(),
+              storyId,
+              entityId,
+              entityType,
+              userId,
+              createdAt: now,
+              updatedAt: now,
+              version: 1,
+              isDeleted: false,
+              deletedAt: null,
+            };
+            db.insert(favorites).values(inserted).run();
+            recordLocalOperationSync(
+              db,
+              storyId,
+              userId,
+              'create',
+              'Favorite',
+              inserted.id,
+              inserted,
+            );
+          }
+        } else {
+          if (!existing || existing.isDeleted) return false;
+          const removed = db
+            .update(favorites)
+            .set({
+              isDeleted: true,
+              deletedAt: new Date(),
               updatedAt: new Date(),
               version: sql`${favorites.version} + 1`,
             })
             .where(eq(favorites.id, existing.id))
-            .returning();
-          await recordLocalOperation(db, storyId, userId, 'update', 'Favorite', existing.id, {
-            isDeleted: false,
-            deletedAt: null,
-            version: restored.version,
+            .returning({ version: favorites.version })
+            .get();
+          recordLocalOperationSync(db, storyId, userId, 'delete', 'Favorite', existing.id, {
+            id: existing.id,
+            version: removed?.version,
           });
-        } else {
-          const now = new Date();
-          const inserted = {
-            id: createULID(),
-            storyId,
-            entityId,
-            entityType,
-            userId,
-            createdAt: now,
-            updatedAt: now,
-            version: 1,
-            isDeleted: false,
-            deletedAt: null,
-          };
-          await db.insert(favorites).values(inserted).run();
-          await recordLocalOperation(
-            db,
-            storyId,
-            userId,
-            'create',
-            'Favorite',
-            inserted.id,
-            inserted,
-          );
         }
-      } else {
-        if (!existing || existing.isDeleted) return;
-        const [removed] = await db
-          .update(favorites)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${favorites.version} + 1`,
-          })
-          .where(eq(favorites.id, existing.id))
-          .returning();
-        await recordLocalOperation(db, storyId, userId, 'delete', 'Favorite', existing.id, {
-          id: existing.id,
-          version: removed.version,
-        });
-      }
+        return true;
+      });
+      if (!changed) return;
 
       entityEventEmitter.emit('favorite_changed', storyId, entityType, entityId, userId);
       const entityEvent = FAVORITE_ENTITY_EVENTS[entityType];

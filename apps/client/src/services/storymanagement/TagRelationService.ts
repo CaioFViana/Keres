@@ -7,7 +7,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -115,33 +116,37 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
         ),
       });
 
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+
       if (deletedRelation) {
         // Reactivate the deleted relation
-        const [updatedRelation] = await db
-          .update(tagRelations)
-          .set({
-            isDeleted: false,
-            deletedAt: null,
-            updatedAt: new Date(),
-            version: sql`${tagRelations.version} + 1`,
-          })
-          .where(eq(tagRelations.id, deletedRelation.id))
-          .returning();
+        await runLocalWrite(db, storyId, () => {
+          const updatedRelation = db
+            .update(tagRelations)
+            .set({
+              isDeleted: false,
+              deletedAt: null,
+              updatedAt: new Date(),
+              version: sql`${tagRelations.version} + 1`,
+            })
+            .where(eq(tagRelations.id, deletedRelation.id))
+            .returning()
+            .get();
 
-        if (!updatedRelation) {
-          throw new Error(`Failed to reactivate tag relation ${deletedRelation.id}.`);
-        }
+          if (!updatedRelation) {
+            throw new Error(`Failed to reactivate tag relation ${deletedRelation.id}.`);
+          }
 
-        const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-        await recordLocalOperation(
-          db,
-          storyId,
-          userIdToLog,
-          'update',
-          'TagRelation',
-          updatedRelation.id,
-          { isDeleted: false, version: updatedRelation.version },
-        );
+          recordLocalOperationSync(
+            db,
+            storyId,
+            userIdToLog,
+            'update',
+            'TagRelation',
+            updatedRelation.id,
+            { isDeleted: false, version: updatedRelation.version },
+          );
+        });
         entityEventEmitter.emit('tag_relation_changed', storyId, relationId);
         return;
       }
@@ -154,11 +159,11 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
         tagId,
       });
 
-      const result = await db.insert(tagRelations).values(newRelation).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'TagRelation', result.id, {
-        ...result,
+      await runLocalWrite(db, storyId, () => {
+        const result = db.insert(tagRelations).values(newRelation).returning().get();
+        recordLocalOperationSync(db, storyId, userIdToLog, 'create', 'TagRelation', result.id, {
+          ...result,
+        });
       });
       entityEventEmitter.emit('tag_relation_changed', storyId, relationId);
     },
@@ -182,31 +187,34 @@ export const createTagRelationService = (db: AppDrizzleClient): TagRelationServi
         return;
       }
 
-      const [updatedRelation] = await db
-        .update(tagRelations)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${tagRelations.version} + 1`,
-        })
-        .where(eq(tagRelations.id, relationToDelete.id))
-        .returning();
-
-      if (!updatedRelation) {
-        throw new Error(`Failed to delete tag relation ${relationToDelete.id}.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'delete',
-        'TagRelation',
-        updatedRelation.id,
-        { isDeleted: true, version: updatedRelation.version },
-      );
+      await runLocalWrite(db, storyId, () => {
+        const updatedRelation = db
+          .update(tagRelations)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${tagRelations.version} + 1`,
+          })
+          .where(eq(tagRelations.id, relationToDelete.id))
+          .returning()
+          .get();
+
+        if (!updatedRelation) {
+          throw new Error(`Failed to delete tag relation ${relationToDelete.id}.`);
+        }
+
+        recordLocalOperationSync(
+          db,
+          storyId,
+          userIdToLog,
+          'delete',
+          'TagRelation',
+          updatedRelation.id,
+          { isDeleted: true, version: updatedRelation.version },
+        );
+      });
       entityEventEmitter.emit('tag_relation_changed', storyId, entityId);
     },
 

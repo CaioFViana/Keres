@@ -9,7 +9,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -109,23 +110,25 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
       await assertOpenStretchRule(data.chapterId, data.endSceneId ?? null);
 
       const anchor = prepareNewEntityData<ChapterAnchorInsert>(data);
-      const result = await db.insert(chapterAnchors).values(anchor).returning().get();
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         anchor.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        anchor.storyId,
-        userIdToLog,
-        'create',
-        'ChapterAnchor',
-        anchor.id,
-        { ...result },
-      );
+      const result = await runLocalWrite(db, anchor.storyId, () => {
+        const inserted = db.insert(chapterAnchors).values(anchor).returning().get();
+        recordLocalOperationSync(
+          db,
+          anchor.storyId,
+          userIdToLog,
+          'create',
+          'ChapterAnchor',
+          anchor.id,
+          { ...inserted },
+        );
+        return inserted;
+      });
       entityEventEmitter.emit('chapter_anchor_changed', anchor.storyId, anchor.id);
       return result;
     },
@@ -145,31 +148,30 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
       delete changed.updatedAt;
       if (Object.keys(changed).length === 0) return original;
 
-      await db
-        .update(chapterAnchors)
-        .set({ ...changes, updatedAt: new Date(), version: sql`${chapterAnchors.version} + 1` })
-        .where(eq(chapterAnchors.id, anchorId));
-
-      const updated = await db.query.chapterAnchors.findFirst({
-        where: eq(chapterAnchors.id, anchorId),
-      });
-      if (!updated) throw new Error(`Failed to retrieve updated ChapterAnchor ${anchorId}.`);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        original.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updated.storyId,
-        userIdToLog,
-        'update',
-        'ChapterAnchor',
-        anchorId,
-        getChangedFields(original, updated),
-      );
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        db.update(chapterAnchors)
+          .set({ ...changes, updatedAt: new Date(), version: sql`${chapterAnchors.version} + 1` })
+          .where(eq(chapterAnchors.id, anchorId))
+          .run();
+        const row = db.select().from(chapterAnchors).where(eq(chapterAnchors.id, anchorId)).get();
+        if (!row) throw new Error(`Failed to retrieve updated ChapterAnchor ${anchorId}.`);
+        recordLocalOperationSync(
+          db,
+          row.storyId,
+          userIdToLog,
+          'update',
+          'ChapterAnchor',
+          anchorId,
+          getChangedFields(original, row),
+        );
+        return row;
+      });
       entityEventEmitter.emit('chapter_anchor_changed', updated.storyId, anchorId);
       return updated;
     },
@@ -184,38 +186,41 @@ export const createChapterAnchorService = (db: AppDrizzleClient): ChapterAnchorS
       }
       await assertStoryIsWritable(db, anchor.storyId);
 
-      const [updated] = await db
-        .update(chapterAnchors)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${chapterAnchors.version} + 1`,
-        })
-        .where(eq(chapterAnchors.id, anchorId))
-        .returning({
-          id: chapterAnchors.id,
-          storyId: chapterAnchors.storyId,
-          isDeleted: chapterAnchors.isDeleted,
-          version: chapterAnchors.version,
-        });
-      if (!updated) throw new Error(`Failed to delete ChapterAnchor ${anchorId}.`);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        anchor.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updated.storyId,
-        userIdToLog,
-        'delete',
-        'ChapterAnchor',
-        anchorId,
-        { id: updated.id, isDeleted: updated.isDeleted, version: updated.version },
-      );
+      const updated = await runLocalWrite(db, anchor.storyId, () => {
+        const deleted = db
+          .update(chapterAnchors)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${chapterAnchors.version} + 1`,
+          })
+          .where(eq(chapterAnchors.id, anchorId))
+          .returning({
+            id: chapterAnchors.id,
+            storyId: chapterAnchors.storyId,
+            isDeleted: chapterAnchors.isDeleted,
+            version: chapterAnchors.version,
+          })
+          .get();
+        if (!deleted) throw new Error(`Failed to delete ChapterAnchor ${anchorId}.`);
+        recordLocalOperationSync(
+          db,
+          deleted.storyId,
+          userIdToLog,
+          'delete',
+          'ChapterAnchor',
+          anchorId,
+          { id: deleted.id, isDeleted: deleted.isDeleted, version: deleted.version },
+        );
+        return deleted;
+      });
       entityEventEmitter.emit('chapter_anchor_changed', updated.storyId, anchorId);
     },
   };

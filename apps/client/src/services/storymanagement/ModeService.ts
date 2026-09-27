@@ -8,7 +8,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -57,16 +58,18 @@ export const createModeService = (db: AppDrizzleClient): ModeService => {
       await assertStoryIsWritable(db, modeData.storyId);
 
       const newMode = prepareNewEntityData<ModeInsert>(modeData);
-      const result = await db.insert(modes).values(newMode).returning().get();
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         newMode.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, newMode.storyId, userIdToLog, 'create', 'Mode', newMode.id, {
-        ...result,
+      const result = await runLocalWrite(db, newMode.storyId, () => {
+        const inserted = db.insert(modes).values(newMode).returning().get();
+        recordLocalOperationSync(db, newMode.storyId, userIdToLog, 'create', 'Mode', newMode.id, {
+          ...inserted,
+        });
+        return inserted;
       });
       entityEventEmitter.emit('mode_changed', newMode.storyId, newMode.characterId);
 
@@ -78,22 +81,25 @@ export const createModeService = (db: AppDrizzleClient): ModeService => {
       if (!original) throw new Error(`Mode with ID ${modeId} not found for update.`);
       await assertStoryIsWritable(db, original.storyId);
 
-      const [updated] = await db
-        .update(modes)
-        .set({ ...modeData, updatedAt: new Date(), version: sql`${modes.version} + 1` })
-        .where(eq(modes.id, modeId))
-        .returning({ storyId: modes.storyId, version: modes.version });
-      if (!updated) throw new Error(`Failed to update mode ${modeId}.`);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        original.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, updated.storyId, userIdToLog, 'update', 'Mode', modeId, {
-        ...modeData,
-        version: updated.version,
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(modes)
+          .set({ ...modeData, updatedAt: new Date(), version: sql`${modes.version} + 1` })
+          .where(eq(modes.id, modeId))
+          .returning({ storyId: modes.storyId, version: modes.version })
+          .get();
+        if (!row) throw new Error(`Failed to update mode ${modeId}.`);
+        recordLocalOperationSync(db, row.storyId, userIdToLog, 'update', 'Mode', modeId, {
+          ...modeData,
+          version: row.version,
+        });
+        return row;
       });
       entityEventEmitter.emit('mode_changed', updated.storyId, original.characterId);
     },
@@ -113,48 +119,52 @@ export const createModeService = (db: AppDrizzleClient): ModeService => {
 
       // That mode's values do not survive it: without the mode, a StatRelation with that modeId would be
       // orphaned and the server would refuse any later edit to it.
-      const orphanValues = await db
-        .select({ id: statRelations.id })
-        .from(statRelations)
-        .where(and(eq(statRelations.modeId, modeId), eq(statRelations.isDeleted, false)))
-        .all();
-      for (const value of orphanValues) {
-        const [updatedValue] = await db
-          .update(statRelations)
+      const orphanCount = await runLocalWrite(db, mode.storyId, () => {
+        const orphanValues = db
+          .select({ id: statRelations.id })
+          .from(statRelations)
+          .where(and(eq(statRelations.modeId, modeId), eq(statRelations.isDeleted, false)))
+          .all();
+        for (const value of orphanValues) {
+          const updatedValue = db
+            .update(statRelations)
+            .set({
+              isDeleted: true,
+              deletedAt: now,
+              updatedAt: now,
+              version: sql`${statRelations.version} + 1`,
+            })
+            .where(eq(statRelations.id, value.id))
+            .returning({ version: statRelations.version })
+            .get();
+          recordLocalOperationSync(
+            db,
+            mode.storyId,
+            userIdToLog,
+            'delete',
+            'StatRelation',
+            value.id,
+            { version: updatedValue?.version },
+          );
+        }
+
+        const updated = db
+          .update(modes)
           .set({
             isDeleted: true,
             deletedAt: now,
             updatedAt: now,
-            version: sql`${statRelations.version} + 1`,
+            version: sql`${modes.version} + 1`,
           })
-          .where(eq(statRelations.id, value.id))
-          .returning({ version: statRelations.version });
-        await recordLocalOperation(
-          db,
-          mode.storyId,
-          userIdToLog,
-          'delete',
-          'StatRelation',
-          value.id,
-          { version: updatedValue?.version },
-        );
-      }
-
-      const [updated] = await db
-        .update(modes)
-        .set({
-          isDeleted: true,
-          deletedAt: now,
-          updatedAt: now,
-          version: sql`${modes.version} + 1`,
-        })
-        .where(eq(modes.id, modeId))
-        .returning({ version: modes.version });
-
-      await recordLocalOperation(db, mode.storyId, userIdToLog, 'delete', 'Mode', modeId, {
-        version: updated?.version,
+          .where(eq(modes.id, modeId))
+          .returning({ version: modes.version })
+          .get();
+        recordLocalOperationSync(db, mode.storyId, userIdToLog, 'delete', 'Mode', modeId, {
+          version: updated?.version,
+        });
+        return orphanValues.length;
       });
-      if (orphanValues.length > 0) {
+      if (orphanCount > 0) {
         entityEventEmitter.emit('stat_relation_changed', mode.storyId, mode.characterId);
       }
       entityEventEmitter.emit('mode_changed', mode.storyId, mode.characterId);

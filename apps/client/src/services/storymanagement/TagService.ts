@@ -10,8 +10,9 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
-} from '../../utils/syncUtils'; // Import recordLocalOperation and getUserIdForOperation
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService'; // Import ServerService and createServerService
 import { buildNativeAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
@@ -134,7 +135,20 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       let newTag = prepareNewEntityData<TagInsert>(tagData);
       const favorite = await normalizeFavoriteCreate(db, newTag.storyId, 'Tag', newTag);
       newTag = favorite.data;
-      const result = await db.insert(tags).values(newTag).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newTag.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newTag.storyId, () => {
+        const inserted = db.insert(tags).values(newTag).returning().get();
+        recordLocalOperationSync(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, {
+          ...inserted,
+        });
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newTag.storyId,
@@ -143,16 +157,6 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         currentUserId,
         favorite.individualFavorite,
       );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newTag.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(db, newTag.storyId, userIdToLog, 'create', 'Tag', newTag.id, {
-        ...result,
-      });
       entityEventEmitter.emit('tag_changed', newTag.storyId, newTag.id); // Emit event after create
 
       return result;
@@ -195,27 +199,31 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
         return;
       }
 
-      const [updatedTag] = await db
-        .update(tags)
-        .set({ ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` })
-        .where(eq(tags.id, tagId))
-        .returning({ id: tags.id, storyId: tags.storyId, version: tags.version }); // Return relevant fields
-
-      if (!updatedTag) {
-        throw new Error(`Failed to update tag ${tagId} or tag not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedTag.storyId,
+        originalTag.storyId,
         currentUserId,
       );
-      // Log the diff already computed above, not the raw `tagData` input - the input has
-      // every field the form sends, changed or not.
-      await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'update', 'Tag', tagId, {
-        ...changes,
-        version: updatedTag.version,
+      const updatedTag = await runLocalWrite(db, originalTag.storyId, () => {
+        const updated = db
+          .update(tags)
+          .set({ ...tagData, updatedAt: new Date(), version: sql`${tags.version} + 1` })
+          .where(eq(tags.id, tagId))
+          .returning({ id: tags.id, storyId: tags.storyId, version: tags.version }) // Return relevant fields
+          .get();
+
+        if (!updated) {
+          throw new Error(`Failed to update tag ${tagId} or tag not found.`);
+        }
+
+        // Log the diff already computed above, not the raw `tagData` input - the input has
+        // every field the form sends, changed or not.
+        recordLocalOperationSync(db, updated.storyId, userIdToLog, 'update', 'Tag', tagId, {
+          ...changes,
+          version: updated.version,
+        });
+        return updated;
       });
       entityEventEmitter.emit('tag_changed', updatedTag.storyId, updatedTag.id); // Emit event after update
     },
@@ -228,36 +236,40 @@ export const createTagService = (db: AppDrizzleClient): TagService => {
       }
       await assertStoryIsWritable(db, tagToDelete.storyId);
 
-      const [updatedTag] = await db
-        .update(tags)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${tags.version} + 1`,
-        })
-        .where(eq(tags.id, tagId))
-        .returning({
-          id: tags.id,
-          storyId: tags.storyId,
-          isDeleted: tags.isDeleted,
-          version: tags.version,
-        });
-
-      if (!updatedTag) {
-        throw new Error(`Failed to delete tag ${tagId} or tag not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedTag.storyId,
+        tagToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, updatedTag.storyId, userIdToLog, 'delete', 'Tag', tagId, {
-        id: updatedTag.id,
-        isDeleted: updatedTag.isDeleted,
-        version: updatedTag.version,
+      const updatedTag = await runLocalWrite(db, tagToDelete.storyId, () => {
+        const deleted = db
+          .update(tags)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${tags.version} + 1`,
+          })
+          .where(eq(tags.id, tagId))
+          .returning({
+            id: tags.id,
+            storyId: tags.storyId,
+            isDeleted: tags.isDeleted,
+            version: tags.version,
+          })
+          .get();
+
+        if (!deleted) {
+          throw new Error(`Failed to delete tag ${tagId} or tag not found.`);
+        }
+
+        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Tag', tagId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
       });
       entityEventEmitter.emit('tag_changed', updatedTag.storyId, updatedTag.id); // Emit event after delete
     },

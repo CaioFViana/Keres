@@ -1,21 +1,23 @@
-import { completeReorderProblem, type ChapterType } from '@keres/shared';
+import type { ChapterType } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { ChapterInsert, ChapterSelect } from '../../db/schema';
-import { chapters, stories } from '../../db/schema';
+import { chapters } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
 import { countActiveStoryEntities } from './storyEntityCount';
 import { createStoryArcService } from './StoryArcService';
+import { planContainerOrderSync, planPlacementSync, writeRankChangesSync } from './arrangedWrites';
 import type { FavoriteFilterState } from '../../types/entityFilters';
 import { buildCustomAttributeSearchCondition } from '../../utils/attributeSearchPredicate';
 import {
@@ -54,11 +56,8 @@ export interface ChapterService {
   deleteChapter(currentUserId: string, chapterId: string): Promise<void>;
   getAllByStoryId(storyId: string, type?: ChapterType | null): Promise<ChapterSelect[]>;
   /**
-   * Reorders one kind of container.
-   *
-   * Chapters and events keep separate 1..N spaces inside the same table, so the operation carries
-   * which one it means - the server filters on it before checking that the payload is complete and
-   * contiguous, and a reorder that named the wrong kind would look like a short list to it.
+   * Reorders one kind of container. Chapters and events keep separate 1..N spaces inside the same
+   * table; each container that moved takes the rank of its new place among its kind.
    */
   reorderChapters(
     currentUserId: string,
@@ -69,10 +68,8 @@ export interface ChapterService {
   /**
    * Moves a container between the two kinds.
    *
-   * Three operations, in this order and all through the log: the row changes kind, the space it
-   * left closes its gap, and the space it joined renumbers around it. The order is not cosmetic -
-   * the server filters each reorder by kind, so it can only match the arrival against the target
-   * space after the kind change has been applied.
+   * One edit of the row - its kind and its rank in the space it joins; both spaces renumber from
+   * their live rows' ranks by themselves.
    *
    * `position` is the 1-based slot in the target space, and only `event -> chapter` should ask for
    * one: the narrative spine has no natural place for a new arrival, so every position is an
@@ -201,7 +198,48 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       }
       const favorite = await normalizeFavoriteCreate(db, newChapter.storyId, 'Chapter', newChapter);
       newChapter = favorite.data;
-      const result = await db.insert(chapters).values(newChapter).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newChapter.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newChapter.storyId, () => {
+        // The asked index is where it goes among its kind; the database numbers it from its rank.
+        const container = { type: newChapter.type ?? 'chapter' };
+        const placement = planPlacementSync(
+          db,
+          'Chapter',
+          newChapter.storyId,
+          container,
+          newChapter.id,
+          typeof newChapter.index === 'number' ? newChapter.index - 1 : undefined,
+        );
+        db.insert(chapters)
+          .values({ ...newChapter, rank: placement.get(newChapter.id)! })
+          .run();
+        // Recorded as the database holds it: its number already derived from its rank.
+        const inserted = db.select().from(chapters).where(eq(chapters.id, newChapter.id)).get()!;
+        recordLocalOperationSync(
+          db,
+          newChapter.storyId,
+          userIdToLog,
+          'create',
+          'Chapter',
+          newChapter.id,
+          { ...inserted },
+        );
+        writeRankChangesSync(
+          db,
+          newChapter.storyId,
+          userIdToLog,
+          'Chapter',
+          placement,
+          new Set([newChapter.id]),
+        );
+        return db.select().from(chapters).where(eq(chapters.id, newChapter.id)).get()!;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newChapter.storyId,
@@ -209,22 +247,6 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         'Chapter',
         currentUserId,
         favorite.individualFavorite,
-      );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newChapter.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newChapter.storyId,
-        userIdToLog,
-        'create',
-        'Chapter',
-        newChapter.id,
-        { ...result },
       );
       entityEventEmitter.emit('chapter_changed', newChapter.storyId, newChapter.id);
 
@@ -248,6 +270,11 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         throw new Error(`Chapter with ID ${chapterId} not found for update.`);
       }
       await assertStoryIsWritable(db, originalChapter.storyId);
+      // A container's place is its rank (reorderChapters, convertChapterType), never a form field.
+      const { index: _index, rank: _rank, ...placeless } = chapterData;
+      chapterData = placeless;
+      const kindChanging =
+        chapterData.type !== undefined && chapterData.type !== originalChapter.type;
       chapterData = await normalizeFavoriteUpdate(
         db,
         originalChapter.storyId,
@@ -270,33 +297,52 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         return originalChapter;
       }
 
-      await db
-        .update(chapters)
-        .set({ ...chapterData, updatedAt: new Date(), version: sql`${chapters.version} + 1` })
-        .where(eq(chapters.id, chapterId));
-
-      const updatedChapter = await db.query.chapters.findFirst({
-        where: eq(chapters.id, chapterId),
-      });
-      if (!updatedChapter) {
-        throw new Error(`Failed to retrieve updated chapter ${chapterId}.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedChapter.storyId,
+        originalChapter.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedChapter.storyId,
-        userIdToLog,
-        'update',
-        'Chapter',
-        chapterId,
-        getChangedFields(originalChapter, updatedChapter),
-      );
+      const updatedChapter = await runLocalWrite(db, originalChapter.storyId, () => {
+        // Changing kind changes list: it enters at the end of the other kind's.
+        const placement = kindChanging
+          ? planPlacementSync(
+              db,
+              'Chapter',
+              originalChapter.storyId,
+              { type: chapterData.type! },
+              chapterId,
+            )
+          : undefined;
+        db.update(chapters)
+          .set({
+            ...chapterData,
+            ...(placement ? { rank: placement.get(chapterId)! } : {}),
+            updatedAt: new Date(),
+            version: sql`${chapters.version} + 1`,
+          })
+          .where(eq(chapters.id, chapterId))
+          .run();
+        const updated = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
+        if (!updated) {
+          throw new Error(`Failed to retrieve updated chapter ${chapterId}.`);
+        }
+        recordLocalOperationSync(db, updated.storyId, userIdToLog, 'update', 'Chapter', chapterId, {
+          ...getChangedFields(originalChapter, updated),
+          ...(placement ? { rank: updated.rank } : {}),
+        });
+        if (placement) {
+          writeRankChangesSync(
+            db,
+            updated.storyId,
+            userIdToLog,
+            'Chapter',
+            placement,
+            new Set([chapterId]),
+          );
+        }
+        return updated;
+      });
       entityEventEmitter.emit('chapter_changed', updatedChapter.storyId, updatedChapter.id);
 
       return updatedChapter;
@@ -311,47 +357,43 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
         return;
       }
       await assertStoryIsWritable(db, chapterToDelete.storyId);
-
-      const [updatedChapter] = await db
-        .update(chapters)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${chapters.version} + 1`,
-        })
-        .where(eq(chapters.id, chapterId))
-        .returning({
-          id: chapters.id,
-          storyId: chapters.storyId,
-          isDeleted: chapters.isDeleted,
-          version: chapters.version,
-        });
-
-      if (!updatedChapter) {
-        throw new Error(`Failed to delete chapter ${chapterId} or chapter not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedChapter.storyId,
+        chapterToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedChapter.storyId,
-        userIdToLog,
-        'delete',
-        'Chapter',
-        chapterId,
-        {
-          id: updatedChapter.id,
-          isDeleted: updatedChapter.isDeleted,
-          version: updatedChapter.version,
-        },
-      );
+
+      const updatedChapter = await runLocalWrite(db, chapterToDelete.storyId, () => {
+        const deleted = db
+          .update(chapters)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${chapters.version} + 1`,
+          })
+          .where(eq(chapters.id, chapterId))
+          .returning({
+            id: chapters.id,
+            storyId: chapters.storyId,
+            isDeleted: chapters.isDeleted,
+            version: chapters.version,
+          })
+          .get();
+        if (!deleted) {
+          throw new Error(`Failed to delete chapter ${chapterId} or chapter not found.`);
+        }
+        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Chapter', chapterId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
+      });
       entityEventEmitter.emit('chapter_changed', updatedChapter.storyId, updatedChapter.id);
+      // Its scenes now read as unchaptered (`SceneService`), so every scene list refreshes.
+      entityEventEmitter.emit('scene_changed', updatedChapter.storyId);
     },
 
     async getAllByStoryId(
@@ -392,54 +434,14 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       type: ChapterType = 'chapter',
     ): Promise<void> {
       await assertStoryIsWritable(db, storyId);
-      const current = await db
-        .select({ id: chapters.id, index: chapters.index })
-        .from(chapters)
-        .where(
-          and(
-            eq(chapters.storyId, storyId),
-            eq(chapters.type, type),
-            eq(chapters.isDeleted, false),
-          ),
-        )
-        .all();
-      const problem = completeReorderProblem(
-        current.map((chapter) => chapter.id),
-        newOrder,
-      );
-      if (problem) throw new Error(`Chapter reorder is invalid. ${problem}`);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-
-      // Every row in the order bumps, even one whose index did not move: the server bumps all
-      // of them when it applies the reorder, and a row bumped on one side only would base its
-      // next edit on a version the other side never saw.
-      await db.transaction(async (tx) => {
-        for (const chapter of newOrder) {
-          await tx
-            .update(chapters)
-            .set({
-              index: chapter.newIndex,
-              updatedAt: new Date(),
-              version: sql`${chapters.version} + 1`,
-            })
-            .where(eq(chapters.id, chapter.id));
-        }
-      });
-      const [story] = await db
-        .update(stories)
-        .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
-        .where(eq(stories.id, storyId))
-        .returning({ version: stories.version });
-      if (!story) {
-        throw new Error(`Cannot reorder chapters: story ${storyId} not found.`);
-      }
-
-      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems: newOrder.map((item) => ({ id: item.id, newIndex: item.newIndex })),
-        // Absent for chapters, which is what this operation meant before events existed - an old
-        // server reads such a payload exactly as it always did.
-        ...(type === 'event' ? { reorderTarget: 'Event' as const } : {}),
-        version: story.version,
+      // Only the containers that moved are edited: each takes the rank of its new place.
+      await runLocalWrite(db, storyId, () => {
+        const orderedIds = [...newOrder]
+          .sort((left, right) => left.newIndex - right.newIndex)
+          .map((item) => item.id);
+        const changes = planContainerOrderSync(db, 'Chapter', storyId, { type }, orderedIds);
+        writeRankChangesSync(db, storyId, userIdToLog, 'Chapter', changes);
       });
       entityEventEmitter.emit('chapter_changed', storyId, 'reorder');
     },
@@ -455,95 +457,35 @@ export const createChapterService = (db: AppDrizzleClient): ChapterService => {
       await assertStoryIsWritable(db, storyId);
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
 
-      const liveOf = async (type: ChapterType) =>
-        db
-          .select({ id: chapters.id, index: chapters.index })
-          .from(chapters)
-          .where(
-            and(
-              eq(chapters.storyId, storyId),
-              eq(chapters.type, type),
-              eq(chapters.isDeleted, false),
-            ),
-          )
-          .orderBy(asc(chapters.index))
-          .all();
-
-      const sourceRemaining = (await liveOf(chapter.type)).filter((row) => row.id !== chapterId);
-      const targetExisting = await liveOf(targetType);
-
-      // Clamped rather than refused: an out-of-range slot is a caller bug, and landing at the end
-      // is a result the writer can see and fix, unlike an exception on a screen.
-      const slot = Math.min(
-        Math.max(position ?? targetExisting.length + 1, 1),
-        targetExisting.length + 1,
-      );
-      const targetOrder = [
-        ...targetExisting.slice(0, slot - 1),
-        { id: chapterId, index: 0 },
-        ...targetExisting.slice(slot - 1),
-      ];
-
-      const renumber = (rows: { id: string }[]) =>
-        rows.map((row, position2) => ({ id: row.id, newIndex: position2 + 1 }));
-      const sourceOrder = renumber(sourceRemaining);
-      const arrivedOrder = renumber(targetOrder);
-
-      await db.transaction(async (tx) => {
-        await tx
+      // One edit of the row: its kind and its rank among the kind it joins. The list it left
+      // closes its gap by itself, since both lists number from their live rows' ranks.
+      await runLocalWrite(db, storyId, () => {
+        const placement = planPlacementSync(
+          db,
+          'Chapter',
+          storyId,
+          { type: targetType },
+          chapterId,
+          // Clamped by the placement: an out-of-range slot lands at the end, visibly.
+          position === undefined ? undefined : position - 1,
+        );
+        const updated = db
           .update(chapters)
           .set({
             type: targetType,
-            index: slot,
+            rank: placement.get(chapterId)!,
             updatedAt: new Date(),
             version: sql`${chapters.version} + 1`,
           })
-          .where(eq(chapters.id, chapterId));
-
-        for (const item of [...sourceOrder, ...arrivedOrder]) {
-          if (item.id === chapterId) continue;
-          await tx
-            .update(chapters)
-            .set({
-              index: item.newIndex,
-              updatedAt: new Date(),
-              version: sql`${chapters.version} + 1`,
-            })
-            .where(eq(chapters.id, item.id));
-        }
-      });
-
-      const updatedChapter = await db.query.chapters.findFirst({
-        where: eq(chapters.id, chapterId),
-      });
-      // The kind change goes first: the server matches each reorder against one kind, so it can
-      // only find the arrival in the target space once this has been applied.
-      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Chapter', chapterId, {
-        type: targetType,
-        version: updatedChapter?.version,
-      });
-
-      const bumpStory = async () => {
-        const [story] = await db
-          .update(stories)
-          .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
-          .where(eq(stories.id, storyId))
-          .returning({ version: stories.version });
-        return story?.version;
-      };
-
-      // An empty space needs no reorder: the server would refuse a payload of nothing to compare.
-      if (sourceOrder.length > 0) {
-        await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-          reorderItems: sourceOrder,
-          ...(chapter.type === 'event' ? { reorderTarget: 'Event' as const } : {}),
-          version: await bumpStory(),
+          .where(eq(chapters.id, chapterId))
+          .returning({ version: chapters.version, rank: chapters.rank })
+          .get();
+        recordLocalOperationSync(db, storyId, userIdToLog, 'update', 'Chapter', chapterId, {
+          type: targetType,
+          rank: updated?.rank,
+          version: updated?.version,
         });
-      }
-      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems: arrivedOrder,
-        ...(targetType === 'event' ? { reorderTarget: 'Event' as const } : {}),
-        version: await bumpStory(),
+        writeRankChangesSync(db, storyId, userIdToLog, 'Chapter', placement, new Set([chapterId]));
       });
 
       entityEventEmitter.emit('chapter_changed', storyId, chapterId);

@@ -10,7 +10,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { createGalleryRelationService } from './GalleryRelationService';
@@ -254,7 +255,26 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       const favorite = await normalizeFavoriteCreate(db, newGallery.storyId, 'Gallery', newGallery);
       newGallery = favorite.data;
 
-      const result = await db.insert(galleries).values(newGallery).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        media.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, media.storyId, () => {
+        const inserted = db.insert(galleries).values(newGallery).returning().get();
+        recordLocalOperationSync(
+          db,
+          media.storyId,
+          userIdToLog,
+          'create',
+          'Gallery',
+          inserted.id,
+          syncablePayload(inserted),
+        );
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newGallery.storyId,
@@ -262,22 +282,6 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         'Gallery',
         currentUserId,
         favorite.individualFavorite,
-      );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        media.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        media.storyId,
-        userIdToLog,
-        'create',
-        'Gallery',
-        result.id,
-        syncablePayload(result),
       );
       entityEventEmitter.emit('gallery_changed', media.storyId, result.id);
 
@@ -307,27 +311,31 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
         return;
       }
 
-      const [updated] = await db
-        .update(galleries)
-        .set({ ...data, updatedAt: new Date(), version: sql`${galleries.version} + 1` })
-        .where(eq(galleries.id, galleryId))
-        .returning({ id: galleries.id, storyId: galleries.storyId, version: galleries.version });
-
-      if (!updated) {
-        throw new Error(`Failed to update gallery ${galleryId} or gallery not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        original.storyId,
         currentUserId,
       );
-      // Log the diff already computed above, not the raw `data` input - the input has every
-      // field the caller sends, changed or not.
-      await recordLocalOperation(db, updated.storyId, userIdToLog, 'update', 'Gallery', galleryId, {
-        ...syncablePayload(changes),
-        version: updated.version,
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(galleries)
+          .set({ ...data, updatedAt: new Date(), version: sql`${galleries.version} + 1` })
+          .where(eq(galleries.id, galleryId))
+          .returning({ id: galleries.id, storyId: galleries.storyId, version: galleries.version })
+          .get();
+
+        if (!row) {
+          throw new Error(`Failed to update gallery ${galleryId} or gallery not found.`);
+        }
+
+        // Log the diff already computed above, not the raw `data` input - the input has every
+        // field the caller sends, changed or not.
+        recordLocalOperationSync(db, row.storyId, userIdToLog, 'update', 'Gallery', galleryId, {
+          ...syncablePayload(changes),
+          version: row.version,
+        });
+        return row;
       });
       entityEventEmitter.emit('gallery_changed', updated.storyId, galleryId);
     },
@@ -344,27 +352,8 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       }
       await assertStoryIsWritable(db, toDelete.storyId);
 
-      const [updated] = await db
-        .update(galleries)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${galleries.version} + 1`,
-        })
-        .where(eq(galleries.id, galleryId))
-        .returning({
-          id: galleries.id,
-          storyId: galleries.storyId,
-          isDeleted: galleries.isDeleted,
-          version: galleries.version,
-        });
-
-      if (!updated) {
-        throw new Error(`Failed to delete gallery ${galleryId} or gallery not found.`);
-      }
-
       // The links go with their gallery; GalleryRelationService owns their tombstones and sync logs.
+      // They go first, as before: their deletes stay queued ahead of the gallery's own.
       await createGalleryRelationService(db).unlinkAllForGallery(
         currentUserId,
         toDelete.storyId,
@@ -374,13 +363,37 @@ export const createGalleryService = (db: AppDrizzleClient): GalleryService => {
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        toDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, updated.storyId, userIdToLog, 'delete', 'Gallery', galleryId, {
-        id: updated.id,
-        isDeleted: updated.isDeleted,
-        version: updated.version,
+      const updated = await runLocalWrite(db, toDelete.storyId, () => {
+        const row = db
+          .update(galleries)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${galleries.version} + 1`,
+          })
+          .where(eq(galleries.id, galleryId))
+          .returning({
+            id: galleries.id,
+            storyId: galleries.storyId,
+            isDeleted: galleries.isDeleted,
+            version: galleries.version,
+          })
+          .get();
+
+        if (!row) {
+          throw new Error(`Failed to delete gallery ${galleryId} or gallery not found.`);
+        }
+
+        recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'Gallery', galleryId, {
+          id: row.id,
+          isDeleted: row.isDeleted,
+          version: row.version,
+        });
+        return row;
       });
       entityEventEmitter.emit('gallery_changed', updated.storyId, galleryId);
       entityEventEmitter.emit('gallery_relation_changed', updated.storyId, galleryId);

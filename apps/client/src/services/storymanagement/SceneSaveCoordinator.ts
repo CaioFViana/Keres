@@ -14,6 +14,7 @@ export type SceneFormData = Omit<
   | 'isDeleted'
   | 'deletedAt'
   | 'index'
+  | 'rank'
   | 'body'
 >;
 

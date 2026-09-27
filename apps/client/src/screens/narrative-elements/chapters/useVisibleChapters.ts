@@ -147,6 +147,7 @@ export function useVisibleChapters(input: VisibleChaptersInput): ChapterSelect[]
         storyId: unchapteredScenes[0]?.storyId ?? storyId ?? '',
         name: t('unchaptered_scenes'),
         index: Number.MAX_SAFE_INTEGER,
+        rank: '',
         type: 'chapter',
         summary: null,
         extraNotes: null,

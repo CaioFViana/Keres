@@ -7,7 +7,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import {
@@ -213,10 +214,13 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
         isDeleted: false,
         deletedAt: null,
       };
-      const created = await db.insert(suggestions).values(suggestion).returning().get();
       const userId = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userId, 'create', 'Suggestion', created.id, {
-        ...created,
+      const created = await runLocalWrite(db, storyId, () => {
+        const inserted = db.insert(suggestions).values(suggestion).returning().get();
+        recordLocalOperationSync(db, storyId, userId, 'create', 'Suggestion', inserted.id, {
+          ...inserted,
+        });
+        return inserted;
       });
       entityEventEmitter.emit('suggestion_changed', storyId, created.id);
       return created;
@@ -230,24 +234,28 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       await assertStoryIsWritable(db, current.storyId);
       if (normalizedValue === current.value) return;
       await ensureUnique(current.storyId, current.type, normalizedValue, id);
-      const [updated] = await db
-        .update(suggestions)
-        .set({
+      const userId = await getUserIdForOperation(db, serverService, current.storyId, currentUserId);
+      const updated = await runLocalWrite(db, current.storyId, () => {
+        const row = db
+          .update(suggestions)
+          .set({
+            value: normalizedValue,
+            updatedAt: new Date(),
+            version: sql`${suggestions.version} + 1`,
+          })
+          .where(eq(suggestions.id, id))
+          .returning({
+            id: suggestions.id,
+            storyId: suggestions.storyId,
+            version: suggestions.version,
+          })
+          .get();
+        if (!row) throw new Error('Could not update suggestion.');
+        recordLocalOperationSync(db, row.storyId, userId, 'update', 'Suggestion', id, {
           value: normalizedValue,
-          updatedAt: new Date(),
-          version: sql`${suggestions.version} + 1`,
-        })
-        .where(eq(suggestions.id, id))
-        .returning({
-          id: suggestions.id,
-          storyId: suggestions.storyId,
-          version: suggestions.version,
+          version: row.version,
         });
-      if (!updated) throw new Error('Could not update suggestion.');
-      const userId = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
-      await recordLocalOperation(db, updated.storyId, userId, 'update', 'Suggestion', id, {
-        value: normalizedValue,
-        version: updated.version,
+        return row;
       });
       entityEventEmitter.emit('suggestion_changed', updated.storyId, id);
     },
@@ -256,26 +264,30 @@ export const createSuggestionService = (db: AppDrizzleClient): SuggestionService
       const current = await db.query.suggestions.findFirst({ where: eq(suggestions.id, id) });
       if (!current || current.isDeleted) return;
       await assertStoryIsWritable(db, current.storyId);
-      const [updated] = await db
-        .update(suggestions)
-        .set({
+      const userId = await getUserIdForOperation(db, serverService, current.storyId, currentUserId);
+      const updated = await runLocalWrite(db, current.storyId, () => {
+        const row = db
+          .update(suggestions)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${suggestions.version} + 1`,
+          })
+          .where(eq(suggestions.id, id))
+          .returning({
+            id: suggestions.id,
+            storyId: suggestions.storyId,
+            version: suggestions.version,
+          })
+          .get();
+        if (!row) throw new Error('Could not delete suggestion.');
+        recordLocalOperationSync(db, row.storyId, userId, 'delete', 'Suggestion', id, {
+          id,
           isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${suggestions.version} + 1`,
-        })
-        .where(eq(suggestions.id, id))
-        .returning({
-          id: suggestions.id,
-          storyId: suggestions.storyId,
-          version: suggestions.version,
+          version: row.version,
         });
-      if (!updated) throw new Error('Could not delete suggestion.');
-      const userId = await getUserIdForOperation(db, serverService, updated.storyId, currentUserId);
-      await recordLocalOperation(db, updated.storyId, userId, 'delete', 'Suggestion', id, {
-        id,
-        isDeleted: true,
-        version: updated.version,
+        return row;
       });
       entityEventEmitter.emit('suggestion_changed', updated.storyId, id);
     },

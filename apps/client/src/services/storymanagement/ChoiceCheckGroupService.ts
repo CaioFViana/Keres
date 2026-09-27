@@ -6,7 +6,8 @@ import { createULID, getChangedFields } from '../../utils/entityUtils';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -89,23 +90,24 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
         deletedAt: null,
       };
 
-      await db.insert(choiceCheckGroups).values(newChoiceCheckGroup).run();
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         newChoiceCheckGroup.storyId,
         userId,
       );
-      await recordLocalOperation(
-        db,
-        newChoiceCheckGroup.storyId,
-        userIdToLog,
-        'create',
-        'ChoiceCheckGroup',
-        newChoiceCheckGroup.id,
-        newChoiceCheckGroup,
-      );
+      await runLocalWrite(db, newChoiceCheckGroup.storyId, () => {
+        db.insert(choiceCheckGroups).values(newChoiceCheckGroup).run();
+        recordLocalOperationSync(
+          db,
+          newChoiceCheckGroup.storyId,
+          userIdToLog,
+          'create',
+          'ChoiceCheckGroup',
+          newChoiceCheckGroup.id,
+          newChoiceCheckGroup,
+        );
+      });
 
       return newChoiceCheckGroup;
     },
@@ -135,39 +137,46 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
       }
       await assertStoryIsWritable(db, originalChoiceCheckGroup.storyId);
 
-      const updatedChoiceCheckGroup = await db
-        .update(choiceCheckGroups)
-        .set({
-          ...choiceCheckGroupData,
-          updatedAt: new Date(),
-          version: sql`${choiceCheckGroups.version} + 1`,
-        })
-        .where(and(eq(choiceCheckGroups.id, id), eq(choiceCheckGroups.isDeleted, false)))
-        .returning()
-        .get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        originalChoiceCheckGroup.storyId,
+        userId,
+      );
+      const updatedChoiceCheckGroup = await runLocalWrite(
+        db,
+        originalChoiceCheckGroup.storyId,
+        () => {
+          const updated = db
+            .update(choiceCheckGroups)
+            .set({
+              ...choiceCheckGroupData,
+              updatedAt: new Date(),
+              version: sql`${choiceCheckGroups.version} + 1`,
+            })
+            .where(and(eq(choiceCheckGroups.id, id), eq(choiceCheckGroups.isDeleted, false)))
+            .returning()
+            .get();
 
-      if (!updatedChoiceCheckGroup) {
-        throw new Error(`ChoiceCheckGroup with ID ${id} not found or already deleted.`);
-      }
+          if (!updated) {
+            throw new Error(`ChoiceCheckGroup with ID ${id} not found or already deleted.`);
+          }
 
-      const changes = getChangedFields(originalChoiceCheckGroup, updatedChoiceCheckGroup);
-      if (Object.keys(changes).length > 0) {
-        const userIdToLog = await getUserIdForOperation(
-          db,
-          serverService,
-          updatedChoiceCheckGroup.storyId,
-          userId,
-        );
-        await recordLocalOperation(
-          db,
-          updatedChoiceCheckGroup.storyId,
-          userIdToLog,
-          'update',
-          'ChoiceCheckGroup',
-          updatedChoiceCheckGroup.id,
-          changes,
-        );
-      }
+          const changes = getChangedFields(originalChoiceCheckGroup, updated);
+          if (Object.keys(changes).length > 0) {
+            recordLocalOperationSync(
+              db,
+              updated.storyId,
+              userIdToLog,
+              'update',
+              'ChoiceCheckGroup',
+              updated.id,
+              changes,
+            );
+          }
+          return updated;
+        },
+      );
 
       return updatedChoiceCheckGroup;
     },
@@ -182,32 +191,37 @@ export const createChoiceCheckGroupService = (db: AppDrizzleClient): ChoiceCheck
       }
       await assertStoryIsWritable(db, choiceCheckGroupToDelete.storyId);
 
-      const [removed] = await db
-        .update(choiceCheckGroups)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${choiceCheckGroups.version} + 1`,
-        })
-        .where(eq(choiceCheckGroups.id, id))
-        .returning({ id: choiceCheckGroups.id, version: choiceCheckGroups.version });
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         choiceCheckGroupToDelete.storyId,
         userId,
       );
-      await recordLocalOperation(
-        db,
-        choiceCheckGroupToDelete.storyId,
-        userIdToLog,
-        'delete',
-        'ChoiceCheckGroup',
-        id,
-        { id, version: removed?.version },
-      );
+      await runLocalWrite(db, choiceCheckGroupToDelete.storyId, () => {
+        const removed = db
+          .update(choiceCheckGroups)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${choiceCheckGroups.version} + 1`,
+          })
+          .where(eq(choiceCheckGroups.id, id))
+          .returning({ id: choiceCheckGroups.id, version: choiceCheckGroups.version })
+          .get();
+        recordLocalOperationSync(
+          db,
+          choiceCheckGroupToDelete.storyId,
+          userIdToLog,
+          'delete',
+          'ChoiceCheckGroup',
+          id,
+          {
+            id,
+            version: removed?.version,
+          },
+        );
+      });
     },
   };
 };

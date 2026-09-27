@@ -94,6 +94,7 @@ export function useChapterFormActions({
           | 'isDeleted'
           | 'deletedAt'
           | 'index'
+          | 'rank'
         > = {
           name: state.name.trim(),
           summary: state.summary,

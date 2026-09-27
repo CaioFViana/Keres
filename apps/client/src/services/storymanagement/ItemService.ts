@@ -9,7 +9,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
@@ -129,7 +130,20 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       let newItem = prepareNewEntityData<ItemInsert>(itemData);
       const favorite = await normalizeFavoriteCreate(db, newItem.storyId, 'Item', newItem);
       newItem = favorite.data;
-      const result = await db.insert(items).values(newItem).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newItem.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newItem.storyId, () => {
+        const inserted = db.insert(items).values(newItem).returning().get();
+        recordLocalOperationSync(db, newItem.storyId, userIdToLog, 'create', 'Item', newItem.id, {
+          ...inserted,
+        });
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newItem.storyId,
@@ -138,15 +152,6 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
         currentUserId,
         favorite.individualFavorite,
       );
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newItem.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(db, newItem.storyId, userIdToLog, 'create', 'Item', newItem.id, {
-        ...result,
-      });
       entityEventEmitter.emit('item_changed', newItem.storyId, newItem.id);
       return result;
     },
@@ -178,28 +183,31 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       delete changes.updatedAt;
       if (Object.keys(changes).length === 0) return originalItem;
 
-      await db
-        .update(items)
-        .set({ ...itemData, updatedAt: new Date(), version: sql`${items.version} + 1` })
-        .where(eq(items.id, itemId));
-      const updatedItem = await db.query.items.findFirst({ where: eq(items.id, itemId) });
-      if (!updatedItem) throw new Error(`Failed to retrieve updated item ${itemId}.`);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedItem.storyId,
+        originalItem.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedItem.storyId,
-        userIdToLog,
-        'update',
-        'Item',
-        itemId,
-        getChangedFields(originalItem, updatedItem),
-      );
+      const updatedItem = await runLocalWrite(db, originalItem.storyId, () => {
+        db.update(items)
+          .set({ ...itemData, updatedAt: new Date(), version: sql`${items.version} + 1` })
+          .where(eq(items.id, itemId))
+          .run();
+        const updated = db.select().from(items).where(eq(items.id, itemId)).get();
+        if (!updated) throw new Error(`Failed to retrieve updated item ${itemId}.`);
+
+        recordLocalOperationSync(
+          db,
+          updated.storyId,
+          userIdToLog,
+          'update',
+          'Item',
+          itemId,
+          getChangedFields(originalItem, updated),
+        );
+        return updated;
+      });
       entityEventEmitter.emit('item_changed', updatedItem.storyId, updatedItem.id);
       return updatedItem;
     },
@@ -208,32 +216,36 @@ export const createItemService = (db: AppDrizzleClient): ItemService => {
       const itemToDelete = await db.query.items.findFirst({ where: eq(items.id, itemId) });
       if (!itemToDelete) return;
       await assertStoryIsWritable(db, itemToDelete.storyId);
-      const [updatedItem] = await db
-        .update(items)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${items.version} + 1`,
-        })
-        .where(eq(items.id, itemId))
-        .returning({
-          id: items.id,
-          storyId: items.storyId,
-          isDeleted: items.isDeleted,
-          version: items.version,
-        });
-      if (!updatedItem) throw new Error(`Failed to delete item ${itemId} or item not found.`);
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedItem.storyId,
+        itemToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, updatedItem.storyId, userIdToLog, 'delete', 'Item', itemId, {
-        id: updatedItem.id,
-        isDeleted: updatedItem.isDeleted,
-        version: updatedItem.version,
+      const updatedItem = await runLocalWrite(db, itemToDelete.storyId, () => {
+        const deleted = db
+          .update(items)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${items.version} + 1`,
+          })
+          .where(eq(items.id, itemId))
+          .returning({
+            id: items.id,
+            storyId: items.storyId,
+            isDeleted: items.isDeleted,
+            version: items.version,
+          })
+          .get();
+        if (!deleted) throw new Error(`Failed to delete item ${itemId} or item not found.`);
+        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Item', itemId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
       });
       entityEventEmitter.emit('item_changed', updatedItem.storyId, updatedItem.id);
     },

@@ -208,6 +208,13 @@ jobs:
         with:
           packages: ''
       - run: bun install --frozen-lockfile
+      # @shopify/react-native-skia keeps its native binaries in sibling packages and copies
+      # them into its own `libs/` in a postinstall script - which Bun skips (this repo has
+      # no `trustedDependencies`). Without this copy the Gradle build fails with "Skia
+      # prebuilt binaries not found". Local copy only, no network; the same command the
+      # Gradle error message suggests.
+      - name: Install Skia prebuilt binaries
+        run: bunx install-skia
       - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       # `android/` is gitignored (generated, not source) - this recreates it fresh from
       # apps/client/app.json on every build.

@@ -39,6 +39,7 @@ import {
   stories,
   storyArcs,
   storyCalendars,
+  storyInvitations,
   storyPermissions,
   storyPublications,
   storySchemaFields,
@@ -86,6 +87,8 @@ export const STORY_CHILD_TABLES = [
   routes,
   scenes,
   seeAlsoRelations,
+  // Server cache, like publications: the next sync brings back whatever still stands.
+  storyInvitations,
   storyPermissions,
   statRelations,
   statStrengths,

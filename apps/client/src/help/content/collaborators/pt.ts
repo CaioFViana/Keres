@@ -8,7 +8,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Colaboradores são amigos que recebem acesso a uma história enviada a um servidor. O dono controla o acesso; escritores editam; leitores consultam.',
+      text: 'Colaboradores são amigos que aceitaram um convite para uma história enviada a um servidor. O dono controla o acesso; escritores editam; leitores consultam. Nada chega aos dispositivos do amigo antes que ele aceite.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
@@ -22,9 +22,10 @@ const page: HelpPage = {
       items: [
         'Envie a história a um servidor e torne-se amigo da pessoa nesse mesmo servidor.',
         'Abra Menu da história › Configurações da história.',
-        'Na área de colaboradores, escolha um amigo e o papel desejado.',
+        'Na área de colaboradores, escolha um amigo e o papel desejado e toque em Convidar.',
+        'O amigo aceita ou recusa em Amigos; até lá o convite aparece como pendente, e você pode trocar o papel oferecido ou cancelá-lo.',
         'Para leitores, ative Permitir comentários de leitores se quiser que eles comentem campos.',
-        'Remova ou altere o papel quando a colaboração terminar.',
+        'Altere o papel ou remova o colaborador a qualquer momento.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

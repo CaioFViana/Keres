@@ -1,15 +1,14 @@
 import { and, eq, or, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db } from '../db';
-import { stories, storyPermissions, users } from '../db/schema';
+import { db, type CompatibleDb } from '../db';
+import { stories, storyInvitations, storyPermissions } from '../db/schema';
 import { FriendStatus } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 
 export class StoryPermissionService {
-  // Helper method to check if two users are friends
-  private async _areFriends(userId1: string, userId2: string): Promise<boolean> {
+  async areFriends(userId1: string, userId2: string): Promise<boolean> {
     const friendship = await db.query.friendships.findFirst({
       where: and(
         or(
@@ -22,7 +21,24 @@ export class StoryPermissionService {
     return !!friendship;
   }
 
-  async deletePermissionsBetweenUsers(userA: string, userB: string): Promise<void> {
+  /**
+   * Everything one of these users holds on the other's stories: permissions and open invitations,
+   * both directions. Runs when a friendship ends (decline, unfriend, blacklist) - access and offers of
+   * access only ever exist between friends.
+   */
+  async deleteAccessBetweenUsers(userA: string, userB: string): Promise<void> {
+    await db
+      .delete(storyInvitations)
+      .where(
+        or(
+          and(eq(storyInvitations.inviterId, userA), eq(storyInvitations.inviteeId, userB)),
+          and(eq(storyInvitations.inviterId, userB), eq(storyInvitations.inviteeId, userA)),
+        ),
+      );
+    await this.deletePermissionsBetweenUsers(userA, userB);
+  }
+
+  private async deletePermissionsBetweenUsers(userA: string, userB: string): Promise<void> {
     // 1. Select the IDs of permissions to delete where userB is target and userA is story owner
     const permissionsToDelete1 = await db
       .select({ id: storyPermissions.id })
@@ -62,7 +78,11 @@ export class StoryPermissionService {
     }
   }
 
-  async upsertStoryPermission(
+  /**
+   * Changes the role of somebody who already collaborates on the story. Access is never created here:
+   * a new collaborator is invited (`StoryInvitationService`) and only their acceptance grants it.
+   */
+  async updateStoryPermission(
     ownerUserId: string,
     storyId: string,
     targetUserId: string,
@@ -78,89 +98,81 @@ export class StoryPermissionService {
         'The story owner already has full permissions and cannot be assigned additional permissions.',
       );
     }
-
-    // New: Check if ownerUserId and targetUserId are friends
-    const areFriends = await this._areFriends(ownerUserId, targetUserId);
-    if (!areFriends) {
+    if (!(await this.areFriends(ownerUserId, targetUserId))) {
       throw new AppError(403, 'Permission can only be granted to friends.');
     }
-
-    // 1. Verify ownerUserId owns the story
-    const story = await db.query.stories.findFirst({
-      where: and(eq(stories.id, storyId), eq(stories.userId, ownerUserId)),
-    });
-
-    if (!story) {
+    if (!(await this.isStoryOwner(ownerUserId, storyId))) {
       throw new Error('Unauthorized: Story not found or not owned by user.');
     }
 
-    // 2. Ensure targetUserId exists
-    const targetUser = await db.query.users.findFirst({
-      where: eq(users.id, targetUserId),
-    });
-
-    if (!targetUser) {
-      // `AppError`, not a plain `Error` routed through `withOwnershipCheck`'s "Unauthorized"
-      // prefix match (see that function's own comment) - this message doesn't start with
-      // "Unauthorized", so a plain `Error` here fell through to the generic 500 fallback
-      // instead of the 404 a "not found" case should be.
-      throw new AppError(404, 'Target user not found.');
+    const existingPermission = await this.getUserPermissionForStory(targetUserId, storyId);
+    if (!existingPermission) {
+      throw new AppError(
+        409,
+        'This user does not collaborate on the story yet: invite them, and access starts when they accept.',
+      );
     }
+    const [updatedPermission] = await db
+      .update(storyPermissions)
+      .set({
+        permissionType,
+        updatedAt: new Date(),
+        version: existingPermission.version + 1,
+      })
+      .where(eq(storyPermissions.id, existingPermission.id))
+      .returning();
+    emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
+    return updatedPermission;
+  }
 
-    // 3. Check if permission already exists
-    const existingPermission = await db.query.storyPermissions.findFirst({
-      where: and(eq(storyPermissions.storyId, storyId), eq(storyPermissions.userId, targetUserId)),
+  /**
+   * Grants access - the one place that creates it, reached only by an accepted invitation. Revives a
+   * revoked row instead of adding a second one for the same person and story.
+   */
+  async grantAccess(
+    storyId: string,
+    userId: string,
+    permissionType: 'reader' | 'writer',
+    database: CompatibleDb = db,
+  ) {
+    const existing = await database.query.storyPermissions.findFirst({
+      where: and(eq(storyPermissions.storyId, storyId), eq(storyPermissions.userId, userId)),
     });
-
-    if (existingPermission) {
-      // Update existing permission
-      const updatedPermission = await db
+    const now = new Date();
+    if (existing) {
+      const [revived] = await database
         .update(storyPermissions)
         .set({
           permissionType,
-          updatedAt: new Date(),
-          version: existingPermission.version + 1,
-          isDeleted: false, // Ensure it's not marked as deleted if it was before
+          updatedAt: now,
+          version: existing.version + 1,
+          isDeleted: false,
           deletedAt: null,
         })
-        .where(eq(storyPermissions.id, existingPermission.id))
+        .where(eq(storyPermissions.id, existing.id))
         .returning();
-      emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
-      return updatedPermission[0];
-    } else {
-      // Create new permission
-      const newPermission = {
+      return revived;
+    }
+    const [created] = await database
+      .insert(storyPermissions)
+      .values({
         id: ulid(),
         storyId,
-        userId: targetUserId,
+        userId,
         permissionType,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: now,
+        updatedAt: now,
         version: 1,
-        // Matches every column the update branch's `.returning()` sends back above - without
-        // these, the two branches returned differently-shaped objects (this one missing
-        // isDeleted/deletedAt entirely), which a precise response schema would have to treat
-        // as optional just to accommodate.
         isDeleted: false,
         deletedAt: null,
-      };
-
-      await db.insert(storyPermissions).values(newPermission);
-      // Friendship can be removed between the precondition above and the insert. Do a compensating
-      // check so an unfriending that wins that race never leaves a usable permission behind.
-      if (!(await this._areFriends(ownerUserId, targetUserId))) {
-        await db.delete(storyPermissions).where(eq(storyPermissions.id, newPermission.id));
-        throw new AppError(403, 'Permission can only be granted to friends.');
-      }
-      emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
-      return newPermission;
-    }
+      })
+      .returning();
+    return created;
   }
 
   async deleteStoryPermission(ownerUserId: string, storyId: string, targetUserId: string) {
     // New: Check if ownerUserId and targetUserId are friends
-    const areFriends = await this._areFriends(ownerUserId, targetUserId);
-    if (!areFriends) {
+    if (!(await this.areFriends(ownerUserId, targetUserId))) {
       throw new AppError(403, 'Permission can only be revoked from friends.');
     }
 
@@ -213,7 +225,9 @@ export class StoryPermissionService {
 
     // 2. Fetch permissions for the story
     const permissions = await db.query.storyPermissions.findMany({
-      where: eq(storyPermissions.storyId, storyId),
+      // Revoked rows stay (soft delete) but are no collaborators: listed, they came back after every
+      // reload and kept blocking "unlink from server".
+      where: and(eq(storyPermissions.storyId, storyId), eq(storyPermissions.isDeleted, false)),
       with: {
         user: {
           columns: {

@@ -4,9 +4,8 @@ import { authTokenManager } from './AuthTokenManager';
 
 /**
  * Calls to the `/story-permissions` routes of the server a story is linked to - collaborator
- * management, never stored locally (the server is what knows who has access). Used today only by the
- * Story Settings screen, for the "unlink from server" gate (owner only, only with no collaborators) and
- * the list that makes it possible.
+ * management, never stored locally (the server is what knows who has access). Access is never granted
+ * here: a collaborator is invited, and only their acceptance creates the permission.
  */
 
 export interface StoryCollaborator {
@@ -41,23 +40,13 @@ export const storyPermissionApi = {
     await clientFor(server).delete(`/story-permissions/story/${storyId}/user/${targetUserId}`);
   },
 
-  /** Grants (or updates, if one already exists) a collaborator's permission on a story. Caller must re-fetch `getCollaborators` afterward - the upsert response doesn't carry the joined `user` info. */
-  async grantCollaborator(
-    server: ServerSelect,
-    storyId: string,
-    targetUserId: string,
-    permissionType: 'reader' | 'writer',
-  ): Promise<void> {
-    await clientFor(server).post('/story-permissions/', { storyId, targetUserId, permissionType });
-  },
-
-  /** Same upsert endpoint, named explicitly for the edit-permission UI. */
+  /** Changes an existing collaborator's role. New collaborators are invited (`StoryInvitationApiService`). */
   async updateCollaboratorPermission(
     server: ServerSelect,
     storyId: string,
     targetUserId: string,
     permissionType: 'reader' | 'writer',
   ): Promise<void> {
-    await this.grantCollaborator(server, storyId, targetUserId, permissionType);
+    await clientFor(server).post('/story-permissions/', { storyId, targetUserId, permissionType });
   },
 };

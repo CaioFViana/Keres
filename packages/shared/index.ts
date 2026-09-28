@@ -73,6 +73,7 @@ export * from './schemas/NoteSchemas';
 export * from './schemas/NoteRelationSchemas';
 export * from './schemas/SceneSchemas';
 export * from './schemas/SeeAlsoRelationSchemas';
+export * from './schemas/StoryInvitationSchemas';
 export * from './schemas/StoryPermissionSchemas';
 export * from './schemas/StatSchemas';
 export * from './schemas/StorySchemaFieldSchemas';

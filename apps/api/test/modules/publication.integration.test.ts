@@ -5,7 +5,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { showcaseSettings, stories, storyPublications } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -108,10 +115,7 @@ describe('POST /stories/:storyId/publications', () => {
 
     await request('POST', `/friend/request/${bia.userId}`, { token: ana.token });
     await request('PUT', `/friend/accept/${ana.userId}`, { token: bia.token });
-    await request('POST', '/story-permissions', {
-      token: ana.token,
-      body: { storyId: story.id, targetUserId: bia.userId, permissionType: 'writer' },
-    });
+    await shareStory(ana, bia, story.id, 'writer');
 
     const { status } = await request('POST', `/stories/${story.id}/publications`, {
       token: bia.token,
@@ -176,10 +180,7 @@ describe('GET /stories/publications/mine', () => {
 
     await request('POST', `/friend/request/${bia.userId}`, { token: ana.token });
     await request('PUT', `/friend/accept/${ana.userId}`, { token: bia.token });
-    await request('POST', '/story-permissions', {
-      token: ana.token,
-      body: { storyId: story.id, targetUserId: bia.userId, permissionType: 'reader' },
-    });
+    await shareStory(ana, bia, story.id, 'reader');
     await publish(ana.token, story.id);
 
     const { status, data } = await request('GET', '/stories/publications/mine', {

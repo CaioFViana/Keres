@@ -1,7 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import { storyPermissions } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -48,10 +55,17 @@ beforeEach(async () => {
 });
 
 describe('POST /story-permissions/', () => {
-  it('lets the owner share a story as a reader', async () => {
-    const { status } = await grant(ana.token, bia.userId, 'reader');
+  it('never gives access to a friend who was not invited', async () => {
+    const { status, data } = await grant(ana.token, bia.userId, 'writer');
 
-    expect(status).toBe(200);
+    expect(status).toBe(409);
+    expect(data.message).toMatch(/invite them/);
+    expect((await listFor(ana.token)).data).toEqual([]);
+  });
+
+  it('lists a collaborator once they accept the invitation', async () => {
+    await shareStory(ana, bia, storyId, 'reader');
+
     const { data } = await listFor(ana.token);
     expect(data.some((permission: any) => permission.userId === bia.userId)).toBe(true);
   });
@@ -60,7 +74,7 @@ describe('POST /story-permissions/', () => {
     const before = await request('GET', '/sync/pullpreviews', { token: bia.token });
     expect(before.data.storyPreviews).toEqual([]);
 
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
 
     const after = await request('GET', '/sync/pullpreviews', { token: bia.token });
     expect(after.data.storyPreviews).toEqual([
@@ -86,7 +100,7 @@ describe('POST /story-permissions/', () => {
   it.each(['reader', 'writer'])(
     'reports the granted %s role back to the collaborator',
     async (permissionType) => {
-      await grant(ana.token, bia.userId, permissionType);
+      await shareStory(ana, bia, storyId, permissionType as 'reader' | 'writer');
 
       const { data } = await pull(bia.token);
 
@@ -95,8 +109,9 @@ describe('POST /story-permissions/', () => {
   );
 
   it('updates an existing grant instead of duplicating it', async () => {
-    await grant(ana.token, bia.userId, 'reader');
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'reader');
+    const changed = await grant(ana.token, bia.userId, 'writer');
+    expect(changed.status).toBe(200);
 
     const { data } = await listFor(ana.token);
 
@@ -105,7 +120,7 @@ describe('POST /story-permissions/', () => {
   });
 
   it('refuses to let a collaborator share the story onward', async () => {
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'writer');
     const carla = await registerUser('carla');
     await befriend(bia, carla);
 
@@ -155,17 +170,18 @@ describe('POST /story-permissions/', () => {
 
 describe('DELETE /story-permissions/story/:storyId/user/:targetUserId', () => {
   it('takes the story away from the collaborator', async () => {
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await revoke(ana.token, bia.userId);
 
     expect(status).toBe(200);
     const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
     expect(data.storyPreviews).toEqual([]);
+    expect((await listFor(ana.token)).data).toEqual([]);
   });
 
   it('refuses a revoke from someone who does not own the story', async () => {
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'writer');
 
     const { status } = await revoke(bia.token, bia.userId);
 
@@ -204,7 +220,7 @@ describe('GET /story-permissions/story/:storyId', () => {
   });
 
   it('refuses to show the collaborator list to a collaborator', async () => {
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'writer');
 
     const { status } = await listFor(bia.token);
 
@@ -226,7 +242,7 @@ describe('GET /story-permissions/story/:storyId', () => {
 
 describe('what a collaborator can do with the story', () => {
   it('lets a reader export it', async () => {
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await request('GET', `/stories/${storyId}/export`, { token: bia.token });
 
@@ -238,7 +254,7 @@ describe('what a collaborator can do with the story', () => {
    * goes away if every permission reader discards the deleted row.
    */
   it('stops a former collaborator from exporting it', async () => {
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
     await revoke(ana.token, bia.userId);
 
     const { status } = await request('GET', `/stories/${storyId}/export`, { token: bia.token });
@@ -247,7 +263,7 @@ describe('what a collaborator can do with the story', () => {
   });
 
   it('stops a former collaborator from pulling it', async () => {
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'writer');
     await revoke(ana.token, bia.userId);
 
     const { status } = await pull(bia.token);
@@ -256,7 +272,7 @@ describe('what a collaborator can do with the story', () => {
   });
 
   it('stops a former collaborator from pushing to it', async () => {
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'writer');
     await revoke(ana.token, bia.userId);
     const characterId = newId();
 
@@ -276,9 +292,9 @@ describe('what a collaborator can do with the story', () => {
   });
 
   it('restores access when the owner shares the story again', async () => {
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
     await revoke(ana.token, bia.userId);
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await request('GET', `/stories/${storyId}/export`, { token: bia.token });
 
@@ -286,7 +302,7 @@ describe('what a collaborator can do with the story', () => {
   });
 
   it('lets a writer push a change', async () => {
-    await grant(ana.token, bia.userId, 'writer');
+    await shareStory(ana, bia, storyId, 'writer');
     const characterId = newId();
 
     const { data } = await request('POST', `/sync/${storyId}`, {
@@ -306,7 +322,7 @@ describe('what a collaborator can do with the story', () => {
   });
 
   it('refuses a write from a reader', async () => {
-    await grant(ana.token, bia.userId, 'reader');
+    await shareStory(ana, bia, storyId, 'reader');
     const characterId = newId();
 
     const { status, data } = await request('POST', `/sync/${storyId}`, {

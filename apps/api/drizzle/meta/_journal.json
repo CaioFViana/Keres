@@ -330,6 +330,13 @@
       "when": 1790524882751,
       "tag": "0046_special_rocket_raccoon",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1790542104107,
+      "tag": "0047_massive_metal_master",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,8 @@ export type RealtimeEvent =
   | { type: 'story.changed'; storyId: string; maxOperationVersion?: number }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  /** A story invitation was sent, answered or withdrawn: a nudge to refetch the open invitations. */
+  | { type: 'story-invitations.changed' }
   /**
    * A story gained (or lost) a public version. It goes to the owner and to everybody with permission on
    * it. With no content payload, like the others: it is only a nudge for the client to redo the

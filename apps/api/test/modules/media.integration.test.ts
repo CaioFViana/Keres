@@ -3,7 +3,14 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
 import { galleries, tiers, users } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -217,10 +224,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
 
   it('refuses an upload from a reader', async () => {
     await befriend(ana, bia);
-    await request('POST', '/story-permissions/', {
-      token: ana.token,
-      body: { storyId, targetUserId: bia.userId, permissionType: 'reader' },
-    });
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await upload(bia.token, PNG_HASH, PNG_BYTES);
 
@@ -229,10 +233,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
 
   it('allows an upload from a writer', async () => {
     await befriend(ana, bia);
-    await request('POST', '/story-permissions/', {
-      token: ana.token,
-      body: { storyId, targetUserId: bia.userId, permissionType: 'writer' },
-    });
+    await shareStory(ana, bia, storyId, 'writer');
 
     const { status } = await upload(bia.token, PNG_HASH, PNG_BYTES);
 
@@ -391,10 +392,7 @@ describe('GET /media/:storyId/blobs/:hash', () => {
     await upload(ana.token, PNG_HASH, PNG_BYTES);
     await referenceInGallery(PNG_HASH);
     await befriend(ana, bia);
-    await request('POST', '/story-permissions/', {
-      token: ana.token,
-      body: { storyId, targetUserId: bia.userId, permissionType: 'reader' },
-    });
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await download(bia.token, PNG_HASH);
 

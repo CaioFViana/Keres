@@ -8,7 +8,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'Collaborators are friends who receive access to a story sent to a server. The owner controls access; writers edit; readers view.',
+      text: 'Collaborators are friends who accepted an invitation to a story sent to a server. The owner controls access; writers edit; readers view. Nothing reaches the friend’s devices until they accept.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
@@ -22,9 +22,10 @@ const page: HelpPage = {
       items: [
         'Send the story to a server and become friends with the person on that same server.',
         'Open Story menu › Story settings.',
-        'In the collaborators area, choose a friend and the wanted role.',
+        'In the collaborators area, choose a friend and the wanted role, then tap Invite.',
+        'The friend accepts or declines in Friends; until then the invitation shows as pending, where you can change the offered role or withdraw it.',
         'For readers, turn on Allow reader comments if you want them to comment on fields.',
-        'Remove or change the role when collaboration ends.',
+        'Change the role or remove the collaborator at any time.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

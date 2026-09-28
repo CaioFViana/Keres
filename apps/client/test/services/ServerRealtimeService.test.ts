@@ -16,6 +16,11 @@ jest.mock('../../src/services/storymanagement/StoryService', () => ({
 jest.mock('../../src/state/storyListStore', () => ({
   useStoryListStore: { getState: jest.fn() },
 }));
+const mockSyncInvitations = jest.fn(async () => undefined);
+jest.mock('../../src/services/StoryInvitationService', () => ({
+  __esModule: true,
+  createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
+}));
 
 import { createKeresAxiosInstance } from '../../src/services/apiClient';
 import { createFriendshipService } from '../../src/services/FriendshipService';
@@ -403,6 +408,25 @@ describe('subscriptions, failures and reconnects', () => {
     expect(mockFriendshipService.syncFriendshipsWithServer).toHaveBeenCalledWith('me', server);
     expect(mockPublicationService.syncPublicationsWithServer).toHaveBeenCalledWith(server);
     expect(mockSyncEngine.requestSync).not.toHaveBeenCalled();
+    // An ended friendship takes its story invitations along: they are fetched again.
+    expect(mockSyncInvitations).toHaveBeenCalledWith(server);
+
+    await service.stop();
+  });
+
+  it('refreshes the open story invitations on their event, without downloading anything', async () => {
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+    service.start();
+    await flush();
+
+    MockWebSocket.instances[0].onmessage?.({
+      data: JSON.stringify({ type: 'story-invitations.changed' }),
+    });
+    await flush();
+
+    expect(mockSyncInvitations).toHaveBeenCalledWith(server);
+    expect(mockSyncEngine.fetchServerStoryPreviews).not.toHaveBeenCalled();
+    expect(mockSyncEngine.downloadAndImportStory).not.toHaveBeenCalled();
 
     await service.stop();
   });

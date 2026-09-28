@@ -134,16 +134,18 @@ export default function StoryCollaborationSection({
                 disabled={!collaboration.selectedFriendId || collaboration.serverActionLoading}
                 style={isCompact ? undefined : styles.addButtonWide}
               >
-                {t('add')}
+                {t('invite')}
               </Button>
             </View>
           ) : (
             <Text style={styles.muted}>{t('no_addable_friends')}</Text>
           )}
 
-          {collaboration.collaborators !== null && collaboration.collaborators.length === 0 && (
-            <Text style={[styles.muted, styles.listEmpty]}>{t('no_collaborators')}</Text>
-          )}
+          {collaboration.collaborators !== null &&
+            collaboration.collaborators.length === 0 &&
+            collaboration.pendingInvitations.length === 0 && (
+              <Text style={[styles.muted, styles.listEmpty]}>{t('no_collaborators')}</Text>
+            )}
 
           <View style={styles.collaboratorList}>
             {(collaboration.collaborators ?? []).map((collaborator) => (
@@ -176,6 +178,46 @@ export default function StoryCollaborationSection({
                   hitSlop={8}
                 >
                   <Ionicons name="trash-outline" size={20} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            ))}
+            {collaboration.pendingInvitations.map((invitation) => (
+              <View
+                key={invitation.id}
+                style={[styles.collaboratorCard, styles.pendingCard]}
+                testID={`pending-invitation-${invitation.inviteeId}`}
+              >
+                <View style={styles.collaboratorName}>
+                  <Text style={styles.pendingName} numberOfLines={1}>
+                    {invitation.inviteeUsername}
+                  </Text>
+                  <Text style={styles.pendingTag}>{t('story_invitation_pending')}</Text>
+                </View>
+                <View style={styles.collaboratorPermission}>
+                  <SingleSelectPill
+                    options={permissionTypeOptions}
+                    value={invitation.permissionType}
+                    onValueChange={(value) => {
+                      if (value === 'reader' || value === 'writer') {
+                        void collaboration.handleUpdateInvitationRole(invitation, value);
+                      }
+                    }}
+                    disabled={collaboration.serverActionLoading}
+                    style={styles.pillFlush}
+                  />
+                </View>
+                <TouchableOpacity
+                  onPress={() => collaboration.handleCancelInvitation(invitation)}
+                  disabled={collaboration.serverActionLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('story_invitation_withdraw')}
+                  style={[
+                    styles.removeButton,
+                    collaboration.serverActionLoading && styles.removeButtonDisabled,
+                  ]}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle-outline" size={20} color={colors.error} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -324,6 +366,19 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.border,
       backgroundColor: colors.surface,
+    },
+    pendingCard: {
+      borderStyle: 'dashed',
+    },
+    pendingName: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    pendingTag: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
     },
     collaboratorName: {
       flex: 1,

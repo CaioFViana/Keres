@@ -18,6 +18,7 @@ import {
   type PublishManuscriptOptions,
 } from '../../src/services/PublicationApiService';
 import { createKeresAxiosInstance } from '../../src/services/apiClient';
+import { storyInvitationApi } from '../../src/services/StoryInvitationApiService';
 import { storyPermissionApi } from '../../src/services/StoryPermissionService';
 import { UserApiService } from '../../src/services/UserApiService';
 
@@ -36,7 +37,7 @@ describe('server-bound API services', () => {
     await expect(storyPermissionApi.getCollaborators(server, 'story')).resolves.toEqual([
       { id: 'permission' },
     ]);
-    await storyPermissionApi.grantCollaborator(server, 'story', 'writer', 'writer');
+    await storyPermissionApi.updateCollaboratorPermission(server, 'story', 'writer', 'writer');
 
     expect(createKeresAxiosInstance).toHaveBeenCalledWith({ baseURL: server.url });
     expect(mockClient.setTokenProvider).toHaveBeenCalled();
@@ -56,6 +57,32 @@ describe('server-bound API services', () => {
       permissionType: 'reader',
     });
     expect(mockClient.delete).toHaveBeenCalledWith('/story-permissions/story/story/user/writer');
+  });
+
+  it('maps the story invitation endpoints of the supplied server', async () => {
+    mockClient.get.mockResolvedValue({ data: [{ id: 'inv' }] });
+    mockClient.post.mockResolvedValue({ data: { id: 'inv' } });
+    mockClient.put.mockResolvedValue({ data: { storyId: 'story' } });
+    mockClient.delete.mockResolvedValue({});
+
+    await expect(storyInvitationApi.list(server)).resolves.toEqual([{ id: 'inv' }]);
+    await storyInvitationApi.listForStory(server, 'story');
+    await expect(storyInvitationApi.invite(server, 'story', 'bia', 'writer')).resolves.toEqual({
+      id: 'inv',
+    });
+    await expect(storyInvitationApi.accept(server, 'inv')).resolves.toEqual({ storyId: 'story' });
+    await storyInvitationApi.remove(server, 'inv');
+
+    expect(mockClient.setActiveServer).toHaveBeenCalledWith(server);
+    expect(mockClient.get).toHaveBeenCalledWith('/friend/story-invitations/');
+    expect(mockClient.get).toHaveBeenCalledWith('/friend/story-invitations/story/story');
+    expect(mockClient.post).toHaveBeenCalledWith('/friend/story-invitations/', {
+      storyId: 'story',
+      targetUserId: 'bia',
+      permissionType: 'writer',
+    });
+    expect(mockClient.put).toHaveBeenCalledWith('/friend/story-invitations/inv/accept');
+    expect(mockClient.delete).toHaveBeenCalledWith('/friend/story-invitations/inv');
   });
 
   it('maps FriendshipApiService endpoints and treats a missing user detail as absent', async () => {

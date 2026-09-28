@@ -5,6 +5,7 @@ import { adminRoutes } from './modules/admin/admin.route';
 import { authRoutes } from './modules/auth/auth.route';
 import { packRoutes } from './modules/pack/pack.route';
 import { friendRoutes } from './modules/friend/friend.route';
+import { storyInvitationRoutes } from './modules/friend/storyInvitation.route';
 import { mediaRoutes } from './modules/media/media.route';
 import { publicRoutes } from './modules/public/public.route';
 import { publicationRoutes } from './modules/story/publication.route';
@@ -114,6 +115,7 @@ export function createApiRoutes() {
     .group('/stories', (app) => app.use(storyRoutes).use(publicationRoutes))
     .group('/media', (app) => app.use(mediaRoutes))
     .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
+    .group('/friend/story-invitations', (app) => app.use(storyInvitationRoutes))
     .group('/friend', (app) => app.use(friendRoutes))
     .group('/packs', (app) => app.use(packRoutes))
     .group('/user', (app) => app.use(userRoutes))

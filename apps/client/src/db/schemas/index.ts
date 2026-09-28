@@ -37,6 +37,7 @@ export * from './stats';
 export * from './stories';
 export * from './storyArcs';
 export * from './storyCalendars';
+export * from './storyInvitations';
 export * from './storyPermissions';
 export * from './storyPublications';
 export * from './storySchemaFields';

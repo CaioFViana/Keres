@@ -1,12 +1,12 @@
 import type { AppDrizzleClient } from '../db';
 import type { ServerSelect } from '../db/schema';
-import { useStoryListStore } from '../state/storyListStore';
 import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createPublicationService } from './PublicationService';
+import { createStoryInvitationService } from './StoryInvitationService';
 import type { ServerStoryPreview } from './SyncEngineService';
-import { createStoryService } from './storymanagement/StoryService';
+import { importNewServerStories } from './sync/importNewServerStories';
 
 const RETRY_MS = 5_000;
 /** How often the silence of the socket is checked. */
@@ -22,6 +22,7 @@ type ServerEvent =
   | { type: 'story.changed'; storyId: string }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  | { type: 'story-invitations.changed' }
   | { type: 'story.published'; storyId: string }
   | { type: 'server.heartbeat' };
 
@@ -209,6 +210,8 @@ export class ServerRealtimeService {
       this.syncEngine.requestSync('websocket');
     } else if (event.type === 'friendships.changed') {
       await createFriendshipService(this.db).syncFriendshipsWithServer(this.userId, this.server);
+      // An ended friendship takes its open story invitations with it.
+      await createStoryInvitationService(this.db).syncWithServer(this.server);
     } else if (event.type === 'story.published') {
       await createPublicationService(this.db).syncPublicationsWithServer(this.server);
     } else if (event.type === 'stories.catalog-changed') {
@@ -216,29 +219,10 @@ export class ServerRealtimeService {
       // fresh connection the socket keeps receiving nudges for stories it can no longer read (each
       // one driving a sync that 403s), and misses them for stories it just gained.
       this.reconnectNow();
-      const engine = this.syncEngine;
-      const previews = await engine.fetchServerStoryPreviews(this.server);
-      const localStories = await this.db.query.stories.findMany({ columns: { id: true } });
-      const localIds = new Set(localStories.map((story) => story.id));
-      let downloadedAny = false;
-      for (const preview of previews) {
-        if (!localIds.has(preview.storyId)) {
-          await engine.downloadAndImportStory(
-            this.server.id,
-            preview.storyId,
-            this.server.idUser,
-            preview.role,
-          );
-          downloadedAny = true;
-        }
-      }
-      // Without this, a new story arriving through this event (somebody adding you as a collaborator, say)
-      // is saved in the local database but invisible in `StorySelectionScreen`, which reads
-      // `useStoryListStore` - the list only reflects the database when something asks for a fresh
-      // `fetchStories`.
-      if (downloadedAny) {
-        await useStoryListStore.getState().fetchStories(createStoryService(this.db));
-      }
+      // An invitation this user accepted (on any device), say: the story is downloaded and listed.
+      await importNewServerStories(this.db, this.syncEngine, this.server);
+    } else if (event.type === 'story-invitations.changed') {
+      await createStoryInvitationService(this.db).syncWithServer(this.server);
     }
   }
 

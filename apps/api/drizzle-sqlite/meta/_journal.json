@@ -239,6 +239,13 @@
       "when": 1790462115870,
       "tag": "0033_colossal_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1790542106421,
+      "tag": "0034_lethal_cardiac",
+      "breakpoints": true
     }
   ]
 }

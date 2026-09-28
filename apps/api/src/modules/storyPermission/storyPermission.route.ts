@@ -4,9 +4,7 @@ import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { AppError } from '../../utils/errors';
 
-/** Shape of a `story_permissions` row as returned by upsertStoryPermission - both its
- *  create and update branches now return every one of these fields (see the comment on
- *  the create branch's object literal in StoryPermissionService.ts). */
+/** Shape of a `story_permissions` row as returned by updateStoryPermission. */
 const StoryPermissionResponseSchema = t.Object({
   id: t.String(),
   storyId: t.String(),
@@ -46,7 +44,7 @@ export const storyPermissionRoutes = new Elysia()
         throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
       return withOwnershipCheck(() =>
-        storyPermissionService.upsertStoryPermission(
+        storyPermissionService.updateStoryPermission(
           user.userId,
           body.storyId,
           body.targetUserId,
@@ -58,9 +56,9 @@ export const storyPermissionRoutes = new Elysia()
       body: CreateStoryPermissionSchema,
       response: StoryPermissionResponseSchema,
       detail: {
-        summary: 'Create or update a story permission',
+        summary: "Change a collaborator's role",
         description:
-          'Allows the story owner to grant or update read/write permissions for another user on a specific story. If a permission already exists for the user and story, it will be updated; otherwise, a new one will be created. The target user must already be a friend of the owner (403 otherwise) - see StoryPermissionService.upsertStoryPermission.',
+          'Allows the story owner to switch an existing collaborator between reader and writer. Access is never created here: new collaborators are invited through /friend/story-invitations and gain access when they accept (409 for somebody who does not collaborate yet). The target user must still be a friend of the owner (403 otherwise).',
         tags: ['Story Permissions'],
       },
     },

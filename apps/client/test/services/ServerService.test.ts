@@ -188,6 +188,19 @@ it('purges reader and writer stories with their local sync state when leaving a 
     createdAt: TEST_NOW,
   });
 
+  await database.db.insert(schema.storyInvitations).values({
+    id: 'invitation',
+    serverId: 'shared-server',
+    storyId: 'someone-else-story',
+    storyTitle: 'Offered',
+    inviterId: 'owner',
+    inviterUsername: 'Owner',
+    inviteeId: 'me',
+    inviteeUsername: 'Me',
+    permissionType: 'reader',
+    createdAt: TEST_NOW,
+  });
+
   await createServerService(database.db).deleteServer('shared-server');
 
   expect(await database.db.select().from(schema.stories).all()).toEqual(
@@ -209,6 +222,7 @@ it('purges reader and writer stories with their local sync state when leaving a 
     expect.arrayContaining([expect.objectContaining({ storyId: 'writer-story' })]),
   );
   expect(await database.db.select().from(schema.storyPublications).all()).toEqual([]);
+  expect(await database.db.select().from(schema.storyInvitations).all()).toEqual([]);
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('writer-story');
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('reader-story');
 });

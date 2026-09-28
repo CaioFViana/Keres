@@ -135,6 +135,29 @@ jest.mock('react-i18next', () => {
   };
 });
 
+// The real container reaches the safe area and the keyboard; this one lays the same slots out flat.
+jest.mock('@/src/components/common/forms/EntityFormContainer/EntityFormContainer', () => {
+  const { Text, View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      children,
+      description,
+      actions,
+    }: {
+      children?: React.ReactNode;
+      description?: string;
+      actions?: React.ReactNode;
+    }) => (
+      <View testID="form-container">
+        {description ? <Text>{description}</Text> : null}
+        {children}
+        {actions}
+      </View>
+    ),
+  };
+});
+
 jest.mock('../../../../src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
   return {
@@ -345,11 +368,13 @@ describe('ManuscriptExportScreen', () => {
     await waitFor(() => expect(mockGoBack).toHaveBeenCalledTimes(1));
   });
 
-  it('closes from its close and cancel buttons', async () => {
+  it('leaves by cancel, with the title and back control in the native header only', async () => {
     const view = await renderScreen();
-    await fireEvent.press(view.getByTestId('export-close'));
+
+    expect(view.queryByTestId('export-close')).toBeNull();
+    expect(view.getByText('export_manuscript_description')).toBeTruthy();
     await fireEvent.press(view.getByTestId('export-cancel'));
-    expect(mockGoBack).toHaveBeenCalledTimes(2);
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
   it('compiles the scene separator and hands the style to the pipeline', async () => {

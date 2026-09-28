@@ -103,6 +103,17 @@ jest.mock('../../../src/services/FriendshipService', () => ({
   }),
 }));
 
+jest.mock('../../../src/components/features/story/StoryInvitationList/StoryInvitationList', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+const mockSyncInvitations = jest.fn(async () => undefined);
+jest.mock('../../../src/services/StoryInvitationService', () => ({
+  __esModule: true,
+  createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
+}));
+
 jest.mock('../../../src/services/ServerService', () => ({
   createServerService: () => ({
     getAllServers: (...args: unknown[]) => mockGetAllServers(...args),

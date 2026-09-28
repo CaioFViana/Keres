@@ -124,6 +124,7 @@ const collaborationState = (overrides = {}) => ({
   setUploadTargetServerId: jest.fn(),
   isOwnerOnServer: false,
   collaborators: null,
+  pendingInvitations: [],
   serverActionLoading: false,
   addableFriends: [],
   selectedFriendId: null,
@@ -134,6 +135,8 @@ const collaborationState = (overrides = {}) => ({
   handleAddCollaborator: jest.fn(),
   handleUpdateCollaboratorPermission: jest.fn(),
   handleRemoveCollaborator: jest.fn(),
+  handleUpdateInvitationRole: jest.fn(),
+  handleCancelInvitation: jest.fn(),
   handleUnlinkFromServer: jest.fn(),
   uploadServerOptions: [],
   addableFriendOptions: [],
@@ -262,31 +265,31 @@ describe('StoryCollaborationSection', () => {
     expect(screen.getByText('no_collaborators')).toBeTruthy();
   });
 
-  it('adds the chosen friend with the chosen permission', async () => {
+  it('invites the chosen friend with the chosen permission', async () => {
     mockCollaboration = linkedOwner({
       addableFriendOptions: [{ label: 'bob', value: 'user-2' }],
       selectedFriendId: 'user-2',
     });
     const screen = await render(<StoryCollaborationSection {...sectionProps()} />);
 
-    expect(screen.getByTestId('button-add').props.disabled).toBe(false);
+    expect(screen.getByTestId('button-invite').props.disabled).toBe(false);
 
     await act(async () => {
       screen.getByTestId('pill-select_permission_type').props.onValueChange('writer');
     });
     expect(mockCollaboration.setSelectedPermissionType).toHaveBeenCalledWith('writer');
 
-    await fireEvent.press(screen.getByTestId('button-add'));
+    await fireEvent.press(screen.getByTestId('button-invite'));
     expect(mockCollaboration.handleAddCollaborator).toHaveBeenCalledTimes(1);
   });
 
-  it('refuses to add without a friend', async () => {
+  it('refuses to invite without a friend', async () => {
     mockCollaboration = linkedOwner({
       addableFriendOptions: [{ label: 'bob', value: 'user-2' }],
     });
     const screen = await render(<StoryCollaborationSection {...sectionProps()} />);
 
-    expect(screen.getByTestId('button-add').props.disabled).toBe(true);
+    expect(screen.getByTestId('button-invite').props.disabled).toBe(true);
   });
 
   it('lists the collaborators with their permission, and removes them', async () => {
@@ -320,6 +323,33 @@ describe('StoryCollaborationSection', () => {
     expect(mockCollaboration.handleRemoveCollaborator).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'col-1' }),
     );
+  });
+
+  it('lists unanswered invitations apart, with their offered role and a way to withdraw', async () => {
+    const invitation = {
+      id: 'inv-1',
+      inviteeId: 'user-3',
+      inviteeUsername: 'carla',
+      permissionType: 'writer',
+    };
+    mockCollaboration = linkedOwner({ pendingInvitations: [invitation] });
+    const screen = await render(<StoryCollaborationSection {...sectionProps()} />);
+
+    expect(screen.getByTestId('pending-invitation-user-3')).toBeTruthy();
+    expect(screen.getByText('carla')).toBeTruthy();
+    expect(screen.getByText('story_invitation_pending')).toBeTruthy();
+    // A pending invitation is somebody on the way, not an empty list.
+    expect(screen.queryByText('no_collaborators')).toBeNull();
+
+    const [rolePill] = screen.getAllByTestId('pill-plain');
+    expect(rolePill.props.value).toBe('writer');
+    await act(async () => {
+      rolePill.props.onValueChange('reader');
+    });
+    expect(mockCollaboration.handleUpdateInvitationRole).toHaveBeenCalledWith(invitation, 'reader');
+
+    await fireEvent.press(screen.getByLabelText('story_invitation_withdraw'));
+    expect(mockCollaboration.handleCancelInvitation).toHaveBeenCalledWith(invitation);
   });
 
   it('blocks unlinking while collaborators remain, and frees it once empty', async () => {

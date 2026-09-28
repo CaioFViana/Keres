@@ -9,9 +9,11 @@ const mockServerService = { getAllServers: jest.fn() };
 const mockStoryService = { updateStory: jest.fn(), unlinkFromServer: jest.fn() };
 const mockFriendshipService = { getAllFriendships: jest.fn() };
 const mockAlert = jest.fn();
+const mockInvite = jest.fn();
+const mockCloseInvitation = jest.fn();
+const mockNotify = jest.fn();
 const mockApi = {
   getCollaborators: jest.fn(),
-  grantCollaborator: jest.fn(),
   updateCollaboratorPermission: jest.fn(),
   removeCollaborator: jest.fn(),
 };
@@ -49,11 +51,37 @@ jest.mock('../../src/services/StoryPermissionService', () => ({
   __esModule: true,
   storyPermissionApi: {
     getCollaborators: (...args: unknown[]) => mockApi.getCollaborators(...args),
-    grantCollaborator: (...args: unknown[]) => mockApi.grantCollaborator(...args),
     updateCollaboratorPermission: (...args: unknown[]) =>
       mockApi.updateCollaboratorPermission(...args),
     removeCollaborator: (...args: unknown[]) => mockApi.removeCollaborator(...args),
   },
+}));
+jest.mock('../../src/services/StoryInvitationApiService', () => ({
+  __esModule: true,
+  storyInvitationApi: { invite: (...args: unknown[]) => mockInvite(...args) },
+}));
+jest.mock('../../src/services/storyInvitationActions', () => ({
+  __esModule: true,
+  closeStoryInvitation: (...args: unknown[]) => mockCloseInvitation(...args),
+}));
+jest.mock('../../src/state/notificationStore', () => ({
+  __esModule: true,
+  useNotificationStore: () => ({ showNotification: mockNotify }),
+}));
+// The hook reads the invitations from the local copy; a settable list stands in for it.
+jest.mock('../../src/hooks/useStoryInvitations', () => {
+  const { create } = require('zustand');
+  const store = create(() => ({ invitations: [] as unknown[] }));
+  return {
+    __esModule: true,
+    mockInvitationList: store,
+    useStoryInvitations: () => store((state: { invitations: unknown[] }) => state.invitations),
+  };
+});
+const mockSyncInvitations = jest.fn(async () => undefined);
+jest.mock('../../src/services/StoryInvitationService', () => ({
+  __esModule: true,
+  createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
 }));
 jest.mock('../../src/services/sync/appSyncEngine', () => ({
   __esModule: true,
@@ -67,10 +95,22 @@ jest.mock('../../src/utils/AppAlert', () => ({
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { useStoryServerCollaboration } from '../../src/hooks/useStoryServerCollaboration';
 import { syncEngine } from '../../src/services/sync/appSyncEngine';
+// @ts-expect-error - only the mock exports it
+import { mockInvitationList } from '../../src/hooks/useStoryInvitations';
 
 const mockUpload = syncEngine.uploadNewStoryToServer as jest.Mock;
 
-const server = { id: 'server-1', name: 'Main' } as never;
+const server = { id: 'server-1', name: 'Main', idUser: 'owner-1' } as never;
+const pendingInvitation = {
+  id: 'inv-1',
+  serverId: 'server-1',
+  serverUserId: 'owner-1',
+  storyId: 'story-1',
+  inviterId: 'owner-1',
+  inviteeId: 'friend-3',
+  inviteeUsername: 'Invited',
+  permissionType: 'reader',
+} as never;
 const collaborator = {
   userId: 'friend-1',
   permissionType: 'reader',
@@ -83,7 +123,9 @@ beforeEach(() => {
   mockServerService.getAllServers.mockResolvedValue([server]);
   mockFriendshipService.getAllFriendships.mockResolvedValue([]);
   mockApi.getCollaborators.mockResolvedValue([collaborator]);
-  mockApi.grantCollaborator.mockResolvedValue(undefined);
+  mockInvite.mockResolvedValue({ inviteeUsername: 'Other' });
+  mockCloseInvitation.mockResolvedValue(undefined);
+  mockInvitationList.setState({ invitations: [] });
   mockApi.updateCollaboratorPermission.mockResolvedValue(undefined);
   mockApi.removeCollaborator.mockResolvedValue(undefined);
   mockUpload.mockResolvedValue({ success: true });
@@ -121,7 +163,9 @@ describe('useStoryServerCollaboration', () => {
     await act(async () =>
       view.result.current.handleUpdateCollaboratorPermission(collaborator, 'writer'),
     );
-    expect(mockApi.grantCollaborator).toHaveBeenCalledWith(server, 'story-1', 'friend-2', 'reader');
+    // Adding is inviting: access only starts when the friend accepts.
+    expect(mockInvite).toHaveBeenCalledWith(server, 'story-1', 'friend-2', 'reader');
+    expect(mockNotify).toHaveBeenCalledWith('story_invitation_sent', 'success');
     expect(mockApi.updateCollaboratorPermission).toHaveBeenCalledWith(
       server,
       'story-1',
@@ -200,14 +244,14 @@ describe('useStoryServerCollaboration', () => {
   it('reports collaborator failures instead of failing silently', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
-    mockApi.grantCollaborator.mockRejectedValue(new Error('boom'));
+    mockInvite.mockRejectedValue(new Error('boom'));
     mockApi.updateCollaboratorPermission.mockRejectedValue(new Error('boom'));
     const view = await renderHook(() => useStoryServerCollaboration('story-1'));
     await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
 
     await act(async () => view.result.current.setSelectedFriendId('friend-2'));
     await act(async () => view.result.current.handleAddCollaborator());
-    expect(mockAlert).toHaveBeenCalledWith('error', 'add_collaborator_failed');
+    expect(mockAlert).toHaveBeenCalledWith('error', 'invite_collaborator_failed');
 
     await act(async () =>
       view.result.current.handleUpdateCollaboratorPermission(collaborator, 'writer'),
@@ -282,5 +326,55 @@ describe('useStoryServerCollaboration', () => {
     await act(async () => offlineButtons[1]?.onPress?.());
     expect(mockAlert).toHaveBeenCalledWith('error', 'unlink_from_server_offline');
     (console.error as jest.Mock).mockRestore();
+  });
+
+  it('shows unanswered invitations of the story and keeps their invitees out of the picker', async () => {
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    mockFriendshipService.getAllFriendships.mockResolvedValue([
+      {
+        serverId: 'server-1',
+        status: 'friend',
+        otherUserId: 'friend-3',
+        friendUsername: 'Invited',
+      },
+      { serverId: 'server-1', status: 'friend', otherUserId: 'friend-2', friendUsername: 'Other' },
+    ]);
+    const otherStory = {
+      ...(pendingInvitation as object),
+      id: 'inv-2',
+      storyId: 'story-9',
+    } as never;
+    mockInvitationList.setState({ invitations: [pendingInvitation, otherStory] });
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+    expect(view.result.current.pendingInvitations).toEqual([pendingInvitation]);
+    await waitFor(() =>
+      expect(view.result.current.addableFriendOptions).toEqual([
+        { label: 'Other', value: 'friend-2' },
+      ]),
+    );
+
+    await act(async () =>
+      view.result.current.handleUpdateInvitationRole(pendingInvitation, 'writer'),
+    );
+    expect(mockInvite).toHaveBeenCalledWith(server, 'story-1', 'friend-3', 'writer');
+
+    await act(async () => view.result.current.handleCancelInvitation(pendingInvitation));
+    const [, , buttons] = mockAlert.mock.calls.at(-1);
+    await act(async () => buttons[1].onPress());
+    expect(mockCloseInvitation).toHaveBeenCalledWith(mockDb, server, pendingInvitation);
+  });
+
+  it('fetches the collaborators again when an invitation is answered', async () => {
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    mockInvitationList.setState({ invitations: [pendingInvitation] });
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+    const calls = mockApi.getCollaborators.mock.calls.length;
+
+    await act(async () => mockInvitationList.setState({ invitations: [] }));
+
+    await waitFor(() => expect(mockApi.getCollaborators.mock.calls.length).toBe(calls + 1));
   });
 });

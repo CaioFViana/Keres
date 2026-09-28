@@ -193,8 +193,8 @@ export class FriendshipService {
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
 
-    // After declining a friend request, delete any associated story permissions
-    await storyPermissionService.deletePermissionsBetweenUsers(
+    // After declining a friend request, delete any story access and invitations between them
+    await storyPermissionService.deleteAccessBetweenUsers(
       existingFriendship.senderId,
       existingFriendship.receiverId,
     );
@@ -222,8 +222,8 @@ export class FriendshipService {
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
 
-    // After unfriending, delete any associated story permissions
-    await storyPermissionService.deletePermissionsBetweenUsers(
+    // After unfriending, delete any story access and invitations between them
+    await storyPermissionService.deleteAccessBetweenUsers(
       existingFriendship.senderId,
       existingFriendship.receiverId,
     );
@@ -261,7 +261,7 @@ export class FriendshipService {
 
       // If the status changed from FRIEND to BLACKLISTED, delete associated story permissions
       if (originalStatus === FriendStatus.FRIEND) {
-        await storyPermissionService.deletePermissionsBetweenUsers(
+        await storyPermissionService.deleteAccessBetweenUsers(
           existingFriendship.senderId,
           existingFriendship.receiverId,
         );

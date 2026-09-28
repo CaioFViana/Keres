@@ -6,6 +6,7 @@ import apiClient, { apiUrl, isOfflineError } from '../../../services/apiClient';
 import { authTokenManager, setAuthDb } from '../../../services/AuthTokenManager';
 import { setEditorDraftDb } from '../../../services/EditorDraftService';
 import { createFriendshipService } from '../../../services/FriendshipService';
+import { createStoryInvitationService } from '../../../services/StoryInvitationService';
 import { createServerService } from '../../../services/ServerService';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
@@ -141,6 +142,10 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
         // Unreachable or unparsable: fall through to the normal calls below, whose own
         // offline/failure handling already covers those cases.
         await friendshipService.syncFriendshipsWithServer(userId, server); // Call friendship sync
+        // Apart from the story sync: an invitation list that fails to load must not hold it up.
+        await createStoryInvitationService(drizzleClient)
+          .syncWithServer(server)
+          .catch((error: unknown) => console.log('Story invitation sync failed:', error));
 
         const serverStoryPreviews = await syncEngine.fetchServerStoryPreviews(server);
 

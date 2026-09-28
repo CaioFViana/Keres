@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import StoryInvitationList from '../../components/features/story/StoryInvitationList/StoryInvitationList';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -15,6 +16,7 @@ import type { FriendshipStackParamList } from '../../navigation/StorySelectionSt
 import type { FriendshipWithServer } from '../../services/FriendshipService';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
+import { createStoryInvitationService } from '../../services/StoryInvitationService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -59,6 +61,13 @@ const FriendshipListScreen = () => {
       const newServersMap = new Map<string, ServerSelect>();
       allServers.forEach((server) => newServersMap.set(server.id, server));
       setServersMap(newServersMap);
+      // Invitations are not kept locally: opening the screen asks every server for the open ones.
+      const invitationService = createStoryInvitationService(drizzleClient);
+      for (const server of allServers) {
+        invitationService
+          .syncWithServer(server)
+          .catch((error) => console.log('Story invitation sync failed:', error));
+      }
     } catch (error) {
       console.error('Error fetching servers:', error);
       AppAlert.alert(t('error'), t('failed_to_load_servers'));
@@ -78,7 +87,7 @@ const FriendshipListScreen = () => {
       console.error('Error fetching friendships:', error);
       AppAlert.alert(t('error'), t('failed_to_load_friendships'));
     }
-  }, [friendshipService, serverService, showNotification, t, localUserId]);
+  }, [drizzleClient, friendshipService, serverService, showNotification, t, localUserId]);
 
   useEffect(() => {
     const unsubscribeFocus = navigation.addListener('focus', () => {
@@ -285,6 +294,7 @@ const FriendshipListScreen = () => {
         )}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}
+        ListHeaderComponent={<StoryInvitationList serverFor={(id) => serversMap.get(id)} />}
         ListEmptyComponent={
           <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
             {t('no_friendships_found')}

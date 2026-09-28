@@ -97,6 +97,12 @@ jest.mock('../../src/state/notificationStore', () => ({
 }));
 
 const mockFetchStories = jest.fn();
+const mockSyncInvitations = jest.fn(async () => undefined);
+jest.mock('../../src/services/StoryInvitationService', () => ({
+  __esModule: true,
+  createStoryInvitationService: () => ({ syncWithServer: mockSyncInvitations }),
+}));
+
 jest.mock('../../src/state/storyListStore', () => ({
   useStoryListStore: (selector?: (state: unknown) => unknown) => {
     const state = { fetchStories: mockFetchStories };

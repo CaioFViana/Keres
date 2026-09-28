@@ -13,7 +13,14 @@ import {
   tiers,
   users,
 } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -1027,11 +1034,7 @@ const grantCollaborator = async (
     token: collaborator.token,
   });
   expect(accepted.status).toBeLessThan(400);
-  const granted = await request('POST', '/story-permissions/', {
-    token: owner.token,
-    body: { storyId: story, targetUserId: collaborator.userId, permissionType },
-  });
-  expect(granted.status).toBeLessThan(400);
+  await shareStory(owner, collaborator, story, permissionType);
 };
 
 const grantWriter = (owner: TestUser, collaborator: TestUser, story: string) =>

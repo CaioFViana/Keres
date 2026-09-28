@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { db } from '../../src/db';
 import { friendships, stories, users } from '../../src/db/schema';
+import { storyInvitationService } from '../../src/services/StoryInvitationService';
 import { storyPermissionService } from '../../src/services/StoryPermissionService';
 import { newId } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
@@ -49,17 +50,20 @@ describe('StoryPermissionService gaps', () => {
   it('drops grants in both directions when two users part ways', async () => {
     const anaStory = await seedStory(anaId);
     const biaStory = await seedStory(biaId);
-    await storyPermissionService.upsertStoryPermission(anaId, anaStory, biaId, 'reader');
-    await storyPermissionService.upsertStoryPermission(biaId, biaStory, anaId, 'writer');
+    await storyPermissionService.grantAccess(anaStory, biaId, 'reader');
+    await storyPermissionService.grantAccess(biaStory, anaId, 'writer');
+    const otherAnaStory = await seedStory(anaId);
+    await storyInvitationService.invite(anaId, otherAnaStory, biaId, 'reader');
 
-    await storyPermissionService.deletePermissionsBetweenUsers(anaId, biaId);
+    await storyPermissionService.deleteAccessBetweenUsers(anaId, biaId);
 
     expect(await db.query.storyPermissions.findMany()).toHaveLength(0);
+    expect(await db.query.storyInvitations.findMany()).toHaveLength(0);
   });
 
   it('refuses to revoke a grant on a story the caller does not own', async () => {
     const biaStory = await seedStory(biaId);
-    await storyPermissionService.upsertStoryPermission(biaId, biaStory, anaId, 'reader');
+    await storyPermissionService.grantAccess(biaStory, anaId, 'reader');
 
     // Friends, but the story is not Ana's: the grant survives.
     await expect(
@@ -70,7 +74,7 @@ describe('StoryPermissionService gaps', () => {
 
   it('lets a writer satisfy a reader requirement and rejects an unknown level', async () => {
     const anaStory = await seedStory(anaId);
-    await storyPermissionService.upsertStoryPermission(anaId, anaStory, biaId, 'writer');
+    await storyPermissionService.grantAccess(anaStory, biaId, 'writer');
 
     expect(await storyPermissionService.hasPermission(biaId, anaStory, 'reader')).toBe(true);
     expect(await storyPermissionService.hasPermission(biaId, anaStory, 'admin' as never)).toBe(
@@ -83,8 +87,8 @@ describe('StoryPermissionService gaps', () => {
     await seedStory(anaId, { isDeleted: true });
     const sharedLive = await seedStory(biaId);
     const sharedRevoked = await seedStory(biaId);
-    await storyPermissionService.upsertStoryPermission(biaId, sharedLive, anaId, 'reader');
-    await storyPermissionService.upsertStoryPermission(biaId, sharedRevoked, anaId, 'reader');
+    await storyPermissionService.grantAccess(sharedLive, anaId, 'reader');
+    await storyPermissionService.grantAccess(sharedRevoked, anaId, 'reader');
     await storyPermissionService.deleteStoryPermission(biaId, sharedRevoked, anaId);
 
     expect((await storyPermissionService.getReadableStoryIds(anaId)).sort()).toEqual(
@@ -93,14 +97,34 @@ describe('StoryPermissionService gaps', () => {
     expect(await storyPermissionService.getReadableStoryIds('nobody')).toEqual([]);
   });
 
-  it('treats a grant naming a user that does not exist as a grant to a non-friend', async () => {
+  it('changes the role of a collaborator but never creates access', async () => {
+    const anaStory = await seedStory(anaId);
+
+    const refused = await storyPermissionService
+      .updateStoryPermission(anaId, anaStory, biaId, 'writer')
+      .then(
+        () => null,
+        (error: { status?: number }) => error,
+      );
+    expect(refused?.status).toBe(409);
+    expect(await db.query.storyPermissions.findMany()).toHaveLength(0);
+
+    await storyPermissionService.grantAccess(anaStory, biaId, 'reader');
+    await storyPermissionService.updateStoryPermission(anaId, anaStory, biaId, 'writer');
+    expect(await storyPermissionService.getUserPermissionForStory(biaId, anaStory)).toMatchObject({
+      permissionType: 'writer',
+      version: 2,
+    });
+  });
+
+  it('treats a role change naming a user that does not exist as one for a non-friend', async () => {
     // The friendship check runs before the target lookup, and the friendships table references
     // users(id) on both engines, so a ghost target always fails as "not friends" (403) - the
     // service's 404 below it is only reachable by a deletion winning the race in between.
     const anaStory = await seedStory(anaId);
 
     const failure = await storyPermissionService
-      .upsertStoryPermission(anaId, anaStory, newId(), 'reader')
+      .updateStoryPermission(anaId, anaStory, newId(), 'reader')
       .then(
         () => null,
         (error: { status?: number; message?: string }) => error,
@@ -110,23 +134,23 @@ describe('StoryPermissionService gaps', () => {
     expect(await db.query.storyPermissions.findMany()).toHaveLength(0);
   });
 
-  it('removes a grant whose friendship broke between the check and the insert', async () => {
+  it('removes access whose friendship broke between the check and the grant', async () => {
     // The unfriending this compensates for wins a race no sequential test can reproduce: real
     // rows would make the test flaky by construction. Forcing the two reads apart pins the
     // behavior that matters - the grant is rolled back instead of left usable.
     const anaStory = await seedStory(anaId);
+    const invitation = await storyInvitationService.invite(anaId, anaStory, biaId, 'reader');
     const areFriends = vi
-      .spyOn(
-        storyPermissionService as unknown as { _areFriends: () => Promise<boolean> },
-        '_areFriends',
-      )
+      .spyOn(storyPermissionService, 'areFriends')
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(false);
     try {
-      await expect(
-        storyPermissionService.upsertStoryPermission(anaId, anaStory, biaId, 'reader'),
-      ).rejects.toThrow(/only be granted to friends/i);
-      expect(await db.query.storyPermissions.findMany()).toHaveLength(0);
+      await expect(storyInvitationService.accept(biaId, invitation.id)).rejects.toThrow(
+        /no longer valid/i,
+      );
+      expect(
+        await storyPermissionService.getUserPermissionForStory(biaId, anaStory),
+      ).toBeUndefined();
     } finally {
       areFriends.mockRestore();
     }

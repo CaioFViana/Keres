@@ -209,3 +209,28 @@ export async function uploadTestStory(
   }
   return { id: data.storyId, title, type };
 }
+
+/**
+ * Gives a friend access to a story the way the app does: the owner invites, the friend accepts.
+ * Access is never granted directly any more, so tests that need a collaborator go through both steps.
+ */
+export async function shareStory(
+  owner: Pick<TestUser, 'token'>,
+  collaborator: Pick<TestUser, 'token' | 'userId'>,
+  storyId: string,
+  permissionType: 'reader' | 'writer',
+): Promise<void> {
+  const invited = await request('POST', '/friend/story-invitations/', {
+    token: owner.token,
+    body: { storyId, targetUserId: collaborator.userId, permissionType },
+  });
+  if (invited.status !== 200) {
+    throw new Error(`Could not invite (${invited.status}): ${JSON.stringify(invited.data)}`);
+  }
+  const accepted = await request('PUT', `/friend/story-invitations/${invited.data.id}/accept`, {
+    token: collaborator.token,
+  });
+  if (accepted.status !== 200) {
+    throw new Error(`Could not accept (${accepted.status}): ${JSON.stringify(accepted.data)}`);
+  }
+}

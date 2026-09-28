@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, net, protocol, safeStorage, session, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, net, protocol, safeStorage, session, shell } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -545,7 +545,7 @@ async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
   });
 }
 
-//Menu.setApplicationMenu(null);
+Menu.setApplicationMenu(null);
 
 const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 

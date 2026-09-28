@@ -28,6 +28,7 @@ const mockGetChapters = jest.fn();
 const mockGetScenes = jest.fn();
 const mockGetRoutes = jest.fn();
 const mockGetArcs = jest.fn();
+const mockFetchPreviews = jest.fn();
 const mockNotify = jest.fn();
 const mockSetTheme = jest.fn();
 const mockConnectivity = { isOffline: (...args: unknown[]) => mockIsOffline(...args) };
@@ -148,6 +149,10 @@ jest.mock('../../../src/services/storymanagement/RouteService', () => ({
   }),
 }));
 
+jest.mock('../../../src/services/sync/StoryTransfer', () => ({
+  fetchServerStoryPreviews: (...args: unknown[]) => mockFetchPreviews(...args),
+}));
+
 jest.mock('../../../src/services/storymanagement/StoryArcService', () => ({
   createStoryArcService: () => ({
     getArcsForStory: (...args: unknown[]) => mockGetArcs(...args),
@@ -251,10 +256,10 @@ function alertButtons(callIndex = 0): AlertButton[] {
 describe('buildStoryPublicUrl', () => {
   it('joins the server origin and story id without duplicate slashes', () => {
     expect(buildStoryPublicUrl('https://s.example///', 'story-1')).toBe(
-      'https://s.example/story/story-1',
+      'https://s.example/showcase/story/story-1',
     );
     expect(buildStoryPublicUrl('https://s.example', 'story-1')).toBe(
-      'https://s.example/story/story-1',
+      'https://s.example/showcase/story/story-1',
     );
   });
 });
@@ -277,6 +282,7 @@ describe('PublishStoryScreen', () => {
     mockGetScenes.mockResolvedValue([]);
     mockGetRoutes.mockResolvedValue([]);
     mockGetArcs.mockResolvedValue([]);
+    mockFetchPreviews.mockResolvedValue([{ storyId: 'story-1', lastOperationVersion: 5 }]);
   });
 
   afterEach(() => {
@@ -317,10 +323,36 @@ describe('PublishStoryScreen', () => {
     const pending = await render(<PublishStoryScreen />);
     await pending.findByText('publish_blocked_pending_operations');
 
+    // Behind the server's own sequence: somebody else wrote since this device last read it.
     mockFindLogs.mockResolvedValue([]);
     mockFindStories.mockResolvedValue([{ ...story, lastServerSyncedLog: 3 }]);
     const unsynced = await render(<PublishStoryScreen />);
     await unsynced.findByText('publish_blocked_not_synced');
+  });
+
+  it('treats a story just sent up as synced, whatever its local counter', async () => {
+    // Written offline (local counter 45), then uploaded: the server's sequence restarts at 0.
+    mockFindStories.mockResolvedValue([{ ...story, lastOperationLog: 45, lastServerSyncedLog: 0 }]);
+    mockFetchPreviews.mockResolvedValue([{ storyId: 'story-1', lastOperationVersion: 0 }]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+
+    expect(view.queryByText('publish_blocked_not_synced')).toBeNull();
+    expect(view.getByText(/publish_synced_version/)).toBeTruthy();
+    await fireEvent.press(view.getByText('Epic'));
+    await fireEvent.press(await view.findByText('publish_create_version'));
+    await waitFor(() => expect(mockPublish).toHaveBeenCalled());
+    // The server checks the version in its own sequence.
+    expect(mockPublish.mock.calls[0][2]).toBe(0);
+  });
+
+  it('leaves the stale check to the server when it cannot tell its version', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, lastServerSyncedLog: 3 }]);
+    mockFetchPreviews.mockResolvedValue([]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+
+    expect(view.queryByText('publish_blocked_not_synced')).toBeNull();
   });
 
   it('publishes a new version and shows its public address', async () => {
@@ -344,14 +376,14 @@ describe('PublishStoryScreen', () => {
     expect(mockSyncPubs).toHaveBeenCalledWith(server);
     expect(mockAlert).toHaveBeenCalledWith(
       'publish_version_created',
-      expect.stringContaining('https://s.example/story/story-1'),
+      expect.stringContaining('https://s.example/showcase/story/story-1'),
       expect.any(Array),
     );
     const open = alertButtons(0).find((b) => b.text === 'publish_open_link');
     await act(async () => {
       await open?.onPress?.();
     });
-    expect(Linking.openURL).toHaveBeenCalledWith('https://s.example/story/story-1');
+    expect(Linking.openURL).toHaveBeenCalledWith('https://s.example/showcase/story/story-1');
   });
 
   it('requires a long enough password when the padlock is on', async () => {
@@ -469,7 +501,7 @@ describe('PublishStoryScreen', () => {
     await view.findByText('Epic');
     await fireEvent.press(view.getByText('Epic'));
     await view.findByText('v1');
-    expect(view.getByText('https://s.example/story/story-1')).toBeTruthy();
+    expect(view.getByText('https://s.example/showcase/story/story-1')).toBeTruthy();
     await fireEvent.press(view.getByTestId('icon-trash-outline'));
     expect(mockAlert).toHaveBeenCalledWith(
       'publish_delete_version_title',
@@ -517,7 +549,7 @@ describe('PublishStoryScreen', () => {
     await view.findByText('publish_unpublish_confirm');
     expect(view.getByText('publish_visibility_applies_to_all')).toBeTruthy();
     await fireEvent.press(view.getByText('publish_open_link'));
-    expect(Linking.openURL).toHaveBeenCalledWith('https://s.example/story/story-1');
+    expect(Linking.openURL).toHaveBeenCalledWith('https://s.example/showcase/story/story-1');
     await fireEvent.press(view.getByText('publish_unpublish_confirm'));
     const confirm = alertButtons(0).find((b) => b.text === 'publish_unpublish_confirm');
     await act(async () => {

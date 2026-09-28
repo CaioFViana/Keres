@@ -103,7 +103,10 @@ beforeEach(async () => {
   context = {
     db: () => database.db,
     storyId: () => STORY_ID,
+    client: jest.fn() as never,
     conflictService: () => ({ recordConflict }) as never,
+    notifier: () => ({}) as never,
+    abortSignal: () => new AbortController().signal,
   } as SyncContext;
 });
 

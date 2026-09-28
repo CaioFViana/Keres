@@ -29,7 +29,7 @@ const update = (overrides: Record<string, unknown> = {}): StoryUpdate =>
     entity: 'Character',
     id: 'character-1',
     version: 4,
-    changes: { name: 'Server name' },
+    changes: { name: 'Server name', version: 4 },
     ...overrides,
   }) as StoryUpdate;
 

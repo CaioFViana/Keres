@@ -1,4 +1,14 @@
-import { app, BrowserWindow, ipcMain, Menu, net, protocol, safeStorage, session, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  net,
+  protocol,
+  safeStorage,
+  session,
+  shell,
+} from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
 import * as path from 'path';

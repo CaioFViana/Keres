@@ -167,8 +167,8 @@ describe('scene separators', () => {
     const hashed = compile('#');
     expect(buildManuscriptMarkdown(hashed, labels)).toContain('\n\\#\n');
     const pdf = Buffer.from(buildManuscriptPdf(manuscript, labels)).toString('latin1');
-    // The PDF draws each word on its own: three asterisks, centered.
-    expect(pdf.match(/\(\*\) Tj/g)).toHaveLength(3);
+    // The PDF sets the line as one string: three asterisks, centered.
+    expect(pdf.match(/\(\* \* \*\) Tj/g)).toHaveLength(1);
     const docx = await buildManuscriptDocxBytes(manuscript, labels);
     expect(docx.length).toBeGreaterThan(0);
   });

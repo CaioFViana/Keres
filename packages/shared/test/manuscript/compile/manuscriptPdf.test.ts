@@ -400,4 +400,43 @@ describe('buildManuscriptPdf', () => {
     expect(text).toContain(emDash);
     expect(text).toContain(`${openQuote}yes${closeQuote}.`);
   });
+
+  describe('content stream size', () => {
+    it('sets a line of one face as a single string', () => {
+      const text = raw(buildManuscriptPdf(manuscript([paragraph('one two three')]), LABELS));
+      expect(text).toContain('(one two three) Tj');
+    });
+
+    it('starts a new string only when the face changes, the space riding with the next word', () => {
+      const bold = { bold: true, italic: false, underline: false, strikethrough: false };
+      const plain = { bold: false, italic: false, underline: false, strikethrough: false };
+      const text = raw(
+        buildManuscriptPdf(
+          manuscript([
+            {
+              kind: 'paragraph',
+              spans: [
+                { text: 'a ', ...plain },
+                { text: 'b', ...bold },
+                { text: ' c', ...plain },
+              ],
+            },
+          ]),
+          LABELS,
+        ),
+      );
+      expect(text).toMatch(/\(a\) Tj \/F2 [\d.]+ Tf \( b\) Tj \/F1 [\d.]+ Tf \( c\) Tj ET/);
+    });
+
+    it('stays within a small multiple of the text it carries', () => {
+      const blocks: CompiledBlock[] = [{ kind: 'title', text: 'My Story' }];
+      let characters = 0;
+      for (let index = 0; index < 400; index += 1) {
+        const line = `Paragraph ${index} walks slowly through the empty square while the rain keeps falling.`;
+        characters += line.length;
+        blocks.push(paragraph(line));
+      }
+      expect(buildManuscriptPdf(manuscript(blocks), LABELS).length).toBeLessThan(characters * 3);
+    });
+  });
 });

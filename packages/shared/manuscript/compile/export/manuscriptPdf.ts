@@ -133,16 +133,29 @@ function drawLine(run: LineRun, y: number, writer: PdfWriter, geometry: PdfGeome
   }
   const gray = run.gray.toFixed(2);
   const placed: { word: Word; x: number }[] = [];
+  // A line is one text object: the words are set as consecutive strings of one font, the spaces
+  // between them inside the strings (each word's leading space is drawn in the word's own face,
+  // exactly the advance the layout counted), so the viewer places every glyph itself. Only a
+  // change of face starts a new string.
+  const segments: { font: PdfFont; text: string }[] = [];
   run.words.forEach((word, index) => {
     if (index > 0) x += widthOfTextAtSize(' ', word.font, run.size);
     placed.push({ word, x });
-    writer.ascii(
-      `BT /F${fontIndex(word.font)} ${trim(run.size)} Tf ${gray} g 1 0 0 1 ${trim(x)} ${trim(y - run.size)} Tm `,
-    );
-    writer.literal(word.text);
-    writer.ascii(' Tj ET\n');
     x += word.width;
+    const last = segments[segments.length - 1];
+    const piece = (index > 0 ? ' ' : '') + word.text;
+    if (last && last.font === word.font) last.text += piece;
+    else segments.push({ font: word.font, text: piece });
   });
+  if (segments.length > 0) {
+    writer.ascii(`BT ${gray} g 1 0 0 1 ${trim(placed[0].x)} ${trim(y - run.size)} Tm`);
+    for (const segment of segments) {
+      writer.ascii(` /F${fontIndex(segment.font)} ${trim(run.size)} Tf `);
+      writer.literal(segment.text);
+      writer.ascii(' Tj');
+    }
+    writer.ascii(' ET\n');
+  }
   // Decoration rules, grouped over contiguous marked words so a multi-word
   // underline reads as one stroke instead of breaking at every space.
   const rules: { flag: 'underline' | 'strikethrough'; from: number; to: number }[] = [];

@@ -138,6 +138,41 @@ Veredito: **viável, esforço P–M, sem tocar a sync engine.** Boot é local-fi
 14. Workflow Pages compondo landing + client (P–M): `pages.yml` hoje publica só `apps/site/dist` com `VITE_BASE=/Keres/`; buildar também o client com baseUrl e copiar `apps/client/dist` → `apps/site/dist/client` num único artefato. `.nojekyll` já é emitido pelo plugin do site (cobre `_expo`); sem 404-fallback pro client (sem deep-link: `NavigationContainer` sem `linking`).
 15. Verificar desktop (P): Electron serve `CLIENT_DIST` via `app://` (`apps/desktop/src/paths.ts`) — dist com baseUrl pode quebrar; provável necessidade de exports separados por alvo (raiz pro desktop, subpath pro Pages) ou ajuste no resolver. Não quebrar `desktop:package`/`capture:screens`.
 
+## Fase 5 — bugs do manuscrito e leitor online (2026-09-28)
+
+Ordem: os dois bugs primeiro, o leitor depois.
+
+**Bug A — manuscrito de história branching (entendimento errado desde a fase 1).** Hoje um manuscrito branching é _uma rota_ (`compileRouteManuscript`: só os passos da rota, na ordem dela; o publish e a tela de export usam a primeira rota por padrão; sem rota, nada é enviado). O esperado é o livro-jogo clássico: **todas as cenas alcançáveis** nos formatos normais (pdf/epub/docx/md/txt/html), cada escolha apontando para a cena de destino ("vá para 23").
+
+- **Decidido (2026-09-28):** a ordem das cenas é uma opção na tela de export/publish entre (B) busca a partir de `isStart`, numerada na ordem de aparição, e (C) numeração embaralhada (livro-jogo clássico, com semente para o resultado ser reproduzível). Ainda a decidir: cenas inalcançáveis (apêndice, como as soltas) e o filtro de arco (escolha cujo destino saiu do arco).
+- Tirar o seletor de rota do export local e do publish (a rota deixa de ser entrada do manuscrito); revisar `compileStoryManuscript`, `useManuscriptExport`, `usePublishManuscript`, `ManuscriptOptionsSchema.routeId`, o help e os testes que fixam o comportamento atual.
+
+**Bug B — PDF grande demais (medido em 2026-09-28).** Bytes por formato, mesma história linear:
+
+| texto | txt | html | docx | epub | pdf |
+|---|---|---|---|---|---|
+| 4,5 K (8 cenas) | 4,8 K | 7 K | 10 K | 3 K | 55 K |
+| 137 K (50 cenas) | 142 K | 150 K | 13 K | 5 K | 1,46 M |
+| 1,3 M (300 cenas) | 1,36 M | 1,41 M | 28 K | 20 K | 13,8 M |
+
+- docx/epub são zip (deflate; o texto repetitivo do teste comprime demais, mas o overhead fixo é ~9 K e ~2 K). html/md/txt ficam em ~1,05× o texto. O overhead fixo de estilos/cabeçalhos é pequeno em todos os formatos (pdf 1,2 K: fontes base-14 não embutidas).
+- **O PDF é ~10× o texto.** Causa: `manuscriptPdf.ts` emite um `BT /F1 11 Tf 0.07 g 1 0 0 1 x y Tm (palavra) Tj ET` por _palavra_ (~60 bytes/palavra) e os content streams não têm `/Filter /FlateDecode`. Medido: streams de 36 K viram 3,4 K com deflate.
+- Consequência: um romance de ~240 mil palavras em PDF já bate o teto de 15 MB (`MAX_MANUSCRIPT_BYTES`), embora o texto tenha 1,3 MB.
+- **Feito (2026-09-28), parte 1:** cada linha vira um único objeto de texto (uma string por troca de fonte, com o espaço na fonte da palavra seguinte, o mesmo avanço que o layout contava). 300 cenas × 800 palavras: 13,8 M → 2,3 M; 50 × 500: 1,46 M → 250 K. Baseline do PDF no snapshot atualizado; testes de contrato de tamanho e de troca de fonte adicionados. Restam ~1,7× o texto.
+- **Opcional, parte 2:** comprimir os streams (ver abaixo) ainda cortaria cerca de metade; `pako` já está no lockfile via jszip, mas seria dependência direta nova e os testes leriam o conteúdo inflado. Só se o tamanho voltar a incomodar.
+- Proposta original: comprimir os streams (dependência pura-JS pequena, ex. `fflate`, ou o deflate que o JSZip já traz; validar Hermes e o boot nativo) e, opcionalmente, agrupar as palavras de uma linha num só `BT` com `TJ`. Depois reavaliar o teto: com o PDF comprimido, 15 MB fica ~10× mais folgado.
+- Teste: contrato de tamanho (PDF de N cenas ≤ k × texto) e abertura em leitor real.
+
+**Leitor online no showcase** (só depois dos bugs; decisões de 2026-09-28):
+
+- Opção no publish "publicar a leitura em showcase", independente do anexo de manuscrito e com as mesmas opções (sem rota); o servidor compila um HTML autocontido da própria cópia; o showcase ganha "Ler online" por versão.
+- Linear: página estática (base `manuscriptHtml`). Branching: mini motor JS embutido — uma cena por vez sobre o motor de `storySimulation` (visitas, inventário, gatilhos; efeitos da escolha e da cena), grafo inteiro a partir de `isStart`, sem rota; teste de paridade com o motor compartilhado.
+- Escolhas indisponíveis aparecem desabilitadas, sem o motivo; só o inventário é visível, gatilhos ficam internos.
+- Segurança: servido com CSP (`default-src 'none'`, script/estilo inline) dentro de `<iframe sandbox="allow-scripts">` sem `allow-same-origin`; o texto já é escapado.
+- Progresso e lista de saves (slot automático + manuais com nome, data, cena, passos; carregar/apagar/recomeçar): o iframe não tem `localStorage`, então pede/grava no showcase (página pai) por `postMessage` com formato fixo; chave por história + versão publicada. "Ler online" abre uma rota do showcase (`/story/:id/read/:versão`); não há leitura avulsa fora do showcase.
+- Teto de tamanho próprio do leitor (constante separada), valor a definir depois do bug B.
+- Migração na API (`readerByteSize` na versão publicada).
+
 ## Risks / Open Questions
 
 - Riscos: WinAnsi sem CJK/emoji no corpo do PDF puro-TS (declarar no help); PDF nativo muda de motor — bytes diferentes do expo-print por decisão (declarar no help/release notes); smart quotes divergem por locale; futura lib de PDF precisa provar boot intacto (histórico: tentativa anterior quebrou o carregamento do app).

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseStoryDetail } from '@keres/shared';
 import { ShowcaseApp } from '../../src/showcase/App';
 import { readerStorageKey } from '../../src/showcase/reader/readerBridge';
-import { click, flush, render } from '../helpers/react';
+import { flush, render } from '../helpers/react';
 
 const mocks = vi.hoisted(() => ({
   fetchStory: vi.fn(),

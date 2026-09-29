@@ -7,6 +7,7 @@ import {
   CURRENT_STORY_FORMAT_VERSION,
   findStoryExportIntegrityViolations,
   FullStoryExportSchema,
+  parseManuscriptMarkdown,
   reviveDates,
   StorySchema,
 } from '@keres/shared';
@@ -226,6 +227,30 @@ it('ships no bundled example that contradicts itself', () => {
         example: `${entry.slug}/${language.language}`,
         violations: violations.map((violation) => violation.message),
       }).toEqual({ example: `${entry.slug}/${language.language}`, violations: [] });
+    }
+  }
+});
+
+/**
+ * The bundled examples are the manuscript's demo: a null body compiles to a bare heading, so an
+ * example without prose exports an empty book. Every scene ships two or three short paragraphs,
+ * authored in `scripts/lib/narratives/` and counted here by the same parser the renderers use.
+ */
+it('ships every bundled example scene with short manuscript prose', () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      const story = language.story as { scenes: { name: string; body: unknown }[] };
+      const failures = story.scenes.flatMap((scene) => {
+        if (typeof scene.body !== 'string') return [`${scene.name}: body is not prose`];
+        const paragraphs = parseManuscriptMarkdown(scene.body).length;
+        return paragraphs >= 2 && paragraphs <= 3
+          ? []
+          : [`${scene.name}: ${paragraphs} paragraphs, expected 2 or 3`];
+      });
+      expect({
+        example: `${entry.slug}/${language.language}`,
+        failures,
+      }).toEqual({ example: `${entry.slug}/${language.language}`, failures: [] });
     }
   }
 });

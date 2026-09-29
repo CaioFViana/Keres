@@ -20,6 +20,12 @@
 export interface NarrativeScene {
   name: string;
   summary: string;
+  /**
+   * The scene's prose for the manuscript: two or three short paragraphs in the manuscript's
+   * minimal markdown (blank-line separated blocks, `**bold**`/`*italic*`/`__underline__`/
+   * `~~strikethrough~~` inline), written to match `summary`. Original prose, never copied.
+   */
+  body: string;
   /** Index into `locations`. */
   location: number;
 }

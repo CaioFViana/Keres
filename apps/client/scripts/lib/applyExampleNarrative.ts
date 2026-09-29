@@ -123,6 +123,7 @@ export function applyNarrative(
       name: authored.name,
       index: (index % 4) + 1,
       summary: authored.summary,
+      body: authored.body,
       isStart: index === narrative.startScene,
       isFinish: narrative.finishScenes.includes(index),
       isFavorite: index === narrative.startScene,

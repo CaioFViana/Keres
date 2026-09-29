@@ -1,8 +1,8 @@
 import type { CompiledManuscript, ManuscriptRenderOptions } from './manuscriptCompiler';
 import {
-  flattenRuns,
+  iterateRuns,
   pdfGeometry,
-  paginate,
+  paginateStream,
   sameAnchorPages,
   widthOfTextAtSize,
   winAnsiByte,
@@ -11,7 +11,6 @@ import {
   type PdfAnchor,
   type PdfFont,
   type PdfGeometry,
-  type PlacedRun,
   type Word,
 } from './manuscriptPdfLayout';
 
@@ -58,25 +57,26 @@ function utf16beHex(text: string): string {
 }
 
 class PdfWriter {
-  private chunks: number[][] = [];
+  // Typed chunks: a book of tens of megabytes must not cost a JS number per byte.
+  private chunks: Uint8Array[] = [];
   private offsets: number[] = [];
   private length = 0;
 
-  private push(bytes: number[]): void {
+  private push(bytes: Uint8Array): void {
     this.chunks.push(bytes);
     this.length += bytes.length;
   }
 
   ascii(text: string): void {
-    const bytes: number[] = [];
+    const bytes = new Uint8Array(text.length);
     for (let index = 0; index < text.length; index += 1) {
-      bytes.push(text.charCodeAt(index) & 0xff);
+      bytes[index] = text.charCodeAt(index) & 0xff;
     }
     this.push(bytes);
   }
 
   raw(bytes: Uint8Array): void {
-    this.push(Array.from(bytes));
+    this.push(bytes);
   }
 
   snapshot(): Uint8Array {
@@ -90,7 +90,7 @@ class PdfWriter {
   }
 
   literal(text: string): void {
-    this.push([0x28, ...escapeLiteral(text), 0x29]);
+    this.push(Uint8Array.from([0x28, ...escapeLiteral(text), 0x29]));
   }
 
   object(body: (writer: PdfWriter) => void): number {
@@ -197,6 +197,96 @@ function trim(value: number): string {
   return String(Math.round(value * 100) / 100);
 }
 
+type TocAnnot = { pageIndex: number; rect: number[]; destPageIndex: number; destY: number };
+
+/** One layout of the whole book: the bytes of every page, and where every heading landed. */
+type LaidPass = {
+  streams: Uint8Array[];
+  annots: TocAnnot[];
+  anchors: Map<string, PdfAnchor>;
+};
+
+/**
+ * Lays the book out once. Each page is drawn into its bytes the moment it is full and the lines
+ * that made it are dropped, so what stays in memory is the finished pages (about the size of the
+ * file) and never the lines of the whole book. Index links can only be aimed once the pass has
+ * seen every heading, so they are kept as bare positions until then.
+ */
+function layoutPass(
+  manuscript: CompiledManuscript,
+  labels: ManuscriptPdfLabels,
+  anchors: Map<string, PdfAnchor>,
+  options: ManuscriptRenderOptions,
+  geometry: PdfGeometry,
+): LaidPass {
+  const streams: Uint8Array[] = [];
+  const links: { pageIndex: number; rect: number[]; target: string }[] = [];
+  const { anchors: found } = paginateStream(
+    iterateRuns(manuscript, labels, anchors, options),
+    geometry,
+    (page, pageIndex) => {
+      const content = new PdfWriter();
+      for (const { run, y } of page) {
+        drawLine(run, y, content, geometry);
+        if (run.linkTarget) {
+          links.push({
+            pageIndex,
+            rect: [
+              geometry.margin,
+              y - run.leading + 2,
+              geometry.margin + geometry.contentWidth,
+              y,
+            ],
+            target: run.linkTarget,
+          });
+        }
+      }
+      const label = `${pageIndex + 1}`;
+      drawLine(
+        {
+          words: [
+            {
+              text: label,
+              font: 'times',
+              width: widthOfTextAtSize(label, 'times', 9),
+              underline: false,
+              strikethrough: false,
+            },
+          ],
+          size: 9,
+          leading: 9,
+          indent: 0,
+          spaceBefore: 0,
+          spaceAfter: 0,
+          centered: true,
+          gray: 0.53,
+          bookmarkId: null,
+          linkTarget: null,
+          keepWithNext: false,
+          forcePageBreak: false,
+        },
+        geometry.footerY + 9,
+        content,
+        geometry,
+      );
+      streams.push(content.snapshot());
+    },
+  );
+  const annots: TocAnnot[] = [];
+  for (const link of links) {
+    const anchor = found.get(link.target);
+    if (anchor) {
+      annots.push({
+        pageIndex: link.pageIndex,
+        rect: link.rect,
+        destPageIndex: anchor.page - 1,
+        destY: anchor.y,
+      });
+    }
+  }
+  return { streams, annots, anchors: found };
+}
+
 /**
  * The compiled manuscript as real PDF bytes, laid out and serialized in pure
  * TypeScript - no native print pipeline, no third-party PDF dependency (the app
@@ -217,70 +307,17 @@ export function buildManuscriptPdf(
 ): Uint8Array {
   const geometry = pdfGeometry(options);
   let anchors = new Map<string, PdfAnchor>();
-  let pages: PlacedRun[][] = [[]];
+  let laid: LaidPass | null = null;
   for (let pass = 0; pass < 3; pass += 1) {
-    const laid = paginate(flattenRuns(manuscript, labels, anchors, options), geometry);
-    pages = laid.pages;
+    laid = layoutPass(manuscript, labels, anchors, options, geometry);
     if (sameAnchorPages(anchors, laid.anchors)) {
       anchors = laid.anchors;
       break;
     }
     anchors = laid.anchors;
   }
-
-  type TocAnnot = { pageIndex: number; rect: number[]; destPageIndex: number; destY: number };
-  const annots: TocAnnot[] = [];
-  const streams = pages.map((runs, pageIndex) => {
-    const content = new PdfWriter();
-    for (const { run, y } of runs) {
-      drawLine(run, y, content, geometry);
-      if (run.linkTarget) {
-        const anchor = anchors.get(run.linkTarget);
-        if (anchor) {
-          annots.push({
-            pageIndex,
-            rect: [
-              geometry.margin,
-              y - run.leading + 2,
-              geometry.margin + geometry.contentWidth,
-              y,
-            ],
-            destPageIndex: anchor.page - 1,
-            destY: anchor.y,
-          });
-        }
-      }
-    }
-    const label = `${pageIndex + 1}`;
-    drawLine(
-      {
-        words: [
-          {
-            text: label,
-            font: 'times',
-            width: widthOfTextAtSize(label, 'times', 9),
-            underline: false,
-            strikethrough: false,
-          },
-        ],
-        size: 9,
-        leading: 9,
-        indent: 0,
-        spaceBefore: 0,
-        spaceAfter: 0,
-        centered: true,
-        gray: 0.53,
-        bookmarkId: null,
-        linkTarget: null,
-        keepWithNext: false,
-        forcePageBreak: false,
-      },
-      geometry.footerY + 9,
-      content,
-      geometry,
-    );
-    return content.snapshot();
-  });
+  const { streams, annots } = laid!;
+  const pageCount = streams.length;
 
   const writer = new PdfWriter();
   writer.ascii('%PDF-1.7\n');
@@ -290,11 +327,11 @@ export function buildManuscriptPdf(
   // Link annotations take ids 3.., then pages and contents alternate from
   // firstPageId on, so every id below stays arithmetic.
   const firstPageId = 3 + annots.length;
-  const kids = pages.map((_, index) => `${firstPageId + 2 * index} 0 R`).join(' ');
+  const kids = streams.map((_, index) => `${firstPageId + 2 * index} 0 R`).join(' ');
   const pagesId = writer.object((body) => {
-    body.ascii(`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>\n`);
+    body.ascii(`<< /Type /Pages /Kids [${kids}] /Count ${pageCount} >>\n`);
   });
-  const annotIdsByPage: number[][] = pages.map(() => []);
+  const annotIdsByPage: number[][] = streams.map(() => []);
   annots.forEach((annot) => {
     const id = writer.object((body) => {
       const destPageId = firstPageId + 2 * annot.destPageIndex;
@@ -305,8 +342,8 @@ export function buildManuscriptPdf(
     });
     annotIdsByPage[annot.pageIndex].push(id);
   });
-  const fontBase = firstPageId + 2 * pages.length;
-  pages.forEach((_, index) => {
+  const fontBase = firstPageId + 2 * pageCount;
+  streams.forEach((_, index) => {
     const contentId = firstPageId + 2 * index + 1;
     const annotRefs = annotIdsByPage[index].map((id) => `${id} 0 R`).join(' ');
     const annotsEntry = annotRefs === '' ? '' : ` /Annots [${annotRefs}]`;

@@ -2,15 +2,17 @@ import {
   buildPublicationLabel,
   buildStoryZipBytes,
   compileStoryManuscript,
+  compileStoryReader,
   CURRENT_STORY_FORMAT_VERSION,
-  describeChoiceAnnotations,
   FORMAT_META,
   ManuscriptOptionsSchema,
+  ReaderOptionsSchema,
   type FullStoryExportType,
   type ManuscriptFormat,
   type ManuscriptOptions,
   type ManuscriptOptionsInput,
   type PublicationLabelMode,
+  type ReaderOptionsInput,
   type ShowcaseVisibility,
   type StoryPublicationSnapshot,
 } from '@keres/shared';
@@ -21,10 +23,16 @@ import { db } from '../db';
 import { stories, storyPermissions, storyPublications, storyShowcaseEntries } from '../db/schema';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
+import { createExclusiveGate } from '../utils/exclusive';
 import { mediaStorageService } from './MediaStorageService';
 import { publicationStorageService } from './PublicationStorageService';
 import { showcaseSettingsService } from './ShowcaseSettingsService';
+import { compileInputOf } from './publicationCompileInput';
+import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { StoryExportImportService } from './StoryExportImportService';
+
+/** One manuscript or reader is compiled at a time: the memory a book costs is not worth multiplying. */
+const compileGate = createExclusiveGate();
 
 /**
  * How many versions of a story the server keeps. Publishing the sixth deletes the oldest, package
@@ -126,13 +134,11 @@ export class StoryPublicationService {
   /**
    * Validates the requested manuscript options against the story, without compiling anything.
    *
-   * A branching story has no linear order, so its manuscript must follow a route - and a linear story
-   * has no routes worth following, so `routeId` is refused there. The route (and the arc, when one is
-   * asked) must be one of this story's live ones, read from the same export the manuscript will be
+   * A branching story is exported whole, as a gamebook, so it takes no route. The arc, when one is
+   * asked, must be one of this story's live ones, read from the same export the manuscript will be
    * compiled from.
    */
   private parseManuscriptOptions(
-    storyType: string,
     storyExport: FullStoryExportType,
     manuscript: ManuscriptOptionsInput,
   ): ManuscriptOptions {
@@ -143,33 +149,34 @@ export class StoryPublicationService {
         .join('; ');
       throw new AppError(400, `Invalid manuscript options: ${details}.`);
     }
-    const options = parsed.data;
-    if (storyType === 'branching' && !options.routeId) {
-      throw new AppError(
-        400,
-        'A routeId is required to publish a manuscript of a branching story.',
-      );
+    this.assertArcBelongs(storyExport, parsed.data.arcId);
+    return parsed.data;
+  }
+
+  /** The reader takes the manuscript's choices (arc, names, typography...) and its own words. */
+  private parseReaderOptions(
+    storyExport: FullStoryExportType,
+    reader: ReaderOptionsInput,
+  ): ReaderOptionsInput {
+    const parsed = ReaderOptionsSchema.safeParse(reader);
+    if (!parsed.success) {
+      const details = parsed.error.issues
+        .map((issue) => `${issue.path.join('.') || 'reader'}: ${issue.message}`)
+        .join('; ');
+      throw new AppError(400, `Invalid reader options: ${details}.`);
     }
-    if (storyType !== 'branching' && options.routeId) {
-      throw new AppError(400, 'routeId is only valid for branching stories.');
+    this.assertArcBelongs(storyExport, parsed.data.arcId);
+    return parsed.data;
+  }
+
+  private assertArcBelongs(storyExport: FullStoryExportType, arcId: string | undefined): void {
+    if (!arcId) return;
+    const belongs = (storyExport.storyArcs ?? []).some(
+      (arc) => arc.id === arcId && arc.storyId === storyExport.story.id && !arc.isDeleted,
+    );
+    if (!belongs) {
+      throw new AppError(400, `Arc "${arcId}" does not belong to this story.`);
     }
-    if (options.routeId) {
-      const belongs = (storyExport.routes ?? []).some(
-        (route) => route.id === options.routeId && route.storyId === storyExport.story.id,
-      );
-      if (!belongs) {
-        throw new AppError(400, `Route "${options.routeId}" does not belong to this story.`);
-      }
-    }
-    if (options.arcId) {
-      const belongs = (storyExport.storyArcs ?? []).some(
-        (arc) => arc.id === options.arcId && arc.storyId === storyExport.story.id && !arc.isDeleted,
-      );
-      if (!belongs) {
-        throw new AppError(400, `Arc "${options.arcId}" does not belong to this story.`);
-      }
-    }
-    return options;
   }
 
   /** Compiles the manuscript from the already-fetched export. Oversized output is the caller's fault. */
@@ -178,56 +185,8 @@ export class StoryPublicationService {
     options: ManuscriptOptions,
   ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
     try {
-      // Choice requirements and effects through the shared describer the device export
-      // also uses - a publication reads exactly like the local file, in English like the
-      // manuscript's default labels.
-      const annotations = describeChoiceAnnotations({
-        groups: storyExport.choiceCheckGroups ?? [],
-        checks: storyExport.choiceChecks ?? [],
-        effects: storyExport.effects ?? [],
-        sceneNamesById: Object.fromEntries(
-          (storyExport.scenes ?? []).map((scene) => [scene.id, scene.name]),
-        ),
-        itemNamesById: Object.fromEntries(
-          (storyExport.items ?? []).map((item) => [item.id, item.name]),
-        ),
-      });
       const compiled = await compileStoryManuscript(
-        {
-          storyTitle: storyExport.story.title,
-          storyType: storyExport.story.type,
-          chapters: (storyExport.chapters ?? []).map((chapter) => ({
-            id: chapter.id,
-            name: chapter.name,
-            index: chapter.index,
-            type: chapter.type,
-            arcId: chapter.arcId,
-          })),
-          scenes: (storyExport.scenes ?? []).map((scene) => ({
-            id: scene.id,
-            chapterId: scene.chapterId,
-            name: scene.name,
-            index: scene.index,
-            body: scene.body,
-            isDeleted: scene.isDeleted,
-          })),
-          choices: (storyExport.choices ?? []).map((choice) => ({
-            id: choice.id,
-            sceneId: choice.sceneId,
-            nextSceneId: choice.nextSceneId,
-            text: choice.text,
-            ...annotations.get(choice.id),
-          })),
-          routes: (storyExport.routes ?? []).map((route) => ({ id: route.id, name: route.name })),
-          routeSteps: (storyExport.routeSteps ?? []).map((step) => ({
-            id: step.id,
-            routeId: step.routeId,
-            position: step.position,
-            sceneId: step.sceneId,
-            isDeleted: step.isDeleted,
-          })),
-          arcs: (storyExport.storyArcs ?? []).map((arc) => ({ id: arc.id, title: arc.title })),
-        },
+        compileInputOf(storyExport),
         // The book's author defaults to the story's, as on the device.
         {
           ...options,
@@ -236,29 +195,50 @@ export class StoryPublicationService {
       );
       return { bytes: compiled.bytes, format: options.format };
     } catch (error) {
-      // The compiler throws a plain Error for input-caused failures (unknown route, output past the
+      // The compiler throws a plain Error for input-caused failures (output past the
       // byte cap). Those are 400s; anything else (a renderer bug) keeps bubbling as a 500.
-      if (error instanceof Error && /exceeds the .* limit|Unknown route/.test(error.message)) {
+      if (error instanceof Error && /exceeds the .* limit/.test(error.message)) {
         throw new AppError(400, error.message);
       }
       throw error;
     }
   }
 
-  /** Removes a version's blobs: the .zip and, when one was published, its manuscript sibling. */
+  /** Compiles the online reader page from the same export, with the same guarantees. */
+  private compileReader(
+    storyExport: FullStoryExportType,
+    options: ReaderOptionsInput,
+  ): { bytes: Uint8Array } {
+    try {
+      return compileStoryReader(compileInputOf(storyExport), {
+        ...options,
+        author: options.author === undefined ? storyExport.story.author : options.author,
+      });
+    } catch (error) {
+      if (error instanceof Error && /exceeds the .* limit/.test(error.message)) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  }
+
+  /** Removes a version's blobs: the .zip and, when they were published, the manuscript and reader siblings. */
   private async deleteVersionBlobs(
     storyId: string,
     publicationId: string,
-    manuscriptFormat: string | null,
+    published: { manuscriptFormat: string | null; readerByteSize: number | null },
   ): Promise<void> {
     await publicationStorageService.delete(storyId, publicationId).catch(() => undefined);
-    if (manuscriptFormat) {
+    if (published.manuscriptFormat) {
       const extension =
-        (FORMAT_META as Record<string, { extension: string }>)[manuscriptFormat]?.extension ??
-        manuscriptFormat;
+        (FORMAT_META as Record<string, { extension: string }>)[published.manuscriptFormat]
+          ?.extension ?? published.manuscriptFormat;
       await publicationStorageService
         .deleteManuscript(storyId, publicationId, extension)
         .catch(() => undefined);
+    }
+    if (published.readerByteSize != null) {
+      await publicationStorageService.deleteReader(storyId, publicationId).catch(() => undefined);
     }
   }
 
@@ -270,6 +250,7 @@ export class StoryPublicationService {
     visibility: ShowcaseVisibility = 'public',
     password?: string,
     manuscript?: ManuscriptOptionsInput,
+    reader?: ReaderOptionsInput,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
@@ -287,6 +268,17 @@ export class StoryPublicationService {
       throw new AppError(400, 'A password is required for password-protected stories.');
     }
 
+    // Before any packaging or compiling: a refused publication costs nothing. 429, not 403 - the
+    // client already reads 403 as "the showcase is off".
+    try {
+      await tierEnforcementService.assertCanPublish(userId);
+    } catch (error) {
+      if (error instanceof TierLimitExceededError) {
+        throw new AppError(429, error.message);
+      }
+      throw error;
+    }
+
     const storyExport = await this.exportImportService.exportStory(storyId, userId);
     const publicationId = ulid();
     const zip = await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash));
@@ -295,11 +287,14 @@ export class StoryPublicationService {
     // the same guarantee the .zip gets from the rollback below. `includeLooseScenes` needs no
     // branching branch here: the route compiler ignores it by construction.
     const manuscriptOptions =
-      manuscript === undefined
-        ? null
-        : this.parseManuscriptOptions(story.type, storyExport, manuscript);
+      manuscript === undefined ? null : this.parseManuscriptOptions(storyExport, manuscript);
     const compiledManuscript = manuscriptOptions
-      ? await this.compileManuscript(storyExport, manuscriptOptions)
+      ? await compileGate(() => this.compileManuscript(storyExport, manuscriptOptions))
+      : null;
+    const readerOptions =
+      reader === undefined ? null : this.parseReaderOptions(storyExport, reader);
+    const compiledReader = readerOptions
+      ? await compileGate(() => this.compileReader(storyExport, readerOptions))
       : null;
 
     // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
@@ -313,6 +308,9 @@ export class StoryPublicationService {
         compiledManuscript.bytes,
         compiledManuscript.format,
       );
+    }
+    if (compiledReader) {
+      await publicationStorageService.storeReader(storyId, publicationId, compiledReader.bytes);
     }
 
     const passwordHash = visibility === 'password' ? await hashPassword(password!) : null;
@@ -335,6 +333,8 @@ export class StoryPublicationService {
             set: { labelMode, visibility, passwordHash, updatedAt: new Date() },
           });
 
+        await tierEnforcementService.recordPublication(tx, userId, storyId);
+
         await tx.insert(storyPublications).values({
           id: publicationId,
           storyId,
@@ -352,6 +352,7 @@ export class StoryPublicationService {
           mediaTotal: zip.totalCount,
           manuscriptFormat: compiledManuscript?.format ?? null,
           manuscriptByteSize: compiledManuscript ? compiledManuscript.bytes.byteLength : null,
+          readerByteSize: compiledReader ? compiledReader.bytes.byteLength : null,
           snapshot: this.snapshotOf(story),
         });
 
@@ -361,6 +362,7 @@ export class StoryPublicationService {
           .select({
             id: storyPublications.id,
             manuscriptFormat: storyPublications.manuscriptFormat,
+            readerByteSize: storyPublications.readerByteSize,
           })
           .from(storyPublications)
           .where(eq(storyPublications.storyId, storyId))
@@ -380,13 +382,16 @@ export class StoryPublicationService {
           const extension = FORMAT_META[compiledManuscript.format].extension;
           await publicationStorageService.deleteManuscript(storyId, publicationId, extension);
         }
+        if (compiledReader) {
+          await publicationStorageService.deleteReader(storyId, publicationId);
+        }
       },
     );
 
     // After the commit: if a blob delete fails, the worst case is an orphaned file, not a version listed
     // on the site whose download no longer exists.
     for (const row of pruned) {
-      await this.deleteVersionBlobs(storyId, row.id, row.manuscriptFormat);
+      await this.deleteVersionBlobs(storyId, row.id, row);
     }
 
     await this.notifyAudience(storyId, userId);
@@ -514,7 +519,7 @@ export class StoryPublicationService {
       }
     });
 
-    await this.deleteVersionBlobs(storyId, publicationId, publication.manuscriptFormat);
+    await this.deleteVersionBlobs(storyId, publicationId, publication);
     await this.notifyAudience(storyId, userId);
   }
 
@@ -523,7 +528,11 @@ export class StoryPublicationService {
 
     const removed = await db.transaction(async (tx) => {
       const publications = await tx
-        .select({ id: storyPublications.id, manuscriptFormat: storyPublications.manuscriptFormat })
+        .select({
+          id: storyPublications.id,
+          manuscriptFormat: storyPublications.manuscriptFormat,
+          readerByteSize: storyPublications.readerByteSize,
+        })
         .from(storyPublications)
         .where(eq(storyPublications.storyId, storyId));
       await tx.delete(storyPublications).where(eq(storyPublications.storyId, storyId));
@@ -532,7 +541,7 @@ export class StoryPublicationService {
     });
 
     for (const row of removed) {
-      await this.deleteVersionBlobs(storyId, row.id, row.manuscriptFormat);
+      await this.deleteVersionBlobs(storyId, row.id, row);
     }
     await this.notifyAudience(storyId, userId);
   }

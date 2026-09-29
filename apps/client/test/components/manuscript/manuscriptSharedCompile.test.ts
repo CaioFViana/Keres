@@ -5,7 +5,7 @@ import {
   buildManuscriptMarkdown,
   buildManuscriptText,
   compileLinearManuscript,
-  compileRouteManuscript,
+  compileGamebookManuscript,
 } from '@keres/shared';
 
 // Guards the client's shared-compile wiring end to end: the unit coverage of
@@ -60,22 +60,21 @@ describe('shared manuscript pipeline', () => {
     expect(markdown).toContain('- Drift — See Fragment');
   });
 
-  it('follows route steps in position order with the route subtitle', () => {
-    const manuscript = compileRouteManuscript({
+  it('compiles a branching story as a gamebook from its start', () => {
+    const manuscript = compileGamebookManuscript({
       title: 'My Story',
-      routeName: 'Main',
-      steps: [
-        { id: 'step-2', routeId: 'r-1', position: 2, sceneId: 's-1', isDeleted: false },
-        { id: 'step-1', routeId: 'r-1', position: 1, sceneId: 's-2', isDeleted: false },
-      ],
-      scenes,
+      scenes: [{ ...scenes[0], isStart: true }, scenes[1]],
       choices,
-      looseHeadingLabel: 'Loose scenes',
+      order: 'discovery',
+      showSceneNames: true,
+      endLabel: 'end of this excerpt',
+      startLabels: { choose: 'Choose where to begin', begin: 'Begin' },
     });
 
     const markdown = buildManuscriptMarkdown(manuscript, labels);
-    expect(markdown).toContain('*Main*');
-    expect(markdown.indexOf('### 1. Fragment')).toBeLessThan(markdown.indexOf('### 2. Opening'));
+    expect(markdown).toContain('### 1. Opening');
+    expect(markdown).toContain('### 2. Fragment');
+    expect(markdown).toContain('- Drift — See Fragment');
   });
 
   it('renders html anchors and packs a docx', async () => {

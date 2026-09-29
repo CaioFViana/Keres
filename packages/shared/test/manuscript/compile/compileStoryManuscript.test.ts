@@ -3,7 +3,6 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import {
   compileStoryManuscript,
   type CompileStoryManuscriptInput,
-  type ManuscriptRoute,
 } from '../../../manuscript/compile/compileStoryManuscript';
 import type { ManuscriptChoice } from '../../../manuscript/compile/export/manuscriptCompiler';
 import {
@@ -12,12 +11,10 @@ import {
 } from '../../../manuscript/compile/manuscriptContracts';
 import type {
   ManuscriptChapter,
-  ManuscriptRouteStep,
   ManuscriptScene,
 } from '../../../manuscript/compile/manuscriptSections';
 import type { ChapterRowType } from '../../../schemas/ChapterSchemas';
 import type { ChoiceType } from '../../../schemas/ChoiceSchemas';
-import type { RouteStepType, RouteType } from '../../../schemas/RouteSchemas';
 import type { SceneType } from '../../../schemas/SceneSchemas';
 
 describe('structural inputs', () => {
@@ -26,8 +23,6 @@ describe('structural inputs', () => {
     expectTypeOf<ChapterRowType>().toMatchTypeOf<ManuscriptChapter>();
     expectTypeOf<SceneType>().toMatchTypeOf<ManuscriptScene>();
     expectTypeOf<ChoiceType>().toMatchTypeOf<ManuscriptChoice>();
-    expectTypeOf<RouteType>().toMatchTypeOf<ManuscriptRoute>();
-    expectTypeOf<RouteStepType>().toMatchTypeOf<ManuscriptRouteStep>();
   });
 });
 
@@ -125,37 +120,92 @@ describe('compileStoryManuscript formats', () => {
   });
 });
 
-describe('compileStoryManuscript routes', () => {
-  const routes: ManuscriptRoute[] = [
-    { id: 'route-1', name: 'Main' },
-    { id: 'route-2', name: 'Other' },
-  ];
-  const routeSteps: ManuscriptRouteStep[] = [
-    { id: 'step-1', routeId: 'route-1', position: 1, sceneId: 's-2', isDeleted: false },
-    { id: 'step-2', routeId: 'route-1', position: 2, sceneId: 's-1', isDeleted: false },
-    { id: 'step-9', routeId: 'route-2', position: 1, sceneId: 's-loose', isDeleted: false },
-  ];
+describe('compileStoryManuscript gamebook', () => {
+  const branching = (overrides: Partial<CompileStoryManuscriptInput> = {}) =>
+    input({
+      storyType: 'branching',
+      scenes: [
+        {
+          id: 's-1',
+          chapterId: null,
+          name: 'Opening',
+          index: 1,
+          body: 'Alpha.',
+          isDeleted: false,
+          isStart: true,
+        },
+        { id: 's-2', chapterId: null, name: 'Door', index: 2, body: 'Beta.', isDeleted: false },
+        { id: 's-3', chapterId: null, name: 'Window', index: 3, body: 'Gamma.', isDeleted: false },
+        {
+          id: 's-4',
+          chapterId: null,
+          name: 'Attic',
+          index: 4,
+          body: 'Unreached.',
+          isDeleted: false,
+        },
+      ],
+      choices: [
+        { id: 'c-1', sceneId: 's-1', nextSceneId: 's-3', text: 'Climb' },
+        { id: 'c-2', sceneId: 's-1', nextSceneId: 's-2', text: 'Knock' },
+      ],
+      ...overrides,
+    });
 
-  it('follows the selected route and ignores other routes steps', async () => {
-    const result = await compileStoryManuscript(
-      input({ storyType: 'branching', routes, routeSteps }),
-      { format: 'md', routeId: 'route-1', includeSceneNames: true },
+  it('compiles the whole book from the start, not one route', async () => {
+    const md = textOf(
+      (await compileStoryManuscript(branching(), { format: 'md', includeSceneNames: true })).bytes,
     );
 
-    const md = textOf(result.bytes);
-    expect(md).toContain('*Main*');
-    // Route order (s-2 first), and the other route's scene stays out.
-    expect(md.indexOf('### 1. Next')).toBeLessThan(md.indexOf('### 2. Opening'));
-    expect(md).not.toContain('Note');
+    expect(md.indexOf('### 1. Opening')).toBeLessThan(md.indexOf('### 2. Window'));
+    expect(md.indexOf('### 2. Window')).toBeLessThan(md.indexOf('### 3. Door'));
+    expect(md).toContain('Alpha.');
+    expect(md).toContain('Beta.');
+    expect(md).toContain('Gamma.');
+    // Nothing leads to it, but a wrongly missed scene is worse than a wrongly kept one.
+    expect(md).toContain('Unreached.');
+    expect(md.indexOf('### 3. Door')).toBeLessThan(md.indexOf('### 4. Attic'));
   });
 
-  it('throws on an unknown route', async () => {
-    await expect(
-      compileStoryManuscript(input({ storyType: 'branching', routes, routeSteps }), {
-        format: 'md',
-        routeId: 'gone',
-      }),
-    ).rejects.toThrow('Unknown route "gone".');
+  it('numbers without names and refers to numbers when names are off', async () => {
+    const md = textOf((await compileStoryManuscript(branching(), { format: 'md' })).bytes);
+
+    expect(md).toContain('### 1\n');
+    expect(md).toContain('Climb');
+    expect(md).not.toContain('Opening');
+  });
+
+  it('shuffles reproducibly with the seed', async () => {
+    const chain = Array.from({ length: 8 }, (_, index) => ({
+      id: `n-${index}`,
+      chapterId: null,
+      name: `Name${index}`,
+      index,
+      body: `Body${index}.`,
+      isDeleted: false,
+      isStart: index === 0,
+    }));
+    const links = chain.slice(1).map((scene, index) => ({
+      id: `k-${index}`,
+      sceneId: chain[index].id,
+      nextSceneId: scene.id,
+      text: 'On',
+    }));
+    const compile = async (shuffleSeed: string) =>
+      textOf(
+        (
+          await compileStoryManuscript(branching({ scenes: chain, choices: links }), {
+            format: 'md',
+            includeSceneNames: true,
+            sceneOrder: 'shuffled',
+            shuffleSeed,
+          })
+        ).bytes,
+      );
+
+    expect(await compile('a')).toEqual(await compile('a'));
+    expect(await compile('a')).not.toEqual(await compile('b'));
+    expect(await compile('a')).toContain('### 1. Name0');
   });
 });
 

@@ -188,10 +188,10 @@ const ManuscriptScreen = () => {
     [scrollToSectionIndex],
   );
 
-  // The export is its own screen; it compiles the same route this one reads.
+  // The export is its own screen; a branching story exports as a whole gamebook, not the route read here.
   const handleExportPress = useCallback(() => {
-    navigation.navigate('ManuscriptExport', { routeId: effectiveRouteId });
-  }, [navigation, effectiveRouteId]);
+    navigation.navigate('ManuscriptExport');
+  }, [navigation]);
 
   const openScene = useCallback(
     (sceneId: string) => {

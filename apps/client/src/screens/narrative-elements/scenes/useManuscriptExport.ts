@@ -1,6 +1,6 @@
 import {
   compileLinearManuscript,
-  compileRouteManuscript,
+  compileGamebookManuscript,
   isLooseScene,
   sceneSeparatorText,
 } from '@keres/shared';
@@ -20,14 +20,14 @@ import { chapterBelongsToArc, sceneBelongsToActiveArc } from '../../../utils/sto
 import { exportFileLanguage } from '../../../utils/storyTransfer';
 
 /**
- * The manuscript export of the selected story: what the export screen needs to show (the route,
- * the loose scenes, the arcs) and the run itself - compile the read model into format-neutral
+ * The manuscript export of the selected story: what the export screen needs to show (the loose
+ * scenes, the arcs) and the run itself - compile the read model into format-neutral
  * blocks with the chosen content, present and draw them, and hand the file to the share sheet (a
  * browser download on web). A delivered file notifies success; a build with no share target says
  * where the file is instead; anything thrown notifies failure. Resolves true once the file was
  * made, so the screen can close; a failure keeps it open to try again.
  */
-export function useManuscriptExport(requestedRouteId: string | null) {
+export function useManuscriptExport() {
   const { t, i18n } = useTranslation();
   const { selectedStory } = useStoryStore();
   const activeArcId = useStoryStore((state) => state.activeArcId);
@@ -35,13 +35,9 @@ export function useManuscriptExport(requestedRouteId: string | null) {
   const { showNotification } = useNotificationStore();
   const { pending: exporting, run } = useAsyncOperation();
   const isBranching = selectedStory?.type === 'branching';
-  const { chapters, scenes, routes, choices, stepsByRouteId, loading, loadChoiceAnnotations } =
-    useManuscriptData(selectedStory?.id ?? null);
-
-  const routeId = requestedRouteId ?? routes[0]?.id ?? null;
-  const routeName = isBranching
-    ? (routes.find((entry) => entry.id === routeId)?.name ?? null)
-    : null;
+  const { chapters, scenes, choices, loading, loadChoiceAnnotations } = useManuscriptData(
+    selectedStory?.id ?? null,
+  );
   const chaptersById = useMemo(
     () => new Map(chapters.map((chapter) => [chapter.id, chapter])),
     [chapters],
@@ -91,15 +87,17 @@ export function useManuscriptExport(requestedRouteId: string | null) {
           });
           const sceneSeparator = sceneSeparatorText(settings.style);
           const manuscript = isBranching
-            ? compileRouteManuscript({
+            ? compileGamebookManuscript({
                 title,
-                routeName: routeName ?? '',
-                steps: routeId ? (stepsByRouteId.get(routeId) ?? []) : [],
                 scenes: exportScenes,
                 choices: annotatedChoices,
-                looseHeadingLabel: t('export_manuscript_loose_heading'),
-                includeSceneNames: settings.includeSceneNames,
-                resetSceneNumbersPerChapter: settings.resetSceneNumbers,
+                order: settings.sceneOrder,
+                showSceneNames: settings.includeSceneNames,
+                endLabel: t('export_manuscript_end_of_excerpt'),
+                startLabels: {
+                  choose: t('export_manuscript_choose_start'),
+                  begin: t('export_manuscript_begin_at'),
+                },
                 sceneSeparator,
               })
             : compileLinearManuscript({
@@ -157,9 +155,6 @@ export function useManuscriptExport(requestedRouteId: string | null) {
       loadChoiceAnnotations,
       choices,
       isBranching,
-      routeName,
-      routeId,
-      stepsByRouteId,
       chapters,
       showNotification,
     ],
@@ -169,7 +164,6 @@ export function useManuscriptExport(requestedRouteId: string | null) {
     loading,
     exporting,
     isBranching,
-    routeName,
     looseCount,
     arcs,
     storyAuthor: selectedStory?.author ?? '',

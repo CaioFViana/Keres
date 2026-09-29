@@ -19,8 +19,8 @@ describe('ManuscriptFormatSchema', () => {
 });
 
 describe('MAX_MANUSCRIPT_BYTES', () => {
-  it('is 15 MB', () => {
-    expect(MAX_MANUSCRIPT_BYTES).toBe(15 * 1024 * 1024);
+  it('is 50 MB', () => {
+    expect(MAX_MANUSCRIPT_BYTES).toBe(50 * 1024 * 1024);
   });
 });
 
@@ -47,6 +47,9 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
       goToScene: 'See',
       looseHeading: 'Appendix',
       tocHeading: 'Contents',
+      endOfExcerpt: 'end of this excerpt',
+      chooseStart: 'Choose where to begin',
+      beginAt: 'Begin',
     });
   });
 });
@@ -60,6 +63,7 @@ describe('ManuscriptOptionsSchema', () => {
       includeSceneNames: false,
       includeToc: false,
       resetSceneNumbers: false,
+      sceneOrder: 'discovery',
     });
   });
 

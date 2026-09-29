@@ -1,4 +1,5 @@
 import {
+  sceneHeadingLabel,
   manuscriptTocEntries,
   type CompiledManuscript,
   type CompiledSpan,
@@ -114,7 +115,7 @@ export function buildManuscriptHtml(
         break;
       case 'scene-heading':
         parts.push(
-          `<h3 class="scene" id="${block.bookmarkId ?? ''}">${escapeHtml(`${block.number}. ${block.name}`)}</h3>`,
+          `<h3 class="scene" id="${block.bookmarkId ?? ''}">${escapeHtml(sceneHeadingLabel(block))}</h3>`,
         );
         break;
       case 'paragraph':

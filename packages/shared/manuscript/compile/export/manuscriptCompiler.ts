@@ -1,9 +1,10 @@
 import {
   isLooseScene,
   linearManuscriptSections,
-  routeManuscriptSections,
+  gamebookManuscriptSections,
+  gamebookStartScenes,
+  type GamebookOrder,
   type ManuscriptChapter,
-  type ManuscriptRouteStep,
   type ManuscriptScene,
   type ManuscriptSection,
 } from '../manuscriptSections';
@@ -74,6 +75,11 @@ export function bookmarkIdForChapter(chapterId: string): string {
   return `chapter-${chapterId.replace(/[^A-Za-z0-9]/g, '')}`.slice(0, 40);
 }
 
+/** A scene heading's text: the number, and the name when the export shows names. */
+export function sceneHeadingLabel(block: { number: number; name: string }): string {
+  return block.name === '' ? String(block.number) : `${block.number}. ${block.name}`;
+}
+
 /** The appendix bookmark: at most one loose section exists per manuscript. */
 export const APPENDIX_BOOKMARK_ID = 'appendix';
 
@@ -103,6 +109,11 @@ type SectionsInput = {
   includeSceneNames: boolean;
   resetSceneNumbersPerChapter: boolean;
   sceneSeparator: string | null;
+  /**
+   * A gamebook: every scene carries its number as a heading (the name too, when `showNames`), and a
+   * choice into a scene that is not in the export ends there, saying so with `endLabel`.
+   */
+  gamebook?: { showNames: boolean; endLabel: string };
 };
 
 function sectionsToBlocks({
@@ -113,6 +124,7 @@ function sectionsToBlocks({
   includeSceneNames,
   resetSceneNumbersPerChapter,
   sceneSeparator,
+  gamebook,
 }: SectionsInput): CompiledBlock[] {
   // First occurrence wins: a looping route bookmarks the scene once, and every choice
   // points at that bookmark.
@@ -120,6 +132,12 @@ function sectionsToBlocks({
   for (const section of sections) {
     if (section.kind === 'scene' && !bookmarkFor.has(section.scene.id)) {
       bookmarkFor.set(section.scene.id, bookmarkIdForScene(section.scene.id));
+    }
+  }
+  const positionOf = new Map<string, number>();
+  for (const section of sections) {
+    if (section.kind === 'scene' && !positionOf.has(section.scene.id)) {
+      positionOf.set(section.scene.id, section.position);
     }
   }
   const emitted = new Set<string>();
@@ -160,12 +178,12 @@ function sectionsToBlocks({
     const bookmarkId = bookmarkFor.get(section.scene.id) ?? null;
     // Without scene names there is no heading to hang the bookmark on, so
     // choices degrade to bare text: any reference would name a scene.
-    if (includeSceneNames) {
+    if (includeSceneNames || gamebook) {
       blocks.push({
         kind: 'scene-heading',
         id: section.scene.id,
         number: resetSceneNumbersPerChapter ? groupNumber : section.position,
-        name: section.scene.name,
+        name: gamebook && !gamebook.showNames ? '' : section.scene.name,
         bookmarkId: bookmarkId && !emitted.has(bookmarkId) ? bookmarkId : null,
       });
     }
@@ -176,6 +194,27 @@ function sectionsToBlocks({
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {
+      if (gamebook) {
+        const targetBookmarkId = bookmarkFor.get(choice.nextSceneId) ?? null;
+        const targetPosition = positionOf.get(choice.nextSceneId);
+        blocks.push({
+          kind: 'choice',
+          id: choice.id,
+          text: targetBookmarkId ? choice.text : `${choice.text} — ${gamebook.endLabel}`,
+          targetSceneId: choice.nextSceneId,
+          targetBookmarkId,
+          // Without names a reference is the scene's number: "See 12".
+          targetSceneName:
+            targetBookmarkId && targetPosition !== undefined
+              ? gamebook.showNames
+                ? (sceneNameById.get(choice.nextSceneId) ?? String(targetPosition))
+                : String(targetPosition)
+              : null,
+          requirements: choice.requirements,
+          effects: choice.effects,
+        });
+        continue;
+      }
       blocks.push({
         kind: 'choice',
         id: choice.id,
@@ -288,45 +327,90 @@ export function compileLinearManuscript({
   };
 }
 
-export type CompileRouteOptions = {
+export type CompileGamebookOptions = {
   title: string;
-  routeName: string;
-  steps: ManuscriptRouteStep[];
+  /** Only the scenes to consider (an arc export passes the arc's own). */
   scenes: ManuscriptScene[];
   choices: ManuscriptChoice[];
-  looseHeadingLabel: string;
-  /** Scene headings on/off; off also renders choices without target references. Defaults to on. */
-  includeSceneNames?: boolean;
-  /** Accepted for uniformity; routes have a single group, so it changes nothing. */
-  resetSceneNumbersPerChapter?: boolean;
-  /** Text drawn between two consecutive scenes of the route. Defaults to none. */
+  order: GamebookOrder;
+  /** Seed of the shuffled order; any string. Defaults to the start scene's id. */
+  seed?: string;
+  /** Scene names beside the numbers, in headings and in references. */
+  showSceneNames: boolean;
+  /** Said after a choice whose target is not part of this export. */
+  endLabel: string;
+  /**
+   * A story with several starts opens on a page saying `choose` and offering each start under
+   * `begin`.
+   */
+  startLabels: { choose: string; begin: string };
+  /** Text drawn between two consecutive scenes. Defaults to none. */
   sceneSeparator?: string | null;
 };
 
-export function compileRouteManuscript({
+/**
+ * A branching story as a gamebook: the scenes the reader can reach from the start, numbered in
+ * `order`, each choice pointing at its target's number (a "page N" in the PDF, a link elsewhere).
+ */
+export function compileGamebookManuscript({
   title,
-  routeName,
-  steps,
   scenes,
   choices,
-  looseHeadingLabel,
-  includeSceneNames = true,
-  resetSceneNumbersPerChapter = false,
+  order,
+  seed,
+  showSceneNames,
+  endLabel,
+  startLabels,
   sceneSeparator = null,
-}: CompileRouteOptions): CompiledManuscript {
+}: CompileGamebookOptions): CompiledManuscript {
+  const sections = gamebookManuscriptSections(scenes, choices, { order, seed });
+  const positionOf = new Map(
+    sections.flatMap((section) =>
+      section.kind === 'scene' ? [[section.scene.id, section.position] as const] : [],
+    ),
+  );
+  const starts = gamebookStartScenes(scenes).filter((scene) => positionOf.has(scene.id));
+  const opening: CompiledBlock[] =
+    starts.length > 1
+      ? [
+          {
+            kind: 'paragraph',
+            spans: [
+              {
+                text: startLabels.choose,
+                bold: true,
+                italic: false,
+                underline: false,
+                strikethrough: false,
+              },
+            ],
+          },
+          ...starts.map(
+            (start): CompiledBlock => ({
+              kind: 'choice',
+              id: `start-${start.id}`,
+              text: startLabels.begin,
+              targetSceneId: start.id,
+              targetBookmarkId: bookmarkIdForScene(start.id),
+              targetSceneName: showSceneNames ? start.name : String(positionOf.get(start.id)),
+            }),
+          ),
+        ]
+      : [];
   return {
     title,
     blocks: [
       { kind: 'title', text: title },
-      { kind: 'subtitle', text: routeName },
+      ...opening,
       ...sectionsToBlocks({
-        sections: routeManuscriptSections(steps, scenes),
+        sections,
         choicesBySceneId: groupChoices(choices),
         sceneNameById: new Map(scenes.map((scene) => [scene.id, scene.name])),
-        looseHeadingLabel,
-        includeSceneNames,
-        resetSceneNumbersPerChapter,
+        looseHeadingLabel: '',
+        includeSceneNames: true,
+        resetSceneNumbersPerChapter: false,
         sceneSeparator,
+        gamebook: { showNames: showSceneNames, endLabel },
       }),
     ],
   };
@@ -360,7 +444,7 @@ export function manuscriptTocEntries(blocks: CompiledBlock[]): ManuscriptTocEntr
     } else if (block.kind === 'scene-heading') {
       const target = block.bookmarkId ?? sceneBookmark.get(block.id) ?? null;
       if (target !== null)
-        entries.push({ level: 1, text: `${block.number}. ${block.name}`, bookmarkId: target });
+        entries.push({ level: 1, text: sceneHeadingLabel(block), bookmarkId: target });
     }
   }
   return entries;

@@ -1,11 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import type {
-  ChapterSelect,
-  RouteSelect,
-  RouteStepSelect,
-  SceneSelect,
-} from '../../../../src/db/schema';
+import type { ChapterSelect, SceneSelect } from '../../../../src/db/schema';
 import type { ManuscriptExportSettings } from '../../../../src/components/features/manuscript/export/manuscriptExportSettings';
 import ManuscriptExportScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptExportScreen';
 
@@ -17,14 +12,13 @@ type OptionsProps = {
   settings: ManuscriptExportSettings;
   onChange: (settings: ManuscriptExportSettings) => void;
   formats: readonly string[];
-  routeName: string | null;
+  branching: boolean;
   showLooseSwitch: boolean;
   looseCount: number;
   arcs: { id: string; title: string }[];
 };
 let mockOptionsProps: OptionsProps | null = null;
 
-let mockRouteParams: { routeId?: string | null } = {};
 let mockStoryType = 'linear';
 let mockStoryTitle = 'My Story';
 let mockActiveArcId: string | null = null;
@@ -33,23 +27,18 @@ let mockLanguage = 'en';
 let mockManuscriptData: {
   chapters: ChapterSelect[];
   scenes: SceneSelect[];
-  routes: RouteSelect[];
   choices: { id: string; sceneId: string; nextSceneId: string; text: string }[];
-  stepsByRouteId: Map<string, RouteStepSelect[]>;
   loading: boolean;
 } = {
   chapters: [],
   scenes: [],
-  routes: [],
   choices: [],
-  stepsByRouteId: new Map(),
   loading: false,
 };
 
 jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => ({ navigate: jest.fn(), goBack: mockGoBack }),
-  useRoute: () => ({ params: mockRouteParams }),
 }));
 
 jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
@@ -229,9 +218,7 @@ function linearData() {
       makeScene({ id: 's-2', name: 'Inland', index: 2, body: null }),
       makeScene({ id: 's-3', name: 'Fragment', index: 3, chapterId: null, body: 'Lost pages.' }),
     ],
-    routes: [] as RouteSelect[],
     choices: [] as { id: string; sceneId: string; nextSceneId: string; text: string }[],
-    stepsByRouteId: new Map<string, RouteStepSelect[]>(),
     loading: false,
   };
 }
@@ -249,9 +236,7 @@ function twoArcData() {
       makeScene({ id: 's-ev', chapterId: 'ev-1', name: 'Tremor', index: 1, body: 'Rumble.' }),
       makeScene({ id: 's-3', name: 'Fragment', index: 3, chapterId: null, body: 'Lost pages.' }),
     ],
-    routes: [] as RouteSelect[],
     choices: [] as { id: string; sceneId: string; nextSceneId: string; text: string }[],
-    stepsByRouteId: new Map<string, RouteStepSelect[]>(),
     loading: false,
   };
 }
@@ -262,22 +247,14 @@ const twoArcs = [
 ];
 
 function branchingData() {
-  const route = { id: 'route-1', name: 'Main' } as RouteSelect;
-  const other = { id: 'route-2', name: 'Alt' } as RouteSelect;
-  const step = (id: string, routeId: string, position: number, sceneId: string) =>
-    ({ id, routeId, position, sceneId, isDeleted: false }) as RouteStepSelect;
   return {
     chapters: [makeChapter()],
     scenes: [
-      makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
+      makeScene({ id: 's-a', name: 'Alpha', body: 'First.', isStart: true }),
       makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+      makeScene({ id: 's-c', name: 'Attic', index: 3, body: 'Unreached.' }),
     ],
-    routes: [route, other],
-    choices: [] as { id: string; sceneId: string; nextSceneId: string; text: string }[],
-    stepsByRouteId: new Map<string, RouteStepSelect[]>([
-      ['route-1', [step('step-1', 'route-1', 1, 's-a'), step('step-2', 'route-1', 2, 's-b')]],
-      ['route-2', [step('step-3', 'route-2', 1, 's-b')]],
-    ]),
+    choices: [{ id: 'c-1', sceneId: 's-a', nextSceneId: 's-b', text: 'Go on' }],
     loading: false,
   };
 }
@@ -299,7 +276,6 @@ function sceneNumbers(call: {
 beforeEach(() => {
   jest.clearAllMocks();
   mockOptionsProps = null;
-  mockRouteParams = {};
   mockStoryType = 'linear';
   mockStoryTitle = 'My Story';
   mockActiveArcId = null;
@@ -342,17 +318,18 @@ describe('ManuscriptExportScreen', () => {
     expect(view.getByTestId('screen-loading')).toBeTruthy();
   });
 
-  it('exports the requested route', async () => {
+  it('exports a branching story as a whole gamebook, in the order asked', async () => {
     mockStoryType = 'branching';
     mockManuscriptData = branchingData();
-    mockRouteParams = { routeId: 'route-2' };
     const view = await renderScreen();
-    expect(mockOptionsProps).toMatchObject({ routeName: 'Alt' });
+    expect(mockOptionsProps).toMatchObject({ branching: true, showLooseSwitch: false });
 
-    await exportWith(view, { includeSceneNames: true });
+    await exportWith(view, { includeSceneNames: true, sceneOrder: 'shuffled' });
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
-    expect(sceneNames(mockExportManuscript.mock.calls[0][0])).toEqual(['Beta']);
+    const call = mockExportManuscript.mock.calls[0][0];
+    // Start first; the scene nothing leads to closes the book.
+    expect(sceneNames(call)).toEqual(['Alpha', 'Beta', 'Attic']);
   });
 
   it('closes after a made file and stays open after a failure', async () => {
@@ -408,7 +385,7 @@ describe('ManuscriptExportScreen', () => {
     await renderScreen();
 
     expect(mockOptionsProps).toMatchObject({
-      routeName: null,
+      branching: false,
       showLooseSwitch: true,
       looseCount: 1,
       settings: { format: 'docx', preset: 'custom', author: 'Ana' },
@@ -535,12 +512,12 @@ describe('ManuscriptExportScreen', () => {
     expect(call.labels).toMatchObject({ tocHeading: 'export_manuscript_index_heading' });
   });
 
-  it('exports the current route with no loose switch in branching stories', async () => {
+  it('has no loose switch in branching stories and keeps the unreachable', async () => {
     mockStoryType = 'branching';
     mockManuscriptData = branchingData();
     const view = await renderScreen();
 
-    expect(mockOptionsProps).toMatchObject({ routeName: 'Main', showLooseSwitch: false });
+    expect(mockOptionsProps).toMatchObject({ branching: true, showLooseSwitch: false });
 
     await exportWith(view, {
       format: 'docx',
@@ -553,10 +530,23 @@ describe('ManuscriptExportScreen', () => {
 
     await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
     const call = mockExportManuscript.mock.calls[0][0];
-    expect(sceneNames(call)).toEqual(['Alpha', 'Beta']);
+    expect(sceneNames(call)).toEqual(['Alpha', 'Beta', 'Attic']);
     expect(
       call.manuscript.blocks.find((block: { kind: string }) => block.kind === 'subtitle'),
-    ).toMatchObject({ text: 'Main' });
+    ).toBeUndefined();
+  });
+
+  it('names only the numbers of a branching story when scene names are off', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    const view = await renderScreen();
+
+    await exportWith(view, { includeSceneNames: false });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const call = mockExportManuscript.mock.calls[0][0];
+    expect(sceneNames(call)).toEqual(['', '', '']);
+    expect(sceneNumbers(call)).toEqual([1, 2, 3]);
   });
 
   it('notifies export failures and undelivered files', async () => {

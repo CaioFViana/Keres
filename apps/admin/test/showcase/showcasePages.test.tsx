@@ -53,6 +53,7 @@ const card: ShowcaseStoryCard = {
     mediaTotal: 2,
     createdAt: '2026-08-19T10:00:00.000Z',
     manuscript: null,
+    reader: null,
   },
   updatedAt: '2026-08-19T10:00:00.000Z',
 };
@@ -71,6 +72,7 @@ const detail: ShowcaseStoryDetail = {
       mediaTotal: 0,
       createdAt: '2026-08-01T10:00:00.000Z',
       manuscript: null,
+      reader: null,
     },
   ],
   updatedAt: '2026-08-19T10:00:00.000Z',

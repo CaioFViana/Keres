@@ -179,7 +179,7 @@ export type NarrativeElementsStackParamList = {
   SceneDetail: { sceneId: string; occurrence?: OccurrenceTarget };
   SceneEditor: { sceneId: string };
   Manuscript: { routeId?: string };
-  ManuscriptExport: { routeId?: string | null };
+  ManuscriptExport: undefined;
   SceneForm: { sceneId?: string; chapterId?: string };
   ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
   ChoiceForm: { choiceId?: string; sceneId?: string };

@@ -93,3 +93,44 @@ it('warns instead of toggling without a database', async () => {
   expect(storeState.toggleDarkMode).not.toHaveBeenCalled();
   expect(console.warn).toHaveBeenCalledWith('Drizzle client not available for theme toggling.');
 });
+
+describe('the native color scheme', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- spied on the real module.
+  const { Appearance, Platform } = require('react-native');
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    Platform.OS = 'ios';
+  });
+
+  it('is told the app is dark, so the navigation bar and native dialogs match it', async () => {
+    const set = jest.spyOn(Appearance, 'setColorScheme').mockImplementation(() => undefined);
+    storeState.darkMode = true;
+
+    await renderWithTheme();
+
+    expect(set).toHaveBeenCalledWith('dark');
+  });
+
+  it('is told the app is light, even on a phone whose system is dark', async () => {
+    const set = jest.spyOn(Appearance, 'setColorScheme').mockImplementation(() => undefined);
+    storeState.darkMode = false;
+
+    await renderWithTheme();
+
+    expect(set).toHaveBeenCalledWith('light');
+  });
+
+  it('is left alone on the web, and an OS that cannot force one is no error', async () => {
+    const set = jest.spyOn(Appearance, 'setColorScheme').mockImplementation(() => {
+      throw new Error('unsupported');
+    });
+    await expect(renderWithTheme()).resolves.toBeDefined();
+    expect(set).toHaveBeenCalled();
+
+    set.mockClear();
+    Platform.OS = 'web';
+    await renderWithTheme();
+    expect(set).not.toHaveBeenCalled();
+  });
+});

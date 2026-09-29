@@ -5,8 +5,13 @@ import pt from '../../src/locales/pt.json';
 const KEYS = [
   'export_manuscript_format_html',
   'publish_manuscript_attach',
-  'publish_manuscript_no_routes',
-  'publish_manuscript_route',
+  'export_manuscript_end_of_excerpt',
+  'export_manuscript_choose_start',
+  'export_manuscript_begin_at',
+  'export_manuscript_scene_order',
+  'export_manuscript_scene_order_discovery',
+  'export_manuscript_scene_order_shuffled',
+  'export_manuscript_scene_order_hint',
 ] as const;
 
 describe('publish manuscript locale keys', () => {

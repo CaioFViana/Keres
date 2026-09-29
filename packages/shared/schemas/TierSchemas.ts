@@ -13,6 +13,8 @@ export const TierCreateInputSchema = z.object({
   maxEntitiesTotal: z.number().int().positive().nullable().optional(),
   maxStorageBytesPerStory: z.number().int().positive().nullable().optional(),
   maxStorageBytesTotal: z.number().int().positive().nullable().optional(),
+  // Zero is a ceiling too: a tier that may not publish at all.
+  maxPublicationsPerDay: z.number().int().nonnegative().nullable().optional(),
 });
 export type TierCreateInput = z.infer<typeof TierCreateInputSchema>;
 

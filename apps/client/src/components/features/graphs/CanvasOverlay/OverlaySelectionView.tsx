@@ -98,7 +98,10 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
       top: bounds.y - pad,
       width: bounds.width + pad * 2,
       height: bounds.height + pad * 2,
-      transform: [{ translateX: moveOffset.x * scale }, { translateY: moveOffset.y * scale }],
+      // The offset is in world units and this wrapper lives in the scaled plane, which turns them
+      // into screen pixels: scaling them again (as this once did) made the box trail the finger by
+      // the zoom factor, then jump to it on release.
+      transform: [{ translateX: moveOffset.x }, { translateY: moveOffset.y }],
     },
     box: {
       position: 'absolute',
@@ -329,8 +332,9 @@ function DragHandle({
       testID={testID}
       style={{
         position: 'absolute',
-        left: x + offset.x * scale,
-        top: y + offset.y * scale,
+        // World units, like `x` and `y`: the plane's scale makes them follow the finger 1:1.
+        left: x + offset.x,
+        top: y + offset.y,
         width: size,
         height: size,
         borderRadius: round ? size / 2 : 3,

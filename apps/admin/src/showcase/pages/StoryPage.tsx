@@ -193,6 +193,14 @@ export function StoryPage() {
               >
                 {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
               </button>
+              {newest.reader && (
+                <Link
+                  to={`/story/${storyId}/read/${newest.id}`}
+                  className="download-button ghost reader-button"
+                >
+                  {t('story.readOnline')}
+                </Link>
+              )}
               {newest.manuscript && (
                 <button
                   type="button"
@@ -228,6 +236,14 @@ export function StoryPage() {
                 >
                   {downloading === version.id ? t('story.preparing') : t('story.download')}
                 </button>
+                {version.reader && (
+                  <Link
+                    to={`/story/${storyId}/read/${version.id}`}
+                    className="download-button ghost reader-button"
+                  >
+                    {t('story.readOnline')}
+                  </Link>
+                )}
                 {version.manuscript && (
                   <button
                     type="button"

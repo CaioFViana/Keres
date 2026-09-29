@@ -159,6 +159,24 @@ export async function fetchManuscriptDownloadUrl(
 }
 
 /**
+ * The address of a version's online reader. A frame cannot send headers either, so a protected
+ * story's address carries the same 60-second token.
+ */
+export async function fetchReaderUrl(storyId: string, publicationId: string): Promise<string> {
+  const response = await fetch(
+    `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
+      publicationId,
+    )}/reader/url`,
+    { method: 'POST', headers: unlockHeaders(storyId) },
+  );
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+  const { url } = (await response.json()) as { url: string };
+  return url;
+}
+
+/**
  * The public packs.
  *
  * No `If-None-Match` here, unlike the story listing, because this page does not poll: a pack

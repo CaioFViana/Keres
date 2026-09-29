@@ -50,6 +50,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Publishing shows you the story’s public address, and the screen keeps showing it for as long as the story stays published. That address is what you share; it does not change when you publish a new version.',
     },
+    { type: 'heading', level: 2, text: 'Reading online' },
+    {
+      type: 'paragraph',
+      text: 'Besides the file, a version can carry a reading page: switch on Publish the reading online and the version gets a Read online button on the story’s public page. It is made with the same options as the manuscript (arc, scene names, typography, quotes), so a story reads the same on the page as in the file. A linear story reads as a single page with a contents index; a branching story is read one scene at a time.',
+    },
+    {
+      type: 'paragraph',
+      text: 'In a branching story, choices that need something the reader has not collected yet appear shut, without saying why; only the items the reader holds are shown, never the story’s internal flags. The reader can go back a step, see the path they took, start over, and keep saves: one automatic and as many named ones as they like. Saves stay in the reader’s own browser, separately for each version.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'The reading page is built from the story as it is when you publish. A scene no choice seems to lead to is still included, after the ones that can be reached. Text you wrote is shown as plain text: nothing in it can run.',
+    },
     { type: 'heading', level: 2, text: 'Version names' },
     {
       type: 'table',

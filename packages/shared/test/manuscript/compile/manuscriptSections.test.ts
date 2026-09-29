@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   findManuscriptMatches,
+  gamebookManuscriptSections,
+  gamebookStartScenes,
   isLooseScene,
   linearManuscriptSections,
   locateOrdinalMatch,
@@ -149,6 +151,93 @@ describe('routeManuscriptSections', () => {
     );
 
     expect(sections.map((s) => s.key)).toEqual(['step-step-1', 'step-step-3']);
+  });
+});
+
+describe('gamebookManuscriptSections', () => {
+  const scene = (id: string, overrides: Partial<ManuscriptScene> = {}) =>
+    makeScene({ id, name: id, chapterId: null, ...overrides });
+  const go = (from: string, to: string) => ({ sceneId: from, nextSceneId: to });
+  const ids = (sections: ReturnType<typeof gamebookManuscriptSections>) =>
+    sections.map((section) => (section.kind === 'scene' ? section.scene.id : section.kind));
+
+  it('numbers by breadth-first search from the start scene, strays last', () => {
+    const sections = gamebookManuscriptSections(
+      [scene('a', { index: 5 }), scene('b', { isStart: true }), scene('c'), scene('d'), scene('e')],
+      [go('b', 'c'), go('b', 'a'), go('c', 'd'), go('a', 'd'), go('d', 'b')],
+      { order: 'discovery' },
+    );
+
+    expect(ids(sections)).toEqual(['b', 'c', 'a', 'd', 'e']);
+    expect(sections.map((section) => (section as { position: number }).position)).toEqual([
+      1, 2, 3, 4, 5,
+    ]);
+  });
+
+  it('reaches from every start, not only the first, and keeps the strays after', () => {
+    const scenes = [
+      scene('a', { isStart: true, index: 1 }),
+      scene('b', { isStart: true, index: 2 }),
+      scene('c', { index: 3 }),
+      scene('lost', { index: 4 }),
+    ];
+
+    const sections = gamebookManuscriptSections(scenes, [go('b', 'c')], { order: 'discovery' });
+
+    expect(ids(sections)).toEqual(['a', 'b', 'c', 'lost']);
+    expect(gamebookStartScenes(scenes).map((start) => start.id)).toEqual(['a', 'b']);
+  });
+
+  it('scatters several starts too, but keeps a lone start first', () => {
+    const many = (starts: number) =>
+      Array.from({ length: 10 }, (_, index) =>
+        scene(`s${index}`, { index, isStart: index < starts }),
+      );
+    const links = Array.from({ length: 9 }, (_, index) => go(`s${index}`, `s${index + 1}`));
+
+    expect(ids(gamebookManuscriptSections(many(1), links, { order: 'shuffled' }))[0]).toBe('s0');
+    const several = ids(
+      gamebookManuscriptSections(many(3), links, { order: 'shuffled', seed: 'x' }),
+    );
+    expect(several).not.toEqual(['s0', 's1', 's2', ...several.slice(3)]);
+    expect([...several].sort()).toEqual(
+      many(3)
+        .map((each) => each.id)
+        .sort(),
+    );
+  });
+
+  it('starts at the first scene by index when none is flagged', () => {
+    const sections = gamebookManuscriptSections(
+      [scene('late', { index: 9 }), scene('early', { index: 1 })],
+      [go('early', 'late')],
+      { order: 'discovery' },
+    );
+    expect(ids(sections)).toEqual(['early', 'late']);
+  });
+
+  it('skips deleted scenes and choices into scenes it was not given', () => {
+    const sections = gamebookManuscriptSections(
+      [scene('a', { isStart: true }), scene('gone', { isDeleted: true })],
+      [go('a', 'gone'), go('a', 'elsewhere')],
+      { order: 'discovery' },
+    );
+    expect(ids(sections)).toEqual(['a']);
+  });
+
+  it('has nothing to number without scenes', () => {
+    expect(gamebookManuscriptSections([], [], { order: 'shuffled' })).toEqual([]);
+  });
+
+  it('defaults the shuffle seed to the start scene, so a book reprints the same', () => {
+    const chain = Array.from({ length: 10 }, (_, index) =>
+      scene(`s${index}`, { isStart: index === 0 }),
+    );
+    const links = chain.slice(1).map((next, index) => go(chain[index].id, next.id));
+    const first = gamebookManuscriptSections(chain, links, { order: 'shuffled' });
+    const second = gamebookManuscriptSections(chain, links, { order: 'shuffled' });
+    expect(ids(first)).toEqual(ids(second));
+    expect(ids(first)[0]).toBe('s0');
   });
 });
 

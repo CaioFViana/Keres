@@ -48,6 +48,7 @@ export class ShowcaseService {
               byteSize: row.manuscriptByteSize,
             }
           : null,
+      reader: row.readerByteSize != null ? { byteSize: row.readerByteSize } : null,
     };
   }
 

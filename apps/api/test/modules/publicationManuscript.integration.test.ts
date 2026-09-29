@@ -10,8 +10,6 @@ import {
   choices,
   effects,
   items,
-  routes,
-  routeSteps,
   scenes,
   showcaseSettings,
   storyArcs,
@@ -85,20 +83,24 @@ async function seedLinearContent(storyId: string): Promise<void> {
   ]);
 }
 
-async function seedBranchingContent(storyId: string): Promise<{ routeId: string }> {
+/** Two flagged starts, each with one way on, and a scene nothing leads to. */
+async function seedBranchingContent(storyId: string): Promise<void> {
   const firstSceneId = newId();
   const secondSceneId = newId();
+  const thirdSceneId = newId();
   await db.insert(scenes).values([
-    { id: firstSceneId, storyId, chapterId: null, name: 'Start', index: 1, body: 'Start body.' },
+    {
+      id: firstSceneId,
+      storyId,
+      chapterId: null,
+      name: 'Start',
+      index: 1,
+      body: 'Start body.',
+      isStart: true,
+    },
     { id: secondSceneId, storyId, chapterId: null, name: 'End', index: 2, body: 'End body.' },
+    { id: thirdSceneId, storyId, chapterId: null, name: 'Attic', index: 3, body: 'Attic body.' },
   ]);
-  const routeId = newId();
-  await db.insert(routes).values({ id: routeId, storyId, name: 'Main' });
-  await db.insert(routeSteps).values([
-    { id: newId(), storyId, routeId, position: 1, sceneId: firstSceneId },
-    { id: newId(), storyId, routeId, position: 2, sceneId: secondSceneId },
-  ]);
-  return { routeId };
 }
 
 /** A choice from the first scene to the second, gated by an item the choice itself grants. */
@@ -279,26 +281,32 @@ describe('publishing with a manuscript', () => {
     expect(await storedPublicationFiles(second.id)).toEqual([]);
   });
 
-  it('publishes a branching manuscript along its route, ignoring includeLooseScenes', async () => {
+  it('publishes a branching manuscript as a whole gamebook, ignoring includeLooseScenes', async () => {
     const story = await uploadTestStory(ana.token, 'Branches', 'branching');
-    const { routeId } = await seedBranchingContent(story.id);
+    await seedBranchingContent(story.id);
+    await seedChoiceAnnotations(story.id);
 
     const { status, data } = await publish(ana.token, story.id, {
-      manuscript: { format: 'md', routeId, includeLooseScenes: false },
+      manuscript: { format: 'md', includeLooseScenes: false, includeSceneNames: true },
     });
 
     expect(status).toBe(200);
     expect(data.manuscriptFormat).toBe('md');
     expect(data.manuscriptByteSize).toBeGreaterThan(0);
+    const manuscript = await storedManuscript(story.id);
+    expect(manuscript).toContain('Start body.');
+    expect(manuscript).toContain('End body.');
+    // Nothing leads to the attic, but reachability is a guess: it closes the book instead of vanishing.
+    expect(manuscript).toContain('Attic body.');
   });
 
   it('embeds choice requirements and effects in the published manuscript', async () => {
     const story = await uploadTestStory(ana.token, 'Branches', 'branching');
-    const { routeId } = await seedBranchingContent(story.id);
+    await seedBranchingContent(story.id);
     await seedChoiceAnnotations(story.id);
 
     const { status } = await publish(ana.token, story.id, {
-      manuscript: { format: 'md', routeId },
+      manuscript: { format: 'md', includeSceneNames: true },
     });
     expect(status).toBe(200);
 
@@ -309,52 +317,45 @@ describe('publishing with a manuscript', () => {
     expect(manuscript).toContain('• Grants item "Brass Key"');
   });
 
-  it('requires a routeId for a branching manuscript', async () => {
+  it('opens a branching manuscript with a start page when several scenes are starts', async () => {
     const story = await uploadTestStory(ana.token, 'Branches', 'branching');
     await seedBranchingContent(story.id);
+    await db.update(scenes).set({ isStart: true }).where(eq(scenes.name, 'Attic'));
 
-    const { status, data } = await publish(ana.token, story.id, {
-      manuscript: { format: 'md' },
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'md',
+        includeSceneNames: true,
+        labels: { chooseStart: 'Pick your start', beginAt: 'Begin' },
+      },
     });
 
-    expect(status).toBe(400);
-    expect(data.message).toMatch(/routeId/i);
-    expect(await storedPublicationFiles(story.id)).toEqual([]);
+    expect(status).toBe(200);
+    const manuscript = await storedManuscript(story.id);
+    expect(manuscript).toContain('Pick your start');
+    expect(manuscript).toContain('Attic body.');
   });
 
-  it('refuses a routeId on a linear story', async () => {
-    const story = await uploadTestStory(ana.token);
-    await seedLinearContent(story.id);
+  it('accepts a shuffled order and a seed for a branching manuscript', async () => {
+    const story = await uploadTestStory(ana.token, 'Branches', 'branching');
+    await seedBranchingContent(story.id);
+    await seedChoiceAnnotations(story.id);
 
-    const { status, data } = await publish(ana.token, story.id, {
-      manuscript: { format: 'md', routeId: newId() },
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', sceneOrder: 'shuffled', shuffleSeed: 'fixed' },
     });
 
-    expect(status).toBe(400);
-    expect(data.message).toMatch(/branching/i);
-    expect(await storedPublicationFiles(story.id)).toEqual([]);
-  });
-
-  it('refuses a route from another story', async () => {
-    const first = await uploadTestStory(ana.token, 'First', 'branching');
-    const { routeId } = await seedBranchingContent(first.id);
-    const second = await uploadTestStory(ana.token, 'Second', 'branching');
-    await seedBranchingContent(second.id);
-
-    const { status, data } = await publish(ana.token, second.id, {
-      manuscript: { format: 'md', routeId },
-    });
-
-    expect(status).toBe(400);
-    expect(data.message).toMatch(/does not belong/i);
-    expect(await storedPublicationFiles(second.id)).toEqual([]);
+    expect(status).toBe(200);
+    const manuscript = await storedManuscript(story.id);
+    expect(manuscript).toContain('Start body.');
+    expect(manuscript).toContain('End body.');
   });
 
   it('refuses an oversized manuscript and writes no package', async () => {
     const story = await uploadTestStory(ana.token);
-    // 600 scenes at the per-scene body cap: ~18 MB of prose, past the 15 MB manuscript cap.
+    // 1800 scenes at the per-scene body cap: ~54 MB of prose, past the 50 MB manuscript cap.
     const body = 'y'.repeat(30000);
-    const rows = Array.from({ length: 600 }, (_, index) => ({
+    const rows = Array.from({ length: 1800 }, (_, index) => ({
       id: newId(),
       storyId: story.id,
       chapterId: null,

@@ -137,10 +137,12 @@
     "maxEntitiesTotal": "Máximo de entidades no total",
     "maxStorageBytesPerStory": "Máximo de bytes por história",
     "maxStorageBytesTotal": "Máximo de bytes no total",
+    "maxPublicationsPerDay": "Máximo de publicações por dia",
     "columnDefault": "Padrão",
     "columnMaxEntitiesPerStory": "Entidades/história",
     "columnMaxStoragePerStory": "Armazenamento/história",
     "columnMaxStorageTotal": "Armazenamento total",
+    "columnMaxPublicationsPerDay": "Publicações/dia",
     "statusDeleted": "Excluído",
     "empty": "Nenhum plano ainda.",
     "confirmDelete": "Excluir o plano \"{{name}}\"?"

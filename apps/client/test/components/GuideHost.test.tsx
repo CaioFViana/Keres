@@ -228,3 +228,29 @@ describe('GuideHost', () => {
     expect(mockRecordSeen).toHaveBeenCalledWith('TourScreen');
   });
 });
+
+describe('the tour card and the navigation bar', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- the context under test.
+  const { SafeAreaInsetsContext } = require('react-native-safe-area-context');
+  const { StyleSheet } = require('react-native');
+
+  it('leaves room under its last row (the help link) for the system bar', async () => {
+    useGuideStore.getState().startTour(twoStepGuide);
+    const screen = await render(
+      <SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 34, left: 0 }}>
+        <GuideHost />
+      </SafeAreaInsetsContext.Provider>,
+    );
+
+    const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
+    expect(wrap.paddingBottom).toBe(54);
+  });
+
+  it('keeps its plain margin where no bar overlaps the window', async () => {
+    useGuideStore.getState().startTour(twoStepGuide);
+    const screen = await render(<GuideHost />);
+
+    const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
+    expect(wrap.paddingBottom).toBe(20);
+  });
+});

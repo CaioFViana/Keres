@@ -1,6 +1,6 @@
 import {
   compileLinearManuscript,
-  compileRouteManuscript,
+  compileGamebookManuscript,
   type CompiledManuscript,
   type ManuscriptChoice,
 } from './export/manuscriptCompiler';
@@ -9,18 +9,14 @@ import {
   FORMAT_META,
   MAX_MANUSCRIPT_BYTES,
   ManuscriptOptionsSchema,
+  type ManuscriptLabels,
+  type ManuscriptOptions,
   type ManuscriptOptionsInput,
 } from './manuscriptContracts';
 import { renderManuscript } from './manuscriptRender';
 import { sceneMatchesArc } from './manuscriptSections';
 import { presentManuscript, renderOptionsOf, sceneSeparatorText } from './manuscriptStyle';
-import type { ManuscriptChapter, ManuscriptRouteStep, ManuscriptScene } from './manuscriptSections';
-
-/** The minimum the entry needs to know about a route. */
-export interface ManuscriptRoute {
-  id: string;
-  name: string;
-}
+import type { ManuscriptChapter, ManuscriptScene } from './manuscriptSections';
 
 export type CompileStoryManuscriptInput = {
   storyTitle: string;
@@ -28,8 +24,6 @@ export type CompileStoryManuscriptInput = {
   chapters: ManuscriptChapter[];
   scenes: ManuscriptScene[];
   choices: ManuscriptChoice[];
-  routes?: ManuscriptRoute[];
-  routeSteps?: ManuscriptRouteStep[];
   /** The story's arcs: an arc export is titled after its arc, as on the device. */
   arcs?: { id: string; title: string }[];
 };
@@ -41,36 +35,32 @@ export type CompiledStoryManuscript = {
 };
 
 /**
- * Compiles a story's manuscript and renders it to bytes. A `routeId` selects
- * the route order (branching stories); without one the linear order is used.
- * An `arcId` keeps only that arc's containers and scenes in either order, under the arc's title.
- * Throws on an unknown route or past `MAX_MANUSCRIPT_BYTES`.
+ * The story's manuscript as blocks, presented as the options ask: a linear story in chapter order,
+ * a branching one as a gamebook (every scene, the ones reachable from a start first, numbered by
+ * `sceneOrder`). An `arcId` keeps only that arc's containers and scenes in either order, under
+ * the arc's title. Every renderer (and the online reader) starts from here.
  */
-export async function compileStoryManuscript(
+export function presentedManuscriptOf(
   input: CompileStoryManuscriptInput,
-  options: ManuscriptOptionsInput,
-): Promise<CompiledStoryManuscript> {
-  const parsed = ManuscriptOptionsSchema.parse(options);
-  const labels = { ...DEFAULT_MANUSCRIPT_LABELS, ...parsed.labels };
+  parsed: ManuscriptOptions,
+  labels: ManuscriptLabels,
+): CompiledManuscript {
   const title =
     (parsed.arcId && input.arcs?.find((arc) => arc.id === parsed.arcId)?.title) || input.storyTitle;
   let compiled: CompiledManuscript;
-  if (parsed.routeId !== undefined) {
-    const route = (input.routes ?? []).find((candidate) => candidate.id === parsed.routeId);
-    if (!route) throw new Error(`Unknown route "${parsed.routeId}".`);
-    const steps = (input.routeSteps ?? []).filter((step) => step.routeId === route.id);
-    // Routes have no arc of their own; their scenes inherit their chapter's. Steps
-    // pointing at a filtered-out scene vanish, like steps pointing at a deleted one.
+  if (input.storyType === 'branching') {
+    // The whole book, in the order asked. An arc keeps only its own scenes (scenes inherit their
+    // chapter's arc), and its edge ends a choice.
     const chaptersById = new Map(input.chapters.map((chapter) => [chapter.id, chapter]));
-    compiled = compileRouteManuscript({
+    compiled = compileGamebookManuscript({
       title,
-      routeName: route.name,
-      steps,
       scenes: input.scenes.filter((scene) => sceneMatchesArc(scene, chaptersById, parsed.arcId)),
       choices: input.choices,
-      looseHeadingLabel: labels.looseHeading,
-      includeSceneNames: parsed.includeSceneNames,
-      resetSceneNumbersPerChapter: parsed.resetSceneNumbers,
+      order: parsed.sceneOrder,
+      seed: parsed.shuffleSeed,
+      showSceneNames: parsed.includeSceneNames,
+      endLabel: labels.endOfExcerpt,
+      startLabels: { choose: labels.chooseStart, begin: labels.beginAt },
       sceneSeparator: sceneSeparatorText(parsed.style),
     });
   } else {
@@ -87,11 +77,23 @@ export async function compileStoryManuscript(
       sceneSeparator: sceneSeparatorText(parsed.style),
     });
   }
-  const presented = presentManuscript(
+  return presentManuscript(
     compiled,
     parsed.style,
     parsed.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en',
   );
+}
+
+/**
+ * Compiles a story's manuscript and renders it to bytes. Throws past `MAX_MANUSCRIPT_BYTES`.
+ */
+export async function compileStoryManuscript(
+  input: CompileStoryManuscriptInput,
+  options: ManuscriptOptionsInput,
+): Promise<CompiledStoryManuscript> {
+  const parsed = ManuscriptOptionsSchema.parse(options);
+  const labels = { ...DEFAULT_MANUSCRIPT_LABELS, ...parsed.labels };
+  const presented = presentedManuscriptOf(input, parsed, labels);
   const rendered = await renderManuscript(
     presented,
     parsed.format,

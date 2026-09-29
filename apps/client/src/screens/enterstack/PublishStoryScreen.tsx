@@ -223,6 +223,7 @@ const PublishStoryScreen = () => {
           usePassword ? 'password' : 'public',
           usePassword ? password.trim() : undefined,
           manuscript.buildOptions(row.story, t, i18n.language),
+          manuscript.buildReaderOptions(row.story, t, i18n.language),
         );
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
 
@@ -246,6 +247,9 @@ const PublishStoryScreen = () => {
         if (status === 409) {
           // The server disagrees with our counter: synchronizing is the only way.
           showNotification(t('publish_blocked_not_synced'), 'error');
+        } else if (status === 429) {
+          // The plan's daily number of publications is used up.
+          showNotification(t('publish_limit_reached'), 'error');
         } else if (status === 403) {
           showNotification(t('publish_showcase_disabled'), 'error');
         } else if (isOfflineError(publishError)) {

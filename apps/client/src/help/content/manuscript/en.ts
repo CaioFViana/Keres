@@ -35,7 +35,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Prose travels with the scene in sync and backups. Export builds Word, PDF, EPUB, HTML, Markdown or plain-text files - the same on every device and when publishing to the showcase. PDF uses a standard serif font, so text outside Western alphabets (Chinese, Arabic, emoji) does not show in it; EPUB and Word keep it; in branching stories each route exports separately, with choices pointing at the page of their target scene. Fragments without a chapter and scenes of event containers can be included as an appendix or left out of the export.',
+      text: 'Prose travels with the scene in sync and backups. Export builds Word, PDF, EPUB, HTML, Markdown or plain-text files - the same on every device and when publishing to the showcase. PDF uses a standard serif font, so text outside Western alphabets (Chinese, Arabic, emoji) does not show in it; EPUB and Word keep it; a branching story exports as a whole gamebook: every scene a choice can reach from the start (or from each start, when there are several, with an opening page to pick one), numbered as the reader meets them or scattered like a printed gamebook, with each choice pointing at the number or page of its target - scenes nothing seems to lead to close the book. Fragments without a chapter and scenes of event containers can be included as an appendix or left out of the export.',
     },
     {
       type: 'seeAlso',

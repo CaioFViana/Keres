@@ -392,6 +392,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'mediaTotal',
       'createdAt',
       'manuscript',
+      'reader',
     ],
   },
   StoryPublication: {
@@ -487,6 +488,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'maxEntitiesTotal',
       'maxStorageBytesPerStory',
       'maxStorageBytesTotal',
+      'maxPublicationsPerDay',
       'createdAt',
       'updatedAt',
     ],

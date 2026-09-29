@@ -127,6 +127,14 @@
     "loadFailed": "Não foi possível carregar os pacotes.",
     "empty": "Ninguém compartilhou um pacote aqui ainda."
   },
+  "reader": {
+    "back": "← Voltar à história",
+    "loading": "Abrindo…",
+    "unavailable": "Esta versão não tem leitura online.",
+    "failed": "Não foi possível abrir a leitura.",
+    "frameTitle": "Lendo {{title}}",
+    "frameTitleBare": "Leitura"
+  },
   "story": {
     "back": "← Todas as histórias",
     "publishedThis": "publicou esta história",
@@ -146,6 +154,7 @@
     "downloadLatest": "Baixar a mais recente",
     "download": "Baixar",
     "manuscriptDownload": "Manuscrito ({{format}} · {{size}})",
+    "readOnline": "Ler online",
     "preparing": "Preparando…",
     "downloadFailed": "Não foi possível iniciar o download.",
     "mediaCount": "{{included}}/{{total}} mídias"

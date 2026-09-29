@@ -26,7 +26,6 @@ const mockUnpublish = jest.fn();
 const mockIsOffline = jest.fn();
 const mockGetChapters = jest.fn();
 const mockGetScenes = jest.fn();
-const mockGetRoutes = jest.fn();
 const mockGetArcs = jest.fn();
 const mockFetchPreviews = jest.fn();
 const mockNotify = jest.fn();
@@ -143,12 +142,6 @@ jest.mock('../../../src/services/storymanagement/SceneService', () => ({
   }),
 }));
 
-jest.mock('../../../src/services/storymanagement/RouteService', () => ({
-  createRouteService: () => ({
-    getAllByStoryId: (...args: unknown[]) => mockGetRoutes(...args),
-  }),
-}));
-
 jest.mock('../../../src/services/sync/StoryTransfer', () => ({
   fetchServerStoryPreviews: (...args: unknown[]) => mockFetchPreviews(...args),
 }));
@@ -223,6 +216,9 @@ const manuscriptLabels = {
   goToScene: 'export_manuscript_go_to_scene',
   looseHeading: 'export_manuscript_loose_heading',
   tocHeading: 'export_manuscript_index_heading',
+  endOfExcerpt: 'export_manuscript_end_of_excerpt',
+  chooseStart: 'export_manuscript_choose_start',
+  beginAt: 'export_manuscript_begin_at',
 };
 /** The device export's defaults, as the publish screen sends them. */
 function manuscriptPayload(overrides: Record<string, unknown> = {}) {
@@ -280,7 +276,6 @@ describe('PublishStoryScreen', () => {
     mockIsOffline.mockReturnValue(false);
     mockGetChapters.mockResolvedValue([]);
     mockGetScenes.mockResolvedValue([]);
-    mockGetRoutes.mockResolvedValue([]);
     mockGetArcs.mockResolvedValue([]);
     mockFetchPreviews.mockResolvedValue([{ storyId: 'story-1', lastOperationVersion: 5 }]);
   });
@@ -371,6 +366,7 @@ describe('PublishStoryScreen', () => {
         'public',
         undefined,
         undefined,
+        undefined,
       ),
     );
     expect(mockSyncPubs).toHaveBeenCalledWith(server);
@@ -406,6 +402,7 @@ describe('PublishStoryScreen', () => {
         'both',
         'password',
         'pw1234',
+        undefined,
         undefined,
       ),
     );
@@ -466,6 +463,13 @@ describe('PublishStoryScreen', () => {
       await fireEvent.press(view.getByText('publish_create_version'));
       await waitFor(() =>
         expect(mockNotify).toHaveBeenCalledWith('publish_showcase_disabled', 'error'),
+      );
+
+      // The plan's daily number of publications: its own message, not 'showcase disabled'.
+      mockPublish.mockRejectedValueOnce({ response: { status: 429 } });
+      await fireEvent.press(view.getByText('publish_create_version'));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith('publish_limit_reached', 'error'),
       );
 
       mockPublish.mockRejectedValueOnce({ isOffline: true });
@@ -602,6 +606,7 @@ describe('PublishStoryScreen', () => {
         'public',
         undefined,
         manuscriptPayload({ format: 'md' }),
+        undefined,
       ),
     );
     const sent = mockPublish.mock.calls[0][6];
@@ -648,26 +653,19 @@ describe('PublishStoryScreen', () => {
     });
   });
 
-  it('sends the picked route for branching stories, defaulting to the first', async () => {
+  it('offers a branching story its scene order instead of a route, discovery by default', async () => {
     mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
-    mockGetRoutes.mockResolvedValue([
-      { id: 'r-1', name: 'Main' },
-      { id: 'r-2', name: 'Alt' },
-    ]);
     const view = await render(<PublishStoryScreen />);
     await view.findByText('Epic');
     await fireEvent.press(view.getByText('Epic'));
     await view.findByText('publish_create_version');
 
-    expect(mockGetRoutes).toHaveBeenCalledWith('story-1');
-    expect(view.queryByText('publish_manuscript_no_routes')).toBeNull();
     await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
-    await view.findByText('publish_manuscript_route');
-    expect(view.getByTestId('route-picker-value').props.children).toBe('r-1');
+    await view.findByTestId('export-scene-order-discovery');
+    expect(view.queryByTestId('route-picker-value')).toBeNull();
     expect(view.queryByTestId('export-loose')).toBeNull();
     expect(view.queryByTestId('export-reset-numbers')).toBeNull();
 
-    await fireEvent.press(view.getByTestId('route-option-r-2'));
     await fireEvent.press(view.getByText('publish_create_version'));
     await waitFor(() =>
       expect(mockPublish).toHaveBeenCalledWith(
@@ -677,35 +675,96 @@ describe('PublishStoryScreen', () => {
         'both',
         'public',
         undefined,
-        manuscriptPayload({ routeId: 'r-2' }),
+        manuscriptPayload({ sceneOrder: 'discovery' }),
+        undefined,
       ),
     );
   });
 
-  it('disables the manuscript option without routes in branching stories', async () => {
+  it('sends the shuffled order a branching story asks for', async () => {
     mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
-    mockGetRoutes.mockResolvedValue([]);
     const view = await render(<PublishStoryScreen />);
     await view.findByText('Epic');
     await fireEvent.press(view.getByText('Epic'));
     await view.findByText('publish_create_version');
 
-    await waitFor(() => expect(view.getByText('publish_manuscript_no_routes')).toBeTruthy());
-    expect(
-      view.getByTestId('publish-manuscript-switch-story-1').props.accessibilityState,
-    ).toMatchObject({ disabled: true });
-
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(await view.findByTestId('export-scene-order-shuffled'));
     await fireEvent.press(view.getByText('publish_create_version'));
-    await waitFor(() =>
-      expect(mockPublish).toHaveBeenCalledWith(
-        server,
-        'story-1',
-        5,
-        'both',
-        'public',
-        undefined,
-        undefined,
-      ),
-    );
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ sceneOrder: 'shuffled' });
+    expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('routeId');
+  });
+
+  it('leaves a linear story without a scene order', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    expect(view.queryByTestId('export-scene-order-discovery')).toBeNull();
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('sceneOrder');
+  });
+
+  it('publishes the reading online with the manuscript choices, no file format, its own words', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    // No file is made: the format is not asked, and no manuscript travels.
+    expect(view.queryByTestId('export-format-docx')).toBeNull();
+    await fireEvent.press(view.getByTestId('export-quotes-curly'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    const [manuscript, reader] = [mockPublish.mock.calls[0][6], mockPublish.mock.calls[0][7]];
+    expect(manuscript).toBeUndefined();
+    expect(reader).not.toHaveProperty('format');
+    expect(reader.style).toMatchObject({ quotes: 'curly' });
+    expect(reader.readerLabels).toMatchObject({
+      back: 'reader_back',
+      newGame: 'reader_new_game',
+      theEnd: 'reader_the_end',
+      close: 'close',
+    });
+    expect(reader.labels).toMatchObject({ endOfExcerpt: 'export_manuscript_end_of_excerpt' });
+  });
+
+  it('sends the manuscript and the reader together, and the scene order to a branching one', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await fireEvent.press(await view.findByTestId('export-scene-order-shuffled'));
+    expect(view.getByTestId('export-format-docx')).toBeTruthy();
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ format: 'docx', sceneOrder: 'shuffled' });
+    expect(mockPublish.mock.calls[0][7]).toMatchObject({ sceneOrder: 'shuffled' });
+  });
+
+  it('sends no reader unless asked', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][7]).toBeUndefined();
   });
 });

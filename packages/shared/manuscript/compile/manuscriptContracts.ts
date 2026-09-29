@@ -6,7 +6,7 @@ export const ManuscriptFormatSchema = z.enum(['docx', 'md', 'txt', 'html', 'pdf'
 export type ManuscriptFormat = z.infer<typeof ManuscriptFormatSchema>;
 
 /** Largest manuscript the pipeline emits: anything bigger must be split first. */
-export const MAX_MANUSCRIPT_BYTES = 15 * 1024 * 1024;
+export const MAX_MANUSCRIPT_BYTES = 50 * 1024 * 1024;
 
 /** What a published version records about its manuscript rendition. */
 export const ManuscriptInfoSchema = z.object({
@@ -14,6 +14,10 @@ export const ManuscriptInfoSchema = z.object({
   byteSize: z.number().int(),
 });
 export type ManuscriptInfo = z.infer<typeof ManuscriptInfoSchema>;
+
+/** What a published version records about its online reader page. */
+export const ReaderInfoSchema = z.object({ byteSize: z.number().int() });
+export type ReaderInfo = z.infer<typeof ReaderInfoSchema>;
 
 export const FORMAT_META: Record<ManuscriptFormat, { extension: string; mimeType: string }> = {
   docx: {
@@ -35,6 +39,12 @@ export const ManuscriptLabelsSchema = z.object({
   goToScene: labelSchema,
   looseHeading: labelSchema,
   tocHeading: labelSchema,
+  /** Said after a gamebook choice whose target is not part of the export (an arc's edge). */
+  endOfExcerpt: labelSchema,
+  /** A gamebook with several starts opens on this: the invitation to pick one. */
+  chooseStart: labelSchema,
+  /** ...and each start is offered as this, followed by its scene. */
+  beginAt: labelSchema,
 });
 export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 
@@ -44,6 +54,9 @@ export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   goToScene: 'See',
   looseHeading: 'Appendix',
   tocHeading: 'Contents',
+  endOfExcerpt: 'end of this excerpt',
+  chooseStart: 'Choose where to begin',
+  beginAt: 'Begin',
 };
 
 /** Every default is the device export's own, so a publication and a local file agree. */
@@ -58,8 +71,13 @@ export const ManuscriptOptionsSchema = z.object({
   resetSceneNumbers: z.boolean().default(false),
   /** Typography and presentation (`manuscriptStyle.ts`); absent is the long-standing look. */
   style: ManuscriptStyleSchema.optional(),
-  /** When set, the manuscript follows this route instead of the linear order. */
-  routeId: z.string().optional(),
+  /**
+   * Branching stories only: how the gamebook numbers its scenes - as the reader meets them
+   * (`discovery`) or scattered like a printed one (`shuffled`, start always 1).
+   */
+  sceneOrder: z.enum(['discovery', 'shuffled']).default('discovery'),
+  /** Seed of the shuffled order; the same seed prints the same book. */
+  shuffleSeed: z.string().max(64).optional(),
   /** When set, only this arc's containers and scenes are included. */
   arcId: z.string().optional(),
   /** Label overrides; anything absent falls back to `DEFAULT_MANUSCRIPT_LABELS`. */

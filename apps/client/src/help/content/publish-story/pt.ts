@@ -51,6 +51,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Ao publicar, o endereço público da história é mostrado, e a tela continua exibindo esse endereço enquanto ela estiver publicada. É ele que você compartilha, e ele não muda quando uma versão nova é publicada.',
     },
+    { type: 'heading', level: 2, text: 'Leitura online' },
+    {
+      type: 'paragraph',
+      text: 'Além do arquivo, uma versão pode levar uma página de leitura: ligue Publicar a leitura online e a versão ganha um botão Ler online na página pública da história. Ela é feita com as mesmas opções do manuscrito (arco, nomes das cenas, tipografia, aspas), então a história lê igual na página e no arquivo. Uma história linear vira uma página só, com índice; uma história ramificada é lida uma cena por vez.',
+    },
+    {
+      type: 'paragraph',
+      text: 'Numa história ramificada, escolhas que dependem de algo que o leitor ainda não juntou aparecem fechadas, sem dizer o motivo; só os itens que o leitor tem são mostrados, nunca as marcas internas da história. O leitor pode voltar um passo, ver o caminho que fez, recomeçar e guardar saves: um automático e quantos nomeados quiser. Os saves ficam no próprio navegador do leitor, separados por versão.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'A página de leitura é feita da história como ela está na hora de publicar. Uma cena que nenhuma escolha parece alcançar entra assim mesmo, depois das que podem ser alcançadas. O texto que você escreveu aparece como texto puro: nada nele pode rodar.',
+    },
     { type: 'heading', level: 2, text: 'Nomes das versões' },
     {
       type: 'table',

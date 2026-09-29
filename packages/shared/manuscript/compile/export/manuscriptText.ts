@@ -1,4 +1,5 @@
 import {
+  sceneHeadingLabel,
   manuscriptTocEntries,
   type CompiledManuscript,
   type CompiledSpan,
@@ -130,7 +131,7 @@ export function buildManuscriptMarkdown(
       case 'scene-heading': {
         const anchor = anchorFor(block.bookmarkId);
         if (anchor) lines.push(anchor);
-        lines.push(`### ${block.number}. ${block.name}`, '');
+        lines.push(`### ${sceneHeadingLabel(block)}`, '');
         break;
       }
       case 'paragraph':
@@ -181,7 +182,7 @@ export function buildManuscriptText(
         lines.push(...underline(block.label, '-'));
         break;
       case 'scene-heading':
-        lines.push(`${block.number}. ${block.name}`, '');
+        lines.push(sceneHeadingLabel(block), '');
         break;
       case 'paragraph':
         lines.push(spansToText(block.spans), '');

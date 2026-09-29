@@ -196,6 +196,7 @@ export * from './manuscript/compile/manuscriptContracts';
 export * from './manuscript/compile/manuscriptRender';
 export * from './manuscript/compile/manuscriptStyle';
 export * from './manuscript/compile/compileStoryManuscript';
+export * from './manuscript/reader/storyReader';
 // The reader's block collides with the editor model's `ManuscriptBlock`, so it
 // exports under its own name; the file itself stays as-is.
 export {

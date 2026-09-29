@@ -1,4 +1,4 @@
-import { isLooseScene } from '@keres/shared';
+import { isLooseScene, type ReaderLabels } from '@keres/shared';
 import { useCallback, useState } from 'react';
 import {
   defaultExportSettings,
@@ -7,44 +7,74 @@ import {
   type ManuscriptExportSettings,
 } from '../../components/features/manuscript/export/manuscriptExportSettings';
 import type { AppDrizzleClient } from '../../db';
-import type { RouteSelect, StorySelect } from '../../db/schema';
-import type { PublishManuscriptOptions } from '../../services/PublicationApiService';
+import type { StorySelect } from '../../db/schema';
+import type {
+  PublishManuscriptOptions,
+  PublishReaderOptions,
+} from '../../services/PublicationApiService';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
-import { createRouteService } from '../../services/storymanagement/RouteService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { createStoryArcService } from '../../services/storymanagement/StoryArcService';
 
+/** The words of the reader's own interface, in the publisher's language. */
+function readerLabelsOf(t: (key: string) => string): ReaderLabels {
+  return {
+    back: t('reader_back'),
+    path: t('reader_path'),
+    inventory: t('reader_inventory'),
+    inventoryEmpty: t('reader_inventory_empty'),
+    saves: t('reader_saves'),
+    save: t('reader_save'),
+    saveName: t('reader_save_name'),
+    load: t('reader_load'),
+    remove: t('reader_remove'),
+    autosave: t('reader_autosave'),
+    noSaves: t('reader_no_saves'),
+    notSaving: t('reader_not_saving'),
+    continueLabel: t('reader_continue'),
+    newGame: t('reader_new_game'),
+    restart: t('reader_restart'),
+    theEnd: t('reader_the_end'),
+    contents: t('reader_contents'),
+    appearance: t('reader_appearance'),
+    theme: t('reader_theme'),
+    themeAuto: t('reader_theme_auto'),
+    themeLight: t('reader_theme_light'),
+    themeDark: t('reader_theme_dark'),
+    themeSepia: t('reader_theme_sepia'),
+    textSize: t('reader_text_size'),
+    stepsWord: t('reader_steps_word'),
+    scene: t('reader_scene'),
+    empty: t('reader_empty'),
+    close: t('close'),
+  };
+}
+
 /**
  * The manuscript choice of one expanded story on the publish screen: the same settings the device
- * export asks (`ManuscriptExportOptions`), plus the attach switch and, for a branching story, the route.
+ * export asks (`ManuscriptExportOptions`), plus the attach switch.
  */
 export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   const [attachManuscript, setAttachManuscript] = useState(false);
+  const [publishReader, setPublishReader] = useState(false);
   const [settings, setSettings] = useState<ManuscriptExportSettings>(() => defaultExportSettings());
-  const [manuscriptRouteId, setManuscriptRouteId] = useState<string | null>(null);
-  const [manuscriptRoutes, setManuscriptRoutes] = useState<RouteSelect[]>([]);
   const [manuscriptLooseCount, setManuscriptLooseCount] = useState(0);
   const [manuscriptArcs, setManuscriptArcs] = useState<{ id: string; title: string }[]>([]);
 
-  // What the manuscript section needs: branching picks one of the story's routes,
-  // linear counts its loose scenes the same way the manuscript screen does.
+  // What the manuscript section needs: linear counts its loose scenes the same way the
+  // manuscript screen does; a branching story is exported whole, so it needs nothing.
   const resetForStory = useCallback(
     (story: StorySelect) => {
       setAttachManuscript(false);
+      setPublishReader(false);
       setSettings(defaultExportSettings(story.author ?? ''));
-      setManuscriptRouteId(null);
-      setManuscriptRoutes([]);
       setManuscriptLooseCount(0);
       setManuscriptArcs([]);
       void (async () => {
         try {
           const arcs = await createStoryArcService(drizzleDb).getArcsForStory(story.id);
           setManuscriptArcs(arcs.map((arc) => ({ id: arc.id, title: arc.title })));
-          if (story.type === 'branching') {
-            const storyRoutes = await createRouteService(drizzleDb).getAllByStoryId(story.id);
-            setManuscriptRoutes(storyRoutes);
-            setManuscriptRouteId(storyRoutes[0]?.id ?? null);
-          } else {
+          if (story.type !== 'branching') {
             const [storyChapters, storyScenes] = await Promise.all([
               createChapterService(drizzleDb).getAllByStoryId(story.id, null),
               createSceneService(drizzleDb).getAllByStoryId(story.id),
@@ -63,61 +93,89 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     [drizzleDb],
   );
 
-  // Render options, never bytes: the server compiles from its own copy in the
-  // publisher's language. A branching story without a route sends nothing.
-  const buildOptions = useCallback(
+  // What shapes the file, whichever of the two the server compiles: the manuscript and the online
+  // reader are made from the same choices.
+  const shapeOf = useCallback(
     (
       story: StorySelect,
       t: (key: string) => string,
       language: string,
-    ): PublishManuscriptOptions | undefined => {
-      const effectiveRouteId =
-        story.type === 'branching' ? (manuscriptRouteId ?? manuscriptRoutes[0]?.id ?? null) : null;
-      if (!attachManuscript || (story.type === 'branching' && !effectiveRouteId)) {
-        return undefined;
-      }
+      format: PublishManuscriptOptions['format'],
+    ): PublishManuscriptOptions => {
       const branching = story.type === 'branching';
+      // What the file can honor follows the format it is made in (the reader is a web page).
+      const forFormat = { ...settings, format };
       return {
-        format: settings.format,
+        format,
         includeLooseScenes: !branching && settings.includeLooseScenes,
         includeSceneNames: settings.includeSceneNames,
-        includeToc: FORMAT_CAPABILITIES[settings.format].index && settings.includeIndex,
+        includeToc: FORMAT_CAPABILITIES[format].index && settings.includeIndex,
         resetSceneNumbers: !branching && settings.includeSceneNames && settings.resetSceneNumbers,
         style: styleForExport(
-          settings,
+          forFormat,
           {
             byLine: t('export_manuscript_title_page_by'),
             copyright: t('export_manuscript_title_page_copyright'),
           },
           new Date(),
         ),
-        ...(effectiveRouteId ? { routeId: effectiveRouteId } : {}),
+        ...(branching ? { sceneOrder: settings.sceneOrder } : {}),
         ...(settings.arcId ? { arcId: settings.arcId } : {}),
         labels: {
           goToPage: t('export_manuscript_go_to_page'),
           goToScene: t('export_manuscript_go_to_scene'),
           looseHeading: t('export_manuscript_loose_heading'),
           tocHeading: t('export_manuscript_index_heading'),
+          endOfExcerpt: t('export_manuscript_end_of_excerpt'),
+          chooseStart: t('export_manuscript_choose_start'),
+          beginAt: t('export_manuscript_begin_at'),
         },
         author: settings.author.trim() || null,
         language,
       };
     },
-    [attachManuscript, settings, manuscriptRouteId, manuscriptRoutes],
+    [settings],
+  );
+
+  // Render options, never bytes: the server compiles from its own copy in the
+  // publisher's language.
+  const buildOptions = useCallback(
+    (
+      story: StorySelect,
+      t: (key: string) => string,
+      language: string,
+    ): PublishManuscriptOptions | undefined =>
+      attachManuscript ? shapeOf(story, t, language, settings.format) : undefined,
+    [attachManuscript, settings.format, shapeOf],
+  );
+
+  // The reading page is html on the server's side; the file format the person picked is the
+  // manuscript's business, and its own interface words travel with it.
+  const buildReaderOptions = useCallback(
+    (
+      story: StorySelect,
+      t: (key: string) => string,
+      language: string,
+    ): PublishReaderOptions | undefined => {
+      if (!publishReader) return undefined;
+      const { format: _format, ...shape } = shapeOf(story, t, language, 'html');
+      return { ...shape, readerLabels: readerLabelsOf(t) };
+    },
+    [publishReader, shapeOf],
   );
 
   return {
     attachManuscript,
     setAttachManuscript,
+    publishReader,
+    setPublishReader,
     settings,
     setSettings,
-    manuscriptRouteId,
-    setManuscriptRouteId,
-    manuscriptRoutes,
     manuscriptLooseCount,
     manuscriptArcs,
     resetForStory,
     buildOptions,
+    buildReaderOptions,
   };
 }
 

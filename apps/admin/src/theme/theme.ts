@@ -137,6 +137,16 @@ function derivedPaletteVars(colors: ThemeColors): Array<[string, string]> {
       '--color-on-primary',
       getContrastTextColor(colors.primary) === 'black' ? '#000000' : '#ffffff',
     ],
+    // The hover of a primary button is the palette's own primary pushed the way its text is not: a
+    // dark primary (light text) goes darker, a light one (dark text) goes lighter - as the original
+    // purple pair did (#6200ee -> #4b00c4 in light, #bb86fc -> #d0bcff in dark). It stayed purple in
+    // every other palette while this was a fixed value in the stylesheet.
+    [
+      '--color-primary-hover',
+      getContrastTextColor(colors.primary) === 'black'
+        ? mixHexColors(colors.primary, '#ffffff', 0.25)
+        : mixHexColors(colors.primary, '#000000', 0.2),
+    ],
     ['--color-row-hover', mixHexColors(colors.surface, colors.primary, 0.08)],
     ['--color-table-head', mixHexColors(colors.surface, colors.text, 0.05)],
     ['--color-pre-bg', mixHexColors(colors.surface, colors.text, 0.07)],
@@ -151,6 +161,7 @@ const MANAGED_CSS_VARS = [
   '--color-sidebar-muted',
   '--color-sidebar-hover',
   '--color-on-primary',
+  '--color-primary-hover',
   '--color-row-hover',
   '--color-table-head',
   '--color-pre-bg',

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
+import { useSystemInsets } from '@/src/hooks/useSystemInsets';
 import { useTheme } from '@/src/theme';
 
 /**
@@ -73,6 +74,7 @@ export default function HeaderActions({ actions }: { actions: readonly HeaderAct
 function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSystemInsets();
   const [open, setOpen] = useState(false);
   return (
     <View style={styles.row}>
@@ -99,7 +101,16 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
             onPress={() => setOpen(false)}
           />
           <View
-            style={[styles.menu, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            testID="header-actions-menu-panel"
+            // The modal's window is under the (translucent) status bar: the first row starts below it.
+            style={[
+              styles.menu,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                marginTop: insets.top + 8,
+              },
+            ]}
           >
             {actions.map((action) => {
               const locked = !!(action.disabled || action.busy);

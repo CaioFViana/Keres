@@ -23,15 +23,17 @@ interface ManuscriptExportOptionsProps {
   onChange: (settings: ManuscriptExportSettings) => void;
   /** The formats this destination offers (every one locally; the server's when publishing). */
   formats: readonly ManuscriptFormat[];
-  /** Branching only: names the route being exported. Null hides the note. */
-  routeName: string | null;
+  /** Branching only: the gamebook's scene order is asked, and scenes are not chaptered. */
+  branching: boolean;
   /** Linear with loose scenes only: when false the loose switch is hidden. */
   showLooseSwitch: boolean;
   looseCount: number;
-  /** Linear only: routes have a single group, so restarting numbers is meaningless. */
+  /** Linear only: a gamebook has a single numbering, so restarting numbers is meaningless. */
   chapterNumberingAvailable: boolean;
   /** The story's arcs; the arc selector only shows when there is more than one. */
   arcs: ManuscriptExportArc[];
+  /** False when no file is made (only the online reader): the format is not asked. */
+  showFormat?: boolean;
 }
 
 const FONT_SIZES = [10, 11, 12, 14] as const;
@@ -58,11 +60,12 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   settings,
   onChange,
   formats,
-  routeName,
+  branching,
   showLooseSwitch,
   looseCount,
   chapterNumberingAvailable,
   arcs,
+  showFormat = true,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -77,10 +80,6 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
 
   return (
     <View>
-      {routeName ? (
-        <Text style={styles.note}>{t('export_manuscript_route_note', { route: routeName })}</Text>
-      ) : null}
-
       <OptionSection title={t('export_manuscript_preset')} />
       <OptionPills
         label={t('export_manuscript_preset_hint')}
@@ -118,16 +117,36 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
         </>
       ) : null}
 
-      <OptionSection title={t('export_format')} />
-      {formats.map((format) => (
-        <OptionRow
-          key={format}
-          testID={`export-format-${format}`}
-          label={t(`export_manuscript_format_${format}`)}
-          selected={settings.format === format}
-          onPress={() => change({ format })}
-        />
-      ))}
+      {showFormat ? (
+        <>
+          <OptionSection title={t('export_format')} />
+          {formats.map((format) => (
+            <OptionRow
+              key={format}
+              testID={`export-format-${format}`}
+              label={t(`export_manuscript_format_${format}`)}
+              selected={settings.format === format}
+              onPress={() => change({ format })}
+            />
+          ))}
+        </>
+      ) : null}
+
+      {branching ? (
+        <>
+          <OptionSection title={t('export_manuscript_scene_order')} />
+          <OptionPills
+            label={t('export_manuscript_scene_order_hint')}
+            testID="export-scene-order"
+            value={settings.sceneOrder}
+            onChange={(sceneOrder) => change({ sceneOrder })}
+            options={[
+              { value: 'discovery', label: t('export_manuscript_scene_order_discovery') },
+              { value: 'shuffled', label: t('export_manuscript_scene_order_shuffled') },
+            ]}
+          />
+        </>
+      ) : null}
 
       <OptionSection title={t('export_manuscript_contents')} />
       <SwitchRow

@@ -337,6 +337,20 @@
       "when": 1790542104107,
       "tag": "0047_massive_metal_master",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1790651393666,
+      "tag": "0048_publication_reader",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1790685668846,
+      "tag": "0049_tier_publication_limit",
+      "breakpoints": true
     }
   ]
 }

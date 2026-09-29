@@ -127,6 +127,14 @@
     "loadFailed": "Could not load the packs.",
     "empty": "Nobody has shared a pack here yet."
   },
+  "reader": {
+    "back": "← Back to the story",
+    "loading": "Opening…",
+    "unavailable": "This version has no online reading.",
+    "failed": "Could not open the reading.",
+    "frameTitle": "Reading {{title}}",
+    "frameTitleBare": "Reading"
+  },
   "story": {
     "back": "← All stories",
     "publishedThis": "published this story",
@@ -146,6 +154,7 @@
     "downloadLatest": "Download latest",
     "download": "Download",
     "manuscriptDownload": "Manuscript ({{format}} · {{size}})",
+    "readOnline": "Read online",
     "preparing": "Preparing…",
     "downloadFailed": "Could not start the download.",
     "mediaCount": "{{included}}/{{total}} media"

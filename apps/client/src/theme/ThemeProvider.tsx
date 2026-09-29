@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Appearance, Platform } from 'react-native';
 import type { AppDrizzleClient } from '../db';
 import { useThemeStore } from '../state/themeStore';
 import { setEntityAppearanceScheme, setGraphEntityPaletteScheme, themes } from '@keres/shared';
@@ -46,6 +47,19 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     const selectedTheme = themes[currentThemeName];
     return darkMode ? selectedTheme.darkColors : selectedTheme.lightColors;
   }, [darkMode, currentThemeName]);
+
+  // The palette is the app's own choice, independent of the system's. What the app does not draw -
+  // the navigation bar's buttons, the keyboard, native dialogs - follows the *system* scheme, so a
+  // dark app on a light phone kept white bars and buttons. Telling the OS which scheme the app is in
+  // makes the native parts match.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    try {
+      Appearance.setColorScheme(darkMode ? 'dark' : 'light');
+    } catch {
+      // An OS that cannot force a scheme keeps following the system: cosmetic only.
+    }
+  }, [darkMode]);
 
   setEntityAppearanceScheme(darkMode);
   setGraphEntityPaletteScheme(darkMode);

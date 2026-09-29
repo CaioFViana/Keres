@@ -173,7 +173,8 @@ describe('location map connection layer', () => {
     expect(labelTextsOf(root)).not.toContain('far');
   });
 
-  it('draws edges without labels when the system font is unavailable', async () => {
+  it('draws edges without labels when no font is available (bundled not loaded, system unmatched)', async () => {
+    jest.spyOn(SkiaMock, 'useFont').mockReturnValue(null as never);
     // Web: `matchFamilyStyle` is unimplemented and throws; the layer must survive with
     // edges only, never a black screen.
     jest.spyOn(SkiaMock, 'matchFont').mockImplementation(() => {

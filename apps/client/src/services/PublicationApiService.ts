@@ -1,6 +1,7 @@
 import type {
   ManuscriptFormat,
   ManuscriptLabels,
+  ReaderLabels,
   ManuscriptStyle,
   PublicationLabelMode,
   ShowcaseVisibility,
@@ -40,13 +41,18 @@ export interface PublishManuscriptOptions {
   includeToc: boolean;
   resetSceneNumbers: boolean;
   style: ManuscriptStyle;
-  /** When set, the manuscript follows this route instead of the linear order. */
-  routeId?: string;
+  /** Branching stories: how the gamebook numbers its scenes. */
+  sceneOrder?: 'discovery' | 'shuffled';
   /** When set, only this arc ships, under its title. */
   arcId?: string;
   labels: ManuscriptLabels;
   author: string | null;
   language: string;
+}
+
+/** The online reader: the manuscript's choices (no file format) and the words of its own interface. */
+export interface PublishReaderOptions extends Omit<PublishManuscriptOptions, 'format'> {
+  readerLabels: ReaderLabels;
 }
 
 /**
@@ -89,6 +95,7 @@ export class PublicationApiService {
     visibility: ShowcaseVisibility = 'public',
     password?: string,
     manuscript?: PublishManuscriptOptions,
+    reader?: PublishReaderOptions,
   ): Promise<StoryPublication> {
     const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
       operationVersion,
@@ -96,6 +103,7 @@ export class PublicationApiService {
       visibility,
       password,
       manuscript,
+      reader,
     });
     return response.data;
   }

@@ -6,6 +6,7 @@ import {
   fetchManuscriptDownloadUrl,
   fetchPack,
   fetchPacks,
+  fetchReaderUrl,
   fetchStories,
   fetchStory,
   readUnlockToken,
@@ -248,6 +249,27 @@ describe('fetchManuscriptDownloadUrl', () => {
     fetchMock.mockResolvedValue(respond({ body: { message: 'Gone.' }, status: 410 }));
 
     await expect(fetchManuscriptDownloadUrl('story-1', 'pub-1')).rejects.toThrow('Gone.');
+  });
+});
+
+describe('fetchReaderUrl', () => {
+  it('requests the reader address with the unlock token', async () => {
+    storeUnlockToken('story-1', 'unlock-1');
+    fetchMock.mockResolvedValue(respond({ body: { url: '/api/public/rd?access=abc' } }));
+
+    const url = await fetchReaderUrl('story-1', 'pub-1');
+
+    expect(url).toBe('/api/public/rd?access=abc');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/public/stories/story-1/publications/pub-1/reader/url',
+      { method: 'POST', headers: { Authorization: 'Showcase unlock-1' } },
+    );
+  });
+
+  it('throws the API message when the address cannot be issued', async () => {
+    fetchMock.mockResolvedValue(respond({ body: { message: 'Not found.' }, status: 404 }));
+
+    await expect(fetchReaderUrl('story-1', 'pub-1')).rejects.toThrow('Not found.');
   });
 });
 

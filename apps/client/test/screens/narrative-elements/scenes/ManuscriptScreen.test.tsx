@@ -666,21 +666,21 @@ describe('ManuscriptScreen', () => {
     expect(view.getByTestId('screen-loading')).toBeTruthy();
   });
 
-  it('opens the export screen on the route being read', async () => {
+  it('opens the export screen', async () => {
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
     await pressHeaderAction('export');
-    expect(mockNavigate).toHaveBeenCalledWith('ManuscriptExport', { routeId: null });
+    expect(mockNavigate).toHaveBeenCalledWith('ManuscriptExport');
   });
 
-  it('exports the picked route in branching stories', async () => {
+  it('exports a branching story whole, whatever route is being read', async () => {
     mockStoryType = 'branching';
     mockManuscriptData = branchingData();
     const view = await render(<ManuscriptScreen />);
     await view.findByTestId('manuscript-list');
     await fireEvent.press(view.getByTestId('route-option-route-2'));
     await pressHeaderAction('export');
-    expect(mockNavigate).toHaveBeenCalledWith('ManuscriptExport', { routeId: 'route-2' });
+    expect(mockNavigate).toHaveBeenCalledWith('ManuscriptExport');
   });
 
   it('opens the index modal listing chapters, scenes and the appendix', async () => {

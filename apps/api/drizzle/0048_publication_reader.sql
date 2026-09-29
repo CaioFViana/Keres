@@ -1,0 +1,1 @@
+ALTER TABLE "story_publications" ADD COLUMN "reader_byte_size" bigint;

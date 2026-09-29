@@ -137,10 +137,12 @@
     "maxEntitiesTotal": "Max entities total",
     "maxStorageBytesPerStory": "Max storage bytes per story",
     "maxStorageBytesTotal": "Max storage bytes total",
+    "maxPublicationsPerDay": "Max publications per day",
     "columnDefault": "Default",
     "columnMaxEntitiesPerStory": "Max entities/story",
     "columnMaxStoragePerStory": "Max storage/story",
     "columnMaxStorageTotal": "Max storage total",
+    "columnMaxPublicationsPerDay": "Publications/day",
     "statusDeleted": "Deleted",
     "empty": "No tiers yet.",
     "confirmDelete": "Delete tier \"{{name}}\"?"

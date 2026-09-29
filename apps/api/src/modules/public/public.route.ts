@@ -8,6 +8,8 @@ import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
+import { publicReaderRoutes } from './publicReader.route';
+import { DOWNLOAD_URL_TTL_SECONDS, verifyShowcaseToken } from './showcaseAccess';
 
 /**
  * The public site. No route here requires authentication, and none of them returns anything a
@@ -19,9 +21,6 @@ import { createAttemptLimiter } from '../../utils/rateLimiter';
 
 /** The same window as /login: 5 attempts per 15 minutes, per story and per IP. */
 const unlockLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
-
-/** Lifetime of the signed download URL. Short: it leaks into browser history and proxy logs. */
-const DOWNLOAD_URL_TTL_SECONDS = 60;
 
 /** A single message for "does not exist" and "wrong password" - see the comment on `/unlock`. */
 const UNLOCK_FAILURE = 'Incorrect password.';
@@ -68,6 +67,7 @@ const VersionSchema = t.Object({
       byteSize: t.Number(),
     }),
   ),
+  reader: t.Nullable(t.Object({ byteSize: t.Number() })),
 });
 
 /** A version's manuscript delivery metadata, or null when the version carries no manuscript. */
@@ -527,21 +527,5 @@ export const publicRoutes = new Elysia()
           },
         },
       ),
-  );
-
-/**
- * Checks an `Authorization: Showcase <token>` and returns whether it unlocks *this* story.
- *
- * The scope is per story on purpose: holding one story's password does not make another visible.
- */
-async function verifyShowcaseToken(
-  showcaseJwt: { verify: (token: string) => Promise<{ storyId?: string } | false> },
-  authorization: string | undefined,
-  storyId: string,
-): Promise<boolean> {
-  if (!authorization?.startsWith('Showcase ')) {
-    return false;
-  }
-  const payload = await showcaseJwt.verify(authorization.slice('Showcase '.length));
-  return !!payload && payload.storyId === storyId;
-}
+  )
+  .use(publicReaderRoutes);

@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import {
+  sceneHeadingLabel,
   manuscriptTocEntries,
   type CompiledBlock,
   type CompiledManuscript,
@@ -148,7 +149,7 @@ function blockXhtml(
       return `<h2 class="chapter" id="${block.bookmarkId}">${escapeHtml(block.label)}</h2>`;
     case 'scene-heading': {
       const id = block.bookmarkId ? ` id="${block.bookmarkId}"` : '';
-      return `<h3 class="scene"${id}>${escapeHtml(`${block.number}. ${block.name}`)}</h3>`;
+      return `<h3 class="scene"${id}>${escapeHtml(sceneHeadingLabel(block))}</h3>`;
     }
     case 'paragraph':
       return `<p>${spansToHtml(block.spans)}</p>`;

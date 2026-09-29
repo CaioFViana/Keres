@@ -68,9 +68,11 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
           enabled={keyboardAvoiding}
-          behavior={
-            Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
-          }
+          // `padding` on both: Android's modal window already resizes for the keyboard (React
+          // Native gives every Modal `adjustResize`), so the avoiding view only has to pad when it
+          // did not. `height` re-measured its own frame after every resize the keyboard caused and
+          // flipped between two heights frame after frame while a search field had focus.
+          behavior={Platform.OS === 'ios' || Platform.OS === 'android' ? 'padding' : undefined}
           style={[
             styles.content,
             {

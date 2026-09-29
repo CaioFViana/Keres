@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ManuscriptInfoSchema } from '../manuscript/compile/manuscriptContracts';
+import { ManuscriptInfoSchema, ReaderInfoSchema } from '../manuscript/compile/manuscriptContracts';
 
 export const PublicationLabelModeSchema = z.enum(['version', 'date', 'both']);
 export const ShowcaseVisibilitySchema = z.enum(['public', 'password']);
@@ -64,6 +64,8 @@ export const ShowcaseVersionSchema = z.object({
   mediaTotal: z.number().int(),
   createdAt: z.string(),
   manuscript: ManuscriptInfoSchema.nullable(),
+  /** The online reader page published alongside the version, when there is one. */
+  reader: ReaderInfoSchema.nullable().default(null),
 });
 
 export const ShowcaseStoryCardSchema = z.object({

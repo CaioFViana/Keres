@@ -1,6 +1,15 @@
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
+import { ulid } from 'ulid';
 import { db } from '../db';
-import { galleries, mediaBlobs, registrationSettings, stories, tiers, users } from '../db/schema';
+import {
+  galleries,
+  mediaBlobs,
+  publicationLog,
+  registrationSettings,
+  stories,
+  tiers,
+  users,
+} from '../db/schema';
 import { syncService } from './SyncService';
 
 /**
@@ -64,6 +73,45 @@ export class TierEnforcementService {
     if (total >= tier.maxStories) {
       throw new TierLimitExceededError(`Story limit reached for your plan (${tier.maxStories}).`);
     }
+  }
+
+  /**
+   * Refuses a publication once the user has made their plan's number of them in the last 24 hours.
+   * A rolling window, not a calendar day: it needs no time zone and does not hand out a fresh
+   * allowance at midnight. Counted from `publication_log`, which deleting a version does not touch.
+   */
+  async assertCanPublish(userId: string, now = new Date()): Promise<void> {
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || tier.maxPublicationsPerDay === null) {
+      return;
+    }
+    const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(publicationLog)
+      .where(and(eq(publicationLog.userId, userId), gte(publicationLog.createdAt, since)));
+    if (total >= tier.maxPublicationsPerDay) {
+      throw new TierLimitExceededError(
+        `Publication limit reached for your plan (${tier.maxPublicationsPerDay} per day). Try again later.`,
+      );
+    }
+  }
+
+  /**
+   * Notes a publication for the daily count, and drops entries too old to matter (a day is all the
+   * window ever looks at; the second one is slack). Runs in the publishing transaction, so a
+   * publication that fails is not counted.
+   */
+  async recordPublication(
+    runner: Pick<typeof db, 'insert' | 'delete'>,
+    userId: string,
+    storyId: string,
+    now = new Date(),
+  ): Promise<void> {
+    await runner.insert(publicationLog).values({ id: ulid(), userId, storyId, createdAt: now });
+    await runner
+      .delete(publicationLog)
+      .where(lt(publicationLog.createdAt, new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)));
   }
 
   /**

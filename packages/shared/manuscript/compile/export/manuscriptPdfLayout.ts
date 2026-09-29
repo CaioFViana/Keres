@@ -1,4 +1,5 @@
 import {
+  sceneHeadingLabel,
   manuscriptTocEntries,
   type CompiledManuscript,
   type CompiledSpan,
@@ -254,12 +255,17 @@ function choiceText(
 const INK = 0.07;
 const GRAY = 0.27;
 
-export function flattenRuns(
+/**
+ * The manuscript as lines, one at a time. A line is handed over as soon as its block is laid out and
+ * nothing here keeps it afterwards, so the layout of a book costs a block, not the book: the caller
+ * places each line on a page and lets it go. (Only the index is built whole: it is a line per heading.)
+ */
+export function* iterateRuns(
   manuscript: CompiledManuscript,
   labels: ManuscriptPdfLabels,
   anchors: Map<string, PdfAnchor>,
   options: ManuscriptRenderOptions,
-): LineRun[] {
+): Generator<LineRun, void, undefined> {
   const geometry = pdfGeometry(options);
   const { contentWidth: CONTENT_WIDTH, bodySize: BODY_SIZE, bodyLeading: BODY_LEADING } = geometry;
   const runs: LineRun[] = [];
@@ -344,16 +350,34 @@ export function flattenRuns(
     if (last) last.spaceAfter = 10;
   };
 
+  // Empty headings (an untitled story or route) and paragraphs that degrade to nothing
+  // (zero-width-only) would otherwise leave phantom blank lines - at the end, between scenes, or
+  // anywhere they land - so they are never handed over. The title page holds the title and the
+  // index alone: the first line after the index opens a fresh page, whatever kind of block leads it.
+  let opensNewPage = false;
+  const drain = function* (): Generator<LineRun, void, undefined> {
+    for (const run of runs) {
+      if (run.words.length === 0) continue;
+      if (opensNewPage) {
+        run.forcePageBreak = true;
+        opensNewPage = false;
+      }
+      yield run;
+    }
+    runs.length = 0;
+  };
+
   let prevBlockKind: string | null = null;
   let tocEmitted = false;
-  let tocEndIndex: number | null = null;
   for (const block of manuscript.blocks) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) {
         const before = runs.length;
         pushToc(manuscriptTocEntries(manuscript.blocks));
-        if (runs.length > before) tocEndIndex = runs.length;
+        const produced = runs.length > before;
+        yield* drain();
+        opensNewPage = produced;
       }
     }
     switch (block.kind) {
@@ -397,7 +421,7 @@ export function flattenRuns(
         });
         break;
       case 'scene-heading':
-        pushHeading(`${block.number}. ${block.name}`, 'times-bold', 12.5, 16, {
+        pushHeading(sceneHeadingLabel(block), 'times-bold', 12.5, 16, {
           spaceBefore: 12,
           spaceAfter: 6,
           gray: GRAY,
@@ -488,23 +512,65 @@ export function flattenRuns(
       }
     }
     prevBlockKind = block.kind;
+    yield* drain();
   }
-  if (tocEndIndex !== null) {
-    // The title page holds the title and the index alone: the body always
-    // opens on a fresh page, whatever kind of block leads it.
-    const first = runs.findIndex((run, index) => index >= tocEndIndex && run.words.length > 0);
-    if (first !== -1) runs[first].forcePageBreak = true;
-  }
-  // Trim: empty headings (an untitled story or route) and paragraphs that
-  // degrade to nothing (zero-width-only) would otherwise leave phantom blank
-  // lines — at the end, between scenes, or anywhere they land.
-  return runs.filter((run) => run.words.length > 0);
+}
+
+/** Every line of the manuscript at once - for callers (and tests) that want the whole list. */
+export function flattenRuns(
+  manuscript: CompiledManuscript,
+  labels: ManuscriptPdfLabels,
+  anchors: Map<string, PdfAnchor>,
+  options: ManuscriptRenderOptions,
+): LineRun[] {
+  return Array.from(iterateRuns(manuscript, labels, anchors, options));
 }
 
 export type PlacedRun = { run: LineRun; y: number };
 
 /** Where a heading landed: page numbers resolve choices, coordinates aim index links. */
 export type PdfAnchor = { page: number; y: number };
+
+/**
+ * Places lines on pages and hands each page over as soon as it is full, so only the page in
+ * progress (and one line of lookahead: a heading keeps with the line after it) is held. Returns
+ * where every heading landed and how many pages there are.
+ */
+export function paginateStream(
+  runs: Iterable<LineRun>,
+  geometry: PdfGeometry,
+  onPage: (page: PlacedRun[], pageIndex: number) => void,
+): { anchors: Map<string, PdfAnchor>; pageCount: number } {
+  const { topY: TOP_Y, bottomY: BOTTOM_Y } = geometry;
+  const anchors = new Map<string, PdfAnchor>();
+  const iterator = runs[Symbol.iterator]();
+  let page: PlacedRun[] = [];
+  let pageCount = 1;
+  let y = TOP_Y;
+  let current = iterator.next();
+  while (!current.done) {
+    const run = current.value;
+    const upcoming = iterator.next();
+    const next = upcoming.done ? undefined : upcoming.value;
+    const keepHeight = run.keepWithNext && next ? next.spaceBefore + next.leading : 0;
+    const need = run.spaceBefore + run.leading + keepHeight;
+    if ((run.forcePageBreak && page.length > 0) || y - need < BOTTOM_Y) {
+      onPage(page, pageCount - 1);
+      page = [];
+      pageCount += 1;
+      y = TOP_Y;
+    }
+    y -= run.spaceBefore;
+    if (run.bookmarkId && !anchors.has(run.bookmarkId)) {
+      anchors.set(run.bookmarkId, { page: pageCount, y });
+    }
+    page.push({ run, y });
+    y -= run.leading + run.spaceAfter;
+    current = upcoming;
+  }
+  onPage(page, pageCount - 1);
+  return { anchors, pageCount };
+}
 
 export function paginate(
   runs: LineRun[],
@@ -513,25 +579,8 @@ export function paginate(
   pages: PlacedRun[][];
   anchors: Map<string, PdfAnchor>;
 } {
-  const { topY: TOP_Y, bottomY: BOTTOM_Y } = geometry;
-  const pages: PlacedRun[][] = [[]];
-  const anchors = new Map<string, PdfAnchor>();
-  let y = TOP_Y;
-  runs.forEach((run, index) => {
-    const next = runs[index + 1];
-    const keepHeight = run.keepWithNext && next ? next.spaceBefore + next.leading : 0;
-    const need = run.spaceBefore + run.leading + keepHeight;
-    if ((run.forcePageBreak && pages[pages.length - 1].length > 0) || y - need < BOTTOM_Y) {
-      pages.push([]);
-      y = TOP_Y;
-    }
-    y -= run.spaceBefore;
-    if (run.bookmarkId && !anchors.has(run.bookmarkId)) {
-      anchors.set(run.bookmarkId, { page: pages.length, y });
-    }
-    pages[pages.length - 1].push({ run, y });
-    y -= run.leading + run.spaceAfter;
-  });
+  const pages: PlacedRun[][] = [];
+  const { anchors } = paginateStream(runs, geometry, (page) => pages.push(page));
   return { pages, anchors };
 }
 

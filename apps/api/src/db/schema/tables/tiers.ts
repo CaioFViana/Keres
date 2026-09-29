@@ -19,6 +19,8 @@ export const tiers = table('tiers', {
   maxEntitiesTotal: integer('max_entities_total'),
   maxStorageBytesPerStory: integer('max_storage_bytes_per_story'),
   maxStorageBytesTotal: integer('max_storage_bytes_total'),
+  /** Versions published in any rolling 24 hours (see `publication_log`); 0 forbids publishing. */
+  maxPublicationsPerDay: integer('max_publications_per_day'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   isDeleted: boolean('is_deleted').notNull().default(false),

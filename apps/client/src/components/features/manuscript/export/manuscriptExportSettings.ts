@@ -17,6 +17,8 @@ export type ManuscriptExportSettings = {
   includeLooseScenes: boolean;
   resetSceneNumbers: boolean;
   includeIndex: boolean;
+  /** Branching only: how the gamebook numbers its scenes. */
+  sceneOrder: 'discovery' | 'shuffled';
   /** Which arc to export; null exports every arc. */
   arcId: string | null;
   /** A generated title page: the author and a copyright line under the title. */
@@ -34,6 +36,7 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     includeLooseScenes: false,
     resetSceneNumbers: false,
     includeIndex: false,
+    sceneOrder: 'discovery',
     arcId: null,
     titlePage: false,
     author,

@@ -95,6 +95,22 @@ describe('administrative and account contracts', () => {
       name: 'Free',
       isDefault: false,
     });
+    // The daily publication ceiling: absent and null are unlimited, zero forbids publishing.
+    expect(TierCreateInputSchema.parse({ name: 'T', maxPublicationsPerDay: 5 })).toMatchObject({
+      maxPublicationsPerDay: 5,
+    });
+    expect(TierCreateInputSchema.parse({ name: 'T', maxPublicationsPerDay: 0 })).toMatchObject({
+      maxPublicationsPerDay: 0,
+    });
+    expect(
+      TierCreateInputSchema.parse({ name: 'T', maxPublicationsPerDay: null }).maxPublicationsPerDay,
+    ).toBeNull();
+    expect(TierCreateInputSchema.safeParse({ name: 'T', maxPublicationsPerDay: -1 }).success).toBe(
+      false,
+    );
+    expect(TierCreateInputSchema.safeParse({ name: 'T', maxPublicationsPerDay: 1.5 }).success).toBe(
+      false,
+    );
     expect(
       TierUsageSchema.parse({
         tier: null,

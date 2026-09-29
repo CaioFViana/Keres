@@ -44,7 +44,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'A prosa viaja com a cena no sync e nos backups. A exportação gera arquivos Word, PDF, EPUB, HTML, Markdown ou texto puro - iguais em todo dispositivo e ao publicar no showcase. O PDF usa uma fonte serifada padrão, então texto fora dos alfabetos ocidentais (chinês, árabe, emoji) não aparece nele; EPUB e Word o mantêm; em histórias ramificadas cada rota exporta separadamente, com as escolhas apontando para a página da cena de destino. Fragmentos sem capítulo e cenas de eventos podem entrar como apêndice ou ficar fora da exportação.',
+      text: 'A prosa viaja com a cena no sync e nos backups. A exportação gera arquivos Word, PDF, EPUB, HTML, Markdown ou texto puro - iguais em todo dispositivo e ao publicar no showcase. O PDF usa uma fonte serifada padrão, então texto fora dos alfabetos ocidentais (chinês, árabe, emoji) não aparece nele; EPUB e Word o mantêm; uma história ramificada exporta como um livro-jogo inteiro: todas as cenas que uma escolha alcança a partir do início (ou de cada início, quando há vários, com uma página de abertura para escolher), numeradas na ordem em que o leitor as encontra ou embaralhadas como num livro-jogo impresso, com cada escolha apontando para o número ou a página do destino - cenas que nada parece levar até elas fecham o livro. Fragmentos sem capítulo e cenas de eventos podem entrar como apêndice ou ficar fora da exportação.',
     },
     {
       type: 'seeAlso',

@@ -145,7 +145,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 - **Cold install** onboarding; multi-server accounts (tokens per `serverId`);
   JWT + queued 401 refresh per server; hosted web session via HttpOnly cookie
   (`/auth/me` restores after F5); password change; profile w/ `@handle`
-  user tags (3–20 chars) and recovery codes; tiered account limits.
+  user tags (3–20 chars) and recovery codes; tiered account limits (stories, entities, storage, and versions published per rolling 24 hours - counted from `publication_log`, so deleting a version does not refund it; over the limit the publish answers 429).
 - **Friends**: request flow w/ `PENDING`/`FRIEND`/`BLACKLISTED`, reader/writer
   grants, blacklist; friend detail/list/form screens.
 - **Story roles**: owner/writer/reader; readers may only write own favourites
@@ -181,11 +181,20 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   (core → narrative → assets → interactions → final) with migration, validation
   and ID remap; language-aware file naming (slug + date).
 - **Manuscript pipeline** (`packages/shared/manuscript`): styled runs,
-  never-throw markdown parser with whitespace round-trip, 15 MB cap
+  never-throw markdown parser with whitespace round-trip, 50 MB cap
   (`MAX_MANUSCRIPT_BYTES`); compiles **DOCX** (TOC/bookmarks/PAGEREF/footer),
-  **MD**, **TXT**, **HTML** + route-following option (`routeId`); **PDF**
-  (pure-TS A4 renderer with TOC links and real choice page numbers) stays
-  client-side.
+  **MD**, **TXT**, **HTML**, **EPUB** and **PDF** (pure-TS renderer, one text
+  object per line, TOC links and real choice page numbers) - on the device and
+  on the server alike. A branching story compiles as a whole **gamebook**
+  (`compileGamebookManuscript`): every scene reachable from its start(s),
+  numbered as met or shuffled by seed (`sceneOrder`), unreachable ones last,
+  an opening page to pick among several starts.
+- **Online reader** (`packages/shared/manuscript/reader`): one self-contained
+  HTML page per published version (linear: the manuscript page with contents,
+  theme and text size; branching: one scene at a time over an engine that
+  mirrors `storySimulation`, with inventory, path, back and a saves list).
+  Served sandboxed (`Content-Security-Policy: sandbox allow-scripts`), embedded
+  by the showcase in a sandboxed frame that keeps its saves.
 - **Map exports**: SVG standalone + PNG raster; plot-coverage SVG.
 
 ## 12. Publishing and Showcase
@@ -193,7 +202,8 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 - **Publications** (`StoryPublication`, immutable, outside incremental sync):
   publish requires ownership + being in sync; labelled versions (keeps 5);
   visibility `public`/`password` (password change on switch); manuscript
-  renditions recorded per version; offline-diff notice on reconnect.
+  renditions and the online reader recorded per version (`manuscriptFormat`,
+  `readerByteSize`); offline-diff notice on reconnect.
 - **Showcase** (admin dual build, served at `/showcase`): public story pages
   with author palette theming + configurable branding (name/logo/palette/title,
   Keres fallback); password gate learns nothing before unlock; ETag caching.
@@ -278,7 +288,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 | Manuscript formats (+ client PDF) | docx/md/txt/html (+pdf) | `manuscriptContracts.ts`, `manuscriptPdf.ts` |
 | Kept publication versions | 5 | `publication.route.ts` |
 | Media transfers per sync cycle | 5 | `MediaSyncService.ts` |
-| Manuscript size cap | 15 MB | `MAX_MANUSCRIPT_BYTES` |
+| Manuscript size cap | 50 MB | `MAX_MANUSCRIPT_BYTES` |
 | Custom-attribute entities / types | 7 / 6 | `StorySchemaEntityType`, `AttributeType` |
 
 ## Appendix B — deliberate non-goals (per `FEATURE_LANDSCAPE.md`)

@@ -41,13 +41,13 @@ function Harness({
   arcs = [],
   showLooseSwitch = true,
   chapterNumberingAvailable = true,
-  routeName = null,
+  branching = false,
 }: {
   formats?: readonly (typeof ALL_FORMATS)[number][];
   arcs?: { id: string; title: string }[];
   showLooseSwitch?: boolean;
   chapterNumberingAvailable?: boolean;
-  routeName?: string | null;
+  branching?: boolean;
 }) {
   const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
   latest = settings;
@@ -56,7 +56,7 @@ function Harness({
       settings={settings}
       onChange={setSettings}
       formats={formats}
-      routeName={routeName}
+      branching={branching}
       showLooseSwitch={showLooseSwitch}
       looseCount={2}
       chapterNumberingAvailable={chapterNumberingAvailable}
@@ -169,10 +169,23 @@ describe('ManuscriptExportOptions', () => {
     expect(latest?.arcId).toBeNull();
   });
 
-  it('notes the route and hides the loose switch when asked', async () => {
-    const view = await render(<Harness routeName="Main" showLooseSwitch={false} />);
+  it('hides the loose switch when asked', async () => {
+    const view = await render(<Harness showLooseSwitch={false} />);
 
-    expect(view.getByText('export_manuscript_route_note:{"route":"Main"}')).toBeTruthy();
     expect(view.queryByTestId('export-loose')).toBeNull();
+  });
+
+  it('asks a linear story nothing about scene order', async () => {
+    const view = await render(<Harness />);
+    expect(view.queryByTestId('export-scene-order-discovery')).toBeNull();
+  });
+
+  it('asks a branching story how its gamebook is numbered', async () => {
+    const view = await render(<Harness branching />);
+    expect(latest?.sceneOrder).toBe('discovery');
+    await fireEvent.press(view.getByTestId('export-scene-order-shuffled'));
+    expect(latest).toMatchObject({ sceneOrder: 'shuffled', preset: 'custom' });
+    await fireEvent.press(view.getByTestId('export-scene-order-discovery'));
+    expect(latest?.sceneOrder).toBe('discovery');
   });
 });

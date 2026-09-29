@@ -41,6 +41,8 @@ export const storyPublications = table(
     manuscriptFormat: text('manuscript_format'),
     /** Rendered manuscript size in bytes. Set together with `manuscriptFormat`, never alone. */
     manuscriptByteSize: bigintNumber('manuscript_byte_size'),
+    /** Size in bytes of the online reader page published alongside the package, or null when none. */
+    readerByteSize: bigintNumber('reader_byte_size'),
     snapshot: json('snapshot').$type<StoryPublicationSnapshot>().notNull(),
     createdAt: timestampNow('created_at'),
   },

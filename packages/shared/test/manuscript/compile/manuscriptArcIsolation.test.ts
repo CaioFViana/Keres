@@ -296,24 +296,20 @@ describe('compileStoryManuscript with arcId', () => {
     expect(text).not.toContain('Beta.');
   });
 
-  it('drops route steps whose scenes belong to another arc', async () => {
+  it('ends a gamebook choice at the arc edge instead of pulling the other arc in', async () => {
     const compiled = await compileStoryManuscript(
       {
         storyTitle: 'My Story',
         storyType: 'branching',
         chapters,
-        scenes,
-        choices: [],
-        routes: [{ id: 'route-1', name: 'Main' }],
-        routeSteps: [
-          { id: 'step-1', routeId: 'route-1', position: 1, sceneId: 's-1', isDeleted: false },
-          { id: 'step-2', routeId: 'route-1', position: 2, sceneId: 's-2', isDeleted: false },
-        ],
+        scenes: [{ ...scenes[0], isStart: true }, scenes[1]],
+        choices: [{ id: 'c-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Cross over' }],
       },
-      { format: 'md', routeId: 'route-1', arcId: 'arc-1' },
+      { format: 'md', arcId: 'arc-1', labels: { endOfExcerpt: 'fim deste trecho' } },
     );
     const text = new TextDecoder().decode(compiled.bytes);
     expect(text).toContain('Alpha.');
     expect(text).not.toContain('Beta.');
+    expect(text).toContain('Cross over — fim deste trecho');
   });
 });

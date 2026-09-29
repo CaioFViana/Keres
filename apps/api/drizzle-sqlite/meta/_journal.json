@@ -246,6 +246,20 @@
       "when": 1790542106421,
       "tag": "0034_lethal_cardiac",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1790651395196,
+      "tag": "0035_publication_reader",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1790685670264,
+      "tag": "0036_tier_publication_limit",
+      "breakpoints": true
     }
   ]
 }

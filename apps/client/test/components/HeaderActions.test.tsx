@@ -1,5 +1,6 @@
 /** @jest-environment node */
 import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import HeaderActions from '../../src/components/common/navigation/HeaderActions/HeaderActions';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 
@@ -167,4 +168,37 @@ it('keeps a single action inline on compact screens, with no burger', async () =
   expect(screen.queryByTestId('header-actions-menu')).toBeNull();
   await fireEvent.press(screen.getByLabelText('Edit'));
   expect(onPress).toHaveBeenCalledTimes(1);
+});
+
+describe('the compact burger menu and the status bar', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- the context under test.
+  const { SafeAreaInsetsContext } = require('react-native-safe-area-context');
+  const actions = [
+    { id: 'a', icon: 'add' as const, label: 'A', onPress: jest.fn() },
+    { id: 'b', icon: 'pencil' as const, label: 'B', onPress: jest.fn() },
+  ];
+
+  it('starts its first row below the status bar the window is drawn under', async () => {
+    mockLayout.mockReturnValue(COMPACT);
+    const screen = await render(
+      <SafeAreaInsetsContext.Provider value={{ top: 32, right: 0, bottom: 0, left: 0 }}>
+        <HeaderActions actions={actions} />
+      </SafeAreaInsetsContext.Provider>,
+    );
+
+    await fireEvent.press(screen.getByTestId('header-actions-menu'));
+
+    const panel = screen.getByTestId('header-actions-menu-panel');
+    expect(StyleSheet.flatten(panel.props.style).marginTop).toBe(40);
+  });
+
+  it('keeps its small margin where there is no status bar to clear (web)', async () => {
+    mockLayout.mockReturnValue(COMPACT);
+    const screen = await render(<HeaderActions actions={actions} />);
+
+    await fireEvent.press(screen.getByTestId('header-actions-menu'));
+
+    const panel = screen.getByTestId('header-actions-menu-panel');
+    expect(StyleSheet.flatten(panel.props.style).marginTop).toBe(8);
+  });
 });

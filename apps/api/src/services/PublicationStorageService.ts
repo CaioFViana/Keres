@@ -94,6 +94,27 @@ export class PublicationStorageService {
   async deleteManuscript(storyId: string, publicationId: string, extension: string): Promise<void> {
     await this.blobStorage.delete(this.manuscriptKeyFor(storyId, publicationId, extension));
   }
+
+  /** The online reader page, a sibling of the package: same folder, `.reader.html`. */
+  readerKeyFor(storyId: string, publicationId: string): string {
+    return `publications/${storyId}/${publicationId}.reader.html`;
+  }
+
+  async storeReader(storyId: string, publicationId: string, bytes: Uint8Array): Promise<void> {
+    await this.blobStorage.put(
+      this.readerKeyFor(storyId, publicationId),
+      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+      'text/html; charset=utf-8',
+    );
+  }
+
+  async readReader(storyId: string, publicationId: string) {
+    return this.blobStorage.get(this.readerKeyFor(storyId, publicationId));
+  }
+
+  async deleteReader(storyId: string, publicationId: string): Promise<void> {
+    await this.blobStorage.delete(this.readerKeyFor(storyId, publicationId));
+  }
 }
 
 export const publicationStorageService = new PublicationStorageService();

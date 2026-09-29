@@ -16,6 +16,7 @@ import {
   TextRun,
 } from 'docx';
 import {
+  sceneHeadingLabel,
   manuscriptTocEntries,
   type CompiledManuscript,
   type CompiledSpan,
@@ -177,7 +178,7 @@ export function buildManuscriptDocument(
         break;
       }
       case 'scene-heading': {
-        const run = new TextRun(`${block.number}. ${block.name}`);
+        const run = new TextRun(sceneHeadingLabel(block));
         children.push(
           new Paragraph({
             heading: HeadingLevel.HEADING_2,

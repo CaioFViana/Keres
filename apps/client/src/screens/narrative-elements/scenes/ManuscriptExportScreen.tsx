@@ -1,5 +1,4 @@
-import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -10,10 +9,7 @@ import { MANUSCRIPT_EXPORT_FORMATS } from '../../../components/features/manuscri
 import { defaultExportSettings } from '../../../components/features/manuscript/export/manuscriptExportSettings';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
-import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useManuscriptExport } from './useManuscriptExport';
-
-type ManuscriptExportRouteProp = RouteProp<NarrativeElementsStackParamList, 'ManuscriptExport'>;
 
 /**
  * The manuscript export as a screen of its own, laid out like every form of the app: the title in
@@ -25,9 +21,8 @@ const ManuscriptExportScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const route = useRoute<ManuscriptExportRouteProp>();
-  const { loading, exporting, isBranching, routeName, looseCount, arcs, storyAuthor, exportWith } =
-    useManuscriptExport(route.params?.routeId ?? null);
+  const { loading, exporting, isBranching, looseCount, arcs, storyAuthor, exportWith } =
+    useManuscriptExport();
   const [settings, setSettings] = useState(() => defaultExportSettings(storyAuthor));
   useScreenHeader({ target: 'parent', title: t('export_manuscript_title') });
 
@@ -56,7 +51,7 @@ const ManuscriptExportScreen = () => {
         settings={settings}
         onChange={setSettings}
         formats={MANUSCRIPT_EXPORT_FORMATS}
-        routeName={routeName}
+        branching={isBranching}
         showLooseSwitch={!isBranching && looseCount > 0}
         looseCount={looseCount}
         chapterNumberingAvailable={!isBranching}

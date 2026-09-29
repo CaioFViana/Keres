@@ -3,7 +3,7 @@ import {
   bookmarkIdForChapter,
   bookmarkIdForScene,
   compileLinearManuscript,
-  compileRouteManuscript,
+  compileGamebookManuscript,
   manuscriptTocEntries,
   withoutLooseSections,
   type CompiledBlock,
@@ -12,7 +12,6 @@ import {
 import {
   linearManuscriptSections,
   type ManuscriptChapter,
-  type ManuscriptRouteStep,
   type ManuscriptScene,
 } from '../../../manuscript/compile/manuscriptSections';
 
@@ -34,17 +33,6 @@ function makeScene(overrides: Partial<ManuscriptScene> = {}): ManuscriptScene {
 
 function makeChoice(overrides: Partial<ManuscriptChoice> = {}): ManuscriptChoice {
   return { id: 'choice-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Go on', ...overrides };
-}
-
-function makeStep(overrides: Partial<ManuscriptRouteStep> = {}): ManuscriptRouteStep {
-  return {
-    id: 'step-1',
-    routeId: 'route-1',
-    position: 1,
-    sceneId: 's-a',
-    isDeleted: false,
-    ...overrides,
-  };
 }
 
 function kinds(blocks: CompiledBlock[]): string[] {
@@ -260,62 +248,162 @@ describe('compileLinearManuscript strikethrough', () => {
   });
 });
 
-describe('compileRouteManuscript', () => {
-  it('compiles steps with a route subtitle and repeat-safe bookmarks', () => {
-    const scenes = [
-      makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
-      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
-    ];
-    const manuscript = compileRouteManuscript({
-      title: 'My Story',
-      routeName: 'Main',
-      steps: [
-        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
-        makeStep({ id: 'step-2', position: 2, sceneId: 's-b' }),
-        makeStep({ id: 'step-3', position: 3, sceneId: 's-a' }),
-      ],
+describe('compileGamebookManuscript', () => {
+  const scenes = [
+    makeScene({ id: 's-a', name: 'Alpha', body: 'First.', isStart: true }),
+    makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+    makeScene({ id: 's-c', name: 'Gamma', index: 3, body: 'Third.' }),
+    makeScene({ id: 's-lost', name: 'Lost', index: 4, body: 'Nobody comes here.' }),
+  ];
+  const choices = [
+    makeChoice({ id: 'c-1', sceneId: 's-a', nextSceneId: 's-c', text: 'Left' }),
+    makeChoice({ id: 'c-2', sceneId: 's-a', nextSceneId: 's-b', text: 'Right' }),
+    makeChoice({ id: 'c-3', sceneId: 's-b', nextSceneId: 's-a', text: 'Back' }),
+  ];
+  const compile = (overrides: Record<string, unknown> = {}) =>
+    compileGamebookManuscript({
+      title: 'My Book',
       scenes,
-      choices: [makeChoice({ id: 'c-1', sceneId: 's-a', nextSceneId: 's-b' })],
-      looseHeadingLabel: 'Loose',
+      choices,
+      order: 'discovery',
+      showSceneNames: true,
+      endLabel: 'the end of this excerpt',
+      startLabels: { choose: 'Choose where to begin', begin: 'Begin' },
+      ...overrides,
     });
+  const headings = (manuscript: ReturnType<typeof compile>) =>
+    manuscript.blocks
+      .filter((block) => block.kind === 'scene-heading')
+      .map((block) => block as Extract<CompiledBlock, { kind: 'scene-heading' }>);
 
-    expect(kinds(manuscript.blocks)).toEqual([
-      'title',
-      'subtitle',
-      'scene-heading',
-      'paragraph',
-      'choice',
-      'scene-heading',
-      'paragraph',
-      'scene-heading',
-      'paragraph',
-      'choice',
+  it('numbers the reachable scenes as they are met, the unreachable after them', () => {
+    const manuscript = compile();
+
+    expect(kinds(manuscript.blocks)[0]).toBe('title');
+    expect(headings(manuscript).map((h) => `${h.number}. ${h.name}`)).toEqual([
+      '1. Alpha',
+      '2. Gamma',
+      '3. Beta',
+      '4. Lost',
     ]);
-    const headings = manuscript.blocks.filter((block) => block.kind === 'scene-heading');
-    expect(
-      headings.map((heading) => (heading as { bookmarkId: string | null }).bookmarkId),
-    ).toEqual(['scene-sa', 'scene-sb', null]);
+    expect(JSON.stringify(manuscript)).toContain('Nobody comes here.');
   });
 
-  it('omits scene headings when scene names are off', () => {
-    const scenes = [
-      makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
-      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+  it('points each choice at its target, loops included', () => {
+    const choiceBlocks = compile().blocks.filter((block) => block.kind === 'choice') as Extract<
+      CompiledBlock,
+      { kind: 'choice' }
+    >[];
+
+    expect(choiceBlocks.map((c) => [c.text, c.targetBookmarkId, c.targetSceneName])).toEqual([
+      ['Left', 'scene-sc', 'Gamma'],
+      ['Right', 'scene-sb', 'Beta'],
+      ['Back', 'scene-sa', 'Alpha'],
+    ]);
+  });
+
+  it('shows only numbers when names are off, and refers to scenes by number', () => {
+    const manuscript = compile({ showSceneNames: false });
+
+    expect(headings(manuscript).map((h) => h.name)).toEqual(['', '', '', '']);
+    expect(headings(manuscript).map((h) => h.number)).toEqual([1, 2, 3, 4]);
+    const targets = manuscript.blocks
+      .filter((block) => block.kind === 'choice')
+      .map((block) => (block as { targetSceneName: string | null }).targetSceneName);
+    expect(targets).toEqual(['2', '3', '1']);
+    expect(manuscriptTocEntries(manuscript.blocks).map((entry) => entry.text)).toEqual([
+      '1',
+      '2',
+      '3',
+      '4',
+    ]);
+  });
+
+  it('scatters the scenes with a seed, the start staying number 1', () => {
+    const many = Array.from({ length: 12 }, (_, index) =>
+      makeScene({ id: `n-${index}`, name: `N${index}`, index, isStart: index === 0 }),
+    );
+    const chain = many
+      .slice(1)
+      .map((scene, index) =>
+        makeChoice({ id: `k-${index}`, sceneId: many[index].id, nextSceneId: scene.id }),
+      );
+    const shuffled = (seed: string) =>
+      headings(compile({ scenes: many, choices: chain, order: 'shuffled', seed })).map((h) => h.id);
+
+    expect(shuffled('one')[0]).toBe('n-0');
+    expect(shuffled('one')).toEqual(shuffled('one'));
+    expect(shuffled('one')).not.toEqual(shuffled('two'));
+    expect(shuffled('one')).not.toEqual(many.map((scene) => scene.id));
+    expect([...shuffled('one')].sort()).toEqual(many.map((scene) => scene.id).sort());
+  });
+
+  it('ends a choice into a scene outside the export, saying so', () => {
+    const manuscript = compile({
+      scenes: scenes.filter((scene) => scene.id !== 's-c'),
+    });
+    const left = manuscript.blocks.find(
+      (block) => block.kind === 'choice' && block.id === 'c-1',
+    ) as Extract<CompiledBlock, { kind: 'choice' }>;
+
+    expect(left).toMatchObject({
+      text: 'Left — the end of this excerpt',
+      targetBookmarkId: null,
+      targetSceneName: null,
+    });
+  });
+
+  describe('with several starts', () => {
+    const twoStarts = [
+      makeScene({ id: 's-a', name: 'Alpha', index: 1, body: 'First.', isStart: true }),
+      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.', isStart: true }),
+      makeScene({ id: 's-c', name: 'Gamma', index: 3, body: 'Third.' }),
+      makeScene({ id: 's-lost', name: 'Lost', index: 4, body: 'Nobody.' }),
     ];
-    const manuscript = compileRouteManuscript({
-      title: 'My Story',
-      routeName: 'Main',
-      steps: [
-        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
-        makeStep({ id: 'step-2', position: 2, sceneId: 's-b' }),
-      ],
-      scenes,
-      choices: [],
-      looseHeadingLabel: 'Loose',
-      includeSceneNames: false,
+    const links = [makeChoice({ id: 'c-1', sceneId: 's-b', nextSceneId: 's-c', text: 'On' })];
+
+    it('opens on a page offering each start, and reaches from all of them', () => {
+      const manuscript = compile({ scenes: twoStarts, choices: links });
+
+      expect(kinds(manuscript.blocks).slice(0, 4)).toEqual([
+        'title',
+        'paragraph',
+        'choice',
+        'choice',
+      ]);
+      expect(manuscript.blocks[1]).toMatchObject({
+        spans: [{ text: 'Choose where to begin', bold: true }],
+      });
+      const offered = manuscript.blocks.slice(2, 4) as Extract<CompiledBlock, { kind: 'choice' }>[];
+      expect(offered.map((c) => [c.text, c.targetBookmarkId, c.targetSceneName])).toEqual([
+        ['Begin', 'scene-sa', 'Alpha'],
+        ['Begin', 'scene-sb', 'Beta'],
+      ]);
+      expect(headings(manuscript).map((h) => h.name)).toEqual(['Alpha', 'Beta', 'Gamma', 'Lost']);
     });
 
-    expect(kinds(manuscript.blocks)).toEqual(['title', 'subtitle', 'paragraph', 'paragraph']);
+    it('offers numbers when names are off', () => {
+      const offered = compile({ scenes: twoStarts, choices: links, showSceneNames: false })
+        .blocks.slice(2, 4)
+        .map((block) => (block as { targetSceneName: string | null }).targetSceneName);
+      expect(offered).toEqual(['1', '2']);
+    });
+
+    it('adds no opening page for a single start', () => {
+      expect(kinds(compile().blocks).slice(0, 2)).toEqual(['title', 'scene-heading']);
+    });
+
+    it('offers only the starts that made it into the export', () => {
+      const manuscript = compile({
+        scenes: twoStarts.filter((scene) => scene.id !== 's-b'),
+        choices: links,
+      });
+      expect(kinds(manuscript.blocks).slice(0, 2)).toEqual(['title', 'scene-heading']);
+    });
+  });
+
+  it('is empty of scenes when the story has none', () => {
+    expect(kinds(compile({ scenes: [], choices: [] }).blocks)).toEqual(['title']);
   });
 });
 
@@ -358,31 +446,6 @@ describe('resetSceneNumbersPerChapter', () => {
   it('restarts scene numbers in every chapter and the appendix', () => {
     expect(headingNumbers(true)).toEqual([1, 2, 1, 1]);
   });
-
-  it('is a no-op for routes, which have a single group', () => {
-    const scenes = [
-      makeScene({ id: 's-a', name: 'Alpha', body: 'First.' }),
-      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
-    ];
-    const manuscript = compileRouteManuscript({
-      title: 'My Story',
-      routeName: 'Main',
-      steps: [
-        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
-        makeStep({ id: 'step-2', position: 2, sceneId: 's-b' }),
-      ],
-      scenes,
-      choices: [],
-      looseHeadingLabel: 'Loose',
-      resetSceneNumbersPerChapter: true,
-    });
-
-    expect(
-      manuscript.blocks
-        .filter((block) => block.kind === 'scene-heading')
-        .map((block) => (block as { number: number }).number),
-    ).toEqual([1, 2]);
-  });
 });
 
 describe('manuscriptTocEntries', () => {
@@ -407,25 +470,6 @@ describe('manuscriptTocEntries', () => {
       { level: 1, text: '2. Opening', bookmarkId: 'scene-s2' },
       { level: 0, text: 'Appendix', bookmarkId: 'appendix' },
       { level: 1, text: '3. Opening', bookmarkId: 'scene-sloose' },
-    ]);
-  });
-
-  it("links repeat visits to the scene's first bookmark", () => {
-    const manuscript = compileRouteManuscript({
-      title: 'My Story',
-      routeName: 'Main',
-      steps: [
-        makeStep({ id: 'step-1', position: 1, sceneId: 's-a' }),
-        makeStep({ id: 'step-2', position: 2, sceneId: 's-a' }),
-      ],
-      scenes: [makeScene({ id: 's-a', name: 'Alpha', body: 'First.' })],
-      choices: [],
-      looseHeadingLabel: 'Loose',
-    });
-
-    expect(manuscriptTocEntries(manuscript.blocks)).toEqual([
-      { level: 1, text: '1. Alpha', bookmarkId: 'scene-sa' },
-      { level: 1, text: '2. Alpha', bookmarkId: 'scene-sa' },
     ]);
   });
 

@@ -73,6 +73,38 @@ describe('OverlaySelectionView', () => {
     expect(callbacks.onDragEnd).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps a dragged handle under the finger at any zoom: its offset is world units, not scaled again', async () => {
+    // Zoomed out to half: the plane scales world units by 0.5, so a 20 px drag is 40 world units.
+    const { view, configs } = await setup(POLYGON, 0.5);
+    const vertex = configs[2];
+    const leftBefore = view.getByTestId('overlay-vertex-1').props.style.left;
+
+    await act(async () => {
+      await vertex.onPanResponderGrant();
+      await vertex.onPanResponderMove({}, { dx: 20, dy: -10 });
+    });
+
+    const style = view.getByTestId('overlay-vertex-1').props.style;
+    // In world units the handle moved dx / scale; the plane turns that back into exactly 20 px.
+    expect(style.left - leftBefore).toBeCloseTo(40);
+    expect(style.top).toBeCloseTo(view.getByTestId('overlay-vertex-1').props.style.top);
+    expect((style.left - leftBefore) * 0.5).toBeCloseTo(20);
+  });
+
+  it('keeps the whole box under the finger while it is moved, too', async () => {
+    const { view, configs } = await setup(POLYGON, 0.5);
+    const [move] = configs;
+
+    await act(async () => {
+      await move.onPanResponderGrant();
+      await move.onPanResponderMove({}, { dx: 20, dy: 10 });
+    });
+
+    const flat = ([] as any[]).concat(view.getByTestId('overlay-selection').props.style);
+    const transform = flat.find((entry) => entry?.transform)?.transform;
+    expect(transform).toEqual([{ translateX: 40 }, { translateY: 20 }]);
+  });
+
   it('commits vertex drags to world points', async () => {
     const { callbacks, configs } = await setup(POLYGON);
     // First responder is the move badge; vertex handles follow in point order.

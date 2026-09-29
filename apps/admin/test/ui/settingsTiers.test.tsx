@@ -59,6 +59,7 @@ const tier = (over: Record<string, unknown> = {}) => ({
   maxEntitiesTotal: null,
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
+  maxPublicationsPerDay: null,
   isDeleted: false,
   ...over,
 });
@@ -367,6 +368,66 @@ describe('tiers page', () => {
 
     expect(mocks.createTier).toHaveBeenCalledWith(
       expect.objectContaining({ maxStories: 25, maxEntitiesPerStory: null }),
+    );
+    await view.unmount();
+  });
+
+  it('asks for the publications per day, labelled, and keeps 0 (none allowed) apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxPublicationsPerDay: 3 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    // The column and its value.
+    expect(view.container.querySelector('thead')!.textContent).toContain('Publications/day');
+    expect(view.container.querySelector('tbody tr')!.textContent).toContain('3');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max publications per day'),
+    )!;
+    const input = label.querySelector('input')!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Team');
+    await changeInput(input, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxPublicationsPerDay: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxPublicationsPerDay: null }),
+    );
+    await view.unmount();
+  });
+
+  it('loads the ceiling of the tier being edited', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxPublicationsPerDay: 7 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.updateTier).toHaveBeenCalledWith(
+      'tier-1',
+      expect.objectContaining({ maxPublicationsPerDay: 7 }),
     );
     await view.unmount();
   });

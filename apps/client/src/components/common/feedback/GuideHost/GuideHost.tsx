@@ -7,6 +7,7 @@ import GuideSpotlight from './GuideSpotlight';
 import { measureGuideAnchors, unionGuideRects } from '../../../../guides/anchorRegistry';
 import { useGuidePersistence } from '../../../../hooks/useGuidePersistence';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
+import { useSystemInsets } from '../../../../hooks/useSystemInsets';
 import { getGuideDrawer, scrollDrawerToRect } from '../../../../navigation/drawerGuideRegistry';
 import { useGuideStore } from '../../../../state/guideStore';
 import { useTheme } from '../../../../theme';
@@ -46,6 +47,7 @@ const ActiveGuideOverlay: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isWide } = useResponsiveLayout();
+  const insets = useSystemInsets();
   const activeTour = useGuideStore((state) => state.activeTour);
   const nextStep = useGuideStore((state) => state.nextStep);
   const prevStep = useGuideStore((state) => state.prevStep);
@@ -157,10 +159,13 @@ const ActiveGuideOverlay: React.FC = () => {
       position: 'absolute',
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
+    // The card sits at the foot of a window the navigation bar draws over: its last row (the help
+    // link) needs room above the bar, not against it.
     cardWrap: {
       flex: 1,
       justifyContent: 'flex-end',
       padding: 20,
+      paddingBottom: 20 + insets.bottom,
     },
     card: {
       width: '100%',
@@ -264,7 +269,7 @@ const ActiveGuideOverlay: React.FC = () => {
         ) : (
           <View pointerEvents="none" style={[styles.dim, StyleSheet.absoluteFill]} />
         )}
-        <View style={styles.cardWrap} pointerEvents="box-none">
+        <View testID="guide-card-wrap" style={styles.cardWrap} pointerEvents="box-none">
           <View style={styles.card} testID="guide-card">
             <Text style={styles.title}>{t(step.titleKey)}</Text>
             <Text style={styles.message}>{t(step.bodyKey)}</Text>

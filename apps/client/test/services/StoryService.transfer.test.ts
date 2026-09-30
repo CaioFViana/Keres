@@ -6,6 +6,7 @@ jest.mock('../../src/services/MediaFileService', () => ({
 
 import { AttributeType } from '@keres/shared';
 import { FullStoryExportSchema } from '@keres/shared';
+import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { mediaFileService } from '../../src/services/MediaFileService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
@@ -244,6 +245,59 @@ it('carries scenes filed nowhere through an export and back', async () => {
     where: (table, { eq }) => eq(table.storyId, importedStoryId),
   });
   expect(scenes.find((scene) => scene.name === 'Filed')?.chapterId).toBe(chapters[0]?.id);
+});
+
+/**
+ * Packages written before ranks carry only each row's position. The importer hands those rows an
+ * empty rank and the database derives the real one from the position - so the order the writer
+ * saw must be the order that lands, even when the package lists the rows backwards and the new ids
+ * therefore sort the other way round (the tie-break between equal ranks is the id).
+ */
+it('keeps the order of scenes and chapters of a package that predates ranks', async () => {
+  await database.db.insert(schema.chapters).values([
+    { id: 'ch-1', storyId: STORY_ID, name: 'First chapter', index: 1, ...entityBase },
+    { id: 'ch-2', storyId: STORY_ID, name: 'Second chapter', index: 2, ...entityBase },
+    { id: 'ch-3', storyId: STORY_ID, name: 'Third chapter', index: 3, ...entityBase },
+  ]);
+  await database.db.insert(schema.scenes).values(
+    ['One', 'Two', 'Three', 'Four'].map((name, position) => ({
+      id: `scene-${position}`,
+      storyId: STORY_ID,
+      chapterId: 'ch-1',
+      locationId: null,
+      name,
+      index: position + 1,
+      isStart: position === 0,
+      isFinish: false,
+      ...entityBase,
+    })),
+  );
+
+  const service = createStoryService(database.db);
+  const exported = JSON.parse(JSON.stringify(await service.exportFullStory(STORY_ID)));
+  // What a V10 package looked like: no ranks, and rows in an order that is not their position.
+  exported.formatVersion = 10;
+  for (const row of [...exported.scenes, ...exported.chapters]) delete row.rank;
+  exported.scenes.reverse();
+  exported.chapters.reverse();
+
+  const importedStoryId = await service.importFullStory(LOCAL_USER_ID, exported, null);
+  const inOrder = async (table: typeof schema.scenes | typeof schema.chapters) =>
+    (await database.db.select().from(table).where(eq(table.storyId, importedStoryId)).all())
+      .sort((a, b) => a.index - b.index)
+      .map((row) => [row.name, row.index, row.rank !== ''] as const);
+
+  expect(await inOrder(schema.scenes)).toEqual([
+    ['One', 1, true],
+    ['Two', 2, true],
+    ['Three', 3, true],
+    ['Four', 4, true],
+  ]);
+  expect(await inOrder(schema.chapters)).toEqual([
+    ['First chapter', 1, true],
+    ['Second chapter', 2, true],
+    ['Third chapter', 3, true],
+  ]);
 });
 
 /**

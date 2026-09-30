@@ -799,6 +799,42 @@ describe('import of a package with one row of every kind', () => {
     expect(after.scenes.map((scene) => scene.body)).toEqual([null, null]);
   });
 
+  it('keeps the order of a package that predates ranks, even when it lists its rows backwards', async () => {
+    const pkg = JSON.parse(JSON.stringify(await service.exportStory(id.story, OWNER)));
+    const positions = (rows: { id: string; index: number }[]) =>
+      Object.fromEntries(rows.map((row) => [row.id, row.index]));
+    const sceneNames = Object.fromEntries(
+      pkg.scenes.map((scene: { id: string; name: string }) => [scene.id, scene.name]),
+    );
+    const before = positions(pkg.scenes);
+    // What a V10 package looked like: no ranks, and rows in an order that is not their position,
+    // so the ids the import hands out sort the other way round.
+    pkg.formatVersion = 10;
+    for (const row of [...pkg.scenes, ...pkg.chapters, ...pkg.stats, ...pkg.storySchemaFields]) {
+      delete row.rank;
+    }
+    pkg.scenes.reverse();
+    pkg.chapters.reverse();
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(IMPORTER, pkg);
+    const after = await childrenOf(importedId);
+
+    const landed = Object.fromEntries(
+      after.scenes.map((scene) => [scene.name, [scene.index, scene.rank !== '']]),
+    );
+    for (const [sceneId, index] of Object.entries(before)) {
+      expect(landed[sceneNames[sceneId]]).toEqual([index, true]);
+    }
+    for (const row of [...after.chapters, ...after.stats, ...after.storySchemaFields]) {
+      expect(row.rank).not.toBe('');
+    }
+  });
+
   it('re-exports every collection and reference after a preserve-id import', async () => {
     const exported = await service.exportStory(id.story, OWNER);
 

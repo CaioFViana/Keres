@@ -251,6 +251,7 @@ export class StoryPublicationService {
     password?: string,
     manuscript?: ManuscriptOptionsInput,
     reader?: ReaderOptionsInput,
+    includePackage = true,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
@@ -268,6 +269,15 @@ export class StoryPublicationService {
       throw new AppError(400, 'A password is required for password-protected stories.');
     }
 
+    // A version with nothing to offer is no version: the package may be left out only when a
+    // manuscript or the online reader is there instead.
+    if (!includePackage && manuscript === undefined && reader === undefined) {
+      throw new AppError(
+        400,
+        'Select at least one of the story package, the manuscript and the online reader.',
+      );
+    }
+
     // Before any packaging or compiling: a refused publication costs nothing. 429, not 403 - the
     // client already reads 403 as "the showcase is off".
     try {
@@ -281,7 +291,10 @@ export class StoryPublicationService {
 
     const storyExport = await this.exportImportService.exportStory(storyId, userId);
     const publicationId = ulid();
-    const zip = await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash));
+    // Left out when the publisher asked for a manuscript and/or the reader only: no packaging cost.
+    const zip = includePackage
+      ? await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash))
+      : null;
 
     // Validated and compiled before any blob is written, so a refused manuscript leaves no litter -
     // the same guarantee the .zip gets from the rollback below. `includeLooseScenes` needs no
@@ -300,7 +313,7 @@ export class StoryPublicationService {
     // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
     // no row is invisible. If the transaction below fails, the files are removed in the `catch` - without
     // that, every refused publication would leave an orphaned .zip taking up disk.
-    await publicationStorageService.store(storyId, publicationId, zip.bytes);
+    if (zip) await publicationStorageService.store(storyId, publicationId, zip.bytes);
     if (compiledManuscript) {
       await publicationStorageService.storeManuscript(
         storyId,
@@ -347,9 +360,10 @@ export class StoryPublicationService {
           ),
           operationVersion: story.lastOperationVersion,
           formatVersion: CURRENT_STORY_FORMAT_VERSION,
-          byteSize: zip.bytes.byteLength,
-          mediaIncluded: zip.includedCount,
-          mediaTotal: zip.totalCount,
+          byteSize: zip ? zip.bytes.byteLength : 0,
+          mediaIncluded: zip ? zip.includedCount : 0,
+          mediaTotal: zip ? zip.totalCount : 0,
+          packageIncluded: zip !== null,
           manuscriptFormat: compiledManuscript?.format ?? null,
           manuscriptByteSize: compiledManuscript ? compiledManuscript.bytes.byteLength : null,
           readerByteSize: compiledReader ? compiledReader.bytes.byteLength : null,
@@ -377,7 +391,7 @@ export class StoryPublicationService {
         return [];
       },
       async () => {
-        await publicationStorageService.delete(storyId, publicationId);
+        if (zip) await publicationStorageService.delete(storyId, publicationId);
         if (compiledManuscript) {
           const extension = FORMAT_META[compiledManuscript.format].extension;
           await publicationStorageService.deleteManuscript(storyId, publicationId, extension);

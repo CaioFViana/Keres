@@ -260,6 +260,13 @@
       "when": 1790685670264,
       "tag": "0036_tier_publication_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1790776835190,
+      "tag": "0037_publication_package_optional",
+      "breakpoints": true
     }
   ]
 }

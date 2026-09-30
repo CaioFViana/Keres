@@ -226,6 +226,7 @@ const PublishStoryScreen = () => {
           usePassword ? password.trim() : undefined,
           manuscriptOptions,
           readerOptions,
+          manuscript.includePackage,
         );
         // A server that predates these extras publishes the version and drops them without a word:
         // saying so beats a page that silently lacks the button.
@@ -281,6 +282,10 @@ const PublishStoryScreen = () => {
         showNotification(t('publish_password_too_short'), 'error');
         return;
       }
+      if (manuscript.nothingSelected) {
+        showNotification(t('publish_select_one'), 'error');
+        return;
+      }
 
       // Visibility applies to the whole story: removing the password now also opens the versions that were
       // already published behind it. That is not obvious from a "publish" button, so it is said before it
@@ -303,7 +308,7 @@ const PublishStoryScreen = () => {
         ],
       );
     },
-    [password, runPublish, showcaseByStory, showNotification, t, usePassword],
+    [manuscript, password, runPublish, showcaseByStory, showNotification, t, usePassword],
   );
 
   const handleDeleteVersion = useCallback(
@@ -596,10 +601,11 @@ const PublishStoryScreen = () => {
                   <TouchableOpacity
                     style={[
                       styles.primaryButton,
-                      (!!reason || busy) && styles.primaryButtonDisabled,
+                      (!!reason || busy || manuscript.nothingSelected) &&
+                        styles.primaryButtonDisabled,
                     ]}
                     onPress={() => handlePublish(row)}
-                    disabled={!!reason || busy}
+                    disabled={!!reason || busy || manuscript.nothingSelected}
                   >
                     <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
                     <Text style={styles.primaryButtonText}>

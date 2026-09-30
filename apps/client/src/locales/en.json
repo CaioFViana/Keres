@@ -1571,6 +1571,8 @@
   "publish_link_intro": "Version {{label}} is live at:",
   "publish_link_password_reminder": "Anyone opening it will need the password you just set.",
   "publish_manuscript_attach": "Attach manuscript",
+  "publish_package_attach": "Publish the story file (.zip)",
+  "publish_select_one": "Select at least one",
   "publish_no_eligible_stories": "No stories to publish. Only stories you own that are linked to a server can be published here.",
   "publish_not_published": "not published",
   "publish_open_link": "Open page",

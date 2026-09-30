@@ -228,6 +228,7 @@ describe('server-bound API services', () => {
       labelMode: 'both',
       visibility: 'password',
       password: 'secret',
+      includePackage: true,
     });
 
     // The manuscript travels as render options only: no bytes leave the device.
@@ -258,6 +259,29 @@ describe('server-bound API services', () => {
       visibility: 'public',
       password: undefined,
       manuscript,
+      includePackage: true,
+    });
+
+    // The story file may be left out when something else is published in its place.
+    await service.publish(
+      server,
+      'story',
+      7,
+      'both',
+      'public',
+      undefined,
+      undefined,
+      {} as never,
+      false,
+    );
+    expect(mockClient.post).toHaveBeenLastCalledWith('/stories/story/publications', {
+      operationVersion: 7,
+      labelMode: 'both',
+      visibility: 'public',
+      password: undefined,
+      manuscript: undefined,
+      reader: {},
+      includePackage: false,
     });
     expect(mockClient.put).toHaveBeenCalledWith('/stories/story/showcase', {
       visibility: 'public',

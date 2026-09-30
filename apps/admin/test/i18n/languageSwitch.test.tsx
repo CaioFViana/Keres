@@ -41,6 +41,7 @@ const card: ShowcaseStoryCard = {
     byteSize: 1024,
     mediaIncluded: 0,
     mediaTotal: 0,
+    packageIncluded: true,
     createdAt: '2026-08-19T10:00:00.000Z',
     manuscript: null,
     reader: null,

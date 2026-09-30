@@ -17,6 +17,11 @@ export interface ShowcaseVersion {
   mediaIncluded: number;
   mediaTotal: number;
   createdAt: string;
+  /**
+   * Whether the story package (.zip) was published. A version may carry only a manuscript and/or the
+   * online reader, in which case `byteSize` is 0 and there is no package to download.
+   */
+  packageIncluded: boolean;
   /** The version's manuscript rendition, when one was published alongside it. */
   manuscript: ManuscriptInfo | null;
   /** The version's online reader page, when one was published alongside it. */

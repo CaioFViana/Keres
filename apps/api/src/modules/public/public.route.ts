@@ -61,6 +61,7 @@ const VersionSchema = t.Object({
   mediaIncluded: t.Number(),
   mediaTotal: t.Number(),
   createdAt: t.String(),
+  packageIncluded: t.Boolean(),
   manuscript: t.Nullable(
     t.Object({
       format: t.String(),
@@ -320,7 +321,9 @@ export const publicRoutes = new Elysia()
             params.storyId,
             params.publicationId,
           );
-          if (!publication) {
+          // A version made only of a manuscript and/or the reader has no package to serve (nor, on S3,
+          // a key to sign).
+          if (!publication || !publication.packageIncluded) {
             throw new AppError(404, 'Not found.');
           }
 
@@ -382,7 +385,7 @@ export const publicRoutes = new Elysia()
             params.storyId,
             params.publicationId,
           );
-          if (!publication) {
+          if (!publication || !publication.packageIncluded) {
             throw new AppError(404, 'Not found.');
           }
 

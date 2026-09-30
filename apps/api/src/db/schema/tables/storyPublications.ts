@@ -1,5 +1,15 @@
 import { relations } from 'drizzle-orm';
-import { bigintNumber, index, integer, json, table, text, timestampNow, unique } from '../columns';
+import {
+  bigintNumber,
+  boolean,
+  index,
+  integer,
+  json,
+  table,
+  text,
+  timestampNow,
+  unique,
+} from '../columns';
 import type { StoryPublicationSnapshot } from '@keres/shared';
 import { stories } from './stories';
 import { users } from './users';
@@ -37,6 +47,11 @@ export const storyPublications = table(
     byteSize: bigintNumber('byte_size').notNull(),
     mediaIncluded: integer('media_included').notNull().default(0),
     mediaTotal: integer('media_total').notNull().default(0),
+    /**
+     * Whether the .zip was published. A version can be only a manuscript and/or an online reader (then
+     * there is no package blob and `byteSize` is 0), so a download of the package is refused for it.
+     */
+    packageIncluded: boolean('package_included').notNull().default(true),
     /** Manuscript rendition published alongside the package (`ManuscriptFormat`), or null when none. */
     manuscriptFormat: text('manuscript_format'),
     /** Rendered manuscript size in bytes. Set together with `manuscriptFormat`, never alone. */

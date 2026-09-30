@@ -70,8 +70,12 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
             <span className="version-label">{latestVersion.label}</span>
             <span className="dot">·</span>
             <span>{formatDate(latestVersion.createdAt, i18n.language)}</span>
-            <span className="dot">·</span>
-            <span>{formatBytes(latestVersion.byteSize)}</span>
+            {latestVersion.packageIncluded !== false && (
+              <>
+                <span className="dot">·</span>
+                <span>{formatBytes(latestVersion.byteSize)}</span>
+              </>
+            )}
           </div>
         </div>
       </div>

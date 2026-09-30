@@ -176,8 +176,10 @@ export function StoryPage() {
             <div>
               <span className="version-label">{newest.label}</span>
               <span className="version-sub">
-                {formatDate(newest.createdAt, i18n.language)} · {formatBytes(newest.byteSize)}
-                {newest.mediaTotal > 0 &&
+                {formatDate(newest.createdAt, i18n.language)}
+                {newest.packageIncluded !== false && ` · ${formatBytes(newest.byteSize)}`}
+                {newest.packageIncluded !== false &&
+                  newest.mediaTotal > 0 &&
                   ` · ${t('story.mediaCount', {
                     included: newest.mediaIncluded,
                     total: newest.mediaTotal,
@@ -185,14 +187,17 @@ export function StoryPage() {
               </span>
             </div>
             <div className="version-actions">
-              <button
-                type="button"
-                className="download-button"
-                disabled={downloading === newest.id}
-                onClick={() => void download(newest.id)}
-              >
-                {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
-              </button>
+              {/* A version may be only a manuscript and/or the reading: then there is no story file to offer. */}
+              {newest.packageIncluded !== false && (
+                <button
+                  type="button"
+                  className="download-button"
+                  disabled={downloading === newest.id}
+                  onClick={() => void download(newest.id)}
+                >
+                  {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
+                </button>
+              )}
               {newest.reader && (
                 <Link
                   to={`/story/${storyId}/read/${newest.id}`}
@@ -224,18 +229,21 @@ export function StoryPage() {
               <div>
                 <span className="version-label">{version.label}</span>
                 <span className="version-sub">
-                  {formatDate(version.createdAt, i18n.language)} · {formatBytes(version.byteSize)}
+                  {formatDate(version.createdAt, i18n.language)}
+                  {version.packageIncluded !== false && ` · ${formatBytes(version.byteSize)}`}
                 </span>
               </div>
               <div className="version-actions">
-                <button
-                  type="button"
-                  className="download-button ghost"
-                  disabled={downloading === version.id}
-                  onClick={() => void download(version.id)}
-                >
-                  {downloading === version.id ? t('story.preparing') : t('story.download')}
-                </button>
+                {version.packageIncluded !== false && (
+                  <button
+                    type="button"
+                    className="download-button ghost"
+                    disabled={downloading === version.id}
+                    onClick={() => void download(version.id)}
+                  >
+                    {downloading === version.id ? t('story.preparing') : t('story.download')}
+                  </button>
+                )}
                 {version.reader && (
                   <Link
                     to={`/story/${storyId}/read/${version.id}`}

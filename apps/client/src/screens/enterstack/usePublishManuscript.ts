@@ -58,6 +58,9 @@ function readerLabelsOf(t: (key: string) => string): ReaderLabels {
 export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   const [attachManuscript, setAttachManuscript] = useState(false);
   const [publishReader, setPublishReader] = useState(false);
+  // The story file (.zip) is what a version has always been; it may be left out when a manuscript
+  // and/or the online reader are published instead.
+  const [includePackage, setIncludePackage] = useState(true);
   const [settings, setSettings] = useState<ManuscriptExportSettings>(() => defaultExportSettings());
   const [manuscriptLooseCount, setManuscriptLooseCount] = useState(0);
   const [manuscriptArcs, setManuscriptArcs] = useState<{ id: string; title: string }[]>([]);
@@ -68,6 +71,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     (story: StorySelect) => {
       setAttachManuscript(false);
       setPublishReader(false);
+      setIncludePackage(true);
       setSettings(defaultExportSettings(story.author ?? ''));
       setManuscriptLooseCount(0);
       setManuscriptArcs([]);
@@ -170,6 +174,10 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     setAttachManuscript,
     publishReader,
     setPublishReader,
+    includePackage,
+    setIncludePackage,
+    /** A version with nothing in it: none of the three is on. */
+    nothingSelected: !includePackage && !attachManuscript && !publishReader,
     settings,
     setSettings,
     manuscriptLooseCount,

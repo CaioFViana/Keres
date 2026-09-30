@@ -351,6 +351,13 @@
       "when": 1790685668846,
       "tag": "0049_tier_publication_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1790776833505,
+      "tag": "0050_publication_package_optional",
+      "breakpoints": true
     }
   ]
 }

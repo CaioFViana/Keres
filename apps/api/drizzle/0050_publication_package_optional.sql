@@ -1,0 +1,1 @@
+ALTER TABLE "story_publications" ADD COLUMN "package_included" boolean DEFAULT true NOT NULL;

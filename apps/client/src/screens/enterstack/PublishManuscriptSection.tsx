@@ -30,6 +30,8 @@ export function PublishManuscriptSection({
       marginBottom: 10,
     },
     label: { fontSize: 13, fontWeight: 'bold', color: colors.text, marginBottom: 8 },
+    selectOne: { fontSize: 13, fontWeight: 'bold', color: colors.textSecondary, marginBottom: 10 },
+    selectOneMissing: { color: colors.error },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: -4, marginBottom: 12 },
     options: { marginBottom: 16 },
   });
@@ -37,6 +39,20 @@ export function PublishManuscriptSection({
   const branching = storyType === 'branching';
   return (
     <>
+      <Text
+        style={[styles.selectOne, manuscript.nothingSelected && styles.selectOneMissing]}
+        testID={`publish-select-one-${storyId}`}
+      >
+        {t('publish_select_one')}
+      </Text>
+      <View style={styles.switchRow}>
+        <Text style={styles.label}>{t('publish_package_attach')}</Text>
+        <ThemedSwitch
+          value={manuscript.includePackage}
+          onValueChange={manuscript.setIncludePackage}
+          testID={`publish-package-switch-${storyId}`}
+        />
+      </View>
       <View style={styles.switchRow}>
         <Text style={styles.label}>{t('publish_manuscript_attach')}</Text>
         <ThemedSwitch

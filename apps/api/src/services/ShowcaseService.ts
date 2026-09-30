@@ -41,6 +41,7 @@ export class ShowcaseService {
       mediaIncluded: row.mediaIncluded,
       mediaTotal: row.mediaTotal,
       createdAt: row.createdAt.toISOString(),
+      packageIncluded: row.packageIncluded,
       manuscript:
         row.manuscriptFormat && row.manuscriptByteSize != null
           ? {

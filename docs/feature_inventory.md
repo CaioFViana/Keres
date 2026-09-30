@@ -203,7 +203,10 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   publish requires ownership + being in sync; labelled versions (keeps 5);
   visibility `public`/`password` (password change on switch); manuscript
   renditions and the online reader recorded per version (`manuscriptFormat`,
-  `readerByteSize`); offline-diff notice on reconnect.
+  `readerByteSize`); the story file (.zip) is itself optional (`packageIncluded`)
+  as long as a manuscript and/or the reader is published - the publish screen
+  asks to select at least one, the API refuses an empty version (400), and the
+  showcase offers no package download for one; offline-diff notice on reconnect.
 - **Showcase** (admin dual build, served at `/showcase`): public story pages
   with author palette theming + configurable branding (name/logo/palette/title,
   Keres fallback); password gate learns nothing before unlock; ETag caching.

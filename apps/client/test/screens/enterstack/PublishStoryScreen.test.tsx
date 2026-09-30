@@ -367,6 +367,7 @@ describe('PublishStoryScreen', () => {
         undefined,
         undefined,
         undefined,
+        true,
       ),
     );
     expect(mockSyncPubs).toHaveBeenCalledWith(server);
@@ -404,6 +405,7 @@ describe('PublishStoryScreen', () => {
         'pw1234',
         undefined,
         undefined,
+        true,
       ),
     );
   });
@@ -607,6 +609,7 @@ describe('PublishStoryScreen', () => {
         undefined,
         manuscriptPayload({ format: 'md' }),
         undefined,
+        true,
       ),
     );
     const sent = mockPublish.mock.calls[0][6];
@@ -677,6 +680,7 @@ describe('PublishStoryScreen', () => {
         undefined,
         manuscriptPayload({ sceneOrder: 'discovery' }),
         undefined,
+        true,
       ),
     );
   });
@@ -781,6 +785,51 @@ describe('PublishStoryScreen', () => {
 
     await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
     expect(mockNotify).not.toHaveBeenCalledWith('publish_extras_ignored', 'error');
+  });
+
+  it('publishes the story file by default, and says to select at least one', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    expect(view.getByText('publish_select_one')).toBeTruthy();
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][8]).toBe(true);
+  });
+
+  it('publishes the reading alone once the story file is switched off', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await fireEvent.press(view.getByTestId('publish-package-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][7]).toBeDefined();
+    expect(mockPublish.mock.calls[0][8]).toBe(false);
+  });
+
+  it('will not publish a version with nothing in it: the button is off and pressing says why', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-package-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    expect(mockPublish).not.toHaveBeenCalled();
+    expect(view.getByText('publish_select_one')).toBeTruthy();
+    // Switching one back on lifts it.
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
   });
 
   it('sends no reader unless asked', async () => {

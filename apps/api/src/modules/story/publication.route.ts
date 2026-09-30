@@ -17,6 +17,8 @@ const PublicationResponseSchema = t.Object({
   mediaTotal: t.Number(),
   manuscriptFormat: t.Nullable(t.String()),
   manuscriptByteSize: t.Nullable(t.Number()),
+  readerByteSize: t.Nullable(t.Number()),
+  packageIncluded: t.Boolean(),
   createdAt: t.Date(),
 });
 
@@ -110,6 +112,7 @@ export const publicationRoutes = new Elysia()
         body.password,
         body.manuscript,
         body.reader,
+        body.includePackage ?? true,
       ),
     {
       params: t.Object({ storyId: t.String() }),
@@ -129,6 +132,8 @@ export const publicationRoutes = new Elysia()
         manuscript: t.Optional(ManuscriptRequestSchema),
         /** When present, an online reader page is compiled and published alongside the package. */
         reader: t.Optional(ReaderRequestSchema),
+        /** Off only together with a manuscript and/or a reader; the server refuses a version with nothing in it. */
+        includePackage: t.Optional(t.Boolean()),
       }),
       detail: {
         summary: 'Publish a new public version of a story',

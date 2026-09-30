@@ -24,6 +24,7 @@ export const StoryPublicationSchema = z.object({
   byteSize: z.number().int(),
   mediaIncluded: z.number().int(),
   mediaTotal: z.number().int(),
+  packageIncluded: z.boolean().default(true),
   createdAt: z.coerce.date(),
 });
 
@@ -36,6 +37,8 @@ export const StoryPublicationSchema = z.object({
 export const CreatePublicationRequestSchema = z.object({
   operationVersion: z.number().int().nonnegative(),
   labelMode: PublicationLabelModeSchema.default('both'),
+  /** Publish the story package (.zip). May be off only when a manuscript or the online reader is published. */
+  includePackage: z.boolean().default(true),
 });
 
 export const UpdateShowcaseVisibilityRequestSchema = z
@@ -63,6 +66,7 @@ export const ShowcaseVersionSchema = z.object({
   mediaIncluded: z.number().int(),
   mediaTotal: z.number().int(),
   createdAt: z.string(),
+  packageIncluded: z.boolean().default(true),
   manuscript: ManuscriptInfoSchema.nullable(),
   /** The online reader page published alongside the version, when there is one. */
   reader: ReaderInfoSchema.nullable().default(null),

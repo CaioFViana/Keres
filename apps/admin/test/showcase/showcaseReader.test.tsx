@@ -32,6 +32,7 @@ const version = (id: string, label: string, reader: { byteSize: number } | null)
   byteSize: 1024,
   mediaIncluded: 0,
   mediaTotal: 0,
+  packageIncluded: true,
   createdAt: '2026-08-19T10:00:00.000Z',
   manuscript: null,
   reader,
@@ -98,6 +99,52 @@ describe('the read-online button', () => {
     await flush();
 
     expect(container.querySelector('.reader-button')).toBeNull();
+    await unmount();
+  });
+});
+
+describe('a version published without the story file', () => {
+  const readingOnly = {
+    ...version('pub-2', 'v2', { byteSize: 900 }),
+    packageIncluded: false,
+    byteSize: 0,
+  };
+
+  it('offers no download of it, nor its size, but keeps the reading', async () => {
+    mocks.fetchStory.mockResolvedValue({
+      ...detail,
+      versions: [readingOnly, version('pub-1', 'v1', null)],
+    });
+    const { container, unmount } = await renderAt('/story/story-1');
+    await flush();
+
+    const rows = [...container.querySelectorAll('.version')];
+    // The newest (reading only) has the reading and no download; the older one still downloads.
+    expect(rows[0].querySelector('.reader-button')).not.toBeNull();
+    expect(rows[0].querySelector('button.download-button')).toBeNull();
+    expect(rows[0].querySelector('.version-sub')!.textContent).not.toMatch(/B\b/);
+    expect(rows[1].querySelector('button.download-button')).not.toBeNull();
+    await unmount();
+  });
+
+  it('keeps the size off its card on the home page', async () => {
+    mocks.fetchStories.mockResolvedValue({
+      stories: [
+        {
+          storyId: 'story-1',
+          snapshot: detail.snapshot,
+          owner: detail.owner,
+          versionCount: 1,
+          latestVersion: readingOnly,
+          updatedAt: detail.updatedAt,
+        },
+      ],
+      etag: null,
+    });
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    expect(container.querySelector('.version-meta')!.textContent).not.toMatch(/\d\s?(B|KB|MB)/);
     await unmount();
   });
 });

@@ -1571,6 +1571,8 @@
   "publish_link_intro": "A versão {{label}} está no ar em:",
   "publish_link_password_reminder": "Quem abrir vai precisar da senha que você acabou de definir.",
   "publish_manuscript_attach": "Anexar manuscrito",
+  "publish_package_attach": "Publicar o arquivo da história (.zip)",
+  "publish_select_one": "Selecione ao menos um",
   "publish_no_eligible_stories": "Nenhuma história para publicar. Só histórias suas e ligadas a um servidor aparecem aqui.",
   "publish_not_published": "não publicada",
   "publish_open_link": "Abrir página",

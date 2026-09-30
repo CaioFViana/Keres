@@ -96,6 +96,7 @@ export class PublicationApiService {
     password?: string,
     manuscript?: PublishManuscriptOptions,
     reader?: PublishReaderOptions,
+    includePackage = true,
   ): Promise<StoryPublication> {
     const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
       operationVersion,
@@ -104,6 +105,7 @@ export class PublicationApiService {
       password,
       manuscript,
       reader,
+      includePackage,
     });
     return response.data;
   }

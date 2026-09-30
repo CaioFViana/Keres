@@ -265,6 +265,8 @@
     "eyebrow": "Story planning",
     "title": "Organize universes, connect narratives, and write anywhere.",
     "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
+    "ctaTry": "Try it now, offline",
+    "tryNote": "Runs in your browser with no server and no account: your stories stay on this device. Server features (sync, collaboration, publishing) are not part of this version.",
     "ctaDownload": "Download",
     "ctaGithub": "View on GitHub",
     "ctaFeatures": "See what's included"

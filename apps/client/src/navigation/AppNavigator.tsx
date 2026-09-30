@@ -101,7 +101,13 @@ const AppNavigator = ({ dbInitialized }: AppNavigatorProps) => {
   // with the entry registering <App /> directly, the container lives here, owning
   // this navigator tree. No linking prop: deep-link routing was never configured.
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer
+      theme={navigationTheme}
+      // Left on, React Navigation writes the focused route's name (`DeviceIndex`, `PackList`) into the
+      // title whenever the screen sets its title on a parent navigator - racing the explicit
+      // `setDocumentTitle` calls. The screens own the title (see `utils/documentTitle`).
+      documentTitle={{ enabled: false }}
+    >
       <SyncInitializer>
         <RootStack.Navigator
           screenOptions={{

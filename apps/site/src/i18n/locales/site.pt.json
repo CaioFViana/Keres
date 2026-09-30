@@ -265,6 +265,8 @@
     "eyebrow": "Planejamento de histórias",
     "title": "Organize universos, conecte narrativas e escreva em qualquer lugar.",
     "lead": "O Keres reúne personagens, locais, capítulos, cenas, escolhas, itens, regras de mundo, notas e mídias num único espaço. O aplicativo continua funcionando sem internet. Um servidor só entra se você quiser sincronizar, colaborar ou publicar.",
+    "ctaTry": "Experimente agora, offline",
+    "tryNote": "Roda no seu navegador, sem servidor nem conta: suas histórias ficam neste aparelho. Os recursos de servidor (sincronização, colaboração, publicação) não fazem parte desta versão.",
     "ctaDownload": "Baixar",
     "ctaGithub": "Ver no GitHub",
     "ctaFeatures": "Ver o que inclui"

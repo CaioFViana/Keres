@@ -2,14 +2,12 @@ import React from 'react';
 import type { KeyboardEvent, StyleProp, ViewStyle } from 'react-native';
 import {
   Dimensions,
-  findNodeHandle,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   TextInput as RNTextInput,
-  UIManager,
 } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
 
@@ -46,6 +44,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   const scrollOffset = React.useRef(0);
   const keyboardTop = React.useRef<number | null>(null);
   const focusScrollTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mounted = React.useRef(true);
   const behavior =
     Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined;
 
@@ -58,11 +57,15 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
 
     focusScrollTimer.current = setTimeout(
       () => {
+        // The timer outlives the screen by up to a quarter of a second, and the focused input can be
+        // gone by then (the screen closed, the field swapped): measuring a view that no longer exists
+        // makes React Native warn "measure cannot find view with tag".
+        if (!mounted.current) return;
         const focusedInput = RNTextInput.State.currentlyFocusedInput?.();
-        const node = focusedInput ? findNodeHandle(focusedInput as any) : null;
-        if (!node) return;
+        // The input's own method, not `UIManager` by tag: it stays quiet when the native view is gone.
+        if (!focusedInput || typeof focusedInput.measureInWindow !== 'function') return;
 
-        UIManager.measureInWindow(node, (_x, y, _width, height) => {
+        focusedInput.measureInWindow((_x, y, _width, height) => {
           const visibleBottom =
             (keyboardTop.current ?? Dimensions.get('window').height) - bottomPadding;
           const overlap = y + height + 24 - visibleBottom;
@@ -80,6 +83,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   }, [bottomPadding]);
 
   React.useEffect(() => {
+    mounted.current = true;
     const handleKeyboardShow = (event: KeyboardEvent) => {
       keyboardTop.current = event.endCoordinates?.screenY ?? null;
       scrollToFocusedInput();
@@ -98,6 +102,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      mounted.current = false;
       if (focusScrollTimer.current) clearTimeout(focusScrollTimer.current);
     };
   }, [scrollToFocusedInput]);

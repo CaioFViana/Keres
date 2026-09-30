@@ -230,6 +230,68 @@ describe('KeyboardAwareScreen', () => {
     await screen.unmount();
   });
 
+  describe('scrolling the focused input into view', () => {
+    const { TextInput: NativeTextInput } = jest.requireActual('react-native');
+    const Probe = () => {
+      const scroll = React.useContext(KeyboardAwareContext);
+      return (
+        <Text testID="ctx" onPress={() => scroll?.()}>
+          go
+        </Text>
+      );
+    };
+
+    afterEach(() => {
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+    });
+
+    it('measures the input through its own method, never UIManager by tag - a gone view would warn', async () => {
+      jest.useFakeTimers();
+      const measureInWindow = jest.fn();
+      jest
+        .spyOn(NativeTextInput.State, 'currentlyFocusedInput')
+        .mockReturnValue({ measureInWindow } as never);
+      const screen = await render(
+        <KeyboardAwareScreen>
+          <Probe />
+        </KeyboardAwareScreen>,
+      );
+
+      await fireEvent.press(screen.getByTestId('ctx'));
+      await jest.advanceTimersByTimeAsync(300);
+
+      expect(measureInWindow).toHaveBeenCalledTimes(1);
+      await screen.unmount();
+    });
+
+    it('measures nothing once the screen is gone, or when nothing is focused', async () => {
+      jest.useFakeTimers();
+      const measureInWindow = jest.fn();
+      const focused = jest
+        .spyOn(NativeTextInput.State, 'currentlyFocusedInput')
+        .mockReturnValue({ measureInWindow } as never);
+      const screen = await render(
+        <KeyboardAwareScreen>
+          <Probe />
+        </KeyboardAwareScreen>,
+      );
+      await fireEvent.press(screen.getByTestId('ctx'));
+      await screen.unmount();
+      await jest.advanceTimersByTimeAsync(300);
+      expect(measureInWindow).not.toHaveBeenCalled();
+
+      focused.mockReturnValue(null as never);
+      const again = await render(
+        <KeyboardAwareScreen>
+          <Probe />
+        </KeyboardAwareScreen>,
+      );
+      await fireEvent.press(again.getByTestId('ctx'));
+      await expect(jest.advanceTimersByTimeAsync(300)).resolves.not.toThrow();
+    });
+  });
+
   it('pins the footer below the scroll view, outside the scroll content', async () => {
     type AncestorNode = { type: unknown; parent: AncestorNode | null };
     const hasScrollAncestor = (node: AncestorNode): boolean => {

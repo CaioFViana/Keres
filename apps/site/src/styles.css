@@ -227,6 +227,12 @@ a {
   gap: 10px;
 }
 
+.hero-note {
+  margin: 14px 0 0;
+  max-width: 62ch;
+  font-size: 0.88rem;
+}
+
 .button {
   display: inline-flex;
   align-items: center;

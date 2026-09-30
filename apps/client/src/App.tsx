@@ -30,6 +30,8 @@ import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
 import i18n from './utils/i18n';
+import { keepPageOutOfBackForwardCache } from './utils/pageLifecycle';
+import { isServerless } from './utils/serverless';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
@@ -88,6 +90,24 @@ const DatabaseInitializer = () => {
   const [drizzleClient, setDrizzleClient] = useState<AppDrizzleClient | null>(null);
   const [userSettingsLoaded, setUserSettingsLoaded] = useState(false);
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
+
+  // The serverless web build (GitHub Pages) only: its database file is held open by a worker until
+  // the page is gone (see `keepPageOutOfBackForwardCache`). A page brought back from that cache anyway
+  // - a browser that ignores both signals - had its worker suspended, so it starts over instead of
+  // limping on. The web client the API serves and the desktop shell are left as they were.
+  useEffect(() => {
+    if (!isServerless() || Platform.OS !== 'web') return;
+    if (typeof globalThis.addEventListener !== 'function') return;
+    const leaveCache = keepPageOutOfBackForwardCache();
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) globalThis.location.reload();
+    };
+    globalThis.addEventListener('pageshow', restore);
+    return () => {
+      leaveCache();
+      globalThis.removeEventListener('pageshow', restore);
+    };
+  }, []);
 
   useEffect(() => {
     // Boot order is load-bearing: the web media cache must exist before anything calls

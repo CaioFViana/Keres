@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react-native';
+import { cleanup, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 jest.mock('expo-sqlite', () => ({
@@ -216,6 +216,69 @@ it('leaves the navigation bar alone off Android', async () => {
   await waitFor(() => expect(screen.getByTestId('app-navigator')).toBeTruthy());
 
   expect(NavigationBar).not.toHaveBeenCalled();
+});
+
+describe('the web page lifecycle', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- platform switch for these cases.
+  const { Platform } = require('react-native');
+  const original = Platform.OS;
+  const listeners = new Map<string, (event: unknown) => void>();
+  const target = globalThis as unknown as Record<string, unknown>;
+  const saved = {
+    add: target.addEventListener,
+    remove: target.removeEventListener,
+    location: target.location,
+  };
+  const reload = jest.fn();
+
+  beforeEach(() => {
+    Platform.OS = 'web';
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    listeners.clear();
+    target.addEventListener = (name: string, handler: (event: unknown) => void) =>
+      void listeners.set(name, handler);
+    target.removeEventListener = (name: string) => void listeners.delete(name);
+    target.location = { reload };
+  });
+
+  afterEach(async () => {
+    // Unmounting removes the listeners: it must happen while the stand-ins are still in place.
+    await cleanup();
+    delete process.env.EXPO_PUBLIC_SERVERLESS;
+    Platform.OS = original;
+    target.addEventListener = saved.add;
+    target.removeEventListener = saved.remove;
+    target.location = saved.location;
+  });
+
+  it('keeps the page out of the back/forward cache, so leaving it releases the database file', async () => {
+    await render(<App />);
+
+    expect(listeners.has('unload')).toBe(true);
+  });
+
+  it('starts over when the page comes back from that cache anyway', async () => {
+    await render(<App />);
+
+    listeners.get('pageshow')?.({ persisted: false });
+    expect(reload).not.toHaveBeenCalled();
+    listeners.get('pageshow')?.({ persisted: true });
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('is left alone outside the serverless build: the hosted and desktop web clients keep the cache', async () => {
+    delete process.env.EXPO_PUBLIC_SERVERLESS;
+    await render(<App />);
+
+    expect(listeners.size).toBe(0);
+  });
+
+  it('is left alone on a phone', async () => {
+    Platform.OS = 'android';
+    await render(<App />);
+
+    expect(listeners.size).toBe(0);
+  });
 });
 
 it('keeps the native window background in sync with the palette', async () => {

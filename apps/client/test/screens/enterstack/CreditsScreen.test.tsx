@@ -28,8 +28,9 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
+const mockBackHandler = jest.fn();
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
-  useBackButtonHandler: () => {},
+  useBackButtonHandler: (options: unknown) => mockBackHandler(options),
 }));
 
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
@@ -51,6 +52,12 @@ describe('CreditsScreen', () => {
   afterEach(() => {
     cleanup();
     (Linking.openURL as jest.Mock).mockRestore();
+  });
+
+  it('registers the header back action, so the web arrow returns to Settings', async () => {
+    await render(<CreditsScreen />);
+
+    expect(mockBackHandler).toHaveBeenCalledWith({ showWebBackButton: true });
   });
 
   it('renders the release version and its English phrase verbatim', async () => {

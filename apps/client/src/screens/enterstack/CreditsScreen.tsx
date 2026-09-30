@@ -32,7 +32,7 @@ const CreditLink = ({ url, children }: { url: string; children: React.ReactNode 
  * `APP_RELEASE`, never translated. Everything around them is interface prose and translated.
  */
 const CreditsScreen = () => {
-  useBackButtonHandler();
+  useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   useScreenHeader({ target: 'parent', title: t('credits_title') });
   const { colors } = useTheme();

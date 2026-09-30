@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { buildTrajectoryStops } from '@keres/shared/graphs/trajectories';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
+import EntityRelationList from '@/src/components/common/display/EntityRelationList/EntityRelationList';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useCharacterTrajectoryData } from '@/src/hooks/useCharacterTrajectoryData';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
@@ -66,25 +66,16 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
   );
 
   const styles = StyleSheet.create({
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-      paddingVertical: 10,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
     order: {
       width: 26,
       height: 26,
       borderRadius: 13,
+      marginRight: 10,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.primaryContainer,
     },
     orderText: { color: colors.primary, fontWeight: '700' },
-    names: { flex: 1 },
-    place: { color: colors.text, fontWeight: '600' },
     scene: { color: colors.textSecondary },
     hint: { color: colors.textSecondary, marginTop: 8 },
     routePicker: { marginTop: 8 },
@@ -109,29 +100,26 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
             />
           </View>
         ))}
-      {stops.length === 0 ? (
-        <Text style={styles.hint}>{t('trajectory_empty')}</Text>
-      ) : (
-        stops.map((stop, index) => (
-          <TouchableOpacity
-            key={`${stop.sceneId}-${index}`}
-            style={styles.row}
-            onPress={() => navigateToEntity('Location', stop.locationId)}
-            accessibilityLabel={locationById.get(stop.locationId)?.name ?? stop.locationId}
-          >
+      <EntityRelationList
+        emptyText={t('trajectory_empty')}
+        items={stops.map((stop, index) => ({
+          id: `${stop.sceneId}-${index}`,
+          testID: `trajectory-stop-${index}`,
+          title: locationById.get(stop.locationId)?.name ?? stop.locationId,
+          color: colors.primary,
+          leading: (
             <View style={styles.order}>
-              <Text style={styles.orderText}>{index + 1}</Text>
-            </View>
-            <View style={styles.names}>
-              <Text style={styles.place}>
-                {locationById.get(stop.locationId)?.name ?? stop.locationId}
+              <Text style={styles.orderText} testID={`trajectory-order-${index}`}>
+                {index + 1}
               </Text>
-              <Text style={styles.scene}>{sceneById.get(stop.sceneId)?.name ?? stop.sceneId}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ))
-      )}
+          ),
+          details: (
+            <Text style={styles.scene}>{sceneById.get(stop.sceneId)?.name ?? stop.sceneId}</Text>
+          ),
+          onPress: () => navigateToEntity('Location', stop.locationId),
+        }))}
+      />
     </CollapsibleCard>
   );
 };

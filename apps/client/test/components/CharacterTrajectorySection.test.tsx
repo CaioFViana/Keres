@@ -1,4 +1,4 @@
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import CharacterTrajectorySection from '../../src/components/features/trajectories/CharacterTrajectorySection';
 
 const mockTrajectoryData = jest.fn();
@@ -125,7 +125,7 @@ describe('CharacterTrajectorySection', () => {
     expect(view.getByText('Keep')).toBeTruthy();
 
     await act(async () => {
-      await fireEvent.press(view.getByLabelText('Keep'));
+      await fireEvent.press(view.getByText('Keep'));
     });
     expect(mockNavigate).toHaveBeenCalledWith('Location', 'loc-b');
   });
@@ -167,9 +167,8 @@ describe('CharacterTrajectorySection', () => {
     );
     // The route walks s-2 before s-1, against chapter order; the first route is picked.
     await waitFor(() => expect(view.getByText('Keep')).toBeTruthy());
-    const keepRow = view.getByLabelText('Keep') as any;
-    const keepBadge = keepRow.children[0].children[0];
-    expect(keepBadge.props.children).toBe(1);
+    expect(view.getByTestId('trajectory-order-0').props.children).toBe(1);
+    expect(within(view.getByTestId('trajectory-stop-0')).getByText('Keep')).toBeTruthy();
     expect(view.getByTestId('route-route-1')).toBeTruthy();
   });
 

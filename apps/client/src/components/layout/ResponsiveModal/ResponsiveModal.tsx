@@ -37,8 +37,11 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   // surface above that measured system area for every modal placement, not only
   // screens that happen to use KeyboardAwareScreen.
   const bottomSystemInset = useFormScrollBottomPadding(0);
-  const { ref: overlayRef, overlap: keyboardOverlap, onLayout: measureOverlay } =
-    useKeyboardOverlap(visible && keyboardAvoiding);
+  const {
+    ref: overlayRef,
+    overlap: keyboardOverlap,
+    onLayout: measureOverlay,
+  } = useKeyboardOverlap(visible && keyboardAvoiding);
   const resolvedPlacement = placement === 'adaptive' ? (isWide ? 'side' : 'bottom') : placement;
   const placementStyle: ViewStyle =
     resolvedPlacement === 'bottom'

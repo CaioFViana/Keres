@@ -40,6 +40,14 @@ export const storyPermissionApi = {
     await clientFor(server).delete(`/story-permissions/story/${storyId}/user/${targetUserId}`);
   },
 
+  /**
+   * The caller gives up their own access to the story. It throws with `response.status === 400` for the
+   * owner and 404 for somebody who no longer collaborates.
+   */
+  async leaveStory(server: ServerSelect, storyId: string): Promise<void> {
+    await clientFor(server).delete(`/story-permissions/story/${storyId}/me`);
+  },
+
   /** Changes an existing collaborator's role. New collaborators are invited (`StoryInvitationApiService`). */
   async updateCollaboratorPermission(
     server: ServerSelect,

@@ -466,7 +466,7 @@ describe('friendship service paths', () => {
 });
 
 describe('recovery code paths', () => {
-  it('keeps answering 401 past the attempt budget', async () => {
+  it('answers 401 while the attempt budget lasts, and 429 - its own status - once it is spent', async () => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const { status } = await request('POST', '/auth/forgot-password', {
@@ -474,7 +474,7 @@ describe('recovery code paths', () => {
       });
       statuses.push(status);
     }
-    expect(statuses).toEqual([401, 401, 401, 401, 401, 401]);
+    expect(statuses).toEqual([401, 401, 401, 401, 401, 429]);
   });
 
   it('spends a code only once when two resets race', async () => {

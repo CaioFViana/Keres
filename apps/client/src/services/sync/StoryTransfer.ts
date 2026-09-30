@@ -22,12 +22,16 @@ export type StoryUploadResult =
   | { success: true }
   | { success: false; reason: 'already_exists' | 'error'; message?: string };
 
-export async function fetchServerStoryPreviews(
+/**
+ * What the server lets this user read, or `null` when it could not be asked. The difference matters to
+ * whoever acts on the absence of a story: an unreachable server has not revoked anything.
+ */
+export async function fetchServerStoryPreviewsOrNull(
   server: ServerSelect,
-): Promise<ServerStoryPreview[]> {
+): Promise<ServerStoryPreview[] | null> {
   if (!server?.url) {
     console.log('A server with a URL is required to fetch story previews.');
-    return [];
+    return null;
   }
 
   const client = createKeresAxiosInstance({ baseURL: server.url });
@@ -42,8 +46,14 @@ export async function fetchServerStoryPreviews(
     return response.data.storyPreviews;
   } catch (error) {
     console.log(`Error fetching server story previews from ${server.url}:`, error);
-    return [];
+    return null;
   }
+}
+
+export async function fetchServerStoryPreviews(
+  server: ServerSelect,
+): Promise<ServerStoryPreview[]> {
+  return (await fetchServerStoryPreviewsOrNull(server)) ?? [];
 }
 
 export async function downloadAndImportStory(

@@ -86,6 +86,11 @@ export interface StoryService {
     targetType: 'linear' | 'branching',
   ): Promise<void>;
   unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
+  /**
+   * Removes this device's copy of a story somebody else owns, once the caller has left it on the server.
+   * Refuses the owner's story and a story never linked to a server: those are deleted, not left.
+   */
+  discardCollaboratedCopy(storyId: string): Promise<void>;
   importFullStory(
     userId: string,
     fullStoryData: FullStoryExportType,
@@ -489,6 +494,17 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       // Safe to remove unconditionally: local media lives under a per-story directory
       // (see mediaFileService.storyMediaDirectory), never shared with any other story on
       // this device, so no other story can still be referencing a file in it.
+      mediaFileService.deleteStoryMedia(storyId);
+    },
+
+    async discardCollaboratedCopy(storyId: string): Promise<void> {
+      const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+      if (!story) return;
+      if (!story.serverId || story.myRole === 'owner') {
+        throw new Error('Only the copy of a story somebody else owns can be discarded this way.');
+      }
+      await purgeStoryLocally(db, storyId);
+      // Per-story directory, never shared (see `deleteStory`).
       mediaFileService.deleteStoryMedia(storyId);
     },
 

@@ -7,6 +7,7 @@ import { SyncEngineService, type SyncEngineDependencies } from '../SyncEngineSer
 import {
   downloadAndImportStory,
   fetchServerStoryPreviews,
+  fetchServerStoryPreviewsOrNull,
   uploadNewStoryToServer,
 } from './StoryTransfer';
 import { registerClientSyncHandlers } from './registerClientSyncHandlers';
@@ -25,6 +26,7 @@ export const createAppSyncEngineDependencies = (): SyncEngineDependencies => {
     createConflictService: createSyncConflictService,
     createServerService,
     fetchServerStoryPreviews,
+    fetchServerStoryPreviewsOrNull,
     downloadAndImportStory: (db, queriedServerId, storyId, userId, role) =>
       downloadAndImportStory(db, queriedServerId, storyId, userId, role, notifier),
     uploadNewStoryToServer,

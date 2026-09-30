@@ -153,6 +153,11 @@ export class StoryInvitationService {
     }
 
     emitUserEvent(userId, { type: 'stories.catalog-changed' });
+    // The owner's collaborator list gained somebody.
+    emitUserEvent(invitation.inviterId, {
+      type: 'story.collaborators-changed',
+      storyId: invitation.storyId,
+    });
     this.notify(invitation.inviterId, userId);
     return { storyId: invitation.storyId };
   }

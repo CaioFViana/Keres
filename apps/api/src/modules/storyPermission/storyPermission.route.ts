@@ -88,6 +88,25 @@ export const storyPermissionRoutes = new Elysia()
       },
     },
   )
+  .delete(
+    '/story/:storyId/me',
+    async ({ params, user }) => {
+      if (!user || !user.userId) {
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
+      }
+      return storyPermissionService.leaveStory(user.userId, params.storyId);
+    },
+    {
+      params: StoryIdParam,
+      response: t.Object({ message: t.String() }),
+      detail: {
+        summary: 'Leave a story you collaborate on',
+        description:
+          'The caller gives up their own access to a story shared with them. The owner can invite them again later. The owner cannot leave (400) and somebody who does not collaborate gets 404.',
+        tags: ['Story Permissions'],
+      },
+    },
+  )
   .get(
     '/story/:storyId',
     async ({ params, user }) => {

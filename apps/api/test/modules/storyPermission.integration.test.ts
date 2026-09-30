@@ -1,5 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { db } from '../../src/db';
+import {
+  closeRealtimeEvents,
+  createWebSocketTicket,
+  openRealtimeEvents,
+} from '../../src/modules/webSocket/webSocket.route';
+import type { RealtimeSocket } from '../../src/services/RealtimeSessionService';
 import { storyPermissions } from '../../src/db/schema';
 import {
   newId,
@@ -211,6 +217,68 @@ describe('DELETE /story-permissions/story/:storyId/user/:targetUserId', () => {
   });
 });
 
+describe('DELETE /story-permissions/story/:storyId/me', () => {
+  const leave = (token: string, story = storyId) =>
+    request('DELETE', `/story-permissions/story/${story}/me`, { token });
+
+  it('lets a collaborator give up their own access: the story leaves their catalog and the owner list', async () => {
+    await shareStory(ana, bia, storyId, 'writer');
+
+    const { status } = await leave(bia.token);
+
+    expect(status).toBe(200);
+    const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
+    expect(data.storyPreviews).toEqual([]);
+    expect((await listFor(ana.token)).data).toEqual([]);
+    expect((await pull(bia.token)).status).toBe(403);
+    expect((await request('GET', `/stories/${storyId}/export`, { token: bia.token })).status).toBe(
+      404,
+    );
+  });
+
+  it('keeps the row as a tombstone, so sync can carry the loss of access', async () => {
+    await shareStory(ana, bia, storyId, 'reader');
+
+    await leave(bia.token);
+
+    const [row] = await db.select().from(storyPermissions);
+    expect(row.isDeleted).toBe(true);
+    expect(row.version).toBeGreaterThan(1);
+  });
+
+  it('can be undone by the owner inviting again', async () => {
+    await shareStory(ana, bia, storyId, 'reader');
+    await leave(bia.token);
+    await shareStory(ana, bia, storyId, 'writer');
+
+    expect((await request('GET', `/stories/${storyId}/export`, { token: bia.token })).status).toBe(
+      200,
+    );
+    expect((await listFor(ana.token)).data).toHaveLength(1);
+  });
+
+  it('refuses the owner: the story is theirs, and ending it is deleting it', async () => {
+    const { status, data } = await leave(ana.token);
+
+    expect(status).toBe(400);
+    expect(data.message).toMatch(/owner cannot leave/i);
+  });
+
+  it('answers 404 to somebody who never collaborated, or already left', async () => {
+    expect((await leave(bia.token)).status).toBe(404);
+
+    await shareStory(ana, bia, storyId, 'reader');
+    await leave(bia.token);
+    expect((await leave(bia.token)).status).toBe(404);
+  });
+
+  it('requires a session', async () => {
+    const { status } = await request('DELETE', `/story-permissions/story/${storyId}/me`);
+
+    expect(status).toBe(401);
+  });
+});
+
 describe('GET /story-permissions/story/:storyId', () => {
   it('starts empty for a story that was never shared', async () => {
     const { status, data } = await listFor(ana.token);
@@ -344,5 +412,105 @@ describe('what a collaborator can do with the story', () => {
     } else {
       expect(status).toBeGreaterThanOrEqual(400);
     }
+  });
+});
+
+/**
+ * Every change to who collaborates on a story is something the people involved have to see without asking:
+ * the collaborator's copy has to go, and the owner's list - on every device - has to change.
+ */
+describe('realtime notifications of collaboration changes', () => {
+  type Socket = RealtimeSocket & { send: Mock; close: Mock };
+  const sockets: Socket[] = [];
+  const connect = async (user: TestUser): Promise<Socket> => {
+    const socket = { send: vi.fn(), close: vi.fn() } as unknown as Socket;
+    sockets.push(socket);
+    await openRealtimeEvents(
+      socket,
+      createWebSocketTicket({ userId: user.userId, username: user.username }),
+    );
+    return socket;
+  };
+  const events = (socket: Socket) =>
+    socket.send.mock.calls.map(
+      ([message]) => JSON.parse(String(message)) as { type: string; storyId?: string },
+    );
+  const heard = (socket: Socket, type: string) =>
+    events(socket).filter((event) => event.type === type);
+
+  afterEach(() => {
+    while (sockets.length) closeRealtimeEvents(sockets.pop()!);
+  });
+
+  it('tells the owner, on every device, when a collaborator leaves - and the collaborator to drop the story', async () => {
+    await shareStory(ana, bia, storyId, 'writer');
+    const owner = await connect(ana);
+    const ownerOtherDevice = await connect(ana);
+    const collaborator = await connect(bia);
+
+    await request('DELETE', `/story-permissions/story/${storyId}/me`, { token: bia.token });
+
+    for (const device of [owner, ownerOtherDevice]) {
+      expect(heard(device, 'story.collaborators-changed')).toEqual([
+        { type: 'story.collaborators-changed', storyId },
+      ]);
+    }
+    expect(heard(collaborator, 'stories.catalog-changed')).toHaveLength(1);
+  });
+
+  it("tells the collaborator to drop the story when the owner removes them, and the owner's other devices", async () => {
+    await shareStory(ana, bia, storyId, 'reader');
+    const owner = await connect(ana);
+    const collaborator = await connect(bia);
+
+    await revoke(ana.token, bia.userId);
+
+    expect(heard(collaborator, 'stories.catalog-changed')).toHaveLength(1);
+    expect(heard(owner, 'story.collaborators-changed')).toHaveLength(1);
+  });
+
+  it('tells both sides when a role changes', async () => {
+    await shareStory(ana, bia, storyId, 'reader');
+    const owner = await connect(ana);
+    const collaborator = await connect(bia);
+
+    await grant(ana.token, bia.userId, 'writer');
+
+    expect(heard(collaborator, 'stories.catalog-changed')).toHaveLength(1);
+    expect(heard(owner, 'story.collaborators-changed')).toHaveLength(1);
+  });
+
+  it('tells the owner when an invitation is accepted', async () => {
+    const owner = await connect(ana);
+
+    await shareStory(ana, bia, storyId, 'reader');
+
+    expect(heard(owner, 'story.collaborators-changed')).toEqual([
+      { type: 'story.collaborators-changed', storyId },
+    ]);
+  });
+
+  it('tells both sides when the end of a friendship takes the access with it', async () => {
+    await shareStory(ana, bia, storyId, 'writer');
+    const owner = await connect(ana);
+    const collaborator = await connect(bia);
+
+    await request('DELETE', `/friend/unfriend/${ana.userId}`, { token: bia.token });
+
+    expect(heard(collaborator, 'stories.catalog-changed').length).toBeGreaterThanOrEqual(1);
+    expect(heard(owner, 'story.collaborators-changed')).toEqual([
+      { type: 'story.collaborators-changed', storyId },
+    ]);
+  });
+
+  it('says nothing to anybody when the owner tries to leave, or a stranger does', async () => {
+    const owner = await connect(ana);
+    const stranger = await connect(bia);
+
+    await request('DELETE', `/story-permissions/story/${storyId}/me`, { token: ana.token });
+    await request('DELETE', `/story-permissions/story/${storyId}/me`, { token: bia.token });
+
+    expect(heard(owner, 'story.collaborators-changed')).toEqual([]);
+    expect(heard(stranger, 'stories.catalog-changed')).toEqual([]);
   });
 });

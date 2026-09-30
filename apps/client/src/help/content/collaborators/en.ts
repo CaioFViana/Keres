@@ -26,6 +26,7 @@ const page: HelpPage = {
         'The friend accepts or declines in Friends; until then the invitation shows as pending, where you can change the offered role or withdraw it.',
         'For readers, turn on Allow reader comments if you want them to comment on fields.',
         'Change the role or remove the collaborator at any time.',
+        'A collaborator can leave on their own: in Story settings of a story someone else owns, tap Leave this story. They lose access, the copy on this device is removed, and the owner can invite them again.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

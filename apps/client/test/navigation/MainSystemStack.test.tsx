@@ -1,6 +1,9 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
+import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
+const mockRootDispatch = jest.fn();
+const mockSetSelectedStory = jest.fn();
 const mockDrawerScreens: Array<Record<string, any>> = [];
 const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
 function mockReset(payload: unknown) {
@@ -46,6 +49,7 @@ jest.mock('@react-navigation/native', () => ({
   DrawerActions: { toggleDrawer: jest.fn(() => ({ type: 'TOGGLE_DRAWER' })) },
   getFocusedRouteNameFromRoute: jest.fn(() => undefined),
   StackActions: { pop: jest.fn(() => ({ type: 'POP' })) },
+  useNavigation: () => ({ dispatch: mockRootDispatch }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('react-i18next', () => {
@@ -67,13 +71,18 @@ jest.mock('../../src/theme', () => ({
   hexToRgb: () => ({ r: 0, g: 0, b: 0 }),
   rgbToHsv: () => ({ h: 0, s: 0, v: 0 }),
 }));
-jest.mock('../../src/state/storyStore', () => ({
-  __esModule: true,
-  useStoryStore: jest.fn((selector) => {
+jest.mock('../../src/state/storyStore', () => {
+  const useStoryStore: any = jest.fn((selector) => {
     const state = { selectedStory: { title: 'A jornada', type: 'linear' } };
     return selector ? selector(state) : state;
-  }),
-}));
+  });
+  // What the access-lost listener reads at the moment it fires.
+  useStoryStore.getState = () => ({
+    selectedStory: { id: 'story-1', title: 'A jornada' },
+    setSelectedStory: mockSetSelectedStory,
+  });
+  return { __esModule: true, useStoryStore };
+});
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => mockResponsiveLayout),
@@ -410,6 +419,22 @@ beforeEach(() => {
 });
 
 afterEach(() => jest.restoreAllMocks());
+
+it('leaves the story on screen when its access is lost, and only that story', async () => {
+  await render(<MainSystemStack />);
+  mockRootDispatch.mockClear();
+  mockSetSelectedStory.mockClear();
+
+  entityEventEmitter.emit('story_access_lost', 'another-story');
+  expect(mockRootDispatch).not.toHaveBeenCalled();
+
+  entityEventEmitter.emit('story_access_lost', 'story-1');
+  expect(mockSetSelectedStory).toHaveBeenCalledWith(null);
+  expect(mockRootDispatch).toHaveBeenCalledWith({
+    type: 'RESET',
+    payload: { index: 0, routes: [{ name: 'StorySelection' }] },
+  });
+});
 
 async function renderDrawer() {
   await render(<MainSystemStack />);

@@ -3,9 +3,12 @@ import type { ServerSelect } from '../../db/schema';
 import { useStoryListStore } from '../../state/storyListStore';
 import type { ServerStoryPreview } from '../SyncEngineService';
 import { createStoryService } from '../storymanagement/StoryService';
+import { dropRevokedServerStories } from './dropRevokedServerStories';
 
 export interface StoryImportEngine {
   fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]>;
+  /** Where present, what the server did not list is acted on too (copies of lost access are removed). */
+  fetchServerStoryPreviewsOrNull?(server: ServerSelect): Promise<ServerStoryPreview[] | null>;
   downloadAndImportStory(
     queriedServerId: string,
     storyId: string,
@@ -32,7 +35,17 @@ export function importNewServerStories(
   const run = previous
     .catch(() => undefined)
     .then(async () => {
-      const previews = await engine.fetchServerStoryPreviews(server);
+      // A list the server really answered lets the device also drop what it lost access to; a failed
+      // request is not an empty list, and is never acted on as one.
+      const answered = engine.fetchServerStoryPreviewsOrNull
+        ? await engine.fetchServerStoryPreviewsOrNull(server)
+        : undefined;
+      const previews =
+        answered ??
+        (engine.fetchServerStoryPreviewsOrNull
+          ? []
+          : await engine.fetchServerStoryPreviews(server));
+      if (answered) await dropRevokedServerStories(db, server, answered);
       const localStories = await db.query.stories.findMany({ columns: { id: true } });
       const localIds = new Set(localStories.map((story) => story.id));
       let downloadedAny = false;

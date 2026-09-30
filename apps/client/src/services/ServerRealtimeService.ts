@@ -5,6 +5,7 @@ import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createPublicationService } from './PublicationService';
 import { createStoryInvitationService } from './StoryInvitationService';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import type { ServerStoryPreview } from './SyncEngineService';
 import { importNewServerStories } from './sync/importNewServerStories';
 
@@ -22,6 +23,7 @@ type ServerEvent =
   | { type: 'story.changed'; storyId: string }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  | { type: 'story.collaborators-changed'; storyId: string }
   | { type: 'story-invitations.changed' }
   | { type: 'story.published'; storyId: string }
   | { type: 'server.heartbeat' };
@@ -220,7 +222,11 @@ export class ServerRealtimeService {
       // one driving a sync that 403s), and misses them for stories it just gained.
       this.reconnectNow();
       // An invitation this user accepted (on any device), say: the story is downloaded and listed.
+      // ...and one this user lost (removed, or left on another device) is dropped from this one.
       await importNewServerStories(this.db, this.syncEngine, this.server);
+    } else if (event.type === 'story.collaborators-changed') {
+      // Somebody joined, left or was removed: whoever shows the collaborators reads them again.
+      entityEventEmitter.emit('story_collaborators_changed', event.storyId, this.server.id);
     } else if (event.type === 'story-invitations.changed') {
       await createStoryInvitationService(this.db).syncWithServer(this.server);
     }

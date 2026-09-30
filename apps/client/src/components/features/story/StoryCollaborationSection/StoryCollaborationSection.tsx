@@ -14,6 +14,8 @@ interface StoryCollaborationSectionProps {
   allowReaderComments: boolean;
   onAllowReaderCommentsChange: (value: boolean) => void;
   canManageStoryPolicy: boolean;
+  /** Runs once the person has left the story and this device's copy is gone. */
+  onLeftStory?: () => void;
 }
 
 export default function StoryCollaborationSection({
@@ -21,6 +23,7 @@ export default function StoryCollaborationSection({
   allowReaderComments,
   onAllowReaderCommentsChange,
   canManageStoryPolicy,
+  onLeftStory,
 }: StoryCollaborationSectionProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -92,6 +95,21 @@ export default function StoryCollaborationSection({
               />
             </View>
           )}
+        </View>
+      )}
+
+      {/* Somebody else's story: what the owner can do is taken away, but leaving is always the person's own. */}
+      {linked && collaboration.isOwnerOnServer === false && (
+        <View style={styles.dangerZone} testID="leave-story-zone">
+          <Text style={styles.muted}>{t('leave_story_hint')}</Text>
+          <Button
+            onPress={() => collaboration.handleLeaveStory(onLeftStory)}
+            disabled={collaboration.serverActionLoading}
+            style={{ backgroundColor: colors.error }}
+            testID="leave-story-button"
+          >
+            {t('leave_story_title')}
+          </Button>
         </View>
       )}
 

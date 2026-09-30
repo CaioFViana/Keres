@@ -5,6 +5,11 @@ export type RealtimeEvent =
   | { type: 'story.changed'; storyId: string; maxOperationVersion?: number }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  /**
+   * Somebody joined, left or was removed from a story, or had their role changed. It goes to the story's
+   * owner (every device of theirs): only a nudge to read the collaborators again, like the others.
+   */
+  | { type: 'story.collaborators-changed'; storyId: string }
   /** A story invitation was sent, answered or withdrawn: a nudge to refetch the open invitations. */
   | { type: 'story-invitations.changed' }
   /**

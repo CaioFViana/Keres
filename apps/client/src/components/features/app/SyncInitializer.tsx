@@ -12,6 +12,7 @@ import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
 import type { ServerStoryPreview } from '../../../services/SyncEngineService';
 import { syncEngine } from '../../../services/sync/appSyncEngine';
+import { dropRevokedServerStories } from '../../../services/sync/dropRevokedServerStories';
 import { useNotificationStore } from '../../../state/notificationStore';
 import { useStoryListStore } from '../../../state/storyListStore';
 import { useStoryStore } from '../../../state/storyStore'; // Import useStoryStore
@@ -147,7 +148,12 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
           .syncWithServer(server)
           .catch((error: unknown) => console.log('Story invitation sync failed:', error));
 
-        const serverStoryPreviews = await syncEngine.fetchServerStoryPreviews(server);
+        const answeredPreviews = await syncEngine.fetchServerStoryPreviewsOrNull(server);
+        const serverStoryPreviews = answeredPreviews ?? [];
+        // Access the server no longer gives (removed by the owner, a friendship that ended) takes the
+        // local copy with it - only from a list the server really answered.
+        if (answeredPreviews)
+          await dropRevokedServerStories(drizzleClient, server, answeredPreviews);
 
         const localStoryIds = new Set(localStories.map((s) => s.id));
         const newStoriesOnServer = serverStoryPreviews.filter(

@@ -20,6 +20,7 @@ import { useNotificationStore } from '../state/notificationStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { AppAlert } from '../utils/AppAlert';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import { useStoryInvitations } from './useStoryInvitations';
 
 /**
@@ -103,6 +104,17 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
   );
   // An invitation leaving the list may be an acceptance: the collaborator list is fetched again.
   const pendingKey = pendingInvitations.map((invitation) => invitation.id).join(',');
+  // Somebody joined, left or was removed - here or on another device: the server says so, and the list is read again.
+  const [collaboratorsTick, setCollaboratorsTick] = useState(0);
+  useEffect(() => {
+    const onChanged = (changedStoryId: string, changedServerId: string) => {
+      if (changedStoryId === storyId && changedServerId === linkedServer?.id) {
+        setCollaboratorsTick((tick) => tick + 1);
+      }
+    };
+    entityEventEmitter.on('story_collaborators_changed', onChanged);
+    return () => entityEventEmitter.off('story_collaborators_changed', onChanged);
+  }, [storyId, linkedServer?.id]);
 
   const [prevStoryId, setPrevStoryId] = useState(storyId);
   const [prevLinkedServer, setPrevLinkedServer] = useState(linkedServer);
@@ -146,7 +158,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [storyId, linkedServer, pendingKey]);
+  }, [storyId, linkedServer, pendingKey, collaboratorsTick]);
 
   useEffect(() => {
     if (linkedServer && isOwnerOnServer === true) {
@@ -347,6 +359,48 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     );
   };
 
+  /**
+   * A collaborator gives up their own access. The server is told first - it has to succeed, or the story
+   * would come back on the next sync - and only then is this device's copy removed.
+   */
+  const handleLeaveStory = (onLeft?: () => void) => {
+    if (!storyId || !linkedServer) return;
+    AppAlert.alert(t('leave_story_title'), t('leave_story_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('leave_story_button'),
+        style: 'destructive',
+        onPress: async () => {
+          setServerActionLoading(true);
+          try {
+            await storyPermissionApi.leaveStory(linkedServer, storyId);
+            await storyService().discardCollaboratedCopy(storyId);
+            AppAlert.alert(t('success'), t('leave_story_success'));
+            onLeft?.();
+          } catch (err: any) {
+            // Already out (the owner removed them meanwhile): the server has nothing left to give up.
+            if (err?.response?.status === 404) {
+              try {
+                await storyService().discardCollaboratedCopy(storyId);
+                onLeft?.();
+                return;
+              } catch (purgeError) {
+                console.error('Failed to discard the copy of a story already left:', purgeError);
+              }
+            }
+            console.error('Failed to leave the story:', err);
+            AppAlert.alert(
+              t('error'),
+              isOfflineError(err) ? t('leave_story_offline') : t('leave_story_failed'),
+            );
+          } finally {
+            setServerActionLoading(false);
+          }
+        },
+      },
+    ]);
+  };
+
   const handleUnlinkFromServer = () => {
     if (!storyId || !userId) return;
     AppAlert.alert(t('unlink_from_server_title'), t('unlink_from_server_message'), [
@@ -400,6 +454,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     handleUpdateInvitationRole,
     handleCancelInvitation,
     handleUnlinkFromServer,
+    handleLeaveStory,
     uploadServerOptions: availableServers.map((server) => ({
       label: server.name,
       value: server.id,

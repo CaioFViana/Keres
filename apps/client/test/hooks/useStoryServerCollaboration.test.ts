@@ -6,7 +6,11 @@ const mockStoryState: any = {
 };
 const mockSettings = { userId: 'user-1' };
 const mockServerService = { getAllServers: jest.fn() };
-const mockStoryService = { updateStory: jest.fn(), unlinkFromServer: jest.fn() };
+const mockStoryService = {
+  updateStory: jest.fn(),
+  unlinkFromServer: jest.fn(),
+  discardCollaboratedCopy: jest.fn(),
+};
 const mockFriendshipService = { getAllFriendships: jest.fn() };
 const mockAlert = jest.fn();
 const mockInvite = jest.fn();
@@ -16,6 +20,7 @@ const mockApi = {
   getCollaborators: jest.fn(),
   updateCollaboratorPermission: jest.fn(),
   removeCollaborator: jest.fn(),
+  leaveStory: jest.fn(),
 };
 
 jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
@@ -54,6 +59,7 @@ jest.mock('../../src/services/StoryPermissionService', () => ({
     updateCollaboratorPermission: (...args: unknown[]) =>
       mockApi.updateCollaboratorPermission(...args),
     removeCollaborator: (...args: unknown[]) => mockApi.removeCollaborator(...args),
+    leaveStory: (...args: unknown[]) => mockApi.leaveStory(...args),
   },
 }));
 jest.mock('../../src/services/StoryInvitationApiService', () => ({
@@ -128,6 +134,8 @@ beforeEach(() => {
   mockInvitationList.setState({ invitations: [] });
   mockApi.updateCollaboratorPermission.mockResolvedValue(undefined);
   mockApi.removeCollaborator.mockResolvedValue(undefined);
+  mockApi.leaveStory.mockResolvedValue(undefined);
+  mockStoryService.discardCollaboratedCopy.mockResolvedValue(undefined);
   mockUpload.mockResolvedValue({ success: true });
 });
 
@@ -287,6 +295,103 @@ describe('useStoryServerCollaboration', () => {
     expect(mockAlert).toHaveBeenCalledWith('error', 'remove_collaborator_failed');
     expect(retry.result.current.collaborators).toEqual([collaborator]);
     (console.error as jest.Mock).mockRestore();
+  });
+
+  it('reads the collaborators again when the server says they changed, for this story only', async () => {
+    const { entityEventEmitter } = jest.requireActual('../../src/utils/EventEmitter');
+    mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+    const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([collaborator]));
+    expect(mockApi.getCollaborators).toHaveBeenCalledTimes(1);
+
+    mockApi.getCollaborators.mockResolvedValue([]);
+    await act(async () =>
+      entityEventEmitter.emit('story_collaborators_changed', 'other', 'server-1'),
+    );
+    await act(async () =>
+      entityEventEmitter.emit('story_collaborators_changed', 'story-1', 'another-server'),
+    );
+    expect(mockApi.getCollaborators).toHaveBeenCalledTimes(1);
+
+    await act(async () =>
+      entityEventEmitter.emit('story_collaborators_changed', 'story-1', 'server-1'),
+    );
+    await waitFor(() => expect(view.result.current.collaborators).toEqual([]));
+    expect(mockApi.getCollaborators).toHaveBeenCalledTimes(2);
+  });
+
+  describe('a collaborator leaving the story', () => {
+    const asCollaborator = async () => {
+      mockStoryState.selectedStory = { id: 'story-1', serverId: 'server-1' };
+      mockApi.getCollaborators.mockRejectedValue({ response: { status: 403 } });
+      const view = await renderHook(() => useStoryServerCollaboration('story-1'));
+      await waitFor(() => expect(view.result.current.isOwnerOnServer).toBe(false));
+      return view;
+    };
+    const confirm = async () => {
+      const buttons = mockAlert.mock.calls.at(-1)?.[2] as Array<{
+        onPress?: () => Promise<void>;
+      }>;
+      await act(async () => buttons[1]?.onPress?.());
+    };
+
+    it("asks first, tells the server, then removes this device's copy and moves on", async () => {
+      const view = await asCollaborator();
+      const onLeft = jest.fn();
+
+      await act(async () => view.result.current.handleLeaveStory(onLeft));
+      expect(mockApi.leaveStory).not.toHaveBeenCalled();
+      expect(mockAlert.mock.calls.at(-1)?.[0]).toBe('leave_story_title');
+      await confirm();
+
+      expect(mockApi.leaveStory).toHaveBeenCalledWith(server, 'story-1');
+      expect(mockStoryService.discardCollaboratedCopy).toHaveBeenCalledWith('story-1');
+      expect(mockAlert).toHaveBeenCalledWith('success', 'leave_story_success');
+      expect(onLeft).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the copy when the server could not be told - it would come back on the next sync', async () => {
+      const view = await asCollaborator();
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockApi.leaveStory.mockRejectedValueOnce(new Error('boom'));
+      const onLeft = jest.fn();
+
+      await act(async () => view.result.current.handleLeaveStory(onLeft));
+      await confirm();
+
+      expect(mockStoryService.discardCollaboratedCopy).not.toHaveBeenCalled();
+      expect(mockAlert).toHaveBeenCalledWith('error', 'leave_story_failed');
+      expect(onLeft).not.toHaveBeenCalled();
+      (console.error as jest.Mock).mockRestore();
+    });
+
+    it('says so when offline', async () => {
+      const { isOfflineError } = jest.requireMock('../../src/services/apiClient') as {
+        isOfflineError: jest.Mock;
+      };
+      const view = await asCollaborator();
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockApi.leaveStory.mockRejectedValueOnce(new Error('network'));
+      isOfflineError.mockReturnValueOnce(true);
+
+      await act(async () => view.result.current.handleLeaveStory());
+      await confirm();
+
+      expect(mockAlert).toHaveBeenCalledWith('error', 'leave_story_offline');
+      (console.error as jest.Mock).mockRestore();
+    });
+
+    it('still removes the copy when the owner had already removed them (404)', async () => {
+      const view = await asCollaborator();
+      mockApi.leaveStory.mockRejectedValueOnce({ response: { status: 404 } });
+      const onLeft = jest.fn();
+
+      await act(async () => view.result.current.handleLeaveStory(onLeft));
+      await confirm();
+
+      expect(mockStoryService.discardCollaboratedCopy).toHaveBeenCalledWith('story-1');
+      expect(onLeft).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('unlinks from the server only after confirmation, and distinguishes offline', async () => {

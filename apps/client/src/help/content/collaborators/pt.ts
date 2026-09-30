@@ -26,6 +26,7 @@ const page: HelpPage = {
         'O amigo aceita ou recusa em Amigos; até lá o convite aparece como pendente, e você pode trocar o papel oferecido ou cancelá-lo.',
         'Para leitores, ative Permitir comentários de leitores se quiser que eles comentem campos.',
         'Altere o papel ou remova o colaborador a qualquer momento.',
+        'Quem colabora pode sair por conta própria: nas Configurações de uma história de outra pessoa, toque em Sair desta história. O acesso é perdido, a cópia neste aparelho é removida e o dono pode convidar de novo.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

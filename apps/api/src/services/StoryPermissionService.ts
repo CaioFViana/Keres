@@ -8,6 +8,11 @@ import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 
 export class StoryPermissionService {
+  /** The owner's devices re-read who collaborates on the story. */
+  private notifyOwner(ownerUserId: string, storyId: string): void {
+    emitUserEvent(ownerUserId, { type: 'story.collaborators-changed', storyId });
+  }
+
   async areFriends(userId1: string, userId2: string): Promise<boolean> {
     const friendship = await db.query.friendships.findFirst({
       where: and(
@@ -41,7 +46,7 @@ export class StoryPermissionService {
   private async deletePermissionsBetweenUsers(userA: string, userB: string): Promise<void> {
     // 1. Select the IDs of permissions to delete where userB is target and userA is story owner
     const permissionsToDelete1 = await db
-      .select({ id: storyPermissions.id })
+      .select({ id: storyPermissions.id, storyId: storyPermissions.storyId })
       .from(storyPermissions)
       .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
       .where(
@@ -56,11 +61,14 @@ export class StoryPermissionService {
 
     if (idsToDelete1.length > 0) {
       await db.delete(storyPermissions).where(inArray(storyPermissions.id, idsToDelete1)).execute();
+      // userB lost access to userA's stories: their copies must go, and userA's list changed.
+      emitUserEvent(userB, { type: 'stories.catalog-changed' });
+      for (const { storyId } of permissionsToDelete1) this.notifyOwner(userA, storyId);
     }
 
     // 2. Select the IDs of permissions to delete where userA is target and userB is story owner
     const permissionsToDelete2 = await db
-      .select({ id: storyPermissions.id })
+      .select({ id: storyPermissions.id, storyId: storyPermissions.storyId })
       .from(storyPermissions)
       .innerJoin(stories, eq(storyPermissions.storyId, stories.id))
       .where(
@@ -75,6 +83,8 @@ export class StoryPermissionService {
 
     if (idsToDelete2.length > 0) {
       await db.delete(storyPermissions).where(inArray(storyPermissions.id, idsToDelete2)).execute();
+      emitUserEvent(userA, { type: 'stories.catalog-changed' });
+      for (const { storyId } of permissionsToDelete2) this.notifyOwner(userB, storyId);
     }
   }
 
@@ -122,6 +132,7 @@ export class StoryPermissionService {
       .where(eq(storyPermissions.id, existingPermission.id))
       .returning();
     emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
+    this.notifyOwner(ownerUserId, storyId);
     return updatedPermission;
   }
 
@@ -209,8 +220,47 @@ export class StoryPermissionService {
       .where(eq(storyPermissions.id, permission.id));
 
     emitUserEvent(targetUserId, { type: 'stories.catalog-changed' });
+    // The owner's other devices, which still show the collaborator.
+    this.notifyOwner(ownerUserId, storyId);
 
     return { message: 'Story permission deleted successfully.' };
+  }
+
+  /**
+   * A collaborator leaves the story on their own: the same soft delete the owner's revocation does (the
+   * row stays so sync can carry the tombstone), started from the other side. No friendship check: what
+   * is being given up is one's own access.
+   * The owner cannot leave: the story is theirs, and ending it is deleting it.
+   */
+  async leaveStory(userId: string, storyId: string) {
+    if (await this.isStoryOwner(userId, storyId)) {
+      throw new AppError(400, 'The owner cannot leave their own story: delete it instead.');
+    }
+    const permission = await this.getUserPermissionForStory(userId, storyId);
+    if (!permission) {
+      throw new AppError(404, 'You do not collaborate on this story.');
+    }
+
+    await db
+      .update(storyPermissions)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        version: permission.version + 1,
+      })
+      .where(eq(storyPermissions.id, permission.id));
+
+    // Their own open sockets rebuild the story subscriptions from the permissions they hold now...
+    emitUserEvent(userId, { type: 'stories.catalog-changed' });
+    // ...and the owner, on every device, is told the collaborator list changed.
+    const story = await db.query.stories.findFirst({
+      where: eq(stories.id, storyId),
+      columns: { userId: true },
+    });
+    if (story) this.notifyOwner(story.userId, storyId);
+
+    return { message: 'You left the story.' };
   }
 
   async getStoryPermissionsForStory(ownerUserId: string, storyId: string) {

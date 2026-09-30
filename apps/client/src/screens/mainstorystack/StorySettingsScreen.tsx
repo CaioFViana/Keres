@@ -369,6 +369,15 @@ const StorySettingsScreen = () => {
           allowReaderComments={allowReaderComments}
           onAllowReaderCommentsChange={setAllowReaderComments}
           canManageStoryPolicy={canManageStoryPolicy}
+          onLeftStory={() => {
+            const rootStackNavigation = navigation.getParent();
+            const resetToStorySelection = CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'StorySelection' }],
+            });
+            if (rootStackNavigation) rootStackNavigation.dispatch(resetToStorySelection);
+            else navigation.dispatch(resetToStorySelection);
+          }}
         />
       )}
     </EntityFormContainer>

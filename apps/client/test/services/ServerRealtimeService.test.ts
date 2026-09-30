@@ -431,6 +431,26 @@ describe('subscriptions, failures and reconnects', () => {
     await service.stop();
   });
 
+  it('tells whoever shows the collaborators that they changed, with the story and the server', async () => {
+    const { entityEventEmitter } = jest.requireActual('../../src/utils/EventEmitter');
+    const heard = jest.fn();
+    entityEventEmitter.on('story_collaborators_changed', heard);
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+    service.start();
+    await flush();
+
+    MockWebSocket.instances[0].onmessage?.({
+      data: JSON.stringify({ type: 'story.collaborators-changed', storyId: 'story-9' }),
+    });
+    await flush();
+
+    expect(heard).toHaveBeenCalledWith('story-9', server.id);
+    // Only a nudge: nothing is downloaded or synced because of it.
+    expect(mockSyncEngine.downloadAndImportStory).not.toHaveBeenCalled();
+    entityEventEmitter.off('story_collaborators_changed', heard);
+    await service.stop();
+  });
+
   it('logs refresh and event failures instead of crashing the connection', async () => {
     mockFriendshipService.syncFriendshipsWithServer.mockRejectedValueOnce(new Error('db locked'));
     mockPublicationService.syncPublicationsWithServer.mockRejectedValue(new Error('db locked'));

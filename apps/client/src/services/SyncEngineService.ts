@@ -47,6 +47,8 @@ export interface SyncEngineDependencies {
   createConflictService(db: AppDrizzleClient): SyncConflictService;
   createServerService(db: AppDrizzleClient): ServerService;
   fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]>;
+  /** `null` when the server could not be asked (see `StoryTransfer.fetchServerStoryPreviewsOrNull`). */
+  fetchServerStoryPreviewsOrNull?(server: ServerSelect): Promise<ServerStoryPreview[] | null>;
   downloadAndImportStory(
     db: AppDrizzleClient | null,
     queriedServerId: string,
@@ -226,6 +228,12 @@ export class SyncEngineService {
 
   public fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]> {
     return this.dependencies.fetchServerStoryPreviews(server);
+  }
+
+  public async fetchServerStoryPreviewsOrNull(
+    server: ServerSelect,
+  ): Promise<ServerStoryPreview[] | null> {
+    return this.dependencies.fetchServerStoryPreviewsOrNull?.(server) ?? null;
   }
 
   public downloadAndImportStory(

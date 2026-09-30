@@ -73,9 +73,18 @@ jest.mock('../../src/services/storymanagement/StoryService', () => ({
   createStoryService: () => ({ getAllStories: mockGetAllStories }),
 }));
 
+const mockDropRevoked = jest.fn(async () => [] as string[]);
+jest.mock('../../src/services/sync/dropRevokedServerStories', () => ({
+  dropRevokedServerStories: (...args: unknown[]) => (mockDropRevoked as jest.Mock)(...args),
+}));
+
+const mockFetchPreviews = jest.fn(async () => [] as unknown[]);
 const mockSyncEngine = {
   bindDatabase: jest.fn(async () => {}),
-  fetchServerStoryPreviews: jest.fn(async () => [] as unknown[]),
+  fetchServerStoryPreviews: mockFetchPreviews,
+  fetchServerStoryPreviewsOrNull: jest.fn(
+    async (_server: unknown): Promise<unknown[] | null> => mockFetchPreviews(),
+  ),
   downloadAndImportStory: jest.fn(async () => {}),
   requestSync: jest.fn(),
   deactivateStory: jest.fn(async () => {}),
@@ -244,6 +253,35 @@ describe('SyncInitializer', () => {
     expect(mockApiClient.setActiveServer).not.toHaveBeenCalled();
     expect(mockRealtimeClass).toHaveBeenCalledTimes(1);
     expect(mockRtStart).toHaveBeenCalledWith();
+  });
+
+  it('drops the copies of stories the server stopped listing, from a list it really answered', async () => {
+    mockGetAllServers.mockResolvedValue([server]);
+    mockGetAllStories.mockResolvedValue([{ id: 'shared-1' }]);
+    const answered = [{ storyId: 'other', lastOperationVersion: 1, role: 'owner' }];
+    mockSyncEngine.fetchServerStoryPreviews.mockResolvedValue(answered);
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+
+    expect(mockDropRevoked).toHaveBeenCalledWith(mockDrizzle, server, answered);
+  });
+
+  it('never acts on an unanswered request as if the server had listed nothing', async () => {
+    mockGetAllServers.mockResolvedValue([server]);
+    mockGetAllStories.mockResolvedValue([{ id: 'shared-1' }]);
+    mockSyncEngine.fetchServerStoryPreviewsOrNull.mockResolvedValueOnce(null);
+    await render(
+      <SyncInitializer>
+        <Text>app</Text>
+      </SyncInitializer>,
+    );
+    await flush();
+
+    expect(mockDropRevoked).not.toHaveBeenCalled();
   });
 
   it('imports stories missing locally and refreshes the list', async () => {

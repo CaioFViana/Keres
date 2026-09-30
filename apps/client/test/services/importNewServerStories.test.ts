@@ -5,6 +5,11 @@ jest.mock('../../src/state/storyListStore', () => ({
   __esModule: true,
   useStoryListStore: { getState: () => ({ fetchStories: mockFetchStories }) },
 }));
+const mockDropRevoked = jest.fn(async () => [] as string[]);
+jest.mock('../../src/services/sync/dropRevokedServerStories', () => ({
+  __esModule: true,
+  dropRevokedServerStories: (...args: unknown[]) => (mockDropRevoked as jest.Mock)(...args),
+}));
 jest.mock('../../src/services/storymanagement/StoryService', () => ({
   __esModule: true,
   createStoryService: jest.fn(() => ({})),
@@ -49,6 +54,35 @@ describe('importNewServerStories', () => {
       'reader',
     );
     expect(mockFetchStories).toHaveBeenCalledTimes(1);
+  });
+
+  it('also drops what the server stopped listing, when the list was really answered', async () => {
+    const { db } = fakeDb(['story-1']);
+    const answered = [{ storyId: 'story-1', role: 'owner' }];
+    const engine = {
+      fetchServerStoryPreviews: jest.fn(),
+      fetchServerStoryPreviewsOrNull: jest.fn(async () => answered),
+      downloadAndImportStory: jest.fn(),
+    };
+
+    await importNewServerStories(db, engine as never, server);
+
+    expect(mockDropRevoked).toHaveBeenCalledWith(db, server, answered);
+    expect(engine.fetchServerStoryPreviews).not.toHaveBeenCalled();
+  });
+
+  it('drops nothing, and imports nothing, when the server could not be asked', async () => {
+    const { db } = fakeDb(['story-1']);
+    const engine = {
+      fetchServerStoryPreviews: jest.fn(),
+      fetchServerStoryPreviewsOrNull: jest.fn(async () => null),
+      downloadAndImportStory: jest.fn(),
+    };
+
+    await expect(importNewServerStories(db, engine as never, server)).resolves.toBe(false);
+
+    expect(mockDropRevoked).not.toHaveBeenCalled();
+    expect(engine.downloadAndImportStory).not.toHaveBeenCalled();
   });
 
   it('never imports a story twice when two runs overlap', async () => {

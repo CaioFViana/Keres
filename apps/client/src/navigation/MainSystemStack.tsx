@@ -7,6 +7,7 @@ import {
   CommonActions,
   getFocusedRouteNameFromRoute,
   StackActions,
+  useNavigation,
 } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,7 @@ import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import { readShowcaseRequest } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
 import { useStoryStore } from '../state/storyStore';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { useTheme } from '../theme';
 import { useStoryVocabulary } from '../vocabulary/useStoryVocabulary';
@@ -134,6 +136,7 @@ const Drawer = createDrawerNavigator<MainSystemDrawerParamList>();
 const MainSystemNavigator = () => {
   const { colors } = useTheme();
   const { selectedStory } = useStoryStore();
+  const rootNavigation = useNavigation();
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { arcs, activeArc, activeArcId, setActiveArcId, showSelector } = useStoryArcs();
@@ -144,6 +147,21 @@ const MainSystemNavigator = () => {
   const { isCompact, isWide, width: viewportWidth } = useResponsiveLayout();
   const { drawerWidth, setDrawerWidth, maximumWidth } = useResizableDrawerWidth(viewportWidth);
   const compactDrawerWidth = Math.ceil(viewportWidth * 0.6);
+
+  // The story on screen was taken away (the owner removed this person, say): its local copy is gone, so
+  // leave it rather than keep showing - and saving to - a story that no longer exists here.
+  React.useEffect(() => {
+    const onAccessLost = (storyId: string) => {
+      const { selectedStory: open, setSelectedStory } = useStoryStore.getState();
+      if (open?.id !== storyId) return;
+      setSelectedStory(null);
+      rootNavigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'StorySelection' }] }),
+      );
+    };
+    entityEventEmitter.on('story_access_lost', onAccessLost);
+    return () => entityEventEmitter.off('story_access_lost', onAccessLost);
+  }, [rootNavigation]);
 
   return (
     <MentionMatcherProvider>

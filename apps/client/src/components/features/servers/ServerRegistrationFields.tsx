@@ -195,6 +195,8 @@ export default function ServerRegistrationFields({
                 onChangeText={onRecoveryCodeChange}
                 style={inputStyle}
                 autoCapitalize="characters"
+                autoCorrect={false}
+                spellCheck={false}
               />
             )}
           </FormField>

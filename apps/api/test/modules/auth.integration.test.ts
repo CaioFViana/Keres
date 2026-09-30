@@ -355,7 +355,8 @@ describe('POST /auth/forgot-password', () => {
       body: { username: user.username, recoveryCode: realCode, newPassword: 'nova-senha-123' },
     });
 
-    expect(status).toBe(401);
+    // Its own status: the code is not what is being refused, and the person should know to wait.
+    expect(status).toBe(429);
   });
 
   it('lets only one of two concurrent redemptions of the same code through', async () => {

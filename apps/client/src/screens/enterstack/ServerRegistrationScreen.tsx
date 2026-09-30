@@ -275,7 +275,9 @@ const ServerRegistrationScreen = () => {
           t('error'),
           outcome.reason === 'invalid_code'
             ? t('recovery_code_invalid')
-            : `${t('server_error')}: ${outcome.status}`,
+            : outcome.reason === 'rate_limited'
+              ? t('recovery_code_rate_limited')
+              : `${t('server_error')}: ${outcome.status}`,
         );
         setLoading(false);
         return;

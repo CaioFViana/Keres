@@ -5,7 +5,11 @@ import { ulid } from 'ulid';
 import { comparePassword, hashPassword } from '../../config/bcrypt';
 import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
-import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
+import {
+  InvalidRecoveryCodeError,
+  RecoveryAttemptsLockedError,
+  recoveryCodeService,
+} from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { userService } from '../../services/UserService';
 import { AppError } from '../../utils/errors';
@@ -246,6 +250,9 @@ export const authRoutes = new Elysia()
         if (error instanceof InvalidRecoveryCodeError) {
           throw new AppError(401, error.message);
         }
+        if (error instanceof RecoveryAttemptsLockedError) {
+          throw new AppError(429, error.message);
+        }
         throw error;
       }
 
@@ -283,6 +290,7 @@ export const authRoutes = new Elysia()
         200: AuthSessionResponseSchema,
         400: MessageResponseSchema,
         401: MessageResponseSchema,
+        429: MessageResponseSchema,
       },
       detail: {
         summary: 'Reset a forgotten password using a recovery code',

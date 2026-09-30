@@ -1638,6 +1638,7 @@
   "recent_operations": "Operações Recentes",
   "recover_account_description": "Digite seu usuário, um dos seus códigos de recuperação e uma nova senha.",
   "recovery_code_invalid": "Esse usuário e código de recuperação não combinam, ou o código já foi usado.",
+  "recovery_code_rate_limited": "Tentativas demais para esta conta. Espere cerca de 15 minutos e tente de novo - até lá até o código certo é recusado.",
   "recovery_code_label": "Código de recuperação",
   "recovery_code_placeholder": "XXXXX-XXXXX",
   "recovery_code_required": "Digite um código de recuperação.",

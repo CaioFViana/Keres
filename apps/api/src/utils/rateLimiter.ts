@@ -22,6 +22,12 @@ export function createAttemptLimiter(options: { maxAttempts: number; windowMs: n
       entry.count += 1;
       return entry.count <= options.maxAttempts;
     },
+    /** Milliseconds until `key` may try again, or 0 when it is not locked out. */
+    retryAfterMs(key: string): number {
+      const entry = attemptsByKey.get(key);
+      if (!entry || entry.count <= options.maxAttempts) return 0;
+      return Math.max(0, entry.windowStart + options.windowMs - Date.now());
+    },
     clearAttempts(key: string): void {
       attemptsByKey.delete(key);
     },

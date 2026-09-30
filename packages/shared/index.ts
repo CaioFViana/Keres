@@ -148,6 +148,7 @@ export * from './metadata/avatar';
 export * from './metadata/keresIcons';
 export * from './metadata/mapIcons';
 export * from './utils/attributeKey';
+export * from './utils/recoveryCode';
 export * from './utils/excerptHighlight';
 export * from './utils/attributeValueCodec';
 export * from './utils/base64';

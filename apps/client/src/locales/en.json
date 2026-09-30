@@ -1638,6 +1638,7 @@
   "recent_operations": "Recent Operations",
   "recover_account_description": "Enter your username, one of your recovery codes, and a new password.",
   "recovery_code_invalid": "That username and recovery code don't match, or the code was already used.",
+  "recovery_code_rate_limited": "Too many attempts for this account. Wait about 15 minutes and try again - until then even the right code is refused.",
   "recovery_code_label": "Recovery code",
   "recovery_code_placeholder": "XXXXX-XXXXX",
   "recovery_code_required": "Enter a recovery code.",

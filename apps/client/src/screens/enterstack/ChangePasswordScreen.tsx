@@ -191,6 +191,8 @@ const ChangePasswordScreen = () => {
       if (!outcome.success) {
         if (outcome.reason === 'invalid_code') {
           AppAlert.alert(t('error'), t('recovery_code_invalid'));
+        } else if (outcome.reason === 'rate_limited') {
+          AppAlert.alert(t('error'), t('recovery_code_rate_limited'));
         } else {
           AppAlert.alert(t('error'), `${t('server_error')}: ${outcome.status}`);
         }
@@ -316,6 +318,8 @@ const ChangePasswordScreen = () => {
                 onChangeText={setRecoveryCode}
                 style={commonInputStyles.input}
                 autoCapitalize="characters"
+                autoCorrect={false}
+                spellCheck={false}
               />
             )}
           </FormField>

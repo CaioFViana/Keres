@@ -5,7 +5,7 @@ import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/
 import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
 import { useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import { useTheme } from '@/src/theme';
-import { spatialRectIntersects } from '@keres/shared';
+import { getContrastTextColor, getReadableInk, spatialRectIntersects } from '@keres/shared';
 import type { StoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import {
   TIMELINE_EVENT_LANE_HEIGHT,
@@ -44,6 +44,13 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     ref,
   ) => {
     const { colors } = useTheme();
+    // Chapter swatches are pastel fills in the light theme: as text or a thin line on the page they
+    // vanish, so whatever is not a filled shape is drawn in the readable shade of the same hue.
+    const ink = useCallback(
+      (swatch: string, minimum = 4.5) =>
+        getReadableInk(swatch, [colors.background, colors.surface], minimum),
+      [colors.background, colors.surface],
+    );
     // Anchored containers get their own strip between the header and the scenes, so the scene rows
     // start below it. The header chrome stays where it was, measured from the top of that strip.
     const headerBaseY = TIMELINE_PADDING + layout.headerHeight;
@@ -174,7 +181,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             justifyContent: 'center',
             paddingHorizontal: 6,
           },
-          barText: { color: '#fff', fontSize: 9, fontWeight: '700', textAlign: 'center' },
+          barText: { fontSize: 9, fontWeight: '700', textAlign: 'center' },
           gapText: { position: 'absolute', fontSize: 9, textAlign: 'center' },
           sequence: { position: 'absolute', fontSize: 9, textAlign: 'center' },
         }),
@@ -238,7 +245,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                         top: top + TIMELINE_EVENT_LANE_HEIGHT / 2 - CAPTION_LIFT,
                         width: fitsInside ? width : label.length * 7,
                         textAlign: fitsInside ? 'center' : 'left',
-                        color: span.color,
+                        color: ink(span.color),
                       },
                     ]}
                   >
@@ -274,7 +281,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                     top={centerY - 0.8}
                     length={Math.abs(row.gapEnd - row.gapStart)}
                     thickness={1.6}
-                    color={row.chapterColor}
+                    color={ink(row.chapterColor, 3)}
                   />
                 )}
               </React.Fragment>
@@ -340,7 +347,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                     top={headerBaseY - 11.5 - chapter.lane * 18}
                     length={chapter.end - chapter.start}
                     thickness={3}
-                    color={chapter.color}
+                    color={ink(chapter.color, 3)}
                   />
                   {chapter.durationLabel && (
                     <Text
@@ -352,7 +359,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                           top: headerBaseY - 20 - chapter.lane * 18 - CAPTION_LIFT,
                           width: Math.max(40, chapter.end - chapter.start),
                           textAlign: 'center',
-                          color: chapter.color,
+                          color: ink(chapter.color),
                         },
                       ]}
                     >
@@ -372,10 +379,16 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             return (
               <React.Fragment key={row.id}>
                 <View style={[styles.rowLabel, { top: y, height: TIMELINE_ROW_HEIGHT }]}>
-                  <Text numberOfLines={1} style={[styles.rowTitle, { color: row.chapterColor }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.rowTitle, { color: ink(row.chapterColor) }]}
+                  >
                     {row.sequence}. {row.name}
                   </Text>
-                  <Text numberOfLines={1} style={[styles.chapter, { color: row.chapterColor }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.chapter, { color: ink(row.chapterColor) }]}
+                  >
                     {row.chapterName}
                   </Text>
                   {/* The in-world date, when the story has said where on its calendar it opens. */}
@@ -446,7 +459,18 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                     ]}
                   >
                     {row.duration && (
-                      <Text numberOfLines={1} style={styles.barText}>
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.barText,
+                          {
+                            color:
+                              getContrastTextColor(row.chapterColor) === 'black'
+                                ? '#000000'
+                                : '#FFFFFF',
+                          },
+                        ]}
+                      >
                         {row.duration.label}
                       </Text>
                     )}

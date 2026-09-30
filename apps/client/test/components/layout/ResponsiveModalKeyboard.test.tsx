@@ -1,21 +1,18 @@
 import { render } from '@testing-library/react-native';
-import { Platform, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import ResponsiveModal from '../../../src/components/layout/ResponsiveModal/ResponsiveModal';
 
-// The avoiding view's own behavior is what is under test: its props are lifted onto a host node.
-jest.mock('react-native/Libraries/Components/Keyboard/KeyboardAvoidingView', () => {
+const mockKeyboard = { overlap: 0, calls: [] as boolean[] };
+jest.mock('../../../src/hooks/useKeyboardOverlap', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
-  const { View } = require('react-native');
   return {
     __esModule: true,
-    default: (props: { behavior?: string; enabled?: boolean; children?: React.ReactNode }) =>
-      React.createElement(
-        View,
-        { testID: 'keyboard-avoiding', behaviorProp: props.behavior, enabledProp: props.enabled },
-        props.children,
-      ),
+    KeyboardHandledContext: React.createContext(false),
+    useKeyboardOverlap: (active: boolean) => {
+      mockKeyboard.calls.push(active);
+      return { ref: { current: null }, overlap: mockKeyboard.overlap, onLayout: jest.fn() };
+    },
   };
 });
 jest.mock('../../../src/theme', () => ({
@@ -25,60 +22,59 @@ jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: true, isWide: false }),
 }));
 jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
-  useFormScrollBottomPadding: () => 0,
+  useFormScrollBottomPadding: () => 20,
 }));
 
+const overlayPadding = (screen: Awaited<ReturnType<typeof render>>) =>
+  StyleSheet.flatten(screen.getByText('composer').parent!.parent!.props.style).paddingBottom;
+
 describe('ResponsiveModal keyboard avoidance', () => {
-  const original = Platform.OS;
-  afterEach(() => {
-    Platform.OS = original;
+  beforeEach(() => {
+    mockKeyboard.overlap = 0;
+    mockKeyboard.calls = [];
   });
 
-  it.each([
-    ['android', 'height'],
-    ['ios', 'padding'],
-  ] as const)(
-    'keeps its usual behavior on %s (%s) unless a modal asks otherwise',
-    async (os, expected) => {
-      Platform.OS = os;
-      const screen = await render(
-        <ResponsiveModal visible onClose={() => {}}>
-          <Text>search</Text>
-        </ResponsiveModal>,
-      );
-
-      const avoiding = screen.getByTestId('keyboard-avoiding');
-      expect(avoiding.props.behaviorProp).toBe(expected);
-      expect(avoiding.props.enabledProp).toBe(true);
-    },
-  );
-
-  it('pads on Android when a modal asks for it', async () => {
-    Platform.OS = 'android';
-    const asked = await render(
-      <ResponsiveModal visible onClose={() => {}} keyboardBehavior="padding">
-        <Text>search</Text>
+  it('keeps clear of the system bar alone while the keyboard is down', async () => {
+    const screen = await render(
+      <ResponsiveModal visible onClose={() => {}} placement="bottom">
+        <Text>composer</Text>
       </ResponsiveModal>,
     );
 
-    expect(asked.getByTestId('keyboard-avoiding').props.behaviorProp).toBe('padding');
+    expect(overlayPadding(screen)).toBe(20);
   });
 
-  it('does nothing on the web, and can be switched off by content that avoids the keyboard itself', async () => {
-    Platform.OS = 'web';
-    const web = await render(
+  it('lifts the surface by what the keyboard covers, instead of adding to the system bar', async () => {
+    mockKeyboard.overlap = 300;
+    const screen = await render(
+      <ResponsiveModal visible onClose={() => {}} placement="bottom">
+        <Text>composer</Text>
+      </ResponsiveModal>,
+    );
+
+    expect(overlayPadding(screen)).toBe(300);
+  });
+
+  it('only watches the keyboard while open, and not at all when switched off', async () => {
+    await render(
       <ResponsiveModal visible onClose={() => {}}>
-        <Text>search</Text>
+        <Text>composer</Text>
       </ResponsiveModal>,
     );
-    expect(web.getByTestId('keyboard-avoiding').props.behaviorProp).toBeUndefined();
+    expect(mockKeyboard.calls.at(-1)).toBe(true);
 
-    Platform.OS = 'android';
-    const off = await render(
+    await render(
       <ResponsiveModal visible onClose={() => {}} keyboardAvoiding={false}>
-        <Text>search</Text>
+        <Text>composer</Text>
       </ResponsiveModal>,
     );
-    expect(off.getAllByTestId('keyboard-avoiding').at(-1)!.props.enabledProp).toBe(false);
+    expect(mockKeyboard.calls.at(-1)).toBe(false);
+
+    await render(
+      <ResponsiveModal visible={false} onClose={() => {}}>
+        <Text>composer</Text>
+      </ResponsiveModal>,
+    );
+    expect(mockKeyboard.calls.at(-1)).toBe(false);
   });
 });

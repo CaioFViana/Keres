@@ -10,6 +10,7 @@ import {
   TextInput as RNTextInput,
 } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { KeyboardHandledContext } from '../../../hooks/useKeyboardOverlap';
 
 /** Exposes `scrollToFocusedInput` to descendants so custom inputs can request a scroll-into-view pass. */
 export const KeyboardAwareContext = React.createContext<(() => void) | null>(null);
@@ -39,6 +40,8 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
   keyboardVerticalOffset = 64,
 }) => {
   const bottomPadding = useFormScrollBottomPadding();
+  // Inside a ResponsiveModal the surface itself is already lifted clear of the keyboard.
+  const keyboardHandledAbove = React.useContext(KeyboardHandledContext);
   const requestedBottomPadding = StyleSheet.flatten(contentContainerStyle)?.paddingBottom;
   const scrollRef = React.useRef<ScrollView>(null);
   const scrollOffset = React.useRef(0);
@@ -111,6 +114,7 @@ const KeyboardAwareScreen: React.FC<KeyboardAwareScreenProps> = ({
     <KeyboardAwareContext.Provider value={scrollToFocusedInput}>
       <KeyboardAvoidingView
         style={styles.flex}
+        enabled={!keyboardHandledAbove}
         behavior={behavior}
         keyboardVerticalOffset={Platform.OS === 'ios' ? keyboardVerticalOffset : 0}
       >

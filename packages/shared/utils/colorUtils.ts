@@ -75,6 +75,44 @@ export function getContrastTextColor(hexColor: string): 'black' | 'white' {
 }
 
 /**
+ * Returns `color` itself when it already reads on every background at `minimum` contrast, otherwise
+ * the closest shade of it (same hue, pulled towards black on light surfaces and white on dark ones)
+ * that does. For pastel series swatches drawn as text or thin lines: they are made for filled
+ * shapes, and on a page of the opposite tone they all but disappear.
+ */
+export function getReadableInk(
+  color: string,
+  backgrounds: string | readonly string[],
+  minimum = 4.5,
+): string {
+  const surfaces = typeof backgrounds === 'string' ? [backgrounds] : backgrounds;
+  const hex = color.startsWith('#') ? color.slice(1) : color;
+  if (!/^([A-Fa-f0-9]{6})$/.test(hex) || surfaces.length === 0) return color;
+
+  const readsEverywhere = (candidate: string) =>
+    surfaces.every((surface) => (getContrastRatio(candidate, surface) ?? Infinity) >= minimum);
+  if (readsEverywhere(color)) return color;
+
+  const averageLuminance =
+    surfaces.reduce((sum, surface) => sum + (getRelativeLuminance(surface) ?? 1), 0) /
+    surfaces.length;
+  const target = averageLuminance > 0.18 ? 0 : 255;
+  const channels = [0, 2, 4].map((offset) => parseInt(hex.substring(offset, offset + 2), 16));
+  for (let step = 1; step <= 20; step++) {
+    const weight = step / 20;
+    const candidate = `#${channels
+      .map((channel) =>
+        Math.round(channel + (target - channel) * weight)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')}`;
+    if (readsEverywhere(candidate)) return candidate.toUpperCase();
+  }
+  return target === 0 ? '#000000' : '#FFFFFF';
+}
+
+/**
  * Returns a distinct series colour for charts. An explicit palette is preserved while there is room;
  * larger comparisons get hues spread around the colour wheel.
  */

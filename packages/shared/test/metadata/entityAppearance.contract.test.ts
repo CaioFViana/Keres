@@ -10,7 +10,7 @@ describe('entity appearance palette', () => {
     setEntityAppearanceScheme(false);
     expect(getEntityAppearance('Character')).toEqual({
       icon: 'people',
-      color: '#00897B',
+      color: '#00796B',
     });
     expect(getEntityAppearance('Character', true)).toEqual({
       icon: 'people',

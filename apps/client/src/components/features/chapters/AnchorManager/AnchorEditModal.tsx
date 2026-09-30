@@ -425,7 +425,6 @@ const AnchorEditModal: React.FC<Props> = ({
       placement="adaptive"
       contentStyle={styles.sheet}
       maxHeight="86%"
-      keyboardAvoiding={false}
     >
       <KeyboardAwareScreen
         contentContainerStyle={styles.keyboardContent}

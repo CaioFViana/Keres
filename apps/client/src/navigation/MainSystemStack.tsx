@@ -11,7 +11,7 @@ import {
 } from '@react-navigation/native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 import GalleryMediaViewerOverlay from '@/src/components/features/gallery/GalleryManager/GalleryMediaViewerOverlay';
 import PresenceMatrixViewerOverlay from '@/src/components/features/presence-matrix/PresenceMatrixViewerOverlay';
@@ -290,18 +290,10 @@ const MainSystemNavigator = () => {
             // The current story has to stand out from the drawer's other entries, which are only navigation -
             // without this, the story's name gets lost in the list as if it were just another item like
             // "Characters" or "Locations".
-            drawerLabel: ({ focused }) => (
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  color: focused ? colors.primary : colors.text,
-                }}
-                numberOfLines={1}
-              >
-                {selectedStory?.title || t('dashboard_title')}
-              </Text>
-            ),
+            // A text label, not a <Text> of its own: the drawer gives text labels the navigation theme's
+            // font, and a custom element would fall back to the platform default - a different typeface.
+            drawerLabel: selectedStory?.title || t('dashboard_title'),
+            drawerLabelStyle: { fontSize: 16, fontWeight: 'bold' },
           }}
           listeners={drawerItemListeners('MainDashboard')}
         />
@@ -311,11 +303,7 @@ const MainSystemNavigator = () => {
           options={{
             title: activeArc?.title || t('all_arcs', { arcs: term('Arc', true) }),
             drawerIcon: drawerStoredIcon(activeArc?.icon, 'library-outline'),
-            drawerLabel: () => (
-              <Text style={{ fontSize: 15, color: colors.text }} numberOfLines={1}>
-                {activeArc?.title || t('all_arcs', { arcs: term('Arc', true) })}
-              </Text>
-            ),
+            drawerLabel: activeArc?.title || t('all_arcs', { arcs: term('Arc', true) }),
             drawerItemStyle: {
               height: showSelector ? undefined : 0,
               overflow: 'hidden',

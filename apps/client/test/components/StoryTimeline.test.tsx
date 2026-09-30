@@ -1,5 +1,7 @@
+import { getContrastRatio } from '@keres/shared';
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import StoryTimelineCanvas from '../../src/components/features/story-timeline/StoryTimelineCanvas';
 import StoryTimelineSheets from '../../src/components/features/story-timeline/StoryTimelineSheets';
 import type { ChapterAnchorSelect, ChapterSelect, SceneSelect } from '../../src/db/schema';
@@ -211,6 +213,22 @@ describe('StoryTimelineCanvas', () => {
     expect(screen.getByText('Day 2')).toBeTruthy();
     expect(screen.getByText('1d')).toBeTruthy();
     expect(screen.getByText('2h')).toBeTruthy();
+  });
+
+  it('draws pastel chapter colours as text in a shade that reads on the page, and labels the bar for contrast', async () => {
+    const layout = timelineLayout();
+    layout.rows[0] = { ...layout.rows[0], chapterColor: '#90CAF9' };
+    const screen = await render(<StoryTimelineCanvas {...canvasProps()} layout={layout} />);
+
+    for (const text of ['1. Scene 1', 'Chapter 1']) {
+      const { color } = StyleSheet.flatten(screen.getByText(text).props.style);
+      expect(color).not.toBe('#90CAF9');
+      for (const surface of ['#fff', '#eee']) {
+        expect(getContrastRatio(color, surface)!).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    // The bar keeps the pastel fill, so its own label is what has to contrast with it.
+    expect(StyleSheet.flatten(screen.getByText('2h').props.style).color).toBe('#000000');
   });
 
   it('names the scene inside its bar when asked', async () => {

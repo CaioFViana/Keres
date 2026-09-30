@@ -480,9 +480,6 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
         onClose={closeModal}
         contentStyle={styles.modalContent}
         maxHeight={Math.min(screenHeight * 0.75, 720)}
-        // With `height`, the search field's frame flipped between two heights, frame after frame,
-        // while the keyboard was open: this list sizes itself, and `height` re-measured it each time.
-        keyboardBehavior="padding"
       >
         <View style={{ flexShrink: 1 }}>
           <View style={styles.modalHeader}>

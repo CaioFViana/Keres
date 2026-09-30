@@ -46,6 +46,40 @@ describe('entity appearance palettes', () => {
     }
   });
 
+  it('puts white on every light-theme entity and world-piece colour, never a mix', () => {
+    // Readable per colour is not enough: mid-tone swatches where black happens to edge out white
+    // made the dashboard tiles alternate between white and black labels.
+    const offenders = [
+      ...Object.entries(ENTITY_APPEARANCE).map(([name, { light }]) => [name, light] as const),
+      ...Object.entries(WORLD_PIECE_SECTION_APPEARANCE).map(
+        ([name, { light }]) => [name, light] as const,
+      ),
+    ].filter(([, color]) => getContrastTextColor(color) !== 'white');
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('puts black on every dark-theme colour the dashboard tiles use, never a mix', () => {
+    const tiles = [
+      'Chapter',
+      'Scene',
+      'Location',
+      'Character',
+      'Note',
+      'WorldRule',
+      'Item',
+      'Gallery',
+      'Tag',
+      'StorySchemaField',
+      'Choice',
+      'Fork',
+    ] as const;
+
+    expect(
+      tiles.filter((name) => getContrastTextColor(ENTITY_APPEARANCE[name].dark) !== 'black'),
+    ).toEqual([]);
+  });
+
   it('uses dark text for the lighter dark-theme tile variants', () => {
     for (const entityType of ['Scene', 'Item', 'StorySchemaField'] as const) {
       expect(getContrastTextColor(ENTITY_APPEARANCE[entityType].dark)).toBe('black');

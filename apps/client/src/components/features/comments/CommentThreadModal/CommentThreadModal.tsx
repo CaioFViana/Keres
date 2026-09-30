@@ -320,7 +320,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       placement="adaptive"
       contentStyle={styles.sheet}
       maxHeight="85%"
-      keyboardAvoiding={false}
     >
       <KeyboardAwareScreen
         contentContainerStyle={styles.keyboardContent}

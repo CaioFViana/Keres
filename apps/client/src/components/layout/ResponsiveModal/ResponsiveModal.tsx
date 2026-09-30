@@ -1,7 +1,8 @@
 import React from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useFormScrollBottomPadding } from '../../../hooks/useFormScrollBottomPadding';
+import { KeyboardHandledContext, useKeyboardOverlap } from '../../../hooks/useKeyboardOverlap';
 import { useResponsiveLayout } from '../../../hooks/useResponsiveLayout';
 import { useTheme } from '../../../theme';
 
@@ -11,14 +12,11 @@ interface ResponsiveModalProps {
   children: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   maxHeight?: number | `${number}%`;
-  /** Turn it off when the content already uses KeyboardAwareScreen, to avoid a double adjustment. */
-  keyboardAvoiding?: boolean;
   /**
-   * How the avoiding view makes room for the keyboard. The default is what every modal had (`height`
-   * on Android, `padding` on iOS). A modal whose search field kept its frame flipping between two
-   * heights under `height` asks for `padding` instead - see `MultiSelectPill`.
+   * The surface lifts itself clear of the keyboard (see `useKeyboardOverlap`). Turn it off for a
+   * modal with nothing to type in.
    */
-  keyboardBehavior?: 'height' | 'padding';
+  keyboardAvoiding?: boolean;
   /** `adaptive` uses the bottom sheet on compact screens and a left panel on wide screens. */
   placement?: 'center' | 'bottom' | 'side' | 'adaptive';
 }
@@ -32,7 +30,6 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   maxHeight = '80%',
   placement = 'center',
   keyboardAvoiding = true,
-  keyboardBehavior,
 }) => {
   const { colors } = useTheme();
   const { isCompact, isWide } = useResponsiveLayout();
@@ -40,6 +37,8 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   // surface above that measured system area for every modal placement, not only
   // screens that happen to use KeyboardAwareScreen.
   const bottomSystemInset = useFormScrollBottomPadding(0);
+  const { ref: overlayRef, overlap: keyboardOverlap, onLayout: measureOverlay } =
+    useKeyboardOverlap(visible && keyboardAvoiding);
   const resolvedPlacement = placement === 'adaptive' ? (isWide ? 'side' : 'bottom') : placement;
   const placementStyle: ViewStyle =
     resolvedPlacement === 'bottom'
@@ -62,28 +61,24 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
       statusBarTranslucent
     >
       <View
+        ref={overlayRef}
+        onLayout={measureOverlay}
         style={[
           styles.overlay,
           resolvedPlacement === 'bottom' && styles.bottomOverlay,
           resolvedPlacement === 'side' && styles.sideOverlay,
           {
-            paddingBottom:
+            // The keyboard's own height already spans the system bar it sits over, so it replaces
+            // the inset rather than adding to it.
+            paddingBottom: Math.max(
               resolvedPlacement === 'bottom' ? bottomSystemInset : Math.max(16, bottomSystemInset),
+              keyboardOverlap,
+            ),
           },
         ]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <KeyboardAvoidingView
-          enabled={keyboardAvoiding}
-          behavior={
-            keyboardBehavior && Platform.OS !== 'web'
-              ? keyboardBehavior
-              : Platform.OS === 'ios'
-                ? 'padding'
-                : Platform.OS === 'android'
-                  ? 'height'
-                  : undefined
-          }
+        <View
           style={[
             styles.content,
             {
@@ -94,8 +89,10 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
             contentStyle,
           ]}
         >
-          {children}
-        </KeyboardAvoidingView>
+          <KeyboardHandledContext.Provider value={keyboardAvoiding}>
+            {children}
+          </KeyboardHandledContext.Provider>
+        </View>
       </View>
     </Modal>
   );
@@ -122,6 +119,8 @@ const styles = StyleSheet.create({
   content: {
     borderRadius: 12,
     overflow: 'hidden',
+    // The space left above the keyboard is what the surface gets, not what its content asks for.
+    flexShrink: 1,
   },
 });
 

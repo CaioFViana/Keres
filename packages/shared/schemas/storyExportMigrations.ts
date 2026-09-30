@@ -221,6 +221,28 @@ const migrateV9ToV10: StoryExportMigration = {
   },
 };
 
+/**
+ * V10 -> V11: `Scene.body`, the manuscript text.
+ *
+ * A package written before the editor has scenes with a summary and nothing behind it, so each one
+ * gets an explicit `null` rather than relying on the schema's default: what is in the package is
+ * then what is imported, and a V10 scene is told apart from a V11 one only by the version number.
+ * A body already present is never touched.
+ */
+const migrateV10ToV11: StoryExportMigration = {
+  fromVersion: 10,
+  migrate: (data) =>
+    Array.isArray(data?.scenes)
+      ? {
+          ...data,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+          scenes: data.scenes.map((scene: any) =>
+            scene?.body === undefined ? { ...scene, body: null } : scene,
+          ),
+        }
+      : data,
+};
+
 const migrations: StoryExportMigration[] = [
   migrateV1ToV2,
   migrateV2ToV3,
@@ -231,6 +253,7 @@ const migrations: StoryExportMigration[] = [
   migrateV7ToV8,
   migrateV8ToV9,
   migrateV9ToV10,
+  migrateV10ToV11,
 ];
 
 /**

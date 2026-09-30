@@ -212,7 +212,7 @@ describe('migrateStoryExport', () => {
     const migrated = migrateStoryExport(v9Export);
 
     expect(migrated).toMatchObject({
-      formatVersion: 10,
+      formatVersion: CURRENT_STORY_FORMAT_VERSION,
       storyArcs: [
         {
           ...defaultArc('story-9')[0],
@@ -229,6 +229,45 @@ describe('migrateStoryExport', () => {
       { id: 'chapter-9', storyId: 'story-9', arcId: null },
       { id: 'event-9', storyId: 'story-9' },
     ]);
+  });
+
+  it('gives every scene of a V10 package an explicit null body, and leaves a written one alone', () => {
+    const v10Export = {
+      formatVersion: 10,
+      story: { id: 'story-10' },
+      scenes: [
+        { id: 'plain', storyId: 'story-10', summary: 'Only a summary' },
+        { id: 'written', storyId: 'story-10', body: 'Once upon a time.' },
+        { id: 'blank', storyId: 'story-10', body: null },
+      ],
+    };
+
+    const migrated = migrateStoryExport(v10Export);
+
+    expect(migrated.formatVersion).toBe(CURRENT_STORY_FORMAT_VERSION);
+    expect(migrated.scenes).toEqual([
+      { id: 'plain', storyId: 'story-10', summary: 'Only a summary', body: null },
+      { id: 'written', storyId: 'story-10', body: 'Once upon a time.' },
+      { id: 'blank', storyId: 'story-10', body: null },
+    ]);
+    // The source is left as it was read.
+    expect(v10Export.scenes[0]).not.toHaveProperty('body');
+  });
+
+  it('does not invent a scenes collection on a package that has none', () => {
+    expect(migrateStoryExport({ formatVersion: 10, story: { id: 'story-10' } })).not.toHaveProperty(
+      'scenes',
+    );
+  });
+
+  it('carries a V9 package through to scenes with a null body as well', () => {
+    const migrated = migrateStoryExport({
+      formatVersion: 9,
+      story: { id: 'story-9' },
+      scenes: [{ id: 'scene-9', storyId: 'story-9' }],
+    });
+
+    expect(migrated.scenes).toEqual([{ id: 'scene-9', storyId: 'story-9', body: null }]);
   });
 
   it('rejects an export produced by a newer format', () => {

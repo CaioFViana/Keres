@@ -23,8 +23,13 @@
  * Bump it when a release changes the shape of what an export carries, and add the matching
  * migration in `storyExportMigrations.ts`. An older Keres refuses a package from a newer format
  * rather than guessing at it.
+ *
+ * **11** - `Scene.body`: the scene's own manuscript text, written in the editor. Older packages
+ * carry no such key; migration gives every scene an explicit `null`, which is exactly what they
+ * were - a scene described by its summary, with no prose behind it. A Keres on 10 would parse a
+ * package from 11 and quietly drop every written scene, hence the bump rather than a silent default.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 10;
+export const CURRENT_STORY_FORMAT_VERSION = 11;
 
 /**
  * Version of the pack content payload (`PackContentType`).

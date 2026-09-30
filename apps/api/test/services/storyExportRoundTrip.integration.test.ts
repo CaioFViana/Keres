@@ -256,6 +256,7 @@ beforeEach(async () => {
       name: 'A luz apaga',
       index: 1,
       rank: 'a1',
+      body: 'A luz apaga **de repente**.\n\nNinguém se mexe.',
       isStart: true,
     },
     {
@@ -629,6 +630,14 @@ describe('export of a story with one row of every kind', () => {
     }
   });
 
+  it('carries the manuscript of a scene, not only its summary', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+
+    const written = pkg.scenes.find((scene: { id: string }) => scene.id === id.sceneA);
+    expect(written?.body).toBe('A luz apaga **de repente**.\n\nNinguém se mexe.');
+    expect(pkg.scenes.find((scene: { id: string }) => scene.id === id.sceneB)?.body).toBeNull();
+  });
+
   it('leaves soft-deleted rows out of the package', async () => {
     await db
       .update(worldRules)
@@ -755,6 +764,39 @@ describe('import of a package with one row of every kind', () => {
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,
     ).toBe(id.characterA);
+  });
+
+  it('brings the manuscript of a scene through an import with regenerated ids', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(IMPORTER, JSON.parse(JSON.stringify(pkg)));
+    const after = await childrenOf(importedId);
+
+    expect(after.scenes.map((scene) => scene.body).sort()).toEqual([
+      'A luz apaga **de repente**.\n\nNinguém se mexe.',
+      null,
+    ]);
+  });
+
+  it('imports a V10 package, whose scenes have no body, with a null body', async () => {
+    const pkg = JSON.parse(JSON.stringify(await service.exportStory(id.story, OWNER)));
+    pkg.formatVersion = 10;
+    for (const scene of pkg.scenes) delete scene.body;
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(IMPORTER, pkg);
+    const after = await childrenOf(importedId);
+
+    expect(after.scenes.map((scene) => scene.body)).toEqual([null, null]);
   });
 
   it('re-exports every collection and reference after a preserve-id import', async () => {

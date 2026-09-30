@@ -50,8 +50,8 @@ export const SceneSchema = z.object({
    */
   rank: z.string().max(RANK_FIELD_MAX).default(''),
   summary: z.string().nullable(),
-  // `.default(null)` like calendarDateOverrideCalendarId below: packages exported before the
-  // Editor existed carry no `body` key and must still parse, with no format bump.
+  // Format V11. `.default(null)` like calendarDateOverrideCalendarId below, as a safety net: the
+  // V10 -> V11 migration already gives every scene of an older package an explicit `null`.
   body: z.string().max(MAX_SCENE_BODY_LENGTH).nullable().default(null),
   gap: SceneTimingValueSchema,
   gapType: z.string().nullable(),

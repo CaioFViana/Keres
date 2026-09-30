@@ -91,7 +91,7 @@ export type PacksStackParamList = {
  * and belongs behind it, so it gets a back arrow instead of a hamburger.
  */
 export type SettingsStackParamList = {
-  Settings: undefined;
+  SettingsHome: undefined;
   Credits: undefined;
 };
 
@@ -265,7 +265,7 @@ const SettingsStackNavigator = () => {
       }}
     >
       <SettingsStack.Screen
-        name="Settings"
+        name="SettingsHome"
         component={SettingsScreen}
         options={{ headerTitle: t('settings_title') }}
       />
@@ -535,7 +535,7 @@ const StorySelectionNavigator = () => {
             drawerLabel: t('settings_title'),
             drawerIcon: drawerIcon('settings-outline'),
           }}
-          listeners={drawerItemListeners('Settings', 'Settings')}
+          listeners={drawerItemListeners('Settings', 'SettingsHome')}
         />
       </Drawer.Navigator>
       <ShippedPacksInstallerOverlay />

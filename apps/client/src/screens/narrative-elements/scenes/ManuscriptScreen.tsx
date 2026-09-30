@@ -20,6 +20,7 @@ import { SingleSelectPill } from '../../../components/common/inputs/MultiSelectP
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { ManuscriptReviewTools } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
 import { ManuscriptSearchToolbar } from '../../../components/features/manuscript/ManuscriptSearchToolbar/ManuscriptSearchToolbar';
+import ManuscriptExplorer from '../../../components/features/manuscript/ManuscriptExplorer/ManuscriptExplorer';
 import ManuscriptIndexModal from '../../../components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
@@ -71,6 +72,8 @@ const ManuscriptScreen = () => {
 
   const [routeId, setRouteId] = useState<string | null>(route.params?.routeId ?? null);
   const effectiveRouteId = routeId ?? routes[0]?.id ?? null;
+  // Branching stories read either along one route or by exploring scene by scene, like the navigator.
+  const [view, setView] = useState<'route' | 'explore'>('route');
   const [mode, setMode] = useState<ManuscriptReviewMode>('read');
   const [indexVisible, setIndexVisible] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number | null>(null);
@@ -387,9 +390,31 @@ const ManuscriptScreen = () => {
     );
   }
 
+  const viewPill = isBranching ? (
+    <SingleSelectPill
+      options={[
+        { label: t('manuscript_view_route'), value: 'route' },
+        { label: t('manuscript_view_explore'), value: 'explore' },
+      ]}
+      value={view}
+      onValueChange={(value) => setView(value === 'explore' ? 'explore' : 'route')}
+      placeholder={t('manuscript_view')}
+    />
+  ) : null;
+
+  if (isBranching && view === 'explore') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.toolbar}>{viewPill}</View>
+        <ManuscriptExplorer storyId={storyId} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
+        {viewPill}
         {isBranching && (
           <SingleSelectPill
             options={routes.map((entry) => ({ label: entry.name, value: entry.id }))}

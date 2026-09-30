@@ -4,6 +4,7 @@ import SvgRasterHost from '@/src/components/features/export/SvgRasterHost';
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
+import { NavigationBar } from 'expo-navigation-bar';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -51,6 +52,8 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       <StatusBar style={statusBarStyle} />
+      {/* The system's back/home buttons: their tint follows the app's palette, not the phone's scheme. */}
+      {Platform.OS === 'android' ? <NavigationBar style={statusBarStyle} /> : null}
       <WebScrollbarTheme />
       {children}
       <DocumentTitleSync />

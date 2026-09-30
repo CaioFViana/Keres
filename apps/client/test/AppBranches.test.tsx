@@ -11,6 +11,7 @@ jest.mock('react-i18next', () => ({
   I18nextProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 jest.mock('expo-status-bar', () => ({ __esModule: true, StatusBar: jest.fn(() => null) }));
+jest.mock('expo-navigation-bar', () => ({ __esModule: true, NavigationBar: jest.fn(() => null) }));
 jest.mock('expo-system-ui', () => ({
   __esModule: true,
   setBackgroundColorAsync: jest.fn(),
@@ -103,6 +104,7 @@ jest.mock('@/src/components/features/app/WebScrollbarTheme', () => () => null);
 jest.mock('@/src/components/features/export/SvgRasterHost', () => () => null);
 
 import { useSQLiteContext } from 'expo-sqlite';
+import { NavigationBar } from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -185,6 +187,35 @@ it.each([
 
   expect(isColorLight).toHaveBeenCalledWith(palette.background);
   expect(StatusBar).toHaveBeenCalledWith(expect.objectContaining({ style }), undefined);
+});
+
+it.each([
+  [true, 'dark'],
+  [false, 'light'],
+])(
+  "tints Android's system buttons from the palette (light=%s -> %s), not the phone's scheme",
+  async (light, style) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- platform switch for one case.
+    const { Platform } = require('react-native');
+    const original = Platform.OS;
+    Platform.OS = 'android';
+    try {
+      (isColorLight as jest.Mock).mockReturnValue(light);
+      const screen = await render(<App />);
+      await waitFor(() => expect(screen.getByTestId('app-navigator')).toBeTruthy());
+
+      expect(NavigationBar).toHaveBeenCalledWith(expect.objectContaining({ style }), undefined);
+    } finally {
+      Platform.OS = original;
+    }
+  },
+);
+
+it('leaves the navigation bar alone off Android', async () => {
+  const screen = await render(<App />);
+  await waitFor(() => expect(screen.getByTestId('app-navigator')).toBeTruthy());
+
+  expect(NavigationBar).not.toHaveBeenCalled();
 });
 
 it('keeps the native window background in sync with the palette', async () => {

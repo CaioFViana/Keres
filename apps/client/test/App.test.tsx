@@ -10,6 +10,7 @@ jest.mock('react-i18next', () => ({
   __esModule: true,
   I18nextProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+jest.mock('expo-navigation-bar', () => ({ __esModule: true, NavigationBar: () => null }));
 jest.mock('expo-status-bar', () => ({ __esModule: true, StatusBar: () => null }));
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,

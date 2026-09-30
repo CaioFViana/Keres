@@ -214,7 +214,7 @@ it.each([
   ['ServerManagementDrawer', 'ServerManagement'],
   ['FriendshipDrawer', 'FriendshipList'],
   ['PacksDrawer', 'PackList'],
-  ['Settings', 'Settings'],
+  ['Settings', 'SettingsHome'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {

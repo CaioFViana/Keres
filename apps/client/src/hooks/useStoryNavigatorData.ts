@@ -11,7 +11,7 @@ import { createSceneService } from '../services/storymanagement/SceneService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { useEntityInitialLoad } from './useEntityRefreshLifecycle';
 
-interface NavigatorData {
+export interface NavigatorData {
   scenes: SceneSelect[];
   choices: ChoiceSelect[];
   items: ItemSelect[];

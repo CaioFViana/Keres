@@ -31,7 +31,10 @@ import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
-type SettingsScreenNavigationProp = NativeStackNavigationProp<SettingsStackParamList, 'Settings'>;
+type SettingsScreenNavigationProp = NativeStackNavigationProp<
+  SettingsStackParamList,
+  'SettingsHome'
+>;
 
 const SettingsScreen = () => {
   useBackButtonHandler();

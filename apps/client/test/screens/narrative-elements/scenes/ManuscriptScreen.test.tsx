@@ -33,6 +33,7 @@ let mockThreadProps: {
 let mockHeaderTitle: string | null = null;
 let mockHeaderActions: readonly HeaderAction[] | null = null;
 let mockStoryType = 'linear';
+let mockNavigatorData: Record<string, unknown> = {};
 let mockStoryTitle = 'My Story';
 let mockActiveArcId: string | null = null;
 let mockArcs: { id: string; title: string }[] = [];
@@ -104,6 +105,11 @@ jest.mock('../../../../src/state/notificationStore', () => ({
   useNotificationStore: () => ({ showNotification: mockNotify }),
 }));
 
+jest.mock('../../../../src/hooks/useStoryNavigatorData', () => ({
+  __esModule: true,
+  useStoryNavigatorData: () => mockNavigatorData,
+}));
+
 const mockLoadChoiceAnnotations = jest.fn(async () => new Map());
 jest.mock('../../../../src/hooks/useManuscriptData', () => ({
   __esModule: true,
@@ -159,11 +165,17 @@ jest.mock('../../../../src/components/common/inputs/MultiSelectPill/MultiSelectP
       placeholder?: string;
     }) => (
       <>
-        <Text testID="route-picker-value">{props.value ?? props.placeholder}</Text>
+        <Text
+          testID={
+            props.placeholder === 'manuscript_view' ? 'view-picker-value' : 'route-picker-value'
+          }
+        >
+          {props.value ?? props.placeholder}
+        </Text>
         {props.options.map((option) => (
           <Text
             key={option.value}
-            testID={`route-option-${option.value}`}
+            testID={`${props.placeholder === 'manuscript_view' ? 'view' : 'route'}-option-${option.value}`}
             onPress={() => props.onValueChange(option.value)}
           >
             {option.label}
@@ -351,6 +363,18 @@ beforeEach(() => {
   mockArcs = [];
   mockLanguage = 'en';
   mockManuscriptData = linearData();
+  mockNavigatorData = {
+    loading: false,
+    scenes: [
+      makeScene({ id: 's-a', name: 'Alpha', isStart: true, body: 'First.' }),
+      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+    ],
+    choices: [{ id: 'c-1', sceneId: 's-a', nextSceneId: 's-b', text: 'Go on' }],
+    items: [],
+    groups: [],
+    checks: [],
+    effects: [],
+  };
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
@@ -645,6 +669,56 @@ describe('ManuscriptScreen', () => {
     await fireEvent.press(view.getByTestId('route-option-route-2'));
     expect(list.getByText('1. Beta')).toBeTruthy();
     expect(list.queryByText('1. Alpha')).toBeNull();
+  });
+
+  it('offers no view switch for linear stories', async () => {
+    const view = await render(<ManuscriptScreen />);
+
+    expect(view.queryByTestId('view-picker-value')).toBeNull();
+  });
+
+  it('reads a branching story by route by default', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    const view = await render(<ManuscriptScreen />);
+
+    expect(view.getByTestId('view-picker-value').props.children).toBe('route');
+    expect(view.getByTestId('manuscript-list')).toBeTruthy();
+  });
+
+  it('explores a branching story scene by scene, like the navigator, choosing to move on', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.press(view.getByTestId('view-option-explore'));
+
+    expect(view.queryByTestId('manuscript-list')).toBeNull();
+    expect(view.getByTestId('navigator-scene-title').props.children).toBe('Alpha');
+    expect(view.getByText('First.')).toBeTruthy();
+
+    await fireEvent.press(view.getByLabelText('Go on'));
+
+    expect(view.getByTestId('navigator-scene-title').props.children).toBe('Beta');
+    expect(view.getByText('Second.')).toBeTruthy();
+    expect(view.getByText('navigator_no_choices')).toBeTruthy();
+
+    await fireEvent.press(view.getByText('navigator_restart'));
+    expect(view.getByText('First.')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('view-option-route'));
+    expect(view.getByTestId('manuscript-list')).toBeTruthy();
+  });
+
+  it('opens the scene from the explorer title', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('view-option-explore'));
+
+    await fireEvent.press(view.getByTestId('navigator-scene-title'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('SceneDetail', { sceneId: 's-a' });
   });
 
   it('shows an empty state without routes in branching stories', async () => {

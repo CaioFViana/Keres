@@ -34,9 +34,12 @@ describe('ResponsiveModal keyboard avoidance', () => {
     Platform.OS = original;
   });
 
-  it.each(['android', 'ios'] as const)(
-    'pads on %s: height fought the window the keyboard already resizes',
-    async (os) => {
+  it.each([
+    ['android', 'height'],
+    ['ios', 'padding'],
+  ] as const)(
+    'keeps its usual behavior on %s (%s) unless a modal asks otherwise',
+    async (os, expected) => {
       Platform.OS = os;
       const screen = await render(
         <ResponsiveModal visible onClose={() => {}}>
@@ -45,10 +48,21 @@ describe('ResponsiveModal keyboard avoidance', () => {
       );
 
       const avoiding = screen.getByTestId('keyboard-avoiding');
-      expect(avoiding.props.behaviorProp).toBe('padding');
+      expect(avoiding.props.behaviorProp).toBe(expected);
       expect(avoiding.props.enabledProp).toBe(true);
     },
   );
+
+  it('pads on Android when a modal asks for it', async () => {
+    Platform.OS = 'android';
+    const asked = await render(
+      <ResponsiveModal visible onClose={() => {}} keyboardBehavior="padding">
+        <Text>search</Text>
+      </ResponsiveModal>,
+    );
+
+    expect(asked.getByTestId('keyboard-avoiding').props.behaviorProp).toBe('padding');
+  });
 
   it('does nothing on the web, and can be switched off by content that avoids the keyboard itself', async () => {
     Platform.OS = 'web';

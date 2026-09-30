@@ -12,6 +12,7 @@ import {
 import type { ManuscriptSection, TextRange } from '@keres/shared';
 import {
   findFirstExcerptMatch,
+  gamebookManuscriptSections,
   linearManuscriptSections,
   routeManuscriptSections,
 } from '@keres/shared';
@@ -68,12 +69,16 @@ const ManuscriptScreen = () => {
 
   const storyId = selectedStory?.id;
   const isBranching = selectedStory?.type === 'branching';
-  const { chapters, scenes, routes, stepsByRouteId, loading } = useManuscriptData(storyId ?? null);
+  const { chapters, scenes, routes, choices, stepsByRouteId, loading } = useManuscriptData(
+    storyId ?? null,
+  );
 
   const [routeId, setRouteId] = useState<string | null>(route.params?.routeId ?? null);
   const effectiveRouteId = routeId ?? routes[0]?.id ?? null;
   // Branching stories read either along one route or by exploring scene by scene, like the navigator.
-  const [view, setView] = useState<'route' | 'explore'>('route');
+  // `all` lists every scene the way a gamebook numbers them (the tree walked from the starts), so
+  // reading and reviewing work on the whole story, not one route.
+  const [view, setView] = useState<'route' | 'all' | 'explore'>('route');
   const [mode, setMode] = useState<ManuscriptReviewMode>('read');
   const [indexVisible, setIndexVisible] = useState(false);
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number | null>(null);
@@ -97,11 +102,44 @@ const ManuscriptScreen = () => {
   // unset pick falls back to the first route.
   const allSections: ManuscriptSection[] = useMemo(() => {
     if (isBranching) {
+      if (view === 'all') {
+        return gamebookManuscriptSections(visibleScenes, choices, { order: 'discovery' });
+      }
       if (!effectiveRouteId) return [];
       return routeManuscriptSections(stepsByRouteId.get(effectiveRouteId) ?? [], visibleScenes);
     }
     return linearManuscriptSections(chapters, scenes, { arcId: activeArcId });
-  }, [isBranching, effectiveRouteId, stepsByRouteId, chapters, scenes, visibleScenes, activeArcId]);
+  }, [
+    isBranching,
+    view,
+    choices,
+    effectiveRouteId,
+    stepsByRouteId,
+    chapters,
+    scenes,
+    visibleScenes,
+    activeArcId,
+  ]);
+
+  // The gamebook list numbers scenes across chapters, so the index is what groups them by chapter.
+  const chapterGroups = useMemo(
+    () =>
+      isBranching && view === 'all'
+        ? {
+            groups: chapters.map((chapter) => ({
+              key: chapter.id,
+              title:
+                chapter.type === 'chapter' ? `${chapter.index}. ${chapter.name}` : chapter.name,
+            })),
+            groupOfScene: Object.fromEntries(
+              visibleScenes.flatMap((scene) =>
+                scene.chapterId ? [[scene.id, scene.chapterId]] : [],
+              ),
+            ),
+          }
+        : undefined,
+    [isBranching, view, chapters, visibleScenes],
+  );
 
   const {
     sections,
@@ -394,10 +432,13 @@ const ManuscriptScreen = () => {
     <SingleSelectPill
       options={[
         { label: t('manuscript_view_route'), value: 'route' },
+        { label: t('manuscript_view_all'), value: 'all' },
         { label: t('manuscript_view_explore'), value: 'explore' },
       ]}
       value={view}
-      onValueChange={(value) => setView(value === 'explore' ? 'explore' : 'route')}
+      onValueChange={(value) =>
+        setView(value === 'explore' ? 'explore' : value === 'all' ? 'all' : 'route')
+      }
       placeholder={t('manuscript_view')}
     />
   ) : null;
@@ -406,7 +447,7 @@ const ManuscriptScreen = () => {
     return (
       <View style={styles.container}>
         <View style={styles.toolbar}>{viewPill}</View>
-        <ManuscriptExplorer storyId={storyId} />
+        <ManuscriptExplorer storyId={storyId} review={mode === 'review'} />
       </View>
     );
   }
@@ -415,7 +456,7 @@ const ManuscriptScreen = () => {
     <View style={styles.container}>
       <View style={styles.toolbar}>
         {viewPill}
-        {isBranching && (
+        {isBranching && view === 'route' && (
           <SingleSelectPill
             options={routes.map((entry) => ({ label: entry.name, value: entry.id }))}
             value={effectiveRouteId}
@@ -437,7 +478,7 @@ const ManuscriptScreen = () => {
           searchAnchorRef={searchAnchorRef}
         />
       </View>
-      {isBranching && routes.length === 0 ? (
+      {isBranching && view === 'route' && routes.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyText}>{t('manuscript_no_routes')}</Text>
         </View>
@@ -483,6 +524,7 @@ const ManuscriptScreen = () => {
         currentSectionIndex={currentSectionIndex}
         looseHeadingLabel={t('export_manuscript_loose_heading')}
         commentCountsBySceneId={commentCountsBySceneId}
+        groupScenesBy={chapterGroups}
         onSelectSection={handleIndexSelect}
         onClose={() => setIndexVisible(false)}
       />

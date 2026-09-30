@@ -234,6 +234,69 @@ describe('ManuscriptIndexModal', () => {
     expect(view.getByText('manuscript_no_scenes')).toBeTruthy();
   });
 
+  it('narrows the contents as you type, keeping a chapter whose own title matches whole', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'inland');
+    expect(view.getByText('2. Inland')).toBeTruthy();
+    expect(view.queryByText('1. Opening')).toBeNull();
+    expect(view.queryByText('3. Fragment')).toBeNull();
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'arrival');
+    expect(view.getByText('1. Opening')).toBeTruthy();
+    expect(view.getByText('2. Inland')).toBeTruthy();
+    expect(view.queryByText('3. Fragment')).toBeNull();
+  });
+
+  it('opens a collapsed chapter while searching, and says when nothing matches', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+    await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
+    expect(view.queryByText('1. Opening')).toBeNull();
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'opening');
+    expect(view.getByText('1. Opening')).toBeTruthy();
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'zzz');
+    expect(view.getByText('manuscript_no_results')).toBeTruthy();
+  });
+
+  it('groups a gamebook list by chapter, in chapter order, loose scenes last', async () => {
+    // The list itself is in gamebook order, across chapters: 1 is in ch-2, 2 in ch-1, 3 in none.
+    const sections = [
+      sceneSection('s-a', 'Alpha', 1, 'ch-2'),
+      sceneSection('s-b', 'Beta', 2, 'ch-1'),
+      sceneSection('s-c', 'Gamma', 3, null),
+      sceneSection('s-d', 'Delta', 4, 'ch-1'),
+    ];
+    const view = await render(
+      <ManuscriptIndexModal
+        {...baseProps}
+        sections={sections}
+        groupScenesBy={{
+          groups: [
+            { key: 'ch-1', title: '1. Arrival' },
+            { key: 'ch-2', title: '2. Departure' },
+          ],
+          groupOfScene: { 's-a': 'ch-2', 's-b': 'ch-1', 's-d': 'ch-1' },
+        }}
+      />,
+    );
+
+    const titles = view.getAllByText(/^(\d+\. |Appendix)/).map((node) => node.props.children);
+    expect(titles).toEqual([
+      '1. Arrival',
+      '2. Beta',
+      '4. Delta',
+      '2. Departure',
+      '1. Alpha',
+      'Appendix',
+      '3. Gamma',
+    ]);
+    // Picking still reports the scene's place in the list, not in its chapter.
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-d'));
+    expect(baseProps.onSelectSection).toHaveBeenCalledWith(3);
+  });
+
   it('closes from the close button', async () => {
     const onClose = jest.fn();
     const view = await render(<ManuscriptIndexModal {...baseProps} onClose={onClose} />);

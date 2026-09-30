@@ -13,6 +13,12 @@ interface ResponsiveModalProps {
   maxHeight?: number | `${number}%`;
   /** Turn it off when the content already uses KeyboardAwareScreen, to avoid a double adjustment. */
   keyboardAvoiding?: boolean;
+  /**
+   * How the avoiding view makes room for the keyboard. The default is what every modal had (`height`
+   * on Android, `padding` on iOS). A modal whose search field kept its frame flipping between two
+   * heights under `height` asks for `padding` instead - see `MultiSelectPill`.
+   */
+  keyboardBehavior?: 'height' | 'padding';
   /** `adaptive` uses the bottom sheet on compact screens and a left panel on wide screens. */
   placement?: 'center' | 'bottom' | 'side' | 'adaptive';
 }
@@ -26,6 +32,7 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
   maxHeight = '80%',
   placement = 'center',
   keyboardAvoiding = true,
+  keyboardBehavior,
 }) => {
   const { colors } = useTheme();
   const { isCompact, isWide } = useResponsiveLayout();
@@ -68,11 +75,15 @@ const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
           enabled={keyboardAvoiding}
-          // `padding` on both: Android's modal window already resizes for the keyboard (React
-          // Native gives every Modal `adjustResize`), so the avoiding view only has to pad when it
-          // did not. `height` re-measured its own frame after every resize the keyboard caused and
-          // flipped between two heights frame after frame while a search field had focus.
-          behavior={Platform.OS === 'ios' || Platform.OS === 'android' ? 'padding' : undefined}
+          behavior={
+            keyboardBehavior && Platform.OS !== 'web'
+              ? keyboardBehavior
+              : Platform.OS === 'ios'
+                ? 'padding'
+                : Platform.OS === 'android'
+                  ? 'height'
+                  : undefined
+          }
           style={[
             styles.content,
             {

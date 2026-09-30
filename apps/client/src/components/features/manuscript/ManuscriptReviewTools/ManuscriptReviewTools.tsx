@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import Button from '../../../common/controls/Button/Button';
 import CommentThreadModal from '../../comments/CommentThreadModal/CommentThreadModal';
 import { manuscriptTextMetrics } from '../manuscriptTextMetrics';
@@ -19,6 +19,8 @@ export interface ManuscriptReviewThread {
   label: string;
   snapshot: string;
   comments: CommentSelect[];
+  /** A passage the reader copied on a phone, offered as the quote; the web reads its selection instead. */
+  excerpt?: string | null;
 }
 
 interface ManuscriptReviewToolsProps {
@@ -77,7 +79,9 @@ export function ManuscriptReviewTools({
           paddingVertical: 8,
         },
         row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-        label: { flex: 1, color: colors.textSecondary, fontSize: 13 },
+        label: { color: colors.textSecondary, fontSize: 13 },
+        hint: { color: colors.textSecondary, fontSize: 11, fontStyle: 'italic' },
+        labels: { flex: 1 },
       }),
     [colors],
   );
@@ -87,9 +91,17 @@ export function ManuscriptReviewTools({
       {bar && (
         <View style={styles.bar} testID={testID}>
           <View style={styles.row}>
-            <Text style={styles.label} numberOfLines={1}>
-              {bar.sceneLabel}
-            </Text>
+            <View style={styles.labels}>
+              <Text style={styles.label} numberOfLines={1}>
+                {bar.sceneLabel}
+              </Text>
+              {/* A phone cannot read a selection: the passage is quoted from what was copied. */}
+              {Platform.OS !== 'web' && canComment ? (
+                <Text style={styles.hint} numberOfLines={2}>
+                  {t('manuscript_comment_copy_hint')}
+                </Text>
+              ) : null}
+            </View>
             <Button onPress={onBarPress}>
               {t('manuscript_comments_button', { count: bar.count })}
             </Button>
@@ -103,7 +115,7 @@ export function ManuscriptReviewTools({
           storyId={storyId}
           fieldLabel={thread.label}
           showExcerptAnchorNotice
-          initialExcerpt={readClippedSelection(thread.key)}
+          initialExcerpt={thread.excerpt ?? readClippedSelection(thread.key)}
           fieldValueSnapshot={thread.snapshot}
           comments={thread.comments}
           canComment={canComment}

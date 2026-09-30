@@ -58,6 +58,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 // service graph reaches it transitively through MediaFileService. The suites that exercise it
 // (media players, thumbnails) register richer per-file mocks, so the global stand-in only keeps
 // everyone else loading.
+// The clipboard is native-backed: tests hand out what a person copied through `mockClipboardText`.
+jest.mock('expo-clipboard', () => ({
+  __esModule: true,
+  getStringAsync: jest.fn(async () => ''),
+  setStringAsync: jest.fn(async () => true),
+}));
+
 jest.mock('expo-video', () => ({
   createVideoPlayer: () => ({ generateThumbnailsAsync: async () => [], release: () => {} }),
   useVideoPlayer: () => null,

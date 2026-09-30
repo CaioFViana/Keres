@@ -6,6 +6,8 @@ import type {
   ManuscriptReviewBar,
   ManuscriptReviewThread,
 } from '../../../components/features/manuscript/ManuscriptReviewTools/ManuscriptReviewTools';
+import { Platform } from 'react-native';
+import { readCopiedPassage } from '../../../hooks/useCopiedPassage';
 import { trackSelectionContainer } from '../../../hooks/useWebSelectionClip';
 import { useSceneBodyComments } from '../../../hooks/useSceneBodyComments';
 
@@ -127,7 +129,12 @@ export function useManuscriptReview(
 
   const [threadSceneId, setThreadSceneId] = useState<string | null>(null);
   const openThread = useCallback((sceneId: string) => setThreadSceneId(sceneId), []);
-  const closeThread = useCallback(() => setThreadSceneId(null), []);
+  // A passage copied on a phone, quoted when the thread opens from the bar (the web reads its selection).
+  const [copiedPassage, setCopiedPassage] = useState<string | null>(null);
+  const closeThread = useCallback(() => {
+    setThreadSceneId(null);
+    setCopiedPassage(null);
+  }, []);
   // Route loops visit one scene twice: the thread is per scene, the first row wins.
   const threadSection =
     sections.find(
@@ -157,12 +164,15 @@ export function useManuscriptReview(
             label: `${threadSection.position}. ${threadSection.scene.name}`,
             snapshot: threadSection.scene.body ?? '',
             comments: commentsBySceneId[threadSection.scene.id] ?? [],
+            excerpt: copiedPassage,
           }
         : null,
-    [threadSection, commentsBySceneId],
+    [threadSection, commentsBySceneId, copiedPassage],
   );
-  const openBarThread = useCallback(() => {
-    if (barSection) openThread(barSection.scene.id);
+  const openBarThread = useCallback(async () => {
+    if (!barSection) return;
+    if (Platform.OS !== 'web') setCopiedPassage(await readCopiedPassage(barSection.scene.body));
+    openThread(barSection.scene.id);
   }, [barSection, openThread]);
   // The thread posts against the scene's saved body, like the editor posts against
   // its live doc: both anchor the same `body` field, so both stay in sync for free.

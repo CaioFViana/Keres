@@ -5,12 +5,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   useWindowDimensions,
 } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '@/src/theme';
 import type { ManuscriptSection } from '@keres/shared';
@@ -25,6 +24,15 @@ interface ManuscriptIndexModalProps {
   looseHeadingLabel: string;
   /** Comment count by scene id; scenes and groups without counts render bare. */
   commentCountsBySceneId?: Record<string, number>;
+  /**
+   * Groups the scenes of a list that has no chapter headings of its own (a gamebook numbers its
+   * scenes across chapters): the groups in their order, and which one each scene belongs to. Scenes
+   * without one gather under the loose heading.
+   */
+  groupScenesBy?: {
+    groups: { key: string; title: string }[];
+    groupOfScene: Record<string, string>;
+  };
   /** Section index in `sections` to scroll the manuscript list to. */
   onSelectSection: (sectionIndex: number) => void;
   onClose: () => void;
@@ -51,6 +59,7 @@ interface IndexGroup {
 function groupIndexSections(
   sections: ManuscriptSection[],
   looseHeadingLabel: string,
+  groupScenesBy?: ManuscriptIndexModalProps['groupScenesBy'],
 ): { leading: IndexSceneEntry[]; groups: IndexGroup[] } {
   const leading: IndexSceneEntry[] = [];
   const groups: IndexGroup[] = [];
@@ -79,8 +88,23 @@ function groupIndexSections(
       else leading.push(entry);
     }
   });
+  if (groupScenesBy && groups.length === 0) {
+    const byKey = new Map<string, IndexGroup>(
+      groupScenesBy.groups.map((group) => [group.key, { ...group, scenes: [] }]),
+    );
+    const loose: IndexGroup = { key: 'loose', title: looseHeadingLabel, scenes: [] };
+    for (const entry of leading) {
+      (byKey.get(groupScenesBy.groupOfScene[entry.sceneId]) ?? loose).scenes.push(entry);
+    }
+    return {
+      leading: [],
+      groups: [...byKey.values(), loose].filter((group) => group.scenes.length > 0),
+    };
+  }
   return { leading, groups };
 }
+
+const normalized = (text: string) => text.trim().toLowerCase();
 
 /**
  * The manuscript table of contents: every chapter of the current view, expandable to its
@@ -93,6 +117,7 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
   currentSectionIndex,
   looseHeadingLabel,
   commentCountsBySceneId = {},
+  groupScenesBy,
   onSelectSection,
   onClose,
 }) => {
@@ -100,19 +125,46 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
   const { colors } = useTheme();
   const { height: screenHeight } = useWindowDimensions();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
-  const { leading, groups } = useMemo(
-    () => groupIndexSections(sections, looseHeadingLabel),
-    [sections, looseHeadingLabel],
+  const [search, setSearch] = useState('');
+  const { leading: allLeading, groups: allGroups } = useMemo(
+    () => groupIndexSections(sections, looseHeadingLabel, groupScenesBy),
+    [sections, looseHeadingLabel, groupScenesBy],
   );
+  // The search narrows the list to the scenes whose name (or number) matches; a chapter whose own
+  // title matches keeps all its scenes. Groups open while searching, so a hit is never hidden.
+  const needle = normalized(search);
+  const searching = needle.length > 0;
+  const matches = (entry: IndexSceneEntry) =>
+    normalized(`${entry.position}. ${entry.name}`).includes(needle);
+  const leading = searching ? allLeading.filter(matches) : allLeading;
+  const groups = searching
+    ? allGroups.flatMap((group) => {
+        if (normalized(group.title).includes(needle)) return [group];
+        const scenes = group.scenes.filter(matches);
+        return scenes.length > 0 ? [{ ...group, scenes }] : [];
+      })
+    : allGroups;
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         content: { padding: 20 },
-        title: { color: colors.text, fontSize: 20, fontWeight: '700' },
-        // The modal surface clips at 90% of the screen: the list needs a bound of
-        // its own or a long chapter list pushes the close button out of reach.
-        list: { marginTop: 12, marginBottom: 8, maxHeight: Math.min(screenHeight * 0.5, 460) },
+        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+        title: { color: colors.text, fontSize: 20, fontWeight: '700', flexShrink: 1 },
+        closeButton: { padding: 5 },
+        searchInput: {
+          marginTop: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          color: colors.text,
+          fontSize: 15,
+        },
+        // The modal surface clips at 90% of the screen: the list needs a bound of its own.
+        list: { marginTop: 12, maxHeight: Math.min(screenHeight * 0.6, 520) },
         chapterRow: {
           flexDirection: 'row',
           alignItems: 'center',
@@ -142,7 +194,6 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
           fontStyle: 'italic',
           marginTop: 12,
         },
-        closeButton: { backgroundColor: colors.textSecondary },
       }),
     [colors, screenHeight],
   );
@@ -198,18 +249,41 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
   return (
     <ResponsiveModal visible={visible} onClose={onClose} maxHeight="90%" placement="adaptive">
       <View testID="manuscript-index-modal" style={styles.content}>
-        <Text style={styles.title}>{t('manuscript_index_title')}</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('manuscript_index_title')}</Text>
+          <TouchableOpacity
+            testID="manuscript-index-close"
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('close')}
+          >
+            <Ionicons name="close" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+        <TextInput
+          testID="manuscript-index-search"
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+          placeholder={t('manuscript_index_search_placeholder')}
+          placeholderTextColor={colors.textSecondary}
+          autoCorrect={false}
+        />
         {sceneCount === 0 ? (
-          <Text style={styles.emptyText}>{t('manuscript_no_scenes')}</Text>
+          <Text style={styles.emptyText}>
+            {searching ? t('manuscript_no_results') : t('manuscript_no_scenes')}
+          </Text>
         ) : (
           <ScrollView
             style={styles.list}
             testID="manuscript-index-list"
+            keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator
           >
             {leading.map((entry) => renderScene(entry, false))}
             {groups.map((group) => {
-              const expanded = !collapsed.has(group.key);
+              const expanded = searching || !collapsed.has(group.key);
               const groupCount = group.scenes.reduce(
                 (total, entry) => total + (commentCountsBySceneId[entry.sceneId] ?? 0),
                 0,
@@ -237,11 +311,6 @@ const ManuscriptIndexModal: React.FC<ManuscriptIndexModalProps> = ({
             })}
           </ScrollView>
         )}
-        <FormActions stackOnCompact>
-          <Button testID="manuscript-index-close" onPress={onClose} style={styles.closeButton}>
-            {t('close')}
-          </Button>
-        </FormActions>
       </View>
     </ResponsiveModal>
   );

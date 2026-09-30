@@ -10,6 +10,14 @@ interface NavigatorScenePanelProps {
   /** What the card shows of the scene: the navigator its summary, the manuscript the text itself. */
   content: 'summary' | 'body';
   onOpenScene?: (sceneId: string) => void;
+  /** Less air above the card, where the screen already has a toolbar over it. */
+  dense?: boolean;
+  /** Commented passages of the body, marked when the body is shown (review mode). */
+  commentExcerpts?: string[];
+  /** Tapping a marked passage. */
+  onCommentPress?: () => void;
+  /** Ref of the body's container: what the web reads a text selection through. */
+  bodyRef?: (node: unknown) => void;
 }
 
 /** The current scene of a simulated walk: its content, the carried state, and the choices at hand. */
@@ -17,6 +25,10 @@ export default function NavigatorScenePanel({
   simulation,
   content,
   onOpenScene,
+  dense = false,
+  commentExcerpts,
+  onCommentPress,
+  bodyRef,
 }: NavigatorScenePanelProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -29,7 +41,7 @@ export default function NavigatorScenePanel({
           borderColor: colors.border,
           borderRadius: 10,
           padding: 16,
-          marginTop: 16,
+          marginTop: dense ? 4 : 16,
         },
         title: { color: colors.text, fontWeight: '700', fontSize: 19 },
         summary: { color: colors.text, fontSize: 16, lineHeight: 25, marginTop: 10 },
@@ -48,7 +60,7 @@ export default function NavigatorScenePanel({
         state: { color: colors.textSecondary, marginTop: 16 },
         activity: { color: colors.textSecondary, marginTop: 6 },
       }),
-    [colors],
+    [colors, dense],
   );
 
   if (!current) return <Text style={styles.muted}>{t('navigator_no_scenes')}</Text>;
@@ -62,8 +74,12 @@ export default function NavigatorScenePanel({
       </TouchableOpacity>
       {content === 'body' ? (
         current.body ? (
-          <View style={styles.body}>
-            <MarkdownPreview text={current.body} />
+          <View style={styles.body} ref={bodyRef} collapsable={false}>
+            <MarkdownPreview
+              text={current.body}
+              commentExcerpts={commentExcerpts}
+              onCommentPress={onCommentPress}
+            />
           </View>
         ) : (
           <Text style={styles.muted}>{t('manuscript_no_body_yet')}</Text>

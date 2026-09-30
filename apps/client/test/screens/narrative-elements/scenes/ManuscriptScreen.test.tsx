@@ -21,6 +21,8 @@ let mockCommentsBySceneId: Record<string, CommentSelect[]> = {};
 const mockReviewAddComment = jest.fn();
 let mockThreadProps: {
   visible: boolean;
+  initialExcerpt?: string | null;
+  onClose: () => void;
   fieldLabel: string;
   comments: CommentSelect[];
   onSubmit: (input: {
@@ -529,6 +531,33 @@ describe('ManuscriptScreen', () => {
     expect(mockThreadProps?.comments).toHaveLength(1);
   });
 
+  it('quotes the passage copied on a phone when the thread opens from the bar', async () => {
+    const { getStringAsync } = jest.requireMock('expo-clipboard');
+    getStringAsync.mockResolvedValueOnce('Lost pages');
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-3'));
+    await pressHeaderAction('mode-review');
+
+    await fireEvent.press(view.getByText('manuscript_comments_button:{"count":0}'));
+
+    expect(mockThreadProps).toMatchObject({ visible: true, initialExcerpt: 'Lost pages' });
+  });
+
+  it('opens the thread without a quote when what was copied is not in the scene', async () => {
+    const { getStringAsync } = jest.requireMock('expo-clipboard');
+    getStringAsync.mockResolvedValueOnce('something else entirely');
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('manuscript-index-open'));
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-3'));
+    await pressHeaderAction('mode-review');
+
+    await fireEvent.press(view.getByText('manuscript_comments_button:{"count":0}'));
+
+    expect(mockThreadProps).toMatchObject({ visible: true });
+    expect(mockThreadProps?.initialExcerpt ?? null).toBeNull();
+  });
+
   it('addresses the bar to the current scene and posts against its body', async () => {
     mockCommentsBySceneId = {
       's-3': [{ id: 'c-3', excerptText: 'Lost' } as CommentSelect],
@@ -708,6 +737,85 @@ describe('ManuscriptScreen', () => {
 
     await fireEvent.press(view.getByTestId('view-option-route'));
     expect(view.getByTestId('manuscript-list')).toBeTruthy();
+  });
+
+  it('lists every scene of a branching story in gamebook order, with review and comments like any other list', async () => {
+    mockStoryType = 'branching';
+    const data = branchingData();
+    // Gamma is only reachable through Beta, and Delta through nothing: both are still in the list.
+    data.scenes = [
+      makeScene({ id: 's-a', name: 'Alpha', isStart: true, body: 'First.' }),
+      makeScene({ id: 's-b', name: 'Beta', index: 2, body: 'Second.' }),
+      makeScene({ id: 's-d', name: 'Delta', index: 4, body: 'Stray.' }),
+      makeScene({ id: 's-c', name: 'Gamma', index: 3, body: 'Third.' }),
+    ];
+    data.choices = [
+      { id: 'c1', sceneId: 's-a', nextSceneId: 's-b', text: 'on' },
+      { id: 'c2', sceneId: 's-b', nextSceneId: 's-c', text: 'on' },
+    ];
+    // No route walks Gamma or Delta: only this view can show them.
+    data.stepsByRouteId = new Map();
+    mockManuscriptData = data;
+    const view = await render(<ManuscriptScreen />);
+
+    await fireEvent.press(view.getByTestId('view-option-all'));
+
+    // The route pill is for the route view only.
+    expect(view.queryByTestId('route-picker-value')).toBeNull();
+    const list = within(view.getByTestId('manuscript-list'));
+    // Reading shows the prose: reachable scenes in discovery order, the stray one last.
+    expect(['First.', 'Second.', 'Third.', 'Stray.'].every((body) => list.queryByText(body))).toBe(
+      true,
+    );
+
+    // Review mode works on it: the scenes carry the comment controls.
+    await pressHeaderAction('mode-review');
+    expect(
+      ['1. Alpha', '2. Beta', '3. Gamma', '4. Delta'].every((title) => list.queryByText(title)),
+    ).toBe(true);
+    expect(view.getByTestId('manuscript-comment-s-c')).toBeTruthy();
+    expect(view.getByTestId('manuscript-review-tools')).toBeTruthy();
+  });
+
+  it('shows the comments of the scene being explored in review mode, and opens their thread', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    mockCommentsBySceneId = {
+      's-a': [{ id: 'c-a', excerptText: 'First' } as CommentSelect],
+      's-b': [],
+    };
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('view-option-explore'));
+
+    // Reading: no review chrome.
+    expect(view.queryByTestId('manuscript-explorer-review-tools')).toBeNull();
+
+    await pressHeaderAction('mode-review');
+    expect(view.getByTestId('manuscript-explorer-review-tools')).toBeTruthy();
+    await fireEvent.press(view.getByText('manuscript_comments_button:{"count":1}'));
+    expect(mockThreadProps).toMatchObject({ visible: true, fieldLabel: 'Alpha' });
+    expect(mockThreadProps?.comments).toHaveLength(1);
+    await act(async () => {
+      mockThreadProps?.onClose();
+    });
+
+    // Moving on brings the next scene's own count.
+    await fireEvent.press(view.getByLabelText('Go on'));
+    expect(view.getByText('manuscript_comments_button:{"count":0}')).toBeTruthy();
+  });
+
+  it('quotes the passage copied from the explored scene when its thread opens', async () => {
+    const { getStringAsync } = jest.requireMock('expo-clipboard');
+    getStringAsync.mockResolvedValueOnce('First.');
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    const view = await render(<ManuscriptScreen />);
+    await fireEvent.press(view.getByTestId('view-option-explore'));
+    await pressHeaderAction('mode-review');
+
+    await fireEvent.press(view.getByText('manuscript_comments_button:{"count":0}'));
+
+    expect(mockThreadProps).toMatchObject({ visible: true, initialExcerpt: 'First.' });
   });
 
   it('opens the scene from the explorer title', async () => {

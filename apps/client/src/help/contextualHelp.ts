@@ -61,7 +61,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   RouteSteps: 'routes',
   RouteReader: 'routes',
   RouteTimeline: 'routes',
-  StoryNavigator: 'routes',
+  StoryNavigator: 'story-navigator',
   LocationsStack: 'locations',
   Locations: 'locations',
   LocationDetail: 'locations',

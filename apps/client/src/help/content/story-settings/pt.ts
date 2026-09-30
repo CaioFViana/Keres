@@ -23,7 +23,7 @@ const page: HelpPage = {
       items: [
         'Abra a seção que deseja alterar.',
         'Use Tipo da história para converter entre Linear e Ramificada.',
-        'Use Colaboradores para convidar, remover ou ajustar acesso.',
+        'Use Colaboradores para convidar, remover ou ajustar acesso. Numa história de outra pessoa, esta área oferece Sair desta história no lugar disso - veja Escrevendo junto.',
         'Use Enviar para servidor para ligar uma história local a um servidor.',
         'Ative comentários de leitores quando quiser receber observações de leitores.',
         'Use o cartão de preferências de leitura para escolher o comportamento dos favoritos, ligar menções automaticamente e normalizar o tempo das cenas ao exibi-lo.',

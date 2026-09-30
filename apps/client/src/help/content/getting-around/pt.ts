@@ -26,6 +26,8 @@ const page: HelpPage = {
         'Toque em um item do menu para voltar à lista principal daquele assunto.',
         'Use o botão Voltar do aparelho ou do navegador para retornar pela sequência de telas que abriu.',
         'Toque em Ajuda no final do menu para pesquisar ou navegar pelo catálogo.',
+        'Quando um cabeçalho tem mais ações do que cabem, elas se juntam em Mais ações (o ícone de hambúrguer): toque para ver cada uma com o seu nome.',
+        'Num formulário, a ação Redefinir do cabeçalho pergunta Descartar alterações? - num item novo apaga tudo o que foi digitado, num existente restaura os valores guardados. Nenhuma das duas se desfaz.',
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

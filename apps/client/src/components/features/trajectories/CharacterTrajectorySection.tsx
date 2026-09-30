@@ -3,8 +3,8 @@ import { buildTrajectoryStops } from '@keres/shared/graphs/trajectories';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
-import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { useCharacterTrajectoryData } from '@/src/hooks/useCharacterTrajectoryData';
 import { useNavigateToEntityDetail } from '@/src/hooks/useNavigateToEntityDetail';
 import { useTheme } from '@/src/theme';
@@ -91,8 +91,10 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
   });
 
   return (
-    <>
-      <ScreenSection title={t('trajectory_title')} />
+    <CollapsibleCard
+      title={t('trajectory_section_title', { count: stops.length })}
+      initialExpanded={false}
+    >
       {storyType === 'branching' &&
         (routes.length === 0 ? (
           <Text style={styles.hint}>{t('trajectory_no_routes')}</Text>
@@ -130,7 +132,7 @@ const CharacterTrajectorySection: React.FC<CharacterTrajectorySectionProps> = ({
           </TouchableOpacity>
         ))
       )}
-    </>
+    </CollapsibleCard>
   );
 };
 

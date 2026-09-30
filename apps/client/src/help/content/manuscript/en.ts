@@ -25,12 +25,17 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Open a scene and select Write manuscript (pencil icon in the header, or the Manuscript card).',
-        'Write in Write mode. The toolbar above the text applies **bold**, *italic*, __underline__ and ~~strikethrough~~; typing stays safe as a local draft until you save.',
-        'Switch to Read to preview the formatted page, or to Review to read and answer scene comments.',
-        'Open the Manuscript from the narrative elements header (book icon) to read everything in order, search the full text, or export.',
+        'Write in Write mode. The toolbar above the text applies **bold**, *italic*, __underline__ and ~~strikethrough~~; typing stays safe as a local draft until you save. Under the text a counter shows words and characters; a scene holds up to about 30,000 characters (around 5,000 words), the editor warns as you near it, and past it the scene should be split in two.',
+        'Switch to Read to preview the formatted page, or to Review to read and answer scene comments: commented passages are marked in the text, and a button shows how many comments the scene has. To comment on a passage, select it, tap Copy and then Comments - the passage is offered as the quote (on the web, selecting is enough).',
+        'Open the Manuscript from the narrative elements header (book icon) to read everything in order, search the full text, or export. Open contents, beside the search box, lists the scenes grouped by chapter with its own search and the comment count of each; tap one to jump to it.',
         'In the manuscript, tap a scene title to open the scene, or the pencil beside it to edit its prose. The eye icon toggles pure reading: titles and buttons disappear so nothing steals a tap.',
         'Export (share icon) opens the export screen: start from a preset (e-book, paperback, submission) or pick the format, contents, title page, layout and text treatment yourself. Options a format cannot use are not shown for it.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'Reading a branching story' },
+    {
+      type: 'paragraph',
+      text: 'In a branching story the manuscript has a View selector above the text: Read a route shows the scenes of one route in order (choose which one beside it), All scenes shows every scene, and Explore scenes reads the way the Story Navigator walks the story - one scene at a time, with its choices shown as unavailable until the reader holds what they need. In Explore, pick a start scene, choose a choice to move on, and use Restart simulation to begin again. Review works in every view, so comments can be read and added while exploring.',
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {

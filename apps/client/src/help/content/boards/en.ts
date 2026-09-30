@@ -4,7 +4,19 @@ const page: HelpPage = {
   title: 'Boards',
   summary:
     'Small freeform sketches of the story dictionary: pins, notes and arrows that are not relations.',
-  keywords: ['board', 'corkboard', 'canvas', 'pin', 'sketch', 'map'],
+  keywords: [
+    'board',
+    'corkboard',
+    'canvas',
+    'pin',
+    'sketch',
+    'map',
+    'shape',
+    'draw',
+    'stamp',
+    'frame',
+    'line',
+  ],
   blocks: [
     { type: 'heading', level: 2, text: 'What it is' },
     {
@@ -22,13 +34,33 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Open Boards in the story menu and create a board with a short name.',
-        'Add existing entities from the picker. The same entity can be pinned more than once.',
-        'Add a note for something that is not an entity yet.',
+        'Above the board, Add an entity opens the picker to pin existing entities. The same entity can be pinned more than once.',
+        'Add note is for something that is not an entity yet. Add objects draws shapes, lines and stamps - see below.',
         'Drag a pin to move it. Tap it to open its profile or edit its note.',
-        'To create a link, turn on Connect nodes in the header and drag from one pin to another.',
+        'To create a link, turn on Connect nodes in the bar above the board and drag from one pin to another. Connect nodes, Edit objects and Edit layout are exclusive: turning one on turns the others off.',
         'In the dialog, choose whether the link is directional, its arrow direction, and optional text.',
-        'Save explicitly. Revert restores the last saved drawing. Opening an entity keeps the unsaved drawing in memory until you save, close the app, or open another board.',
+        'Save with the checkmark in the header; the undo arrow (Revert) goes back to the last saved drawing. Both stay dimmed until something changes.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'Shapes, lines, and stamps' },
+    {
+      type: 'paragraph',
+      text: 'Besides pins and notes, a board takes drawn objects: a frame around the conspirators, a line marking a border, a star on the key scene. They are decoration and grouping only; nothing drawn becomes a relation or changes the story.',
+    },
+    {
+      type: 'steps',
+      items: [
+        'Open Add objects (shapes icon) and choose a group: Draw (rectangle, ellipse, frame, line, polygon), Ready-made shapes (square, diamond, triangle, pentagon, hexagon, star) or Stamp (an icon).',
+        'Rectangle, ellipse, frame and the ready-made shapes are drawn by dragging across the canvas. For a line, tap to place each point, then Finish; a polygon closes itself when you finish. For a stamp, tap where it goes. Cancel leaves without creating anything.',
+        'Turn on Edit objects to select one: it shows handles to move it or drag its points and corners, and a column with Edit details, Bring to front, Send to back, Lock object and Deselect.',
+        'Edit details sets its label, color, and whether it is dashed or filled, or which icon a stamp shows. Remove deletes it.',
+        'A locked object can still be selected and edited in its details, but cannot be moved or reshaped until you unlock it.',
+      ],
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'Objects are saved, shared and exported together with the drawing, in the PNG or SVG you chose in App settings.',
     },
     { type: 'heading', level: 2, text: 'Links on a board' },
     {
@@ -56,6 +88,11 @@ const page: HelpPage = {
     {
       type: 'callout',
       tone: 'info',
+      text: 'Changes you have not saved are kept on this device, per board, even if you close the app or open an entity from a pin. The next time you open the board they come back with a notice. If the saved board changed in the meantime, the notice says so; use Revert to drop your draft and keep the saved one.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
       text: 'If two people save the same board, Keres will not merge the drawings. Keep yours, keep theirs, or keep theirs and save yours as another board.',
     },
     {
@@ -66,7 +103,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Boards do not change the story map, the location graph, or character relations. Links and their text stay on that board. Opening a pinned entity keeps the unsaved drawing in memory until you save, close the app, or open another board. Saving writes one update for the whole drawing, so two people editing the same board resolve it as keep-mine, keep-theirs, or a copy — the drawings are not merged.',
+      text: 'Boards do not change the story map, the location graph, or character relations. Links and their text stay on that board. Saving writes one update for the whole drawing, so two people editing the same board resolve it as keep-mine, keep-theirs, or a copy — the drawings are not merged.',
     },
   ],
 };

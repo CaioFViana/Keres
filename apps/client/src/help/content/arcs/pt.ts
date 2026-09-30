@@ -33,7 +33,7 @@ const page: HelpPage = {
       items: [
         'Abra Personalização no menu da história e escolha Arcos.',
         'Escolha Adicionar para criar outro arco e dê a ele um nome claro.',
-        'Se quiser, acrescente uma descrição e escolha um tema para o arco.',
+        'Se quiser, acrescente uma descrição, escolha um Ícone (busque na biblioteca ou use os recentes) e um tema para o arco.',
         'Abra um capítulo ou evento e escolha o arco ao qual ele pertence.',
         'Use o seletor de arcos no cabeçalho da história quando quiser focar em um arco.',
       ],

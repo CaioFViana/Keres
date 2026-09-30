@@ -22,12 +22,33 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Crie os Locais antes de organizá-los no mapa.',
-        'Use Adicionar imagens para colocar uma base visual e Adicionar locais ou Marcador para colocar pontos no canvas.',
+        'Acima do mapa, Adicionar imagem de fundo dá uma base visual, e Adicionar locais e Adicionar marcador colocam pontos no canvas.',
         'Arraste pontos ou imagens para posicioná-los; o modo Editar layout libera os controles de tamanho e camadas.',
-        'Ative Ligar nós no cabeçalho e arraste de um ponto até outro para criar uma ligação.',
+        'Ative Ligar nós acima do mapa e arraste de um ponto até outro para criar uma ligação. Ligar nós, Editar objetos e Editar layout são exclusivos: ligar um desliga os outros.',
         'No diálogo, escolha se a ligação é direcionada, o sentido A → B ou B → A, e um texto opcional.',
         'Abra um Local pelo mapa para revisar sua ficha, relações e destino de mapa.',
+        'Guarde com o visto no cabeçalho; a seta de desfazer (Reverter) volta ao último mapa guardado.',
       ],
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'As alterações por guardar ficam neste aparelho, por mapa, mesmo que você feche a app. Na próxima vez que abrir o mapa elas voltam, com um aviso; se o mapa guardado mudou entretanto o aviso diz isso, e Reverter descarta o seu rascunho.',
+    },
+    { type: 'heading', level: 2, text: 'Formas, linhas e carimbos' },
+    {
+      type: 'paragraph',
+      text: 'Adicionar objetos (ícone de formas) desenha por cima do mapa: retângulos, elipses, molduras, linhas, polígonos, formas prontas e carimbos (um ícone). Funciona como no board: arraste para retângulos, elipses, molduras e formas prontas; toque em cada ponto de uma linha ou polígono e escolha Concluir; toque uma vez para um carimbo. Editar objetos seleciona um para mover, remodelar, bloquear, mudar a camada ou abrir os detalhes (rótulo, cor, tracejado ou preenchido). Nada do que se desenha altera Locais nem relações.',
+    },
+    { type: 'heading', level: 2, text: 'Trajetos' },
+    {
+      type: 'paragraph',
+      text: 'Mostrar trajetos (ícone de pegadas) desenha por cima do mapa o caminho de um personagem ou de um item, de um ponto de Local ao seguinte, na ordem da história. Escolha quem seguir na folha - vários personagens e itens ao mesmo tempo - e, numa história ramificada, também a Rota que o caminho segue. Limpar seleção os esconde.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'O trajeto é calculado a partir das cenas em que o personagem aparece (ou da jornada do item) e do Local em que cada cena acontece; nada é guardado no mapa, e a seleção é esquecida ao sair. As paradas cujo Local não está neste mapa são contadas num aviso (“2 paradas fora deste mapa”) em vez de desenhadas.',
     },
     { type: 'heading', level: 2, text: 'Direção, textos e marcadores' },
     {
@@ -42,9 +63,12 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Hierarquia e conexões entre Locais alteram as relações da história e podem aparecer onde essas relações são usadas. Posições, imagens, marcadores, textos, destinos de mapa e ligações com marcadores pertencem somente a este mapa. Remover um ponto não exclui o Local nem as cenas que acontecem nele.',
+      text: 'Hierarquia e conexões entre Locais alteram as relações da história e podem aparecer onde essas relações são usadas. Posições, imagens, marcadores, textos, destinos de mapa e ligações com marcadores pertencem somente a este mapa. Remover um ponto não exclui o Local nem as cenas que acontecem nele. Formas, linhas e carimbos pertencem somente a este mapa e entram na exportação dele em PNG ou SVG.',
     },
-    { type: 'seeAlso', pages: ['locations', 'scenes', 'boards'] },
+    {
+      type: 'seeAlso',
+      pages: ['locations', 'scenes', 'boards', 'characters', 'item-journeys', 'app-settings'],
+    },
   ],
 };
 export default page;

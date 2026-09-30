@@ -30,9 +30,9 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
-      text: 'Import does not replace an existing story: it creates a new copy. Export does not change the story. Older-version files may not be accepted if the app cannot read them safely.',
+      text: 'Import does not replace an existing story: it creates a new copy. Export does not change the story. A file made by an older version of Keres is brought up to date as it is imported, prose of the scenes included. A file made by a newer version than your app is refused, with a message: update the app and try again. To get the prose as a document to read or send (Word, PDF, EPUB...), use Export in the Manuscript instead; this is the copy of the whole story.',
     },
-    { type: 'seeAlso', pages: ['data-and-backup', 'story-list', 'example-stories'] },
+    { type: 'seeAlso', pages: ['data-and-backup', 'story-list', 'example-stories', 'manuscript'] },
   ],
 };
 export default page;

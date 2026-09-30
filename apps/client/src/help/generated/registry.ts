@@ -109,6 +109,8 @@ import storyList_en from '../content/story-list/en';
 import storyList_pt from '../content/story-list/pt';
 import storyMap_en from '../content/story-map/en';
 import storyMap_pt from '../content/story-map/pt';
+import storyNavigator_en from '../content/story-navigator/en';
+import storyNavigator_pt from '../content/story-navigator/pt';
 import storySettings_en from '../content/story-settings/en';
 import storySettings_pt from '../content/story-settings/pt';
 import storyState_en from '../content/story-state/en';
@@ -193,6 +195,7 @@ export type GeneratedHelpPageId =
   | 'story-devices'
   | 'story-list'
   | 'story-map'
+  | 'story-navigator'
   | 'story-settings'
   | 'story-state'
   | 'story-type'
@@ -424,6 +427,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'story-map': {
     en: storyMap_en,
     pt: storyMap_pt,
+  },
+  'story-navigator': {
+    en: storyNavigator_en,
+    pt: storyNavigator_pt,
   },
   'story-settings': {
     en: storySettings_en,

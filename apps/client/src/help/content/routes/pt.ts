@@ -64,7 +64,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Uma Rota não altera o Mapa, as Cenas ou as Escolhas. O Leitor usa somente os passos dela. Se uma Escolha for excluída ou passar a levar a outra Cena, a rota é sinalizada para reparo antes de poder ser lida.',
     },
-    { type: 'seeAlso', pages: ['branching-basics', 'choices', 'story-map', 'story-state'] },
+    {
+      type: 'seeAlso',
+      pages: ['branching-basics', 'story-navigator', 'choices', 'story-map', 'story-state'],
+    },
   ],
 };
 

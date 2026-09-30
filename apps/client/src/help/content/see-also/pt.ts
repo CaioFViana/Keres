@@ -32,6 +32,11 @@ const page: HelpPage = {
       tone: 'info',
       text: 'Use Etiquetas para agrupar muitos elementos por uma palavra curta e Notas para guardar texto. Use Veja também quando o importante é navegar de uma ficha a outra.',
     },
+    { type: 'heading', level: 2, text: 'Nomes que podem significar duas coisas' },
+    {
+      type: 'paragraph',
+      text: 'Quando um texto menciona um nome que combina com mais de um elemento - duas personagens chamadas Mara, um lugar e um item com o mesmo nome - a ficha mostra um cartão Nomes ambíguos listando cada um com o trecho de onde veio. Toque no elemento que o texto quer dizer e ele é ligado em Veja também; até lá nada é adivinhado.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

@@ -123,6 +123,11 @@ const page: HelpPage = {
         },
       ],
     },
+    { type: 'heading', level: 2, text: 'Trajeto' },
+    {
+      type: 'paragraph',
+      text: 'Os detalhes de um personagem também mostram um cartão Trajeto, fechado até você abri-lo: por onde ele andou, uma linha por parada (uma cena e o lugar onde ela acontece) na ordem da história. Numa história ramificada, escolha a Rota que o caminho segue. É calculado a partir das cenas em que o personagem aparece, nunca guardado, e o mesmo caminho pode ser desenhado sobre um Mapa de locais.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

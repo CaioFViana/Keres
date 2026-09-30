@@ -30,9 +30,9 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
-      text: 'Importar não substitui uma história existente: cria uma nova cópia. Exportar não muda a história. Arquivos de versões antigas podem não ser aceitos se o aplicativo não conseguir lê-los com segurança.',
+      text: 'Importar não substitui uma história existente: cria uma nova cópia. Exportar não muda a história. Um arquivo feito por uma versão mais antiga do Keres é atualizado ao ser importado, prosa das cenas inclusa. Um arquivo feito por uma versão mais nova que a do seu app é recusado, com uma mensagem: atualize o app e tente de novo. Para ter a prosa como documento para ler ou enviar (Word, PDF, EPUB...), use Exportar no Manuscrito; aqui é a cópia da história inteira.',
     },
-    { type: 'seeAlso', pages: ['data-and-backup', 'story-list', 'example-stories'] },
+    { type: 'seeAlso', pages: ['data-and-backup', 'story-list', 'example-stories', 'manuscript'] },
   ],
 };
 export default page;

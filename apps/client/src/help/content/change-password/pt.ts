@@ -47,6 +47,15 @@ const page: HelpPage = {
         'Confirme. Você continua com a mesma conta, agora com a nova senha.',
       ],
     },
+    {
+      type: 'paragraph',
+      text: 'O código é tolerante na digitação: maiúsculas, o hífen, espaços e quebras de linha não importam, então um código colado de uma anotação funciona como está.',
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'Depois de cinco tentativas erradas na mesma conta, o servidor recusa todo código - até o certo - por cerca de 15 minutos. Espere em vez de digitar de novo.',
+    },
     { type: 'heading', level: 3, text: 'Gerando novos códigos de recuperação' },
     {
       type: 'paragraph',

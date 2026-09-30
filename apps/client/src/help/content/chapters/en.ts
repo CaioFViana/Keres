@@ -25,6 +25,7 @@ const page: HelpPage = {
         'Use Summary to record its role in the narrative.',
         'Save it, open the chapter in the list, and create or associate scenes inside it.',
         'Use chapter reordering when you want to change reading order.',
+        'In a chapter’s scene list, Quick add (lightning icon) asks only for a title and adds the scene to that chapter at once; fill in the rest of the scene later.',
       ],
     },
     {

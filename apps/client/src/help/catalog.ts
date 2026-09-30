@@ -70,6 +70,7 @@ export const helpSections: HelpSection[] = [
     pageIds: [
       'branching-basics',
       'routes',
+      'story-navigator',
       'choices',
       'story-map',
       'choice-conditions',

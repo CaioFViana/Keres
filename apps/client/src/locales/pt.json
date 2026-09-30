@@ -2274,6 +2274,7 @@
   "trajectory_off_map_one": "{{count}} parada fora deste mapa",
   "trajectory_off_map_other": "{{count}} paradas fora deste mapa",
   "trajectory_route": "Rota",
+  "trajectory_section_title": "Trajeto ({{count}})",
   "trajectory_show": "Mostrar trajetos",
   "trajectory_title": "Trajeto",
   "trigger_state_set": "Setado",

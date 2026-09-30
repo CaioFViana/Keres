@@ -32,6 +32,11 @@ const page: HelpPage = {
       tone: 'info',
       text: 'Use Tags to group many elements under a short word and Notes to keep text. Use See also when the important part is navigating from one profile to another.',
     },
+    { type: 'heading', level: 2, text: 'Names that could mean two things' },
+    {
+      type: 'paragraph',
+      text: 'When a text mentions a name that matches more than one element - two characters called Mara, a place and an item with the same name - the profile shows an Ambiguous names card listing each one with the excerpt it came from. Tap the element the text means, and it is linked in See also; until then nothing is guessed.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

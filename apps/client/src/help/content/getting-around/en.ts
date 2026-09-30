@@ -26,6 +26,8 @@ const page: HelpPage = {
         'Tap a menu item to return to that subject’s main list.',
         'Use your device or browser Back button to return through the screens you opened.',
         'Tap Help at the bottom of the menu to search or browse the catalog.',
+        'When a header has more actions than fit, they gather under More actions (the burger icon): tap it to see each one with its name.',
+        'On a form, the header Reset action asks Discard changes? - on a new item it clears everything typed, on an existing one it restores the saved values. Neither can be undone.',
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

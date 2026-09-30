@@ -40,6 +40,15 @@ const page: HelpPage = {
         'Confirm. You keep using the same account, now with the new password.',
       ],
     },
+    {
+      type: 'paragraph',
+      text: 'A code is forgiving to type: capital letters, the hyphen, spaces and line breaks do not matter, so a code pasted from a note works as it is.',
+    },
+    {
+      type: 'callout',
+      tone: 'warning',
+      text: 'After five wrong attempts for the same account, the server refuses every code - even the right one - for about 15 minutes. Wait instead of retyping it.',
+    },
     { type: 'heading', level: 3, text: 'Getting new recovery codes' },
     {
       type: 'paragraph',

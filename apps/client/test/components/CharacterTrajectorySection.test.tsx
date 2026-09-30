@@ -16,7 +16,31 @@ jest.mock('../../src/theme', () => ({
     },
   }),
 }));
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: { count?: number }) =>
+      options?.count === undefined ? key : `${key}:${options.count}`,
+  }),
+}));
+// The card itself animates; what matters here is the title it gets, and that it starts closed.
+const mockCard = jest.fn();
+jest.mock('../../src/components/common/display/CollapsibleCard/CollapsibleCard', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- mock factories cannot use imports.
+  const ReactActual = require('react');
+  const { View, Text } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({ title, initialExpanded, children }: any) => {
+      mockCard({ title, initialExpanded });
+      return ReactActual.createElement(
+        View,
+        { testID: 'collapsible-card' },
+        ReactActual.createElement(Text, null, title),
+        children,
+      );
+    },
+  };
+});
 jest.mock('../../src/components/common/inputs/MultiSelectPill/MultiSelectPill', () => {
   const { Text, TouchableOpacity } = jest.requireActual('react-native');
   const ReactActual = jest.requireActual('react');
@@ -104,6 +128,25 @@ describe('CharacterTrajectorySection', () => {
       await fireEvent.press(view.getByLabelText('Keep'));
     });
     expect(mockNavigate).toHaveBeenCalledWith('Location', 'loc-b');
+  });
+
+  it('sits in a collapsed card like the other sections, titled with how many stops it has', async () => {
+    const view = await render(
+      <CharacterTrajectorySection
+        characterId="char-1"
+        storyId="story-1"
+        storyType="linear"
+        scenes={SCENES}
+        appearances={APPEARANCES}
+        locations={LOCATIONS}
+      />,
+    );
+
+    await waitFor(() => expect(view.getByText('trajectory_section_title:2')).toBeTruthy());
+    expect(mockCard).toHaveBeenLastCalledWith({
+      title: 'trajectory_section_title:2',
+      initialExpanded: false,
+    });
   });
 
   it('orders branching stops by the picked route', async () => {

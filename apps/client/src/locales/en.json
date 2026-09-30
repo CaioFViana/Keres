@@ -2274,6 +2274,7 @@
   "trajectory_off_map_one": "{{count}} stop off this map",
   "trajectory_off_map_other": "{{count}} stops off this map",
   "trajectory_route": "Route",
+  "trajectory_section_title": "Trajectory ({{count}})",
   "trajectory_show": "Show trajectories",
   "trajectory_title": "Trajectory",
   "trigger_state_set": "Set",

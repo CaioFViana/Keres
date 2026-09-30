@@ -9,7 +9,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Alguns servidores têm uma página pública que lista as histórias que seus usuários escolheram publicar. Publicar coloca ali uma cópia congelada de uma história sua, como um arquivo que qualquer pessoa pode baixar e abrir no próprio Keres.',
+      text: 'Alguns servidores têm uma página pública que lista as histórias que seus usuários escolheram publicar. Publicar coloca ali uma cópia congelada de uma história sua, como um arquivo que qualquer pessoa pode baixar e abrir no próprio Keres e, se quiser, também como manuscrito e como uma página para ler online.',
     },
     {
       type: 'callout',
@@ -42,9 +42,38 @@ const page: HelpPage = {
       items: [
         'Abra na lista a história que quer publicar.',
         'Escolha como a versão deve ser nomeada.',
+        'Escolha o que a versão leva: o arquivo da história (.zip), o manuscrito, a leitura online. Ao menos um precisa estar ligado; a tela diz Selecione ao menos um até isso acontecer.',
         'Decida se ela fica listada publicamente ou escondida atrás de uma senha.',
         'Escolha Criar nova versão pública.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'O que uma versão leva' },
+    {
+      type: 'table',
+      headers: ['Chave', 'O que os leitores recebem'],
+      rows: [
+        [
+          'Publicar o arquivo da história (.zip)',
+          'O arquivo que qualquer pessoa pode baixar e importar no próprio Keres. Vem ligado por padrão.',
+        ],
+        [
+          'Anexar manuscrito',
+          'A prosa como documento para baixar, no formato que você escolher (Word, PDF, EPUB e outros), feito com as mesmas opções da exportação no aparelho.',
+        ],
+        [
+          'Publicar a leitura online',
+          'Um botão Ler online na página pública da história (veja abaixo).',
+        ],
+      ],
+    },
+    {
+      type: 'paragraph',
+      text: 'Uma versão pode deixar o arquivo de fora, para uma história que você só quer que seja lida, não copiada. As opções do manuscrito aparecem assim que uma das duas últimas chaves é ligada.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'Se o servidor for mais antigo que o seu app e não puder incluir o manuscrito ou a leitura, a versão é publicada mesmo assim - sem eles - e a tela avisa.',
     },
     { type: 'heading', level: 2, text: 'O link' },
     {
@@ -54,7 +83,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Leitura online' },
     {
       type: 'paragraph',
-      text: 'Além do arquivo, uma versão pode levar uma página de leitura: ligue Publicar a leitura online e a versão ganha um botão Ler online na página pública da história. Ela é feita com as mesmas opções do manuscrito (arco, nomes das cenas, tipografia, aspas), então a história lê igual na página e no arquivo. Uma história linear vira uma página só, com índice; uma história ramificada é lida uma cena por vez.',
+      text: 'Uma versão pode levar uma página de leitura: ligue Publicar a leitura online e a versão ganha um botão Ler online na página pública da história. Ela é feita com as mesmas opções do manuscrito (arco, nomes das cenas, tipografia, aspas), então a história lê igual na página e no arquivo. Uma história linear vira uma página só, com índice; uma história ramificada é lida uma cena por vez.',
     },
     {
       type: 'paragraph',
@@ -93,6 +122,11 @@ const page: HelpPage = {
       type: 'callout',
       tone: 'info',
       text: 'Senha é um segredo compartilhado, não uma permissão por pessoa. Quem receber pode repassar. Para dar acesso a uma pessoa específica e poder tirar depois, adicione-a como leitora da história.',
+    },
+    { type: 'heading', level: 2, text: 'Limites de publicação' },
+    {
+      type: 'paragraph',
+      text: 'Um servidor pode limitar quantas versões uma conta publica por dia. Quando o limite chega, a tela diz que seu plano não permite mais publicações hoje; tente de novo em algumas horas. Nada se perde - a versão apenas não é criada.',
     },
     { type: 'heading', level: 2, text: 'Versões antigas' },
     {

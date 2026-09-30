@@ -757,6 +757,32 @@ describe('PublishStoryScreen', () => {
     expect(mockPublish.mock.calls[0][7]).toMatchObject({ sceneOrder: 'shuffled' });
   });
 
+  it('says so when the server publishes the version but drops the reading it was asked for', async () => {
+    // An old server answers without the reader's size: the field is simply not there.
+    mockPublish.mockResolvedValue({ label: 'v1' });
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockNotify).toHaveBeenCalledWith('publish_extras_ignored', 'error'));
+  });
+
+  it('stays quiet when the server did publish the reading', async () => {
+    mockPublish.mockResolvedValue({ label: 'v1', readerByteSize: 1200 });
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByTestId('publish-reader-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockNotify).not.toHaveBeenCalledWith('publish_extras_ignored', 'error');
+  });
+
   it('sends no reader unless asked', async () => {
     const view = await render(<PublishStoryScreen />);
     await view.findByText('Epic');

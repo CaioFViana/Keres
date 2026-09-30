@@ -52,10 +52,37 @@ function el(tag, className, text) {
 }
 
 var readerPrefs = { theme: '', size: 100 };
+// The page that embeds the reader may lend it its colors: they apply while the theme is "auto", so
+// the reading looks like part of the site. Only plain color values are taken from a message.
+var PALETTE_KEYS = ['bg', 'fg', 'muted', 'accent', 'line', 'card'];
+var COLOR_VALUE = /^(#[0-9a-fA-F]{3,8}|rgba?\\([0-9\\s.,%]+\\))$/;
+var hostPalette = null;
+var hostScheme = '';
+window.addEventListener('message', function (event) {
+  if (event.source !== window.parent) return;
+  var message = event.data;
+  if (!message || message.keresReader !== 1 || message.type !== 'host') return;
+  var palette = {};
+  var complete = message.palette && typeof message.palette === 'object';
+  for (var i = 0; complete && i < PALETTE_KEYS.length; i += 1) {
+    var value = message.palette[PALETTE_KEYS[i]];
+    if (typeof value === 'string' && COLOR_VALUE.test(value.trim())) palette[PALETTE_KEYS[i]] = value.trim();
+    else complete = false;
+  }
+  hostPalette = complete ? palette : null;
+  hostScheme = message.scheme === 'dark' || message.scheme === 'light' ? message.scheme : '';
+  applyPrefs();
+});
 function applyPrefs() {
   var root = document.documentElement;
   if (readerPrefs.theme) root.setAttribute('data-theme', readerPrefs.theme);
   else root.removeAttribute('data-theme');
+  // Scrollbars and form controls follow the colors' scheme, not the phone's.
+  root.style.colorScheme = !readerPrefs.theme && hostPalette ? hostScheme : '';
+  for (var k = 0; k < PALETTE_KEYS.length; k += 1) {
+    if (!readerPrefs.theme && hostPalette) root.style.setProperty('--' + PALETTE_KEYS[k], hostPalette[PALETTE_KEYS[k]]);
+    else root.style.removeProperty('--' + PALETTE_KEYS[k]);
+  }
   root.style.setProperty('--scale', String(readerPrefs.size / 100));
 }
 function readPrefs(list) {
@@ -83,6 +110,7 @@ var sheet = (function () {
   var onClose = null;
   function close() {
     root.hidden = true;
+    root.firstElementChild.classList.remove('wide');
     body.innerHTML = '';
     if (onClose) onClose();
     onClose = null;
@@ -145,9 +173,12 @@ export const READER_BRANCHING_SOURCE = `
   var loaded = false;
 
   function sceneOf(id) { return D.scenes[id]; }
-  function sceneLabel(id, position) {
+  // A scene is told by its name or, where names are left out, by its number in the gamebook - the
+  // same one the manuscript prints - never by its place along the way, which says nothing of which scene it is.
+  function sceneLabel(id) {
     var scene = sceneOf(id);
-    return scene && scene.name ? scene.name : L.scene + ' ' + position;
+    if (!scene) return '';
+    return scene.name ? scene.name : L.scene + ' ' + scene.number;
   }
   function current() { return steps[steps.length - 1]; }
   function currentState() { return snaps[snaps.length - 1]; }
@@ -173,7 +204,7 @@ export const READER_BRANCHING_SOURCE = `
     if (!steps.length) return;
     var entry = {
       id: 'auto', kind: 'auto', name: L.autosave, at: new Date().toISOString(),
-      scene: sceneLabel(current().s, steps.length), count: steps.length, steps: steps.slice()
+      scene: sceneLabel(current().s), count: steps.length, steps: steps.slice()
     };
     saves = saves.filter(function (save) { return save.id !== 'auto' || save.kind === 'prefs'; }).concat([entry]);
     persist();
@@ -306,21 +337,51 @@ export const READER_BRANCHING_SOURCE = `
     bag: document.getElementById('act-bag'),
     saves: document.getElementById('act-saves'),
     look: document.getElementById('act-look'),
-    home: document.getElementById('act-home')
+    home: document.getElementById('act-home'),
+    here: document.getElementById('here')
   };
   function syncBar() {
     var playing = steps.length > 0;
+    // Where the reader is: the scene's name, or its number.
+    bar.here.textContent = playing ? sceneLabel(current().s) : '';
     bar.back.disabled = steps.length < 2;
     bar.path.disabled = !playing;
     bar.bag.disabled = !playing;
     bar.home.disabled = !playing;
   }
 
+  // The walk read back: every scene passed, in order, with the choice taken to leave it.
+  function journeySheet(list) {
+    sheet.open(L.journey, function (body) {
+      document.getElementById('sheet').firstElementChild.classList.add('wide');
+      var page = el('div', 'journey');
+      list.forEach(function (step, index) {
+        var scene = step && sceneOf(step.s);
+        if (!scene) return;
+        var part = el('section', 'stop');
+        part.appendChild(el('h3', 'stop-name', sceneLabel(step.s)));
+        var text = el('div', 'text');
+        text.innerHTML = scene.html;
+        part.appendChild(text);
+        var next = list[index + 1];
+        if (next && next.c) {
+          scene.choices.forEach(function (choice) {
+            if (choice.i === next.c) part.appendChild(el('p', 'taken', choice.text));
+          });
+        }
+        page.appendChild(part);
+      });
+      body.appendChild(page);
+    });
+  }
   function pathSheet() {
     sheet.open(L.path, function (body) {
+      var read = el('button', 'pill', L.journey);
+      read.addEventListener('click', function () { journeySheet(steps.slice()); });
+      body.appendChild(read);
       var list = el('ol', 'trail');
       steps.forEach(function (step, index) {
-        var item = el('li', index === steps.length - 1 ? 'here' : '', sceneLabel(step.s, index + 1));
+        var item = el('li', index === steps.length - 1 ? 'here' : '', sceneLabel(step.s));
         list.appendChild(item);
       });
       body.appendChild(list);
@@ -351,11 +412,11 @@ export const READER_BRANCHING_SOURCE = `
             manual.sort(function (a, b) { return a.at < b.at ? -1 : 1; });
             saves = saves.filter(function (entry) { return entry !== manual[0]; });
           }
-          var name = input.value.replace(/^\\s+|\\s+$/g, '') || sceneLabel(current().s, steps.length);
+          var name = input.value.replace(/^\\s+|\\s+$/g, '') || sceneLabel(current().s);
           saves.push({
             id: 'm' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36),
             kind: 'manual', name: name.slice(0, 60), at: new Date().toISOString(),
-            scene: sceneLabel(current().s, steps.length), count: steps.length, steps: steps.slice()
+            scene: sceneLabel(current().s), count: steps.length, steps: steps.slice()
           });
           persist();
           savesSheet();
@@ -375,6 +436,11 @@ export const READER_BRANCHING_SOURCE = `
         var when = new Date(entry.at);
         info.appendChild(el('span', 'meta', entry.scene + ' · ' + entry.count + ' ' + L.stepsWord + ' · ' + (isNaN(when.getTime()) ? '' : when.toLocaleString())));
         item.appendChild(info);
+        if (Array.isArray(entry.steps) && entry.steps.length) {
+          var read = el('button', 'pill', L.journey);
+          read.addEventListener('click', function () { journeySheet(entry.steps); });
+          item.appendChild(read);
+        }
         var load = el('button', 'pill', L.load);
         load.addEventListener('click', function () { if (restore(entry.steps)) { autosave(); sheet.close(); } });
         item.appendChild(load);
@@ -432,15 +498,55 @@ export const READER_LINEAR_SOURCE = `
     saves = saves.filter(function (save) { return save.kind === 'prefs'; }).concat([entry]);
     persist();
   }
+  // Where the reader is: the chapter heading last passed, and the scene under it (when names are shown).
+  var here = document.getElementById('here');
+  var headings = document.querySelectorAll('#view h2.chapter, #view h3.scene');
+  function showHere() {
+    var chapter = '';
+    var scene = '';
+    for (var i = 0; i < headings.length; i += 1) {
+      if (headings[i].getBoundingClientRect().top > 96) break;
+      if (headings[i].tagName === 'H2') { chapter = headings[i].textContent; scene = ''; }
+      else scene = headings[i].textContent;
+    }
+    here.textContent = chapter && scene ? chapter + ' · ' + scene : chapter || scene;
+  }
+  var progress = document.getElementById('progress');
+  function showProgress() {
+    progress.style.width = Math.round(place() * 100) + '%';
+    showHere();
+  }
   window.addEventListener('scroll', function () {
+    showProgress();
     clearTimeout(timer);
     timer = setTimeout(remember, 600);
   }, { passive: true });
+  window.addEventListener('resize', showProgress);
+  showProgress();
 
+  // The contents open as a sheet over the reading, each entry a jump to its heading; the manuscript's
+  // own index stays in the page (hidden) as the source of the list.
   var toc = document.querySelector('nav.toc');
   var contents = document.getElementById('act-contents');
-  if (toc) contents.addEventListener('click', function () { toc.scrollIntoView(); });
-  else contents.hidden = true;
+  if (toc) {
+    contents.addEventListener('click', function () {
+      sheet.open(L.contents, function (body) {
+        var list = el('ul', 'contents');
+        Array.prototype.forEach.call(toc.querySelectorAll('a'), function (link) {
+          var item = el('li', link.parentNode.className);
+          var go = el('button', '', link.textContent);
+          go.addEventListener('click', function () {
+            sheet.close();
+            var target = document.getElementById(link.getAttribute('href').slice(1));
+            if (target) target.scrollIntoView();
+          });
+          item.appendChild(go);
+          list.appendChild(item);
+        });
+        body.appendChild(list);
+      });
+    });
+  } else contents.hidden = true;
   document.getElementById('act-look').addEventListener('click', function () { appearanceSheet(L, persist); });
 
   readerBridge.load(function (list) {

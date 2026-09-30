@@ -49,6 +49,7 @@ export const ReaderLabelsSchema = z.object({
   textSize: labelSchema,
   stepsWord: labelSchema,
   scene: labelSchema,
+  journey: labelSchema,
   empty: labelSchema,
   close: labelSchema,
 });
@@ -81,6 +82,7 @@ export const DEFAULT_READER_LABELS: ReaderLabels = {
   textSize: 'Text size',
   stepsWord: 'steps',
   scene: 'Scene',
+  journey: 'Read my path',
   empty: 'This story has no scenes to read yet.',
   close: 'Close',
 };
@@ -135,6 +137,8 @@ export type ReaderStoryData = {
     string,
     {
       name: string;
+      /** The scene's number in the gamebook (the manuscript's own): what says which scene it is when names are left out. */
+      number: number;
       html: string;
       choices: { i: string; text: string; to: string | null }[];
       effects: { effectType: string; itemId: string | null; triggerName: string | null }[];
@@ -165,7 +169,7 @@ function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
   let current: ReaderStoryData['scenes'][string] | null = null;
   for (const block of blocks) {
     if (block.kind === 'scene-heading') {
-      current = { name: block.name, html: '', choices: [], effects: [] };
+      current = { name: block.name, number: block.number, html: '', choices: [], effects: [] };
       scenes[block.id] = current;
       order.push(block.id);
     } else if (block.kind === 'paragraph') {
@@ -257,34 +261,60 @@ function jsonForScript(value: unknown): string {
 }
 
 const READER_CSS = `
-:root { --bg: #fdfcf9; --fg: #1c1b19; --muted: #6b665d; --accent: #2b5cb8; --line: #ddd8ce; --card: #ffffff; --scale: 1; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --bg: #16171b; --fg: #e7e3da; --muted: #9c978c; --accent: #8fb0ff; --line: #33343b; --card: #1e1f25; } }
-[data-theme='light'] { --bg: #fdfcf9; --fg: #1c1b19; --muted: #6b665d; --accent: #2b5cb8; --line: #ddd8ce; --card: #ffffff; }
-[data-theme='dark'] { --bg: #16171b; --fg: #e7e3da; --muted: #9c978c; --accent: #8fb0ff; --line: #33343b; --card: #1e1f25; }
-[data-theme='sepia'] { --bg: #f3ead7; --fg: #3b2f22; --muted: #7a6a55; --accent: #8a4b16; --line: #d9c9a8; --card: #f8f1e1; }
-html { font-size: calc(100% * var(--scale)); }
-body { background: var(--bg); color: var(--fg); }
-a { color: var(--accent); }
+:root { --bg: #fdfcf9; --fg: #1c1b19; --muted: #6b665d; --accent: #2b5cb8; --line: #ddd8ce; --card: #ffffff; --scale: 1; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --bg: #16171b; --fg: #e7e3da; --muted: #9c978c; --accent: #8fb0ff; --line: #33343b; --card: #1e1f25; color-scheme: dark; } }
+[data-theme='light'] { --bg: #fdfcf9; --fg: #1c1b19; --muted: #6b665d; --accent: #2b5cb8; --line: #ddd8ce; --card: #ffffff; color-scheme: light; }
+[data-theme='dark'] { --bg: #16171b; --fg: #e7e3da; --muted: #9c978c; --accent: #8fb0ff; --line: #33343b; --card: #1e1f25; color-scheme: dark; }
+[data-theme='sepia'] { --bg: #f3ead7; --fg: #3b2f22; --muted: #7a6a55; --accent: #8a4b16; --line: #d9c9a8; --card: #f8f1e1; color-scheme: light; }
+html { font-size: calc(100% * var(--scale)); scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding: 0; max-width: none; background: var(--bg); color: var(--fg); font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif; line-height: 1.75; text-rendering: optimizeLegibility; }
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+a { color: var(--accent); text-underline-offset: 0.15em; }
 button { font: inherit; color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem 0; background: var(--bg); border-bottom: 1px solid var(--line); font-family: system-ui, sans-serif; font-size: 0.85rem; }
+[id] { scroll-margin-top: 4.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+#bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.55rem max(1rem, calc((100% - 42rem) / 2 + 1.25rem)); background: var(--bg); background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); font-family: system-ui, sans-serif; font-size: 0.85rem; line-height: 1.4; }
 #bar .spacer { flex: 1; }
-#bar button, .pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 0.3rem 0.8rem; cursor: pointer; }
+#bar .here { flex: 1 1 0; min-width: 4rem; align-self: center; text-align: center; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bar button, .pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 0.3rem 0.9rem; cursor: pointer; transition: border-color 0.15s; }
+#bar button:hover:not(:disabled), .pill:hover { border-color: var(--accent); }
 #bar button:disabled { opacity: 0.4; cursor: default; }
 .pill.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-#view { padding-bottom: 4rem; }
-.scene-name, .story-title { text-align: center; }
-.story-title { font-size: 2rem; margin-top: 3rem; }
-.byline, .prompt { text-align: center; color: var(--muted); }
-.text p { text-indent: 2em; margin: 0 0 0.7rem; }
-.choices, .start, .the-end { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 2rem; font-family: system-ui, sans-serif; }
-.choice { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 0.6rem; padding: 0.8rem 1rem; cursor: pointer; line-height: 1.4; }
-.choice.primary { border-color: var(--accent); }
-.choice:hover:not(:disabled) { border-color: var(--accent); }
-.choice.closed { opacity: 0.45; cursor: default; }
+#progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 0; background: var(--accent); transition: width 0.15s; }
+
+/* The path read back: the scenes walked, in order, each followed by the choice taken. */
+.sheet-box.wide { width: min(44rem, 100%); max-height: 92vh; }
+.journey { font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif; line-height: 1.75; }
+.journey p { margin: 0 0 0.85rem; text-indent: 1.5em; }
+.stop { padding: 1rem 0 0.4rem; border-bottom: 1px solid var(--line); }
+.stop-name { text-align: center; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0 0 0.8rem; }
+.journey p.taken { font-family: system-ui, sans-serif; text-indent: 0; border-left: 3px solid var(--accent); padding: 0.3rem 0.8rem; margin: 1rem 0; color: var(--muted); }
+.journey p.taken::before { content: '→  '; }
+#view { max-width: 42rem; margin: 0 auto; padding: 0 1.25rem 6rem; }
+.title, .story-title { text-align: center; font-size: clamp(2rem, 7vw, 2.9rem); line-height: 1.15; font-weight: 700; margin: 4rem 0 0.6rem; }
+.subtitle, .byline, .prompt { text-align: center; color: var(--muted); font-style: italic; margin: 0 0 3rem; }
+.chapter { text-align: center; font-size: 1.7rem; line-height: 1.25; margin: 5rem 0 2rem; }
+.chapter::before { content: ''; display: block; width: 3rem; height: 1px; background: var(--line); margin: 0 auto 1.6rem; }
+.title + .chapter, .subtitle + .chapter { margin-top: 3rem; }
+h3.scene, .scene-name { text-align: center; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 3rem 0 1.4rem; }
+/* The scene page keeps its own space above, name or not: without a name the text would sit against the bar. */
+article.scene { padding-top: 3rem; }
+.scene-name { margin-top: 0; }
+:where(#view) p { margin: 0 0 0.85rem; text-indent: 1.5em; hyphens: auto; overflow-wrap: break-word; }
+@media (min-width: 40rem) { :where(#view) .text p, :where(#view) > p { text-align: justify; } }
+p.subtitle, p.byline, p.prompt, p.note, p.end-mark, p.scene-break, p.choice, p.choice-detail, .chapter + p, h3.scene + p, .scene-name + .text > p:first-child { text-indent: 0; }
+p.scene-break { text-align: center; color: var(--muted); letter-spacing: 0.4em; margin: 1.8rem 0; }
+nav.toc { display: none; }
 .end-mark { text-align: center; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin: 1rem 0 0; }
+.choices, .start, .the-end { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 2.5rem; font-family: system-ui, sans-serif; }
+.choice { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 0.7rem; padding: 0.85rem 1.1rem; cursor: pointer; line-height: 1.45; transition: border-color 0.15s, transform 0.15s; }
+.choice.primary { border-color: var(--accent); }
+.choice:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+.choice.closed { opacity: 0.45; cursor: default; }
 .note { color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.9rem; }
-.veil { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 10; font-family: system-ui, sans-serif; }
+.veil { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 10; font-family: system-ui, sans-serif; line-height: 1.5; }
 .veil[hidden] { display: none; }
 .sheet-box { background: var(--bg); color: var(--fg); width: min(34rem, 100%); max-height: 80vh; overflow: auto; border-radius: 1rem 1rem 0 0; padding: 1rem; }
 .sheet-box header { display: flex; justify-content: space-between; align-items: center; }
@@ -294,7 +324,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .row .name { flex: 1; min-width: 8rem; padding: 0.3rem 0.6rem; border: 1px solid var(--line); border-radius: 0.4rem; background: var(--card); color: var(--fg); font: inherit; }
 .trail, .bag, .saves { padding-left: 1.2rem; }
 .trail li.here { font-weight: bold; }
-.saves { list-style: none; padding: 0; }
+.saves, .contents { list-style: none; padding: 0; margin: 0.6rem 0 0; }
+.contents li { border-bottom: 1px solid var(--line); }
+.contents li.toc-scene { padding-left: 1.2rem; font-size: 0.92rem; }
+.contents button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 0.6rem 0; cursor: pointer; }
+.contents button:hover { color: var(--accent); }
 .save { display: flex; gap: 0.4rem; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--line); }
 .save .info { flex: 1; display: flex; flex-direction: column; }
 .save .meta { color: var(--muted); font-size: 0.8rem; }
@@ -346,7 +380,7 @@ export function buildBranchingReaderHtml(
     css: options.css,
     labels,
     data,
-    bar: `<header id="bar">${button('act-back', labels.back)}${button('act-path', labels.path)}${button('act-bag', labels.inventory)}${button('act-saves', labels.saves)}<span class="spacer"></span>${button('act-home', labels.restart)}${button('act-look', labels.appearance)}</header>`,
+    bar: `<header id="bar">${button('act-back', labels.back)}${button('act-path', labels.path)}${button('act-bag', labels.inventory)}${button('act-saves', labels.saves)}<span id="here" class="here"></span>${button('act-home', labels.restart)}${button('act-look', labels.appearance)}</header>`,
     main: '<main id="view"></main>',
     scripts: [READER_ENGINE_SOURCE, READER_COMMON_SOURCE, READER_BRANCHING_SOURCE].join('\n'),
   });
@@ -380,7 +414,7 @@ export function buildLinearReaderHtml(
     css: `${between('<style>\n', '\n</style>')}\n${options.css}`,
     labels,
     data: { labels },
-    bar: `<header id="bar">${button('act-contents', labels.contents)}<span class="spacer"></span>${button('act-look', labels.appearance)}</header>`,
+    bar: `<header id="bar">${button('act-contents', labels.contents)}<span id="here" class="here"></span>${button('act-look', labels.appearance)}<span id="progress"></span></header>`,
     main: `<main id="view">${between('<body>\n', '\n</body>')}</main>`,
     scripts: [READER_COMMON_SOURCE, READER_LINEAR_SOURCE].join('\n'),
   });

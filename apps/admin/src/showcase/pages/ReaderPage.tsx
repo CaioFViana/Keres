@@ -4,8 +4,10 @@ import { Link, useParams } from 'react-router-dom';
 import type { ShowcaseStoryDetail } from '@keres/shared';
 import { fetchReaderUrl, fetchStory, unlockStory } from '../api/showcaseApi';
 import { PasswordGate } from '../components/PasswordGate';
+import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
 import {
   loadReaderSaves,
+  readerPaletteOf,
   readerStorageKey,
   readReaderMessage,
   sanitizeReaderSaves,
@@ -24,6 +26,21 @@ export function ReaderPage() {
   const { storyId = '', publicationId = '' } = useParams();
   const { t } = useTranslation('showcase');
   const frame = useRef<HTMLIFrameElement>(null);
+  const { resolved } = useShowcaseTheme();
+
+  // The reader wears the site's colors: sent when it asks for its saves (it is ready then) and
+  // again whenever the site's theme changes. The frame's origin is opaque, hence `*`.
+  const sendPalette = useCallback(() => {
+    frame.current?.contentWindow?.postMessage(
+      { keresReader: 1, type: 'host', palette: readerPaletteOf(), scheme: resolved },
+      '*',
+    );
+  }, [resolved]);
+  useEffect(() => {
+    // After the theme provider has applied the new theme to the document.
+    const timer = window.setTimeout(sendPalette, 0);
+    return () => window.clearTimeout(timer);
+  }, [resolved, sendPalette]);
 
   const [detail, setDetail] = useState<ShowcaseStoryDetail | null>(null);
   const [locked, setLocked] = useState(false);
@@ -79,6 +96,7 @@ export function ReaderPage() {
           { keresReader: 1, type: 'saves', saves: loadReaderSaves(window.localStorage, key) },
           '*',
         );
+        sendPalette();
         return;
       }
       const saves = sanitizeReaderSaves(message.saves);
@@ -86,7 +104,7 @@ export function ReaderPage() {
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [storyId, publicationId]);
+  }, [storyId, publicationId, sendPalette]);
 
   if (locked) {
     return (

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useMatch } from 'react-router-dom';
 import { LanguageSelect } from '../../i18n/LanguageSelect';
 import { SHOWCASE_LANGUAGE_KEY } from '../../i18n';
 import keresLogoUrl from 'virtual:keres-logo';
@@ -53,9 +53,11 @@ export function Layout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('showcase');
   const config = useShowcaseConfig();
   const siteName = config?.siteName || 'Keres';
+  // Reading takes the whole window below the header: one scroll (the reader's), no footer.
+  const reading = useMatch('/story/:storyId/read/:publicationId') !== null;
 
   return (
-    <div className="site">
+    <div className={reading ? 'site site--reading' : 'site'}>
       <header className="site-header">
         <div className="site-header-inner">
           <Link to="/" className="brand">
@@ -84,15 +86,17 @@ export function Layout({ children }: { children: ReactNode }) {
 
       <main className="site-main">{children}</main>
 
-      <footer className="site-footer">
-        <div className="site-footer-inner">
-          <div className="footer-brand">
-            <KeresMark size={22} />
-            <span className="brand-name">Keres</span>
+      {!reading && (
+        <footer className="site-footer">
+          <div className="site-footer-inner">
+            <div className="footer-brand">
+              <KeresMark size={22} />
+              <span className="brand-name">Keres</span>
+            </div>
+            <p className="disclaimer">{t('footer.disclaimer')}</p>
           </div>
-          <p className="disclaimer">{t('footer.disclaimer')}</p>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   );
 }

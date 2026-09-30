@@ -238,6 +238,36 @@ describe('the saves the reader asks for', () => {
     await unmount();
   });
 
+  it("lends the reader the site's colors when it asks, so it looks part of the page", async () => {
+    // jsdom does not resolve custom properties in computed styles: the page's colors are stubbed.
+    const site: Record<string, string> = { '--color-bg': '#0e0d13', '--color-primary': '#bb86fc' };
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: (name: string) => site[name] ?? '#000000',
+    } as unknown as CSSStyleDeclaration);
+    const { frame, reply, unmount } = await open();
+
+    await postFrom(frame, { keresReader: 1, type: 'load' });
+
+    expect(reply).toHaveBeenCalledWith(
+      {
+        keresReader: 1,
+        type: 'host',
+        palette: expect.objectContaining({ bg: '#0e0d13', accent: '#bb86fc' }),
+        scheme: expect.stringMatching(/^(light|dark)$/),
+      },
+      '*',
+    );
+    await unmount();
+  });
+
+  it('takes the window while reading: one scroll, no footer', async () => {
+    const { container, unmount } = await open();
+
+    expect(container.querySelector('.site.site--reading')).not.toBeNull();
+    expect(container.querySelector('.site-footer')).toBeNull();
+    await unmount();
+  });
+
   it('answers an empty list when nothing was kept', async () => {
     const { frame, reply, unmount } = await open();
 

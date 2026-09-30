@@ -407,6 +407,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'byteSize',
       'mediaIncluded',
       'mediaTotal',
+      'manuscriptFormat',
+      'readerByteSize',
       'createdAt',
     ],
   },

@@ -45,6 +45,7 @@ function readerLabelsOf(t: (key: string) => string): ReaderLabels {
     textSize: t('reader_text_size'),
     stepsWord: t('reader_steps_word'),
     scene: t('reader_scene'),
+    journey: t('reader_journey'),
     empty: t('reader_empty'),
     close: t('close'),
   };

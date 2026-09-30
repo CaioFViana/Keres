@@ -143,6 +143,64 @@ describe('a branching reader', () => {
     expect(data.start).toMatchObject({ prompt: null, options: [{ to: 'a' }] });
   });
 
+  it('names the scene it is on in the bar, and leaves it empty on the start page, and numbers it without names', () => {
+    const named = open(decode(compileStoryReader(keyStory(), READER_OPTIONS).bytes));
+    expect(named.document.getElementById('here')!.textContent).toBe('');
+    named.click('#view .choice.primary');
+    expect(named.document.getElementById('here')!.textContent).toBe('Hall');
+    named.choice('Fetch the key').click();
+    expect(named.document.getElementById('here')!.textContent).toBe('Cellar');
+
+    const bare = open(
+      decode(compileStoryReader(keyStory(), { ...READER_OPTIONS, includeSceneNames: false }).bytes),
+    );
+    bare.click('#view .choice.primary');
+    // Without names a scene is told by its number in the gamebook.
+    expect(bare.document.getElementById('here')!.textContent).toBe('Scene 1');
+  });
+
+  it('tells scenes by their gamebook number, so a path revisiting one shows the same number, not its place in the walk', () => {
+    const { document, click, choice } = open(
+      decode(compileStoryReader(keyStory(), { ...READER_OPTIONS, includeSceneNames: false }).bytes),
+    );
+    click('#view .choice.primary');
+    choice('Fetch the key').click();
+    choice('Return upstairs').click();
+
+    click('#act-path');
+    const labels = [...document.querySelectorAll('.trail li')].map((item) => item.textContent);
+    // Hall, Cellar, Hall again: 1, 2, 1 - never 1, 2, 3.
+    expect(labels).toEqual(['Scene 1', 'Scene 2', 'Scene 1']);
+  });
+
+  it('reads the path back: each scene walked in full, followed by the choice taken to leave it', () => {
+    const { document, click, choice } = open(
+      decode(compileStoryReader(keyStory(), READER_OPTIONS).bytes),
+    );
+    click('#view .choice.primary');
+    choice('Fetch the key').click();
+    click('#act-path');
+    [...document.querySelectorAll<HTMLButtonElement>('.sheet-box .pill')]
+      .find((button) => button.textContent === 'Read my path')!
+      .click();
+
+    const stops = [...document.querySelectorAll('.journey .stop')];
+    expect(stops.map((stop) => stop.querySelector('.stop-name')!.textContent)).toEqual([
+      'Hall',
+      'Cellar',
+    ]);
+    expect(stops[0].textContent).toContain('You stand in the hall.');
+    expect(stops[0].querySelector('.taken')!.textContent).toBe('Fetch the key');
+    expect(stops[1].textContent).toContain('Damp stone.');
+    // The last scene has not been left yet: no choice taken, and the ones not taken are not listed.
+    expect(stops[1].querySelector('.taken')).toBeNull();
+    expect(document.querySelector('.journey')!.textContent).not.toContain('Open the locked door');
+    expect(document.querySelector('.sheet-box')!.classList.contains('wide')).toBe(true);
+
+    document.getElementById('sheet-close')!.click();
+    expect(document.querySelector('.sheet-box')!.classList.contains('wide')).toBe(false);
+  });
+
   it('reads scene by scene, gating choices on what was collected', () => {
     const { document, click, choice, choices } = open(
       decode(compileStoryReader(keyStory(), READER_OPTIONS).bytes),
@@ -330,6 +388,64 @@ describe('a linear reader', () => {
     expect(html).not.toMatch(/https?:\/\//);
   });
 
+  it('opens its contents as a sheet whose entries jump to the headings, and shows how far it is read', () => {
+    const { document, click } = open(decode(compileStoryReader(linear(), READER_OPTIONS).bytes));
+    const jumped: string[] = [];
+    document.querySelectorAll('[id]').forEach((node) => {
+      node.scrollIntoView = () => jumped.push(node.id);
+    });
+
+    click('#act-contents');
+    const entries = [...document.querySelectorAll<HTMLButtonElement>('.contents button')];
+    expect(document.getElementById('sheet')!.hidden).toBe(false);
+    expect(entries.map((entry) => entry.textContent)).toEqual([
+      '1. Arrival',
+      '1. Dusk',
+      '2. Night',
+    ]);
+
+    entries.find((entry) => entry.textContent === '2. Night')!.click();
+    expect(document.getElementById('sheet')!.hidden).toBe(true);
+    expect(jumped).toHaveLength(1);
+    expect(document.getElementById('progress')).not.toBeNull();
+  });
+
+  it('says in the bar which chapter, and scene, is being read as the page scrolls', () => {
+    const { dom, document } = open(decode(compileStoryReader(linear(), READER_OPTIONS).bytes));
+    const tops = new Map<string, number>();
+    document.querySelectorAll('h2.chapter, h3.scene').forEach((node) => {
+      node.getBoundingClientRect = () =>
+        ({ top: tops.get(node.textContent ?? '') ?? 9999 }) as DOMRect;
+    });
+    const here = () => document.getElementById('here')!.textContent;
+    const scroll = () => dom.window.dispatchEvent(new dom.window.Event('scroll'));
+
+    // Nothing passed yet: the title is still on screen.
+    scroll();
+    expect(here()).toBe('');
+
+    tops.set('1. Arrival', -400);
+    tops.set('1. Dusk', -300);
+    scroll();
+    expect(here()).toBe('1. Arrival · 1. Dusk');
+
+    tops.set('2. Night', 40);
+    scroll();
+    expect(here()).toBe('1. Arrival · 2. Night');
+  });
+
+  it('shows only the chapter when scene names are left out', () => {
+    const { dom, document } = open(
+      decode(compileStoryReader(linear(), { ...READER_OPTIONS, includeSceneNames: false }).bytes),
+    );
+    document.querySelectorAll('h2.chapter').forEach((node) => {
+      node.getBoundingClientRect = () => ({ top: -10 }) as DOMRect;
+    });
+    dom.window.dispatchEvent(new dom.window.Event('scroll'));
+
+    expect(document.getElementById('here')!.textContent).toBe('1. Arrival');
+  });
+
   it('honors the typography asked, except the point size (the reader has its own)', () => {
     const html = decode(
       compileStoryReader(linear(), {
@@ -426,6 +542,52 @@ describe('the bridge to the showcase page', () => {
     expect(last.find((save) => save.kind === 'prefs')).toMatchObject({ theme: 'sepia', size: 120 });
   });
 
+  it("wears the site's colors while its own theme is auto, and only real colors", async () => {
+    const html = decode(compileStoryReader(keyStory(), READER_OPTIONS).bytes);
+    const { host, frame } = embed(html, []);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const inner = frame.contentWindow as unknown as {
+      MessageEvent: typeof MessageEvent;
+      dispatchEvent: (event: Event) => boolean;
+    };
+    const send = (palette: unknown) =>
+      inner.dispatchEvent(
+        new inner.MessageEvent('message', {
+          data: { keresReader: 1, type: 'host', palette },
+          source: host.window as unknown as MessageEventSource,
+        }),
+      );
+    const root = frame.contentDocument!.documentElement;
+    const palette = {
+      bg: '#0e0d13',
+      fg: '#f2f0f7',
+      muted: '#a5a1b4',
+      accent: '#bb86fc',
+      line: '#262435',
+      card: 'rgb(23, 22, 31)',
+    };
+
+    send(palette);
+    expect(root.style.getPropertyValue('--bg')).toBe('#0e0d13');
+    expect(root.style.getPropertyValue('--accent')).toBe('#bb86fc');
+    expect(root.style.getPropertyValue('--card')).toBe('rgb(23, 22, 31)');
+
+    // Anything that is not a plain color refuses the whole palette: nothing is injected into the style.
+    send({ ...palette, bg: 'red; background: url(//evil)' });
+    expect(root.style.getPropertyValue('--bg')).toBe('');
+    expect(root.style.getPropertyValue('--accent')).toBe('');
+
+    // A theme the reader picked itself wins over the site's.
+    send(palette);
+    frame.contentDocument!.getElementById('act-look')!.click();
+    const dark = [...frame.contentDocument!.querySelectorAll<HTMLButtonElement>('.pill')].find(
+      (button) => button.textContent === 'Dark',
+    );
+    dark?.click();
+    expect(root.getAttribute('data-theme')).toBe('dark');
+    expect(root.style.getPropertyValue('--bg')).toBe('');
+  });
+
   it('lists, writes, loads and deletes manual saves', async () => {
     const html = decode(compileStoryReader(keyStory(), READER_OPTIONS).bytes);
     const { frame, written } = embed(html, []);
@@ -463,5 +625,14 @@ describe('the bridge to the showcase page', () => {
     await new Promise((resolve) => setTimeout(resolve, 1700));
     click('#act-saves');
     expect(document.querySelector('#sheet-body .note')!.textContent).toContain('not being kept');
+  });
+});
+
+describe('the reader stylesheet', () => {
+  it('styles the scene heading of a linear reader only: the branching scene page is an article of the same class', () => {
+    const html = decode(compileStoryReader(keyStory(), READER_OPTIONS).bytes);
+
+    expect(html).toContain('h3.scene, .scene-name {');
+    expect(html).not.toMatch(/^\.scene, /m);
   });
 });

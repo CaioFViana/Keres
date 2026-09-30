@@ -101,6 +101,27 @@ export function storeReaderSaves(storage: StorageLike, key: string, saves: Reade
   }
 }
 
+/** The site's colors the reader wears while its own theme is "auto". Read from the page's CSS variables. */
+export type ReaderPalette = Record<'bg' | 'fg' | 'muted' | 'accent' | 'line' | 'card', string>;
+
+const PALETTE_SOURCES: Record<keyof ReaderPalette, string> = {
+  bg: '--color-bg',
+  fg: '--color-text',
+  muted: '--color-text-secondary',
+  accent: '--color-primary',
+  line: '--color-border',
+  card: '--color-surface',
+};
+
+export function readerPaletteOf(element: Element = document.documentElement): ReaderPalette {
+  const style = getComputedStyle(element);
+  const palette = {} as ReaderPalette;
+  for (const key of Object.keys(PALETTE_SOURCES) as (keyof ReaderPalette)[]) {
+    palette[key] = style.getPropertyValue(PALETTE_SOURCES[key]).trim();
+  }
+  return palette;
+}
+
 export type ReaderMessage = { type: 'load' } | { type: 'write'; saves: unknown };
 
 /** A message of the reader protocol, or null for anything else that happens to arrive. */

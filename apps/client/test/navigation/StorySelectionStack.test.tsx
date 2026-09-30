@@ -395,3 +395,43 @@ describe('the packs stack', () => {
     expect(getByTestId('drawer-menu-button')).toBeTruthy();
   });
 });
+
+describe('the settings stack', () => {
+  const focusOn = (screen: string | undefined) => {
+    (
+      jest.requireMock('@react-navigation/native').getFocusedRouteNameFromRoute as jest.Mock
+    ).mockReturnValue(screen);
+  };
+
+  async function headerOn(screen: string, index: number) {
+    focusOn(screen);
+    await renderDrawer();
+    const navigator = mockDrawerNavigatorProps.at(-1);
+    const options = navigator?.screenOptions({
+      navigation: { getState: () => ({ routes: [] }) },
+      route: {
+        key: 'settings-key',
+        name: 'Settings',
+        state: {
+          type: 'stack',
+          key: 'settings-stack',
+          index,
+          routes: ['SettingsHome', 'Credits'].slice(0, index + 1).map((name) => ({ name })),
+        },
+      },
+    });
+    return render(<>{options.headerLeft()}</>);
+  }
+
+  afterEach(() => focusOn(undefined));
+
+  it('shows no arrow on its root - there is nothing behind it to go back to', async () => {
+    const { queryByTestId } = await headerOn('SettingsHome', 0);
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it('shows an arrow on the credits screen, reached from it', async () => {
+    const { queryByTestId } = await headerOn('Credits', 1);
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
+  });
+});

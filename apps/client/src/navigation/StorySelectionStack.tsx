@@ -123,6 +123,8 @@ const storySelectionStackRootScreens = new Set([
   // The same reason as the story's drawer: the root of a stack opened from the menu shows no arrow.
   'HelpIndex',
   'DeviceIndex',
+  // The settings stack's own root: the drawer entry it sits behind is called `Settings`.
+  'SettingsHome',
 ]);
 
 type StorySelectionMainDrawerNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList>;

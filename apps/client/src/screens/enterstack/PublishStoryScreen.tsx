@@ -214,6 +214,8 @@ const PublishStoryScreen = () => {
         // Visibility travels with the publication, rather than in a second call only when there is a password:
         // that way publishing with the padlock off really does make the story public, and does not silently
         // leave an old password in force.
+        const manuscriptOptions = manuscript.buildOptions(row.story, t, i18n.language);
+        const readerOptions = manuscript.buildReaderOptions(row.story, t, i18n.language);
         const published = await publicationApiService.publish(
           row.server,
           row.story.id,
@@ -222,9 +224,17 @@ const PublishStoryScreen = () => {
           labelMode,
           usePassword ? 'password' : 'public',
           usePassword ? password.trim() : undefined,
-          manuscript.buildOptions(row.story, t, i18n.language),
-          manuscript.buildReaderOptions(row.story, t, i18n.language),
+          manuscriptOptions,
+          readerOptions,
         );
+        // A server that predates these extras publishes the version and drops them without a word:
+        // saying so beats a page that silently lacks the button.
+        const droppedExtras =
+          (manuscriptOptions && !published.manuscriptFormat) ||
+          (readerOptions && published.readerByteSize == null);
+        if (droppedExtras) {
+          showNotification(t('publish_extras_ignored'), 'error');
+        }
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
 
         // Publishing without saying where the story ended up leaves the person with nothing in hand - the

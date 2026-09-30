@@ -1251,13 +1251,7 @@
         "minutesPerHour": 60,
         "hoursPerDay": 24,
         "daysPerWeek": 5,
-        "weekdayNames": [
-          "Bambu",
-          "Névoa",
-          "Lua",
-          "Vento",
-          "Estrela"
-        ],
+        "weekdayNames": ["Bambu", "Névoa", "Lua", "Vento", "Estrela"],
         "unitNames": {},
         "months": [
           {

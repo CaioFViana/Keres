@@ -6,15 +6,15 @@
  * This module is consumed by both the client and the API, so there is no separate server version.
  */
 export const APP_RELEASE = {
-  name: 'Aion',
-  version: '1.8.0',
+  name: 'Hestia',
+  version: '1.9.0',
   /**
    * The release's line, shown verbatim on the credits screen. English, never translated - it is
    * the release's voice, quoted from `docs/fluff_release_names.md`. Update it by hand with every
    * release (see `docs/release_process.md`).
    */
   phrase:
-    'Locked in place by the eternal serpent, the young main exists surrounded by the zodiac. Never ending, never starting, always present, always cycling.',
+    'At the heart of the biggest mountain, the flame of home protect us all. The first and the last. Its warmth shall embraces our families forever.',
 } as const;
 
 /** Where the source lives; the credits screen links out to it. */

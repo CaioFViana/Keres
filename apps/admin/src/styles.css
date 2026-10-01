@@ -481,6 +481,16 @@ button.button-danger:hover {
   font-weight: 500;
 }
 
+.storage-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.storage-input input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .form-card label.checkbox-label {
   flex-direction: row;
   align-items: center;

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Tier, TierCreateInput } from '@keres/shared';
 import { TierApiService } from '../../api/TierApiService';
+import { StorageLimitInput } from './StorageLimitInput';
+import { formatStorage } from './storageUnits';
 
 const emptyForm: TierCreateInput = {
   name: '',
@@ -24,6 +26,8 @@ export function TiersPage() {
   const { t } = useTranslation('admin');
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Bumped whenever a record is loaded into the form, so inputs that keep their own text start over.
+  const [formVersion, setFormVersion] = useState(0);
   const [form, setForm] = useState<TierCreateInput>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +44,7 @@ export function TiersPage() {
 
   const startEdit = (tier: Tier) => {
     setEditingId(tier.id);
+    setFormVersion((v) => v + 1);
     setForm({
       name: tier.name,
       isDefault: tier.isDefault,
@@ -54,6 +59,7 @@ export function TiersPage() {
 
   const startNew = () => {
     setEditingId('new');
+    setFormVersion((v) => v + 1);
     setForm(emptyForm);
   };
 
@@ -135,8 +141,18 @@ export function TiersPage() {
           {limitInput(t('tiers.maxStories'), 'maxStories')}
           {limitInput(t('tiers.maxEntitiesPerStory'), 'maxEntitiesPerStory')}
           {limitInput(t('tiers.maxEntitiesTotal'), 'maxEntitiesTotal')}
-          {limitInput(t('tiers.maxStorageBytesPerStory'), 'maxStorageBytesPerStory')}
-          {limitInput(t('tiers.maxStorageBytesTotal'), 'maxStorageBytesTotal')}
+          <StorageLimitInput
+            key={`${formVersion}-story`}
+            label={t('tiers.maxStorageBytesPerStory')}
+            value={form.maxStorageBytesPerStory ?? null}
+            onChange={(bytes) => setForm((f) => ({ ...f, maxStorageBytesPerStory: bytes }))}
+          />
+          <StorageLimitInput
+            key={`${formVersion}-total`}
+            label={t('tiers.maxStorageBytesTotal')}
+            value={form.maxStorageBytesTotal ?? null}
+            onChange={(bytes) => setForm((f) => ({ ...f, maxStorageBytesTotal: bytes }))}
+          />
           {limitInput(t('tiers.maxPublicationsPerDay'), 'maxPublicationsPerDay')}
           <div className="form-actions">
             <button type="submit" disabled={saving}>
@@ -175,8 +191,8 @@ export function TiersPage() {
                   <td>{tier.maxStories ?? '∞'}</td>
                   <td>{tier.maxEntitiesPerStory ?? '∞'}</td>
                   <td>{tier.maxEntitiesTotal ?? '∞'}</td>
-                  <td>{tier.maxStorageBytesPerStory ?? '∞'}</td>
-                  <td>{tier.maxStorageBytesTotal ?? '∞'}</td>
+                  <td>{formatStorage(tier.maxStorageBytesPerStory)}</td>
+                  <td>{formatStorage(tier.maxStorageBytesTotal)}</td>
                   <td>{tier.maxPublicationsPerDay ?? '∞'}</td>
                   <td>
                     {!tier.isDeleted && (

@@ -432,6 +432,72 @@ describe('tiers page', () => {
     await view.unmount();
   });
 
+  it('shows storage limits as KB/MB/GB and edits them as an amount and a unit', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({ maxStorageBytesPerStory: 100 * 1024 * 1024, maxStorageBytesTotal: 2 * 1024 ** 3 }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const cells = Array.from(view.container.querySelectorAll('tbody tr td')).map(
+      (cell) => cell.textContent,
+    );
+    expect(cells).toContain('100 MB');
+    expect(cells).toContain('2 GB');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max storage per story'),
+    )!;
+    const amount = label.querySelector('input')!;
+    const unit = label.querySelector('select')!;
+    expect(amount.value).toBe('100');
+    expect(unit.value).toBe('MB');
+
+    // A new amount keeps the unit; a new unit keeps the amount.
+    await changeInput(amount, '250');
+    await changeInput(unit, 'GB');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.updateTier).toHaveBeenCalledWith(
+      'tier-1',
+      expect.objectContaining({
+        maxStorageBytesPerStory: 250 * 1024 ** 3,
+        maxStorageBytesTotal: 2 * 1024 ** 3,
+      }),
+    );
+    await view.unmount();
+  });
+
+  it('leaves a cleared storage limit unlimited', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxStorageBytesTotal: 1024 ** 3 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max storage total'),
+    )!;
+    await changeInput(label.querySelector('input')!, '');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.updateTier).toHaveBeenCalledWith(
+      'tier-1',
+      expect.objectContaining({ maxStorageBytesTotal: null }),
+    );
+    await view.unmount();
+  });
+
   it('marks a new tier as the default', async () => {
     mocks.listTiers.mockResolvedValue([tier()]);
     const view = await withProviders(<TiersPage />);

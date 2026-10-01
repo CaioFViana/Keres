@@ -7,7 +7,6 @@ const mockSetSelectedStory = jest.fn();
 const mockAppAlert = jest.fn();
 const mockAnalyzeStoryCheap = jest.fn();
 const mockAnalyzeStoryFull = jest.fn();
-const mockCountForStory = jest.fn();
 const mockNormalizeIndexes = jest.fn();
 const mockUpdateStory = jest.fn();
 const mockNavigateToEntityDetail = jest.fn();
@@ -72,10 +71,6 @@ jest.mock('../../../src/services/storymanagement/StoryAnalysisService', () => ({
     analyzeStoryCheap: mockAnalyzeStoryCheap,
     analyzeStoryFull: mockAnalyzeStoryFull,
   }),
-}));
-jest.mock('../../../src/services/storymanagement/StoryEntityCountService', () => ({
-  __esModule: true,
-  createStoryEntityCountService: () => ({ countForStory: mockCountForStory }),
 }));
 jest.mock('../../../src/services/storymanagement/StoryIndexService', () => ({
   __esModule: true,
@@ -238,7 +233,6 @@ describe('StoryAnalysisScreen', () => {
     mockAnalyzeStoryFull.mockResolvedValue({ findings: [] });
     mockNormalizeIndexes.mockResolvedValue({ changed: 3 });
     mockUpdateStory.mockResolvedValue(undefined);
-    mockCountForStory.mockResolvedValue({ total: 0, byType: {} });
   });
 
   it('requests its guided tour', async () => {
@@ -343,39 +337,24 @@ describe('StoryAnalysisScreen', () => {
     expect(mockAppAlert).toHaveBeenCalledWith('success', 'story_updated_successfully');
   });
 
-  it('reports how many entities the story has, by type, the way the plan counts them', async () => {
-    mockCountForStory.mockResolvedValue({
-      total: 14,
-      byType: { Character: 3, TagRelation: 9, Gallery: 2 },
-    });
-    const view = await render(<StoryAnalysisScreen />);
+  it('opens the entity count from a chart button in the header', async () => {
+    await render(<StoryAnalysisScreen />);
 
-    await waitFor(() => expect(mockCountForStory).toHaveBeenCalledWith('story-1'));
-    await waitFor(() => expect(view.queryByTestId('card-entity_count_title (14)')).not.toBeNull());
-    // Most numerous first; a vocabulary type takes the story's own word, the others a plain label.
-    const rows = ['TagRelation', 'Character', 'Gallery'].map((type) =>
-      view.getByTestId(`entity-count-${type}`),
-    );
-    expect(rows.map((row) => row.props.children.map((child: any) => child.props.children))).toEqual([
-      ['entity_count_tag_relation', 9],
-      ['Characters', 3],
-      ['entity_count_gallery', 2],
+    const config = mockUseScreenHeader.mock.calls.at(-1)?.[0] as {
+      target: string;
+      actions: { id: string; icon: string; label: string; onPress: () => void }[];
+    };
+    expect(config.target).toBe('parent');
+    expect(config.actions).toEqual([
+      expect.objectContaining({
+        id: 'entity-count',
+        icon: 'stats-chart-outline',
+        label: 'entity_count_title',
+      }),
     ]);
-    expect(view.queryByTestId('entity-count-Location')).toBeNull();
-  });
 
-  it('keeps the report when the entities cannot be counted', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockSelectedStory = { id: 'story-1', type: 'linear', completenessChecks: false };
-    mockCountForStory.mockRejectedValue(new Error('count down'));
-    try {
-      const view = await render(<StoryAnalysisScreen />);
-      await waitFor(() => expect(view.queryByText('analysis_no_issues_found')).not.toBeNull());
-      await waitFor(() => expect(errorSpy).toHaveBeenCalled());
-      expect(view.queryByTestId('card-entity_count_title (0)')).toBeNull();
-    } finally {
-      errorSpy.mockRestore();
-    }
+    config.actions[0].onPress();
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('StoryEntityCount');
   });
 
   it('shows the error state when the report cannot load', async () => {

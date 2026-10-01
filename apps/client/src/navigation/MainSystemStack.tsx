@@ -28,7 +28,6 @@ import { MentionMatcherProvider } from '../mentions/MentionMatcherProvider';
 import { MentionNavigationProvider } from '../mentions/MentionNavigationProvider';
 import GlobalSearchScreen from '../screens/globalsearch/GlobalSearchScreen';
 import MainDashboardScreen from '../screens/mainstorystack/MainDashboardScreen';
-import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
 import StorySettingsScreen from '../screens/mainstorystack/StorySettingsScreen';
 import { readShowcaseRequest } from '../showcase/showcaseRequest';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
@@ -67,6 +66,7 @@ import {
   NoteStackNavigator,
   OperationLogStackNavigator,
   PlotsStackNavigator,
+  StoryAnalysisStackNavigator,
   TagStackNavigator,
   WorldRuleStackNavigator,
   type BoardStackParamList,
@@ -80,6 +80,7 @@ import {
   type NotesStackParamList,
   type OperationLogStackParamList,
   type PlotsStackParamList,
+  type StoryAnalysisStackParamList,
   type TagsStackParamList,
   type WorldRulesStackParamList,
 } from './MainSystemStacks';
@@ -97,6 +98,7 @@ export type {
   NotesStackParamList,
   OperationLogStackParamList,
   PlotsStackParamList,
+  StoryAnalysisStackParamList,
   TagsStackParamList,
   WorldRulesStackParamList,
 } from './MainSystemStacks';
@@ -122,7 +124,7 @@ export type MainSystemDrawerParamList = {
   // Optional on purpose: the dashboard passes the story explicitly, but arriving straight
   // from the drawer navigates with no param at all (both screens read `selectedStory`).
   StorySettings: { storyId: string } | undefined;
-  StoryAnalysis: { storyId: string } | undefined;
+  StoryAnalysisStack: NavigatorScreenParams<StoryAnalysisStackParamList> | undefined;
   OperationLogStack: NavigatorScreenParams<OperationLogStackParamList> | undefined;
   CommentsStack: NavigatorScreenParams<CommentsStackParamList> | undefined;
   CustomizationStack: NavigatorScreenParams<CustomizationStackParamList> | undefined;
@@ -460,13 +462,13 @@ const MainSystemNavigator = () => {
           listeners={drawerItemListeners('OperationLogStack', 'OperationLog')}
         />
         <Drawer.Screen
-          name="StoryAnalysis"
-          component={StoryAnalysisScreen}
+          name="StoryAnalysisStack"
+          component={StoryAnalysisStackNavigator}
           options={{
             title: t('story_analysis_title'),
             drawerIcon: drawerIcon('analytics-outline'),
           }}
-          listeners={drawerItemListeners('StoryAnalysis')}
+          listeners={drawerItemListeners('StoryAnalysisStack', 'StoryAnalysis')}
         />
         <Drawer.Screen
           name="StoryDevicesDrawer"

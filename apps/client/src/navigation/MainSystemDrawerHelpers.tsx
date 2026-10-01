@@ -25,6 +25,7 @@ export const mainSystemStackRootScreens = new Set([
   'Notes',
   'Plots',
   'OperationLog',
+  'StoryAnalysis',
   'CommentsList',
   'CustomizationIndex',
   'HelpIndex',

@@ -192,6 +192,14 @@ jest.mock('../../src/screens/operationlog/OperationLogListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/mainstorystack/StoryAnalysisScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/mainstorystack/StoryEntityCountScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/plots/PlotDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -334,6 +342,7 @@ import {
   NoteStackNavigator,
   OperationLogStackNavigator,
   PlotsStackNavigator,
+  StoryAnalysisStackNavigator,
   TagStackNavigator,
   WorldRuleStackNavigator,
 } from '../../src/navigation/MainSystemStacks';
@@ -438,6 +447,11 @@ const stacks: Array<{
     label: 'OperationLogStack',
     Navigator: OperationLogStackNavigator,
     screens: ['OperationLog', 'OperationLogDetail'],
+  },
+  {
+    label: 'StoryAnalysisStack',
+    Navigator: StoryAnalysisStackNavigator,
+    screens: ['StoryAnalysis', 'StoryEntityCount'],
   },
   {
     label: 'CommentsStack',

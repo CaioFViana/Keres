@@ -35,6 +35,28 @@ const page: HelpPage = {
       tone: 'info',
       text: 'The deeper check can take a while on a large branching story, so it does not run on its own - press the button whenever you want an up-to-date result. Only one can run at a time, and leaving the screen stops it.',
     },
+    { type: 'heading', level: 2, text: 'How many things the story holds' },
+    {
+      type: 'paragraph',
+      text: 'The chart button at the top right opens a second screen that counts everything in the story, type by type: characters, scenes, choices, tags, media files, and also the links between them, such as a tag applied to a character or a character placed in a scene. Each type has its own icon, and the bar beside it shows how it compares with the biggest one.',
+    },
+    {
+      type: 'steps',
+      items: [
+        'Open the story analysis and tap the chart button at the top right.',
+        'Read the total at the top: it is every item of the story, except favorites and comments.',
+        'Tap NAME or QUANTITY to sort the list; tap the same one again to reverse the order.',
+      ],
+    },
+    {
+      type: 'paragraph',
+      text: 'This is the same count a server plan uses to limit how much one story can hold. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color as you get close, and red at the limit.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'The plan comes from the server, so it is missing while you are offline. The count itself is always shown, and it includes what has not synchronized yet.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

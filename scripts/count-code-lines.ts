@@ -42,6 +42,8 @@ const ignoredDirectories = new Set([
   'coverage',
   'coverage-sync',
   'dist',
+  'dist-hosted',
+  'dist-pages',
   'dist-server',
   'drizzle',
   'generated',

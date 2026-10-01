@@ -181,3 +181,38 @@ describe('POST /stories/import', () => {
     expect(status).toBe(401);
   });
 });
+
+describe('GET /stories/:storyId/plan', () => {
+  it("answers with the owner's entity ceilings, unlimited when there is no plan", async () => {
+    const story = await createStory(ana.token);
+
+    const { status, data } = await request('GET', `/stories/${story.id}/plan`, {
+      token: ana.token,
+    });
+
+    expect(status).toBe(200);
+    expect(data).toEqual({
+      tierName: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      entitiesUsedTotal: 0,
+    });
+  });
+
+  it('hides another user’s story behind a 404', async () => {
+    const story = await createStory(ana.token);
+    const bia = await registerUser('bia');
+
+    const { status } = await request('GET', `/stories/${story.id}/plan`, { token: bia.token });
+
+    expect(status).toBe(404);
+  });
+
+  it('requires a session', async () => {
+    const story = await createStory(ana.token);
+
+    const { status } = await request('GET', `/stories/${story.id}/plan`);
+
+    expect(status).toBe(401);
+  });
+});

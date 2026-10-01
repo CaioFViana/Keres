@@ -1,4 +1,4 @@
-import { TIER_EXEMPT_ENTITY_TYPES } from '@keres/shared';
+import { type StoryPlan, TIER_EXEMPT_ENTITY_TYPES } from '@keres/shared';
 import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -129,6 +129,46 @@ export class TierEnforcementService {
     return story?.userId ?? actingUserId;
   }
 
+  private async liveStoryIdsOf(userId: string): Promise<string[]> {
+    const userStories = await db.query.stories.findMany({
+      where: and(eq(stories.userId, userId), eq(stories.isDeleted, false)),
+      columns: { id: true },
+    });
+    return userStories.map((s) => s.id);
+  }
+
+  /**
+   * The live entities of these stories as the plan's entity ceilings count them. The rule is shared
+   * with the client, which reports the same count (TIER_EXEMPT_ENTITY_TYPES says why Favorite and
+   * Comment are out).
+   */
+  private async countEntities(storyIds: string[]): Promise<number> {
+    const handlers = [...syncService.getEntityHandlers().values()].filter(
+      (h) => !TIER_EXEMPT_ENTITY_TYPES.includes(h.entityName),
+    );
+    const counts = await Promise.all(handlers.map((h) => h.countForStoryIds(storyIds)));
+    return counts.reduce((sum, c) => sum + c, 0);
+  }
+
+  /**
+   * The entity ceilings of a story's owner and how much of the total one the owner has used, for the
+   * client to show next to what it counts itself. Unlimited (no tier) is all `null`.
+   */
+  async getStoryPlan(storyId: string): Promise<StoryPlan> {
+    const ownerId = await this.payerOf('', storyId);
+    const tier = await this.getEffectiveTier(ownerId);
+    const entitiesUsedTotal =
+      tier && tier.maxEntitiesTotal !== null
+        ? await this.countEntities(await this.liveStoryIdsOf(ownerId))
+        : 0;
+    return {
+      tierName: tier?.name ?? null,
+      maxEntitiesPerStory: tier?.maxEntitiesPerStory ?? null,
+      maxEntitiesTotal: tier?.maxEntitiesTotal ?? null,
+      entitiesUsedTotal,
+    };
+  }
+
   /** `storyId` is the story the entity is being created in; used for the per-story ceiling. */
   async assertCanCreateEntity(actingUserId: string, storyId: string): Promise<void> {
     const userId = await this.payerOf(actingUserId, storyId);
@@ -137,15 +177,8 @@ export class TierEnforcementService {
       return;
     }
 
-    // The rule is shared with the client, which reports these counts (TIER_EXEMPT_ENTITY_TYPES says why
-    // Favorite and Comment are out).
-    const handlers = [...syncService.getEntityHandlers().values()].filter(
-      (h) => !TIER_EXEMPT_ENTITY_TYPES.includes(h.entityName),
-    );
-
     if (tier.maxEntitiesPerStory !== null) {
-      const counts = await Promise.all(handlers.map((h) => h.countForStoryIds([storyId])));
-      const total = counts.reduce((sum, c) => sum + c, 0);
+      const total = await this.countEntities([storyId]);
       if (total >= tier.maxEntitiesPerStory) {
         throw new TierLimitExceededError(
           `Entity limit for this story reached for your plan (${tier.maxEntitiesPerStory}).`,
@@ -154,13 +187,7 @@ export class TierEnforcementService {
     }
 
     if (tier.maxEntitiesTotal !== null) {
-      const userStories = await db.query.stories.findMany({
-        where: and(eq(stories.userId, userId), eq(stories.isDeleted, false)),
-        columns: { id: true },
-      });
-      const storyIds = userStories.map((s) => s.id);
-      const counts = await Promise.all(handlers.map((h) => h.countForStoryIds(storyIds)));
-      const total = counts.reduce((sum, c) => sum + c, 0);
+      const total = await this.countEntities(await this.liveStoryIdsOf(userId));
       if (total >= tier.maxEntitiesTotal) {
         throw new TierLimitExceededError(
           `Total entity limit reached for your plan (${tier.maxEntitiesTotal}).`,

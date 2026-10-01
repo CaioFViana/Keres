@@ -42,6 +42,28 @@ const page: HelpPage = {
       tone: 'info',
       text: 'A checagem mais profunda pode demorar em uma história ramificada grande, por isso ela não roda sozinha - toque no botão sempre que quiser um resultado atualizado. Só uma roda por vez, e sair da tela interrompe a checagem.',
     },
+    { type: 'heading', level: 2, text: 'Quantas coisas a história tem' },
+    {
+      type: 'paragraph',
+      text: 'O botão de gráfico no canto superior direito abre uma segunda tela que conta tudo o que há na história, tipo por tipo: personagens, cenas, escolhas, tags, arquivos de mídia e também as ligações entre eles, como uma tag aplicada a um personagem ou um personagem colocado em uma cena. Cada tipo tem seu ícone, e a barra ao lado mostra como ele se compara ao maior.',
+    },
+    {
+      type: 'steps',
+      items: [
+        'Abra a análise da história e toque no botão de gráfico no canto superior direito.',
+        'Leia o total no alto: são todos os itens da história, menos favoritos e comentários.',
+        'Toque em NOME ou QUANTIDADE para ordenar a lista; toque no mesmo de novo para inverter a ordem.',
+      ],
+    },
+    {
+      type: 'paragraph',
+      text: 'É a mesma contagem que o plano de um servidor usa para limitar quanto uma história pode ter. Para uma história que está só neste dispositivo, nada a limita e a tela apenas mostra o que existe. Para uma história ligada a um servidor, a tela mostra também o nome do plano e o quanto falta para os limites, por exemplo 251 / 500 para esta história, e o total de todas as histórias que o plano cobre, quando ele tem um. A barra muda para a cor de aviso perto do limite, e fica vermelha no limite.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'O plano vem do servidor, então não aparece enquanto você está sem conexão. A contagem em si aparece sempre, e inclui o que ainda não foi sincronizado.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

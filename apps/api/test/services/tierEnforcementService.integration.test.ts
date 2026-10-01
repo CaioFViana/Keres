@@ -349,3 +349,47 @@ describe('TierEnforcementService honest storage ledger', () => {
     ).rejects.toBeInstanceOf(TierLimitExceededError);
   });
 });
+
+describe('TierEnforcementService getStoryPlan', () => {
+  it('reports no ceilings for an owner with no plan', async () => {
+    await expect(tierEnforcementService.getStoryPlan(storyId)).resolves.toEqual({
+      tierName: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      entitiesUsedTotal: 0,
+    });
+  });
+
+  it("reports the owner's ceilings and what the owner uses of the total one", async () => {
+    const tierId = await seedTier({ maxEntitiesPerStory: 500, maxEntitiesTotal: 900 });
+    await assignTier(tierId);
+    const now = new Date();
+    await db.insert(characters).values(
+      ['a', 'b', 'c'].map((name) => ({
+        id: newId(),
+        storyId,
+        name,
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        isDeleted: false,
+      })) as never,
+    );
+
+    await expect(tierEnforcementService.getStoryPlan(storyId)).resolves.toEqual({
+      tierName: `Tier ${tierId}`,
+      maxEntitiesPerStory: 500,
+      maxEntitiesTotal: 900,
+      entitiesUsedTotal: 3,
+    });
+  });
+
+  it('skips the total count when there is no total ceiling to compare it with', async () => {
+    await assignTier(await seedTier({ maxEntitiesPerStory: 500 }));
+
+    const plan = await tierEnforcementService.getStoryPlan(storyId);
+
+    expect(plan).toMatchObject({ maxEntitiesPerStory: 500, maxEntitiesTotal: null });
+    expect(plan.entitiesUsedTotal).toBe(0);
+  });
+});

@@ -1,8 +1,9 @@
-import { FullStoryExportSchema } from '@keres/shared';
+import { FullStoryExportSchema, StoryPlanSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { StoryExportImportService } from '../../services/StoryExportImportService';
 import { storyPermissionService } from '../../services/StoryPermissionService';
+import { tierEnforcementService } from '../../services/TierEnforcementService';
 import { AppError } from '../../utils/errors';
 
 const storyExportImportService = new StoryExportImportService();
@@ -42,6 +43,33 @@ export const storyRoutes = new Elysia()
         summary: 'Export a full story',
         description:
           'Exports a full story, including all its related entities, as a single JSON object.',
+        tags: ['Story'],
+      },
+    },
+  )
+  .get(
+    '/:storyId/plan',
+    async ({ params, user }) => {
+      if (!user || !user.userId) {
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
+      }
+      const canRead = await storyPermissionService.hasPermission(
+        user.userId,
+        params.storyId,
+        'reader',
+      );
+      if (!canRead) {
+        throw new AppError(404, 'Story not found.');
+      }
+      return tierEnforcementService.getStoryPlan(params.storyId);
+    },
+    {
+      params: t.Object({ storyId: t.String() }),
+      response: StoryPlanSchema,
+      detail: {
+        summary: "The story owner's entity ceilings",
+        description:
+          "The plan the story counts against is its owner's, whoever is writing: its entity ceilings (null is unlimited) and how much of the total ceiling the owner has used.",
         tags: ['Story'],
       },
     },

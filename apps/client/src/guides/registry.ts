@@ -314,6 +314,19 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
+  StoryEntityCount: {
+    id: 'StoryEntityCount',
+    drawerId: 'main-system',
+    helpPageId: 'story-analysis',
+    steps: [
+      {
+        id: 'card',
+        anchors: [screenAnchorId('StoryEntityCount', 'card')],
+        titleKey: 'tour_entitycount_start_title',
+        bodyKey: 'tour_entitycount_start_body',
+      },
+    ],
+  },
   StoryAppearance: {
     id: 'StoryAppearance',
     drawerId: 'main-system',
@@ -522,7 +535,7 @@ export const screenGuides: Record<string, Guide> = {
           'CustomizationStack',
           'CommentsStack',
           'OperationLogStack',
-          'StoryAnalysis',
+          'StoryAnalysisStack',
         ]),
         titleKey: 'tour_dashboard_group_organize_title',
         bodyKey: 'tour_dashboard_group_organize_body',

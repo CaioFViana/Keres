@@ -214,7 +214,10 @@ const MainDashboardScreen = () => {
       analysisIssueCount={analysisIssueCount}
       onOpenAnalysis={() => {
         if (selectedStory?.id) {
-          navigation.navigate('StoryAnalysis', { storyId: selectedStory.id });
+          navigation.navigate('StoryAnalysisStack', {
+            screen: 'StoryAnalysis',
+            params: { storyId: selectedStory.id },
+          });
         }
       }}
       onOpenOperationLog={() => {

@@ -12,6 +12,7 @@ import type { OperationLogSelect } from '../../../db/schema';
 import { useEntityName } from '../../../hooks/useEntityName';
 import { useUserDisplayName } from '../../../hooks/useUserDisplayName'; // Import the new hook
 import { useTheme } from '../../../theme';
+import { isLinkEntityType } from '../../../utils/entityTypeBadge';
 import { truncate } from '../../../utils/stringUtils';
 
 interface OperationLogListItemProps {
@@ -33,18 +34,6 @@ const getOperationIconName = (operationType: string): keyof typeof Ionicons.glyp
   }
 };
 
-const RELATION_ENTITY_TYPES = new Set<string>([
-  OperationLogEntityType.CharacterRelation,
-  OperationLogEntityType.CharacterScene,
-  OperationLogEntityType.GalleryRelation,
-  OperationLogEntityType.LocationRelation,
-  OperationLogEntityType.NoteRelation,
-  OperationLogEntityType.PlotScene,
-  OperationLogEntityType.SeeAlsoRelation,
-  OperationLogEntityType.StatRelation,
-  OperationLogEntityType.TagRelation,
-]);
-
 const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
   log,
   onPress,
@@ -64,7 +53,7 @@ const OperationLogListItem: React.FC<OperationLogListItemProps> = ({
     log.entityType === OperationLogEntityType.WorldRule && worldPieceSection
       ? getWorldPieceSectionAppearance(worldPieceSection)
       : getEntityAppearance(log.entityType);
-  const isRelation = RELATION_ENTITY_TYPES.has(log.entityType);
+  const isRelation = isLinkEntityType(log.entityType);
   const entityIcon = isRelation
     ? 'link-outline'
     : (entityAppearance.icon as keyof typeof Ionicons.glyphMap);

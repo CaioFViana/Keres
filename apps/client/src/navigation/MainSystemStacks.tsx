@@ -48,6 +48,8 @@ import NoteFormScreen from '../screens/notes/NoteFormScreen';
 import NotesScreen from '../screens/notes/NoteListScreen';
 import OperationLogDetailScreen from '../screens/operationlog/OperationLogDetailScreen';
 import OperationLogScreen from '../screens/operationlog/OperationLogListScreen';
+import StoryAnalysisScreen from '../screens/mainstorystack/StoryAnalysisScreen';
+import StoryEntityCountScreen from '../screens/mainstorystack/StoryEntityCountScreen';
 import PlotDetailScreen from '../screens/plots/PlotDetailScreen';
 import PlotFormScreen from '../screens/plots/PlotFormScreen';
 import PlotListScreen from '../screens/plots/PlotListScreen';
@@ -395,6 +397,26 @@ export const OperationLogStackNavigator = () => {
       <OperationLogStack.Screen name="OperationLog" component={OperationLogScreen} />
       <OperationLogStack.Screen name="OperationLogDetail" component={OperationLogDetailScreen} />
     </OperationLogStack.Navigator>
+  );
+};
+//#endregion
+//#region StoryAnalysis
+const StoryAnalysisStack = createNativeStackNavigator<StoryAnalysisStackParamList>();
+
+export type StoryAnalysisStackParamList = {
+  // Optional on purpose: the dashboard passes the story explicitly, but arriving straight from the
+  // drawer navigates with no param at all (both screens read `selectedStory`).
+  StoryAnalysis: { storyId: string } | undefined;
+  StoryEntityCount: undefined;
+};
+
+export const StoryAnalysisStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <StoryAnalysisStack.Navigator screenOptions={{ headerShown: false }}>
+      <StoryAnalysisStack.Screen name="StoryAnalysis" component={StoryAnalysisScreen} />
+      <StoryAnalysisStack.Screen name="StoryEntityCount" component={StoryEntityCountScreen} />
+    </StoryAnalysisStack.Navigator>
   );
 };
 //#endregion

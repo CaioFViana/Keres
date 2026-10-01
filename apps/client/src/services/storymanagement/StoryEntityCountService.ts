@@ -29,7 +29,9 @@ export const createStoryEntityCountService = (db: AppDrizzleClient) => ({
         const [row] = (await db
           .select({ value: count() })
           .from(table)
-          .where(and(eq(table.storyId, storyId), eq(table.isDeleted, false)))) as { value: number }[];
+          .where(and(eq(table.storyId, storyId), eq(table.isDeleted, false)))) as {
+          value: number;
+        }[];
         return [entityType, row?.value ?? 0] as const;
       }),
     );

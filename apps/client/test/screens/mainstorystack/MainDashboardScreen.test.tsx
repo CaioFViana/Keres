@@ -222,7 +222,10 @@ describe('MainDashboardScreen', () => {
   it('navigates to analysis, operation log and settings', async () => {
     const view = await render(<MainDashboardScreen />);
     await fireEvent.press(view.getByTestId('open-analysis'));
-    expect(mockNavigate).toHaveBeenCalledWith('StoryAnalysis', { storyId: 'story-1' });
+    expect(mockNavigate).toHaveBeenCalledWith('StoryAnalysisStack', {
+      screen: 'StoryAnalysis',
+      params: { storyId: 'story-1' },
+    });
     await fireEvent.press(view.getByTestId('open-oplog'));
     expect(mockNavigate).toHaveBeenCalledWith('OperationLogStack', { screen: 'OperationLog' });
     const headerCall = mockUseScreenHeader.mock.calls[0][0] as {

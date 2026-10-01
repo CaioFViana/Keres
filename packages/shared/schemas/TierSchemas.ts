@@ -40,3 +40,18 @@ export const TierUsageSchema = z.object({
   storageBytesMax: z.number().int().nullable(),
 });
 export type TierUsage = z.infer<typeof TierUsageSchema>;
+
+/**
+ * What a story's owner's plan allows for its entities, and what the owner already uses of it across
+ * all their stories. Read by anyone who can read the story: the plan that counts is the owner's
+ * (see `TierEnforcementService.payerOf`), whoever is writing. `null` ceilings are unlimited, and a
+ * missing tier (no plan, no signup default) is unlimited too.
+ */
+export const StoryPlanSchema = z.object({
+  tierName: z.string().nullable(),
+  maxEntitiesPerStory: z.number().int().nullable(),
+  maxEntitiesTotal: z.number().int().nullable(),
+  /** The owner's live entities over all their stories, counted the way the total ceiling counts. */
+  entitiesUsedTotal: z.number().int(),
+});
+export type StoryPlan = z.infer<typeof StoryPlanSchema>;

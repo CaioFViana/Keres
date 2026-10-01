@@ -128,7 +128,7 @@ jest.mock('../../../src/utils/documentTitle', () => ({
 
 jest.mock('../../../src/utils/i18n', () => ({
   __esModule: true,
-  default: { changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
+  default: { language: 'en', changeLanguage: (...args: unknown[]) => mockChangeLanguage(...args) },
   getLanguageOptions: () => [
     { label: 'English', value: 'en' },
     { label: 'Português', value: 'pt' },
@@ -381,14 +381,27 @@ describe('ColdInstallScreen', () => {
     expect(openURL).toHaveBeenCalledWith('https://github.com/CaioFViana/Keres/releases/latest');
   });
 
-  it('validates language and username before proceeding', async () => {
+  it('asks for a name before proceeding', async () => {
     const view = await render(<ColdInstallScreen />);
     await view.findByText('welcome');
     await goToNameStep(view);
     await fireEvent.press(view.getByText('disabled:proceed'));
-    expect(view.getByText('select_language_error')).toBeTruthy();
     expect(view.getByText('username_required_error')).toBeTruthy();
     expect(mockMigrate).not.toHaveBeenCalled();
+  });
+
+  it('can proceed with just a name: the language already shown counts as chosen', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome');
+    expect(view.getByTestId('language-value').props.children).toBe('select_language:en');
+    await goToNameStep(view);
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+    await fireEvent.press(view.getByText('enabled:proceed'));
+    await waitFor(() => expect(mockCreateClientSettings).toHaveBeenCalled());
+    expect(mockCreateClientSettings).toHaveBeenCalledWith(
+      mockDrizzle,
+      expect.objectContaining({ language: 'en', localUsername: 'Bob' }),
+    );
   });
 
   it('selects a language and enables proceed with a valid username', async () => {

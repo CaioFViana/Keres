@@ -1852,7 +1852,6 @@
   "select_item_character_owner": "Selecionar {{character}} don{{ending}}",
   "select_item_journey_new_character_owner": "Selecionar {{prefix}} {{character}} don{{ending}}",
   "select_language": "Selecionar Idioma",
-  "select_language_error": "Por favor, selecione um idioma",
   "select_location_to_connect": "Selecionar Location para Conectar",
   "select_note": "Selecionar Nota",
   "select_parent_location": "Selecionar Location Pai",

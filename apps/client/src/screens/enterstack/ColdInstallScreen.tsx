@@ -59,16 +59,23 @@ type ColdInstallScreenNavigationProp = NativeStackNavigationProp<RootStackParamL
  * not a guided tour: those need the settings row this screen is about to create, and there is
  * nothing to remember afterwards - it shows whenever there is no profile yet.
  */
+/** The language the app is showing now, when it is one of the offered ones; English otherwise. */
+const initialLanguage = (): string => {
+  const current = (i18n.language ?? 'en').split('-')[0];
+  return current === 'pt' ? 'pt' : 'en';
+};
+
 const ColdInstallScreen = () => {
   const [page, setPage] = useState(0);
   const [username, setUsername] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [languageError, setLanguageError] = useState<string | null>(null);
   const { t } = useTranslation();
   useDocumentTitle(t('welcome'));
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
   const { colors } = useTheme();
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  // Starts on the language the app is already showing, so there is never a step left undone: with none
+  // chosen, the way forward stayed disabled with nothing on screen saying why.
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(initialLanguage);
   const { showNotification } = useNotificationStore();
 
   const db = useSQLiteContext();
@@ -130,13 +137,6 @@ const ColdInstallScreen = () => {
   const handleProceed = async () => {
     let isValid = true;
 
-    if (!selectedLanguage) {
-      setLanguageError(t('select_language_error'));
-      isValid = false;
-    } else {
-      setLanguageError(null);
-    }
-
     // The name is only how the app addresses the person on this device: nothing bounds it but being
     // there (the column is NOT NULL text, and no schema limits it).
     if (trimmedUsername.length === 0) {
@@ -163,7 +163,7 @@ const ColdInstallScreen = () => {
     // Create initial client settings in SQLite
     await createClientSettings(drizzleDb, {
       localUsername: trimmedUsername,
-      language: selectedLanguage || 'en', // Default to English if not selected
+      language: selectedLanguage,
       darkMode,
       use24HourTime: true, // Default to 24-hour clock
       dateDisplayFormat: 'iso',
@@ -180,14 +180,14 @@ const ColdInstallScreen = () => {
   };
 
   const handleLanguageChange = (itemValue: string | null) => {
+    // Choosing nothing is not an option here: the language already shown stays.
+    if (!itemValue) return;
     setSelectedLanguage(itemValue);
-    if (itemValue) {
-      i18n.changeLanguage(itemValue);
-      // No need to call setStoreLanguage here, as it will be set during handleProceed
-    }
+    i18n.changeLanguage(itemValue);
+    // No need to call setStoreLanguage here, as it will be set during handleProceed
   };
 
-  const isProceedDisabled = !selectedLanguage || trimmedUsername.length === 0;
+  const isProceedDisabled = trimmedUsername.length === 0;
 
   const styles = StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
@@ -326,7 +326,6 @@ const ColdInstallScreen = () => {
             )}
           </View>
         </View>
-        {languageError && <Text style={styles.errorText}>{languageError}</Text>}
       </View>
 
       <KeyboardAwareScreen

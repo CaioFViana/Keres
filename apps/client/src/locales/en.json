@@ -1852,7 +1852,6 @@
   "select_item_character_owner": "Select owner ({{character}})",
   "select_item_journey_new_character_owner": "Select new owner ({{character}})",
   "select_language": "Select Language",
-  "select_language_error": "Please select a language",
   "select_location_to_connect": "Select Location to Connect",
   "select_note": "Select Note",
   "select_parent_location": "Select Parent Location",

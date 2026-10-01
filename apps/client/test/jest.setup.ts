@@ -38,6 +38,8 @@ jest.mock('react-native-reanimated', () => {
   const React = require('react');
   return {
     ...ReanimatedMock,
+    // Absent from the stock mock: nothing animates in Jest, so motion is simply not reduced.
+    useReducedMotion: () => false,
     // The stock mock rebuilds the shared object on every render; the real hook keeps one object
     // per component instance, which the viewport camera mirror relies on.
     useSharedValue: (initial: unknown) => {

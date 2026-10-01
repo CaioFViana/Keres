@@ -2,6 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import {
   APP_RELEASE,
+  KERES_LATEST_RELEASE_URL,
   KERES_LICENSE,
   KERES_REPOSITORY_URL,
   THIRD_PARTY_CREDITS,
@@ -66,6 +67,8 @@ const CreditsScreen = () => {
           </CreditLink>
           {' · '}
           <CreditLink url={KERES_REPOSITORY_URL}>{t('credits_repository')}</CreditLink>
+          {' · '}
+          <CreditLink url={KERES_LATEST_RELEASE_URL}>{t('credits_latest_release')}</CreditLink>
         </Text>
       </View>
 

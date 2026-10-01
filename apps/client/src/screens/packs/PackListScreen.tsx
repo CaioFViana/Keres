@@ -26,7 +26,7 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
-import { isServerless } from '../../utils/serverless';
+import { isServerless } from '../../utils/clientFlavor';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.

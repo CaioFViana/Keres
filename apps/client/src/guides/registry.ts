@@ -1,6 +1,6 @@
 import { drawerAnchorId, screenAnchorId } from './anchorRegistry';
 import type { Guide, GuideDrawerId } from './types';
-import { isServerless } from '../utils/serverless';
+import { isServerless } from '../utils/clientFlavor';
 
 const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string[] =>
   routes.map((route) => drawerAnchorId(drawerId, route));

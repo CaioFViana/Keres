@@ -19,7 +19,7 @@ import ResizableDrawerContent, {
 import ShippedPacksInstallerOverlay from '@/src/components/features/packs/ShippedPacksInstallerOverlay';
 import { screenHelpPage } from '../help/contextualHelp';
 import { useHasRegisteredServer } from '../hooks/useHasRegisteredServer';
-import { isServerless } from '../utils/serverless';
+import { isServerless } from '../utils/clientFlavor';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import SettingsScreen from '../screens/enterstack/AppSettingsScreen';
 import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';

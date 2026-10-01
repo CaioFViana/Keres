@@ -8,6 +8,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
@@ -30,6 +31,7 @@ import { getCommonContainerStyles, getCommonInputStyles } from '../../theme/comm
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
+import { normalizeLocalUsername } from '../../utils/localUsername';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   SettingsStackParamList,
@@ -70,8 +72,14 @@ const SettingsScreen = () => {
   const { showNotification } = useNotificationStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
 
+  // What is typed is kept apart from what is saved: the name is saved as it becomes valid, and the
+  // field can pass through empty while it is being rewritten without ever saving that.
+  const [usernameDraft, setUsernameDraft] = useState<string | null>(null);
+  const usernameInvalid = usernameDraft !== null && normalizeLocalUsername(usernameDraft) === null;
   const handleUsernameChange = (newUsername: string) => {
-    setUsername(drizzleClient, newUsername);
+    setUsernameDraft(newUsername);
+    const name = normalizeLocalUsername(newUsername);
+    if (name) void setUsername(drizzleClient, name);
   };
 
   const handleLanguageChange = (newLanguage: string | null) => {
@@ -189,11 +197,17 @@ const SettingsScreen = () => {
           <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
           <View style={styles.inputWrapper}>
             <TextInput
-              value={username || 'Keres User'}
+              value={usernameDraft ?? (username || 'Keres User')}
               onChangeText={handleUsernameChange}
+              onBlur={() => setUsernameDraft(null)}
               placeholder={t('enter_username')}
               style={[commonInputStyles.input, styles.input]}
             />
+            {usernameInvalid && (
+              <Text style={[styles.usernameError, { color: colors.error }]}>
+                {t('username_required_error')}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -380,6 +394,7 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 0,
   },
+  usernameError: { fontSize: 13, marginTop: 4 },
   inputWrapper: {
     flex: 2,
     width: '80%',

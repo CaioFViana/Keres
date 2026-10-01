@@ -261,6 +261,36 @@ describe('AppSettingsScreen', () => {
     expect(mockSetUsername).toHaveBeenCalledWith(mockDrizzle, 'Alice');
   });
 
+  it('saves the name without the spaces around it, as the first-run setup does', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByText('username');
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '  Alice ');
+    expect(mockSetUsername).toHaveBeenCalledWith(mockDrizzle, 'Alice');
+  });
+
+  it('lets the field be emptied to rewrite it, but never saves it empty and says why', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByText('username');
+    expect(view.queryByText('username_required_error')).toBeNull();
+
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '   ');
+
+    expect(mockSetUsername).not.toHaveBeenCalled();
+    expect(view.getByText('username_required_error')).toBeTruthy();
+    expect(view.getByPlaceholderText('enter_username').props.value).toBe('   ');
+  });
+
+  it('goes back to the saved name, and drops the message, when the field is left empty', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByText('username');
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '');
+
+    await fireEvent(view.getByPlaceholderText('enter_username'), 'blur');
+
+    expect(view.queryByText('username_required_error')).toBeNull();
+    expect(view.getByPlaceholderText('enter_username').props.value).toBe('Bob');
+  });
+
   it('changes the language and falls back to English on null', async () => {
     const view = await render(<SettingsScreen />);
     await view.findByTestId('pill-select_language-pt');

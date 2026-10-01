@@ -87,6 +87,22 @@ describe('setUsername', () => {
     expect(store().username).toBe('nova-ana');
   });
 
+  it('saves the name without the spaces around it', async () => {
+    await store().setUsername(db, '  nova-ana ');
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      localUsername: 'nova-ana',
+    });
+    expect(store().username).toBe('nova-ana');
+  });
+
+  it('never saves an empty name, whoever asks', async () => {
+    await store().setUsername(db, '   ');
+
+    expect(mockClientSettings.updateClientSettings).not.toHaveBeenCalled();
+    expect(store().username).toBeNull();
+  });
+
   it('does not update the state when the write fails', async () => {
     mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
 

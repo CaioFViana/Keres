@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { isHostedByApi } from '../utils/clientFlavor';
 
 /**
  * A session by HttpOnly cookie, only on the web client co-hosted by the API (HTML marked with
@@ -7,13 +7,7 @@ import { Platform } from 'react-native';
  */
 
 export function usesHttpOnlyCookieSession(): boolean {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') {
-    return false;
-  }
-  if (window.keresAuth) {
-    return false;
-  }
-  return document.querySelector('meta[name="keres-hosted"]') !== null;
+  return isHostedByApi();
 }
 
 export function hostedApiOrigin(): string {

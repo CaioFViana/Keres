@@ -46,6 +46,8 @@ export interface SingleSelectPillProps {
   /** Layout adjustment for compact contexts such as a filter toolbar. */
   style?: StyleProp<ViewStyle>;
   triggerStyle?: StyleProp<ViewStyle>;
+  /** Replaces the pill frame with a custom trigger; the list it opens is the same. */
+  trigger?: (open: () => void) => React.ReactNode;
 }
 
 interface MultiSelectPillProps {
@@ -621,6 +623,7 @@ export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
   allowDeselect = false,
   style,
   triggerStyle,
+  trigger,
 }) => (
   <MultiSelectPill
     options={options.map((option) => ({ ...option, color: option.color ?? undefined }))}
@@ -632,6 +635,7 @@ export const SingleSelectPill: React.FC<SingleSelectPillProps> = ({
     disabled={disabled}
     style={style}
     triggerStyle={triggerStyle}
+    trigger={trigger}
   />
 );
 

@@ -1,4 +1,4 @@
-import { isServerless } from './serverless';
+import { isServerless } from './clientFlavor';
 
 /** Set before the one reload that puts the page under the worker; a second miss gives up. */
 const RELOAD_FLAG = 'keres-coi-reload';

@@ -31,7 +31,7 @@ import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
 import i18n from './utils/i18n';
 import { keepPageOutOfBackForwardCache } from './utils/pageLifecycle';
-import { isServerless } from './utils/serverless';
+import { isServerless } from './utils/clientFlavor';
 
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();

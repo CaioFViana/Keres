@@ -20,6 +20,12 @@ export const APP_RELEASE = {
 /** Where the source lives; the credits screen links out to it. */
 export const KERES_REPOSITORY_URL = 'https://github.com/CaioFViana/Keres';
 
+/**
+ * The newest release of the official apps (mobile and desktop). The browser builds point here, since
+ * those are the ones without the browser's limits.
+ */
+export const KERES_LATEST_RELEASE_URL = `${KERES_REPOSITORY_URL}/releases/latest`;
+
 /** Keres' own license, shown on the credits screen next to the repository link. */
 export const KERES_LICENSE = {
   name: 'Mozilla Public License 2.0',

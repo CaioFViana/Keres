@@ -5,6 +5,7 @@ import type { AppDrizzleClient } from '../db';
 import type { ServerSelect } from '../db/schema';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 import type { FirstStoryProgress, TutorialProgress } from '../utils/tutorialProgress';
+import { normalizeLocalUsername } from '../utils/localUsername';
 import {
   defaultTutorialProgress,
   encodeTutorialProgress,
@@ -96,8 +97,11 @@ export const useUserSettingsStore = create<UserSettingsState>((set, get) => ({
   },
 
   setUsername: async (db: AppDrizzleClient, username: string) => {
-    await updateClientSettings(db, { localUsername: username });
-    set({ username });
+    // A name is never saved empty, whoever asks: the screens validate it, and this is the backstop.
+    const name = normalizeLocalUsername(username);
+    if (!name) return;
+    await updateClientSettings(db, { localUsername: name });
+    set({ username: name });
   },
 
   setLanguage: async (db: AppDrizzleClient, language: string) => {

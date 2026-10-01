@@ -43,6 +43,26 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
+const mockLayout = { width: 600 };
+jest.mock('../../../src/hooks/useResponsiveLayout', () => ({
+  useResponsiveLayout: () => ({
+    width: mockLayout.width,
+    isCompact: mockLayout.width < 768,
+    isMedium: mockLayout.width >= 768 && mockLayout.width < 1100,
+    isWide: mockLayout.width >= 1100,
+  }),
+}));
+
+const mockFlavor = { current: 'native' as 'native' | 'desktop' | 'web' | 'serverless-web' };
+jest.mock('../../../src/utils/clientFlavor', () => ({
+  ...jest.requireActual('../../../src/utils/clientFlavor'),
+  getClientFlavor: () => mockFlavor.current,
+}));
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => mockNavigation,
 }));
@@ -84,9 +104,17 @@ jest.mock('../../../src/state/notificationStore', () => ({
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
 }));
 
+const mockTheme = { darkMode: false };
+const mockPreviewDarkMode = jest.fn((value: boolean) => {
+  mockTheme.darkMode = value;
+});
 jest.mock('../../../src/state/themeStore', () => ({
   useThemeStore: (selector: (state: unknown) => unknown) =>
-    selector({ initializeTheme: (...args: unknown[]) => mockInitializeTheme(...args) }),
+    selector({
+      initializeTheme: (...args: unknown[]) => mockInitializeTheme(...args),
+      darkMode: mockTheme.darkMode,
+      previewDarkMode: (value: boolean) => mockPreviewDarkMode(value),
+    }),
 }));
 
 jest.mock('../../../src/state/userSettingsStore', () => ({
@@ -152,13 +180,30 @@ jest.mock('../../../src/components/common', () => {
   };
 });
 
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { BackHandler } from 'react-native';
+import { act, cleanup, configure, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { BackHandler, Linking } from 'react-native';
 import ColdInstallScreen from '../../../src/screens/enterstack/ColdInstallScreen';
 
+/** The step on screen, as the dots report it (1-based). */
+const stepOf = (view: Awaited<ReturnType<typeof render>>) =>
+  view.getByTestId('welcome-progress').props.accessibilityValue.now;
+
+/** The welcome has two steps before the form that creates the profile. */
+const goToNameStep = async (view: Awaited<ReturnType<typeof render>>) => {
+  await fireEvent.press(view.getByText('enabled:welcome_next'));
+  await fireEvent.press(view.getByText('enabled:welcome_next'));
+};
+
 describe('ColdInstallScreen', () => {
+  // Steps off screen are hidden from accessibility on purpose; the tests still look inside them.
+  beforeAll(() => configure({ defaultIncludeHiddenElements: true }));
+  afterAll(() => configure({ defaultIncludeHiddenElements: false }));
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFlavor.current = 'native';
+    mockLayout.width = 600;
+    mockTheme.darkMode = false;
     mockBackHandler.current = null;
     jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, handler) => {
       // RN 0.86 passes a HardwareBackPressEvent the production handlers ignore; the holder
@@ -179,41 +224,194 @@ describe('ColdInstallScreen', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders the welcome form with proceed disabled', async () => {
+  it('opens on what Keres is, with the language choice already at hand', async () => {
     const view = await render(<ColdInstallScreen />);
     await view.findByText('welcome');
-    expect(view.getByText('disabled:proceed')).toBeTruthy();
-    expect(view.getByPlaceholderText('enter_username')).toBeTruthy();
+    expect(view.getByText('welcome_what_title')).toBeTruthy();
+    expect(view.getByText('welcome_what_plan')).toBeTruthy();
+    expect(view.getByText('welcome_what_write')).toBeTruthy();
+    expect(view.getByTestId('language-value')).toBeTruthy();
+    expect(stepOf(view)).toBe(1);
     expect(mockUseDocumentTitle).toHaveBeenCalledWith('welcome');
+  });
+
+  it('walks the steps forward and back, ending on the form with proceed disabled', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome_what_title');
+    expect(view.queryByTestId('welcome-back')).toBeNull();
+    // The form is part of the last step: out of reach until the welcome gets there.
+    expect(view.getByPlaceholderText('enter_username').props.editable).toBe(false);
+
+    await fireEvent.press(view.getByText('enabled:welcome_next'));
+    expect(stepOf(view)).toBe(2);
+
+    await fireEvent.press(view.getByText('enabled:welcome_next'));
+    expect(stepOf(view)).toBe(3);
+    expect(view.getByText('welcome_name_explain')).toBeTruthy();
+    expect(view.getByText('disabled:proceed')).toBeTruthy();
+    expect(view.getByPlaceholderText('enter_username').props.editable).toBe(true);
+
+    await fireEvent.press(view.getByTestId('welcome-back'));
+    expect(stepOf(view)).toBe(2);
+    expect(view.getByPlaceholderText('enter_username').props.editable).toBe(false);
+  });
+
+  it.each([
+    [600, 'stacked'],
+    [900, 'split'],
+    [1400, 'split'],
+  ])(
+    'lays the welcome out %ipx wide as %s: the picture beside the text once there is room',
+    async (width, layout) => {
+      mockLayout.width = width;
+      const view = await render(<ColdInstallScreen />);
+      await view.findByText('welcome_what_title');
+
+      expect(view.getByTestId(`welcome-screen-${layout}`)).toBeTruthy();
+      // The same steps either way, with the language, the way out and the way forward in reach.
+      expect(view.getByTestId('welcome-skip')).toBeTruthy();
+      expect(view.getByText('enabled:welcome_next')).toBeTruthy();
+      expect(view.getByTestId('welcome-progress')).toBeTruthy();
+    },
+  );
+
+  it('takes a tap on a dot as a trip to that step, forward or back', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome_what_title');
+    expect(view.getByTestId('welcome-dot-0').props.accessibilityState.selected).toBe(true);
+
+    await fireEvent.press(view.getByTestId('welcome-dot-2'));
+    expect(stepOf(view)).toBe(3);
+    expect(view.getByTestId('welcome-dot-2').props.accessibilityState.selected).toBe(true);
+    expect(view.getByPlaceholderText('enter_username').props.editable).toBe(true);
+
+    await fireEvent.press(view.getByTestId('welcome-dot-1'));
+    expect(stepOf(view)).toBe(2);
+    await fireEvent.press(view.getByTestId('welcome-dot-0'));
+    expect(stepOf(view)).toBe(1);
+  });
+
+  it('keeps the steps off screen out of reach of a screen reader and of a tap', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome_what_title');
+
+    expect(view.getByTestId('welcome-page-what').props.accessibilityElementsHidden).toBe(false);
+    expect(view.getByTestId('welcome-page-where').props.accessibilityElementsHidden).toBe(true);
+    expect(view.getByTestId('welcome-page-where').props.pointerEvents).toBe('none');
+
+    await fireEvent.press(view.getByText('enabled:welcome_next'));
+    expect(view.getByTestId('welcome-page-where').props.accessibilityElementsHidden).toBe(false);
+    expect(view.getByTestId('welcome-page-what').props.accessibilityElementsHidden).toBe(true);
+  });
+
+  it('offers dark mode from the start, shown at once and kept for the profile it creates', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome');
+
+    await fireEvent.press(view.getByTestId('welcome-dark-mode'));
+    expect(mockPreviewDarkMode).toHaveBeenCalledWith(true);
+
+    // The profile is created with the choice made on the way, not with the default.
+    mockTheme.darkMode = true;
+    await fireEvent.press(view.getByTestId('language-en'));
+    await goToNameStep(view);
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+    await fireEvent.press(view.getByText('enabled:proceed'));
+    await waitFor(() => expect(mockCreateClientSettings).toHaveBeenCalled());
+    expect(mockCreateClientSettings).toHaveBeenCalledWith(
+      mockDrizzle,
+      expect.objectContaining({ darkMode: true }),
+    );
+  });
+
+  it('lets the first two steps be skipped, straight to the name', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome_what_title');
+
+    await fireEvent.press(view.getByTestId('welcome-skip'));
+
+    expect(stepOf(view)).toBe(3);
+    expect(view.queryByTestId('welcome-skip')).toBeNull();
+    expect(view.getByPlaceholderText('enter_username').props.editable).toBe(true);
+  });
+
+  it.each([
+    [
+      'native',
+      ['welcome_where_device', 'welcome_where_offline_first', 'welcome_where_servers_how'],
+      false,
+    ],
+    [
+      'desktop',
+      ['welcome_where_device', 'welcome_where_offline_first', 'welcome_where_servers_how'],
+      false,
+    ],
+    [
+      'web',
+      ['welcome_where_browser', 'welcome_where_web_one_server', 'welcome_where_servers_how'],
+      true,
+    ],
+    ['serverless-web', ['welcome_where_browser', 'welcome_where_serverless'], true],
+  ] as const)(
+    'says plainly where things live, in the words of the %s build',
+    async (flavor, expected, hasLink) => {
+      mockFlavor.current = flavor;
+      const view = await render(<ColdInstallScreen />);
+
+      const shown = [
+        'welcome_where_device',
+        'welcome_where_browser',
+        'welcome_where_offline_first',
+        'welcome_where_web_one_server',
+        'welcome_where_serverless',
+        'welcome_where_servers_how',
+      ].filter((key) => view.queryByText(key));
+      expect(shown).toEqual([...expected]);
+      expect(view.queryByTestId('welcome-official-app-link') !== null).toBe(hasLink);
+    },
+  );
+
+  it('points the browser builds at the latest official app, off to the side', async () => {
+    mockFlavor.current = 'serverless-web';
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const view = await render(<ColdInstallScreen />);
+
+    await fireEvent.press(view.getByTestId('welcome-official-app-link'));
+
+    expect(openURL).toHaveBeenCalledWith('https://github.com/CaioFViana/Keres/releases/latest');
   });
 
   it('validates language and username before proceeding', async () => {
     const view = await render(<ColdInstallScreen />);
-    await view.findByText('disabled:proceed');
-    await fireEvent.press(view.getByTestId('proceed-btn'));
+    await view.findByText('welcome');
+    await goToNameStep(view);
+    await fireEvent.press(view.getByText('disabled:proceed'));
     expect(view.getByText('select_language_error')).toBeTruthy();
-    expect(view.getByText('username_length_error')).toBeTruthy();
+    expect(view.getByText('username_required_error')).toBeTruthy();
     expect(mockMigrate).not.toHaveBeenCalled();
   });
 
   it('selects a language and enables proceed with a valid username', async () => {
     const view = await render(<ColdInstallScreen />);
-    await view.findByText('disabled:proceed');
+    await view.findByText('welcome');
     await fireEvent.press(view.getByTestId('language-pt'));
     expect(mockChangeLanguage).toHaveBeenCalledWith('pt');
     expect(view.getByTestId('language-value').props.children).toBe('select_language:pt');
-    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bo');
+    await goToNameStep(view);
+    // The name is only how the app calls the person: anything but nothing will do.
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '   ');
     expect(view.getByText('disabled:proceed')).toBeTruthy();
-    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bo');
     expect(view.getByText('enabled:proceed')).toBeTruthy();
   });
 
   it('provisions the install and opens story selection', async () => {
     const view = await render(<ColdInstallScreen />);
-    await view.findByText('disabled:proceed');
+    await view.findByText('welcome');
     await fireEvent.press(view.getByTestId('language-en'));
-    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), 'Bob');
-    await fireEvent.press(view.getByTestId('proceed-btn'));
+    await goToNameStep(view);
+    await fireEvent.changeText(view.getByPlaceholderText('enter_username'), '  Bob ');
+    await fireEvent.press(view.getByText('enabled:proceed'));
     await waitFor(() => expect(mockMigrate).toHaveBeenCalledWith(mockSqliteDb));
     expect(mockSetAuthDb).toHaveBeenCalledWith(mockDrizzle);
     expect(mockBindDatabase).toHaveBeenCalledWith(mockDrizzle);
@@ -230,6 +428,21 @@ describe('ColdInstallScreen', () => {
     expect(mockInitializeSettings).toHaveBeenCalledWith(mockDrizzle);
     expect(mockInitializeTheme).toHaveBeenCalledWith(mockDrizzle);
     expect(mockReplace).toHaveBeenCalledWith('StorySelection');
+  });
+
+  it('goes back through the steps before it ever leaves', async () => {
+    const view = await render(<ColdInstallScreen />);
+    await view.findByText('welcome');
+    await fireEvent.press(view.getByText('enabled:welcome_next'));
+    expect(stepOf(view)).toBe(2);
+
+    await act(async () => {
+      expect(mockBackHandler.current?.()).toBe(true);
+    });
+
+    expect(stepOf(view)).toBe(1);
+    expect(BackHandler.exitApp).not.toHaveBeenCalled();
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 
   it('exits only on a double back press', async () => {

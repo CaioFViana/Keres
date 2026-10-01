@@ -1,3 +1,4 @@
+import { TIER_EXEMPT_ENTITY_TYPES } from '@keres/shared';
 import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -136,13 +137,11 @@ export class TierEnforcementService {
       return;
     }
 
-    const handlers = [...syncService.getEntityHandlers().values()]
-      // Favorite and Comment are personal metadata/annotations, not story content - they must neither
-      // consume nor be blocked by the tier's entity limit.
-      .filter(
-        (h) =>
-          h.entityName !== 'Story' && h.entityName !== 'Favorite' && h.entityName !== 'Comment',
-      );
+    // The rule is shared with the client, which reports these counts (TIER_EXEMPT_ENTITY_TYPES says why
+    // Favorite and Comment are out).
+    const handlers = [...syncService.getEntityHandlers().values()].filter(
+      (h) => !TIER_EXEMPT_ENTITY_TYPES.includes(h.entityName),
+    );
 
     if (tier.maxEntitiesPerStory !== null) {
       const counts = await Promise.all(handlers.map((h) => h.countForStoryIds([storyId])));

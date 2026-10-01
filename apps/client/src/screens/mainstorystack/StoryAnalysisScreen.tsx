@@ -21,6 +21,8 @@ import { useStoryRole } from '../../hooks/useStoryRole';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { StoryAnalysisReport } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
+import type { StoryEntityCounts } from '../../services/storymanagement/StoryEntityCountService';
+import { createStoryEntityCountService } from '../../services/storymanagement/StoryEntityCountService';
 import { createStoryIndexService } from '../../services/storymanagement/StoryIndexService';
 import { createStoryService } from '../../services/storymanagement/StoryService';
 import { useStoryStore } from '../../state/storyStore';
@@ -28,6 +30,7 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, getCommonContainerStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
 import type { StoryAnalysisCategory, StoryAnalysisFinding } from '../../utils/storyAnalysisChecks';
@@ -66,6 +69,51 @@ const CATEGORY_TITLE_KEYS: Record<StoryAnalysisCategory, string> = {
   storySchema: 'analysis_category_story_schema',
 };
 
+/**
+ * What each synchronized entity type is called in the count. The types the story's vocabulary renames
+ * (characters, scenes...) are labelled through it instead; these are the rest, relations and links
+ * included, because the plan counts those too.
+ */
+const ENTITY_COUNT_LABEL_KEYS: Record<string, string> = {
+  AttributeValue: 'entity_count_attribute_value',
+  Board: 'entity_count_board',
+  Chapter: 'entity_count_chapter',
+  ChapterAnchor: 'entity_count_chapter_anchor',
+  Character: 'entity_count_character',
+  CharacterRelation: 'entity_count_character_relation',
+  CharacterScene: 'entity_count_character_scene',
+  Choice: 'entity_count_choice',
+  ChoiceCheck: 'entity_count_choice_check',
+  ChoiceCheckGroup: 'entity_count_choice_check_group',
+  Effect: 'entity_count_effect',
+  Gallery: 'entity_count_gallery',
+  GalleryRelation: 'entity_count_gallery_relation',
+  Item: 'entity_count_item',
+  ItemJourney: 'entity_count_item_journey',
+  Location: 'entity_count_location',
+  LocationMap: 'entity_count_location_map',
+  LocationRelation: 'entity_count_location_relation',
+  Mode: 'entity_count_mode',
+  Note: 'entity_count_note',
+  NoteRelation: 'entity_count_note_relation',
+  Plot: 'entity_count_plot',
+  PlotScene: 'entity_count_plot_scene',
+  Route: 'entity_count_route',
+  RouteStep: 'entity_count_route_step',
+  Scene: 'entity_count_scene',
+  SeeAlsoRelation: 'entity_count_see_also_relation',
+  Stat: 'entity_count_stat',
+  StatRelation: 'entity_count_stat_relation',
+  StatStrength: 'entity_count_stat_strength',
+  StoryArc: 'entity_count_story_arc',
+  StoryCalendar: 'entity_count_story_calendar',
+  StorySchemaField: 'entity_count_story_schema_field',
+  Suggestion: 'entity_count_suggestion',
+  Tag: 'entity_count_tag',
+  TagRelation: 'entity_count_tag_relation',
+  WorldRule: 'entity_count_world_rule',
+};
+
 const StoryAnalysisScreen = () => {
   useScreenTour('StoryAnalysis');
   const reportAnchorRef = useScreenAnchor('StoryAnalysis', 'report');
@@ -85,6 +133,8 @@ const StoryAnalysisScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
 
   const [report, setReport] = useState<StoryAnalysisReport | null>(null);
+  // Only information; a failure to count leaves the card out and never the report.
+  const [entityCounts, setEntityCounts] = useState<StoryEntityCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -115,6 +165,13 @@ const StoryAnalysisScreen = () => {
       const result = await createStoryAnalysisService(drizzleDb).analyzeStoryCheap(storyId);
       setReport(result);
       setHasRunFull(selectedStory?.type !== 'branching');
+      createStoryEntityCountService(drizzleDb)
+        .countForStory(storyId)
+        .then(setEntityCounts)
+        .catch((countError) => {
+          console.error('StoryAnalysisScreen: failed to count entities.', countError);
+          setEntityCounts(null);
+        });
     } catch (loadError) {
       console.error('StoryAnalysisScreen: failed to analyze story.', loadError);
       setError(t('failed_to_load_analysis'));
@@ -237,6 +294,20 @@ const StoryAnalysisScreen = () => {
     return grouped;
   }, [report]);
 
+  const entityCountRows = useMemo(
+    () =>
+      Object.entries(entityCounts?.byType ?? {})
+        .map(([entityType, value]) => ({
+          entityType,
+          value: value ?? 0,
+          label: isStoryVocabularyEntityType(entityType)
+            ? term(entityType, true)
+            : t(ENTITY_COUNT_LABEL_KEYS[entityType] ?? entityType),
+        }))
+        .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label)),
+    [entityCounts, t, term],
+  );
+
   const handleFindingPress = useCallback(
     (finding: StoryAnalysisFinding) => {
       if (!finding.entityId) return;
@@ -329,6 +400,19 @@ const StoryAnalysisScreen = () => {
     fixButton: {
       marginTop: 8,
     },
+    countHint: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      lineHeight: 18,
+      marginBottom: 10,
+    },
+    countRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+    countLabel: { color: colors.text, fontSize: 14, flex: 1 },
+    countValue: { color: colors.text, fontSize: 14, fontWeight: '700' },
     findingRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -392,6 +476,21 @@ const StoryAnalysisScreen = () => {
     </View>
   );
 
+  const entityCountCard = entityCounts && (
+    <CollapsibleCard
+      title={`${t('entity_count_title')} (${entityCounts.total})`}
+      initialExpanded={false}
+    >
+      <Text style={styles.countHint}>{t('entity_count_hint')}</Text>
+      {entityCountRows.map((row) => (
+        <View key={row.entityType} style={styles.countRow} testID={`entity-count-${row.entityType}`}>
+          <Text style={styles.countLabel}>{row.label}</Text>
+          <Text style={styles.countValue}>{row.value}</Text>
+        </View>
+      ))}
+    </CollapsibleCard>
+  );
+
   const analysisCard = (
     <View style={styles.analysisCard}>
       <Text style={styles.analysisHint}>{t('story_analysis_run_hint')}</Text>
@@ -439,6 +538,7 @@ const StoryAnalysisScreen = () => {
       >
         {preferencesCard}
         {analysisCard}
+        {entityCountCard}
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconWrap} testID="analysis-empty-icon">
             <Ionicons name="checkmark" size={28} color={colors.onPrimaryContainer} />
@@ -457,6 +557,7 @@ const StoryAnalysisScreen = () => {
     >
       {preferencesCard}
       {analysisCard}
+      {entityCountCard}
 
       {(hasRunFull || report.findings.length > 0) && (
         <Text style={styles.subtitle}>

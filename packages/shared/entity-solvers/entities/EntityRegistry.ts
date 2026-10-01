@@ -186,6 +186,19 @@ export function getStorySyncEntityTypes(): readonly OperationLogEntityType[] {
 }
 
 /**
+ * What a plan's entity ceilings (`maxEntitiesPerStory`, `maxEntitiesTotal`) do not count. The Story
+ * itself has its own ceiling (`maxStories`); a Favorite and a Comment are personal annotations, not
+ * story content. Everything else a story synchronizes counts, one per live row - relations and
+ * links included.
+ */
+export const TIER_EXEMPT_ENTITY_TYPES: readonly string[] = ['Story', 'Favorite', 'Comment'];
+
+/** The entity types the plan's entity ceilings count; the API enforces them, the client reports them. */
+export function getTierCountedEntityTypes(): readonly OperationLogEntityType[] {
+  return getStorySyncEntityTypes().filter((type) => !TIER_EXEMPT_ENTITY_TYPES.includes(type));
+}
+
+/**
  * Fails during registration rather than silently treating a new entity as an unresolvable sync
  * conflict at runtime. Database-backed handlers remain host-owned; only their required coverage is
  * domain metadata.

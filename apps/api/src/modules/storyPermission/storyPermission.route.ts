@@ -1,16 +1,10 @@
-import {
-  CreateStoryPermissionSchema,
-  StoryAndTargetUserParams, // Import the new schema
-  StoryIdParam,
-} from '@keres/shared';
+import { CreateStoryPermissionSchema, StoryAndTargetUserParams, StoryIdParam } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import type { JWTPayload } from '../../index'; // Import JWTPayload
+import type { JWTPayload } from '../../index';
 import { storyPermissionService } from '../../services/StoryPermissionService';
 import { AppError } from '../../utils/errors';
 
-/** Shape of a `story_permissions` row as returned by upsertStoryPermission - both its
- *  create and update branches now return every one of these fields (see the comment on
- *  the create branch's object literal in StoryPermissionService.ts). */
+/** Shape of a `story_permissions` row as returned by updateStoryPermission. */
 const StoryPermissionResponseSchema = t.Object({
   id: t.String(),
   storyId: t.String(),
@@ -42,7 +36,7 @@ async function withOwnershipCheck<T>(action: () => Promise<T>): Promise<T> {
 }
 
 export const storyPermissionRoutes = new Elysia()
-  .decorate('user', null as JWTPayload | null) // Decorate 'user' property
+  .decorate('user', null as JWTPayload | null)
   .post(
     '/',
     async ({ body, user }) => {
@@ -50,7 +44,7 @@ export const storyPermissionRoutes = new Elysia()
         throw new AppError(401, 'Unauthorized: User not authenticated.');
       }
       return withOwnershipCheck(() =>
-        storyPermissionService.upsertStoryPermission(
+        storyPermissionService.updateStoryPermission(
           user.userId,
           body.storyId,
           body.targetUserId,
@@ -59,18 +53,18 @@ export const storyPermissionRoutes = new Elysia()
       );
     },
     {
-      body: CreateStoryPermissionSchema, // This schema now serves for upsert
+      body: CreateStoryPermissionSchema,
       response: StoryPermissionResponseSchema,
       detail: {
-        summary: 'Create or update a story permission',
+        summary: "Change a collaborator's role",
         description:
-          'Allows the story owner to grant or update read/write permissions for another user on a specific story. If a permission already exists for the user and story, it will be updated; otherwise, a new one will be created. The target user must already be a friend of the owner (403 otherwise) - see StoryPermissionService.upsertStoryPermission.',
+          'Allows the story owner to switch an existing collaborator between reader and writer. Access is never created here: new collaborators are invited through /friend/story-invitations and gain access when they accept (409 for somebody who does not collaborate yet). The target user must still be a friend of the owner (403 otherwise).',
         tags: ['Story Permissions'],
       },
     },
   )
   .delete(
-    '/story/:storyId/user/:targetUserId', // New path for delete
+    '/story/:storyId/user/:targetUserId',
     async ({ params, user }) => {
       if (!user || !user.userId) {
         throw new AppError(401, 'Unauthorized: User not authenticated.');
@@ -84,12 +78,31 @@ export const storyPermissionRoutes = new Elysia()
       );
     },
     {
-      params: StoryAndTargetUserParams, // Use the new params schema
+      params: StoryAndTargetUserParams,
       response: t.Object({ message: t.String() }),
       detail: {
         summary: 'Delete a story permission',
         description:
           'Allows the story owner to revoke an existing story permission for a specific user on a specific story.',
+        tags: ['Story Permissions'],
+      },
+    },
+  )
+  .delete(
+    '/story/:storyId/me',
+    async ({ params, user }) => {
+      if (!user || !user.userId) {
+        throw new AppError(401, 'Unauthorized: User not authenticated.');
+      }
+      return storyPermissionService.leaveStory(user.userId, params.storyId);
+    },
+    {
+      params: StoryIdParam,
+      response: t.Object({ message: t.String() }),
+      detail: {
+        summary: 'Leave a story you collaborate on',
+        description:
+          'The caller gives up their own access to a story shared with them. The owner can invite them again later. The owner cannot leave (400) and somebody who does not collaborate gets 404.',
         tags: ['Story Permissions'],
       },
     },

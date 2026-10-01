@@ -58,6 +58,12 @@ describe('redeemRecoveryCode', () => {
 
     await redeemRecoveryCode('https://keres.example.com', 'ana', '  AAAAA-11111  ', 'pass1234');
 
+    // A 401 is a valid answer here (invalid code), not a transport failure: the call accepts
+    // every status so axios never throws before the outcome mapping runs.
+    const options = mockPost.mock.calls[0]?.[2] as { validateStatus: (status: number) => boolean };
+    expect(options.validateStatus(401)).toBe(true);
+    expect(options.validateStatus(500)).toBe(true);
+
     expect(mockPost).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ recoveryCode: 'AAAAA-11111' }),

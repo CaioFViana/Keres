@@ -5,7 +5,7 @@ import {
   formatCalendarDate,
   partsToDayNumber,
 } from '@keres/shared';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
@@ -48,15 +48,21 @@ const StoryDateInput: React.FC<Props> = ({ value, onChange, editable = true }) =
   const [month, setMonth] = useState('1');
   const [day, setDay] = useState('1');
 
-  useEffect(() => {
-    if (!definition || value === null || value === '') return;
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return;
-    const parts = dayNumberToParts(definition, parsed);
-    setYear(String(parts.year));
-    setMonth(String(parts.month));
-    setDay(String(parts.day));
-  }, [definition, value]);
+  const [prevDefinition, setPrevDefinition] = useState(definition);
+  const [prevValue, setPrevValue] = useState(value);
+  if (definition !== prevDefinition || value !== prevValue) {
+    setPrevDefinition(definition);
+    setPrevValue(value);
+    if (definition && value !== null && value !== '') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        const parts = dayNumberToParts(definition, parsed);
+        setYear(String(parts.year));
+        setMonth(String(parts.month));
+        setDay(String(parts.day));
+      }
+    }
+  }
 
   const styles = useMemo(
     () =>

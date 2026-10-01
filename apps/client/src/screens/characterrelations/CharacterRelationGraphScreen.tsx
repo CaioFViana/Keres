@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -28,7 +28,12 @@ import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGr
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
-import { buildCharacterRelationMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import {
+  buildCharacterRelationMapFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 
@@ -56,7 +61,7 @@ interface CharacterRelationNodeConnection {
 
 const CharacterRelationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<CharactersScreenNavigationProp>();
@@ -208,9 +213,14 @@ const CharacterRelationGraphScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(
+      const result = await deliverMapExport(
         svg,
-        buildCharacterRelationMapFileName(selectedStory.title),
+        buildCharacterRelationMapFileName(
+          selectedStory.title,
+          new Date(),
+          exportFileLanguage(i18n.language),
+        ),
+        useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
         showNotification(
@@ -242,6 +252,7 @@ const CharacterRelationGraphScreen = () => {
     showEdgeLabels,
     showNotification,
     t,
+    i18n,
   ]);
 
   const styles = useMemo(

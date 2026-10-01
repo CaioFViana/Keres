@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
+import {
+  CanvasOverlaySchema,
+  canvasOverlayBounds,
+  MAX_CANVAS_OVERLAYS,
+} from './CanvasOverlaySchemas';
 
 /**
  * A Board is a named drawing: pins of existing entities, free notes, and arrows that are not
@@ -30,6 +35,10 @@ export const BOARD_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 
 export const MAX_BOARD_NODES = 500;
 export const MAX_BOARD_EDGES = 1000;
+/** Note titles, edge labels and pin labels. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_BOARD_TITLE_LENGTH = 200;
+/** Note bodies and pin card notes. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_BOARD_BODY_LENGTH = 8000;
 const BOARD_MAX_NODE_EXTENT = 720;
 export const BOARD_CARD_DISPLAY_MODES = ['compact', 'summary', 'note', 'summary-and-note'] as const;
 export type BoardCardDisplayMode = (typeof BOARD_CARD_DISPLAY_MODES)[number];
@@ -57,11 +66,11 @@ const BoardEntityNodeSchema = z.object({
   y: z.number().finite(),
   entityType: z.enum(BOARD_PIN_ENTITIES),
   entityId: z.string().min(1),
-  labelAtPin: z.string().max(200),
+  labelAtPin: z.string().max(MAX_BOARD_TITLE_LENGTH),
   /** Presentation belongs to this Board pin, not to the linked story entity. */
   displayMode: z.enum(BOARD_CARD_DISPLAY_MODES).default('compact'),
   /** A contextual note for this pin; it deliberately does not create a Note entity. */
-  cardNote: z.string().max(8000).nullable().default(null),
+  cardNote: z.string().max(MAX_BOARD_BODY_LENGTH).nullable().default(null),
   /** Optional manual dimensions keep older compact pins visually unchanged. */
   width: z.number().finite().min(148).max(720).optional(),
   height: z.number().finite().min(86).max(720).optional(),
@@ -74,8 +83,8 @@ const BoardNoteNodeSchema = z.object({
   kind: z.literal('note'),
   x: z.number().finite(),
   y: z.number().finite(),
-  title: z.string().max(200),
-  body: z.string().max(8000).nullable(),
+  title: z.string().max(MAX_BOARD_TITLE_LENGTH),
+  body: z.string().max(MAX_BOARD_BODY_LENGTH).nullable(),
   width: z.number().finite().min(148).max(720).optional(),
   height: z.number().finite().min(86).max(720).optional(),
   zIndex: z.number().finite().optional(),
@@ -91,7 +100,7 @@ export const BoardEdgeSchema = z.object({
   from: BoardLocalIdSchema,
   to: BoardLocalIdSchema,
   directed: z.boolean(),
-  label: z.string().max(200).nullable(),
+  label: z.string().max(MAX_BOARD_TITLE_LENGTH).nullable(),
 });
 
 export const EMPTY_BOARD_CONTENT = { nodes: [], edges: [] } as const;
@@ -100,6 +109,7 @@ export const BoardContentSchema = z
   .object({
     nodes: z.array(BoardNodeSchema).max(MAX_BOARD_NODES),
     edges: z.array(BoardEdgeSchema).max(MAX_BOARD_EDGES),
+    overlays: z.array(CanvasOverlaySchema).max(MAX_CANVAS_OVERLAYS).optional(),
   })
   .superRefine((content, context) => {
     const nodeIds = new Set<string>();
@@ -149,17 +159,29 @@ export const BoardContentSchema = z
         });
       }
     }
+    const overlayIds = new Set<string>();
+    for (const [index, overlay] of (content.overlays ?? []).entries()) {
+      if (overlayIds.has(overlay.id) || nodeIds.has(overlay.id) || edgeIds.has(overlay.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['overlays', index, 'id'],
+          message: 'Duplicate overlay id on this board.',
+        });
+      }
+      overlayIds.add(overlay.id);
+    }
     // A freeform Board may be large, but an unbounded JSON coordinate would make exports and
     // geometry unsafe even after the interactive canvas becomes virtualized.
     if (
-      !isSpatialEnvelopeSafe(
-        content.nodes.map((node) => ({
+      !isSpatialEnvelopeSafe([
+        ...content.nodes.map((node) => ({
           x: node.x,
           y: node.y,
           width: node.width ?? BOARD_MAX_NODE_EXTENT,
           height: node.height ?? BOARD_MAX_NODE_EXTENT,
         })),
-      )
+        ...(content.overlays ?? []).map(canvasOverlayBounds),
+      ])
     ) {
       context.addIssue({
         code: 'custom',
@@ -204,9 +226,9 @@ export type CreateBoardDataType = z.infer<typeof CreateBoardDataSchema>;
 export type PartialBoardType = z.infer<typeof PartialBoardSchema>;
 
 /**
- * Rewrites `entityId` on entity pins after a story clone/import. Node and edge ids stay:
- * they are local to this JSON, not rows in the id map. Unmapped ids (a ghost pin) stay as they
- * were — the pin remains a ghost in the copy too.
+ * Rewrites `entityId` on entity pins after a story clone/import. Node, edge and overlay
+ * ids stay: they are local to this JSON, not rows in the id map. Unmapped ids (a ghost pin)
+ * stay as they were — the pin remains a ghost in the copy too.
  */
 export function remapBoardContent(
   content: BoardContentType,
@@ -224,5 +246,6 @@ export function remapBoardContent(
         : node,
     ),
     edges: content.edges,
+    overlays: content.overlays?.map((overlay) => ({ ...overlay })),
   };
 }

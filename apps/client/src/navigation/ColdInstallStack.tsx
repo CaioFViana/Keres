@@ -1,5 +1,4 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
 import ColdInstallScreen from '../screens/enterstack/ColdInstallScreen';
 
 type ColdInstallStackParamList = {
@@ -7,6 +6,12 @@ type ColdInstallStackParamList = {
 };
 
 const ColdInstallStack = createNativeStackNavigator<ColdInstallStackParamList>();
+
+/**
+ * First-run stack: a single welcome screen that creates the local profile (username,
+ * language, theme). `AppNavigator` routes here only when no client settings exist yet;
+ * once the profile is created the screen replaces itself with story selection.
+ */
 
 const ColdInstallNavigator = () => {
   return (

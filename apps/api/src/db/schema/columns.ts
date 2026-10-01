@@ -103,7 +103,7 @@ export const timestampNow = asPostgresCompatible<
     : (name: string) => pg.timestamp(name).notNull().defaultNow(),
 );
 
-/** Documento JSON. `jsonb` no Postgres, texto serializado pelo drizzle no SQLite. */
+/** JSON document. `jsonb` on Postgres, drizzle-serialized text on SQLite. */
 export const json = asPostgresCompatible<typeof pg.jsonb>(
   usingSqlite ? (name: string) => sqlite.text(name, { mode: 'json' }) : pg.jsonb,
 );
@@ -119,8 +119,8 @@ export const unique = asPostgresCompatible<typeof pg.unique>(
 );
 
 /**
- * Uma tabela sob outro nome, para a mesma tabela aparecer duas vezes numa consulta.
- * `FriendshipService` usa isso para juntar `users` com ela mesma (quem enviou e quem recebeu).
+ * One table under another name, so the same table can appear twice in a query.
+ * `FriendshipService` uses it to join `users` with itself (who sent and who received).
  */
 export const alias = asPostgresCompatible<typeof pg.alias>(usingSqlite ? sqlite.alias : pg.alias);
 

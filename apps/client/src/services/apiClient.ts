@@ -42,6 +42,44 @@ export function isOfflineError(error: unknown): boolean {
   );
 }
 
+/**
+ * True when the server refused the sync protocol version this build speaks (HTTP 426). The
+ * server is reachable and fine - the app (or, for a self-hosted server, the server) is simply
+ * behind, so the user gets an "update" message instead of a generic sync failure.
+ */
+export function isProtocolMismatchError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  return (error as AxiosError).response?.status === 426;
+}
+
+/**
+ * True when the server has no such story (HTTP 404 on a sync endpoint). The story was deleted
+ * server-side: retrying changes nothing, so the engine deactivates the story instead of
+ * hammering a settled fact on every cycle.
+ */
+export function isNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  return (error as AxiosError).response?.status === 404;
+}
+
+/**
+ * True when a reachable server said "not right now": rate limited (429) or momentarily unable to
+ * answer (502/503/504 - a restart, a proxy with no upstream). Nothing is wrong with the request and
+ * nothing the user can do helps, so the sync backs off quietly instead of announcing a failure on
+ * every retry the way a genuine error deserves.
+ */
+export function isTransientServerError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const status = (error as AxiosError).response?.status;
+  return status === 429 || status === 502 || status === 503 || status === 504;
+}
+
 /** True when a request or sync cycle was cancelled via AbortSignal. */
 export function isAbortError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {

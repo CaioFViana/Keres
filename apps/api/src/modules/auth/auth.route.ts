@@ -5,7 +5,11 @@ import { ulid } from 'ulid';
 import { comparePassword, hashPassword } from '../../config/bcrypt';
 import { env } from '../../config/env';
 import { jwtRefresh } from '../../config/jwt';
-import { InvalidRecoveryCodeError, recoveryCodeService } from '../../services/RecoveryCodeService';
+import {
+  InvalidRecoveryCodeError,
+  RecoveryAttemptsLockedError,
+  recoveryCodeService,
+} from '../../services/RecoveryCodeService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { userService } from '../../services/UserService';
 import { AppError } from '../../utils/errors';
@@ -74,7 +78,6 @@ export const authRoutes = new Elysia()
   .post(
     '/login',
     async ({ jwt, jwtRefresh, body, cookie }) => {
-      // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       if (!loginAttemptLimiter.registerAttempt(username)) {
@@ -98,9 +101,8 @@ export const authRoutes = new Elysia()
 
       loginAttemptLimiter.clearAttempts(username);
 
-      // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
-      const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username }); // Use jwtRefresh for refresh token
+      const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });
 
       cookie['access_token'].set({
         value: accessToken,
@@ -140,7 +142,6 @@ export const authRoutes = new Elysia()
   .post(
     '/register',
     async ({ jwt, jwtRefresh, body, cookie }) => {
-      // Destructure jwtRefresh and cookie
       const { username, password } = body;
 
       // Evaluated live on every attempt (see RegistrationSettingsService) rather than trusting a boolean
@@ -178,12 +179,11 @@ export const authRoutes = new Elysia()
       // It is this user's only chance to save them.
       const recoveryCodes = await recoveryCodeService.generateCodes(newUser.id);
 
-      // Sign JWT with userId and username as per the schema defined in index.ts
       const accessToken = await jwt.sign({ userId: newUser.id, username: newUser.username });
       const refreshToken = await jwtRefresh.sign({
         userId: newUser.id,
         username: newUser.username,
-      }); // Use jwtRefresh for refresh token
+      });
 
       cookie['access_token'].set({
         value: accessToken,
@@ -250,6 +250,9 @@ export const authRoutes = new Elysia()
         if (error instanceof InvalidRecoveryCodeError) {
           throw new AppError(401, error.message);
         }
+        if (error instanceof RecoveryAttemptsLockedError) {
+          throw new AppError(429, error.message);
+        }
         throw error;
       }
 
@@ -287,6 +290,7 @@ export const authRoutes = new Elysia()
         200: AuthSessionResponseSchema,
         400: MessageResponseSchema,
         401: MessageResponseSchema,
+        429: MessageResponseSchema,
       },
       detail: {
         summary: 'Reset a forgotten password using a recovery code',
@@ -310,7 +314,7 @@ export const authRoutes = new Elysia()
         throw new AppError(401, 'Refresh token not found');
       }
 
-      const payload = await jwtRefresh.verify(refreshToken); // Use jwtRefresh to verify
+      const payload = await jwtRefresh.verify(refreshToken);
 
       if (!payload || !payload.userId || !payload.username) {
         throw new AppError(401, 'Invalid or expired refresh token');
@@ -324,12 +328,11 @@ export const authRoutes = new Elysia()
         throw new AppError(401, 'Invalid or expired refresh token');
       }
 
-      // Sign a new access token with the payload from the refresh token
       const newAccessToken = await jwt.sign({ userId: payload.userId, username: payload.username });
       const newRefreshToken = await jwtRefresh.sign({
         userId: payload.userId,
         username: payload.username,
-      }); // Generate a new refresh token
+      });
 
       cookie['access_token'].set({
         value: newAccessToken,

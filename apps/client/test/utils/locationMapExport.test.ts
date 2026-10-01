@@ -25,7 +25,7 @@ const content = {
 const options = {
   title: 'Map',
   subtitle: '',
-  colors: { background: '', surface: '', text: '', textSecondary: '', border: '' },
+  colors: { background: '', surface: '', text: '', textSecondary: '', border: '', primary: '' },
   nodeNames: {},
   connections: [],
   contains: [],

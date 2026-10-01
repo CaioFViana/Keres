@@ -1,32 +1,32 @@
 import { z } from 'zod';
-import { ChapterSchema } from './ChapterSchemas'; // Adjusted path
-import { CharacterSchema } from './CharacterSchemas'; // Adjusted path
+import { ChapterSchema } from './ChapterSchemas';
+import { CharacterSchema } from './CharacterSchemas';
 import { ChapterAnchorSchema } from './ChapterAnchorSchemas';
 import { StoryCalendarSchema } from './StoryCalendarSchemas';
 import { StoryArcSchema } from './StoryArcSchemas';
 import { BoardSchema } from './BoardSchemas';
 import { LocationMapSchema } from './LocationMapSchemas';
-import { CharacterRelationSchema } from './CharacterRelationSchemas'; // Adjusted path
-import { CharacterSceneSchema } from './CharacterSceneSchemas'; // Adjusted path
+import { CharacterRelationSchema } from './CharacterRelationSchemas';
+import { CharacterSceneSchema } from './CharacterSceneSchemas';
 import { PlotSchema } from './PlotSchemas';
 import { PlotSceneSchema } from './PlotSceneSchemas';
 import { RouteSchema, RouteStepSchema } from './RouteSchemas';
-import { ChoiceSchema } from './ChoiceSchemas'; // Adjusted path
+import { ChoiceSchema } from './ChoiceSchemas';
 import { ChoiceCheckGroupSchema } from './ChoiceCheckGroupSchemas';
 import { ChoiceCheckSchema } from './ChoiceCheckSchemas';
 import { EffectSchema } from './EffectSchemas';
-import { GalleryRelationSchema, GallerySchema } from './GallerySchemas'; // Adjusted path
-import { ItemJourneySchema } from './ItemJourneySchemas'; // Adjusted path
-import { ItemSchema } from './ItemSchemas'; // Adjusted path
-import { LocationSchema } from './LocationSchemas'; // Adjusted path
+import { GalleryRelationSchema, GallerySchema } from './GallerySchemas';
+import { ItemJourneySchema } from './ItemJourneySchemas';
+import { ItemSchema } from './ItemSchemas';
+import { LocationSchema } from './LocationSchemas';
 import { LocationRelationSchema } from './LocationRelationSchemas';
-import { NoteSchema } from './NoteSchemas'; // Adjusted path
-import { SceneSchema } from './SceneSchemas'; // Adjusted path
-import { StorySchema } from './StorySchemas'; // Adjusted path
-import { SuggestionSchema } from './SuggestionSchemas'; // Adjusted path
-import { TagRelationSchema } from './TagRelationSchemas'; // Adjusted path
-import { TagSchema } from './TagSchemas'; // Adjusted path
-import { WorldRuleSchema } from './WorldRuleSchemas'; // Adjusted path
+import { NoteSchema } from './NoteSchemas';
+import { SceneSchema } from './SceneSchemas';
+import { StorySchema } from './StorySchemas';
+import { SuggestionSchema } from './SuggestionSchemas';
+import { TagRelationSchema } from './TagRelationSchemas';
+import { TagSchema } from './TagSchemas';
+import { WorldRuleSchema } from './WorldRuleSchemas';
 import { NoteRelationSchema } from './NoteRelationSchemas';
 import { ModeSchema } from './ModeSchemas';
 import { StatRelationSchema, StatSchema, StatStrengthSchema } from './StatSchemas';
@@ -37,8 +37,16 @@ import { FavoriteSchema } from './FavoriteSchemas';
 import { CommentSchema } from './CommentSchemas';
 import { SeeAlsoRelationSchema } from './SeeAlsoRelationSchemas';
 
-// This schema defines the structure for a full story export/import.
-// It includes the main story object and all its related entities as arrays.
+/**
+ * A portable story: the `story` row plus every related entity as an array, with the server's
+ * `lastOperationVersion` and the package's `formatVersion`.
+ *
+ * Never parsed raw: `migrateStoryExport` runs first (both in the client and in the API) and fills
+ * every collection a newer format added, so a required array means "present since format V1" and
+ * an optional one means "introduced later" - each optional field below names its version. Adding a
+ * collection without that treatment (migration + optional + version note) breaks imports of every
+ * older package.
+ */
 export const FullStoryExportSchema = z.object({
   story: StorySchema,
   chapters: z.array(ChapterSchema),
@@ -94,7 +102,7 @@ export const FullStoryExportSchema = z.object({
   statStrengths: z.array(StatStrengthSchema).optional(),
   statRelations: z.array(StatRelationSchema).optional(),
   modes: z.array(ModeSchema).optional(),
-  serverLastOperationVersion: z.number().int().min(0), // New field for server's last operation version
+  serverLastOperationVersion: z.number().int().min(0),
   // Absent from exports predating this field - `migrateStoryExport` normalises it to
   // `CURRENT_STORY_FORMAT_VERSION` before this validation runs, so the default here is only a safety
   // net for callers that skip the migration.

@@ -13,6 +13,8 @@ export const stats = table('stats', {
   name: text('name').notNull(),
   isPrimary: boolean('is_primary').notNull().default(true),
   order: integer('order').notNull().default(0),
+  /** Place in the story's list (see rules/rank.ts); the order is derived from it. */
+  rank: text('rank').notNull().default(''),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

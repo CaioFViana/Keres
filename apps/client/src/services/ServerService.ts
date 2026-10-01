@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import type { ServerInsert, ServerSelect } from '../db/schema';
-import { friendships, servers, stories, storyPublications } from '../db/schema';
+import { friendships, servers, stories, storyInvitations, storyPublications } from '../db/schema';
 import { useConnectivityStore } from '../state/connectivityStore';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
@@ -157,6 +157,7 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         // Friendships are a local cache of server state. Leaving the server must remove
         // only this local copy; logging in again will repopulate it from the unchanged API.
         await tx.delete(friendships).where(eq(friendships.serverId, serverId)).run();
+        await tx.delete(storyInvitations).where(eq(storyInvitations.serverId, serverId)).run();
         await tx
           .update(servers)
           .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })

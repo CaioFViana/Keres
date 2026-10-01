@@ -13,7 +13,7 @@ import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
 import type { FavoriteBehavior, Story } from '@keres/shared/entities/Story';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -25,6 +25,7 @@ import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
+import { isServerless } from '../../utils/serverless';
 
 type StorySettingsScreenNavigationProp = DrawerNavigationProp<
   MainSystemDrawerParamList,
@@ -60,9 +61,16 @@ const StorySettingsScreen = () => {
 
   const applyStoryIdentity = identity.applyStoryIdentity;
 
-  useEffect(() => {
+  const [prevStoryId, setPrevStoryId] = useState<typeof storyId | null>(null);
+  if (storyId !== prevStoryId) {
+    setPrevStoryId(storyId);
     if (!storyId) {
       setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!storyId) {
       return;
     }
     const loadStory = async () => {
@@ -252,15 +260,15 @@ const StorySettingsScreen = () => {
       description={t('story_settings_screen_description')}
       actions={
         <>
-          <Button onPress={handleSave} disabled={!canEdit || saving || deleting}>
-            {t('update_story')}
-          </Button>
           <Button
             onPress={handleDelete}
             style={{ backgroundColor: colors.error }}
             disabled={!canManageStoryPolicy || saving || deleting}
           >
             {t('delete_story_title')}
+          </Button>
+          <Button onPress={handleSave} disabled={!canEdit || saving || deleting}>
+            {t('update_story')}
           </Button>
         </>
       }
@@ -354,12 +362,24 @@ const StorySettingsScreen = () => {
         </View>
       </View>
 
-      <StoryCollaborationSection
-        storyId={storyId}
-        allowReaderComments={allowReaderComments}
-        onAllowReaderCommentsChange={setAllowReaderComments}
-        canManageStoryPolicy={canManageStoryPolicy}
-      />
+      {/* Collaboration is linking the story to a server and its people; a serverless build has neither. */}
+      {isServerless() ? null : (
+        <StoryCollaborationSection
+          storyId={storyId}
+          allowReaderComments={allowReaderComments}
+          onAllowReaderCommentsChange={setAllowReaderComments}
+          canManageStoryPolicy={canManageStoryPolicy}
+          onLeftStory={() => {
+            const rootStackNavigation = navigation.getParent();
+            const resetToStorySelection = CommonActions.reset({
+              index: 0,
+              routes: [{ name: 'StorySelection' }],
+            });
+            if (rootStackNavigation) rootStackNavigation.dispatch(resetToStorySelection);
+            else navigation.dispatch(resetToStorySelection);
+          }}
+        />
+      )}
     </EntityFormContainer>
   );
 };

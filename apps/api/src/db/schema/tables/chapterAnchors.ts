@@ -1,5 +1,5 @@
 import type { ScenePosition } from '@keres/shared';
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { chapters } from './chapters';
 import { scenes } from './scenes';
 import { stories } from './stories';
@@ -45,9 +45,6 @@ export const chapterAnchors = table(
     isDeleted: boolean('is_deleted').notNull().default(false),
     deletedAt: timestamp('deleted_at'),
   },
-  (table) => {
-    return {
-      unq: unique('story_chapter_anchor_order_unq').on(table.storyId, table.chapterId, table.order),
-    };
-  },
+  // No uniqueness on `order`: it is a place, which two devices can hand out alike offline - rows
+  // read by (order, id) instead, the same everywhere.
 );

@@ -2,16 +2,17 @@ import { create } from 'zustand';
 import type { AppDrizzleClient } from '../db';
 import { getClientSettings, updateClientSettings } from '../services/ClientSettingsService';
 
+/** Durable dark-mode flag: every change writes through to `client_settings` first. */
 interface ThemeState {
   darkMode: boolean;
   initializeTheme: (db: AppDrizzleClient) => Promise<void>;
   setDarkMode: (db: AppDrizzleClient, darkMode: boolean) => Promise<void>;
   toggleDarkMode: (db: AppDrizzleClient) => Promise<void>;
-  resetTheme: () => void; // Add resetTheme to the interface
+  resetTheme: () => void;
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  darkMode: false, // Default to light mode
+  darkMode: false,
 
   initializeTheme: async (db: AppDrizzleClient) => {
     const settings = await getClientSettings(db);
@@ -32,6 +33,6 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 
   resetTheme: () => {
-    set({ darkMode: false }); // Reset to default light mode
+    set({ darkMode: false });
   },
 }));

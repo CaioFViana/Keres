@@ -1,9 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { ShowcaseConfigProvider } from './config/ShowcaseConfigProvider';
 import { AboutPage } from './pages/AboutPage';
 import { HomePage } from './pages/HomePage';
 import { PackPage } from './pages/PackPage';
 import { PacksPage } from './pages/PacksPage';
+import { ReaderPage } from './pages/ReaderPage';
 import { StoryPage } from './pages/StoryPage';
 import { ShowcaseThemeProvider } from './theme/ShowcaseThemeProvider';
 
@@ -14,16 +16,19 @@ import { ShowcaseThemeProvider } from './theme/ShowcaseThemeProvider';
 export function ShowcaseApp() {
   return (
     <ShowcaseThemeProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/story/:storyId" element={<StoryPage />} />
-          <Route path="/packs" element={<PacksPage />} />
-          <Route path="/pack/:packId" element={<PackPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <ShowcaseConfigProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/story/:storyId" element={<StoryPage />} />
+            <Route path="/story/:storyId/read/:publicationId" element={<ReaderPage />} />
+            <Route path="/packs" element={<PacksPage />} />
+            <Route path="/pack/:packId" element={<PackPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Layout>
+      </ShowcaseConfigProvider>
     </ShowcaseThemeProvider>
   );
 }

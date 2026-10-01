@@ -14,6 +14,13 @@ interface StoryListState {
   removeStory: (storyId: string) => void;
 }
 
+/**
+ * In-memory mirror of the story list for pickers and the dashboard.
+ *
+ * Every mutation emits `story_changed` with the affected id (favorite toggles reuse the
+ * same event) so open screens refresh; `fetchStories` is the only reader and resolves
+ * the user id at call time rather than caching it.
+ */
 export const useStoryListStore = create<StoryListState>((set, get) => ({
   stories: [],
   setStories: (stories) => set({ stories }),

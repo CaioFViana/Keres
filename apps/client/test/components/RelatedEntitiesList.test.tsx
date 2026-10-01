@@ -1,5 +1,4 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import RelatedEntitiesList from '../../src/components/common/lists/RelatedEntitiesList/RelatedEntitiesList';
 
 jest.mock('../../src/theme', () => ({

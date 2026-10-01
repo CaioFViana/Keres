@@ -82,3 +82,23 @@ describe('toEntityColumns for CharacterRelation', () => {
     expect(toEntityColumns('NotAnEntity', { character1Id: 'char-a' })).toEqual({});
   });
 });
+
+describe('toEntityColumns for Gallery', () => {
+  it('drops device-local transfer state even though those are real table columns', () => {
+    expect(
+      toEntityColumns('Gallery', {
+        title: 'Still',
+        mediaType: 'image',
+        hash: 'abc123',
+        localPath: '/tmp/evil.bin',
+        uploadState: 'pending',
+        downloadState: 'downloaded',
+        thumbnailPath: '/tmp/evil-thumb.bin',
+      }),
+    ).toEqual({
+      title: 'Still',
+      mediaType: 'image',
+      hash: 'abc123',
+    });
+  });
+});

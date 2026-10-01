@@ -11,7 +11,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { buildAdvancedSearchConditions } from './advancedSearchConditions';
@@ -239,7 +240,26 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         newWorldRule,
       );
       newWorldRule = favorite.data;
-      const result = await db.insert(worldRules).values(newWorldRule).returning().get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        newWorldRule.storyId,
+        currentUserId,
+      );
+      const result = await runLocalWrite(db, newWorldRule.storyId, () => {
+        const inserted = db.insert(worldRules).values(newWorldRule).returning().get();
+        recordLocalOperationSync(
+          db,
+          newWorldRule.storyId,
+          userIdToLog,
+          'create',
+          'WorldRule',
+          newWorldRule.id,
+          { ...inserted },
+        );
+        return inserted;
+      });
+      // After the create, so its operation is never pushed ahead of the entity it points at.
       await persistInitialFavorite(
         db,
         newWorldRule.storyId,
@@ -247,22 +267,6 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         'WorldRule',
         currentUserId,
         favorite.individualFavorite,
-      );
-
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newWorldRule.storyId,
-        currentUserId,
-      );
-      await recordLocalOperation(
-        db,
-        newWorldRule.storyId,
-        userIdToLog,
-        'create',
-        'WorldRule',
-        newWorldRule.id,
-        { ...result },
       );
       entityEventEmitter.emit('worldrule_changed', newWorldRule.storyId, newWorldRule.id);
 
@@ -308,33 +312,32 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
         return originalWorldRule;
       }
 
-      await db
-        .update(worldRules)
-        .set({ ...worldRuleData, updatedAt: new Date(), version: sql`${worldRules.version} + 1` })
-        .where(eq(worldRules.id, worldRuleId));
-
-      const updatedWorldRule = await db.query.worldRules.findFirst({
-        where: eq(worldRules.id, worldRuleId),
-      });
-      if (!updatedWorldRule) {
-        throw new Error(`Failed to retrieve updated world rule ${worldRuleId}.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedWorldRule.storyId,
+        originalWorldRule.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedWorldRule.storyId,
-        userIdToLog,
-        'update',
-        'WorldRule',
-        worldRuleId,
-        getChangedFields(originalWorldRule, updatedWorldRule),
-      );
+      const updatedWorldRule = await runLocalWrite(db, originalWorldRule.storyId, () => {
+        db.update(worldRules)
+          .set({ ...worldRuleData, updatedAt: new Date(), version: sql`${worldRules.version} + 1` })
+          .where(eq(worldRules.id, worldRuleId))
+          .run();
+        const updated = db.select().from(worldRules).where(eq(worldRules.id, worldRuleId)).get();
+        if (!updated) {
+          throw new Error(`Failed to retrieve updated world rule ${worldRuleId}.`);
+        }
+        recordLocalOperationSync(
+          db,
+          updated.storyId,
+          userIdToLog,
+          'update',
+          'WorldRule',
+          worldRuleId,
+          getChangedFields(originalWorldRule, updated),
+        );
+        return updated;
+      });
       entityEventEmitter.emit('worldrule_changed', updatedWorldRule.storyId, updatedWorldRule.id);
 
       return updatedWorldRule;
@@ -350,45 +353,49 @@ export const createWorldRuleService = (db: AppDrizzleClient): WorldRuleService =
       }
       await assertStoryIsWritable(db, worldRuleToDelete.storyId);
 
-      const [updatedWorldRule] = await db
-        .update(worldRules)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${worldRules.version} + 1`,
-        })
-        .where(eq(worldRules.id, worldRuleId))
-        .returning({
-          id: worldRules.id,
-          storyId: worldRules.storyId,
-          isDeleted: worldRules.isDeleted,
-          version: worldRules.version,
-        });
-
-      if (!updatedWorldRule) {
-        throw new Error(`Failed to delete world rule ${worldRuleId} or world rule not found.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedWorldRule.storyId,
+        worldRuleToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedWorldRule.storyId,
-        userIdToLog,
-        'delete',
-        'WorldRule',
-        worldRuleId,
-        {
-          id: updatedWorldRule.id,
-          isDeleted: updatedWorldRule.isDeleted,
-          version: updatedWorldRule.version,
-        },
-      );
+      const updatedWorldRule = await runLocalWrite(db, worldRuleToDelete.storyId, () => {
+        const deleted = db
+          .update(worldRules)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${worldRules.version} + 1`,
+          })
+          .where(eq(worldRules.id, worldRuleId))
+          .returning({
+            id: worldRules.id,
+            storyId: worldRules.storyId,
+            isDeleted: worldRules.isDeleted,
+            version: worldRules.version,
+          })
+          .get();
+
+        if (!deleted) {
+          throw new Error(`Failed to delete world rule ${worldRuleId} or world rule not found.`);
+        }
+
+        recordLocalOperationSync(
+          db,
+          deleted.storyId,
+          userIdToLog,
+          'delete',
+          'WorldRule',
+          worldRuleId,
+          {
+            id: deleted.id,
+            isDeleted: deleted.isDeleted,
+            version: deleted.version,
+          },
+        );
+        return deleted;
+      });
       entityEventEmitter.emit('worldrule_changed', updatedWorldRule.storyId, updatedWorldRule.id);
     },
   };

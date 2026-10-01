@@ -1,17 +1,18 @@
 import { Button, FormContainer, SingleSelectPill, TextInput } from '@/src/components/common';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useSQLiteContext } from 'expo-sqlite'; // Import useSQLiteContext
-import React, { useEffect, useRef, useState } from 'react';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler, StyleSheet, Text, View } from 'react-native';
-import { useDrizzle } from '../../db'; // Import useDrizzle
-import { migrate } from '../../db/migrate'; // Import migrate
+import { BackHandler, Platform, StyleSheet, Text, View } from 'react-native';
+import { useDrizzle } from '../../db';
+import { migrate } from '../../db/migrate';
 import { setAuthDb } from '../../services/AuthTokenManager';
-import { createClientSettings } from '../../services/ClientSettingsService'; // Import createClientSettings
+import { setEditorDraftDb } from '../../services/EditorDraftService';
+import { createClientSettings } from '../../services/ClientSettingsService';
 import { syncEngine } from '../../services/sync/appSyncEngine';
-import { useNotificationStore } from '../../state/notificationStore'; // Import useNotificationStore
-import { useThemeStore } from '../../state/themeStore'; // Import useThemeStore
+import { useNotificationStore } from '../../state/notificationStore';
+import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonInputStyles } from '../../theme/commonStyles';
@@ -35,10 +36,10 @@ const ColdInstallScreen = () => {
   const navigation = useNavigation<ColdInstallScreenNavigationProp>();
   const { colors } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
-  const { showNotification } = useNotificationStore(); // Destructure showNotification
+  const { showNotification } = useNotificationStore();
 
-  const db = useSQLiteContext(); // Get the raw SQLite database instance
-  const drizzleDb = useDrizzle(); // Get the Drizzle client from context
+  const db = useSQLiteContext();
+  const drizzleDb = useDrizzle();
 
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
   const initializeThemeSettings = useThemeStore((state) => state.initializeTheme);
@@ -48,9 +49,14 @@ const ColdInstallScreen = () => {
   const backPressTimer = useRef<number | null>(null);
 
   useEffect(() => {
+    // The web build has no hardware back button; registering only logs
+    // "BackHandler is not supported on web" noise.
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     const backAction = () => {
       if (backPressTimer.current && Date.now() - backPressTimer.current < 2000) {
-        // If pressed again within 2 seconds, exit the app
         BackHandler.exitApp();
         return true; // Event handled
       } else {
@@ -87,17 +93,17 @@ const ColdInstallScreen = () => {
     }
 
     // Run database migrations first
-    await migrate(db); // Use the raw db instance for migrations
+    await migrate(db);
 
     // A full reset deliberately detaches these services while the old account is being
     // erased. Reattach them as soon as the fresh schema exists, before server registration
     // can attempt to persist tokens or start its first synchronization.
     setAuthDb(drizzleDb);
+    setEditorDraftDb(drizzleDb);
     await syncEngine.bindDatabase(drizzleDb);
 
     // Create initial client settings in SQLite
     await createClientSettings(drizzleDb, {
-      // Pass drizzleDb
       localUsername: username,
       language: selectedLanguage || 'en', // Default to English if not selected
       darkMode: false, // Default to light mode
@@ -105,6 +111,7 @@ const ColdInstallScreen = () => {
       dateDisplayFormat: 'iso',
       showContextualHelp: true,
       suggestLiteraryDevices: true,
+      showTutorials: true,
     });
 
     // Initialize stores with the newly created settings

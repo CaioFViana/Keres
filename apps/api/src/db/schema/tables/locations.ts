@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
-import { scenes } from './scenes'; // Will be created later
+import { scenes } from './scenes';
 
 export const locations = table('locations', {
   id: text('id').primaryKey(),

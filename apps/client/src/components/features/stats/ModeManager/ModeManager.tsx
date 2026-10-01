@@ -1,6 +1,6 @@
 import { getEntityAppearance } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ModeSelect } from '../../../../db/schema';

@@ -19,6 +19,7 @@ type Bindings = Pick<
 export function createCommentFieldBindings({ commentsByField, addComment, ...common }: Bindings) {
   return (fieldKey: string, value: string): Omit<FieldProps, 'label'> => ({
     ...common,
+    fieldKey,
     value,
     comments: commentsByField[fieldKey] ?? [],
     onAddComment: (input) => addComment({ fieldKey }, { ...input, contentSnapshot: value }),

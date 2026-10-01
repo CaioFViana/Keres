@@ -7,6 +7,8 @@ export const chapters = sqliteTable('chapters', {
   storyId: text('story_id').notNull(),
   name: text('name').notNull(),
   index: integer('index').notNull(),
+  /** Place among the containers of its kind (see rules/rank.ts); a trigger derives the index. */
+  rank: text('rank').notNull().default(''),
   /**
    * Chapter or event. A chapter's index is the story's narrative order; an event's is only the
    * order the writer arranged the list in - the two keep separate 1..N spaces. Defaulted so every

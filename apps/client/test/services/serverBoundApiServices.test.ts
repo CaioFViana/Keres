@@ -13,7 +13,12 @@ jest.mock('../../src/services/apiClient', () => ({ createKeresAxiosInstance: jes
 jest.mock('../../src/services/AuthTokenManager', () => ({ authTokenManager: {} }));
 
 import { FriendshipApiService } from '../../src/services/FriendshipApiService';
+import {
+  PublicationApiService,
+  type PublishManuscriptOptions,
+} from '../../src/services/PublicationApiService';
 import { createKeresAxiosInstance } from '../../src/services/apiClient';
+import { storyInvitationApi } from '../../src/services/StoryInvitationApiService';
 import { storyPermissionApi } from '../../src/services/StoryPermissionService';
 import { UserApiService } from '../../src/services/UserApiService';
 
@@ -32,7 +37,7 @@ describe('server-bound API services', () => {
     await expect(storyPermissionApi.getCollaborators(server, 'story')).resolves.toEqual([
       { id: 'permission' },
     ]);
-    await storyPermissionApi.grantCollaborator(server, 'story', 'writer', 'writer');
+    await storyPermissionApi.updateCollaboratorPermission(server, 'story', 'writer', 'writer');
 
     expect(createKeresAxiosInstance).toHaveBeenCalledWith({ baseURL: server.url });
     expect(mockClient.setTokenProvider).toHaveBeenCalled();
@@ -43,6 +48,41 @@ describe('server-bound API services', () => {
       targetUserId: 'writer',
       permissionType: 'writer',
     });
+    await storyPermissionApi.updateCollaboratorPermission(server, 'story', 'writer', 'reader');
+    await storyPermissionApi.removeCollaborator(server, 'story', 'writer');
+
+    expect(mockClient.post).toHaveBeenCalledWith('/story-permissions/', {
+      storyId: 'story',
+      targetUserId: 'writer',
+      permissionType: 'reader',
+    });
+    expect(mockClient.delete).toHaveBeenCalledWith('/story-permissions/story/story/user/writer');
+  });
+
+  it('maps the story invitation endpoints of the supplied server', async () => {
+    mockClient.get.mockResolvedValue({ data: [{ id: 'inv' }] });
+    mockClient.post.mockResolvedValue({ data: { id: 'inv' } });
+    mockClient.put.mockResolvedValue({ data: { storyId: 'story' } });
+    mockClient.delete.mockResolvedValue({});
+
+    await expect(storyInvitationApi.list(server)).resolves.toEqual([{ id: 'inv' }]);
+    await storyInvitationApi.listForStory(server, 'story');
+    await expect(storyInvitationApi.invite(server, 'story', 'bia', 'writer')).resolves.toEqual({
+      id: 'inv',
+    });
+    await expect(storyInvitationApi.accept(server, 'inv')).resolves.toEqual({ storyId: 'story' });
+    await storyInvitationApi.remove(server, 'inv');
+
+    expect(mockClient.setActiveServer).toHaveBeenCalledWith(server);
+    expect(mockClient.get).toHaveBeenCalledWith('/friend/story-invitations/');
+    expect(mockClient.get).toHaveBeenCalledWith('/friend/story-invitations/story/story');
+    expect(mockClient.post).toHaveBeenCalledWith('/friend/story-invitations/', {
+      storyId: 'story',
+      targetUserId: 'bia',
+      permissionType: 'writer',
+    });
+    expect(mockClient.put).toHaveBeenCalledWith('/friend/story-invitations/inv/accept');
+    expect(mockClient.delete).toHaveBeenCalledWith('/friend/story-invitations/inv');
   });
 
   it('maps FriendshipApiService endpoints and treats a missing user detail as absent', async () => {
@@ -84,5 +124,170 @@ describe('server-bound API services', () => {
     expect(mockClient.put).toHaveBeenCalledWith('/user/recovery-codes', {
       currentPassword: 'hunter2',
     });
+  });
+
+  it('maps every FriendshipApiService action to its endpoint and lists friendships', async () => {
+    mockClient.put.mockResolvedValue({ data: { id: 'accepted' } });
+    mockClient.delete.mockResolvedValue({ data: { id: 'gone' } });
+    mockClient.post.mockResolvedValue({ data: { id: 'listed' } });
+    mockClient.get.mockResolvedValue({ data: [{ id: 'friend-1' }] });
+    const service = new FriendshipApiService();
+
+    await expect(service.acceptFriendRequest(server, 'friend')).resolves.toEqual({
+      id: 'accepted',
+    });
+    await expect(service.declineFriendRequest(server, 'friend')).resolves.toEqual({ id: 'gone' });
+    await expect(service.unfriendUser(server, 'friend')).resolves.toEqual({ id: 'gone' });
+    await expect(service.cancelSentFriendRequest(server, 'friend')).resolves.toEqual({
+      id: 'gone',
+    });
+    await expect(service.blacklistUser(server, 'friend')).resolves.toEqual({ id: 'listed' });
+    await expect(service.unblacklistUser(server, 'friend')).resolves.toEqual({ id: 'gone' });
+    await expect(service.getFriendships(server)).resolves.toEqual([{ id: 'friend-1' }]);
+
+    expect(mockClient.put).toHaveBeenCalledWith('/friend/accept/friend');
+    expect(mockClient.delete).toHaveBeenCalledWith('/friend/decline/friend');
+    expect(mockClient.delete).toHaveBeenCalledWith('/friend/unfriend/friend');
+    expect(mockClient.delete).toHaveBeenCalledWith('/friend/request/friend');
+    expect(mockClient.post).toHaveBeenCalledWith('/friend/blacklist/friend');
+    expect(mockClient.delete).toHaveBeenCalledWith('/friend/blacklist/friend');
+    expect(mockClient.get).toHaveBeenCalledWith('/friend/');
+  });
+
+  it('returns user details and rethrows a non-404 failure after logging it', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockClient.get
+      .mockResolvedValueOnce({ data: { id: 'user', username: 'Ada' } })
+      .mockRejectedValueOnce(new Error('boom'));
+    const service = new FriendshipApiService();
+
+    await expect(service.getUserDetails(server, 'user')).resolves.toEqual({
+      id: 'user',
+      username: 'Ada',
+    });
+    await expect(service.getUserDetails(server, 'user')).rejects.toThrow('boom');
+    expect(console.error).toHaveBeenCalledWith('Error fetching user details:', expect.any(Error));
+    (console.error as jest.Mock).mockRestore();
+  });
+
+  it('edits the tag and profile, changes the password and reads the own profile', async () => {
+    mockClient.put.mockResolvedValue({ data: { id: 'me', tag: 'ada' } });
+    mockClient.get.mockResolvedValue({ data: { id: 'me', username: 'Ada' } });
+    const service = new UserApiService();
+
+    await expect(service.updateOwnTag(server, 'ada')).resolves.toEqual({ id: 'me', tag: 'ada' });
+    await expect(service.updateProfile(server, { displayName: 'Ada' } as never)).resolves.toEqual({
+      id: 'me',
+      tag: 'ada',
+    });
+    await expect(service.changeOwnPassword(server, 'old', 'new')).resolves.toBeUndefined();
+    await expect(service.getOwnProfile(server)).resolves.toEqual({
+      id: 'me',
+      username: 'Ada',
+    });
+
+    expect(mockClient.put).toHaveBeenCalledWith('/user/tag', { tag: 'ada' });
+    expect(mockClient.put).toHaveBeenCalledWith('/user/profile', { displayName: 'Ada' });
+    expect(mockClient.put).toHaveBeenCalledWith('/user/password', {
+      currentPassword: 'old',
+      newPassword: 'new',
+    });
+    expect(mockClient.get).toHaveBeenCalledWith('/user/details/me');
+  });
+
+  it('rethrows a non-404 user lookup failure instead of reporting the user absent', async () => {
+    mockClient.get.mockRejectedValueOnce(new Error('boom'));
+    const service = new UserApiService();
+
+    await expect(service.getUserByTag(server, 'ada')).rejects.toThrow('boom');
+    mockClient.get.mockRejectedValueOnce(new Error('boom'));
+    await expect(service.getOwnProfile(server)).rejects.toThrow('boom');
+  });
+
+  it('maps every PublicationApiService route to its endpoint', async () => {
+    mockClient.get.mockResolvedValue({ data: [{ id: 'pub-1' }] });
+    mockClient.post.mockResolvedValue({ data: { id: 'pub-2' } });
+    mockClient.put.mockResolvedValue({});
+    mockClient.delete.mockResolvedValue({});
+    const service = new PublicationApiService();
+
+    await expect(service.listVisible(server)).resolves.toEqual([{ id: 'pub-1' }]);
+    await expect(service.getStoryShowcase(server, 'story')).resolves.toEqual([{ id: 'pub-1' }]);
+    // Visibility travels with the publication so an earlier protection cannot linger silently.
+    await expect(
+      service.publish(server, 'story', 7, 'both', 'password', 'secret'),
+    ).resolves.toEqual({ id: 'pub-2' });
+    await service.setVisibility(server, 'story', 'public');
+    await service.deletePublication(server, 'story', 'pub-1');
+    await service.unpublish(server, 'story');
+
+    expect(mockClient.get).toHaveBeenCalledWith('/stories/publications/mine');
+    expect(mockClient.get).toHaveBeenCalledWith('/stories/story/publications');
+    expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {
+      operationVersion: 7,
+      labelMode: 'both',
+      visibility: 'password',
+      password: 'secret',
+      includePackage: true,
+    });
+
+    // The manuscript travels as render options only: no bytes leave the device.
+    const manuscript: PublishManuscriptOptions = {
+      format: 'md',
+      includeLooseScenes: false,
+      includeSceneNames: true,
+      includeToc: false,
+      resetSceneNumbers: false,
+      style: { quotes: 'curly' },
+      sceneOrder: 'shuffled',
+      labels: {
+        goToPage: 'Go to page',
+        goToScene: 'See',
+        looseHeading: 'Loose scenes',
+        tocHeading: 'Contents',
+        endOfExcerpt: 'end of this excerpt',
+        chooseStart: 'Choose where to begin',
+        beginAt: 'Begin',
+      },
+      author: null,
+      language: 'en',
+    };
+    await service.publish(server, 'story', 7, 'both', 'public', undefined, manuscript);
+    expect(mockClient.post).toHaveBeenCalledWith('/stories/story/publications', {
+      operationVersion: 7,
+      labelMode: 'both',
+      visibility: 'public',
+      password: undefined,
+      manuscript,
+      includePackage: true,
+    });
+
+    // The story file may be left out when something else is published in its place.
+    await service.publish(
+      server,
+      'story',
+      7,
+      'both',
+      'public',
+      undefined,
+      undefined,
+      {} as never,
+      false,
+    );
+    expect(mockClient.post).toHaveBeenLastCalledWith('/stories/story/publications', {
+      operationVersion: 7,
+      labelMode: 'both',
+      visibility: 'public',
+      password: undefined,
+      manuscript: undefined,
+      reader: {},
+      includePackage: false,
+    });
+    expect(mockClient.put).toHaveBeenCalledWith('/stories/story/showcase', {
+      visibility: 'public',
+      password: undefined,
+    });
+    expect(mockClient.delete).toHaveBeenCalledWith('/stories/story/publications/pub-1');
+    expect(mockClient.delete).toHaveBeenCalledWith('/stories/story/publications');
   });
 });

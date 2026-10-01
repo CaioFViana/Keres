@@ -20,6 +20,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { usePackFormActions } from '../../../src/screens/packs/usePackFormActions';
 import type { PackFormState } from '../../../src/screens/packs/usePackFormState';
 import type { PackService } from '../../../src/services/storymanagement/PackService';
@@ -148,11 +149,13 @@ it('reextracts and updates details when editing', async () => {
 });
 
 it('does not navigate after a save failure', async () => {
-  (packService.createPack as jest.Mock).mockRejectedValue(new Error('write failed'));
-  const view = await renderActions(createState());
+  await withSilencedConsole(['error'], async () => {
+    (packService.createPack as jest.Mock).mockRejectedValue(new Error('write failed'));
+    const view = await renderActions(createState());
 
-  await act(async () => view.result.current.handleSave());
+    await act(async () => view.result.current.handleSave());
 
-  expect(mockShowNotification).toHaveBeenCalledWith('packs_save_failed', 'error');
-  expect(navigation.goBack).not.toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith('packs_save_failed', 'error');
+    expect(navigation.goBack).not.toHaveBeenCalled();
+  });
 });

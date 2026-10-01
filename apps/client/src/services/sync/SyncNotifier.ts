@@ -14,6 +14,8 @@ export interface SyncNotifier {
   pushedUpdates(count: number): void;
   pushFailed(): void;
   syncFailed(): void;
+  protocolMismatch(): void;
+  storyNotFound(): void;
   /** Escape hatch for transfer flows that build a finished message before notifying. */
   message(text: string, type: SyncNotificationType): void;
 }
@@ -31,6 +33,8 @@ export const createAppSyncNotifier = (): SyncNotifier => {
     pushedUpdates: (count) => notify(i18n.t('sync_pushed_updates', { count }), 'success'),
     pushFailed: () => notify(i18n.t('sync_push_failed'), 'error'),
     syncFailed: () => notify(i18n.t('sync_failed'), 'error'),
+    protocolMismatch: () => notify(i18n.t('sync_protocol_mismatch'), 'error'),
+    storyNotFound: () => notify(i18n.t('sync_story_not_found'), 'error'),
     message: (text, type) => notify(text, type),
   };
 };

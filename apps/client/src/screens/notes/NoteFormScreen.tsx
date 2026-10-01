@@ -10,11 +10,12 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { NotesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -70,6 +71,8 @@ const NoteFormScreen = () => {
     setCustomValues,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = noteFormState;
 
   const { availableTags, selectedTagIds, persistTagRelations, handleTagSelectionChange } =
@@ -104,9 +107,12 @@ const NoteFormScreen = () => {
 
   const formTitle = isEditing ? t('edit_note_title') : t('create_note_title');
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   if (loading) {
@@ -119,9 +125,6 @@ const NoteFormScreen = () => {
       description={t('note_form_description')}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_note')}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -131,6 +134,9 @@ const NoteFormScreen = () => {
               {t('delete_note_title')}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {isEditing ? t('save_changes') : t('create_note')}
+          </Button>
         </>
       }
     >

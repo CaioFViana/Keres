@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { LocationMapMarkerType, LocationMapNodeType } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useTheme } from '../../../theme';
 import { LOCATION_MAP_NODE_SIZE } from '@keres/shared/graphs/locationMapLayout';
 
@@ -19,12 +20,9 @@ interface Props {
   selected: boolean;
   layoutEditing: boolean;
   connectionMode?: boolean;
+  /** While set, the point ignores taps and drags: only overlay shapes respond. */
+  overlayEditing?: boolean;
   scale: number;
-  /** Surface translation for the world-coordinate canvas. */
-  positionOffsetX?: number;
-  positionOffsetY?: number;
-  /** Baked viewport scale so the native surface can stay in screen pixels. */
-  positionScale?: number;
   onSelect: (nodeId: string) => void;
   onMove: (nodeId: string, x: number, y: number) => void;
   onDragStart: (nodeId: string) => void;
@@ -47,10 +45,8 @@ const LocationMapNodeView: React.FC<Props> = ({
   selected,
   layoutEditing,
   connectionMode = false,
+  overlayEditing = false,
   scale,
-  positionOffsetX = 0,
-  positionOffsetY = 0,
-  positionScale = 1,
   onSelect,
   onMove,
   onDragStart,
@@ -64,25 +60,19 @@ const LocationMapNodeView: React.FC<Props> = ({
   onConnectionCancel,
 }) => {
   const { colors } = useTheme();
-  const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
+  const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
   const pressedAt = useRef(0);
   const destinationHoldHintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showDestinationHoldHint, setShowDestinationHoldHint] = useState(false);
   const nodeId = useRef(node.id);
-  nodeId.current = node.id;
   const destinationMapId = useRef(node.destinationMapId);
-  destinationMapId.current = node.destinationMapId;
-  const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
-  position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  const position = useRef({ x: node.x, y: node.y });
   const scaleRef = useRef(scale);
-  scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
-  layoutEditingRef.current = layoutEditing;
   const connectionModeRef = useRef(connectionMode);
-  connectionModeRef.current = connectionMode;
+  const overlayEditingRef = useRef(overlayEditing);
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const handlers = useRef({
     onSelect,
     onMove,
@@ -96,19 +86,31 @@ const LocationMapNodeView: React.FC<Props> = ({
     onConnectionEnd,
     onConnectionCancel,
   });
-  handlers.current = {
-    onSelect,
-    onMove,
-    onDragStart,
-    onDragEnd,
-    onBringToFront,
-    onSendToBack,
-    onOpenDestination,
-    onConnectionStart,
-    onConnectionMove,
-    onConnectionEnd,
-    onConnectionCancel,
-  };
+  useEffect(() => {
+    // Latest-ref sync for the responder below: every reader runs on gestures, after effects
+    // have flushed. No dependency array - the sync unconditionally followed every render.
+    nodeId.current = node.id;
+    destinationMapId.current = node.destinationMapId;
+    position.current = { x: node.x, y: node.y };
+    scaleRef.current = scale;
+    layoutEditingRef.current = layoutEditing;
+    connectionModeRef.current = connectionMode;
+    overlayEditingRef.current = overlayEditing;
+    selectedRef.current = selected;
+    handlers.current = {
+      onSelect,
+      onMove,
+      onDragStart,
+      onDragEnd,
+      onBringToFront,
+      onSendToBack,
+      onOpenDestination,
+      onConnectionStart,
+      onConnectionMove,
+      onConnectionEnd,
+      onConnectionCancel,
+    };
+  });
 
   const clearDestinationHoldHint = () => {
     if (destinationHoldHintTimer.current !== null) {
@@ -127,23 +129,28 @@ const LocationMapNodeView: React.FC<Props> = ({
 
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
+          if (overlayEditingRef.current) return false;
           if (connectionModeRef.current) return true;
           if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
+          !overlayEditingRef.current &&
           (dragging.current || connectionModeRef.current) &&
           !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !overlayEditingRef.current &&
           (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: (event) => {
           dragging.current = false;
+          // eslint-disable-next-line react-hooks/purity -- runs only when the gesture grants; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
           pressedAt.current = Date.now();
           origin.current = { x: position.current.x, y: position.current.y };
           if (connectionModeRef.current) handlers.current.onConnectionStart?.(nodeId.current);
@@ -202,6 +209,7 @@ const LocationMapNodeView: React.FC<Props> = ({
             // action that changes maps, which prevents an accidental map switch while editing.
             if (
               destinationMapId.current &&
+              // eslint-disable-next-line react-hooks/purity -- runs only when the gesture releases; PanResponder wiring invokes nothing during render, and time-stamping a gesture is not render impurity.
               Date.now() - pressedAt.current >= DESTINATION_HOLD_DURATION
             )
               handlers.current.onOpenDestination?.(nodeId.current);
@@ -224,19 +232,20 @@ const LocationMapNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current)
-    origin.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  useEffect(() => {
+    // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
+    // tracks the node's committed position. Readers are gesture handlers (post-commit).
+    if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  }, [node.x, node.y]);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: (node.x + positionOffsetX - LOCATION_MAP_NODE_SIZE / 2) * positionScale,
-          top: (node.y + positionOffsetY - LOCATION_MAP_NODE_SIZE / 2) * positionScale,
+          left: node.x - LOCATION_MAP_NODE_SIZE / 2,
+          top: node.y - LOCATION_MAP_NODE_SIZE / 2,
           width: LOCATION_MAP_NODE_SIZE,
-          transform: [{ scale: positionScale }],
-          transformOrigin: 'top left' as const,
           alignItems: 'center',
           zIndex: node.zIndex ?? 0,
           ...(Platform.OS === 'web'
@@ -316,27 +325,13 @@ const LocationMapNodeView: React.FC<Props> = ({
           zIndex: 4,
         },
       }),
-    [
-      colors,
-      node.color,
-      node.x,
-      node.y,
-      node.zIndex,
-      positionOffsetX,
-      positionOffsetY,
-      positionScale,
-      selected,
-    ],
+    [colors, node.color, node.x, node.y, node.zIndex, selected],
   );
 
   return (
     <View style={styles.node} {...pan.panHandlers}>
       <View style={styles.circle} pointerEvents="none">
-        <Ionicons
-          name={(node.icon as keyof typeof Ionicons.glyphMap) || 'location'}
-          size={22}
-          color={node.color}
-        />
+        <MapIcon name={node.icon} size={22} color={node.color} />
       </View>
       {!!node.destinationMapId && (
         <View pointerEvents="none" style={styles.destinationBadge}>

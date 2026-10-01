@@ -50,6 +50,7 @@ export function useItemJourneyTimelineData(storyId: string, itemId: string) {
   }, [drizzleDb, itemId, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void load();
   }, [load]);
 

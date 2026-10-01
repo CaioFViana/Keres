@@ -2,7 +2,7 @@ import FormField from '@/src/components/common/forms/FormField/FormField';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { isTimingInput, parseTimingInput } from '@/src/utils/sceneTimingInput';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import { useTheme } from '@/src/theme';

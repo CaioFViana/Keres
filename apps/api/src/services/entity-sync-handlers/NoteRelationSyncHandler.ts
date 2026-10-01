@@ -12,19 +12,21 @@ import { db, type CompatibleDb } from '../../db';
 import {
   chapters,
   characters,
+  choices,
   locations,
   noteRelations,
   notes,
   scenes,
   worldRules,
 } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateNoteRelationDataSchema,
   typeof PartialNoteRelationSchema
 > {
   entityName = 'NoteRelation';
+  readonly naturalKey = ['noteId', 'relationId', 'relationType'] as const;
 
   constructor() {
     super('id', 'version', CreateNoteRelationDataSchema, PartialNoteRelationSchema, {
@@ -129,6 +131,21 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
           );
         }
         break;
+      case 'Choice':
+        const choiceExists = await database.query.choices.findFirst({
+          where: and(
+            eq(choices.id, relationId),
+            eq(choices.storyId, storyId),
+            eq(choices.isDeleted, false),
+          ),
+        });
+        if (!choiceExists) {
+          throw new SyncConflictError(
+            'referenced_entity_deleted',
+            `Validation Error: Choice with ID ${relationId} not found, is deleted, or does not belong to story ${storyId}.`,
+          );
+        }
+        break;
       default:
         throw new Error(
           `Validation Error: Unsupported NoteRelationEntities type: ${relationType}.`,
@@ -165,7 +182,8 @@ export class NoteRelationSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingRelation) {
-      throw new Error(
+      throw duplicateOf(
+        existingRelation,
         `Conflict: NoteRelation for note ${validatedData.noteId} and entity ${validatedData.relationId} (${validatedData.relationType}) already exists and is not deleted.`,
       );
     }

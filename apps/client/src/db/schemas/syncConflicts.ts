@@ -18,17 +18,17 @@ export const syncConflicts = sqliteTable('sync_conflicts', {
   storyId: text('story_id').notNull(),
   entityType: text('entity_type').notNull(),
   entityId: text('entity_id').notNull(),
-  /** Um dos valores de `SyncConflictReason` no pacote compartilhado. */
+  /** One of the `SyncConflictReason` values in the shared package. */
   reason: text('reason').notNull(),
   /** What the user did locally and has not gone through yet. */
   localOperationType: text('local_operation_type', {
-    enum: ['create', 'update', 'delete', 'reorder'],
+    enum: ['create', 'update', 'delete'],
   }).notNull(),
   /** JSON: the ids of the `operation_logs` rows grouped in this conflict. */
   localOperationIds: text('local_operation_ids').notNull(),
   /** JSON: the values the user wants to keep. */
   localValues: text('local_values').notNull(),
-  /** JSON: o estado da entidade no servidor, para o comparativo lado a lado. */
+  /** JSON: the entity's state on the server, for the side-by-side comparison. */
   serverValues: text('server_values'),
   /** The base version the user edited on top of. */
   clientVersion: integer('client_version'),

@@ -1,12 +1,13 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
@@ -42,7 +43,7 @@ import type { ItemStackParamList } from '../../navigation/MainSystemStack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type ItemJourneyDetailScreenParamList = {
-  ItemJourneyDetail: { itemJourneyId: string };
+  ItemJourneyDetail: { itemJourneyId: string; occurrence?: OccurrenceTarget };
 };
 
 type ItemJourneyDetailScreenRouteProp = RouteProp<
@@ -56,7 +57,7 @@ const ItemJourneyDetailScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<ItemStackParamList, 'ItemJourneyDetail'>>();
   const route = useRoute<ItemJourneyDetailScreenRouteProp>();
-  const { itemJourneyId } = route.params;
+  const { itemJourneyId, occurrence } = route.params;
   const { t } = useTranslation();
   const itemCopy = useVocabularyEntityCopy('Item');
   const sceneCopy = useVocabularyEntityCopy('Scene');
@@ -285,6 +286,7 @@ const ItemJourneyDetailScreen = () => {
   return (
     <DetailContainer
       title={headerTitle}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

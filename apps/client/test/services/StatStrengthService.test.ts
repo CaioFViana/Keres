@@ -10,7 +10,9 @@ jest.mock('../../src/utils/syncUtils', () => ({
   __esModule: true,
   assertStoryIsWritable: jest.fn().mockResolvedValue(undefined),
   getUserIdForOperation: jest.fn(),
-  recordLocalOperation: (...args: unknown[]) => mockOperation(...args),
+  recordLocalOperationSync: (...args: unknown[]) => mockOperation(...args),
+  runLocalWrite: (_db: unknown, _storyId: string, unit: () => unknown) => Promise.resolve(unit()),
+  afterLocalWrite: (emit: () => void) => emit(),
 }));
 jest.mock('../../src/utils/entityUtils', () => ({
   __esModule: true,
@@ -86,7 +88,7 @@ describe('StatStrengthService', () => {
     const insert = {
       values: jest.fn().mockReturnThis(),
       returning: jest.fn().mockReturnThis(),
-      get: jest.fn().mockResolvedValue({ id: 'tier-new', minValue: 5 }),
+      get: jest.fn().mockReturnValue({ id: 'tier-new', minValue: 5 }),
     };
     const db = { select: jest.fn(() => read), insert: jest.fn(() => insert) } as never;
     await expect(

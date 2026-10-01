@@ -16,6 +16,12 @@ export class RouteStepSyncHandler extends BaseSyncEntityHandler<
   typeof PartialRouteStepSchema
 > {
   entityName = 'RouteStep';
+  /**
+   * A route is one path: two devices replacing it offline both write position 1, 2, ... The
+   * second is refused as a `duplicate` of the first, so the path stays whole and the device is
+   * asked only where its step differs - never a union of both paths with every position twice.
+   */
+  readonly naturalKey = ['routeId', 'position'] as const;
   constructor() {
     super('id', 'version', CreateRouteStepDataSchema, PartialRouteStepSchema, {
       storyIdColumnName: 'storyId',

@@ -7,6 +7,8 @@ import { SiteThemeProvider } from './theme/SiteThemeProvider';
 export function SiteApp() {
   const { t, i18n } = useTranslation();
 
+  // One static index.html serves both languages: title, document language, and description
+  // follow the active language instead.
   useEffect(() => {
     document.title = t('meta.title');
     document.documentElement.lang = i18n.language;

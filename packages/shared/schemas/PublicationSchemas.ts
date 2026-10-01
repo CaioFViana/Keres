@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ManuscriptInfoSchema, ReaderInfoSchema } from '../manuscript/compile/manuscriptContracts';
 
 export const PublicationLabelModeSchema = z.enum(['version', 'date', 'both']);
 export const ShowcaseVisibilitySchema = z.enum(['public', 'password']);
@@ -23,6 +24,7 @@ export const StoryPublicationSchema = z.object({
   byteSize: z.number().int(),
   mediaIncluded: z.number().int(),
   mediaTotal: z.number().int(),
+  packageIncluded: z.boolean().default(true),
   createdAt: z.coerce.date(),
 });
 
@@ -35,6 +37,8 @@ export const StoryPublicationSchema = z.object({
 export const CreatePublicationRequestSchema = z.object({
   operationVersion: z.number().int().nonnegative(),
   labelMode: PublicationLabelModeSchema.default('both'),
+  /** Publish the story package (.zip). May be off only when a manuscript or the online reader is published. */
+  includePackage: z.boolean().default(true),
 });
 
 export const UpdateShowcaseVisibilityRequestSchema = z
@@ -62,6 +66,10 @@ export const ShowcaseVersionSchema = z.object({
   mediaIncluded: z.number().int(),
   mediaTotal: z.number().int(),
   createdAt: z.string(),
+  packageIncluded: z.boolean().default(true),
+  manuscript: ManuscriptInfoSchema.nullable(),
+  /** The online reader page published alongside the version, when there is one. */
+  reader: ReaderInfoSchema.nullable().default(null),
 });
 
 export const ShowcaseStoryCardSchema = z.object({
@@ -94,7 +102,7 @@ export type CreatePublicationRequest = z.infer<typeof CreatePublicationRequestSc
 export type UpdateShowcaseVisibilityRequest = z.infer<typeof UpdateShowcaseVisibilityRequestSchema>;
 export type UnlockShowcaseStoryRequest = z.infer<typeof UnlockShowcaseStoryRequestSchema>;
 
-/** `2026-08-19`, no fuso local de quem publica (o servidor). */
+/** `2026-08-19`, in the publisher's local time zone (the server). */
 function formatDatePart(publishedAt: Date): string {
   const year = publishedAt.getFullYear();
   const month = String(publishedAt.getMonth() + 1).padStart(2, '0');

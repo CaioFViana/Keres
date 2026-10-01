@@ -2,14 +2,13 @@ import type {
   CreateStoryUpdate,
   DeleteStoryUpdate,
   EffectiveStoryRole,
-  StoryUpdate,
   SyncAppliedOperation,
   SyncConflict,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { and, eq, max } from 'drizzle-orm';
+import { and, asc, eq, max, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db, withTransaction } from '../../db';
+import { db, withWriteTransaction } from '../../db';
 import { operationLog, stories } from '../../db/schema';
 import { AppError } from '../../utils/errors';
 import { eventManager } from '../../utils/EventManager';
@@ -22,8 +21,21 @@ import type {
 import { SyncConflictError } from '../entity-sync-handlers/BaseSyncEntityHandler';
 import { storyPermissionService } from '../StoryPermissionService';
 import { TierLimitExceededError, tierEnforcementService } from '../TierEnforcementService';
-import { getChangedFieldsSinceVersion, serializeSyncEntity } from './SyncConflictDetails';
+import { readPushEnvelope, writtenPayload } from './pushEnvelope';
+import { refuseTwin } from './pushTwins';
+import { movesArrangedRows, normalizeArrangedUpdate, renumberArranged } from './arrangedRanks';
+import { assertGalleryStorageQuota } from './pushGalleryQuota';
+import { collectPushMediaGarbage } from './pushMediaGc';
+import {
+  getChangedFieldsSinceVersion,
+  getEntityLastOperationVersion,
+  serializeSyncEntity,
+} from './SyncConflictDetails';
+import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
+import { findIdempotentHit } from './SyncPushIdempotency';
+import { shouldCompactStoryNow, storyUpdateFlipsFavorites } from './pushPolicy';
 import type { SyncOperationLogService } from './SyncOperationLogService';
+import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates
@@ -44,11 +56,15 @@ export class SyncPushService {
    * the operation log was only recorded at the end, so a broken batch left the server with data no
    * other client would ever see. Now each operation is applied and recorded individually, and the
    * refused ones come back described in `conflicts` for the client to resolve with the user.
+   *
+   * The same holds for the envelope: each element is validated on its own, so one malformed
+   * operation becomes a `validation` conflict instead of failing the whole request - which the
+   * client would resend, and fail on, every cycle, stalling every valid operation behind it.
    */
   async processAndRecordUpdates(
     userId: string,
     storyId: string,
-    updates: StoryUpdate[],
+    rawUpdates: readonly unknown[],
   ): Promise<{
     lastOperationVersion: number;
     applied: SyncAppliedOperation[];
@@ -60,7 +76,9 @@ export class SyncPushService {
     });
 
     if (!story) {
-      throw new Error('Story not found.');
+      // 404, not 500: a deleted story is a settled fact, not a broken server. The client
+      // deactivates instead of retrying forever.
+      throw new AppError(404, 'Story not found.');
     }
 
     let role: EffectiveStoryRole | undefined;
@@ -82,6 +100,7 @@ export class SyncPushService {
 
     const applied: SyncAppliedOperation[] = [];
     const conflicts: SyncConflict[] = [];
+    let storyBehaviorChanged = false;
     /**
      * Entities that already conflicted in this batch. The following operations on them were built on
      * top of a base we have just refused, so applying them would corrupt the state - they are refused
@@ -91,9 +110,28 @@ export class SyncPushService {
 
     let lastOperationVersion = await this.getMaxOperationVersion(storyId);
 
-    for (const update of updates) {
+    for (const rawUpdate of rawUpdates) {
+      const envelope = readPushEnvelope(rawUpdate);
+      if ('refusal' in envelope) {
+        blockedEntities.add(`${envelope.refusal.entity}:${envelope.refusal.entityId}`);
+        conflicts.push(envelope.refusal);
+        continue;
+      }
+      const update = normalizeArrangedUpdate(envelope.update);
       const entityId = update.id || '';
       const entityKey = `${update.entity}:${entityId}`;
+
+      // Idempotency: when a push response is lost the client resends the same batch, and without
+      // this lookup the retry of an update hits a false `version_conflict` against its own
+      // already-applied work. Ops without a clientOperationId (old clients) keep the previous
+      // behaviour.
+      if (update.clientOperationId) {
+        const hit = await findIdempotentHit(storyId, update, entityId, this.entityHandlers);
+        if (hit) {
+          applied.push(hit);
+          continue;
+        }
+      }
 
       const recordConflict = (
         reason: SyncConflict['reason'],
@@ -115,6 +153,14 @@ export class SyncPushService {
       const handler = this.entityHandlers.get(update.entity);
       if (!handler) {
         recordConflict('unknown', `No sync handler registered for entity type: ${update.entity}`);
+        continue;
+      }
+
+      // A deleted story takes no new content - only operations on the Story itself (its owner
+      // restoring it) go through. The pull delivers the deletion; these are held as conflicts,
+      // resendable if the story comes back.
+      if (story.isDeleted && update.entity !== 'Story') {
+        recordConflict('deleted_on_server', `Story ${storyId} was deleted.`);
         continue;
       }
 
@@ -144,6 +190,7 @@ export class SyncPushService {
         throw error;
       }
 
+      // A refused operation blocks what follows on its entity: those rest on the refused base.
       if (blockedEntities.has(entityKey)) {
         recordConflict(
           'version_conflict',
@@ -154,7 +201,7 @@ export class SyncPushService {
 
       let currentEntity: SyncEntityRow | undefined;
 
-      /** Contexto que a tela de conflito usa para montar o comparativo lado a lado. */
+      /** Context the conflict screen uses to build the side-by-side comparison. */
       const conflictContext = (): Partial<SyncConflict> => ({
         serverEntity: currentEntity ? serializeSyncEntity(currentEntity) : null,
         attemptedChanges:
@@ -170,8 +217,14 @@ export class SyncPushService {
             : update.version,
       });
 
-      /** Already applied: nothing to write, but the client needs to know it went through. */
-      let alreadyApplied = false;
+      /**
+       * Already applied: nothing to write, but the client needs to know it went through - and
+       * at WHICH server version. Reporting the batch's current max here (rather than the
+       * version that actually holds the effect, or 0 when no row holds it) makes the client
+       * mark its op with a version that belongs to somebody else's operation, and its echo
+       * check then skips that operation on the next pull: a silent, permanent data loss.
+       */
+      let alreadyAppliedVersion: number | null = null;
       /** Filled in inside the transaction when the operation writes something new. */
       let writeResult: {
         logged: { id: string; operationVersion: number };
@@ -183,17 +236,30 @@ export class SyncPushService {
         // that, a failure between the two steps (say, the process dying) left the entity changed but
         // invisible to other clients, and a resend of the same operation by the very client that originated
         // it hit a false `version_conflict` against its own work. Handlers receive this `tx` explicitly.
-        await withTransaction(async (tx) => {
-          // Creation handlers historically own their insert timestamps, and several of them do not
-          // call BaseSyncEntityHandler.parseOperationTime(). Validate at the protocol boundary as
-          // well, so a client clock cannot place *any* operation ahead of the server's history.
-          this.assertOperationTimeIsValid(update.operationTime);
+        // A *write* transaction (immediate on SQLite): every op here reads-then-maybe-writes, the
+        // classic lock-upgrade shape, and two deferred transactions upgrading at once deadlock where
+        // an immediate one simply waits its turn.
+        await withWriteTransaction(async (tx) => {
+          // `operationTime` was already clamped to the server's clock at the top of the loop, so
+          // creation handlers that own their insert timestamps cannot place an operation ahead
+          // of the server's history either.
+
+          // One operation of a story at a time: a no-op write takes the story row's lock (Postgres;
+          // SQLite's write transaction already serializes), so two pushes cannot both find no
+          // live twin and then both insert one - the second waits and is refused as a duplicate.
+          await tx
+            .update(stories)
+            .set({ lastOperationVersion: sql`${stories.lastOperationVersion}` })
+            .where(eq(stories.id, storyId));
 
           // A read inside the transaction: the create-vs-alreadyApplied / not_found decision has to see the
           // same row the write is going to touch.
           currentEntity = await handler.findById(entityId, tx);
 
           if (currentEntity && !handler.checkBelongsToStory(currentEntity, storyId)) {
+            // Forgotten before refusing: the conflict response carries `serverEntity`, and a row
+            // of a story the caller may not read must never leave through it.
+            currentEntity = undefined;
             throw new SyncConflictError(
               'unauthorized',
               `Entity ${entityId} does not belong to story ${storyId}.`,
@@ -211,7 +277,10 @@ export class SyncPushService {
               // the correct reference for a retried create. The server's operation log preserves
               // the original accepted create payload and is the authoritative idempotency record.
               const [recordedCreate] = await tx
-                .select({ payload: operationLog.payload })
+                .select({
+                  payload: operationLog.payload,
+                  operationVersion: operationLog.operationVersion,
+                })
                 .from(operationLog)
                 .where(
                   and(
@@ -221,6 +290,7 @@ export class SyncPushService {
                     eq(operationLog.operationType, 'create'),
                   ),
                 )
+                .orderBy(asc(operationLog.operationVersion))
                 .limit(1);
               const matchesCurrent = handler.createPayloadMatches(currentEntity, createData);
               const matchesRecordedCreate =
@@ -235,27 +305,72 @@ export class SyncPushService {
                   `An entity with ID ${entityId} already exists with different data.`,
                 );
               }
-              alreadyApplied = true;
+              // The recorded row's own version: the echo check on the client keys on it, and a
+              // fresher number would mask whatever operation actually sits there. Zero when no
+              // recorded row exists (the row came from outside sync): no pull ever carries 0.
+              alreadyAppliedVersion = recordedCreate?.operationVersion ?? 0;
             } else {
               if (handler.tierLimitScope === 'story') {
                 await tierEnforcementService.assertCanCreateStory(userId);
               } else if (handler.tierLimitScope === 'entity') {
                 await tierEnforcementService.assertCanCreateEntity(userId, storyId);
               }
+              await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
+              await refuseTwin(
+                handler,
+                storyId,
+                {
+                  ...((update as CreateStoryUpdate).data ?? {}),
+                  id: entityId,
+                },
+                tx,
+              );
               await handler.create(userId, storyId, update as CreateStoryUpdate, tx);
             }
-          } else if (update.type === 'update' || update.type === 'reorder') {
+          } else if (update.type === 'update') {
             if (!currentEntity) {
               throw new SyncConflictError(
                 'not_found',
                 `${update.entity} with ID ${entityId} does not exist on the server.`,
               );
             }
+            // A restore brings a row back into every count a create is held to; skipping the
+            // check let delete, create new, restore the old go past any plan ceiling.
+            if (
+              handler.isDeletedRow(currentEntity) &&
+              (update as UpdateStoryUpdate).changes?.isDeleted === false
+            ) {
+              if (handler.tierLimitScope === 'story') {
+                await tierEnforcementService.assertCanCreateStory(userId);
+              } else if (handler.tierLimitScope === 'entity') {
+                await tierEnforcementService.assertCanCreateEntity(userId, storyId);
+              }
+            }
+            // Restored, or re-keyed, a row may become what a live row of another id already is.
+            const changes = ((update as UpdateStoryUpdate).changes ?? {}) as Record<
+              string,
+              unknown
+            >;
+            const restoring = handler.isDeletedRow(currentEntity) && changes.isDeleted === false;
+            const stillDeleted = handler.isDeletedRow(currentEntity) && !restoring;
+            if (
+              !stillDeleted &&
+              (restoring || handler.naturalKey.some((field) => field in changes))
+            ) {
+              await refuseTwin(
+                handler,
+                storyId,
+                { ...serializeSyncEntity(currentEntity), ...changes, id: entityId },
+                tx,
+              );
+            }
+            await assertGalleryStorageQuota(update, currentEntity, userId, storyId);
             await handler.update(userId, storyId, update as UpdateStoryUpdate, currentEntity, tx);
           } else if (update.type === 'delete') {
-            if (!currentEntity) {
-              // Deleting something the server does not have is the desired outcome, not an error.
-              alreadyApplied = true;
+            if (!currentEntity || handler.isDeletedRow(currentEntity)) {
+              // Deleting something the server does not have - or already tombstoned - is the
+              // desired outcome, not an error, and logging it again would only churn versions.
+              alreadyAppliedVersion = 0;
             } else {
               const deleteUpdate = handler.prepareDelete(
                 { ...policyContext, currentEntity },
@@ -265,7 +380,13 @@ export class SyncPushService {
             }
           }
 
-          if (alreadyApplied) return;
+          if (alreadyAppliedVersion !== null) return;
+
+          // Positions follow ranks: a row that arrived, left, moved or was re-ranked renumbers
+          // its container here, in the same transaction, without touching any row's version.
+          if (movesArrangedRows(update)) {
+            await renumberArranged(tx, storyId, update.entity);
+          }
 
           // The entity's version *after* the operation, read back so the client knows which base its next
           // edits rest on.
@@ -277,6 +398,7 @@ export class SyncPushService {
               update,
               entityId,
               entityVersion: entityAfter?.version,
+              payload: writtenPayload(handler, update, currentEntity, entityAfter, userId),
             },
             tx,
           );
@@ -288,6 +410,17 @@ export class SyncPushService {
           continue;
         }
         if (error instanceof SyncConflictError) {
+          // A twin may have committed between this op's pre-check and its conflicting write
+          // (two tabs pushing the same batch): the key proves the effect already landed, so a
+          // `version_conflict` against it would be false. A genuine concurrent edit carries a
+          // different key, misses the lookup, and still conflicts below.
+          if (update.clientOperationId) {
+            const raced = await findIdempotentHit(storyId, update, entityId, this.entityHandlers);
+            if (raced) {
+              applied.push(raced);
+              continue;
+            }
+          }
           const context = conflictContext();
           const clientVersion = error.clientVersion ?? context.clientVersion;
           // It only makes sense for a `version_conflict` on an `update` of an entity that still exists - the
@@ -300,11 +433,26 @@ export class SyncPushService {
             typeof clientVersion === 'number'
               ? await getChangedFieldsSinceVersion(storyId, update.entity, entityId, clientVersion)
               : undefined;
+          const entityOperationVersion =
+            error.reason === 'version_conflict' &&
+            (update.type === 'update' || update.type === 'delete') &&
+            currentEntity
+              ? await getEntityLastOperationVersion(storyId, update.entity, entityId)
+              : undefined;
           recordConflict(error.reason, error.message, {
             ...context,
+            // A duplicate answers with the row it duplicates - the client folds its own into it -
+            // and with its own row as held here, when the server has one.
+            ...(error.existing
+              ? {
+                  serverEntity: serializeSyncEntity(error.existing),
+                  ...(currentEntity ? { ownEntity: serializeSyncEntity(currentEntity) } : {}),
+                }
+              : {}),
             clientVersion,
             serverVersion: error.serverVersion ?? context.serverVersion,
             changedFields,
+            entityOperationVersion,
           });
           continue;
         }
@@ -316,9 +464,20 @@ export class SyncPushService {
           );
           continue;
         }
-        // An unexpected failure while applying this operation. Recorded as a conflict rather than taking the
-        // batch down: the user's other operations can still be saved, and the client stops resending in a
-        // loop an operation that will never go through.
+        // An unexpected failure while applying this operation. Before calling it a conflict, check
+        // whether the op actually landed: a concurrent duplicate push (two tabs, retried batch)
+        // can lose the (storyId, clientOperationId) unique race after the twin committed, and
+        // reporting that as 'unknown' would manufacture a conflict for an applied op.
+        if (update.clientOperationId) {
+          const raced = await findIdempotentHit(storyId, update, entityId, this.entityHandlers);
+          if (raced) {
+            applied.push(raced);
+            continue;
+          }
+        }
+        // Recorded as a conflict rather than taking the batch down: the user's other operations
+        // can still be saved, and the client stops resending in a loop an operation that will
+        // never go through.
         logger.error(`SyncService: failed to apply ${update.type} on ${entityKey}`, error);
         recordConflict(
           'unknown',
@@ -328,10 +487,10 @@ export class SyncPushService {
         continue;
       }
 
-      if (alreadyApplied) {
+      if (alreadyAppliedVersion !== null) {
         applied.push({
           clientOperationId: update.clientOperationId,
-          operationVersion: lastOperationVersion,
+          operationVersion: alreadyAppliedVersion,
           entityVersion: currentEntity?.version,
           entity: update.entity,
           entityId,
@@ -340,6 +499,10 @@ export class SyncPushService {
       }
 
       const { logged, entityAfter } = writeResult!;
+      // Only now that the operation committed: collecting inside the transaction both reads stale
+      // state and risks deleting bytes a rollback would resurrect the reference of (see
+      // `collectPushMediaGarbage`). `currentEntity` is still the pre-operation row here.
+      await collectPushMediaGarbage(update, currentEntity);
       lastOperationVersion = logged.operationVersion;
       applied.push({
         clientOperationId: update.clientOperationId,
@@ -349,6 +512,9 @@ export class SyncPushService {
         entity: update.entity,
         entityId,
       });
+      if (storyUpdateFlipsFavorites(update)) {
+        storyBehaviorChanged = true;
+      }
     }
 
     if (applied.length > 0) {
@@ -360,9 +526,43 @@ export class SyncPushService {
         maxOperationVersion: lastOperationVersion,
         originatingUser: userId,
       });
+
+      // Best-effort history compaction: old update runs collapse into their final state. A
+      // compaction failure must never fail the push that just succeeded.
+      if (shouldCompactStoryNow(storyId)) {
+        try {
+          await compactStoryUpdateHistory(storyId);
+        } catch (error) {
+          logger.error('SyncService: history compaction failed', error);
+        }
+      }
+    }
+
+    if (storyBehaviorChanged) {
+      await this.repairPublicFavoritesAfterStoryChange(storyId);
     }
 
     return { lastOperationVersion, applied, conflicts };
+  }
+
+  /**
+   * A Story op may have flipped `favoriteBehavior` to `individual_public`, exposing imported
+   * favorites that have no operation logs. Repairing here - once per story edit, not once per
+   * pull per client - covers the switch at its source. Best-effort like compaction: the
+   * pull-time fingerprint mismatch re-runs the same repair, so a failure here self-heals.
+   */
+  private async repairPublicFavoritesAfterStoryChange(storyId: string): Promise<void> {
+    try {
+      const current = await db.query.stories.findFirst({
+        where: eq(stories.id, storyId),
+        columns: { favoriteBehavior: true },
+      });
+      if (current?.favoriteBehavior === 'individual_public') {
+        await ensurePublicFavoriteOperationLogs(storyId);
+      }
+    } catch (error) {
+      logger.error('SyncService: public favorite repair after story change failed', error);
+    }
   }
 
   private async getMaxOperationVersion(storyId: string): Promise<number> {
@@ -372,32 +572,4 @@ export class SyncPushService {
       .where(eq(operationLog.storyId, storyId));
     return result.at(0)?.maxVersion || 0;
   }
-
-  /** Reject malformed or materially future client clocks for every operation kind, including creates. */
-  private assertOperationTimeIsValid(operationTime: string | undefined): void {
-    if (!operationTime) return;
-    const timestamp = new Date(operationTime);
-    if (Number.isNaN(timestamp.getTime())) {
-      throw new SyncConflictError('validation', `Operation time ${operationTime} is invalid.`);
-    }
-    if (timestamp.getTime() > Date.now() + 1000) {
-      throw new SyncConflictError(
-        'validation',
-        `Operation time ${operationTime} cannot be in the future.`,
-      );
-    }
-  }
-
-  /**
-   * Which fields actually changed on this entity since the version the client read as its base - the
-   * difference between "the client's base went stale" (`version_conflict`, which only compares the
-   * version number) and "something the client also edited genuinely changed". Without it, the client
-   * has no way to know whether a `version_conflict` was caused by an edit to a field other than its
-   * own (perfectly mergeable) or to the same field (a real decision) - `serverEntity` alone does not
-   * get to that answer, because the current value of a field the client is editing always "looks"
-   * different from the value the client wants to write, whether the server touched it or not.
-   * `entityVersion` (the entity's version *after* each operation, see
-   * `db/schema/tables/operationLog.ts`) is what makes it possible to reconstruct exactly the
-   * operations that happened between the client's base and now.
-   */
 }

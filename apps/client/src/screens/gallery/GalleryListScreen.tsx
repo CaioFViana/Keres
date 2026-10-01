@@ -3,9 +3,9 @@ import { commonScreenStyleDefs } from '../../theme/commonStyles';
 import { MEDIA_TYPES } from '@keres/shared';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -15,6 +15,8 @@ import { promptGalleryAddKind } from '@/src/components/features/gallery/promptGa
 import GalleryGridItem from '@/src/components/features/list-items/GalleryGridItem';
 import { useDrizzle } from '../../db';
 import type { GallerySelect } from '../../db/schemas/galleries';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -39,6 +41,8 @@ export type GalleryScreenNavigationProp = CompositeNavigationProp<
 
 const GalleryListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('GalleryStack');
+  const listAnchorRef = useScreenAnchor('Gallery', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { breakpoint } = useResponsiveLayout();
@@ -80,37 +84,45 @@ const GalleryListScreen = () => {
         return;
       }
 
-      let assets;
+      // The picker covers the app with a native activity: an open drawer would be revealed
+      // mid-transition on return, so it is put away on both sides of the flow. A no-op when
+      // already closed.
+      navigation.dispatch(DrawerActions.closeDrawer());
       try {
-        assets = await picker();
-      } catch (pickError) {
-        console.log('Media picker failed:', pickError);
-        showNotification(t('media_picker_failed'), 'error');
-        return;
-      }
+        let assets;
+        try {
+          assets = await picker();
+        } catch (pickError) {
+          console.log('Media picker failed:', pickError);
+          showNotification(t('media_picker_failed'), 'error');
+          return;
+        }
 
-      if (!assets) {
-        return;
-      }
+        if (!assets) {
+          return;
+        }
 
-      setImporting(true);
-      const galleryService = createGalleryService(db);
-      const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
-      setImporting(false);
+        setImporting(true);
+        const galleryService = createGalleryService(db);
+        const summary = await importPickedMediaAssets(galleryService, storyId, userId, assets);
+        setImporting(false);
 
-      if (summary.added > 0) {
-        showNotification(t('media_added_successfully', { count: summary.added }), 'success');
-      }
-      if (summary.duplicates > 0) {
-        showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
-      }
-      if (summary.rejected > 0) {
-        showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
-      }
+        if (summary.added > 0) {
+          showNotification(t('media_added_successfully', { count: summary.added }), 'success');
+        }
+        if (summary.duplicates > 0) {
+          showNotification(t('media_already_in_gallery', { count: summary.duplicates }), 'info');
+        }
+        if (summary.rejected > 0) {
+          showNotification(t('media_unsupported_skipped', { count: summary.rejected }), 'warning');
+        }
 
-      await refetch();
+        await refetch();
+      } finally {
+        navigation.dispatch(DrawerActions.closeDrawer());
+      }
     },
-    [storyId, userId, db, showNotification, t, refetch],
+    [storyId, userId, db, navigation, showNotification, t, refetch],
   );
 
   const handleAddLink = useCallback(
@@ -235,20 +247,35 @@ const GalleryListScreen = () => {
           void handleAddLink(url, title);
         }}
       />
-      <GenericFilterSortList
-        {...listProps}
-        key={`gallery-columns-${numColumns}`}
-        data={galleries}
-        renderItem={renderGalleryItem}
-        keyExtractor={(item) => item.id}
-        numColumns={numColumns}
-        columnWrapperStyle={styles.columnWrapper}
-        searchPlaceholder={t('search_media')}
-        filterOptions={mediaTypeOptions}
-        sortOptions={sortOptions}
-        entityName="Gallery"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          key={`gallery-columns-${numColumns}`}
+          data={galleries}
+          renderItem={renderGalleryItem}
+          keyExtractor={(item) => item.id}
+          numColumns={numColumns}
+          columnWrapperStyle={styles.columnWrapper}
+          searchPlaceholder={t('search_media')}
+          filterOptions={mediaTypeOptions}
+          sortOptions={sortOptions}
+          entityName="Gallery"
+          storyId={storyId || ''}
+          emptyStateTitle={t('galleries_empty_title')}
+          emptyStateMessage={t('galleries_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('galleries_empty_create'),
+                    onPress: handleAddMedia,
+                    testID: 'empty-create-gallery',
+                  },
+                ]
+              : []
+          }
+        />
+      </View>
     </View>
   );
 };

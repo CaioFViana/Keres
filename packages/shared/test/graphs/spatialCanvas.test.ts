@@ -7,6 +7,8 @@ import {
   MAX_SPATIAL_WORLD_COORDINATE,
   spatialBounds,
   spatialNativeSurface,
+  spatialOverlayNeedsSync,
+  spatialOverlayScaleDrifted,
   spatialRectIntersects,
   spatialRenderWindow,
   spatialScreenToWorld,
@@ -77,6 +79,49 @@ describe('spatial canvas geometry', () => {
       width: 600,
       height: 300,
     });
+  });
+
+  it('caps the native surface below the GPU texture limit of old phones', () => {
+    expect(MAX_SPATIAL_NATIVE_SURFACE).toBeLessThanOrEqual(2048);
+  });
+
+  it('keeps the overlay quiet while the visible rect stays comfortably inside', () => {
+    const overlay = { x: 0, y: 0, width: 300, height: 300 };
+    expect(spatialOverlayNeedsSync({ x: 100, y: 100, width: 100, height: 100 }, overlay)).toBe(
+      false,
+    );
+  });
+
+  it('re-syncs the overlay once the visible rect drifts past the margin', () => {
+    const overlay = { x: 0, y: 0, width: 300, height: 300 };
+    expect(spatialOverlayNeedsSync({ x: 10, y: 100, width: 100, height: 100 }, overlay)).toBe(true);
+    expect(spatialOverlayNeedsSync({ x: 100, y: 100, width: 100, height: 150 }, overlay)).toBe(
+      true,
+    );
+  });
+
+  it('re-syncs an overlay that was never laid out', () => {
+    expect(
+      spatialOverlayNeedsSync(
+        { x: 0, y: 0, width: 100, height: 100 },
+        { x: 0, y: 0, width: 0, height: 0 },
+      ),
+    ).toBe(true);
+  });
+
+  it('tolerates a pinch inside the scale drift, since the bitmap barely grows', () => {
+    expect(spatialOverlayScaleDrifted(1.1, 1)).toBe(false);
+    expect(spatialOverlayScaleDrifted(0.9, 1)).toBe(false);
+  });
+
+  it('re-syncs once a pinch drifts the scale past the threshold', () => {
+    expect(spatialOverlayScaleDrifted(1.3, 1)).toBe(true);
+    expect(spatialOverlayScaleDrifted(0.7, 1)).toBe(true);
+  });
+
+  it('re-syncs an overlay whose sync scale is missing or invalid', () => {
+    expect(spatialOverlayScaleDrifted(1, 0)).toBe(true);
+    expect(spatialOverlayScaleDrifted(0, 1)).toBe(true);
   });
 });
 

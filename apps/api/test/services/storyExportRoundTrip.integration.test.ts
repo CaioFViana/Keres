@@ -223,13 +223,14 @@ beforeEach(async () => {
     isDefault: true,
   } as never);
   await db.insert(chapters).values([
-    { id: id.chapter, storyId, name: 'Primeira noite', index: 1, arcId: id.storyArc },
+    { id: id.chapter, storyId, name: 'Primeira noite', index: 1, rank: 'a1', arcId: id.storyArc },
     // An event, so the package carries both kinds of container and a chronology between them.
     {
       id: id.event,
       storyId,
       name: 'A guerra de trezentos anos',
       index: 1,
+      rank: 'a1',
       type: 'event',
       arcId: id.storyArc,
     },
@@ -254,6 +255,8 @@ beforeEach(async () => {
       locationId: id.location,
       name: 'A luz apaga',
       index: 1,
+      rank: 'a1',
+      body: 'A luz apaga **de repente**.\n\nNinguém se mexe.',
       isStart: true,
     },
     {
@@ -263,6 +266,7 @@ beforeEach(async () => {
       locationId: id.otherLocation,
       name: 'A maré sobe',
       index: 2,
+      rank: 'a2',
     },
   ] as never);
   // The event is placed against the spine, which is what the anchor is for.
@@ -500,6 +504,7 @@ beforeEach(async () => {
     entityType: 'Character',
     name: 'Ofício',
     key: 'oficio',
+    rank: 'a1',
     type: 'text',
   } as never);
   await db.insert(attributeValues).values({
@@ -528,8 +533,8 @@ beforeEach(async () => {
     criticality: 2,
   } as never);
   await db.insert(stats).values([
-    { id: id.stat, storyId, name: 'Coragem', isPrimary: true, order: 0 },
-    { id: id.secondaryStat, storyId, name: 'Reputação', isPrimary: false, order: 1 },
+    { id: id.stat, storyId, name: 'Coragem', isPrimary: true, order: 0, rank: 'a1' },
+    { id: id.secondaryStat, storyId, name: 'Reputação', isPrimary: false, order: 1, rank: 'a2' },
   ] as never);
   await db.insert(statStrengths).values([
     // A null statId is the story's default ladder; the other row is the stat's override.
@@ -623,6 +628,14 @@ describe('export of a story with one row of every kind', () => {
       expect({ collection, length: rows.length }).toEqual({ collection, length: rows.length });
       expect(rows.length).toBeGreaterThan(0);
     }
+  });
+
+  it('carries the manuscript of a scene, not only its summary', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+
+    const written = pkg.scenes.find((scene: { id: string }) => scene.id === id.sceneA);
+    expect(written?.body).toBe('A luz apaga **de repente**.\n\nNinguém se mexe.');
+    expect(pkg.scenes.find((scene: { id: string }) => scene.id === id.sceneB)?.body).toBeNull();
   });
 
   it('leaves soft-deleted rows out of the package', async () => {
@@ -751,6 +764,75 @@ describe('import of a package with one row of every kind', () => {
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,
     ).toBe(id.characterA);
+  });
+
+  it('brings the manuscript of a scene through an import with regenerated ids', async () => {
+    const pkg = await service.exportStory(id.story, OWNER);
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(IMPORTER, JSON.parse(JSON.stringify(pkg)));
+    const after = await childrenOf(importedId);
+
+    expect(after.scenes.map((scene) => scene.body).sort()).toEqual([
+      'A luz apaga **de repente**.\n\nNinguém se mexe.',
+      null,
+    ]);
+  });
+
+  it('imports a V10 package, whose scenes have no body, with a null body', async () => {
+    const pkg = JSON.parse(JSON.stringify(await service.exportStory(id.story, OWNER)));
+    pkg.formatVersion = 10;
+    for (const scene of pkg.scenes) delete scene.body;
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(IMPORTER, pkg);
+    const after = await childrenOf(importedId);
+
+    expect(after.scenes.map((scene) => scene.body)).toEqual([null, null]);
+  });
+
+  it('keeps the order of a package that predates ranks, even when it lists its rows backwards', async () => {
+    const pkg = JSON.parse(JSON.stringify(await service.exportStory(id.story, OWNER)));
+    const positions = (rows: { id: string; index: number }[]) =>
+      Object.fromEntries(rows.map((row) => [row.id, row.index]));
+    const sceneNames = Object.fromEntries(
+      pkg.scenes.map((scene: { id: string; name: string }) => [scene.id, scene.name]),
+    );
+    const before = positions(pkg.scenes);
+    // What a V10 package looked like: no ranks, and rows in an order that is not their position,
+    // so the ids the import hands out sort the other way round.
+    pkg.formatVersion = 10;
+    for (const row of [...pkg.scenes, ...pkg.chapters, ...pkg.stats, ...pkg.storySchemaFields]) {
+      delete row.rank;
+    }
+    pkg.scenes.reverse();
+    pkg.chapters.reverse();
+    await truncateAll();
+    await db.insert(users).values([
+      { id: OWNER, username: 'dona', tag: 'dona', password: 'x' },
+      { id: IMPORTER, username: 'leitor', tag: 'leitor', password: 'x' },
+    ] as never);
+
+    const importedId = await service.importStory(IMPORTER, pkg);
+    const after = await childrenOf(importedId);
+
+    const landed = Object.fromEntries(
+      after.scenes.map((scene) => [scene.name, [scene.index, scene.rank !== '']]),
+    );
+    for (const [sceneId, index] of Object.entries(before)) {
+      expect(landed[sceneNames[sceneId]]).toEqual([index, true]);
+    }
+    for (const row of [...after.chapters, ...after.stats, ...after.storySchemaFields]) {
+      expect(row.rank).not.toBe('');
+    }
   });
 
   it('re-exports every collection and reference after a preserve-id import', async () => {

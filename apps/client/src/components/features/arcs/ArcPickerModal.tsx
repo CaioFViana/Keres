@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -48,31 +49,55 @@ const ArcPickerModal: React.FC<Props> = ({ visible, arcs, activeArcId, onSelect,
               style={styles.row}
               onPress={() => choose(null)}
               accessibilityRole="button"
+              testID="arc-picker-row-all"
             >
-              <Ionicons
-                name={activeArcId ? 'ellipse-outline' : 'checkmark-circle'}
+              <MapIcon
+                name="library"
                 size={22}
                 color={colors.primary}
+                testID="arc-picker-icon-all"
               />
               <Text style={[styles.label, { color: colors.text }]}>
                 {t('all_arcs', { arcs: vocab.term('Arc', true) })}
               </Text>
-            </TouchableOpacity>
-            {arcs.map((arc) => (
-              <TouchableOpacity
-                key={arc.id}
-                style={styles.row}
-                onPress={() => choose(arc.id)}
-                accessibilityRole="button"
-              >
+              {!activeArcId && (
                 <Ionicons
-                  name={activeArcId === arc.id ? 'checkmark-circle' : 'ellipse-outline'}
+                  name="checkmark-circle"
                   size={22}
-                  color={arc.color || colors.primary}
+                  color={colors.primary}
+                  testID="arc-picker-check-all"
                 />
-                <Text style={[styles.label, { color: colors.text }]}>{arc.title}</Text>
-              </TouchableOpacity>
-            ))}
+              )}
+            </TouchableOpacity>
+            {arcs.map((arc) => {
+              const color = arc.color || colors.primary;
+              const selected = activeArcId === arc.id;
+              return (
+                <TouchableOpacity
+                  key={arc.id}
+                  style={styles.row}
+                  onPress={() => choose(arc.id)}
+                  accessibilityRole="button"
+                  testID={`arc-picker-row-${arc.id}`}
+                >
+                  <MapIcon
+                    name={arc.icon || 'library'}
+                    size={22}
+                    color={color}
+                    testID={`arc-picker-icon-${arc.id}`}
+                  />
+                  <Text style={[styles.label, { color: colors.text }]}>{arc.title}</Text>
+                  {selected && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={22}
+                      color={colors.primary}
+                      testID={`arc-picker-check-${arc.id}`}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </Pressable>
       </Pressable>
@@ -103,6 +128,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   label: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
   },

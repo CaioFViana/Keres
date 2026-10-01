@@ -10,7 +10,7 @@ import {
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
@@ -30,7 +30,7 @@ export default function RouteDetailScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<Navigation>();
-  const { routeId } = useRoute<ScreenRoute>().params;
+  const { routeId, occurrence } = useRoute<ScreenRoute>().params;
   const { selectedStory } = useStoryStore();
   const { routes, stepsOf, sceneById, validationOf, executionValidationOf, loading } =
     useStoryRoutes(selectedStory?.id);
@@ -99,7 +99,7 @@ export default function RouteDetailScreen() {
   const execution = executionValidationOf(routeId);
   const unavailableIssue = execution.issues.find((issue) => issue.kind === 'choice_unavailable');
   return (
-    <DetailContainer title={route.name}>
+    <DetailContainer title={route.name} landing={occurrence ?? null}>
       <Text style={styles.count}>{t('route_step_count', { count: steps.length })}</Text>
       {issues.length ? (
         <Text style={styles.invalid}>
@@ -113,7 +113,11 @@ export default function RouteDetailScreen() {
           })}
         </Text>
       ) : null}
-      <DetailField label={t('route_details')} value={route.details || t('common_na')} />
+      <DetailField
+        label={t('route_details')}
+        value={route.details || t('common_na')}
+        fieldKey="details"
+      />
       <ScreenSection title={t('route_steps')} />
       {steps.length ? (
         steps.map((step) => {

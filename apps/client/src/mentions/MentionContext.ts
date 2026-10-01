@@ -4,7 +4,12 @@ import {
   type MentionMatcher,
   type MentionRef,
 } from '../utils/entityMentions';
-import type { MentionBacklink, MentionBacklinkIndex } from './mentionBacklinks';
+import type {
+  AmbiguousMention,
+  AmbiguousMentionIndex,
+  MentionBacklink,
+  MentionBacklinkIndex,
+} from './mentionBacklinks';
 
 /**
  * The story's mention matcher and the way to open one, for any component that draws text.
@@ -27,6 +32,7 @@ import type { MentionBacklink, MentionBacklinkIndex } from './mentionBacklinks';
 
 export const MentionMatcherContext = createContext<MentionMatcher>(EMPTY_MENTION_MATCHER);
 export const MentionBacklinksContext = createContext<MentionBacklinkIndex>(new Map());
+export const MentionAmbiguityContext = createContext<AmbiguousMentionIndex>(new Map());
 
 export type OpenMention = (ref: MentionRef) => void;
 
@@ -48,4 +54,9 @@ export const useMentions = (): MentionsAccess => {
 export const useMentionBacklinks = (type: MentionRef['type'], id: string): MentionBacklink[] => {
   const backlinks = useContext(MentionBacklinksContext);
   return backlinks.get(`${type}:${id}`) ?? [];
+};
+
+export const useAmbiguousMentions = (type: MentionRef['type'], id: string): AmbiguousMention[] => {
+  const ambiguities = useContext(MentionAmbiguityContext);
+  return ambiguities.get(`${type}:${id}`) ?? [];
 };

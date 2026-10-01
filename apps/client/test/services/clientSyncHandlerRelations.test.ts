@@ -64,6 +64,104 @@ describe('collaboration sync handlers', () => {
     );
   });
 
+  it('refuses comment work before a database is set', async () => {
+    const handler = new CommentClientSyncHandler();
+
+    await expect(handler.applyCreate(STORY_ID, createUpdate('Comment', 'c-1', {}))).rejects.toThrow(
+      /database not set/,
+    );
+  });
+
+  it('ignores comment operations addressed to another entity type', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'c-1', {}));
+    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'c-1', {}));
+    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'c-1'));
+
+    expect(await database.db.select().from(schema.comments).all()).toEqual([]);
+  });
+
+  it('refuses comment operations with no id or no changes', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Comment', data: {} } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'Comment',
+      changes: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Comment', id: 'c-1' } as never);
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Comment' } as never);
+
+    expect(await database.db.select().from(schema.comments).all()).toEqual([]);
+  });
+
+  it('stores a tombstone comment with its deletion date revived', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Comment', 'comment-9', {
+        entityType: 'Character',
+        entityId: 'character-1',
+        fieldKey: 'name',
+        authorUserId: 'author-1',
+        commentText: 'x',
+        criticality: 1,
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: true,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('comment-9');
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
+
+  it('revives the ISO dates a comment change carries', async () => {
+    const handler = new CommentClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Comment', 'comment-1', {
+        entityType: 'Character',
+        entityId: 'character-1',
+        fieldKey: 'name',
+        authorUserId: 'author-1',
+        commentText: 'old',
+        criticality: 1,
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Comment', 'comment-1', {
+        commentText: 'new',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('comment-1');
+    expect(row).toMatchObject({ commentText: 'new' });
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+  });
+
   it('syncs a user favorite idempotently without altering a separate favorite', async () => {
     const handler = new FavoriteClientSyncHandler();
     handler.setDb(database.db);
@@ -99,7 +197,128 @@ describe('collaboration sync handlers', () => {
     );
   });
 
-  it('uses the story context and unique relation key to make see-also pulls repeatable', async () => {
+  it('refuses favorite work before a database is set', async () => {
+    const handler = new FavoriteClientSyncHandler();
+
+    await expect(
+      handler.applyCreate(STORY_ID, createUpdate('Favorite', 'f-1', {})),
+    ).rejects.toThrow(/database not set/);
+  });
+
+  it('ignores favorite operations addressed to another entity type', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'f-1', {}));
+    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'f-1', {}));
+    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'f-1'));
+
+    expect(await database.db.select().from(schema.favorites).all()).toEqual([]);
+  });
+
+  it('refuses favorite operations with no id or no changes', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, { type: 'create', entity: 'Favorite', data: {} } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'Favorite',
+      changes: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, { type: 'update', entity: 'Favorite', id: 'f-1' } as never);
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'Favorite' } as never);
+
+    expect(await database.db.select().from(schema.favorites).all()).toEqual([]);
+  });
+
+  it('applies a favorite change and revives the ISO dates it carries', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Favorite', 'favorite-1', {
+        entityId: 'character-1',
+        entityType: 'Character',
+        userId: 'reader-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Favorite', 'favorite-1', {
+        entityId: 'character-2',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('favorite-1');
+    expect(row).toMatchObject({ entityId: 'character-2' });
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('applies a favorite change that carries no dates', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Favorite', 'favorite-1', {
+        entityId: 'character-1',
+        entityType: 'Character',
+        userId: 'reader-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('Favorite', 'favorite-1', { entityId: 'character-2' }),
+    );
+
+    expect(await handler.getById('favorite-1')).toMatchObject({ entityId: 'character-2' });
+  });
+
+  it('stores a tombstone favorite with its deletion date revived', async () => {
+    const handler = new FavoriteClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Favorite', 'favorite-9', {
+        entityId: 'character-1',
+        entityType: 'Character',
+        userId: 'reader-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: true,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('favorite-9');
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
+
+  /**
+   * The server refuses a second live relation of one pair, so a pulled twin is history the server
+   * holds (the first one deleted since, say): the device mirrors it rather than folding it away.
+   */
+  it('uses the story context and mirrors every see-also row the server sends', async () => {
     const handler = new SeeAlsoRelationClientSyncHandler();
     handler.setDb(database.db);
     const relation = {
@@ -128,7 +347,135 @@ describe('collaboration sync handlers', () => {
 
     expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([
       expect.objectContaining({ id: 'see-1', storyId: STORY_ID, entityBId: 'location-2' }),
+      expect.objectContaining({ id: 'see-2', storyId: STORY_ID, entityBId: 'location-1' }),
     ]);
+  });
+
+  it('refuses see-also work before a database is set', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+
+    await expect(
+      handler.applyCreate(STORY_ID, createUpdate('SeeAlsoRelation', 'see-1', {})),
+    ).rejects.toThrow(/database not set/);
+  });
+
+  it('ignores see-also operations addressed to another entity type', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, createUpdate('OutraEntidade', 'see-1', {}));
+    await handler.applyUpdate(STORY_ID, updateUpdate('OutraEntidade', 'see-1', {}));
+    await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'see-1'));
+
+    expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([]);
+  });
+
+  it('refuses see-also operations with no id or no changes', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(STORY_ID, {
+      type: 'create',
+      entity: 'SeeAlsoRelation',
+      data: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'SeeAlsoRelation',
+      changes: {},
+    } as never);
+    await handler.applyUpdate(STORY_ID, {
+      type: 'update',
+      entity: 'SeeAlsoRelation',
+      id: 'see-1',
+    } as never);
+    await handler.applyDelete(STORY_ID, { type: 'delete', entity: 'SeeAlsoRelation' } as never);
+
+    expect(await database.db.select().from(schema.seeAlsoRelations).all()).toEqual([]);
+  });
+
+  it('soft-deletes a see-also link, keeping the row so the tombstone survives', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('SeeAlsoRelation', 'see-1', {
+        entityAType: 'Character',
+        entityAId: 'character-1',
+        entityBType: 'Location',
+        entityBId: 'location-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyDelete(STORY_ID, deleteUpdate('SeeAlsoRelation', 'see-1'));
+
+    const row = await handler.getById('see-1');
+    expect(row).toMatchObject({ isDeleted: true });
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('stores a tombstone see-also link with its deletion date revived', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('SeeAlsoRelation', 'see-9', {
+        entityAType: 'Character',
+        entityAId: 'character-1',
+        entityBType: 'Location',
+        entityBId: 'location-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: true,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('see-9');
+    expect(row?.deletedAt).toBeInstanceOf(Date);
+    expect((row?.deletedAt as Date).toISOString()).toBe(CREATED_AT);
+  });
+
+  it('revives the ISO dates a see-also change carries', async () => {
+    const handler = new SeeAlsoRelationClientSyncHandler();
+    handler.setDb(database.db);
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('SeeAlsoRelation', 'see-1', {
+        entityAType: 'Character',
+        entityAId: 'character-1',
+        entityBType: 'Location',
+        entityBId: 'location-1',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      }),
+    );
+
+    await handler.applyUpdate(
+      STORY_ID,
+      updateUpdate('SeeAlsoRelation', 'see-1', {
+        entityBId: 'location-2',
+        createdAt: CREATED_AT,
+        updatedAt: CREATED_AT,
+        deletedAt: CREATED_AT,
+      }),
+    );
+
+    const row = await handler.getById('see-1');
+    expect(row).toMatchObject({ entityBId: 'location-2' });
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
+    expect(row?.deletedAt).toBeInstanceOf(Date);
   });
 
   it('applies gallery ownership changes and ignores another entity type', async () => {
@@ -160,7 +507,13 @@ describe('collaboration sync handlers', () => {
   });
 });
 
-describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
+/**
+ * The server refuses a second connection of one pair or a second parent of one child, and the
+ * device that made it folds its own row into the first: whatever a pull brings is a row the
+ * server holds, and the device mirrors it - judging it here (by recency) dropped server rows or
+ * deleted local ones with nothing recorded, and the devices drifted apart.
+ */
+describe('LocationRelationClientSyncHandler mirroring', () => {
   const relation = (id: string, overrides: Record<string, unknown> = {}) => ({
     id,
     storyId: STORY_ID,
@@ -181,7 +534,7 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
     return handler;
   };
 
-  it('keeps the newer local connection when a duplicate arrives from the server', async () => {
+  it('takes every relation the server sends, whatever else this device holds', async () => {
     const handler = withHandler();
     await handler.applyCreate(
       STORY_ID,
@@ -194,69 +547,26 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
 
     await handler.applyCreate(
       STORY_ID,
-      createUpdate('LocationRelation', 'older-remote', relation('older-remote')),
+      createUpdate('LocationRelation', 'remote', relation('remote')),
+    );
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate(
+        'LocationRelation',
+        'parent',
+        relation('parent', { relationType: 'contains', locationBId: 'child' }),
+      ),
     );
 
-    expect(await database.db.select().from(schema.locationRelations).all()).toEqual([
-      expect.objectContaining({ id: 'local', isDeleted: false }),
+    const rows = await database.db.select().from(schema.locationRelations).all();
+    expect(rows.map((row) => [row.id, row.isDeleted]).sort()).toEqual([
+      ['local', false],
+      ['parent', false],
+      ['remote', false],
     ]);
   });
 
-  it('replaces an older local connection when the incoming duplicate is newer', async () => {
-    const handler = withHandler();
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate('LocationRelation', 'local', relation('local')),
-    );
-
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'newer-remote',
-        relation('newer-remote', { updatedAt: '2026-08-11T12:00:00.000Z' }),
-      ),
-    );
-
-    const byId = new Map(
-      (await database.db.select().from(schema.locationRelations).all()).map((row) => [row.id, row]),
-    );
-    expect(byId.get('local')).toMatchObject({ isDeleted: true, version: 2 });
-    expect(byId.get('newer-remote')).toMatchObject({ isDeleted: false });
-  });
-
-  it('treats a child with another contains parent as the same conflict class', async () => {
-    const handler = withHandler();
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'old-parent',
-        relation('old-parent', {
-          relationType: 'contains',
-          locationAId: 'parent-a',
-          locationBId: 'child',
-        }),
-      ),
-    );
-
-    await handler.applyCreate(
-      STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'new-parent',
-        relation('new-parent', {
-          relationType: 'contains',
-          locationAId: 'parent-b',
-          locationBId: 'child',
-        }),
-      ),
-    );
-
-    expect(await database.db.select().from(schema.locationRelations).all()).toHaveLength(1);
-  });
-
-  it('does not overwrite a local relation when an older update would make it duplicate', async () => {
+  it('applies an update as the server made it, never judging it against other rows', async () => {
     const handler = withHandler();
     await handler.applyCreate(
       STORY_ID,
@@ -268,25 +578,18 @@ describe('LocationRelationClientSyncHandler duplicate reconciliation', () => {
     );
     await handler.applyCreate(
       STORY_ID,
-      createUpdate(
-        'LocationRelation',
-        'existing',
-        relation('existing', { updatedAt: '2026-08-11T12:00:00.000Z' }),
-      ),
+      createUpdate('LocationRelation', 'other', relation('other')),
     );
 
     await handler.applyUpdate(
       STORY_ID,
-      updateUpdate('LocationRelation', 'target', {
-        locationAId: 'location-a',
-        locationBId: 'location-b',
-        updatedAt: CREATED_AT,
-      }),
+      updateUpdate('LocationRelation', 'target', { relationType: 'contains' }),
     );
 
     expect(await handler.getById('target')).toEqual(
-      expect.objectContaining({ locationAId: 'location-c', locationBId: 'location-d' }),
+      expect.objectContaining({ relationType: 'contains', locationAId: 'location-c' }),
     );
+    expect(await handler.getById('other')).toEqual(expect.objectContaining({ isDeleted: false }));
   });
 
   it('ignores malformed, misaddressed, and missing local operations without mutating a relation', async () => {

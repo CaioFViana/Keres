@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Text, TextInput, StyleSheet } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import EntityFormContainer from '../../src/components/common/forms/EntityFormContainer/EntityFormContainer';

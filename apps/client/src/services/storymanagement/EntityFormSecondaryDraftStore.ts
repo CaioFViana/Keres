@@ -1,5 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NoteRelation } from '@keres/shared/entities/Note';
+import {
+  clearBoundEditorDraft,
+  isEditorDraftDbBound,
+  readBoundEditorDraft,
+  SECONDARY_DRAFT_FIELD,
+  writeEditorDraftNow,
+} from '../EditorDraftService';
 
 /**
  * Durable secondary-data draft for multi-step entity forms.
@@ -49,18 +56,7 @@ export function resetEntityFormSecondaryDraftLocksForTests(): void {
   draftLocks.clear();
 }
 
-export async function readEntityFormSecondaryDraft(
-  storyId: string,
-  entityType: string,
-  entityId: string,
-): Promise<EntityFormSecondaryDraft | null> {
-  let raw: string | null;
-  try {
-    raw = await AsyncStorage.getItem(storageKey(storyId, entityType, entityId));
-  } catch (error) {
-    console.error('Failed to read entity secondary draft:', error);
-    throw error;
-  }
+function parseSecondaryDraft(raw: string | null): EntityFormSecondaryDraft | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<EntityFormSecondaryDraft>;
@@ -83,6 +79,54 @@ export async function readEntityFormSecondaryDraft(
   }
 }
 
+async function readLegacyDraft(
+  storyId: string,
+  entityType: string,
+  entityId: string,
+): Promise<EntityFormSecondaryDraft | null> {
+  let raw: string | null;
+  try {
+    raw = await AsyncStorage.getItem(storageKey(storyId, entityType, entityId));
+  } catch (error) {
+    console.error('Failed to read entity secondary draft:', error);
+    throw error;
+  }
+  return parseSecondaryDraft(raw);
+}
+
+export async function readEntityFormSecondaryDraft(
+  storyId: string,
+  entityType: string,
+  entityId: string,
+): Promise<EntityFormSecondaryDraft | null> {
+  if (isEditorDraftDbBound()) {
+    const row = await readBoundEditorDraft(storyId, entityType, entityId, SECONDARY_DRAFT_FIELD);
+    if (row) return parseSecondaryDraft(row.content);
+    // One-time transparent adoption of drafts left in AsyncStorage by older versions.
+    const legacy = await readLegacyDraft(storyId, entityType, entityId);
+    if (legacy) {
+      const stored = await writeEditorDraftNow(
+        storyId,
+        entityType,
+        entityId,
+        SECONDARY_DRAFT_FIELD,
+        JSON.stringify({ ...legacy, updatedAt: legacy.updatedAt }),
+      );
+      // Only drop the legacy copy once the SQLite one exists: if the database was unbound
+      // mid-flight, the legacy key is still the only copy.
+      if (stored) {
+        try {
+          await AsyncStorage.removeItem(storageKey(storyId, entityType, entityId));
+        } catch (error) {
+          console.error('Failed to clear adopted entity secondary draft:', error);
+        }
+      }
+    }
+    return legacy;
+  }
+  return readLegacyDraft(storyId, entityType, entityId);
+}
+
 export async function writeEntityFormSecondaryDraft(
   storyId: string,
   entityType: string,
@@ -91,12 +135,28 @@ export async function writeEntityFormSecondaryDraft(
 ): Promise<void> {
   const key = storageKey(storyId, entityType, entityId);
   await withDraftLock(key, async () => {
+    const payload: EntityFormSecondaryDraft = {
+      ...draft,
+      pendingEntityRelations: draft.pendingEntityRelations ?? [],
+      updatedAt: new Date().toISOString(),
+    };
+    if (isEditorDraftDbBound()) {
+      try {
+        const stored = await writeEditorDraftNow(
+          storyId,
+          entityType,
+          entityId,
+          SECONDARY_DRAFT_FIELD,
+          JSON.stringify(payload),
+        );
+        if (!stored) throw new Error('Editor draft database was unbound mid-write.');
+      } catch (error) {
+        console.error('Failed to write entity secondary draft:', error);
+        throw error;
+      }
+      return;
+    }
     try {
-      const payload: EntityFormSecondaryDraft = {
-        ...draft,
-        pendingEntityRelations: draft.pendingEntityRelations ?? [],
-        updatedAt: new Date().toISOString(),
-      };
       await AsyncStorage.setItem(key, JSON.stringify(payload));
     } catch (error) {
       console.error('Failed to write entity secondary draft:', error);
@@ -112,6 +172,14 @@ export async function clearEntityFormSecondaryDraft(
 ): Promise<void> {
   const key = storageKey(storyId, entityType, entityId);
   await withDraftLock(key, async () => {
+    if (isEditorDraftDbBound()) {
+      try {
+        await clearBoundEditorDraft(storyId, entityType, entityId, SECONDARY_DRAFT_FIELD);
+      } catch (error) {
+        console.error('Failed to clear entity secondary draft:', error);
+        throw error;
+      }
+    }
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
@@ -136,14 +204,30 @@ export async function patchEntityFormSecondaryDraft(
   await withDraftLock(key, async () => {
     const current = await readEntityFormSecondaryDraft(storyId, entityType, entityId);
     if (!current) return;
+    const payload: EntityFormSecondaryDraft = {
+      selectedTagIds: patch.selectedTagIds ?? current.selectedTagIds,
+      pendingNoteRelations: patch.pendingNoteRelations ?? current.pendingNoteRelations,
+      customValues: patch.customValues ?? current.customValues,
+      pendingEntityRelations: patch.pendingEntityRelations ?? current.pendingEntityRelations,
+      updatedAt: new Date().toISOString(),
+    };
+    if (isEditorDraftDbBound()) {
+      try {
+        const stored = await writeEditorDraftNow(
+          storyId,
+          entityType,
+          entityId,
+          SECONDARY_DRAFT_FIELD,
+          JSON.stringify(payload),
+        );
+        if (!stored) throw new Error('Editor draft database was unbound mid-write.');
+      } catch (error) {
+        console.error('Failed to patch entity secondary draft:', error);
+        throw error;
+      }
+      return;
+    }
     try {
-      const payload: EntityFormSecondaryDraft = {
-        selectedTagIds: patch.selectedTagIds ?? current.selectedTagIds,
-        pendingNoteRelations: patch.pendingNoteRelations ?? current.pendingNoteRelations,
-        customValues: patch.customValues ?? current.customValues,
-        pendingEntityRelations: patch.pendingEntityRelations ?? current.pendingEntityRelations,
-        updatedAt: new Date().toISOString(),
-      };
       await AsyncStorage.setItem(key, JSON.stringify(payload));
     } catch (error) {
       console.error('Failed to patch entity secondary draft:', error);

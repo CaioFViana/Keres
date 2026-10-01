@@ -73,9 +73,20 @@ function previewOf(slug: string, language: string, pack: unknown): ShippedPackPr
       tags?: unknown;
       stats?: unknown;
       settings?: { statSystem?: unknown; vocabulary?: { terms?: unknown } | null };
+      extras?: {
+        chapters?: unknown;
+        scenes?: unknown;
+        characters?: unknown;
+        locations?: unknown;
+        worldRules?: unknown;
+        notes?: unknown;
+        storyBoards?: unknown;
+        storyLocationMaps?: unknown;
+      };
     };
   } | null;
   const vocabulary = file?.content?.settings?.vocabulary;
+  const extras = file?.content?.extras;
 
   return {
     slug,
@@ -93,6 +104,16 @@ function previewOf(slug: string, language: string, pack: unknown): ShippedPackPr
         typeof vocabulary === 'object' &&
         vocabulary !== null &&
         Object.keys(vocabulary.terms ?? {}).length > 0,
+      extras: {
+        chapters: countOf(extras?.chapters),
+        scenes: countOf(extras?.scenes),
+        characters: countOf(extras?.characters),
+        locations: countOf(extras?.locations),
+        worldRules: countOf(extras?.worldRules),
+        notes: countOf(extras?.notes),
+        storyBoards: countOf(extras?.storyBoards),
+        storyLocationMaps: countOf(extras?.storyLocationMaps),
+      },
     },
     statSystem: file?.content?.settings?.statSystem === true,
   };

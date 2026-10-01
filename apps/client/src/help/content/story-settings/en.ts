@@ -23,7 +23,7 @@ const page: HelpPage = {
       items: [
         'Open the section you want to change.',
         'Use Story type to convert between Linear and Branching.',
-        'Use Collaborators to invite, remove, or adjust access.',
+        'Use Collaborators to invite, remove, or adjust access. On a story someone else owns, this area offers Leave this story instead - see Writing together.',
         'Use Send to server to link a local story to a server.',
         'Enable reader comments when you want observations from readers.',
         'Use the reading-preferences card to choose favorite behavior, link mentions automatically, and normalize scene timing while it is displayed.',

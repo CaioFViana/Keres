@@ -1,5 +1,5 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
 import type { ServerSelect } from '../db/schema';
@@ -9,11 +9,30 @@ import { createServerService } from '../services/ServerService';
 import { createStoryService } from '../services/storymanagement/StoryService';
 import type { StoryCollaborator } from '../services/StoryPermissionService';
 import { storyPermissionApi } from '../services/StoryPermissionService';
+import { closeStoryInvitation } from '../services/storyInvitationActions';
+import { storyInvitationApi } from '../services/StoryInvitationApiService';
+import {
+  createStoryInvitationService,
+  type ServerStoryInvitation,
+} from '../services/StoryInvitationService';
 import { syncEngine } from '../services/sync/appSyncEngine';
+import { useNotificationStore } from '../state/notificationStore';
 import { useStoryStore } from '../state/storyStore';
 import { useUserSettingsStore } from '../state/userSettingsStore';
 import { AppAlert } from '../utils/AppAlert';
+import { entityEventEmitter } from '../utils/EventEmitter';
+import { useStoryInvitations } from './useStoryInvitations';
 
+/**
+ * Server linkage and collaboration state for one story's settings screen.
+ *
+ * Owns three chained async stages: (1) resolve the linked server from the local
+ * registry, (2) probe ownership by fetching collaborators (a 403 means "not owner",
+ * not an error), (3) list addable friends once ownership is confirmed. Each stage
+ * guards its own `cancelled` flag and each handoff resets the downstream state
+ * during render, so switching stories can never show the previous story's server,
+ * collaborators, or friend picker.
+ */
 export function useStoryServerCollaboration(storyId: string | undefined) {
   const { t } = useTranslation();
   const drizzleDb = useDrizzle();
@@ -66,11 +85,50 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
   }, [storyId, selectedStory?.serverId, serverService, storyService, userId, t]);
 
   const linkedServer = availableServers.find((server) => server.id === serverId) ?? null;
+  const { showNotification } = useNotificationStore();
 
+  // Invitations the owner sent for this story and nobody answered yet: they are not collaborators
+  // (no access, nothing downloaded) until accepted.
+  const allInvitations = useStoryInvitations();
+  const pendingInvitations = useMemo(
+    () =>
+      linkedServer && storyId
+        ? allInvitations.filter(
+            (invitation) =>
+              invitation.serverId === linkedServer.id &&
+              invitation.storyId === storyId &&
+              invitation.inviterId === linkedServer.idUser,
+          )
+        : [],
+    [allInvitations, linkedServer, storyId],
+  );
+  // An invitation leaving the list may be an acceptance: the collaborator list is fetched again.
+  const pendingKey = pendingInvitations.map((invitation) => invitation.id).join(',');
+  // Somebody joined, left or was removed - here or on another device: the server says so, and the list is read again.
+  const [collaboratorsTick, setCollaboratorsTick] = useState(0);
   useEffect(() => {
+    const onChanged = (changedStoryId: string, changedServerId: string) => {
+      if (changedStoryId === storyId && changedServerId === linkedServer?.id) {
+        setCollaboratorsTick((tick) => tick + 1);
+      }
+    };
+    entityEventEmitter.on('story_collaborators_changed', onChanged);
+    return () => entityEventEmitter.off('story_collaborators_changed', onChanged);
+  }, [storyId, linkedServer?.id]);
+
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevLinkedServer, setPrevLinkedServer] = useState(linkedServer);
+  if (storyId !== prevStoryId || linkedServer !== prevLinkedServer) {
+    setPrevStoryId(storyId);
+    setPrevLinkedServer(linkedServer);
     if (!storyId || !linkedServer) {
       setIsOwnerOnServer(null);
       setCollaborators(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!storyId || !linkedServer) {
       return;
     }
     let cancelled = false;
@@ -86,6 +144,8 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
         }
       } catch (err: any) {
         if (cancelled) return;
+        // A 403 is not an error here - it is how the server reports that the
+        // current user is linked to the story but is not its owner.
         if (err?.response?.status === 403) {
           setIsOwnerOnServer(false);
         } else {
@@ -98,19 +158,39 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [storyId, linkedServer]);
+  }, [storyId, linkedServer, pendingKey, collaboratorsTick]);
 
   useEffect(() => {
+    if (linkedServer && isOwnerOnServer === true) {
+      createStoryInvitationService(drizzleDb)
+        .syncWithServer(linkedServer)
+        .catch((error) => console.log('Failed to load story invitations:', error));
+    }
+  }, [drizzleDb, linkedServer, isOwnerOnServer]);
+
+  const [prevOwnerLinkedServer, setPrevOwnerLinkedServer] = useState(linkedServer);
+  const [prevIsOwnerOnServer, setPrevIsOwnerOnServer] = useState(isOwnerOnServer);
+  if (linkedServer !== prevOwnerLinkedServer || isOwnerOnServer !== prevIsOwnerOnServer) {
+    setPrevOwnerLinkedServer(linkedServer);
+    setPrevIsOwnerOnServer(isOwnerOnServer);
     if (!linkedServer || isOwnerOnServer !== true) {
       setAddableFriends([]);
       setSelectedFriendId(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!linkedServer || isOwnerOnServer !== true) {
       return;
     }
     let cancelled = false;
     (async () => {
       try {
         const allFriendships = await friendshipService().getAllFriendships();
-        const collaboratorIds = new Set((collaborators ?? []).map((c) => c.userId));
+        const collaboratorIds = new Set([
+          ...(collaborators ?? []).map((c) => c.userId),
+          ...pendingInvitations.map((invitation) => invitation.inviteeId),
+        ]);
         const friends = allFriendships
           .filter((f) => f.serverId === linkedServer.id && f.status === FriendStatus.FRIEND)
           .map((f) => ({ id: f.otherUserId, username: f.friendUsername }))
@@ -126,7 +206,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [linkedServer, isOwnerOnServer, collaborators, friendshipService]);
+  }, [linkedServer, isOwnerOnServer, collaborators, pendingInvitations, friendshipService]);
 
   const handleSendToServer = async () => {
     if (!storyId || !userId || !uploadTargetServerId) return;
@@ -153,25 +233,72 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     }
   };
 
+  /** Invites the picked friend: they become a collaborator only once they accept. */
   const handleAddCollaborator = async () => {
     if (!storyId || !linkedServer || !selectedFriendId) return;
     setServerActionLoading(true);
     try {
-      await storyPermissionApi.grantCollaborator(
+      const invitation = await storyInvitationApi.invite(
         linkedServer,
         storyId,
         selectedFriendId,
         selectedPermissionType,
       );
-      setCollaborators(await storyPermissionApi.getCollaborators(linkedServer, storyId));
+      await createStoryInvitationService(drizzleDb).syncWithServer(linkedServer);
       setSelectedFriendId(null);
       setSelectedPermissionType('reader');
+      showNotification(t('story_invitation_sent', { name: invitation.inviteeUsername }), 'success');
     } catch (err) {
-      console.error('Failed to add collaborator:', err);
-      AppAlert.alert(t('error'), t('add_collaborator_failed'));
+      console.error('Failed to invite collaborator:', err);
+      AppAlert.alert(t('error'), t('invite_collaborator_failed'));
     } finally {
       setServerActionLoading(false);
     }
+  };
+
+  /** Changes the role offered by an unanswered invitation (inviting again only updates it). */
+  const handleUpdateInvitationRole = async (
+    invitation: ServerStoryInvitation,
+    permissionType: 'reader' | 'writer',
+  ) => {
+    if (!storyId || !linkedServer || permissionType === invitation.permissionType) return;
+    setServerActionLoading(true);
+    try {
+      await storyInvitationApi.invite(linkedServer, storyId, invitation.inviteeId, permissionType);
+      await createStoryInvitationService(drizzleDb).syncWithServer(linkedServer);
+    } catch (err) {
+      console.error('Failed to change the invitation role:', err);
+      AppAlert.alert(t('error'), t('update_collaborator_permission_failed'));
+    } finally {
+      setServerActionLoading(false);
+    }
+  };
+
+  const handleCancelInvitation = (invitation: ServerStoryInvitation) => {
+    if (!linkedServer) return;
+    AppAlert.alert(
+      t('story_invitation_withdraw'),
+      t('story_invitation_withdraw_message'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('proceed'),
+          style: 'destructive',
+          onPress: async () => {
+            setServerActionLoading(true);
+            try {
+              await closeStoryInvitation(drizzleDb, linkedServer, invitation);
+            } catch (err) {
+              console.error('Failed to withdraw the invitation:', err);
+              AppAlert.alert(t('error'), t('story_invitation_failed'));
+            } finally {
+              setServerActionLoading(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   const handleUpdateCollaboratorPermission = async (
@@ -232,6 +359,48 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     );
   };
 
+  /**
+   * A collaborator gives up their own access. The server is told first - it has to succeed, or the story
+   * would come back on the next sync - and only then is this device's copy removed.
+   */
+  const handleLeaveStory = (onLeft?: () => void) => {
+    if (!storyId || !linkedServer) return;
+    AppAlert.alert(t('leave_story_title'), t('leave_story_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('leave_story_button'),
+        style: 'destructive',
+        onPress: async () => {
+          setServerActionLoading(true);
+          try {
+            await storyPermissionApi.leaveStory(linkedServer, storyId);
+            await storyService().discardCollaboratedCopy(storyId);
+            AppAlert.alert(t('success'), t('leave_story_success'));
+            onLeft?.();
+          } catch (err: any) {
+            // Already out (the owner removed them meanwhile): the server has nothing left to give up.
+            if (err?.response?.status === 404) {
+              try {
+                await storyService().discardCollaboratedCopy(storyId);
+                onLeft?.();
+                return;
+              } catch (purgeError) {
+                console.error('Failed to discard the copy of a story already left:', purgeError);
+              }
+            }
+            console.error('Failed to leave the story:', err);
+            AppAlert.alert(
+              t('error'),
+              isOfflineError(err) ? t('leave_story_offline') : t('leave_story_failed'),
+            );
+          } finally {
+            setServerActionLoading(false);
+          }
+        },
+      },
+    ]);
+  };
+
   const handleUnlinkFromServer = () => {
     if (!storyId || !userId) return;
     AppAlert.alert(t('unlink_from_server_title'), t('unlink_from_server_message'), [
@@ -271,6 +440,7 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     setUploadTargetServerId,
     isOwnerOnServer,
     collaborators,
+    pendingInvitations,
     serverActionLoading,
     addableFriends,
     selectedFriendId,
@@ -281,7 +451,10 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
     handleAddCollaborator,
     handleUpdateCollaboratorPermission,
     handleRemoveCollaborator,
+    handleUpdateInvitationRole,
+    handleCancelInvitation,
     handleUnlinkFromServer,
+    handleLeaveStory,
     uploadServerOptions: availableServers.map((server) => ({
       label: server.name,
       value: server.id,

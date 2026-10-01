@@ -16,8 +16,8 @@ const optionalEnvironmentString = z.preprocess(
 
 const envSchema = z.object({
   /**
-   * Qual motor de banco usar. `postgres` exige um servidor; `sqlite` guarda tudo num arquivo
-   * local (Keres Server caseiro, sem Docker).
+   * Which database engine to use. `postgres` needs a server; `sqlite` keeps everything in a local
+   * file (home-hosted Keres Server, no Docker).
    */
   DATABASE_DRIVER: z.enum(['postgres', 'sqlite']).optional().default('postgres'),
   /**
@@ -32,8 +32,8 @@ const envSchema = z.object({
   JWT_SECRET_REFRESH: z.string().min(32, 'JWT_SECRET_REFRESH must be at least 32 characters long'),
   PORT: z.string().optional().default('3000'),
   /**
-   * Interface HTTP. Ausente deixa o Bun escutar em todas (Compose / `bun run api:start`).
-   * O launcher caseiro preenche `127.0.0.1` ou `0.0.0.0`.
+   * HTTP interface. When absent, Bun listens on all of them (Compose / `bun run api:start`).
+   * The home-hosted launcher fills in `127.0.0.1` or `0.0.0.0`.
    */
   HOST: optionalEnvironmentString,
   NODE_ENV: z.string().optional().default('development'),
@@ -71,6 +71,11 @@ const envSchema = z.object({
    * Both are optional - if they are not set, the reconciliation is simply skipped.
    */
   ROOT_ADMIN_USERNAME: z.string().min(1).optional(),
+  /**
+   * Pulls plus pushes one user may make per minute. A device syncs a few times a minute at most;
+   * the ceiling only stops a runaway client. Raised for load and convergence tests.
+   */
+  SYNC_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().optional().default(120),
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
 });
 

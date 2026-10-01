@@ -142,6 +142,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
   }, [db, label, storyId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` clears synchronously only when no story is selected (and sets loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
     load();
   }, [load]);
 

@@ -1,8 +1,16 @@
 import { createHash } from 'node:crypto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
-import { galleries } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import { galleries, tiers, users } from '../../src/db/schema';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -19,13 +27,24 @@ const md5 = (bytes: Uint8Array) => createHash('md5').update(Buffer.from(bytes)).
 
 const PNG_HASH = md5(PNG_BYTES);
 
-function upload(
+/**
+ * Uploads bytes the way the client does: after the media file's metadata reached the story (the
+ * server refuses bytes no media file of the story refers to). `declare: false` skips that step.
+ */
+async function upload(
   token: string,
   hash: string,
   bytes: Uint8Array,
   mimeType = 'image/png',
   story = storyId,
+  options: { declare?: boolean } = {},
 ) {
+  if (options.declare !== false) {
+    const declared = await db.query.galleries.findFirst({
+      where: (row, { and, eq: equals }) => and(equals(row.storyId, story), equals(row.hash, hash)),
+    });
+    if (!declared) await referenceInGallery(hash, story, mimeType);
+  }
   const form = new FormData();
   form.append('file', new File([Buffer.from(bytes)], 'retrato.png', { type: mimeType }));
   form.append('mimeType', mimeType);
@@ -39,7 +58,12 @@ const download = (token: string, hash: string, story = storyId) =>
   request('GET', `/media/${story}/blobs/${hash}`, { token });
 
 /** Registers the media in the story's gallery - that is what authorizes reading the bytes. */
-async function referenceInGallery(hash: string, story = storyId, mimeType = 'image/png') {
+async function referenceInGallery(
+  hash: string,
+  story = storyId,
+  mimeType = 'image/png',
+  sizeBytes = PNG_BYTES.length,
+) {
   const now = new Date();
   await db.insert(galleries).values({
     id: newId(),
@@ -48,7 +72,7 @@ async function referenceInGallery(hash: string, story = storyId, mimeType = 'ima
     mimeType,
     fileName: 'retrato.png',
     hash,
-    sizeBytes: PNG_BYTES.length,
+    sizeBytes,
     title: null,
     isFavorite: false,
     extraNotes: null,
@@ -72,6 +96,16 @@ beforeEach(async () => {
   storyId = (await uploadTestStory(ana.token)).id;
 });
 
+describe('POST /media/:storyId/blobs/:hash without metadata', () => {
+  it('refuses bytes no media file of the story refers to, as retryable', async () => {
+    const { status } = await upload(ana.token, PNG_HASH, PNG_BYTES, 'image/png', storyId, {
+      declare: false,
+    });
+
+    expect(status).toBe(409);
+  });
+});
+
 describe('POST /media/:storyId/blobs/status', () => {
   it('reports every hash as missing on an empty server', async () => {
     const { status, data } = await blobStatus(ana.token, [PNG_HASH]);
@@ -82,10 +116,22 @@ describe('POST /media/:storyId/blobs/status', () => {
 
   it('reports a hash as present once it was uploaded', async () => {
     await upload(ana.token, PNG_HASH, PNG_BYTES);
+    await referenceInGallery(PNG_HASH);
 
     const { data } = await blobStatus(ana.token, [PNG_HASH]);
 
     expect(data).toEqual({ present: [PNG_HASH], missing: [] });
+  });
+
+  it('reports a stored hash as missing when this story does not reference it', async () => {
+    // Storage is deduplicated globally: without the reference gate, any reader of any story
+    // could probe whether somebody else's bytes exist on the server just by knowing the hash.
+    const outra = await uploadTestStory(ana.token, 'Outra');
+    await upload(ana.token, PNG_HASH, PNG_BYTES, 'image/png', outra.id);
+
+    const { data } = await blobStatus(ana.token, [PNG_HASH]);
+
+    expect(data).toEqual({ present: [], missing: [PNG_HASH] });
   });
 
   it('rejects a hash that is not a 32-character digest', async () => {
@@ -151,6 +197,20 @@ describe('POST /media/:storyId/blobs/:hash', () => {
     expect(status).toBe(400);
   });
 
+  it('answers 500 when storage fails, so the client retries instead of blaming its bytes', async () => {
+    const { mediaStorageService } = await import('../../src/services/MediaStorageService');
+    const failing = vi
+      .spyOn(mediaStorageService, 'store')
+      .mockRejectedValueOnce(new Error('disk on fire'));
+    try {
+      const { status } = await upload(ana.token, PNG_HASH, PNG_BYTES);
+
+      expect(status).toBe(500);
+    } finally {
+      failing.mockRestore();
+    }
+  });
+
   it('rejects a media type the app cannot display', async () => {
     const { status } = await upload(
       ana.token,
@@ -164,10 +224,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
 
   it('refuses an upload from a reader', async () => {
     await befriend(ana, bia);
-    await request('POST', '/story-permissions/', {
-      token: ana.token,
-      body: { storyId, targetUserId: bia.userId, permissionType: 'reader' },
-    });
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await upload(bia.token, PNG_HASH, PNG_BYTES);
 
@@ -176,10 +233,7 @@ describe('POST /media/:storyId/blobs/:hash', () => {
 
   it('allows an upload from a writer', async () => {
     await befriend(ana, bia);
-    await request('POST', '/story-permissions/', {
-      token: ana.token,
-      body: { storyId, targetUserId: bia.userId, permissionType: 'writer' },
-    });
+    await shareStory(ana, bia, storyId, 'writer');
 
     const { status } = await upload(bia.token, PNG_HASH, PNG_BYTES);
 
@@ -193,6 +247,67 @@ describe('POST /media/:storyId/blobs/:hash', () => {
     const { status } = await request('POST', `/media/${storyId}/blobs/${PNG_HASH}`, { body: form });
 
     expect(status).toBe(401);
+  });
+
+  it('trusts the file type when the client sends no mimeType field', async () => {
+    await referenceInGallery(PNG_HASH);
+    const form = new FormData();
+    form.append('file', new File([Buffer.from(PNG_BYTES)], 'retrato.png', { type: 'image/png' }));
+
+    const { status, data } = await request('POST', `/media/${storyId}/blobs/${PNG_HASH}`, {
+      token: ana.token,
+      body: form,
+    });
+
+    expect(status).toBe(200);
+    expect(data.mimeType).toBe('image/png');
+  });
+
+  it('rejects an upload that declares no type at all', async () => {
+    const form = new FormData();
+    form.append('file', new File([Buffer.from(PNG_BYTES)], 'retrato.png'));
+
+    const { status } = await request('POST', `/media/${storyId}/blobs/${PNG_HASH}`, {
+      token: ana.token,
+      body: form,
+    });
+
+    expect(status).toBe(415);
+  });
+
+  it('refuses an upload past the per-file ceiling', async () => {
+    const huge = new Uint8Array(52_428_801);
+    const form = new FormData();
+    form.append('file', new File([huge], 'grande.png', { type: 'image/png' }));
+    form.append('mimeType', 'image/png');
+
+    const { status } = await request('POST', `/media/${storyId}/blobs/${md5(huge)}`, {
+      token: ana.token,
+      body: form,
+    });
+
+    expect(status).toBe(413);
+  });
+
+  it('refuses an upload once the story storage ceiling is reached, whatever its row declared', async () => {
+    const tierId = newId();
+    await db.insert(tiers).values({
+      id: tierId,
+      name: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: null,
+      maxEntitiesPerStory: null,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: 1,
+      maxStorageBytesTotal: null,
+    } as never);
+    await db.update(users).set({ tierId }).where(eq(users.id, ana.userId));
+    // The row claims nothing; the bytes are what count.
+    await referenceInGallery(PNG_HASH, storyId, 'image/png', 0);
+
+    const { status } = await upload(ana.token, PNG_HASH, PNG_BYTES);
+
+    expect(status).toBe(403);
   });
 });
 
@@ -222,7 +337,8 @@ describe('GET /media/:storyId/blobs/:hash', () => {
    * check, knowing a hash would grant access to any user's media.
    */
   it('refuses a hash the story does not reference, even to its owner', async () => {
-    await upload(ana.token, PNG_HASH, PNG_BYTES);
+    const outra = await uploadTestStory(ana.token, 'Outra');
+    await upload(ana.token, PNG_HASH, PNG_BYTES, 'image/png', outra.id);
 
     const { status } = await download(ana.token, PNG_HASH);
 
@@ -276,10 +392,7 @@ describe('GET /media/:storyId/blobs/:hash', () => {
     await upload(ana.token, PNG_HASH, PNG_BYTES);
     await referenceInGallery(PNG_HASH);
     await befriend(ana, bia);
-    await request('POST', '/story-permissions/', {
-      token: ana.token,
-      body: { storyId, targetUserId: bia.userId, permissionType: 'reader' },
-    });
+    await shareStory(ana, bia, storyId, 'reader');
 
     const { status } = await download(bia.token, PNG_HASH);
 

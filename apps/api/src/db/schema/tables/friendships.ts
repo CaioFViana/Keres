@@ -1,4 +1,3 @@
-// apps/api/src/db/schema/tables/friendships.ts
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { sql } from 'drizzle-orm';
 import { dbEnum, table, text, timestamp, timestampNow, unique } from '../columns';
@@ -17,7 +16,6 @@ export const friendships = table(
     id: text('id')
       .primaryKey()
       .$defaultFn(() => ulid()),
-    // New explicit sender and receiver IDs
     senderId: text('sender_id')
       .notNull()
       .references(() => users.id),

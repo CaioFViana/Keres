@@ -1,11 +1,11 @@
 /*
- * O visual do site público.
+ * The public site's look.
  *
- * Duas famílias de variáveis convivem aqui de propósito:
- *   --color-*  o visual fixo do Keres (cabeçalho, rodapé, listagem)
- *   --story-*  a paleta da história aberta, injetada em linha por `paletteVars`
- * A segunda só existe dentro da página de uma história - é o que permite tingir aquela página
- * com o tema que o autor escolheu sem deixar a moldura do site ilegível.
+ * Two variable families coexist here on purpose:
+ *   --color-*  the fixed Keres look (header, footer, listing)
+ *   --story-*  the open story's palette, injected inline by `paletteVars`
+ * The second only exists inside a story's page - it is what allows tinting that page
+ * with the theme its author chose without making the site's frame unreadable.
  */
 
 :root,
@@ -114,14 +114,21 @@ a {
 }
 
 /*
- * O ícone é um PNG recortado, desenhado bem abaixo do seu tamanho nativo: sem
- * `object-fit: contain` uma proporção diferente o esticaria, e o `display: block` evita a
- * folga de linha de base que uma imagem inline abriria dentro do flex do cabeçalho.
+ * The icon is a cropped PNG, drawn well below its native size: without
+ * `object-fit: contain` a different aspect ratio would stretch it, and `display: block`
+ * avoids the baseline gap an inline image would open inside the header's flex layout.
  */
 .mark {
   display: block;
   object-fit: contain;
   flex: 0 0 auto;
+}
+
+/* An uploaded logo keeps the header's height; a wide one shrinks to fit instead of pushing the nav. */
+.site-logo {
+  height: 28px;
+  width: auto;
+  max-width: 140px;
 }
 
 .site-nav {
@@ -136,7 +143,7 @@ a {
   color: var(--color-text);
 }
 
-/* Mesma forma do botão de tema ao lado, para os dois lerem como um par de controles. */
+/* Same shape as the theme button beside it, so the two read as a pair of controls. */
 .language-select {
   padding: 6px 10px;
   border: 1px solid var(--color-border);
@@ -363,7 +370,7 @@ a {
   min-width: 0;
 }
 
-/* O conteúdo é o SVG do ícone escolhido pela pessoa; a cor de fundo vem em linha. */
+/* The content is the SVG of the icon the person chose; the background colour comes inline. */
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -506,6 +513,16 @@ a {
   min-width: 0;
 }
 
+/* A version's buttons, side by side: the package first, the manuscript (when one was
+   published) second. More specific than `.version div` on purpose, so the row wins. */
+.version .version-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .version-sub {
   font-size: 0.8rem;
   color: var(--color-text-secondary);
@@ -529,6 +546,75 @@ a {
   border-color: var(--color-border);
   color: var(--color-text);
   font-weight: 500;
+}
+
+a.download-button {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* ---------- reader page ---------- */
+
+/* Reading takes the window under the header; the reader inside is the only thing that scrolls. */
+.site--reading {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+}
+
+.site--reading .site-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.site--reading .site-main > * {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reader-page {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.reader-head {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.reader-head .back-link {
+  margin-bottom: 0;
+}
+
+.reader-title {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-page > .muted,
+.reader-page > .error-text {
+  padding: 24px;
+}
+
+.reader-frame {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--color-bg);
 }
 
 .download-button:hover:not(:disabled) {

@@ -274,6 +274,62 @@
       "when": 1788485383359,
       "tag": "0038_good_jocasta",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1789679748254,
+      "tag": "0039_violet_gamma_corps",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1789844596637,
+      "tag": "0040_safe_annihilus",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1789866006194,
+      "tag": "0041_whole_wendigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "6",
+      "when": 1789867834568,
+      "tag": "0042_public_ogun",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "6",
+      "when": 1790289358431,
+      "tag": "0043_neat_salo",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1790444516254,
+      "tag": "0044_absurd_mad_thinker",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1790462110436,
+      "tag": "0045_purple_iceman",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1790617866377,
+      "tag": "0046_lazy_skrulls",
+      "breakpoints": true
     }
   ]
 }

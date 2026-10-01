@@ -1,5 +1,5 @@
-import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { relations, sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 import { users } from './users';
 
@@ -22,12 +22,9 @@ export const favorites = table(
     deletedAt: timestamp('deleted_at'),
   },
   (table) => ({
-    unq: unique('favorite_story_entity_user_unq').on(
-      table.storyId,
-      table.entityId,
-      table.entityType,
-      table.userId,
-    ),
+    unq: uniqueIndex('favorite_story_entity_user_unq')
+      .on(table.storyId, table.entityId, table.entityType, table.userId)
+      .where(sql`${table.isDeleted} = false`),
   }),
 );
 

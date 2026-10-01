@@ -23,72 +23,84 @@ const littleMermaidEn: StoryNarrative = {
       name: 'The garden with the statue',
       summary:
         'Each of the six princesses has a plot of the palace garden to keep as she likes. The youngest plants hers round with nothing but red flowers and a marble boy sunk from some wreck, and keeps it exactly so.',
+      body: 'Each of the six sea princesses keeps a plot of the palace garden, and each plot tells on its keeper: shells here, anchors there, a sunken bell polished like a mirror. The youngest plants hers with nothing but red flowers, all facing one way.\n\nAt the centre stands a marble boy, fished from some wreck and carried home in secret - a human child, life-size, weathered soft by the sea. She keeps the flowers trimmed and the marble clean, and keeps it exactly so, year after year, asking nothing.',
       location: 2,
     },
     {
       name: 'Fifteen, and the surface',
       summary:
         'On her fifteenth birthday she is finally allowed to rise. She surfaces beside a ship lit for a birthday of its own, and sees a prince who is close enough to watch and too far to speak to.',
+      body: 'On her fifteenth birthday she is finally allowed to rise, and the surface keeps every promise her sisters made about it: the sky enormous, the air like cold wine, and a ship lit for a birthday of its own, music spilling off the deck like light.\n\nOn that deck stands a prince, close enough to watch and too far to speak to, laughing at something someone says. She watches until the lamps blur. It is her birthday too, and she has never had a present she wanted less to share.',
       location: 0,
     },
     {
       name: 'A rescue in silence',
       summary:
         'The storm breaks the ship apart. She holds the prince above water all night and leaves him on the sand at the temple steps, then watches from the shallows as a girl from the temple finds him and is thanked for it.',
+      body: 'The storm takes the ship apart plank by plank, and the sea - her own element, her inheritance - turns strange and violent under her hands. She finds him in the wreckage and holds him above water all night, swimming the way one prays: without stopping, without bargaining.\n\nAt dawn she lays him on the sand by the temple steps and slips back into the shallows. A girl from the temple finds him, and he wakes, and he thanks the girl - and the little mermaid watches the whole mistake happen, motionless in the foam, saying nothing.',
       location: 0,
     },
     {
       name: 'The price of a soul',
       summary:
         'Her grandmother explains what she has never had to explain before: mermaids live three hundred years and end as foam, and the only path to an immortal soul runs through a human who loves her above all others.',
+      body: "'What becomes of us?' she asks her grandmother, and the old queen tells her what she has never had to tell anyone: mermaids live three hundred years and end as foam on the water - no soul, no after, only the long dissolving.\n\nThere is one path, and one only: a human who loves her above father and mother, above everything, and gives her a soul with that love. The grandmother says it the way one states the weather. The little mermaid hears it the way one hears a door opening.",
       location: 1,
     },
     {
       name: 'Beyond the whirlpools',
       summary:
         'She swims past the boiling whirlpools and the polyp forest to the Sea Witch, who is neither surprised to see her nor pleased. The Witch knew she would come and has the price ready.',
+      body: "Past the boiling whirlpools she swims, where the water stands up like glass and falls like stone, and through the forest of polyps - half plant, half animal, all grasping - to the Witch's lair at the back of everything.\n\nThe Sea Witch is neither surprised to see her nor pleased. Witches of her standing do not do surprise; they do preparation. The price is ready before the little mermaid opens her mouth, which tells her, coldly, how many have come before.",
       location: 3,
     },
     {
       name: 'Voice for legs',
       summary:
         'The terms are stated plainly: her tongue for the potion, legs that walk like knives, and no way back. If the prince marries another, she becomes foam on the first morning after. She agrees to all of it.',
+      body: "'Your tongue,' says the Witch. 'The potion takes your voice - no singing, no speaking, no telling him. Your tail will split into legs, and every step will feel like walking on knives, and there is no way back. None.'\n\nAnd the last term, stated plainly: if the prince marries another, she dissolves into foam on the first morning after. No soul, no after. The little mermaid considers the whole of it - the knives, the silence, the odds - and agrees to all of it.",
       location: 3,
     },
     {
       name: 'Every step like knives',
       summary:
         'She wakes on the shore with legs and no voice, and the prince finds her there. She dances better than anyone at his court, and every step costs her exactly what she was told it would.',
+      body: 'She wakes on the shore with legs and no voice, the potion burning itself out behind her eyes, and the first face she sees is his. The prince finds her there, wrapped in her own hair, and takes her for a shipwrecked stranger - which, in the ways that count, she is.\n\nShe dances better than anyone at his court - the pain makes her precise, the way grief makes poets precise - and every step costs her exactly what she was told it would. She pays it gladly, nightly, and smiles through all of it. Smiling, at least, needs no tongue.',
       location: 4,
     },
     {
       name: 'A silent companion',
       summary:
         "She becomes the prince's favourite, sleeping on a cushion at his door. He tells her, kindly and often, about the temple girl who saved his life - to the one person who could correct him and cannot.",
+      body: 'She becomes his favourite: sleeping on a cushion at his door, riding beside him, understanding everything and answering nothing. He tells her things he tells no one else, kindly and often, the way one talks to a dog one loves.\n\nMost often he tells her about the temple girl who saved his life - her face, her voice, his debt - to the one person in the world who could correct him and cannot. She listens with her hands folded. It is, she thinks, the knives she was warned about, except that no one warned her about these.',
       location: 4,
     },
     {
       name: 'The neighbouring princess',
       summary:
         "The prince is sent to meet a neighbouring king's daughter he has no intention of marrying. She turns out to be the girl from the temple steps, and he believes he has found his rescuer at last.",
+      body: 'The prince is sent to meet the daughter of a neighbouring king, and goes the way princes go to such meetings: dutifully, and certain it will come to nothing. The little mermaid goes with him, because favourites go everywhere, and watches the nothing happen.\n\nThe princess steps forward - and she is the girl from the temple steps. Older, kept, unmistakable. The prince believes he has found his rescuer at last, and kneels, and the court applauds, and the little mermaid applauds with it, because there is nothing else her hands can usefully do.',
       location: 4,
     },
     {
       name: 'A royal wedding',
       summary:
         "The wedding is held aboard ship, and the little mermaid carries the bride's train. She dances that night better than she ever has, knowing the terms and the hour, and says nothing because she cannot.",
+      body: 'The wedding is held aboard ship, under lanterns, with the sea all around like a witness. The little mermaid carries the bridal train. She arranges it, straightens it, holds it clear of the deck - the perfect attendant, the perfect stranger.\n\nThat night she dances better than she ever has, knowing the terms and the hour: the foam, the morning, the end of it. She dances the whole story - the rescue, the silence, the knives - and says nothing, because she cannot, and is applauded, because she is wonderful.',
       location: 4,
     },
     {
       name: "Her sisters' gift",
       summary:
         'Before dawn her sisters break the surface with their hair shorn off. They have traded it to the Witch for a knife: if she kills the prince before sunrise, the blood on her feet will make her a mermaid again.',
+      body: "Before dawn her sisters break the surface, and their hair - their beautiful long hair, their pride - is shorn to the scalp. They traded it to the Witch in the night, all of it, for the knife one of them holds up now, dripping.\n\n'Kill him before sunrise,' they whisper, 'and let his blood fall on your feet, and you will be a mermaid again - all of it undone, all of it forgiven.' The knife is heavy. The sun is coming. Her sisters are waiting, bald and weeping, in the swell.",
       location: 0,
     },
     {
       name: 'Foam and air',
       summary:
         'She stands over the sleeping prince with the knife, and throws it into the waves instead. She dissolves into foam at sunrise - and rises, not as nothing, but among the daughters of the air, with a soul to earn by her own work.',
+      body: 'She stands over the sleeping prince with the knife, and looks at him for a long time - the face from the deck, the face from the wreck, the face that thanked the wrong girl. Then she throws the knife into the waves, as far as she can throw.\n\nAt sunrise she dissolves into foam - and rises, not as nothing, but among the daughters of the air, who tell her what she has earned: a soul to win by her own work, three hundred years of it, shortened by every good child and lengthened by every tear. It is not the bargain she made. It is better. It is hers.',
       location: 0,
     },
   ],
@@ -276,72 +288,84 @@ const littleMermaidPt: StoryNarrative = {
       name: 'O jardim com a estátua',
       summary:
         'Cada uma das seis princesas tem um canteiro do jardim do palácio para cuidar como quiser. A mais nova planta o dela apenas com flores vermelhas em volta de um menino de mármore vindo de algum naufrágio, e o mantém exatamente assim.',
+      body: 'Cada uma das seis princesas do mar cuida de um canteiro do jardim do palácio, e cada canteiro entrega sua dona: conchas aqui, âncoras ali, um sino naufragado polido como espelho. A mais nova planta o dela só com flores vermelhas, todas viradas para o mesmo lado.\n\nNo centro fica um menino de mármore, pescado de algum naufrágio e levado para casa em segredo - uma criança humana, em tamanho natural, amaciada pelo mar. Ela mantém as flores aparadas e o mármore limpo, e o mantém exatamente assim, ano após ano, sem pedir nada.',
       location: 2,
     },
     {
       name: 'Quinze anos, e a superfície',
       summary:
         'No seu décimo quinto aniversário ela enfim pode subir. Emerge ao lado de um navio iluminado por um aniversário seu, e vê um príncipe perto o bastante para observar e longe demais para falar.',
+      body: 'No seu décimo quinto aniversário ela enfim pode subir, e a superfície cumpre cada promessa que as irmãs fizeram sobre ela: o céu enorme, o ar como vinho frio, e um navio iluminado por um aniversário seu, música derramando do convés como luz.\n\nNaquele convés está um príncipe, perto o bastante para observar e longe demais para falar, rindo de algo que alguém diz. Ela observa até os lampiões embaçarem. Também é aniversário dela, e ela nunca teve um presente que quisesse menos dividir.',
       location: 0,
     },
     {
       name: 'Um resgate em silêncio',
       summary:
         "A tempestade despedaça o navio. Ela sustenta o príncipe acima d'água a noite inteira e o deixa na areia junto aos degraus do templo, e então assiste da rebentação enquanto uma moça do templo o encontra e é agradecida por isso.",
+      body: 'A tempestade desmonta o navio tábua por tábua, e o mar - seu próprio elemento, sua herança - se vira estranho e violento sob suas mãos. Ela o encontra nos destroços e o sustenta acima da água a noite inteira, nadando como se reza: sem parar, sem pechinchar.\n\nAo amanhecer ela o deita na areia junto aos degraus do templo e escorrega de volta para a rebentação. Uma moça do templo o encontra, e ele acorda, e agradece à moça - e a pequena sereia assiste ao engano inteiro acontecer, imóvel na espuma, sem dizer nada.',
       location: 0,
     },
     {
       name: 'O preço de uma alma',
       summary:
         'A avó explica o que nunca precisou explicar antes: sereias vivem trezentos anos e terminam em espuma, e o único caminho para uma alma imortal passa por um humano que a ame acima de todos.',
+      body: '- O que será de nós? - ela pergunta à avó, e a velha rainha lhe conta o que nunca precisou contar a ninguém: sereias vivem trezentos anos e terminam em espuma sobre a água - sem alma, sem depois, só o longo dissolver.\n\nHá um caminho, e um só: um humano que a ame acima de pai e mãe, acima de tudo, e lhe dê uma alma com esse amor. A avó diz isso como quem diz o tempo. A pequena sereia ouve como quem ouve uma porta se abrindo.',
       location: 1,
     },
     {
       name: 'Além dos redemoinhos',
       summary:
         'Ela atravessa os redemoinhos ferventes e a floresta de pólipos até a Bruxa do Mar, que não se surpreende ao vê-la nem se alegra. A Bruxa sabia que ela viria e já tem o preço pronto.',
+      body: 'Ela nada para além dos redemoinhos ferventes, onde a água se levanta como vidro e cai como pedra, e através da floresta de pólipos - meio planta, meio bicho, tudo agarrando - até o covil da Bruxa nos fundos de tudo.\n\nA Bruxa do Mar não se surpreende ao vê-la nem se alegra. Bruxas da sua posição não fazem surpresa; fazem preparo. O preço está pronto antes que a pequena sereia abra a boca, o que lhe diz, friamente, quantas vieram antes.',
       location: 3,
     },
     {
       name: 'A voz pelas pernas',
       summary:
         'As condições são ditas com todas as letras: a língua pela poção, pernas que caminham como facas, e nenhum caminho de volta. Se o príncipe se casar com outra, ela vira espuma na primeira manhã seguinte. Ela aceita tudo.',
+      body: '- Sua língua - diz a Bruxa. - A poção leva sua voz - sem cantar, sem falar, sem contar a ele. Sua cauda vai se partir em pernas, e cada passo parecerá caminhar sobre facas, e não há caminho de volta. Nenhum.\n\nE a última condição, dita com todas as letras: se o príncipe se casar com outra, ela se dissolve em espuma na primeira manhã seguinte. Sem alma, sem depois. A pequena sereia considera tudo - as facas, o silêncio, as probabilidades - e aceita tudo.',
       location: 3,
     },
     {
       name: 'Cada passo como facas',
       summary:
         'Ela acorda na praia com pernas e sem voz, e o príncipe a encontra ali. Dança melhor que qualquer pessoa da corte dele, e cada passo lhe custa exatamente o que lhe disseram que custaria.',
+      body: 'Ela acorda na praia com pernas e sem voz, a poção se apagando atrás dos seus olhos, e o primeiro rosto que vê é o dele. O príncipe a encontra ali, enrolada nos próprios cabelos, e a toma por uma náufraga desconhecida - o que, nos sentidos que contam, ela é.\n\nEla dança melhor que qualquer pessoa da corte dele - a dor a torna precisa, como a tristeza torna os poetas precisos - e cada passo lhe custa exatamente o que lhe disseram que custaria. Ela paga de bom grado, toda noite, e sorri o tempo todo. Sorrir, ao menos, não precisa de língua.',
       location: 4,
     },
     {
       name: 'Uma companhia muda',
       summary:
         'Ela se torna a favorita do príncipe, dormindo numa almofada à porta dele. Ele lhe fala, com gentileza e com frequência, sobre a moça do templo que lhe salvou a vida - à única pessoa que poderia corrigi-lo e não pode.',
+      body: 'Ela se torna a favorita dele: dormindo numa almofada à porta dele, cavalgando ao lado dele, entendendo tudo e não respondendo nada. Ele lhe conta coisas que não conta a mais ninguém, com gentileza e com frequência, como se fala com um cachorro que se ama.\n\nNa maioria das vezes ele lhe fala sobre a moça do templo que lhe salvou a vida - o rosto, a voz, a dívida - à única pessoa no mundo que poderia corrigi-lo e não pode. Ela escuta de mãos cruzadas. São, ela pensa, as facas sobre as quais a avisaram, só que ninguém a avisou sobre estas.',
       location: 4,
     },
     {
       name: 'A princesa vizinha',
       summary:
         'O príncipe é mandado conhecer a filha de um rei vizinho com quem não pretende se casar. Ela acaba sendo a moça dos degraus do templo, e ele acredita ter enfim encontrado quem o salvou.',
+      body: 'O príncipe é mandado conhecer a filha de um rei vizinho, e vai como príncipes vão a esses encontros: por dever, e certo de que não dará em nada. A pequena sereia vai com ele, porque favoritas vão a toda parte, e assiste ao nada acontecer.\n\nA princesa dá um passo à frente - e é a moça dos degraus do templo. Mais velha, guardada, inconfundível. O príncipe acredita ter enfim encontrado quem o salvou, e se ajoelha, e a corte aplaude, e a pequena sereia aplaude junto, porque não há mais nada de útil que suas mãos possam fazer.',
       location: 4,
     },
     {
       name: 'Um casamento real',
       summary:
         'O casamento é celebrado a bordo, e a pequena sereia carrega a cauda do vestido da noiva. Dança naquela noite melhor do que jamais dançou, sabendo das condições e da hora, e nada diz porque não pode.',
+      body: 'O casamento é celebrado a bordo, sob lampiões, com o mar em volta como testemunha. A pequena sereia carrega a cauda do vestido da noiva. Ela a arruma, a endireita, a mantém longe do convés - a acompanhante perfeita, a desconhecida perfeita.\n\nNaquela noite ela dança melhor do que jamais dançou, sabendo das condições e da hora: a espuma, a manhã, o fim de tudo. Dança a história inteira - o resgate, o silêncio, as facas - e nada diz, porque não pode, e é aplaudida, porque está maravilhosa.',
       location: 4,
     },
     {
       name: 'O presente das irmãs',
       summary:
         'Antes do amanhecer as irmãs rompem a superfície com os cabelos cortados rente. Trocaram-nos com a Bruxa por uma faca: se ela matar o príncipe antes do nascer do sol, o sangue em seus pés a fará sereia de novo.',
+      body: 'Antes do amanhecer as irmãs rompem a superfície, e os cabelos delas - seus belos cabelos longos, seu orgulho - estão cortados rente ao couro. Trocaram-nos com a Bruxa de madrugada, todos, pela faca que uma delas ergue agora, gotejando.\n\n- Mate-o antes do nascer do sol - elas sussurram - e deixe o sangue dele cair nos seus pés, e você será sereia de novo - tudo desfeito, tudo perdoado. A faca é pesada. O sol vem vindo. As irmãs esperam, carecas e chorando, na ondulação.',
       location: 0,
     },
     {
       name: 'Espuma e ar',
       summary:
         'Ela fica de pé sobre o príncipe adormecido com a faca, e a atira nas ondas. Dissolve-se em espuma ao nascer do sol - e sobe, não como nada, mas entre as filhas do ar, com uma alma a conquistar pelo próprio esforço.',
+      body: 'Ela fica de pé sobre o príncipe adormecido com a faca, e olha para ele por um longo tempo - o rosto do convés, o rosto do naufrágio, o rosto que agradeceu à moça errada. Então atira a faca nas ondas, o mais longe que consegue.\n\nAo nascer do sol ela se dissolve em espuma - e sobe, não como nada, mas entre as filhas do ar, que lhe contam o que ela conquistou: uma alma a ganhar pelo próprio esforço, trezentos anos disso, encurtados por cada criança boa e alongados por cada lágrima. Não é o trato que ela fez. É melhor. É dela.',
       location: 0,
     },
   ],

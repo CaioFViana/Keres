@@ -51,9 +51,18 @@ export function usePresenceMatrixCatalog(
     })();
   }, [db, storyId]);
 
-  useEffect(() => {
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevLoadItemJourneys, setPrevLoadItemJourneys] = useState(loadItemJourneys);
+  if (storyId !== prevStoryId || loadItemJourneys !== prevLoadItemJourneys) {
+    setPrevStoryId(storyId);
+    setPrevLoadItemJourneys(loadItemJourneys);
     if (!storyId || !loadItemJourneys) {
       setJourneys([]);
+    }
+  }
+
+  useEffect(() => {
+    if (!storyId || !loadItemJourneys) {
       return;
     }
     let cancelled = false;

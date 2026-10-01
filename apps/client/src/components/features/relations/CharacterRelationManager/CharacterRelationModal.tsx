@@ -2,7 +2,7 @@ import FormActions from '@/src/components/common/controls/FormActions/FormAction
 import { Ionicons } from '@expo/vector-icons';
 import type { Character } from '@keres/shared/entities/Character';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
@@ -43,7 +43,21 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
   const [errors, setErrors] = useState<{ relatedCharId?: string; relationType?: string }>({});
   const [showCharacterPicker, setShowCharacterPicker] = useState(false);
 
-  useEffect(() => {
+  const [prevInitialRelation, setPrevInitialRelation] = useState<
+    typeof initialRelation | undefined
+  >(undefined);
+  const [prevIsVisible, setPrevIsVisible] = useState<boolean | null>(null);
+  const [prevCurrentCharacterId, setPrevCurrentCharacterId] = useState<
+    typeof currentCharacterId | null
+  >(null);
+  if (
+    initialRelation !== prevInitialRelation ||
+    isVisible !== prevIsVisible ||
+    currentCharacterId !== prevCurrentCharacterId
+  ) {
+    setPrevInitialRelation(initialRelation);
+    setPrevIsVisible(isVisible);
+    setPrevCurrentCharacterId(currentCharacterId);
     if (initialRelation) {
       const relatedId =
         initialRelation.character1Id === currentCharacterId
@@ -56,7 +70,7 @@ const CharacterRelationModal: React.FC<CharacterRelationModalProps> = ({
       setRelationType('');
     }
     setErrors({});
-  }, [initialRelation, isVisible, currentCharacterId]);
+  }
 
   const validate = () => {
     const newErrors: { relatedCharId?: string; relationType?: string } = {};

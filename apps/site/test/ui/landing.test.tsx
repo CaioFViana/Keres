@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { SiteApp } from '../../src/App';
 import { FEATURE_GROUPS } from '../../src/content/catalog';
-import { GITHUB_RELEASES_URL, GITHUB_REPO_URL } from '../../src/content/links';
+import { GITHUB_RELEASES_URL, GITHUB_REPO_URL, WEB_CLIENT_URL } from '../../src/content/links';
 import i18n, { SITE_LANGUAGE_KEY } from '../../src/i18n';
 import siteEn from '../../src/i18n/locales/site.en.json';
 import sitePt from '../../src/i18n/locales/site.pt.json';
@@ -18,6 +18,33 @@ afterEach(async () => {
 });
 
 describe('landing page', () => {
+  it('offers the serverless client right in the hero, at the client/ folder beside the page', async () => {
+    const { container, unmount } = await render(<SiteApp />);
+
+    const link = container.querySelector<HTMLAnchorElement>('[data-testid="try-web-client"]')!;
+    expect(link.textContent).toBe(siteEn.hero.ctaTry);
+    expect(link.getAttribute('href')).toBe(WEB_CLIENT_URL);
+    // Under the site's own base path, so it follows the repository name the workflow injects.
+    expect(WEB_CLIENT_URL).toBe(`${import.meta.env.BASE_URL}client/`);
+    expect(WEB_CLIENT_URL.endsWith('/client/')).toBe(true);
+    // What it is, and what it is not: no server, nothing leaves the device.
+    expect(container.textContent).toContain(siteEn.hero.tryNote);
+
+    await unmount();
+  });
+
+  it('says the same in Portuguese', async () => {
+    await i18n.changeLanguage('pt');
+    const { container, unmount } = await render(<SiteApp />);
+
+    expect(container.querySelector('[data-testid="try-web-client"]')!.textContent).toBe(
+      sitePt.hero.ctaTry,
+    );
+    expect(container.textContent).toContain(sitePt.hero.tryNote);
+
+    await unmount();
+  });
+
   it('renders the English hero and every feature group', async () => {
     const { container, unmount } = await render(<SiteApp />);
 

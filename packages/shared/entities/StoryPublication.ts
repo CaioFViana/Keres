@@ -16,11 +16,17 @@ export interface StoryPublication {
   operationVersion: number;
   /** `CURRENT_STORY_FORMAT_VERSION` at the instant of publication. */
   formatVersion: number;
-  /** Tamanho do .zip em bytes. */
+  /** Size of the .zip in bytes. */
   byteSize: number;
   /** How many media files went into the package, out of how many the story references. */
   mediaIncluded: number;
   mediaTotal: number;
+  /** False when only a manuscript and/or the online reader were published. Absent on older servers (true). */
+  packageIncluded?: boolean;
+  /** The manuscript file published with the version, when there is one. Absent from servers that predate it. */
+  manuscriptFormat?: string | null;
+  /** Size of the online reader page, when one was published; absent from servers that predate it. */
+  readerByteSize?: number | null;
   createdAt: Date;
 }
 

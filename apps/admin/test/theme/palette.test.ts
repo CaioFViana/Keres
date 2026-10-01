@@ -101,6 +101,41 @@ describe('derived palette colors', () => {
     },
   );
 
+  // The bug: buttons kept the stylesheet's purple hover (#4b00c4 / #d0bcff) in every custom palette.
+  it.each(PALETTE_NAMES.filter((name) => name !== 'default'))(
+    'gives %s buttons a hover of their own primary, still readable under the button text',
+    (palette) => {
+      for (const mode of ['light', 'dark'] as const) {
+        applyPalette(palette, mode);
+
+        const hover = cssVar('--color-primary-hover');
+        expect(hover).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(hover).not.toBe(cssVar('--color-primary'));
+        expect(luminanceGap(hover, cssVar('--color-on-primary'))).toBeGreaterThan(0.4);
+      }
+    },
+  );
+
+  it('moves a hover away from the text: darker on a dark primary, lighter on a light one', () => {
+    const luminanceOf = (hex: string) => luminanceGap(hex, '#000000');
+    for (const palette of PALETTE_NAMES.filter((name) => name !== 'default')) {
+      applyPalette(palette, 'light');
+      const primary = cssVar('--color-primary');
+      const hover = cssVar('--color-primary-hover');
+      const textIsWhite = luminanceGap(cssVar('--color-on-primary'), '#ffffff') < 0.05;
+      if (textIsWhite) expect(luminanceOf(hover)).toBeLessThan(luminanceOf(primary));
+      else expect(luminanceOf(hover)).toBeGreaterThan(luminanceOf(primary));
+    }
+  });
+
+  it('hands the hover back to the stylesheet with the default palette', () => {
+    applyPalette('ocean', 'dark');
+    expect(cssVar('--color-primary-hover')).not.toBe('');
+
+    applyPalette('default', 'dark');
+    expect(cssVar('--color-primary-hover')).toBe('');
+  });
+
   it('derives the sidebar hover from the sidebar itself, not a fixed color', () => {
     applyPalette('forest', 'light');
     const forestHover = cssVar('--color-sidebar-hover');
@@ -117,6 +152,7 @@ describe('derived palette colors', () => {
       '--color-sidebar-muted',
       '--color-sidebar-hover',
       '--color-on-primary',
+      '--color-primary-hover',
       '--color-row-hover',
       '--color-table-head',
       '--color-pre-bg',

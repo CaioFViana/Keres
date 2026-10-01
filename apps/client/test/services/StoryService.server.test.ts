@@ -127,4 +127,44 @@ describe('StoryService server lifecycle', () => {
     expect(await database.db.query.stories.findFirst()).toBeUndefined();
     expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith(TEST_STORY_ID);
   });
+
+  describe('discarding the copy of a story somebody else owns', () => {
+    const withTransaction = () => {
+      (
+        database.db as unknown as {
+          transaction: <T>(callback: (tx: typeof database.db) => Promise<T>) => Promise<T>;
+        }
+      ).transaction = async (callback) => callback(database.db);
+    };
+
+    it('removes the local copy and its media, once the caller is not the owner', async () => {
+      await database.db
+        .update(schema.stories)
+        .set({ myRole: 'writer' })
+        .where(eq(schema.stories.id, TEST_STORY_ID));
+      withTransaction();
+
+      await createStoryService(database.db).discardCollaboratedCopy(TEST_STORY_ID);
+
+      expect(await database.db.query.stories.findFirst()).toBeUndefined();
+      expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith(TEST_STORY_ID);
+    });
+
+    it("refuses the owner's own story: that one is deleted, not left", async () => {
+      withTransaction();
+
+      await expect(
+        createStoryService(database.db).discardCollaboratedCopy(TEST_STORY_ID),
+      ).rejects.toThrow(/somebody else owns/);
+
+      expect(await database.db.query.stories.findFirst()).toBeDefined();
+      expect(mediaFileService.deleteStoryMedia).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for a story that is not here', async () => {
+      await expect(
+        createStoryService(database.db).discardCollaboratedCopy('missing'),
+      ).resolves.toBeUndefined();
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import {
   ScreenError,
@@ -12,7 +13,7 @@ import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import 
 import type { Location } from '@keres/shared/entities/Location'; // Import Location entity
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -51,7 +52,7 @@ import { createCharacterDetailMutations } from './createCharacterDetailMutations
 
 // Define the parameter list for this screen
 export type CharacterDetailScreenParamList = {
-  CharacterDetail: { characterId: string };
+  CharacterDetail: { characterId: string; occurrence?: OccurrenceTarget };
 };
 
 type CharacterDetailScreenRouteProp = RouteProp<CharacterDetailScreenParamList, 'CharacterDetail'>;
@@ -66,7 +67,7 @@ const CharacterDetailScreen = () => {
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const { openCharacter: openPresenceMatrix } = useOpenPresenceMatrixViewer();
   const route = useRoute<CharacterDetailScreenRouteProp>();
-  const { characterId } = route.params;
+  const { characterId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Character');
   const sceneCopy = useVocabularyEntityCopy('Scene');
@@ -376,6 +377,7 @@ const CharacterDetailScreen = () => {
 
   useEffect(() => {
     if (character) {
+      /* eslint-disable react-hooks/set-state-in-effect -- each fetch clears synchronously only when its service/data is missing and otherwise sets after `await`; the rule cannot verify across the callback boundary. */
       fetchRelationsForCharacter();
       fetchAllCharactersInStory(); // Fetch all characters here
       fetchScenesForCharacter(); // Fetch character scene relations
@@ -383,6 +385,7 @@ const CharacterDetailScreen = () => {
       fetchAllItemsInStory(); // Fetch all items
       fetchAllItemJourneysInStory(); // Fetch all item journeys
       fetchAllLocationsInStory(); // Fetch all locations
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [
     character,
@@ -400,6 +403,7 @@ const CharacterDetailScreen = () => {
     handleDeleteRelation,
     handleSaveCharacterScene,
     handleDeleteCharacterScene,
+    // eslint-disable-next-line react-hooks/refs -- the factory only closes over the service refs for its async event handlers; nothing is read during the call.
   } = createCharacterDetailMutations({
     characterRelationServiceRef,
     characterSceneServiceRef,
@@ -491,6 +495,8 @@ const CharacterDetailScreen = () => {
       handleDeleteRelation={handleDeleteRelation}
       characterSceneRelations={characterSceneRelations}
       allScenes={allScenes}
+      allLocations={allLocations}
+      storyType={selectedStory?.type}
       handleSaveCharacterScene={handleSaveCharacterScene}
       handleDeleteCharacterScene={handleDeleteCharacterScene}
       allItems={allItems}
@@ -503,6 +509,7 @@ const CharacterDetailScreen = () => {
       saveNoteRelation={saveNoteRelation}
       deleteNoteRelation={deleteNoteRelation}
       appearingArcs={appearingArcs}
+      occurrence={occurrence}
     />
   );
 };

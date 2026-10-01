@@ -12,7 +12,7 @@ import {
   SYNC_CLIENT_IMMUTABLE_FIELD_SET,
 } from '@keres/shared';
 import type { SQL } from 'drizzle-orm';
-import { and, count, eq, inArray, sql } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db, type CompatibleDb } from '../../db';
 import { getApiEntityTable } from '../entity-solvers/ApiEntityTableRegistry';
@@ -81,23 +81,68 @@ export class SyncConflictError extends Error {
   readonly reason: SyncConflictReason;
   readonly clientVersion?: number;
   readonly serverVersion?: number;
+  /** For `duplicate`: the live row the operation would duplicate, returned as `serverEntity`. */
+  readonly existing?: SyncEntityRow;
 
   constructor(
     reason: SyncConflictReason,
     message: string,
-    versions?: { clientVersion?: number; serverVersion?: number },
+    versions?: { clientVersion?: number; serverVersion?: number; existing?: SyncEntityRow },
   ) {
     super(message);
     this.name = 'SyncConflictError';
     this.reason = reason;
     this.clientVersion = versions?.clientVersion;
     this.serverVersion = versions?.serverVersion;
+    this.existing = versions?.existing;
   }
+}
+
+/**
+ * The refusal of an operation naming what a live row of another id already is (see the shared
+ * `duplicate` reason): the client folds its row into `existing`.
+ */
+export function duplicateOf(existing: SyncEntityRow, message: string): SyncConflictError {
+  return new SyncConflictError('duplicate', message, {
+    existing,
+    serverVersion: typeof existing.version === 'number' ? existing.version : undefined,
+  });
+}
+
+/**
+ * A client clock running ahead must never place an operation after the server's own "now" - but
+ * it must not cost the operation either. Refusing it (the previous behaviour) turned every edit of
+ * a device whose clock drifted a couple of seconds into a `validation` conflict, and a refused
+ * create resolves by discarding the user's work. Clamping keeps history free of future
+ * timestamps while the edit itself goes through. A malformed value is still a refusal: no client
+ * of ours sends one, so it is corruption or tampering, not drift.
+ */
+export function clampOperationTime(
+  operationTime: string | undefined,
+  nowMs: number = Date.now(),
+): string | undefined {
+  if (!operationTime) return undefined;
+  const timestamp = new Date(operationTime).getTime();
+  if (Number.isNaN(timestamp)) {
+    throw new SyncConflictError('validation', `Operation time ${operationTime} is invalid.`);
+  }
+  return timestamp > nowMs ? new Date(nowMs).toISOString() : operationTime;
 }
 
 export interface SyncEntityHandler {
   entityName: string;
+  /** Fields naming what a row is; two live rows never share them (see `findLiveTwin`). */
+  readonly naturalKey: readonly string[];
   findById(id: string, database?: CompatibleDb): Promise<SyncEntityRow | undefined>;
+  /**
+   * The live row of another id that is what `row` would be - the same tag name, the same pair of
+   * related characters - or undefined. An operation making `row` so is refused `duplicate`.
+   */
+  findLiveTwin(
+    storyId: string,
+    row: SyncEntityRow,
+    database?: CompatibleDb,
+  ): Promise<SyncEntityRow | undefined>;
   findByIdOrThrow(id: string, database?: CompatibleDb): Promise<SyncEntityRow>;
   create(
     userId: string,
@@ -125,6 +170,8 @@ export interface SyncEntityHandler {
   sanitizePayloadForLog(update: StoryUpdate, actingUserId: string): SyncPayload;
   /** A resent create: does the sanitised payload describe the same row that already exists? */
   createPayloadMatches(existing: SyncPayload, incomingData: SyncPayload): boolean;
+  /** Whether this row is already a tombstone, so a retried delete reports idempotent success. */
+  isDeletedRow(entity: SyncEntityRow): boolean;
   /** Counts non-deleted rows of this entity in the given stories. Used by TierEnforcementService. */
   countForStoryIds(storyIds: string[], database?: CompatibleDb): Promise<number>;
   allowsReaderWrite(context: SyncOperationPolicyContext): boolean;
@@ -159,14 +206,26 @@ export abstract class BaseSyncEntityHandler<
 {
   abstract entityName: string;
   tierLimitScope: 'story' | 'entity' | 'none' = 'entity';
+  /**
+   * Fields naming what a row is (a tag's name, a pair of related characters, one entity's value
+   * for one field). Two devices can make the same thing offline; the second is refused as a
+   * `duplicate` of the first, which the client folds its row into. Empty: every row is its own.
+   */
+  readonly naturalKey: readonly string[] = [];
+  /**
+   * Fields set once by the create and never by an update (the links a create validated). An
+   * update carrying them is neither written nor relayed: logged, other devices would apply a change
+   * the server itself refused.
+   */
+  protected fixedFields: readonly string[] = [];
   protected idColumnName: string;
   protected storyIdColumnName?: string;
   protected userIdColumnName?: string;
   protected versionColumnName: string;
   protected isDeletedColumnName?: string;
   protected deletedAtColumnName?: string;
-  protected createSchema: CreateType; // Zod schema for creation
-  protected updateSchema: UpdateType; // Zod schema for updates
+  protected createSchema: CreateType;
+  protected updateSchema: UpdateType;
 
   /** The API entity-table registry is the sole mapping from a domain entity to host persistence. */
   protected get table() {
@@ -184,8 +243,8 @@ export abstract class BaseSyncEntityHandler<
   constructor(
     idColumnName: string,
     versionColumnName: string,
-    createSchema: CreateType, // New: Zod schema for creation
-    updateSchema: UpdateType, // New: Zod schema for updates
+    createSchema: CreateType,
+    updateSchema: UpdateType,
     options?: {
       storyIdColumnName?: string;
       userIdColumnName?: string;
@@ -215,6 +274,33 @@ export abstract class BaseSyncEntityHandler<
       .where(eq(this.column(this.idColumnName), id))
       .limit(1);
     return results.at(0) as SyncStoredEntityFor<CreateType> | undefined;
+  }
+
+  async findLiveTwin(
+    storyId: string,
+    row: SyncEntityRow,
+    database: CompatibleDb = db,
+  ): Promise<SyncEntityRow | undefined> {
+    if (this.naturalKey.length === 0 || !this.storyIdColumnName || !this.isDeletedColumnName) {
+      return undefined;
+    }
+    const fields = row as Record<string, unknown>;
+    const conditions = [
+      eq(this.column(this.storyIdColumnName), storyId),
+      eq(this.column(this.isDeletedColumnName), false),
+      ne(this.column(this.idColumnName), String(fields[this.idColumnName] ?? '')),
+      ...this.naturalKey.map((field) =>
+        fields[field] === null || fields[field] === undefined
+          ? isNull(this.column(field))
+          : eq(this.column(field), fields[field]),
+      ),
+    ];
+    const results = await database
+      .select()
+      .from(this.table)
+      .where(and(...conditions))
+      .limit(1);
+    return results.at(0) as SyncEntityRow | undefined;
   }
 
   async findByIdOrThrow(
@@ -287,6 +373,16 @@ export abstract class BaseSyncEntityHandler<
     });
   }
 
+  /**
+   * Whether this row is already a tombstone. The push service reads it before
+   * deleting so a retried delete reports idempotent success without appending
+   * another log row for a deletion that already took effect.
+   */
+  isDeletedRow(entity: SyncEntityRow): boolean {
+    if (!this.isDeletedColumnName) return false;
+    return !!(entity as Record<string, unknown>)[this.isDeletedColumnName];
+  }
+
   abstract create(
     userId: string,
     storyId: string,
@@ -305,6 +401,7 @@ export abstract class BaseSyncEntityHandler<
     // they are the *restoration* of a deleted entity. Extracting them before validating avoids depending on
     // every entity schema accepting those fields.
     const incomingChanges: Record<string, unknown> = { ...update.changes };
+    for (const field of this.fixedFields) delete incomingChanges[field];
     const restoreRequested = incomingChanges.isDeleted === false;
     delete incomingChanges.isDeleted;
     delete incomingChanges.deletedAt;
@@ -330,16 +427,14 @@ export abstract class BaseSyncEntityHandler<
 
     this.checkVersionConflict(update.changes.version, this.readVersion(currentEntity), update.id!);
 
-    // Validate incoming changes against the update schema.
     const validatedChanges: z.infer<UpdateType> = this.updateSchema.parse(incomingChanges);
     this.stripImmutableFields(validatedChanges as Record<string, unknown>);
     this.keepOnlyProvidedKeys(validatedChanges as Record<string, unknown>, incomingChanges);
 
-    // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
     const changes: Record<string, unknown> = {
-      ...validatedChanges, // Use validated changes
+      ...validatedChanges,
       updatedAt: clientOperationTime, // Use client's operationTime for updatedAt
       [this.versionColumnName]: sql`${this.column(this.versionColumnName)} + 1` as SQL<number>,
     };
@@ -400,7 +495,6 @@ export abstract class BaseSyncEntityHandler<
 
     this.checkVersionConflict(update.version!, this.readVersion(currentEntity), update.id!);
 
-    // Validate operationTime is not in the future
     const clientOperationTime = this.parseOperationTime(update.operationTime);
 
     const [deleted] = await database
@@ -431,16 +525,9 @@ export abstract class BaseSyncEntityHandler<
     }
   }
 
-  /** Rejects times in the future (beyond 1s of slack for clock skew). */
+  /** The client's operation time, never later than the server's clock (see `clampOperationTime`). */
   protected parseOperationTime(operationTime: string | undefined): Date {
-    const clientOperationTime = operationTime ? new Date(operationTime) : new Date();
-    if (clientOperationTime.getTime() > new Date().getTime() + 1000) {
-      throw new SyncConflictError(
-        'validation',
-        `Operation time ${operationTime} cannot be in the future.`,
-      );
-    }
-    return clientOperationTime;
+    return new Date(clampOperationTime(operationTime) ?? Date.now());
   }
 
   private readVersion(entity: Record<string, unknown>): number {
@@ -519,6 +606,7 @@ export abstract class BaseSyncEntityHandler<
     }
     if (update.type === 'update') {
       const incoming: Record<string, unknown> = { ...(update as UpdateStoryUpdate).changes };
+      for (const field of this.fixedFields) delete incoming[field];
       const restoreRequested = incoming.isDeleted === false;
       delete incoming.isDeleted;
       delete incoming.deletedAt;
@@ -534,13 +622,6 @@ export abstract class BaseSyncEntityHandler<
     if (update.type === 'delete') {
       return { id: update.id };
     }
-    if (update.type === 'reorder') {
-      return {
-        reorderItems: (update as { reorderItems?: unknown }).reorderItems,
-        reorderTarget: (update as { reorderTarget?: unknown }).reorderTarget,
-        schemaEntityType: (update as { schemaEntityType?: unknown }).schemaEntityType,
-      };
-    }
     return {};
   }
 
@@ -555,8 +636,8 @@ export abstract class BaseSyncEntityHandler<
       return false;
     }
     for (const [key, value] of Object.entries(parsed)) {
+      // `userId`/`authorUserId` are in the immutable set, so they skip here too.
       if (SYNC_CLIENT_IMMUTABLE_FIELD_SET.has(key)) continue;
-      if (key === 'userId' || key === 'authorUserId') continue;
       if (value === undefined) continue;
       if (!syncValuesMatch(existing?.[key], value)) {
         return false;
@@ -587,6 +668,41 @@ export abstract class BaseSyncEntityHandler<
   ): void {
     for (const key of Object.keys(parsed)) {
       if (!(key in provided)) delete parsed[key];
+    }
+  }
+
+  /**
+   * Refuses a reference to an entity outside this story (or deleted). For the polymorphic links
+   * (`entityType` + `entityId`) the handlers cannot express as a foreign key: without it, a writer
+   * of one story could attach rows to - and learn about - entities of stories they cannot read.
+   */
+  protected async assertEntityInStory(
+    entityType: string,
+    entityId: string,
+    storyId: string,
+    database: CompatibleDb = db,
+  ): Promise<void> {
+    const table = getApiEntityTable(entityType);
+    const storyColumn = entityType === 'Story' ? table?.id : table?.storyId;
+    const found =
+      table && storyColumn
+        ? await database
+            .select({ id: table.id })
+            .from(table)
+            .where(
+              and(
+                eq(table.id, entityId),
+                eq(storyColumn, storyId),
+                ...(table.isDeleted ? [eq(table.isDeleted, false)] : []),
+              ),
+            )
+            .limit(1)
+        : [];
+    if (found.length === 0) {
+      throw new SyncConflictError(
+        'referenced_entity_deleted',
+        `${entityType} ${entityId} not found, is deleted, or does not belong to story ${storyId}.`,
+      );
     }
   }
 

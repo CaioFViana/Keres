@@ -8,7 +8,13 @@ import type {
 } from '@/src/components/features/location-maps/LocationMapCanvas';
 import type { LocationMapSelect } from '../db/schema';
 import type { NotificationType } from '../state/notificationStore';
-import { buildLocationMapFileName, deliverSvgMap } from '../utils/storyTransfer';
+import { useUserSettingsStore } from '../state/userSettingsStore';
+import type { SvgExportColors } from '../utils/svgExport';
+import {
+  buildLocationMapFileName,
+  deliverMapExport,
+  type ExportFileLanguage,
+} from '../utils/storyTransfer';
 import { buildStandaloneLocationMapSvg } from '../utils/storyMapSvgExport';
 
 type GalleryMediaById = Record<
@@ -28,16 +34,12 @@ interface Options {
   nodeNames: Record<string, string>;
   connections: LocationMapConnection[];
   contains: LocationMapContains[];
-  colors: {
-    background: string;
-    surface: string;
-    text: string;
-    textSecondary: string;
-    border: string;
-  };
+  colors: SvgExportColors;
   t: TFunction;
   showNotification: (message: string, type?: NotificationType) => void;
   setExporting: Dispatch<SetStateAction<boolean>>;
+  /** App language for the file-name slug; never the system language. */
+  language: ExportFileLanguage;
 }
 
 /** Builds and delivers a standalone location-map SVG without inflating its screen controller. */
@@ -52,6 +54,7 @@ export function useLocationMapExport({
   t,
   showNotification,
   setExporting,
+  language,
 }: Options) {
   return useCallback(async () => {
     if (!map) return;
@@ -68,7 +71,11 @@ export function useLocationMapExport({
         connections,
         contains,
       });
-      const result = await deliverSvgMap(svg, buildLocationMapFileName(map.name));
+      const result = await deliverMapExport(
+        svg,
+        buildLocationMapFileName(map.name, new Date(), language),
+        useUserSettingsStore.getState().exportFormat,
+      );
       if (result.delivered) {
         showNotification(
           t('location_map_export_success', { fileName: result.fileName }),
@@ -97,5 +104,6 @@ export function useLocationMapExport({
     setExporting,
     showNotification,
     t,
+    language,
   ]);
 }

@@ -46,7 +46,7 @@ import { createCommentService } from '../../src/services/storymanagement/Comment
 import { createFavoriteService } from '../../src/services/storymanagement/FavoriteService';
 import { createServerService } from '../../src/services/ServerService';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { SyncEngineService } from '../../src/services/SyncEngineService';
+import type { SyncEngineService } from '../../src/services/SyncEngineService';
 import { createAppSyncEngine } from '../../src/services/sync/appSyncEngine';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -327,12 +327,46 @@ describe('uploadNewStoryToServer', () => {
     );
   });
 
+  it('migrates identity before exporting, so the server snapshot carries the server id', async () => {
+    await seedLocalStory();
+
+    await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    // The server stores the snapshot verbatim and the identity columns are immutable
+    // afterwards: exporting first would freeze the local id server-side forever.
+    expect(mockFavoriteService.migrateUserIdentity.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStoryService.exportFullStory.mock.invocationCallOrder[0],
+    );
+    expect(mockCommentService.migrateAuthorIdentity.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStoryService.exportFullStory.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('migrates identity back when the import POST fails, so nothing sits invisible', async () => {
+    await seedLocalStory();
+    routes['/stories/import'] = null;
+
+    const result = await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
+
+    expect(result).toMatchObject({ success: false, reason: 'error' });
+    expect(mockFavoriteService.migrateUserIdentity).toHaveBeenLastCalledWith(
+      STORY_ID,
+      'server-user',
+      LOCAL_USER,
+    );
+    expect(mockCommentService.migrateAuthorIdentity).toHaveBeenLastCalledWith(
+      STORY_ID,
+      'server-user',
+      LOCAL_USER,
+    );
+  });
+
   it('marks every operation included in the imported snapshot as already sent', async () => {
     await seedLocalStory({ lastOperationLog: 4 });
     await seedOperation('op-favorite', { entityType: 'Favorite', operationVersion: 2 });
     await seedOperation('op-comment', { entityType: 'Comment', operationVersion: 3 });
     await seedOperation('op-character', { entityType: 'Character', operationVersion: 4 });
-    await seedOperation('op-board', { entityType: 'Board', operationVersion: 4 });
+    await seedOperation('op-board', { entityType: 'Board', operationVersion: 1 });
 
     await engine.uploadNewStoryToServer(STORY_ID, SERVER, LOCAL_USER);
 

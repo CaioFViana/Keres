@@ -1,5 +1,6 @@
 import GraphConnectionModal from '@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
 import type { LocationMapContentType } from '@keres/shared';
+import { MAX_LOCATION_MAP_ANNOTATION_LENGTH } from '@keres/shared';
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +32,7 @@ const LocationMapConnectionModal: React.FC<Props> = ({
       sourceName={sourceName}
       targetName={targetName}
       labelEnabled
+      labelMaxLength={MAX_LOCATION_MAP_ANNOTATION_LENGTH}
       directionHint={t('location_map_connection_direction_hint')}
       onClose={onClose}
       onConfirm={({ directed, direction, label }) => {

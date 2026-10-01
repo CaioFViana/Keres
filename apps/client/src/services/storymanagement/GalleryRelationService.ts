@@ -8,7 +8,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -62,6 +63,31 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
 
   const ownerKey = (owner: GalleryOwnerRef) => `${owner.ownerType}:${owner.ownerId}`;
 
+  /** Tombstones one link and records its delete; runs inside a `runLocalWrite` unit. */
+  const tombstoneRelation = (storyId: string, relationId: string, userIdToLog: string): void => {
+    const updated = db
+      .update(galleryRelations)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        version: sql`${galleryRelations.version} + 1`,
+      })
+      .where(eq(galleryRelations.id, relationId))
+      .returning()
+      .get();
+
+    if (!updated) {
+      throw new Error(`Failed to remove gallery relation ${relationId}.`);
+    }
+
+    recordLocalOperationSync(db, storyId, userIdToLog, 'delete', 'GalleryRelation', updated.id, {
+      id: updated.id,
+      isDeleted: true,
+      version: updated.version,
+    });
+  };
+
   return {
     async getOwnersForGallery(storyId, galleryId): Promise<GalleryRelationSelect[]> {
       return db.query.galleryRelations.findMany({
@@ -86,80 +112,78 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
 
     async linkGalleryToOwner(currentUserId, storyId, galleryId, owner): Promise<void> {
       await assertStoryIsWritable(db, storyId);
-      const existing = await db.query.galleryRelations.findFirst({
-        where: and(
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      const pairIs = (isDeleted: boolean) =>
+        and(
           eq(galleryRelations.storyId, storyId),
           eq(galleryRelations.galleryId, galleryId),
           eq(galleryRelations.ownerId, owner.ownerId),
           eq(galleryRelations.ownerType, owner.ownerType),
-          eq(galleryRelations.isDeleted, false),
-        ),
-      });
+          eq(galleryRelations.isDeleted, isDeleted),
+        );
 
-      if (existing) {
-        return;
-      }
-
-      // Relinking something that was unlinked reuses the row instead of creating another: the server treats
-      // the (media, owner) pair as unique among the active ones, so a second row for the same pair would be
-      // refused on the push.
-      const tombstone = await db.query.galleryRelations.findFirst({
-        where: and(
-          eq(galleryRelations.storyId, storyId),
-          eq(galleryRelations.galleryId, galleryId),
-          eq(galleryRelations.ownerId, owner.ownerId),
-          eq(galleryRelations.ownerType, owner.ownerType),
-          eq(galleryRelations.isDeleted, true),
-        ),
-      });
-
-      if (tombstone) {
-        const [revived] = await db
-          .update(galleryRelations)
-          .set({
-            isDeleted: false,
-            deletedAt: null,
-            updatedAt: new Date(),
-            version: sql`${galleryRelations.version} + 1`,
-          })
-          .where(eq(galleryRelations.id, tombstone.id))
-          .returning();
-
-        if (!revived) {
-          throw new Error(`Failed to restore gallery relation ${tombstone.id}.`);
+      // The lookups run inside the unit: two quick links of the same pair would otherwise both
+      // see "not linked yet" and write two rows for it.
+      const linked = await runLocalWrite(db, storyId, () => {
+        const existing = db.select().from(galleryRelations).where(pairIs(false)).get();
+        if (existing) {
+          return false;
         }
 
-        const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-        await recordLocalOperation(
-          db,
+        // Relinking something that was unlinked reuses the row instead of creating another: the
+        // server treats the (media, owner) pair as unique among the active ones, so a second row
+        // for the same pair would be refused on the push.
+        const tombstone = db.select().from(galleryRelations).where(pairIs(true)).get();
+
+        if (tombstone) {
+          const revived = db
+            .update(galleryRelations)
+            .set({
+              isDeleted: false,
+              deletedAt: null,
+              updatedAt: new Date(),
+              version: sql`${galleryRelations.version} + 1`,
+            })
+            .where(eq(galleryRelations.id, tombstone.id))
+            .returning()
+            .get();
+
+          if (!revived) {
+            throw new Error(`Failed to restore gallery relation ${tombstone.id}.`);
+          }
+
+          recordLocalOperationSync(
+            db,
+            storyId,
+            userIdToLog,
+            'update',
+            'GalleryRelation',
+            revived.id,
+            {
+              isDeleted: false,
+              version: revived.version,
+            },
+          );
+          return true;
+        }
+
+        const newRelation = prepareNewEntityData<GalleryRelationInsert>({
           storyId,
-          userIdToLog,
-          'update',
-          'GalleryRelation',
-          revived.id,
-          {
-            isDeleted: false,
-            version: revived.version,
-          },
-        );
+          galleryId,
+          ownerId: owner.ownerId,
+          ownerType: owner.ownerType,
+        });
+
+        const result = db.insert(galleryRelations).values(newRelation).returning().get();
+        recordLocalOperationSync(db, storyId, userIdToLog, 'create', 'GalleryRelation', result.id, {
+          ...result,
+        });
+        return true;
+      });
+
+      if (linked) {
         entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
-        return;
       }
-
-      const newRelation = prepareNewEntityData<GalleryRelationInsert>({
-        storyId,
-        galleryId,
-        ownerId: owner.ownerId,
-        ownerType: owner.ownerType,
-      });
-
-      const result = await db.insert(galleryRelations).values(newRelation).returning().get();
-
-      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'create', 'GalleryRelation', result.id, {
-        ...result,
-      });
-      entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
     },
 
     async unlinkGalleryFromOwner(currentUserId, storyId, galleryId, owner): Promise<void> {
@@ -181,45 +205,26 @@ export const createGalleryRelationService = (db: AppDrizzleClient): GalleryRelat
         return;
       }
 
-      const [updated] = await db
-        .update(galleryRelations)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${galleryRelations.version} + 1`,
-        })
-        .where(eq(galleryRelations.id, relation.id))
-        .returning();
-
-      if (!updated) {
-        throw new Error(`Failed to remove gallery relation ${relation.id}.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'delete',
-        'GalleryRelation',
-        updated.id,
-        {
-          id: updated.id,
-          isDeleted: true,
-          version: updated.version,
-        },
-      );
+      await runLocalWrite(db, storyId, () => tombstoneRelation(storyId, relation.id, userIdToLog));
       entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
     },
 
     async unlinkAllForGallery(currentUserId, storyId, galleryId): Promise<number> {
       const relations = await this.getOwnersForGallery(storyId, galleryId);
-      for (const relation of relations) {
-        await this.unlinkGalleryFromOwner(currentUserId, storyId, galleryId, {
-          ownerId: relation.ownerId,
-          ownerType: relation.ownerType as GalleryOwnerEntity,
-        });
+      if (relations.length === 0) {
+        return 0;
+      }
+      await assertStoryIsWritable(db, storyId);
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+      // One unit for the whole sweep: removing a gallery never leaves it half-unlinked.
+      await runLocalWrite(db, storyId, () => {
+        for (const relation of relations) {
+          tombstoneRelation(storyId, relation.id, userIdToLog);
+        }
+      });
+      for (let i = 0; i < relations.length; i++) {
+        entityEventEmitter.emit('gallery_relation_changed', storyId, galleryId);
       }
       return relations.length;
     },

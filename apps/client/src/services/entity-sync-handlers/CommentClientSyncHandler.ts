@@ -5,24 +5,24 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import { comments } from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class CommentClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'Comment';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(db: AppDrizzleClient): void {
+  setDb(db: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = db;
   }
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) throw new Error('CommentClientSyncHandler: database not set.');
     return this.dbInstance;
   }
 
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
+    if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as Comment;
     await this.db
       .insert(comments)
@@ -39,7 +39,7 @@ export class CommentClientSyncHandler implements ClientSyncEntityHandler {
   }
 
   async applyUpdate(_storyId: string, update: UpdateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
+    if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<Comment>;
     await this.db
       .update(comments)
@@ -54,7 +54,7 @@ export class CommentClientSyncHandler implements ClientSyncEntityHandler {
   }
 
   async applyDelete(_storyId: string, update: DeleteStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
+    if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(comments)
       .set({

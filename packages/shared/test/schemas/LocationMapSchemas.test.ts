@@ -9,6 +9,7 @@ import {
 
 const imageId = '01ABCDEF';
 const nodeId = '02GHJKMN';
+const markerId = '03PQRSTV';
 
 describe('LocationMapContentSchema', () => {
   it('accepts an empty map', () => {
@@ -116,6 +117,15 @@ describe('LocationMapContentSchema', () => {
       destinationMapId: null,
     });
     expect(content.nodes[0].destinationMapId).toBe('map-2');
+  });
+
+  it('accepts a marker with an empty title', () => {
+    const content = LocationMapContentSchema.parse({
+      images: [],
+      nodes: [],
+      markers: [{ id: markerId, x: 10, y: 20, title: '', icon: 'flag' }],
+    });
+    expect(content.markers?.[0].title).toBe('');
   });
 
   it('rejects duplicate image ids', () => {

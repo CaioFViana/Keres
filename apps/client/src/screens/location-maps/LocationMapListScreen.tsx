@@ -5,7 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenError } from '@/src/components/common/feedback/ScreenState/ScreenState';
@@ -70,6 +70,7 @@ const LocationMapListScreen = () => {
   }, [db, storyId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     void reload();
   }, [reload]);
 

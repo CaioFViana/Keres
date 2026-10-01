@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { isSpatialEnvelopeSafe } from '../graphs/spatialCanvas';
 import { BOARD_LOCAL_ID_ALPHABET, BOARD_LOCAL_ID_LENGTH } from './BoardSchemas';
+import {
+  CanvasOverlaySchema,
+  canvasOverlayBounds,
+  MAX_CANVAS_OVERLAYS,
+} from './CanvasOverlaySchemas';
 
 /**
  * A Location Map is a named drawing over gallery images: pins of existing locations (with a
@@ -20,6 +25,12 @@ export const MAX_LOCATION_MAP_NODES = 500;
 export const MAX_LOCATION_MAP_MARKERS = 500;
 export const MAX_LOCATION_MAP_RELATION_TEXTS = 1000;
 export const MAX_LOCATION_MAP_MARKER_CONNECTIONS = 1000;
+/** Marker titles and pin label snapshots. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_LOCATION_MAP_TITLE_LENGTH = 200;
+/** Marker notes. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_LOCATION_MAP_NOTE_LENGTH = 8000;
+/** Relation texts and marker-connection labels. Mirrored by the canvas inputs via `maxLength`. */
+export const MAX_LOCATION_MAP_ANNOTATION_LENGTH = 500;
 
 /** Default icon color of a map point - the Location entity's own colour. */
 export const DEFAULT_LOCATION_MAP_NODE_COLOR = '#8BC34A';
@@ -70,7 +81,7 @@ const LocationMapNodeSchema = z.object({
   /** Optional cartographic destination; this is not a LocationRelation. */
   destinationMapId: z.string().min(1).nullable().optional(),
   /** Snapshot used to keep a deleted Location point legible. */
-  labelAtPin: z.string().max(200).optional(),
+  labelAtPin: z.string().max(MAX_LOCATION_MAP_TITLE_LENGTH).optional(),
 });
 
 /** A map-only point such as loot, a door, a danger zone or a free annotation. */
@@ -78,8 +89,8 @@ export const LocationMapMarkerSchema = z.object({
   id: LocationMapLocalIdSchema,
   x: z.number().finite(),
   y: z.number().finite(),
-  title: z.string().min(1).max(200),
-  note: z.string().max(8000).nullable().optional(),
+  title: z.string().max(MAX_LOCATION_MAP_TITLE_LENGTH),
+  note: z.string().max(MAX_LOCATION_MAP_NOTE_LENGTH).nullable().optional(),
   icon: z.string().min(1).max(60),
   color: z.string().max(20).default(DEFAULT_LOCATION_MAP_NODE_COLOR),
   zIndex: z.number().finite().optional(),
@@ -90,7 +101,7 @@ export const LocationMapMarkerSchema = z.object({
 export const LocationMapRelationTextSchema = z.object({
   sourceLocationId: z.string().min(1),
   destinationLocationId: z.string().min(1),
-  text: z.string().min(1).max(500),
+  text: z.string().min(1).max(MAX_LOCATION_MAP_ANNOTATION_LENGTH),
 });
 
 /** A map-only edge when at least one end is a free marker. Point ids are local to the map. */
@@ -99,7 +110,7 @@ export const LocationMapMarkerConnectionSchema = z.object({
   fromId: LocationMapLocalIdSchema,
   toId: LocationMapLocalIdSchema,
   directed: z.boolean().default(true),
-  label: z.string().min(1).max(500).nullable().optional(),
+  label: z.string().min(1).max(MAX_LOCATION_MAP_ANNOTATION_LENGTH).nullable().optional(),
 });
 
 export const LocationMapContentSchema = z
@@ -115,6 +126,7 @@ export const LocationMapContentSchema = z
       .array(LocationMapMarkerConnectionSchema)
       .max(MAX_LOCATION_MAP_MARKER_CONNECTIONS)
       .optional(),
+    overlays: z.array(CanvasOverlaySchema).max(MAX_CANVAS_OVERLAYS).optional(),
   })
   .superRefine((content, context) => {
     const imageIds = new Set<string>();
@@ -196,6 +208,17 @@ export const LocationMapContentSchema = z
         });
       }
     }
+    const overlayIds = new Set<string>();
+    for (const [index, overlay] of (content.overlays ?? []).entries()) {
+      if (overlayIds.has(overlay.id) || nodeIds.has(overlay.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['overlays', index, 'id'],
+          message: 'Duplicate overlay id on this location map.',
+        });
+      }
+      overlayIds.add(overlay.id);
+    }
     const pointRectangles = [...content.nodes, ...(content.markers ?? [])].map((point) => ({
       x: point.x - LOCATION_MAP_POINT_RADIUS,
       y: point.y - LOCATION_MAP_POINT_RADIUS,
@@ -211,6 +234,7 @@ export const LocationMapContentSchema = z
           height: image.height,
         })),
         ...pointRectangles,
+        ...(content.overlays ?? []).map(canvasOverlayBounds),
       ])
     ) {
       context.addIssue({
@@ -260,8 +284,8 @@ export type CreateLocationMapDataType = z.infer<typeof CreateLocationMapDataSche
 export type PartialLocationMapType = z.infer<typeof PartialLocationMapSchema>;
 
 /**
- * Rewrites `galleryId`/`locationId` after a story clone/import. Image and node ids stay: they are
- * local to this JSON, not rows in the id map.
+ * Rewrites `galleryId`/`locationId` after a story clone/import. Image, node and overlay ids
+ * stay: they are local to this JSON, not rows in the id map.
  */
 export function remapLocationMapContent(
   content: LocationMapContentType,
@@ -288,5 +312,6 @@ export function remapLocationMapContent(
       destinationLocationId: remapId(relationText.destinationLocationId),
     })),
     markerConnections: content.markerConnections?.map((connection) => ({ ...connection })),
+    overlays: content.overlays?.map((overlay) => ({ ...overlay })),
   };
 }

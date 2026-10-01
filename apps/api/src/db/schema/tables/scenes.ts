@@ -4,9 +4,9 @@ import { stories } from './stories';
 import { storyCalendars } from './storyCalendars';
 import { chapters } from './chapters';
 import { locations } from './locations';
-import { choices } from './choices'; // Will be created later
-import { characterScenes } from './characterScenes'; // Will be created later
-import { itemJourneys } from './itemJourneys'; // Will be created later
+import { choices } from './choices';
+import { characterScenes } from './characterScenes';
+import { itemJourneys } from './itemJourneys';
 
 export const scenes = table('scenes', {
   id: text('id').primaryKey(),
@@ -18,7 +18,10 @@ export const scenes = table('scenes', {
   locationId: text('location_id').references(() => locations.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
+  /** Place among the chapter's scenes (see rules/rank.ts); the index is derived from it. */
+  rank: text('rank').notNull().default(''),
   summary: text('summary'),
+  body: text('body'),
   gap: integer('gap'),
   gapType: text('gap_type'),
   calendarDateOverride: text('calendar_date_override'),

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { GraphNode, StoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
-import React, { useMemo, type RefObject } from 'react';
+import { useMemo, type RefObject } from 'react';
 import {
   ActivityIndicator,
   ScrollView,

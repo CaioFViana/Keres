@@ -50,11 +50,8 @@ export const HOSTED_CLIENT_HISTORY_GUARD = `<script>(function(){function here(){
 
 export function rewriteHostedClientHtml(html: string): string {
   let next = html;
-  if (!/<meta\s+name="keres-hosted"/i.test(next)) {
-    next = /<head>/i.test(next)
-      ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_META}`)
-      : `${HOSTED_CLIENT_META}${next}`;
-  }
+  // Order matters: the history guard goes in first so the meta marker wins position zero,
+  // right after `<head>` or at the very start when the page has no head element.
   if (
     !next.includes('HOSTED_CLIENT_HISTORY_GUARD') &&
     !next.includes('history.pushState=function()')
@@ -62,6 +59,11 @@ export function rewriteHostedClientHtml(html: string): string {
     next = /<head>/i.test(next)
       ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_HISTORY_GUARD}`)
       : `${HOSTED_CLIENT_HISTORY_GUARD}${next}`;
+  }
+  if (!/<meta\s+name="keres-hosted"/i.test(next)) {
+    next = /<head>/i.test(next)
+      ? next.replace(/<head>/i, `<head>${HOSTED_CLIENT_META}`)
+      : `${HOSTED_CLIENT_META}${next}`;
   }
   return next;
 }

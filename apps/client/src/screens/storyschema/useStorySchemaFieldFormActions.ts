@@ -91,6 +91,7 @@ export function useStorySchemaFieldFormActions({
           order: existingFieldCount,
         });
       }
+      await state.clearFormDraft();
       navigation.goBack();
     } catch (err: any) {
       console.error('Failed to save attribute field:', err);

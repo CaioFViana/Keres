@@ -5,7 +5,12 @@ import type { AppDrizzleClient, SeeAlsoRelationSelect } from '../../db';
 import { seeAlsoRelations } from '../../db';
 import { createULID } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export interface SeeAlsoEntityRef {
@@ -87,6 +92,94 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
     return undefined;
   };
 
+  /** The row a new link would insert, or the live link the pair already has. */
+  const planLink = async (
+    storyId: string,
+    a: SeeAlsoEntityRef,
+    b: SeeAlsoEntityRef,
+  ): Promise<{ existing: SeeAlsoRelationSelect } | { row: SeeAlsoRelationSelect }> => {
+    if (
+      isSameEntity({ type: a.entityType, id: a.entityId }, { type: b.entityType, id: b.entityId })
+    ) {
+      throw new Error(SELF_LINK_ERROR);
+    }
+
+    const [entityA, entityB] = sortEntityRefs(a, b);
+    const existing = await findExistingPair(storyId, entityA, entityB);
+    if (existing) {
+      return { existing };
+    }
+
+    const now = new Date();
+    return {
+      row: {
+        id: createULID(),
+        storyId,
+        entityAType: entityA.entityType,
+        entityAId: entityA.entityId,
+        entityBType: entityB.entityType,
+        entityBId: entityB.entityId,
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    };
+  };
+
+  /** Inside a unit. */
+  const insertLink = (row: SeeAlsoRelationSelect, userIdToLog: string) => {
+    db.insert(seeAlsoRelations).values(row).run();
+    recordLocalOperationSync(
+      db,
+      row.storyId,
+      userIdToLog,
+      'create',
+      'SeeAlsoRelation',
+      row.id,
+      row,
+    );
+  };
+
+  /** Inside a unit. */
+  const removeLink = (relation: SeeAlsoRelationSelect, userIdToLog: string) => {
+    const removed = db
+      .update(seeAlsoRelations)
+      .set({
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+        version: sql`${seeAlsoRelations.version} + 1`,
+      })
+      .where(eq(seeAlsoRelations.id, relation.id))
+      .returning({ id: seeAlsoRelations.id, version: seeAlsoRelations.version })
+      .get();
+
+    if (!removed) {
+      throw new Error(`Failed to delete SeeAlsoRelation ${relation.id}.`);
+    }
+    recordLocalOperationSync(
+      db,
+      relation.storyId,
+      userIdToLog,
+      'delete',
+      'SeeAlsoRelation',
+      relation.id,
+      {
+        id: relation.id,
+        isDeleted: true,
+        version: removed.version,
+      },
+    );
+  };
+
+  // Both sides may have their detail screen mounted - notify both.
+  const emitLinkChanged = (link: SeeAlsoRelationSelect) => {
+    entityEventEmitter.emit('see_also_relation_changed', link.storyId, link.entityAId);
+    entityEventEmitter.emit('see_also_relation_changed', link.storyId, link.entityBId);
+  };
+
   return {
     async getRelationsForEntity(storyId, entityType, entityId) {
       return db
@@ -112,48 +205,16 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
     },
 
     async addSeeAlsoLink(currentUserId, storyId, a, b) {
-      if (
-        isSameEntity({ type: a.entityType, id: a.entityId }, { type: b.entityType, id: b.entityId })
-      ) {
-        throw new Error(SELF_LINK_ERROR);
+      await assertStoryIsWritable(db, storyId);
+      const planned = await planLink(storyId, a, b);
+      if ('existing' in planned) {
+        return planned.existing;
       }
-
-      const [entityA, entityB] = sortEntityRefs(a, b);
-      const existing = await findExistingPair(storyId, entityA, entityB);
-      if (existing) {
-        return existing;
-      }
-
-      const now = new Date();
-      const inserted = {
-        id: createULID(),
-        storyId,
-        entityAType: entityA.entityType,
-        entityAId: entityA.entityId,
-        entityBType: entityB.entityType,
-        entityBId: entityB.entityId,
-        createdAt: now,
-        updatedAt: now,
-        version: 1,
-        isDeleted: false,
-        deletedAt: null,
-      };
-      await db.insert(seeAlsoRelations).values(inserted).run();
+      const inserted = planned.row;
 
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'create',
-        'SeeAlsoRelation',
-        inserted.id,
-        inserted,
-      );
-
-      // Ambos os lados podem estar com a tela de detalhe montada - avisa os dois.
-      entityEventEmitter.emit('see_also_relation_changed', storyId, entityA.entityId);
-      entityEventEmitter.emit('see_also_relation_changed', storyId, entityB.entityId);
+      await runLocalWrite(db, storyId, () => insertLink(inserted, userIdToLog));
+      emitLinkChanged(inserted);
 
       return inserted;
     },
@@ -165,21 +226,7 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
       if (!relation || relation.isDeleted) {
         return false;
       }
-
-      const [removed] = await db
-        .update(seeAlsoRelations)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${seeAlsoRelations.version} + 1`,
-        })
-        .where(eq(seeAlsoRelations.id, relationId))
-        .returning({ id: seeAlsoRelations.id, version: seeAlsoRelations.version });
-
-      if (!removed) {
-        throw new Error(`Failed to delete SeeAlsoRelation ${relationId}.`);
-      }
+      await assertStoryIsWritable(db, relation.storyId);
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -187,22 +234,8 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
         relation.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        relation.storyId,
-        userIdToLog,
-        'delete',
-        'SeeAlsoRelation',
-        relationId,
-        {
-          id: relationId,
-          isDeleted: true,
-          version: removed.version,
-        },
-      );
-
-      entityEventEmitter.emit('see_also_relation_changed', relation.storyId, relation.entityAId);
-      entityEventEmitter.emit('see_also_relation_changed', relation.storyId, relation.entityBId);
+      await runLocalWrite(db, relation.storyId, () => removeLink(relation, userIdToLog));
+      emitLinkChanged(relation);
       return true;
     },
 
@@ -227,19 +260,34 @@ export const createSeeAlsoRelationService = (db: AppDrizzleClient): SeeAlsoRelat
       const desiredKeys = new Set(
         targets.map((target) => `${target.entityType}:${target.entityId}`),
       );
-
-      for (const target of targets) {
+      const addKeys = new Set<string>();
+      const toAdd = targets.filter((target) => {
         const key = `${target.entityType}:${target.entityId}`;
-        if (!currentByKey.has(key)) {
-          await this.addSeeAlsoLink(currentUserId, storyId, { entityType, entityId }, target);
-        }
+        if (currentByKey.has(key) || addKeys.has(key)) return false;
+        addKeys.add(key);
+        return true;
+      });
+      const toRemove = [...currentByKey]
+        .filter(([key]) => !desiredKeys.has(key))
+        .map(([, relation]) => relation);
+      if (toAdd.length === 0 && toRemove.length === 0) {
+        return;
       }
 
-      for (const [key, relation] of currentByKey) {
-        if (!desiredKeys.has(key)) {
-          await this.removeSeeAlsoLink(currentUserId, relation.id);
-        }
+      await assertStoryIsWritable(db, storyId);
+      const rows: SeeAlsoRelationSelect[] = [];
+      for (const target of toAdd) {
+        const planned = await planLink(storyId, { entityType, entityId }, target);
+        if ('row' in planned) rows.push(planned.row);
       }
+      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+      // One save of the list is one change: every add and removal lands (and syncs) together.
+      await runLocalWrite(db, storyId, () => {
+        for (const row of rows) insertLink(row, userIdToLog);
+        for (const relation of toRemove) removeLink(relation, userIdToLog);
+      });
+      for (const link of [...rows, ...toRemove]) emitLinkChanged(link);
     },
   };
 };

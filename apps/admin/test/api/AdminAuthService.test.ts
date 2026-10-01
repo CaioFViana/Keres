@@ -15,7 +15,7 @@ vi.mock('../../src/api/apiClient', () => ({
   setStoredUsername: mocks.setStoredUsername,
 }));
 
-import { login, logout } from '../../src/api/AdminAuthService';
+import { login, logout, probeAdminAccess } from '../../src/api/AdminAuthService';
 
 describe('admin login', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -60,6 +60,36 @@ describe('admin login', () => {
     mocks.get.mockRejectedValue(new Error('Network Error'));
 
     await expect(login('admin', 'password')).rejects.toThrow('Network Error');
+    expect(mocks.clearLocalSession).toHaveBeenCalledOnce();
+  });
+});
+
+describe('admin access probe', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('reuses the users listing as a cheap admin-only probe', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await probeAdminAccess();
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/users', { params: { pageSize: 1 } });
+  });
+
+  it('lets the interceptor error through untouched for the caller to handle', async () => {
+    mocks.get.mockRejectedValue(new Error('Admin access required.'));
+
+    await expect(probeAdminAccess()).rejects.toThrow('Admin access required.');
+  });
+
+  it('still says something when the probe fails without a message', async () => {
+    mocks.post.mockResolvedValueOnce({
+      data: { accessToken: 'token', userId: 'user-1', username: 'admin' },
+    });
+    mocks.get.mockRejectedValue('boom');
+
+    await expect(login('admin', 'password')).rejects.toThrow(
+      'Could not verify admin access. Try again.',
+    );
     expect(mocks.clearLocalSession).toHaveBeenCalledOnce();
   });
 });

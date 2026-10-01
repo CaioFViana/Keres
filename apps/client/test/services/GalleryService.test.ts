@@ -3,7 +3,7 @@
  */
 import * as schema from '../../src/db/schema';
 import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
+import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 let database: TestDatabase;
@@ -12,6 +12,7 @@ beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database);
   jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -65,6 +66,125 @@ it('finds gallery work that is pending transfer without including deleted media'
   expect((await service.getPendingDownloads(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
     'download',
   ]);
+});
+
+it('lists never-transferred media before retries, so failures cannot starve fresh work', async () => {
+  await database.db.insert(schema.galleries).values([
+    {
+      id: 'failed-upload',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'failed-upload.png',
+      hash: 'failed-upload-hash',
+      sizeBytes: 10,
+      uploadState: 'failed',
+      downloadState: 'downloaded',
+      ...entityBase,
+    },
+    {
+      id: 'fresh-upload',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'fresh-upload.png',
+      hash: 'fresh-upload-hash',
+      sizeBytes: 10,
+      uploadState: 'pending',
+      downloadState: 'downloaded',
+      ...entityBase,
+    },
+    {
+      id: 'failed-download',
+      storyId: TEST_STORY_ID,
+      mediaType: 'audio',
+      mimeType: 'audio/mpeg',
+      fileName: 'failed-download.mp3',
+      hash: 'failed-download-hash',
+      sizeBytes: 20,
+      uploadState: 'uploaded',
+      downloadState: 'failed',
+      ...entityBase,
+    },
+    {
+      id: 'fresh-download',
+      storyId: TEST_STORY_ID,
+      mediaType: 'audio',
+      mimeType: 'audio/mpeg',
+      fileName: 'fresh-download.mp3',
+      hash: 'fresh-download-hash',
+      sizeBytes: 20,
+      uploadState: 'uploaded',
+      downloadState: 'pending',
+      ...entityBase,
+    },
+  ]);
+
+  const service = createGalleryService(database.db);
+  expect((await service.getPendingUploads(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
+    'fresh-upload',
+    'failed-upload',
+  ]);
+  expect((await service.getPendingDownloads(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
+    'fresh-download',
+    'failed-download',
+  ]);
+});
+
+it('lists tombstone files for collection and the paths live media still holds', async () => {
+  await database.db.insert(schema.galleries).values([
+    {
+      id: 'gone',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'gone.png',
+      hash: 'gone-hash',
+      sizeBytes: 10,
+      localPath: '/local/gone.png',
+      uploadState: 'uploaded',
+      downloadState: 'downloaded',
+      ...entityBase,
+      isDeleted: true,
+    },
+    {
+      id: 'collected',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'collected.png',
+      hash: 'collected-hash',
+      sizeBytes: 10,
+      localPath: null,
+      uploadState: 'uploaded',
+      downloadState: 'pending',
+      ...entityBase,
+      isDeleted: true,
+    },
+    {
+      id: 'live',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'live.png',
+      hash: 'live-hash',
+      sizeBytes: 10,
+      localPath: '/local/live.png',
+      thumbnailPath: '/local/live.thumb',
+      uploadState: 'uploaded',
+      downloadState: 'downloaded',
+      ...entityBase,
+    },
+  ]);
+
+  const service = createGalleryService(database.db);
+  expect((await service.getDeletedMediaWithLocalFiles(TEST_STORY_ID)).map(({ id }) => id)).toEqual([
+    'gone',
+  ]);
+  expect(await service.getLiveMediaLocalPaths(TEST_STORY_ID)).toEqual(
+    expect.arrayContaining(['/local/live.png', '/local/live.thumb']),
+  );
+  expect(await service.getLiveMediaLocalPaths(TEST_STORY_ID)).not.toContain('/local/gone.png');
 });
 
 it('filters gallery media, retrieves it through a live owner relation, and ignores deleted links', async () => {
@@ -214,4 +334,131 @@ it('soft-deletes gallery relations together with a removed gallery', async () =>
       where: (row, { eq }) => eq(row.id, 'gallery-link'),
     }),
   ).toEqual(expect.objectContaining({ isDeleted: true, version: 2 }));
+});
+
+it('excludes non-favorites on request', async () => {
+  await database.db.insert(schema.galleries).values([
+    {
+      id: 'map',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'map.png',
+      hash: 'map-hash',
+      sizeBytes: 10,
+      isFavorite: true,
+      ...entityBase,
+    },
+    {
+      id: 'song',
+      storyId: TEST_STORY_ID,
+      mediaType: 'audio',
+      mimeType: 'audio/mpeg',
+      fileName: 'song.mp3',
+      hash: 'song-hash',
+      sizeBytes: 20,
+      isFavorite: false,
+      ...entityBase,
+    },
+  ]);
+
+  const rows = await createGalleryService(database.db).getGalleriesByStoryId(TEST_STORY_ID, {
+    favoriteFilterState: 'not-favorite',
+  });
+
+  expect(rows.map((row) => row.id)).toEqual(['song']);
+});
+
+it('sorts by title, file name, size and timestamps, newest first by default', async () => {
+  await database.db.insert(schema.galleries).values([
+    {
+      id: 'a',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'b.png',
+      hash: 'a-hash',
+      sizeBytes: 30,
+      title: 'Bravo',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+      version: 1,
+      isDeleted: false,
+    },
+    {
+      id: 'b',
+      storyId: TEST_STORY_ID,
+      mediaType: 'image',
+      mimeType: 'image/png',
+      fileName: 'a.png',
+      hash: 'b-hash',
+      sizeBytes: 10,
+      title: 'Alpha',
+      createdAt: new Date('2026-02-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-15T00:00:00.000Z'),
+      version: 1,
+      isDeleted: false,
+    },
+  ]);
+  const service = createGalleryService(database.db);
+
+  const byTitle = await service.getGalleriesByStoryId(TEST_STORY_ID, {
+    sortBy: 'title',
+    sortDirection: 'asc',
+  });
+  expect(byTitle.map((row) => row.id)).toEqual(['b', 'a']);
+  const byFile = await service.getGalleriesByStoryId(TEST_STORY_ID, {
+    sortBy: 'fileName',
+    sortDirection: 'asc',
+  });
+  expect(byFile.map((row) => row.id)).toEqual(['b', 'a']);
+  const bySize = await service.getGalleriesByStoryId(TEST_STORY_ID, {
+    sortBy: 'sizeBytes',
+    sortDirection: 'desc',
+  });
+  expect(bySize.map((row) => row.id)).toEqual(['a', 'b']);
+  const byUpdated = await service.getGalleriesByStoryId(TEST_STORY_ID, {
+    sortBy: 'updatedAt',
+    sortDirection: 'asc',
+  });
+  expect(byUpdated.map((row) => row.id)).toEqual(['b', 'a']);
+  const byCreated = await service.getGalleriesByStoryId(TEST_STORY_ID, {
+    sortBy: 'createdAt',
+    sortDirection: 'asc',
+  });
+  expect(byCreated.map((row) => row.id)).toEqual(['a', 'b']);
+  // Most recent first: what was just added is what the person wants to see.
+  const byDefault = await service.getGalleriesByStoryId(TEST_STORY_ID);
+  expect(byDefault.map((row) => row.id)).toEqual(['b', 'a']);
+});
+
+it('refuses to update a gallery that does not exist', async () => {
+  await expect(
+    createGalleryService(database.db).updateGallery(TEST_USER_ID, 'missing', { title: 'X' }),
+  ).rejects.toThrow('not found for update');
+});
+
+it('skips the write and the operation log when the metadata did not change', async () => {
+  await database.db.insert(schema.galleries).values({
+    id: 'map',
+    storyId: TEST_STORY_ID,
+    mediaType: 'image',
+    mimeType: 'image/png',
+    fileName: 'map.png',
+    hash: 'map-hash',
+    sizeBytes: 10,
+    title: 'Map',
+    ...entityBase,
+  });
+
+  await createGalleryService(database.db).updateGallery(TEST_USER_ID, 'map', { title: 'Map' });
+
+  expect(await database.db.query.operationLogs.findMany()).toEqual([]);
+});
+
+it('warns and stays quiet when deleting a gallery that does not exist', async () => {
+  await createGalleryService(database.db).deleteGallery(TEST_USER_ID, 'missing');
+
+  expect(console.warn).toHaveBeenCalledWith('Attempted to delete non-existent gallery missing.');
+  expect(await database.db.query.operationLogs.findMany()).toEqual([]);
 });

@@ -68,7 +68,8 @@ describe('entity previews', () => {
       field: 'chapterId',
       targetEntityType: OperationLogEntityType.Chapter,
       targetCollection: 'chapters',
-      required: true,
+      // Unfiled scenes travel: the filing is optional in the portable format, as it is live.
+      required: false,
     });
   });
 

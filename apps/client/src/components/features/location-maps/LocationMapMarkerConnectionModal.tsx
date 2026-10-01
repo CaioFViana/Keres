@@ -1,5 +1,6 @@
 import GraphConnectionModal from '@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
 import type { LocationMapContentType } from '@keres/shared';
+import { MAX_LOCATION_MAP_ANNOTATION_LENGTH } from '@keres/shared';
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { addLocationMapMarkerConnection } from '@/src/utils/locationMapContent';
@@ -34,6 +35,7 @@ const LocationMapMarkerConnectionModal: React.FC<Props> = ({
       pair.to
     }
     labelEnabled
+    labelMaxLength={MAX_LOCATION_MAP_ANNOTATION_LENGTH}
     onClose={onClose}
     onConfirm={({ directed, direction, label }) => {
       setContent((current) =>

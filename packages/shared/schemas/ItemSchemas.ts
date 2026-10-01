@@ -27,10 +27,10 @@ export const CreateItemDataSchema = ItemSchema.omit({
   deletedAt: true,
 }).extend({
   name: z.string().min(1, 'Item name cannot be empty'),
-  characterOwnerId: z.string().nullable().default(null), // Added
-  category: z.string().nullable().default(null), // Added
+  characterOwnerId: z.string().nullable().default(null),
+  category: z.string().nullable().default(null),
   description: z.string().nullable().default(null),
-  initialState: z.string().nullable().default(null), // Added
+  initialState: z.string().nullable().default(null),
   isFavorite: z.boolean().default(false),
   extraNotes: z.string().nullable().default(null),
 });

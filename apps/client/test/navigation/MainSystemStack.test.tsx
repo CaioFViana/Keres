@@ -1,6 +1,9 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
+import { entityEventEmitter } from '../../src/utils/EventEmitter';
 
+const mockRootDispatch = jest.fn();
+const mockSetSelectedStory = jest.fn();
 const mockDrawerScreens: Array<Record<string, any>> = [];
 const mockDrawerNavigatorProps: Array<Record<string, any>> = [];
 function mockReset(payload: unknown) {
@@ -46,6 +49,7 @@ jest.mock('@react-navigation/native', () => ({
   DrawerActions: { toggleDrawer: jest.fn(() => ({ type: 'TOGGLE_DRAWER' })) },
   getFocusedRouteNameFromRoute: jest.fn(() => undefined),
   StackActions: { pop: jest.fn(() => ({ type: 'POP' })) },
+  useNavigation: () => ({ dispatch: mockRootDispatch }),
 }));
 jest.mock('@expo/vector-icons', () => ({ __esModule: true, Ionicons: () => null }));
 jest.mock('react-i18next', () => {
@@ -67,13 +71,18 @@ jest.mock('../../src/theme', () => ({
   hexToRgb: () => ({ r: 0, g: 0, b: 0 }),
   rgbToHsv: () => ({ h: 0, s: 0, v: 0 }),
 }));
-jest.mock('../../src/state/storyStore', () => ({
-  __esModule: true,
-  useStoryStore: jest.fn((selector) => {
+jest.mock('../../src/state/storyStore', () => {
+  const useStoryStore: any = jest.fn((selector) => {
     const state = { selectedStory: { title: 'A jornada', type: 'linear' } };
     return selector ? selector(state) : state;
-  }),
-}));
+  });
+  // What the access-lost listener reads at the moment it fires.
+  useStoryStore.getState = () => ({
+    selectedStory: { id: 'story-1', title: 'A jornada' },
+    setSelectedStory: mockSetSelectedStory,
+  });
+  return { __esModule: true, useStoryStore };
+});
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
   useResponsiveLayout: jest.fn(() => mockResponsiveLayout),
@@ -116,17 +125,27 @@ jest.mock('../../src/help/contextualHelp', () => ({
   __esModule: true,
   screenHelpPage: { NarrativeElementsStack: 'narrative-elements' },
 }));
+const mockStoryArcs = {
+  arcs: [] as Array<{ id: string; title: string; icon: string | null }>,
+  activeArc: null as null | { id: string; title: string; icon: string | null },
+  activeArcId: null as string | null,
+  setActiveArcId: jest.fn(),
+  showSelector: false,
+  reload: jest.fn(),
+};
 jest.mock('../../src/hooks/useStoryArcs', () => ({
   __esModule: true,
-  useStoryArcs: () => ({
-    arcs: [],
-    activeArc: null,
-    activeArcId: null,
-    setActiveArcId: jest.fn(),
-    showSelector: false,
-    reload: jest.fn(),
-  }),
+  useStoryArcs: () => mockStoryArcs,
 }));
+jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({ name, color, size }: { name: string; color: string; size: number }) => (
+      <View testID="arc-context-icon" accessibilityLabel={`${name}:${color}:${size}`} />
+    ),
+  };
+});
 
 jest.mock('../../src/screens/narrative-elements/chapters/ChapterDetailScreen', () => ({
   __esModule: true,
@@ -260,7 +279,15 @@ jest.mock('../../src/screens/operationlog/OperationLogListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/narrative-elements/scenes/ManuscriptScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/narrative-elements/scenes/SceneEditorScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -381,6 +408,10 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDrawerScreens.length = 0;
   mockDrawerNavigatorProps.length = 0;
+  mockStoryArcs.arcs = [];
+  mockStoryArcs.activeArc = null;
+  mockStoryArcs.activeArcId = null;
+  mockStoryArcs.showSelector = false;
   mockResponsiveLayout.isCompact = false;
   mockResponsiveLayout.isWide = false;
   mockResponsiveLayout.width = 1000;
@@ -388,6 +419,22 @@ beforeEach(() => {
 });
 
 afterEach(() => jest.restoreAllMocks());
+
+it('leaves the story on screen when its access is lost, and only that story', async () => {
+  await render(<MainSystemStack />);
+  mockRootDispatch.mockClear();
+  mockSetSelectedStory.mockClear();
+
+  entityEventEmitter.emit('story_access_lost', 'another-story');
+  expect(mockRootDispatch).not.toHaveBeenCalled();
+
+  entityEventEmitter.emit('story_access_lost', 'story-1');
+  expect(mockSetSelectedStory).toHaveBeenCalledWith(null);
+  expect(mockRootDispatch).toHaveBeenCalledWith({
+    type: 'RESET',
+    payload: { index: 0, routes: [{ name: 'StorySelection' }] },
+  });
+});
 
 async function renderDrawer() {
   await render(<MainSystemStack />);
@@ -416,6 +463,35 @@ it('configures a compact, front drawer and preserves the current story as its da
     drawerItemStyle: { height: 0, overflow: 'hidden' },
   });
   expect(drawerScreen('ChoicesStack')).toBeUndefined();
+});
+
+it('draws the arc context entry with the active arc picked icon', async () => {
+  mockStoryArcs.activeArc = { id: 'arc-1', title: 'War', icon: 'keres:castle' };
+  mockStoryArcs.activeArcId = 'arc-1';
+  mockStoryArcs.showSelector = true;
+  await renderDrawer();
+
+  const options = drawerScreen('ArcContext')?.options as {
+    drawerIcon: (props: { color: string; size: number }) => React.ReactNode;
+  };
+  const view = await render(<>{options.drawerIcon({ color: '#123456', size: 24 })}</>);
+  expect(view.getByTestId('arc-context-icon')).toHaveProp(
+    'accessibilityLabel',
+    'keres:castle:#123456:24',
+  );
+});
+
+it('falls back to the library icon with no active arc', async () => {
+  await renderDrawer();
+
+  const options = drawerScreen('ArcContext')?.options as {
+    drawerIcon: (props: { color: string; size: number }) => React.ReactNode;
+  };
+  const view = await render(<>{options.drawerIcon({ color: '#123456', size: 24 })}</>);
+  expect(view.getByTestId('arc-context-icon')).toHaveProp(
+    'accessibilityLabel',
+    'library-outline:#123456:24',
+  );
 });
 
 it('keeps both back and menu controls on a nested compact screen', async () => {
@@ -489,7 +565,7 @@ it.each([
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its list screen when its drawer item is pressed', async (drawerName, screen) => {
   await renderDrawer();
-  const navigation = { navigate: jest.fn() };
+  const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
   const preventDefault = jest.fn();
   const listeners = drawerScreen(drawerName)?.listeners({ navigation });
 
@@ -497,7 +573,26 @@ it.each([
 
   expect(preventDefault).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith(drawerName, { screen });
+  // The router only auto-closes when the route index changes; same-section taps (already
+  // focused) would leave the menu open over the reset list without this explicit close.
+  expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
+
+it.each([['MainDashboard'], ['GlobalSearch'], ['StoryAnalysis'], ['StorySettings']])(
+  'closes the drawer when the plain entry %s is tapped while focused',
+  async (drawerName) => {
+    await renderDrawer();
+    const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
+    const preventDefault = jest.fn();
+    const listeners = drawerScreen(drawerName)?.listeners({ navigation });
+
+    listeners.drawerItemPress({ preventDefault });
+
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(navigation.navigate).toHaveBeenCalledWith(drawerName);
+    expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
+  },
+);
 
 it('resets the root stack to story selection instead of restoring a nested drawer state', async () => {
   await renderDrawer();

@@ -4,6 +4,7 @@ jest.mock('expo-file-system', () => ({
   File: jest.fn(),
   Paths: { cache: 'cache' },
 }));
+jest.mock('expo-file-system/legacy', () => ({ readAsStringAsync: jest.fn() }));
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('react-native', () => ({ Platform: { OS: 'web' } }));
 jest.mock('../../src/services/MediaFileService', () => ({
@@ -16,19 +17,22 @@ jest.mock('../../src/utils/storyMediaBundle', () => ({
 import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { extractStoryZip } from '../../src/utils/storyMediaBundle';
 import {
+  deliverMapExport,
   deliverStoryExport,
   deliverStoryZipExport,
   deliverSvgMap,
   pickStoryExportFile,
-  StoryImportError,
+  type StoryImportError,
 } from '../../src/utils/storyTransfer';
 
 const getDocumentAsync = DocumentPicker.getDocumentAsync as jest.Mock;
 const FileMock = File as unknown as jest.Mock;
+const legacyReadMock = LegacyFileSystem.readAsStringAsync as jest.Mock;
 const extractZipMock = extractStoryZip as jest.Mock;
 const shareAvailableMock = Sharing.isAvailableAsync as jest.Mock;
 const shareMock = Sharing.shareAsync as jest.Mock;
@@ -67,6 +71,78 @@ function validExport(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   Platform.OS = 'web';
+});
+
+describe('map export format', () => {
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" font-family="Helvetica, Arial, sans-serif"></svg>';
+
+  // The RN preset's global `URL` polyfill needs a native module; the browser download path
+  // only works once the page-level APIs are stubbed, like the delivery tests below do.
+  function stubBrowserDownload() {
+    const anchor = document.createElement('a');
+    const click = jest.spyOn(anchor, 'click').mockImplementation(() => {});
+    const createElement = jest.spyOn(document, 'createElement').mockReturnValue(anchor);
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: jest.fn(() => 'blob:map'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: jest.fn() });
+    return { anchor, click, createElement };
+  }
+
+  it('delivers the string untouched in svg mode', async () => {
+    const { anchor, click, createElement } = stubBrowserDownload();
+    const rasterize = jest.fn();
+
+    await expect(
+      deliverMapExport(svg, 'a-queda-mapa-2026-08-11.svg', 'svg', rasterize),
+    ).resolves.toEqual({ delivered: true, fileName: 'a-queda-mapa-2026-08-11.svg' });
+    expect(rasterize).not.toHaveBeenCalled();
+    expect(anchor.download).toBe('a-queda-mapa-2026-08-11.svg');
+    expect(click).toHaveBeenCalledTimes(1);
+    createElement.mockRestore();
+    click.mockRestore();
+  });
+
+  it('rasterizes the same string at capped size in png mode', async () => {
+    const { anchor, click, createElement } = stubBrowserDownload();
+    const bytes = Uint8Array.from([137, 80, 78, 71]);
+    const rasterize = jest.fn(
+      async (_svg: string, _width: number, _height: number): Promise<Uint8Array> => bytes,
+    );
+
+    await expect(
+      deliverMapExport(
+        svg.replace('width="800"', 'width="8000"'),
+        'a-queda-mapa-2026-08-11.svg',
+        'png',
+        rasterize,
+      ),
+    ).resolves.toEqual({ delivered: true, fileName: 'a-queda-mapa-2026-08-11.png' });
+
+    // The raster copy carries the sanitized string at the capped resolution; the file name
+    // swaps its suffix.
+    expect(rasterize).toHaveBeenCalledTimes(1);
+    const [rasterSvg, width, height] = rasterize.mock.calls[0];
+    expect(rasterSvg).toContain('font-family="sans-serif"');
+    expect(rasterSvg).not.toContain('Arial');
+    expect(width).toBe(4096);
+    expect(height).toBe(Math.round(520 * (4096 / 8000)));
+    expect(anchor.download).toBe('a-queda-mapa-2026-08-11.png');
+    expect(click).toHaveBeenCalledTimes(1);
+    createElement.mockRestore();
+    click.mockRestore();
+  });
+
+  it('refuses to rasterize an svg without root dimensions', async () => {
+    const rasterize = jest.fn();
+
+    await expect(deliverMapExport('<svg />', 'a-queda.svg', 'png', rasterize)).rejects.toThrow(
+      'no root dimensions',
+    );
+    expect(rasterize).not.toHaveBeenCalled();
+  });
 });
 
 describe('story transfer delivery', () => {
@@ -161,7 +237,8 @@ describe('story transfer picker', () => {
     );
     expect(getDocumentAsync).toHaveBeenCalledWith({
       type: '*/*',
-      copyToCacheDirectory: true,
+      // No staged copy: inside Expo Go both file-system modules refuse to read it back.
+      copyToCacheDirectory: false,
       multiple: false,
     });
   });
@@ -253,6 +330,56 @@ describe('story transfer picker', () => {
     extractZipMock.mockResolvedValue(extracted);
 
     await expect(pickStoryExportFile()).resolves.toEqual(extracted);
+    expect(extractZipMock).toHaveBeenCalledWith(new Uint8Array([1, 2]), 'backup.zip');
+  });
+
+  it('reads a native JSON package through the new API without touching the legacy module', async () => {
+    Platform.OS = 'ios';
+    getDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ name: 'backup.json', uri: 'file://cache/backup.json' }],
+    });
+    FileMock.mockImplementationOnce(() => ({
+      text: jest.fn().mockResolvedValue(JSON.stringify(validExport())),
+    }));
+
+    const picked = await pickStoryExportFile();
+
+    expect(picked?.story.story).toMatchObject({ id: STORY_ID });
+    expect(legacyReadMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to legacy reads when the sandbox hides the staged native copy', async () => {
+    Platform.OS = 'android';
+    getDocumentAsync.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ name: 'backup.json', uri: 'file://cache/backup.json' }],
+    });
+    FileMock.mockImplementationOnce(() => ({
+      text: jest.fn().mockRejectedValue(new Error('denied')),
+    }));
+    legacyReadMock.mockResolvedValueOnce(JSON.stringify(validExport()));
+
+    const picked = await pickStoryExportFile();
+
+    expect(picked?.story.story).toMatchObject({ id: STORY_ID });
+    expect(legacyReadMock).toHaveBeenCalledWith('file://cache/backup.json', { encoding: 'utf8' });
+
+    getDocumentAsync.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ name: 'backup.zip', uri: 'file://cache/backup.zip' }],
+    });
+    FileMock.mockImplementationOnce(() => ({
+      bytes: jest.fn().mockRejectedValue(new Error('denied')),
+    }));
+    legacyReadMock.mockResolvedValueOnce('AQI=');
+    extractZipMock.mockResolvedValue({ story: validExport(), media: [] });
+
+    await pickStoryExportFile();
+
+    expect(legacyReadMock).toHaveBeenCalledWith('file://cache/backup.zip', {
+      encoding: 'base64',
+    });
     expect(extractZipMock).toHaveBeenCalledWith(new Uint8Array([1, 2]), 'backup.zip');
   });
 });

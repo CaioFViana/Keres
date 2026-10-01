@@ -1,4 +1,4 @@
-import type { BoardContentType, BoardNodeType } from '@keres/shared';
+import type { BoardContentType, BoardNodeType, SpatialRect } from '@keres/shared';
 
 export const BOARD_NODE_WIDTH = 148;
 export const BOARD_NODE_HEIGHT = 86;
@@ -11,8 +11,6 @@ export const BOARD_NODE_MAX_HEIGHT = 720;
 /** Gallery pins with a renderable image become a bigger card that includes it. */
 export const BOARD_GALLERY_WIDTH = 220;
 export const BOARD_GALLERY_HEIGHT = 200;
-/** Height of the image area inside a gallery card. */
-export const BOARD_GALLERY_IMAGE_HEIGHT = 128;
 export const BOARD_CANVAS_PADDING = 240;
 export const BOARD_CANVAS_MIN = 720;
 
@@ -48,6 +46,17 @@ export function galleryMediaForNode(
 ): BoardGalleryMedia | null | undefined {
   const entityId = nodeEntityId(node);
   return entityId ? galleryMediaById?.[entityId] : undefined;
+}
+
+/**
+ * The file the UI shows for a gallery pin: the image itself, or a video's extracted frame.
+ * Anything else has no picture - see `galleryHasImage`.
+ */
+export function galleryDisplayPath(media: BoardGalleryMedia | null | undefined): string | null {
+  if (!media) return null;
+  if (media.mediaType === 'image') return media.localPath;
+  if (media.mediaType === 'video') return media.thumbnailPath;
+  return null;
 }
 
 /** Approximate width of a character at 11px - only to size a note's body line. */
@@ -218,8 +227,10 @@ export function normalizeBoardCanvas(
   minWidth = BOARD_CANVAS_MIN,
   minHeight = BOARD_CANVAS_MIN,
   galleryMediaById?: BoardGalleryMediaById,
+  /** Extra world rects the canvas must include (overlay bounds in the export). */
+  extraRects?: readonly SpatialRect[],
 ): { offsetX: number; offsetY: number; width: number; height: number } {
-  if (nodes.length === 0) {
+  if (nodes.length === 0 && (extraRects?.length ?? 0) === 0) {
     return { offsetX: 0, offsetY: 0, width: minWidth, height: minHeight };
   }
   let minX = Number.POSITIVE_INFINITY;
@@ -232,6 +243,12 @@ export function normalizeBoardCanvas(
     minY = Math.min(minY, node.y);
     maxX = Math.max(maxX, node.x + size.width);
     maxY = Math.max(maxY, node.y + size.height);
+  }
+  for (const rect of extraRects ?? []) {
+    minX = Math.min(minX, rect.x);
+    minY = Math.min(minY, rect.y);
+    maxX = Math.max(maxX, rect.x + rect.width);
+    maxY = Math.max(maxY, rect.y + rect.height);
   }
   return {
     offsetX: BOARD_CANVAS_PADDING - minX,

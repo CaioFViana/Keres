@@ -18,6 +18,14 @@ interface UseOperationLogsOptions {
   shouldRefetch?: boolean;
 }
 
+/**
+ * Operation history for one story, in recent-first or paginated mode.
+ *
+ * Subscribes to `operation_log_updated` so each sync cycle and local write resets to
+ * page 1; appended pages are deduplicated by id because a refetch racing `loadMore`
+ * can otherwise duplicate rows. WorldRule rows additionally resolve their section for
+ * display, defaulting to an empty map when none are present.
+ */
 export function useOperationLogs({
   storyId,
   limit,
@@ -107,12 +115,22 @@ export function useOperationLogs({
     };
   }, [fetchLogs, storyId]);
 
-  useEffect(() => {
+  const [prevLogs, setPrevLogs] = useState(logs);
+  if (logs !== prevLogs) {
+    setPrevLogs(logs);
     const worldPieceIds = logs
       .filter((log) => log.entityType === OperationLogEntityType.WorldRule)
       .map((log) => log.entityId);
     if (worldPieceIds.length === 0) {
       setWorldPieceSections({});
+    }
+  }
+
+  useEffect(() => {
+    const worldPieceIds = logs
+      .filter((log) => log.entityType === OperationLogEntityType.WorldRule)
+      .map((log) => log.entityId);
+    if (worldPieceIds.length === 0) {
       return;
     }
 
@@ -143,9 +161,22 @@ export function useOperationLogs({
     };
   }, [drizzleDb, logs, storyId]);
 
-  useEffect(() => {
+  const [prevFetchLogs, setPrevFetchLogs] = useState(() => fetchLogs);
+  const [prevShouldRefetch, setPrevShouldRefetch] = useState(shouldRefetch);
+  if (fetchLogs !== prevFetchLogs || shouldRefetch !== prevShouldRefetch) {
+    // Wrapped: the state holds the callback itself, and an unwrapped function argument would
+    // run as a state updater instead - invoking a DB read during render and looping into
+    // "Too many re-renders".
+    setPrevFetchLogs(() => fetchLogs);
+    setPrevShouldRefetch(shouldRefetch);
     if (shouldRefetch) {
       setPage(1);
+    }
+  }
+
+  useEffect(() => {
+    if (shouldRefetch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchLogs` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
       fetchLogs(1);
     }
   }, [fetchLogs, shouldRefetch]);

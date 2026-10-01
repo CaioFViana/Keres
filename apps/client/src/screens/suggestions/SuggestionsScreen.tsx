@@ -10,11 +10,13 @@ import { isSuggestionAttributeType, STORY_SCHEMA_ENTITY_TYPES } from '@keres/sha
 import { WORLD_PIECE_SECTIONS } from '@keres/shared/entities/WorldRule';
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { SuggestionSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -62,6 +64,8 @@ const SCHEMA_ENTITY_LABELS: Record<StorySchemaEntityType, string> = {
 };
 const SuggestionsScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('Suggestions');
+  const groupsAnchorRef = useScreenAnchor('Suggestions', 'groups');
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
 
@@ -255,12 +259,15 @@ const SuggestionsScreen = () => {
     }, [loadGroups, loadValues]),
   );
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadValues` clears synchronously only when no story/type is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadValues();
   }, [loadValues]);
-  useEffect(() => {
+  const [prevSelectedType, setPrevSelectedType] = useState(selectedType);
+  if (selectedType !== prevSelectedType) {
+    setPrevSelectedType(selectedType);
     setRenamingList(false);
     setRenameListName('');
-  }, [selectedType]);
+  }
   useEffect(() => {
     const refresh = (changedStoryId: string) => {
       if (changedStoryId === storyId) loadValues();
@@ -505,7 +512,7 @@ const SuggestionsScreen = () => {
   );
 
   return (
-    <View style={commonContainerStyles.container}>
+    <View ref={groupsAnchorRef} collapsable={false} style={commonContainerStyles.container}>
       <Text style={styles.title}>{t('standard_suggestions_title')}</Text>
       <Text style={styles.description}>{t('standard_suggestions_description')}</Text>
       {isCompact ? (

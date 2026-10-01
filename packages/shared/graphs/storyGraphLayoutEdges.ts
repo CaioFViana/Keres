@@ -14,7 +14,7 @@ const LAYER_GAP = 92;
 const ARROW_LENGTH = 11;
 const ARROW_HALF_WIDTH = 5.5;
 const SELF_LOOP_BULGE = 46;
-/** Curvas de cada aresta, ainda em coordenadas locais. */
+/** Curves of each edge, still in local coordinates. */
 export function placeEdges(
   edges: WorkEdge[],
   nodesById: Map<string, GraphNode>,

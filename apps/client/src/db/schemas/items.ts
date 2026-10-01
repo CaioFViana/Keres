@@ -4,13 +4,13 @@ import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 export const items = sqliteTable('items', {
   id: text('id').primaryKey(),
   storyId: text('story_id').notNull(),
-  characterOwnerId: text('character_owner_id'), // Nullable
+  characterOwnerId: text('character_owner_id'),
   name: text('name').notNull(),
-  category: text('category'), // Nullable
-  description: text('description'), // Nullable
-  initialState: text('initial_state'), // Nullable
+  category: text('category'),
+  description: text('description'),
+  initialState: text('initial_state'),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).default(false).notNull(),
-  extraNotes: text('extra_notes'), // Nullable
+  extraNotes: text('extra_notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

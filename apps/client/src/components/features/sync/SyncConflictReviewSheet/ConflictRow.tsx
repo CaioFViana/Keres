@@ -70,16 +70,18 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
       </TouchableOpacity>
       {summary.canQuickResolve ? (
         <View style={styles.actions}>
-          <TouchableOpacity
-            onPress={onKeepMine}
-            disabled={isResolving}
-            style={styles.actionButton}
-            accessibilityRole="button"
-            accessibilityLabel={t('conflict_keep_mine')}
-            accessibilityHint={t('conflict_keep_mine_description')}
-          >
-            <Ionicons name="checkmark-circle-outline" size={22} color={colors.primary} />
-          </TouchableOpacity>
+          {summary.canKeepMine && (
+            <TouchableOpacity
+              onPress={onKeepMine}
+              disabled={isResolving}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel={t('conflict_keep_mine')}
+              accessibilityHint={t('conflict_keep_mine_description')}
+            >
+              <Ionicons name="checkmark-circle-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={onKeepServer}
             disabled={isResolving}

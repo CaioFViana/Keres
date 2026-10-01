@@ -28,13 +28,13 @@ export class SyncService {
     );
   }
 
-  /** Exposto para AdminRecoveryService (restaurar entidades) e TierEnforcementService (contar uso). */
+  /** Exposed for AdminRecoveryService (restoring entities) and TierEnforcementService (counting usage). */
   getEntityHandlers(): ReadonlyMap<string, SyncEntityHandler> {
     return this.entityHandlers;
   }
 
   /** Delegates transactional batch application to the sync protocol write coordinator. */
-  async processAndRecordUpdates(userId: string, storyId: string, updates: StoryUpdate[]) {
+  async processAndRecordUpdates(userId: string, storyId: string, updates: readonly unknown[]) {
     return this.pushService.processAndRecordUpdates(userId, storyId, updates);
   }
 
@@ -57,12 +57,14 @@ export class SyncService {
     storyId: string,
     lastOperationVersion: number,
     lastPublicFavoriteVersion = 0,
+    clientFavorites?: { count: number; maxVersion: number } | null,
   ) {
     return this.pullService.getUpdatesForStory(
       userId,
       storyId,
       lastOperationVersion,
       lastPublicFavoriteVersion,
+      clientFavorites,
     );
   }
 
@@ -113,7 +115,7 @@ export class SyncService {
     });
 
     permittedStories.forEach((permission) => {
-      if (permission.story && !permission.story.isDeleted) {
+      if (permission.story && !permission.story.isDeleted && !storyMap.has(permission.story.id)) {
         storyMap.set(permission.story.id, {
           lastOperationVersion: permission.story.lastOperationVersion,
           role: permission.permissionType,

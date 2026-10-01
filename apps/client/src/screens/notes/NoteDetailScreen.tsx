@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -19,7 +20,7 @@ import { createNoteRelationService } from '@/src/services/storymanagement/NoteRe
 import type { NoteRelation } from '@keres/shared/entities/Note'; // Import NoteRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useDrizzle } from '../../db';
@@ -44,7 +45,7 @@ import type { NotesScreenNavigationProp } from './NoteListScreen';
 
 // Define the parameter list for this screen
 export type NoteDetailScreenParamList = {
-  NoteDetail: { noteId: string };
+  NoteDetail: { noteId: string; occurrence?: OccurrenceTarget };
 };
 
 type NoteDetailScreenRouteProp = RouteProp<NoteDetailScreenParamList, 'NoteDetail'>;
@@ -55,7 +56,7 @@ const NoteDetailScreen = () => {
   const navigation = useNavigation<NotesScreenNavigationProp>();
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<NoteDetailScreenRouteProp>();
-  const { noteId } = route.params;
+  const { noteId, occurrence } = route.params;
 
   const drizzleDb = useDrizzle();
   const noteServiceRef = useRef<ReturnType<typeof createNoteService> | null>(null);
@@ -270,8 +271,10 @@ const NoteDetailScreen = () => {
 
   useEffect(() => {
     if (note) {
+      /* eslint-disable react-hooks/set-state-in-effect -- `fetchTagsForNote` clears synchronously only when its service/data is missing and `processNoteRelations` only reaches setState after `await`; the rule cannot verify across the callback boundary. */
       fetchTagsForNote();
       processNoteRelations(); // Process relations after they are fetched
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [note, fetchTagsForNote, processNoteRelations]);
 
@@ -317,6 +320,7 @@ const NoteDetailScreen = () => {
   return (
     <DetailContainer
       title={note.title}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

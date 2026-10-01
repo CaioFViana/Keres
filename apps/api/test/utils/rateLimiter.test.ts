@@ -33,4 +33,21 @@ describe('createAttemptLimiter', () => {
 
     expect(limiter.registerAttempt('ana')).toBe(true);
   });
+
+  it('says how long a locked-out key still has to wait, and nothing when it is not locked', () => {
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+    const limiter = createAttemptLimiter({ maxAttempts: 2, windowMs: 60_000 });
+    expect(limiter.retryAfterMs('ana')).toBe(0);
+
+    limiter.registerAttempt('ana');
+    limiter.registerAttempt('ana');
+    expect(limiter.retryAfterMs('ana')).toBe(0);
+
+    limiter.registerAttempt('ana');
+    vi.advanceTimersByTime(20_000);
+    expect(limiter.retryAfterMs('ana')).toBe(40_000);
+
+    vi.advanceTimersByTime(40_000);
+    expect(limiter.retryAfterMs('ana')).toBe(0);
+  });
 });

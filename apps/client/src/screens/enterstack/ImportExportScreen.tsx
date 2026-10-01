@@ -5,8 +5,8 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import { DrawerActions, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -34,6 +34,7 @@ import {
 const ImportExportScreen = () => {
   const { t } = useTranslation();
   useScreenHeader({ target: 'self', title: t('import_export_title') });
+  const navigation = useNavigation();
   const { colors } = useTheme();
   useBackButtonHandler();
   const drizzleDb = useDrizzle();
@@ -159,6 +160,10 @@ const ImportExportScreen = () => {
       return;
     }
 
+    // The picker covers the app with a native activity: an open drawer would be revealed
+    // mid-transition on return, so it is put away on both sides of the flow. A no-op when
+    // already closed.
+    navigation.dispatch(DrawerActions.closeDrawer());
     setImporting(true);
     try {
       const picked = await pickStoryExportFile();
@@ -169,7 +174,7 @@ const ImportExportScreen = () => {
 
       const storyService = createStoryService(drizzleDb);
 
-      // O importador insere com ids refeitos. Portanto pode ser usado para restaurar um backup paralelo.
+      // The importer inserts with remade ids, so it can also restore a parallel backup.
       const importedStoryId = createULID();
 
       // It writes the .zip's media files into the device's storage before creating the records - the gallery
@@ -199,7 +204,7 @@ const ImportExportScreen = () => {
 
       showNotification(t('import_story_success', { title: storyExport.story.title }), 'success');
       await loadStories();
-      fetchStoryList(storyService); // Mantém a tela de seleção de histórias em dia.
+      fetchStoryList(storyService); // Keeps the story selection screen up to date.
     } catch (importError) {
       if (importError instanceof StoryImportError) {
         console.log('ImportExportScreen: import rejected.', importError.message);
@@ -217,9 +222,10 @@ const ImportExportScreen = () => {
       console.log('ImportExportScreen: failed to import story.', importError);
       showNotification(t('import_story_failed'), 'error');
     } finally {
+      navigation.dispatch(DrawerActions.closeDrawer());
       setImporting(false);
     }
-  }, [drizzleDb, userId, showNotification, t, loadStories, fetchStoryList]);
+  }, [drizzleDb, userId, navigation, showNotification, t, loadStories, fetchStoryList]);
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),

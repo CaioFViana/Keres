@@ -30,6 +30,8 @@ const createState = (overrides: Partial<RouteFormState> = {}): RouteFormState =>
     setDetails: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as RouteFormState;
 
@@ -82,7 +84,8 @@ it('alerts user_not_identified when identity is missing but the name is present'
 });
 
 it('replaces into route detail after creating a route', async () => {
-  const view = await renderActions();
+  const state = createState();
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -92,13 +95,13 @@ it('replaces into route detail after creating a route', async () => {
     name: 'Hero Path',
     details: null,
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.replace).toHaveBeenCalledWith('RouteDetail', { routeId: 'route-1' });
 });
 
 it('goes back after updating an existing route', async () => {
-  const view = await renderActions(
-    createState({ routeId: 'route-1', isEditing: true, details: ' notes ' }),
-  );
+  const state = createState({ routeId: 'route-1', isEditing: true, details: ' notes ' });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -108,16 +111,19 @@ it('goes back after updating an existing route', async () => {
     name: 'Hero Path',
     details: 'notes',
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('delegates deletion and navigates to the routes list', async () => {
-  const view = await renderActions(createState({ routeId: 'route-1', isEditing: true }));
+  const state = createState({ routeId: 'route-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(routeService.delete).toHaveBeenCalledWith('user-1', 'route-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith('Routes');
 });

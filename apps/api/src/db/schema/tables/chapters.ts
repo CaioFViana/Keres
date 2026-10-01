@@ -11,10 +11,11 @@ export const chapters = table('chapters', {
     .references(() => stories.id),
   name: text('name').notNull(),
   index: integer('index').notNull(),
+  /** Place among the containers of its kind (see rules/rank.ts); the index is derived from it. */
+  rank: text('rank').notNull().default(''),
   /**
-   * Chapter or event. The reorder handler filters on this: each kind owns an independent 1..N
-   * index space inside this table, because a chapter's index is narrative order and an event's is
-   * not. Defaulted so existing rows need no data step.
+   * Chapter or event: each kind owns an independent 1..N index space inside this table (derived
+   * from `rank`), because a chapter's index is narrative order and an event's is not.
    */
   type: text('type').$type<ChapterType>().notNull().default('chapter'),
   summary: text('summary'),

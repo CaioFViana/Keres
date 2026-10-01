@@ -5,20 +5,19 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
-import { createULID } from '../../utils/entityUtils';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'StorySchemaField';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(dbInstance: AppDrizzleClient): void {
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = dbInstance;
   }
 
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) {
       throw new Error('StorySchemaFieldClientSyncHandler: Drizzle client (db) not set.');
     }
@@ -85,14 +84,11 @@ export class StorySchemaFieldClientSyncHandler implements ClientSyncEntityHandle
       return;
     }
 
-    // It mutates the key when applying the remote deletion, the same reason as the side that actually deleted (see
-    // StorySchemaFieldService.deleteField): the local unique(storyId, entityType, key) constraint
-    // is not filtered by isDeleted, so without this the device would not be able to recreate a
-    // field with the same key afterwards.
+    // The key stays: uniqueness holds among live fields only, so a tombstone never blocks a new
+    // field of its key, and the row matches the server's.
     await this.db
       .update(schema.storySchemaFields)
       .set({
-        key: `${existing.key}__deleted_${createULID()}`,
         isDeleted: true,
         deletedAt: new Date(),
         updatedAt: new Date(),

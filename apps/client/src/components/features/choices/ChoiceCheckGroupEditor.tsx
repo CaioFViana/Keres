@@ -3,7 +3,6 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { ChoiceCheck } from '@keres/shared/entities/ChoiceCheck';
 import type { ChoiceCheckGroup } from '@keres/shared/entities/ChoiceCheckGroup';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,

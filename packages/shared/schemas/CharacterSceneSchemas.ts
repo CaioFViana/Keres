@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const CharacterSceneSchema = z.object({
-  id: z.string(), // Add the ID field
+  id: z.string(),
   characterId: z.string(),
   storyId: z.string(),
   sceneId: z.string(),

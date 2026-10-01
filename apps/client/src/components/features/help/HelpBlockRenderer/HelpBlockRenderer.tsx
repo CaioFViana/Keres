@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { HelpBlock } from '@/src/help/types';
 import { useTheme } from '@/src/theme';

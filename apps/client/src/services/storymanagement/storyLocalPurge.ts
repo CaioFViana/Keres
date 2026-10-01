@@ -12,6 +12,7 @@ import {
   choiceChecks,
   choices,
   comments,
+  editorDrafts,
   effects,
   favorites,
   galleries,
@@ -38,6 +39,7 @@ import {
   stories,
   storyArcs,
   storyCalendars,
+  storyInvitations,
   storyPermissions,
   storyPublications,
   storySchemaFields,
@@ -55,6 +57,7 @@ import {
 export const STORY_CHILD_TABLES = [
   attributeValues,
   comments,
+  editorDrafts,
   favorites,
   chapters,
   chapterAnchors,
@@ -84,6 +87,8 @@ export const STORY_CHILD_TABLES = [
   routes,
   scenes,
   seeAlsoRelations,
+  // Server cache, like publications: the next sync brings back whatever still stands.
+  storyInvitations,
   storyPermissions,
   statRelations,
   statStrengths,

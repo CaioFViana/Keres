@@ -4,7 +4,6 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 import { StyleSheet } from 'react-native';
 import MultiSelectPill, {
   SingleSelectPill,
@@ -371,5 +370,53 @@ describe('MultiSelectPill, option height in the modal', () => {
 
     expect(checkSlotOf(screen, 'atena')).toMatchObject({ width: 24, height: 24 });
     expect(checkSlotOf(screen, 'keres')).toEqual(checkSlotOf(screen, 'atena'));
+  });
+});
+
+describe('MultiSelectPill, custom trigger', () => {
+  it('opens the identical modal from a caller trigger instead of the pill frame', async () => {
+    const { Text, TouchableOpacity } = require('react-native');
+    const onSelectionChange = jest.fn();
+    const screen = await render(
+      <MultiSelectPill
+        options={[{ label: 'Harbor', value: 'loc-1' }]}
+        selectedValues={[]}
+        onSelectionChange={onSelectionChange}
+        placeholder="Add locations"
+        trigger={(open) => (
+          <TouchableOpacity testID="custom-trigger" onPress={open}>
+            <Text>icon</Text>
+          </TouchableOpacity>
+        )}
+      />,
+    );
+
+    expect(screen.queryByTestId('multiselect-trigger')).toBeNull();
+    await fireEvent.press(screen.getByTestId('custom-trigger'));
+    await waitFor(() => screen.getByTestId('multiselect-option-loc-1'));
+    expect(screen.getByText('Harbor')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('multiselect-option-loc-1'));
+    expect(onSelectionChange).toHaveBeenCalledWith(['loc-1']);
+  });
+
+  it('keeps a disabled trigger inert', async () => {
+    const { Text, TouchableOpacity } = require('react-native');
+    const screen = await render(
+      <MultiSelectPill
+        options={[{ label: 'Harbor', value: 'loc-1' }]}
+        selectedValues={[]}
+        onSelectionChange={jest.fn()}
+        disabled
+        trigger={(open) => (
+          <TouchableOpacity testID="custom-trigger" onPress={open}>
+            <Text>icon</Text>
+          </TouchableOpacity>
+        )}
+      />,
+    );
+
+    await fireEvent.press(screen.getByTestId('custom-trigger'));
+    expect(screen.queryByTestId('multiselect-option-loc-1')).toBeNull();
   });
 });

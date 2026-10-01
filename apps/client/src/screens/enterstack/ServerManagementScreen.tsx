@@ -4,7 +4,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -44,7 +44,7 @@ const ServerManagementScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonCardStyles = getCommonCardStyles(colors);
   const drizzleDb = useDrizzle();
-  const serverService = useRef(createServerService(drizzleDb)).current;
+  const [serverService] = useState(() => createServerService(drizzleDb));
   const isFocused = useIsFocused();
 
   const [servers, setServers] = useState<ServerWithStatus[]>([]);
@@ -99,13 +99,26 @@ const ServerManagementScreen = () => {
     }
   }, [serverService, t]);
 
+  const [prevIsFocused, setPrevIsFocused] = useState(isFocused);
+  const [prevLoadAndPingServers, setPrevLoadAndPingServers] = useState(() => loadAndPingServers);
+  if (isFocused !== prevIsFocused || loadAndPingServers !== prevLoadAndPingServers) {
+    setPrevIsFocused(isFocused);
+    // Wrapped: the state holds the callback itself, and an unwrapped function argument would
+    // run as a state updater instead - invoking a DB read during render on every focus change
+    // and looping into "Too many re-renders".
+    setPrevLoadAndPingServers(() => loadAndPingServers);
+    if (isFocused) {
+      setLoading(true);
+    }
+  }
+
   useEffect(() => {
     if (!isFocused) {
       return;
     }
 
     let cancelled = false;
-    setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadAndPingServers` only reaches setState after `await`; the rule cannot verify across the callback boundary.
     loadAndPingServers().finally(() => {
       if (!cancelled) {
         setLoading(false);

@@ -5,6 +5,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 // erases at compile time and never touches the runtime require graph.
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 import { useHeaderBackActionStore } from '../state/headerBackActionStore';
+import type { OccurrenceTarget } from './occurrenceTarget';
 
 export type NavigableEntityType =
   | 'Character'
@@ -84,7 +85,7 @@ export function navigateToEntityDetail(
   drawerNavigation: DrawerNavigationProp<MainSystemDrawerParamList>,
   entityType: NavigableEntityType,
   entityId: string,
-  options?: { onReturn?: () => void },
+  options?: { onReturn?: () => void; occurrence?: OccurrenceTarget },
 ): void {
   const route = ENTITY_ROUTES[entityType];
   const state = drawerNavigation.getState?.() as NavigationStateLike | undefined;
@@ -112,6 +113,9 @@ export function navigateToEntityDetail(
 
   (drawerNavigation.navigate as (name: string, params: unknown) => void)(route.stack, {
     screen: route.screen,
-    params: { [route.paramKey]: entityId },
+    params: {
+      [route.paramKey]: entityId,
+      ...(options?.occurrence ? { occurrence: options.occurrence } : null),
+    },
   });
 }

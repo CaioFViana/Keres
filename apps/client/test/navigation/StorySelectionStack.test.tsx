@@ -28,7 +28,10 @@ function mockStackNavigator({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function mockStackScreen() {
+const mockStackScreens: string[] = [];
+
+function mockStackScreen({ name }: { name: string }) {
+  mockStackScreens.push(name);
   return null;
 }
 
@@ -112,6 +115,10 @@ jest.mock('../../src/screens/enterstack/ChangePasswordScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/enterstack/CreditsScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/enterstack/FriendDetailScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -156,6 +163,10 @@ jest.mock('../../src/screens/examplestories/ExampleStoriesScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/components/features/packs/ShippedPacksInstallerOverlay', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 
 import StorySelectionStack from '../../src/navigation/StorySelectionStack';
 
@@ -165,6 +176,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDrawerScreens.length = 0;
   mockDrawerNavigatorProps.length = 0;
+  mockStackScreens.length = 0;
+  delete process.env.EXPO_PUBLIC_SERVERLESS;
   mockResponsiveLayout.isCompact = false;
   mockResponsiveLayout.isWide = true;
   mockResponsiveLayout.width = 1200;
@@ -201,11 +214,12 @@ it.each([
   ['ServerManagementDrawer', 'ServerManagement'],
   ['FriendshipDrawer', 'FriendshipList'],
   ['PacksDrawer', 'PackList'],
+  ['Settings', 'SettingsHome'],
   ['StoryDevicesDrawer', 'DeviceIndex'],
   ['HelpDrawer', 'HelpIndex'],
 ])('returns %s to its root screen from a drawer press', async (drawerName, screen) => {
   await renderDrawer();
-  const navigation = { navigate: jest.fn() };
+  const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
   const preventDefault = jest.fn();
   const listeners = drawerScreen(drawerName)?.listeners({ navigation });
 
@@ -213,7 +227,26 @@ it.each([
 
   expect(preventDefault).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith(drawerName, { screen });
+  // Same-section taps do not change the route index, so the router would not auto-close;
+  // the explicit close keeps the menu from lingering over the reset list.
+  expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
 });
+
+it.each([['ImportExport'], ['PublishStory'], ['ExampleStories']])(
+  'closes the drawer when the plain entry %s is tapped while focused',
+  async (drawerName) => {
+    await renderDrawer();
+    const navigation = { navigate: jest.fn(), closeDrawer: jest.fn() };
+    const preventDefault = jest.fn();
+    const listeners = drawerScreen(drawerName)?.listeners({ navigation });
+
+    listeners.drawerItemPress({ preventDefault });
+
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(navigation.navigate).toHaveBeenCalledWith(drawerName);
+    expect(navigation.closeDrawer).toHaveBeenCalledTimes(1);
+  },
+);
 
 it('uses the compact front drawer dimensions on small screens', async () => {
   mockResponsiveLayout.isCompact = true;
@@ -253,6 +286,39 @@ describe('the publish entry', () => {
       height: 0,
       overflow: 'hidden',
     });
+  });
+});
+
+describe('a serverless build', () => {
+  // The web build on GitHub Pages runs on the device alone: what only talks to a server is not
+  // registered at all, so nothing can navigate there.
+  it('registers no server, friend or publish entry', async () => {
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    await render(<StorySelectionStack />);
+
+    expect(mockDrawerScreens.map((screen) => screen.name)).toEqual([
+      'StorySelectionMain',
+      'ImportExport',
+      'PacksDrawer',
+      'ExampleStories',
+      'StoryDevicesDrawer',
+      'HelpDrawer',
+      'Settings',
+    ]);
+  });
+
+  it('keeps local packs but drops browsing the server ones', async () => {
+    const Packs = async () => {
+      await render(<StorySelectionStack />);
+      const PacksStack = drawerScreen('PacksDrawer')?.component;
+      mockStackScreens.length = 0;
+      await render(<PacksStack />);
+      return [...mockStackScreens];
+    };
+
+    expect(await Packs()).toEqual(['PackList', 'PackForm', 'PackBrowse', 'ShippedPacks']);
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    expect(await Packs()).toEqual(['PackList', 'PackForm', 'ShippedPacks']);
   });
 });
 
@@ -327,5 +393,45 @@ describe('the packs stack', () => {
 
     expect(getByTestId('navigation-back-button')).toBeTruthy();
     expect(getByTestId('drawer-menu-button')).toBeTruthy();
+  });
+});
+
+describe('the settings stack', () => {
+  const focusOn = (screen: string | undefined) => {
+    (
+      jest.requireMock('@react-navigation/native').getFocusedRouteNameFromRoute as jest.Mock
+    ).mockReturnValue(screen);
+  };
+
+  async function headerOn(screen: string, index: number) {
+    focusOn(screen);
+    await renderDrawer();
+    const navigator = mockDrawerNavigatorProps.at(-1);
+    const options = navigator?.screenOptions({
+      navigation: { getState: () => ({ routes: [] }) },
+      route: {
+        key: 'settings-key',
+        name: 'Settings',
+        state: {
+          type: 'stack',
+          key: 'settings-stack',
+          index,
+          routes: ['SettingsHome', 'Credits'].slice(0, index + 1).map((name) => ({ name })),
+        },
+      },
+    });
+    return render(<>{options.headerLeft()}</>);
+  }
+
+  afterEach(() => focusOn(undefined));
+
+  it('shows no arrow on its root - there is nothing behind it to go back to', async () => {
+    const { queryByTestId } = await headerOn('SettingsHome', 0);
+    expect(queryByTestId('navigation-back-button')).toBeNull();
+  });
+
+  it('shows an arrow on the credits screen, reached from it', async () => {
+    const { queryByTestId } = await headerOn('Credits', 1);
+    expect(queryByTestId('navigation-back-button')).not.toBeNull();
   });
 });

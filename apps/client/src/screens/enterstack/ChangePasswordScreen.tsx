@@ -12,7 +12,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -191,6 +191,8 @@ const ChangePasswordScreen = () => {
       if (!outcome.success) {
         if (outcome.reason === 'invalid_code') {
           AppAlert.alert(t('error'), t('recovery_code_invalid'));
+        } else if (outcome.reason === 'rate_limited') {
+          AppAlert.alert(t('error'), t('recovery_code_rate_limited'));
         } else {
           AppAlert.alert(t('error'), `${t('server_error')}: ${outcome.status}`);
         }
@@ -316,6 +318,8 @@ const ChangePasswordScreen = () => {
                 onChangeText={setRecoveryCode}
                 style={commonInputStyles.input}
                 autoCapitalize="characters"
+                autoCorrect={false}
+                spellCheck={false}
               />
             )}
           </FormField>

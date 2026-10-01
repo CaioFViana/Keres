@@ -1,4 +1,12 @@
-import type { PublicationLabelMode, ShowcaseVisibility, StoryPublication } from '@keres/shared';
+import type {
+  ManuscriptFormat,
+  ManuscriptLabels,
+  ReaderLabels,
+  ManuscriptStyle,
+  PublicationLabelMode,
+  ShowcaseVisibility,
+  StoryPublication,
+} from '@keres/shared';
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
@@ -9,6 +17,42 @@ export interface StoryShowcaseState {
   labelMode: PublicationLabelMode;
   hasPassword: boolean;
   publications: StoryPublication[];
+}
+
+/** Manuscript renditions the server can build: every one, in pure TypeScript. */
+export const SERVER_MANUSCRIPT_FORMATS: ManuscriptFormat[] = [
+  'docx',
+  'pdf',
+  'epub',
+  'html',
+  'md',
+  'txt',
+];
+
+/**
+ * How the server should render the story's manuscript for this version. Options
+ * only - no bytes leave the device; the server compiles from its own copy.
+ */
+/** What the server compiles from its own copy: the same choices as the device export. */
+export interface PublishManuscriptOptions {
+  format: ManuscriptFormat;
+  includeLooseScenes: boolean;
+  includeSceneNames: boolean;
+  includeToc: boolean;
+  resetSceneNumbers: boolean;
+  style: ManuscriptStyle;
+  /** Branching stories: how the gamebook numbers its scenes. */
+  sceneOrder?: 'discovery' | 'shuffled';
+  /** When set, only this arc ships, under its title. */
+  arcId?: string;
+  labels: ManuscriptLabels;
+  author: string | null;
+  language: string;
+}
+
+/** The online reader: the manuscript's choices (no file format) and the words of its own interface. */
+export interface PublishReaderOptions extends Omit<PublishManuscriptOptions, 'format'> {
+  readerLabels: ReaderLabels;
 }
 
 /**
@@ -50,12 +94,18 @@ export class PublicationApiService {
     labelMode: PublicationLabelMode,
     visibility: ShowcaseVisibility = 'public',
     password?: string,
+    manuscript?: PublishManuscriptOptions,
+    reader?: PublishReaderOptions,
+    includePackage = true,
   ): Promise<StoryPublication> {
     const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
       operationVersion,
       labelMode,
       visibility,
       password,
+      manuscript,
+      reader,
+      includePackage,
     });
     return response.data;
   }

@@ -2,7 +2,7 @@ import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 import { characters } from './characters';
-import { itemJourneys } from './itemJourneys'; // Will be created later
+import { itemJourneys } from './itemJourneys';
 
 export const items = table('items', {
   id: text('id').primaryKey(),

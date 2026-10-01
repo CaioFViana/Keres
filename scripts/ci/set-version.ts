@@ -1,9 +1,15 @@
-import { assertSemver, readReleaseName, setAppRelease, setPackageVersions } from '../lib/version';
+import {
+  assertTagVersion,
+  readReleaseName,
+  setAppRelease,
+  setPackageVersions,
+} from '../lib/version';
 
 /**
  * Writes the version coming from the Git tag into every file that declares one.
  *
  *   bun scripts/ci/set-version.ts 1.2.3
+ *   bun scripts/ci/set-version.ts 1.2.3-dev1
  *
  * Without the tag's "v" - the workflow strips it before calling (see
  * `.github/workflows/release.yml`). That makes the tag the single source of truth, instead of
@@ -16,7 +22,7 @@ if (!version) {
 }
 
 try {
-  assertSemver(version);
+  assertTagVersion(version);
   setPackageVersions(version);
   // CI takes only the version from the tag. The release name stays whatever `version:set`
   // committed, and every artifact reports the tag's version.

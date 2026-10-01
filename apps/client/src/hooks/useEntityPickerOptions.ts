@@ -31,6 +31,7 @@ export function useEntityPickerOptions(
   }, [db, storyId, entityType]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     reload();
   }, [reload]);
 

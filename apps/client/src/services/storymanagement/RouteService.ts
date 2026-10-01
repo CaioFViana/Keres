@@ -8,7 +8,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -21,6 +22,14 @@ export const createRouteService = (db: AppDrizzleClient) => {
       where: and(eq(routeSteps.routeId, routeId), eq(routeSteps.isDeleted, false)),
       orderBy: [asc(routeSteps.position)],
     });
+  /** `getSteps` for inside a unit, so the steps it replaces are the ones live under the lock. */
+  const getStepsSync = (routeId: string) =>
+    db
+      .select()
+      .from(routeSteps)
+      .where(and(eq(routeSteps.routeId, routeId), eq(routeSteps.isDeleted, false)))
+      .orderBy(asc(routeSteps.position))
+      .all();
   const validate = async (storyId: string, steps: RouteStep[]) => {
     const [story, storyScenes, storyChoices] = await Promise.all([
       db.query.stories.findFirst({ where: eq(stories.id, storyId) }),
@@ -70,34 +79,42 @@ export const createRouteService = (db: AppDrizzleClient) => {
           isDeleted: false,
           deletedAt: null,
         };
-        const [created] = await db.insert(routes).values(row).returning();
         const logUser = await getUserIdForOperation(db, server, row.storyId, userId);
-        await recordLocalOperation(db, row.storyId, logUser, 'create', 'Route', row.id, row);
+        const created = await runLocalWrite(db, row.storyId, () => {
+          const inserted = db.insert(routes).values(row).returning().get();
+          recordLocalOperationSync(db, row.storyId, logUser, 'create', 'Route', row.id, row);
+          return inserted;
+        });
         entityEventEmitter.emit('route_changed', row.storyId, row.id);
         return created!;
       }
-      const original = await db.query.routes.findFirst({ where: eq(routes.id, value.id) });
+      const routeId = value.id;
+      const original = await db.query.routes.findFirst({ where: eq(routes.id, routeId) });
       if (!original || original.isDeleted) throw new Error('Route not found.');
-      const [updated] = await db
-        .update(routes)
-        .set({
-          name: value.name.trim(),
-          details: value.details,
-          updatedAt: now,
-          version: sql`${routes.version} + 1`,
-        })
-        .where(eq(routes.id, value.id))
-        .returning();
       const logUser = await getUserIdForOperation(db, server, original.storyId, userId);
-      await recordLocalOperation(
-        db,
-        original.storyId,
-        logUser,
-        'update',
-        'Route',
-        original.id,
-        getChangedFields(original, updated!),
-      );
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(routes)
+          .set({
+            name: value.name.trim(),
+            details: value.details,
+            updatedAt: now,
+            version: sql`${routes.version} + 1`,
+          })
+          .where(eq(routes.id, routeId))
+          .returning()
+          .get();
+        recordLocalOperationSync(
+          db,
+          original.storyId,
+          logUser,
+          'update',
+          'Route',
+          original.id,
+          getChangedFields(original, row!),
+        );
+        return row;
+      });
       entityEventEmitter.emit('route_changed', original.storyId, original.id);
       return updated!;
     },
@@ -122,28 +139,29 @@ export const createRouteService = (db: AppDrizzleClient) => {
         deletedAt: null,
       }));
       await validate(route.storyId, rows);
-      const old = await getSteps(routeId);
       const logUser = await getUserIdForOperation(db, server, route.storyId, userId);
-      for (const step of old) {
-        await db
-          .update(routeSteps)
-          .set({
+      await runLocalWrite(db, route.storyId, () => {
+        for (const step of getStepsSync(routeId)) {
+          db.update(routeSteps)
+            .set({
+              isDeleted: true,
+              deletedAt: new Date(),
+              updatedAt: new Date(),
+              version: sql`${routeSteps.version} + 1`,
+            })
+            .where(eq(routeSteps.id, step.id))
+            .run();
+          recordLocalOperationSync(db, route.storyId, logUser, 'delete', 'RouteStep', step.id, {
+            id: step.id,
             isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${routeSteps.version} + 1`,
-          })
-          .where(eq(routeSteps.id, step.id));
-        await recordLocalOperation(db, route.storyId, logUser, 'delete', 'RouteStep', step.id, {
-          id: step.id,
-          isDeleted: true,
-          version: step.version + 1,
-        });
-      }
-      for (const row of rows as RouteStepInsert[]) {
-        await db.insert(routeSteps).values(row);
-        await recordLocalOperation(db, route.storyId, logUser, 'create', 'RouteStep', row.id, row);
-      }
+            version: step.version + 1,
+          });
+        }
+        for (const row of rows as RouteStepInsert[]) {
+          db.insert(routeSteps).values(row).run();
+          recordLocalOperationSync(db, route.storyId, logUser, 'create', 'RouteStep', row.id, row);
+        }
+      });
       entityEventEmitter.emit('route_step_changed', route.storyId, routeId);
     },
     async delete(userId: string, routeId: string): Promise<void> {
@@ -152,44 +170,48 @@ export const createRouteService = (db: AppDrizzleClient) => {
       await assertStoryIsWritable(db, route.storyId);
       const logUser = await getUserIdForOperation(db, server, route.storyId, userId);
       const now = new Date();
-      const steps = await getSteps(routeId);
-      for (const step of steps) {
-        const [deletedStep] = await db
-          .update(routeSteps)
+      const deleted = await runLocalWrite(db, route.storyId, () => {
+        for (const step of getStepsSync(routeId)) {
+          const deletedStep = db
+            .update(routeSteps)
+            .set({
+              isDeleted: true,
+              deletedAt: now,
+              updatedAt: now,
+              version: sql`${routeSteps.version} + 1`,
+            })
+            .where(eq(routeSteps.id, step.id))
+            .returning()
+            .get();
+          if (deletedStep) {
+            recordLocalOperationSync(db, route.storyId, logUser, 'delete', 'RouteStep', step.id, {
+              id: step.id,
+              isDeleted: true,
+              version: deletedStep.version,
+            });
+          }
+        }
+        const deletedRoute = db
+          .update(routes)
           .set({
             isDeleted: true,
             deletedAt: now,
             updatedAt: now,
-            version: sql`${routeSteps.version} + 1`,
+            version: sql`${routes.version} + 1`,
           })
-          .where(eq(routeSteps.id, step.id))
-          .returning();
-        if (deletedStep) {
-          await recordLocalOperation(db, route.storyId, logUser, 'delete', 'RouteStep', step.id, {
-            id: step.id,
+          .where(eq(routes.id, routeId))
+          .returning()
+          .get();
+        if (deletedRoute) {
+          recordLocalOperationSync(db, route.storyId, logUser, 'delete', 'Route', routeId, {
+            id: routeId,
             isDeleted: true,
-            version: deletedStep.version,
+            version: deletedRoute.version,
           });
         }
-      }
-      const [deleted] = await db
-        .update(routes)
-        .set({
-          isDeleted: true,
-          deletedAt: now,
-          updatedAt: now,
-          version: sql`${routes.version} + 1`,
-        })
-        .where(eq(routes.id, routeId))
-        .returning();
-      if (deleted) {
-        await recordLocalOperation(db, route.storyId, logUser, 'delete', 'Route', routeId, {
-          id: routeId,
-          isDeleted: true,
-          version: deleted.version,
-        });
-        entityEventEmitter.emit('route_changed', route.storyId, routeId);
-      }
+        return deletedRoute;
+      });
+      if (deleted) entityEventEmitter.emit('route_changed', route.storyId, routeId);
     },
   };
 };

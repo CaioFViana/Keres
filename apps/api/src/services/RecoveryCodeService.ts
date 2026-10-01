@@ -1,3 +1,4 @@
+import { normalizeRecoveryCode } from '@keres/shared';
 import { and, eq } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
 import { db } from '../db';
@@ -8,6 +9,20 @@ export class InvalidRecoveryCodeError extends Error {
   constructor() {
     super('Invalid username or recovery code.');
     this.name = 'InvalidRecoveryCodeError';
+  }
+}
+
+/**
+ * Too many attempts for one account. Its own error, unlike a wrong code: from the lockout on, even the
+ * right code is refused, and saying so is what lets the person wait instead of retyping it for
+ * a quarter of an hour.
+ */
+export class RecoveryAttemptsLockedError extends Error {
+  constructor(readonly retryAfterMinutes: number) {
+    super(
+      `Too many attempts. Try again in ${retryAfterMinutes} ${retryAfterMinutes === 1 ? 'minute' : 'minutes'}.`,
+    );
+    this.name = 'RecoveryAttemptsLockedError';
   }
 }
 
@@ -76,15 +91,27 @@ export class RecoveryCodeService {
     plainCode: string,
     newPassword: string,
   ): Promise<{ id: string; username: string; tag: string }> {
-    if (!recoveryAttemptLimiter.registerAttempt(username)) {
-      throw new InvalidRecoveryCodeError();
+    // What was typed is read the way it was meant: stray spaces around the name, and a code in any
+    // case, with or without its hyphen (see `normalizeRecoveryCode`).
+    const name = username.trim();
+    const code = normalizeRecoveryCode(plainCode);
+
+    if (!recoveryAttemptLimiter.registerAttempt(name)) {
+      throw new RecoveryAttemptsLockedError(
+        Math.max(1, Math.ceil(recoveryAttemptLimiter.retryAfterMs(name) / 60000)),
+      );
     }
 
     // isDeleted excluded here too - otherwise a soft-deleted account could bypass the same
     // restriction on /auth/login simply by resetting its password through this endpoint instead.
-    const user = await db.query.users.findFirst({
-      where: and(eq(users.username, username), eq(users.isDeleted, false)),
-    });
+    // The name as typed first - registration does not trim, so "ana " can be an account of its own -
+    // then without the stray spaces.
+    const findLive = (candidate: string) =>
+      db.query.users.findFirst({
+        where: and(eq(users.username, candidate), eq(users.isDeleted, false)),
+      });
+    const user =
+      (await findLive(username)) ?? (name !== username ? await findLive(name) : undefined);
     if (!user) {
       throw new InvalidRecoveryCodeError();
     }
@@ -95,7 +122,7 @@ export class RecoveryCodeService {
 
     let matched: (typeof candidates)[number] | undefined;
     for (const candidate of candidates) {
-      if (await comparePassword(plainCode, candidate.codeHash)) {
+      if (await comparePassword(code, candidate.codeHash)) {
         matched = candidate;
         break;
       }
@@ -125,7 +152,7 @@ export class RecoveryCodeService {
         .where(eq(users.id, user.id));
     });
 
-    recoveryAttemptLimiter.clearAttempts(username);
+    recoveryAttemptLimiter.clearAttempts(name);
     return { id: user.id, username: user.username, tag: user.tag };
   }
 }

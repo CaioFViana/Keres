@@ -1,4 +1,5 @@
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { characters } from './characters';
 import { stories } from './stories';
 
@@ -24,11 +25,9 @@ export const characterRelations = table(
   },
   (table) => {
     return {
-      unq: unique('story_char1_char2_unq').on(
-        table.storyId,
-        table.character1Id,
-        table.character2Id,
-      ),
+      unq: uniqueIndex('story_char1_char2_unq')
+        .on(table.storyId, table.character1Id, table.character2Id)
+        .where(sql`${table.isDeleted} = false`),
     };
   },
 );

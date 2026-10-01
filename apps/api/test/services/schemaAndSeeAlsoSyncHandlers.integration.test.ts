@@ -141,10 +141,8 @@ describe('schema and see-also sync entity handlers', () => {
     await values.delete(userId, storyId, remove('AttributeValue', valueId, 2), updatedValue);
     await fields.delete(userId, storyId, remove('StorySchemaField', fieldId, 2), updatedField);
     expect(await values.findByIdOrThrow(valueId)).toMatchObject({ isDeleted: true });
-    expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({
-      isDeleted: true,
-      key: expect.stringContaining('__deleted_'),
-    });
+    // The key stays: uniqueness holds among live fields only, so the tombstone blocks nothing.
+    expect(await fields.findByIdOrThrow(fieldId)).toMatchObject({ isDeleted: true, key: 'origem' });
   });
 
   it('stores an entity field target and keeps its type and target immutable', async () => {
@@ -190,6 +188,10 @@ describe('schema and see-also sync entity handlers', () => {
       targetEntityType: 'Location',
     });
   });
+
+  // NOTE: an ENTITY field without targetEntityType is rejected by the schema's own
+  // superRefine at parse time (see the shared CreateStorySchemaFieldDataSchema tests), so the
+  // handler-level throw below it is unreachable defense-in-depth, not a testable branch.
 
   it('normalizes and tombstones a see-also link between valid story entities', async () => {
     const handler = new SeeAlsoRelationSyncHandler();
@@ -357,5 +359,118 @@ describe('schema and see-also sync entity handlers', () => {
         }),
       );
     }
+  });
+});
+
+describe('story-scoped polymorphic references', () => {
+  async function seedOtherStory() {
+    const otherStoryId = newId();
+    const now = new Date();
+    await db.insert(stories).values({
+      id: otherStoryId,
+      userId,
+      title: 'Outra',
+      type: 'linear',
+      createdAt: now,
+      updatedAt: now,
+      version: 1,
+      isDeleted: false,
+    } as never);
+    const otherCharacterId = newId();
+    await new CharacterSyncHandler().create(
+      userId,
+      otherStoryId,
+      create('Character', otherCharacterId, { name: 'Nyx' }),
+    );
+    const otherFieldId = newId();
+    await new StorySchemaFieldSyncHandler().create(
+      userId,
+      otherStoryId,
+      create('StorySchemaField', otherFieldId, {
+        entityType: 'Character',
+        name: 'Origem',
+        key: 'origem',
+        description: null,
+        type: 'text',
+        isRequired: false,
+        defaultValue: null,
+        order: 0,
+      }),
+    );
+    return { otherStoryId, otherCharacterId, otherFieldId };
+  }
+
+  async function seedField(entityType = 'Character') {
+    const fieldId = newId();
+    await new StorySchemaFieldSyncHandler().create(
+      userId,
+      storyId,
+      create('StorySchemaField', fieldId, {
+        entityType,
+        name: 'Origem',
+        key: `origem_${entityType.toLowerCase()}`,
+        description: null,
+        type: 'text',
+        isRequired: false,
+        defaultValue: null,
+        order: 0,
+      }),
+    );
+    return fieldId;
+  }
+
+  it("refuses a value on another story's field or entity, or a field of another entity type", async () => {
+    const values = new AttributeValueSyncHandler();
+    const { otherCharacterId, otherFieldId } = await seedOtherStory();
+    const ownField = await seedField();
+    const locationField = await seedField('Location');
+    const value = (entityId: string, fieldId: string) =>
+      create('AttributeValue', newId(), {
+        entityType: 'Character',
+        entityId,
+        fieldId,
+        value: 'x',
+      });
+
+    await expect(
+      values.create(userId, storyId, value(characterId, otherFieldId)),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      values.create(userId, storyId, value(otherCharacterId, ownField)),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+    await expect(
+      values.create(userId, storyId, value(characterId, locationField)),
+    ).rejects.toMatchObject({ reason: 'referenced_entity_deleted' });
+  });
+
+  it('never repoints a value to another entity or field, neither in the row nor in the log', async () => {
+    const values = new AttributeValueSyncHandler();
+    const fieldId = await seedField();
+    const valueId = newId();
+    await values.create(
+      userId,
+      storyId,
+      create('AttributeValue', valueId, {
+        entityType: 'Character',
+        entityId: characterId,
+        fieldId,
+        value: 'Submundo',
+      }),
+    );
+    const repoint = {
+      type: 'update',
+      entity: 'AttributeValue',
+      id: valueId,
+      changes: { value: 'Olimpo', entityId: locationId, fieldId: newId(), version: 1 },
+    } as UpdateStoryUpdate;
+
+    await values.update(userId, storyId, repoint, await values.findByIdOrThrow(valueId));
+
+    expect(await values.findByIdOrThrow(valueId)).toMatchObject({
+      entityId: characterId,
+      fieldId,
+      value: 'Olimpo',
+    });
+    expect(values.sanitizePayloadForLog(repoint, userId)).toEqual({ value: 'Olimpo' });
   });
 });

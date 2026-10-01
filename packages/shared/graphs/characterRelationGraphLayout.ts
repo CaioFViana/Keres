@@ -81,7 +81,7 @@ export interface CharacterRelationGraphLayout {
   edges: RelationGraphEdge[];
   width: number;
   height: number;
-  /** Grupos de personagens conectados entre si, isolados do resto. */
+  /** Groups of characters connected to each other, isolated from the rest. */
   clusterCount: number;
   isolatedCount: number;
 }
@@ -141,7 +141,7 @@ export function buildCharacterRelationGraphLayout(
 
   const clusterBoxes = clusterComponents
     .map(layoutComponentCircular)
-    // Maiores primeiro deixa o empacotamento em prateleiras mais compacto (first-fit decreasing).
+    // Largest first keeps the shelf packing tighter (first-fit decreasing).
     .sort((a, b) => b.width * b.height - a.width * a.height);
 
   const packed = packClusters(clusterBoxes, direction);
@@ -256,7 +256,7 @@ function layoutComponentCircular(members: WorkNode[]): ClusterBox {
   const radius = Math.max(MIN_CLUSTER_RADIUS, circumferenceNeeded / (2 * Math.PI));
 
   const nodes = ordered.map((work, index) => {
-    const angle = (index / count) * Math.PI * 2 - Math.PI / 2; // primeiro nó no topo do círculo
+    const angle = (index / count) * Math.PI * 2 - Math.PI / 2; // first node at the top of the circle
     const centerX = Math.cos(angle) * radius;
     const centerY = Math.sin(angle) * radius;
     return buildNode(work, centerX - NODE_WIDTH / 2, centerY - NODE_HEIGHT / 2);
@@ -385,7 +385,7 @@ function buildNode(work: WorkNode, x: number, y: number): RelationGraphNode {
   };
 }
 
-/** Desloca tudo para dentro da margem e devolve o tamanho final do desenho. */
+/** Shifts everything inside the margin and returns the final drawing size. */
 function normalizeToPadding(nodes: RelationGraphNode[]): { width: number; height: number } {
   if (nodes.length === 0) {
     return { width: GRAPH_PADDING * 2, height: GRAPH_PADDING * 2 };

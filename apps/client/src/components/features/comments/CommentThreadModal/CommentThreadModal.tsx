@@ -1,6 +1,14 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import Avatar from '@/src/components/common/display/Avatar/Avatar';
+import MarkedText from '@/src/components/common/display/MarkedText/MarkedText';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import type { TextRange } from '@keres/shared';
+import {
+  collapseWhitespace,
+  findFirstExcerptMatch,
+  frameMatchWindow,
+  stripMarkdownText,
+} from '@keres/shared';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,12 +46,16 @@ interface CommentThreadModalProps {
     commentId: string,
     changes: { commentText?: string; criticality?: number },
   ) => Promise<void>;
+  /** Manuscript prose composer: explain that the first match anchors the comment. */
+  showExcerptAnchorNotice?: boolean;
+  /** A fresh text selection, pre-filled into the excerpt composer on open. */
+  initialExcerpt?: string | null;
 }
 
 /**
- * Usa o mesmo `ResponsiveModal` de `GraphNodeSheet`/seletores: bottom sheet em telas
- * compactas, painel lateral em telas largas - em vez de um bottom sheet fixo em qualquer
- * tamanho de tela, que ficava com cara de app mobile mesmo no desktop.
+ * Uses the same `ResponsiveModal` as `GraphNodeSheet`/selectors: bottom sheet on compact
+ * screens, side panel on wide screens - instead of a fixed bottom sheet at any screen
+ * size, which looked like a mobile app even on desktop.
  */
 const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   visible,
@@ -58,6 +70,8 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   onSubmit,
   onDelete,
   onUpdate,
+  showExcerptAnchorNotice = false,
+  initialExcerpt = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -67,15 +81,53 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
   const [commentText, setCommentText] = useState('');
   const [excerptText, setExcerptText] = useState('');
   const [criticality, setCriticality] = useState<CommentCriticality>(DEFAULT_CRITICALITY);
+  // Derived-state reset during render (the sanctioned pattern, not an effect): a fresh
+  // selection pre-fills the excerpt on open; without one the composer keeps whatever
+  // it had, so drafts survive close/reopen exactly as before.
+  const [prevVisible, setPrevVisible] = useState(false);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
+    if (visible && initialExcerpt && initialExcerpt.trim()) setExcerptText(initialExcerpt);
+  }
   const [submitting, setSubmitting] = useState(false);
+  // Web textareas never auto-grow: pin each composer's measured content height
+  // as its minimum (same technique as the prose editor) so long comments grow
+  // the field instead of scrolling inside a fixed box.
+  const [excerptHeight, setExcerptHeight] = useState<number | null>(null);
+  const [commentHeight, setCommentHeight] = useState<number | null>(null);
 
   const sortedComments = useMemo(
     () => [...comments].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
     [comments],
   );
 
-  const excerptMismatch =
-    excerptText.trim().length > 0 && !fieldValueSnapshot.includes(excerptText.trim());
+  // Prose snapshots hold markdown but preview rendered, like the document: no
+  // markup symbol ever shows. Plain detail fields preview raw, where asterisks
+  // are literal prose. Either way the preview flows as one line: line breaks
+  // would corrupt the framed window, so they read as spaces.
+  const displaySnapshot = useMemo(() => {
+    const rendered = showExcerptAnchorNotice
+      ? stripMarkdownText(fieldValueSnapshot)
+      : fieldValueSnapshot;
+    return collapseWhitespace(rendered);
+  }, [fieldValueSnapshot, showExcerptAnchorNotice]);
+  // The typed excerpt anchors live in the preview by the same rule that marks it:
+  // first occurrence, case- and accent-insensitive, compared in the exact space
+  // the preview shows (rendered, then collapsed, on both sides). A stale excerpt
+  // (field edited since) simply marks nothing and keeps its warning.
+  const liveExcerptMatch = useMemo(() => {
+    const rendered = showExcerptAnchorNotice ? stripMarkdownText(excerptText) : excerptText;
+    return findFirstExcerptMatch(displaySnapshot, collapseWhitespace(rendered));
+  }, [displaySnapshot, excerptText, showExcerptAnchorNotice]);
+  // Long previews frame around the anchor (like backlinks: ...context marked
+  // context...) instead of always opening at the head. Short texts pass through
+  // untouched, and with no anchor the head shows as before.
+  const framedPreview = useMemo((): { text: string; ranges: TextRange[] } => {
+    if (!liveExcerptMatch) return { text: displaySnapshot, ranges: [] };
+    const framed = frameMatchWindow(displaySnapshot, liveExcerptMatch);
+    return { text: framed.text, ranges: [framed.match] };
+  }, [displaySnapshot, liveExcerptMatch]);
+  const excerptMismatch = excerptText.trim().length > 0 && !liveExcerptMatch;
 
   const handleSubmit = useCallback(async () => {
     const trimmedComment = commentText.trim();
@@ -140,6 +192,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     excerptBlock: {
       borderLeftWidth: 2,
       borderLeftColor: colors.primary,
+      backgroundColor: colors.primaryContainer,
       paddingLeft: 8,
       marginTop: 4,
       marginBottom: 2,
@@ -171,6 +224,7 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     excerptInput: { minHeight: 40, textAlignVertical: 'top' },
     commentInput: { minHeight: 70, textAlignVertical: 'top' },
     warningText: { color: colors.notification, fontSize: 12, marginBottom: 8 },
+    noticeText: { color: colors.textSecondary, fontSize: 12, marginBottom: 8 },
     // Criticality icons and the post button share the same row, instead of each one
     // taking the full width on separate rows - that left a fair amount of horizontal
     // space idle on wide screens.
@@ -181,6 +235,84 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
     postButton: { paddingHorizontal: 20 },
   });
 
+  // Pinned composer: rides the footer's slot below the thread scroll view, so
+  // scrolling the thread never pushes the inputs and the post button away.
+  const footer = !canComment ? undefined : (
+    <View style={styles.footer} testID="comment-composer">
+      <View style={styles.snapshotBlock}>
+        <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
+        <MarkedText
+          text={framedPreview.text || t('common_na')}
+          ranges={framedPreview.ranges}
+          style={styles.snapshotText}
+          numberOfLines={4}
+        />
+      </View>
+
+      <TextInput
+        testID="comment-excerpt-input"
+        style={[
+          styles.input,
+          styles.excerptInput,
+          excerptHeight != null && { minHeight: Math.max(40, excerptHeight) },
+        ]}
+        value={excerptText}
+        onChangeText={setExcerptText}
+        onContentSizeChange={(event) => setExcerptHeight(event.nativeEvent.contentSize.height)}
+        placeholder={t('excerpt_placeholder')}
+        multiline
+      />
+      {showExcerptAnchorNotice && (
+        <Text style={styles.noticeText}>{t('excerpt_anchor_notice')}</Text>
+      )}
+      {excerptMismatch && <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>}
+
+      <TextInput
+        testID="comment-text-input"
+        style={[
+          styles.input,
+          styles.commentInput,
+          commentHeight != null && { minHeight: Math.max(70, commentHeight) },
+        ]}
+        value={commentText}
+        onChangeText={setCommentText}
+        onContentSizeChange={(event) => setCommentHeight(event.nativeEvent.contentSize.height)}
+        placeholder={t('comment_text_placeholder')}
+        multiline
+      />
+
+      <View style={styles.actionRow}>
+        <View style={styles.criticalityRow}>
+          {CRITICALITY_LEVELS.map((level) => (
+            <TouchableOpacity
+              key={level}
+              style={[
+                styles.criticalityButton,
+                criticality === level && styles.criticalityButtonActive,
+              ]}
+              onPress={() => setCriticality(level)}
+              accessibilityLabel={t(`comment_criticality_${level}`)}
+            >
+              <Ionicons
+                name={CRITICALITY_ICONS[level]}
+                size={20}
+                color={criticality === level ? colors.primary : colors.textSecondary}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Button
+          onPress={handleSubmit}
+          disabled={submitting || !commentText.trim()}
+          style={styles.postButton}
+        >
+          {submitting ? t('saving') : t('add_comment')}
+        </Button>
+      </View>
+    </View>
+  );
+
   return (
     <ResponsiveModal
       visible={visible}
@@ -188,11 +320,11 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
       placement="adaptive"
       contentStyle={styles.sheet}
       maxHeight="85%"
-      keyboardAvoiding={false}
     >
       <KeyboardAwareScreen
         contentContainerStyle={styles.keyboardContent}
         keyboardVerticalOffset={0}
+        footer={footer}
       >
         <View style={styles.header}>
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -254,66 +386,6 @@ const CommentThreadModal: React.FC<CommentThreadModalProps> = ({
             })
           )}
         </View>
-
-        {canComment && (
-          <View style={styles.footer}>
-            <View style={styles.snapshotBlock}>
-              <Text style={styles.snapshotLabel}>{fieldLabel}</Text>
-              <Text style={styles.snapshotText} numberOfLines={4}>
-                {fieldValueSnapshot || t('common_na')}
-              </Text>
-            </View>
-
-            <TextInput
-              style={[styles.input, styles.excerptInput]}
-              value={excerptText}
-              onChangeText={setExcerptText}
-              placeholder={t('excerpt_placeholder')}
-              multiline
-            />
-            {excerptMismatch && (
-              <Text style={styles.warningText}>{t('excerpt_not_found_warning')}</Text>
-            )}
-
-            <TextInput
-              style={[styles.input, styles.commentInput]}
-              value={commentText}
-              onChangeText={setCommentText}
-              placeholder={t('comment_text_placeholder')}
-              multiline
-            />
-
-            <View style={styles.actionRow}>
-              <View style={styles.criticalityRow}>
-                {CRITICALITY_LEVELS.map((level) => (
-                  <TouchableOpacity
-                    key={level}
-                    style={[
-                      styles.criticalityButton,
-                      criticality === level && styles.criticalityButtonActive,
-                    ]}
-                    onPress={() => setCriticality(level)}
-                    accessibilityLabel={t(`comment_criticality_${level}`)}
-                  >
-                    <Ionicons
-                      name={CRITICALITY_ICONS[level]}
-                      size={20}
-                      color={criticality === level ? colors.primary : colors.textSecondary}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Button
-                onPress={handleSubmit}
-                disabled={submitting || !commentText.trim()}
-                style={styles.postButton}
-              >
-                {submitting ? t('saving') : t('add_comment')}
-              </Button>
-            </View>
-          </View>
-        )}
       </KeyboardAwareScreen>
     </ResponsiveModal>
   );

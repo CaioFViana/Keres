@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import React from 'react';
+import type React from 'react';
 import { renderHook } from '@testing-library/react-native';
 import { useScreenHeader } from '../../src/hooks/useScreenHeader';
 import { setDocumentTitle } from '../../src/utils/documentTitle';

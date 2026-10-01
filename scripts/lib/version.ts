@@ -21,15 +21,29 @@ export const APP_RELEASE_FILE = 'packages/shared/metadata/AppRelease.ts';
 /**
  * The compatibility numbers, which this module deliberately does **not** write.
  *
- * `setAppRelease` rewrites `AppRelease.ts` whole from a template, so anything kept there would be
- * erased at the next release. These are bumped by a person who knows whether the format or the wire
- * actually changed; `release-check` reads them out so the question gets asked.
+ * `setAppRelease` only touches the `name` and `version` fields of `AppRelease.ts` - the release
+ * phrase and the credits next to them are hand-owned and survive releases. These numbers are
+ * bumped by a person who knows whether the format or the wire actually changed; `release-check`
+ * reads them out so the question gets asked.
  */
 export const RELEASE_VERSIONS_FILE = 'packages/shared/metadata/ReleaseVersions.ts';
 
 export function assertSemver(version: string | undefined): asserts version is string {
   if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
     throw new Error(`Version must use MAJOR.MINOR.PATCH, got ${JSON.stringify(version)}.`);
+  }
+}
+
+/**
+ * What a version tag may carry: a release (`1.2.3`) or a development build (`1.2.3-dev1`).
+ * Only CI tag-stamping accepts the suffix - the files committed to the repository stay plain
+ * MAJOR.MINOR.PATCH, enforced by `assertSemver` in `version:set` and `release-check`.
+ */
+export function assertTagVersion(version: string | undefined): asserts version is string {
+  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version ?? '')) {
+    throw new Error(
+      `Version must use MAJOR.MINOR.PATCH with an optional -prerelease suffix, got ${JSON.stringify(version)}.`,
+    );
   }
 }
 
@@ -42,7 +56,7 @@ export function readJson<T>(relativePath: string): T {
 }
 
 export function setPackageVersions(version: string): void {
-  assertSemver(version);
+  assertTagVersion(version);
   for (const relativePath of VERSIONED_JSON_FILES) {
     const filePath = join(repoRoot, relativePath);
     const json = JSON.parse(readFileSync(filePath, 'utf8')) as { version?: string };
@@ -58,9 +72,24 @@ export function setPackageVersions(version: string): void {
   console.log(`Set version ${version} in ${APP_JSON_FILE}`);
 }
 
-export function readReleaseName(): string {
+const APP_RELEASE_BLOCK_PATTERN = /(export const APP_RELEASE = \{)([\s\S]*?)(\} as const;)/;
+
+/**
+ * The body of the `APP_RELEASE` literal. Reads and writes stay inside it: the credits below the
+ * identity carry their own `name` fields, and an unanchored `name:` match would be one reorder
+ * away from stamping the version onto an icon author.
+ */
+function readAppReleaseBody(): string {
   const source = readFileSync(join(repoRoot, APP_RELEASE_FILE), 'utf8');
-  const match = source.match(/name:\s*(['"])(.*?)\1/);
+  const block = APP_RELEASE_BLOCK_PATTERN.exec(source);
+  if (!block) {
+    throw new Error(`Could not find APP_RELEASE in ${APP_RELEASE_FILE}.`);
+  }
+  return block[2];
+}
+
+export function readReleaseName(): string {
+  const match = readAppReleaseBody().match(/^\s*name:\s*(['"])(.*?)\1/m);
   if (!match?.[2]) {
     throw new Error(`Could not read release name from ${APP_RELEASE_FILE}.`);
   }
@@ -68,17 +97,56 @@ export function readReleaseName(): string {
 }
 
 export function readReleaseVersion(): string | undefined {
-  const source = readFileSync(join(repoRoot, APP_RELEASE_FILE), 'utf8');
-  return source.match(/version:\s*(['"])(.*?)\1/)?.[2];
+  return readAppReleaseBody().match(/^\s*version:\s*(['"])(.*?)\1/m)?.[2];
+}
+
+export function readReleasePhrase(): string | undefined {
+  return readAppReleaseBody().match(/^\s*phrase:\s*(['"])([\s\S]*?)\1/m)?.[2];
+}
+
+/**
+ * Replaces one quoted field inside the `APP_RELEASE` literal, keeping the file's own quote
+ * style: the release phrase and the credits around it are hand-owned and must survive a
+ * release untouched and still formatted (biome quotes single).
+ */
+function setReleaseField(body: string, field: 'name' | 'version', value: string): string {
+  const pattern = new RegExp(`(^\\s*${field}:\\s*)(['"])(.*?)\\2`, 'm');
+  const match = pattern.exec(body);
+  if (!match) {
+    throw new Error(`Could not find ${field} in ${APP_RELEASE_FILE}.`);
+  }
+  const quote = match[2];
+  const escaped = value.replace(/\\/g, '\\\\').replaceAll(quote, `\\${quote}`);
+  return (
+    body.slice(0, match.index) +
+    match[1] +
+    quote +
+    escaped +
+    quote +
+    body.slice(match.index + match[0].length)
+  );
 }
 
 export function setAppRelease(version: string, name: string): void {
-  assertSemver(version);
-  if (!name?.trim()) {
+  assertTagVersion(version);
+  const trimmed = name?.trim();
+  if (!trimmed) {
     throw new Error('Release name cannot be empty.');
   }
 
-  const source = `/**\n * Identity of the released version of Keres.\n *\n * Update it with \`bun run version:set <version> <name>\` at the repository root. This module is\n * consumed by both the client and the API, so there is no separate server version.\n */\nexport const APP_RELEASE = {\n  name: ${JSON.stringify(name.trim())},\n  version: ${JSON.stringify(version)},\n} as const;\n`;
-  writeFileSync(join(repoRoot, APP_RELEASE_FILE), source);
-  console.log(`Set release ${version} ${name.trim()} in ${APP_RELEASE_FILE}`);
+  const filePath = join(repoRoot, APP_RELEASE_FILE);
+  const source = readFileSync(filePath, 'utf8');
+  const block = APP_RELEASE_BLOCK_PATTERN.exec(source);
+  if (!block) {
+    throw new Error(`Could not find APP_RELEASE in ${APP_RELEASE_FILE}.`);
+  }
+  const updated = setReleaseField(setReleaseField(block[2], 'name', trimmed), 'version', version);
+  const rewritten =
+    source.slice(0, block.index) +
+    block[1] +
+    updated +
+    block[3] +
+    source.slice(block.index + block[0].length);
+  writeFileSync(filePath, rewritten);
+  console.log(`Set release ${version} ${trimmed} in ${APP_RELEASE_FILE}`);
 }

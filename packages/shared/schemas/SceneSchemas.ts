@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANK_FIELD_MAX, RankFieldSchema } from './RankSchemas';
 
 // PostgreSQL `integer` is the narrowest persistence target; keeping this bound in the shared
 // contract prevents a local SQLite value from becoming impossible to synchronize later.
@@ -16,6 +17,14 @@ const CalendarDateOverrideSchema = z
   .regex(/^-?\d{1,}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Use YYYY-MM-DDTHH:mm')
   .nullable()
   .default(null);
+
+/**
+ * Max manuscript characters per scene, markdown included. 30k is ~5.000 words - a "very long"
+ * chapter by editorial standards (Reedsy/Jericho put standard chapters at 2-4k words), so no
+ * legitimate scene hits it; whoever does gets told to split the scene. Enforced here, at the
+ * validation boundary both client and API share.
+ */
+export const MAX_SCENE_BODY_LENGTH = 30000;
 
 export const SceneSchema = z.object({
   id: z.string(),
@@ -35,7 +44,15 @@ export const SceneSchema = z.object({
   locationId: z.string().nullable(),
   name: z.string(),
   index: z.number(),
+  /**
+   * The scene's place among its chapter's scenes (see `rules/rank.ts`); `index` is derived from
+   * it. Defaulted for packages written before ranks: an empty rank takes the one its index implies.
+   */
+  rank: z.string().max(RANK_FIELD_MAX).default(''),
   summary: z.string().nullable(),
+  // Format V11. `.default(null)` like calendarDateOverrideCalendarId below, as a safety net: the
+  // V10 -> V11 migration already gives every scene of an older package an explicit `null`.
+  body: z.string().max(MAX_SCENE_BODY_LENGTH).nullable().default(null),
   gap: SceneTimingValueSchema,
   gapType: z.string().nullable(),
   calendarDateOverride: CalendarDateOverrideSchema,
@@ -67,6 +84,9 @@ export const CreateSceneDataSchema = SceneSchema.omit({
   // 1..N within the chapter, like the chapter index: it is what the API requires when reordering, and
   // accepting 0 here is what left creation and reordering with incompatible contracts.
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
+  // Optional, with no default: `.partial()` keeps defaults alive, and an update that says nothing
+  // about the place must not move the row. A create without one takes its index's legacy rank.
+  rank: RankFieldSchema.optional(),
   isFavorite: z.boolean().default(false),
   isStart: z.boolean().default(false),
   isFinish: z.boolean().default(false),

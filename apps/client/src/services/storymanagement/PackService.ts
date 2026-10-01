@@ -24,9 +24,10 @@ import { createStoryService } from './StoryService';
  *
  * Two operations matter and everything else is bookkeeping around them.
  *
- * **Extraction** reads a story and keeps only its *shape* - custom attributes, suggestion
- * catalogues, stat axes and ladders, tags. Never an entity, never an `attributeValue`, never a
- * `statRelation`: those are the writer's content, and a pack that carried them would be a story.
+ * **Extraction** reads a story and keeps its *shape* - custom attributes, suggestion
+ * catalogues, stat axes and ladders, tags - plus, when the author asks for it, element skeletons
+ * as `extras`. Never an `attributeValue`, never a `statRelation`, never gallery bytes: those are
+ * the writer's filled-in content, and extras stay skeletons on purpose.
  *
  * **Application** happens only at story creation, and goes through `importFullStory` rather than
  * through the per-entity services. That is what gives the feature its defining property: the import
@@ -55,6 +56,16 @@ export interface PackContentCounts {
   tags: number;
   stats: number;
   hasVocabulary: boolean;
+  extras: {
+    chapters: number;
+    scenes: number;
+    characters: number;
+    locations: number;
+    worldRules: number;
+    notes: number;
+    storyBoards: number;
+    storyLocationMaps: number;
+  };
 }
 
 /** A pack as it travels: metadata plus the payload. */
@@ -115,16 +126,40 @@ export interface PackService {
    * operation log entries and the result is bootstrapped to a server whole - see
    * `utils/packBundle.ts`.
    */
-  createStoryWithPacks(userId: string, story: NewStoryData, packIds: string[]): Promise<string>;
+  createStoryWithPacks(
+    userId: string,
+    story: NewStoryData,
+    packIds: string[],
+    includeExtras?: boolean | readonly string[],
+  ): Promise<string>;
+}
+
+/** Whether the pack carries any skeleton at all - the install switch has nothing to offer otherwise. */
+export function packHasExtras(counts: PackContentCounts | undefined): boolean {
+  if (!counts) return false;
+  return Object.values(counts.extras).some((count) => count > 0);
 }
 
 export function countPackContent(content: PackContentType): PackContentCounts {
+  // Rows written before format v2 have no `extras` key; validation fills it wherever it runs,
+  // but this also reads stored rows through the tolerant parse above.
+  const extras = content.extras ?? EMPTY_EXTRAS;
   return {
     customAttributes: content.storySchemaFields.length,
     suggestions: content.suggestions.length,
     tags: content.tags.length,
     stats: content.stats.length,
     hasVocabulary: Object.keys(content.settings.vocabulary?.terms ?? {}).length > 0,
+    extras: {
+      chapters: extras.chapters.length,
+      scenes: extras.scenes.length,
+      characters: extras.characters.length,
+      locations: extras.locations.length,
+      worldRules: extras.worldRules.length,
+      notes: extras.notes.length,
+      storyBoards: extras.storyBoards.length,
+      storyLocationMaps: extras.storyLocationMaps.length,
+    },
   };
 }
 
@@ -138,6 +173,22 @@ function parseContent(raw: string): PackContentType | null {
   }
 }
 
+const EMPTY_EXTRAS: PackContentType['extras'] = {
+  chapters: [],
+  scenes: [],
+  characters: [],
+  locations: [],
+  worldRules: [],
+  notes: [],
+  storyBoards: [],
+  storyLocationMaps: [],
+  characterScenes: [],
+  characterRelations: [],
+  locationRelations: [],
+  noteRelations: [],
+  tagRelations: [],
+};
+
 const EMPTY_CONTENT: PackContentType = {
   formatVersion: CURRENT_PACK_FORMAT_VERSION,
   storySchemaFields: [],
@@ -146,6 +197,7 @@ const EMPTY_CONTENT: PackContentType = {
   stats: [],
   statStrengths: [],
   settings: { statSystem: false, statNotation: 'letter' },
+  extras: EMPTY_EXTRAS,
 };
 
 export const createPackService = (db: AppDrizzleClient): PackService => {
@@ -162,7 +214,11 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       .get();
     if (!story) throw new Error(`Story with ID ${storyId} not found for pack extraction.`);
 
-    const content: PackContentType = { ...EMPTY_CONTENT, settings: { ...EMPTY_CONTENT.settings } };
+    const content: PackContentType = {
+      ...EMPTY_CONTENT,
+      settings: { ...EMPTY_CONTENT.settings },
+      extras: { ...EMPTY_CONTENT.extras },
+    };
     // A pack offers terminology only at story creation. The resulting story owns its copied value.
     content.settings.vocabulary = story.vocabulary;
 
@@ -235,6 +291,13 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       );
     }
 
+    if (selection.extras) {
+      content.extras = await harvestExtras(
+        storyId,
+        content.tags.map((tag) => tag.id),
+      );
+    }
+
     return content;
   }
 
@@ -283,6 +346,137 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       }
     }
     return harvested;
+  }
+
+  /**
+   * Element skeletons for `extras`: every live element row plus the joins whose endpoints travel
+   * along. Anything pointing outside the harvest is sanitized the way the target state allows -
+   * an optional reference becomes null (an unfiled scene, a scene without a place, a chapter
+   * without an arc), join rows are dropped - so harvested content always satisfies the extras
+   * integrity rules by construction. Unfiled scenes travel as unfiled, exactly as story export
+   * carries them.
+   *
+   * Two deliberate exceptions: board pins and map nodes keep pointing at deleted locations as
+   * ghosts (`labelAtPin` and ghost pins are designed render states), while map background images
+   * are dropped outright - gallery bytes never travel in a pack, so an image would have no
+   * fallback at all.
+   */
+  async function harvestExtras(
+    storyId: string,
+    carriedTagIds: string[],
+  ): Promise<PackContentType['extras']> {
+    // One where clause for thirteen tables, mirroring the exporter's generic read: every
+    // extras table carries `storyId` and soft-delete flags.
+    const liveRows = async <T>(table: object): Promise<T[]> => {
+      const rows = await db
+        .select()
+        .from(table as any)
+        .where(and(eq((table as any).storyId, storyId), eq((table as any).isDeleted, false)))
+        .all();
+      return rows as T[];
+    };
+
+    type Extras = PackContentType['extras'];
+    const chapters = await liveRows<Extras['chapters'][number]>(schema.chapters);
+    const scenes = await liveRows<Extras['scenes'][number]>(schema.scenes);
+    const characters = await liveRows<Extras['characters'][number]>(schema.characters);
+    const locations = await liveRows<Extras['locations'][number]>(schema.locations);
+    const worldRules = await liveRows<Extras['worldRules'][number]>(schema.worldRules);
+    const notes = await liveRows<Extras['notes'][number]>(schema.notes);
+    const storyBoards = await liveRows<Extras['storyBoards'][number]>(schema.boards);
+    const storyLocationMaps = await liveRows<Extras['storyLocationMaps'][number]>(
+      schema.locationMaps,
+    );
+
+    const chapterIds = new Set(chapters.map((row) => row.id));
+    const sceneIds = new Set(scenes.map((row) => row.id));
+    const characterIds = new Set(characters.map((row) => row.id));
+    const locationIds = new Set(locations.map((row) => row.id));
+    const worldRuleIds = new Set(worldRules.map((row) => row.id));
+    const noteIds = new Set(notes.map((row) => row.id));
+    const mapIds = new Set(storyLocationMaps.map((row) => row.id));
+    const tagIds = new Set(carriedTagIds);
+    const ownersOf = (relationType: string): ReadonlySet<string> | null => {
+      switch (relationType) {
+        case 'Character':
+          return characterIds;
+        case 'Location':
+          return locationIds;
+        case 'Scene':
+          return sceneIds;
+        case 'Chapter':
+          return chapterIds;
+        case 'WorldRule':
+          return worldRuleIds;
+        case 'Note':
+          return noteIds;
+        default:
+          return null;
+      }
+    };
+
+    const characterScenes = (
+      await liveRows<Extras['characterScenes'][number]>(schema.characterScenes)
+    ).filter((row) => characterIds.has(row.characterId) && sceneIds.has(row.sceneId));
+    const characterRelations = (
+      await liveRows<Extras['characterRelations'][number]>(schema.characterRelations)
+    ).filter((row) => characterIds.has(row.character1Id) && characterIds.has(row.character2Id));
+    const locationRelations = (
+      await liveRows<Extras['locationRelations'][number]>(schema.locationRelations)
+    ).filter((row) => locationIds.has(row.locationAId) && locationIds.has(row.locationBId));
+    const noteRelations = (
+      await liveRows<Extras['noteRelations'][number]>(schema.noteRelations)
+    ).filter((row) => {
+      const owners = ownersOf(row.relationType);
+      return noteIds.has(row.noteId) && owners !== null && owners.has(row.relationId);
+    });
+    const tagRelations = (
+      await liveRows<Extras['tagRelations'][number]>(schema.tagRelations)
+    ).filter((row) => {
+      const owners = ownersOf(row.relationType);
+      return tagIds.has(row.tagId) && owners !== null && owners.has(row.relationId);
+    });
+
+    return {
+      chapters: chapters.map((row) => ({ ...row, arcId: null })),
+      scenes: scenes.map((row) => ({
+        ...row,
+        chapterId: row.chapterId !== null && chapterIds.has(row.chapterId) ? row.chapterId : null,
+        locationId:
+          row.locationId !== null && locationIds.has(row.locationId) ? row.locationId : null,
+      })),
+      characters,
+      locations,
+      worldRules,
+      notes,
+      storyBoards,
+      storyLocationMaps: storyLocationMaps.map((row) => ({
+        ...row,
+        content: {
+          ...row.content,
+          images: [],
+          nodes: row.content.nodes.map((node) => ({
+            ...node,
+            destinationMapId:
+              node.destinationMapId != null && mapIds.has(node.destinationMapId)
+                ? node.destinationMapId
+                : null,
+          })),
+          markers: row.content.markers?.map((marker) => ({
+            ...marker,
+            destinationMapId:
+              marker.destinationMapId != null && mapIds.has(marker.destinationMapId)
+                ? marker.destinationMapId
+                : null,
+          })),
+        },
+      })),
+      characterScenes,
+      characterRelations,
+      locationRelations,
+      noteRelations,
+      tagRelations,
+    };
   }
 
   async function loadContents(packIds: string[]): Promise<PackContentType[]> {
@@ -413,7 +607,12 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       return findPackConflicts(await loadContents(packIds));
     },
 
-    async createStoryWithPacks(userId, story, packIds) {
+    async createStoryWithPacks(
+      userId,
+      story,
+      packIds,
+      includeExtras: boolean | readonly string[] = false,
+    ) {
       const contents = await loadContents(packIds);
       const conflicts = findPackConflicts(contents);
       if (conflicts.length > 0) {
@@ -423,9 +622,15 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
           `Selected packs conflict: ${conflicts.map((conflict) => conflict.detail).join(', ')}`,
         );
       }
+      // A boolean decides for every pack at once; a list names the packs whose skeletons install.
+      // The composer only understands positions, so the names become flags here.
+      const flags =
+        typeof includeExtras === 'boolean'
+          ? includeExtras
+          : packIds.map((packId) => includeExtras.includes(packId));
       return createStoryService(db).importFullStory(
         userId,
-        buildStoryBundleFromPacks(story, contents),
+        buildStoryBundleFromPacks(story, contents, flags),
         null,
       );
     },

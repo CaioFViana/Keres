@@ -28,6 +28,26 @@ module.exports = defineConfig([
           disallowTypeAnnotations: false,
         },
       ],
+      /**
+       * React Hooks v6 rules, new as errors in eslint-config-expo 57 (313 findings on code
+       * the SDK 55 gate accepted). All five were revisited and re-tightened:
+       *
+       * - refs / set-state-in-effect / immutability / purity are back at error: every
+       *   finding was either refactored (render-adjust sync, useMemo services, index
+       *   lookbacks) or suppressed per line with a justification the rule cannot verify
+       *   (async-callback boundaries, reanimated shared values, gesture-only responders).
+       * - preserve-manual-memoization stays off, deliberately: without the React Compiler
+       *   in the toolchain it only asks to pessimize already-optimal property-level deps
+       *   (`[story?.id]` -> `[story]`, recreating callbacks on every field change). The one
+       *   genuine ordering bug it surfaced (inputStyles used before declaration in
+       *   StoryCalendarFormScreen) was fixed by moving the memo above its user.
+       * Do not add new violations.
+       */
+      'react-hooks/refs': 'error',
+      'react-hooks/set-state-in-effect': 'error',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/immutability': 'error',
+      'react-hooks/purity': 'error',
     },
   },
 ]);

@@ -204,6 +204,17 @@ describe('syncPublicationsWithServer', () => {
     expect(listVisible).toHaveBeenCalledTimes(1);
   });
 
+  it('clears the mirror quietly when the server lists nothing', async () => {
+    listVisible.mockResolvedValue([publication('pub-1', 'v7-2026-08-19')]);
+    await service.syncPublicationsWithServer(server() as never);
+
+    listVisible.mockResolvedValue([]);
+    await service.syncPublicationsWithServer(server() as never);
+
+    expect(await service.getPublicationsForStory(STORY_ID)).toEqual([]);
+    expect(shown).toEqual([]);
+  });
+
   it('names the story generically when it is not on this device', async () => {
     await database.db.delete(stories);
     listVisible.mockResolvedValue([publication('pub-1', 'v7-2026-08-19')]);

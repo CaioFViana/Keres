@@ -6,9 +6,9 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateSceneDataSchema, PartialSceneSchema } from '@keres/shared';
-import { and, eq, not, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
-import { chapters, locations, scenes, stories, storyCalendars } from '../../db/schema';
+import { chapters, locations, scenes, storyCalendars } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
 
 export class SceneSyncHandler extends BaseSyncEntityHandler<
@@ -92,43 +92,9 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  private async _isStoryLinear(storyId: string, database: CompatibleDb = db): Promise<boolean> {
-    const story = await database.query.stories.findFirst({
-      where: eq(stories.id, storyId),
-      columns: {
-        type: true,
-      },
-    });
-    return story?.type === 'linear';
-  }
-
-  private async _handleIsStartFinishFlags(
-    storyId: string,
-    sceneId: string,
-    isStart: boolean | undefined,
-    isFinish: boolean | undefined,
-    database: CompatibleDb = db,
-  ): Promise<void> {
-    if (isStart === true) {
-      // Unset isStart for all other scenes in the same story
-      await database
-        .update(scenes)
-        .set({ isStart: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-        .where(
-          and(eq(scenes.storyId, storyId), eq(scenes.isStart, true), not(eq(scenes.id, sceneId))),
-        );
-    }
-
-    if (isFinish === true) {
-      // Unset isFinish for all other scenes in the same story
-      await database
-        .update(scenes)
-        .set({ isFinish: false, updatedAt: new Date(), version: sql`${scenes.version} + 1` })
-        .where(
-          and(eq(scenes.storyId, storyId), eq(scenes.isFinish, true), not(eq(scenes.id, sceneId))),
-        );
-    }
-  }
+  // No side effects on other scenes: a linear story's single start/finish is kept by the client,
+  // which records the flag each other scene loses as its own edit (SceneService). Every row an
+  // operation changes has to be logged, or no other device ever learns of it.
 
   async create(
     userId: string,
@@ -154,17 +120,6 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
       validatedData.calendarDateOverrideCalendarId,
       database,
     );
-
-    const isLinear = await this._isStoryLinear(storyId, database);
-    if (isLinear && (validatedData.isStart || validatedData.isFinish)) {
-      await this._handleIsStartFinishFlags(
-        storyId,
-        update.id!,
-        validatedData.isStart,
-        validatedData.isFinish,
-        database,
-      );
-    }
 
     await database.insert(scenes).values({
       id: update.id!,
@@ -205,28 +160,11 @@ export class SceneSyncHandler extends BaseSyncEntityHandler<
       );
     }
 
-    const isLinear = await this._isStoryLinear(storyId, database);
-    if (
-      isLinear &&
-      (validatedChanges.isStart !== undefined || validatedChanges.isFinish !== undefined)
-    ) {
-      await this._handleIsStartFinishFlags(
-        storyId,
-        update.id!,
-        validatedChanges.isStart,
-        validatedChanges.isFinish,
-        database,
-      );
-    }
-
     // Delegated to the base class instead of a raw version-matched UPDATE reimplemented here:
     // that reimplementation had no `checkVersionConflict`, no `deleted_on_server` check, and
     // used server time instead of the client's `operationTime` - a concurrent edit landed here
     // with no error and no conflict reported, just silently dropped (same bug already found
     // and fixed in NoteSyncHandler/WorldRuleSyncHandler, just never cleaned up in this sibling).
-    // As a bonus, throwing on conflict now also rolls back the isStart/isFinish flag-flip above
-    // via the same transaction, instead of leaving other scenes' flags cleared while this
-    // scene's own edit silently failed to apply.
     await super.update(userId, storyId, update, currentEntity, database);
   }
 

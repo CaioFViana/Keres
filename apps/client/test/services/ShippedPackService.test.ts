@@ -17,7 +17,7 @@ import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
  * worth spending tests on - the files are generated, so nothing else would catch a bad one.
  */
 
-const EXPECTED_SLUGS = ['comic', 'novel-craft', 'tabletop-stats'];
+const EXPECTED_SLUGS = ['comic', 'novel-craft', 'tabletop-stats', 'three-act-skeleton'];
 const USER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
 let database: TestDatabase;
@@ -36,12 +36,33 @@ describe('the shipped catalogue', () => {
     }
   });
 
-  it('identifies vocabulary in every pack preview', () => {
+  it('identifies vocabulary in pack previews, and its absence in the skeleton', () => {
     const previews = createShippedPackService(db).previewShippedPacks();
 
-    expect(previews).toHaveLength(6);
+    expect(previews).toHaveLength(8);
     for (const preview of previews) {
-      expect(preview.counts.hasVocabulary).toBe(true);
+      // The skeleton carries elements, not renamed ones: vocabulary would rename entities in
+      // every story made from it, which a starter template has no business doing.
+      expect(`${preview.slug}: ${preview.counts.hasVocabulary}`).toBe(
+        `${preview.slug}: ${preview.slug !== 'three-act-skeleton'}`,
+      );
+    }
+  });
+
+  it('counts the skeleton extras in the three-act preview', () => {
+    const previews = createShippedPackService(db)
+      .previewShippedPacks()
+      .filter((preview) => preview.slug === 'three-act-skeleton');
+
+    expect(previews).toHaveLength(2);
+    for (const preview of previews) {
+      expect(preview.counts.extras).toMatchObject({
+        chapters: 3,
+        scenes: 7,
+        characters: 2,
+        locations: 2,
+        storyBoards: 2,
+      });
     }
   });
 
@@ -66,6 +87,31 @@ describe('the shipped catalogue', () => {
     for (const entry of shippedPackRegistry) {
       const shapes = entry.languages.map((language) => {
         const content = PackContentSchema.parse((language.pack as { content: unknown }).content);
+        // Names are translations, not structure - but the skeleton's shape must match exactly:
+        // same collections, same filings, same links.
+        const chapterIndex = (id: string | null) =>
+          content.extras.chapters.findIndex((row) => row.id === id);
+        const sceneIndex = (id: string) => content.extras.scenes.findIndex((row) => row.id === id);
+        const characterIndex = (id: string) =>
+          content.extras.characters.findIndex((row) => row.id === id);
+        const locationIndex = (id: string | null) =>
+          id === null ? null : content.extras.locations.findIndex((row) => row.id === id);
+        // Board pins point at rows whose ids differ per language, so the shape compares the
+        // pinned position inside each collection instead - the same trick as the filings above.
+        const pinnedPosition = (entityType: string, entityId: string): number => {
+          switch (entityType) {
+            case 'Chapter':
+              return content.extras.chapters.findIndex((row) => row.id === entityId);
+            case 'Scene':
+              return content.extras.scenes.findIndex((row) => row.id === entityId);
+            case 'Character':
+              return content.extras.characters.findIndex((row) => row.id === entityId);
+            case 'Location':
+              return content.extras.locations.findIndex((row) => row.id === entityId);
+            default:
+              return -1;
+          }
+        };
         return JSON.stringify({
           keys: content.storySchemaFields.map((field) => `${field.entityType}.${field.key}`),
           types: content.storySchemaFields.map((field) => field.type),
@@ -77,16 +123,47 @@ describe('the shipped catalogue', () => {
             statNotation: content.settings.statNotation,
           },
           vocabularyKeys: Object.keys(content.settings.vocabulary?.terms ?? {}).sort(),
+          extras: {
+            chapters: content.extras.chapters.length,
+            characters: content.extras.characters.length,
+            locations: content.extras.locations.length,
+            scenes: content.extras.scenes.map((scene) => [
+              chapterIndex(scene.chapterId),
+              locationIndex(scene.locationId),
+              scene.index,
+              scene.isStart,
+              scene.isFinish,
+            ]),
+            links: content.extras.characterScenes.map((link) => [
+              characterIndex(link.characterId),
+              sceneIndex(link.sceneId),
+            ]),
+            boards: content.extras.storyBoards.map((board) => [
+              board.content.nodes.map((node) => [
+                node.id,
+                node.kind,
+                node.kind === 'entity' ? node.entityType : null,
+                node.kind === 'entity' ? pinnedPosition(node.entityType, node.entityId) : null,
+                node.x,
+                node.y,
+              ]),
+              board.content.edges.map((edge) => [edge.id, edge.from, edge.to, edge.directed]),
+            ]),
+          },
         });
       });
       expect(`${entry.slug}: ${shapes[0]}`).toBe(`${entry.slug}: ${shapes[1]}`);
     }
   });
 
-  it('ships a complete vocabulary localized for every pack language', () => {
+  it('ships a complete vocabulary localized for every pack language that carries one', () => {
     for (const entry of shippedPackRegistry) {
       for (const language of entry.languages) {
         const content = PackContentSchema.parse((language.pack as { content: unknown }).content);
+        if (entry.slug === 'three-act-skeleton') {
+          expect(content.settings.vocabulary ?? null).toBeNull();
+          continue;
+        }
         expect(content.settings.vocabulary).toMatchObject({
           version: 1,
           language: language.language,
@@ -114,6 +191,46 @@ describe('the shipped catalogue', () => {
     }
   });
 
+  it('numbers chapters and scenes 1..N with no holes', () => {
+    // The only numbering the API accepts on reorder - and the one the example stories use. A
+    // shipped skeleton starting its scenes at 0 would install rows the app cannot reorder.
+    // Unfiled scenes are sorted by name live, so their stored index is unconstrained.
+    const expected = (size: number) => Array.from({ length: size }, (_, position) => position + 1);
+    const violations: string[] = [];
+    for (const entry of shippedPackRegistry) {
+      for (const language of entry.languages) {
+        const content = PackContentSchema.parse((language.pack as { content: unknown }).content);
+        const label = `${entry.slug}/${language.language}`;
+        const chaptersByType = new Map<string, number[]>();
+        for (const chapter of content.extras.chapters) {
+          const list = chaptersByType.get(chapter.type) ?? [];
+          list.push(chapter.index);
+          chaptersByType.set(chapter.type, list);
+        }
+        for (const [type, indices] of chaptersByType) {
+          const sorted = [...indices].sort((a, b) => a - b);
+          if (JSON.stringify(sorted) !== JSON.stringify(expected(indices.length))) {
+            violations.push(`${label} ${type} chapters: ${sorted}`);
+          }
+        }
+        const scenesByChapter = new Map<string, number[]>();
+        for (const scene of content.extras.scenes) {
+          if (scene.chapterId === null) continue;
+          const list = scenesByChapter.get(scene.chapterId) ?? [];
+          list.push(scene.index);
+          scenesByChapter.set(scene.chapterId, list);
+        }
+        for (const [chapterId, indices] of scenesByChapter) {
+          const sorted = [...indices].sort((a, b) => a - b);
+          if (JSON.stringify(sorted) !== JSON.stringify(expected(indices.length))) {
+            violations.push(`${label} chapter ${chapterId} scenes: ${sorted}`);
+          }
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
   it('gives every row an id of its own', () => {
     for (const entry of shippedPackRegistry) {
       for (const language of entry.languages) {
@@ -125,6 +242,19 @@ describe('the shipped catalogue', () => {
           ...content.suggestions.map((row) => row.id),
           ...content.stats.map((row) => row.id),
           ...content.statStrengths.map((row) => row.id),
+          ...content.extras.chapters.map((row) => row.id),
+          ...content.extras.scenes.map((row) => row.id),
+          ...content.extras.characters.map((row) => row.id),
+          ...content.extras.locations.map((row) => row.id),
+          ...content.extras.worldRules.map((row) => row.id),
+          ...content.extras.notes.map((row) => row.id),
+          ...content.extras.storyBoards.map((row) => row.id),
+          ...content.extras.storyLocationMaps.map((row) => row.id),
+          ...content.extras.characterScenes.map((row) => row.id),
+          ...content.extras.characterRelations.map((row) => row.id),
+          ...content.extras.locationRelations.map((row) => row.id),
+          ...content.extras.noteRelations.map((row) => row.id),
+          ...content.extras.tagRelations.map((row) => row.id),
         ];
         expect(new Set(ids).size).toBe(ids.length);
       }
@@ -148,6 +278,26 @@ describe('installing a shipped pack', () => {
       // No source story: it was not extracted here, so it cannot be re-extracted.
       sourceStoryId: null,
       counts: { stats: 6, customAttributes: 0, hasVocabulary: true },
+    });
+  });
+
+  it('installs the three-act skeleton with its extras counts', async () => {
+    const result = await createShippedPackService(db).installShippedPack(
+      'three-act-skeleton',
+      'en',
+    );
+
+    expect(result.status).toBe('installed');
+    const packs = await createPackService(db).listPacks();
+    expect(packs).toHaveLength(1);
+    expect(packs[0]).toMatchObject({
+      name: 'Three-act skeleton',
+      language: 'en',
+      counts: {
+        customAttributes: 0,
+        hasVocabulary: false,
+        extras: { chapters: 3, scenes: 7, characters: 2, locations: 2, storyBoards: 2 },
+      },
     });
   });
 
@@ -249,6 +399,97 @@ describe('a story created from a shipped pack', () => {
       });
     },
   );
+
+  it('creates the three-act skeleton as ordinary elements when extras install', async () => {
+    const installed = await createShippedPackService(db).installShippedPack(
+      'three-act-skeleton',
+      'en',
+    );
+    if (installed.status !== 'installed') throw new Error('The pack failed to install.');
+
+    const storyId = await createPackService(db).createStoryWithPacks(
+      USER_ID,
+      newStory('A structured tale'),
+      [installed.packId],
+      [installed.packId],
+    );
+
+    const chapters = await db.query.chapters.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(chapters.map((row) => row.name).sort()).toEqual([
+      'Confrontation',
+      'Resolution',
+      'Setup',
+    ]);
+    const scenes = await db.query.scenes.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(scenes).toHaveLength(7);
+    expect(scenes.filter((row) => row.isStart)).toHaveLength(1);
+    expect(scenes.filter((row) => row.isFinish)).toHaveLength(1);
+    const characters = await db.query.characters.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(characters.map((row) => row.name).sort()).toEqual(['Antagonist', 'Protagonist']);
+    expect(characters.every((row) => row.description && row.motivation)).toBe(true);
+    const locations = await db.query.locations.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(locations).toHaveLength(2);
+    expect(locations.every((row) => row.description)).toBe(true);
+    const links = await db.query.characterScenes.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(links).toHaveLength(2);
+    const boards = await db.query.boards.findMany({
+      where: (table, { eq }) => eq(table.storyId, storyId),
+    });
+    expect(boards.map((row) => row.name).sort()).toEqual(['Cast & places', 'Three-act map']);
+    const boardByName = new Map(boards.map((row) => [row.name, row]));
+    expect(boardByName.get('Three-act map')?.content.edges).toHaveLength(8);
+    expect(boardByName.get('Cast & places')?.content.edges).toHaveLength(1);
+    // Pins follow the remap: every pinned entity is a row of this story, not a stale pack id.
+    const elementIds = new Set([
+      ...chapters.map((row) => row.id),
+      ...scenes.map((row) => row.id),
+      ...characters.map((row) => row.id),
+      ...locations.map((row) => row.id),
+    ]);
+    for (const board of boards) {
+      for (const node of board.content.nodes) {
+        if (node.kind === 'entity') expect(elementIds.has(node.entityId)).toBe(true);
+      }
+    }
+  });
+
+  it('creates an empty story from the skeleton when extras stay out', async () => {
+    const installed = await createShippedPackService(db).installShippedPack(
+      'three-act-skeleton',
+      'pt',
+    );
+    if (installed.status !== 'installed') throw new Error('The pack failed to install.');
+
+    // The skeleton carries no structure at all, so switching its extras off leaves nothing -
+    // the same empty story as choosing no pack.
+    const storyId = await createPackService(db).createStoryWithPacks(
+      USER_ID,
+      newStory('Uma história vazia'),
+      [installed.packId],
+      [],
+    );
+
+    expect(
+      await db.query.chapters.findMany({
+        where: (table, { eq }) => eq(table.storyId, storyId),
+      }),
+    ).toHaveLength(0);
+    expect(
+      await db.query.scenes.findMany({
+        where: (table, { eq }) => eq(table.storyId, storyId),
+      }),
+    ).toHaveLength(0);
+  });
 
   it('creates the novel craft fields on the entities they belong to', async () => {
     const shipped = createShippedPackService(db);

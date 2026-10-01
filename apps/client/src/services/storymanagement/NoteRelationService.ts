@@ -6,7 +6,12 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export type NewNoteRelation = Omit<
@@ -98,6 +103,7 @@ export function createNoteRelationService(
       userId: string,
       relation: SaveNoteRelation,
     ): Promise<NoteRelationInterface> {
+      await assertStoryIsWritable(drizzleDb, relation.storyId);
       try {
         let resultRelation: NoteRelationInterface;
 
@@ -133,38 +139,42 @@ export function createNoteRelationService(
               return existingRelation;
             }
 
-            const [updatedRelation] = await drizzleDb
-              .update(schema.noteRelations)
-              .set({
-                noteId: relation.noteId,
-                relationId: relation.relationId,
-                relationType: relation.relationType,
-                updatedAt: new Date(),
-                version: sql`${schema.noteRelations.version} + 1`,
-              })
-              .where(eq(schema.noteRelations.id, relation.id))
-              .returning();
-
-            if (!updatedRelation) {
-              throw new Error('Failed to retrieve updated note relation after update operation.');
-            }
-            resultRelation = updatedRelation;
-
+            const relationRowId = relation.id;
             const userIdToLog = await getUserIdForOperation(
               drizzleDb,
               serverService,
-              resultRelation.storyId,
+              existingRelation.storyId,
               userId,
             );
-            await recordLocalOperation(
-              drizzleDb,
-              resultRelation.storyId,
-              userIdToLog,
-              'update',
-              'NoteRelation',
-              resultRelation.id,
-              getChangedFields(existingRelation, resultRelation),
-            );
+            resultRelation = await runLocalWrite(drizzleDb, existingRelation.storyId, () => {
+              const updatedRelation = drizzleDb
+                .update(schema.noteRelations)
+                .set({
+                  noteId: relation.noteId,
+                  relationId: relation.relationId,
+                  relationType: relation.relationType,
+                  updatedAt: new Date(),
+                  version: sql`${schema.noteRelations.version} + 1`,
+                })
+                .where(eq(schema.noteRelations.id, relationRowId))
+                .returning()
+                .get();
+
+              if (!updatedRelation) {
+                throw new Error('Failed to retrieve updated note relation after update operation.');
+              }
+
+              recordLocalOperationSync(
+                drizzleDb,
+                updatedRelation.storyId,
+                userIdToLog,
+                'update',
+                'NoteRelation',
+                updatedRelation.id,
+                getChangedFields(existingRelation, updatedRelation),
+              );
+              return updatedRelation;
+            });
             return resultRelation;
           }
         }
@@ -194,30 +204,33 @@ export function createNoteRelationService(
           deletedAt: null,
         };
 
-        const [insertedRelation] = await drizzleDb
-          .insert(schema.noteRelations)
-          .values(noteRelationToInsert)
-          .returning();
-        if (!insertedRelation) {
-          throw new Error('Failed to retrieve inserted note relation after insert operation.');
-        }
-        resultRelation = insertedRelation;
-
         const userIdToLog = await getUserIdForOperation(
           drizzleDb,
           serverService,
-          resultRelation.storyId,
+          noteRelationToInsert.storyId,
           userId,
         );
-        await recordLocalOperation(
-          drizzleDb,
-          resultRelation.storyId,
-          userIdToLog,
-          'create',
-          'NoteRelation',
-          resultRelation.id,
-          resultRelation,
-        );
+        resultRelation = await runLocalWrite(drizzleDb, noteRelationToInsert.storyId, () => {
+          const insertedRelation = drizzleDb
+            .insert(schema.noteRelations)
+            .values(noteRelationToInsert)
+            .returning()
+            .get();
+          if (!insertedRelation) {
+            throw new Error('Failed to retrieve inserted note relation after insert operation.');
+          }
+
+          recordLocalOperationSync(
+            drizzleDb,
+            insertedRelation.storyId,
+            userIdToLog,
+            'create',
+            'NoteRelation',
+            insertedRelation.id,
+            insertedRelation,
+          );
+          return insertedRelation;
+        });
 
         return resultRelation;
       } catch (error) {
@@ -236,38 +249,42 @@ export function createNoteRelationService(
           console.warn(`NoteRelation with ID ${relationId} not found for deletion.`);
           return false;
         }
-
-        const now = new Date();
-        const [updatedRelation] = await drizzleDb
-          .update(schema.noteRelations)
-          .set({
-            isDeleted: true,
-            deletedAt: now,
-            updatedAt: now,
-            version: existingRelation.version + 1,
-          })
-          .where(eq(schema.noteRelations.id, relationId))
-          .returning();
-
-        if (!updatedRelation) {
-          throw new Error(`Failed to delete note relation ${relationId} or relation not found.`);
-        }
+        await assertStoryIsWritable(drizzleDb, existingRelation.storyId);
 
         const userIdToLog = await getUserIdForOperation(
           drizzleDb,
           serverService,
-          updatedRelation.storyId,
+          existingRelation.storyId,
           userId,
         );
-        await recordLocalOperation(
-          drizzleDb,
-          updatedRelation.storyId,
-          userIdToLog,
-          'delete',
-          'NoteRelation',
-          relationId,
-          { id: relationId, isDeleted: true, version: updatedRelation.version },
-        );
+        const now = new Date();
+        await runLocalWrite(drizzleDb, existingRelation.storyId, () => {
+          const updatedRelation = drizzleDb
+            .update(schema.noteRelations)
+            .set({
+              isDeleted: true,
+              deletedAt: now,
+              updatedAt: now,
+              version: existingRelation.version + 1,
+            })
+            .where(eq(schema.noteRelations.id, relationId))
+            .returning()
+            .get();
+
+          if (!updatedRelation) {
+            throw new Error(`Failed to delete note relation ${relationId} or relation not found.`);
+          }
+
+          recordLocalOperationSync(
+            drizzleDb,
+            updatedRelation.storyId,
+            userIdToLog,
+            'delete',
+            'NoteRelation',
+            relationId,
+            { id: relationId, isDeleted: true, version: updatedRelation.version },
+          );
+        });
 
         return true;
       } catch (error) {

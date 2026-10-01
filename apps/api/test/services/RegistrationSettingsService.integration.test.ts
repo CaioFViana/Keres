@@ -53,4 +53,14 @@ describe('RegistrationSettingsService integration', () => {
     });
     expect(await db.select().from(registrationSettings)).toHaveLength(1);
   });
+
+  it('creates the singleton exactly once under concurrent first reads', async () => {
+    const service = new RegistrationSettingsService();
+
+    const [first, second] = await Promise.all([service.getOrCreate(), service.getOrCreate()]);
+
+    expect(first.id).toBe(REGISTRATION_SETTINGS_SINGLETON_ID);
+    expect(second.id).toBe(REGISTRATION_SETTINGS_SINGLETON_ID);
+    expect(await db.select().from(registrationSettings)).toHaveLength(1);
+  });
 });

@@ -1,4 +1,4 @@
-import { boolean, table, text, timestampNow } from '../columns';
+import { boolean, table, text, timestamp, timestampNow } from '../columns';
 
 /**
  * Global Showcase configuration. A single-row table, the same pattern as `registration_settings`:
@@ -15,5 +15,12 @@ export const showcaseSettings = table('showcase_settings', {
   isShowcaseEnabled: boolean('is_showcase_enabled').notNull().default(false),
   /** The Expo client hosted at `/`; when off, the root becomes the server's minimal landing page. */
   isHostedClientEnabled: boolean('is_hosted_client_enabled').notNull().default(true),
+  /** Branding of the public site. Must stay in sync with the admin panel's defaults. */
+  siteName: text('site_name').notNull().default('Keres'),
+  /** Key into `themes` from `@keres/shared`; validated by `ShowcaseSettingsService`. */
+  sitePalette: text('site_palette').notNull().default('default'),
+  /** Null when no logo was uploaded; the bytes live in blob storage under `showcase/logo`. */
+  logoContentType: text('logo_content_type'),
+  logoUpdatedAt: timestamp('logo_updated_at'),
   updatedAt: timestampNow('updated_at'),
 });

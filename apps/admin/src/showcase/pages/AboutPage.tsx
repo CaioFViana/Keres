@@ -1,16 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { fetchConfig } from '../api/showcaseApi';
+import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
 
 export function AboutPage() {
   const { t } = useTranslation('showcase');
-  const [version, setVersion] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchConfig()
-      .then((config) => setVersion(config.serverVersion))
-      .catch(() => setVersion(null));
-  }, []);
+  const config = useShowcaseConfig();
+  const version = config?.serverVersion ?? null;
 
   return (
     <section className="prose">
@@ -20,12 +14,13 @@ export function AboutPage() {
       <h2>{t('about.downloadTitle')}</h2>
       <p>{t('about.downloadBody')}</p>
       {/*
-        `Trans` porque a frase tem um trecho em negrito no meio: o nome da tela do app. Partir a
-        string em três pedaços deixaria a ordem das palavras presa ao inglês.
+        `Trans` because the sentence has a bold span in the middle: the app screen's name. Splitting
+        the string into three pieces would pin the word order to English.
       */}
       <p>
         <Trans ns="showcase" i18nKey="about.importBody" components={{ strong: <strong /> }} />
       </p>
+      <p>{t('about.manuscriptBody')}</p>
 
       <h2>{t('about.responsibilityTitle')}</h2>
       <p>{t('about.responsibilityBody')}</p>

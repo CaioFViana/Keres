@@ -29,13 +29,22 @@ describe('story state stores', () => {
       useStoryListStore.getState().setStories([story('first'), story('second')]);
       useStoryListStore.getState().updateStoryFavoriteStatus('second', true);
       useStoryListStore.getState().updateStory(story('first', true));
+      useStoryListStore.getState().addStory(story('third'));
       useStoryListStore.getState().removeStory('second');
 
-      expect(useStoryListStore.getState().stories).toEqual([story('first', true)]);
-      expect(listener.mock.calls.map(([id]) => id)).toEqual(['second', 'first', 'second']);
+      expect(useStoryListStore.getState().stories).toEqual([story('first', true), story('third')]);
+      expect(listener.mock.calls.map(([id]) => id)).toEqual(['second', 'first', 'third', 'second']);
     } finally {
       entityEventEmitter.off('story_changed', listener);
     }
+  });
+
+  it('scopes the dashboard to one arc and back to every arc', () => {
+    useStoryStore.getState().setActiveArcId('arc-1');
+    expect(useStoryStore.getState().activeArcId).toBe('arc-1');
+    useStoryStore.getState().setSelectedStory(story('selected'));
+    // Selecting a story resets the scope: the arcs belong to the previous story.
+    expect(useStoryStore.getState().activeArcId).toBeNull();
   });
 
   it('fetches stories for the configured local user and preserves the last good list on failure', async () => {

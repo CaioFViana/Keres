@@ -1,19 +1,30 @@
 import type { AppDrizzleClient } from '../db';
 import type { ServerSelect } from '../db/schema';
-import { useStoryListStore } from '../state/storyListStore';
 import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
 import { createPublicationService } from './PublicationService';
+import { createStoryInvitationService } from './StoryInvitationService';
+import { entityEventEmitter } from '../utils/EventEmitter';
 import type { ServerStoryPreview } from './SyncEngineService';
-import { createStoryService } from './storymanagement/StoryService';
+import { importNewServerStories } from './sync/importNewServerStories';
 
 const RETRY_MS = 5_000;
+/** How often the silence of the socket is checked. */
+const WATCHDOG_MS = 15_000;
+/**
+ * Silence past this means the socket is half-open (NAT timeout, a drop with no FIN): the server
+ * ticks a heartbeat every 30s, so 75s is over two missed beats plus slack. The socket is dropped
+ * and reconnected rather than trusted.
+ */
+const SILENCE_LIMIT_MS = 75_000;
 
 type ServerEvent =
   | { type: 'story.changed'; storyId: string }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  | { type: 'story.collaborators-changed'; storyId: string }
+  | { type: 'story-invitations.changed' }
   | { type: 'story.published'; storyId: string }
   | { type: 'server.heartbeat' };
 
@@ -32,9 +43,22 @@ export interface RealtimeSyncEngine {
 export class ServerRealtimeService {
   private socket: WebSocket | null = null;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private watchdogTimer: ReturnType<typeof setInterval> | null = null;
+  private lastMessageAt = 0;
+  /**
+   * The watchdog only trusts silence as death once the server has proven it ticks: older servers
+   * never send heartbeats, and treating their healthy idle sockets as half-open would churn a
+   * reconnect every 75s for every user still on one.
+   */
+  private heartbeatArmed = false;
   private stopped = true;
   private storyId: string | undefined;
   private activeTasks = new Set<Promise<unknown>>();
+  /**
+   * Bumped on every (re)connect attempt: a ticket fetch that resolves after a newer attempt
+   * started belongs to a stale generation and must not open a second socket.
+   */
+  private connectionAttempt = 0;
 
   constructor(
     private readonly db: AppDrizzleClient,
@@ -46,6 +70,21 @@ export class ServerRealtimeService {
   start(storyId?: string): void {
     this.storyId = storyId;
     this.stopped = false;
+    this.lastMessageAt = Date.now();
+    if (this.watchdogTimer) clearInterval(this.watchdogTimer);
+    this.watchdogTimer = setInterval(() => {
+      if (
+        this.stopped ||
+        !this.heartbeatArmed ||
+        !this.socket ||
+        this.socket.readyState !== WebSocket.OPEN
+      )
+        return;
+      if (Date.now() - this.lastMessageAt > SILENCE_LIMIT_MS) {
+        console.log(`Realtime silent for too long (${this.server.name}); reconnecting.`);
+        this.reconnectNow();
+      }
+    }, WATCHDOG_MS);
     this.track(this.connect());
   }
 
@@ -60,6 +99,8 @@ export class ServerRealtimeService {
     this.stopped = true;
     if (this.retryTimer) clearTimeout(this.retryTimer);
     this.retryTimer = null;
+    if (this.watchdogTimer) clearInterval(this.watchdogTimer);
+    this.watchdogTimer = null;
     this.socket?.close();
     this.socket = null;
     await Promise.allSettled(Array.from(this.activeTasks));
@@ -75,19 +116,20 @@ export class ServerRealtimeService {
   }
 
   private async connect(): Promise<void> {
+    const attempt = ++this.connectionAttempt;
     try {
       const client = createKeresAxiosInstance({ baseURL: this.server.url });
       client.setTokenProvider(authTokenManager);
       client.setActiveServer(this.server);
       const { data } = await client.post<{ ticket: string }>('/auth/ws-ticket');
-      if (this.stopped) return;
+      if (this.stopped || attempt !== this.connectionAttempt) return;
       const wsUrl =
         apiBaseUrl(this.server.url).replace(/^http/i, 'ws').replace(/\/$/, '') +
         `/ws/events?ticket=${encodeURIComponent(data.ticket)}`;
       const socket = new WebSocket(wsUrl);
       this.socket = socket;
       socket.onopen = () => {
-        if (this.stopped) {
+        if (this.stopped || attempt !== this.connectionAttempt) {
           socket.close();
           return;
         }
@@ -128,6 +170,7 @@ export class ServerRealtimeService {
         );
       };
       socket.onmessage = (event) => {
+        this.lastMessageAt = Date.now();
         if (!this.stopped) {
           this.track(
             this.handleEvent(event.data as string).catch((error) => {
@@ -137,7 +180,13 @@ export class ServerRealtimeService {
         }
       };
       socket.onerror = () => socket.close();
-      socket.onclose = () => this.scheduleReconnect();
+      socket.onclose = () => {
+        // Only the current socket may schedule a reconnect: the late close of a replaced
+        // socket (after an explicit reconnect, or a stale attempt) must not open a second one.
+        if (this.socket !== socket) return;
+        this.socket = null;
+        this.scheduleReconnect();
+      };
     } catch (error) {
       console.log(
         `Realtime connection failed for ${this.server.name}; retrying after health check.`,
@@ -155,37 +204,53 @@ export class ServerRealtimeService {
       return;
     }
     console.log(`Realtime event from ${this.server.name}: ${event.type}`);
+    if (event.type === 'server.heartbeat') {
+      this.heartbeatArmed = true;
+      return;
+    }
     if (event.type === 'story.changed') {
       this.syncEngine.requestSync('websocket');
     } else if (event.type === 'friendships.changed') {
       await createFriendshipService(this.db).syncFriendshipsWithServer(this.userId, this.server);
+      // An ended friendship takes its open story invitations with it.
+      await createStoryInvitationService(this.db).syncWithServer(this.server);
     } else if (event.type === 'story.published') {
       await createPublicationService(this.db).syncPublicationsWithServer(this.server);
     } else if (event.type === 'stories.catalog-changed') {
-      const engine = this.syncEngine;
-      const previews = await engine.fetchServerStoryPreviews(this.server);
-      const localStories = await this.db.query.stories.findMany({ columns: { id: true } });
-      const localIds = new Set(localStories.map((story) => story.id));
-      let downloadedAny = false;
-      for (const preview of previews) {
-        if (!localIds.has(preview.storyId)) {
-          await engine.downloadAndImportStory(
-            this.server.id,
-            preview.storyId,
-            this.server.idUser,
-            preview.role,
-          );
-          downloadedAny = true;
-        }
-      }
-      // Without this, a new story arriving through this event (somebody adding you as a collaborator, say)
-      // is saved in the local database but invisible in `StorySelectionScreen`, which reads
-      // `useStoryListStore` - the list only reflects the database when something asks for a fresh
-      // `fetchStories`.
-      if (downloadedAny) {
-        await useStoryListStore.getState().fetchStories(createStoryService(this.db));
-      }
+      // A grant or revocation only takes effect on this socket's subscriptions at open: without a
+      // fresh connection the socket keeps receiving nudges for stories it can no longer read (each
+      // one driving a sync that 403s), and misses them for stories it just gained.
+      this.reconnectNow();
+      // An invitation this user accepted (on any device), say: the story is downloaded and listed.
+      // ...and one this user lost (removed, or left on another device) is dropped from this one.
+      await importNewServerStories(this.db, this.syncEngine, this.server);
+    } else if (event.type === 'story.collaborators-changed') {
+      // Somebody joined, left or was removed: whoever shows the collaborators reads them again.
+      entityEventEmitter.emit('story_collaborators_changed', event.storyId, this.server.id);
+    } else if (event.type === 'story-invitations.changed') {
+      await createStoryInvitationService(this.db).syncWithServer(this.server);
     }
+  }
+
+  /**
+   * Drops the current socket and connects again immediately, so the server rebuilds the
+   * story subscriptions from the current permissions. Any ticket fetch still in flight is
+   * invalidated first: when it lands it must not open a second socket next to the new one.
+   */
+  private reconnectNow(): void {
+    if (this.stopped) return;
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    const previous = this.socket;
+    this.socket = null;
+    this.connectionAttempt += 1;
+    // A fresh window for the new socket, re-armed by its opening heartbeat.
+    this.heartbeatArmed = false;
+    this.lastMessageAt = Date.now();
+    previous?.close();
+    this.track(this.connect());
   }
 
   private scheduleReconnect(): void {

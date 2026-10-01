@@ -5,20 +5,23 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
 import type { GregorianDateDisplayFormat } from '@keres/shared';
+import type { MapExportFormat } from '@keres/shared/entities/ClientSettings';
 import { resetDatabase, useDrizzle } from '../../db'; // Import resetDatabase
 import { servers } from '../../db/schema';
-import type { StorySelectionDrawerParamList } from '../../navigation/StorySelectionStack';
+import type { SettingsStackParamList } from '../../navigation/StorySelectionStack';
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
+import { setEditorDraftDb } from '../../services/EditorDraftService';
 import { mediaFileService } from '../../services/MediaFileService';
 import { syncEngine } from '../../services/sync/appSyncEngine';
+import { useGuideStore } from '../../state/guideStore';
+import { useNotificationStore } from '../../state/notificationStore';
 import { resetAllClientStores } from '../../state/resetAllClientStores';
 import { useThemeStore } from '../../state/themeStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -28,12 +31,15 @@ import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n, { getLanguageOptions } from '../../utils/i18n';
 
-type SettingsScreenNavigationProp = DrawerNavigationProp<StorySelectionDrawerParamList, 'Settings'>;
+type SettingsScreenNavigationProp = NativeStackNavigationProp<
+  SettingsStackParamList,
+  'SettingsHome'
+>;
 
 const SettingsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-  useScreenHeader({ target: 'self', title: t('settings_title') });
+  useScreenHeader({ target: 'parent', title: t('settings_title') });
   const { colors } = useTheme();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
@@ -48,14 +54,20 @@ const SettingsScreen = () => {
     dateDisplayFormat,
     showContextualHelp,
     suggestLiteraryDevices,
+    exportFormat,
+    showTutorials,
     setUsername,
     setLanguage,
     setUse24HourTime,
     setDateDisplayFormat,
     setShowContextualHelp,
     setSuggestLiteraryDevices,
+    setExportFormat,
+    setShowTutorials,
+    resetSeenTutorials,
     resetSettings,
   } = useUserSettingsStore();
+  const { showNotification } = useNotificationStore();
   const { darkMode, setDarkMode, resetTheme } = useThemeStore();
 
   const handleUsernameChange = (newUsername: string) => {
@@ -83,8 +95,24 @@ const SettingsScreen = () => {
     }
   };
 
+  const handleExportFormatChange = (value: string | null) => {
+    if (value === 'svg' || value === 'png') {
+      setExportFormat(drizzleClient, value as MapExportFormat);
+    }
+  };
+
   const handleContextualHelpToggle = (value: boolean) => {
     setShowContextualHelp(drizzleClient, value);
+  };
+
+  const handleShowTutorialsToggle = (value: boolean) => {
+    setShowTutorials(drizzleClient, value);
+  };
+
+  const handleResetSeenTutorials = async () => {
+    await resetSeenTutorials(drizzleClient);
+    useGuideStore.getState().reset();
+    showNotification(t('tutorials_reset_success'), 'success');
   };
 
   const handleLiteraryDevicesToggle = (value: boolean) => {
@@ -119,6 +147,7 @@ const SettingsScreen = () => {
               await Promise.all([realtimeShutdown, syncEngine.reset()]);
               await authTokenManager.clearAllAuth(serverIds);
               setAuthDb(null);
+              setEditorDraftDb(null);
               await mediaFileService.deleteAllMedia();
 
               await resetDatabase(db);
@@ -222,6 +251,26 @@ const SettingsScreen = () => {
 
         <View style={styles.settingItem}>
           <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('export_format')}</Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {t('export_format_hint')}
+            </Text>
+          </View>
+          <View style={styles.dateFormatSelectWrapper}>
+            <SingleSelectPill
+              options={[
+                { label: t('export_format_svg'), value: 'svg' },
+                { label: t('export_format_png'), value: 'png' },
+              ]}
+              value={exportFormat}
+              onValueChange={handleExportFormatChange}
+              placeholder={t('export_format')}
+            />
+          </View>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
             <Text style={[styles.settingLabel, { color: colors.text }]}>
               {t('suggest_literary_devices')}
             </Text>
@@ -254,18 +303,42 @@ const SettingsScreen = () => {
           />
         </View>
 
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('show_tutorials')}</Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {showTutorials ? t('show_tutorials_on') : t('show_tutorials_off')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={showTutorials}
+            onValueChange={handleShowTutorialsToggle}
+            style={styles.contextualHelpSwitch}
+          />
+        </View>
+
+        <Button onPress={handleResetSeenTutorials} style={{ marginTop: 10 }}>
+          {t('reset_seen_tutorials')}
+        </Button>
+
         <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
           {t('reset_application')}
         </Button>
       </View>
 
       <View style={styles.branding}>
-        <Image
-          source={require('../../../assets/images/desktop_icon.png')}
-          style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
-          resizeMode="contain"
-          accessibilityLabel="Keres"
-        />
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Credits')}
+          accessibilityLabel={t('credits_open_credits')}
+          accessibilityRole="button"
+        >
+          <Image
+            source={require('../../../assets/images/desktop_icon.png')}
+            style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
+            resizeMode="contain"
+            accessibilityLabel="Keres"
+          />
+        </TouchableOpacity>
         <Text style={[styles.brandVersion, { color: colors.textSecondary }]}>
           Keres {APP_RELEASE.version} {APP_RELEASE.name}
         </Text>

@@ -4,7 +4,7 @@ import { getOnColorForFill } from '@keres/shared';
 import type { GlobalSearchEntityType } from '@keres/shared/metadata/globalSearchFields';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -17,6 +17,8 @@ import {
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import GlobalSearchResultItem from '@/src/components/features/list-items/GlobalSearchResultItem';
 import { useDrizzle } from '../../db';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import type { GlobalSearchResult } from '../../services/storymanagement/GlobalSearchService';
@@ -62,6 +64,8 @@ interface ResultSection {
 
 const GlobalSearchScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('GlobalSearch');
+  const searchAnchorRef = useScreenAnchor('GlobalSearch', 'search');
   const { t } = useTranslation();
   const { label } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -71,7 +75,7 @@ const GlobalSearchScreen = () => {
   const { userId } = useUserSettingsStore();
   const storyId = selectedStory?.id;
 
-  const globalSearchService = useRef(createGlobalSearchService(drizzleDb)).current;
+  const [globalSearchService] = useState(() => createGlobalSearchService(drizzleDb));
 
   const [query, setQuery] = useState('');
   const [committedQuery, setCommittedQuery] = useState('');
@@ -91,17 +95,37 @@ const GlobalSearchScreen = () => {
     };
   }, [query, debouncedSetCommittedQuery]);
 
+  const [prevCommittedQuery, setPrevCommittedQuery] = useState(committedQuery);
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  const [prevUserId, setPrevUserId] = useState(userId);
+  const [prevGlobalSearchService, setPrevGlobalSearchService] = useState(globalSearchService);
+  if (
+    committedQuery !== prevCommittedQuery ||
+    storyId !== prevStoryId ||
+    userId !== prevUserId ||
+    globalSearchService !== prevGlobalSearchService
+  ) {
+    setPrevCommittedQuery(committedQuery);
+    setPrevStoryId(storyId);
+    setPrevUserId(userId);
+    setPrevGlobalSearchService(globalSearchService);
+    const trimmed = committedQuery.trim();
+    if (!storyId || !userId || trimmed.length < MIN_QUERY_LENGTH) {
+      setResults([]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
     const trimmed = committedQuery.trim();
     if (!storyId || !userId || trimmed.length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     globalSearchService
       .searchAllEntities(storyId, trimmed, userId)
       .then((found) => {
@@ -174,7 +198,13 @@ const GlobalSearchScreen = () => {
 
   const handleResultPress = useCallback(
     (result: GlobalSearchResult) => {
-      navigateToEntityDetail(navigation, result.entityType, result.id);
+      if (result.occurrence) {
+        navigateToEntityDetail(navigation, result.entityType, result.id, {
+          occurrence: result.occurrence,
+        });
+      } else {
+        navigateToEntityDetail(navigation, result.entityType, result.id);
+      }
     },
     [navigation],
   );
@@ -186,7 +216,7 @@ const GlobalSearchScreen = () => {
   return (
     <View style={styles(colors).container}>
       <View style={styles(colors).searchContainer}>
-        <View style={styles(colors).searchRow}>
+        <View ref={searchAnchorRef} collapsable={false} style={styles(colors).searchRow}>
           <TextInput
             placeholder={t('global_search_placeholder')}
             value={query}

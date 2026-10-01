@@ -115,6 +115,7 @@ const CollapsibleCard: React.FC<CollapsibleCardProps> = ({
     (event: LayoutChangeEvent) => {
       const measuredHeight = event.nativeEvent.layout.height;
       if (measuredHeight > 0 && contentHeight.value !== measuredHeight) {
+        // eslint-disable-next-line react-hooks/immutability -- reanimated shared values are mutated by design; the rule models them as immutable React state.
         contentHeight.value = measuredHeight;
       }
     },

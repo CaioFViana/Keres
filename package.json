@@ -1,6 +1,6 @@
 {
   "name": "keres-monorepo",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "author": "",
   "description": "",
   "keywords": [],
@@ -26,11 +26,13 @@
     "desktop:package": "bun run --cwd apps/desktop package",
     "desktop:capture": "bun run --cwd apps/desktop capture:screens",
     "typecheck": "bun scripts/run-all.ts typecheck",
+    "typecheck:scripts": "bunx tsc --noEmit -p scripts/tsconfig.json",
     "lint": "bun scripts/run-all.ts lint",
     "test": "bun scripts/run-all.ts test",
     "test:coverage": "bun scripts/run-all.ts test:coverage",
     "test:integration": "bun run --cwd apps/api test:integration && bun run --cwd apps/api test:integration:sqlite",
     "test:report": "bun scripts/test-report.ts",
+    "test:sync-fuzz-api": "bun scripts/sync-fuzz-api.ts",
     "coverage:update": "bun scripts/coverage-update.ts",
     "locales:audit": "bun scripts/verify-translations.ts",
     "format": "biome format --write .",
@@ -46,8 +48,8 @@
     "packages/*"
   ],
   "patchedDependencies": {
-    "expo-sqlite@16.0.10": "patches/expo-sqlite@16.0.10.patch",
-    "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch"
+    "drizzle-orm@0.44.7": "patches/drizzle-orm@0.44.7.patch",
+    "expo-sqlite@57.0.3": "patches/expo-sqlite@57.0.3.patch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8"

@@ -1,8 +1,9 @@
 import ScreenContainer from '@/src/components/layout/ScreenContainer/ScreenContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -14,7 +15,10 @@ import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
 import type { CharacterSelect } from '../../db/schemas/characters';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -27,10 +31,13 @@ import { useStoryStore } from '../../state/storyStore';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
 import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 const CharactersScreen = () => {
   useBackButtonHandler();
+  useScreenTour('CharactersStack');
+  const listAnchorRef = useScreenAnchor('Characters', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
 
@@ -54,10 +61,20 @@ const CharactersScreen = () => {
     changeEvent: 'character_changed',
   });
 
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const arcIdsByCharacter = useEntityArcIds(storyId ?? '', 'character');
+  const visibleCharacters = useMemo(
+    () =>
+      characters.filter((character: CharacterWithTags) =>
+        entityBelongsToActiveArc(arcIdsByCharacter.get(character.id), activeArcId),
+      ),
+    [characters, arcIdsByCharacter, activeArcId],
+  );
+
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [relations, setRelations] = useState<CharacterRelation[]>([]);
   const [allCharacters, setAllCharacters] = useState<CharacterSelect[]>([]);
-  const tagService = useRef(createTagService(drizzleDb)).current;
+  const [tagService] = useState(() => createTagService(drizzleDb));
   const { canEdit } = useStoryRole(storyId);
 
   // Styles are always defined at the top
@@ -77,6 +94,7 @@ const CharactersScreen = () => {
   }, [storyId, tagService]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchTags();
   }, [fetchTags]);
 
@@ -95,6 +113,7 @@ const CharactersScreen = () => {
   }, [drizzleDb, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchRelations` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchRelations();
   }, [fetchRelations]);
 
@@ -221,19 +240,34 @@ const CharactersScreen = () => {
 
   return (
     <ScreenContainer>
-      <GenericFilterSortList
-        {...listProps}
-        data={characters}
-        renderItem={memoizedRenderItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('search_entities', { entities: term('Character', true) })}
-        filterOptions={memoizedTagFilterOptions}
-        sortOptions={memoizedSortOptions}
-        entityName="Character"
-        storyId={storyId || ''}
-        onAdvancedSearch={setStoreAdvancedSearchCriteria}
-        currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={visibleCharacters}
+          renderItem={memoizedRenderItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('search_entities', { entities: term('Character', true) })}
+          filterOptions={memoizedTagFilterOptions}
+          sortOptions={memoizedSortOptions}
+          entityName="Character"
+          storyId={storyId || ''}
+          onAdvancedSearch={setStoreAdvancedSearchCriteria}
+          currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+          emptyStateTitle={t('characters_empty_title')}
+          emptyStateMessage={t('characters_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('characters_empty_create'),
+                    onPress: () => navigation.navigate('CharacterForm', { characterId: undefined }),
+                    testID: 'empty-create-character',
+                  },
+                ]
+              : []
+          }
+        />
+      </View>
     </ScreenContainer>
   );
 };

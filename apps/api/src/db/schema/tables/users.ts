@@ -20,7 +20,7 @@ export const users = table(
     password: text('password').notNull(),
     /** Hex color for the avatar background; `null` until the user picks one (see Avatar.tsx). */
     avatarColor: text('avatar_color'),
-    /** Ionicons glyph name for the avatar; `null` until the user picks one. */
+    /** Stored icon name for the avatar (a plain Ionicons name or `keres:<name>`); `null` until the user picks one. */
     avatarIcon: text('avatar_icon'),
     /** Free-text profile description, capped at 200 chars (enforced in UpdateUserProfileSchema). */
     bio: text('bio'),

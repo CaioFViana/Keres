@@ -1,11 +1,13 @@
 import type { StoryUpdateType } from '@keres/shared';
-import { eq } from 'drizzle-orm'; // Import eq
+import { ARRANGED } from '@keres/shared';
+import { and, desc, eq, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
-import * as schema from '../db/schema'; // Import all schema
-import type { ServerService } from '../services/ServerService'; // Import ServerService
+import * as schema from '../db/schema';
+import type { ServerService } from '../services/ServerService';
 import { entityEventEmitter } from './EventEmitter';
 import i18n from './i18n';
 import { createULID } from './entityUtils';
+import { withOpLogLock } from './opLogMutex';
 
 /** Thrown when a story-content mutation is attempted by a user with only reader access. */
 export class StoryReadOnlyError extends Error {
@@ -66,6 +68,150 @@ export async function assertStoryIsOwned(db: AppDrizzleClient, storyId: string):
   }
 }
 
+/**
+ * A local mutation as ONE unit: the entity write and the op-log entry that makes it sync commit
+ * together or not at all.
+ *
+ * Written as two independent statements, a crash (or the OS killing the app) between them left a
+ * row changed on the device with no operation to send it: the edit never reached the server, the
+ * row's version ran ahead of it, and nothing ever noticed. Here the unit runs synchronously inside
+ * a savepoint - the database is a single connection driven by a synchronous driver, so no other
+ * flow can interleave a statement between BEGIN and COMMIT, and a savepoint works both on its own
+ * and nested in a transaction another flow has open. It also runs under the story's op-log lock,
+ * so a sync decision in progress (a pull reconciling this entity, a conflict resolution) never
+ * sees half of it.
+ *
+ * `unit` must be synchronous: drizzle's sync builders (`.run()`, `.get()`, `.all()`) and
+ * `recordLocalOperationSync`. Anything asynchronous - permission gates, reading the acting user,
+ * services of other entities - happens before or after. Events queued with `afterLocalWrite`
+ * fire only once the unit committed.
+ */
+export async function runLocalWrite<T>(
+  db: AppDrizzleClient,
+  storyId: string,
+  unit: () => T,
+): Promise<T> {
+  const { result, events } = await withOpLogLock(storyId, async () => runAtomically(db, unit));
+  for (const emit of events) emit();
+  return result;
+}
+
+let savepointSequence = 0;
+/** Events of the unit running right now; `null` outside one. */
+let unitEvents: (() => void)[] | null = null;
+
+/** Queues an event for after the running unit commits (fires at once outside a unit). */
+export function afterLocalWrite(emit: () => void): void {
+  if (unitEvents) unitEvents.push(emit);
+  else emit();
+}
+
+function runAtomically<T>(
+  db: AppDrizzleClient,
+  unit: () => T,
+): { result: T; events: (() => void)[] } {
+  if (unitEvents) {
+    throw new Error('runLocalWrite: units cannot nest - write everything in one unit.');
+  }
+  const savepoint = `local_write_${++savepointSequence}`;
+  const events: (() => void)[] = [];
+  db.run(sql.raw(`SAVEPOINT ${savepoint}`));
+  unitEvents = events;
+  try {
+    const result = unit();
+    if (result && typeof (result as { then?: unknown }).then === 'function') {
+      throw new Error('runLocalWrite: the unit must be synchronous (use .run()/.get()/.all()).');
+    }
+    db.run(sql.raw(`RELEASE ${savepoint}`));
+    return { result, events };
+  } catch (error) {
+    db.run(sql.raw(`ROLLBACK TO ${savepoint}`));
+    db.run(sql.raw(`RELEASE ${savepoint}`));
+    throw error;
+  } finally {
+    unitEvents = null;
+  }
+}
+
+/**
+ * Appends one entry to the story's local op-log queue and bumps the story's
+ * `lastOperationLog` to the entry's version, so versions stay a dense per-story sequence
+ * the sync code can resume from. Entries start unsynced (`isSynced: false`,
+ * `serverOperationVersion: 0`) with the payload stored stringified.
+ *
+ * Synchronous, for use inside a `runLocalWrite` unit together with the entity write it
+ * describes. Callers must run the `assertStoryIsWritable`/`assertStoryIsOwned` gates first.
+ */
+export function recordLocalOperationSync(
+  db: AppDrizzleClient,
+  storyId: string,
+  userId: string,
+  operationType: StoryUpdateType,
+  entityType: string,
+  entityId: string,
+  payload: Record<string, any>,
+): number {
+  const story = db
+    .select({ lastOperationLog: schema.stories.lastOperationLog })
+    .from(schema.stories)
+    .where(eq(schema.stories.id, storyId))
+    .get();
+  // A write for a story that is not here (a stale screen, a half-purged story) would queue an
+  // operation no sequence owns and no push ever sends: refused, and the unit rolls back with it.
+  if (!story) {
+    throw new Error(
+      `Cannot record ${operationType} of ${entityType}: story ${storyId} is not here.`,
+    );
+  }
+  const next = (story.lastOperationLog || 0) + 1;
+  const operationId = createULID();
+  const heldBy = findConflictHoldingEdits(db, storyId, entityType, entityId, operationType);
+  // An arranged row's position is derived from its rank on every device: an edit never carries it.
+  const arranged = ARRANGED[entityType];
+  const recorded =
+    operationType === 'update' && arranged && arranged.positionField in payload
+      ? Object.fromEntries(
+          Object.entries(payload).filter(([field]) => field !== arranged.positionField),
+        )
+      : payload;
+
+  db.insert(schema.operationLogs)
+    .values({
+      id: operationId,
+      storyId: storyId,
+      userId: userId,
+      operationVersion: next,
+      operationType: operationType,
+      entityType: entityType,
+      entityId: entityId,
+      payload: JSON.stringify(recorded),
+      createdAt: new Date(),
+      isSynced: false,
+      serverOperationVersion: 0,
+      conflictState: heldBy ? 'conflicted' : null,
+    })
+    .run();
+  if (heldBy) {
+    joinPendingConflict(db, heldBy, operationId, operationType, recorded);
+  }
+  db.update(schema.stories)
+    .set({ lastOperationLog: next, updatedAt: new Date() })
+    .where(eq(schema.stories.id, storyId))
+    .run();
+
+  // Without this, a local edit's own operation log row doesn't show up in the Operation Log
+  // screen until it's unmounted and remounted (e.g. leaving and re-entering the story).
+  afterLocalWrite(() => entityEventEmitter.emit('operation_log_updated', storyId));
+  console.log(
+    `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${next}`,
+  );
+  return next;
+}
+
+/**
+ * The asynchronous form, as a unit of its own. Prefer recording inside the entity write's own
+ * `runLocalWrite` unit; this remains for writes that are already atomic on their own terms.
+ */
 export async function recordLocalOperation(
   db: AppDrizzleClient,
   storyId: string,
@@ -79,45 +225,166 @@ export async function recordLocalOperation(
     console.error('recordLocalOperation: Drizzle client (db) not set.');
     return;
   }
-
-  // Get the current local max operation version for this story
-  const currentStory = await db.query.stories.findFirst({
-    where: (stories, { eq }) => eq(stories.id, storyId),
-    columns: { lastOperationLog: true },
-  });
-
-  const nextOperationVersion = (currentStory?.lastOperationLog || 0) + 1;
-
-  // Insert into operationLogs
-  await db.insert(schema.operationLogs).values({
-    id: createULID(),
-    storyId: storyId,
-    userId: userId,
-    operationVersion: nextOperationVersion,
-    operationType: operationType,
-    entityType: entityType,
-    entityId: entityId,
-    payload: JSON.stringify(payload), // Store payload as JSON string
-    createdAt: new Date(),
-    isSynced: false,
-    serverOperationVersion: 0,
-  });
-
-  // Update the story's lastOperationLog
-  await db
-    .update(schema.stories)
-    .set({ lastOperationLog: nextOperationVersion, updatedAt: new Date() }) // Also update updatedAt
-    .where(eq(schema.stories.id, storyId));
-
-  // Without this, a local edit's own operation log row doesn't show up in the Operation Log
-  // screen until it's unmounted and remounted (e.g. leaving and re-entering the story) - this
-  // event was only ever emitted from the remote-pull/push-result side of SyncEngineService,
-  // never from the local write path that creates the entry in the first place.
-  entityEventEmitter.emit('operation_log_updated', storyId);
-
-  console.log(
-    `Recorded local operation: ${operationType} ${entityType} ${entityId} for story ${storyId}, version ${nextOperationVersion}`,
+  await runLocalWrite(db, storyId, () =>
+    recordLocalOperationSync(db, storyId, userId, operationType, entityType, entityId, payload),
   );
+}
+
+/** Row bookkeeping, never a local value a conflict asks about. */
+const CONFLICT_BOOKKEEPING = new Set(['id', 'storyId', 'version', 'createdAt', 'updatedAt']);
+
+/**
+ * The pending conflict a new local edit of this entity must join, if any.
+ *
+ * While an entity's conflict is open, its earlier edits wait for the user's decision - and an edit
+ * made in the meantime rests on them. Pushed on its own it would land first (it is newer in the
+ * queue but not held), and the resolution would then write the conflict's decision over the row,
+ * leaving the device showing something the server no longer has once the echo is skipped. Held in
+ * the conflict, it simply becomes part of "mine": the decision covers the latest intent.
+ *
+ * A quarantine (`validation` without a server snapshot) resolves by discarding its unpushable
+ * operation, which must never take a valid new edit with it. Order disputes left by builds before
+ * ranks resolve by arrangement, not by field, so no edit joins them either.
+ */
+function findConflictHoldingEdits(
+  db: AppDrizzleClient,
+  storyId: string,
+  entityType: string,
+  entityId: string,
+  operationType: StoryUpdateType,
+): typeof schema.syncConflicts.$inferSelect | undefined {
+  const conflict = db
+    .select()
+    .from(schema.syncConflicts)
+    .where(
+      and(
+        eq(schema.syncConflicts.storyId, storyId),
+        eq(schema.syncConflicts.entityType, entityType),
+        eq(schema.syncConflicts.entityId, entityId),
+        eq(schema.syncConflicts.status, 'pending'),
+      ),
+    )
+    .get();
+  if (!conflict) return undefined;
+  if (conflict.reason === 'validation' && !conflict.serverValues) return undefined;
+  return conflict;
+}
+
+function joinPendingConflict(
+  db: AppDrizzleClient,
+  conflict: typeof schema.syncConflicts.$inferSelect,
+  operationId: string,
+  operationType: StoryUpdateType,
+  payload: Record<string, any>,
+): void {
+  const parse = <T>(raw: string | null, fallback: T): T => {
+    try {
+      return raw ? (JSON.parse(raw) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const values = Object.fromEntries(
+    Object.entries(payload).filter(([field]) => !CONFLICT_BOOKKEEPING.has(field)),
+  );
+  db.update(schema.syncConflicts)
+    .set({
+      localOperationIds: JSON.stringify([
+        ...parse<string[]>(conflict.localOperationIds, []),
+        operationId,
+      ]),
+      localValues: JSON.stringify({
+        ...parse<Record<string, any>>(conflict.localValues, {}),
+        ...values,
+      }),
+      // A later deletion is the strongest intent; a create stays a create.
+      localOperationType: operationType === 'delete' ? 'delete' : conflict.localOperationType,
+    })
+    .where(eq(schema.syncConflicts.id, conflict.id))
+    .run();
+  afterLocalWrite(() => entityEventEmitter.emit('sync_conflicts_changed', conflict.storyId));
+}
+
+/**
+ * How many synchronized operations a story keeps on the device. Everything still waiting for the
+ * server is always kept (it is the pending queue, not history), and so is every operation carrying
+ * a conflict state - trimming those would destroy the evidence the conflict screen needs.
+ */
+export const MAX_RETAINED_SYNCED_OPERATIONS = 100;
+
+/**
+ * Drops synchronized, conflict-free history beyond the newest `keep` operations for one story.
+ * Runs after a successful push; without it the local log grows forever (one row per save), and
+ * with scene prose in the payloads that growth stops being negligible.
+ *
+ * Ordered by `serverOperationVersion` - when the server accepted the row - never by the local
+ * `operationVersion` or `createdAt`. The local counter and the server's versions are different
+ * spaces (a resend can sync an old counter late, and idempotent no-ops report version 0), so
+ * ordering by the counter could trim an op the next pull still needs for its echo check while
+ * keeping a newer-looking but older-accepted one. The server version is the comparable recency
+ * key; no-op 0s (which no pull can ever carry) and version-less rows sort first and trim first,
+ * and the local counter only breaks ties deterministically. `createdAt` stays out because the
+ * SQLite timestamp column only has second precision, so two saves in the same second could tie.
+ *
+ * Only rows at or below the pull cursor are eligible at all: a synced op past the cursor has not
+ * had its echo delivered yet (a blocked pull keeps pushing while starving the pull), and trimming
+ * it would make the echo arrive as a foreign operation - re-applying a reorder, which bumps
+ * versions instead of setting them. Favorites additionally wait for the public-favorites cursor,
+ * since the historical path can deliver them after the main cursor has passed.
+ *
+ * @returns how many rows were removed.
+ */
+export async function trimSyncedOperationLogs(
+  db: AppDrizzleClient,
+  storyId: string,
+  keep: number = MAX_RETAINED_SYNCED_OPERATIONS,
+): Promise<number> {
+  if (!db) {
+    console.error('trimSyncedOperationLogs: Drizzle client (db) not set.');
+    return 0;
+  }
+
+  const story = await db.query.stories.findFirst({
+    where: eq(schema.stories.id, storyId),
+    columns: { lastServerSyncedLog: true, lastPublicFavoriteLog: true },
+  });
+  const mainCursor = story?.lastServerSyncedLog ?? 0;
+  const favoriteCursor = Math.min(mainCursor, story?.lastPublicFavoriteLog ?? 0);
+
+  const synced = await db.query.operationLogs.findMany({
+    where: and(
+      eq(schema.operationLogs.storyId, storyId),
+      eq(schema.operationLogs.isSynced, true),
+      isNull(schema.operationLogs.conflictState),
+      or(
+        isNull(schema.operationLogs.serverOperationVersion),
+        and(
+          ne(schema.operationLogs.entityType, 'Favorite'),
+          lte(schema.operationLogs.serverOperationVersion, mainCursor),
+        ),
+        and(
+          eq(schema.operationLogs.entityType, 'Favorite'),
+          lte(schema.operationLogs.serverOperationVersion, favoriteCursor),
+        ),
+      ),
+    ),
+    columns: { id: true },
+    orderBy: [
+      desc(schema.operationLogs.serverOperationVersion),
+      desc(schema.operationLogs.operationVersion),
+    ],
+  });
+  const stale = synced.slice(keep);
+  if (stale.length === 0) {
+    return 0;
+  }
+  await db.delete(schema.operationLogs).where(
+    inArray(
+      schema.operationLogs.id,
+      stale.map((row) => row.id),
+    ),
+  );
+  return stale.length;
 }
 
 export async function getUserIdForOperation(

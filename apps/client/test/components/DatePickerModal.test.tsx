@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
-import React from 'react';
 import DatePickerModal from '../../src/components/common/inputs/DatePickerInput/DatePickerModal';
 
 jest.mock('../../src/theme', () => ({
@@ -206,7 +205,21 @@ describe('DatePickerModal', () => {
     await fireEvent.press(screen.getByTestId('date-picker-confirm'));
     expect(onSelect).not.toHaveBeenCalled();
 
-    await fireEvent.press(screen.getByText('cancel'));
+    await fireEvent.press(screen.getByTestId('date-picker-close'));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('disables the header check with no date and enables it once a day is picked', async () => {
+    const { screen } = await renderModal(null);
+
+    expect(screen.getByTestId('date-picker-confirm').props.accessibilityState).toMatchObject({
+      disabled: true,
+    });
+
+    await fireEvent.press(screen.getByTestId('date-picker-day-20'));
+
+    expect(screen.getByTestId('date-picker-confirm').props.accessibilityState).toMatchObject({
+      disabled: false,
+    });
   });
 });

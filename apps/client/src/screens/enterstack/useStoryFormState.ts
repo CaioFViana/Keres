@@ -1,6 +1,6 @@
 import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
 import type { RefObject } from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoryService } from '../../services/storymanagement/StoryService';
 
@@ -19,6 +19,15 @@ export function useStoryFormState({
   const { t } = useTranslation();
   const identity = useStoryIdentityDraft();
   const [selectedPackIds, setSelectedPackIds] = useState<string[]>([]);
+  // Selected packs whose skeletons stay out: an opt-out list, so a newly picked pack installs its
+  // extras unless the author says otherwise - and a deselected pack keeps its answer for reselection.
+  const [packsWithoutExtras, setPacksWithoutExtras] = useState<string[]>([]);
+  const togglePackExtras = useCallback((packId: string, include: boolean) => {
+    setPacksWithoutExtras((current) => {
+      if (include) return current.filter((id) => id !== packId);
+      return current.includes(packId) ? current : [...current, packId];
+    });
+  }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isEditing = !!initialStoryId;
@@ -62,6 +71,8 @@ export function useStoryFormState({
     identity,
     selectedPackIds,
     setSelectedPackIds,
+    packsWithoutExtras,
+    togglePackExtras,
     loading,
     error,
     setError,

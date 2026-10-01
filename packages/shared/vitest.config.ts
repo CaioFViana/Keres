@@ -14,6 +14,7 @@ export default defineConfig({
         'entities/**/*.ts',
         'entity-solvers/**/*.ts',
         'graphs/**/*.ts',
+        'manuscript/**/*.ts',
         'metadata/**/*.ts',
         'rules/**/*.ts',
         'schemas/**/*.ts',

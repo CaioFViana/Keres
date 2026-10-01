@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, View, type ViewProps } from 'react-native';
 import { useTheme } from '@/src/theme';
 

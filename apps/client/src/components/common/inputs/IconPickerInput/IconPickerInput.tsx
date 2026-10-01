@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../theme';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import IconPickerModal from '@/src/components/common/inputs/IconPickerInput/IconPickerModal';
 
@@ -9,8 +9,8 @@ interface IconPickerInputProps {
   onSelectIcon: (icon: string) => void;
   currentIcon: string | null;
   placeholder?: string;
-  /** The icon list to pick from - defaults to the avatar set; maps use `MAP_ICON_OPTIONS`. */
-  iconOptions?: readonly (keyof typeof Ionicons.glyphMap)[];
+  /** The Ionicons list to pick from - defaults to the avatar set; maps use `MAP_ICON_OPTIONS`. The Keres pack is always appended. */
+  iconOptions?: readonly string[];
   /**
    * Positioning only (margin, width). Do NOT pass `commonInputStyles.input` here: this component already
    * draws the field's frame, and a second border/height around it misaligns the inner content.
@@ -79,11 +79,7 @@ const IconPickerInput: React.FC<IconPickerInputProps> = ({
     <View style={[styles.container, style]}>
       <Pressable style={styles.inputWrapper} onPress={() => setModalVisible(true)}>
         <View style={styles.iconPreview}>
-          <Ionicons
-            name={(currentIcon as keyof typeof Ionicons.glyphMap) || 'help-outline'}
-            size={20}
-            color={colors.text}
-          />
+          <MapIcon name={currentIcon || 'help-outline'} size={20} color={colors.text} />
         </View>
         <Text style={styles.label}>{currentIcon || placeholder}</Text>
       </Pressable>

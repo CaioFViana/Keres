@@ -32,7 +32,18 @@ export function galleryHasFile(type: string | null | undefined): boolean {
 }
 
 /**
- * Accepted formats. Playable types are restricted to what Expo can display without transcoding.
+ * Accepted formats. Playable types are restricted to containers at least one OS player decodes
+ * without transcoding - not every entry plays everywhere:
+ *
+ * - video/mp4, video/quicktime, video/x-m4v, video/3gpp: iOS (AVPlayer), Android (Media3) and web.
+ * - video/webm: Android and web (Chrome/Firefox); iOS cannot decode it.
+ * - video/x-matroska: Android and web (Chrome); iOS cannot decode it.
+ *
+ * A file that imports fine but does not play on the device is a normal outcome, not a corrupt
+ * record: the preview players surface a "preview unavailable" state instead of failing the
+ * import (see `VideoPreviewPlayer`). Deliberately absent: avi/wmv/flv/mpeg (no OS player
+ * decodes them) and HLS (a stream, not an importable file).
+ *
  * Documents are stored as files and handed to the OS; links have no bytes.
  */
 export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = {
@@ -45,7 +56,14 @@ export const SUPPORTED_MEDIA_MIME_TYPES: Record<MediaType, readonly string[]> = 
     'image/heic',
     'image/heif',
   ],
-  video: ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v', 'video/3gpp'],
+  video: [
+    'video/mp4',
+    'video/quicktime',
+    'video/webm',
+    'video/x-m4v',
+    'video/3gpp',
+    'video/x-matroska',
+  ],
   audio: [
     'audio/mpeg',
     'audio/mp4',
@@ -81,7 +99,7 @@ export const ALL_SUPPORTED_MEDIA_MIME_TYPES: readonly string[] = MEDIA_TYPES.fla
   (type) => SUPPORTED_MEDIA_MIME_TYPES[type],
 );
 
-/** Filtro para o seletor de ficheiros reproduzíveis: `['image/*', 'video/*', 'audio/*']`. */
+/** Filter for the playable-file picker: `['image/*', 'video/*', 'audio/*']`. */
 export const MEDIA_PICKER_MIME_FILTERS: readonly string[] = PLAYABLE_MEDIA_TYPES.map(
   (type) => `${type}/*`,
 );
@@ -104,6 +122,7 @@ export const MEDIA_MIME_TYPE_EXTENSIONS: Record<string, string> = {
   'video/webm': 'webm',
   'video/x-m4v': 'm4v',
   'video/3gpp': '3gp',
+  'video/x-matroska': 'mkv',
   'application/pdf': 'pdf',
   'application/msword': 'doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
@@ -154,6 +173,136 @@ export function extensionForMimeType(mimeType: string | null | undefined): strin
     return 'bin';
   }
   return MEDIA_MIME_TYPE_EXTENSIONS[mimeType.toLowerCase()] ?? 'bin';
+}
+
+/** How many leading bytes `sniffMediaMimeType` needs to identify every supported container. */
+export const MEDIA_SNIFF_HEADER_BYTES = 128;
+
+function headerStartsWith(header: Uint8Array, signature: readonly number[]): boolean {
+  if (header.length < signature.length) {
+    return false;
+  }
+  return signature.every((byte, index) => header[index] === byte);
+}
+
+/** Reads ASCII out of the header; `undefined` when the window runs past the available bytes. */
+function headerAscii(header: Uint8Array, offset: number, length: number): string | undefined {
+  if (header.length < offset + length) {
+    return undefined;
+  }
+  let text = '';
+  for (let index = offset; index < offset + length; index++) {
+    text += String.fromCharCode(header[index]);
+  }
+  return text;
+}
+
+/**
+ * Tells webm apart from matroska: both are EBML (`1A 45 DF A3`), so the answer sits in the
+ * header's DocType element (`42 82`, a short VINT length, then the ASCII name).
+ */
+function sniffEbmlDocType(header: Uint8Array): string | undefined {
+  for (let index = 4; index + 3 < header.length; index++) {
+    if (header[index] === 0x42 && header[index + 1] === 0x82) {
+      const sizeByte = header[index + 2];
+      const length = sizeByte & 0x7f;
+      const nameStart = index + 3;
+      if (sizeByte & 0x80 && nameStart + length <= header.length) {
+        const name = headerAscii(header, nameStart, length);
+        if (name === 'webm') {
+          return 'video/webm';
+        }
+        if (name === 'matroska') {
+          return 'video/x-matroska';
+        }
+      }
+      return undefined;
+    }
+  }
+  // The DocType element is required, so reaching here means a malformed header - but scanning
+  // the raw window still rescues files whose elements arrive in an unusual order.
+  const windowText = headerAscii(header, 0, header.length) ?? '';
+  if (windowText.includes('matroska')) {
+    return 'video/x-matroska';
+  }
+  if (windowText.includes('webm')) {
+    return 'video/webm';
+  }
+  return undefined;
+}
+
+/**
+ * Identifies a media file from its first bytes.
+ *
+ * The last resort when the picker reports no (usable) mime type and the file name carries no
+ * extension - Android returns a null mime type for providers it does not recognize, and iOS
+ * falls back to `application/octet-stream` for unknown extensions. Every answer is a member of
+ * `SUPPORTED_MEDIA_MIME_TYPES`; anything else (plain text, zip-based documents, unknown data)
+ * yields `undefined` so the caller reports the file as unsupported.
+ */
+export function sniffMediaMimeType(header: Uint8Array): string | undefined {
+  if (header.length >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  if (headerStartsWith(header, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return 'image/png';
+  }
+  if (headerAscii(header, 0, 4) === 'GIF8') {
+    return 'image/gif';
+  }
+  if (header.length >= 2 && header[0] === 0x42 && header[1] === 0x4d) {
+    return 'image/bmp';
+  }
+  if (headerAscii(header, 0, 4) === '%PDF') {
+    return 'application/pdf';
+  }
+  if (headerAscii(header, 0, 4) === 'OggS') {
+    return 'audio/ogg';
+  }
+  if (headerAscii(header, 0, 4) === 'fLaC') {
+    return 'audio/flac';
+  }
+  if (headerAscii(header, 0, 3) === 'ID3') {
+    return 'audio/mpeg';
+  }
+  if (header.length >= 2 && header[0] === 0xff && (header[1] & 0xe0) === 0xe0) {
+    // A raw MPEG frame and an ADTS AAC frame share the 11-bit sync word; the layer bits tell
+    // them apart (`00` is reserved in MPEG, so it can only be AAC).
+    return ((header[1] >> 1) & 0x03) === 0 ? 'audio/aac' : 'audio/mpeg';
+  }
+  if (headerAscii(header, 0, 4) === 'RIFF') {
+    const form = headerAscii(header, 8, 4);
+    if (form === 'WAVE') {
+      return 'audio/wav';
+    }
+    if (form === 'WEBP') {
+      return 'image/webp';
+    }
+    return undefined;
+  }
+  if (headerAscii(header, 4, 4) === 'ftyp') {
+    const brand = headerAscii(header, 8, 4);
+    if (brand === 'qt  ') {
+      return 'video/quicktime';
+    }
+    if (brand === 'M4V ') {
+      return 'video/x-m4v';
+    }
+    if (brand === 'M4A ' || brand === 'M4B ' || brand === 'M4P ') {
+      return 'audio/mp4';
+    }
+    if (brand !== undefined && brand.startsWith('3g')) {
+      return 'video/3gpp';
+    }
+    if (brand !== undefined && (brand.startsWith('he') || brand === 'mif1' || brand === 'msf1')) {
+      return brand === 'mif1' || brand === 'msf1' ? 'image/heif' : 'image/heic';
+    }
+    return 'video/mp4';
+  }
+  if (headerStartsWith(header, [0x1a, 0x45, 0xdf, 0xa3])) {
+    return sniffEbmlDocType(header);
+  }
+  return undefined;
 }
 
 /**
@@ -273,7 +422,7 @@ export type CreateGalleryRelationDataType = z.infer<typeof CreateGalleryRelation
 export type GalleryRelationType = z.infer<typeof GalleryRelationSchema>;
 export type PartialGalleryRelationType = z.infer<typeof PartialGalleryRelationSchema>;
 
-/** Corpo de `POST /media/:storyId/blobs/status`. */
+/** Body of `POST /media/:storyId/blobs/status`. */
 export const MediaBlobStatusRequestSchema = z.object({
   hashes: z.array(MediaHashSchema).max(500),
 });

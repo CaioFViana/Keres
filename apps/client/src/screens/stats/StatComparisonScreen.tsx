@@ -3,7 +3,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
@@ -24,7 +24,8 @@ import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import { deliverMapExport } from '../../utils/storyTransfer';
 import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {
   buildStatRadarLayout,
@@ -194,7 +195,11 @@ const StatComparisonScreen = () => {
           border: colors.border,
         },
       });
-      const result = await deliverSvgMap(svg, `${selectedStory.title}-stats.svg`);
+      const result = await deliverMapExport(
+        svg,
+        `${selectedStory.title}-stats.svg`,
+        useUserSettingsStore.getState().exportFormat,
+      );
       showNotification(
         result.delivered
           ? t('stat_export_success', { fileName: result.fileName })

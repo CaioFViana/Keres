@@ -9,6 +9,7 @@ jest.mock('react-i18next', () => ({
 
 import { AttributeType } from '@keres/shared';
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useStorySchemaFieldFormActions } from '../../../src/screens/storyschema/useStorySchemaFieldFormActions';
 import type { StorySchemaFieldFormState } from '../../../src/screens/storyschema/useStorySchemaFieldFormState';
 import type { StorySchemaFieldService } from '../../../src/services/storymanagement/StorySchemaFieldService';
@@ -33,6 +34,8 @@ const createState = (
     isEditing: false,
     handleNameChange: jest.fn(),
     handleKeyChange: jest.fn(),
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as StorySchemaFieldFormState;
 
@@ -101,7 +104,8 @@ it('requires a target entity type for ENTITY attributes', async () => {
 });
 
 it('creates a field and navigates back', async () => {
-  const view = await renderActions(createState({ description: '  strong  ', defaultValue: ' 1 ' }));
+  const state = createState({ description: '  strong  ', defaultValue: ' 1 ' });
+  const view = await renderActions(state);
 
   await act(async () => {
     await view.result.current.handleSave();
@@ -119,20 +123,19 @@ it('creates a field and navigates back', async () => {
     defaultValue: '1',
     order: 2,
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('updates an existing field without rewriting key or type', async () => {
-  const view = await renderActions(
-    createState({
-      isEditing: true,
-      name: 'Updated',
-      description: 'note',
-      isRequired: true,
-      defaultValue: 'x',
-    }),
-    { initialFieldId: 'field-1' },
-  );
+  const state = createState({
+    isEditing: true,
+    name: 'Updated',
+    description: 'note',
+    isRequired: true,
+    defaultValue: 'x',
+  });
+  const view = await renderActions(state, { initialFieldId: 'field-1' });
 
   await act(async () => {
     await view.result.current.handleSave();
@@ -145,6 +148,7 @@ it('updates an existing field without rewriting key or type', async () => {
     defaultValue: 'x',
   });
   expect(storySchemaFieldService.createField).not.toHaveBeenCalled();
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
@@ -172,13 +176,17 @@ it('clears default value when saving an ENTITY attribute', async () => {
 });
 
 it('surfaces persistence failures without navigating back', async () => {
-  (storySchemaFieldService.createField as jest.Mock).mockRejectedValue(new Error('duplicate key'));
-  const view = await renderActions();
+  await withSilencedConsole(['error'], async () => {
+    (storySchemaFieldService.createField as jest.Mock).mockRejectedValue(
+      new Error('duplicate key'),
+    );
+    const view = await renderActions();
 
-  await act(async () => {
-    await view.result.current.handleSave();
+    await act(async () => {
+      await view.result.current.handleSave();
+    });
+
+    expect(mockAlert).toHaveBeenCalledWith('error', 'duplicate key');
+    expect(navigation.goBack).not.toHaveBeenCalled();
   });
-
-  expect(mockAlert).toHaveBeenCalledWith('error', 'duplicate key');
-  expect(navigation.goBack).not.toHaveBeenCalled();
 });

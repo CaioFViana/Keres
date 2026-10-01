@@ -8,6 +8,7 @@ export const helpSections: HelpSection[] = [
     pageIds: [
       'what-is-keres',
       'first-story',
+      'guided-tours',
       'how-keres-organizes',
       'getting-around',
       'lists-and-search',
@@ -47,6 +48,7 @@ export const helpSections: HelpSection[] = [
       'narrative-elements',
       'chapters',
       'scenes',
+      'manuscript',
       'scene-timing',
       'plots',
       'locations',
@@ -68,6 +70,7 @@ export const helpSections: HelpSection[] = [
     pageIds: [
       'branching-basics',
       'routes',
+      'story-navigator',
       'choices',
       'story-map',
       'choice-conditions',

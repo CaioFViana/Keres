@@ -8,9 +8,9 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import type { PlotsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -36,9 +36,11 @@ export default function RouteFormScreen() {
   const { routeServiceRef } = useRouteFormResources();
   const routeFormState = useRouteFormState({
     routeId,
+    storyId: selectedStory?.id,
     routeServiceRef,
   });
-  const { name, setName, details, setDetails, loading, isEditing } = routeFormState;
+  const { name, setName, details, setDetails, loading, isEditing, isDirty, resetForm } =
+    routeFormState;
   const { deleting, handleDelete, handleSave, saving } = useRouteFormActions({
     state: routeFormState,
     routeServiceRef,
@@ -48,9 +50,12 @@ export default function RouteFormScreen() {
   });
 
   const input = getCommonInputStyles(colors);
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: isEditing ? t('edit_route') : t('create_route'),
+    actions: resetHeaderAction,
   });
 
   if (loading) return <ScreenLoading />;
@@ -84,15 +89,15 @@ export default function RouteFormScreen() {
       </FormField>
       {isEditing ? (
         <FormActions stackOnCompact>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {t('save_changes')}
-          </Button>
           <Button
             onPress={handleDelete}
             style={{ backgroundColor: colors.error }}
             disabled={saving || deleting}
           >
             {t('delete_route_title')}
+          </Button>
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {t('save_changes')}
           </Button>
         </FormActions>
       ) : (

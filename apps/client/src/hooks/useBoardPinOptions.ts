@@ -176,6 +176,7 @@ export function useBoardPinOptions(storyId: string | undefined, excludedBoardId?
   }, [db, excludedBoardId, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void load();
   }, [load]);
 

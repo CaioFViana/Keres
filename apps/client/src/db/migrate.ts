@@ -1,13 +1,25 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-// Import all migration files dynamically
-import migrations from './migrations/index'; // Import the generated migrations array
+import migrations from './migrations/index';
 
+/**
+ * Applies pending client-side migrations in order, recording each in `_migrations`.
+ *
+ * Unlike the server's migration runner, this one is hand-rolled against expo-sqlite:
+ * it diffs the generated migration list against the `_migrations` table and runs only
+ * what is missing, so re-opening the database is a no-op once everything is applied.
+ * A failing migration aborts startup (the error is rethrown) rather than leaving a
+ * half-migrated schema behind.
+ *
+ * Each migration runs in its own transaction, journal insert included: without one, a
+ * mid-migration failure leaves partial effects behind while the journal stays empty, and
+ * the relaunch re-runs non-idempotent statements (CREATE INDEX et al) into a startup
+ * abort loop. (Plain BEGIN/COMMIT, not a driver helper, so the better-sqlite3 test fake
+ * executes the real thing.)
+ */
 export async function migrate(expoDb: SQLiteDatabase) {
-  // Renamed db to expoDb for clarity
   console.log('migrate: Starting custom Drizzle client-side migrations...');
 
-  // Ensure _migrations table exists
   await expoDb.execAsync(`
     CREATE TABLE IF NOT EXISTS _migrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,14 +34,20 @@ export async function migrate(expoDb: SQLiteDatabase) {
   const appliedMigrationNames = new Set(appliedMigrations.map((m) => m.name));
 
   for (const migration of migrations) {
-    // Use the dynamically imported migrations
     if (!appliedMigrationNames.has(migration.name)) {
       console.log(`migrate: Applying migration: ${migration.name}`);
       try {
+        await expoDb.execAsync('BEGIN');
         await migration.run(expoDb);
         await expoDb.runAsync(`INSERT INTO _migrations (name) VALUES (?)`, migration.name);
+        await expoDb.execAsync('COMMIT');
         console.log(`migrate: Successfully applied migration: ${migration.name}`);
       } catch (error) {
+        try {
+          await expoDb.execAsync('ROLLBACK');
+        } catch {
+          // BEGIN itself failed: nothing to roll back.
+        }
         console.error(`migrate: Failed to apply migration ${migration.name}:`, error);
         throw error;
       }

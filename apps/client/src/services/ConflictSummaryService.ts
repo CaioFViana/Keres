@@ -57,6 +57,12 @@ export interface ConflictSummary {
    */
   canQuickResolve: boolean;
   /**
+   * Whether keeping this device's version can land at all. Not when what the change points at was
+   * deleted on the server, nor when the operation could never be sent: resending it would only
+   * reopen the conflict, so the only choice offered is to discard it.
+   */
+  canKeepMine: boolean;
+  /**
    * A Board whose drawing (`content`) clashed: keep-mine / keep-server, plus clone-mine-as-a-new-board.
    * The JSON is not offered field-by-field — two layouts cannot be merged.
    */
@@ -152,6 +158,15 @@ export function collectEntityRefs(
       continue;
     }
 
+    // A route's whole path: its scenes are named, not listed by id.
+    for (const path of [conflict.localValues.steps, conflict.serverValues?.steps]) {
+      if (!Array.isArray(path)) continue;
+      for (const step of path as { sceneId?: unknown }[]) {
+        if (typeof step?.sceneId === 'string')
+          refs.push({ entityType: 'Scene', entityId: step.sceneId });
+      }
+    }
+
     for (const field of conflict.contestedFields) {
       const entityType = resolveEntityReferenceFieldType(field);
       if (!entityType) continue;
@@ -208,6 +223,12 @@ function isBinaryContentConflict(conflict: PendingConflict): boolean {
   );
 }
 
+/** See `ConflictSummary.canKeepMine`. */
+function keepMineCanLand(conflict: PendingConflict): boolean {
+  if (conflict.reason === 'referenced_entity_deleted') return false;
+  return !(conflict.reason === 'validation' && conflict.serverValues === null);
+}
+
 export function buildConflictSummaries(
   conflicts: PendingConflict[],
   snapshots: Map<string, Record<string, any>>,
@@ -230,6 +251,7 @@ export function buildConflictSummaries(
         detail: withServerMessage(detail, conflict),
         reason: conflict.reason,
         canQuickResolve: true,
+        canKeepMine: keepMineCanLand(conflict),
         offerBoardClone: false,
         diffFields: [],
       };
@@ -247,6 +269,12 @@ export function buildConflictSummaries(
       getSimpleDisplayName(conflict.entityType, mergedContent) ?? conflict.entityId;
 
     const displayValue = (field: string, value: unknown): string => {
+      if (conflict.entityType === 'Route' && field === 'steps' && Array.isArray(value)) {
+        if (value.length === 0) return emptyLabel;
+        return (value as { sceneId: string }[])
+          .map((step) => names.get(`Scene:${step.sceneId}`) || step.sceneId)
+          .join(' → ');
+      }
       const targetType = resolveEntityReferenceFieldType(field);
       if (targetType && typeof value === 'string' && value) {
         return names.get(`${targetType}:${value}`) || formatValue(value, emptyLabel);
@@ -284,6 +312,7 @@ export function buildConflictSummaries(
       detail,
       reason: conflict.reason,
       canQuickResolve,
+      canKeepMine: keepMineCanLand(conflict),
       offerBoardClone,
       diffFields,
     };

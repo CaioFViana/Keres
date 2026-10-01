@@ -28,6 +28,9 @@ const SETTINGS = {
   use24HourTime: true,
   dateDisplayFormat: 'dmy' as const,
   showContextualHelp: false,
+  exportFormat: 'png' as const,
+  showTutorials: false,
+  seenTutorials: '{"version":1,"seen":["StorySelectionMain"]}',
 };
 
 beforeEach(() => {
@@ -51,6 +54,9 @@ describe('initializeSettings', () => {
     expect(store()).toMatchObject({ userId: 'local-user-1', username: 'ana', language: 'pt-BR' });
     expect(store().showContextualHelp).toBe(false);
     expect(store().dateDisplayFormat).toBe('dmy');
+    expect(store().exportFormat).toBe('png');
+    expect(store().showTutorials).toBe(false);
+    expect(store().tutorialProgress).toEqual({ version: 1, seen: ['StorySelectionMain'] });
     expect(settings).toEqual(SETTINGS);
   });
 
@@ -125,6 +131,28 @@ describe('setDateDisplayFormat', () => {
   });
 });
 
+describe('setUse24HourTime', () => {
+  it('persists the clock choice before updating what the screens read', async () => {
+    await store().setUse24HourTime(db, true);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      use24HourTime: true,
+    });
+    expect(store().use24HourTime).toBe(true);
+  });
+});
+
+describe('setSuggestLiteraryDevices', () => {
+  it('persists the toggle before updating what the screens read', async () => {
+    await store().setSuggestLiteraryDevices(db, false);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      suggestLiteraryDevices: false,
+    });
+    expect(store().suggestLiteraryDevices).toBe(false);
+  });
+});
+
 describe('active server', () => {
   it('remembers the server the user signed into', () => {
     store().setActiveServer(server);
@@ -169,6 +197,116 @@ describe('setShowContextualHelp', () => {
   });
 });
 
+describe('setExportFormat', () => {
+  it('persists the map export format before updating the UI state', async () => {
+    await store().setExportFormat(db, 'png');
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      exportFormat: 'png',
+    });
+    expect(store().exportFormat).toBe('png');
+  });
+
+  it('keeps the current format when persistence fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().setExportFormat(db, 'png')).rejects.toThrow();
+    expect(store().exportFormat).toBe('svg');
+  });
+});
+
+describe('setShowTutorials', () => {
+  it('persists the master switch before updating the UI state', async () => {
+    await store().setShowTutorials(db, false);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      showTutorials: false,
+    });
+    expect(store().showTutorials).toBe(false);
+  });
+
+  it('keeps the current switch when persistence fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().setShowTutorials(db, false)).rejects.toThrow();
+    expect(store().showTutorials).toBe(true);
+  });
+});
+
+describe('markTutorialSeen', () => {
+  it('persists the grown seen list before updating the UI state', async () => {
+    mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
+    await store().initializeSettings(db);
+
+    await store().markTutorialSeen(db, 'MainDashboard');
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      seenTutorials: '{"version":1,"seen":["StorySelectionMain","MainDashboard"]}',
+    });
+    expect(store().tutorialProgress.seen).toEqual(['StorySelectionMain', 'MainDashboard']);
+  });
+
+  it('writes nothing when the tour is already seen', async () => {
+    mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
+    await store().initializeSettings(db);
+
+    await store().markTutorialSeen(db, 'StorySelectionMain');
+
+    expect(mockClientSettings.updateClientSettings).not.toHaveBeenCalled();
+  });
+
+  it('keeps the current history when persistence fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().markTutorialSeen(db, 'MainDashboard')).rejects.toThrow();
+    expect(store().tutorialProgress.seen).toEqual([]);
+  });
+});
+
+describe('setFirstStoryProgress', () => {
+  it('persists the merged trail before updating the UI state', async () => {
+    mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
+    await store().initializeSettings(db);
+
+    await store().setFirstStoryProgress(db, { choice: 'example' });
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      seenTutorials:
+        '{"version":1,"seen":["StorySelectionMain"],' +
+        '"firstStory":{"choice":"example","done":false,"dismissed":false}}',
+    });
+    expect(store().tutorialProgress.firstStory).toEqual({
+      choice: 'example',
+      done: false,
+      dismissed: false,
+    });
+    expect(store().tutorialProgress.seen).toEqual(['StorySelectionMain']);
+  });
+
+  it('keeps the current trail when persistence fails', async () => {
+    mockClientSettings.updateClientSettings.mockRejectedValueOnce(new Error('banco fora'));
+
+    await expect(store().setFirstStoryProgress(db, { choice: 'create' })).rejects.toThrow();
+    expect(store().tutorialProgress.firstStory).toBeUndefined();
+  });
+});
+
+describe('resetSeenTutorials', () => {
+  it('clears the history and re-enables tours', async () => {
+    mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
+    await store().initializeSettings(db);
+
+    await store().resetSeenTutorials(db);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      showTutorials: true,
+      seenTutorials: '{"version":1,"seen":[]}',
+    });
+    expect(store().showTutorials).toBe(true);
+    expect(store().tutorialProgress).toEqual({ version: 1, seen: [] });
+  });
+});
+
 describe('resetSettings', () => {
   it('wipes everything, including the active server', async () => {
     mockClientSettings.getClientSettings.mockResolvedValue(SETTINGS);
@@ -182,7 +320,10 @@ describe('resetSettings', () => {
       username: null,
       language: null,
       showContextualHelp: true,
+      exportFormat: 'svg',
+      showTutorials: true,
       activeServer: null,
     });
+    expect(store().tutorialProgress).toEqual({ version: 1, seen: [] });
   });
 });

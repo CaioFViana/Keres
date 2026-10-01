@@ -5,7 +5,6 @@ import FormField from '@/src/components/common/forms/FormField/FormField';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import type { PackSelectionType } from '@keres/shared';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Button from '../../components/common/controls/Button/Button';
@@ -151,6 +150,7 @@ const PackFormScreen = () => {
         true,
         !selection.suggestions,
       )}
+      {renderToggle('extras', 'packs_toggle_extras', 'packs_toggle_extras_hint')}
 
       <ScreenSection title={t('packs_details')} />
       <FormField label={t('name')}>

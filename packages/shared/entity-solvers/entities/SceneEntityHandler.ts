@@ -13,7 +13,9 @@ export const sceneEntityHandler: EntityDomainHandler = {
   entityType: OperationLogEntityType.Scene,
   exportCollection: 'scenes',
   exportReferences: [
-    { field: 'chapterId', targetEntityType: OperationLogEntityType.Chapter, required: true },
+    // Optional: an unfiled scene is a supported live state - the writer unfiled it on purpose -
+    // so the portable format carries it instead of pruning it as dangling.
+    { field: 'chapterId', targetEntityType: OperationLogEntityType.Chapter, required: false },
     { field: 'locationId', targetEntityType: OperationLogEntityType.Location, required: false },
   ],
   conflictLabelKey: 'scene',

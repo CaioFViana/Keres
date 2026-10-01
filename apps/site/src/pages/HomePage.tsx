@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Showcase } from '../components/Showcase';
 import { DOWNLOADS, FAQ_ITEMS, FEATURE_GROUPS, PILLARS, PLATFORMS } from '../content/catalog';
-import { DOCKER_IMAGE, GITHUB_RELEASES_URL, GITHUB_REPO_URL } from '../content/links';
+import {
+  DOCKER_IMAGE,
+  GITHUB_RELEASES_URL,
+  GITHUB_REPO_URL,
+  WEB_CLIENT_URL,
+} from '../content/links';
 import keresLogoUrl from 'virtual:keres-logo';
 
 const DOWNLOAD_HREFS: Record<(typeof DOWNLOADS)[number], string> = {
@@ -30,6 +35,10 @@ export function HomePage() {
           <h1 className="hero-title">{t('hero.title')}</h1>
           <p className="hero-text">{t('hero.lead')}</p>
           <div className="hero-actions">
+            {/* Plain link, not the router: the client is its own app, served from a sibling folder. */}
+            <a className="button button-primary" href={WEB_CLIENT_URL} data-testid="try-web-client">
+              {t('hero.ctaTry')}
+            </a>
             <a className="button button-primary" href="#download">
               {t('hero.ctaDownload')}
             </a>
@@ -45,6 +54,7 @@ export function HomePage() {
               {t('hero.ctaFeatures')}
             </a>
           </div>
+          <p className="muted hero-note">{t('hero.tryNote')}</p>
         </div>
       </section>
 

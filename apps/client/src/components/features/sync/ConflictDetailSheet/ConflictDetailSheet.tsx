@@ -137,13 +137,15 @@ const ConflictDetailSheet: React.FC<ConflictDetailSheetProps> = ({
         <Text style={styles.reason}>{reason}</Text>
 
         <Text style={styles.sectionTitle}>{t('conflict_choose_action')}</Text>
-        <ConflictAction
-          icon="checkmark-circle-outline"
-          title={t('conflict_keep_mine')}
-          description={t('conflict_keep_mine_description')}
-          onPress={onKeepMine}
-          disabled={isResolving}
-        />
+        {summary.canKeepMine && (
+          <ConflictAction
+            icon="checkmark-circle-outline"
+            title={t('conflict_keep_mine')}
+            description={t('conflict_keep_mine_description')}
+            onPress={onKeepMine}
+            disabled={isResolving}
+          />
+        )}
         <ConflictAction
           icon="cloud-download-outline"
           title={t('conflict_keep_server')}

@@ -8,6 +8,8 @@ export interface Tier {
   maxEntitiesTotal: number | null;
   maxStorageBytesPerStory: number | null;
   maxStorageBytesTotal: number | null;
+  /** Versions the user may publish to the showcase in any 24 hours. */
+  maxPublicationsPerDay: number | null;
   createdAt: Date;
   updatedAt: Date;
   isDeleted: boolean;

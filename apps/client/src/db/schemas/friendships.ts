@@ -1,7 +1,7 @@
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
-import { servers } from './servers'; // Import servers table
+import { servers } from './servers';
 import { users } from './users';
 
 export const friendships = sqliteTable(

@@ -23,72 +23,84 @@ const princessKaguyaEn: StoryNarrative = {
       name: 'A child in the bamboo',
       summary:
         'Cutting bamboo as he has every day of his life, Taketori no Okina finds one stalk shining from the inside. Within it sits a child no taller than his hand, and he carries her home in his palms.',
+      body: 'Taketori no Okina has cut bamboo every day of his life, and bamboo has never once surprised him - until the morning one stalk shines from the inside, lit like a lantern with no flame in it. He splits it open with hands that have suddenly forgotten their trade.\n\nWithin sits a child no taller than his hand, shining a little herself, looking up at him with complete composure. He carries her home in his palms, walking the way one walks with a full cup, and does not tell his wife until she is standing in the doorway seeing it.',
       location: 3,
     },
     {
       name: 'Growing like bamboo in spring',
       summary:
         'The child reaches full womanhood in three months. Neither the old man nor his wife asks why; they have wanted a daughter for forty years and are not inclined to interrogate one.',
+      body: 'The child grows the way bamboo grows: visibly, overnight, an inch while you look away. In three months she is a grown woman, graceful and grave, with manners no one taught her and a gaze that seems to measure distances nobody else can see.\n\nNeither the old man nor his wife asks why. They have wanted a daughter for forty years, and wanting teaches its own etiquette: you do not interrogate a gift. They name her their daughter in everything but the asking, and she lets them, gently.',
       location: 1,
     },
     {
       name: 'Gold in every stalk',
       summary:
         'From the day he finds her, every stalk the old man cuts has gold inside it. The household becomes wealthy without anyone deciding to become wealthy, which is the first hint that she is being provided for from elsewhere.',
+      body: 'From the day he finds her, every stalk the old man cuts has gold inside it - not gold like a prize, but gold like a salary, regular and sufficient. The household becomes wealthy the way rivers become wide: without anyone deciding it.\n\nThe old man tells himself it is luck, and his wife tells herself it is reward, and neither of them says what both of them notice: that the gold pays for exactly the life the girl requires. It is the first hint that she is being provided for from elsewhere - and the politest.',
       location: 3,
     },
     {
       name: 'The name Kaguya-hime',
       summary:
         'A naming feast lasts three days, and she is given the name Shining Princess of the Supple Bamboo. Word of her beauty leaves the house with the guests and does not stop travelling.',
+      body: 'The naming feast lasts three days, with music and sake and more guests than the house was built to hold. She is given the name Kaguya-hime - Shining Princess of the Supple Bamboo - and the name fits her the way light fits a lamp.\n\nWord of her beauty leaves the house with the guests, riding in every palanquin and told at every gate, and does not stop travelling. By winter it has reached the capital. By spring it has reached everyone. Beauty, announced this thoroughly, is a kind of weather.',
       location: 1,
     },
     {
       name: 'Five suitors at the gate',
       summary:
         'Five nobles camp outside the house and refuse to leave. Kaguya-hime does not want any of them and will not say so, because a refusal would fall on the old man who has to live with these families.',
+      body: 'Five nobles arrive and camp outside the house and refuse to leave: princes and ministers and counsellors, each certain he is the exception. They send poems. They send gifts. They send each other pointed looks over the fence.\n\nKaguya-hime does not want any of them, and will not say so - not from kindness to the suitors, but from care for the old man, who must go on living beside these families after the refusals. So she smiles, and thanks them for the poems, and sets about refusing them all without refusing a single one.',
       location: 0,
     },
     {
       name: 'The stone bowl and the jewelled branch',
       summary:
         'She sets each suitor a treasure to fetch. Prince Ishitsukuri sends for an ordinary bowl from a temple outside the city; Prince Kuramochi has a branch made by six jewellers and tells a long story about sailing to Mount Horai.',
+      body: 'To each suitor she names a treasure: to Prince Ishitsukuri, the stone bowl of the Buddha; to Prince Kuramochi, the jewelled branch of Mount Horai. Impossible objects, politely requested. The suitors bow and depart, and the house enjoys its first quiet week in months.\n\nIshitsukuri sends to a temple outside the city for an ordinary bowl and presents it with a straight face. Kuramochi hires six jewellers to make a branch, then tells a long story about sailing to Horai - storms, monsters, two years at sea - that would be magnificent if a single word of it were true.',
       location: 2,
     },
     {
       name: 'The fire-rat robe and the dragon jewel',
       summary:
         "Minister Abe pays a fortune for a robe that burns in the first flame it meets. Counselor Otomo puts to sea after a jewel from a dragon's neck, is nearly drowned by a storm, and comes home swearing he was the injured party.",
+      body: 'Minister Abe pays a fortune to a merchant for a robe of fire-rat skin, guaranteed against all flame. Kaguya-hime holds it to a candle. It burns - immediately, thoroughly, expensively - and the minister, the old couple agree later, burns nearly as well.\n\nCounselor Otomo actually puts to sea after a jewel from the neck of a dragon, which is more than the others attempted and exactly as wise. A storm nearly drowns him, and he comes home soaked and furious, swearing he was the injured party - as if the sea had owed him the jewel and defaulted.',
       location: 2,
     },
     {
       name: "The swallow's shell",
       summary:
         "Counselor Isonokami climbs to a swallow's nest for a shell that is not there and falls. The jewellers arrive that same week demanding payment for the branch, and every one of the five stories comes apart at once.",
+      body: 'Counselor Isonokami climbs to a swallow nest for a shell that is not there - swallows keep no shells, as anyone could have told him - and falls, and is carried home in a state that ends his suit more finally than any refusal.\n\nThat same week the six jewellers arrive demanding payment for the branch, with the bill itemised and witnessed. The voyage, the bowl, the robe, the storm, the nest: every one of the five stories comes apart at once, like five knots in the same rope, pulled together.',
       location: 0,
     },
     {
       name: "The Emperor's courtship",
       summary:
         'The Emperor of Japan hears the reports and comes himself. He is the one man who cannot be sent after an impossible object, and Kaguya-hime tells him plainly that she is not of this country - which he takes for modesty.',
+      body: "The Emperor of Japan hears the reports and comes himself - past the gate, into the house, with the ease of a man for whom all doors are already open. He is the one man who cannot be sent after an impossible object. There is nowhere to send him that he does not already own.\n\n'I am not of this country,' Kaguya-hime tells him plainly, meaning it literally, meaning the Moon. He takes it for modesty - the loveliest modesty he has ever heard - and loves her the more for it. She watches him misunderstand her, and grieves in advance, and says nothing further.",
       location: 0,
     },
     {
       name: 'A secret from the Moon',
       summary:
         'As the fifteenth night of the eighth month approaches she cannot stop weeping. She finally tells the old couple where she is from and that her people are coming for her, and that nothing anyone does can stop it.',
+      body: 'As the fifteenth night of the eighth month approaches, she cannot stop weeping. She weeps at her sewing, at her meals, on the moonlit veranda where she sits watching the Moon the way one watches a road.\n\nAt last she tells the old couple everything: where she is from, that her people are coming for her on the fifteenth night, and that nothing anyone does - no soldiers, no prayers, no locked doors - can stop it. They hold her hands and weep with her, and the Moon goes on rising, punctual and pitiless.',
       location: 2,
     },
     {
       name: 'The robe of feathers',
       summary:
         "Two thousand of the Emperor's soldiers surround the house. A shining retinue descends anyway, the soldiers cannot lift their arms, and Kaguya-hime leaves a letter and a vial before the robe is placed on her shoulders and she forgets them all.",
+      body: 'Two thousand soldiers of the Emperor surround the house on the appointed night, armed and earnest and entirely beside the point. A shining retinue descends from the sky anyway, and the soldiers find they cannot lift their arms, and stand like a field of statues holding sticks.\n\nKaguya-hime leaves a letter and a small vial for the Emperor, and embraces the old couple one last time. Then the robe of feathers is placed on her shoulders - and the forgetting comes with it, the way sleep comes with lying down, and she rises without looking back, because she no longer remembers what looking back is for.',
       location: 1,
     },
     {
       name: 'The mountain of immortality',
       summary:
         'The Emperor reads the letter and refuses the elixir: eternity without her is the one thing he wants least. He sends both to be burned on the peak nearest the sky, and the smoke has not stopped rising from Mount Fuji since.',
+      body: 'The Emperor reads the letter, and holds the vial of the elixir of immortality for a long time without opening it. Eternity without her, he understands, is the one thing he wants least - an endless reign of the fifteenth night, forever.\n\nHe sends both - the letter and the vial - to be burned on the peak nearest the sky, where the smoke can climb closest to where she went. And the smoke has not stopped rising from Mount Fuji since, which is either a legend or a fact, and either way is true.',
       location: 4,
     },
   ],
@@ -297,72 +309,84 @@ const princessKaguyaPt: StoryNarrative = {
       name: 'Uma criança no bambu',
       summary:
         'Cortando bambu como em todos os dias de sua vida, Taketori no Okina encontra um talo brilhando por dentro. Dentro dele há uma criança não maior que sua mão, e ele a leva para casa nas palmas.',
+      body: 'Taketori no Okina corta bambu todos os dias de sua vida, e o bambu jamais o surpreendeu - até a manhã em que um talo brilha por dentro, aceso como um lampião sem chama. Ele o abre com mãos que de repente esqueceram o ofício.\n\nDentro há uma criança não maior que sua mão, brilhando um pouco ela mesma, olhando para ele com total compostura. Ele a leva para casa nas palmas, andando como se anda com uma xícara cheia, e nada conta à esposa até que ela está na porta vendo com os próprios olhos.',
       location: 3,
     },
     {
       name: 'Crescendo como bambu na primavera',
       summary:
         'A criança chega à idade adulta em três meses. Nem o velho nem a esposa perguntam por quê; querem uma filha há quarenta anos e não estão inclinados a interrogar uma.',
+      body: 'A criança cresce como bambu cresce: visivelmente, de noite, um palmo enquanto se desvia o olhar. Em três meses é uma mulher feita, graciosa e grave, com maneiras que ninguém lhe ensinou e um olhar que parece medir distâncias que mais ninguém vê.\n\nNem o velho nem a esposa perguntam por quê. Querem uma filha há quarenta anos, e o querer ensina sua própria etiqueta: não se interroga um presente. Eles a tratam como filha em tudo menos no perguntar, e ela deixa, gentilmente.',
       location: 1,
     },
     {
       name: 'Ouro em cada talo',
       summary:
         'Desde o dia em que a encontra, todo talo que o velho corta tem ouro dentro. A casa enriquece sem que ninguém tenha decidido enriquecer, e é o primeiro indício de que ela é sustentada de outro lugar.',
+      body: 'Desde o dia em que a encontra, todo talo que o velho corta tem ouro dentro - não ouro como prêmio, mas ouro como salário, regular e suficiente. A casa enriquece como rios alargam: sem que ninguém decida.\n\nO velho diz a si mesmo que é sorte, e a esposa diz a si mesma que é recompensa, e nenhum dos dois diz o que ambos notam: que o ouro paga exatamente a vida de que a menina precisa. É o primeiro indício de que ela é sustentada de outro lugar - e o mais educado.',
       location: 3,
     },
     {
       name: 'O nome Kaguya-hime',
       summary:
         'A festa de nomeação dura três dias, e ela recebe o nome de Princesa Radiante do Bambu Flexível. A notícia de sua beleza sai da casa com os convidados e não para mais de viajar.',
+      body: 'A festa de nomeação dura três dias, com música e saquê e mais convidados do que a casa foi feita para conter. Ela recebe o nome de Kaguya-hime - Princesa Radiante do Bambu Flexível - e o nome lhe serve como a luz serve ao lampião.\n\nA notícia de sua beleza sai da casa com os convidados, viajando em cada palanquim e contada em cada portão, e não para mais de viajar. No inverno chega à capital. Na primavera chega a todos. A beleza, anunciada com tal afinco, é uma espécie de clima.',
       location: 1,
     },
     {
       name: 'Cinco pretendentes no portão',
       summary:
         'Cinco nobres acampam diante da casa e se recusam a ir embora. Kaguya-hime não quer nenhum deles e não vai dizê-lo, porque a recusa recairia sobre o velho, que precisa conviver com essas famílias.',
+      body: 'Cinco nobres chegam e acampam diante da casa e se recusam a ir embora: príncipes e ministros e conselheiros, cada um certo de ser a exceção. Mandam poemas. Mandam presentes. Mandam uns aos outros olhares pontudos por cima da cerca.\n\nKaguya-hime não quer nenhum deles, e não vai dizê-lo - não por bondade com os pretendentes, mas por cuidado com o velho, que precisa continuar vivendo ao lado dessas famílias depois das recusas. Então sorri, agradece os poemas, e trata de recusar todos sem recusar um único.',
       location: 0,
     },
     {
       name: 'A tigela de pedra e o ramo enjoiado',
       summary:
         'Ela impõe a cada pretendente um tesouro a buscar. O príncipe Ishitsukuri manda vir uma tigela comum de um templo fora da capital; o príncipe Kuramochi encomenda um ramo a seis joalheiros e conta uma longa história sobre navegar até o Monte Horai.',
+      body: 'A cada pretendente ela impõe um tesouro: ao príncipe Ishitsukuri, a tigela de pedra do Buda; ao príncipe Kuramochi, o ramo enjoiado do Monte Horai. Objetos impossíveis, pedidos educadamente. Os pretendentes se curvam e partem, e a casa desfruta sua primeira semana quieta em meses.\n\nIshitsukuri manda vir de um templo fora da capital uma tigela comum e a apresenta com cara séria. Kuramochi contrata seis joalheiros para fazer um ramo, e então conta uma longa história sobre navegar até Horai - tempestades, monstros, dois anos no mar - que seria magnífica se uma palavra dela fosse verdade.',
       location: 2,
     },
     {
       name: 'O manto de rato-de-fogo e a joia do dragão',
       summary:
         'O ministro Abe paga uma fortuna por um manto que queima na primeira chama que encontra. O conselheiro Otomo faz-se ao mar atrás de uma joia do pescoço de um dragão, quase se afoga numa tempestade e volta jurando que a vítima foi ele.',
+      body: 'O ministro Abe paga uma fortuna a um mercador por um manto de pele de rato-de-fogo, garantido contra toda chama. Kaguya-hime o segura junto a uma vela. Ele queima - de imediato, por completo, caramente - e o rosto do ministro, concordarão os velhos depois, queima quase tão bem.\n\nO conselheiro Otomo de fato se faz ao mar atrás de uma joia do pescoço de um dragão, o que é mais do que os outros tentaram e exatamente tão sensato. Uma tempestade quase o afoga, e ele volta encharcado e furioso, jurando que a vítima foi ele - como se o mar lhe devesse a joia e tivesse dado o calote.',
       location: 2,
     },
     {
       name: 'A concha da andorinha',
       summary:
         'O conselheiro Isonokami sobe até um ninho de andorinha atrás de uma concha que não está lá, e cai. Os joalheiros chegam naquela mesma semana cobrando o pagamento do ramo, e as cinco histórias desmoronam de uma vez.',
+      body: 'O conselheiro Isonokami sobe até um ninho de andorinha atrás de uma concha que não está lá - andorinhas não guardam conchas, como qualquer um poderia ter lhe dito - e cai, e é levado para casa num estado que encerra sua corte mais definitivamente que qualquer recusa.\n\nNaquela mesma semana os seis joalheiros chegam cobrando o pagamento do ramo, com a conta detalhada e testemunhada. A viagem de Kuramochi, a tigela de Ishitsukuri, o manto de Abe, a tempestade de Otomo, o ninho de Isonokami: as cinco histórias desmoronam de uma vez, como cinco nós na mesma corda, puxados juntos.',
       location: 0,
     },
     {
       name: 'A corte do Imperador',
       summary:
         'O Imperador do Japão ouve os relatos e vem pessoalmente. É o único homem que não pode ser mandado atrás de um objeto impossível, e Kaguya-hime lhe diz com todas as letras que não é deste país - o que ele toma por modéstia.',
+      body: 'O Imperador do Japão ouve os relatos e vem pessoalmente - portão adentro, casa adentro, com o desembaraço de um homem para quem todas as portas já estão abertas. É o único homem que não pode ser mandado atrás de um objeto impossível. Não há para onde mandá-lo que ele já não possua.\n\n- Não sou deste país - diz-lhe Kaguya-hime com todas as letras, querendo dizer literalmente, querendo dizer a Lua. Ele toma por modéstia - a mais linda modéstia que já ouviu - e a ama ainda mais por isso. Ela o observa entendê-la mal, e sofre de antemão, e nada mais diz.',
       location: 0,
     },
     {
       name: 'Um segredo da Lua',
       summary:
         'Com a aproximação da décima quinta noite do oitavo mês, ela não consegue parar de chorar. Enfim conta ao casal de velhos de onde veio, que seu povo virá buscá-la, e que nada que alguém faça poderá impedir.',
+      body: 'Com a aproximação da décima quinta noite do oitavo mês, ela não consegue parar de chorar. Chora na costura, nas refeições, na varanda ao luar onde se senta observando a Lua como se observa uma estrada.\n\nEnfim conta tudo ao casal de velhos: de onde veio, que seu povo virá buscá-la na décima quinta noite, e que nada que alguém faça - nem soldados, nem preces, nem portas trancadas - poderá impedir. Eles seguram suas mãos e choram com ela, e a Lua segue nascendo, pontual e impiedosa.',
       location: 2,
     },
     {
       name: 'O manto de plumas',
       summary:
         'Dois mil soldados do Imperador cercam a casa. Uma comitiva luminosa desce assim mesmo, os soldados não conseguem erguer os braços, e Kaguya-hime deixa uma carta e um frasco antes que o manto lhe seja posto sobre os ombros e ela esqueça todos eles.',
+      body: 'Dois mil soldados do Imperador cercam a casa na noite marcada, armados e sérios e inteiramente fora de questão. Uma comitiva luminosa desce do céu assim mesmo, e os soldados descobrem que não conseguem erguer os braços, e ficam como um campo de estátuas segurando gravetos.\n\nKaguya-hime deixa uma carta e um pequeno frasco para o Imperador, e abraça o casal de velhos uma última vez. Então o manto de plumas lhe é posto sobre os ombros - e o esquecimento vem com ele, como o sono vem com o deitar, e ela sobe sem olhar para trás, porque já não lembra para que serve olhar para trás.',
       location: 1,
     },
     {
       name: 'A montanha da imortalidade',
       summary:
         'O Imperador lê a carta e recusa o elixir: a eternidade sem ela é a última coisa que quer. Manda queimar ambos no pico mais próximo do céu, e a fumaça não parou de subir do Monte Fuji desde então.',
+      body: 'O Imperador lê a carta, e segura o frasco do elixir da imortalidade por um longo tempo sem abri-lo. A eternidade sem ela, ele entende, é a última coisa que quer - um reinado sem fim da décima quinta noite, para sempre.\n\nEle manda ambos - a carta e o frasco - serem queimados no pico mais próximo do céu, onde a fumaça pode subir para o mais perto de onde ela foi. E a fumaça não parou de subir do Monte Fuji desde então, o que é ou uma lenda ou um fato, e de todo jeito é verdade.',
       location: 4,
     },
   ],

@@ -18,7 +18,7 @@ import SeeAlsoManager, {
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { TFunction } from 'i18next';
-import React, { type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-native';
 import type { CharacterSelect } from '../../db/schemas/characters';
 import type { ModeSelect } from '../../db/schemas/modes';
@@ -170,9 +170,6 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
       description={formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -182,6 +179,9 @@ export function CharacterFormContent(props: CharacterFormContentProps) {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

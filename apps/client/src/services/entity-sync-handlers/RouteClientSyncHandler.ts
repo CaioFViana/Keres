@@ -1,13 +1,13 @@
 import type { CreateStoryUpdate, DeleteStoryUpdate, Route, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class RouteClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'Route';
-  private dbInstance: AppDrizzleClient | null = null;
-  setDb(dbInstance: AppDrizzleClient) {
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction) {
     this.dbInstance = dbInstance;
   }
   private get db() {
@@ -33,6 +33,7 @@ export class RouteClientSyncHandler implements ClientSyncEntityHandler {
       .set({
         ...changes,
         updatedAt: new Date(),
+        createdAt: changes.createdAt ? new Date(changes.createdAt) : undefined,
         deletedAt: changes.deletedAt ? new Date(changes.deletedAt) : undefined,
       })
       .where(eq(schema.routes.id, update.id));

@@ -1,18 +1,62 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, Platform, StyleSheet, View } from 'react-native';
+import { useGalleryMediaViewerStore } from '../../../../state/galleryMediaViewerStore';
 import { useNotificationStore } from '../../../../state/notificationStore';
-import NotificationItem from '@/src/components/common/feedback/NotificationItem/NotificationItem';
+import { usePresenceMatrixViewerStore } from '../../../../state/presenceMatrixViewerStore';
+import { useShippedPacksInstallerStore } from '../../../../state/shippedPacksInstallerStore';
+import NotificationLanes from '../NotificationLanes/NotificationLanes';
 
 const NotificationPopup = () => {
   const { currentNotifications } = useNotificationStore();
+  // A fullscreen overlay draws the lanes itself, as ordinary children of its own Modal - on iOS
+  // a second root-level Modal cannot present while another one is open (shared presenter), so
+  // the root host standing down is what keeps exactly one toast visible instead of two, or none.
+  // (A toast mid-flight re-slides when its host switches - a remount, same content and lane.)
+  // One subscription per line: hooks must all run on every render, and `||` would
+  // short-circuit the calls.
+  const galleryOpen = useGalleryMediaViewerStore((state) => state.galleryId !== null);
+  const presenceOpen = usePresenceMatrixViewerStore((state) => state.request !== null);
+  const installerOpen = useShippedPacksInstallerStore((state) => state.open);
+  const fullscreenOverlayOpen = galleryOpen || presenceOpen || installerOpen;
 
+  if (fullscreenOverlayOpen) return null;
+
+  // On iOS the toasts ride a transparent passthrough Modal of their own: a fullscreen
+  // native `Modal` (an alert, a guided tour...) lives in its own native layer above the
+  // whole React tree, where no zIndex can reach - and a touch that misses every view of the
+  // modal window still falls through to the app window beneath.
+  if (Platform.OS === 'ios') {
+    // The layer only exists while a lane is occupied, and `box-none` lets every touch
+    // outside the items fall through to the app beneath. One honest trade-off: a toast
+    // already on screen stays under a Modal opened after it (it fades within seconds).
+    return (
+      <Modal
+        visible={currentNotifications.some((notification) => notification !== null)}
+        transparent
+        animationType="none"
+        onRequestClose={() => {}}
+        testID="notification-modal"
+      >
+        <View style={styles.modalContainer} pointerEvents="box-none" testID="notification-lanes">
+          <NotificationLanes />
+        </View>
+      </Modal>
+    );
+  }
+
+  // Everywhere else the plain view stays. On web the DOM stacking already favors this host
+  // (and a fixed overlay div would swallow clicks - `box-none` is not valid CSS, so the
+  // browser would drop the passthrough). On Android a fullscreen dialog consumes every touch
+  // inside its bounds - including the ones `box-none` lets fall through - so a Modal host
+  // would freeze the whole app until the toast fades; an ordinary view has no such window,
+  // and `box-none` keeps the empty areas around the items touchable. Trade-off: a toast fired
+  // while a fullscreen native Modal is open stays under it (it fades within seconds).
   return (
-    <View style={styles.container}>
-      {currentNotifications.map((notification, index) =>
-        notification ? (
-          <NotificationItem key={notification.id} notification={notification} laneIndex={index} />
-        ) : null,
-      )}
+    <View
+      style={styles.container}
+      pointerEvents={Platform.OS === 'web' ? undefined : 'box-none'}
+      testID="notification-host"
+    >
+      <NotificationLanes />
     </View>
   );
 };
@@ -27,6 +71,9 @@ const styles = StyleSheet.create({
     // but we need to ensure it's positioned correctly over other content.
     zIndex: 1000,
     alignItems: 'flex-end', // Align notifications to the right
+  },
+  modalContainer: {
+    flex: 1,
   },
 });
 

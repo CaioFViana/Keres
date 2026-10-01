@@ -24,6 +24,20 @@ export function sceneBelongsToActiveArc(
   return chapterBelongsToArc(chapter, activeArcId);
 }
 
+/**
+ * Characters, locations and items inherit arcs from their chaptered scenes. One with no
+ * chaptered link has no arc to contradict, so it stays visible like an unchaptered scene -
+ * a character created under an active arc must not vanish from its own list.
+ */
+export function entityBelongsToActiveArc(
+  arcIds: readonly string[] | undefined,
+  activeArcId: string | null,
+): boolean {
+  if (!activeArcId) return true;
+  if (!arcIds || arcIds.length === 0) return true;
+  return arcIds.includes(activeArcId);
+}
+
 export function resolveEffectiveTheme(
   storyTheme: string | null | undefined,
   arcThemeOverride: string | null | undefined,

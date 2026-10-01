@@ -78,6 +78,7 @@ export function useChapterAnchors(
   }, [chapterId, db, storyId, storyType]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `reload` only reaches setState after `await`; the rule cannot verify across the callback boundary.
     void reload();
   }, [reload]);
 

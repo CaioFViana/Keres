@@ -8,12 +8,13 @@ jest.mock('../../src/state/connectivityStore', () => ({
 }));
 
 import { AxiosError, type AxiosRequestConfig } from 'axios';
-import {
+import apiClientDefault, {
   apiBaseUrl,
   apiUrl,
   clearAllServerAuthState,
   clearServerTokenCache,
   createKeresAxiosInstance,
+  createPlainAxiosInstance,
   getServerAccessToken,
   isOfflineError,
   updateServerTokenCache,
@@ -369,6 +370,60 @@ describe('token refresh on 401', () => {
     expect(results).toHaveLength(2);
   });
 
+  it('fails every queued 401 when the refresh itself is refused', async () => {
+    updateServerTokenCache(SERVER.id, 'expirado', 'refresh-1');
+    const { instance } = buildInstance([{ status: 401 }, { status: 401 }]);
+    const provider = tokenProvider({
+      refreshAccessToken: jest.fn(async () => null),
+    });
+    instance.setTokenProvider(provider);
+
+    const results = await Promise.allSettled([
+      instance.get('/stories'),
+      instance.get('/characters'),
+    ]);
+
+    expect(provider.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(results.map((result) => result.status)).toEqual(['rejected', 'rejected']);
+    expect(provider.clearAuth).toHaveBeenCalledWith(SERVER.id);
+  });
+
+  it('surfaces the retried failure when the request keeps failing after a refresh', async () => {
+    updateServerTokenCache(SERVER.id, 'expirado', 'refresh-1');
+    const { instance } = buildInstance([
+      { status: 401 },
+      { status: 401 },
+      { status: 500, data: { message: 'Boom.' } },
+      { status: 500, data: { message: 'Boom.' } },
+    ]);
+    const provider = tokenProvider({
+      refreshAccessToken: jest.fn(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve({ accessToken: 'novo-access', refreshToken: 'novo-refresh' }),
+              10,
+            ),
+          ),
+      ),
+    });
+    instance.setTokenProvider(provider);
+
+    // The first request refreshes and its retry fails; the queued second request replays and
+    // fails the same way - both rejections carry the server's normalized error.
+    const results = await Promise.allSettled([
+      instance.get('/stories'),
+      instance.get('/characters'),
+    ]);
+
+    expect(provider.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(results).toHaveLength(2);
+    for (const result of results) {
+      expect(result.status).toBe('rejected');
+      expect(result).toMatchObject({ status: 'rejected', reason: { code: 'SERVER_ERROR_500' } });
+    }
+  });
+
   it('does not try to refresh a failed refresh call', async () => {
     updateServerTokenCache(SERVER.id, 'expirado', 'refresh-1');
     const { instance } = buildInstance([{ status: 401 }]);
@@ -454,5 +509,39 @@ describe('clearAllServerAuthState', () => {
 
   it('is a no-op for a server that was never used', () => {
     expect(() => clearAllServerAuthState(['nunca-visto'])).not.toThrow();
+  });
+});
+
+describe('request setup failures', () => {
+  it('normalizes a failure that never left the client instead of leaking the raw error', async () => {
+    const { instance } = buildInstance([]);
+    instance.defaults.adapter = async (config) => {
+      // An axios failure with neither response nor request: the request was never built.
+      throw new AxiosError('boom', undefined, config);
+    };
+    instance.setActiveServer(SERVER);
+
+    await expect(instance.get('/stories')).rejects.toMatchObject({
+      code: 'REQUEST_SETUP_ERROR',
+    });
+    expect(console.log).toHaveBeenCalledWith('API Request Setup Error:', 'boom');
+  });
+});
+
+describe('instance factories', () => {
+  it('repoints instances at a new server root and builds plain ones without interceptors', async () => {
+    const { instance, seen } = buildInstance([{ status: 200 }, { status: 200 }]);
+
+    instance.setBaseUrl('https://outro.example.com/');
+    expect(instance.defaults.baseURL).toBe('https://outro.example.com/api');
+    await instance.get('/stories');
+    expect(seen[0]?.baseURL).toBe('https://outro.example.com/api');
+
+    apiClientDefault.setBaseUrl('https://padrao.example.com/');
+    expect(apiClientDefault.defaults.baseURL).toBe('https://padrao.example.com/api');
+
+    const plain = createPlainAxiosInstance({ baseURL: 'https://plain.example.com' });
+    expect(plain.defaults.baseURL).toBe('https://plain.example.com');
+    expect((plain.interceptors.request as unknown as { handlers: unknown[] }).handlers).toEqual([]);
   });
 });

@@ -1,13 +1,16 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import MapIcon from '@/src/components/common/display/MapIcon/MapIcon';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
@@ -20,6 +23,8 @@ import { AppAlert } from '@/src/utils/AppAlert';
 
 const StoryArcListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StoryArcList');
+  const listAnchorRef = useScreenAnchor('StoryArcs', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -64,26 +69,30 @@ const StoryArcListScreen = () => {
       notify(t('arc_delete_blocked', { arc: vocab.term('Arc') }), 'error');
       return;
     }
-    AppAlert.alert(t('delete'), vocab.term('Arc'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await createStoryArcService(db).deleteArc(userId, arc.id);
-            await reload();
-          } catch (error) {
-            notify(
-              error instanceof Error
-                ? error.message
-                : t('arc_delete_blocked', { arc: vocab.term('Arc') }),
-              'error',
-            );
-          }
+    AppAlert.alert(
+      t('arc_delete_title', { arc: vocab.term('Arc') }),
+      t('arc_delete_message', { name: arc.title, arc: vocab.term('Arc') }),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await createStoryArcService(db).deleteArc(userId, arc.id);
+              await reload();
+            } catch (error) {
+              notify(
+                error instanceof Error
+                  ? error.message
+                  : t('arc_delete_blocked', { arc: vocab.term('Arc') }),
+                'error',
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const styles = StyleSheet.create({
@@ -105,7 +114,7 @@ const StoryArcListScreen = () => {
   });
 
   return (
-    <ScrollView style={styles.root}>
+    <ScrollView ref={listAnchorRef} style={styles.root}>
       <Text style={styles.intro}>{t('arcs_intro', { arc: vocab.term('Arc') })}</Text>
       {arcs.map((arc) => (
         <TouchableOpacity
@@ -113,11 +122,7 @@ const StoryArcListScreen = () => {
           style={styles.card}
           onPress={() => canEdit && navigation.navigate('StoryArcForm', { arcId: arc.id })}
         >
-          <Ionicons
-            name={(arc.icon as keyof typeof Ionicons.glyphMap) || 'library'}
-            size={22}
-            color={arc.color || colors.primary}
-          />
+          <MapIcon name={arc.icon || 'library'} size={22} color={arc.color || colors.primary} />
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{arc.title}</Text>
           </View>

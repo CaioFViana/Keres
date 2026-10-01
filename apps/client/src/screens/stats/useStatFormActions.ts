@@ -63,6 +63,7 @@ export function useStatFormActions({
           order: statsCount,
         });
       }
+      await state.clearFormDraft();
       navigation.goBack();
     } catch (error: any) {
       console.error('Failed to save stat:', error);
@@ -70,18 +71,7 @@ export function useStatFormActions({
     } finally {
       setSaving(false);
     }
-  }, [
-    navigation,
-    state.isEditing,
-    state.isPrimary,
-    state.name,
-    state.statId,
-    statServiceRef,
-    statsCount,
-    storyId,
-    t,
-    userId,
-  ]);
+  }, [navigation, state, statServiceRef, statsCount, storyId, t, userId]);
 
   return { handleSave, saving };
 }

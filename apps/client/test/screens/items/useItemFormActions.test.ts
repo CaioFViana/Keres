@@ -46,6 +46,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useItemFormActions } from '../../../src/screens/items/useItemFormActions';
 import type { ItemFormState } from '../../../src/screens/items/useItemFormState';
 import type { ItemService } from '../../../src/services/storymanagement/ItemService';
@@ -72,6 +73,8 @@ const createState = (overrides: Partial<ItemFormState> = {}): ItemFormState =>
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as ItemFormState;
 
@@ -142,41 +145,48 @@ it('coordinates persistence, notification and replacement after creation', async
   expect(navigation.dispatch).toHaveBeenCalledWith(
     expect.objectContaining({ payload: expect.objectContaining({ name: 'ItemForm' }) }),
   );
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('delegates deletion and completes it with an event and back navigation', async () => {
-  const view = await renderActions(createState({ currentItemId: 'item-1', isEditing: true }));
+  const state = createState({ currentItemId: 'item-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(itemService.deleteItem).toHaveBeenCalledWith('user-1', 'item-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(mockEmit).toHaveBeenCalledWith('item_changed', 'story-1', 'item-1');
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('does not emit success after a secondary-write failure, then recovers on retry', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('item-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('item-1');
-    return { entityId: 'item-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('item-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('item-1');
+      return { entityId: 'item-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedItemId).toHaveBeenCalledWith('item-1');
+    expect(mockEmit).toHaveBeenCalledWith('item_changed', 'story-1', 'item-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedItemId).toHaveBeenCalledWith('item-1');
-  expect(mockEmit).toHaveBeenCalledWith('item_changed', 'story-1', 'item-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });

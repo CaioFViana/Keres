@@ -7,11 +7,10 @@ interface SyncConflictState {
   conflicts: PendingConflict[];
   /** The conflict opened in the field-diff drill-in. `null` when none is open. */
   selectedConflictId: string | null;
-  isVisible: boolean;
   isResolving: boolean;
+  /** Story scope the loaded list was read with; reloads after an action preserve it. */
+  lastScope: string | undefined;
   refresh: (db: AppDrizzleClient, storyId?: string) => Promise<void>;
-  open: () => void;
-  close: () => void;
   selectConflict: (id: string) => void;
   clearSelection: () => void;
   keepLocal: (
@@ -30,19 +29,26 @@ interface SyncConflictState {
   reset: () => void;
 }
 
+// Refreshes overlap in practice (a resolve lands while a sync event fires another): without a
+// generation the slower one wins and the list shows a stale scope. `reset` also invalidates,
+// so an in-flight load cannot repopulate a cleared store.
+let refreshGeneration = 0;
+
 export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
   conflicts: [],
   selectedConflictId: null,
-  isVisible: false,
   isResolving: false,
+  lastScope: undefined,
 
-  reset: () =>
+  reset: () => {
+    refreshGeneration += 1;
     set({
       conflicts: [],
       selectedConflictId: null,
-      isVisible: false,
       isResolving: false,
-    }),
+      lastScope: undefined,
+    });
+  },
 
   /**
    * It only reloads the list - it never opens the screen by itself. A conflict stalls that entity's
@@ -50,17 +56,15 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
    * point (the banner on the Dashboard) is what decides when to show this.
    */
   refresh: async (db, storyId) => {
+    const generation = ++refreshGeneration;
     try {
       const conflicts = await createSyncConflictService(db).getPendingConflicts(storyId);
-      set({ conflicts });
+      if (generation !== refreshGeneration) return;
+      set({ conflicts, lastScope: storyId });
     } catch (error) {
       console.log('useSyncConflictStore: failed to load pending conflicts.', error);
     }
   },
-
-  open: () => set({ isVisible: true }),
-
-  close: () => set({ isVisible: false, selectedConflictId: null }),
 
   selectConflict: (id) => set({ selectedConflictId: id }),
 
@@ -78,7 +82,9 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
         selectedConflictId:
           state.selectedConflictId === conflictId ? null : state.selectedConflictId,
       }));
-      await get().refresh(db);
+      // Preserve the loaded scope: an unscoped reload would flood the list (and the banner
+      // count) with other stories' conflicts.
+      await get().refresh(db, get().lastScope);
     }
   },
 
@@ -94,7 +100,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
         selectedConflictId:
           state.selectedConflictId === conflictId ? null : state.selectedConflictId,
       }));
-      await get().refresh(db);
+      await get().refresh(db, get().lastScope);
     }
   },
 
@@ -114,7 +120,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
         selectedConflictId:
           state.selectedConflictId === conflictId ? null : state.selectedConflictId,
       }));
-      await get().refresh(db);
+      await get().refresh(db, get().lastScope);
     }
   },
 
@@ -128,7 +134,7 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
         selectedConflictId:
           state.selectedConflictId === conflictId ? null : state.selectedConflictId,
       }));
-      await get().refresh(db);
+      await get().refresh(db, get().lastScope);
     }
   },
 }));

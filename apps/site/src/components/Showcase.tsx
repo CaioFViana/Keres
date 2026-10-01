@@ -38,9 +38,9 @@ export function Showcase() {
                   <h3>{t(`showcase.items.${screen.id}.title`)}</h3>
                   <p>{t(`showcase.items.${screen.id}.body`)}</p>
                 </figcaption>
-                {/* Continua sendo um link para o arquivo: quem abre em nova aba, copia o
-                  endereço ou navega pelo teclado espera isso. O clique comum, esse, abre a
-                  foto ampliada sem tirar ninguém da página. */}
+                {/* Still a link to the file: whoever opens it in a new tab, copies the
+                  address, or navigates by keyboard expects that. The ordinary click, though,
+                  opens the enlarged photo without taking anyone off the page. */}
                 <a
                   className="showcase-window"
                   href={source}

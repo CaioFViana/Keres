@@ -2,7 +2,6 @@ import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { Effect } from '@keres/shared/entities/Effect';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,

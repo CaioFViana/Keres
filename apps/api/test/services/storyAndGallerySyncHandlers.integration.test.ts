@@ -26,7 +26,7 @@ beforeEach(async () => {
 });
 
 describe('story and gallery sync entity handlers', () => {
-  it('creates a story at the operation time and reorders every chapter atomically', async () => {
+  it('creates a story at the operation time and chapters that carry their ranks', async () => {
     const stories = new StorySyncHandler();
     const chapters = new ChapterSyncHandler();
     const storyId = newId();
@@ -81,24 +81,20 @@ describe('story and gallery sync entity handlers', () => {
 
     const current = await stories.findByIdOrThrow(storyId);
     expect(current.createdAt).toEqual(new Date(operationTime));
-    await stories.update(
+    // The handler stores the rank it is given; the push derives the numbers from it afterwards.
+    await chapters.create(
       userId,
       storyId,
-      {
-        type: 'reorder',
-        entity: 'Story',
-        id: storyId,
-        version: 1,
-        reorderItems: [
-          { id: firstChapterId, newIndex: 2 },
-          { id: secondChapterId, newIndex: 1 },
-        ],
-      } as any,
-      current,
+      create('Chapter', newId(), {
+        name: 'Terceiro',
+        index: 3,
+        rank: 'a0V',
+        summary: null,
+        isFavorite: false,
+        extraNotes: null,
+      }),
     );
-    expect(await chapters.findByIdOrThrow(firstChapterId)).toMatchObject({ index: 2, version: 2 });
-    expect(await chapters.findByIdOrThrow(secondChapterId)).toMatchObject({ index: 1, version: 2 });
-    expect(await stories.findByIdOrThrow(storyId)).toMatchObject({ version: 2 });
+    expect((await chapters.findByIdOrThrow(firstChapterId)).version).toBe(1);
   });
 
   it('validates gallery MIME consistency on create and update', async () => {

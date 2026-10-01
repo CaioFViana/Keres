@@ -11,7 +11,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import type { FavoriteFilterState } from '../../types/entityFilters';
@@ -148,22 +149,25 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
     ): Promise<ChoiceSelect> {
       await assertStoryIsWritable(db, choiceData.storyId);
       const newChoice = prepareNewEntityData<ChoiceInsert>(choiceData);
-      const result = await db.insert(choices).values(newChoice).returning().get();
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         newChoice.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        newChoice.storyId,
-        userIdToLog,
-        'create',
-        'Choice',
-        newChoice.id,
-        { ...result },
-      );
+      const result = await runLocalWrite(db, newChoice.storyId, () => {
+        const inserted = db.insert(choices).values(newChoice).returning().get();
+        recordLocalOperationSync(
+          db,
+          newChoice.storyId,
+          userIdToLog,
+          'create',
+          'Choice',
+          newChoice.id,
+          { ...inserted },
+        );
+        return inserted;
+      });
       entityEventEmitter.emit('choice_changed', newChoice.storyId, newChoice.id);
       return result;
     },
@@ -187,28 +191,30 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
       delete changes.updatedAt;
       if (Object.keys(changes).length === 0) return originalChoice;
 
-      await db
-        .update(choices)
-        .set({ ...choiceData, updatedAt: new Date(), version: sql`${choices.version} + 1` })
-        .where(eq(choices.id, choiceId));
-      const updatedChoice = await db.query.choices.findFirst({ where: eq(choices.id, choiceId) });
-      if (!updatedChoice) throw new Error(`Failed to retrieve updated choice ${choiceId}.`);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedChoice.storyId,
+        originalChoice.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedChoice.storyId,
-        userIdToLog,
-        'update',
-        'Choice',
-        choiceId,
-        getChangedFields(originalChoice, updatedChoice),
-      );
+      const updatedChoice = await runLocalWrite(db, originalChoice.storyId, () => {
+        db.update(choices)
+          .set({ ...choiceData, updatedAt: new Date(), version: sql`${choices.version} + 1` })
+          .where(eq(choices.id, choiceId))
+          .run();
+        const updated = db.select().from(choices).where(eq(choices.id, choiceId)).get();
+        if (!updated) throw new Error(`Failed to retrieve updated choice ${choiceId}.`);
+        recordLocalOperationSync(
+          db,
+          updated.storyId,
+          userIdToLog,
+          'update',
+          'Choice',
+          choiceId,
+          getChangedFields(originalChoice, updated),
+        );
+        return updated;
+      });
       entityEventEmitter.emit('choice_changed', updatedChoice.storyId, updatedChoice.id);
       return updatedChoice;
     },
@@ -217,42 +223,37 @@ export const createChoiceService = (db: AppDrizzleClient): ChoiceService => {
       const choiceToDelete = await db.query.choices.findFirst({ where: eq(choices.id, choiceId) });
       if (!choiceToDelete) return;
       await assertStoryIsWritable(db, choiceToDelete.storyId);
-      const [updatedChoice] = await db
-        .update(choices)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${choices.version} + 1`,
-        })
-        .where(eq(choices.id, choiceId))
-        .returning({
-          id: choices.id,
-          storyId: choices.storyId,
-          isDeleted: choices.isDeleted,
-          version: choices.version,
-        });
-      if (!updatedChoice)
-        throw new Error(`Failed to delete choice ${choiceId} or choice not found.`);
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updatedChoice.storyId,
+        choiceToDelete.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updatedChoice.storyId,
-        userIdToLog,
-        'delete',
-        'Choice',
-        choiceId,
-        {
-          id: updatedChoice.id,
-          isDeleted: updatedChoice.isDeleted,
-          version: updatedChoice.version,
-        },
-      );
+      const updatedChoice = await runLocalWrite(db, choiceToDelete.storyId, () => {
+        const deleted = db
+          .update(choices)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${choices.version} + 1`,
+          })
+          .where(eq(choices.id, choiceId))
+          .returning({
+            id: choices.id,
+            storyId: choices.storyId,
+            isDeleted: choices.isDeleted,
+            version: choices.version,
+          })
+          .get();
+        if (!deleted) throw new Error(`Failed to delete choice ${choiceId} or choice not found.`);
+        recordLocalOperationSync(db, deleted.storyId, userIdToLog, 'delete', 'Choice', choiceId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
+      });
       entityEventEmitter.emit('choice_changed', updatedChoice.storyId, updatedChoice.id);
     },
 

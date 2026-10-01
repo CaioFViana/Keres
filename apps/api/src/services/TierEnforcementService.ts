@@ -1,6 +1,15 @@
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
+import { ulid } from 'ulid';
 import { db } from '../db';
-import { galleries, registrationSettings, stories, tiers, users } from '../db/schema';
+import {
+  galleries,
+  mediaBlobs,
+  publicationLog,
+  registrationSettings,
+  stories,
+  tiers,
+  users,
+} from '../db/schema';
 import { syncService } from './SyncService';
 
 /**
@@ -66,8 +75,62 @@ export class TierEnforcementService {
     }
   }
 
+  /**
+   * Refuses a publication once the user has made their plan's number of them in the last 24 hours.
+   * A rolling window, not a calendar day: it needs no time zone and does not hand out a fresh
+   * allowance at midnight. Counted from `publication_log`, which deleting a version does not touch.
+   */
+  async assertCanPublish(userId: string, now = new Date()): Promise<void> {
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || tier.maxPublicationsPerDay === null) {
+      return;
+    }
+    const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(publicationLog)
+      .where(and(eq(publicationLog.userId, userId), gte(publicationLog.createdAt, since)));
+    if (total >= tier.maxPublicationsPerDay) {
+      throw new TierLimitExceededError(
+        `Publication limit reached for your plan (${tier.maxPublicationsPerDay} per day). Try again later.`,
+      );
+    }
+  }
+
+  /**
+   * Notes a publication for the daily count, and drops entries too old to matter (a day is all the
+   * window ever looks at; the second one is slack). Runs in the publishing transaction, so a
+   * publication that fails is not counted.
+   */
+  async recordPublication(
+    runner: Pick<typeof db, 'insert' | 'delete'>,
+    userId: string,
+    storyId: string,
+    now = new Date(),
+  ): Promise<void> {
+    await runner.insert(publicationLog).values({ id: ulid(), userId, storyId, createdAt: now });
+    await runner
+      .delete(publicationLog)
+      .where(lt(publicationLog.createdAt, new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)));
+  }
+
+  /**
+   * Whose plan a story's content counts against: its owner's, whoever is writing. Charging the
+   * acting user let a writer's entities and bytes count toward nobody's total - a collaborator
+   * account was all it took to go past the owner's ceiling. Falls back to the acting user for a
+   * story that does not exist yet.
+   */
+  private async payerOf(actingUserId: string, storyId: string): Promise<string> {
+    const story = await db.query.stories.findFirst({
+      where: eq(stories.id, storyId),
+      columns: { userId: true },
+    });
+    return story?.userId ?? actingUserId;
+  }
+
   /** `storyId` is the story the entity is being created in; used for the per-story ceiling. */
-  async assertCanCreateEntity(userId: string, storyId: string): Promise<void> {
+  async assertCanCreateEntity(actingUserId: string, storyId: string): Promise<void> {
+    const userId = await this.payerOf(actingUserId, storyId);
     const tier = await this.getEffectiveTier(userId);
     if (!tier || (tier.maxEntitiesPerStory === null && tier.maxEntitiesTotal === null)) {
       return;
@@ -108,31 +171,51 @@ export class TierEnforcementService {
   }
 
   /**
-   * It sums `galleries.sizeBytes` (not `mediaBlobs.sizeBytes`): the blob is deduplicated globally, so
-   * two stories referencing the same hash have to count the bytes once each (that is what they "use"),
-   * not once in the server's total.
+   * Storage a set of live gallery rows uses. Each row counts once per story that references it
+   * (the blob is deduplicated globally, but each story "uses" its bytes), and at the blob's TRUE
+   * size once the bytes are stored - the size a client declares in the row only stands in until
+   * then. Counting declared sizes alone let a row declare 0 bytes and upload 50 MB, over and over.
+   *
+   * Deliberately without a cast: an `::int` would overflow ("integer out of range" - Postgres does
+   * not truncate silently) past ~2.1 GB. Postgres returns an integer `sum` as a bigint (a string)
+   * and SQLite as a number, which is why `Number(...)` serves both.
    */
+  private async storageUsed(scope: { storyId: string } | { ownerId: string }): Promise<number> {
+    const size = sql<
+      string | number
+    >`coalesce(sum(coalesce(${mediaBlobs.sizeBytes}, ${galleries.sizeBytes})), 0)`;
+    const [{ used }] =
+      'storyId' in scope
+        ? await db
+            .select({ used: size })
+            .from(galleries)
+            .leftJoin(mediaBlobs, eq(mediaBlobs.hash, galleries.hash))
+            .where(and(eq(galleries.storyId, scope.storyId), eq(galleries.isDeleted, false)))
+        : await db
+            .select({ used: size })
+            .from(galleries)
+            .innerJoin(stories, eq(galleries.storyId, stories.id))
+            .leftJoin(mediaBlobs, eq(mediaBlobs.hash, galleries.hash))
+            .where(and(eq(stories.userId, scope.ownerId), eq(galleries.isDeleted, false)));
+    return Number(used);
+  }
+
+  /** Refuses `incomingBytes` more on the story, against its owner's per-story and total ceilings. */
   async assertCanUploadMedia(
-    userId: string,
+    actingUserId: string,
     storyId: string,
     incomingBytes: number,
   ): Promise<void> {
-    const tier = await this.getEffectiveTier(userId);
+    const ownerId = await this.payerOf(actingUserId, storyId);
+    const tier = await this.getEffectiveTier(ownerId);
     if (!tier || (tier.maxStorageBytesPerStory === null && tier.maxStorageBytesTotal === null)) {
       return;
     }
+    if (incomingBytes <= 0) return;
 
     if (tier.maxStorageBytesPerStory !== null) {
-      // Deliberately without a cast: an `::int` would overflow ("integer out of range" - Postgres does not
-      // truncate silently) as soon as a story's total went past ~2.1 GB, breaking every upload for it with
-      // an opaque 500. It is not hypothetical: a tier's *limit* is capped at that by the column's type, but
-      // actual usage is not. Postgres returns an integer `sum` as a bigint (a string) and SQLite as a
-      // number, which is why `Number(...)` serves both.
-      const [{ used }] = await db
-        .select({ used: sql<string | number>`coalesce(sum(${galleries.sizeBytes}), 0)` })
-        .from(galleries)
-        .where(and(eq(galleries.storyId, storyId), eq(galleries.isDeleted, false)));
-      if (Number(used) + incomingBytes > tier.maxStorageBytesPerStory) {
+      const used = await this.storageUsed({ storyId });
+      if (used + incomingBytes > tier.maxStorageBytesPerStory) {
         throw new TierLimitExceededError(
           `Storage limit for this story reached for your plan (${tier.maxStorageBytesPerStory} bytes).`,
         );
@@ -140,17 +223,59 @@ export class TierEnforcementService {
     }
 
     if (tier.maxStorageBytesTotal !== null) {
-      const [{ used }] = await db
-        .select({ used: sql<string | number>`coalesce(sum(${galleries.sizeBytes}), 0)` })
-        .from(galleries)
-        .innerJoin(stories, eq(galleries.storyId, stories.id))
-        .where(and(eq(stories.userId, userId), eq(galleries.isDeleted, false)));
-      if (Number(used) + incomingBytes > tier.maxStorageBytesTotal) {
+      const used = await this.storageUsed({ ownerId });
+      if (used + incomingBytes > tier.maxStorageBytesTotal) {
         throw new TierLimitExceededError(
           `Total storage limit reached for your plan (${tier.maxStorageBytesTotal} bytes).`,
         );
       }
     }
+  }
+
+  /**
+   * The upload of a blob's bytes: only for a hash some live gallery row of this story references
+   * (the client synchronizes the metadata first), charged at the uploaded size in place of what
+   * those rows declared. Unreferenced uploads were bytes no ledger ever counted.
+   */
+  async assertCanStoreBlob(
+    actingUserId: string,
+    storyId: string,
+    hash: string,
+    sizeBytes: number,
+  ): Promise<void> {
+    const referencing = await db
+      .select({ sizeBytes: galleries.sizeBytes })
+      .from(galleries)
+      .where(
+        and(
+          eq(galleries.storyId, storyId),
+          eq(galleries.hash, hash),
+          eq(galleries.isDeleted, false),
+        ),
+      );
+    if (referencing.length === 0) {
+      throw new BlobNotReferencedError(hash);
+    }
+    const stored = await db.query.mediaBlobs.findFirst({
+      where: eq(mediaBlobs.hash, hash),
+      columns: { hash: true },
+    });
+    // Already stored: the ledger counts its true size for these rows already.
+    if (stored) return;
+    const declared = referencing.reduce((sum, row) => sum + row.sizeBytes, 0);
+    await this.assertCanUploadMedia(
+      actingUserId,
+      storyId,
+      referencing.length * sizeBytes - declared,
+    );
+  }
+}
+
+/** An upload of bytes no media file of the story refers to. */
+export class BlobNotReferencedError extends Error {
+  constructor(hash: string) {
+    super(`No media file of this story refers to ${hash}; synchronize its metadata first.`);
+    this.name = 'BlobNotReferencedError';
   }
 }
 

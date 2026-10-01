@@ -53,6 +53,18 @@ describe('new response schemas do not break DB-independent error branches', () =
     await expectCleanUnauthorized('GET', `/story-permissions/story/${ulid}`);
   });
 
+  it('story invitation routes', async () => {
+    const ulid = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+    await expectCleanUnauthorized('GET', '/friend/story-invitations/');
+    await expectCleanUnauthorized('GET', `/friend/story-invitations/story/${ulid}`);
+    await expectCleanUnauthorized('POST', '/friend/story-invitations/', {
+      headers: { ...badAuth, 'content-type': 'application/json' },
+      body: JSON.stringify({ storyId: ulid, targetUserId: ulid, permissionType: 'reader' }),
+    });
+    await expectCleanUnauthorized('PUT', `/friend/story-invitations/${ulid}/accept`);
+    await expectCleanUnauthorized('DELETE', `/friend/story-invitations/${ulid}`);
+  });
+
   it('story routes', async () => {
     await expectCleanUnauthorized('GET', '/stories/s/export');
     // POST /import's body (FullStoryExportSchema) is large, pre-existing, and untouched by

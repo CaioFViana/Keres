@@ -73,6 +73,7 @@ export * from './schemas/NoteSchemas';
 export * from './schemas/NoteRelationSchemas';
 export * from './schemas/SceneSchemas';
 export * from './schemas/SeeAlsoRelationSchemas';
+export * from './schemas/StoryInvitationSchemas';
 export * from './schemas/StoryPermissionSchemas';
 export * from './schemas/StatSchemas';
 export * from './schemas/StorySchemaFieldSchemas';
@@ -81,8 +82,10 @@ export * from './schemas/ChapterAnchorSchemas';
 export * from './schemas/StoryCalendarSchemas';
 export * from './schemas/StoryArcSchemas';
 export * from './schemas/BoardSchemas';
+export * from './schemas/CanvasOverlaySchemas';
 export * from './schemas/LocationMapSchemas';
 export * from './schemas/PackSchemas';
+export * from './schemas/packContentMigrations';
 export * from './schemas/SuggestionSchemas';
 export * from './schemas/TagRelationSchemas';
 export * from './schemas/TagSchemas';
@@ -142,8 +145,11 @@ export * from './metadata/SeeAlsoEntityType';
 export * from './metadata/CommentEntityType';
 export * from './metadata/entityFields';
 export * from './metadata/avatar';
+export * from './metadata/keresIcons';
 export * from './metadata/mapIcons';
 export * from './utils/attributeKey';
+export * from './utils/recoveryCode';
+export * from './utils/excerptHighlight';
 export * from './utils/attributeValueCodec';
 export * from './utils/base64';
 export * from './utils/attributeDateValue';
@@ -151,7 +157,6 @@ export * from './utils/colorUtils';
 export * from './metadata/TimingUnit';
 export * from './utils/storyCalendar';
 export * from './utils/storyZip';
-export * from './utils/syncOperationCodec';
 export * from './utils/reviveDates';
 export * from './theme/ThemeColors';
 export * from './theme/getOnColorForFill';
@@ -169,7 +174,39 @@ export * from './utils/routeValidation';
 export * from './utils/routeChronology';
 export * from './utils/storySimulation';
 export * from './utils/routeTraversal';
+export * from './rules/rank';
 export * from './rules/reorderIndices';
 export * from './rules/syncConflict';
 export * from './rules/storyExportIntegrity';
 export * from './rules/storyOwnerFields';
+// Manuscript document model: the client editor and (later) the API publisher
+// share styled runs as the source of truth, with markdown as serialization.
+export * from './manuscript/ManuscriptDocument';
+// Storage boundary with the enriched-html editor (HTML in/out, doc inside).
+export * from './manuscript/enrichedHtml';
+// Pure manuscript pipeline: sections, markdown reader, compiler, renderers and entry.
+export * from './manuscript/choiceAnnotations';
+export * from './manuscript/compile/manuscriptSections';
+export * from './manuscript/compile/export/manuscriptCompiler';
+export * from './manuscript/compile/export/manuscriptText';
+export * from './manuscript/compile/export/manuscriptDocx';
+export * from './manuscript/compile/export/manuscriptEpub';
+export * from './manuscript/compile/export/manuscriptHtml';
+export * from './manuscript/compile/export/manuscriptPdf';
+export * from './manuscript/compile/manuscriptContracts';
+export * from './manuscript/compile/manuscriptRender';
+export * from './manuscript/compile/manuscriptStyle';
+export * from './manuscript/compile/compileStoryManuscript';
+export * from './manuscript/reader/storyReader';
+// The reader's block collides with the editor model's `ManuscriptBlock`, so it
+// exports under its own name; the file itself stays as-is.
+export {
+  MANUSCRIPT_LARGE_SCENE_CHARS,
+  countManuscriptDisplayChars,
+  getManuscriptSizeStatus,
+  parseManuscriptMarkdown,
+  stripManuscriptMarkers,
+  type ManuscriptBlock as ManuscriptReaderBlock,
+  type ManuscriptInline,
+  type ManuscriptSizeStatus,
+} from './manuscript/compile/parseManuscriptMarkdown';

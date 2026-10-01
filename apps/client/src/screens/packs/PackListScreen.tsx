@@ -1,7 +1,7 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -17,12 +17,16 @@ import type { PackVisibility } from '@keres/shared';
 import type { ServerSelect } from '../../db/schema';
 import { packApiService } from '../../services/PackApiService';
 import { createServerService } from '../../services/ServerService';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { createPackService, type PackSummary } from '../../services/storymanagement/PackService';
+import { packExtrasChips } from '../../utils/packChips';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
 import { commonDetailStyleDefs, commonScreenStyleDefs } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
+import { isServerless } from '../../utils/serverless';
 
 /**
  * The packs on this device: reusable slices of a story's structure, applied when a story is created.
@@ -38,6 +42,9 @@ import { AppAlert } from '../../utils/AppAlert';
  */
 const PackListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('PackList');
+  const listAnchorRef = useScreenAnchor('Packs', 'list');
+  const actionsAnchorRef = useScreenAnchor('Packs', 'actions');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<{ navigate: (screen: string, params?: unknown) => void }>();
@@ -210,6 +217,7 @@ const PackListScreen = () => {
       pack.counts.tags > 0 && t('packs_chip_tags', { count: pack.counts.tags }),
       pack.counts.stats > 0 && t('packs_chip_stats', { count: pack.counts.stats }),
       pack.counts.hasVocabulary && t('packs_chip_vocabulary'),
+      ...packExtrasChips(pack.counts, t),
     ].filter((chip): chip is string => Boolean(chip));
 
   const renderPack = ({ item }: { item: PackSummary }) => {
@@ -242,14 +250,17 @@ const PackListScreen = () => {
           )}
         </View>
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => handleShare(item)}
-            accessibilityLabel={t('packs_share_title')}
-            disabled={busyPackId === item.id}
-          >
-            <Ionicons name="cloud-upload-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
+          {/* Sharing uploads the pack to a server; a serverless build has nowhere to send it. */}
+          {isServerless() ? null : (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleShare(item)}
+              accessibilityLabel={t('packs_share_title')}
+              disabled={busyPackId === item.id}
+            >
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.text} />
+            </TouchableOpacity>
+          )}
           {/* Re-extraction is the only way to edit a pack, and it needs the source story present. */}
           {item.sourceStoryId ? (
             <TouchableOpacity
@@ -284,48 +295,54 @@ const PackListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        contentContainerStyle={styles.content}
-        data={packs}
-        keyExtractor={(pack) => pack.id}
-        renderItem={renderPack}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.description}>{t('packs_description')}</Text>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => navigation.navigate('PackForm', {})}
-              testID="create-pack"
-            >
-              <Ionicons name="add" size={20} color={colors.onPrimary} />
-              <Text style={styles.createButtonText}>{t('packs_create')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.createButton, styles.browseButton]}
-              onPress={() => navigation.navigate('PackBrowse')}
-              testID="browse-packs"
-            >
-              <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
-              <Text style={[styles.createButtonText, { color: colors.text }]}>
-                {t('packs_browse_title')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.createButton, styles.browseButton]}
-              onPress={() => navigation.navigate('ShippedPacks')}
-              testID="shipped-packs"
-            >
-              <Ionicons name="gift-outline" size={20} color={colors.text} />
-              <Text style={[styles.createButtonText, { color: colors.text }]}>
-                {t('shipped_packs_title')}
-              </Text>
-            </TouchableOpacity>
-          </>
-        }
-        ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <FlatList
+          contentContainerStyle={styles.content}
+          data={packs}
+          keyExtractor={(pack) => pack.id}
+          renderItem={renderPack}
+          ListHeaderComponent={
+            <>
+              <Text style={styles.description}>{t('packs_description')}</Text>
+              <View ref={actionsAnchorRef} collapsable={false}>
+                <TouchableOpacity
+                  style={styles.createButton}
+                  onPress={() => navigation.navigate('PackForm', {})}
+                  testID="create-pack"
+                >
+                  <Ionicons name="add" size={20} color={colors.onPrimary} />
+                  <Text style={styles.createButtonText}>{t('packs_create')}</Text>
+                </TouchableOpacity>
+                {isServerless() ? null : (
+                  <TouchableOpacity
+                    style={[styles.createButton, styles.browseButton]}
+                    onPress={() => navigation.navigate('PackBrowse')}
+                    testID="browse-packs"
+                  >
+                    <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
+                    <Text style={[styles.createButtonText, { color: colors.text }]}>
+                      {t('packs_browse_title')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={[styles.createButton, styles.browseButton]}
+                  onPress={() => navigation.navigate('ShippedPacks')}
+                  testID="shipped-packs"
+                >
+                  <Ionicons name="gift-outline" size={20} color={colors.text} />
+                  <Text style={[styles.createButtonText, { color: colors.text }]}>
+                    {t('shipped_packs_title')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          }
+          ListEmptyComponent={<Text style={styles.emptyText}>{t('packs_empty')}</Text>}
+        />
+      </View>
       <SharePackModal
-        visible={sharingPack !== null}
+        visible={!isServerless() && sharingPack !== null}
         packName={sharingPack?.name ?? ''}
         servers={servers}
         onCancel={() => setSharingPack(null)}

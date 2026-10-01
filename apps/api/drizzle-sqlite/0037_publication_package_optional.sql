@@ -1,0 +1,1 @@
+ALTER TABLE `story_publications` ADD `package_included` integer DEFAULT true NOT NULL;

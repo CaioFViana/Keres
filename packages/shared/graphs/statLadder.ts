@@ -31,8 +31,8 @@ const EMPTY_VALUE = '—';
 export type StatNotation = 'letter' | 'number';
 
 /**
- * Ordena os degraus e garante que a escada abra no zero: sem um degrau em 0, todo valor abaixo
- * do primeiro piso ficaria fora de qualquer intervalo.
+ * Sorts the rungs and makes the ladder start at zero: without a rung at 0, every value below
+ * the first floor would fall outside every interval.
  */
 export function sortLadder(tiers: readonly StatTier[]): StatTier[] {
   const sorted = [...tiers].sort((a, b) => a.minValue - b.minValue);

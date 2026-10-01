@@ -1,7 +1,13 @@
 import type { UpdateRegistrationSettings } from '@keres/shared';
 import { count, eq } from 'drizzle-orm';
 import { db } from '../db';
-import { REGISTRATION_SETTINGS_SINGLETON_ID, registrationSettings, users } from '../db/schema';
+import {
+  REGISTRATION_SETTINGS_SINGLETON_ID,
+  registrationSettings,
+  tiers,
+  users,
+} from '../db/schema';
+import { TierNotFoundError } from './TierService';
 
 /**
  * Registration configuration is a single row (`id = 'singleton'`). Instead of requiring a separate
@@ -35,6 +41,16 @@ export class RegistrationSettingsService {
 
   async update(patch: UpdateRegistrationSettings) {
     await this.getOrCreate();
+    // Same guard as AdminUserService: a dangling default tier would fail on the foreign
+    // key here - and worse, break every later registration - so it is refused up front.
+    if (patch.defaultTierId) {
+      const tier = await db.query.tiers.findFirst({
+        where: eq(tiers.id, patch.defaultTierId),
+      });
+      if (!tier) {
+        throw new TierNotFoundError();
+      }
+    }
     const [updated] = await db
       .update(registrationSettings)
       .set({ ...patch, updatedAt: new Date() })

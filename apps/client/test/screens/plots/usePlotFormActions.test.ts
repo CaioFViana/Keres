@@ -30,6 +30,8 @@ const createState = (overrides: Partial<PlotFormState> = {}): PlotFormState =>
     setDetails: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as PlotFormState;
 
@@ -80,7 +82,8 @@ it('rejects an unnamed plot before persistence', async () => {
 });
 
 it('replaces into the edit form after creating a plot', async () => {
-  const view = await renderActions();
+  const state = createState();
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -90,14 +93,14 @@ it('replaces into the edit form after creating a plot', async () => {
     name: 'Main Plot',
     details: null,
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.replace).toHaveBeenCalledWith('PlotForm', { plotId: 'plot-1' });
   expect(navigation.goBack).not.toHaveBeenCalled();
 });
 
 it('goes back after updating an existing plot', async () => {
-  const view = await renderActions(
-    createState({ plotId: 'plot-1', isEditing: true, details: ' notes ' }),
-  );
+  const state = createState({ plotId: 'plot-1', isEditing: true, details: ' notes ' });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleSave());
 
@@ -107,17 +110,20 @@ it('goes back after updating an existing plot', async () => {
     name: 'Main Plot',
     details: 'notes',
   });
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('delegates deletion and navigates to the plots list', async () => {
-  const view = await renderActions(createState({ plotId: 'plot-1', isEditing: true }));
+  const state = createState({ plotId: 'plot-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(plotService.delete).toHaveBeenCalledWith('user-1', 'plot-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(navigation.navigate).toHaveBeenCalledWith('Plots');
 });
 

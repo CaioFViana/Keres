@@ -1,6 +1,6 @@
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -52,9 +52,13 @@ function ReorderModal<T>({
   const { colors } = useTheme();
   const [reorderedItems, setReorderedItems] = useState<T[]>([]);
 
-  useEffect(() => {
+  const [prevItems, setPrevItems] = useState<typeof items | null>(null);
+  const [prevIsVisible, setPrevIsVisible] = useState<boolean | null>(null);
+  if (items !== prevItems || isVisible !== prevIsVisible) {
+    setPrevItems(items);
+    setPrevIsVisible(isVisible);
     setReorderedItems(items);
-  }, [items, isVisible]);
+  }
 
   const moveItem = useCallback((index: number, direction: 'up' | 'down') => {
     setReorderedItems((previous) => {

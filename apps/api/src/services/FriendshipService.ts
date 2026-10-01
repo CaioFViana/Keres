@@ -61,8 +61,8 @@ export class FriendshipService {
       // either direction. Without this, two requests racing in opposite directions (A→B and
       // B→A) can both read "no existing row" before either commits and create two independent
       // rows - the unique constraint on (senderId, receiverId) only catches an exact duplicate
-      // (A→B twice), not the reverse direction. Como cada motor faz isso de um jeito, o
-      // detalhe mora em `lockUserPair`.
+      // (A→B twice), not the reverse direction. Each engine does that differently, so the
+      // detail lives in `lockUserPair`.
       await lockUserPair(tx, senderId, receiverId);
 
       // Check for an existing direct pending request (sender -> receiver)
@@ -193,8 +193,8 @@ export class FriendshipService {
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
 
-    // After declining a friend request, delete any associated story permissions
-    await storyPermissionService.deletePermissionsBetweenUsers(
+    // After declining a friend request, delete any story access and invitations between them
+    await storyPermissionService.deleteAccessBetweenUsers(
       existingFriendship.senderId,
       existingFriendship.receiverId,
     );
@@ -222,8 +222,8 @@ export class FriendshipService {
 
     await db.delete(friendships).where(eq(friendships.id, existingFriendship.id));
 
-    // After unfriending, delete any associated story permissions
-    await storyPermissionService.deletePermissionsBetweenUsers(
+    // After unfriending, delete any story access and invitations between them
+    await storyPermissionService.deleteAccessBetweenUsers(
       existingFriendship.senderId,
       existingFriendship.receiverId,
     );
@@ -261,7 +261,7 @@ export class FriendshipService {
 
       // If the status changed from FRIEND to BLACKLISTED, delete associated story permissions
       if (originalStatus === FriendStatus.FRIEND) {
-        await storyPermissionService.deletePermissionsBetweenUsers(
+        await storyPermissionService.deleteAccessBetweenUsers(
           existingFriendship.senderId,
           existingFriendship.receiverId,
         );

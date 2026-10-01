@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../../src/db';
 import { usingSqlite } from '../../src/db/dialect';
-import { users } from '../../src/db/schema';
+import { userRecoveryCodes, users } from '../../src/db/schema';
 
 /**
  * Promotes a user to admin by writing straight to the table.
@@ -20,6 +20,18 @@ export async function softDeleteUser(userId: string): Promise<void> {
     .update(users)
     .set({ isDeleted: true, deletedAt: new Date() })
     .where(eq(users.id, userId));
+}
+
+/**
+ * Removes the user row entirely, to exercise the not-found paths behind a still-valid token.
+ *
+ * Auth only verifies the JWT signature, never the row, so a token issued before the deletion
+ * still passes the gate and reaches the service - which is exactly the window these tests need.
+ * The recovery codes seeded at registration go first, since they reference the user row.
+ */
+export async function hardDeleteUser(userId: string): Promise<void> {
+  await db.delete(userRecoveryCodes).where(eq(userRecoveryCodes.userId, userId));
+  await db.delete(users).where(eq(users.id, userId));
 }
 
 /**

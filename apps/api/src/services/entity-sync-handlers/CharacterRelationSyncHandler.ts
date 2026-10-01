@@ -13,13 +13,14 @@ import {
 import { and, eq, ne } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { characterRelations, characters } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateCharacterRelationDataSchema,
   typeof PartialCharacterRelationSchema
 > {
   entityName = 'CharacterRelation';
+  readonly naturalKey = ['character1Id', 'character2Id'] as const;
 
   constructor() {
     super('id', 'version', CreateCharacterRelationDataSchema, PartialCharacterRelationSchema, {
@@ -96,7 +97,8 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingRelation) {
-      throw new Error(
+      throw duplicateOf(
+        existingRelation,
         `Conflict: CharacterRelation between ${sortedChar1Id} and ${sortedChar2Id} already exists and is not deleted.`,
       );
     }
@@ -149,7 +151,8 @@ export class CharacterRelationSyncHandler extends BaseSyncEntityHandler<
       });
 
       if (existingRelation) {
-        throw new Error(
+        throw duplicateOf(
+          existingRelation,
           `Conflict: CharacterRelation between ${newChar1Id} and ${newChar2Id} already exists and is not deleted.`,
         );
       }

@@ -5,24 +5,24 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import { seeAlsoRelations } from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'SeeAlsoRelation';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(db: AppDrizzleClient): void {
+  setDb(db: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = db;
   }
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) throw new Error('SeeAlsoRelationClientSyncHandler: database not set.');
     return this.dbInstance;
   }
 
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
+    if (update.entity !== this.entityName || !update.id) return;
     const data = update.data as SeeAlsoRelation;
     await this.db
       .insert(seeAlsoRelations)
@@ -39,7 +39,7 @@ export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler
   }
 
   async applyUpdate(_storyId: string, update: UpdateStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
+    if (update.entity !== this.entityName || !update.id || !update.changes) return;
     const changes = update.changes as Partial<SeeAlsoRelation>;
     await this.db
       .update(seeAlsoRelations)
@@ -54,7 +54,7 @@ export class SeeAlsoRelationClientSyncHandler implements ClientSyncEntityHandler
   }
 
   async applyDelete(_storyId: string, update: DeleteStoryUpdate): Promise<void> {
-    if (update.entity !== this.entityName) return;
+    if (update.entity !== this.entityName || !update.id) return;
     await this.db
       .update(seeAlsoRelations)
       .set({

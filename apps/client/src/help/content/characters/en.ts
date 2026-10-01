@@ -123,6 +123,11 @@ const page: HelpPage = {
         },
       ],
     },
+    { type: 'heading', level: 2, text: 'Trajectory' },
+    {
+      type: 'paragraph',
+      text: 'The details of a character also show a Trajectory card, closed until you open it: where the character has been, one row per stop (a scene and the place it happens in) in story order. In a branching story, choose the Route the path follows. It is worked out from the scenes the character appears in, never stored, and the same path can be drawn over a Location map.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

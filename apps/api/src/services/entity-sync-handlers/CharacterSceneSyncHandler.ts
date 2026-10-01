@@ -9,26 +9,21 @@ import { CreateCharacterSceneDataSchema, PartialCharacterSceneSchema } from '@ke
 import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { characters, characterScenes, scenes } from '../../db/schema';
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
   typeof CreateCharacterSceneDataSchema,
   typeof PartialCharacterSceneSchema
 > {
   entityName = 'CharacterScene';
+  readonly naturalKey = ['characterId', 'sceneId'] as const;
 
   constructor() {
-    super(
-      'id', // Now using a single 'id' column
-      'version',
-      CreateCharacterSceneDataSchema,
-      PartialCharacterSceneSchema,
-      {
-        storyIdColumnName: 'storyId',
-        isDeletedColumnName: 'isDeleted',
-        deletedAtColumnName: 'deletedAt',
-      },
-    );
+    super('id', 'version', CreateCharacterSceneDataSchema, PartialCharacterSceneSchema, {
+      storyIdColumnName: 'storyId',
+      isDeletedColumnName: 'isDeleted',
+      deletedAtColumnName: 'deletedAt',
+    });
   }
 
   private async validateRelatedEntities(
@@ -91,7 +86,8 @@ export class CharacterSceneSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingCharacterScene) {
-      throw new Error(
+      throw duplicateOf(
+        existingCharacterScene,
         `Conflict: CharacterScene for Character ID ${validatedData.characterId} and Scene ID ${validatedData.sceneId} already exists and is not deleted.`,
       );
     }

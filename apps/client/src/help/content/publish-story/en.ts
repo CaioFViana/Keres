@@ -8,7 +8,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'Some servers have a public page listing stories their users chose to publish. Publishing puts a frozen copy of one of your stories there, as a file anyone can download and open in their own Keres.',
+      text: 'Some servers have a public page listing stories their users chose to publish. Publishing puts a frozen copy of one of your stories there, as a file anyone can download and open in their own Keres, and optionally as a manuscript and a page to read online.',
     },
     {
       type: 'callout',
@@ -41,14 +41,57 @@ const page: HelpPage = {
       items: [
         'Open the story you want to publish on the list.',
         'Choose how the version should be named.',
+        'Choose what the version carries: the story file (.zip), the manuscript, the reading online. At least one must be on; the screen says Select at least one until it is.',
         'Decide whether it is listed publicly or hidden behind a password.',
         'Choose Create new public version.',
       ],
+    },
+    { type: 'heading', level: 2, text: 'What a version carries' },
+    {
+      type: 'table',
+      headers: ['Switch', 'What readers get'],
+      rows: [
+        [
+          'Publish the story file (.zip)',
+          'The file anyone can download and import into their own Keres. On by default.',
+        ],
+        [
+          'Attach manuscript',
+          'The prose as a document to download, in the format you pick (Word, PDF, EPUB and others), made with the same options as the device export.',
+        ],
+        [
+          'Publish the reading online',
+          'A Read online button on the story’s public page (see below).',
+        ],
+      ],
+    },
+    {
+      type: 'paragraph',
+      text: 'A version may leave the file out, for a story you only want read, not copied. The manuscript options appear as soon as either of the last two is on.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'If the server is older than your app and cannot add the manuscript or the reading, the version is still published - without them - and the screen tells you so.',
     },
     { type: 'heading', level: 2, text: 'The link' },
     {
       type: 'paragraph',
       text: 'Publishing shows you the story’s public address, and the screen keeps showing it for as long as the story stays published. That address is what you share; it does not change when you publish a new version.',
+    },
+    { type: 'heading', level: 2, text: 'Reading online' },
+    {
+      type: 'paragraph',
+      text: 'A version can carry a reading page: switch on Publish the reading online and the version gets a Read online button on the story’s public page. It is made with the same options as the manuscript (arc, scene names, typography, quotes), so a story reads the same on the page as in the file. A linear story reads as a single page with a contents index; a branching story is read one scene at a time.',
+    },
+    {
+      type: 'paragraph',
+      text: 'In a branching story, choices that need something the reader has not collected yet appear shut, without saying why; only the items the reader holds are shown, never the story’s internal flags. The reader can go back a step, see the path they took, start over, and keep saves: one automatic and as many named ones as they like. Saves stay in the reader’s own browser, separately for each version.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'The reading page is built from the story as it is when you publish. A scene no choice seems to lead to is still included, after the ones that can be reached. Text you wrote is shown as plain text: nothing in it can run.',
     },
     { type: 'heading', level: 2, text: 'Version names' },
     {
@@ -78,6 +121,11 @@ const page: HelpPage = {
       type: 'callout',
       tone: 'info',
       text: 'A password is a shared secret, not a per-person permission. Anyone you give it to can pass it on. To grant access to one specific person and be able to take it back, add them as a reader of the story instead.',
+    },
+    { type: 'heading', level: 2, text: 'Publishing limits' },
+    {
+      type: 'paragraph',
+      text: 'A server can cap how many versions one account publishes per day. When the cap is reached the screen says your plan allows no more publications today; try again in a few hours. Nothing is lost - the version simply is not created.',
     },
     { type: 'heading', level: 2, text: 'Older versions' },
     {

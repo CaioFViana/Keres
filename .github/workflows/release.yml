@@ -2,10 +2,14 @@ name: Release
 
 # Tagged releases only - a normal push to any branch never triggers this. Cut a release with:
 #   git tag v1.2.3 && git push origin v1.2.3
+# Development tags (`v1.2.3-dev1`) are excluded here - `dev-build.yml` compiles those into
+# run artifacts without creating a release. (`tags` and `tags-ignore` cannot be combined, so
+# the exclusion is a `!` pattern: order matters, the negative match must come last.)
 on:
   push:
     tags:
       - 'v*.*.*'
+      - '!v*.*.*-dev*'
 
 # If someone pushes two tags close together, don't let their release-creation steps race each
 # other (each would try to attach artifacts to a GitHub Release keyed by the same tag ref).
@@ -215,8 +219,22 @@ jobs:
           java-version: '17'
       # Belt-and-suspenders: GitHub's ubuntu-latest runners ship an Android SDK already, but
       # pin/verify it explicitly rather than relying on whatever happens to be preinstalled.
+      # packages must stay empty: the action default (tools platform-tools) installs the
+      # obsolete tools package, which Google removed from the repository - sdkmanager exits 1
+      # with a Failed to find package tools warning. The runner already ships platform-tools
+      # and the platforms/build-tools Gradle needs; the action still ensures cmdline-tools
+      # exist and accepts the SDK licenses.
       - uses: android-actions/setup-android@v4
+        with:
+          packages: ''
       - run: bun install --frozen-lockfile
+      # @shopify/react-native-skia keeps its native binaries in sibling packages and copies
+      # them into its own `libs/` in a postinstall script - which Bun skips (this repo has
+      # no `trustedDependencies`). Without this copy the Gradle build fails with "Skia
+      # prebuilt binaries not found". Local copy only, no network; the same command the
+      # Gradle error message suggests.
+      - name: Install Skia prebuilt binaries
+        run: bunx install-skia
       - run: bun scripts/ci/set-version.ts ${{ needs.version.outputs.version }}
       # `android/` is gitignored (generated, not source) - this recreates it fresh from
       # apps/client/app.json on every release build.

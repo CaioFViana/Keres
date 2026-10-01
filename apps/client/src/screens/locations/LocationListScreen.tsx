@@ -4,7 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -15,7 +15,10 @@ import {
 import LocationListItem from '@/src/components/features/list-items/LocationListItem';
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type {
@@ -25,8 +28,10 @@ import type {
 import type { LocationWithTags } from '../../services/storymanagement/LocationService';
 import { createTagService } from '../../services/storymanagement/TagService';
 import { useLocationStore } from '../../state/locationStore';
+import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type LocationsScreenNavigationProp = CompositeNavigationProp<
@@ -36,6 +41,8 @@ export type LocationsScreenNavigationProp = CompositeNavigationProp<
 
 const LocationsScreen = () => {
   useBackButtonHandler();
+  useScreenTour('LocationsStack');
+  const listAnchorRef = useScreenAnchor('Locations', 'list');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -57,8 +64,18 @@ const LocationsScreen = () => {
     changeEvent: 'location_changed',
   });
 
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const arcIdsByLocation = useEntityArcIds(storyId ?? '', 'location');
+  const visibleLocations = useMemo(
+    () =>
+      locations.filter((location: LocationWithTags) =>
+        entityBelongsToActiveArc(arcIdsByLocation.get(location.id), activeArcId),
+      ),
+    [locations, arcIdsByLocation, activeArcId],
+  );
+
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const tagService = useRef(createTagService(drizzleDb)).current;
+  const [tagService] = useState(() => createTagService(drizzleDb));
   const { canEdit } = useStoryRole(storyId);
 
   const styles = StyleSheet.create({ ...commonScreenStyleDefs(colors) });
@@ -78,6 +95,7 @@ const LocationsScreen = () => {
   }, [storyId, tagService]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchTags();
   }, [fetchTags]);
 
@@ -166,19 +184,34 @@ const LocationsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        {...listProps}
-        data={locations}
-        renderItem={memoizedRenderItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
-        filterOptions={memoizedTagFilterOptions}
-        sortOptions={memoizedSortOptions}
-        entityName="Location"
-        storyId={storyId || ''}
-        onAdvancedSearch={setStoreAdvancedSearchCriteria}
-        currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={visibleLocations}
+          renderItem={memoizedRenderItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('search_entities', { entities: term('Location', true) })}
+          filterOptions={memoizedTagFilterOptions}
+          sortOptions={memoizedSortOptions}
+          entityName="Location"
+          storyId={storyId || ''}
+          onAdvancedSearch={setStoreAdvancedSearchCriteria}
+          currentAdvancedSearchCriteria={storeAdvancedSearchCriteria}
+          emptyStateTitle={t('locations_empty_title')}
+          emptyStateMessage={t('locations_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('locations_empty_create'),
+                    onPress: () => navigation.navigate('LocationForm', { locationId: undefined }),
+                    testID: 'empty-create-location',
+                  },
+                ]
+              : []
+          }
+        />
+      </View>
     </View>
   );
 };

@@ -4,9 +4,9 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import {
   ScreenError,
   ScreenLoading,
@@ -14,6 +14,8 @@ import {
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import PlotListItem from '@/src/components/features/list-items/PlotListItem';
 import type { PlotSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -38,6 +40,8 @@ export type PlotsScreenNavigationProp = CompositeNavigationProp<
  */
 const PlotListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('PlotsStack');
+  const listAnchorRef = useScreenAnchor('Plots', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
@@ -52,11 +56,6 @@ const PlotListScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonScreenStyleDefs(colors),
-    emptyText: {
-      color: colors.textSecondary,
-      textAlign: 'center',
-      marginTop: 20,
-    },
   });
 
   useScreenHeader({
@@ -154,26 +153,41 @@ const PlotListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        data={visiblePlots}
-        renderItem={renderPlotListItem}
-        keyExtractor={(item) => item.id}
-        onSearch={setSearchQuery}
-        searchPlaceholder={t('search_plots')}
-        currentSearchTerm={searchQuery}
-        filterOptions={[]}
-        onFilterChange={() => {}}
-        selectedFilterValues={[]}
-        sortOptions={sortOptions}
-        onSortChange={setActiveSort}
-        onSortDirectionChange={setSortDirection}
-        currentSortDirection={sortDirection}
-        currentSortValue={activeSort}
-        emptyListComponent={<Text style={styles.emptyText}>{t('no_plots')}</Text>}
-        disableTagFilter
-        disableFavoriteFilter
-        isLoading={loading}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          data={visiblePlots}
+          renderItem={renderPlotListItem}
+          keyExtractor={(item) => item.id}
+          onSearch={setSearchQuery}
+          searchPlaceholder={t('search_plots')}
+          currentSearchTerm={searchQuery}
+          filterOptions={[]}
+          onFilterChange={() => {}}
+          selectedFilterValues={[]}
+          sortOptions={sortOptions}
+          onSortChange={setActiveSort}
+          onSortDirectionChange={setSortDirection}
+          currentSortDirection={sortDirection}
+          currentSortValue={activeSort}
+          entityName="Plot"
+          emptyStateTitle={t('plots_empty_title')}
+          emptyStateMessage={t('plots_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('plots_empty_create'),
+                    onPress: () => navigation.navigate('PlotForm', {}),
+                    testID: 'empty-create-plot',
+                  },
+                ]
+              : []
+          }
+          disableTagFilter
+          disableFavoriteFilter
+          isLoading={loading}
+        />
+      </View>
     </View>
   );
 };

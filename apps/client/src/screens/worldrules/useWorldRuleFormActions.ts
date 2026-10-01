@@ -126,6 +126,7 @@ export function useWorldRuleFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('worldrule_changed', storyId, savedWorldRuleId);
         AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
@@ -164,6 +165,7 @@ export function useWorldRuleFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await worldRuleServiceRef.current!.deleteWorldRule(userId, worldRuleId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('worldrule_changed', storyId, worldRuleId);
         navigation.goBack();
       },

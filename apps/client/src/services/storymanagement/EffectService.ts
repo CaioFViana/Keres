@@ -6,7 +6,8 @@ import { createULID, getChangedFields } from '../../utils/entityUtils';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -96,18 +97,19 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
         deletedAt: null,
       };
 
-      await db.insert(effects).values(newEffect).run();
-
       const userIdToLog = await getUserIdForOperation(db, serverService, newEffect.storyId, userId);
-      await recordLocalOperation(
-        db,
-        newEffect.storyId,
-        userIdToLog,
-        'create',
-        'Effect',
-        newEffect.id,
-        newEffect,
-      );
+      await runLocalWrite(db, newEffect.storyId, () => {
+        db.insert(effects).values(newEffect).run();
+        recordLocalOperationSync(
+          db,
+          newEffect.storyId,
+          userIdToLog,
+          'create',
+          'Effect',
+          newEffect.id,
+          newEffect,
+        );
+      });
 
       return newEffect;
     },
@@ -136,39 +138,42 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
       }
       await assertStoryIsWritable(db, originalEffect.storyId);
 
-      const updatedEffect = await db
-        .update(effects)
-        .set({
-          ...effectData,
-          updatedAt: new Date(),
-          version: sql`${effects.version} + 1`,
-        })
-        .where(and(eq(effects.id, id), eq(effects.isDeleted, false)))
-        .returning()
-        .get();
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        originalEffect.storyId,
+        userId,
+      );
+      const updatedEffect = await runLocalWrite(db, originalEffect.storyId, () => {
+        const updated = db
+          .update(effects)
+          .set({
+            ...effectData,
+            updatedAt: new Date(),
+            version: sql`${effects.version} + 1`,
+          })
+          .where(and(eq(effects.id, id), eq(effects.isDeleted, false)))
+          .returning()
+          .get();
 
-      if (!updatedEffect) {
-        throw new Error(`Effect with ID ${id} not found or already deleted.`);
-      }
+        if (!updated) {
+          throw new Error(`Effect with ID ${id} not found or already deleted.`);
+        }
 
-      const changes = getChangedFields(originalEffect, updatedEffect);
-      if (Object.keys(changes).length > 0) {
-        const userIdToLog = await getUserIdForOperation(
-          db,
-          serverService,
-          updatedEffect.storyId,
-          userId,
-        );
-        await recordLocalOperation(
-          db,
-          updatedEffect.storyId,
-          userIdToLog,
-          'update',
-          'Effect',
-          updatedEffect.id,
-          changes,
-        );
-      }
+        const changes = getChangedFields(originalEffect, updated);
+        if (Object.keys(changes).length > 0) {
+          recordLocalOperationSync(
+            db,
+            updated.storyId,
+            userIdToLog,
+            'update',
+            'Effect',
+            updated.id,
+            changes,
+          );
+        }
+        return updated;
+      });
 
       return updatedEffect;
     },
@@ -181,26 +186,28 @@ export const createEffectService = (db: AppDrizzleClient): EffectService => {
       }
       await assertStoryIsWritable(db, effectToDelete.storyId);
 
-      const [removed] = await db
-        .update(effects)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${effects.version} + 1`,
-        })
-        .where(eq(effects.id, id))
-        .returning({ id: effects.id, version: effects.version });
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         effectToDelete.storyId,
         userId,
       );
-      await recordLocalOperation(db, effectToDelete.storyId, userIdToLog, 'delete', 'Effect', id, {
-        id,
-        version: removed?.version,
+      await runLocalWrite(db, effectToDelete.storyId, () => {
+        const removed = db
+          .update(effects)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${effects.version} + 1`,
+          })
+          .where(eq(effects.id, id))
+          .returning({ id: effects.id, version: effects.version })
+          .get();
+        recordLocalOperationSync(db, effectToDelete.storyId, userIdToLog, 'delete', 'Effect', id, {
+          id,
+          version: removed?.version,
+        });
       });
     },
   };

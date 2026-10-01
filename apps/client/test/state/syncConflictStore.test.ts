@@ -37,24 +37,29 @@ afterEach(() => {
  * the list.
  */
 describe('refresh', () => {
-  it('loads the pending conflicts without opening the screen', async () => {
+  it('loads the pending conflicts', async () => {
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
 
     await store().refresh(db);
 
     expect(store().conflicts).toHaveLength(1);
-    expect(store().isVisible).toBe(false);
   });
 
-  it('never opens the screen on its own, even across repeated refreshes', async () => {
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
-    await store().refresh(db);
-    await store().refresh(db);
+  it('ignores a stale refresh that resolves after a newer one', async () => {
+    let resolveFirst!: (value: { id: string }[]) => void;
+    mockService.getPendingConflicts
+      .mockImplementationOnce(
+        () => new Promise<{ id: string }[]>((resolve) => void (resolveFirst = resolve)),
+      )
+      .mockResolvedValueOnce([conflict('c2')]);
 
-    mockService.getPendingConflicts.mockResolvedValue([conflict('c1'), conflict('c2')]);
-    await store().refresh(db);
+    const first = store().refresh(db);
+    const second = store().refresh(db);
+    await second;
+    resolveFirst([conflict('c1')]);
+    await first;
 
-    expect(store().isVisible).toBe(false);
+    expect(store().conflicts).toEqual([conflict('c2')]);
   });
 
   it('replaces the list wholesale, including clearing it out', async () => {
@@ -81,23 +86,6 @@ describe('refresh', () => {
     await store().refresh(db);
 
     expect(store().conflicts).toHaveLength(1);
-  });
-});
-
-describe('open and close', () => {
-  it('opens and closes as a plain toggle', () => {
-    store().open();
-    expect(store().isVisible).toBe(true);
-
-    store().close();
-    expect(store().isVisible).toBe(false);
-  });
-
-  it('clears the selected conflict when closing', () => {
-    store().selectConflict('c1');
-    store().close();
-
-    expect(store().selectedConflictId).toBeNull();
   });
 });
 
@@ -164,22 +152,106 @@ describe('resolving', () => {
 
     expect(mockService.getPendingConflicts).toHaveBeenCalled();
   });
+
+  it('keeps the server board and clones the local drawing under a new name', async () => {
+    store().selectConflict('c1');
+
+    await store().keepServerAndCloneBoard(db, 'c1', 'user-1', 'Cópia local');
+
+    expect(mockService.resolveKeepServerAndCloneBoard).toHaveBeenCalledWith(
+      'c1',
+      'user-1',
+      'Cópia local',
+    );
+    expect(mockService.getPendingConflicts).toHaveBeenCalled();
+    expect(store().selectedConflictId).toBeNull();
+    expect(store().isResolving).toBe(false);
+  });
+
+  it('lowers the resolving flag and reloads even when the clone fails', async () => {
+    mockService.resolveKeepServerAndCloneBoard.mockRejectedValueOnce(new Error('sem espaço'));
+
+    await store().keepServerAndCloneBoard(db, 'c1', 'user-1', 'Cópia local');
+
+    expect(console.log).toHaveBeenCalledWith(
+      'useSyncConflictStore: failed to clone the local board.',
+      expect.any(Error),
+    );
+    expect(store().isResolving).toBe(false);
+    expect(mockService.getPendingConflicts).toHaveBeenCalled();
+  });
+
+  it('still reloads the list after a failed dismissal', async () => {
+    mockService.dismissConflict.mockRejectedValueOnce(new Error('sem permissão'));
+
+    await store().dismiss(db, 'c1');
+
+    expect(console.log).toHaveBeenCalledWith(
+      'useSyncConflictStore: failed to dismiss conflict.',
+      expect.any(Error),
+    );
+    expect(mockService.getPendingConflicts).toHaveBeenCalled();
+  });
+});
+
+describe('preserving the loaded scope', () => {
+  beforeEach(async () => {
+    await store().refresh(db, 'story-1');
+    mockService.getPendingConflicts.mockClear();
+  });
+
+  it('reloads the same story after keeping local', async () => {
+    await store().keepLocal(db, 'c1');
+
+    expect(mockService.getPendingConflicts).toHaveBeenCalledWith('story-1');
+  });
+
+  it('reloads the same story after keeping server', async () => {
+    await store().keepServer(db, 'c1');
+
+    expect(mockService.getPendingConflicts).toHaveBeenCalledWith('story-1');
+  });
+
+  it('reloads the same story after cloning the board', async () => {
+    await store().keepServerAndCloneBoard(db, 'c1', 'user-1', 'Cópia local');
+
+    expect(mockService.getPendingConflicts).toHaveBeenCalledWith('story-1');
+  });
+
+  it('reloads the same story after dismissing', async () => {
+    await store().dismiss(db, 'c1');
+
+    expect(mockService.getPendingConflicts).toHaveBeenCalledWith('story-1');
+  });
 });
 
 describe('reset', () => {
   it('clears everything', async () => {
     mockService.getPendingConflicts.mockResolvedValue([conflict('c1')]);
-    await store().refresh(db);
+    await store().refresh(db, 'story-1');
     store().selectConflict('c1');
-    store().open();
 
     store().reset();
 
     expect(store()).toMatchObject({
       conflicts: [],
       selectedConflictId: null,
-      isVisible: false,
       isResolving: false,
+      lastScope: undefined,
     });
+  });
+
+  it('drops an in-flight refresh that resolves after the reset', async () => {
+    let resolveLoad!: (value: { id: string }[]) => void;
+    mockService.getPendingConflicts.mockImplementationOnce(
+      () => new Promise<{ id: string }[]>((resolve) => void (resolveLoad = resolve)),
+    );
+
+    const load = store().refresh(db);
+    store().reset();
+    resolveLoad([conflict('c1')]);
+    await load;
+
+    expect(store().conflicts).toEqual([]);
   });
 });

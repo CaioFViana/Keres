@@ -75,7 +75,7 @@ export class StatRelationSyncHandler extends BaseSyncEntityHandler<
     }
   }
 
-  /** Dois valores para o mesmo (personagem, modo, stat) fariam a leitura depender da ordem. */
+  /** Two values for the same (character, mode, stat) would make reads order-dependent. */
   private async assertNoDuplicateValue(
     storyId: string,
     characterId: string,

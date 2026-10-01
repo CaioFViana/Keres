@@ -12,7 +12,7 @@ import {
 import { entityFieldMetadata } from '@keres/shared/metadata/entityFields';
 import type { RouteProp } from '@react-navigation/native';
 import { useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -39,8 +39,6 @@ const getOperationIcon = (operationType: string): keyof typeof Ionicons.glyphMap
       return 'create-outline';
     case 'delete':
       return 'trash-outline';
-    case 'reorder':
-      return 'repeat-outline';
     default:
       return 'help-circle-outline';
   }
@@ -64,15 +62,10 @@ const OperationLogDetailScreen: React.FC = () => {
   const [operationLog, setOperationLog] = useState<OperationLogSelect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [operationLogService, setOperationLogService] = useState<ReturnType<
-    typeof createOperationLogService
-  > | null>(null);
-
-  useEffect(() => {
-    if (drizzleDb) {
-      setOperationLogService(createOperationLogService(drizzleDb));
-    }
-  }, [drizzleDb]);
+  const operationLogService = useMemo(
+    () => (drizzleDb ? createOperationLogService(drizzleDb) : null),
+    [drizzleDb],
+  );
 
   const fetchOperationLogDetails = useCallback(async () => {
     if (!operationLogService || !logId) return;
@@ -95,6 +88,7 @@ const OperationLogDetailScreen: React.FC = () => {
   }, [operationLogService, logId, t, userId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchOperationLogDetails` resets loading/error synchronously for immediate feedback; the log itself arrives after `await`. The rule cannot verify across the callback boundary.
     fetchOperationLogDetails();
   }, [fetchOperationLogDetails]);
 
@@ -225,18 +219,6 @@ const OperationLogDetailScreen: React.FC = () => {
       textAlign: 'center',
       marginTop: 20,
     },
-    reorderItemRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 6,
-      paddingLeft: 6,
-    },
-    reorderIndex: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: colors.primary,
-      width: 28,
-    },
   });
 
   if (loading || mainEntityLoading) {
@@ -315,28 +297,7 @@ const OperationLogDetailScreen: React.FC = () => {
         {payload && (
           <View>
             <ScreenSection title={t('operation_log_changes_title')} />
-            {operationLog.operationType === 'reorder' ? (
-              <View style={styles.changeCard}>
-                {payload.reorderItems.map((item: { id: string; newIndex: number }) => (
-                  <View key={item.id} style={styles.reorderItemRow}>
-                    <Text style={styles.reorderIndex}>{item.newIndex}.</Text>
-                    <ResolvedFieldValue
-                      // A 'reorder' recorded on 'Story' reorders Chapters; recorded on
-                      // 'Chapter' it reorders that chapter's Scenes (see
-                      // ChapterService.reorderChapters / SceneService.reorderScenes).
-                      entityType={
-                        operationLog.entityType === OperationLogEntityType.Story
-                          ? OperationLogEntityType.Chapter
-                          : OperationLogEntityType.Scene
-                      }
-                      entityId={item.id}
-                      storyId={operationLog.storyId}
-                      style={styles.changeValue}
-                    />
-                  </View>
-                ))}
-              </View>
-            ) : Object.keys(payload).length === 0 ? (
+            {Object.keys(payload).length === 0 ? (
               <Text style={styles.emptyValue}>{t('operation_log_no_changes')}</Text>
             ) : (
               // Every payload field is already a genuine change (see the services in
@@ -416,6 +377,7 @@ const ResolvedFieldValue: React.FC<{
 
   useEffect(() => {
     let isMounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronous loading feedback for the async `getEntityIdentifier` chain below; the name itself arrives in `.then`/`.finally`.
     setLoading(true);
     EntityService.getEntityIdentifier(db, entityType.toLowerCase(), entityId, storyId, t)
       .then((resolved) => {

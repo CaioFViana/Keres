@@ -57,7 +57,7 @@ interface GalleryDetailContentProps {
    * `navigation.goBack()` directly - its host decides what "close" means.
    */
   onClose: () => void;
-  /** Exibe um controle expl\u00edcito para fechar a tela ou o overlay que hospeda o conte\u00fado. */
+  /** Shows an explicit control to close the screen or the overlay hosting the content. */
   showCloseButton?: boolean;
 }
 
@@ -144,6 +144,7 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
   }, [storyId, galleryId, galleryService, relationService, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets error/loading synchronously only when no story is selected (and loading for its event callers); everything else waits for `await`. The rule cannot verify across the callback boundary.
     load();
   }, [load]);
 
@@ -495,11 +496,11 @@ const GalleryDetailContent: React.FC<GalleryDetailContentProps> = ({
 
             {canEdit && (
               <FormActions stackOnCompact style={{ marginTop: 25 }}>
-                <Button onPress={handleSave} disabled={saving}>
-                  {saving ? t('saving') : t('save_changes')}
-                </Button>
                 <Button onPress={handleDelete} style={styles.deleteButton} disabled={saving}>
                   {t('delete')}
+                </Button>
+                <Button onPress={handleSave} disabled={saving}>
+                  {saving ? t('saving') : t('save_changes')}
                 </Button>
               </FormActions>
             )}

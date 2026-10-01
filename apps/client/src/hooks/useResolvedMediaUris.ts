@@ -12,18 +12,25 @@ export function useResolvedMediaUris(
 ): Record<string, string | null> {
   const [resolved, setResolved] = useState<Record<string, string | null>>({});
   const key = paths.join('|');
+  const uniquePaths = [...new Set(paths.filter((path): path is string => Boolean(path)))];
+
+  const [prevKey, setPrevKey] = useState(key);
+  if (key !== prevKey) {
+    setPrevKey(key);
+    if (uniquePaths.length === 0) {
+      setResolved({});
+    }
+  }
 
   useEffect(() => {
-    const unique = [...new Set(paths.filter((path): path is string => Boolean(path)))];
-    if (unique.length === 0) {
-      setResolved({});
+    if (uniquePaths.length === 0) {
       return;
     }
     let cancelled = false;
     (async () => {
       const next: Record<string, string | null> = {};
       await Promise.all(
-        unique.map(async (path) => {
+        uniquePaths.map(async (path) => {
           if (Platform.OS !== 'web' || !path.startsWith(DESKTOP_MEDIA_URI_PREFIX)) {
             next[path] = path;
             return;
@@ -41,6 +48,8 @@ export function useResolvedMediaUris(
     return () => {
       cancelled = true;
     };
+    // `uniquePaths` is rebuilt every render; `key` is its stable identity, so the
+    // effect depends on the key instead of re-resolving on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

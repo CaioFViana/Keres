@@ -1,15 +1,26 @@
+import { MAX_SYNC_BATCH_SIZE, MAX_SYNC_PULL_BATCH } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   chapters,
   characters,
+  comments,
   favorites,
   operationLog,
   scenes,
   stories,
+  tiers,
+  users,
 } from '../../src/db/schema';
-import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import {
+  newId,
+  registerUser,
+  request,
+  shareStory,
+  type TestUser,
+  uploadTestStory,
+} from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 
 let ana: TestUser;
@@ -179,6 +190,35 @@ describe('POST /sync/:storyId', () => {
     expect(data.conflicts[0].changedFields).toEqual(['title']);
   });
 
+  it("hands a pulled operation back with its pusher's own id", async () => {
+    const characterId = newId();
+    const { data } = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+
+    const pulled = await pull(ana.token, storyId, data.applied[0].operationVersion - 1);
+
+    // A device whose push answer was lost recognises its own operation by it.
+    expect(pulled.data.updates[0]).toMatchObject({ clientOperationId: `local-${characterId}` });
+  });
+
+  it('names the last operation on the entity in a stale-base refusal, over the wire', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const staleVersion = created.data.applied[0].entityVersion;
+    const moved = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Primeiro', staleVersion),
+    ]);
+
+    const { data } = await push(ana.token, storyId, [
+      updateCharacter(characterId, 'Segundo', staleVersion, 'stale-base'),
+    ]);
+
+    // A client already holding this operation has seen every change and rebases silently.
+    expect(data.conflicts[0]).toMatchObject({
+      reason: 'version_conflict',
+      entityOperationVersion: moved.data.applied[0].operationVersion,
+    });
+  });
+
   it('includes a field in changedFields when both sides genuinely edited it', async () => {
     const characterId = newId();
     const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
@@ -231,17 +271,26 @@ describe('POST /sync/:storyId', () => {
     const staleVersion = created.data.applied[0].entityVersion;
     await push(ana.token, storyId, [updateCharacter(characterId, 'Primeiro', staleVersion)]);
 
-    const { status } = await push(ana.token, storyId, [
+    const { status, data } = await push(ana.token, storyId, [
       {
         type: 'update',
         entity: 'Character',
         id: characterId,
         version: staleVersion,
         changes: { name: 'Segundo' },
+        clientOperationId: 'local-no-base',
       },
     ]);
 
-    expect(status).toBe(422);
+    // Refused per operation (not as a 422 for the whole batch), and never applied.
+    expect(status).toBe(200);
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ clientOperationId: 'local-no-base', reason: 'validation' }),
+    ]);
+    expect(
+      (await db.query.characters.findFirst({ where: eq(characters.id, characterId) }))?.name,
+    ).toBe('Primeiro');
   });
 
   it('applies the good operations of a batch even when one conflicts', async () => {
@@ -315,7 +364,11 @@ describe('POST /sync/:storyId', () => {
     const characterId = newId();
     await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
 
-    const { data } = await push(ana.token, storyId, [createCharacter(characterId, 'Outra pessoa')]);
+    // A distinct operation carries its own idempotency key: reusing the first create's key
+    // would make this a resend (idempotent success), not a colliding second create.
+    const { data } = await push(ana.token, storyId, [
+      { ...createCharacter(characterId, 'Outra pessoa'), clientOperationId: 'local-impostor' },
+    ]);
 
     expect(data.applied).toEqual([]);
     expect(data.conflicts).toEqual([
@@ -362,26 +415,139 @@ describe('POST /sync/:storyId', () => {
     });
   });
 
-  it('rejects an operation timestamp that is in the future instead of letting client clocks reorder history', async () => {
+  it('records deletions and restores with the whole row, so drifted tombstones come back in step', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [
+      {
+        ...createCharacter(characterId, 'Keres'),
+        data: { id: characterId, storyId, name: 'Keres', description: 'Deusa da ruína' },
+      },
+    ]);
+    const deleted = await push(ana.token, storyId, [
+      {
+        type: 'delete',
+        entity: 'Character',
+        id: characterId,
+        version: created.data.applied[0].entityVersion,
+      },
+    ]);
+    const restored = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        changes: {
+          name: 'Keres voltou',
+          isDeleted: false,
+          version: deleted.data.applied[0].entityVersion,
+        },
+      },
+    ]);
+
+    // The deletion relays the tombstone as the server holds it.
+    const pulledDelete = await pull(
+      ana.token,
+      storyId,
+      deleted.data.applied[0].operationVersion - 1,
+    );
+    expect(pulledDelete.data.updates[0]).toMatchObject({
+      type: 'delete',
+      id: characterId,
+      data: { name: 'Keres', description: 'Deusa da ruína', isDeleted: true },
+    });
+    expect(pulledDelete.data.updates[0].data.storyId).toBeUndefined();
+
+    const pulled = await pull(ana.token, storyId, restored.data.applied[0].operationVersion - 1);
+    expect(pulled.data.updates).toHaveLength(1);
+    expect(pulled.data.updates[0].changes).toMatchObject({
+      name: 'Keres voltou',
+      description: 'Deusa da ruína',
+      isDeleted: false,
+      deletedAt: null,
+    });
+    // Identity and bookkeeping stay out of the payload, as in any other operation.
+    expect(pulled.data.updates[0].changes.storyId).toBeUndefined();
+    expect(pulled.data.updates[0].changes.id).toBeUndefined();
+  });
+
+  it('clamps a future operation timestamp to the server clock instead of refusing the operation', async () => {
+    const characterId = newId();
     const { data } = await push(ana.token, storyId, [
       {
-        ...createCharacter(newId(), 'Do futuro'),
+        ...createCharacter(characterId, 'Do futuro'),
         operationTime: new Date(Date.now() + 60_000).toISOString(),
       },
     ]);
 
-    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([]);
+    expect(data.applied).toHaveLength(1);
+    const [logged] = await db
+      .select({ createdAt: operationLog.createdAt })
+      .from(operationLog)
+      .where(eq(operationLog.entityId, characterId));
+    expect(logged!.createdAt.getTime()).toBeLessThanOrEqual(Date.now());
+    const pulled = await pull(ana.token, storyId, data.applied[0].operationVersion - 1);
+    expect(new Date(pulled.data.updates[0].operationTime).getTime()).toBeLessThanOrEqual(
+      Date.now(),
+    );
+  });
+
+  it('refuses a malformed operation alone, applying the valid ones around it', async () => {
+    const before = newId();
+    const after = newId();
+    const { status, data } = await push(ana.token, storyId, [
+      createCharacter(before, 'Antes'),
+      { ...createCharacter('not-a-ulid', 'Quebrado'), clientOperationId: 'local-broken' },
+      { type: 'teleport', entity: 'Character', clientOperationId: 'local-alien' },
+      createCharacter(after, 'Depois'),
+    ]);
+
+    expect(status).toBe(200);
+    expect(data.applied.map((entry: { entityId: string }) => entry.entityId)).toEqual([
+      before,
+      after,
+    ]);
     expect(data.conflicts).toEqual([
-      expect.objectContaining({ reason: 'validation', message: expect.stringContaining('future') }),
+      expect.objectContaining({
+        clientOperationId: 'local-broken',
+        entity: 'Character',
+        entityId: 'not-a-ulid',
+        reason: 'validation',
+      }),
+      expect.objectContaining({
+        clientOperationId: 'local-alien',
+        entity: 'Character',
+        reason: 'validation',
+      }),
     ]);
   });
 
-  it('rejects an invalid operation timestamp before a handler can persist an invalid date', async () => {
-    const { status } = await push(ana.token, storyId, [
-      { ...createCharacter(newId(), 'Tempo inválido'), operationTime: 'not-a-date' },
+  it('applies an operation carrying a valid past timestamp', async () => {
+    const { data } = await push(ana.token, storyId, [
+      {
+        ...createCharacter(newId(), 'Do passado'),
+        operationTime: new Date(Date.now() - 60_000).toISOString(),
+      },
     ]);
 
-    expect(status).toBe(422);
+    expect(data.conflicts).toEqual([]);
+    expect(data.applied).toHaveLength(1);
+  });
+
+  it('rejects an invalid operation timestamp before a handler can persist an invalid date', async () => {
+    const characterId = newId();
+    const { status, data } = await push(ana.token, storyId, [
+      { ...createCharacter(characterId, 'Tempo inválido'), operationTime: 'not-a-date' },
+    ]);
+
+    expect(status).toBe(200);
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ entityId: characterId, reason: 'validation' }),
+    ]);
+    expect(
+      await db.query.characters.findFirst({ where: eq(characters.id, characterId) }),
+    ).toBeUndefined();
   });
 
   it('rejects a batch that is not an array of operations', async () => {
@@ -427,6 +593,41 @@ describe('POST /sync/:storyId', () => {
     expect(reFetched.story.title).toBe("Bia's story");
   });
 
+  it("never returns another story's row in the conflict of a refused cross-story operation", async () => {
+    const bia = await registerUser('bia');
+    const biaStory = await uploadTestStory(bia.token, "Bia's story");
+    const biaCharacter = newId();
+    await push(bia.token, biaStory.id, [
+      {
+        type: 'create',
+        entity: 'Character',
+        id: biaCharacter,
+        version: 0,
+        data: { id: biaCharacter, storyId: biaStory.id, name: 'Segredo' },
+      },
+    ]);
+
+    const { data } = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: biaCharacter,
+        changes: { version: 0 },
+      },
+      { type: 'delete', entity: 'Story', id: biaStory.id, version: 0 },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toHaveLength(2);
+    for (const conflict of data.conflicts) {
+      expect(conflict).toMatchObject({ reason: 'unauthorized' });
+      expect(conflict.serverEntity ?? null).toBeNull();
+      expect(conflict.serverVersion).toBeUndefined();
+      expect(JSON.stringify(conflict)).not.toContain('Segredo');
+      expect(JSON.stringify(conflict)).not.toContain("Bia's story");
+    }
+  });
+
   it("rejects a Story delete targeting a different story than the one in the URL, even one the pusher doesn't own", async () => {
     const bia = await registerUser('bia');
     const biaStory = await uploadTestStory(bia.token, "Bia's story");
@@ -443,6 +644,12 @@ describe('POST /sync/:storyId', () => {
       token: bia.token,
     });
     expect(reFetched.story.isDeleted).toBe(false);
+  });
+
+  it('answers 404 when the story does not exist', async () => {
+    const { status } = await push(ana.token, newId(), [createCharacter(newId(), 'Ghost')]);
+
+    expect(status).toBe(404);
   });
 });
 
@@ -551,7 +758,32 @@ describe('GET /sync/:storyId/pull', () => {
     expect(create.data).not.toHaveProperty('storyId');
     expect(update.changes).not.toHaveProperty('storyId');
     expect(deletion).toMatchObject({ type: 'delete', version: 3, operationId: expect.any(String) });
-    expect(deletion.data).toBeUndefined();
+    // A deletion relays its tombstone (see the whole-row test below), never the story id.
+    expect(deletion.data).toMatchObject({ name: 'Keres, a Deusa', isDeleted: true });
+    expect(deletion.data).not.toHaveProperty('storyId');
+  });
+
+  it('falls back to the log position for rows written before entity versions existed', async () => {
+    const firstId = newId();
+    const secondId = newId();
+    await push(ana.token, storyId, [createCharacter(firstId, 'Keres')]);
+    const { data: second } = await push(ana.token, storyId, [createCharacter(secondId, 'Nyx')]);
+    await db
+      .update(operationLog)
+      .set({ entityVersion: null })
+      .where(eq(operationLog.id, second.applied[0].operationId));
+
+    const { data } = await pull(ana.token, storyId, 0);
+    const updates = data.updates.filter(
+      (entry: { entity: string; id: string }) => entry.entity === 'Character',
+    );
+
+    expect(updates.find((entry: { id: string }) => entry.id === firstId)).toMatchObject({
+      version: 1,
+    });
+    expect(updates.find((entry: { id: string }) => entry.id === secondId)).toMatchObject({
+      version: 2,
+    });
   });
 
   it('publishes legacy favorites exactly once when a story becomes public', async () => {
@@ -601,111 +833,46 @@ describe('GET /sync/:storyId/pull', () => {
     expect(data.role).toBe('owner');
   });
 
-  it('serializes chapter and story reorders back into the exact pull operations clients apply', async () => {
-    const chapterA = newId();
-    const chapterB = newId();
+  /** A move is the edit of the row that moved: its rank travels, its number never does. */
+  it('relays a move as an edit of the row carrying its rank and never its number', async () => {
+    const chapterId = newId();
     const sceneA = newId();
     const sceneB = newId();
-    const now = new Date();
-    await db.insert(chapters).values([
-      {
-        id: chapterA,
-        storyId,
-        name: 'Um',
-        index: 1,
-        version: 1,
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      },
-      {
-        id: chapterB,
-        storyId,
-        name: 'Dois',
-        index: 2,
-        version: 1,
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      },
-    ] as never);
+    await db
+      .insert(chapters)
+      .values({ id: chapterId, storyId, name: 'Um', index: 1, version: 1 } as never);
     await db.insert(scenes).values([
-      {
-        id: sceneA,
-        storyId,
-        chapterId: chapterA,
-        name: 'Cena um',
-        index: 1,
-        version: 1,
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      },
-      {
-        id: sceneB,
-        storyId,
-        chapterId: chapterA,
-        name: 'Cena dois',
-        index: 2,
-        version: 1,
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      },
+      { id: sceneA, storyId, chapterId, name: 'A', index: 1, rank: 'a1', version: 1 },
+      { id: sceneB, storyId, chapterId, name: 'B', index: 2, rank: 'a2', version: 1 },
     ] as never);
+    const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
 
-    const chapterPush = await push(ana.token, storyId, [
+    const pushed = await push(ana.token, storyId, [
       {
-        type: 'reorder',
-        entity: 'Chapter',
-        id: chapterA,
+        type: 'update',
+        entity: 'Scene',
+        id: sceneB,
         version: 1,
-        reorderItems: [
-          { id: sceneA, newIndex: 2 },
-          { id: sceneB, newIndex: 1 },
-        ],
-        clientOperationId: 'chapter-reorder',
+        changes: { rank: 'a0', index: 1, version: 1 },
+        clientOperationId: 'move-b',
       },
     ]);
-    expect(chapterPush.data.conflicts).toEqual([]);
-    const storyPush = await push(ana.token, storyId, [
-      {
-        type: 'reorder',
-        entity: 'Story',
-        id: storyId,
-        version: 1,
-        reorderItems: [
-          { id: chapterA, newIndex: 2 },
-          { id: chapterB, newIndex: 1 },
-        ],
-        clientOperationId: 'story-reorder',
-      },
-    ]);
-    expect(storyPush.data.conflicts).toEqual([]);
+    expect(pushed.data.conflicts).toEqual([]);
 
-    const { data } = await pull(ana.token, storyId);
-    expect(data.updates).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          type: 'reorder',
-          entity: 'Chapter',
-          id: chapterA,
-          reorderItems: [
-            { id: sceneA, newIndex: 2 },
-            { id: sceneB, newIndex: 1 },
-          ],
-        }),
-        expect.objectContaining({
-          type: 'reorder',
-          entity: 'Story',
-          id: storyId,
-          reorderItems: [
-            { id: chapterA, newIndex: 2 },
-            { id: chapterB, newIndex: 1 },
-          ],
-        }),
-      ]),
-    );
+    const { data } = await pull(ana.token, storyId, story?.lastOperationVersion ?? 0);
+    expect(data.updates).toEqual([
+      expect.objectContaining({
+        type: 'update',
+        entity: 'Scene',
+        id: sceneB,
+        version: 2,
+        changes: expect.not.objectContaining({ index: expect.anything() }),
+      }),
+    ]);
+    expect(data.updates[0].changes.rank).toBe('a0');
+    const rows = await db.query.scenes.findMany({ where: eq(scenes.chapterId, chapterId) });
+    expect(rows.find((row) => row.id === sceneA)).toMatchObject({ index: 2, version: 1 });
+    expect(rows.find((row) => row.id === sceneB)).toMatchObject({ index: 1, version: 2 });
   });
 
   it('rejects a pull with no version, since the server cannot guess it', async () => {
@@ -720,6 +887,66 @@ describe('GET /sync/:storyId/pull', () => {
     });
 
     expect(status).toBe(401);
+  });
+
+  it('keeps a merged page prefix-closed so the client max-cursor cannot skip main rows', async () => {
+    await db
+      .update(stories)
+      .set({ favoriteBehavior: 'individual_public' })
+      .where(eq(stories.id, storyId));
+    const base = (await pull(ana.token, storyId)).data.serverMaxOperationVersion;
+
+    // A full main page, then favorites *above* the page top: without the cap the merge hands
+    // the client a page whose max sits past undelivered mains, and the client's single
+    // max-cursor skips them forever.
+    const characterIds = Array.from({ length: MAX_SYNC_PULL_BATCH + 100 }, () => newId());
+    for (let i = 0; i < characterIds.length; i += MAX_SYNC_BATCH_SIZE) {
+      const batch = characterIds
+        .slice(i, i + MAX_SYNC_BATCH_SIZE)
+        .map((id, j) => createCharacter(id, `C${i + j}`));
+      const pushed = await push(ana.token, storyId, batch);
+      expect(pushed.status).toBe(200);
+      expect(pushed.data.conflicts).toEqual([]);
+    }
+    const favoriteIds = Array.from({ length: 5 }, () => newId());
+    const favPushed = await push(
+      ana.token,
+      storyId,
+      favoriteIds.map((id, j) => ({
+        type: 'create',
+        entity: 'Favorite',
+        id,
+        data: { userId: ana.userId, entityId: characterIds[j], entityType: 'Character' },
+        clientOperationId: `fav-${id}`,
+      })),
+    );
+    expect(favPushed.status).toBe(200);
+    expect(favPushed.data.conflicts).toEqual([]);
+
+    const first = await pull(ana.token, storyId, base, 0);
+    expect(first.status).toBe(200);
+    expect(first.data.updates).toHaveLength(MAX_SYNC_PULL_BATCH);
+    const firstMax = Math.max(
+      ...first.data.updates.map((update: { operationVersion: number }) => update.operationVersion),
+    );
+    expect(firstMax).toBe(base + MAX_SYNC_PULL_BATCH);
+
+    const second = await pull(ana.token, storyId, firstMax, 0);
+    expect(second.status).toBe(200);
+    const secondVersions = second.data.updates.map(
+      (update: { operationVersion: number }) => update.operationVersion,
+    );
+    // The held-out mains plus the favorites above them, each exactly once.
+    expect(second.data.updates).toHaveLength(105);
+    expect(new Set(secondVersions).size).toBe(secondVersions.length);
+    expect(secondVersions).toContain(base + MAX_SYNC_PULL_BATCH + 50);
+    expect(secondVersions).toContain(base + MAX_SYNC_PULL_BATCH + 100 + 5);
+  });
+
+  it('answers 404 when the story does not exist', async () => {
+    const { status } = await pull(ana.token, newId());
+
+    expect(status).toBe(404);
   });
 });
 
@@ -750,6 +977,16 @@ describe('GET /sync/pullpreviews', () => {
     expect(data.storyPreviews).toEqual([
       expect.objectContaining({ storyId, role: 'writer', lastOperationVersion: 0 }),
     ]);
+  });
+
+  it('omits a shared story the owner deleted, even though the permission row survives', async () => {
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+    await db.update(stories).set({ isDeleted: true }).where(eq(stories.id, storyId));
+
+    const { data } = await request('GET', '/sync/pullpreviews', { token: bia.token });
+
+    expect(data.storyPreviews).toEqual([]);
   });
 
   /**
@@ -797,11 +1034,7 @@ const grantCollaborator = async (
     token: collaborator.token,
   });
   expect(accepted.status).toBeLessThan(400);
-  const granted = await request('POST', '/story-permissions/', {
-    token: owner.token,
-    body: { storyId: story, targetUserId: collaborator.userId, permissionType },
-  });
-  expect(granted.status).toBeLessThan(400);
+  await shareStory(owner, collaborator, story, permissionType);
 };
 
 const grantWriter = (owner: TestUser, collaborator: TestUser, story: string) =>
@@ -849,6 +1082,48 @@ describe('sync authorization hardening', () => {
       expect.arrayContaining([expect.objectContaining({ entity: 'Favorite', id: favoriteId })]),
     );
     expect(data.publicFavorites).toEqual([]);
+  });
+
+  it('pages past a full batch of invisible favorites instead of stalling the pull', async () => {
+    // A whole page of someone else's favorites on a private story: with LIMIT-before-filter
+    // the page held only invisible rows, the client received an empty list, stopped paging,
+    // and never advanced past them again. The invisible run is seeded straight into the log -
+    // the pull query is what's under test, not the pushes that wrote it.
+    const bia = await registerUser('bia');
+    await grantCollaborator(ana, bia, storyId, 'writer');
+    const before = (await pull(ana.token, storyId, 0)).data.serverMaxOperationVersion;
+    const now = new Date();
+    await db.insert(operationLog).values(
+      Array.from({ length: MAX_SYNC_PULL_BATCH }, (_, index) => ({
+        id: newId(),
+        storyId,
+        userId: ana.userId,
+        operationVersion: before + index + 1,
+        operationType: 'create' as const,
+        entityType: 'Favorite',
+        entityId: newId(),
+        payload: { entityId: newId(), entityType: 'Character', userId: ana.userId },
+        entityVersion: 1,
+        createdAt: now,
+      })),
+    );
+    await db
+      .update(stories)
+      .set({ lastOperationVersion: before + MAX_SYNC_PULL_BATCH })
+      .where(eq(stories.id, storyId));
+    const characterId = newId();
+    const pushed = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    expect(pushed.data.conflicts).toEqual([]);
+
+    const { status, data } = await pull(bia.token, storyId);
+
+    expect(status).toBe(200);
+    expect(data.updates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Character', id: characterId })]),
+    );
+    expect(data.updates).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ entity: 'Favorite' })]),
+    );
   });
 
   it('rejects a pull from a user with no permission to read the story', async () => {
@@ -1116,6 +1391,22 @@ describe('sync authorization hardening', () => {
       { type: 'delete', entity: 'Comment', id: commentId, version },
     ]);
     expect(deleted.data.applied).toHaveLength(1);
+
+    // The author cannot undo the moderation by restoring the tombstone.
+    const tombstoneVersion = deleted.data.applied[0].entityVersion;
+    const restored = await push(bia.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Comment',
+        id: commentId,
+        changes: { isDeleted: false, version: tombstoneVersion },
+      },
+    ]);
+    expect(restored.data.applied).toEqual([]);
+    expect(restored.data.conflicts[0]).toMatchObject({ reason: 'unauthorized' });
+    expect(
+      (await db.query.comments.findFirst({ where: eq(comments.id, commentId) }))?.isDeleted,
+    ).toBe(true);
   });
 
   it("does not let one writer delete another writer's comment", async () => {
@@ -1157,6 +1448,115 @@ describe('sync authorization hardening', () => {
     expect(deletion.data.applied).toEqual([]);
     expect(deletion.data.conflicts).toEqual([
       expect.objectContaining({ entity: 'Comment', entityId: commentId, reason: 'unauthorized' }),
+    ]);
+  });
+});
+
+describe('sync rate limiting', () => {
+  it('refuses push and pull with 429 once the per-user window is exhausted', async () => {
+    // 120 attempts per minute per user, shared by push and pull: burn the window on
+    // the cheapest call (an empty pull), then watch both doors close on the same key.
+    for (let i = 0; i < 120; i += 1) {
+      const { status } = await pull(ana.token, storyId, 0);
+      expect(status).not.toBe(429);
+    }
+
+    const overflowPush = await push(ana.token, storyId, []);
+    expect(overflowPush.status).toBe(429);
+
+    const overflowPull = await pull(ana.token, storyId, 0);
+    expect(overflowPull.status).toBe(429);
+  });
+});
+
+describe('closing the remaining push loopholes', () => {
+  it('holds new content for a deleted story as conflicts, still accepting its Story', async () => {
+    await db.update(stories).set({ isDeleted: true }).where(eq(stories.id, storyId));
+
+    const { data } = await push(ana.token, storyId, [createCharacter(newId(), 'Tarde demais')]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ entity: 'Character', reason: 'deleted_on_server' }),
+    ]);
+  });
+
+  it('holds a restore to the plan ceiling, like a create', async () => {
+    const characterId = newId();
+    const created = await push(ana.token, storyId, [createCharacter(characterId, 'Keres')]);
+    const deleted = await push(ana.token, storyId, [
+      {
+        type: 'delete',
+        entity: 'Character',
+        id: characterId,
+        version: created.data.applied[0].entityVersion,
+      },
+    ]);
+    // A ceiling the story already sits on: nothing more may come back to life.
+    const tierId = newId();
+    await db.insert(tiers).values({
+      id: tierId,
+      name: `Tier ${tierId}`,
+      isDefault: false,
+      maxStories: null,
+      maxEntitiesPerStory: 0,
+      maxEntitiesTotal: null,
+      maxStorageBytesPerStory: null,
+      maxStorageBytesTotal: null,
+    } as never);
+    await db.update(users).set({ tierId }).where(eq(users.id, ana.userId));
+
+    const { data } = await push(ana.token, storyId, [
+      {
+        type: 'update',
+        entity: 'Character',
+        id: characterId,
+        changes: { isDeleted: false, version: deleted.data.applied[0].entityVersion },
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ entity: 'Character', reason: 'limit_exceeded' }),
+    ]);
+  });
+
+  it("refuses a comment anchored to another story's entity", async () => {
+    const bia = await registerUser('bia');
+    const biaStory = await uploadTestStory(bia.token, "Bia's story");
+    const biaCharacter = newId();
+    await push(bia.token, biaStory.id, [
+      {
+        type: 'create',
+        entity: 'Character',
+        id: biaCharacter,
+        version: 0,
+        data: { id: biaCharacter, storyId: biaStory.id, name: 'Segredo' },
+      },
+    ]);
+
+    const { data } = await push(ana.token, storyId, [
+      {
+        type: 'create',
+        entity: 'Comment',
+        id: newId(),
+        data: {
+          entityType: 'Character',
+          entityId: biaCharacter,
+          fieldId: null,
+          fieldKey: 'name',
+          contentSnapshot: 'Segredo',
+          excerptText: null,
+          authorUserId: ana.userId,
+          commentText: 'Olá',
+          criticality: 1,
+        },
+      },
+    ]);
+
+    expect(data.applied).toEqual([]);
+    expect(data.conflicts).toEqual([
+      expect.objectContaining({ entity: 'Comment', reason: 'referenced_entity_deleted' }),
     ]);
   });
 });

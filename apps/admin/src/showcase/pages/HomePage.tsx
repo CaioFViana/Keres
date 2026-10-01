@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import type { ShowcaseStoryCard } from '@keres/shared';
 import { fetchStories } from '../api/showcaseApi';
 import { StoryCard } from '../components/StoryCard';
+import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
 
 /** How often the list is polled. With an ETag, it almost always costs a 304. */
 const POLL_INTERVAL_MS = 30_000;
 
 export function HomePage() {
   const { t } = useTranslation('showcase');
+  const config = useShowcaseConfig();
   const [stories, setStories] = useState<ShowcaseStoryCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const etagRef = useRef<string | null>(null);
@@ -44,7 +46,11 @@ export function HomePage() {
     <>
       <section className="hero">
         <div className="hero-inner">
-          <p className="hero-eyebrow">{t('home.eyebrow')}</p>
+          <p className="hero-eyebrow">
+            {config?.siteName
+              ? t('home.eyebrowWithSite', { siteName: config.siteName })
+              : t('home.eyebrow')}
+          </p>
           <h1 className="hero-title">{t('home.title')}</h1>
           <p className="hero-text">{t('home.intro')}</p>
         </div>

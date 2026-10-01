@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -13,6 +13,8 @@ import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill
 import ReorderModal from '../../components/common/modals/ReorderModal/ReorderModal';
 import { useDrizzle } from '../../db';
 import type { StatSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryStats } from '../../hooks/useStoryStats';
@@ -31,6 +33,9 @@ type StatListNavigationProp = NativeStackNavigationProp<CustomizationStackParamL
 /** The root of the "Stats" menu: the registered axes, and the shortcuts to the ladder, the comparison and the ranking. */
 const StatListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StatList');
+  const settingsAnchorRef = useScreenAnchor('Stats', 'settings');
+  const axesAnchorRef = useScreenAnchor('Stats', 'axes');
   const { t } = useTranslation();
 
   const { colors } = useTheme();
@@ -48,10 +53,17 @@ const StatListScreen = () => {
   );
   const [savingSettings, setSavingSettings] = useState(false);
 
-  useEffect(() => {
+  const [prevStatSystem, setPrevStatSystem] = useState(selectedStory?.statSystem);
+  const [prevStatNotation, setPrevStatNotation] = useState(selectedStory?.statNotation);
+  if (
+    selectedStory?.statSystem !== prevStatSystem ||
+    selectedStory?.statNotation !== prevStatNotation
+  ) {
+    setPrevStatSystem(selectedStory?.statSystem);
+    setPrevStatNotation(selectedStory?.statNotation);
     setStatSystem(selectedStory?.statSystem ?? false);
     setStatNotation((selectedStory?.statNotation ?? 'letter') as StatNotation);
-  }, [selectedStory?.statNotation, selectedStory?.statSystem]);
+  }
 
   const commonContainerStyles = getCommonContainerStyles(colors);
   const styles = useMemo(
@@ -237,7 +249,12 @@ const StatListScreen = () => {
     statNotation !== ((selectedStory?.statNotation ?? 'letter') as StatNotation);
 
   const settingsCard = (
-    <View style={styles.settingsCard} testID="stat-system-settings">
+    <View
+      ref={settingsAnchorRef}
+      collapsable={false}
+      style={styles.settingsCard}
+      testID="stat-system-settings"
+    >
       <View style={styles.settingRow}>
         <View style={styles.settingBody}>
           <Text style={styles.settingTitle}>{t('stat_system')}</Text>
@@ -322,45 +339,47 @@ const StatListScreen = () => {
       </View>
 
       {statSystem ? (
-        <FlatList
-          data={sections}
-          keyExtractor={(section) => section.key}
-          ListHeaderComponent={settingsCard}
-          ListEmptyComponent={<Text style={styles.empty}>{t('stats_empty')}</Text>}
-          renderItem={({ item: section }) => (
-            <View>
-              <Text style={styles.sectionLabel}>{section.label}</Text>
-              {section.rows.map((stat) => {
-                const ladder = data.ladderOf(stat.id);
-                const top = ladder.at(-1);
-                return (
-                  <TouchableOpacity
-                    key={stat.id}
-                    style={styles.row}
-                    onPress={() => navigation.navigate('StatForm', { statId: stat.id })}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.name}>{stat.name}</Text>
-                      <Text style={styles.meta}>
-                        {t('stat_ladder_title')}: {ladder.length} ·{' '}
-                        {top ? formatStatValue(top.minValue, ladder, statNotation) : '—'}
-                      </Text>
-                    </View>
-                    {canEdit ? (
-                      <TouchableOpacity
-                        accessibilityLabel={t('delete')}
-                        style={styles.actionButton}
-                        onPress={() => handleDelete(stat)}
-                      >
-                        <Ionicons name="trash-outline" size={20} color={colors.error} />
-                      </TouchableOpacity>
-                    ) : null}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        />
+        <View ref={axesAnchorRef} collapsable={false} style={{ flex: 1 }}>
+          <FlatList
+            data={sections}
+            keyExtractor={(section) => section.key}
+            ListHeaderComponent={settingsCard}
+            ListEmptyComponent={<Text style={styles.empty}>{t('stats_empty')}</Text>}
+            renderItem={({ item: section }) => (
+              <View>
+                <Text style={styles.sectionLabel}>{section.label}</Text>
+                {section.rows.map((stat) => {
+                  const ladder = data.ladderOf(stat.id);
+                  const top = ladder.at(-1);
+                  return (
+                    <TouchableOpacity
+                      key={stat.id}
+                      style={styles.row}
+                      onPress={() => navigation.navigate('StatForm', { statId: stat.id })}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.name}>{stat.name}</Text>
+                        <Text style={styles.meta}>
+                          {t('stat_ladder_title')}: {ladder.length} ·{' '}
+                          {top ? formatStatValue(top.minValue, ladder, statNotation) : '—'}
+                        </Text>
+                      </View>
+                      {canEdit ? (
+                        <TouchableOpacity
+                          accessibilityLabel={t('delete')}
+                          style={styles.actionButton}
+                          onPress={() => handleDelete(stat)}
+                        >
+                          <Ionicons name="trash-outline" size={20} color={colors.error} />
+                        </TouchableOpacity>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          />
+        </View>
       ) : (
         <>
           {settingsCard}

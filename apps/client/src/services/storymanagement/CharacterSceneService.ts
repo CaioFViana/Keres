@@ -3,7 +3,12 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import { createULID, getChangedFields } from '../../utils/entityUtils';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
 export type NewCharacterScene = Omit<
@@ -112,6 +117,7 @@ export function createCharacterSceneService(
       userId: string,
       relation: SaveCharacterScene,
     ): Promise<CharacterSceneInterface> {
+      await assertStoryIsWritable(drizzleDb, relation.storyId);
       try {
         let resultRelation: CharacterSceneInterface;
 
@@ -146,39 +152,41 @@ export function createCharacterSceneService(
               return existingRelation;
             }
 
-            const [updatedRelation] = await drizzleDb
-              .update(schema.characterScenes)
-              .set({
-                characterId: relation.characterId,
-                sceneId: relation.sceneId,
-                updatedAt: new Date(),
-                version: sql`${schema.characterScenes.version} + 1`,
-              })
-              .where(eq(schema.characterScenes.id, relation.id))
-              .returning();
-
-            if (!updatedRelation) {
-              throw new Error(
-                'Failed to retrieve updated character-scene relation after update operation.',
-              );
-            }
-            resultRelation = updatedRelation;
-
             const userIdToLog = await getUserIdForOperation(
               drizzleDb,
               serverService,
-              resultRelation.storyId,
+              existingRelation.storyId,
               userId,
             );
-            await recordLocalOperation(
-              drizzleDb,
-              resultRelation.storyId,
-              userIdToLog,
-              'update',
-              'CharacterScene',
-              resultRelation.id,
-              getChangedFields(existingRelation, resultRelation),
-            );
+            resultRelation = await runLocalWrite(drizzleDb, existingRelation.storyId, () => {
+              const updatedRelation = drizzleDb
+                .update(schema.characterScenes)
+                .set({
+                  characterId: relation.characterId,
+                  sceneId: relation.sceneId,
+                  updatedAt: new Date(),
+                  version: sql`${schema.characterScenes.version} + 1`,
+                })
+                .where(eq(schema.characterScenes.id, existingRelation.id))
+                .returning()
+                .get();
+
+              if (!updatedRelation) {
+                throw new Error(
+                  'Failed to retrieve updated character-scene relation after update operation.',
+                );
+              }
+              recordLocalOperationSync(
+                drizzleDb,
+                updatedRelation.storyId,
+                userIdToLog,
+                'update',
+                'CharacterScene',
+                updatedRelation.id,
+                getChangedFields(existingRelation, updatedRelation),
+              );
+              return updatedRelation;
+            });
             return resultRelation;
           }
         }
@@ -207,32 +215,34 @@ export function createCharacterSceneService(
           deletedAt: null,
         };
 
-        const [insertedRelation] = await drizzleDb
-          .insert(schema.characterScenes)
-          .values(characterSceneToInsert)
-          .returning();
-        if (!insertedRelation) {
-          throw new Error(
-            'Failed to retrieve inserted character-scene relation after insert operation.',
-          );
-        }
-        resultRelation = insertedRelation;
-
         const userIdToLog = await getUserIdForOperation(
           drizzleDb,
           serverService,
-          resultRelation.storyId,
+          relation.storyId,
           userId,
         );
-        await recordLocalOperation(
-          drizzleDb,
-          resultRelation.storyId,
-          userIdToLog,
-          'create',
-          'CharacterScene',
-          resultRelation.id,
-          resultRelation,
-        );
+        resultRelation = await runLocalWrite(drizzleDb, relation.storyId, () => {
+          const insertedRelation = drizzleDb
+            .insert(schema.characterScenes)
+            .values(characterSceneToInsert)
+            .returning()
+            .get();
+          if (!insertedRelation) {
+            throw new Error(
+              'Failed to retrieve inserted character-scene relation after insert operation.',
+            );
+          }
+          recordLocalOperationSync(
+            drizzleDb,
+            insertedRelation.storyId,
+            userIdToLog,
+            'create',
+            'CharacterScene',
+            insertedRelation.id,
+            insertedRelation,
+          );
+          return insertedRelation;
+        });
 
         return resultRelation;
       } catch (error) {
@@ -251,40 +261,43 @@ export function createCharacterSceneService(
           console.warn(`CharacterScene with ID ${relationId} not found for deletion.`);
           return false;
         }
-
-        const now = new Date();
-        const [updatedRelation] = await drizzleDb
-          .update(schema.characterScenes)
-          .set({
-            isDeleted: true,
-            deletedAt: now,
-            updatedAt: now,
-            version: existingRelation.version + 1,
-          })
-          .where(eq(schema.characterScenes.id, relationId))
-          .returning();
-
-        if (!updatedRelation) {
-          throw new Error(
-            `Failed to delete character-scene relation ${relationId} or relation not found.`,
-          );
-        }
+        await assertStoryIsWritable(drizzleDb, existingRelation.storyId);
 
         const userIdToLog = await getUserIdForOperation(
           drizzleDb,
           serverService,
-          updatedRelation.storyId,
+          existingRelation.storyId,
           userId,
         );
-        await recordLocalOperation(
-          drizzleDb,
-          updatedRelation.storyId,
-          userIdToLog,
-          'delete',
-          'CharacterScene',
-          relationId,
-          { id: relationId, isDeleted: true, version: updatedRelation.version },
-        );
+        const now = new Date();
+        await runLocalWrite(drizzleDb, existingRelation.storyId, () => {
+          const updatedRelation = drizzleDb
+            .update(schema.characterScenes)
+            .set({
+              isDeleted: true,
+              deletedAt: now,
+              updatedAt: now,
+              version: existingRelation.version + 1,
+            })
+            .where(eq(schema.characterScenes.id, relationId))
+            .returning()
+            .get();
+
+          if (!updatedRelation) {
+            throw new Error(
+              `Failed to delete character-scene relation ${relationId} or relation not found.`,
+            );
+          }
+          recordLocalOperationSync(
+            drizzleDb,
+            updatedRelation.storyId,
+            userIdToLog,
+            'delete',
+            'CharacterScene',
+            relationId,
+            { id: relationId, isDeleted: true, version: updatedRelation.version },
+          );
+        });
 
         return true;
       } catch (error) {

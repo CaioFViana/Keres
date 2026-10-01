@@ -1,9 +1,9 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import type { LocationMapContentType } from '@keres/shared';
+import { generateLocationMapLocalId, type LocationMapContentType } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import {
@@ -16,8 +16,10 @@ import LocationMapCanvas, {
 import LocationMapHeaderActions from '@/src/components/features/location-maps/LocationMapHeaderActions';
 import LocationMapConnectionModal from '@/src/components/features/location-maps/LocationMapConnectionModal';
 import LocationMapNodeSheet from '@/src/components/features/location-maps/LocationMapNodeSheet';
-import LocationMapMarkerSheet from '@/src/components/features/location-maps/LocationMapMarkerSheet';
 import LocationMapMarkerConnectionModal from '@/src/components/features/location-maps/LocationMapMarkerConnectionModal';
+import LocationMapMarkerSheetSection from '@/src/components/features/location-maps/LocationMapMarkerSheetSection';
+import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/OverlaySheet';
+import TrajectoryPickerSheet from '@/src/components/features/location-maps/TrajectoryPickerSheet';
 import LocationMapTools from '@/src/components/features/location-maps/LocationMapTools';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import { useDrizzle } from '../../db';
@@ -28,11 +30,16 @@ import type {
   LocationSelect,
 } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useLocationMapRelations } from '../../hooks/useLocationMapRelations';
 import { useLocationMapCanvasActions } from '../../hooks/useLocationMapCanvasActions';
 import { useLocationMapExport } from '../../hooks/useLocationMapExport';
+import { exportFileLanguage } from '../../utils/storyTransfer';
+import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
+import { useLocationMapImageUris } from '../../hooks/useLocationMapImageUris';
+import { useLocationMapNodeSummary } from '../../hooks/useLocationMapNodeSummary';
+import { useLocationMapTrajectories } from '../../hooks/useLocationMapTrajectories';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
-import { useResolvedMediaUris } from '../../hooks/useResolvedMediaUris';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { LocationStackParamList } from '../../navigation/MainSystemStack';
 import { createGalleryService } from '../../services/storymanagement/GalleryService';
@@ -45,16 +52,16 @@ import { readShowcaseRequest } from '../../showcase/showcaseRequest';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
-import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import { removeLocationMapPoint } from '../../utils/locationMapContent';
 const LocationMapScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<LocationStackParamList, 'LocationMap'>>();
   const { mapId } = useRoute<RouteProp<LocationStackParamList, 'LocationMap'>>().params;
   const db = useDrizzle();
   const storyId = useStoryStore((state) => state.selectedStory?.id);
+  const storyType = useStoryStore((state) => state.selectedStory?.type);
   const { canEdit } = useStoryRole(storyId);
   const { userId } = useUserSettingsStore();
   const { showNotification } = useNotificationStore();
@@ -85,14 +92,27 @@ const LocationMapScreen = () => {
     from: string;
     to: string;
   } | null>(null);
-  const [selectedNodeSummary, setSelectedNodeSummary] = useState<BoardEntitySummary | null>(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const generateOverlayId = useCallback(
+    () =>
+      generateLocationMapLocalId(
+        new Set([
+          ...content.images.map((image) => image.id),
+          ...content.nodes.map((node) => node.id),
+          ...(content.markers ?? []).map((marker) => marker.id),
+          ...(content.overlays ?? []).map((overlay) => overlay.id),
+        ]),
+      ),
+    [content],
+  );
+  const overlayActions = useCanvasOverlayActions({ setContent, generateOverlayId });
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
   useBackButtonHandler({
     showWebBackButton: true,
     onBack: () => navigation.goBack(),
   });
+  useScreenTour('LocationMap', canEdit);
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -141,6 +161,7 @@ const LocationMapScreen = () => {
     }
   }, [db, mapId, showNotification, storyId, t]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void load();
   }, [load]);
   useEffect(() => {
@@ -180,6 +201,8 @@ const LocationMapScreen = () => {
   const revert = useCallback(() => {
     setContent(savedContent);
   }, [savedContent]);
+  const trajectories = useLocationMapTrajectories({ storyId, storyType, nodes: content.nodes });
+  const { hasSelection: hasTrajectories, setPickerOpen } = trajectories;
   useScreenHeader({
     target: 'parent',
     title: map?.name ?? t('location_map_list_title'),
@@ -191,91 +214,22 @@ const LocationMapScreen = () => {
             saving={saving}
             onRevert={revert}
             onSave={() => void save()}
-            layoutEditing={layoutEditing}
-            connectionMode={connectionMode}
-            onToggleLayout={() => {
-              setLayoutEditing((current) => !current);
-              setConnectionMode(false);
-              setOpenedNodeId(null);
-              setOpenedMarkerId(null);
-            }}
-            onToggleConnectionMode={() => {
-              setConnectionMode((current) => !current);
-              setLayoutEditing(false);
-              setOpenedNodeId(null);
-              setOpenedMarkerId(null);
-            }}
           />
         ) : null,
-      [canEdit, connectionMode, dirty, layoutEditing, revert, save, saving],
+      [canEdit, dirty, revert, save, saving],
     ),
   });
-  const galleryMediaById = useMemo(() => {
-    const next: Record<
-      string,
-      {
-        mediaType: string;
-        mimeType: string;
-        localPath: string | null;
-        thumbnailPath: string | null;
-      }
-    > = {};
-    for (const gallery of galleries) {
-      next[gallery.id] = {
-        mediaType: gallery.mediaType,
-        mimeType: gallery.mimeType,
-        localPath: gallery.localPath,
-        thumbnailPath: gallery.thumbnailPath ?? null,
-      };
-    }
-    return next;
-  }, [galleries]);
-  const imagePaths = useMemo(
-    () =>
-      content.images.map((image) => {
-        const media = galleryMediaById[image.galleryId];
-        if (!media || media.mediaType !== 'image') return null;
-        return media.localPath;
-      }),
-    [content.images, galleryMediaById],
+  const { galleryMediaById, imageUris, nodeNames } = useLocationMapImageUris(
+    galleries,
+    content.images,
+    locations,
+    content.nodes,
   );
-  const resolvedUris = useResolvedMediaUris(imagePaths);
-  const imageUris = useMemo(() => {
-    const next: Record<string, string | null> = {};
-    content.images.forEach((image, index) => {
-      const path = imagePaths[index];
-      next[image.galleryId] = path ? (resolvedUris[path] ?? null) : null;
-    });
-    return next;
-  }, [content.images, imagePaths, resolvedUris]);
-  const locationNameById = useMemo(
-    () => new Map(locations.map((location) => [location.id, location.name])),
-    [locations],
+  const { selectedNode, selectedNodeSummary } = useLocationMapNodeSummary(
+    db,
+    content.nodes,
+    selectedNodeId,
   );
-  const nodeNames = useMemo(() => {
-    const next: Record<string, string> = {};
-    for (const node of content.nodes)
-      next[node.locationId] = locationNameById.get(node.locationId) ?? node.locationId;
-    return next;
-  }, [content.nodes, locationNameById]);
-
-  const selectedNode = useMemo(
-    () => content.nodes.find((node) => node.id === selectedNodeId) ?? null,
-    [content.nodes, selectedNodeId],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    setSelectedNodeSummary(null);
-    if (!selectedNode) return;
-    (async () => {
-      const summary = await loadBoardEntitySummary(db, 'Location', selectedNode.locationId);
-      if (!cancelled) setSelectedNodeSummary(summary);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [db, selectedNode]);
 
   const {
     connections,
@@ -317,6 +271,7 @@ const LocationMapScreen = () => {
     t,
     showNotification,
     setExporting,
+    language: exportFileLanguage(i18n.language),
   });
 
   const {
@@ -371,6 +326,10 @@ const LocationMapScreen = () => {
   const openedMarker =
     (content.markers ?? []).find((marker) => marker.id === openedMarkerId) ?? null;
 
+  const sheetOverlay =
+    (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
+    null;
+
   if (loading) return <ScreenLoading message={t('loading')} padded />;
   if (error || !map) {
     return (
@@ -391,6 +350,41 @@ const LocationMapScreen = () => {
           onAddImages={addImages}
           onAddLocations={addLocations}
           onAddMarker={addMarker}
+          onObjectsAction={overlayActions.handleObjectsAction}
+          drawTool={overlayActions.drawTool}
+          canFinish={overlayActions.canFinish}
+          onFinishDraw={overlayActions.finishDraft}
+          onCancelDraw={overlayActions.cancelDraw}
+          layoutEditing={layoutEditing}
+          connectionMode={connectionMode}
+          overlayEditing={overlayActions.selectMode}
+          trajectoriesActive={hasTrajectories}
+          onOpenTrajectories={() => setPickerOpen(true)}
+          onToggleLayout={() => {
+            setLayoutEditing((current) => !current);
+            setConnectionMode(false);
+            overlayActions.cancelSelect();
+            setOpenedNodeId(null);
+            setOpenedMarkerId(null);
+          }}
+          onToggleConnectionMode={() => {
+            setConnectionMode((current) => !current);
+            setLayoutEditing(false);
+            overlayActions.cancelSelect();
+            setOpenedNodeId(null);
+            setOpenedMarkerId(null);
+          }}
+          onToggleOverlayEdit={() => {
+            if (overlayActions.selectMode) {
+              overlayActions.cancelInteraction();
+              return;
+            }
+            overlayActions.handleObjectsAction('select');
+            setLayoutEditing(false);
+            setConnectionMode(false);
+            setOpenedNodeId(null);
+            setOpenedMarkerId(null);
+          }}
         />
       )}
       <LocationMapCanvas
@@ -405,7 +399,11 @@ const LocationMapScreen = () => {
         selectedMarkerId={selectedMarkerId}
         layoutEditing={layoutEditing}
         connectionMode={connectionMode}
-        onSelectImage={handleSelectImage}
+        overlayEditing={overlayActions.selectMode}
+        onSelectImage={(id) => {
+          overlayActions.cancelInteraction();
+          handleSelectImage(id);
+        }}
         onMoveImage={handleMoveImage}
         onResizeImage={handleResizeImageDirect}
         onBringImageToFront={(id) => moveImageLayer(id, 'front')}
@@ -416,9 +414,15 @@ const LocationMapScreen = () => {
         onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
         onBringMarkerToFront={(id) => moveMarkerLayer(id, 'front')}
         onSendMarkerToBack={(id) => moveMarkerLayer(id, 'back')}
-        onSelectNode={handleSelectNode}
+        onSelectNode={(id) => {
+          overlayActions.cancelInteraction();
+          handleSelectNode(id);
+        }}
         onMoveNode={handleMoveNode}
-        onSelectMarker={handleSelectMarker}
+        onSelectMarker={(id) => {
+          overlayActions.cancelInteraction();
+          handleSelectMarker(id);
+        }}
         onMoveMarker={handleMoveMarker}
         onOpenNodeDestination={handleOpenNodeDestination}
         onOpenMarkerDestination={handleOpenMarkerDestination}
@@ -428,6 +432,12 @@ const LocationMapScreen = () => {
           if (fromLocation && toLocation) setConnectionPair({ from: fromLocation, to: toLocation });
           else setMarkerConnectionPair({ from, to });
         }}
+        interactionMode={overlayActions.interactionMode}
+        draft={overlayActions.draft}
+        selectedOverlayId={overlayActions.selectedOverlayId}
+        overlayCallbacks={overlayActions}
+        trajectoryOverlays={trajectories.overlays}
+        offMapCount={trajectories.offMapCount}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -517,66 +527,17 @@ const LocationMapScreen = () => {
           }}
         />
       )}
-      {openedMarker && (
-        <LocationMapMarkerSheet
-          title={openedMarker.title}
-          note={openedMarker.note}
-          icon={openedMarker.icon}
-          color={openedMarker.color}
-          destinationMapId={openedMarker.destinationMapId}
-          destinationUnavailable={
-            !!openedMarker.destinationMapId && !destinationName(openedMarker.destinationMapId)
-          }
-          destinationOptions={destinationOptions}
-          canEdit={canEdit}
-          onChange={(changes) =>
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).map((marker) =>
-                marker.id === openedMarker.id ? { ...marker, ...changes } : marker,
-              ),
-            }))
-          }
-          onChangeDestination={(destinationMapId) =>
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).map((marker) =>
-                marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
-              ),
-            }))
-          }
-          onCreateDestination={() =>
-            void createDestination(
-              { title: openedMarker.title, note: openedMarker.note },
-              (destinationMapId) =>
-                setContent((current) => ({
-                  ...current,
-                  markers: (current.markers ?? []).map((marker) =>
-                    marker.id === openedMarker.id ? { ...marker, destinationMapId } : marker,
-                  ),
-                })),
-            )
-          }
-          onOpenDestination={() => openDestination(openedMarker.destinationMapId)}
-          onClearDestination={() =>
-            setContent((current) => ({
-              ...current,
-              markers: (current.markers ?? []).map((marker) =>
-                marker.id === openedMarker.id ? { ...marker, destinationMapId: null } : marker,
-              ),
-            }))
-          }
-          onRemove={() => {
-            setContent((current) => removeLocationMapPoint(current, openedMarker.id));
-            setSelectedMarkerId(null);
-            setOpenedMarkerId(null);
-          }}
-          onClose={() => {
-            setOpenedMarkerId(null);
-            setSelectedMarkerId(null);
-          }}
-        />
-      )}
+      <LocationMapMarkerSheetSection
+        openedMarker={openedMarker}
+        destinationName={destinationName}
+        destinationOptions={destinationOptions}
+        canEdit={canEdit}
+        setContent={setContent}
+        createDestination={createDestination}
+        openDestination={openDestination}
+        setSelectedMarkerId={setSelectedMarkerId}
+        setOpenedMarkerId={setOpenedMarkerId}
+      />
       {connectionPair && (
         <LocationMapConnectionModal
           pair={connectionPair}
@@ -594,6 +555,32 @@ const LocationMapScreen = () => {
           locationNames={nodeNames}
           setContent={setContent}
           onClose={() => setMarkerConnectionPair(null)}
+        />
+      )}
+      {sheetOverlay && (
+        <OverlaySheet
+          overlay={sheetOverlay}
+          canEdit={canEdit}
+          defaultColor={colors.primary}
+          onChange={(patch) => overlayActions.updateOverlay(sheetOverlay.id, patch)}
+          onRemove={() => overlayActions.deleteOverlay(sheetOverlay.id)}
+          onClose={overlayActions.closeOverlaySheet}
+        />
+      )}
+      {trajectories.pickerOpen && (
+        <TrajectoryPickerSheet
+          characters={trajectories.characters}
+          items={trajectories.items}
+          routes={trajectories.routes}
+          storyType={storyType}
+          selectedCharacterIds={trajectories.selectedCharacterIds}
+          selectedItemIds={trajectories.selectedItemIds}
+          routeId={trajectories.routeId}
+          onToggleCharacter={trajectories.toggleCharacter}
+          onToggleItem={trajectories.toggleItem}
+          onSelectRoute={trajectories.selectRoute}
+          onClear={trajectories.clearSelection}
+          onClose={() => trajectories.setPickerOpen(false)}
         />
       )}
     </View>

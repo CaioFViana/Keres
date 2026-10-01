@@ -4,8 +4,9 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
 import {
   ScreenError,
@@ -14,6 +15,8 @@ import {
 import NoteListItem from '@/src/components/features/list-items/NoteListItem';
 import { useDrizzle } from '../../db';
 import type { TagSelect } from '../../db/schema';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -33,13 +36,15 @@ export type NotesScreenNavigationProp = CompositeNavigationProp<
 
 const NotesScreen = () => {
   useBackButtonHandler();
+  useScreenTour('NotesStack');
+  const listAnchorRef = useScreenAnchor('Notes', 'list');
   const { t } = useTranslation();
 
   const drizzleDb = useDrizzle();
   const navigation = useNavigation<NotesScreenNavigationProp>();
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
-  const tagService = useRef(createTagService(drizzleDb)).current;
+  const [tagService] = useState(() => createTagService(drizzleDb));
 
   const {
     listProps,
@@ -71,6 +76,7 @@ const NotesScreen = () => {
   }, [storyId, tagService]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `fetchTags` clears synchronously only when no story is selected; everything else waits for `await`. The rule cannot verify across the callback boundary.
     fetchTags();
   }, [fetchTags]);
 
@@ -143,18 +149,33 @@ const NotesScreen = () => {
 
   return (
     <ScreenContainer>
-      <GenericFilterSortList
-        {...listProps}
-        data={notes}
-        renderItem={memoizedNoteListItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('search_notes')}
-        filterOptions={memoizedTagFilterOptions}
-        sortOptions={memoizedSortOptions}
-        disableTagFilter={false}
-        entityName="Note"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={notes}
+          renderItem={memoizedNoteListItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('search_notes')}
+          filterOptions={memoizedTagFilterOptions}
+          sortOptions={memoizedSortOptions}
+          disableTagFilter={false}
+          entityName="Note"
+          storyId={storyId || ''}
+          emptyStateTitle={t('notes_empty_title')}
+          emptyStateMessage={t('notes_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('notes_empty_create'),
+                    onPress: () => navigation.navigate('NoteForm', { noteId: undefined }),
+                    testID: 'empty-create-note',
+                  },
+                ]
+              : []
+          }
+        />
+      </View>
     </ScreenContainer>
   );
 };

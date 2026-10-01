@@ -20,14 +20,15 @@ import {
   tagRelations,
   tags,
   worldRules,
-} from '../../db/schema'; // Import all possible relation tables
-import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
+} from '../../db/schema';
+import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
 
 export class TagRelationSyncHandler extends BaseSyncEntityHandler<
   typeof CreateTagRelationDataSchema,
   typeof PartialTagRelationSchema
 > {
   entityName = 'TagRelation';
+  readonly naturalKey = ['tagId', 'relationId', 'relationType'] as const;
 
   constructor() {
     super('id', 'version', CreateTagRelationDataSchema, PartialTagRelationSchema, {
@@ -188,7 +189,8 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingTagRelation) {
-      throw new Error(
+      throw duplicateOf(
+        existingTagRelation,
         `Conflict: TagRelation for Tag ID ${validatedData.tagId}, Relation ID ${validatedData.relationId} (Type: ${validatedData.relationType}) already exists in story ${storyId}.`,
       );
     }
@@ -241,7 +243,8 @@ export class TagRelationSyncHandler extends BaseSyncEntityHandler<
       });
 
       if (existingTagRelation) {
-        throw new Error(
+        throw duplicateOf(
+          existingTagRelation,
           `Conflict: TagRelation for Tag ID ${newTagId}, Relation ID ${newRelationId} (Type: ${newRelationType}) already exists in story ${storyId}.`,
         );
       }

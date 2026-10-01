@@ -22,7 +22,7 @@ import {
  * always produces the same map, so exporting twice gives the same file.
  */
 
-/** Cena, reduzida ao que o layout precisa (SceneSelect satisfaz esta forma). */
+/** Scene, reduced to what the layout needs (SceneSelect satisfies this shape). */
 export interface GraphScene {
   id: string;
   name: string;
@@ -37,7 +37,7 @@ export interface GraphScene {
   durationType?: string | null;
 }
 
-/** Escolha, reduzida ao que o layout precisa (ChoiceSelect satisfaz esta forma). */
+/** Choice, reduced to what the layout needs (ChoiceSelect satisfies this shape). */
 export interface GraphChoice {
   id: string;
   sceneId: string;
@@ -90,7 +90,7 @@ export interface GraphNode {
   y: number;
   width: number;
   height: number;
-  /** `true` para as cenas que ficaram fora do fluxo, na grade do fim do mapa. */
+  /** `true` for the scenes left out of the flow, in the grid at the end of the map. */
   isDetached: boolean;
 }
 

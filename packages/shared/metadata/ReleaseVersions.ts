@@ -7,13 +7,14 @@
  * as a literal `6` and quietly fell a version behind, and the only thing that noticed was a guard
  * that fires after the packages are already stale.
  *
- * **Not in `AppRelease.ts`**, deliberately. That file is machine-written: `bun run version:set`
- * rewrites it whole from a template, so anything added to it disappears at the next release. It
- * holds the app's identity, which the tool owns; this holds the compatibility numbers, which people
- * own.
+ * **Not in `AppRelease.ts`**, deliberately. That file holds the app's identity, which the
+ * tool owns (`bun run version:set` stamps its `name` and `version` fields in place), next to the
+ * release phrase and the credits, which people own; this holds the compatibility numbers, which
+ * people own too but for a different reason - the format and the wire, not the release's face.
  *
- * Each is re-exported from the module that explains what it means - `StoryExportVersion.ts` and
- * `SyncProtocol.ts` - so call sites keep importing from the place that documents them.
+ * Each is re-exported from the module that explains what it means - `StoryExportVersion.ts`,
+ * `SyncProtocol.ts` and `PackSchemas.ts` - so call sites keep importing from the place that
+ * documents them.
  */
 
 /**
@@ -22,8 +23,25 @@
  * Bump it when a release changes the shape of what an export carries, and add the matching
  * migration in `storyExportMigrations.ts`. An older Keres refuses a package from a newer format
  * rather than guessing at it.
+ *
+ * **11** - `Scene.body`: the scene's own manuscript text, written in the editor. Older packages
+ * carry no such key; migration gives every scene an explicit `null`, which is exactly what they
+ * were - a scene described by its summary, with no prose behind it. A Keres on 10 would parse a
+ * package from 11 and quietly drop every written scene, hence the bump rather than a silent default.
  */
-export const CURRENT_STORY_FORMAT_VERSION = 10;
+export const CURRENT_STORY_FORMAT_VERSION = 11;
+
+/**
+ * Version of the pack content payload (`PackContentType`).
+ *
+ * Bump it when a release changes the shape of what a pack carries, and add the matching
+ * migration in `packContentMigrations.ts`. An older Keres refuses a pack from a newer format
+ * rather than guessing at it; the listing merely degrades, it never breaks.
+ *
+ * **2** - `extras`: element skeletons (chapters, scenes, characters, locations, world rules,
+ * notes, boards, location maps, and their join rows) carried alongside the schema.
+ */
+export const CURRENT_PACK_FORMAT_VERSION = 2;
 
 /**
  * Version of the synchronization protocol: what client and server exchange, and the rules each end
@@ -33,9 +51,8 @@ export const CURRENT_STORY_FORMAT_VERSION = 10;
  * payload, a column that starts arriving null, a rule the server begins to enforce. Most releases
  * do not touch it, which is the whole reason it is separate from the app's version.
  *
- * These two numbers move **only in an official release**, never in ordinary development. Schema
- * work on this branch (nullable `Scene.chapterId`, Gallery `document`/`link` + `sourceUrl`) waits
- * for that bump; raising them here would cut off peers and invalidate example stories mid-cycle.
+ * These two numbers move **only in an official release**, never in ordinary development:
+ * raising them mid-cycle cuts off peers and invalidates example stories.
  *
  * **2** - `Scene.locationId` became nullable. A client on 1 declares `location_id TEXT NOT NULL`
  * locally, so a pull carrying a null fails the insert and wedges that story's synchronization in a
@@ -48,8 +65,11 @@ export const CURRENT_STORY_FORMAT_VERSION = 10;
  * **4** - Arc added, that alone is worth raising, but minimum is also raised as some internal code
  * for API/Syncing changed way too much. fully reworked. Just this once and to be safe, Version 4
  *
+ * **5** - Positions became per-row ranks (`rules/rank.ts`): a move is an ordinary edit of the row
+ * that moved, and `index`/`order` are derived on each side. The protocol has no container order
+ * any more; a peer on 4 would send one and never see a rank change, so it cannot share a story.
  */
-export const SYNC_PROTOCOL_VERSION = 4;
+export const SYNC_PROTOCOL_VERSION = 5;
 
 /**
  * The oldest synchronization protocol this build still understands.
@@ -58,6 +78,6 @@ export const SYNC_PROTOCOL_VERSION = 4;
  * old peers are cut off, and it should be a decision rather than a side effect of bumping the line
  * above.
  *
- * Raised to **4** with the lines above.
+ * Raised to **4** with the lines above, and to **5** with ranks: a peer on 4 would diverge.
  */
-export const MIN_SUPPORTED_SYNC_PROTOCOL = 4;
+export const MIN_SUPPORTED_SYNC_PROTOCOL = 5;

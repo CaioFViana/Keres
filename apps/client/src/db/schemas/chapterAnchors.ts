@@ -1,7 +1,7 @@
 import type { ScenePosition } from '@keres/shared';
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
  * One stretch of story time a container occupies, anchored to the spine.
@@ -43,8 +43,10 @@ export const chapterAnchors = sqliteTable(
    * order is what distinguishes a second stretch of the same container from a duplicate of the
    * first.
    */
+  // Lookups only, never uniqueness: a synced table must take every row the server holds. Two
+  // devices can write the same thing offline; the push folds the twin (the `duplicate` reason).
   (table) => [
-    uniqueIndex('chapter_anchor_order_unique')
+    index('chapter_anchor_order_idx')
       .on(table.storyId, table.chapterId, table.order)
       .where(sql`${table.isDeleted} = 0`),
   ],

@@ -5,20 +5,20 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 /** Applies LocationMap documents received from the server to the local SQLite store. */
 export class LocationMapClientSyncHandler implements ClientSyncEntityHandler {
   entityName = 'LocationMap';
-  private dbInstance: AppDrizzleClient | null = null;
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(dbInstance: AppDrizzleClient): void {
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = dbInstance;
   }
 
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) {
       throw new Error('LocationMapClientSyncHandler: Drizzle client (db) not set.');
     }

@@ -9,7 +9,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -104,28 +105,32 @@ export const createPlotSceneService = (db: AppDrizzleClient) => {
         delete changes.updatedAt;
         delete changes.version;
         if (Object.keys(changes).length === 0) return original;
-        const [updated] = await db
-          .update(plotScenes)
-          .set({
-            plotId: relation.plotId,
-            sceneId: relation.sceneId,
-            note,
-            updatedAt: new Date(),
-            version: sql`${plotScenes.version} + 1`,
-          })
-          .where(eq(plotScenes.id, original.id))
-          .returning();
-        if (!updated) throw new Error('Unable to update plot-scene relation.');
-        const logUserId = await getUserIdForOperation(db, serverService, updated.storyId, userId);
-        await recordLocalOperation(
-          db,
-          updated.storyId,
-          logUserId,
-          'update',
-          'PlotScene',
-          updated.id,
-          getChangedFields(original, updated),
-        );
+        const logUserId = await getUserIdForOperation(db, serverService, original.storyId, userId);
+        const updated = await runLocalWrite(db, original.storyId, () => {
+          const row = db
+            .update(plotScenes)
+            .set({
+              plotId: relation.plotId,
+              sceneId: relation.sceneId,
+              note,
+              updatedAt: new Date(),
+              version: sql`${plotScenes.version} + 1`,
+            })
+            .where(eq(plotScenes.id, original.id))
+            .returning()
+            .get();
+          if (!row) throw new Error('Unable to update plot-scene relation.');
+          recordLocalOperationSync(
+            db,
+            row.storyId,
+            logUserId,
+            'update',
+            'PlotScene',
+            row.id,
+            getChangedFields(original, row),
+          );
+          return row;
+        });
         entityEventEmitter.emit('plot_scene_changed', updated.storyId, updated.id);
         return updated;
       }
@@ -140,18 +145,13 @@ export const createPlotSceneService = (db: AppDrizzleClient) => {
         isDeleted: false,
         deletedAt: null,
       };
-      const [created] = await db.insert(plotScenes).values(insert).returning();
-      if (!created) throw new Error('Unable to create plot-scene relation.');
-      const logUserId = await getUserIdForOperation(db, serverService, created.storyId, userId);
-      await recordLocalOperation(
-        db,
-        created.storyId,
-        logUserId,
-        'create',
-        'PlotScene',
-        created.id,
-        created,
-      );
+      const logUserId = await getUserIdForOperation(db, serverService, insert.storyId, userId);
+      const created = await runLocalWrite(db, insert.storyId, () => {
+        const row = db.insert(plotScenes).values(insert).returning().get();
+        if (!row) throw new Error('Unable to create plot-scene relation.');
+        recordLocalOperationSync(db, row.storyId, logUserId, 'create', 'PlotScene', row.id, row);
+        return row;
+      });
       entityEventEmitter.emit('plot_scene_changed', created.storyId, created.id);
       return created;
     },
@@ -159,23 +159,28 @@ export const createPlotSceneService = (db: AppDrizzleClient) => {
       const original = await db.query.plotScenes.findFirst({ where: eq(plotScenes.id, id) });
       if (!original || original.isDeleted) return;
       await assertStoryIsWritable(db, original.storyId);
-      const [deleted] = await db
-        .update(plotScenes)
-        .set({
+      const logUserId = await getUserIdForOperation(db, serverService, original.storyId, userId);
+      const deleted = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(plotScenes)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${plotScenes.version} + 1`,
+          })
+          .where(eq(plotScenes.id, id))
+          .returning()
+          .get();
+        if (!row) return undefined;
+        recordLocalOperationSync(db, row.storyId, logUserId, 'delete', 'PlotScene', id, {
+          id,
           isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${plotScenes.version} + 1`,
-        })
-        .where(eq(plotScenes.id, id))
-        .returning();
-      if (!deleted) return;
-      const logUserId = await getUserIdForOperation(db, serverService, deleted.storyId, userId);
-      await recordLocalOperation(db, deleted.storyId, logUserId, 'delete', 'PlotScene', id, {
-        id,
-        isDeleted: true,
-        version: deleted.version,
+          version: row.version,
+        });
+        return row;
       });
+      if (!deleted) return;
       entityEventEmitter.emit('plot_scene_changed', deleted.storyId, id);
     },
   };

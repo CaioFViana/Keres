@@ -1,6 +1,5 @@
 import { type StorySchemaEntityType } from '@keres/shared';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
 
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
@@ -37,7 +36,10 @@ import NarrativeElementsListScreen from '../screens/narrative-elements/chapters/
 import ChoiceDetailScreen from '../screens/narrative-elements/choices/ChoiceDetailScreen';
 import ChoiceFormScreen from '../screens/narrative-elements/choices/ChoiceFormScreen';
 import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewScreen';
+import ManuscriptExportScreen from '../screens/narrative-elements/scenes/ManuscriptExportScreen';
+import ManuscriptScreen from '../screens/narrative-elements/scenes/ManuscriptScreen';
 import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import SceneEditorScreen from '../screens/narrative-elements/scenes/SceneEditorScreen';
 import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
 import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
 import type { NoteDetailScreenParamList } from '../screens/notes/NoteDetailScreen';
@@ -81,20 +83,31 @@ import WorldRuleDetailScreen from '../screens/worldrules/WorldRuleDetailScreen';
 import WorldRuleFormScreen from '../screens/worldrules/WorldRuleFormScreen';
 import WorldRulesScreen from '../screens/worldrules/WorldRuleListScreen';
 import { showcaseInitialRoute } from '../showcase/showcaseRequest';
+import type { OccurrenceTarget } from '../utils/occurrenceTarget';
 
-//#region Suggestions
-//#endregion
+/**
+ * The main drawer's nested stacks: one navigator per drawer section (characters, plots,
+ * locations, ...), mounted as sibling `Drawer.Screen`s in `MainSystemStack`.
+ *
+ * Every navigator hides its own header (`headerShown: false`) because the drawer draws the
+ * single shared header (back button, help shortcut, contextual actions); each screen sets
+ * its own header content through the drawer via `getParent()?.setOptions(...)`. Every
+ * navigator also installs `useBackButtonHandler` so Android hardware back pops the nested
+ * stack (closing an open drawer first) instead of leaving the app. Navigators with a
+ * showcase entry point resolve their initial route through `showcaseInitialRoute` so
+ * screen captures open without flashing the list first.
+ */
 //#region Plots
 const PlotsStack = createNativeStackNavigator<PlotsStackParamList>();
 export type PlotsStackParamList = {
   Plots: undefined;
-  PlotDetail: { plotId: string };
+  PlotDetail: { plotId: string; occurrence?: OccurrenceTarget };
   PlotForm: { plotId?: string };
   PlotMatrix: undefined;
   PlotProgress: undefined;
   PlotReader: undefined;
   Routes: undefined;
-  RouteDetail: { routeId: string };
+  RouteDetail: { routeId: string; occurrence?: OccurrenceTarget };
   RouteForm: { routeId?: string };
   RouteSteps: { routeId: string };
   RouteReader: { routeId: string };
@@ -163,9 +176,12 @@ export type NarrativeElementsStackParamList = {
   NarrativeElements: undefined;
   ChapterDetail: ChapterDetailScreenParamList['ChapterDetail'];
   ChapterForm: { chapterId?: string };
-  SceneDetail: { sceneId: string };
+  SceneDetail: { sceneId: string; occurrence?: OccurrenceTarget };
+  SceneEditor: { sceneId: string };
+  Manuscript: { routeId?: string };
+  ManuscriptExport: undefined;
   SceneForm: { sceneId?: string; chapterId?: string };
-  ChoiceDetail: { choiceId: string };
+  ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
   ChoiceForm: { choiceId?: string; sceneId?: string };
   ChoiceView: undefined;
   StoryTimeline: undefined;
@@ -185,6 +201,9 @@ export const NarrativeElementsStackNavigator = () => {
       <NarrativeElementsStack.Screen name="ChapterDetail" component={ChapterDetailScreen} />
       <NarrativeElementsStack.Screen name="ChapterForm" component={ChapterFormScreen} />
       <NarrativeElementsStack.Screen name="SceneDetail" component={SceneDetailScreen} />
+      <NarrativeElementsStack.Screen name="SceneEditor" component={SceneEditorScreen} />
+      <NarrativeElementsStack.Screen name="Manuscript" component={ManuscriptScreen} />
+      <NarrativeElementsStack.Screen name="ManuscriptExport" component={ManuscriptExportScreen} />
       <NarrativeElementsStack.Screen name="SceneForm" component={SceneFormScreen} />
       <NarrativeElementsStack.Screen name="ChoiceDetail" component={ChoiceDetailScreen} />
       <NarrativeElementsStack.Screen name="ChoiceForm" component={ChoiceFormScreen} />
@@ -199,14 +218,14 @@ export const NarrativeElementsStackNavigator = () => {
 const ItemStack = createNativeStackNavigator<ItemStackParamList>();
 
 export type ItemDetailScreenParamList = {
-  ItemDetail: { itemId: string };
+  ItemDetail: { itemId: string; occurrence?: OccurrenceTarget };
 };
 
 export type ItemStackParamList = {
   Items: undefined;
   ItemDetail: ItemDetailScreenParamList['ItemDetail'];
   ItemForm: { itemId?: string };
-  ItemJourneyDetail: { itemJourneyId: string };
+  ItemJourneyDetail: { itemJourneyId: string; occurrence?: OccurrenceTarget };
   ItemJourneyForm: { itemJourneyId?: string; itemId?: string };
 };
 

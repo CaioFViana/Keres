@@ -1,25 +1,39 @@
-import { spatialRectIntersects, type LocationMapContentType } from '@keres/shared';
-import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
 import {
-  type FreeformCanvasHandle,
-  useFreeformCanvasViewport,
-} from '@/src/hooks/useFreeformCanvasViewport';
+  canvasOverlayBounds,
+  spatialRectIntersects,
+  type CanvasOverlayType,
+  type LocationMapContentType,
+} from '@keres/shared';
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
+import OverlayInteractionLayer from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
+import OverlaySelectionView from '@/src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
+import type {
+  OverlayCanvasCallbacks,
+  OverlayDraft,
+  OverlayInteractionMode,
+} from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
+import GraphCanvasFrame, {
+  graphCanvasPlaneStyle,
+} from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
+import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import {
   locationMapCanvasBounds,
   LOCATION_MAP_NODE_SIZE,
 } from '@keres/shared/graphs/locationMapLayout';
 import { useTheme } from '../../../theme';
 import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
+import SkiaOverlayErrorBoundary from '../graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
 import LocationMapConnectionLayer, {
   type LocationMapConnection,
   type LocationMapContains,
 } from './LocationMapConnectionLayer';
+import TrajectoryOffMapChip from './TrajectoryOffMapChip';
 import LocationMapImageView from './LocationMapImageView';
 import LocationMapNodeView from './LocationMapNodeView';
 
-export type LocationMapCanvasHandle = FreeformCanvasHandle;
+export type LocationMapCanvasHandle = CanvasViewportHandle;
 export type { LocationMapConnection, LocationMapContains } from './LocationMapConnectionLayer';
 
 interface Props {
@@ -33,6 +47,8 @@ interface Props {
   selectedMarkerId: string | null;
   layoutEditing: boolean;
   connectionMode: boolean;
+  /** While set, images and points ignore taps and drags: only overlay shapes respond. */
+  overlayEditing: boolean;
   onSelectImage: (imageId: string) => void;
   onMoveImage: (imageId: string, x: number, y: number) => void;
   onResizeImage: (imageId: string, width: number, height: number) => void;
@@ -51,6 +67,13 @@ interface Props {
   onOpenNodeDestination: (nodeId: string) => void;
   onOpenMarkerDestination: (markerId: string) => void;
   onConnectPoints: (fromPointId: string, toPointId: string) => void;
+  interactionMode: OverlayInteractionMode;
+  draft: OverlayDraft | null;
+  selectedOverlayId: string | null;
+  overlayCallbacks: OverlayCanvasCallbacks;
+  /** Transient trajectory lines; rendered but never persisted into the content. */
+  trajectoryOverlays: CanvasOverlayType[] | null;
+  offMapCount: number;
 }
 
 type ActiveDrag = { kind: 'image' | 'node' | 'marker'; id: string; x: number; y: number };
@@ -69,6 +92,7 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       selectedMarkerId,
       layoutEditing,
       connectionMode,
+      overlayEditing,
       onSelectImage,
       onMoveImage,
       onResizeImage,
@@ -87,16 +111,25 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       onOpenNodeDestination,
       onOpenMarkerDestination,
       onConnectPoints,
+      interactionMode,
+      draft,
+      selectedOverlayId,
+      overlayCallbacks,
+      trajectoryOverlays,
+      offMapCount,
     },
     ref,
   ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
     const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
+    const [rectPreview, setRectPreview] = useState<{
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+    } | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
-    const dragLocalOriginRef = useRef({ x: 0, y: 0 });
     const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
 
     const publishPendingDrag = useCallback(() => {
@@ -150,24 +183,25 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       };
     }, [activeDrag, content]);
     const worldBounds = locationMapCanvasBounds(layoutContent);
-    const viewport = useFreeformCanvasViewport(ref, {
-      bounds: {
+    const viewport = useCanvasViewport(
+      ref,
+      {
         x: worldBounds.originX,
         y: worldBounds.originY,
         width: worldBounds.width,
         height: worldBounds.height,
       },
-      onAutoPan: adjustDraggedItemForAutoPan,
-    });
+      { clampMode: 'none', onAutoPan: adjustDraggedItemForAutoPan },
+    );
     const {
       setChildDragging,
       width,
       height,
-      localOrigin,
-      bakedScale,
+      cameraTransform,
       renderWindow,
       scale,
       worldToScreen,
+      screenToWorld,
       updateAutoPan,
       stopAutoPan,
       containerRef,
@@ -175,6 +209,11 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       panHandlers,
       animatedTransform,
     } = viewport;
+    // An armed overlay tool owns every gesture until it is done: the pan responder yields
+    // while the interaction catcher above the plane takes the taps and drags.
+    useEffect(() => {
+      setChildDragging(!!interactionMode);
+    }, [interactionMode, setChildDragging]);
 
     const updateDrag = useCallback(
       (kind: ActiveDrag['kind'], id: string, x: number, y: number) => {
@@ -188,12 +227,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               );
         if (!point) return;
         const position = {
-          x: clampCanvasWorldCoordinate(
-            x + dragLocalOriginRef.current.x + dragAutoPanOffsetRef.current.x,
-          ),
-          y: clampCanvasWorldCoordinate(
-            y + dragLocalOriginRef.current.y + dragAutoPanOffsetRef.current.y,
-          ),
+          x: clampCanvasWorldCoordinate(x + dragAutoPanOffsetRef.current.x),
+          y: clampCanvasWorldCoordinate(y + dragAutoPanOffsetRef.current.y),
         };
         pendingDragRef.current = { kind, id, ...position };
         updateAutoPan(
@@ -223,10 +258,9 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
       [],
     );
     const handleDragStart = useCallback(() => {
-      dragLocalOriginRef.current = localOrigin;
       dragAutoPanOffsetRef.current = { x: 0, y: 0 };
       setChildDragging(true);
-    }, [localOrigin, setChildDragging]);
+    }, [setChildDragging]);
     const handleDragEnd = useCallback(
       (kind: ActiveDrag['kind'], id: string) => {
         stopAutoPan();
@@ -315,16 +349,40 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
           ),
       [activeDrag?.id, layoutContent.markers, layoutContent.nodes, renderWindow],
     );
+    const visibleStamps = useMemo(
+      () =>
+        (layoutContent.overlays ?? [])
+          .filter(
+            (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
+              overlay.kind === 'stamp',
+          )
+          .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
+          .map((stamp, order) => ({ stamp, order }))
+          .sort(
+            (left, right) =>
+              (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ stamp }) => stamp),
+      [layoutContent.overlays, renderWindow],
+    );
+    const snapTargets = useMemo(
+      () =>
+        [...layoutContent.nodes, ...(layoutContent.markers ?? [])].map((point) => ({
+          x: point.x,
+          y: point.y,
+        })),
+      [layoutContent.markers, layoutContent.nodes],
+    );
+    const selectedOverlay = selectedOverlayId
+      ? ((layoutContent.overlays ?? []).find((overlay) => overlay.id === selectedOverlayId) ?? null)
+      : null;
 
-    return (
-      <GraphCanvasFrame
-        width={width}
-        height={height}
-        contentOverflow="hidden"
-        containerRef={containerRef}
-        handleLayout={handleLayout}
-        panHandlers={panHandlers}
-        animatedTransform={animatedTransform}
+    // Paint order stays images < edges < nodes: the image bases ride their own camera
+    // plane below the overlay, the pins stay on the main plane above it.
+    const underlay = (
+      <Animated.View
+        style={[graphCanvasPlaneStyle, { transform: animatedTransform }]}
+        pointerEvents="box-none"
       >
         <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
           {visibleImages.map((image) => (
@@ -334,10 +392,8 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
               uri={imageUris[image.galleryId] ?? null}
               selected={selectedImageId === image.id}
               layoutEditing={layoutEditing}
+              overlayEditing={overlayEditing}
               scale={scale}
-              positionOffsetX={-localOrigin.x}
-              positionOffsetY={-localOrigin.y}
-              positionScale={bakedScale}
               locked={image.locked}
               onSelect={onSelectImage}
               onMove={(id, x, y) => updateDrag('image', id, x, y)}
@@ -351,52 +407,109 @@ const LocationMapCanvas = forwardRef<LocationMapCanvasHandle, Props>(
             />
           ))}
         </View>
-        <LocationMapConnectionLayer
-          width={width}
-          height={height}
-          content={layoutContent}
-          connections={connections}
-          contains={contains}
-          connectionDrag={connectionDrag}
-          originX={localOrigin.x}
-          originY={localOrigin.y}
-          contentScale={bakedScale}
-          renderWindow={renderWindow}
-          background={colors.background}
-          primary={colors.primary}
-        />
-        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
-          {visiblePoints.map(({ kind, point }) => (
-            <LocationMapNodeView
-              key={point.id}
-              node={point}
-              name={
-                kind === 'node' ? (nodeNames[point.locationId] ?? point.locationId) : point.title
-              }
-              selected={
-                kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
-              }
-              layoutEditing={layoutEditing}
-              connectionMode={connectionMode}
-              scale={scale}
-              positionOffsetX={-localOrigin.x}
-              positionOffsetY={-localOrigin.y}
-              positionScale={bakedScale}
-              onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
-              onMove={(id, x, y) => updateDrag(kind, id, x, y)}
-              onDragStart={handleDragStart}
-              onDragEnd={(id) => handleDragEnd(kind, id)}
-              onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
-              onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
-              onOpenDestination={kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination}
-              onConnectionStart={handleConnectionStart}
-              onConnectionMove={handleConnectionMove}
-              onConnectionEnd={handleConnectionEnd}
-              onConnectionCancel={() => setConnectionDrag(null)}
-            />
-          ))}
-        </View>
-      </GraphCanvasFrame>
+      </Animated.View>
+    );
+    const overlay =
+      width > 0 && height > 0 ? (
+        <SkiaOverlayErrorBoundary canvas="location-map">
+          <LocationMapConnectionLayer
+            content={layoutContent}
+            connections={connections}
+            contains={contains}
+            overlays={[...(layoutContent.overlays ?? []), ...(trajectoryOverlays ?? [])]}
+            draft={draft}
+            rectPreview={rectPreview}
+            scale={scale}
+            connectionDrag={connectionDrag}
+            camera={cameraTransform}
+            renderWindow={renderWindow}
+            background={colors.background}
+            primary={colors.primary}
+          />
+        </SkiaOverlayErrorBoundary>
+      ) : null;
+
+    return (
+      <View style={{ flex: 1 }}>
+        <GraphCanvasFrame
+          containerRef={containerRef}
+          handleLayout={handleLayout}
+          panHandlers={panHandlers}
+          animatedTransform={animatedTransform}
+          underlay={underlay}
+          overlay={overlay}
+          interactionOverlay={
+            interactionMode ? (
+              <OverlayInteractionLayer
+                mode={interactionMode}
+                screenToWorld={screenToWorld}
+                scale={scale}
+                overlays={layoutContent.overlays}
+                snapTargets={snapTargets}
+                onDrawTap={overlayCallbacks.onDrawTap}
+                onStampPlace={overlayCallbacks.onStampPlace}
+                onDrawRect={(start, end) => {
+                  if (interactionMode.kind === 'draw')
+                    overlayCallbacks.onDrawRect(interactionMode.tool, start, end);
+                }}
+                onPreviewRect={setRectPreview}
+                onSelectOverlay={overlayCallbacks.onSelectOverlay}
+              />
+            ) : null
+          }
+        >
+          <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 2 }]}>
+            {visiblePoints.map(({ kind, point }) => (
+              <LocationMapNodeView
+                key={point.id}
+                node={point}
+                name={
+                  kind === 'node' ? (nodeNames[point.locationId] ?? point.locationId) : point.title
+                }
+                selected={
+                  kind === 'node' ? selectedNodeId === point.id : selectedMarkerId === point.id
+                }
+                layoutEditing={layoutEditing}
+                connectionMode={connectionMode}
+                overlayEditing={overlayEditing}
+                scale={scale}
+                onSelect={kind === 'node' ? onSelectNode : onSelectMarker}
+                onMove={(id, x, y) => updateDrag(kind, id, x, y)}
+                onDragStart={handleDragStart}
+                onDragEnd={(id) => handleDragEnd(kind, id)}
+                onBringToFront={kind === 'node' ? onBringNodeToFront : onBringMarkerToFront}
+                onSendToBack={kind === 'node' ? onSendNodeToBack : onSendMarkerToBack}
+                onOpenDestination={
+                  kind === 'node' ? onOpenNodeDestination : onOpenMarkerDestination
+                }
+                onConnectionStart={handleConnectionStart}
+                onConnectionMove={handleConnectionMove}
+                onConnectionEnd={handleConnectionEnd}
+                onConnectionCancel={() => setConnectionDrag(null)}
+              />
+            ))}
+            {visibleStamps.map((stamp) => (
+              <CanvasStampView key={stamp.id} stamp={stamp} />
+            ))}
+            {selectedOverlay && (
+              <OverlaySelectionView
+                overlay={selectedOverlay}
+                scale={scale}
+                onDragStart={() => setChildDragging(true)}
+                onDragEnd={() => setChildDragging(false)}
+                onCommitMove={overlayCallbacks.onCommitMove}
+                onCommitVertex={overlayCallbacks.onCommitVertex}
+                onCommitRect={overlayCallbacks.onCommitRect}
+                onDetails={overlayCallbacks.onOpenOverlaySheet}
+                onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
+                onToggleLock={overlayCallbacks.onToggleLock}
+                onDeselect={overlayCallbacks.onDeselectOverlay}
+              />
+            )}
+          </View>
+        </GraphCanvasFrame>
+        <TrajectoryOffMapChip count={offMapCount} />
+      </View>
     );
   },
 );

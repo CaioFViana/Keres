@@ -253,8 +253,9 @@ export const userRoutes = new Elysia()
       }
     },
     {
+      // Loose on purpose: RegenerateRecoveryCodesSchema stays the real gate, answering 400.
       body: t.Object({
-        currentPassword: t.String(),
+        currentPassword: t.Optional(t.String()),
       }),
       response: {
         200: t.Object({ recoveryCodes: t.Array(t.String()) }),

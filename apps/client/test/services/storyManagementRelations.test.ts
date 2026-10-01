@@ -14,6 +14,7 @@ import { createStorySchemaFieldService } from '../../src/services/storymanagemen
 import { createStatService } from '../../src/services/storymanagement/StatService';
 import { createSuggestionService } from '../../src/services/storymanagement/SuggestionService';
 import { createTagRelationService } from '../../src/services/storymanagement/TagRelationService';
+import { withSilencedConsole } from '../helpers/silenceConsole';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 const STORY_ID = 'story-1';
@@ -94,6 +95,18 @@ describe('AttributeValueService', () => {
       ['a', 1],
       ['b', 2],
     ]);
+  });
+
+  it('writes nothing for an empty field set or an unchanged value', async () => {
+    const service = createAttributeValueService(database.db);
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', {});
+
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', { rank: '7' });
+    await service.saveValuesForEntity(USER_ID, STORY_ID, 'Character', 'char-1', { rank: '7' });
+
+    // One create, no update: resubmitting the same value must not churn the log.
+    const logged = await database.db.query.operationLogs.findMany();
+    expect(logged.map((operation) => operation.operationType)).toEqual(['create']);
   });
 
   it('does not create a row or an operation for a wholly empty submission', async () => {
@@ -199,6 +212,35 @@ describe('SuggestionService', () => {
     expect(
       (await service.getStoredSuggestions('character_gender', STORY_ID)).map((row) => row.value),
     ).toEqual(['A']);
+  });
+
+  it('names both characters in a relation-type usage', async () => {
+    const service = createSuggestionService(database.db);
+    await database.db.insert(schema.characters).values([
+      { id: 'ada', storyId: STORY_ID, name: 'Ada', ...base },
+      { id: 'grace', storyId: STORY_ID, name: 'Grace', ...base },
+    ]);
+    await database.db.insert(schema.characterRelations).values({
+      id: 'ada-grace',
+      storyId: STORY_ID,
+      character1Id: 'ada',
+      character2Id: 'grace',
+      relationType: 'mentor',
+      ...base,
+    });
+
+    // A relation has no title of its own: the usage names both endpoints instead.
+    expect(await service.getSuggestionUsages('characterRelation_type', STORY_ID, 'mentor')).toEqual(
+      [
+        expect.objectContaining({
+          entityType: 'CharacterRelation',
+          id: 'ada-grace',
+          title: 'Ada ↔ Grace',
+          characterIds: ['ada', 'grace'],
+          characterNames: ['Ada', 'Grace'],
+        }),
+      ],
+    );
   });
 
   it('renames native usages through the services that own each entity', async () => {
@@ -366,7 +408,8 @@ describe('StorySchemaFieldService', () => {
       targetEntityType: null,
       isRequired: false,
       defaultValue: null,
-      order: 1,
+      // The place it takes among the fields already there: the front.
+      order: 0,
     });
     await database.db.insert(schema.attributeValues).values({
       id: 'rank-value',
@@ -407,7 +450,7 @@ describe('StorySchemaFieldService', () => {
     ).toBe(true);
   });
 
-  it('reorders only fields of the selected entity type in one sync operation', async () => {
+  it('reorders only fields of the selected entity type, editing only the one that moved', async () => {
     const service = createStorySchemaFieldService(database.db);
     const first = await service.createField(USER_ID, {
       storyId: STORY_ID,
@@ -446,9 +489,23 @@ describe('StorySchemaFieldService', () => {
       order: 0,
     });
 
+    const third = await service.createField(USER_ID, {
+      storyId: STORY_ID,
+      entityType: 'Character',
+      name: 'Third',
+      key: 'third',
+      description: null,
+      type: AttributeType.TEXT,
+      targetEntityType: null,
+      isRequired: false,
+      defaultValue: null,
+      order: 2,
+    });
+
     await service.reorderFields(USER_ID, STORY_ID, 'Character', [
       { id: second.id, order: 0 },
       { id: first.id, order: 1 },
+      { id: third.id, order: 2 },
     ]);
 
     expect(
@@ -459,27 +516,27 @@ describe('StorySchemaFieldService', () => {
     ).toEqual([
       { id: second.id, order: 0 },
       { id: first.id, order: 1 },
+      { id: third.id, order: 2 },
     ]);
     expect((await service.getById(locationField.id))?.order).toBe(0);
+    // Only the field that moved is edited: its rank, one version up.
+    expect(
+      (await service.getFieldsByStoryAndEntityType(STORY_ID, 'Character')).map(
+        ({ version }) => version,
+      ),
+    ).toEqual([2, 1, 1]);
 
     const operations = await database.db.select().from(schema.operationLogs).all();
-    const reorders = operations.filter(
-      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
-    );
-    expect(reorders).toHaveLength(1);
-    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
-      reorderTarget: 'StorySchemaField',
-      schemaEntityType: 'Character',
-      reorderItems: [
-        { id: second.id, newIndex: 1 },
-        { id: first.id, newIndex: 2 },
-      ],
-    });
+    const moves = operations.filter((operation) => operation.operationType === 'update');
+    expect(moves.map((operation) => [operation.entityType, operation.entityId])).toEqual([
+      ['StorySchemaField', second.id],
+    ]);
+    expect(Object.keys(JSON.parse(moves[0]!.payload)).sort()).toEqual(['rank', 'version']);
   });
 });
 
 describe('StatService', () => {
-  it('reorders all stats through one story-level sync operation', async () => {
+  it('reorders stats by editing only the one that moved', async () => {
     const service = createStatService(database.db);
     const courage = await service.createStat(USER_ID, {
       storyId: STORY_ID,
@@ -491,30 +548,31 @@ describe('StatService', () => {
       name: 'Wisdom',
       order: 1,
     });
+    const strength = await service.createStat(USER_ID, {
+      storyId: STORY_ID,
+      name: 'Strength',
+      order: 2,
+    });
 
     await service.reorderStats(USER_ID, STORY_ID, [
       { id: wisdom.id, order: 0 },
       { id: courage.id, order: 1 },
+      { id: strength.id, order: 2 },
     ]);
 
-    expect(
-      (await service.getStatsByStoryId(STORY_ID)).map(({ id, order }) => ({ id, order })),
-    ).toEqual([
+    const stats = await service.getStatsByStoryId(STORY_ID);
+    expect(stats.map(({ id, order }) => ({ id, order }))).toEqual([
       { id: wisdom.id, order: 0 },
       { id: courage.id, order: 1 },
+      { id: strength.id, order: 2 },
     ]);
+    // Only the stat that moved is edited: its rank, one version up.
+    expect(stats.map(({ version }) => version)).toEqual([2, 1, 1]);
     const operations = await database.db.select().from(schema.operationLogs).all();
-    const reorders = operations.filter(
-      (operation) => operation.entityType === 'Story' && operation.operationType === 'reorder',
-    );
-    expect(reorders).toHaveLength(1);
-    expect(JSON.parse(reorders[0]!.payload)).toMatchObject({
-      reorderTarget: 'Stat',
-      reorderItems: [
-        { id: wisdom.id, newIndex: 1 },
-        { id: courage.id, newIndex: 2 },
-      ],
-    });
+    const moves = operations.filter((operation) => operation.operationType === 'update');
+    expect(moves.map((operation) => [operation.entityType, operation.entityId])).toEqual([
+      ['Stat', wisdom.id],
+    ]);
   });
 });
 
@@ -534,6 +592,17 @@ describe('SeeAlsoRelationService', () => {
       expect.objectContaining({ entityAId: 'ada', entityBId: 'sword', isDeleted: false }),
     ]);
     await expect(service.addSeeAlsoLink(USER_ID, STORY_ID, ada, ada)).rejects.toThrow('cannot be');
+  });
+
+  it('reports a missing or removed link on removal instead of throwing', async () => {
+    const service = createSeeAlsoRelationService(database.db);
+    const ada = { entityType: 'Character' as const, entityId: 'ada' };
+    const atlas = { entityType: 'Location' as const, entityId: 'atlas' };
+    const relation = await service.addSeeAlsoLink(USER_ID, STORY_ID, ada, atlas);
+
+    expect(await service.removeSeeAlsoLink(USER_ID, relation.id)).toBe(true);
+    expect(await service.removeSeeAlsoLink(USER_ID, relation.id)).toBe(false);
+    expect(await service.removeSeeAlsoLink(USER_ID, 'missing')).toBe(false);
   });
 });
 
@@ -574,6 +643,31 @@ describe('TagRelationService', () => {
       (await service.getTagsForEntity(STORY_ID, 'char-1', 'Character')).map((tag) => tag.id).sort(),
     ).toEqual(['tag-a', 'tag-b']);
     expect(await database.db.select().from(schema.tagRelations).all()).toHaveLength(2);
+  });
+
+  it('lists the live relations of a tag and stays quiet on duplicate or missing operations', async () => {
+    await withSilencedConsole(['warn'], async () => {
+      const service = createTagRelationService(database.db);
+      await database.db
+        .insert(schema.tags)
+        .values({ id: 'tag-a', storyId: STORY_ID, name: 'A', ...base });
+
+      await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+      // A second add of the same live link is a no-op, not a duplicate row or operation.
+      await service.addTagToEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+      expect(await database.db.select().from(schema.tagRelations).all()).toHaveLength(1);
+
+      expect(
+        (await service.getRelationsForTag(STORY_ID, 'tag-a')).map((row) => row.relationId),
+      ).toEqual(['char-1']);
+
+      // Removing a link that was never there warns instead of logging a phantom operation.
+      await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-2', 'Character', 'tag-a');
+      expect(await database.db.query.operationLogs.findMany()).toHaveLength(1);
+
+      await service.removeTagFromEntity(USER_ID, STORY_ID, 'char-1', 'Character', 'tag-a');
+      expect(await service.getRelationsForTag(STORY_ID, 'tag-a')).toEqual([]);
+    });
   });
 });
 

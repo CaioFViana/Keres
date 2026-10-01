@@ -26,6 +26,31 @@ export async function preparePersistence(): Promise<void> {
   await reconcileRootAdmin();
 }
 
+/**
+ * Periodically reaps media blobs whose grace period expired. Best-effort: a failed sweep only
+ * delays disk reclamation to the next run, and candidates are re-checked (references first)
+ * before anything is deleted, so overlapping runs - or two processes sweeping at once - can only
+ * repeat idempotent work, never delete a referenced blob.
+ */
+function startMediaBlobSweepScheduler(): void {
+  const sweep = () => {
+    mediaStorageService
+      .sweepExpiredUnreferencedBlobs()
+      .then((examined) => {
+        if (examined > 0) {
+          logger.info(`Media blob sweep examined ${examined} expired blob(s).`);
+        }
+      })
+      .catch((error: unknown) => {
+        logger.error('Media blob sweep failed', error);
+      });
+  };
+  // One early run collects whatever expired while the server was down; the hourly cadence bounds
+  // how long past the grace period bytes linger.
+  setTimeout(sweep, 60_000);
+  setInterval(sweep, 60 * 60_000);
+}
+
 export async function bootAndListen(options?: {
   onListening?: (address: ListeningAddress) => void;
 }): Promise<void> {
@@ -42,6 +67,7 @@ export async function bootAndListen(options?: {
   }
 
   const app = await createApp();
+  startMediaBlobSweepScheduler();
   app.listen(
     {
       port: env.PORT,

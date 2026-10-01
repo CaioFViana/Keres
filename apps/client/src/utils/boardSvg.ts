@@ -1,29 +1,30 @@
 import type { BoardContentType } from '@keres/shared';
 import { getEntityAppearance } from '@keres/shared';
 import { boardEdgeGeometry } from './boardEdges';
+import { canvasOverlayExportBounds, renderCanvasOverlaySvg } from './canvasOverlaySvg';
 import {
   normalizeBoardCanvas,
   boardNodeSize,
   wrapNoteBody,
   noteBodyCharsPerLine,
   galleryHasImage,
-  BOARD_GALLERY_IMAGE_HEIGHT,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMediaById,
 } from './boardLayout';
 import { boardPinAppearanceType } from './boardPinAppearance';
 import type { BoardEntitySummary } from './boardEntitySummary';
+import {
+  escapeSvgXml,
+  roundSvg,
+  svgExportDocument,
+  svgExportTitleBlock,
+  type SvgExportColors,
+} from './svgExport';
 
 export interface BoardSvgOptions {
   title: string;
   subtitle: string;
-  colors: {
-    background: string;
-    surface: string;
-    text: string;
-    textSecondary: string;
-    border: string;
-  };
+  colors: SvgExportColors;
   titles: Record<
     string,
     {
@@ -59,7 +60,13 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
     undefined,
     undefined,
     options.galleryMediaById,
+    (content.overlays ?? []).map(canvasOverlayExportBounds),
   );
+  const overlayGroups = renderCanvasOverlaySvg(content.overlays, {
+    shift: (x, y) => ({ x: x + offsetX, y: y + offsetY }),
+    colors: options.colors,
+    stroke: options.colors.text,
+  });
   const shiftedNodes = content.nodes.map((node) => ({
     ...node,
     x: node.x + offsetX,
@@ -92,8 +99,8 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
       // An opaque background with a border: without it the text disappears over the line it
       // describes, and the exported file must stay readable anywhere.
       parts.push(
-        `<rect x="${round(x)}" y="${round(y)}" width="${round(labelWidth)}" height="${labelHeight}" rx="4" fill="${options.colors.background}" fill-opacity="0.92" stroke="${options.colors.border}" stroke-width="1"/>`,
-        `<text x="${round(edge.labelX)}" y="${round(edge.labelY + 4)}" font-size="11" text-anchor="middle" fill="${options.colors.text}">${escapeXml(label)}</text>`,
+        `<rect x="${roundSvg(x)}" y="${roundSvg(y)}" width="${roundSvg(labelWidth)}" height="${labelHeight}" rx="4" fill="${options.colors.background}" fill-opacity="0.92" stroke="${options.colors.border}" stroke-width="1"/>`,
+        `<text x="${roundSvg(edge.labelX)}" y="${roundSvg(edge.labelY + 4)}" font-size="11" text-anchor="middle" fill="${options.colors.text}">${escapeSvgXml(label)}</text>`,
       );
     }
     return parts.join('');
@@ -152,61 +159,63 @@ export function renderBoardSvg(content: BoardContentType, options: BoardSvgOptio
     const imageX = node.x + 12;
     const imageY = node.y + 8;
     const imageWidth = Math.max(0, size.width - 20);
-    const clipId = `gallery-clip-${escapeXml(node.id)}`;
+    // The on-screen picture flexes: resizing the pin grows the image while the title block stays
+    // a compact footer. Mirror that by anchoring the footer at the bottom with the plain card's
+    // row metrics (title +20, type +38, details +56 step 13) and giving the image the rest.
+    const footerHeight = 56 + entityLines.length * 13;
+    const footerTop = node.y + size.height - 8 - footerHeight;
+    const imageHeight = Math.max(0, footerTop - 8 - imageY);
+    const clipId = `gallery-clip-${escapeSvgXml(node.id)}`;
     const imageArea = hasGalleryImage
       ? [
-          `<defs><clipPath id="${clipId}"><rect x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${BOARD_GALLERY_IMAGE_HEIGHT}" rx="6"/></clipPath></defs>`,
+          `<defs><clipPath id="${clipId}"><rect x="${roundSvg(imageX)}" y="${roundSvg(imageY)}" width="${roundSvg(imageWidth)}" height="${roundSvg(imageHeight)}" rx="6"/></clipPath></defs>`,
           galleryImage
-            ? `<image href="${galleryImage}" x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${BOARD_GALLERY_IMAGE_HEIGHT}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>`
+            ? `<image href="${galleryImage}" x="${roundSvg(imageX)}" y="${roundSvg(imageY)}" width="${roundSvg(imageWidth)}" height="${roundSvg(imageHeight)}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clipId})"/>`
             : [
-                `<rect x="${round(imageX)}" y="${round(imageY)}" width="${round(imageWidth)}" height="${BOARD_GALLERY_IMAGE_HEIGHT}" rx="6" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`,
-                `<circle cx="${round(imageX + imageWidth / 2 - 20)}" cy="${round(imageY + 46)}" r="9" fill="${options.colors.textSecondary}"/>`,
-                `<path d="M ${round(imageX + imageWidth / 2 + 10)} ${round(imageY + 96)} L ${round(imageX + imageWidth / 2 + 40)} ${round(imageY + 62)} L ${round(imageX + imageWidth / 2 + 70)} ${round(imageY + 96)} Z" fill="${options.colors.textSecondary}"/>`,
+                `<rect x="${roundSvg(imageX)}" y="${roundSvg(imageY)}" width="${roundSvg(imageWidth)}" height="${roundSvg(imageHeight)}" rx="6" fill="${options.colors.surface}" stroke="${options.colors.border}"/>`,
+                `<g clip-path="url(#${clipId})">`,
+                `<circle cx="${roundSvg(imageX + imageWidth / 2 - 20)}" cy="${roundSvg(imageY + imageHeight * 0.36)}" r="9" fill="${options.colors.textSecondary}"/>`,
+                `<path d="M ${roundSvg(imageX + imageWidth / 2 + 10)} ${roundSvg(imageY + imageHeight * 0.75)} L ${roundSvg(imageX + imageWidth / 2 + 40)} ${roundSvg(imageY + imageHeight * 0.48)} L ${roundSvg(imageX + imageWidth / 2 + 70)} ${roundSvg(imageY + imageHeight * 0.75)} Z" fill="${options.colors.textSecondary}"/>`,
+                '</g>',
               ].join(''),
         ]
       : [];
-    const titleY = hasGalleryImage ? imageY + BOARD_GALLERY_IMAGE_HEIGHT + 24 : node.y + 28;
-    const typeY = hasGalleryImage ? imageY + BOARD_GALLERY_IMAGE_HEIGHT + 42 : node.y + 46;
-    const detailBaseY = hasGalleryImage ? imageY + BOARD_GALLERY_IMAGE_HEIGHT + 60 : node.y + 64;
+    const titleY = hasGalleryImage ? footerTop + 20 : node.y + 28;
+    const typeY = hasGalleryImage ? footerTop + 38 : node.y + 46;
+    const detailBaseY = hasGalleryImage ? footerTop + 56 : node.y + 64;
     return [
-      `<rect x="${round(node.x)}" y="${round(node.y)}" width="${size.width}" height="${size.height}" rx="10" fill="${fill}"/>`,
+      `<rect x="${roundSvg(node.x)}" y="${roundSvg(node.y)}" width="${size.width}" height="${size.height}" rx="10" fill="${fill}"/>`,
       ...imageArea,
       hasGalleryImage
         ? ''
-        : `<rect x="${round(node.x)}" y="${round(node.y)}" width="5" height="${size.height}" rx="2" fill="${accent}"/>`,
-      `<text x="${round(node.x + 14)}" y="${round(titleY)}" font-size="12" font-weight="600" fill="${options.colors.text}">${escapeXml(title)}</text>`,
-      `<text x="${round(node.x + 14)}" y="${round(typeY)}" font-size="10" fill="${options.colors.textSecondary}">${escapeXml(typeLabel)}</text>`,
+        : `<rect x="${roundSvg(node.x)}" y="${roundSvg(node.y)}" width="5" height="${size.height}" rx="2" fill="${accent}"/>`,
+      `<text x="${roundSvg(node.x + 14)}" y="${roundSvg(titleY)}" font-size="12" font-weight="600" fill="${options.colors.text}">${escapeSvgXml(title)}</text>`,
+      `<text x="${roundSvg(node.x + 14)}" y="${roundSvg(typeY)}" font-size="10" fill="${options.colors.textSecondary}">${escapeSvgXml(typeLabel)}</text>`,
       ...bodyLines.map(
         (line, index) =>
-          `<text x="${round(node.x + 14)}" y="${round(node.y + 64 + index * 13)}" font-size="11" fill="${options.colors.text}">${escapeXml(line)}</text>`,
+          `<text x="${roundSvg(node.x + 14)}" y="${roundSvg(node.y + 64 + index * 13)}" font-size="11" fill="${options.colors.text}">${escapeSvgXml(line)}</text>`,
       ),
       ...entityLines.map(
         (line, index) =>
-          `<text x="${round(node.x + 14)}" y="${round(detailBaseY + index * 13)}" font-size="11" fill="${escapeXml(index === 0 ? options.colors.text : options.colors.textSecondary)}">${escapeXml(line)}</text>`,
+          `<text x="${roundSvg(node.x + 14)}" y="${roundSvg(detailBaseY + index * 13)}" font-size="11" fill="${escapeSvgXml(index === 0 ? options.colors.text : options.colors.textSecondary)}">${escapeSvgXml(line)}</text>`,
       ),
       // Stroke drawn last so the rounded frame stays visible over a full-bleed picture.
-      `<rect x="${round(node.x)}" y="${round(node.y)}" width="${size.width}" height="${size.height}" rx="10" fill="none" stroke="${options.colors.border}" stroke-width="1"/>`,
+      `<rect x="${roundSvg(node.x)}" y="${roundSvg(node.y)}" width="${size.width}" height="${size.height}" rx="10" fill="none" stroke="${options.colors.border}" stroke-width="1"/>`,
     ].join('');
   });
 
   const body = [
-    `<rect x="0" y="0" width="${round(width)}" height="${round(totalHeight)}" fill="${options.colors.background}"/>`,
-    `<text x="24" y="28" font-size="20" font-weight="bold" fill="${options.colors.text}">${escapeXml(options.title)}</text>`,
-    `<text x="24" y="46" font-size="11" fill="${options.colors.textSecondary}">${escapeXml(options.subtitle)}</text>`,
+    `<rect x="0" y="0" width="${roundSvg(width)}" height="${roundSvg(totalHeight)}" fill="${options.colors.background}"/>`,
+    svgExportTitleBlock(options.title, options.subtitle, options.colors),
     `<g transform="translate(0 ${HEADER})">`,
     ...edgeElements,
+    ...overlayGroups.vectors,
     ...nodeElements,
+    ...overlayGroups.stamps,
     '</g>',
   ].join('\n');
 
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${round(width)}" height="${round(totalHeight)}" viewBox="0 0 ${round(width)} ${round(totalHeight)}" font-family="Helvetica, Arial, sans-serif">`,
-    `<title>${escapeXml(options.title)}</title>`,
-    body,
-    '</svg>',
-    '',
-  ].join('\n');
+  return svgExportDocument({ width, height: totalHeight, title: options.title, body });
 }
 
 /** Cuts a line of text so it stays inside the card, like the screen's single-line labels. */
@@ -214,17 +223,4 @@ function truncate(value: string, maxChars: number): string {
   const normalized = (value ?? '').trim().replace(/\s+/g, ' ');
   if (normalized.length <= maxChars) return normalized;
   return `${normalized.slice(0, maxChars - 1)}…`;
-}
-
-function escapeXml(value: string): string {
-  return (value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

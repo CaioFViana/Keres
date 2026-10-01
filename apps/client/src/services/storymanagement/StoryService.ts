@@ -3,7 +3,7 @@ import { STORY_OWNER_ONLY_FIELDS } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryInsert, StorySelect } from '../../db/schema';
-import { choices, favorites, plots, servers, stories } from '../../db/schema';
+import { choices, comments, favorites, plots, servers, stories } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { getChangedFields, prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
@@ -12,7 +12,8 @@ import {
   assertStoryIsOwned,
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
   StoryOwnerOnlyError,
 } from '../../utils/syncUtils';
 import { createKeresAxiosInstance, isOfflineError } from '../apiClient';
@@ -20,6 +21,7 @@ import { authTokenManager } from '../AuthTokenManager';
 import { mediaFileService } from '../MediaFileService';
 import { createServerService } from '../ServerService';
 import { createChoiceService } from './ChoiceService';
+import { createCommentService } from './CommentService';
 import { createFavoriteService } from './FavoriteService';
 import { createSceneService } from './SceneService';
 import { SQLiteStoryPackageExporter } from './story-packages/SQLiteStoryPackageExporter';
@@ -84,6 +86,11 @@ export interface StoryService {
     targetType: 'linear' | 'branching',
   ): Promise<void>;
   unlinkFromServer(currentUserId: string, storyId: string): Promise<void>;
+  /**
+   * Removes this device's copy of a story somebody else owns, once the caller has left it on the server.
+   * Refuses the owner's story and a story never linked to a server: those are deleted, not left.
+   */
+  discardCollaboratedCopy(storyId: string): Promise<void>;
   importFullStory(
     userId: string,
     fullStoryData: FullStoryExportType,
@@ -98,8 +105,14 @@ export interface StoryService {
 export const createStoryService = (db: AppDrizzleClient): StoryService => {
   const serverService = createServerService(db);
   const favoriteService = createFavoriteService(db);
+  const commentService = createCommentService(db);
   const sceneService = createSceneService(db);
   const choiceService = createChoiceService(db);
+  /** getUserIdForOperation's rule, for a story link that is not (yet) the stored row's. */
+  const userIdForServer = async (serverId: string | null | undefined, currentUserId: string) => {
+    const server = serverId ? await serverService.getServerById(serverId) : undefined;
+    return server?.idUser || currentUserId;
+  };
   return {
     async getAllStories(currentLocalUserId?: string): Promise<StorySelect[]> {
       const rows = await db.select().from(stories).where(eq(stories.isDeleted, false)).all();
@@ -142,18 +155,17 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
 
     async createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect> {
       const newStory = prepareNewEntityData<StoryInsert>({ ...storyData, userId: currentUserId });
-      const result = await db.insert(stories).values(newStory).returning().get();
+      // The row getUserIdForOperation would read does not exist until the unit below commits.
+      const userIdToLog = await userIdForServer(newStory.serverId, currentUserId);
+      const result = await runLocalWrite(db, newStory.id, () => {
+        const inserted = db.insert(stories).values(newStory).returning().get();
+        recordLocalOperationSync(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, {
+          ...newStory,
+        }); // Pass serializable data
+        return inserted;
+      });
 
-      const userIdToLog = await getUserIdForOperation(
-        db,
-        serverService,
-        newStory.id,
-        currentUserId,
-      );
-      await recordLocalOperation(db, newStory.id, userIdToLog, 'create', 'Story', newStory.id, {
-        ...newStory,
-      }); // Pass serializable data
-
+      // After the story's create: the default arc's operation points at it.
       await createStoryArcService(db).createArc(currentUserId, {
         storyId: newStory.id,
         title: 'Arc',
@@ -232,23 +244,31 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         return;
       }
 
-      const [updatedStory] = await db
-        .update(stories)
-        .set({ ...dataToPersist, updatedAt: new Date(), version: sql`${stories.version} + 1` })
-        .where(eq(stories.id, storyId))
-        .returning();
+      // Resolved against the link the row has AFTER this write, as getUserIdForOperation did when it
+      // ran after the update: unlinking clears `serverId`, and that update is the local user's.
+      const userIdToLog = await userIdForServer(
+        dataToPersist.serverId !== undefined ? dataToPersist.serverId : originalStory.serverId,
+        currentUserId,
+      );
+      await runLocalWrite(db, storyId, () => {
+        const updatedStory = db
+          .update(stories)
+          .set({ ...dataToPersist, updatedAt: new Date(), version: sql`${stories.version} + 1` })
+          .where(eq(stories.id, storyId))
+          .returning()
+          .get();
 
-      if (!updatedStory) {
-        throw new Error(`Failed to update story ${storyId} or story not found.`);
-      }
+        if (!updatedStory) {
+          throw new Error(`Failed to update story ${storyId} or story not found.`);
+        }
 
-      const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      // Diffed against the actual persisted row, not the raw `storyData` input - logging the
-      // input directly would record every field the form sends (title, description, genre...)
-      // as "changed" even when only one of them actually was.
-      const changes = getChangedFields(originalStory, updatedStory);
-      delete changes.updatedAt;
-      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, changes);
+        // Diffed against the actual persisted row, not the raw `storyData` input - logging the
+        // input directly would record every field the form sends (title, description, genre...)
+        // as "changed" even when only one of them actually was.
+        const changes = getChangedFields(originalStory, updatedStory);
+        delete changes.updatedAt;
+        recordLocalOperationSync(db, storyId, userIdToLog, 'update', 'Story', storyId, changes);
+      });
       entityEventEmitter.emit('story_changed', storyId, storyId);
     },
 
@@ -328,24 +348,23 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       const nonEmptyChapters = groupScenesByChapter(storyChapters, storyScenes);
       const { intraEdgesByChapter } = classifyEdges(nonEmptyChapters, storyChoices);
 
-      const sceneUpdates: { sceneId: string; changes: { index: number } }[] = [];
+      const orders: { chapterId: string; newOrder: { id: string; newIndex: number }[] }[] = [];
       for (const { chapter, scenes: chapterScenes } of nonEmptyChapters) {
         const intraEdges = intraEdgesByChapter.get(chapter.id) ?? [];
         const order = computeChapterChainOrder(chapterScenes, intraEdges);
         const sceneById = new Map(chapterScenes.map((s) => [s.id, s]));
-        order.forEach((sceneId, position) => {
-          const scene = sceneById.get(sceneId)!;
-          // 1..N within the chapter, like every scene: the conversion is precisely where the order
-          // stops being given by the choices and starts being given by the index.
-          const newIndex = position + 1;
-          if (scene.index !== newIndex) {
-            sceneUpdates.push({ sceneId, changes: { index: newIndex } });
-          }
-        });
+        // 1..N within the chapter, like every scene: the conversion is precisely where the order
+        // stops being given by the choices and starts being given by the index. Written as the
+        // chapters' orders, the only thing that positions scenes in sync - all in one write.
+        const newOrder = order.map((sceneId, position) => ({
+          id: sceneId,
+          newIndex: position + 1,
+        }));
+        if (newOrder.some((item) => sceneById.get(item.id)!.index !== item.newIndex)) {
+          orders.push({ chapterId: chapter.id, newOrder });
+        }
       }
-      if (sceneUpdates.length > 0) {
-        await sceneService.batchUpdateScenes(currentUserId, storyId, sceneUpdates);
-      }
+      await sceneService.reorderScenesInChapters(currentUserId, storyId, orders);
 
       // Every choice disappears in the conversion to Linear - linear mode never stores per-Choice
       // navigation data, and a future reconversion to Branching generates new choices
@@ -386,22 +405,25 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
       await assertStoryIsWritable(db, storyId);
 
-      const [updatedStory] = await db
-        .update(stories)
-        .set({ isFavorite, updatedAt: new Date(), version: sql`${stories.version} + 1` })
-        .where(eq(stories.id, storyId))
-        .returning({ isFavorite: stories.isFavorite, version: stories.version });
-
-      if (!updatedStory) {
-        throw new Error(
-          `Failed to update favorite status for story ${storyId} or story not found.`,
-        );
-      }
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(db, storyId, userIdToLog, 'update', 'Story', storyId, {
-        isFavorite: updatedStory.isFavorite,
-        version: updatedStory.version,
+      await runLocalWrite(db, storyId, () => {
+        const updatedStory = db
+          .update(stories)
+          .set({ isFavorite, updatedAt: new Date(), version: sql`${stories.version} + 1` })
+          .where(eq(stories.id, storyId))
+          .returning({ isFavorite: stories.isFavorite, version: stories.version })
+          .get();
+
+        if (!updatedStory) {
+          throw new Error(
+            `Failed to update favorite status for story ${storyId} or story not found.`,
+          );
+        }
+
+        recordLocalOperationSync(db, storyId, userIdToLog, 'update', 'Story', storyId, {
+          isFavorite: updatedStory.isFavorite,
+          version: updatedStory.version,
+        });
       });
     },
 
@@ -475,6 +497,17 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       mediaFileService.deleteStoryMedia(storyId);
     },
 
+    async discardCollaboratedCopy(storyId: string): Promise<void> {
+      const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
+      if (!story) return;
+      if (!story.serverId || story.myRole === 'owner') {
+        throw new Error('Only the copy of a story somebody else owns can be discarded this way.');
+      }
+      await purgeStoryLocally(db, storyId);
+      // Per-story directory, never shared (see `deleteStory`).
+      mediaFileService.deleteStoryMedia(storyId);
+    },
+
     async unlinkFromServer(currentUserId: string, storyId: string): Promise<void> {
       const story = await this.getStoryById(storyId);
       if (!story) {
@@ -491,6 +524,7 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         // The server row itself is gone locally - nothing to notify, just drop the stale link.
         if (server?.idUser) {
           await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
+          await commentService.migrateAuthorIdentity(storyId, server.idUser, currentUserId);
         } else {
           // The downloaded story keeps only the account's own favourites. If the server
           // registration has vanished, those rows are the only remaining source for recovering the identity.
@@ -501,6 +535,14 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
             .all();
           for (const { userId } of formerUserIds) {
             await favoriteService.migrateUserIdentity(storyId, userId, currentUserId);
+          }
+          const formerAuthorIds = await db
+            .selectDistinct({ authorUserId: comments.authorUserId })
+            .from(comments)
+            .where(eq(comments.storyId, storyId))
+            .all();
+          for (const { authorUserId } of formerAuthorIds) {
+            await commentService.migrateAuthorIdentity(storyId, authorUserId, currentUserId);
           }
         }
         await this.updateStory(currentUserId, storyId, {
@@ -551,6 +593,9 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       }
 
       await favoriteService.migrateUserIdentity(storyId, server.idUser, currentUserId);
+      // Comments mirror favourites: without this the owner's own comments keep the server
+      // identity after unlinking, and authorship checks stop recognising them as theirs.
+      await commentService.migrateAuthorIdentity(storyId, server.idUser, currentUserId);
       await this.updateStory(currentUserId, storyId, { serverId: null, lastPublicFavoriteLog: 0 });
     },
 

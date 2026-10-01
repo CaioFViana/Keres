@@ -4,6 +4,7 @@ import { useCharacterStore } from './characterStore';
 import { useConnectivityStore } from './connectivityStore';
 import { useGalleryMediaViewerStore } from './galleryMediaViewerStore';
 import { useGalleryStore } from './galleryStore';
+import { useGuideStore } from './guideStore';
 import { useItemStore } from './itemStore';
 import { useLocationMapDraftStore } from './locationMapDraftStore';
 import { useLocationStore } from './locationStore';
@@ -28,6 +29,7 @@ export function resetAllClientStores(): void {
   useConnectivityStore.getState().reset();
   useNotificationStore.getState().clearAll();
   useGalleryMediaViewerStore.getState().close();
+  useGuideStore.getState().reset();
 
   useChapterStore.getState().resetStore();
   useCharacterStore.getState().resetStore();

@@ -102,4 +102,12 @@ describe('theme persistence', () => {
     useThemeStore.getState().resetTheme();
     expect(useThemeStore.getState().darkMode).toBe(false);
   });
+
+  it('keeps the safe default when no settings row exists yet', async () => {
+    settingsService.getClientSettings.mockResolvedValue(null);
+
+    await useThemeStore.getState().initializeTheme(db);
+
+    expect(useThemeStore.getState().darkMode).toBe(false);
+  });
 });

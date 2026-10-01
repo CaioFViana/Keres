@@ -2,9 +2,10 @@ import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import CanvasLine from '../graphs/CanvasLine/CanvasLine';
 import GraphCanvasFrame from '../graphs/GraphCanvasFrame/GraphCanvasFrame';
-import type { PanZoomCanvasHandle } from '../../../hooks/usePanZoomCanvas';
-import { usePanZoomCanvas } from '../../../hooks/usePanZoomCanvas';
+import type { CanvasViewportHandle } from '../../../hooks/useCanvasViewport';
+import { useCanvasViewport } from '../../../hooks/useCanvasViewport';
 import { useTheme } from '../../../theme';
+import { spatialRectIntersects } from '@keres/shared';
 import type { PresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import {
   buildMatrixThreadSegments,
@@ -24,7 +25,7 @@ interface Props {
   onPressRow: (rowId: string) => void;
   showRowCoverage: boolean;
 }
-export type PresenceMatrixCanvasHandle = PanZoomCanvasHandle;
+export type PresenceMatrixCanvasHandle = CanvasViewportHandle;
 
 const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
   ({ layout, onPressScene, onPressRow, showRowCoverage }, ref) => {
@@ -52,14 +53,50 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
       },
       [gridLeft, gridTop, layout.rows, layout.sceneWidth, layout.scenes, onPressRow, onPressScene],
     );
-    const panZoom = usePanZoomCanvas(ref, layout, {
-      minScale: 0.08,
-      maxScale: 3,
-      fitVerticalAlignment: 'top',
-      refitOnLayoutChange: false,
-      freePan: true,
-      onTap: handleTap,
-    });
+    const { containerRef, handleLayout, panHandlers, animatedTransform, renderWindow } =
+      useCanvasViewport(ref, layout, {
+        minScale: 0.08,
+        maxScale: 3,
+        fitVerticalAlignment: 'top',
+        refitOnLayoutChange: false,
+        clampMode: 'free',
+        onTap: handleTap,
+      });
+    /** Scene indexes whose column reaches the culling window; rows and headers cull with these. */
+    const visibleSceneIndexes = useMemo(
+      () =>
+        layout.scenes.flatMap((scene, index) =>
+          spatialRectIntersects(
+            {
+              x: gridLeft + index * layout.sceneWidth,
+              y: gridTop,
+              width: layout.sceneWidth,
+              height: layout.rows.length * MATRIX_ROW_HEIGHT,
+            },
+            renderWindow,
+          )
+            ? [index]
+            : [],
+        ),
+      [gridLeft, gridTop, layout.rows.length, layout.sceneWidth, layout.scenes, renderWindow],
+    );
+    const visibleRowIndexes = useMemo(
+      () =>
+        layout.rows.flatMap((row, rowIndex) =>
+          spatialRectIntersects(
+            {
+              x: gridLeft,
+              y: gridTop + rowIndex * MATRIX_ROW_HEIGHT,
+              width: layout.scenes.length * layout.sceneWidth,
+              height: MATRIX_ROW_HEIGHT,
+            },
+            renderWindow,
+          )
+            ? [rowIndex]
+            : [],
+        ),
+      [gridLeft, gridTop, layout.rows, layout.sceneWidth, layout.scenes.length, renderWindow],
+    );
     const styles = useMemo(
       () =>
         StyleSheet.create({
@@ -99,24 +136,55 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
       });
       return groups;
     }, [layout.scenes]);
+    const visibleChapterGroups = useMemo(
+      () =>
+        chapterGroups.filter((chapter) =>
+          spatialRectIntersects(
+            {
+              x: gridLeft + chapter.start * layout.sceneWidth,
+              y: MATRIX_PADDING,
+              width: (chapter.end - chapter.start + 1) * layout.sceneWidth,
+              height: MATRIX_HEADER_HEIGHT,
+            },
+            renderWindow,
+          ),
+        ),
+      [chapterGroups, gridLeft, layout.sceneWidth, renderWindow],
+    );
     const threads = useMemo(
       () =>
         layout.rows.flatMap((row, rowIndex) =>
-          buildMatrixThreadSegments(row, layout.scenes, layout.sceneWidth).map(
-            (segment, position) => ({
+          buildMatrixThreadSegments(row, layout.scenes, layout.sceneWidth)
+            .map((segment, position) => ({
               key: `${row.id}-${position}`,
               color: row.color,
               y: matrixRowCenterY(rowIndex),
               ...segment,
-            }),
-          ),
+            }))
+            .filter((thread) =>
+              spatialRectIntersects(
+                {
+                  x: Math.min(thread.x1, thread.x2),
+                  y: thread.y - MATRIX_THREAD_WIDTH / 2,
+                  width: Math.abs(thread.x2 - thread.x1),
+                  height: MATRIX_THREAD_WIDTH,
+                },
+                renderWindow,
+              ),
+            ),
         ),
-      [layout.rows, layout.sceneWidth, layout.scenes],
+      [layout.rows, layout.sceneWidth, layout.scenes, renderWindow],
     );
     const gridHeight = layout.rows.length * MATRIX_ROW_HEIGHT;
     return (
-      <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
-        {layout.scenes.map((scene, index) => {
+      <GraphCanvasFrame
+        containerRef={containerRef}
+        handleLayout={handleLayout}
+        panHandlers={panHandlers}
+        animatedTransform={animatedTransform}
+      >
+        {visibleSceneIndexes.map((index) => {
+          const scene = layout.scenes[index];
           const x = MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth;
           return (
             <React.Fragment key={scene.id}>
@@ -158,7 +226,7 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
             dashed={thread.isGap}
           />
         ))}
-        {chapterGroups.map((chapter) => (
+        {visibleChapterGroups.map((chapter) => (
           <View
             key={`${chapter.start}-${chapter.name}`}
             pointerEvents="none"
@@ -177,112 +245,119 @@ const PresenceMatrixCanvas = forwardRef<PresenceMatrixCanvasHandle, Props>(
             </Text>
           </View>
         ))}
-        {layout.scenes.map((scene, index) => (
-          <View
-            key={`scene-${scene.id}`}
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth + 4,
-              top: MATRIX_PADDING + 17,
-              width: layout.sceneWidth - 8,
-              height: MATRIX_HEADER_HEIGHT - 25,
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              numberOfLines={2}
-              style={[
-                styles.label,
-                {
-                  position: 'relative',
-                  left: 4,
-                  width: layout.sceneWidth - 12,
-                  color: colors.text,
-                  fontSize: 10,
-                },
-              ]}
-            >
-              {`${index + 1}. ${scene.name}`}
-            </Text>
-          </View>
-        ))}
-        {layout.rows.map((row, rowIndex) => (
-          <React.Fragment key={row.id}>
+        {visibleSceneIndexes.map((index) => {
+          const scene = layout.scenes[index];
+          return (
             <View
+              key={`scene-${scene.id}`}
               pointerEvents="none"
               style={{
                 position: 'absolute',
-                left: MATRIX_PADDING,
-                top: gridTop + rowIndex * MATRIX_ROW_HEIGHT,
-                width: MATRIX_LABEL_WIDTH - 8,
-                height: MATRIX_ROW_HEIGHT,
+                left: MATRIX_PADDING + MATRIX_LABEL_WIDTH + index * layout.sceneWidth + 4,
+                top: MATRIX_PADDING + 17,
+                width: layout.sceneWidth - 8,
+                height: MATRIX_HEADER_HEIGHT - 25,
                 justifyContent: 'center',
               }}
             >
-              <View>
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.label,
-                    {
-                      position: 'relative',
-                      left: 0,
-                      width: MATRIX_LABEL_WIDTH - 8,
-                      color: row.color,
-                    },
-                  ]}
-                >
-                  {row.label}
-                </Text>
-                {showRowCoverage && (
-                  <Text style={[styles.rowPresence, { color: colors.textSecondary }]}>
-                    {`${row.cells.size}/${layout.scenes.length} (${Math.round((row.cells.size / layout.scenes.length || 0) * 100)}%)`}
-                  </Text>
-                )}
-              </View>
+              <Text
+                numberOfLines={2}
+                style={[
+                  styles.label,
+                  {
+                    position: 'relative',
+                    left: 4,
+                    width: layout.sceneWidth - 12,
+                    color: colors.text,
+                    fontSize: 10,
+                  },
+                ]}
+              >
+                {`${index + 1}. ${scene.name}`}
+              </Text>
             </View>
-            {layout.scenes.map((scene, sceneIndex) => {
-              const value = row.cells.get(scene.id);
-              if (!value) return null;
-              return (
-                <View
-                  key={`${row.id}-${scene.id}`}
-                  pointerEvents="none"
-                  style={[
-                    styles.cell,
-                    {
-                      left:
-                        MATRIX_PADDING +
-                        MATRIX_LABEL_WIDTH +
-                        sceneIndex * layout.sceneWidth +
-                        MATRIX_CELL_INSET,
-                      top: gridTop + rowIndex * MATRIX_ROW_HEIGHT + 10,
-                      width: layout.sceneWidth - MATRIX_CELL_INSET * 2,
-                      height: MATRIX_ROW_HEIGHT - 20,
-                      borderColor: row.color,
-                      backgroundColor: `${row.color}2E`,
-                    },
-                  ]}
-                >
+          );
+        })}
+        {visibleRowIndexes.map((rowIndex) => {
+          const row = layout.rows[rowIndex];
+          return (
+            <React.Fragment key={row.id}>
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  left: MATRIX_PADDING,
+                  top: gridTop + rowIndex * MATRIX_ROW_HEIGHT,
+                  width: MATRIX_LABEL_WIDTH - 8,
+                  height: MATRIX_ROW_HEIGHT,
+                  justifyContent: 'center',
+                }}
+              >
+                <View>
                   <Text
-                    numberOfLines={2}
+                    numberOfLines={1}
                     style={[
-                      styles.cellText,
+                      styles.label,
                       {
-                        color: colors.text,
-                        textAlign: value === '✓' ? 'center' : 'left',
-                        fontSize: value === '✓' ? 16 : 10,
+                        position: 'relative',
+                        left: 0,
+                        width: MATRIX_LABEL_WIDTH - 8,
+                        color: row.color,
                       },
                     ]}
                   >
-                    {value}
+                    {row.label}
                   </Text>
+                  {showRowCoverage && (
+                    <Text style={[styles.rowPresence, { color: colors.textSecondary }]}>
+                      {`${row.cells.size}/${layout.scenes.length} (${Math.round((row.cells.size / layout.scenes.length || 0) * 100)}%)`}
+                    </Text>
+                  )}
                 </View>
-              );
-            })}
-          </React.Fragment>
-        ))}
+              </View>
+              {visibleSceneIndexes.map((sceneIndex) => {
+                const scene = layout.scenes[sceneIndex];
+                const value = row.cells.get(scene.id);
+                if (!value) return null;
+                return (
+                  <View
+                    key={`${row.id}-${scene.id}`}
+                    pointerEvents="none"
+                    style={[
+                      styles.cell,
+                      {
+                        left:
+                          MATRIX_PADDING +
+                          MATRIX_LABEL_WIDTH +
+                          sceneIndex * layout.sceneWidth +
+                          MATRIX_CELL_INSET,
+                        top: gridTop + rowIndex * MATRIX_ROW_HEIGHT + 10,
+                        width: layout.sceneWidth - MATRIX_CELL_INSET * 2,
+                        height: MATRIX_ROW_HEIGHT - 20,
+                        borderColor: row.color,
+                        backgroundColor: `${row.color}2E`,
+                      },
+                    ]}
+                  >
+                    <Text
+                      numberOfLines={2}
+                      style={[
+                        styles.cellText,
+                        {
+                          color: colors.text,
+                          textAlign: value === '✓' ? 'center' : 'left',
+                          fontSize: value === '✓' ? 16 : 10,
+                        },
+                      ]}
+                    >
+                      {value}
+                    </Text>
+                  </View>
+                );
+              })}
+            </React.Fragment>
+          );
+        })}
       </GraphCanvasFrame>
     );
   },

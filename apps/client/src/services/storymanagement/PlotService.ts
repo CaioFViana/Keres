@@ -7,7 +7,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -27,34 +28,39 @@ export const createPlotService = (db: AppDrizzleClient) => {
     },
     async save(userId: string, value: SavePlot): Promise<Plot> {
       await assertStoryIsWritable(db, value.storyId);
-      if (value.id) {
-        const original = await db.query.plots.findFirst({ where: eq(plots.id, value.id) });
+      const plotId = value.id;
+      if (plotId) {
+        const original = await db.query.plots.findFirst({ where: eq(plots.id, plotId) });
         if (!original || original.isDeleted) throw new Error('Plot not found.');
         const changes = getChangedFields(original, { ...original, ...value });
         delete changes.updatedAt;
         delete changes.version;
         if (Object.keys(changes).length === 0) return original;
-        const [updated] = await db
-          .update(plots)
-          .set({
-            name: value.name.trim(),
-            details: value.details,
-            updatedAt: new Date(),
-            version: sql`${plots.version} + 1`,
-          })
-          .where(eq(plots.id, value.id))
-          .returning();
-        if (!updated) throw new Error('Unable to update plot.');
-        const logUserId = await getUserIdForOperation(db, serverService, updated.storyId, userId);
-        await recordLocalOperation(
-          db,
-          updated.storyId,
-          logUserId,
-          'update',
-          'Plot',
-          updated.id,
-          getChangedFields(original, updated),
-        );
+        const logUserId = await getUserIdForOperation(db, serverService, original.storyId, userId);
+        const updated = await runLocalWrite(db, original.storyId, () => {
+          const row = db
+            .update(plots)
+            .set({
+              name: value.name.trim(),
+              details: value.details,
+              updatedAt: new Date(),
+              version: sql`${plots.version} + 1`,
+            })
+            .where(eq(plots.id, plotId))
+            .returning()
+            .get();
+          if (!row) throw new Error('Unable to update plot.');
+          recordLocalOperationSync(
+            db,
+            row.storyId,
+            logUserId,
+            'update',
+            'Plot',
+            row.id,
+            getChangedFields(original, row),
+          );
+          return row;
+        });
         entityEventEmitter.emit('plot_changed', updated.storyId, updated.id);
         return updated;
       }
@@ -70,18 +76,13 @@ export const createPlotService = (db: AppDrizzleClient) => {
         isDeleted: false,
         deletedAt: null,
       };
-      const [created] = await db.insert(plots).values(newPlot).returning();
-      if (!created) throw new Error('Unable to create plot.');
-      const logUserId = await getUserIdForOperation(db, serverService, created.storyId, userId);
-      await recordLocalOperation(
-        db,
-        created.storyId,
-        logUserId,
-        'create',
-        'Plot',
-        created.id,
-        created,
-      );
+      const logUserId = await getUserIdForOperation(db, serverService, newPlot.storyId, userId);
+      const created = await runLocalWrite(db, newPlot.storyId, () => {
+        const row = db.insert(plots).values(newPlot).returning().get();
+        if (!row) throw new Error('Unable to create plot.');
+        recordLocalOperationSync(db, row.storyId, logUserId, 'create', 'Plot', row.id, row);
+        return row;
+      });
       entityEventEmitter.emit('plot_changed', created.storyId, created.id);
       return created;
     },
@@ -89,23 +90,28 @@ export const createPlotService = (db: AppDrizzleClient) => {
       const original = await db.query.plots.findFirst({ where: eq(plots.id, id) });
       if (!original || original.isDeleted) return;
       await assertStoryIsWritable(db, original.storyId);
-      const [deleted] = await db
-        .update(plots)
-        .set({
+      const logUserId = await getUserIdForOperation(db, serverService, original.storyId, userId);
+      const deleted = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(plots)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${plots.version} + 1`,
+          })
+          .where(eq(plots.id, id))
+          .returning()
+          .get();
+        if (!row) return undefined;
+        recordLocalOperationSync(db, row.storyId, logUserId, 'delete', 'Plot', id, {
+          id,
           isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${plots.version} + 1`,
-        })
-        .where(eq(plots.id, id))
-        .returning();
-      if (!deleted) return;
-      const logUserId = await getUserIdForOperation(db, serverService, deleted.storyId, userId);
-      await recordLocalOperation(db, deleted.storyId, logUserId, 'delete', 'Plot', id, {
-        id,
-        isDeleted: true,
-        version: deleted.version,
+          version: row.version,
+        });
+        return row;
       });
+      if (!deleted) return;
       entityEventEmitter.emit('plot_changed', deleted.storyId, id);
     },
   };

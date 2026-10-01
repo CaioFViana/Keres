@@ -28,8 +28,6 @@ const getOperationIconName = (operationType: string): keyof typeof Ionicons.glyp
       return 'create-outline';
     case 'delete':
       return 'trash-outline';
-    case 'reorder':
-      return 'repeat-outline';
     default:
       return 'help-circle-outline';
   }

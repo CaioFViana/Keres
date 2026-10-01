@@ -11,7 +11,8 @@ jest.mock('../../src/utils/syncUtils', () => ({
   __esModule: true,
   assertStoryIsWritable: (...args: unknown[]) => mockWritable(...args),
   getUserIdForOperation: jest.fn().mockResolvedValue('actor'),
-  recordLocalOperation: (...args: unknown[]) => mockOperation(...args),
+  recordLocalOperationSync: (...args: unknown[]) => mockOperation(...args),
+  runLocalWrite: (_db: unknown, _storyId: unknown, unit: () => unknown) => Promise.resolve(unit()),
 }));
 jest.mock('../../src/utils/entityUtils', () => ({
   __esModule: true,
@@ -63,12 +64,13 @@ describe('ModeService', () => {
     const insert = {
       values: jest.fn().mockReturnThis(),
       returning: jest.fn().mockReturnThis(),
-      get: jest.fn().mockResolvedValue({ id: 'new-mode' }),
+      get: jest.fn().mockReturnValue({ id: 'new-mode' }),
     };
     const update = {
       set: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
-      returning: jest.fn().mockResolvedValue([{ storyId: 'story', version: 2 }]),
+      returning: jest.fn().mockReturnThis(),
+      get: jest.fn().mockReturnValue({ storyId: 'story', version: 2 }),
     };
     const db = {
       insert: jest.fn(() => insert),

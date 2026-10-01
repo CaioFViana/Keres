@@ -12,7 +12,7 @@ import RelationAttributeLine from '@/src/components/features/relations/RelationM
 import { relationSectionStyleDefs } from '@/src/components/features/relations/RelationManager/relationSectionStyles';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { PlotSceneSelect, SceneSelect } from '../../db/schema';
@@ -39,7 +39,7 @@ const PlotDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<PlotsScreenNavigationProp>();
   const route = useRoute<PlotDetailScreenRouteProp>();
-  const { plotId } = route.params;
+  const { plotId, occurrence } = route.params;
   const { selectedStory } = useStoryStore();
   const navigateToDetail = useNavigateToEntityDetail();
   // Opening the Scene leaves `PlotsStack` for `NarrativeElementsStack`; without registering the way back, the
@@ -108,6 +108,7 @@ const PlotDetailScreen = () => {
   return (
     <DetailContainer
       title={plot.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
@@ -122,7 +123,11 @@ const PlotDetailScreen = () => {
         })}
       </Text>
 
-      <DetailField label={t('plot_details')} value={plot.details || t('common_na')} />
+      <DetailField
+        label={t('plot_details')}
+        value={plot.details || t('common_na')}
+        fieldKey="details"
+      />
 
       <GenericRelationDisplay<SceneSelect, PlotSceneSelect>
         title={t('plot_scenes')}

@@ -1,16 +1,31 @@
 import {
+  canvasOverlayBounds,
   clipSpatialSegment,
   spatialRectIntersects,
   type BoardContentType,
   type BoardNodeType,
+  type CanvasOverlayType,
 } from '@keres/shared';
 import React, { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Svg, { G, Path, Polygon, Text as SvgText } from 'react-native-svg';
+import { DashPathEffect, Path, Text as SkiaText } from '@shopify/react-native-skia';
+import type { SkFont } from '@shopify/react-native-skia';
+import CanvasOverlayLayer from '@/src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
+import CanvasStampView from '@/src/components/features/graphs/CanvasOverlay/CanvasStampView';
+import OverlayDraftView from '@/src/components/features/graphs/CanvasOverlay/OverlayDraftView';
+import OverlayInteractionLayer from '@/src/components/features/graphs/CanvasOverlay/OverlayInteractionLayer';
+import OverlaySelectionView from '@/src/components/features/graphs/CanvasOverlay/OverlaySelectionView';
+import type {
+  OverlayCanvasCallbacks,
+  OverlayDraft,
+  OverlayInteractionMode,
+} from '@/src/components/features/graphs/CanvasOverlay/overlayTools';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import {
-  type FreeformCanvasHandle,
-  useFreeformCanvasViewport,
-} from '@/src/hooks/useFreeformCanvasViewport';
+import SkiaEdgeCanvas from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaEdgeCanvas';
+import SkiaOverlayErrorBoundary from '@/src/components/features/graphs/SkiaEdgeCanvas/SkiaOverlayErrorBoundary';
+import { polygonPointsToPath } from '@/src/components/features/graphs/SkiaEdgeCanvas/polygonPointsToPath';
+import { measureEdgeLabelWidth } from '@/src/components/features/graphs/SkiaEdgeCanvas/measureEdgeLabelWidth';
+import { useEdgeFont } from '@/src/components/features/graphs/SkiaEdgeCanvas/useEdgeFont';
+import { type CanvasViewportHandle, useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import { useTheme } from '../../../theme';
 import { boardEdgeGeometry } from '../../../utils/boardEdges';
 import { clampCanvasWorldCoordinate } from '../../../utils/canvasDragBounds';
@@ -23,7 +38,7 @@ import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
 import type { BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import BoardNodeView from './BoardNode';
 
-export type BoardCanvasHandle = FreeformCanvasHandle;
+export type BoardCanvasHandle = CanvasViewportHandle;
 
 export interface BoardPinTitle {
   title: string;
@@ -39,6 +54,8 @@ interface Props {
   selectedNodeId: string | null;
   layoutEditing: boolean;
   connectionMode: boolean;
+  /** While set, pins ignore taps and drags: only overlay shapes respond. */
+  overlayEditing: boolean;
   galleryMediaById?: BoardGalleryMediaById;
   summaries?: Record<string, BoardEntitySummary | null>;
   onSelectNode: (node: BoardNodeType) => void;
@@ -48,6 +65,10 @@ interface Props {
   onBringNodeToFront: (nodeId: string) => void;
   onSendNodeToBack: (nodeId: string) => void;
   onConnectNodes: (fromNodeId: string, toNodeId: string) => void;
+  interactionMode: OverlayInteractionMode;
+  draft: OverlayDraft | null;
+  selectedOverlayId: string | null;
+  overlayCallbacks: OverlayCanvasCallbacks;
 }
 
 type ActiveDrag = { id: string; x: number; y: number };
@@ -58,39 +79,34 @@ const BoardEdgeView = React.memo(function BoardEdgeView({
   edge,
   stroke,
   labelBackground,
+  font,
 }: {
   edge: BoardEdgeGeometry;
   stroke: string;
   labelBackground: string;
+  font: SkFont | null;
 }) {
+  // Skia has no `textAnchor`: center by measured width instead. Both place the baseline at
+  // the same y. Without a font (web: `matchFamilyStyle` is unimplemented) the edge still
+  // draws, only its label is skipped.
+  const labelX =
+    edge.label && font ? edge.labelX - measureEdgeLabelWidth(font, edge.label, 11) / 2 : 0;
   return (
     <>
-      <Path d={edge.path} fill="none" stroke={stroke} strokeWidth={edge.directed ? 2 : 1.6} />
-      {edge.directed && <Polygon points={edge.arrow.points} fill={stroke} />}
-      {!!edge.label && (
+      <Path path={edge.path} style="stroke" color={stroke} strokeWidth={edge.directed ? 2 : 1.6} />
+      {edge.directed && <Path path={polygonPointsToPath(edge.arrow.points)} color={stroke} />}
+      {!!edge.label && font && (
         <>
-          <SvgText
-            x={edge.labelX}
+          <SkiaText
+            x={labelX}
             y={edge.labelY}
-            fill={labelBackground}
-            stroke={labelBackground}
+            font={font}
+            text={edge.label}
+            color={labelBackground}
+            style="stroke"
             strokeWidth={4}
-            fontSize={11}
-            fontWeight="600"
-            textAnchor="middle"
-          >
-            {edge.label}
-          </SvgText>
-          <SvgText
-            x={edge.labelX}
-            y={edge.labelY}
-            fill={stroke}
-            fontSize={11}
-            fontWeight="600"
-            textAnchor="middle"
-          >
-            {edge.label}
-          </SvgText>
+          />
+          <SkiaText x={labelX} y={edge.labelY} font={font} text={edge.label} color={stroke} />
         </>
       )}
     </>
@@ -105,6 +121,7 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       selectedNodeId,
       layoutEditing,
       connectionMode,
+      overlayEditing,
       galleryMediaById,
       summaries,
       onSelectNode,
@@ -114,16 +131,23 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       onBringNodeToFront,
       onSendNodeToBack,
       onConnectNodes,
+      interactionMode,
+      draft,
+      selectedOverlayId,
+      overlayCallbacks,
     },
     ref,
   ) => {
     const { colors } = useTheme();
     const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
     const [connectionDrag, setConnectionDrag] = useState<ConnectionDrag | null>(null);
+    const [rectPreview, setRectPreview] = useState<{
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+    } | null>(null);
     const activeDragRef = useRef<ActiveDrag | null>(null);
     const pendingDragRef = useRef<ActiveDrag | null>(null);
     const dragFrameRef = useRef<number | null>(null);
-    const dragLocalOriginRef = useRef({ x: 0, y: 0 });
     const dragAutoPanOffsetRef = useRef({ x: 0, y: 0 });
     const edgeCacheRef = useRef(new Map<string, BoardEdgeGeometry>());
 
@@ -162,24 +186,28 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       [activeDrag, content.nodes],
     );
     const worldBounds = boardCanvasBounds(layoutNodes, undefined, undefined, galleryMediaById);
-    const viewport = useFreeformCanvasViewport(ref, {
-      bounds: {
+    const viewport = useCanvasViewport(
+      ref,
+      {
         x: worldBounds.originX,
         y: worldBounds.originY,
         width: worldBounds.width,
         height: worldBounds.height,
       },
-      onAutoPan: adjustDraggedNodeForAutoPan,
-    });
+      { clampMode: 'none', onAutoPan: adjustDraggedNodeForAutoPan },
+    );
+    // System font on native, bundled Roboto on web; null while unavailable, where the
+    // label below is skipped.
+    const edgeFont = useEdgeFont(11, true);
     const {
       setChildDragging,
       width,
       height,
-      localOrigin,
-      bakedScale,
+      cameraTransform,
       renderWindow,
       scale,
       worldToScreen,
+      screenToWorld,
       updateAutoPan,
       stopAutoPan,
       containerRef,
@@ -187,6 +215,11 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       panHandlers,
       animatedTransform,
     } = viewport;
+    // An armed overlay tool owns every gesture until it is done: the pan responder yields
+    // while the interaction catcher above the plane takes the taps and drags.
+    useEffect(() => {
+      setChildDragging(!!interactionMode);
+    }, [interactionMode, setChildDragging]);
 
     const nodeCenter = useCallback(
       (node: BoardNodeType) => {
@@ -203,12 +236,8 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         const node = content.nodes.find((candidate) => candidate.id === nodeId);
         if (!node) return;
         const position = {
-          x: clampCanvasWorldCoordinate(
-            x + dragLocalOriginRef.current.x + dragAutoPanOffsetRef.current.x,
-          ),
-          y: clampCanvasWorldCoordinate(
-            y + dragLocalOriginRef.current.y + dragAutoPanOffsetRef.current.y,
-          ),
+          x: clampCanvasWorldCoordinate(x + dragAutoPanOffsetRef.current.x),
+          y: clampCanvasWorldCoordinate(y + dragAutoPanOffsetRef.current.y),
         };
         pendingDragRef.current = { id: nodeId, ...position };
         const size = boardNodeSize(
@@ -238,10 +267,9 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
       [],
     );
     const handleNodeDragStart = useCallback(() => {
-      dragLocalOriginRef.current = localOrigin;
       dragAutoPanOffsetRef.current = { x: 0, y: 0 };
       setChildDragging(true);
-    }, [localOrigin, setChildDragging]);
+    }, [setChildDragging]);
     const handleNodeDragEnd = useCallback(
       (nodeId: string) => {
         stopAutoPan();
@@ -361,6 +389,29 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
           .map(({ node }) => node),
       [visibleNodes],
     );
+    const visibleStamps = useMemo(
+      () =>
+        (content.overlays ?? [])
+          .filter(
+            (overlay): overlay is Extract<CanvasOverlayType, { kind: 'stamp' }> =>
+              overlay.kind === 'stamp',
+          )
+          .filter((stamp) => spatialRectIntersects(canvasOverlayBounds(stamp), renderWindow))
+          .map((stamp, order) => ({ stamp, order }))
+          .sort(
+            (left, right) =>
+              (left.stamp.zIndex ?? 0) - (right.stamp.zIndex ?? 0) || left.order - right.order,
+          )
+          .map(({ stamp }) => stamp),
+      [content.overlays, renderWindow],
+    );
+    const snapTargets = useMemo(
+      () => layoutNodes.map((node) => nodeCenter(node)),
+      [layoutNodes, nodeCenter],
+    );
+    const selectedOverlay = selectedOverlayId
+      ? ((content.overlays ?? []).find((overlay) => overlay.id === selectedOverlayId) ?? null)
+      : null;
     const connectionPath = useMemo(() => {
       if (!connectionDrag) return null;
       const source = nodesById.get(connectionDrag.fromNodeId);
@@ -371,44 +422,68 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
         : null;
     }, [connectionDrag, nodeCenter, nodesById, renderWindow]);
 
-    return (
-      <GraphCanvasFrame
-        width={width}
-        height={height}
-        contentOverflow="hidden"
-        containerRef={containerRef}
-        handleLayout={handleLayout}
-        panHandlers={panHandlers}
-        animatedTransform={animatedTransform}
-      >
-        <Svg
-          width={width}
-          height={height}
-          pointerEvents="none"
-          style={{ position: 'absolute', left: 0, top: 0 }}
-        >
-          <G
-            transform={`translate(${-localOrigin.x * bakedScale} ${-localOrigin.y * bakedScale}) scale(${bakedScale})`}
-          >
+    const overlay =
+      width > 0 && height > 0 ? (
+        <SkiaOverlayErrorBoundary canvas="board">
+          <SkiaEdgeCanvas camera={cameraTransform}>
             {visibleEdges.map((edge) => (
               <BoardEdgeView
                 key={edge.id}
                 edge={edge}
                 stroke={colors.text}
                 labelBackground={colors.background}
+                font={edgeFont}
               />
             ))}
+            <CanvasOverlayLayer
+              overlays={content.overlays}
+              renderWindow={renderWindow}
+              stroke={colors.text}
+              labelBackground={colors.background}
+              font={edgeFont}
+            />
+            <OverlayDraftView
+              points={draft?.points ?? null}
+              rect={rectPreview}
+              color={colors.primary}
+              scale={scale}
+            />
             {connectionPath && (
-              <Path
-                d={connectionPath}
-                fill="none"
-                stroke={colors.primary}
-                strokeDasharray="6 4"
-                strokeWidth={2}
-              />
+              <Path path={connectionPath} style="stroke" color={colors.primary} strokeWidth={2}>
+                <DashPathEffect intervals={[6, 4]} />
+              </Path>
             )}
-          </G>
-        </Svg>
+          </SkiaEdgeCanvas>
+        </SkiaOverlayErrorBoundary>
+      ) : null;
+
+    return (
+      <GraphCanvasFrame
+        containerRef={containerRef}
+        handleLayout={handleLayout}
+        panHandlers={panHandlers}
+        animatedTransform={animatedTransform}
+        overlay={overlay}
+        interactionOverlay={
+          interactionMode ? (
+            <OverlayInteractionLayer
+              mode={interactionMode}
+              screenToWorld={screenToWorld}
+              scale={scale}
+              overlays={content.overlays}
+              snapTargets={snapTargets}
+              onDrawTap={overlayCallbacks.onDrawTap}
+              onStampPlace={overlayCallbacks.onStampPlace}
+              onDrawRect={(start, end) => {
+                if (interactionMode.kind === 'draw')
+                  overlayCallbacks.onDrawRect(interactionMode.tool, start, end);
+              }}
+              onPreviewRect={setRectPreview}
+              onSelectOverlay={overlayCallbacks.onSelectOverlay}
+            />
+          ) : null
+        }
+      >
         {stackedNodes.map((node) => {
           const meta = titles[node.id];
           return (
@@ -423,10 +498,8 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
               selected={selectedNodeId === node.id}
               layoutEditing={layoutEditing}
               connectionMode={connectionMode}
+              overlayEditing={overlayEditing}
               scale={scale}
-              positionOffsetX={-localOrigin.x}
-              positionOffsetY={-localOrigin.y}
-              positionScale={bakedScale}
               galleryMedia={
                 node.kind === 'entity' && node.entityType === 'Gallery'
                   ? galleryMediaById?.[node.entityId]
@@ -448,6 +521,24 @@ const BoardCanvas = forwardRef<BoardCanvasHandle, Props>(
             />
           );
         })}
+        {visibleStamps.map((stamp) => (
+          <CanvasStampView key={stamp.id} stamp={stamp} />
+        ))}
+        {selectedOverlay && (
+          <OverlaySelectionView
+            overlay={selectedOverlay}
+            scale={scale}
+            onDragStart={() => setChildDragging(true)}
+            onDragEnd={() => setChildDragging(false)}
+            onCommitMove={overlayCallbacks.onCommitMove}
+            onCommitVertex={overlayCallbacks.onCommitVertex}
+            onCommitRect={overlayCallbacks.onCommitRect}
+            onDetails={overlayCallbacks.onOpenOverlaySheet}
+            onMoveLayer={overlayCallbacks.onMoveOverlayLayer}
+            onToggleLock={overlayCallbacks.onToggleLock}
+            onDeselect={overlayCallbacks.onDeselectOverlay}
+          />
+        )}
       </GraphCanvasFrame>
     );
   },

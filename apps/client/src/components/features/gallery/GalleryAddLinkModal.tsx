@@ -4,7 +4,7 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { normalizeGalleryLink } from '@keres/shared';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../theme';
@@ -22,12 +22,14 @@ const GalleryAddLinkModal: React.FC<Props> = ({ visible, onCancel, onConfirm }) 
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
 
-  useEffect(() => {
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible) {
       setUrl('');
       setTitle('');
     }
-  }, [visible]);
+  }
 
   const normalized = normalizeGalleryLink(url);
   const styles = StyleSheet.create({

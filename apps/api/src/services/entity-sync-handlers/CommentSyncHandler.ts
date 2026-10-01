@@ -21,6 +21,16 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
 > {
   entityName = 'Comment';
   tierLimitScope = 'none' as const;
+  // Where a comment is anchored and who wrote it are settled at creation.
+  protected fixedFields = [
+    'storyId',
+    'entityType',
+    'entityId',
+    'fieldId',
+    'fieldKey',
+    'authorUserId',
+    'contentSnapshot',
+  ] as const;
 
   allowsReaderWrite(context: SyncOperationPolicyContext): boolean {
     return context.allowReaderComments;
@@ -35,6 +45,19 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
       throw new SyncConflictError(
         'unauthorized',
         'Only the comment author or the story owner can delete this comment.',
+      );
+    }
+    // Restoring undoes a deletion, and the row does not record who deleted it: letting the author
+    // restore would let them reverse the owner's moderation. Only the owner restores.
+    if (
+      context.update.type === 'update' &&
+      context.role !== 'owner' &&
+      context.currentEntity.isDeleted &&
+      (context.update as UpdateStoryUpdate).changes?.isDeleted === false
+    ) {
+      throw new SyncConflictError(
+        'unauthorized',
+        'Only the story owner can restore a deleted comment.',
       );
     }
   }
@@ -68,6 +91,8 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
         'A user can only create comments under their own identity.',
       );
     }
+    // Polymorphic, so no foreign key holds it to this story.
+    await this.assertEntityInStory(data.entityType, data.entityId, storyId, database);
     const now = this.parseOperationTime(update.operationTime);
     await database.insert(comments).values({
       id: update.id!,
@@ -102,14 +127,6 @@ export class CommentSyncHandler extends BaseSyncEntityHandler<
     if (currentEntity.authorUserId !== userId) {
       throw new SyncConflictError('unauthorized', 'Only the comment author can edit it.');
     }
-    const changes = { ...update.changes };
-    delete changes.storyId;
-    delete changes.entityType;
-    delete changes.entityId;
-    delete changes.fieldId;
-    delete changes.fieldKey;
-    delete changes.authorUserId;
-    delete changes.contentSnapshot;
-    await super.update(userId, storyId, { ...update, changes }, currentEntity, database);
+    await super.update(userId, storyId, update, currentEntity, database);
   }
 }

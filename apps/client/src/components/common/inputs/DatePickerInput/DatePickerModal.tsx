@@ -16,7 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useUserSettingsStore } from '../../../../state/userSettingsStore';
@@ -41,9 +40,9 @@ function pad2(value: number): string {
 }
 
 /**
- * A date calendar (with optional time) for `AttributeType.DATE`. It mirrors `ColorPickerModal`'s
- * structure: it keeps the choice in local state and only returns it on "Select", so leaving through
- * "Cancel" changes nothing.
+ * A date calendar (with optional time) for `AttributeType.DATE`. Like `ColorPickerModal`, close and
+ * confirm live in the header: the choice stays in local state and only returns on confirm, so
+ * leaving through close changes nothing.
  *
  * No time zone arithmetic happens here - the date components are handled as numbers and serialised by
  * `formatAttributeDate`. See `attributeDateValue.ts` for why.
@@ -163,18 +162,34 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
   };
 
   const handleConfirm = () => {
-    onSelect(currentParts ? formatAttributeDate(currentParts) : null);
+    // The header check is disabled with no date; the guard keeps programmatic presses honest too.
+    if (!currentParts) return;
+    onSelect(formatAttributeDate(currentParts));
   };
 
   const styles = StyleSheet.create({
     container: { backgroundColor: colors.background, flexShrink: 1 },
     content: { padding: 20 },
+    // Close and confirm live in the header, like the color and icon pickers: no bottom
+    // action row wasting vertical room on short windows.
+    header: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    titleWrap: {
+      flex: 1,
+      alignItems: 'center',
+    },
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 12,
       color: colors.text,
       textAlign: 'center',
+    },
+    headerButton: {
+      padding: 5,
     },
     preview: {
       fontSize: 16,
@@ -252,8 +267,6 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
       justifyContent: 'center',
     },
     periodText: { color: colors.primary, fontWeight: 'bold', fontSize: 15 },
-    actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
-    actionButton: { width: '47%' },
   });
 
   const dayCells: (number | null)[] = [
@@ -273,7 +286,34 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      {title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.header}>
+        <TouchableOpacity
+          testID="date-picker-close"
+          accessibilityRole="button"
+          accessibilityLabel={t('close')}
+          onPress={onClose}
+          style={styles.headerButton}
+        >
+          <Ionicons name="close" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <View style={styles.titleWrap}>
+          {title ? <Text style={styles.title}>{title}</Text> : null}
+        </View>
+        <TouchableOpacity
+          testID="date-picker-confirm"
+          accessibilityRole="button"
+          accessibilityLabel={t('select')}
+          onPress={handleConfirm}
+          disabled={currentParts === null}
+          style={styles.headerButton}
+        >
+          <Ionicons
+            name="checkmark"
+            size={24}
+            color={currentParts === null ? colors.textSecondary : colors.primary}
+          />
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.preview} testID="date-picker-preview">
         {previewText}
@@ -416,23 +456,6 @@ const DatePickerModal: React.FC<DatePickerModalProps> = ({ value, onSelect, onCl
           )}
         </View>
       )}
-
-      <View style={styles.actionRow}>
-        <Button
-          onPress={onClose}
-          style={[styles.actionButton, { backgroundColor: colors.textSecondary }]}
-        >
-          {t('cancel')}
-        </Button>
-        <Button
-          onPress={handleConfirm}
-          disabled={currentParts === null}
-          style={styles.actionButton}
-          testID="date-picker-confirm"
-        >
-          {t('select')}
-        </Button>
-      </View>
     </ScrollView>
   );
 };

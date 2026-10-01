@@ -8,7 +8,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -56,12 +57,13 @@ function enqueue<T>(key: string, task: () => Promise<T>): Promise<T> {
   const previous = pendingWrites.get(key) ?? Promise.resolve();
   // A `catch` in the chain: a failed write must not take the next one in the queue down.
   const next = previous.then(task, task);
-  pendingWrites.set(
-    key,
-    next.catch(() => undefined),
-  );
-  void next.finally(() => {
-    if (pendingWrites.get(key) === next) pendingWrites.delete(key);
+  const tracked = next.catch(() => undefined);
+  pendingWrites.set(key, tracked);
+  // On the caught promise, not on `next`: `finally` returns a new promise, and hanging it off the
+  // rejecting `next` would leave an unhandled rejection behind. Compared against the stored promise
+  // for the same reason - `next` itself is never in the map, so the entry would never be deleted.
+  void tracked.finally(() => {
+    if (pendingWrites.get(key) === tracked) pendingWrites.delete(key);
   });
   return next;
 }
@@ -85,9 +87,10 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
       .orderBy(asc(statRelations.id))
       .all();
 
-  const softDelete = async (row: StatRelationSelect, currentUserId: string) => {
+  // Synchronous: runs inside the caller's `runLocalWrite` unit.
+  const softDelete = (row: StatRelationSelect, userIdToLog: string) => {
     const now = new Date();
-    const [updated] = await db
+    const updated = db
       .update(statRelations)
       .set({
         isDeleted: true,
@@ -96,10 +99,10 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
         version: sql`${statRelations.version} + 1`,
       })
       .where(eq(statRelations.id, row.id))
-      .returning({ version: statRelations.version });
+      .returning({ version: statRelations.version })
+      .get();
 
-    const userIdToLog = await getUserIdForOperation(db, serverService, row.storyId, currentUserId);
-    await recordLocalOperation(db, row.storyId, userIdToLog, 'delete', 'StatRelation', row.id, {
+    recordLocalOperationSync(db, row.storyId, userIdToLog, 'delete', 'StatRelation', row.id, {
       version: updated?.version,
     });
   };
@@ -109,20 +112,21 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
    *
    * The cleanup is the fix for devices that already ended up with duplicates before the queue above
    * existed: without it, the same conflict would come back on every synchronization, because the server
-   * would keep refusing the second row's create.
+   * would keep refusing the second row's create. Synchronous, so the read that decides and the writes
+   * it leads to share one unit.
    */
-  const takeSingleLiveValue = async (
-    currentUserId: string,
+  const takeSingleLiveValue = (
+    userIdToLog: string,
     characterId: string,
     modeId: string | null,
     statId: string,
-  ): Promise<StatRelationSelect | undefined> => {
-    const live = await findLiveValues(characterId, modeId, statId);
+  ): StatRelationSelect | undefined => {
+    const live = findLiveValues(characterId, modeId, statId);
     for (const duplicate of live.slice(1)) {
       console.warn(
         `Collapsing a duplicate stat value for character ${characterId} and stat ${statId}.`,
       );
-      await softDelete(duplicate, currentUserId);
+      softDelete(duplicate, userIdToLog);
     }
     return live[0];
   };
@@ -148,41 +152,45 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
       await assertStoryIsWritable(db, storyId);
 
       return enqueue(valueKey(characterId, modeId, statId), async () => {
-        const existing = await takeSingleLiveValue(currentUserId, characterId, modeId, statId);
         const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
 
-        if (existing) {
-          if (existing.value === value) return;
-          const [updated] = await db
-            .update(statRelations)
-            .set({ value, updatedAt: new Date(), version: sql`${statRelations.version} + 1` })
-            .where(eq(statRelations.id, existing.id))
-            .returning({ version: statRelations.version });
-          await recordLocalOperation(
-            db,
-            storyId,
-            userIdToLog,
-            'update',
-            'StatRelation',
-            existing.id,
-            { value, version: updated?.version },
-          );
-          entityEventEmitter.emit('stat_relation_changed', storyId, characterId);
-          return;
-        }
+        const changed = await runLocalWrite(db, storyId, () => {
+          const existing = takeSingleLiveValue(userIdToLog, characterId, modeId, statId);
 
-        const row = prepareNewEntityData<StatRelationInsert>({
-          storyId,
-          characterId,
-          modeId,
-          statId,
-          value,
-        } as Create<StatRelationInsert>);
-        const result = await db.insert(statRelations).values(row).returning().get();
-        await recordLocalOperation(db, storyId, userIdToLog, 'create', 'StatRelation', row.id, {
-          ...result,
+          if (existing) {
+            if (existing.value === value) return false;
+            const updated = db
+              .update(statRelations)
+              .set({ value, updatedAt: new Date(), version: sql`${statRelations.version} + 1` })
+              .where(eq(statRelations.id, existing.id))
+              .returning({ version: statRelations.version })
+              .get();
+            recordLocalOperationSync(
+              db,
+              storyId,
+              userIdToLog,
+              'update',
+              'StatRelation',
+              existing.id,
+              { value, version: updated?.version },
+            );
+            return true;
+          }
+
+          const row = prepareNewEntityData<StatRelationInsert>({
+            storyId,
+            characterId,
+            modeId,
+            statId,
+            value,
+          } as Create<StatRelationInsert>);
+          const result = db.insert(statRelations).values(row).returning().get();
+          recordLocalOperationSync(db, storyId, userIdToLog, 'create', 'StatRelation', row.id, {
+            ...result,
+          });
+          return true;
         });
-        entityEventEmitter.emit('stat_relation_changed', storyId, characterId);
+        if (changed) entityEventEmitter.emit('stat_relation_changed', storyId, characterId);
       });
     },
 
@@ -190,12 +198,16 @@ export const createStatRelationService = (db: AppDrizzleClient): StatRelationSer
       return enqueue(valueKey(characterId, modeId, statId), async () => {
         const live = await findLiveValues(characterId, modeId, statId);
         if (live.length === 0) return;
-        await assertStoryIsWritable(db, live[0]!.storyId);
+        const storyId = live[0]!.storyId;
+        await assertStoryIsWritable(db, storyId);
+        const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
 
         // It deletes every live one, not only the first: clearing the field means saying "there is no value of
         // its own here", and a surviving duplicate would make the value reappear on its own.
-        for (const row of live) await softDelete(row, currentUserId);
-        entityEventEmitter.emit('stat_relation_changed', live[0]!.storyId, characterId);
+        await runLocalWrite(db, storyId, () => {
+          for (const row of live) softDelete(row, userIdToLog);
+        });
+        entityEventEmitter.emit('stat_relation_changed', storyId, characterId);
       });
     },
   };

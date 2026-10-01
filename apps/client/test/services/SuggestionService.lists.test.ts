@@ -7,6 +7,10 @@ import {
   createSuggestionService,
   namedListDisplayKey,
 } from '../../src/services/storymanagement/SuggestionService';
+import {
+  customAttributeSuggestionType,
+  parseNamedListCatalogValue,
+} from '../../src/services/storymanagement/suggestionTypes';
 import { entityBase, TEST_STORY_ID, TEST_USER_ID, seedLocalStory } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -99,5 +103,74 @@ describe('named suggestion lists', () => {
 
     expect(await service.listNamedLists(TEST_STORY_ID)).toEqual([]);
     expect(await service.getStoredSuggestions(colors.type, TEST_STORY_ID)).toEqual([]);
+  });
+
+  it('lists named lists ordered by display name, skipping corrupt catalog rows', async () => {
+    const service = createSuggestionService(database.db);
+    await service.createNamedList(TEST_USER_ID, TEST_STORY_ID, 'Zebras');
+    await service.createNamedList(TEST_USER_ID, TEST_STORY_ID, 'Cores');
+    await service.createSuggestion(TEST_USER_ID, LIST_CATALOG_TYPE, 'not-json{{{', TEST_STORY_ID);
+
+    expect((await service.listNamedLists(TEST_STORY_ID)).map((list) => list.name)).toEqual([
+      'Cores',
+      'Zebras',
+    ]);
+  });
+
+  it('returns no usages for an unknown suggestion type', async () => {
+    const service = createSuggestionService(database.db);
+
+    expect(await service.getSuggestions('no-such-type', TEST_STORY_ID)).toEqual([]);
+    expect(await service.getSuggestions('character_race', '')).toEqual([]);
+  });
+
+  it('refuses to create a suggestion without type, value or story', async () => {
+    const service = createSuggestionService(database.db);
+
+    await expect(
+      service.createSuggestion(TEST_USER_ID, 'character_race', '   ', TEST_STORY_ID),
+    ).rejects.toThrow('required');
+  });
+
+  it('merges a rename into an existing saved value by deleting the source row', async () => {
+    const service = createSuggestionService(database.db);
+    await service.createSuggestion(TEST_USER_ID, 'character_race', 'Elf', TEST_STORY_ID);
+    await service.createSuggestion(TEST_USER_ID, 'character_race', 'Dwarf', TEST_STORY_ID);
+
+    const result = await service.renameSuggestionValue(
+      TEST_USER_ID,
+      TEST_STORY_ID,
+      'character_race',
+      'Elf',
+      'Dwarf',
+      true,
+    );
+
+    expect(result.merged).toBe(true);
+    expect(
+      (await service.getStoredSuggestions('character_race', TEST_STORY_ID)).map((row) => row.value),
+    ).toEqual(['Dwarf']);
+  });
+
+  it('refuses to copy from the list catalog itself', async () => {
+    const service = createSuggestionService(database.db);
+
+    await expect(
+      service.copyStoredValues(TEST_USER_ID, TEST_STORY_ID, LIST_CATALOG_TYPE, ['character_race']),
+    ).rejects.toThrow('Cannot copy from the list catalog.');
+  });
+
+  it('derives catalog keys and display names, tolerating corrupt entries', async () => {
+    expect(customAttributeSuggestionType('field-9')).toBe('custom:field-9');
+    expect(namedListDisplayKey('list_01J9GQK7X1D6N3Q2R4W5E6T7Y1_cores')).toBe('cores');
+    // A hand-written catalog type without the ULID slug still lists under its full key.
+    expect(namedListDisplayKey('list_x9_cores')).toBe('list_x9_cores');
+    expect(parseNamedListCatalogValue('not-json{{{')).toBeNull();
+    expect(parseNamedListCatalogValue(JSON.stringify({ type: 'character_race' }))).toBeNull();
+    expect(
+      parseNamedListCatalogValue(
+        JSON.stringify({ type: 'list_01J9GQK7X1D6N3Q2R4W5E6T7Y1_cores', name: '  Cores ' }),
+      ),
+    ).toEqual({ type: 'list_01J9GQK7X1D6N3Q2R4W5E6T7Y1_cores', name: 'Cores' });
   });
 });

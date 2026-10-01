@@ -10,6 +10,7 @@ jest.mock('@react-navigation/native', () => ({
   __esModule: true,
   useNavigation: () => mockNavigation,
   useFocusEffect: (effect: () => void) => effect(),
+  DrawerActions: { closeDrawer: () => ({ type: 'CLOSE_DRAWER' }) },
 }));
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   __esModule: true,
@@ -57,7 +58,7 @@ beforeEach(() => {
   useHeaderBackActionStore.setState({ backAction: undefined, crossStackReturnAction: undefined });
   (useResponsiveLayout as jest.Mock).mockReturnValue({ isWide: false });
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, listener) => {
-    hardwareBack = () => listener() === true;
+    hardwareBack = () => listener({ type: 'hardwareBackPress', timeStamp: 0 }) === true;
     return { remove: jest.fn() };
   });
 });
@@ -90,6 +91,39 @@ it('lets the app exit handler receive back presses with nowhere to go', async ()
   expect(hardwareBack?.()).toBe(false);
 });
 
+it('closes an open parent drawer before anything below gets the back press', async () => {
+  const parent = {
+    getState: jest.fn(() => ({ history: [{ type: 'drawer', status: 'open' }] })),
+    dispatch: jest.fn(),
+    canGoBack: jest.fn(() => true),
+    goBack: jest.fn(),
+  };
+  mockNavigation.canGoBack.mockReturnValue(true);
+  mockNavigation.getParent.mockReturnValue(parent);
+  await renderHook(() => useBackButtonHandler());
+
+  expect(hardwareBack?.()).toBe(true);
+  expect(parent.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'CLOSE_DRAWER' }));
+  expect(mockNavigation.goBack).not.toHaveBeenCalled();
+  expect(parent.goBack).not.toHaveBeenCalled();
+});
+
+it('falls through to the stack when the parent drawer is closed', async () => {
+  const parent = {
+    getState: jest.fn(() => ({ history: [] })),
+    dispatch: jest.fn(),
+    canGoBack: jest.fn(() => false),
+    goBack: jest.fn(),
+  };
+  mockNavigation.canGoBack.mockReturnValue(true);
+  mockNavigation.getParent.mockReturnValue(parent);
+  await renderHook(() => useBackButtonHandler());
+
+  expect(hardwareBack?.()).toBe(true);
+  expect(parent.dispatch).not.toHaveBeenCalled();
+  expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+});
+
 it('preserves the drawer header on web screens without a custom back button', async () => {
   const drawer = {
     getState: jest.fn(() => ({ type: 'drawer' })),
@@ -110,6 +144,13 @@ it('registers the focused child navigator as the header back action', async () =
   useHeaderBackActionStore.getState().backAction?.();
 
   expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+});
+
+it('never touches BackHandler on web, where it only logs a warning', async () => {
+  setPlatform('web');
+  await renderHook(() => useBackButtonHandler());
+
+  expect(BackHandler.addEventListener).not.toHaveBeenCalled();
 });
 
 it('uses a one-shot cross-stack return before the destination stack back action', async () => {

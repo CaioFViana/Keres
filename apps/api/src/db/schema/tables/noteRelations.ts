@@ -2,8 +2,6 @@ import { relations } from 'drizzle-orm';
 import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { notes } from './notes';
 import { stories } from './stories';
-// Import other relevant entities (locations, scenes, etc.) if NoteRelation can link to them
-// For now, assuming only characters for relationId, but this might need expansion
 
 export const noteRelations = table('note_relations', {
   id: text('id').primaryKey(),

@@ -42,6 +42,22 @@ it('forwards the cross-stack return action to the header back store', async () =
   expect(useHeaderBackActionStore.getState().consumeCrossStackReturnAction()).toBe(returnToOrigin);
 });
 
+it('carries an occurrence target into the detail params', async () => {
+  const { result } = await renderHook(() => useNavigateToEntityDetail());
+
+  result.current('Character', 'char-1', {
+    occurrence: { field: 'biography', needle: 'harbor' },
+  });
+
+  expect(navigate).toHaveBeenCalledWith('CharactersStack', {
+    screen: 'CharacterDetail',
+    params: {
+      characterId: 'char-1',
+      occurrence: { field: 'biography', needle: 'harbor' },
+    },
+  });
+});
+
 it('does nothing when the screen has no drawer parent', async () => {
   (useNavigation as unknown as jest.Mock).mockReturnValue({ getParent: () => undefined });
   const { result } = await renderHook(() => useNavigateToEntityDetail());

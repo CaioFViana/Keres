@@ -41,7 +41,10 @@ const card: ShowcaseStoryCard = {
     byteSize: 1024,
     mediaIncluded: 0,
     mediaTotal: 0,
+    packageIncluded: true,
     createdAt: '2026-08-19T10:00:00.000Z',
+    manuscript: null,
+    reader: null,
   },
   updatedAt: '2026-08-19T10:00:00.000Z',
 };
@@ -83,6 +86,14 @@ describe('the language dropdown', () => {
 
     expect(localStorage.getItem(ADMIN_LANGUAGE_KEY)).toBe('pt');
     expect(i18n.language).toBe('pt');
+    await unmount();
+  });
+
+  it('shows English when the current language is one it does not offer', async () => {
+    await i18n.changeLanguage('es');
+    const { container, unmount } = await render(<LanguageSelect storageKey={ADMIN_LANGUAGE_KEY} />);
+
+    expect(container.querySelector('select')?.value).toBe('en');
     await unmount();
   });
 

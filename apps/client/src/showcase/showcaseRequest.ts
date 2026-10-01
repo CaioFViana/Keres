@@ -13,9 +13,9 @@
 export interface ShowcaseRequest {
   /** The story's folder in `exampleStories/content`. */
   story: string;
-  /** Item da gaveta, ex.: `PlotsStack`. */
+  /** Drawer item, e.g. `PlotsStack`. */
   stack: string;
-  /** Tela dentro daquela pilha, ex.: `PlotProgress`. Ausente = a raiz da pilha. */
+  /** Screen inside that stack, e.g. `PlotProgress`. Absent = the stack's root. */
   screen?: string;
   /**
    * Display name of an entity to open after the list loads (ids are remapped on install).

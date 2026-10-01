@@ -45,6 +45,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useCharacterFormActions } from '../../../src/screens/characters/useCharacterFormActions';
 import type { CharacterFormState } from '../../../src/screens/characters/useCharacterFormState';
 import type { CharacterService } from '../../../src/services/storymanagement/CharacterService';
@@ -85,6 +86,8 @@ const createState = (overrides: Partial<CharacterFormState> = {}): CharacterForm
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as CharacterFormState;
 
@@ -163,43 +166,48 @@ it('coordinates persistence, notification and replacement after creation', async
   expect(navigation.dispatch).toHaveBeenCalledWith(
     expect.objectContaining({ payload: expect.objectContaining({ name: 'CharacterForm' }) }),
   );
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('delegates deletion and completes it with an event and back navigation', async () => {
-  const view = await renderActions(
-    createState({ currentCharacterId: 'character-1', isEditing: true }),
-  );
+  const state = createState({ currentCharacterId: 'character-1', isEditing: true });
+  const view = await renderActions(state);
 
   await act(async () => view.result.current.handleDelete());
   const request = mockConfirmDelete.mock.calls[0][0];
   await act(async () => request.onConfirm());
 
   expect(characterService.deleteCharacter).toHaveBeenCalledWith('user-1', 'character-1');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   expect(mockEmit).toHaveBeenCalledWith('character_changed', 'story-1', 'character-1');
   expect(navigation.goBack).toHaveBeenCalled();
 });
 
 it('does not emit success after a secondary-write failure, then recovers on retry', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('character-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('character-1');
-    return { entityId: 'character-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('character-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('character-1');
+      return { entityId: 'character-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedCharacterId).toHaveBeenCalledWith('character-1');
+    expect(mockEmit).toHaveBeenCalledWith('character_changed', 'story-1', 'character-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedCharacterId).toHaveBeenCalledWith('character-1');
-  expect(mockEmit).toHaveBeenCalledWith('character_changed', 'story-1', 'character-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });

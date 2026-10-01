@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { commonScreenStyleDefs, commonDetailStyleDefs } from '../../theme/commonStyles';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -31,7 +31,12 @@ import type {
 import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
-import { buildLocationGraphMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
+import {
+  buildLocationGraphMapFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
@@ -55,7 +60,7 @@ interface LocationNodeConnection {
 
 const LocationGraphScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
   const navigation = useNavigation<LocationsScreenNavigationProp>();
@@ -240,7 +245,15 @@ const LocationGraphScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(svg, buildLocationGraphMapFileName(selectedStory.title));
+      const result = await deliverMapExport(
+        svg,
+        buildLocationGraphMapFileName(
+          selectedStory.title,
+          new Date(),
+          exportFileLanguage(i18n.language),
+        ),
+        useUserSettingsStore.getState().exportFormat,
+      );
       if (result.delivered) {
         showNotification(
           t('location_graph_export_success', { fileName: result.fileName }),
@@ -260,7 +273,7 @@ const LocationGraphScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, graphSubtitle, selectedIds, selectedStory, showNotification, t]);
+  }, [colors, layout, graphSubtitle, selectedIds, selectedStory, showNotification, t, i18n]);
 
   const styles = useMemo(
     () =>

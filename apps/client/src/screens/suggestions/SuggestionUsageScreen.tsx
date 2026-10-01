@@ -6,7 +6,7 @@ import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveM
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -98,6 +98,7 @@ const SuggestionUsageScreen = () => {
   }, [service, storyId, type, value]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for immediate feedback; the usages themselves arrive after `await`. The rule cannot verify across the callback boundary.
     load();
   }, [load]);
 

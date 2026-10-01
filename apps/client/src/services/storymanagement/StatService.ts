@@ -1,17 +1,19 @@
-import { completeReorderProblem, MAX_PRIMARY_STATS } from '@keres/shared';
+import { MAX_PRIMARY_STATS } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StatInsert, StatSelect } from '../../db/schema';
-import { stats, stories } from '../../db/schema';
+import { stats } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
 import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
+import { planContainerOrderSync, planPlacementSync, writeRankChangesSync } from './arrangedWrites';
 
 export interface StatService {
   getStatsByStoryId(storyId: string): Promise<StatSelect[]>;
@@ -84,23 +86,48 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
       if (statData.isPrimary !== false) await assertPrimaryLimit(statData.storyId);
 
       const newStat = prepareNewEntityData<StatInsert>(statData);
-      const result = await db.insert(stats).values(newStat).returning().get();
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         newStat.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, newStat.storyId, userIdToLog, 'create', 'Stat', newStat.id, {
-        ...result,
+      const result = await runLocalWrite(db, newStat.storyId, () => {
+        // The asked order is where it goes in the list; the database numbers it from its rank.
+        const placement = planPlacementSync(
+          db,
+          'Stat',
+          newStat.storyId,
+          {},
+          newStat.id,
+          typeof statData.order === 'number' ? statData.order : undefined,
+        );
+        db.insert(stats)
+          .values({ ...newStat, rank: placement.get(newStat.id)! })
+          .run();
+        // Recorded as the database holds it: its number already derived from its rank.
+        const inserted = db.select().from(stats).where(eq(stats.id, newStat.id)).get()!;
+        recordLocalOperationSync(db, newStat.storyId, userIdToLog, 'create', 'Stat', newStat.id, {
+          ...inserted,
+        });
+        writeRankChangesSync(
+          db,
+          newStat.storyId,
+          userIdToLog,
+          'Stat',
+          placement,
+          new Set([newStat.id]),
+        );
+        return db.select().from(stats).where(eq(stats.id, newStat.id)).get()!;
       });
       entityEventEmitter.emit('stat_changed', newStat.storyId);
 
       return result;
     },
 
-    async updateStat(currentUserId, statId, statData) {
+    async updateStat(currentUserId, statId, requested) {
+      // A stat's place is its rank (reorderStats); the order a form holds is never written.
+      const { order: _order, ...statData } = requested;
       const original = await db.query.stats.findFirst({ where: eq(stats.id, statId) });
       if (!original) throw new Error(`Stat with ID ${statId} not found for update.`);
       await assertStoryIsWritable(db, original.storyId);
@@ -109,69 +136,39 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
         await assertPrimaryLimit(original.storyId, statId);
       }
 
-      const [updated] = await db
-        .update(stats)
-        .set({ ...statData, updatedAt: new Date(), version: sql`${stats.version} + 1` })
-        .where(eq(stats.id, statId))
-        .returning({ id: stats.id, storyId: stats.storyId, version: stats.version });
-      if (!updated) throw new Error(`Failed to update stat ${statId}.`);
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        original.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, updated.storyId, userIdToLog, 'update', 'Stat', statId, {
-        ...statData,
-        version: updated.version,
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(stats)
+          .set({ ...statData, updatedAt: new Date(), version: sql`${stats.version} + 1` })
+          .where(eq(stats.id, statId))
+          .returning({ id: stats.id, storyId: stats.storyId, version: stats.version })
+          .get();
+        if (!row) throw new Error(`Failed to update stat ${statId}.`);
+        recordLocalOperationSync(db, row.storyId, userIdToLog, 'update', 'Stat', statId, {
+          ...statData,
+          version: row.version,
+        });
+        return row;
       });
       entityEventEmitter.emit('stat_changed', updated.storyId);
     },
 
     async reorderStats(currentUserId, storyId, newOrder) {
       await assertStoryIsWritable(db, storyId);
-
-      const current = await db
-        .select({ id: stats.id, order: stats.order })
-        .from(stats)
-        .where(livingStats(storyId))
-        .all();
-      const byId = new Map(current.map((row) => [row.id, row]));
-
-      const reorderItems = newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 }));
-      const problem = completeReorderProblem(
-        current.map((stat) => stat.id),
-        reorderItems,
-      );
-      if (problem) throw new Error(`Stat reorder is invalid. ${problem}`);
-
-      const changed = newOrder.filter(({ id, order }) => byId.get(id)?.order !== order);
-      if (changed.length === 0) return;
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      const now = new Date();
-      const story = await db.transaction(async (tx) => {
-        await Promise.all(
-          changed.map((stat) =>
-            tx
-              .update(stats)
-              .set({ order: stat.order, updatedAt: now, version: sql`${stats.version} + 1` })
-              .where(eq(stats.id, stat.id)),
-          ),
-        );
-        return (
-          await tx
-            .update(stories)
-            .set({ version: sql`${stories.version} + 1`, updatedAt: now })
-            .where(eq(stories.id, storyId))
-            .returning({ version: stories.version })
-        ).at(0);
-      });
-      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems,
-        reorderTarget: 'Stat',
-        version: story?.version,
+      // Only the stats that moved are edited: each takes the rank of its new place.
+      await runLocalWrite(db, storyId, () => {
+        const orderedIds = [...newOrder]
+          .sort((left, right) => left.order - right.order)
+          .map((item) => item.id);
+        const changes = planContainerOrderSync(db, 'Stat', storyId, {}, orderedIds);
+        writeRankChangesSync(db, storyId, userIdToLog, 'Stat', changes);
       });
       entityEventEmitter.emit('stat_changed', storyId);
     },
@@ -185,26 +182,28 @@ export const createStatService = (db: AppDrizzleClient): StatService => {
       if (stat.isDeleted) return;
       await assertStoryIsWritable(db, stat.storyId);
 
-      const now = new Date();
-      const [updated] = await db
-        .update(stats)
-        .set({
-          isDeleted: true,
-          deletedAt: now,
-          updatedAt: now,
-          version: sql`${stats.version} + 1`,
-        })
-        .where(eq(stats.id, statId))
-        .returning({ version: stats.version });
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         stat.storyId,
         currentUserId,
       );
-      await recordLocalOperation(db, stat.storyId, userIdToLog, 'delete', 'Stat', statId, {
-        version: updated?.version,
+      const now = new Date();
+      await runLocalWrite(db, stat.storyId, () => {
+        const updated = db
+          .update(stats)
+          .set({
+            isDeleted: true,
+            deletedAt: now,
+            updatedAt: now,
+            version: sql`${stats.version} + 1`,
+          })
+          .where(eq(stats.id, statId))
+          .returning({ version: stats.version })
+          .get();
+        recordLocalOperationSync(db, stat.storyId, userIdToLog, 'delete', 'Stat', statId, {
+          version: updated?.version,
+        });
       });
       entityEventEmitter.emit('stat_changed', stat.storyId);
     },

@@ -1,5 +1,5 @@
 import type { CommentEntityType } from '@keres/shared';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, CommentSelect } from '../../db';
 import { comments } from '../../db';
 import { createULID } from '../../utils/entityUtils';
@@ -7,7 +7,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n from '../../utils/i18n';
 import {
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
   StoryReadOnlyError,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
@@ -28,6 +29,11 @@ export interface CommentService {
     storyId: string,
     entityType: CommentEntityType,
     entityId: string,
+  ): Promise<CommentSelect[]>;
+  getCommentsForEntities(
+    storyId: string,
+    entityType: CommentEntityType,
+    entityIds: string[],
   ): Promise<CommentSelect[]>;
   getAllCommentsForStory(
     storyId: string,
@@ -91,6 +97,25 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
         .all();
     },
 
+    // One query for a whole reading surface (the manuscript's scenes): the per-entity
+    // reader would cost a query per row. Writes still go through the same
+    // create/update/delete as every other surface - only the read is bulk.
+    async getCommentsForEntities(storyId, entityType, entityIds) {
+      if (entityIds.length === 0) return [];
+      return db
+        .select()
+        .from(comments)
+        .where(
+          and(
+            eq(comments.storyId, storyId),
+            eq(comments.entityType, entityType),
+            inArray(comments.entityId, entityIds),
+            eq(comments.isDeleted, false),
+          ),
+        )
+        .all();
+    },
+
     async getAllCommentsForStory(storyId, { page, pageSize }) {
       const where = and(eq(comments.storyId, storyId), eq(comments.isDeleted, false));
       const [{ value: total }] = await db.select({ value: count() }).from(comments).where(where);
@@ -128,16 +153,18 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
         isDeleted: false,
         deletedAt: null,
       };
-      await db.insert(comments).values(inserted).run();
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'create',
-        'Comment',
-        inserted.id,
-        inserted,
-      );
+      await runLocalWrite(db, storyId, () => {
+        db.insert(comments).values(inserted).run();
+        recordLocalOperationSync(
+          db,
+          storyId,
+          userIdToLog,
+          'create',
+          'Comment',
+          inserted.id,
+          inserted,
+        );
+      });
       entityEventEmitter.emit('comment_changed', storyId, entityType, entityId);
       return inserted;
     },
@@ -147,6 +174,7 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
       if (!existing || existing.isDeleted) {
         throw new Error('Comment not found.');
       }
+      await assertCanWriteComment(existing.storyId);
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -158,24 +186,30 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
         throw new Error('Only the comment author can edit it.');
       }
 
-      const [updated] = await db
-        .update(comments)
-        .set({ ...changes, updatedAt: new Date(), version: sql`${comments.version} + 1` })
-        .where(eq(comments.id, commentId))
-        .returning();
-
-      await recordLocalOperation(
-        db,
-        existing.storyId,
-        userIdToLog,
-        'update',
-        'Comment',
-        commentId,
-        {
-          ...changes,
-          version: updated.version,
-        },
-      );
+      const updated = await runLocalWrite(db, existing.storyId, () => {
+        const row = db
+          .update(comments)
+          .set({ ...changes, updatedAt: new Date(), version: sql`${comments.version} + 1` })
+          .where(eq(comments.id, commentId))
+          .returning()
+          .get();
+        if (!row) {
+          throw new Error('Comment not found.');
+        }
+        recordLocalOperationSync(
+          db,
+          existing.storyId,
+          userIdToLog,
+          'update',
+          'Comment',
+          commentId,
+          {
+            ...changes,
+            version: row.version,
+          },
+        );
+        return row;
+      });
       entityEventEmitter.emit(
         'comment_changed',
         existing.storyId,
@@ -190,6 +224,7 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
       if (!existing || existing.isDeleted) {
         return false;
       }
+      await assertCanWriteComment(existing.storyId);
 
       const userIdToLog = await getUserIdForOperation(
         db,
@@ -203,34 +238,37 @@ export const createCommentService = (db: AppDrizzleClient): CommentService => {
         throw new Error('Only the comment author or the story owner can delete this comment.');
       }
 
-      const [removed] = await db
-        .update(comments)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${comments.version} + 1`,
-        })
-        .where(eq(comments.id, commentId))
-        .returning({ id: comments.id, version: comments.version });
+      await runLocalWrite(db, existing.storyId, () => {
+        const removed = db
+          .update(comments)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${comments.version} + 1`,
+          })
+          .where(eq(comments.id, commentId))
+          .returning({ id: comments.id, version: comments.version })
+          .get();
 
-      if (!removed) {
-        throw new Error(`Failed to delete Comment ${commentId}.`);
-      }
+        if (!removed) {
+          throw new Error(`Failed to delete Comment ${commentId}.`);
+        }
 
-      await recordLocalOperation(
-        db,
-        existing.storyId,
-        userIdToLog,
-        'delete',
-        'Comment',
-        commentId,
-        {
-          id: commentId,
-          isDeleted: true,
-          version: removed.version,
-        },
-      );
+        recordLocalOperationSync(
+          db,
+          existing.storyId,
+          userIdToLog,
+          'delete',
+          'Comment',
+          commentId,
+          {
+            id: commentId,
+            isDeleted: true,
+            version: removed.version,
+          },
+        );
+      });
       entityEventEmitter.emit(
         'comment_changed',
         existing.storyId,

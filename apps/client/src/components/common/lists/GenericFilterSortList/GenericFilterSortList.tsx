@@ -12,16 +12,27 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '../../../../theme';
+import Button from '@/src/components/common/controls/Button/Button';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import type { AdvancedSearchScope } from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
 import MultiSelectPill, {
   SingleSelectPill,
 } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import { entityFieldMetadata } from '@keres/shared/metadata/entityFields'; // Import metadata
-import { getOnColorForFill, STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared';
+import {
+  entityFieldMetadata,
+  getEntityAppearance,
+  getOnColorForFill,
+  STORY_SCHEMA_ENTITY_TYPES,
+} from '@keres/shared';
 
 import type { FavoriteFilterState } from '../../../../types/entityFilters';
+
+export interface GuidedEmptyStateAction {
+  label: string;
+  onPress: () => void;
+  testID?: string;
+}
 
 interface GenericFilterSortListProps<T> {
   data: T[];
@@ -45,6 +56,13 @@ interface GenericFilterSortListProps<T> {
   currentSortDirection: 'asc' | 'desc';
   currentSortValue?: string | null;
   emptyListComponent?: React.ReactElement;
+  /**
+   * Guided empty state: a title, a hint and up to two actions ("Create X", ...). An explicit
+   * `emptyListComponent` still wins; without either, the legacy plain text shows.
+   */
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+  emptyStateActions?: GuidedEmptyStateAction[];
   // Favorite Filter Props
   onFavoriteFilterChange?: (state: FavoriteFilterState) => void;
   currentFavoriteFilterState?: FavoriteFilterState;
@@ -85,6 +103,9 @@ const GenericFilterSortList = <T,>({
   currentSortDirection,
   currentSortValue,
   emptyListComponent,
+  emptyStateTitle,
+  emptyStateMessage,
+  emptyStateActions,
   onFavoriteFilterChange,
   currentFavoriteFilterState,
   entityName,
@@ -125,17 +146,28 @@ const GenericFilterSortList = <T,>({
     return hasNativeSearchableFields || supportsCustomAttributes;
   }, [advancedSearchScopes, entityName]);
 
-  React.useEffect(() => {
+  // Controlled from the parent, mirrored locally for the pill controls: when the parent's
+  // props change (a filter cleared elsewhere, a deep link), the render-time comparisons
+  // below resync the local selections instead of leaving the pills showing stale state.
+  const [prevSelectedFilterValues, setPrevSelectedFilterValues] = useState(selectedFilterValues);
+  if (selectedFilterValues !== prevSelectedFilterValues) {
+    setPrevSelectedFilterValues(selectedFilterValues);
     setSelectedFilter(selectedFilterValues || []);
-  }, [selectedFilterValues]);
+  }
 
-  React.useEffect(() => {
+  const [prevFavoriteFilterState, setPrevFavoriteFilterState] = useState(
+    currentFavoriteFilterState,
+  );
+  if (currentFavoriteFilterState !== prevFavoriteFilterState) {
+    setPrevFavoriteFilterState(currentFavoriteFilterState);
     setInternalFavoriteFilterState(currentFavoriteFilterState || 'all');
-  }, [currentFavoriteFilterState]);
+  }
 
-  React.useEffect(() => {
+  const [prevCurrentSortValue, setPrevCurrentSortValue] = useState(currentSortValue);
+  if (currentSortValue !== prevCurrentSortValue) {
+    setPrevCurrentSortValue(currentSortValue);
     setSelectedSort(currentSortValue || null);
-  }, [currentSortValue]);
+  }
 
   const handleSearchTextChange = (text: string) => {
     onSearch(text);
@@ -206,7 +238,6 @@ const GenericFilterSortList = <T,>({
 
   const handleOpenAdvancedSearchModal = useCallback(() => {
     if (hasAdvancedSearchFields) {
-      // Only open if there are fields
       setIsAdvancedSearchModalVisible(true);
     }
   }, [hasAdvancedSearchFields]);
@@ -280,7 +311,7 @@ const GenericFilterSortList = <T,>({
           <TouchableOpacity
             onPress={handleOpenAdvancedSearchModal}
             style={styles(colors).advancedSearchButton}
-            disabled={!hasAdvancedSearchFields} // Disable if no fields are searchable
+            disabled={!hasAdvancedSearchFields}
           >
             <Ionicons
               name="search-outline"
@@ -343,24 +374,67 @@ const GenericFilterSortList = <T,>({
         numColumns={numColumns}
         columnWrapperStyle={numColumns > 1 ? columnWrapperStyle : undefined}
         ListEmptyComponent={
-          emptyListComponent || <Text style={styles(colors).emptyText}>{t('no_items_found')}</Text>
+          emptyListComponent || (
+            <GuidedEmptyState
+              title={emptyStateTitle}
+              message={emptyStateMessage}
+              actions={emptyStateActions}
+              entityName={entityName}
+              fallbackText={t('no_items_found')}
+            />
+          )
         }
         style={styles(colors).list}
       />
-      {storyId &&
-        entityName &&
-        onAdvancedSearch &&
-        hasAdvancedSearchFields && ( // Only render modal if there are searchable fields
-          <AdvancedSearchModal
-            entityName={entityName}
-            storyId={storyId}
-            isVisible={isAdvancedSearchModalVisible}
-            onClose={handleCloseAdvancedSearchModal}
-            onSearch={handleAdvancedSearchSubmit}
-            initialCriteria={currentAdvancedSearchCriteria}
-            scopes={advancedSearchScopes}
-          />
-        )}
+      {storyId && entityName && onAdvancedSearch && hasAdvancedSearchFields && (
+        <AdvancedSearchModal
+          entityName={entityName}
+          storyId={storyId}
+          isVisible={isAdvancedSearchModalVisible}
+          onClose={handleCloseAdvancedSearchModal}
+          onSearch={handleAdvancedSearchSubmit}
+          initialCriteria={currentAdvancedSearchCriteria}
+          scopes={advancedSearchScopes}
+        />
+      )}
+    </View>
+  );
+};
+
+const GuidedEmptyState: React.FC<{
+  title?: string;
+  message?: string;
+  actions?: GuidedEmptyStateAction[];
+  entityName?: string;
+  fallbackText: string;
+}> = ({ title, message, actions, entityName, fallbackText }) => {
+  const { colors } = useTheme();
+  const entityIcon = entityName
+    ? (getEntityAppearance(entityName).icon as keyof typeof Ionicons.glyphMap)
+    : null;
+  const visibleActions = (actions ?? []).slice(0, 2);
+  if (!title && !message && visibleActions.length === 0) {
+    return <Text style={styles(colors).emptyText}>{fallbackText}</Text>;
+  }
+  return (
+    <View style={styles(colors).guidedEmpty} testID="guided-empty-state">
+      {entityIcon ? (
+        <View style={styles(colors).guidedEmptyIconWrap} testID="guided-empty-icon">
+          <Ionicons name={entityIcon} size={28} color={colors.onPrimaryContainer} />
+        </View>
+      ) : null}
+      {title ? <Text style={styles(colors).guidedEmptyTitle}>{title}</Text> : null}
+      {message ? <Text style={styles(colors).guidedEmptyMessage}>{message}</Text> : null}
+      {visibleActions.map((action, index) => (
+        <Button
+          key={action.testID ?? `guided-empty-action-${index}`}
+          onPress={action.onPress}
+          testID={action.testID ?? `guided-empty-action-${index}`}
+          style={styles(colors).guidedEmptyButton}
+        >
+          {action.label}
+        </Button>
+      ))}
     </View>
   );
 };
@@ -421,6 +495,37 @@ const styles = (colors: any) =>
       color: colors.textSecondary,
       textAlign: 'center',
       marginTop: 20,
+    },
+    guidedEmpty: {
+      alignItems: 'center',
+      paddingVertical: 32,
+      paddingHorizontal: 24,
+      gap: 12,
+    },
+    guidedEmptyIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginBottom: 2,
+    },
+    guidedEmptyTitle: {
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: 'bold',
+      textAlign: 'center',
+    },
+    guidedEmptyMessage: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      lineHeight: 20,
+      textAlign: 'center',
+    },
+    guidedEmptyButton: {
+      marginTop: 4,
+      minWidth: 200,
     },
     advancedSearchButton: {
       padding: 12,

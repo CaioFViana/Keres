@@ -1,5 +1,5 @@
 import { AttributeType, CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
@@ -10,7 +10,9 @@ import {
   choiceChecks,
   choices,
   effects,
+  favorites,
   locations,
+  operationLog,
   scenes,
   storySchemaFields,
   stories,
@@ -241,6 +243,19 @@ const effect = (overrides: Record<string, unknown> = {}) => ({
   isDeleted: false,
   deletedAt: null,
   ...overrides,
+});
+
+const favorite = (id = newId()) => ({
+  id,
+  storyId: ORIGINAL_STORY_ID,
+  entityId: ORIGINAL_CHAPTER_ID,
+  entityType: 'Chapter',
+  userId: OWNER_ID,
+  createdAt: OLD,
+  updatedAt: OLD,
+  version: 1,
+  isDeleted: false,
+  deletedAt: null,
 });
 
 function buildExport(overrides: Record<string, unknown> = {}) {
@@ -595,5 +610,50 @@ describe('entity attribute references', () => {
       .where(eq(attributeValues.storyId, storyId));
 
     expect(importedValue.value).toBeNull();
+  });
+});
+
+describe('public-favorite history on import', () => {
+  function publicExportWithFavorite() {
+    const exported = buildExport({ favorites: [favorite()] });
+    (exported.story as Record<string, unknown>).favoriteBehavior = 'individual_public';
+    return exported;
+  }
+
+  it('materialises operation logs for imported favorites of a public story', async () => {
+    const storyId = await service.importStory(IMPORTER_ID, publicExportWithFavorite());
+
+    const [importedFavorite] = await db
+      .select()
+      .from(favorites)
+      .where(eq(favorites.storyId, storyId));
+    const logs = await db
+      .select()
+      .from(operationLog)
+      .where(
+        and(
+          eq(operationLog.storyId, storyId),
+          eq(operationLog.entityType, 'Favorite'),
+          eq(operationLog.operationType, 'create'),
+        ),
+      );
+
+    expect(logs).toHaveLength(1);
+    expect(logs[0]!.entityId).toBe(importedFavorite!.id);
+    expect((await storyRow(storyId))!.lastOperationVersion).toBe(1);
+  });
+
+  it('leaves private stories without favorite history, as before', async () => {
+    const storyId = await service.importStory(
+      IMPORTER_ID,
+      buildExport({ favorites: [favorite()] }),
+    );
+
+    const logs = await db
+      .select()
+      .from(operationLog)
+      .where(and(eq(operationLog.storyId, storyId), eq(operationLog.entityType, 'Favorite')));
+
+    expect(logs).toHaveLength(0);
   });
 });

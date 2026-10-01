@@ -25,6 +25,7 @@ const page: HelpPage = {
         'Use Resumo para registrar seu papel na narrativa.',
         'Salve, abra o capítulo na lista e crie ou associe cenas dentro dele.',
         'Use a reorganização de capítulos quando quiser mudar a ordem de leitura.',
+        'Na lista de cenas de um capítulo, Adição rápida (ícone de raio) pede só um título e já acrescenta a cena a esse capítulo; o resto da cena você preenche depois.',
       ],
     },
     {

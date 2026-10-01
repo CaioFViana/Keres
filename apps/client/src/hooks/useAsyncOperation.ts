@@ -1,6 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
 
-/** Keep form content mounted while a command runs; reject repeated presses synchronously. */
+/**
+ * Reentrancy guard for async commands (save, delete, send-to-server).
+ *
+ * The ref rejects repeated presses synchronously - before the next render - while
+ * `pending` drives the UI's disabled/spinner state. The guard always releases in
+ * `finally`, so a throwing operation cannot wedge the button forever.
+ */
 export function useAsyncOperation() {
   const running = useRef(false);
   const [pending, setPending] = useState(false);

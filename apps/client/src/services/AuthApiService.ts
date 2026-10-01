@@ -1,3 +1,4 @@
+import { normalizeRecoveryCode } from '@keres/shared';
 import apiClient, { apiUrl } from './apiClient';
 
 export interface RecoveryCodeLoginResult {
@@ -10,7 +11,7 @@ export interface RecoveryCodeLoginResult {
 
 export type RedeemRecoveryCodeOutcome =
   | { success: true; result: RecoveryCodeLoginResult }
-  | { success: false; reason: 'invalid_code' | 'server_error'; status?: number };
+  | { success: false; reason: 'invalid_code' | 'rate_limited' | 'server_error'; status?: number };
 
 /**
  * Exchanges a recovery code for a new session on `serverAddress` - used both for entering
@@ -27,12 +28,17 @@ export async function redeemRecoveryCode(
 ): Promise<RedeemRecoveryCodeOutcome> {
   const response = await apiClient.post(
     apiUrl(serverAddress, '/auth/forgot-password'),
-    { username, recoveryCode: recoveryCode.trim(), newPassword },
+    // The code as it was issued, however it was typed; the name without the spaces a keyboard leaves.
+    { username: username.trim(), recoveryCode: normalizeRecoveryCode(recoveryCode), newPassword },
     { timeout: 5000, validateStatus: () => true },
   );
 
   if (response.status === 401) {
     return { success: false, reason: 'invalid_code' };
+  }
+  // The account is locked out for a while: even the right code is refused until it passes.
+  if (response.status === 429) {
+    return { success: false, reason: 'rate_limited', status: 429 };
   }
   if (
     response.status !== 200 ||

@@ -12,9 +12,9 @@ import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import type { TagsStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
@@ -42,6 +42,7 @@ const TagFormScreen = () => {
 
   const tagFormState = useTagFormState({
     tagId,
+    storyId: selectedStory?.id,
     tagServiceRef,
   });
   const {
@@ -56,6 +57,8 @@ const TagFormScreen = () => {
     loading,
     loadError,
     isEditing,
+    isDirty,
+    resetForm,
   } = tagFormState;
 
   const { deleting, handleDelete, handleSave, saving } = useTagFormActions({
@@ -66,9 +69,12 @@ const TagFormScreen = () => {
     userId,
   });
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: isEditing ? t('edit_tag_title') : t('create_tag_title'),
+    actions: resetHeaderAction,
   });
 
   if (loading) {
@@ -84,9 +90,6 @@ const TagFormScreen = () => {
       description={t('tag_form_description')}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {isEditing ? t('save_changes') : t('create_tag')}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -96,6 +99,9 @@ const TagFormScreen = () => {
               {t('delete_tag_title')}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {isEditing ? t('save_changes') : t('create_tag')}
+          </Button>
         </>
       }
     >

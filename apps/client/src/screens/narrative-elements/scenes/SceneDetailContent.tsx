@@ -19,7 +19,6 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { ThemeColors } from '@keres/shared/theme/ThemeColors';
 import type { TFunction } from 'i18next';
-import React from 'react';
 import {
   Text,
   TouchableOpacity,
@@ -39,6 +38,7 @@ import type {
 } from '../../../db/schema';
 import type { SaveNoteRelation } from '../../../services/storymanagement/NoteRelationService';
 import { formatSceneGap, formatSceneUniverseDuration } from '../../../utils/sceneTiming';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 /**
  * Presentation contract for the scene detail screen.
@@ -61,6 +61,11 @@ export interface SceneDetailContentProps {
   chapter: { name: string; index: number } | null | undefined;
   sceneTags: TagSelect[];
   commentField(field: string, value: string): Omit<CommentableDetailFieldProps, 'label'>;
+  /** Truncated prose for the manuscript entry, or null when nothing was written yet. */
+  manuscriptExcerpt: string | null;
+  /** True when a stored prose draft differs from the saved body: the "unsaved draft" flag. */
+  hasBodyDraft: boolean;
+  onOpenEditor(): void;
   dateForScene(
     scene: SceneSelect,
   ): { date: string; gapRange?: unknown; durationEnd?: unknown } | null | undefined;
@@ -88,6 +93,7 @@ export interface SceneDetailContentProps {
   isBranching: boolean;
   sceneEffects: unknown[];
   describeEffect(effect: never): string;
+  occurrence?: OccurrenceTarget | null;
 }
 
 export function SceneDetailContent(props: SceneDetailContentProps) {
@@ -109,6 +115,9 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     openGalleryMediaViewer,
     canEdit,
     characterSceneRelations,
+    manuscriptExcerpt,
+    hasBodyDraft,
+    onOpenEditor,
     characters,
     itemJourneys,
     allItems,
@@ -125,10 +134,12 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
     isBranching,
     sceneEffects,
     describeEffect,
+    occurrence,
   } = props;
   return (
     <DetailContainer
-      title={scene.name}
+      title={selectedStory?.type === 'linear' ? `${scene.index}. ${scene.name}` : scene.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
@@ -148,6 +159,16 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
         {...commentField('summary', scene.summary || t('common_na'))}
         label={t('summary')}
       />
+      <DetailField
+        label={t('manuscript_prose')}
+        value={manuscriptExcerpt || t('manuscript_no_body_yet')}
+        onPress={onOpenEditor}
+      />
+      {hasBodyDraft && (
+        <Text style={{ color: colors.notification, fontSize: 13, marginBottom: 12 }}>
+          {t('manuscript_unsaved_draft')}
+        </Text>
+      )}
       {dateForScene(scene) && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
       )}

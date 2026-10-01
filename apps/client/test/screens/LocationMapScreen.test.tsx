@@ -1,5 +1,4 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
-import React from 'react';
 
 const mockColors = {
   background: '#111',
@@ -10,14 +9,18 @@ const mockColors = {
   text: '#fff',
   textSecondary: '#aaa',
 };
-jest.mock('../../src/theme', () => ({
-  __esModule: true,
-  useTheme: () => ({ colors: mockColors }),
-}));
+jest.mock('../../src/theme', () => {
+  const actual = jest.requireActual('../../src/theme');
+  return {
+    __esModule: true,
+    ...actual,
+    useTheme: () => ({ colors: mockColors }),
+  };
+});
 const mockT = (key: string) => key;
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: mockT }),
+  useTranslation: () => ({ t: mockT, i18n: { language: 'en' } }),
 }));
 
 const mockGoBack = jest.fn();
@@ -141,7 +144,7 @@ jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () =>
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: React.forwardRef((props: any, _ref: unknown) => {
+    default: React.forwardRef(function MockLocationMapCanvas(props: any, _ref: unknown) {
       mockCanvasProps = props;
       return (
         <TouchableOpacity testID="map-select-node" onPress={() => props.onSelectNode('node-1')}>
@@ -151,8 +154,27 @@ jest.mock('../../src/components/features/location-maps/LocationMapCanvas', () =>
     }),
   };
 });
+jest.mock('../../src/hooks/useLocationMapTrajectories', () => ({
+  __esModule: true,
+  useLocationMapTrajectories: () => ({
+    characters: [],
+    items: [],
+    routes: [],
+    routeId: null,
+    selectedCharacterIds: [],
+    selectedItemIds: [],
+    pickerOpen: false,
+    setPickerOpen: jest.fn(),
+    toggleCharacter: jest.fn(),
+    toggleItem: jest.fn(),
+    selectRoute: jest.fn(),
+    clearSelection: jest.fn(),
+    overlays: [],
+    offMapCount: 0,
+    hasSelection: false,
+  }),
+}));
 jest.mock('../../src/components/features/location-maps/LocationMapTools', () => {
-  const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
@@ -167,7 +189,6 @@ jest.mock('../../src/components/features/location-maps/LocationMapTools', () => 
   };
 });
 jest.mock('../../src/components/features/location-maps/LocationMapNodeSheet', () => {
-  const React = require('react');
   const { Text, TouchableOpacity, View } = require('react-native');
   return {
     __esModule: true,
@@ -193,6 +214,11 @@ jest.mock('../../src/components/features/location-maps/LocationMapHeaderActions'
 jest.mock('../../src/components/features/graphs/GraphCanvasControls/GraphCanvasControls', () => ({
   __esModule: true,
   default: () => null,
+}));
+const mockUseScreenTour = jest.fn();
+jest.mock('../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 
 import LocationMapScreen from '../../src/screens/location-maps/LocationMapScreen';
@@ -242,6 +268,7 @@ describe('LocationMapScreen', () => {
 
     await fireEvent.press(view.getByTestId('map-open-location'));
     expect(mockNavigateToEntity).toHaveBeenCalledWith('Location', 'location-1');
+    expect(mockUseScreenTour).toHaveBeenCalledWith('LocationMap', true);
   });
 
   it('adds a selected location through the map tools without replacing existing nodes', async () => {

@@ -1,4 +1,3 @@
-// apps/api/src/db/schema/tables/userRecoveryCodes.ts
 import { boolean, table, text, timestamp, timestampNow } from '../columns';
 import { ulid } from 'ulid';
 import { users } from './users';

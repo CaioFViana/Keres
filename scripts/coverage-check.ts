@@ -10,6 +10,18 @@ import {
 } from './lib/coverage';
 import { repoRoot } from './lib/packages';
 
+/**
+ * Enforces the scoped coverage floors on the paths that must never silently regress.
+ *
+ *   bun scripts/coverage-check.ts client
+ *   bun scripts/coverage-check.ts api
+ *
+ * A workspace-wide floor averages every file together, so a well-tested periphery can hide an
+ * untested sync core. These scopes re-measure only the sync engine, its entity handlers, and
+ * (for the API) export/import against their own, higher floors from `coverage-thresholds.json`.
+ * CI runs this after the ordinary workspace reports; `coverage-update.ts` raises both kinds of
+ * floor together.
+ */
 interface Scope {
   threshold: string;
   reports: [string, string][];

@@ -9,13 +9,14 @@ import { CreateSuggestionDataSchema, PartialSuggestionSchema } from '@keres/shar
 import { and, eq, ne } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { suggestions } from '../../db/schema';
-import { BaseSyncEntityHandler } from './BaseSyncEntityHandler';
+import { BaseSyncEntityHandler, duplicateOf } from './BaseSyncEntityHandler';
 
 export class SuggestionSyncHandler extends BaseSyncEntityHandler<
   typeof CreateSuggestionDataSchema,
   typeof PartialSuggestionSchema
 > {
   entityName = 'Suggestion';
+  readonly naturalKey = ['type', 'value'] as const;
 
   constructor() {
     super('id', 'version', CreateSuggestionDataSchema, PartialSuggestionSchema, {
@@ -44,7 +45,8 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
     });
 
     if (existingSuggestion) {
-      throw new Error(
+      throw duplicateOf(
+        existingSuggestion,
         `Conflict: Suggestion with type "${validatedData.type}" and value "${validatedData.value}" already exists in story ${storyId}.`,
       );
     }
@@ -90,7 +92,8 @@ export class SuggestionSyncHandler extends BaseSyncEntityHandler<
       });
 
       if (existingSuggestion) {
-        throw new Error(
+        throw duplicateOf(
+          existingSuggestion,
           `Conflict: Suggestion with type "${newType}" and value "${newValue}" already exists in story ${storyId}.`,
         );
       }

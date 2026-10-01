@@ -15,11 +15,12 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../../hooks/useStorySchemaFields';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
@@ -91,6 +92,8 @@ const ChapterFormScreen = () => {
     setCustomValues,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = chapterFormState;
 
   const {
@@ -143,9 +146,12 @@ const ChapterFormScreen = () => {
   const arcCopy = useVocabularyEntityCopy('Arc');
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   if (loading) {
@@ -158,9 +164,6 @@ const ChapterFormScreen = () => {
       description={copy.formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -170,6 +173,9 @@ const ChapterFormScreen = () => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

@@ -433,7 +433,11 @@ describe('collaboration sync entity handlers', () => {
     expect(await scenesHandler.findByIdOrThrow(noLocationId)).toMatchObject({ locationId: null });
   });
 
-  it('keeps one start/finish only in linear stories and leaves branching scene flags independent', async () => {
+  /**
+   * An operation writes its own row only: in a linear story the client hands the flags over, each
+   * other scene's loss recorded as its own edit, so no row changes without every device learning.
+   */
+  it('writes the start/finish flags of the scene the operation names and no other', async () => {
     const scenesHandler = new SceneSyncHandler();
     const nextLinearId = newId();
     const sceneData = (id: string, overrides: Record<string, unknown> = {}) => ({
@@ -459,10 +463,7 @@ describe('collaboration sync entity handlers', () => {
       storyId,
       create('Scene', nextLinearId, sceneData(nextLinearId)),
     );
-    expect(await scenesHandler.findByIdOrThrow(sceneId)).toMatchObject({
-      isStart: false,
-      isFinish: false,
-    });
+    expect(await scenesHandler.findByIdOrThrow(sceneId)).toMatchObject({ isFinish: true });
     expect(await scenesHandler.findByIdOrThrow(nextLinearId)).toMatchObject({
       isStart: true,
       isFinish: true,

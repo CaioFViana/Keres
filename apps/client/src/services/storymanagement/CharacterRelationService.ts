@@ -1,3 +1,4 @@
+import { sortIdPair } from '@keres/shared';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { SQL } from 'drizzle-orm';
 import { and, asc, desc, eq, or, sql } from 'drizzle-orm'; // Import SQL
@@ -6,7 +7,12 @@ import type { AppDrizzleClient } from '../../db';
 import { characterRelations, characters } from '../../db';
 import { createULID, getChangedFields } from '../../utils/entityUtils'; // Import for changed fields in update
 import { entityEventEmitter } from '../../utils/EventEmitter'; // Import for event emission
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils'; // Imports for logging operations
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils'; // Imports for logging operations
 import { createServerService } from '../ServerService'; // Import ServerService to get userId
 
 export type CharacterRelationWithNames = CharacterRelation & {
@@ -102,6 +108,7 @@ export const createCharacterRelationService = (
       relation: CharacterRelation,
     ): Promise<CharacterRelation> {
       // Added currentUserId
+      await assertStoryIsWritable(db, relation.storyId);
       try {
         console.log(
           'Attempting to save relation with ID:',
@@ -112,20 +119,78 @@ export const createCharacterRelationService = (
           relation,
         );
 
-        // Helper to check if a relation with this ID exists in the DB
-        const checkIfRelationExists = async (id: string): Promise<boolean> => {
-          const existing = await db.query.characterRelations.findFirst({
-            where: and(eq(characterRelations.id, id), eq(characterRelations.isDeleted, false)),
-          });
-          return !!existing;
-        };
-
         let resultRelation: CharacterRelation; // To store the final relation to return
 
         if (relation.id && relation.id !== '') {
-          const exists = await checkIfRelationExists(relation.id);
+          const rowById = await db.query.characterRelations.findFirst({
+            where: eq(characterRelations.id, relation.id),
+          });
 
-          if (exists) {
+          if (rowById?.isDeleted) {
+            // The row is a tombstone: restore it in place instead of falling through to the
+            // insert below, which would collide on the primary key. Endpoints stay immutable
+            // and the pair check still excludes this very row, exactly like a live update.
+            if (
+              rowById.character1Id !== relation.character1Id ||
+              rowById.character2Id !== relation.character2Id
+            ) {
+              throw new Error(`Character IDs (character1Id, character2Id) cannot be changed on an existing CharacterRelation.
+                                 Old: ${rowById.character1Id}, ${rowById.character2Id} | New: ${relation.character1Id}, ${relation.character2Id}`);
+            }
+            const restoreDuplicate = await getExistingRelationForPair(
+              db,
+              relation.storyId,
+              relation.character1Id,
+              relation.character2Id,
+              relation.id,
+            );
+            if (restoreDuplicate) {
+              throw new Error(
+                `A relation between character ${relation.character1Id} and ${relation.character2Id} already exists with ID ${restoreDuplicate.id}.`,
+              );
+            }
+            const restoreUserId = await getUserIdForOperation(
+              db,
+              serverService,
+              rowById.storyId,
+              currentUserId,
+            );
+            const restoredRelation = await runLocalWrite(db, rowById.storyId, () => {
+              const restored = db
+                .update(characterRelations)
+                .set({
+                  relationType: relation.relationType,
+                  isDeleted: false,
+                  deletedAt: null,
+                  updatedAt: new Date(),
+                  version: sql`${characterRelations.version} + 1`,
+                })
+                .where(eq(characterRelations.id, relation.id))
+                .returning()
+                .get();
+              if (!restored) {
+                throw new Error('Failed to retrieve restored relation after update operation.');
+              }
+              recordLocalOperationSync(
+                db,
+                restored.storyId,
+                restoreUserId,
+                'update',
+                'CharacterRelation',
+                relation.id,
+                getChangedFields(rowById, restored),
+              );
+              return restored;
+            });
+            entityEventEmitter.emit(
+              'character_relation_changed',
+              restoredRelation.storyId,
+              restoredRelation.id,
+            );
+            return restoredRelation;
+          }
+
+          if (!!rowById && !rowById.isDeleted) {
             // Fetch old relation for diffing
             const oldRelation = await db.query.characterRelations.findFirst({
               where: eq(characterRelations.id, relation.id),
@@ -172,47 +237,48 @@ export const createCharacterRelationService = (
               return oldRelation; // Return the original relation as no update occurred
             }
 
-            // Record exists, proceed with update
-            const [updatedRelation] = await db
-              .update(characterRelations)
-              .set({
-                character1Id: relation.character1Id,
-                character2Id: relation.character2Id,
-                relationType: relation.relationType,
-                updatedAt: new Date(),
-                version: sql`${characterRelations.version} + 1`,
-              })
-              .where(eq(characterRelations.id, relation.id))
-              .returning();
-
-            if (!updatedRelation) {
-              console.error(
-                'Update operation did not return any updated rows for ID:',
-                relation.id,
-              );
-              throw new Error('Failed to retrieve updated relation after update operation.');
-            }
-            resultRelation = updatedRelation;
-
-            // Log update operation
-            const changedFields = getChangedFields(oldRelation, updatedRelation);
-
             const userIdToLog = await getUserIdForOperation(
               db,
               serverService,
-              updatedRelation.storyId,
+              oldRelation.storyId,
               currentUserId,
             );
 
-            await recordLocalOperation(
-              db,
-              updatedRelation.storyId,
-              userIdToLog,
-              'update',
-              'CharacterRelation',
-              relation.id,
-              changedFields,
-            );
+            // Record exists, proceed with update
+            const updatedRelation = await runLocalWrite(db, oldRelation.storyId, () => {
+              const updated = db
+                .update(characterRelations)
+                .set({
+                  character1Id: relation.character1Id,
+                  character2Id: relation.character2Id,
+                  relationType: relation.relationType,
+                  updatedAt: new Date(),
+                  version: sql`${characterRelations.version} + 1`,
+                })
+                .where(eq(characterRelations.id, relation.id))
+                .returning()
+                .get();
+
+              if (!updated) {
+                console.error(
+                  'Update operation did not return any updated rows for ID:',
+                  relation.id,
+                );
+                throw new Error('Failed to retrieve updated relation after update operation.');
+              }
+
+              recordLocalOperationSync(
+                db,
+                updated.storyId,
+                userIdToLog,
+                'update',
+                'CharacterRelation',
+                relation.id,
+                getChangedFields(oldRelation, updated),
+              );
+              return updated;
+            });
+            resultRelation = updatedRelation;
             entityEventEmitter.emit(
               'character_relation_changed',
               updatedRelation.storyId,
@@ -240,8 +306,15 @@ export const createCharacterRelationService = (
         }
 
         // --- INSERT LOGIC (either because relation.id was empty/undefined OR because it didn't exist for update) ---
+        // The pair is stored sorted, as the server stores it: one relation, one way of writing it.
+        const [character1Id, character2Id] = sortIdPair(
+          relation.character1Id,
+          relation.character2Id,
+        );
         const newRelationData: CharacterRelation = {
           ...relation,
+          character1Id,
+          character2Id,
           id: relation.id && relation.id !== '' ? relation.id : createULID(),
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -249,34 +322,30 @@ export const createCharacterRelationService = (
           isDeleted: false,
           deletedAt: null,
         };
-        console.log('Inserting new relation with generated ID:', newRelationData.id);
-        const [insertedRelation] = await db
-          .insert(characterRelations)
-          .values(newRelationData)
-          .returning();
-        if (!insertedRelation) {
-          console.error('Insert operation did not return any inserted rows.');
-          throw new Error('Failed to retrieve inserted relation after insert operation.');
-        }
-        resultRelation = insertedRelation;
-
-        // Log create operation
         const userIdToLog = await getUserIdForOperation(
           db,
           serverService,
-          resultRelation.storyId,
+          newRelationData.storyId,
           currentUserId,
         );
-
-        await recordLocalOperation(
-          db,
-          resultRelation.storyId,
-          userIdToLog,
-          'create',
-          'CharacterRelation',
-          resultRelation.id,
-          resultRelation,
-        );
+        console.log('Inserting new relation with generated ID:', newRelationData.id);
+        resultRelation = await runLocalWrite(db, newRelationData.storyId, () => {
+          const inserted = db.insert(characterRelations).values(newRelationData).returning().get();
+          if (!inserted) {
+            console.error('Insert operation did not return any inserted rows.');
+            throw new Error('Failed to retrieve inserted relation after insert operation.');
+          }
+          recordLocalOperationSync(
+            db,
+            inserted.storyId,
+            userIdToLog,
+            'create',
+            'CharacterRelation',
+            inserted.id,
+            inserted,
+          );
+          return inserted;
+        });
         entityEventEmitter.emit(
           'character_relation_changed',
           resultRelation.storyId,
@@ -292,53 +361,57 @@ export const createCharacterRelationService = (
 
     async deleteCharacterRelation(currentUserId: string, relationId: string): Promise<boolean> {
       // Added currentUserId
+      const relationToDelete = await db.query.characterRelations.findFirst({
+        where: eq(characterRelations.id, relationId),
+      });
+      if (!relationToDelete) {
+        console.warn(`Attempted to delete non-existent character relation ${relationId}.`);
+        return false; // Return false if not found
+      }
+      // Outside the try below: that catch swallows everything into `false`, which would
+      // turn a refused write into a silent no-op instead of an explicit error.
+      await assertStoryIsWritable(db, relationToDelete.storyId);
       try {
-        const relationToDelete = await db.query.characterRelations.findFirst({
-          where: eq(characterRelations.id, relationId),
-        });
-        if (!relationToDelete) {
-          console.warn(`Attempted to delete non-existent character relation ${relationId}.`);
-          return false; // Return false if not found
-        }
-
-        const [updatedRelation] = await db
-          .update(characterRelations)
-          .set({
-            isDeleted: true,
-            deletedAt: new Date(),
-            updatedAt: new Date(),
-            version: sql`${characterRelations.version} + 1`,
-          })
-          .where(eq(characterRelations.id, relationId))
-          .returning(); // Returning the updated relation
-
-        if (!updatedRelation) {
-          throw new Error(
-            `Failed to delete character relation ${relationId} or relation not found.`,
-          );
-        }
-
-        // Log delete operation
-        const changedFields = {
-          id: updatedRelation.id,
-          isDeleted: updatedRelation.isDeleted,
-          version: updatedRelation.version,
-        };
         const userIdToLog = await getUserIdForOperation(
           db,
           serverService,
-          updatedRelation.storyId,
+          relationToDelete.storyId,
           currentUserId,
         );
-        await recordLocalOperation(
-          db,
-          updatedRelation.storyId,
-          userIdToLog,
-          'delete',
-          'CharacterRelation',
-          relationId,
-          changedFields,
-        );
+        const updatedRelation = await runLocalWrite(db, relationToDelete.storyId, () => {
+          const deleted = db
+            .update(characterRelations)
+            .set({
+              isDeleted: true,
+              deletedAt: new Date(),
+              updatedAt: new Date(),
+              version: sql`${characterRelations.version} + 1`,
+            })
+            .where(eq(characterRelations.id, relationId))
+            .returning()
+            .get();
+
+          if (!deleted) {
+            throw new Error(
+              `Failed to delete character relation ${relationId} or relation not found.`,
+            );
+          }
+
+          recordLocalOperationSync(
+            db,
+            deleted.storyId,
+            userIdToLog,
+            'delete',
+            'CharacterRelation',
+            relationId,
+            {
+              id: deleted.id,
+              isDeleted: deleted.isDeleted,
+              version: deleted.version,
+            },
+          );
+          return deleted;
+        });
         entityEventEmitter.emit(
           'character_relation_changed',
           updatedRelation.storyId,

@@ -34,7 +34,7 @@ const page: HelpPage = {
       items: [
         'Open Customization from the story menu and choose Arcs.',
         'Choose Add to create another arc, then give it a clear name.',
-        'Optionally add a description and choose a theme for that arc.',
+        'Optionally add a description, pick an Icon (search the library or choose from the recent ones) and choose a theme for that arc.',
         'Open a chapter or event and choose the arc it belongs to.',
         'Use the arc selector in the story header when you want to focus on one arc.',
       ],

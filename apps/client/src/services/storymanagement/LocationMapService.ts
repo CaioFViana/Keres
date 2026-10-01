@@ -10,7 +10,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -36,16 +37,18 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
   const liveInStory = (storyId: string) =>
     and(eq(locationMaps.storyId, storyId), eq(locationMaps.isDeleted, false));
 
-  const logOperation = async (
-    currentUserId: string,
+  const userIdFor = (currentUserId: string, storyId: string) =>
+    getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+  /** Inside a unit. */
+  const logOperation = (
+    userIdToLog: string,
     storyId: string,
     type: 'create' | 'update' | 'delete',
     mapId: string,
     payload: Record<string, unknown>,
   ) => {
-    const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-    await recordLocalOperation(db, storyId, userIdToLog, type, 'LocationMap', mapId, payload);
-    entityEventEmitter.emit('location_map_changed', storyId, mapId);
+    recordLocalOperationSync(db, storyId, userIdToLog, type, 'LocationMap', mapId, payload);
   };
 
   return {
@@ -66,8 +69,13 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
       await assertStoryIsWritable(db, data.storyId);
       const content = validateLocationMapContent(data.content ?? { images: [], nodes: [] });
       const map = prepareNewEntityData<LocationMapInsert>({ ...data, content });
-      const result = await db.insert(locationMaps).values(map).returning().get();
-      await logOperation(currentUserId, map.storyId, 'create', map.id, { ...result });
+      const userIdToLog = await userIdFor(currentUserId, map.storyId);
+      const result = await runLocalWrite(db, map.storyId, () => {
+        const inserted = db.insert(locationMaps).values(map).returning().get();
+        logOperation(userIdToLog, map.storyId, 'create', map.id, { ...inserted });
+        return inserted;
+      });
+      entityEventEmitter.emit('location_map_changed', map.storyId, map.id);
       return result;
     },
 
@@ -87,22 +95,27 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
       delete changed.updatedAt;
       if (Object.keys(changed).length === 0) return original;
 
-      await db
-        .update(locationMaps)
-        .set({ ...normalised, updatedAt: new Date(), version: sql`${locationMaps.version} + 1` })
-        .where(eq(locationMaps.id, mapId));
+      const userIdToLog = await userIdFor(currentUserId, original.storyId);
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        db.update(locationMaps)
+          .set({ ...normalised, updatedAt: new Date(), version: sql`${locationMaps.version} + 1` })
+          .where(eq(locationMaps.id, mapId))
+          .run();
 
-      const updated = await db.query.locationMaps.findFirst({ where: eq(locationMaps.id, mapId) });
-      if (!updated) throw new Error(`Failed to retrieve updated LocationMap ${mapId}.`);
+        const row = db.select().from(locationMaps).where(eq(locationMaps.id, mapId)).get();
+        if (!row) throw new Error(`Failed to retrieve updated LocationMap ${mapId}.`);
 
-      const operationChanges = getChangedFields(original, updated);
-      // The map content is a single validated JSON document. It must travel whole: the generic
-      // object diff would otherwise omit an unchanged required collection (`images` or `nodes`).
-      if (operationChanges.content !== undefined) {
-        operationChanges.content = updated.content;
-      }
+        const operationChanges = getChangedFields(original, row);
+        // The map content is a single validated JSON document. It must travel whole: the generic
+        // object diff would otherwise omit an unchanged required collection (`images` or `nodes`).
+        if (operationChanges.content !== undefined) {
+          operationChanges.content = row.content;
+        }
 
-      await logOperation(currentUserId, updated.storyId, 'update', mapId, operationChanges);
+        logOperation(userIdToLog, row.storyId, 'update', mapId, operationChanges);
+        return row;
+      });
+      entityEventEmitter.emit('location_map_changed', updated.storyId, mapId);
       return updated;
     },
 
@@ -114,29 +127,35 @@ export const createLocationMapService = (db: AppDrizzleClient): LocationMapServi
       }
       await assertStoryIsWritable(db, original.storyId);
 
-      const [updated] = await db
-        .update(locationMaps)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${locationMaps.version} + 1`,
-        })
-        .where(eq(locationMaps.id, mapId))
-        .returning({
-          id: locationMaps.id,
-          storyId: locationMaps.storyId,
-          isDeleted: locationMaps.isDeleted,
-          version: locationMaps.version,
+      const userIdToLog = await userIdFor(currentUserId, original.storyId);
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const deleted = db
+          .update(locationMaps)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${locationMaps.version} + 1`,
+          })
+          .where(eq(locationMaps.id, mapId))
+          .returning({
+            id: locationMaps.id,
+            storyId: locationMaps.storyId,
+            isDeleted: locationMaps.isDeleted,
+            version: locationMaps.version,
+          })
+          .get();
+
+        if (!deleted) throw new Error(`Failed to delete location map ${mapId}.`);
+
+        logOperation(userIdToLog, deleted.storyId, 'delete', mapId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
         });
-
-      if (!updated) throw new Error(`Failed to delete location map ${mapId}.`);
-
-      await logOperation(currentUserId, updated.storyId, 'delete', mapId, {
-        id: updated.id,
-        isDeleted: updated.isDeleted,
-        version: updated.version,
+        return deleted;
       });
+      entityEventEmitter.emit('location_map_changed', updated.storyId, mapId);
     },
   };
 };

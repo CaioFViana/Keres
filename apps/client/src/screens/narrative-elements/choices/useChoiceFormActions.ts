@@ -106,6 +106,7 @@ export function useChoiceFormActions({
           },
         });
 
+        await state.clearFormDraft();
         entityEventEmitter.emit('choice_changed', storyId, savedChoiceId);
         AppAlert.alert(t('success'), created ? copy.created : copy.updated);
 
@@ -142,6 +143,7 @@ export function useChoiceFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await choiceServiceRef.current!.deleteChoice(userId, choiceId);
+        await state.clearFormDraft();
         entityEventEmitter.emit('choice_changed', storyId, choiceId);
         navigation.goBack();
       },

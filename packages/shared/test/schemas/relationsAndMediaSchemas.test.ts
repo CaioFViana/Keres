@@ -102,6 +102,9 @@ describe('relation and media contracts', () => {
     expect(mediaTypeForMimeType('application/zip')).toBeNull();
     expect(extensionForMimeType('video/quicktime')).toBe('mov');
     expect(extensionForMimeType(undefined)).toBe('bin');
+    expect(isSupportedMediaMimeType('video/x-matroska')).toBe(true);
+    expect(mediaTypeForMimeType('video/x-matroska')).toBe('video');
+    expect(extensionForMimeType('video/x-matroska')).toBe('mkv');
     expect(MediaBlobStatusRequestSchema.parse({ hashes: ['a'.repeat(32)] })).toEqual({
       hashes: ['a'.repeat(32)],
     });

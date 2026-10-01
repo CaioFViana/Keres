@@ -1,4 +1,4 @@
-import { UlidSchema } from '../schemas/SyncSchemas'; // Adjusted path
+import { UlidSchema } from '../schemas/SyncSchemas';
 import { z } from 'zod';
 
 export const CharacterSchema = z.object({

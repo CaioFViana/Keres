@@ -16,7 +16,7 @@ import type {
   NativeStackNavigationProp,
   NativeStackScreenProps,
 } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -65,7 +65,7 @@ const ServerRegistrationScreen = () => {
 
   const commonInputStyles = getCommonInputStyles(colors);
   const drizzleDb = useDrizzle();
-  const serverService = useRef(createServerService(drizzleDb)).current;
+  const [serverService] = useState(() => createServerService(drizzleDb));
   const { setActiveServer } = useUserSettingsStore();
 
   const [mode, setMode] = useState<ServerAuthMode>('login');
@@ -275,7 +275,9 @@ const ServerRegistrationScreen = () => {
           t('error'),
           outcome.reason === 'invalid_code'
             ? t('recovery_code_invalid')
-            : `${t('server_error')}: ${outcome.status}`,
+            : outcome.reason === 'rate_limited'
+              ? t('recovery_code_rate_limited')
+              : `${t('server_error')}: ${outcome.status}`,
         );
         setLoading(false);
         return;
@@ -379,15 +381,15 @@ const ServerRegistrationScreen = () => {
       actions={
         serverId ? (
           <FormActions stackOnCompact>
-            <Button onPress={handleSave} disabled={loading}>
-              {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
-            </Button>
             <Button
               onPress={handleDeleteServer}
               style={{ backgroundColor: colors.error }}
               disabled={loading}
             >
               {t('delete_server')}
+            </Button>
+            <Button onPress={handleSave} disabled={loading}>
+              {loading ? <ActivityIndicator color={colors.onPrimary} /> : t('update_server')}
             </Button>
           </FormActions>
         ) : (

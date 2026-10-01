@@ -2,7 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import type { ShowcaseStoryDetail } from '@keres/shared';
-import { fetchDownloadUrl, fetchStory, unlockStory } from '../api/showcaseApi';
+import {
+  fetchDownloadUrl,
+  fetchManuscriptDownloadUrl,
+  fetchStory,
+  unlockStory,
+} from '../api/showcaseApi';
 import { OwnerAvatar } from '../components/OwnerAvatar';
 import { PasswordGate } from '../components/PasswordGate';
 import { formatBytes, formatDate, genreList } from '../format';
@@ -18,6 +23,7 @@ export function StoryPage() {
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadingManuscript, setDownloadingManuscript] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +55,18 @@ export function StoryPage() {
       setError(caught instanceof Error ? caught.message : t('story.downloadFailed'));
     } finally {
       setDownloading(null);
+    }
+  };
+
+  const downloadManuscript = async (publicationId: string) => {
+    setDownloadingManuscript(publicationId);
+    setError(null);
+    try {
+      window.location.href = await fetchManuscriptDownloadUrl(storyId, publicationId);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : t('story.downloadFailed'));
+    } finally {
+      setDownloadingManuscript(null);
     }
   };
 
@@ -93,8 +111,8 @@ export function StoryPage() {
         <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
         <h1>{snapshot.title}</h1>
         {/*
-          Quem publicou, sempre - é um fato sobre esta página. O autor da obra é outra coisa e
-          aparece entre os dados da história, abaixo.
+          The publisher, always - it is a fact about this page. The work's author is a different
+          thing, shown among the story's data below.
         */}
         <div className="owner">
           <OwnerAvatar owner={owner} size={34} />
@@ -111,9 +129,9 @@ export function StoryPage() {
 
       <dl className="story-facts">
         {/*
-          Texto livre da própria história: pode ser um pseudônimo, uma equipe, ou uma atribuição
-          de domínio público. Não tem relação com a conta que publicou, e por isso não cai para
-          o nome dela quando está vazio.
+          Free text from the story itself: it may be a pseudonym, a team, or a public-domain
+          attribution. It has no relation to the account that published, so it never falls back
+          to that account's name when empty.
         */}
         {snapshot.author && (
           <div>
@@ -158,22 +176,52 @@ export function StoryPage() {
             <div>
               <span className="version-label">{newest.label}</span>
               <span className="version-sub">
-                {formatDate(newest.createdAt, i18n.language)} · {formatBytes(newest.byteSize)}
-                {newest.mediaTotal > 0 &&
+                {formatDate(newest.createdAt, i18n.language)}
+                {newest.packageIncluded !== false && ` · ${formatBytes(newest.byteSize)}`}
+                {newest.packageIncluded !== false &&
+                  newest.mediaTotal > 0 &&
                   ` · ${t('story.mediaCount', {
                     included: newest.mediaIncluded,
                     total: newest.mediaTotal,
                   })}`}
               </span>
             </div>
-            <button
-              type="button"
-              className="download-button"
-              disabled={downloading === newest.id}
-              onClick={() => void download(newest.id)}
-            >
-              {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
-            </button>
+            <div className="version-actions">
+              {/* A version may be only a manuscript and/or the reading: then there is no story file to offer. */}
+              {newest.packageIncluded !== false && (
+                <button
+                  type="button"
+                  className="download-button"
+                  disabled={downloading === newest.id}
+                  onClick={() => void download(newest.id)}
+                >
+                  {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
+                </button>
+              )}
+              {newest.reader && (
+                <Link
+                  to={`/story/${storyId}/read/${newest.id}`}
+                  className="download-button ghost reader-button"
+                >
+                  {t('story.readOnline')}
+                </Link>
+              )}
+              {newest.manuscript && (
+                <button
+                  type="button"
+                  className="download-button ghost manuscript-button"
+                  disabled={downloadingManuscript === newest.id}
+                  onClick={() => void downloadManuscript(newest.id)}
+                >
+                  {downloadingManuscript === newest.id
+                    ? t('story.preparing')
+                    : t('story.manuscriptDownload', {
+                        format: newest.manuscript.format.toUpperCase(),
+                        size: formatBytes(newest.manuscript.byteSize),
+                      })}
+                </button>
+              )}
+            </div>
           </li>
 
           {older.map((version) => (
@@ -181,17 +229,45 @@ export function StoryPage() {
               <div>
                 <span className="version-label">{version.label}</span>
                 <span className="version-sub">
-                  {formatDate(version.createdAt, i18n.language)} · {formatBytes(version.byteSize)}
+                  {formatDate(version.createdAt, i18n.language)}
+                  {version.packageIncluded !== false && ` · ${formatBytes(version.byteSize)}`}
                 </span>
               </div>
-              <button
-                type="button"
-                className="download-button ghost"
-                disabled={downloading === version.id}
-                onClick={() => void download(version.id)}
-              >
-                {downloading === version.id ? t('story.preparing') : t('story.download')}
-              </button>
+              <div className="version-actions">
+                {version.packageIncluded !== false && (
+                  <button
+                    type="button"
+                    className="download-button ghost"
+                    disabled={downloading === version.id}
+                    onClick={() => void download(version.id)}
+                  >
+                    {downloading === version.id ? t('story.preparing') : t('story.download')}
+                  </button>
+                )}
+                {version.reader && (
+                  <Link
+                    to={`/story/${storyId}/read/${version.id}`}
+                    className="download-button ghost reader-button"
+                  >
+                    {t('story.readOnline')}
+                  </Link>
+                )}
+                {version.manuscript && (
+                  <button
+                    type="button"
+                    className="download-button ghost manuscript-button"
+                    disabled={downloadingManuscript === version.id}
+                    onClick={() => void downloadManuscript(version.id)}
+                  >
+                    {downloadingManuscript === version.id
+                      ? t('story.preparing')
+                      : t('story.manuscriptDownload', {
+                          format: version.manuscript.format.toUpperCase(),
+                          size: formatBytes(version.manuscript.byteSize),
+                        })}
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>

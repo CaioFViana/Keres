@@ -26,7 +26,7 @@ const page: HelpPage = {
         'Create the Route, give it a name, and save it. Then open Edit steps.',
         'Choose the starting Scene. For every following Scene, the screen offers only the Choices that actually leave the current Scene.',
         'End the Route when you reach an ending, or continue through another available Choice.',
-        'Use the Route Reader to read the chosen path, and Story Navigator to try Choices, conditions and effects without saving a Route.',
+        'Use the Route Reader to read the chosen path, and the Story Navigator (see its own page) to try Choices, conditions and effects without saving a Route.',
       ],
     },
     {
@@ -65,7 +65,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'A Route does not change the map, Scenes, or Choices. The Reader uses only its steps. If a Choice is deleted or starts leading to another Scene, the Route is marked for repair before it can be read.',
     },
-    { type: 'seeAlso', pages: ['branching-basics', 'choices', 'story-map', 'story-state'] },
+    {
+      type: 'seeAlso',
+      pages: ['branching-basics', 'story-navigator', 'choices', 'story-map', 'story-state'],
+    },
   ],
 };
 

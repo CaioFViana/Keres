@@ -14,11 +14,12 @@ import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/See
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../../hooks/useFormResetHeaderAction';
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
@@ -75,6 +76,8 @@ const ChoiceFormScreen = () => {
     setNotes,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = choiceFormState;
 
   const { checks, effects, relations } = useChoiceFormAssociations(
@@ -136,9 +139,12 @@ const ChoiceFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   const sceneOptions = useMemo(
@@ -202,9 +208,6 @@ const ChoiceFormScreen = () => {
       description={copy.formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -214,6 +217,9 @@ const ChoiceFormScreen = () => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

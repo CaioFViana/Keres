@@ -13,7 +13,11 @@ import {
   formatSceneUniverseDuration,
 } from '@/src/utils/sceneTiming';
 import { chapterBelongsToArc, sceneBelongsToActiveArc } from '@/src/utils/storyArcFilter';
-import { buildStoryTimelineFileName, deliverSvgMap } from '@/src/utils/storyTransfer';
+import {
+  buildStoryTimelineFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '@/src/utils/storyTransfer';
 import type { CalendarDefinitionType } from '@keres/shared';
 import {
   calendarSecondsPerDay,
@@ -58,7 +62,7 @@ const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) 
  * ceiling.
  */
 export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | null) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { definition: primaryCalendar, calendars, describeDay } = useStoryCalendar();
   const calendar = calendarOverride ?? primaryCalendar;
   const { colors } = useTheme();
@@ -156,8 +160,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
   const orderedScenes = useMemo(() => {
     const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
     const colorsByChapter = buildChapterColors(chapters);
-    let previousChapterIndex: number | undefined;
-    return scenes
+    const sorted = scenes
       .filter((scene): scene is typeof scene & { chapterId: string } =>
         Boolean(scene.chapterId && chapterIds.includes(scene.chapterId)),
       )
@@ -165,23 +168,24 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
         (a, b) =>
           (chapterById.get(a.chapterId)?.index ?? 0) - (chapterById.get(b.chapterId)?.index ?? 0) ||
           a.index - b.index,
-      )
-      .map((scene) => {
-        const chapterIndex = chapterById.get(scene.chapterId)?.index;
-        const hideGapBefore =
-          previousChapterIndex !== undefined &&
-          chapterIndex !== previousChapterIndex &&
-          chapterIndex !== previousChapterIndex + 1;
-        previousChapterIndex = chapterIndex;
-        return {
-          ...scene,
-          hideGapBefore,
-          chapterName: chapterById.get(scene.chapterId)?.name ?? t('common_na'),
-          chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
-          gapLabel: formatSceneGap(scene, t, { calendar }),
-          durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
-        };
-      });
+      );
+    return sorted.map((scene, position) => {
+      const chapterIndex = chapterById.get(scene.chapterId)?.index;
+      const previousChapterIndex =
+        position === 0 ? undefined : chapterById.get(sorted[position - 1]!.chapterId)?.index;
+      const hideGapBefore =
+        previousChapterIndex !== undefined &&
+        chapterIndex !== previousChapterIndex &&
+        chapterIndex !== previousChapterIndex + 1;
+      return {
+        ...scene,
+        hideGapBefore,
+        chapterName: chapterById.get(scene.chapterId)?.name ?? t('common_na'),
+        chapterColor: colorsByChapter.get(scene.chapterId) ?? colors.border,
+        gapLabel: formatSceneGap(scene, t, { calendar }),
+        durationLabel: formatSceneUniverseDuration(scene, t, { calendar }),
+      };
+    });
   }, [calendar, chapterIds, chapters, colors.border, scenes, t]);
   const chapterDurationLabels = useMemo(
     () =>
@@ -377,7 +381,11 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
           border: colors.border,
         },
       });
-      const result = await deliverSvgMap(svg, buildStoryTimelineFileName(story.title));
+      const result = await deliverMapExport(
+        svg,
+        buildStoryTimelineFileName(story.title, new Date(), exportFileLanguage(i18n.language)),
+        useUserSettingsStore.getState().exportFormat,
+      );
       notify(
         result.delivered
           ? t('story_timeline_export_success', { fileName: result.fileName })
@@ -390,7 +398,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
     } finally {
       setSaving(false);
     }
-  }, [colors, layout, notify, scaleMode, showSceneNames, story, storyDurationLabel, t]);
+  }, [colors, layout, notify, scaleMode, showSceneNames, story, storyDurationLabel, t, i18n]);
 
   return {
     story,

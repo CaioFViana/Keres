@@ -4,18 +4,20 @@ const mockStoryState: any = {
   selectedStory: { id: 'story-1', title: 'Story', timelineEpochDay: 0, timelineEpochSeconds: 0 },
   activeArcId: null,
 };
-const mockSettings = { dateDisplayFormat: 'DD/MM/YYYY' };
+const mockSettings = { dateDisplayFormat: 'DD/MM/YYYY', exportFormat: 'svg' };
 const mockNotify = jest.fn();
 const mockChapterService = { getAllByStoryId: jest.fn() };
 const mockSceneService = { getAllByStoryId: jest.fn() };
 const mockAnchorService = { getAnchorsForStory: jest.fn() };
 const mockDeliver = jest.fn();
 const mockRender = jest.fn();
+const mockBuildFileName = jest.fn((..._args: unknown[]) => 'Story.svg');
+let mockLanguage = 'en';
 
 jest.mock('../../src/db', () => ({ __esModule: true, useDrizzle: jest.fn(() => mockDb) }));
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: jest.fn(() => ({ t: mockT })),
+  useTranslation: jest.fn(() => ({ t: mockT, i18n: { language: mockLanguage } })),
 }));
 jest.mock('../../src/state/storyStore', () => ({
   __esModule: true,
@@ -23,7 +25,12 @@ jest.mock('../../src/state/storyStore', () => ({
 }));
 jest.mock('../../src/state/userSettingsStore', () => ({
   __esModule: true,
-  useUserSettingsStore: jest.fn((selector) => selector(mockSettings)),
+  useUserSettingsStore: Object.assign(
+    jest.fn((selector) => selector(mockSettings)),
+    {
+      getState: () => mockSettings,
+    },
+  ),
 }));
 jest.mock('../../src/state/notificationStore', () => ({
   __esModule: true,
@@ -64,8 +71,9 @@ jest.mock('../../src/utils/storyArcFilter', () => ({
 }));
 jest.mock('../../src/utils/storyTransfer', () => ({
   __esModule: true,
-  buildStoryTimelineFileName: jest.fn(() => 'Story.svg'),
-  deliverSvgMap: (...args: unknown[]) => mockDeliver(...args),
+  ...jest.requireActual('../../src/utils/storyTransfer'),
+  buildStoryTimelineFileName: (...args: unknown[]) => mockBuildFileName(...args),
+  deliverMapExport: (...args: unknown[]) => mockDeliver(...args),
 }));
 jest.mock('@keres/shared/graphs/storyTimelineLayout', () => ({
   __esModule: true,
@@ -82,10 +90,18 @@ jest.mock('@keres/shared/graphs/storyTimelineSvg', () => ({
 }));
 
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { useStoryCalendar } from '../../src/hooks/useStoryCalendar';
 import { useStoryTimeline } from '../../src/hooks/useStoryTimeline';
+import { withSilencedConsole } from '../helpers/silenceConsole';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockLanguage = 'en';
+  (useStoryCalendar as jest.Mock).mockReturnValue({
+    definition: null,
+    calendars: [],
+    describeDay: jest.fn(),
+  });
   mockChapterService.getAllByStoryId.mockImplementation(async (_story: string, type: string) =>
     type === 'event'
       ? [{ id: 'event-1', type: 'event', index: 1, name: 'Event', isDeleted: false }]
@@ -126,6 +142,7 @@ describe('useStoryTimeline', () => {
   });
 
   it('updates display controls and exports the built timeline', async () => {
+    mockLanguage = 'pt-BR';
     const view = await renderHook(() => useStoryTimeline());
     await waitFor(() => expect(view.result.current.loading).toBe(false));
     await act(async () => {
@@ -135,7 +152,161 @@ describe('useStoryTimeline', () => {
     });
     await act(async () => view.result.current.exportTimeline());
     expect(mockRender).toHaveBeenCalled();
-    expect(mockDeliver).toHaveBeenCalledWith('<svg />', 'Story.svg');
+    expect(mockBuildFileName).toHaveBeenCalledWith('Story', expect.any(Date), 'pt');
+    expect(mockDeliver).toHaveBeenCalledWith('<svg />', 'Story.svg', 'svg');
     expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_success', 'success');
+  });
+
+  it('derives calendar dates, elapsed overrides, and anchored containers', async () => {
+    const definition = {
+      secondsPerMinute: 60,
+      minutesPerHour: 60,
+      hoursPerDay: 24,
+      daysPerWeek: 7,
+      weekdayNames: ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven'],
+      unitNames: {},
+      months: [{ name: 'First', days: 30 }],
+      eras: [],
+      moons: [],
+      seasons: [],
+    } as never;
+    const describeDay = jest.fn(() => ({
+      date: 'First 1',
+      weekday: null,
+      season: null,
+      moons: [],
+    }));
+    (useStoryCalendar as jest.Mock).mockReturnValue({
+      definition,
+      calendars: [{ id: 'cal-2', definition }],
+      describeDay,
+    });
+    mockChapterService.getAllByStoryId.mockImplementation(async (_story: string, type: string) =>
+      type === 'event'
+        ? [{ id: 'event-1', type: 'event', index: 1, name: 'Event', isDeleted: false }]
+        : [
+            { id: 'chapter-3', type: 'chapter', index: 3, name: 'Far', isDeleted: false },
+            { id: 'chapter-1', type: 'chapter', index: 1, name: 'Near', isDeleted: false },
+          ],
+    );
+    mockSceneService.getAllByStoryId.mockResolvedValue([
+      {
+        id: 'scene-2',
+        chapterId: 'chapter-1',
+        index: 2,
+        name: 'Second',
+        isDeleted: false,
+        calendarDateOverride: '1-01-05T00:00',
+        calendarDateOverrideCalendarId: 'cal-2',
+      },
+      {
+        id: 'scene-1',
+        chapterId: 'chapter-1',
+        index: 1,
+        name: 'First',
+        isDeleted: false,
+        calendarDateOverride: '1-01-01T12:00',
+        calendarDateOverrideCalendarId: null,
+      },
+      {
+        id: 'scene-3',
+        chapterId: 'chapter-3',
+        index: 1,
+        name: 'Far scene',
+        isDeleted: false,
+        calendarDateOverride: null,
+        calendarDateOverrideCalendarId: null,
+      },
+      { id: 'scene-event', chapterId: 'event-1', index: 1, name: 'Inside', isDeleted: false },
+    ]);
+    mockAnchorService.getAnchorsForStory.mockResolvedValue([
+      {
+        chapterId: 'event-1',
+        order: 2,
+        startSceneId: 'scene-2',
+        startPosition: 'start',
+        startOffset: 0,
+        startOffsetUnit: 'days',
+        endSceneId: null,
+        endPosition: null,
+        endOffset: null,
+        endOffsetUnit: null,
+      },
+      {
+        chapterId: 'event-1',
+        order: 1,
+        startSceneId: 'scene-1',
+        startPosition: 'start',
+        startOffset: 0,
+        startOffsetUnit: 'days',
+        endSceneId: 'scene-2',
+        endPosition: 'end',
+        endOffset: 1,
+        endOffsetUnit: 'days',
+      },
+      {
+        chapterId: 'chapter-1',
+        order: 1,
+        startSceneId: 'scene-1',
+        startPosition: 'start',
+        startOffset: 0,
+        startOffsetUnit: 'days',
+        endSceneId: null,
+        endPosition: null,
+        endOffset: null,
+        endOffsetUnit: null,
+      },
+    ]);
+    const view = await renderHook(() => useStoryTimeline());
+    await waitFor(() => expect(view.result.current.loading).toBe(false));
+    expect(view.result.current.chapters.map((chapter) => chapter.id)).toEqual([
+      'chapter-1',
+      'chapter-3',
+    ]);
+    expect(view.result.current.dateForRow(0)).toEqual(expect.stringContaining('·'));
+    expect(view.result.current.describeSceneDay('scene-1')).toEqual(
+      expect.objectContaining({ date: 'First 1' }),
+    );
+    expect(view.result.current.layout.rows).toHaveLength(3);
+    expect(view.result.current.describeSceneDay('missing')).toBeNull();
+  });
+
+  it('reports export failures and recovers saving state', async () => {
+    await withSilencedConsole(['log'], async () => {
+      const view = await renderHook(() => useStoryTimeline());
+      await waitFor(() => expect(view.result.current.loading).toBe(false));
+      mockDeliver.mockRejectedValueOnce(new Error('share unavailable'));
+      await act(async () => view.result.current.exportTimeline());
+      expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_failed', 'error');
+      expect(view.result.current.saving).toBe(false);
+    });
+  });
+
+  it('warns when the export has no share target', async () => {
+    const view = await renderHook(() => useStoryTimeline());
+    await waitFor(() => expect(view.result.current.loading).toBe(false));
+    mockDeliver.mockResolvedValueOnce({
+      delivered: false,
+      uri: '/tmp/story.svg',
+      fileName: 's.svg',
+    });
+    await act(async () => view.result.current.exportTimeline());
+    expect(mockNotify).toHaveBeenCalledWith('story_timeline_export_no_share_target', 'warning');
+  });
+
+  it('stays empty without a story and dateless without an anchored epoch', async () => {
+    const story = mockStoryState.selectedStory;
+    mockStoryState.selectedStory = null;
+    const missing = await renderHook(() => useStoryTimeline());
+    await act(async () => {});
+    expect(missing.result.current.chapters).toEqual([]);
+    expect(missing.result.current.dateForRow(0)).toBeNull();
+
+    mockStoryState.selectedStory = { ...story, timelineEpochDay: null };
+    const dateless = await renderHook(() => useStoryTimeline());
+    await waitFor(() => expect(dateless.result.current.loading).toBe(false));
+    expect(dateless.result.current.dateForRow(0)).toBeNull();
+    expect(dateless.result.current.describeSceneDay('scene-1')).toBeNull();
+    mockStoryState.selectedStory = story;
   });
 });

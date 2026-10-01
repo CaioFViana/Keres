@@ -100,6 +100,50 @@ describe('story export integrity', () => {
     expect(findStoryExportIntegrityViolations(buildExport())).toEqual([]);
   });
 
+  it('keeps scenes filed nowhere, nulling a chapter the package does not carry', () => {
+    const pruned = pruneDanglingStoryExportRows(
+      buildExport({
+        scenes: [
+          { id: 'scene-1', storyId: 'story-1', chapterId: 'chapter-1', locationId: 'loc-a' },
+          { id: 'scene-loose', storyId: 'story-1', chapterId: null, locationId: null },
+          {
+            id: 'scene-stale',
+            storyId: 'story-1',
+            chapterId: 'chapter-gone',
+            locationId: 'loc-gone',
+          },
+        ],
+      }),
+    );
+
+    // An unfiled scene is a supported live state, not a broken link; a stale filing unfiles it.
+    expect(pruned.scenes).toEqual([
+      expect.objectContaining({ id: 'scene-1', chapterId: 'chapter-1', locationId: 'loc-a' }),
+      expect.objectContaining({ id: 'scene-loose', chapterId: null, locationId: null }),
+      expect.objectContaining({ id: 'scene-stale', chapterId: null, locationId: null }),
+    ]);
+  });
+
+  it('accepts an unfiled scene but refuses one pointing at a missing chapter', () => {
+    expect(
+      findStoryExportIntegrityErrors(
+        buildExport({
+          scenes: [{ id: 'scene-loose', storyId: 'story-1', chapterId: null, locationId: null }],
+        }),
+      ),
+    ).toEqual([]);
+
+    expect(
+      findStoryExportIntegrityErrors(
+        buildExport({
+          scenes: [
+            { id: 'scene-stale', storyId: 'story-1', chapterId: 'chapter-gone', locationId: null },
+          ],
+        }),
+      ),
+    ).toMatchObject([{ kind: 'dangling_reference', collection: 'scenes', ids: ['scene-stale'] }]);
+  });
+
   it('refuses a chapter assigned to an Arc the package does not carry', () => {
     const violations = findStoryExportIntegrityErrors(
       buildExport({

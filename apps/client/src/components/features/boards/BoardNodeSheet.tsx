@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardCardDisplayMode, BoardContentType, BoardNodeType } from '@keres/shared';
-import { generateBoardLocalId } from '@keres/shared';
+import { generateBoardLocalId, MAX_BOARD_BODY_LENGTH, MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -15,6 +15,8 @@ import { getCommonCardStyles } from '../../../theme/commonStyles';
 import { useTheme } from '../../../theme';
 import { boardPinTypeKey } from '../../../utils/boardPinAppearance';
 import type { BoardEntitySummary } from '../../../utils/boardEntitySummary';
+import type { BoardGalleryMedia } from '../../../utils/boardLayout';
+import BoardNodeSheetGalleryPreview from './BoardNodeSheetGalleryPreview';
 
 interface Props {
   node: BoardNodeType;
@@ -23,6 +25,8 @@ interface Props {
   ghost: boolean;
   /** Light summary of the entity behind the pin, when it is an entity pin. */
   summary?: BoardEntitySummary | null;
+  /** The gallery's media, when the pin is a Gallery pin - shows the picture preview. */
+  galleryMedia?: BoardGalleryMedia | null;
   content: BoardContentType;
   nodeTitles: Record<string, string>;
   canEdit: boolean;
@@ -39,6 +43,7 @@ const BoardNodeSheet: React.FC<Props> = ({
   typeLabel,
   ghost,
   summary,
+  galleryMedia,
   content,
   nodeTitles,
   canEdit,
@@ -58,13 +63,23 @@ const BoardNodeSheet: React.FC<Props> = ({
   const [noteTitle, setNoteTitle] = useState(noteTitleFromNode);
   const [noteBody, setNoteBody] = useState(noteBodyFromNode);
 
-  useEffect(() => {
+  const [prevNodeId, setPrevNodeId] = useState(node.id);
+  const [prevNoteTitleFromNode, setPrevNoteTitleFromNode] = useState(noteTitleFromNode);
+  const [prevNoteBodyFromNode, setPrevNoteBodyFromNode] = useState(noteBodyFromNode);
+  if (
+    node.id !== prevNodeId ||
+    noteTitleFromNode !== prevNoteTitleFromNode ||
+    noteBodyFromNode !== prevNoteBodyFromNode
+  ) {
+    setPrevNodeId(node.id);
+    setPrevNoteTitleFromNode(noteTitleFromNode);
+    setPrevNoteBodyFromNode(noteBodyFromNode);
     setConnectTo(null);
     setDirected(true);
     setEdgeLabel('');
     setNoteTitle(noteTitleFromNode);
     setNoteBody(noteBodyFromNode);
-  }, [node.id, noteBodyFromNode, noteTitleFromNode]);
+  }
 
   const edges = content.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
   // An edge is a relationship between a pair, irrespective of its direction. Keeping the picker
@@ -75,7 +90,11 @@ const BoardNodeSheet: React.FC<Props> = ({
   // State updates are asynchronous, so a fast double tap can call `addEdge` twice before the
   // picker rerenders. Keep the immediate interaction state in a ref as well as in the UI state.
   const connectedNodeIdsRef = useRef(connectedNodeIds);
-  connectedNodeIdsRef.current = connectedNodeIds;
+  useEffect(() => {
+    // No dependency array: `connectedNodeIds` is a fresh `Set` every render, so the sync
+    // unconditionally followed every render; readers are event handlers (post-commit).
+    connectedNodeIdsRef.current = connectedNodeIds;
+  });
   const others = content.nodes.filter(
     (item) => item.id !== node.id && !connectedNodeIds.has(item.id),
   );
@@ -256,11 +275,17 @@ const BoardNodeSheet: React.FC<Props> = ({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <BoardNodeSheetGalleryPreview galleryMedia={galleryMedia} />
         {node.kind === 'note' && canEdit && (
           <>
             <Text style={styles.section}>{t('board_note')}</Text>
             <View style={styles.field}>
-              <TextInput value={noteTitle} onChangeText={setNoteTitle} placeholder={t('title')} />
+              <TextInput
+                value={noteTitle}
+                onChangeText={setNoteTitle}
+                placeholder={t('title')}
+                maxLength={MAX_BOARD_TITLE_LENGTH}
+              />
             </View>
             <View style={styles.field}>
               <TextInput
@@ -268,6 +293,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                 onChangeText={setNoteBody}
                 placeholder={t('board_note_body')}
                 multiline
+                maxLength={MAX_BOARD_BODY_LENGTH}
                 style={{ minHeight: 140, textAlignVertical: 'top' }}
               />
             </View>
@@ -315,6 +341,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                   }
                   placeholder={t('board_card_note_placeholder')}
                   multiline
+                  maxLength={MAX_BOARD_BODY_LENGTH}
                   style={{ minHeight: 100, textAlignVertical: 'top' }}
                 />
               </View>
@@ -371,6 +398,7 @@ const BoardNodeSheet: React.FC<Props> = ({
                   value={edgeLabel}
                   onChangeText={setEdgeLabel}
                   placeholder={t('board_edge_label')}
+                  maxLength={MAX_BOARD_TITLE_LENGTH}
                 />
               </View>
               <Button

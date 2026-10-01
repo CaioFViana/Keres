@@ -378,7 +378,7 @@ export async function createApp() {
         }
       })
       // No compatibility shim: before the panel fallback could return its HTML, the old
-      // endpoints administrativos recebem o mesmo 404 JSON de qualquer rota API removida.
+      // administrative endpoints receive the same JSON 404 as any removed API route.
       .all('/admin/api', ({ set }) => {
         set.status = 404;
         return { message: 'Not found' };

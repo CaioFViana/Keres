@@ -1,18 +1,20 @@
-import { completeReorderProblem, type StorySchemaEntityType } from '@keres/shared';
+import type { StorySchemaEntityType } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StorySchemaFieldInsert, StorySchemaFieldSelect } from '../../db/schema';
-import { storySchemaFields, stories } from '../../db/schema';
+import { storySchemaFields } from '../../db/schema';
 import type { Create } from '../../utils/entityUtils';
-import { createULID, prepareNewEntityData } from '../../utils/entityUtils';
+import { prepareNewEntityData } from '../../utils/entityUtils';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 import { createAttributeValueService } from './AttributeValueService';
+import { planContainerOrderSync, planPlacementSync, writeRankChangesSync } from './arrangedWrites';
 import { countActiveStoryEntities } from './storyEntityCount';
 
 export interface StorySchemaFieldService {
@@ -94,29 +96,62 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       }
 
       const newField = prepareNewEntityData<StorySchemaFieldInsert>(fieldData);
-      const result = await db.insert(storySchemaFields).values(newField).returning().get();
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
         newField.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        newField.storyId,
-        userIdToLog,
-        'create',
-        'StorySchemaField',
-        newField.id,
-        { ...result },
-      );
+      const result = await runLocalWrite(db, newField.storyId, () => {
+        // The asked order is where it goes among its type's fields; the database numbers it.
+        const placement = planPlacementSync(
+          db,
+          'StorySchemaField',
+          newField.storyId,
+          { entityType: newField.entityType },
+          newField.id,
+          typeof fieldData.order === 'number' ? fieldData.order : undefined,
+        );
+        db.insert(storySchemaFields)
+          .values({ ...newField, rank: placement.get(newField.id)! })
+          .run();
+        // Recorded as the database holds it: its number already derived from its rank.
+        const inserted = db
+          .select()
+          .from(storySchemaFields)
+          .where(eq(storySchemaFields.id, newField.id))
+          .get()!;
+        recordLocalOperationSync(
+          db,
+          newField.storyId,
+          userIdToLog,
+          'create',
+          'StorySchemaField',
+          newField.id,
+          { ...inserted },
+        );
+        writeRankChangesSync(
+          db,
+          newField.storyId,
+          userIdToLog,
+          'StorySchemaField',
+          placement,
+          new Set([newField.id]),
+        );
+        return db
+          .select()
+          .from(storySchemaFields)
+          .where(eq(storySchemaFields.id, newField.id))
+          .get()!;
+      });
       entityEventEmitter.emit('story_schema_field_changed', newField.storyId, newField.entityType);
 
       return result;
     },
 
-    async updateField(currentUserId, fieldId, fieldData): Promise<void> {
+    async updateField(currentUserId, fieldId, requested): Promise<void> {
+      // A field's place is its rank (reorderFields); the order a form holds is never written.
+      const { order: _order, ...fieldData } = requested;
       const original = await db.query.storySchemaFields.findFirst({
         where: eq(storySchemaFields.id, fieldId),
       });
@@ -124,97 +159,65 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
         throw new Error(`Attribute field with ID ${fieldId} not found for update.`);
       }
       await assertStoryIsWritable(db, original.storyId);
-
-      const [updated] = await db
-        .update(storySchemaFields)
-        .set({
-          ...fieldData,
-          updatedAt: new Date(),
-          version: sql`${storySchemaFields.version} + 1`,
-        })
-        .where(eq(storySchemaFields.id, fieldId))
-        .returning({
-          id: storySchemaFields.id,
-          storyId: storySchemaFields.storyId,
-          entityType: storySchemaFields.entityType,
-          version: storySchemaFields.version,
-        });
-
-      if (!updated) {
-        throw new Error(`Failed to update attribute field ${fieldId}.`);
-      }
-
       const userIdToLog = await getUserIdForOperation(
         db,
         serverService,
-        updated.storyId,
+        original.storyId,
         currentUserId,
       );
-      await recordLocalOperation(
-        db,
-        updated.storyId,
-        userIdToLog,
-        'update',
-        'StorySchemaField',
-        fieldId,
-        {
-          ...fieldData,
-          version: updated.version,
-        },
-      );
+
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        const row = db
+          .update(storySchemaFields)
+          .set({
+            ...fieldData,
+            updatedAt: new Date(),
+            version: sql`${storySchemaFields.version} + 1`,
+          })
+          .where(eq(storySchemaFields.id, fieldId))
+          .returning({
+            id: storySchemaFields.id,
+            storyId: storySchemaFields.storyId,
+            entityType: storySchemaFields.entityType,
+            version: storySchemaFields.version,
+          })
+          .get();
+        if (!row) {
+          throw new Error(`Failed to update attribute field ${fieldId}.`);
+        }
+        recordLocalOperationSync(
+          db,
+          row.storyId,
+          userIdToLog,
+          'update',
+          'StorySchemaField',
+          fieldId,
+          {
+            ...fieldData,
+            version: row.version,
+          },
+        );
+        return row;
+      });
       entityEventEmitter.emit('story_schema_field_changed', updated.storyId, updated.entityType);
     },
 
     async reorderFields(currentUserId, storyId, entityType, newOrder): Promise<void> {
       await assertStoryIsWritable(db, storyId);
-
-      const fields = await db
-        .select({ id: storySchemaFields.id, order: storySchemaFields.order })
-        .from(storySchemaFields)
-        .where(
-          and(
-            eq(storySchemaFields.storyId, storyId),
-            eq(storySchemaFields.entityType, entityType),
-            eq(storySchemaFields.isDeleted, false),
-          ),
-        )
-        .all();
-      const fieldsById = new Map(fields.map((field) => [field.id, field]));
-
-      const reorderItems = newOrder.map(({ id, order }) => ({ id, newIndex: order + 1 }));
-      const problem = completeReorderProblem(
-        fields.map((field) => field.id),
-        reorderItems,
-      );
-      if (problem) throw new Error(`Attribute reorder is invalid. ${problem}`);
-
-      const changedFields = newOrder.filter(({ id, order }) => fieldsById.get(id)?.order !== order);
-      if (changedFields.length === 0) return;
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      for (const field of changedFields) {
-        await db
-          .update(storySchemaFields)
-          .set({
-            order: field.order,
-            updatedAt: new Date(),
-            version: sql`${storySchemaFields.version} + 1`,
-          })
-          .where(eq(storySchemaFields.id, field.id))
-          .run();
-      }
-
-      const [story] = await db
-        .update(stories)
-        .set({ version: sql`${stories.version} + 1`, updatedAt: new Date() })
-        .where(eq(stories.id, storyId))
-        .returning({ version: stories.version });
-
-      await recordLocalOperation(db, storyId, userIdToLog, 'reorder', 'Story', storyId, {
-        reorderItems,
-        reorderTarget: 'StorySchemaField',
-        schemaEntityType: entityType,
-        version: story?.version,
+      // Only the fields that moved are edited: each takes the rank of its new place.
+      await runLocalWrite(db, storyId, () => {
+        const orderedIds = [...newOrder]
+          .sort((left, right) => left.order - right.order)
+          .map((item) => item.id);
+        const changes = planContainerOrderSync(
+          db,
+          'StorySchemaField',
+          storyId,
+          { entityType },
+          orderedIds,
+        );
+        writeRankChangesSync(db, storyId, userIdToLog, 'StorySchemaField', changes);
       });
       entityEventEmitter.emit('story_schema_field_changed', storyId, entityType);
     },
@@ -241,41 +244,35 @@ export const createStorySchemaFieldService = (db: AppDrizzleClient): StorySchema
       );
       const now = new Date();
 
-      // It mutates the key on the soft-delete to free the unique(storyId, entityType, key) slot - the
-      // local constraint (and the server's) is not filtered by isDeleted, so recreating a field
-      // with the same key after deleting the old one would run into the tombstone row. It only needs to
-      // hold locally (the server does its own independent mutation when processing the same
-      // delete, see StorySchemaFieldSyncHandler) - nobody ever reads that mutated key back.
-      const mangledKey = `${field.key}__deleted_${createULID()}`;
-      const [updatedField] = await db
-        .update(storySchemaFields)
-        .set({
-          key: mangledKey,
-          isDeleted: true,
-          deletedAt: now,
-          updatedAt: now,
-          version: sql`${storySchemaFields.version} + 1`,
-        })
-        .where(eq(storySchemaFields.id, fieldId))
-        .returning({ id: storySchemaFields.id, version: storySchemaFields.version });
-
-      if (!updatedField) {
-        throw new Error(`Failed to delete attribute field ${fieldId}.`);
-      }
-
-      await recordLocalOperation(
-        db,
-        field.storyId,
-        userIdToLog,
-        'delete',
-        'StorySchemaField',
-        fieldId,
-        {
-          id: fieldId,
-          isDeleted: true,
-          version: updatedField.version,
-        },
-      );
+      await runLocalWrite(db, field.storyId, () => {
+        const updatedField = db
+          .update(storySchemaFields)
+          .set({
+            isDeleted: true,
+            deletedAt: now,
+            updatedAt: now,
+            version: sql`${storySchemaFields.version} + 1`,
+          })
+          .where(eq(storySchemaFields.id, fieldId))
+          .returning({ id: storySchemaFields.id, version: storySchemaFields.version })
+          .get();
+        if (!updatedField) {
+          throw new Error(`Failed to delete attribute field ${fieldId}.`);
+        }
+        recordLocalOperationSync(
+          db,
+          field.storyId,
+          userIdToLog,
+          'delete',
+          'StorySchemaField',
+          fieldId,
+          {
+            id: fieldId,
+            isDeleted: true,
+            version: updatedField.version,
+          },
+        );
+      });
 
       // Values cannot outlive their field: their deletion and per-row sync operations belong to
       // AttributeValueService, which owns that entity's lifecycle.

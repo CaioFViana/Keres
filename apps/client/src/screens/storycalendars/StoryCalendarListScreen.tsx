@@ -13,12 +13,14 @@ import {
 } from '@keres/shared';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { StoryCalendarSelect } from '@/src/db/schema';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryCalendar } from '@/src/hooks/useStoryCalendar';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
@@ -44,6 +46,8 @@ import type { CustomizationStackParamList } from '@/src/navigation/MainSystemSta
  */
 const StoryCalendarListScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StoryCalendarList');
+  const listAnchorRef = useScreenAnchor('StoryCalendars', 'list');
   const { t } = useTranslation();
   const { colors } = useTheme();
   const db = useDrizzle();
@@ -67,13 +71,25 @@ const StoryCalendarListScreen = () => {
   const [epoch, setEpoch] = useState({ year: '1', month: '1', day: '1', hour: '0', minute: '0' });
   const [gregorianEpoch, setGregorianEpoch] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (story?.timelineEpochDay === null || story?.timelineEpochDay === undefined) {
-      return;
-    }
-    if (!primary) {
-      const date = gregorianPartsFromDayNumber(story.timelineEpochDay);
-      const seconds = story.timelineEpochSeconds ?? 0;
+  const storyEpochDay = story?.timelineEpochDay;
+  const epochSecondsValue = story?.timelineEpochSeconds;
+  const [prevEpochInputs, setPrevEpochInputs] = useState<{
+    primary: typeof primary;
+    day: typeof storyEpochDay;
+    seconds: typeof epochSecondsValue;
+  } | null>(null);
+  if (
+    !prevEpochInputs ||
+    prevEpochInputs.primary !== primary ||
+    prevEpochInputs.day !== storyEpochDay ||
+    prevEpochInputs.seconds !== epochSecondsValue
+  ) {
+    setPrevEpochInputs({ primary, day: storyEpochDay, seconds: epochSecondsValue });
+    if (storyEpochDay === null || storyEpochDay === undefined) {
+      // No epoch anchored yet: keep the current form state, like the effect's early return did.
+    } else if (!primary) {
+      const date = gregorianPartsFromDayNumber(storyEpochDay);
+      const seconds = epochSecondsValue ?? 0;
       setGregorianEpoch(
         formatAttributeDate({
           ...date,
@@ -81,25 +97,25 @@ const StoryCalendarListScreen = () => {
           minute: Math.floor((seconds % 3600) / 60),
         }),
       );
-      return;
+    } else {
+      const parts = dayNumberToParts(primary.definition, storyEpochDay);
+      const epochSeconds = epochSecondsValue ?? 0;
+      const hour = Math.floor(
+        epochSeconds / (primary.definition.minutesPerHour * primary.definition.secondsPerMinute),
+      );
+      const minute = Math.floor(
+        (epochSeconds % (primary.definition.minutesPerHour * primary.definition.secondsPerMinute)) /
+          primary.definition.secondsPerMinute,
+      );
+      setEpoch({
+        year: String(parts.year),
+        month: String(parts.month),
+        day: String(parts.day),
+        hour: String(hour),
+        minute: String(minute),
+      });
     }
-    const parts = dayNumberToParts(primary.definition, story.timelineEpochDay);
-    const epochSeconds = story.timelineEpochSeconds ?? 0;
-    const hour = Math.floor(
-      epochSeconds / (primary.definition.minutesPerHour * primary.definition.secondsPerMinute),
-    );
-    const minute = Math.floor(
-      (epochSeconds % (primary.definition.minutesPerHour * primary.definition.secondsPerMinute)) /
-        primary.definition.secondsPerMinute,
-    );
-    setEpoch({
-      year: String(parts.year),
-      month: String(parts.month),
-      day: String(parts.day),
-      hour: String(hour),
-      minute: String(minute),
-    });
-  }, [primary, story?.timelineEpochDay, story?.timelineEpochSeconds]);
+  }
 
   useScreenHeader({
     target: 'parent',
@@ -351,7 +367,7 @@ const StoryCalendarListScreen = () => {
     });
 
   return (
-    <View style={styles.root}>
+    <View ref={listAnchorRef} collapsable={false} style={styles.root}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.intro}>{t('calendar_list_intro')}</Text>
 

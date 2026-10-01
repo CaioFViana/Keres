@@ -1,0 +1,308 @@
+import { cleanup, fireEvent, render, within } from '@testing-library/react-native';
+import type { ManuscriptSection } from '@keres/shared';
+import { StyleSheet } from 'react-native';
+import ManuscriptIndexModal from '../../../src/components/features/manuscript/ManuscriptIndexModal/ManuscriptIndexModal';
+
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+
+jest.mock('../../../src/theme', () => ({
+  __esModule: true,
+  useTheme: () => ({
+    colors: {
+      text: '#111',
+      textSecondary: '#555',
+      surface: '#fff',
+      border: '#ddd',
+      primary: '#00f',
+      primaryContainer: '#ccf',
+      onPrimaryContainer: '#001',
+      background: '#fff',
+    },
+  }),
+}));
+
+jest.mock('react-i18next', () => {
+  const t = (key: string, params?: Record<string, unknown>) =>
+    params ? `${key}:${JSON.stringify(params)}` : key;
+  return { __esModule: true, useTranslation: () => ({ t }) };
+});
+
+jest.mock('../../../src/components/layout/ResponsiveModal/ResponsiveModal', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
+      visible ? <View>{children}</View> : null,
+  };
+});
+
+function sceneSection(
+  id: string,
+  name: string,
+  position: number,
+  chapterId: string | null,
+): ManuscriptSection {
+  return {
+    key: `scene-${id}`,
+    kind: 'scene',
+    scene: { id, chapterId, name, index: position, body: 'Prose.', isDeleted: false },
+    position,
+  };
+}
+
+const linearSections: ManuscriptSection[] = [
+  {
+    key: 'container-ch-1',
+    kind: 'container',
+    containerId: 'ch-1',
+    name: 'Arrival',
+    index: 1,
+    containerType: 'chapter',
+  },
+  sceneSection('s-1', 'Opening', 1, 'ch-1'),
+  sceneSection('s-2', 'Inland', 2, 'ch-1'),
+  { key: 'loose-heading', kind: 'loose-heading' },
+  sceneSection('s-3', 'Fragment', 3, null),
+];
+
+const baseProps = {
+  visible: true,
+  sections: linearSections,
+  currentSectionIndex: null as number | null,
+  looseHeadingLabel: 'Appendix',
+  onSelectSection: jest.fn(),
+  onClose: jest.fn(),
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+afterEach(() => {
+  cleanup();
+});
+
+describe('ManuscriptIndexModal', () => {
+  it('keeps the chapter list in a bounded scroll region with close fixed below', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    const list = view.getByTestId('manuscript-index-list');
+    expect(within(list).getByTestId('manuscript-index-container-ch-1')).toBeTruthy();
+    expect(within(list).queryByTestId('manuscript-index-close')).toBeNull();
+    expect(view.getByTestId('manuscript-index-close')).toBeTruthy();
+    expect(StyleSheet.flatten(list.props.style)?.maxHeight).toEqual(expect.any(Number));
+  });
+
+  it('renders nothing while hidden', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} visible={false} />);
+
+    expect(view.queryByTestId('manuscript-index-modal')).toBeNull();
+  });
+
+  it('lists chapters with their scenes and an appendix for loose scenes', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    expect(view.getByText('manuscript_index_title')).toBeTruthy();
+    expect(view.getByText('1. Arrival')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-container-ch-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-2')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-loose-heading')).toBeTruthy();
+    expect(view.getByText('Appendix')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-scene-s-3')).toBeTruthy();
+    expect(view.getByText('3. Fragment')).toBeTruthy();
+  });
+
+  it('badges scenes with counts and chapters with aggregates', async () => {
+    const view = await render(
+      <ManuscriptIndexModal {...baseProps} commentCountsBySceneId={{ 's-1': 2, 's-3': 1 }} />,
+    );
+
+    const badgeText = (testID: string) =>
+      within(view.getByTestId(testID)).getByText(/^[0-9]+$/).props.children;
+    expect(badgeText('manuscript-index-scene-s-1-comments')).toBe(2);
+    expect(badgeText('manuscript-index-container-ch-1-comments')).toBe(2);
+    expect(badgeText('manuscript-index-loose-heading-comments')).toBe(1);
+    expect(view.queryByTestId('manuscript-index-scene-s-2-comments')).toBeNull();
+  });
+
+  it('shows event titles without a chapter number', async () => {
+    const sections: ManuscriptSection[] = [
+      {
+        key: 'container-ev-1',
+        kind: 'container',
+        containerId: 'ev-1',
+        name: 'The War',
+        index: 2,
+        containerType: 'event',
+      },
+      sceneSection('s-9', 'Aftermath', 1, 'ev-1'),
+    ];
+    const view = await render(<ManuscriptIndexModal {...baseProps} sections={sections} />);
+
+    expect(view.getByText('The War')).toBeTruthy();
+    expect(view.queryByText('2. The War')).toBeNull();
+  });
+
+  it('collapses and re-expands a chapter on press', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    expect(
+      view.getByTestId('manuscript-index-container-ch-1').props.accessibilityState,
+    ).toMatchObject({ expanded: true });
+    await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
+
+    expect(view.queryByTestId('manuscript-index-scene-s-1')).toBeNull();
+    expect(
+      view.getByTestId('manuscript-index-container-ch-1').props.accessibilityState,
+    ).toMatchObject({ expanded: false });
+
+    await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
+    expect(view.getByTestId('manuscript-index-scene-s-1')).toBeTruthy();
+  });
+
+  it('reports the section index of the picked scene', async () => {
+    const onSelectSection = jest.fn();
+    const view = await render(
+      <ManuscriptIndexModal {...baseProps} onSelectSection={onSelectSection} />,
+    );
+
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-3'));
+
+    expect(onSelectSection).toHaveBeenCalledWith(4);
+  });
+
+  it('highlights the scene the reader is on', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} currentSectionIndex={1} />);
+
+    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+    expect(view.getByTestId('manuscript-index-scene-s-2').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
+  });
+
+  it('highlights nothing before the reader has a position', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    expect(view.getByTestId('manuscript-index-scene-s-1').props.accessibilityState).toMatchObject({
+      selected: false,
+    });
+  });
+
+  it('renders route scenes flat when there are no containers', async () => {
+    const sections: ManuscriptSection[] = [
+      {
+        key: 'step-step-1',
+        kind: 'scene',
+        scene: {
+          id: 's-a',
+          chapterId: 'ch-1',
+          name: 'Alpha',
+          index: 1,
+          body: 'First.',
+          isDeleted: false,
+        },
+        position: 1,
+      },
+      {
+        key: 'step-step-2',
+        kind: 'scene',
+        scene: {
+          id: 's-b',
+          chapterId: 'ch-1',
+          name: 'Beta',
+          index: 2,
+          body: 'Second.',
+          isDeleted: false,
+        },
+        position: 2,
+      },
+    ];
+    const view = await render(<ManuscriptIndexModal {...baseProps} sections={sections} />);
+
+    expect(view.getByTestId('manuscript-index-step-step-1')).toBeTruthy();
+    expect(view.getByTestId('manuscript-index-step-step-2')).toBeTruthy();
+    expect(view.getByText('1. Alpha')).toBeTruthy();
+    expect(view.queryByText('Appendix')).toBeNull();
+  });
+
+  it('shows an empty state without scenes', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} sections={[]} />);
+
+    expect(view.getByText('manuscript_no_scenes')).toBeTruthy();
+  });
+
+  it('narrows the contents as you type, keeping a chapter whose own title matches whole', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'inland');
+    expect(view.getByText('2. Inland')).toBeTruthy();
+    expect(view.queryByText('1. Opening')).toBeNull();
+    expect(view.queryByText('3. Fragment')).toBeNull();
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'arrival');
+    expect(view.getByText('1. Opening')).toBeTruthy();
+    expect(view.getByText('2. Inland')).toBeTruthy();
+    expect(view.queryByText('3. Fragment')).toBeNull();
+  });
+
+  it('opens a collapsed chapter while searching, and says when nothing matches', async () => {
+    const view = await render(<ManuscriptIndexModal {...baseProps} />);
+    await fireEvent.press(view.getByTestId('manuscript-index-container-ch-1'));
+    expect(view.queryByText('1. Opening')).toBeNull();
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'opening');
+    expect(view.getByText('1. Opening')).toBeTruthy();
+
+    await fireEvent.changeText(view.getByTestId('manuscript-index-search'), 'zzz');
+    expect(view.getByText('manuscript_no_results')).toBeTruthy();
+  });
+
+  it('groups a gamebook list by chapter, in chapter order, loose scenes last', async () => {
+    // The list itself is in gamebook order, across chapters: 1 is in ch-2, 2 in ch-1, 3 in none.
+    const sections = [
+      sceneSection('s-a', 'Alpha', 1, 'ch-2'),
+      sceneSection('s-b', 'Beta', 2, 'ch-1'),
+      sceneSection('s-c', 'Gamma', 3, null),
+      sceneSection('s-d', 'Delta', 4, 'ch-1'),
+    ];
+    const view = await render(
+      <ManuscriptIndexModal
+        {...baseProps}
+        sections={sections}
+        groupScenesBy={{
+          groups: [
+            { key: 'ch-1', title: '1. Arrival' },
+            { key: 'ch-2', title: '2. Departure' },
+          ],
+          groupOfScene: { 's-a': 'ch-2', 's-b': 'ch-1', 's-d': 'ch-1' },
+        }}
+      />,
+    );
+
+    const titles = view.getAllByText(/^(\d+\. |Appendix)/).map((node) => node.props.children);
+    expect(titles).toEqual([
+      '1. Arrival',
+      '2. Beta',
+      '4. Delta',
+      '2. Departure',
+      '1. Alpha',
+      'Appendix',
+      '3. Gamma',
+    ]);
+    // Picking still reports the scene's place in the list, not in its chapter.
+    await fireEvent.press(view.getByTestId('manuscript-index-scene-s-d'));
+    expect(baseProps.onSelectSection).toHaveBeenCalledWith(3);
+  });
+
+  it('closes from the close button', async () => {
+    const onClose = jest.fn();
+    const view = await render(<ManuscriptIndexModal {...baseProps} onClose={onClose} />);
+
+    await fireEvent.press(view.getByTestId('manuscript-index-close'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});

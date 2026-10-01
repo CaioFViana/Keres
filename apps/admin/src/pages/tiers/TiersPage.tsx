@@ -11,6 +11,7 @@ const emptyForm: TierCreateInput = {
   maxEntitiesTotal: null,
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
+  maxPublicationsPerDay: null,
 };
 
 function toNumberOrNull(value: string): number | null {
@@ -47,6 +48,7 @@ export function TiersPage() {
       maxEntitiesTotal: tier.maxEntitiesTotal,
       maxStorageBytesPerStory: tier.maxStorageBytesPerStory,
       maxStorageBytesTotal: tier.maxStorageBytesTotal,
+      maxPublicationsPerDay: tier.maxPublicationsPerDay,
     });
   };
 
@@ -135,6 +137,7 @@ export function TiersPage() {
           {limitInput(t('tiers.maxEntitiesTotal'), 'maxEntitiesTotal')}
           {limitInput(t('tiers.maxStorageBytesPerStory'), 'maxStorageBytesPerStory')}
           {limitInput(t('tiers.maxStorageBytesTotal'), 'maxStorageBytesTotal')}
+          {limitInput(t('tiers.maxPublicationsPerDay'), 'maxPublicationsPerDay')}
           <div className="form-actions">
             <button type="submit" disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
@@ -160,6 +163,7 @@ export function TiersPage() {
                 <th>{t('tiers.maxEntitiesTotal')}</th>
                 <th>{t('tiers.columnMaxStoragePerStory')}</th>
                 <th>{t('tiers.columnMaxStorageTotal')}</th>
+                <th>{t('tiers.columnMaxPublicationsPerDay')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -173,6 +177,7 @@ export function TiersPage() {
                   <td>{tier.maxEntitiesTotal ?? '∞'}</td>
                   <td>{tier.maxStorageBytesPerStory ?? '∞'}</td>
                   <td>{tier.maxStorageBytesTotal ?? '∞'}</td>
+                  <td>{tier.maxPublicationsPerDay ?? '∞'}</td>
                   <td>
                     {!tier.isDeleted && (
                       <div className="table-actions">
@@ -196,7 +201,7 @@ export function TiersPage() {
               ))}
               {tiers.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="empty-state">
+                  <td colSpan={9} className="empty-state">
                     {t('tiers.empty')}
                   </td>
                 </tr>

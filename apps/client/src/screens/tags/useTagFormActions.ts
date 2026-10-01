@@ -70,6 +70,7 @@ export function useTagFormActions({
           await tagServiceRef.current.createTag(userId, { ...tagData, storyId });
           AppAlert.alert(t('success'), t('tag_created_successfully'));
         }
+        await state.clearFormDraft();
         navigation.goBack();
       } catch (err) {
         console.error('Failed to save tag:', err);
@@ -95,6 +96,7 @@ export function useTagFormActions({
       onLoadingChange: setDeleting,
       onConfirm: async () => {
         await tagServiceRef.current!.deleteTag(userId, tagId);
+        await state.clearFormDraft();
         navigation.goBack();
       },
     });

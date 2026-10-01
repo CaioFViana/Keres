@@ -1,8 +1,8 @@
 import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
-import { db } from '../db'; // Assuming 'db' is exported from '../db/index.ts'
-import { users } from '../db/schema/tables/users'; // Import the users schema
+import { db } from '../db';
+import { users } from '../db/schema/tables/users';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { recoveryCodeService } from './RecoveryCodeService';
 

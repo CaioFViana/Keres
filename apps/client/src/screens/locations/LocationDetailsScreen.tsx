@@ -1,4 +1,5 @@
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -26,7 +27,7 @@ import type { CharacterScene } from '@keres/shared/entities/CharacterScene'; // 
 import type { Item, ItemJourney } from '@keres/shared/entities/Item'; // Import Item and ItemJourney entities
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../db';
 import type { LocationRelationSelect, LocationSelect, SceneSelect } from '../../db/schema'; // Explicitly import SceneSelect
@@ -60,7 +61,7 @@ import { AppAlert } from '../../utils/AppAlert';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
 
 export type LocationDetailScreenParamList = {
-  LocationDetail: { locationId: string };
+  LocationDetail: { locationId: string; occurrence?: OccurrenceTarget };
 };
 
 type LocationDetailScreenRouteProp = RouteProp<LocationStackParamList, 'LocationDetail'>;
@@ -71,7 +72,7 @@ const LocationDetailsScreen = () => {
   const navigation = useNavigation<LocationsScreenNavigationProp>(); // Use the imported navigation type
   const openGalleryMediaViewer = useOpenGalleryMediaViewer();
   const route = useRoute<LocationDetailScreenRouteProp>();
-  const { locationId } = route.params;
+  const { locationId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Location');
   const sceneCopy = useVocabularyEntityCopy('Scene');
@@ -459,6 +460,7 @@ const LocationDetailsScreen = () => {
 
   useEffect(() => {
     if (location) {
+      /* eslint-disable react-hooks/set-state-in-effect -- each fetch clears synchronously only when its service/data is missing and otherwise sets after `await`; the rule cannot verify across the callback boundary. */
       fetchAllCharactersInStory(); // Fetch all characters
       fetchAllScenesInStory(); // Fetch all scenes
       fetchAllCharacterSceneRelations(); // Fetch all character scene relations
@@ -466,6 +468,7 @@ const LocationDetailsScreen = () => {
       fetchAllItemJourneysInStory(); // Fetch all item journeys
       fetchAllLocationsInStory(); // Fetch all locations
       fetchAllLocationRelationsInStory(); // Fetch all Location relations
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [
     location,
@@ -519,7 +522,7 @@ const LocationDetailsScreen = () => {
   });
 
   return (
-    <DetailContainer title={location.name}>
+    <DetailContainer title={location.name} landing={occurrence ?? null}>
       <TagList tags={locationTags} variant="chip" emptyMessage={t('no_tags_found')} />
 
       <CommentableDetailField

@@ -20,9 +20,11 @@ the tag push is handled by [`.github/workflows/release.yml`](../.github/workflow
 - [ ] Decide the new semver version and a codename in the spirit of
       [`docs/fluff_release_names.md`](fluff_release_names.md).
 - [ ] Run `bun run version:set 1.2.3 Galatea` (replace both values). It updates every
-      workspace `package.json`, Expo's `app.json`, and
+      workspace `package.json`, Expo's `app.json`, and the `name`/`version` fields of
       [`packages/shared/metadata/AppRelease.ts`](../packages/shared/metadata/AppRelease.ts),
-      the one human-facing identity consumed by both client and server.
+      the one human-facing identity consumed by both client and server. The rest of that
+      file is hand-owned and survives the stamp.
+- [ ] Set the release's `phrase` in `AppRelease.ts` by hand, quoting the new entry's line.
 - [ ] Add the release's entry to
       [`docs/fluff_release_names.md`](fluff_release_names.md).
 

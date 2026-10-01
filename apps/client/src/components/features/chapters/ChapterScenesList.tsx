@@ -26,6 +26,9 @@ interface Props {
   expandedSceneIds: ReadonlySet<string>;
   onSceneExpandedChange: (sceneId: string, isExpanded: boolean) => void;
   tagsBySceneId?: ReadonlyMap<string, TagSelect[]>;
+  /** Opens title-only capture for this group; absent hides the quick-add button entirely. */
+  onQuickAddPress?: () => void;
+  quickAddTestID?: string;
 }
 
 const ChapterScenesList: React.FC<Props> = ({
@@ -44,9 +47,12 @@ const ChapterScenesList: React.FC<Props> = ({
   expandedSceneIds,
   onSceneExpandedChange,
   tagsBySceneId,
+  onQuickAddPress,
+  quickAddTestID,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const showQuickAdd = canEdit && onQuickAddPress !== undefined;
   const sorted = useMemo(() => {
     const direction = sortDirection === 'desc' ? -1 : 1;
     const key: SceneListSort =
@@ -101,6 +107,18 @@ const ChapterScenesList: React.FC<Props> = ({
               <Ionicons name="add" size={16} color={colors.primary} />
               <Text style={styles.addText}>{t('add_scene')}</Text>
             </TouchableOpacity>
+            {showQuickAdd && (
+              <TouchableOpacity
+                style={styles.add}
+                onPress={onQuickAddPress}
+                accessibilityRole="button"
+                accessibilityLabel={t('quick_add_scene')}
+                testID={quickAddTestID ? `${quickAddTestID}-button` : 'quick-add-scene-button'}
+              >
+                <Ionicons name="flash-outline" size={16} color={colors.primary} />
+                <Text style={styles.addText}>{t('quick_add_scene')}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>

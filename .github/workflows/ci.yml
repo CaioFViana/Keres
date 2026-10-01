@@ -18,7 +18,22 @@ env:
   BUN_VERSION: '1.2.19'
 
 jobs:
+  # One job per package instead of a single sequential chain: every package reports its own
+  # red/green in the same run (no more fix-rerun-discover cycles), wall time drops to the
+  # slowest package, and a flaky package can be re-run on its own. `fail-fast: false` is the
+  # point: a red client must not hide a red api.
   verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: shared
+          - name: client
+          - name: api
+          - name: admin
+          - name: desktop
+          - name: site
+    name: verify (${{ matrix.name }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -26,14 +41,28 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun install --frozen-lockfile
-      # All three aggregate every package (see scripts/run-all.ts); `typecheck` also covers the
-      # repository's own scripts.
-      - run: bun run typecheck
-      - run: bun run lint
+      # `--only` runs the script in one package (see scripts/run-all.ts), skipping cleanly
+      # when the package does not declare it.
+      - run: bun scripts/run-all.ts typecheck --only ${{ matrix.name }}
+      - run: bun scripts/run-all.ts lint --only ${{ matrix.name }}
       # With coverage, not `bun run test`: that is what enforces the thresholds set in each
       # workspace. Without it the floors would sit in the file and never be checked.
-      - run: bun run test:coverage
-      - run: bun scripts/coverage-check.ts client
+      - run: bun scripts/run-all.ts test:coverage --only ${{ matrix.name }}
+      - if: matrix.name == 'client'
+        run: bun scripts/coverage-check.ts client
+
+  # The repository's own scripts are not a package, but they are TypeScript. `run-all.ts`
+  # checks them on unfiltered local `typecheck` runs; here they get their own tiny job so the
+  # matrix above stays uniform.
+  repo-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck:scripts
 
   # Separate from `verify` so a database failure is not mistaken for a code failure, and so both
   # run in parallel. The local equivalent is

@@ -98,14 +98,14 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     await this.assertHashBindableToStory(storyId, validatedData.hash, database);
 
     await database.insert(galleries).values({
-      id: update.id!, // Explicitly provide ID from update, as it's a ULID from client
-      storyId: storyId, // Ensure storyId is set from the context
-      ...validatedData, // Spread the validated data from the client
-      version: 1, // Ensure version starts at 1 for new creations
-      createdAt: new Date(), // Ensure createdAt is set
-      updatedAt: new Date(), // Ensure updatedAt is set
-      isDeleted: false, // Ensure isDeleted is false
-      deletedAt: null, // Ensure deletedAt is null
+      id: update.id!,
+      storyId: storyId,
+      ...validatedData,
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
     });
   }
 
@@ -145,9 +145,8 @@ export class GallerySyncHandler extends BaseSyncEntityHandler<
     database: CompatibleDb = db,
   ): Promise<void> {
     await super.delete(userId, storyId, update, currentEntity, database);
-    // The row becomes a tombstone above, but the hash may be used by another Gallery (in the same story
-    // or another, since storage is deduplicated globally) - the blob only becomes ownerless when no live
-    // reference is left.
-    await mediaStorageService.deleteBlobIfUnreferenced(currentEntity.hash);
+    // No blob collection here: it runs in the push coordinator after the commit (see
+    // `collectPushMediaGarbage`). Inside this transaction the check would read stale state - and
+    // bytes deleted first would stay deleted if the transaction then rolled back.
   }
 }

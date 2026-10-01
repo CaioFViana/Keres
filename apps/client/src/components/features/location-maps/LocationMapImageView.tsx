@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
-import { Image, PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { PanResponder, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import type { LocationMapImageType } from '@keres/shared';
 import { useTheme } from '../../../theme';
 
@@ -12,13 +13,10 @@ interface Props {
   selected: boolean;
   layoutEditing: boolean;
   scale: number;
-  /** Surface translation for the world-coordinate canvas. */
-  positionOffsetX?: number;
-  positionOffsetY?: number;
-  /** Baked viewport scale so the native surface can stay in screen pixels. */
-  positionScale?: number;
   /** When locked, dragging on the image pans the canvas instead of moving the image. */
   locked: boolean;
+  /** While set, the image ignores taps and drags: only overlay shapes respond. */
+  overlayEditing?: boolean;
   onSelect: (imageId: string) => void;
   onMove: (imageId: string, x: number, y: number) => void;
   onResize: (imageId: string, width: number, height: number) => void;
@@ -44,10 +42,8 @@ const LocationMapImageView: React.FC<Props> = ({
   selected,
   layoutEditing,
   scale,
-  positionOffsetX = 0,
-  positionOffsetY = 0,
-  positionScale = 1,
   locked,
+  overlayEditing = false,
   onSelect,
   onMove,
   onResize,
@@ -59,20 +55,15 @@ const LocationMapImageView: React.FC<Props> = ({
   onRemove,
 }) => {
   const { colors } = useTheme();
-  const origin = useRef({ x: image.x + positionOffsetX, y: image.y + positionOffsetY });
+  const origin = useRef({ x: image.x, y: image.y });
   const dragging = useRef(false);
   const imageId = useRef(image.id);
-  imageId.current = image.id;
-  const position = useRef({ x: image.x + positionOffsetX, y: image.y + positionOffsetY });
-  position.current = { x: image.x + positionOffsetX, y: image.y + positionOffsetY };
+  const position = useRef({ x: image.x, y: image.y });
   const scaleRef = useRef(scale);
-  scaleRef.current = scale;
   const lockedRef = useRef(locked);
-  lockedRef.current = locked;
   const layoutEditingRef = useRef(layoutEditing);
-  layoutEditingRef.current = layoutEditing;
+  const overlayEditingRef = useRef(overlayEditing);
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const handlers = useRef({
     onSelect,
     onMove,
@@ -84,30 +75,46 @@ const LocationMapImageView: React.FC<Props> = ({
     onToggleLock,
     onRemove,
   });
-  handlers.current = {
-    onSelect,
-    onMove,
-    onResize,
-    onDragStart,
-    onDragEnd,
-    onBringToFront,
-    onSendToBack,
-    onToggleLock,
-    onRemove,
-  };
+  useEffect(() => {
+    // Latest-ref sync for the responders below: every reader runs on gestures, after effects
+    // have flushed. No dependency array - the sync unconditionally followed every render.
+    imageId.current = image.id;
+    position.current = { x: image.x, y: image.y };
+    scaleRef.current = scale;
+    lockedRef.current = locked;
+    layoutEditingRef.current = layoutEditing;
+    overlayEditingRef.current = overlayEditing;
+    selectedRef.current = selected;
+    handlers.current = {
+      onSelect,
+      onMove,
+      onResize,
+      onDragStart,
+      onDragEnd,
+      onBringToFront,
+      onSendToBack,
+      onToggleLock,
+      onRemove,
+    };
+  });
 
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         onStartShouldSetPanResponder: () => {
+          if (overlayEditingRef.current) return false;
           if (layoutEditingRef.current && selectedRef.current) return false;
           if (!lockedRef.current) handlers.current.onDragStart(imageId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
-          dragging.current && !(layoutEditingRef.current && selectedRef.current),
+          !overlayEditingRef.current &&
+          dragging.current &&
+          !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !overlayEditingRef.current &&
           !(layoutEditingRef.current && selectedRef.current) &&
           !lockedRef.current &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
@@ -156,14 +163,20 @@ const LocationMapImageView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current)
-    origin.current = { x: image.x + positionOffsetX, y: image.y + positionOffsetY };
+  useEffect(() => {
+    // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
+    // tracks the image's committed position. Readers are gesture handlers (post-commit).
+    if (!dragging.current) origin.current = { x: image.x, y: image.y };
+  }, [image.x, image.y]);
 
   const sizeRef = useRef({ width: image.width, height: image.height });
-  sizeRef.current = { width: image.width, height: image.height };
-  const resizeOrigin = useRef(sizeRef.current);
+  useEffect(() => {
+    sizeRef.current = { width: image.width, height: image.height };
+  }, [image.width, image.height]);
+  const resizeOrigin = useRef({ width: image.width, height: image.height });
   const resizePan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponder: () => layoutEditing,
         onMoveShouldSetPanResponder: () => layoutEditing,
@@ -191,12 +204,10 @@ const LocationMapImageView: React.FC<Props> = ({
       StyleSheet.create({
         image: {
           position: 'absolute',
-          left: (image.x + positionOffsetX) * positionScale,
-          top: (image.y + positionOffsetY) * positionScale,
+          left: image.x,
+          top: image.y,
           width: image.width,
           height: image.height,
-          transform: [{ scale: positionScale }],
-          transformOrigin: 'top left' as const,
           backgroundColor: colors.surface,
           borderWidth: selected ? 2.5 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -232,23 +243,20 @@ const LocationMapImageView: React.FC<Props> = ({
           zIndex: 3,
         },
       }),
-    [
-      colors,
-      image.height,
-      image.width,
-      image.x,
-      image.y,
-      positionOffsetX,
-      positionOffsetY,
-      positionScale,
-      selected,
-    ],
+    [colors, image.height, image.width, image.x, image.y, selected],
   );
 
   return (
     <View style={styles.image} {...pan.panHandlers}>
       {uri ? (
-        <Image source={{ uri }} style={{ width: '100%', height: '100%' }} resizeMode="stretch" />
+        <Image
+          source={{ uri }}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="fill"
+          // Hit-transparent: the image view owns the gesture, and on web a hittable <img>
+          // would arm the native drag instead of the view's responder.
+          pointerEvents="none"
+        />
       ) : null}
       {layoutEditing && selected && (
         <>

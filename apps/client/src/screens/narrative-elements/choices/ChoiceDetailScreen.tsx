@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -21,7 +22,7 @@ import type { Effect } from '@keres/shared/entities/Effect';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../../db';
@@ -48,7 +49,7 @@ import { useVocabularyEntityCopy } from '../../../vocabulary/useVocabularyEntity
 import type { NarrativeElementsStackParamList } from '../../../navigation/MainSystemStack';
 
 export type ChoiceDetailScreenParamList = {
-  ChoiceDetail: { choiceId: string };
+  ChoiceDetail: { choiceId: string; occurrence?: OccurrenceTarget };
 };
 
 type ChoiceDetailScreenRouteProp = RouteProp<ChoiceDetailScreenParamList, 'ChoiceDetail'>;
@@ -59,7 +60,7 @@ const ChoiceDetailScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChoiceDetail'>>();
   const route = useRoute<ChoiceDetailScreenRouteProp>();
-  const { choiceId } = route.params;
+  const { choiceId, occurrence } = route.params;
   const { t } = useTranslation();
   const copy = useVocabularyEntityCopy('Choice');
   const sceneCopy = useVocabularyEntityCopy('Scene');
@@ -296,6 +297,7 @@ const ChoiceDetailScreen = () => {
   return (
     <DetailContainer
       title={choice.text}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

@@ -123,4 +123,40 @@ describe('story local purge', () => {
       database.db.query.packs.findFirst({ where: (packs, { eq }) => eq(packs.id, 'other-pack') }),
     ).resolves.toMatchObject({ sourceStoryId: OTHER_STORY_ID });
   });
+
+  it('removes the story editor drafts while keeping other stories ones', async () => {
+    await database.db.insert(schema.editorDrafts).values([
+      {
+        id: 'draft-1',
+        storyId: STORY_ID,
+        entityType: 'Scene',
+        entityId: 'scene-1',
+        field: 'body',
+        content: '# Rascunho',
+        updatedAt: now,
+      },
+      {
+        id: 'draft-2',
+        storyId: OTHER_STORY_ID,
+        entityType: 'Scene',
+        entityId: 'scene-9',
+        field: 'body',
+        content: '# Outro',
+        updatedAt: now,
+      },
+    ]);
+
+    await purgeStoryLocally(database.db, STORY_ID);
+
+    await expect(
+      database.db.query.editorDrafts.findFirst({
+        where: (drafts, { eq }) => eq(drafts.storyId, STORY_ID),
+      }),
+    ).resolves.toBeUndefined();
+    await expect(
+      database.db.query.editorDrafts.findFirst({
+        where: (drafts, { eq }) => eq(drafts.storyId, OTHER_STORY_ID),
+      }),
+    ).resolves.toMatchObject({ id: 'draft-2' });
+  });
 });

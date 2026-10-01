@@ -13,6 +13,7 @@ import NoteManager from '@/src/components/features/notes/NoteManager';
 import CharacterRelationManager from '@/src/components/features/relations/CharacterRelationManager/CharacterRelationManager';
 import AppearsInArcsSection from '@/src/components/features/arcs/AppearsInArcsSection';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import CharacterTrajectorySection from '@/src/components/features/trajectories/CharacterTrajectorySection';
 import ScenePresenceList, {
   type ScenePresenceEntry,
 } from '@/src/components/features/scenes/ScenePresenceList/ScenePresenceList';
@@ -21,12 +22,12 @@ import { ModeManager } from '@/src/components/features/stats/ModeManager/ModeMan
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import TagList from '@/src/components/common/display/TagList/TagList';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import type { CharacterRelation } from '@keres/shared/entities/CharacterRelation';
 import type { CharacterScene } from '@keres/shared/entities/CharacterScene';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { StatNotation } from '@keres/shared/graphs/statLadder';
 import type { TFunction } from 'i18next';
-import React from 'react';
 import { Text, type StyleProp, type TextStyle } from 'react-native';
 import type { CharacterSelect } from '../../db/schemas/characters';
 import type { ModeSelect } from '../../db/schemas/modes';
@@ -64,6 +65,8 @@ export type CharacterDetailContentProps = {
   handleDeleteRelation: (relationId: string) => Promise<void>;
   characterSceneRelations: CharacterScene[];
   allScenes: SceneSelect[];
+  allLocations: { id: string; name: string }[];
+  storyType: 'linear' | 'branching' | undefined;
   handleSaveCharacterScene: (characterScene: CharacterScene) => Promise<void>;
   handleDeleteCharacterScene: (characterSceneId: string) => Promise<void>;
   allItems: ItemSelect[];
@@ -76,6 +79,7 @@ export type CharacterDetailContentProps = {
   saveNoteRelation: (relation: SaveNoteRelation) => Promise<void>;
   deleteNoteRelation: (relationId: string) => Promise<void>;
   appearingArcs: StoryArcSelect[];
+  occurrence?: OccurrenceTarget | null;
 };
 
 export function CharacterDetailContent(props: CharacterDetailContentProps) {
@@ -100,6 +104,8 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
     handleDeleteRelation,
     characterSceneRelations,
     allScenes,
+    allLocations,
+    storyType,
     handleSaveCharacterScene,
     handleDeleteCharacterScene,
     allItems,
@@ -112,10 +118,12 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
     saveNoteRelation,
     deleteNoteRelation,
     appearingArcs,
+    occurrence,
   } = props;
   return (
     <DetailContainer
       title={character.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>
@@ -252,6 +260,17 @@ export function CharacterDetailContent(props: CharacterDetailContentProps) {
         entityType="Location"
         sceneLabel={sceneCopy.entity}
       />
+
+      {storyType && (
+        <CharacterTrajectorySection
+          characterId={characterId}
+          storyId={character.storyId}
+          storyType={storyType}
+          scenes={allScenes}
+          appearances={characterSceneRelations}
+          locations={allLocations}
+        />
+      )}
 
       <NoteManager
         noteRelations={characterNoteRelations}

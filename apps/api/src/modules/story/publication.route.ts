@@ -15,7 +15,65 @@ const PublicationResponseSchema = t.Object({
   byteSize: t.Number(),
   mediaIncluded: t.Number(),
   mediaTotal: t.Number(),
+  manuscriptFormat: t.Nullable(t.String()),
+  manuscriptByteSize: t.Nullable(t.Number()),
+  readerByteSize: t.Nullable(t.Number()),
+  packageIncluded: t.Boolean(),
   createdAt: t.Date(),
+});
+
+/**
+ * What shapes a manuscript, shared by the manuscript rendition and the online reader (which is made
+ * from the same choices). Mirrors shared `ManuscriptOptionsSchema`, minus the file format.
+ */
+const manuscriptShape = {
+  includeLooseScenes: t.Optional(t.Boolean()),
+  includeSceneNames: t.Optional(t.Boolean()),
+  includeToc: t.Optional(t.Boolean()),
+  resetSceneNumbers: t.Optional(t.Boolean()),
+  /** Typography and presentation; its fields are validated by the shared `ManuscriptStyleSchema`. */
+  style: t.Optional(t.Record(t.String(), t.Unknown())),
+  /** Branching stories: how the gamebook numbers its scenes. */
+  sceneOrder: t.Optional(t.Union([t.Literal('discovery'), t.Literal('shuffled')])),
+  /** Seed of the shuffled order; the same seed prints the same book. */
+  shuffleSeed: t.Optional(t.String({ maxLength: 64 })),
+  /** Keeps only this arc's containers and scenes; must belong to the story. */
+  arcId: t.Optional(t.String()),
+  labels: t.Optional(
+    t.Object({
+      goToPage: t.Optional(t.String({ maxLength: 80 })),
+      goToScene: t.Optional(t.String({ maxLength: 80 })),
+      looseHeading: t.Optional(t.String({ maxLength: 80 })),
+      tocHeading: t.Optional(t.String({ maxLength: 80 })),
+      endOfExcerpt: t.Optional(t.String({ maxLength: 80 })),
+      chooseStart: t.Optional(t.String({ maxLength: 80 })),
+      beginAt: t.Optional(t.String({ maxLength: 80 })),
+    }),
+  ),
+  /** Book metadata (EPUB). */
+  author: t.Optional(t.Nullable(t.String({ maxLength: 200 }))),
+  identifier: t.Optional(t.String({ maxLength: 200 })),
+  language: t.Optional(t.String({ maxLength: 35 })),
+};
+
+/** Manuscript rendition to publish alongside the package. */
+const ManuscriptRequestSchema = t.Object({
+  format: t.Union([
+    t.Literal('docx'),
+    t.Literal('md'),
+    t.Literal('txt'),
+    t.Literal('html'),
+    t.Literal('pdf'),
+    t.Literal('epub'),
+  ]),
+  ...manuscriptShape,
+});
+
+/** The online reader to publish alongside the package: the manuscript's choices plus the reader's own words. */
+const ReaderRequestSchema = t.Object({
+  ...manuscriptShape,
+  /** The reader's interface words; validated by the shared `ReaderLabelsSchema`. */
+  readerLabels: t.Optional(t.Record(t.String(), t.String({ maxLength: 120 }))),
 });
 
 /**
@@ -52,6 +110,9 @@ export const publicationRoutes = new Elysia()
         (body.labelMode ?? 'both') as PublicationLabelMode,
         (body.visibility ?? 'public') as ShowcaseVisibility,
         body.password,
+        body.manuscript,
+        body.reader,
+        body.includePackage ?? true,
       ),
     {
       params: t.Object({ storyId: t.String() }),
@@ -67,11 +128,17 @@ export const publicationRoutes = new Elysia()
          */
         visibility: t.Optional(t.Union([t.Literal('public'), t.Literal('password')])),
         password: t.Optional(t.String({ minLength: 4, maxLength: 200 })),
+        /** When present, a readable manuscript is compiled and published alongside the package. */
+        manuscript: t.Optional(ManuscriptRequestSchema),
+        /** When present, an online reader page is compiled and published alongside the package. */
+        reader: t.Optional(ReaderRequestSchema),
+        /** Off only together with a manuscript and/or a reader; the server refuses a version with nothing in it. */
+        includePackage: t.Optional(t.Boolean()),
       }),
       detail: {
         summary: 'Publish a new public version of a story',
         description:
-          'Owner only. Packages the story exactly like the client export does (story.json + media) and stores it as an immutable version. Rejects with 409 when the story is not in sync with the server. Only the newest 5 versions are kept.',
+          'Owner only. Packages the story exactly like the client export does (story.json + media) and stores it as an immutable version, with an optional readable manuscript alongside it. Rejects with 409 when the story is not in sync with the server. Only the newest 5 versions are kept.',
         tags: ['Showcase'],
       },
     },

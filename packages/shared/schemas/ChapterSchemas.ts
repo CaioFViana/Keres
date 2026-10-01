@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANK_FIELD_MAX, RankFieldSchema } from './RankSchemas';
 import { CHAPTER_TYPES, DEFAULT_CHAPTER_TYPE } from '../metadata/ChapterType';
 
 export const ChapterSchema = z.object({
@@ -6,6 +7,8 @@ export const ChapterSchema = z.object({
   storyId: z.string(),
   name: z.string(),
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
+  /** The container's place among those of its kind (see `SceneSchema.rank`). */
+  rank: z.string().max(RANK_FIELD_MAX).default(''),
   /**
    * Chapter or event. Defaulted rather than required because every row written before this existed
    * has no value for it, and every one of those is a chapter.
@@ -38,6 +41,8 @@ export const CreateChapterDataSchema = ChapterSchema.omit({
   name: z.string().min(1, 'Chapter name cannot be empty'),
   index: z.number().int().min(1, 'Index must be a positive integer starting from 1'),
   type: z.enum(CHAPTER_TYPES).default(DEFAULT_CHAPTER_TYPE),
+  // Optional with no default, like `CreateSceneDataSchema.rank`.
+  rank: RankFieldSchema.optional(),
   isFavorite: z.boolean().default(false),
 });
 

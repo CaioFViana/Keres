@@ -13,6 +13,7 @@ export class StoryExportVersionError extends Error {
 
 type StoryExportMigration = {
   fromVersion: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
   migrate: (data: any) => any;
 };
 
@@ -34,7 +35,8 @@ const migrateV1ToV2: StoryExportMigration = {
         }
       : data?.story;
     const suggestions = Array.isArray(data?.suggestions)
-      ? data.suggestions.map((rawSuggestion: any) => {
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+        data.suggestions.map((rawSuggestion: any) => {
           const suggestion = { ...rawSuggestion };
           delete suggestion.isDefault;
           return suggestion;
@@ -60,7 +62,7 @@ const migrateV2ToV3: StoryExportMigration = {
   }),
 };
 
-/** V3 -> V4: grupos/checks de Choice e effects (Scene/Choice). */
+/** V3 -> V4: Choice groups/checks and effects (Scene/Choice). */
 const migrateV3ToV4: StoryExportMigration = {
   fromVersion: 3,
   migrate: (data) => ({
@@ -71,7 +73,7 @@ const migrateV3ToV4: StoryExportMigration = {
   }),
 };
 
-/** V4 -> V5: sistema de status (stats, escadas, valores) e modos de personagem. */
+/** V4 -> V5: stat system (stats, ladders, values) and character modes. */
 const migrateV4ToV5: StoryExportMigration = {
   fromVersion: 4,
   migrate: (data) => ({
@@ -173,6 +175,7 @@ const migrateV9ToV10: StoryExportMigration = {
       return candidate;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
     let storyArcs = suppliedArcs.map((arc: any) => ({ ...arc }));
     if (!storyArcs.length) {
       storyArcs = [
@@ -193,14 +196,17 @@ const migrateV9ToV10: StoryExportMigration = {
           deletedAt: null,
         },
       ];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
     } else if (!storyArcs.some((arc: any) => arc?.isDefault === true)) {
       storyArcs[0] = { ...storyArcs[0], isDefault: true };
     }
 
     const fallbackArcId =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
       storyArcs.find((arc: any) => arc?.isDefault === true)?.id ?? storyArcs[0].id;
     const chapters = Array.isArray(data?.chapters)
-      ? data.chapters.map((chapter: any) =>
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+        data.chapters.map((chapter: any) =>
           chapter?.arcId === null || chapter?.arcId === undefined
             ? { ...chapter, arcId: fallbackArcId }
             : chapter,
@@ -215,6 +221,28 @@ const migrateV9ToV10: StoryExportMigration = {
   },
 };
 
+/**
+ * V10 -> V11: `Scene.body`, the manuscript text.
+ *
+ * A package written before the editor has scenes with a summary and nothing behind it, so each one
+ * gets an explicit `null` rather than relying on the schema's default: what is in the package is
+ * then what is imported, and a V10 scene is told apart from a V11 one only by the version number.
+ * A body already present is never touched.
+ */
+const migrateV10ToV11: StoryExportMigration = {
+  fromVersion: 10,
+  migrate: (data) =>
+    Array.isArray(data?.scenes)
+      ? {
+          ...data,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation row: unshaped until the schema parses it.
+          scenes: data.scenes.map((scene: any) =>
+            scene?.body === undefined ? { ...scene, body: null } : scene,
+          ),
+        }
+      : data,
+};
+
 const migrations: StoryExportMigration[] = [
   migrateV1ToV2,
   migrateV2ToV3,
@@ -225,6 +253,7 @@ const migrations: StoryExportMigration[] = [
   migrateV7ToV8,
   migrateV8ToV9,
   migrateV9ToV10,
+  migrateV10ToV11,
 ];
 
 /**
@@ -234,6 +263,7 @@ const migrations: StoryExportMigration[] = [
  * Exports predating this field have no `formatVersion` - they are treated as version 0. It must run
  * before `FullStoryExportSchema.parse()`, both in the client and in the API.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-validation JSON: unshaped until the schema parses it, so narrowing here only adds casts.
 export function migrateStoryExport(raw: any): any {
   const version = typeof raw?.formatVersion === 'number' ? raw.formatVersion : 0;
 

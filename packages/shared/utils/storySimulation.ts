@@ -31,6 +31,11 @@ type SimulatedCheck = Pick<
   | 'isDeleted'
 >;
 
+/**
+ * Whether the raw condition holds in this state. It deliberately ignores `mode`: `block`
+ * inverts the answer in `evaluateSimulatedChoice`, so this stays the single reading of the
+ * condition shared by analysis, route replay and the navigator.
+ */
 function matches(check: SimulatedCheck, state: StorySimulationState) {
   if (check.type === 'sceneCount')
     return (
@@ -99,6 +104,10 @@ export function applySimulationEffects(
   return { sceneVisits: new Map(state.sceneVisits), inventory, triggers };
 }
 
+/**
+ * Enters a scene: applies the scene's effects first, then records the visit. Returns a new
+ * state; the input is never mutated, so callers can branch replays from one shared state.
+ */
 export function enterSimulatedScene(
   state: StorySimulationState,
   sceneId: string,

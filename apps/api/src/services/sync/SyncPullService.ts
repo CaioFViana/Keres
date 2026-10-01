@@ -5,16 +5,26 @@ import type {
   StoryUpdate,
   UpdateStoryUpdate,
 } from '@keres/shared';
-import { decodePulledReorderOperation, MAX_SYNC_PULL_BATCH } from '@keres/shared';
-import { and, eq, gt, max, ne } from 'drizzle-orm';
-import { ulid } from 'ulid';
+import { MAX_SYNC_PULL_BATCH } from '@keres/shared';
+import { and, eq, gt, max, ne, or } from 'drizzle-orm';
 import { db } from '../../db';
-import { lockStoryForUpdate } from '../../db/sqlOperators';
 import { favorites, operationLog, stories } from '../../db/schema';
 import { eventManager } from '../../utils/EventManager';
 import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { storyPermissionService } from '../StoryPermissionService';
+import {
+  ensurePublicFavoriteOperationLogs,
+  getFavoritesFingerprint,
+  type FavoritesFingerprint,
+} from './publicFavoriteRepair';
+
+/** A log row carrying an operation type this server does not know - legacy or future. */
+export class UnknownSyncOperationTypeError extends Error {
+  constructor(operationType: string, entityType: string) {
+    super(`Unknown sync operation: ${operationType}/${entityType}`);
+  }
+}
 
 /**
  * Read side of the API sync protocol. It authorizes access, applies operation-log visibility and
@@ -27,63 +37,97 @@ export class SyncPullService {
     storyId: string,
     lastOperationVersion: number,
     lastPublicFavoriteVersion = 0,
+    clientFavorites?: FavoritesFingerprint | null,
   ): Promise<{
     updates: StoryUpdate[];
     publicFavorites: (typeof favorites.$inferSelect)[];
     serverMaxOperationVersion: number;
     role: EffectiveStoryRole;
+    favoritesFingerprint: FavoritesFingerprint | undefined;
   }> {
     const story = await db.query.stories.findFirst({ where: eq(stories.id, storyId) });
-    if (!story) throw new Error('Story not found.');
+    // 404, not 500: a deleted story is a settled fact, not a broken server. The client
+    // deactivates instead of retrying forever.
+    if (!story) throw new AppError(404, 'Story not found.');
 
     const role = await this.getReadRole(userId, storyId, story.userId);
     if (!role) {
       throw new AppError(403, 'Unauthorized: User does not have read permission for this story.');
     }
 
-    if (story.favoriteBehavior === 'individual_public') {
-      const repairedFavorites = await this.ensurePublicFavoriteOperationLogs(storyId);
-      if (repairedFavorites.count > 0) {
-        logger.info('Created missing operation logs for public favorites', {
-          storyId,
-          count: repairedFavorites.count,
-        });
-        eventManager.emit(`storyUpdate:${storyId}`, {
-          type: 'story_update',
-          storyId,
-          updates: repairedFavorites.count,
-          maxOperationVersion: repairedFavorites.maxOperationVersion,
-        });
+    const publishesFavorites = story.favoriteBehavior === 'individual_public';
+    // The full roster used to be re-sent (and the repair re-run) on every pull of every
+    // public story - O(roster) rows per client every 30s to almost always deliver nothing
+    // new. Now a one-row fingerprint decides: a match means the client's table already
+    // mirrors this one, so both the repair and the snapshot are skipped. A mismatch (or a
+    // client too old to send one) falls back to the old behaviour - repair first so the
+    // cursors below also carry the newly materialised history, then the full roster once.
+    let favoritesFingerprint: FavoritesFingerprint | undefined;
+    let includeFavoritesSnapshot = false;
+    if (publishesFavorites) {
+      favoritesFingerprint = await getFavoritesFingerprint(storyId);
+      includeFavoritesSnapshot =
+        !clientFavorites ||
+        clientFavorites.count !== favoritesFingerprint.count ||
+        clientFavorites.maxVersion !== favoritesFingerprint.maxVersion;
+      if (includeFavoritesSnapshot) {
+        const repairedFavorites = await ensurePublicFavoriteOperationLogs(storyId);
+        if (repairedFavorites.count > 0) {
+          logger.info('Created missing operation logs for public favorites', {
+            storyId,
+            count: repairedFavorites.count,
+          });
+          eventManager.emit(`storyUpdate:${storyId}`, {
+            type: 'story_update',
+            storyId,
+            updates: repairedFavorites.count,
+            maxOperationVersion: repairedFavorites.maxOperationVersion,
+          });
+        }
       }
     }
 
-    const operationsAfterMainCursor = await db.query.operationLog.findMany({
+    // Visibility belongs in the query, not in a post-filter. With LIMIT-before-filter, a
+    // run of MAX_SYNC_PULL_BATCH invisible favorites (someone else's, on a story keeping them
+    // private) fills the whole page, the client receives an empty list, stops paging, and never
+    // advances past them - a silent permanent stall, with new history piling up above a window
+    // that never moves. Filtering in SQL makes every page carry visible progress, or be honestly
+    // empty only at the end of history.
+    const favoriteVisibility = publishesFavorites
+      ? undefined
+      : or(ne(operationLog.entityType, 'Favorite'), eq(operationLog.userId, userId));
+    const visibleOperations = await db.query.operationLog.findMany({
       where: and(
         eq(operationLog.storyId, storyId),
         gt(operationLog.operationVersion, lastOperationVersion),
+        favoriteVisibility,
       ),
       orderBy: [operationLog.operationVersion],
       limit: MAX_SYNC_PULL_BATCH,
     });
-    const visibleOperations = operationsAfterMainCursor.filter(
-      (operation) =>
-        operation.entityType !== 'Favorite' ||
-        story.favoriteBehavior === 'individual_public' ||
-        operation.userId === userId,
-    );
 
-    // A separate cursor exposes favourites which predate a change to public visibility.
-    const historicalPublicFavorites =
-      story.favoriteBehavior === 'individual_public'
-        ? await db.query.operationLog.findMany({
-            where: and(
-              eq(operationLog.storyId, storyId),
-              eq(operationLog.entityType, 'Favorite'),
-              gt(operationLog.operationVersion, lastPublicFavoriteVersion),
-            ),
-            orderBy: [operationLog.operationVersion],
-          })
-        : [];
+    // A separate cursor exposes favourites which predate a change to public visibility. It carries
+    // the same batch ceiling as the main query: when history exceeds it, the client's cursor simply
+    // continues on the next cycle instead of one pull loading the whole favourite history at once.
+    const historicalPublicFavorites = publishesFavorites
+      ? await db.query.operationLog.findMany({
+          where: and(
+            eq(operationLog.storyId, storyId),
+            eq(operationLog.entityType, 'Favorite'),
+            gt(operationLog.operationVersion, lastPublicFavoriteVersion),
+          ),
+          orderBy: [operationLog.operationVersion],
+          limit: MAX_SYNC_PULL_BATCH,
+        })
+      : [];
+    // The same row can arrive through both cursors, so the merge dedupes by id and restores
+    // version order: the client applies updates in sequence and must never see one twice.
+    // The merge joins two full cursors, so without the cap it can reach twice the batch size -
+    // and the client advances a SINGLE max-cursor per page, which is only valid when the page
+    // is prefix-closed. Favorites above the main page top would otherwise drag the cursor past
+    // undelivered main rows, skipping them forever. Keeping the lowest batch restores the
+    // invariant: versions are unique per story, so cut rows sort strictly above the page max
+    // and the next page picks them up.
     const operations = Array.from(
       new Map(
         [...visibleOperations, ...historicalPublicFavorites].map((operation) => [
@@ -91,18 +135,43 @@ export class SyncPullService {
           operation,
         ]),
       ).values(),
-    ).sort((left, right) => left.operationVersion - right.operationVersion);
+    )
+      .sort((left, right) => left.operationVersion - right.operationVersion)
+      .slice(0, MAX_SYNC_PULL_BATCH);
 
-    const updates = operations.map((operation) => this.toStoryUpdate(operation));
+    // A single legacy/future row must not poison the whole page: an unknown operation type is
+    // skipped with a warning and the rest of the page still goes out. Conversion failures for
+    // *known* types still throw - a corrupt row of a kind this server understands is a bug worth
+    // failing loudly on, not silent data loss.
+    const updates: StoryUpdate[] = [];
+    for (const operation of operations) {
+      try {
+        updates.push(this.toStoryUpdate(operation));
+      } catch (error) {
+        if (!(error instanceof UnknownSyncOperationTypeError)) throw error;
+        logger.warn('SyncPullService: skipping unknown sync operation type', {
+          storyId,
+          operationId: operation.id,
+          operationVersion: operation.operationVersion,
+          operationType: operation.operationType,
+          entityType: operation.entityType,
+        });
+      }
+    }
     const serverMaxOperationVersion = await this.getMaxOperationVersion(storyId);
-    const publicFavorites =
-      story.favoriteBehavior === 'individual_public'
-        ? await db.query.favorites.findMany({
-            where: and(eq(favorites.storyId, storyId), ne(favorites.userId, userId)),
-          })
-        : [];
+    const publicFavorites = includeFavoritesSnapshot
+      ? await db.query.favorites.findMany({
+          where: and(eq(favorites.storyId, storyId), ne(favorites.userId, userId)),
+        })
+      : [];
 
-    return { updates, publicFavorites, serverMaxOperationVersion, role };
+    return {
+      updates,
+      publicFavorites,
+      serverMaxOperationVersion,
+      role,
+      favoritesFingerprint,
+    };
   }
 
   private async getReadRole(
@@ -115,66 +184,6 @@ export class SyncPullService {
     return permission?.permissionType === 'reader' || permission?.permissionType === 'writer'
       ? permission.permissionType
       : undefined;
-  }
-
-  /** Materialises operation history for snapshot-uploaded favourites that became public later. */
-  async ensurePublicFavoriteOperationLogs(
-    storyId: string,
-  ): Promise<{ count: number; maxOperationVersion: number }> {
-    return db.transaction(async (tx) => {
-      await lockStoryForUpdate(tx, storyId);
-
-      const [favoriteRows, loggedFavoriteRows, storyRow] = await Promise.all([
-        tx
-          .select()
-          .from(favorites)
-          .where(and(eq(favorites.storyId, storyId), eq(favorites.isDeleted, false))),
-        tx
-          .select({ entityId: operationLog.entityId })
-          .from(operationLog)
-          .where(
-            and(
-              eq(operationLog.storyId, storyId),
-              eq(operationLog.entityType, 'Favorite'),
-              eq(operationLog.operationType, 'create'),
-            ),
-          ),
-        tx
-          .select({ lastOperationVersion: stories.lastOperationVersion })
-          .from(stories)
-          .where(eq(stories.id, storyId)),
-      ]);
-      const loggedIds = new Set(loggedFavoriteRows.map((row) => row.entityId));
-      const missingFavorites = favoriteRows.filter((favorite) => !loggedIds.has(favorite.id));
-      let nextOperationVersion = storyRow.at(0)?.lastOperationVersion || 0;
-
-      for (const favorite of missingFavorites) {
-        nextOperationVersion += 1;
-        await tx.insert(operationLog).values({
-          id: ulid(),
-          storyId,
-          userId: favorite.userId,
-          operationVersion: nextOperationVersion,
-          operationType: 'create',
-          entityType: 'Favorite',
-          entityId: favorite.id,
-          payload: {
-            entityId: favorite.entityId,
-            entityType: favorite.entityType,
-            userId: favorite.userId,
-          },
-          entityVersion: favorite.version,
-          createdAt: favorite.createdAt,
-        });
-      }
-      if (missingFavorites.length > 0) {
-        await tx
-          .update(stories)
-          .set({ lastOperationVersion: nextOperationVersion })
-          .where(eq(stories.id, storyId));
-      }
-      return { count: missingFavorites.length, maxOperationVersion: nextOperationVersion };
-    });
   }
 
   private async getMaxOperationVersion(storyId: string): Promise<number> {
@@ -197,6 +206,9 @@ export class SyncPullService {
       operationTime,
       originatingUser: operation.userId,
       operationId: operation.id,
+      // The pushing device's own id for the operation: a device whose push answer was lost
+      // recognises it here as its own, already applied, instead of as someone else's edit.
+      ...(operation.clientOperationId ? { clientOperationId: operation.clientOperationId } : {}),
     };
 
     if (operation.operationType === 'create') {
@@ -231,15 +243,18 @@ export class SyncPullService {
       } as UpdateStoryUpdate;
     }
     if (operation.operationType === 'delete') {
+      // Deletions recorded since they carry the tombstone relay it (see `wholeRowPayload`);
+      // older ones hold only the id and go out exactly as before.
+      const tombstone: Record<string, unknown> = { ...payload };
+      delete tombstone.id;
+      delete tombstone.storyId;
       return {
         type: 'delete',
         entity: operation.entityType,
         ...metadata,
+        ...(Object.keys(tombstone).length > 0 ? { data: tombstone } : {}),
       } as DeleteStoryUpdate;
     }
-    if (operation.operationType === 'reorder') {
-      return decodePulledReorderOperation(operation.entityType, payload, metadata);
-    }
-    throw new Error(`Unknown sync operation: ${operation.operationType}/${operation.entityType}`);
+    throw new UnknownSyncOperationTypeError(operation.operationType, operation.entityType);
   }
 }

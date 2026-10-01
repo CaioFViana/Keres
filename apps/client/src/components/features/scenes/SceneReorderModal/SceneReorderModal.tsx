@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { SceneSelect } from '../../../../db/schema';
@@ -34,9 +34,13 @@ const SceneReorderModal: React.FC<SceneReorderModalProps> = ({
 
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(initialChapterId);
 
-  useEffect(() => {
+  const [prevInitialChapterId, setPrevInitialChapterId] = useState(initialChapterId);
+  const [prevIsVisible, setPrevIsVisible] = useState(isVisible);
+  if (initialChapterId !== prevInitialChapterId || isVisible !== prevIsVisible) {
+    setPrevInitialChapterId(initialChapterId);
+    setPrevIsVisible(isVisible);
     if (isVisible) setSelectedChapterId(initialChapterId);
-  }, [initialChapterId, isVisible]);
+  }
 
   const sortedScenesInChapter = useMemo(() => {
     if (!selectedChapterId) return [];

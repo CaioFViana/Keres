@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/index';
 import { request, registerUser, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
@@ -10,6 +10,11 @@ beforeEach(async () => {
   admin = await registerUser('root');
   await promoteToAdmin(admin.userId);
 });
+
+// This file leaves showcase_settings with the hosted client disabled, and the files after it in
+// the run do not truncate - without this, a later suite reads the landing page instead of the
+// client (hostedClientRoute.test.ts fails on the missing isolation headers).
+afterAll(truncateAll);
 
 describe('hosted client setting', () => {
   it('defaults to enabled and replaces the root client with a server landing when disabled', async () => {

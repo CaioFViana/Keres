@@ -4,8 +4,8 @@ import { characters } from './characters';
 import { stories } from './stories';
 
 /**
- * Um estado alternativo de um personagem ao longo da obra. Independente do sistema de status:
- * a tabela existe e sincroniza mesmo com `stories.stat_system` desligado.
+ * An alternative state of a character over the course of the work. Independent of the stat system:
+ * the table exists and syncs even with `stories.stat_system` off.
  */
 export const modes = table('modes', {
   id: text('id').primaryKey(),

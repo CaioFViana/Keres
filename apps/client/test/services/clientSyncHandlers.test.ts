@@ -14,6 +14,7 @@ import { ChoiceClientSyncHandler } from '../../src/services/entity-sync-handlers
 import { ChoiceCheckClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckClientSyncHandler';
 import { ChoiceCheckGroupClientSyncHandler } from '../../src/services/entity-sync-handlers/ChoiceCheckGroupClientSyncHandler';
 import { EffectClientSyncHandler } from '../../src/services/entity-sync-handlers/EffectClientSyncHandler';
+import { GalleryRelationClientSyncHandler } from '../../src/services/entity-sync-handlers/GalleryRelationClientSyncHandler';
 import { ItemClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemClientSyncHandler';
 import { ItemJourneyClientSyncHandler } from '../../src/services/entity-sync-handlers/ItemJourneyClientSyncHandler';
 import { LocationClientSyncHandler } from '../../src/services/entity-sync-handlers/LocationClientSyncHandler';
@@ -731,6 +732,25 @@ const HANDLERS = [
     change: { value: 2 },
   },
   {
+    name: 'GalleryRelation',
+    build: () => new GalleryRelationClientSyncHandler(),
+    table: schema.galleryRelations,
+    labelColumn: 'ownerId' as const,
+    data: (id: string) => ({
+      id,
+      storyId: STORY_ID,
+      galleryId: `gallery-${id}`,
+      ownerId: `owner-${id}`,
+      ownerType: 'Character',
+      createdAt: CREATED_AT,
+      updatedAt: CREATED_AT,
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    }),
+    change: { ownerId: 'owner-revised' },
+  },
+  {
     name: 'Mode',
     build: () => new ModeClientSyncHandler(),
     table: schema.modes,
@@ -820,6 +840,18 @@ describe.each(HANDLERS)(
       expect(row.createdAt.toISOString()).toBe(CREATED_AT);
     });
 
+    it('stores a tombstone create with its deletion date revived', async () => {
+      const handler = withDb();
+      const payload = { ...data('e-1'), isDeleted: true, deletedAt: CREATED_AT };
+
+      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', payload));
+
+      const [row] = rowsOf();
+      expect(row.isDeleted).toBe(true);
+      expect(row.deletedAt).toBeInstanceOf(Date);
+      expect(row.deletedAt.toISOString()).toBe(CREATED_AT);
+    });
+
     it('files the entity under the story it was pulled for, not the one in the payload', async () => {
       const handler = withDb();
       const payload = { ...data('e-1'), storyId: 'historia-errada' };
@@ -895,6 +927,50 @@ describe.each(HANDLERS)(
       expect(rowsOf()[0][labelColumn]).not.toBe(Object.values(change)[0]);
     });
 
+    it('refuses an update with no id instead of writing it nowhere', async () => {
+      const handler = withDb();
+      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      const before = rowsOf();
+
+      await handler.applyUpdate(STORY_ID, {
+        type: 'update',
+        entity: name,
+        changes: change,
+      } as unknown as UpdateStoryUpdate);
+
+      expect(rowsOf()).toEqual(before);
+    });
+
+    it('refuses an update with no changes instead of touching the row', async () => {
+      const handler = withDb();
+      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      const before = rowsOf();
+
+      await handler.applyUpdate(STORY_ID, {
+        type: 'update',
+        entity: name,
+        id: 'e-1',
+      } as unknown as UpdateStoryUpdate);
+
+      expect(rowsOf()).toEqual(before);
+    });
+
+    it('revives the ISO dates a change carries as real timestamps', async () => {
+      const handler = withDb();
+      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+
+      await handler.applyUpdate(
+        STORY_ID,
+        updateUpdate(name, 'e-1', { ...change, createdAt: CREATED_AT, deletedAt: CREATED_AT }),
+      );
+
+      const [row] = rowsOf();
+      expect(row.createdAt).toBeInstanceOf(Date);
+      expect(row.createdAt.toISOString()).toBe(CREATED_AT);
+      expect(row.deletedAt).toBeInstanceOf(Date);
+      expect(row.deletedAt.toISOString()).toBe(CREATED_AT);
+    });
+
     it('soft-deletes, keeping the row so the tombstone survives', async () => {
       const handler = withDb();
       await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
@@ -913,6 +989,31 @@ describe.each(HANDLERS)(
       await handler.applyDelete(STORY_ID, deleteUpdate('OutraEntidade', 'e-1'));
 
       expect(rowsOf()[0].isDeleted).toBe(false);
+    });
+
+    it('refuses a delete with no id instead of deleting blindly', async () => {
+      const handler = withDb();
+      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      const before = rowsOf();
+
+      await handler.applyDelete(STORY_ID, {
+        type: 'delete',
+        entity: name,
+      } as unknown as DeleteStoryUpdate);
+
+      expect(rowsOf()).toEqual(before);
+    });
+
+    it('ignores a delete for an id that is not here, so pulls stay idempotent', async () => {
+      const handler = withDb();
+      await handler.applyCreate(STORY_ID, createUpdate(name, 'e-1', data('e-1')));
+      const before = rowsOf();
+
+      await expect(
+        handler.applyDelete(STORY_ID, deleteUpdate(name, 'nao-existe')),
+      ).resolves.toBeUndefined();
+
+      expect(rowsOf()).toEqual(before);
     });
 
     it('reads an entity back by id', async () => {
@@ -1000,5 +1101,32 @@ describe('CharacterClientSyncHandler specifics', () => {
       where: eq(schema.characters.id, 'char-1'),
     });
     expect(row!.title).toBeNull();
+  });
+});
+
+describe('SuggestionClientSyncHandler specifics', () => {
+  it('defaults the bookkeeping fields a bare suggestion omits', async () => {
+    const handler = new SuggestionClientSyncHandler();
+    handler.setDb(database.db);
+    // The timestamp column only keeps whole seconds - compare without the milliseconds.
+    const before = Math.floor(Date.now() / 1000) * 1000;
+
+    await handler.applyCreate(
+      STORY_ID,
+      createUpdate('Suggestion', 's-1', { type: 'character-name', value: 'Nyx' }),
+    );
+
+    const row = await database.db.query.suggestions.findFirst({
+      where: eq(schema.suggestions.id, 's-1'),
+    });
+    expect(row).toMatchObject({
+      type: 'character-name',
+      value: 'Nyx',
+      version: 1,
+      isDeleted: false,
+      deletedAt: null,
+    });
+    expect(row!.createdAt.getTime()).toBeGreaterThanOrEqual(before);
+    expect(row!.updatedAt.getTime()).toBeGreaterThanOrEqual(before);
   });
 });

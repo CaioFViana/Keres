@@ -7,7 +7,7 @@ import { calendarDaysPerYear, CalendarDefinitionSchema } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -121,6 +121,8 @@ const StoryCalendarFormScreen = () => {
    * Empty is kept as 1 rather than 0: every one of these is a divisor somewhere, and a zero would
    * make a year zero days long while the writer is still typing.
    */
+  const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
+
   const numberField = (
     key: 'daysPerWeek' | 'hoursPerDay' | 'minutesPerHour' | 'secondsPerMinute',
     label: string,
@@ -144,7 +146,6 @@ const StoryCalendarFormScreen = () => {
     </View>
   );
 
-  const inputStyles = useMemo(() => getCommonInputStyles(colors), [colors]);
   const styles = useMemo(
     () =>
       StyleSheet.create({

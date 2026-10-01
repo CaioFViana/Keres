@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RANK_FIELD_MAX, RankFieldSchema } from './RankSchemas';
 
 // --- Stat ---------------------------------------------------------------------------------
 
@@ -8,6 +9,8 @@ export const StatSchema = z.object({
   name: z.string().min(1, 'Stat name cannot be empty'),
   isPrimary: z.boolean(),
   order: z.number().int(),
+  /** The stat's place in the story's list (see `SceneSchema.rank`); `order` is derived from it. */
+  rank: z.string().max(RANK_FIELD_MAX).default(''),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -26,6 +29,8 @@ export const CreateStatDataSchema = StatSchema.omit({
 }).extend({
   isPrimary: z.boolean().default(true),
   order: z.number().int().default(0),
+  // Optional with no default, like `CreateSceneDataSchema.rank`.
+  rank: RankFieldSchema.optional(),
 });
 
 export const PartialStatSchema = CreateStatDataSchema.partial();

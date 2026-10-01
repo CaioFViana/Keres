@@ -1,6 +1,7 @@
-import FormActions from '@/src/components/common/controls/FormActions/FormActions';
+import { getContrastTextColor } from '@keres/shared';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PanResponder,
@@ -13,7 +14,6 @@ import {
 } from 'react-native';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, useTheme } from '../../../../theme';
-import Button from '@/src/components/common/controls/Button/Button';
 
 const SLIDER_HEIGHT = 20;
 
@@ -117,13 +117,15 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
   const [pickerLayout, setPickerLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [hueLayout, setHueLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
-  useEffect(() => {
+  const [prevCurrentColor, setPrevCurrentColor] = useState<typeof currentColor | null>(null);
+  if (currentColor !== prevCurrentColor) {
+    setPrevCurrentColor(currentColor);
     const { r, g, b } = hexToRgb(currentColor);
     const { h, s, v } = rgbToHsv(r, g, b);
     setHue(h);
     setSaturation(s);
     setValue(v);
-  }, [currentColor]);
+  }
 
   const getRgbFromHsv = useCallback(() => {
     return hsvToRgb(hue, saturation, value);
@@ -155,49 +157,53 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
     }
   }, []);
 
-  const saturationValuePanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt, gestureState) => {
-        saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
-          setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
-          handleColorSelect(
-            gestureState,
-            { x: pageX, y: pageY, width: _width, height: _height },
-            false,
-          );
-        });
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        if (pickerLayout.width > 0) {
-          handleColorSelect(gestureState, pickerLayout, false);
-        }
-      },
-    }),
-  ).current;
+  const [saturationValuePanResponder] = useState(
+    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (evt, gestureState) => {
+          saturationValueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+            setPickerLayout({ x: pageX, y: pageY, width: _width, height: _height });
+            handleColorSelect(
+              gestureState,
+              { x: pageX, y: pageY, width: _width, height: _height },
+              false,
+            );
+          });
+        },
+        onPanResponderMove: (evt, gestureState) => {
+          if (pickerLayout.width > 0) {
+            handleColorSelect(gestureState, pickerLayout, false);
+          }
+        },
+      }),
+  );
 
-  const huePanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt, gestureState) => {
-        hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
-          setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
-          handleColorSelect(
-            gestureState,
-            { x: pageX, y: pageY, width: _width, height: _height },
-            true,
-          );
-        });
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        if (hueLayout.width > 0) {
-          handleColorSelect(gestureState, hueLayout, true);
-        }
-      },
-    }),
-  ).current;
+  const [huePanResponder] = useState(
+    // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (evt, gestureState) => {
+          hueRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+            setHueLayout({ x: pageX, y: pageY, width: _width, height: _height });
+            handleColorSelect(
+              gestureState,
+              { x: pageX, y: pageY, width: _width, height: _height },
+              true,
+            );
+          });
+        },
+        onPanResponderMove: (evt, gestureState) => {
+          if (hueLayout.width > 0) {
+            handleColorSelect(gestureState, hueLayout, true);
+          }
+        },
+      }),
+  );
 
   const getBackgroundColorForSatValPicker = useCallback(() => {
     const { r, g, b } = hsvToRgb(hue, 100, 100); // Max saturation and value for the base hue
@@ -233,12 +239,39 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       alignItems: 'center',
       padding: 20,
     },
+    // Close and confirm live in the header, like the icon picker: no bottom action
+    // row wasting vertical room on short windows. The confirm button doubles as the
+    // live color preview, and the hex rides under the title - nothing below the
+    // sliders needs the room.
+    header: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    titleWrap: {
+      flex: 1,
+      alignItems: 'center',
+    },
     title: {
       fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 20,
       color: colors.text,
       textAlign: 'center',
+    },
+    hexCaption: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    headerButton: {
+      padding: 5,
+    },
+    confirmButton: {
+      padding: 5,
+      borderRadius: 17,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     saturationValuePicker: {
       width: colorPickerSize,
@@ -290,44 +323,6 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       shadowRadius: 1,
       top: (SLIDER_HEIGHT - 20) / 2, // Center vertically
     },
-    previewColor: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      borderWidth: 2,
-      borderColor: colors.border, // Use border color
-      marginBottom: 10,
-    },
-    hexText: {
-      fontSize: 16,
-      marginBottom: 20,
-      fontWeight: 'bold',
-      color: colors.text, // Use text color
-    },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      width: '100%',
-    },
-    button: {
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 5,
-      minWidth: 100,
-      alignItems: 'center',
-    },
-    cancelButton: {
-      backgroundColor: colors.textSecondary,
-      width: '40%',
-    },
-    selectButton: {
-      backgroundColor: colors.primary,
-      width: '40%',
-    },
-    buttonText: {
-      color: colors.onPrimary,
-      fontWeight: 'bold',
-    },
     standardColorsContainer: {
       width: standardColorsWidth,
       marginTop: sideBySideLayout ? 0 : 10,
@@ -357,7 +352,34 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
     >
-      {title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.header}>
+        <TouchableOpacity
+          testID="color-picker-close"
+          accessibilityRole="button"
+          accessibilityLabel={t('close')}
+          onPress={onClose}
+          style={styles.headerButton}
+        >
+          <Ionicons name="close" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <View style={styles.titleWrap}>
+          {title ? <Text style={styles.title}>{title}</Text> : null}
+          <Text style={styles.hexCaption}>{currentPickedColorHex().toUpperCase()}</Text>
+        </View>
+        <TouchableOpacity
+          testID="color-picker-confirm"
+          accessibilityRole="button"
+          accessibilityLabel={t('select')}
+          onPress={() => onSelectColor(currentPickedColorHex())}
+          style={[styles.confirmButton, { backgroundColor: currentPickedColorHex() }]}
+        >
+          <Ionicons
+            name="checkmark"
+            size={24}
+            color={getContrastTextColor(currentPickedColorHex())}
+          />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.pickerWorkspace}>
         <View style={styles.pickerControls}>
@@ -374,13 +396,13 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
               colors={['#FFFFFF', 'transparent']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <LinearGradient
               colors={['#000000', 'transparent']}
               start={{ x: 0, y: 1 }}
               end={{ x: 0, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View
               style={[
@@ -397,7 +419,7 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
               colors={['#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FF0000']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View
               style={[
@@ -420,23 +442,6 @@ const ColorPickerModal: React.FC<ColorPickerModalProps> = ({
           </View>
         </View>
       </View>
-
-      {/* Current Color Preview */}
-      <View style={[styles.previewColor, { backgroundColor: currentPickedColorHex() }]} />
-      <Text style={styles.hexText}>{currentPickedColorHex().toUpperCase()}</Text>
-
-      {/* Action Buttons */}
-      <FormActions>
-        <Button onPress={onClose} style={{ backgroundColor: colors.textSecondary }}>
-          {t('cancel')}
-        </Button>
-        <Button
-          onPress={() => onSelectColor(currentPickedColorHex())}
-          style={{ backgroundColor: colors.primary }}
-        >
-          {t('select')}
-        </Button>
-      </FormActions>
     </ScrollView>
   );
 };

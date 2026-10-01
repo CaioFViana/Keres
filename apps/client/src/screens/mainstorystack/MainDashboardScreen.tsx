@@ -1,27 +1,33 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BackHandler } from 'react-native';
+import { BackHandler, Platform } from 'react-native';
 
 import { useDrizzle } from '../../db';
+import { useScreenTour } from '../../guides/useScreenTour';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryContentMetricsService } from '../../services/storymanagement/StoryContentMetricsService';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useSyncConflictStore } from '../../state/syncConflictStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { entityEventEmitter } from '../../utils/EventEmitter';
+import { shouldCompleteFirstStory } from '../../utils/tutorialProgress';
 import { MainDashboardContent } from './MainDashboardContent';
 
 const MainDashboardScreen = () => {
+  useScreenTour('MainDashboard');
   const { selectedStory } = useStoryStore();
   const db = useDrizzle();
   const navigation =
     useNavigation<DrawerNavigationProp<MainSystemDrawerParamList, 'MainDashboard'>>();
   const { showNotification } = useNotificationStore();
   const { t } = useTranslation();
+  const tutorialProgress = useUserSettingsStore((state) => state.tutorialProgress);
+  const setFirstStoryProgress = useUserSettingsStore((state) => state.setFirstStoryProgress);
   const conflictCount = useSyncConflictStore((state) => state.conflicts.length);
   const [conflictSheetOpen, setConflictSheetOpen] = useState(false);
 
@@ -42,6 +48,12 @@ const MainDashboardScreen = () => {
   const backPressTimer = useRef<number | null>(null);
 
   useEffect(() => {
+    // The web build has no hardware back button; registering only logs
+    // "BackHandler is not supported on web" noise.
+    if (Platform.OS === 'web') {
+      return;
+    }
+
     const backAction = () => {
       const rootStackNavigation = navigation.getParent();
 
@@ -133,6 +145,20 @@ const MainDashboardScreen = () => {
       fetchCounts();
       runAnalysis();
     }, [fetchCounts, runAnalysis]),
+  );
+
+  // The "first story" trail ends here: a choice was made on the selection screen and a story is
+  // now open. The celebration fires once - persisting first, so a failed write retries next focus
+  // instead of celebrating twice.
+  useFocusEffect(
+    useCallback(() => {
+      if (!shouldCompleteFirstStory(tutorialProgress)) return;
+      setFirstStoryProgress(db, { done: true })
+        .then(() => showNotification(t('first_story_success'), 'success'))
+        .catch((error: unknown) => {
+          console.warn('[MainDashboardScreen] failed to complete the first-story trail.', error);
+        });
+    }, [tutorialProgress, db, setFirstStoryProgress, showNotification, t]),
   );
 
   useEffect(() => {

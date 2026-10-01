@@ -2,7 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '@/src/components/common/controls/Button/Button';
@@ -14,6 +14,8 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useDrizzle } from '../../db';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
@@ -65,6 +67,8 @@ const CATEGORY_TITLE_KEYS: Record<StoryAnalysisCategory, string> = {
 };
 
 const StoryAnalysisScreen = () => {
+  useScreenTour('StoryAnalysis');
+  const reportAnchorRef = useScreenAnchor('StoryAnalysis', 'report');
   const { t } = useTranslation();
   const { term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -95,9 +99,13 @@ const StoryAnalysisScreen = () => {
   const [hasRunFull, setHasRunFull] = useState(selectedStory?.type !== 'branching');
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  useEffect(() => {
+  const [prevCompletenessChecks, setPrevCompletenessChecks] = useState(
+    selectedStory?.completenessChecks,
+  );
+  if (selectedStory?.completenessChecks !== prevCompletenessChecks) {
+    setPrevCompletenessChecks(selectedStory?.completenessChecks);
     setCompletenessChecks(selectedStory?.completenessChecks ?? false);
-  }, [selectedStory?.completenessChecks]);
+  }
 
   const loadCheapReport = useCallback(async () => {
     if (!storyId) return;
@@ -239,6 +247,15 @@ const StoryAnalysisScreen = () => {
 
   const styles = StyleSheet.create({
     ...commonDetailStyleDefs(colors),
+    emptyIconWrap: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primaryContainer,
+      marginBottom: 14,
+    },
     scrollContent: {
       // The common container already applies 20px on every side. Repeating the padding on the scrollable
       // content left the check's card 40px away from the edges, unlike the drawer's other screens.
@@ -416,13 +433,16 @@ const StoryAnalysisScreen = () => {
   if (!report || (report.findings.length === 0 && hasRunFull)) {
     return (
       <ScrollView
+        ref={reportAnchorRef}
         style={commonContainerStyles.container}
         contentContainerStyle={styles.scrollContent}
       >
         {preferencesCard}
         {analysisCard}
         <View style={styles.emptyContainer}>
-          <Ionicons name="checkmark-circle-outline" size={54} color={colors.primary} />
+          <View style={styles.emptyIconWrap} testID="analysis-empty-icon">
+            <Ionicons name="checkmark" size={28} color={colors.onPrimaryContainer} />
+          </View>
           <Text style={styles.emptyText}>{t('analysis_no_issues_found')}</Text>
         </View>
       </ScrollView>
@@ -431,6 +451,7 @@ const StoryAnalysisScreen = () => {
 
   return (
     <ScrollView
+      ref={reportAnchorRef}
       style={commonContainerStyles.container}
       contentContainerStyle={styles.scrollContent}
     >

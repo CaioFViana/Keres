@@ -14,6 +14,8 @@ interface GraphConnectionModalProps {
   targetName: string;
   /** Boards save a label with their edge; story-location relations deliberately do not. */
   labelEnabled?: boolean;
+  /** Schema limit of the label being written; each caller passes its own. */
+  labelMaxLength?: number;
   directionHint?: string;
   onClose: () => void;
   onConfirm: (connection: {
@@ -28,6 +30,7 @@ const GraphConnectionModal: React.FC<GraphConnectionModalProps> = ({
   sourceName,
   targetName,
   labelEnabled = false,
+  labelMaxLength,
   directionHint,
   onClose,
   onConfirm,
@@ -136,6 +139,7 @@ const GraphConnectionModal: React.FC<GraphConnectionModalProps> = ({
             onChangeText={setLabel}
             placeholder={t('graph_connection_label_placeholder')}
             placeholderTextColor={colors.textSecondary}
+            maxLength={labelMaxLength}
             style={styles.input}
           />
         </View>

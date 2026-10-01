@@ -1,6 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   type CoverageKind,
@@ -244,7 +243,7 @@ if (failed.length) {
   for (const result of failed) {
     const message = result.ratchetFailure
       ? `Coverage below the ratchet: ${JSON.stringify(ratchets[result.name])}`
-      : result.output.trim().split(/\r?\n/).slice(-30).join('\n');
+      : result.output.trim().split(/\r?\n/).slice(-150).join('\n');
     console.error(`\n[${result.name}]\n${message}`);
   }
   process.exitCode = 1;

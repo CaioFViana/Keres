@@ -1,0 +1,1 @@
+ALTER TABLE `story_publications` ADD `reader_byte_size` integer;

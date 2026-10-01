@@ -10,10 +10,12 @@ import { useTheme } from '@/src/theme';
 import { getCommonContainerStyles } from '@/src/theme/commonStyles';
 import { themeDisplayOptions } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import { AppAlert } from '@/src/utils/AppAlert';
 import ThemePreview from './ThemePreview';
@@ -23,6 +25,8 @@ const StoryAppearanceScreen = () => {
   // The drawer owns the visible header. Register its back action against this nested stack so the
   // header arrow returns to Customization instead of attempting to pop the drawer itself.
   useBackButtonHandler({ showWebBackButton: true });
+  useScreenTour('StoryAppearance');
+  const cardAnchorRef = useScreenAnchor('Appearance', 'card');
   const { t } = useTranslation();
   const { colors, setTheme: applyTheme } = useTheme();
   const drizzleDb = useDrizzle();
@@ -36,9 +40,16 @@ const StoryAppearanceScreen = () => {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const [prevSelectedStoryId, setPrevSelectedStoryId] = useState(selectedStory?.id);
+  const [prevSelectedStoryTheme, setPrevSelectedStoryTheme] = useState(selectedStory?.theme);
+  if (
+    selectedStory?.id !== prevSelectedStoryId ||
+    selectedStory?.theme !== prevSelectedStoryTheme
+  ) {
+    setPrevSelectedStoryId(selectedStory?.id);
+    setPrevSelectedStoryTheme(selectedStory?.theme);
     setThemeName(selectedStory?.theme || 'default');
-  }, [selectedStory?.id, selectedStory?.theme]);
+  }
 
   useScreenHeader({
     target: 'parent',
@@ -121,7 +132,7 @@ const StoryAppearanceScreen = () => {
     >
       <Text style={styles.title}>{t('appearance_title')}</Text>
       <Text style={styles.description}>{t('appearance_screen_description')}</Text>
-      <View style={styles.card}>
+      <View ref={cardAnchorRef} collapsable={false} style={styles.card}>
         <View style={styles.cardHeading}>
           <Ionicons name="color-palette-outline" size={24} color={colors.primary} />
           <Text style={styles.cardTitle}>{t('theme')}</Text>

@@ -1,7 +1,14 @@
 const coverageThresholds = require('../../scripts/coverage-thresholds.json');
+const expoPreset = require('jest-expo/jest-preset');
 
 module.exports = {
   preset: 'jest-expo',
+  // The enriched-html lib ships ESM-only; allow babel-jest to transform it so
+  // the web integration test can mount the real implementation. Everything
+  // else keeps the preset's ignore list untouched.
+  transformIgnorePatterns: expoPreset.transformIgnorePatterns.map((pattern) =>
+    pattern.replace('standard-navigation))', 'standard-navigation|react-native-enriched-html))'),
+  ),
   // `src` is here only so *coverage* can see the files no test imports.
   // With only `test/` on the list, Jest does not scan `src/` and the `collectCoverageFrom` below has
   // no effect: the report measures only what the tests already touch, which makes coverage look
@@ -11,6 +18,13 @@ module.exports = {
   // looking for tests in there too.
   testMatch: ['<rootDir>/test/**/*.test.ts', '<rootDir>/test/**/*.test.tsx'],
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
+  // Mirrors the `@/*` path alias in tsconfig.json so tests can import components that use it.
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+    // The real enriched-html web build imports its stylesheet; styles are
+    // irrelevant to behavior tests.
+    '\\.css$': '<rootDir>/test/helpers/cssStub.js',
+  },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

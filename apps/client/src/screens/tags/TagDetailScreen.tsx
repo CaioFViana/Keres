@@ -1,5 +1,6 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import { createCommentFieldBindings } from '@/src/components/features/comments/CommentableDetailField/createCommentFieldBindings';
+import type { OccurrenceTarget } from '@/src/utils/occurrenceTarget';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
@@ -14,7 +15,7 @@ import FavoritedByList from '@/src/components/features/favorites/FavoritedByList
 import type { TagRelation } from '@keres/shared/entities/Tag'; // Import TagRelation
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next'; // Import useTranslation
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '../../db';
@@ -35,7 +36,7 @@ import type { TagsScreenNavigationProp } from './TagListScreen';
 
 // Define the parameter list for this screen
 export type TagDetailScreenParamList = {
-  TagDetail: { tagId: string };
+  TagDetail: { tagId: string; occurrence?: OccurrenceTarget };
 };
 
 type TagDetailScreenRouteProp = RouteProp<TagDetailScreenParamList, 'TagDetail'>;
@@ -45,7 +46,7 @@ const TagDetailScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<TagsScreenNavigationProp>();
   const route = useRoute<TagDetailScreenRouteProp>();
-  const { tagId } = route.params;
+  const { tagId, occurrence } = route.params;
 
   const drizzleDb = useDrizzle();
   const tagServiceRef = useRef<ReturnType<typeof createTagService> | null>(null);
@@ -255,6 +256,7 @@ const TagDetailScreen = () => {
 
   useEffect(() => {
     if (allTagRelations.length > 0 && selectedStory?.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- `processTagRelations` only reaches setState after `await`; the rule cannot verify across the callback boundary.
       processTagRelations();
     }
   }, [allTagRelations, selectedStory?.id, processTagRelations]);
@@ -300,6 +302,7 @@ const TagDetailScreen = () => {
   return (
     <DetailContainer
       title={tag.name}
+      landing={occurrence ?? null}
       footer={
         <>
           <Button onPress={() => navigation.goBack()}>{t('go_back')}</Button>

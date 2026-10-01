@@ -2,9 +2,10 @@ import React, { forwardRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import CanvasLine from '@/src/components/features/graphs/CanvasLine/CanvasLine';
 import GraphCanvasFrame from '@/src/components/features/graphs/GraphCanvasFrame/GraphCanvasFrame';
-import type { PanZoomCanvasHandle } from '@/src/hooks/usePanZoomCanvas';
-import { usePanZoomCanvas } from '@/src/hooks/usePanZoomCanvas';
+import type { CanvasViewportHandle } from '@/src/hooks/useCanvasViewport';
+import { useCanvasViewport } from '@/src/hooks/useCanvasViewport';
 import { useTheme } from '@/src/theme';
+import { getContrastTextColor, getReadableInk, spatialRectIntersects } from '@keres/shared';
 import type { StoryTimelineLayout } from '@keres/shared/graphs/storyTimelineLayout';
 import {
   TIMELINE_EVENT_LANE_HEIGHT,
@@ -24,7 +25,7 @@ interface Props {
   storyDurationLabel: string;
   storyDurationTitle: string;
 }
-export type StoryTimelineCanvasHandle = PanZoomCanvasHandle;
+export type StoryTimelineCanvasHandle = CanvasViewportHandle;
 
 /** Half the height of a 10pt line, to put a view's top where the SVG put a text's baseline. */
 const CAPTION_LIFT = 9;
@@ -43,6 +44,13 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
     ref,
   ) => {
     const { colors } = useTheme();
+    // Chapter swatches are pastel fills in the light theme: as text or a thin line on the page they
+    // vanish, so whatever is not a filled shape is drawn in the readable shade of the same hue.
+    const ink = useCallback(
+      (swatch: string, minimum = 4.5) =>
+        getReadableInk(swatch, [colors.background, colors.surface], minimum),
+      [colors.background, colors.surface],
+    );
     // Anchored containers get their own strip between the header and the scenes, so the scene rows
     // start below it. The header chrome stays where it was, measured from the top of that strip.
     const headerBaseY = TIMELINE_PADDING + layout.headerHeight;
@@ -76,15 +84,74 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
       },
       [headerBaseY, layout.eventSpans, layout.rows, onPressEvent, onPressScene, startY],
     );
-    const panZoom = usePanZoomCanvas(ref, layout, {
-      minScale: 0.08,
-      maxScale: 3,
-      fitVerticalAlignment: 'top',
-      fitMode: 'height',
-      refitOnLayoutChange: false,
-      freePan: true,
-      onTap: handleTap,
-    });
+    const { containerRef, handleLayout, panHandlers, animatedTransform, renderWindow } =
+      useCanvasViewport(ref, layout, {
+        minScale: 0.08,
+        maxScale: 3,
+        fitVerticalAlignment: 'top',
+        fitMode: 'height',
+        refitOnLayoutChange: false,
+        clampMode: 'free',
+        onTap: handleTap,
+      });
+    /** Row indexes whose band reaches the culling window; bands, bars and labels cull with these. */
+    const visibleRowIndexes = useMemo(
+      () =>
+        layout.rows.flatMap((row, index) =>
+          spatialRectIntersects(
+            {
+              x: TIMELINE_PADDING,
+              y: startY + index * TIMELINE_ROW_HEIGHT,
+              width: layout.width - TIMELINE_PADDING * 2,
+              height: TIMELINE_ROW_HEIGHT,
+            },
+            renderWindow,
+          )
+            ? [index]
+            : [],
+        ),
+      [layout.rows, layout.width, renderWindow, startY],
+    );
+    const visibleSpans = useMemo(
+      () =>
+        layout.eventSpans.filter((span) =>
+          spatialRectIntersects(
+            {
+              x: Math.min(span.start, span.end) - (span.instant ? 10 : 0),
+              y: headerBaseY + span.lane * TIMELINE_EVENT_LANE_HEIGHT,
+              width: Math.abs(span.end - span.start) + (span.instant ? 20 : 0),
+              height: TIMELINE_EVENT_LANE_HEIGHT,
+            },
+            renderWindow,
+          ),
+        ),
+      [headerBaseY, layout.eventSpans, renderWindow],
+    );
+    const visibleTicks = useMemo(
+      () =>
+        layout.rulerTicks.filter((tick) =>
+          spatialRectIntersects(
+            { x: tick.x - 40, y: headerBaseY - 30, width: 80, height: 30 },
+            renderWindow,
+          ),
+        ),
+      [headerBaseY, layout.rulerTicks, renderWindow],
+    );
+    const visibleChapters = useMemo(
+      () =>
+        layout.chapters.filter((chapter) =>
+          spatialRectIntersects(
+            {
+              x: Math.min(chapter.start, chapter.end),
+              y: headerBaseY - 29 - chapter.lane * 18,
+              width: Math.abs(chapter.end - chapter.start),
+              height: 29,
+            },
+            renderWindow,
+          ),
+        ),
+      [headerBaseY, layout.chapters, renderWindow],
+    );
     const styles = useMemo(
       () =>
         StyleSheet.create({
@@ -114,21 +181,26 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             justifyContent: 'center',
             paddingHorizontal: 6,
           },
-          barText: { color: '#fff', fontSize: 9, fontWeight: '700', textAlign: 'center' },
+          barText: { fontSize: 9, fontWeight: '700', textAlign: 'center' },
           gapText: { position: 'absolute', fontSize: 9, textAlign: 'center' },
           sequence: { position: 'absolute', fontSize: 9, textAlign: 'center' },
         }),
       [colors.textSecondary],
     );
     return (
-      <GraphCanvasFrame width={layout.width} height={layout.height} {...panZoom}>
-        <View pointerEvents="none" style={{ width: layout.width, height: layout.height }}>
+      <GraphCanvasFrame
+        containerRef={containerRef}
+        handleLayout={handleLayout}
+        panHandlers={panHandlers}
+        animatedTransform={animatedTransform}
+      >
+        <View pointerEvents="none">
           {/*
           Anchored containers, drawn as bands across the scenes they cover. A dashed outline is a
           chapter placed somewhere other than where it is told; a solid one is an event. Only the
           first stretch carries the name - the others are the same container resuming.
         */}
-          {layout.eventSpans.map((span) => {
+          {visibleSpans.map((span) => {
             const top = headerBaseY + span.lane * TIMELINE_EVENT_LANE_HEIGHT;
             const width = Math.max(span.instant ? 0 : 4, span.end - span.start);
             const label = span.name.length <= 28 ? span.name : `${span.name.slice(0, 27)}…`;
@@ -173,7 +245,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                         top: top + TIMELINE_EVENT_LANE_HEIGHT / 2 - CAPTION_LIFT,
                         width: fitsInside ? width : label.length * 7,
                         textAlign: fitsInside ? 'center' : 'left',
-                        color: span.color,
+                        color: ink(span.color),
                       },
                     ]}
                   >
@@ -183,7 +255,8 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
               </React.Fragment>
             );
           })}
-          {layout.rows.map((row, index) => {
+          {visibleRowIndexes.map((index) => {
+            const row = layout.rows[index];
             const y = startY + index * TIMELINE_ROW_HEIGHT;
             const centerY = y + TIMELINE_ROW_HEIGHT / 2;
             return (
@@ -208,7 +281,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                     top={centerY - 0.8}
                     length={Math.abs(row.gapEnd - row.gapStart)}
                     thickness={1.6}
-                    color={row.chapterColor}
+                    color={ink(row.chapterColor, 3)}
                   />
                 )}
               </React.Fragment>
@@ -223,7 +296,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                 thickness={1}
                 color={colors.border}
               />
-              {layout.rulerTicks.map((tick) => (
+              {visibleTicks.map((tick) => (
                 <React.Fragment key={`${tick.x}-${tick.label}`}>
                   <CanvasLine
                     vertical
@@ -267,14 +340,14 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
               >
                 {storyDurationTitle}: {storyDurationLabel}
               </Text>
-              {layout.chapters.map((chapter) => (
+              {visibleChapters.map((chapter) => (
                 <React.Fragment key={chapter.id}>
                   <CanvasLine
                     left={chapter.start}
                     top={headerBaseY - 11.5 - chapter.lane * 18}
                     length={chapter.end - chapter.start}
                     thickness={3}
-                    color={chapter.color}
+                    color={ink(chapter.color, 3)}
                   />
                   {chapter.durationLabel && (
                     <Text
@@ -286,7 +359,7 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                           top: headerBaseY - 20 - chapter.lane * 18 - CAPTION_LIFT,
                           width: Math.max(40, chapter.end - chapter.start),
                           textAlign: 'center',
-                          color: chapter.color,
+                          color: ink(chapter.color),
                         },
                       ]}
                     >
@@ -297,7 +370,8 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
               ))}
             </>
           )}
-          {layout.rows.map((row, index) => {
+          {visibleRowIndexes.map((index) => {
+            const row = layout.rows[index];
             const y = startY + index * TIMELINE_ROW_HEIGHT;
             const centerY = y + TIMELINE_ROW_HEIGHT / 2;
             const barLeft = Math.min(row.barStart, row.barEnd);
@@ -305,10 +379,16 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
             return (
               <React.Fragment key={row.id}>
                 <View style={[styles.rowLabel, { top: y, height: TIMELINE_ROW_HEIGHT }]}>
-                  <Text numberOfLines={1} style={[styles.rowTitle, { color: row.chapterColor }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.rowTitle, { color: ink(row.chapterColor) }]}
+                  >
                     {row.sequence}. {row.name}
                   </Text>
-                  <Text numberOfLines={1} style={[styles.chapter, { color: row.chapterColor }]}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.chapter, { color: ink(row.chapterColor) }]}
+                  >
                     {row.chapterName}
                   </Text>
                   {/* The in-world date, when the story has said where on its calendar it opens. */}
@@ -379,7 +459,18 @@ const StoryTimelineCanvas = forwardRef<StoryTimelineCanvasHandle, Props>(
                     ]}
                   >
                     {row.duration && (
-                      <Text numberOfLines={1} style={styles.barText}>
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.barText,
+                          {
+                            color:
+                              getContrastTextColor(row.chapterColor) === 'black'
+                                ? '#000000'
+                                : '#FFFFFF',
+                          },
+                        ]}
+                      >
                         {row.duration.label}
                       </Text>
                     )}

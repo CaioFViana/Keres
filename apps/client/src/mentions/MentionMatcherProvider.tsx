@@ -12,8 +12,17 @@ import {
   type MentionMatcher,
 } from '../utils/entityMentions';
 import { loadEntityOptions } from '../utils/entityOptions';
-import { buildMentionBacklinkIndex, type MentionTextSource } from './mentionBacklinks';
-import { MentionBacklinksContext, MentionMatcherContext } from './MentionContext';
+import { debounce } from '../utils/debounce';
+import {
+  buildAmbiguousMentionIndex,
+  buildMentionBacklinkIndex,
+  type MentionTextSource,
+} from './mentionBacklinks';
+import {
+  MentionAmbiguityContext,
+  MentionBacklinksContext,
+  MentionMatcherContext,
+} from './MentionContext';
 import { customAttributeMentionFields } from './customAttributeMentions';
 
 /**
@@ -64,6 +73,7 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const [matcher, setMatcher] = useState<MentionMatcher>(EMPTY_MENTION_MATCHER);
   const [backlinks, setBacklinks] = useState(() => new Map());
+  const [ambiguities, setAmbiguities] = useState(() => new Map());
 
   const storyId = selectedStory?.id;
   const enabled =
@@ -77,6 +87,7 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
     if (!enabled || !storyId || !drizzleDb) {
       setMatcher(EMPTY_MENTION_MATCHER);
       setBacklinks(new Map());
+      setAmbiguities(new Map());
       return;
     }
     try {
@@ -105,51 +116,101 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
         customValues,
       ] = await Promise.all([
         drizzleDb
-          .select()
+          .select({
+            id: schema.characters.id,
+            description: schema.characters.description,
+            personality: schema.characters.personality,
+            motivation: schema.characters.motivation,
+            qualities: schema.characters.qualities,
+            weaknesses: schema.characters.weaknesses,
+            biography: schema.characters.biography,
+            plannedTimeline: schema.characters.plannedTimeline,
+            extraNotes: schema.characters.extraNotes,
+          })
           .from(schema.characters)
           .where(
             and(eq(schema.characters.storyId, storyId), eq(schema.characters.isDeleted, false)),
           )
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.locations.id,
+            description: schema.locations.description,
+            climate: schema.locations.climate,
+            culture: schema.locations.culture,
+            politics: schema.locations.politics,
+            extraNotes: schema.locations.extraNotes,
+          })
           .from(schema.locations)
           .where(and(eq(schema.locations.storyId, storyId), eq(schema.locations.isDeleted, false)))
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.items.id,
+            description: schema.items.description,
+            extraNotes: schema.items.extraNotes,
+          })
           .from(schema.items)
           .where(and(eq(schema.items.storyId, storyId), eq(schema.items.isDeleted, false)))
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.scenes.id,
+            summary: schema.scenes.summary,
+            extraNotes: schema.scenes.extraNotes,
+          })
           .from(schema.scenes)
           .where(and(eq(schema.scenes.storyId, storyId), eq(schema.scenes.isDeleted, false)))
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.chapters.id,
+            summary: schema.chapters.summary,
+            extraNotes: schema.chapters.extraNotes,
+          })
           .from(schema.chapters)
           .where(and(eq(schema.chapters.storyId, storyId), eq(schema.chapters.isDeleted, false)))
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.notes.id,
+            body: schema.notes.body,
+            extraNotes: schema.notes.extraNotes,
+          })
           .from(schema.notes)
           .where(and(eq(schema.notes.storyId, storyId), eq(schema.notes.isDeleted, false)))
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.worldRules.id,
+            type: schema.worldRules.type,
+            category: schema.worldRules.category,
+            behavior: schema.worldRules.behavior,
+            usability: schema.worldRules.usability,
+            danger: schema.worldRules.danger,
+            description: schema.worldRules.description,
+            extraNotes: schema.worldRules.extraNotes,
+          })
           .from(schema.worldRules)
           .where(
             and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
           )
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.plots.id,
+            details: schema.plots.details,
+          })
           .from(schema.plots)
           .where(and(eq(schema.plots.storyId, storyId), eq(schema.plots.isDeleted, false)))
           .all(),
         drizzleDb
-          .select()
+          .select({
+            id: schema.storySchemaFields.id,
+            entityType: schema.storySchemaFields.entityType,
+            type: schema.storySchemaFields.type,
+            defaultValue: schema.storySchemaFields.defaultValue,
+          })
           .from(schema.storySchemaFields)
           .where(
             and(
@@ -159,7 +220,12 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
           )
           .all(),
         drizzleDb
-          .select()
+          .select({
+            entityType: schema.attributeValues.entityType,
+            entityId: schema.attributeValues.entityId,
+            fieldId: schema.attributeValues.fieldId,
+            value: schema.attributeValues.value,
+          })
           .from(schema.attributeValues)
           .where(
             and(
@@ -230,11 +296,13 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
       if (token !== loadToken.current) return;
       setMatcher(nextMatcher);
       setBacklinks(buildMentionBacklinkIndex(sources, nextMatcher));
+      setAmbiguities(buildAmbiguousMentionIndex(sources, nextMatcher));
     } catch (error) {
       console.error('Failed to build the mention matcher:', error);
       if (token === loadToken.current) {
         setMatcher(EMPTY_MENTION_MATCHER);
         setBacklinks(new Map());
+        setAmbiguities(new Map());
       }
     }
   }, [drizzleDb, enabled, storyId]);
@@ -243,16 +311,23 @@ export const MentionMatcherProvider: React.FC<{ children: React.ReactNode }> = (
 
   useEffect(() => {
     if (!enabled) return;
-    for (const event of CHANGE_EVENTS) entityEventEmitter.on(event, reload);
+    // Saves arrive in bursts (a form write plus its relations); rebuilding the whole-story
+    // index per event would scan every text field several times for one save. The initial
+    // load above stays immediate - only event-driven rebuilds wait out the burst.
+    const debouncedReload = debounce(() => void reload(), 500);
+    for (const event of CHANGE_EVENTS) entityEventEmitter.on(event, debouncedReload);
     return () => {
-      for (const event of CHANGE_EVENTS) entityEventEmitter.off(event, reload);
+      debouncedReload.cancel?.();
+      for (const event of CHANGE_EVENTS) entityEventEmitter.off(event, debouncedReload);
     };
   }, [reload, enabled]);
 
   return (
     <MentionMatcherContext.Provider value={matcher}>
       <MentionBacklinksContext.Provider value={backlinks}>
-        {children}
+        <MentionAmbiguityContext.Provider value={ambiguities}>
+          {children}
+        </MentionAmbiguityContext.Provider>
       </MentionBacklinksContext.Provider>
     </MentionMatcherContext.Provider>
   );

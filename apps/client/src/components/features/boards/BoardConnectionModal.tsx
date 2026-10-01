@@ -1,5 +1,5 @@
 import type { BoardContentType } from '@keres/shared';
-import { generateBoardLocalId } from '@keres/shared';
+import { generateBoardLocalId, MAX_BOARD_TITLE_LENGTH } from '@keres/shared';
 import React from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import GraphConnectionModal from '@/src/components/features/graphs/GraphConnectionModal/GraphConnectionModal';
@@ -17,6 +17,7 @@ const BoardConnectionModal: React.FC<Props> = ({ pair, nodeTitles, setContent, o
     sourceName={nodeTitles[pair.from] ?? pair.from}
     targetName={nodeTitles[pair.to] ?? pair.to}
     labelEnabled
+    labelMaxLength={MAX_BOARD_TITLE_LENGTH}
     onClose={onClose}
     onConfirm={({ directed, direction, label }) => {
       setContent((current) => {

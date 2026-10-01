@@ -1,6 +1,5 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
@@ -196,6 +195,8 @@ export default function ServerRegistrationFields({
                 onChangeText={onRecoveryCodeChange}
                 style={inputStyle}
                 autoCapitalize="characters"
+                autoCorrect={false}
+                spellCheck={false}
               />
             )}
           </FormField>

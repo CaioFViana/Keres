@@ -16,11 +16,12 @@ import { WORLD_PIECE_SECTIONS, type WorldPieceSection } from '@keres/shared/enti
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useEntityFormSecondaryDraft } from '../../hooks/useEntityFormSecondaryDraft';
+import { useFormResetHeaderAction } from '../../hooks/useFormResetHeaderAction';
 import { useStorySchemaFields } from '../../hooks/useStorySchemaFields';
 import type { WorldRulesStackParamList } from '../../navigation/MainSystemStack';
 import { useStoryStore } from '../../state/storyStore';
@@ -98,6 +99,8 @@ const WorldRuleFormScreen = () => {
     setCustomValues,
     loading,
     isEditing,
+    isDirty,
+    resetForm,
   } = worldRuleFormState;
 
   const {
@@ -145,9 +148,12 @@ const WorldRuleFormScreen = () => {
 
   const formTitle = isEditing ? copy.editTitle : copy.createTitle;
 
+  const resetHeaderAction = useFormResetHeaderAction({ isEditing, isDirty, resetForm });
+
   useScreenHeader({
     target: 'parent',
     title: formTitle,
+    actions: resetHeaderAction,
   });
 
   if (loading) {
@@ -160,9 +166,6 @@ const WorldRuleFormScreen = () => {
       description={copy.formDescription}
       actions={
         <>
-          <Button onPress={handleSave} disabled={saving || deleting}>
-            {copy.saveLabel}
-          </Button>
           {isEditing && (
             <Button
               onPress={handleDelete}
@@ -172,6 +175,9 @@ const WorldRuleFormScreen = () => {
               {copy.deleteLabel}
             </Button>
           )}
+          <Button onPress={handleSave} disabled={saving || deleting}>
+            {copy.saveLabel}
+          </Button>
         </>
       }
     >

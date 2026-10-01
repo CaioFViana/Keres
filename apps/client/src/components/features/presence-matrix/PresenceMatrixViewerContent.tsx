@@ -6,7 +6,7 @@ import type { PresenceMatrixRow } from '@keres/shared/graphs/presenceMatrixLayou
 import { buildPresenceMatrixLayout } from '@keres/shared/graphs/presenceMatrixLayout';
 import { renderPresenceMatrixSvg } from '@keres/shared/graphs/presenceMatrixSvg';
 import { buildChapterColors } from '@keres/shared/graphs/storyGraphLayout';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { CharacterSelect, ItemSelect } from '../../../db/schema';
@@ -15,7 +15,8 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { deliverSvgMap } from '../../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import { deliverMapExport } from '../../../utils/storyTransfer';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
@@ -32,6 +33,9 @@ const PresenceMatrixViewerContent: React.FC<{
   const story = useStoryStore((state) => state.selectedStory);
   const notify = useNotificationStore((state) => state.showNotification);
   const canvas = useRef<PresenceMatrixCanvasHandle>(null);
+  const zoomIn = useCallback(() => canvas.current?.zoomBy(1.25), []);
+  const zoomOut = useCallback(() => canvas.current?.zoomBy(0.8), []);
+  const fitCanvasToScreen = useCallback(() => canvas.current?.fitToScreen(), []);
   /**
    * Events are out by default.
    *
@@ -61,10 +65,12 @@ const PresenceMatrixViewerContent: React.FC<{
     (id: string) => seriesColor(Math.max(0, itemIds.indexOf(id)), itemIds.length),
     [itemIds],
   );
-  useEffect(() => {
+  const [prevRequest, setPrevRequest] = useState(request);
+  if (request !== prevRequest) {
+    setPrevRequest(request);
     setIds(request.kind === 'character' && request.characterId ? [request.characterId] : []);
     setItemIds(request.kind === 'item' && request.itemId ? [request.itemId] : []);
-  }, [request]);
+  }
 
   const selectedItems = useMemo(
     () =>
@@ -214,7 +220,11 @@ const PresenceMatrixViewerContent: React.FC<{
         border: colors.border,
         showRowCoverage: request.kind === 'character',
       });
-      const r = await deliverSvgMap(svg, `${story.title}-presenca.svg`);
+      const r = await deliverMapExport(
+        svg,
+        `${story.title}-presenca.svg`,
+        useUserSettingsStore.getState().exportFormat,
+      );
       notify(
         r.delivered
           ? t('presence_matrix_export_success', { fileName: r.fileName })
@@ -464,25 +474,18 @@ const PresenceMatrixViewerContent: React.FC<{
       )}
       {layout.rows.length > 0 && (
         <View style={styles.controls}>
-          {[
-            ['add', () => canvas.current?.zoomBy(1.25)],
-            ['remove', () => canvas.current?.zoomBy(0.8)],
-            ['scan-outline', () => canvas.current?.fitToScreen()],
-            ['image-outline', exportMap],
-          ].map(([name, press]) => (
-            <TouchableOpacity
-              key={name as string}
-              style={styles.control}
-              onPress={press as () => void}
-              disabled={saving}
-            >
-              <Ionicons
-                name={name as keyof typeof Ionicons.glyphMap}
-                size={20}
-                color={colors.text}
-              />
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity style={styles.control} onPress={zoomIn} disabled={saving}>
+            <Ionicons name="add" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.control} onPress={zoomOut} disabled={saving}>
+            <Ionicons name="remove" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.control} onPress={fitCanvasToScreen} disabled={saving}>
+            <Ionicons name="scan-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.control} onPress={exportMap} disabled={saving}>
+            <Ionicons name="image-outline" size={20} color={colors.text} />
+          </TouchableOpacity>
         </View>
       )}
       {selectedSceneId && (

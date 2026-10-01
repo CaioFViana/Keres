@@ -1,6 +1,6 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -72,6 +72,7 @@ const PackBrowseScreen = () => {
   }, [server, showNotification, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadRemote` sets loading synchronously for immediate feedback; the pack list itself arrives after `await`. The rule cannot verify across the callback boundary.
     loadRemote();
   }, [loadRemote]);
 

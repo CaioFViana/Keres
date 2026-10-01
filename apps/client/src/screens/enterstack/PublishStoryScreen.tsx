@@ -9,7 +9,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { and, eq, isNull } from 'drizzle-orm';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Linking,
@@ -31,6 +31,9 @@ import {
 } from '../../services/PublicationApiService';
 import { createPublicationService } from '../../services/PublicationService';
 import { createServerService } from '../../services/ServerService';
+import { fetchServerStoryPreviews } from '../../services/sync/StoryTransfer';
+import { PublishManuscriptSection } from './PublishManuscriptSection';
+import { usePublishManuscript } from './usePublishManuscript';
 import { useConnectivityStore } from '../../state/connectivityStore';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useTheme } from '../../theme';
@@ -61,16 +64,17 @@ interface StoryRow {
 /**
  * A story's public address.
  *
- * Assembled here from `servers.url` because the app already knows where the server lives - the site is
- * served by the same process and on the same origin as the API (see the catch-all in
- * apps/api/src/index.ts), so there is nothing to ask the server.
+ * Assembled here from `servers.url` because the app already knows where the server lives - the
+ * showcase is served by the same process and on the same origin as the API, under `/showcase` (the
+ * root is the web client; see `SHOWCASE_PATH_PREFIX` in apps/api/src/services/hostedClient.ts), so
+ * there is nothing to ask the server.
  */
 export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {
-  return `${serverUrl.replace(/\/+$/, '')}/story/${storyId}`;
+  return `${serverUrl.replace(/\/+$/, '')}/showcase/story/${storyId}`;
 }
 
 const PublishStoryScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useScreenHeader({ target: 'self', title: t('publish_story_title') });
   const { colors } = useTheme();
   useBackButtonHandler();
@@ -80,10 +84,13 @@ const PublishStoryScreen = () => {
 
   const [rows, setRows] = useState<StoryRow[]>([]);
   const [showcaseByStory, setShowcaseByStory] = useState<Record<string, StoryShowcaseState>>({});
+  /** Each story's current version on its server, when the server answered. */
+  const [serverVersionByStory, setServerVersionByStory] = useState<Record<string, number>>({});
   const [expandedStoryId, setExpandedStoryId] = useState<string | null>(null);
   const [labelMode, setLabelMode] = useState<LabelMode>('both');
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState('');
+  const manuscript = usePublishManuscript(drizzleDb);
   const [busyStoryId, setBusyStoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +124,17 @@ const PublishStoryScreen = () => {
         built.push({ story, server, pendingOperations: pending.length });
       }
       setRows(built);
+
+      // Where each server's sequence stands. `lastServerSyncedLog` counts in that same sequence (how far
+      // this device has read it); `lastOperationLog` is the device's own counter and never matches it
+      // after the story was sent up, since an upload restarts the server's sequence at 0.
+      const versions: Record<string, number> = {};
+      for (const server of new Map(built.map((row) => [row.server.id, row.server])).values()) {
+        for (const preview of await fetchServerStoryPreviews(server)) {
+          versions[preview.storyId] = preview.lastOperationVersion;
+        }
+      }
+      setServerVersionByStory(versions);
 
       // The local mirror is enough to list them; querying the server is what brings the current visibility,
       // and it is done only for the servers that actually have a story here.
@@ -179,12 +197,14 @@ const PublishStoryScreen = () => {
       if (row.pendingOperations > 0) {
         return t('publish_blocked_pending_operations', { count: row.pendingOperations });
       }
-      if ((row.story.lastServerSyncedLog ?? 0) !== (row.story.lastOperationLog ?? 0)) {
+      // Unknown when the server did not answer: its own check (409) still refuses a stale publish.
+      const serverVersion = serverVersionByStory[row.story.id];
+      if (serverVersion !== undefined && (row.story.lastServerSyncedLog ?? 0) < serverVersion) {
         return t('publish_blocked_not_synced');
       }
       return null;
     },
-    [isOffline, t],
+    [isOffline, serverVersionByStory, t],
   );
 
   const runPublish = useCallback(
@@ -194,14 +214,28 @@ const PublishStoryScreen = () => {
         // Visibility travels with the publication, rather than in a second call only when there is a password:
         // that way publishing with the padlock off really does make the story public, and does not silently
         // leave an old password in force.
+        const manuscriptOptions = manuscript.buildOptions(row.story, t, i18n.language);
+        const readerOptions = manuscript.buildReaderOptions(row.story, t, i18n.language);
         const published = await publicationApiService.publish(
           row.server,
           row.story.id,
-          row.story.lastOperationLog ?? 0,
+          // The server's sequence, as far as this device has read it - what the server checks against.
+          row.story.lastServerSyncedLog ?? 0,
           labelMode,
           usePassword ? 'password' : 'public',
           usePassword ? password.trim() : undefined,
+          manuscriptOptions,
+          readerOptions,
+          manuscript.includePackage,
         );
+        // A server that predates these extras publishes the version and drops them without a word:
+        // saying so beats a page that silently lacks the button.
+        const droppedExtras =
+          (manuscriptOptions && !published.manuscriptFormat) ||
+          (readerOptions && published.readerByteSize == null);
+        if (droppedExtras) {
+          showNotification(t('publish_extras_ignored'), 'error');
+        }
         await createPublicationService(drizzleDb).syncPublicationsWithServer(row.server);
 
         // Publishing without saying where the story ended up leaves the person with nothing in hand - the
@@ -224,6 +258,9 @@ const PublishStoryScreen = () => {
         if (status === 409) {
           // The server disagrees with our counter: synchronizing is the only way.
           showNotification(t('publish_blocked_not_synced'), 'error');
+        } else if (status === 429) {
+          // The plan's daily number of publications is used up.
+          showNotification(t('publish_limit_reached'), 'error');
         } else if (status === 403) {
           showNotification(t('publish_showcase_disabled'), 'error');
         } else if (isOfflineError(publishError)) {
@@ -236,13 +273,17 @@ const PublishStoryScreen = () => {
         setBusyStoryId(null);
       }
     },
-    [drizzleDb, labelMode, load, password, showNotification, t, usePassword],
+    [drizzleDb, i18n, labelMode, load, manuscript, password, showNotification, t, usePassword],
   );
 
   const handlePublish = useCallback(
     (row: StoryRow) => {
       if (usePassword && password.trim().length < 4) {
         showNotification(t('publish_password_too_short'), 'error');
+        return;
+      }
+      if (manuscript.nothingSelected) {
+        showNotification(t('publish_select_one'), 'error');
         return;
       }
 
@@ -267,7 +308,7 @@ const PublishStoryScreen = () => {
         ],
       );
     },
-    [password, runPublish, showcaseByStory, showNotification, t, usePassword],
+    [manuscript, password, runPublish, showcaseByStory, showNotification, t, usePassword],
   );
 
   const handleDeleteVersion = useCallback(
@@ -465,6 +506,7 @@ const PublishStoryScreen = () => {
                     setUsePassword(showcase?.visibility === 'password');
                     setPassword('');
                     setLabelMode(showcase?.labelMode ?? 'both');
+                    manuscript.resetForStory(row.story);
                   }
                   setExpandedStoryId(expanded ? null : row.story.id);
                 }}
@@ -472,8 +514,8 @@ const PublishStoryScreen = () => {
                 <View style={styles.storyInfo}>
                   <Text style={styles.storyTitle}>{row.story.title}</Text>
                   <Text style={styles.storyMeta}>
-                    {row.server.name} · {t('publish_local_version')}{' '}
-                    {row.story.lastOperationLog ?? 0}
+                    {row.server.name} ·{' '}
+                    {t('publish_synced_version', { version: row.story.lastServerSyncedLog ?? 0 })}
                     {showcase?.isPublished
                       ? ` · ${t('publish_versions_count', {
                           count: showcase.publications.length,
@@ -550,13 +592,20 @@ const PublishStoryScreen = () => {
                     </>
                   )}
 
+                  <PublishManuscriptSection
+                    storyId={row.story.id}
+                    storyType={row.story.type}
+                    manuscript={manuscript}
+                  />
+
                   <TouchableOpacity
                     style={[
                       styles.primaryButton,
-                      (!!reason || busy) && styles.primaryButtonDisabled,
+                      (!!reason || busy || manuscript.nothingSelected) &&
+                        styles.primaryButtonDisabled,
                     ]}
                     onPress={() => handlePublish(row)}
-                    disabled={!!reason || busy}
+                    disabled={!!reason || busy || manuscript.nothingSelected}
                   >
                     <Ionicons name="cloud-upload-outline" size={18} color={colors.onPrimary} />
                     <Text style={styles.primaryButtonText}>

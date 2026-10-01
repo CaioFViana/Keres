@@ -1,8 +1,8 @@
 import { avatarColorFromSeed, DEFAULT_AVATAR_ICON } from '@keres/shared';
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { View } from 'react-native';
 import { isColorLight } from '../../../../theme/commonStyles';
+import MapIcon from '../MapIcon/MapIcon';
 
 /**
  * The default icon, the fallback palette and the colour seed live in `@keres/shared`: the public site
@@ -22,7 +22,7 @@ const ICON_TINT_ON_DARK = 'rgba(255, 255, 255, 0.75)';
 export interface AvatarProps {
   /** The background colour the user picked; `null`/absent falls back to the deterministic one. */
   color?: string | null;
-  /** The name of the Ionicons icon picked; `null`/absent falls back to the default icon. */
+  /** Stored icon name (`ion:`/`keres:`); `null`/absent falls back to the default icon. */
   icon?: string | null;
   /** Only used when no `color` was chosen, to generate a stable fallback (an id or a username). */
   seed: string;
@@ -31,7 +31,7 @@ export interface AvatarProps {
 
 const Avatar: React.FC<AvatarProps> = ({ color, icon, seed, size = 40 }) => {
   const backgroundColor = color || avatarColorFromSeed(seed);
-  const iconName = (icon as keyof typeof Ionicons.glyphMap) || DEFAULT_AVATAR_ICON;
+  const iconName = icon || DEFAULT_AVATAR_ICON;
   const iconTint = isColorLight(backgroundColor) ? ICON_TINT_ON_LIGHT : ICON_TINT_ON_DARK;
 
   return (
@@ -45,7 +45,7 @@ const Avatar: React.FC<AvatarProps> = ({ color, icon, seed, size = 40 }) => {
         justifyContent: 'center',
       }}
     >
-      <Ionicons name={iconName} size={size * 0.58} color={iconTint} />
+      <MapIcon name={iconName} size={size * 0.58} color={iconTint} />
     </View>
   );
 };

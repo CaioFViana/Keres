@@ -15,6 +15,15 @@ jest.mock('@expo/vector-icons', () => {
     ),
   };
 });
+jest.mock('../../src/components/common/display/MapIcon/MapIcon', () => {
+  const { View } = jest.requireActual('react-native');
+  return {
+    __esModule: true,
+    default: ({ name, color, size }: any) => (
+      <View testID="drawer-stored-icon" accessibilityLabel={`${name}:${color}:${size}`} />
+    ),
+  };
+});
 jest.mock('../../src/components/common/navigation/DrawerMenuButton/DrawerMenuButton', () => {
   const { Pressable } = jest.requireActual('react-native');
   return {
@@ -27,10 +36,10 @@ jest.mock('../../src/components/common/navigation/DrawerMenuButton/DrawerMenuBut
 
 import { fireEvent, render } from '@testing-library/react-native';
 import { DrawerActions } from '@react-navigation/native';
-import React from 'react';
 import {
   ArcContextDrawerScreen,
   drawerIcon,
+  drawerStoredIcon,
   DrawerToggleButton,
   mainSystemStackRootScreens,
 } from '../../src/navigation/MainSystemDrawerHelpers';
@@ -56,6 +65,22 @@ describe('MainSystemDrawerHelpers', () => {
     expect(view.getByTestId('drawer-icon')).toHaveProp(
       'accessibilityLabel',
       'people-outline:#123456:24',
+    );
+  });
+
+  it('renders a stored icon name, falling back when none is set', async () => {
+    const Icon = drawerStoredIcon('keres:castle', 'library-outline');
+    const picked = await render(<Icon color="#123456" size={24} />);
+    expect(picked.getByTestId('drawer-stored-icon')).toHaveProp(
+      'accessibilityLabel',
+      'keres:castle:#123456:24',
+    );
+
+    const Fallback = drawerStoredIcon(null, 'library-outline');
+    const fallback = await render(<Fallback color="#123456" size={24} />);
+    expect(fallback.getByTestId('drawer-stored-icon')).toHaveProp(
+      'accessibilityLabel',
+      'library-outline:#123456:24',
     );
   });
 

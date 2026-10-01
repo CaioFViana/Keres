@@ -1,6 +1,6 @@
 /**
- * Inventário da landing. Os textos moram nos dicionários; daqui saem só os ids,
- * para a página e os testes afirmarem a mesma lista.
+ * The landing page's inventory. The texts live in the dictionaries; only the ids
+ * come from here, so the page and the tests assert the same list.
  */
 
 export const NAV_SECTIONS = ['product', 'universe', 'platforms', 'download'] as const;
@@ -77,16 +77,16 @@ export const PLATFORMS = [
 ] as const;
 
 /**
- * A vitrine: fotos do app rodando, não desenhos feitos para a página.
+ * The showcase: photos of the app running, not drawings made for the page.
  *
- * Cada arquivo em `public/showcase/screens/<id>.<idioma>.<tema>.png` sai de
- * `apps/desktop/scripts/capture-screens.cjs`, que abre o app de verdade dentro do Electron,
- * com uma história de exemplo instalada, e fotografa a tela. Existe uma versão por idioma e
- * por tema, e cada tela vem da história de exemplo que melhor a preenche - a vitrine inteira
- * saindo do mesmo exemplo dava a impressão de um app de uma história só.
+ * Each file in `public/showcase/screens/<id>.<language>.<theme>.png` comes from
+ * `apps/desktop/scripts/capture-screens.cjs`, which opens the real app inside Electron,
+ * with an example story installed, and photographs the screen. There is one version per
+ * language and theme, and each screen comes from the example story that fills it best -
+ * the whole showcase taken from a single example gave the impression of a one-story app.
  *
- * A lista é curta de propósito: telas de conta, servidor e importação mostram encanamento, não
- * a escrita - elas continuam sendo texto nos cartões de recurso.
+ * The list is short on purpose: account, server, and import screens show plumbing, not
+ * writing - they remain text on the feature cards.
  */
 export const SHOWCASE_SCREENS = [
   { id: 'narrative-elements', width: 1440, height: 900 },
@@ -97,8 +97,8 @@ export const SHOWCASE_SCREENS = [
   { id: 'story-map', width: 1440, height: 900 },
   { id: 'board-canvas', width: 1440, height: 900 },
   { id: 'story-timeline', width: 1440, height: 900 },
-  // O mapa de locais é uma faixa baixa: fotografado na janela cheia, sobrava meia página em
-  // branco embaixo do desenho.
+  // The location map is a low strip: photographed in the full window, it left half a page
+  // of white below the drawing.
   { id: 'location-map', width: 1440, height: 560 },
   { id: 'location-map-canvas', width: 1440, height: 900 },
   { id: 'plot-coverage', width: 1440, height: 620 },

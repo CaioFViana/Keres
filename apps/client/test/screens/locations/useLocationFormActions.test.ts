@@ -45,6 +45,7 @@ jest.mock('react-i18next', () => ({
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
+import { withSilencedConsole } from '../../helpers/silenceConsole';
 import { useLocationFormActions } from '../../../src/screens/locations/useLocationFormActions';
 import type { LocationFormState } from '../../../src/screens/locations/useLocationFormState';
 import type { LocationService } from '../../../src/services/storymanagement/LocationService';
@@ -65,6 +66,8 @@ const createState = (overrides: Partial<LocationFormState> = {}): LocationFormSt
     setCustomValues: jest.fn(),
     loading: false,
     isEditing: false,
+    clearFormDraft: jest.fn().mockResolvedValue(undefined),
+    draftRestored: false,
     ...overrides,
   }) as LocationFormState;
 
@@ -133,28 +136,33 @@ it('coordinates persistence and retains identity before secondary writes complet
   expect(persistPendingLocationRelations).toHaveBeenCalledWith('location-1');
   expect(mockEmit).toHaveBeenCalledWith('location_changed', 'story-1', 'location-1');
   expect(mockAlert).toHaveBeenCalledWith('success', 'created');
+  expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
 });
 
 it('retries after a secondary failure without signalling success on the first attempt', async () => {
-  const state = createState();
-  let attempt = 0;
-  mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
-    options.onEntityPersisted('location-1');
-    if (attempt === 0) {
-      attempt += 1;
-      throw new Error('secondary failed');
-    }
-    await options.persistSecondaryData('location-1');
-    return { entityId: 'location-1', created: false };
+  await withSilencedConsole(['error'], async () => {
+    const state = createState();
+    let attempt = 0;
+    mockSaveEntityWithSecondaryData.mockImplementation(async (options) => {
+      options.onEntityPersisted('location-1');
+      if (attempt === 0) {
+        attempt += 1;
+        throw new Error('secondary failed');
+      }
+      await options.persistSecondaryData('location-1');
+      return { entityId: 'location-1', created: false };
+    });
+
+    const view = await renderActions(state);
+    await act(async () => view.result.current.handleSave());
+    expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
+    expect(mockEmit).not.toHaveBeenCalled();
+    expect(state.clearFormDraft).not.toHaveBeenCalled();
+
+    mockAlert.mockClear();
+    await act(async () => view.result.current.handleSave());
+    expect(state.retainPersistedLocationId).toHaveBeenCalledWith('location-1');
+    expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
+    expect(state.clearFormDraft).toHaveBeenCalledTimes(1);
   });
-
-  const view = await renderActions(state);
-  await act(async () => view.result.current.handleSave());
-  expect(mockAlert).toHaveBeenCalledWith('error', 'save failed');
-  expect(mockEmit).not.toHaveBeenCalled();
-
-  mockAlert.mockClear();
-  await act(async () => view.result.current.handleSave());
-  expect(state.retainPersistedLocationId).toHaveBeenCalledWith('location-1');
-  expect(mockAlert).toHaveBeenCalledWith('success', expect.any(String));
 });

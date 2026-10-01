@@ -240,6 +240,21 @@ describe('updating an anchor', () => {
   it('refuses an anchor that is not there', async () => {
     await expect(service().updateAnchor(TEST_USER_ID, 'missing', {})).rejects.toThrow('not found');
   });
+
+  it('closes an open stretch and refuses to reopen one beside another', async () => {
+    const open = await service().createAnchor(
+      TEST_USER_ID,
+      anchorValues({ endSceneId: null, endPosition: null }),
+    );
+
+    const closed = await service().updateAnchor(TEST_USER_ID, open.id, { endSceneId: 'scene-b' });
+    expect(closed.endSceneId).toBe('scene-b');
+
+    await service().createAnchor(TEST_USER_ID, anchorValues({ order: 2 }));
+    await expect(
+      service().updateAnchor(TEST_USER_ID, open.id, { endSceneId: null }),
+    ).rejects.toThrow('only stretch');
+  });
 });
 
 describe('deleting an anchor', () => {

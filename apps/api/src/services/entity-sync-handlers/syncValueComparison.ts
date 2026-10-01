@@ -1,4 +1,10 @@
-/** Compares JSON-compatible sync values structurally, independent of object key order. */
+/**
+ * Compares JSON-compatible sync values structurally, independent of object key order.
+ *
+ * A missing key and an explicit null compare equal, and Dates compare by instant: create
+ * idempotency (`createPayloadMatches`) must not treat a retried payload as different just
+ * because one side omitted a null or serialized a Date.
+ */
 export function syncValuesMatch(left: unknown, right: unknown): boolean {
   if (left instanceof Date || right instanceof Date) {
     const leftTime = left instanceof Date ? left.getTime() : new Date(String(left)).getTime();

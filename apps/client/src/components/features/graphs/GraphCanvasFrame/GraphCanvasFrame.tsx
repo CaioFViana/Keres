@@ -1,41 +1,97 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Animated, Platform, View } from 'react-native';
-import type { usePanZoomCanvas } from '../../../../hooks/usePanZoomCanvas';
+import type { useCanvasViewport } from '../../../../hooks/useCanvasViewport';
 import { useTheme } from '../../../../theme';
 
-type PanZoomCanvasResult = ReturnType<typeof usePanZoomCanvas>;
+type CanvasViewportResult = ReturnType<typeof useCanvasViewport>;
 
 interface GraphCanvasFrameProps {
-  width: number;
-  height: number;
   children: React.ReactNode;
-  containerRef: PanZoomCanvasResult['containerRef'];
-  handleLayout: PanZoomCanvasResult['handleLayout'];
-  panHandlers: PanZoomCanvasResult['panHandlers'];
-  animatedTransform: PanZoomCanvasResult['animatedTransform'];
+  containerRef: CanvasViewportResult['containerRef'];
+  handleLayout: CanvasViewportResult['handleLayout'];
+  panHandlers: CanvasViewportResult['panHandlers'];
+  animatedTransform: CanvasViewportResult['animatedTransform'];
   /**
-   * Boards draw pins as views on top of an SVG. When a pin is dragged into the empty margin of a
-   * centred drawing, the line must still paint. Other graphs stay clipped to the drawing box.
+   * Content painted below the overlay (the location map's image bases: images < edges <
+   * nodes). A second animated plane goes here when its content needs the camera; reuse
+   * `graphCanvasPlaneStyle` so it matches the main plane exactly.
    */
-  contentOverflow?: 'hidden' | 'visible';
+  underlay?: React.ReactNode;
+  /**
+   * Viewport-sized overlay (the `SkiaEdgeCanvas`), rendered before the plane so nodes keep
+   * painting above the edges. It must not carry an RN transform: the camera lives in its own
+   * Skia `Group`, and a second transform here would double-apply it.
+   */
+  overlay?: React.ReactNode;
+  /**
+   * Touch catcher above the plane (overlay draw/select tools). Mounted only while a tool is
+   * armed; empty otherwise, so idle taps keep reaching the nodes below.
+   */
+  interactionOverlay?: React.ReactNode;
 }
 
 /**
- * `StoryGraphCanvas`, `CharacterRelationGraphCanvas` and `LocationGraphCanvas` repeated, byte for
- * byte, the same `usePanZoomCanvas` scaffolding (`View`/`Animated.View` with `transformOrigin` and
- * `transform`) - pure structure, with no domain logic at all. Only that part comes out here; the
- * rendering inside (SVG edges, node style/colour/badge) stays in each canvas,
- * which is already genuinely different between the three.
+ * The inner camera plane geometry, shared with `underlay` planes so all planes agree. Kept
+ * deliberately free of `pointerEvents`: as a style key it is ignored on native and dropped as
+ * invalid CSS on web, which leaves the full-size plane swallowing every hit aimed below it.
+ * Every plane renders `pointerEvents="box-none"` as a real View prop instead - the prop carries
+ * native semantics and react-native-web's `box-none` polyfill, so empty space falls through to
+ * the layers below while pins/nodes still receive the hit.
  */
+export const graphCanvasPlaneStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  transformOrigin: 'top left',
+  overflow: 'visible',
+} as const;
+
+/**
+ * The shared pan/zoom scaffolding of every canvas: an outer viewport that owns the gestures and
+ * clips to the screen, and an inner plane that carries the camera transform.
+ *
+ * Children are world-addressed (`left`/`top` in drawing coordinates) and the inner plane is
+ * viewport-sized with visible overflow, so panning and zooming only ever rewrite the container
+ * transform - never a child's layout position, and never a document-sized native surface. The
+ * only viewport-sized surfaces are the edges overlays each canvas draws for itself.
+ */
+/**
+ * Attaches native-drag suppression to the container's host node on web, returning the detach
+ * cleanup. Anything else - native platforms, a missing ref, or a host node without DOM
+ * listeners (the test renderer) - attaches nothing and returns undefined.
+ */
+export function suppressNativeDragOnContainer(
+  containerRef: { current: unknown },
+  platformOS: typeof Platform.OS,
+): (() => void) | undefined {
+  if (platformOS !== 'web') return undefined;
+  const node = containerRef.current as unknown as {
+    addEventListener?: (
+      type: string,
+      listener: (event: { preventDefault: () => void }) => void,
+    ) => void;
+    removeEventListener?: (
+      type: string,
+      listener: (event: { preventDefault: () => void }) => void,
+    ) => void;
+  } | null;
+  if (!node?.addEventListener || !node.removeEventListener) return undefined;
+  const suppressNativeDrag = (event: { preventDefault: () => void }) => event.preventDefault();
+  node.addEventListener('dragstart', suppressNativeDrag);
+  return () => node.removeEventListener?.('dragstart', suppressNativeDrag);
+}
+
 const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
-  width,
-  height,
   containerRef,
   handleLayout,
   panHandlers,
   animatedTransform,
   children,
-  contentOverflow = 'hidden',
+  underlay,
+  overlay,
+  interactionOverlay,
 }) => {
   const { colors } = useTheme();
 
@@ -49,34 +105,27 @@ const GraphCanvasFrame: React.FC<GraphCanvasFrameProps> = ({
           ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
           : {}),
       },
-      content: {
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        transformOrigin: 'top left' as const,
-        overflow: contentOverflow,
-        // Empty space belongs to the container's pan; pins/nodes still receive the hit.
-        pointerEvents: 'box-none' as const,
-      },
+      content: graphCanvasPlaneStyle,
     }),
-    [colors, contentOverflow],
+    [colors],
   );
 
+  // Native HTML5 drag would hijack image gestures (a ghost follows the cursor while the
+  // responder system starves), and react-native-web drops the `onDragStart` prop, so the
+  // suppression is a real DOM listener: `dragstart` bubbles here from any descendant image.
+  useEffect(() => suppressNativeDragOnContainer(containerRef, Platform.OS), [containerRef]);
+
   return (
-    <View
-      ref={containerRef}
-      style={styles.container}
-      onLayout={handleLayout}
-      {...panHandlers}
-      {...(Platform.OS === 'web'
-        ? {
-            onDragStart: (event: { preventDefault?: () => void }) => event.preventDefault?.(),
-          }
-        : {})}
-    >
-      <Animated.View style={[styles.content, { width, height, transform: animatedTransform }]}>
+    <View ref={containerRef} style={styles.container} onLayout={handleLayout} {...panHandlers}>
+      {underlay}
+      {overlay}
+      <Animated.View
+        style={[styles.content, { transform: animatedTransform }]}
+        pointerEvents="box-none"
+      >
         {children}
       </Animated.View>
+      {interactionOverlay}
     </View>
   );
 };

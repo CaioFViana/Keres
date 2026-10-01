@@ -4,7 +4,7 @@ import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import GenericFilterSortList from '@/src/components/common/lists/GenericFilterSortList/GenericFilterSortList';
@@ -23,7 +23,10 @@ import type {
   TagSelect,
 } from '../../db/schema';
 import type { ItemSelect } from '../../db/schemas/items';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -43,6 +46,7 @@ import { createTagService } from '../../services/storymanagement/TagService';
 import { createTagRelationService } from '../../services/storymanagement/TagRelationService';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { orderItemJourneysByNarrative } from '../../utils/itemJourneyOrder';
+import { entityBelongsToActiveArc } from '../../utils/storyArcFilter';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 export type ItemsScreenNavigationProp = CompositeNavigationProp<
@@ -52,6 +56,8 @@ export type ItemsScreenNavigationProp = CompositeNavigationProp<
 
 const ItemListScreen = () => {
   useBackButtonHandler();
+  useScreenTour('ItemsStack');
+  const listAnchorRef = useScreenAnchor('Items', 'list');
   const { t } = useTranslation();
   const { agree, term } = useStoryVocabulary();
   const { colors } = useTheme();
@@ -92,6 +98,7 @@ const ItemListScreen = () => {
   }, [drizzleDb, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadJourneys` only reaches setState after `await`; the rule cannot verify across the callback boundary.
     loadJourneys();
   }, [loadJourneys]);
 
@@ -105,6 +112,7 @@ const ItemListScreen = () => {
   }, [drizzleDb, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadCharacterNames` clears synchronously only when db/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadCharacterNames();
   }, [loadCharacterNames]);
   useEffect(() => {
@@ -154,6 +162,7 @@ const ItemListScreen = () => {
   }, [drizzleDb, items, storyId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadTags` clears synchronously only when db/story are missing; everything else waits for `await`. The rule cannot verify across the callback boundary.
     loadTags();
   }, [loadTags]);
 
@@ -169,16 +178,19 @@ const ItemListScreen = () => {
     };
   }, [loadTags, storyId]);
 
+  const activeArcId = useStoryStore((state) => state.activeArcId);
+  const arcIdsByItem = useEntityArcIds(storyId ?? '', 'item');
   const itemsWithTags = useMemo(
     () =>
       (items as ItemSelect[])
         .map((item) => ({ ...item, tags: tagsByItemId.get(item.id) ?? [] }))
         .filter(
           (item) =>
-            activeTagIds.length === 0 ||
-            item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id)),
+            (activeTagIds.length === 0 ||
+              item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id))) &&
+            entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
         ),
-    [activeTagIds, items, tagsByItemId],
+    [activeArcId, activeTagIds, arcIdsByItem, items, tagsByItemId],
   );
 
   const handleViewDetails = useCallback(
@@ -308,19 +320,38 @@ const ItemListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <GenericFilterSortList
-        {...listProps}
-        data={itemsWithTags}
-        renderItem={memoizedItemListItem}
-        keyExtractor={(item) => item.id}
-        searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
-        filterOptions={allTags.map((tag) => ({ label: tag.name, value: tag.id, color: tag.color }))}
-        onFilterChange={setActiveTagIds}
-        selectedFilterValues={activeTagIds}
-        sortOptions={memoizedSortOptions}
-        entityName="Item"
-        storyId={storyId || ''}
-      />
+      <View ref={listAnchorRef} collapsable={false} style={{ flex: 1 }}>
+        <GenericFilterSortList
+          {...listProps}
+          data={itemsWithTags}
+          renderItem={memoizedItemListItem}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}
+          filterOptions={allTags.map((tag) => ({
+            label: tag.name,
+            value: tag.id,
+            color: tag.color,
+          }))}
+          onFilterChange={setActiveTagIds}
+          selectedFilterValues={activeTagIds}
+          sortOptions={memoizedSortOptions}
+          entityName="Item"
+          storyId={storyId || ''}
+          emptyStateTitle={t('items_empty_title')}
+          emptyStateMessage={t('items_empty_message')}
+          emptyStateActions={
+            canEdit
+              ? [
+                  {
+                    label: t('items_empty_create'),
+                    onPress: () => navigation.navigate('ItemForm', {}),
+                    testID: 'empty-create-item',
+                  },
+                ]
+              : []
+          }
+        />
+      </View>
     </View>
   );
 };

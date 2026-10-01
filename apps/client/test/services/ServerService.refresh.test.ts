@@ -101,6 +101,20 @@ describe('ServerService.refreshServerToken', () => {
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
+  it('reports a refresh that threw as an authentication problem', async () => {
+    mockGetTokens.mockResolvedValue({ accessToken: 'expired', refreshToken: 'refresh' });
+    mockIsJwtExpired.mockReturnValue(true);
+    mockRefreshAccessToken.mockRejectedValue(new Error('decrypt failed'));
+    mockIsOfflineError.mockReturnValue(false);
+
+    await expect(service.refreshServerToken(server)).resolves.toBe(server);
+
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      'Failed to refresh token for server Principal. Please re-authenticate.',
+      'error',
+    );
+  });
+
   it('does not report "refresh failed" when the server is already known unreachable', async () => {
     // AuthTokenManager.refreshAccessToken swallows an offline failure into a plain `null`
     // return (see its own isOfflineError branch) - the only way refreshServerToken can

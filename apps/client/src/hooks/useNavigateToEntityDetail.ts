@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import type { MainSystemDrawerParamList } from '../navigation/MainSystemStack';
 import type { NavigableEntityType } from '../utils/entityNavigation';
 import { navigateToEntityDetail } from '../utils/entityNavigation';
+import type { OccurrenceTarget } from '../utils/occurrenceTarget';
 
 /**
  * `navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>()` followed by
@@ -18,7 +19,12 @@ export function useNavigateToEntityDetail() {
     // `options.onReturn` is passed straight through: whoever leaves their own stack (the Plot matrix
     // opening a Scene, say) has to register the way back, otherwise the back button takes the destination
     // stack to where it used to be, rather than to where the person came from.
-    (entityType: NavigableEntityType, entityId: string, options?: { onReturn?: () => void }) => {
+    // `options.occurrence` rides along untouched: the detail screen lands on it.
+    (
+      entityType: NavigableEntityType,
+      entityId: string,
+      options?: { onReturn?: () => void; occurrence?: OccurrenceTarget },
+    ) => {
       const drawerNavigation =
         navigation.getParent<DrawerNavigationProp<MainSystemDrawerParamList>>();
       if (drawerNavigation) {

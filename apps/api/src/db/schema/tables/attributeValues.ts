@@ -1,5 +1,5 @@
-import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow, unique } from '../columns';
+import { relations, sql } from 'drizzle-orm';
+import { boolean, integer, table, text, timestamp, timestampNow, uniqueIndex } from '../columns';
 import { stories } from './stories';
 import { storySchemaFields } from './storySchemaFields';
 import type { StorySchemaEntityType } from '@keres/shared';
@@ -28,7 +28,9 @@ export const attributeValues = table(
   },
   (table) => {
     return {
-      unq: unique('entity_field_unq').on(table.entityId, table.fieldId),
+      unq: uniqueIndex('entity_field_unq')
+        .on(table.entityId, table.fieldId)
+        .where(sql`${table.isDeleted} = false`),
     };
   },
 );

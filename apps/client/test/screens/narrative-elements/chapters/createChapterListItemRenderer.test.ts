@@ -80,6 +80,7 @@ describe('chapter list query helpers', () => {
 
   it('passes filtered scenes and interaction callbacks to the chapter components', () => {
     const onAddScene = jest.fn();
+    const onQuickAddPress = jest.fn();
     const onReorder = jest.fn();
     const chapter = { id: 'chapter-1', isFavorite: false } as any;
     const matchingScene = scene({ isFavorite: true });
@@ -91,6 +92,7 @@ describe('chapter list query helpers', () => {
       choices: [],
       favoriteFilterState: 'all',
       handleAddScene: onAddScene,
+      handleQuickAddPress: onQuickAddPress,
       handleOpenScene: jest.fn(),
       handleToggleFavorite: jest.fn(),
       handleToggleSceneFavorite: jest.fn(),
@@ -116,8 +118,10 @@ describe('chapter list query helpers', () => {
     expect(scenesList.props.canEdit).toBe(true);
     scenesList.props.onAddScene();
     scenesList.props.onReorderScenes();
+    scenesList.props.onQuickAddPress();
     expect(onAddScene).toHaveBeenCalledWith('chapter-1');
     expect(onReorder).toHaveBeenCalledWith('chapter-1');
+    expect(onQuickAddPress).toHaveBeenCalledWith('chapter-1');
   });
 
   it('applies advanced search matches to chapter scenes', () => {
@@ -135,6 +139,7 @@ describe('chapter list query helpers', () => {
       choices: [],
       favoriteFilterState: 'all',
       handleAddScene: jest.fn(),
+      handleQuickAddPress: jest.fn(),
       handleOpenScene: jest.fn(),
       handleToggleFavorite: jest.fn(),
       handleToggleSceneFavorite: jest.fn(),

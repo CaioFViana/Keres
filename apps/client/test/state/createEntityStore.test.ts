@@ -232,6 +232,23 @@ describe('fetching', () => {
 
     expect(store.getState().error).toBeNull();
   });
+
+  it('decorates with per-user favorites and filters on them when the behavior is individual', async () => {
+    mockFavoriteService.getBehavior.mockResolvedValueOnce('individual');
+    mockFavoriteService.decorateEntities.mockResolvedValueOnce([tag('a', true), tag('b', false)]);
+    const { store, fetchEntities } = readyStore();
+    store.setState({ favoriteFilterState: 'favorite' } as any);
+
+    await (store.getState() as any).fetchTags();
+
+    // The service query is unfiltered: the per-user filter applies after decoration.
+    expect(fetchEntities.mock.calls[0][1]).toMatchObject({ favoriteFilterState: 'all' });
+    expect(mockFavoriteService.decorateEntities).toHaveBeenCalledWith('story-1', 'Tag', 'user-1', [
+      tag('a'),
+      tag('b'),
+    ]);
+    expect((store.getState() as any).tags).toEqual([tag('a', true)]);
+  });
 });
 
 describe('filter and sort setters', () => {
@@ -474,5 +491,17 @@ describe('extra actions', () => {
 
     expect(store.getState().activeSort).toBe('index');
     expect((store.getState() as any).tags).toEqual([tag('a'), tag('b')]);
+  });
+
+  it('lets store-specific actions read the current state through get', async () => {
+    const { store } = readyStore({
+      extraActions: ({ get }: any) => ({
+        count: () => get().tags.length,
+      }),
+    } as any);
+
+    await (store.getState() as any).fetchTags();
+
+    expect((store.getState() as any).count()).toBe(2);
   });
 });

@@ -6,7 +6,7 @@ import type {
   UpdateStoryUpdate,
 } from '@keres/shared';
 import { CreateItemDataSchema, PartialItemSchema } from '@keres/shared';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, type CompatibleDb } from '../../db';
 import { characters, items } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError } from './BaseSyncEntityHandler';
@@ -58,20 +58,9 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
     // Validate characterOwnerId if present
     await this.validateCharacterOwner(storyId, validatedData.characterOwnerId, database);
 
-    // Check for existing item with the same name within the same story
-    const existingItem = await database.query.items.findFirst({
-      where: and(
-        eq(items.storyId, storyId),
-        eq(items.name, validatedData.name),
-        eq(items.isDeleted, false),
-      ),
-    });
-
-    if (existingItem) {
-      throw new Error(
-        `Conflict: Item with name "${validatedData.name}" already exists in story ${storyId}.`,
-      );
-    }
+    // No uniqueness by name: two items are two things, whatever they are called. Two devices can
+    // name one alike offline, and refusing the second (or folding it into the first, with the
+    // journeys, effects and checks that point at it) would lose one of them.
 
     await database.insert(items).values({
       id: update.id!,
@@ -103,24 +92,6 @@ export class ItemSyncHandler extends BaseSyncEntityHandler<
     // Validate characterOwnerId if it's being updated
     if (validatedChanges.characterOwnerId !== undefined) {
       await this.validateCharacterOwner(storyId, validatedChanges.characterOwnerId, database);
-    }
-
-    // If the name is being updated, check for uniqueness within the story
-    if (validatedChanges.name && validatedChanges.name !== currentEntity.name) {
-      const existingItem = await database.query.items.findFirst({
-        where: and(
-          eq(items.storyId, storyId),
-          eq(items.name, validatedChanges.name),
-          eq(items.isDeleted, false),
-          ne(items.id, update.id!), // Exclude the current item from the check
-        ),
-      });
-
-      if (existingItem) {
-        throw new Error(
-          `Conflict: Item with name "${validatedChanges.name}" already exists in story ${storyId}.`,
-        );
-      }
     }
 
     await super.update(userId, storyId, update, currentEntity, database);

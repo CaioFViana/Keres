@@ -116,3 +116,71 @@ it('stores media in OPFS when the Electron bridge is absent', async () => {
   await deleteDirectory('media/story');
   expect(existsSync('media/story/b.png')).toBe(false);
 });
+
+it('rejects an empty path and reports a browser without OPFS', async () => {
+  const root = new Map<string, Entry>();
+  installMemoryOpfs(root);
+
+  await expect(writeBytes('', new Uint8Array([1]))).rejects.toThrow('Invalid media path');
+
+  const storage = navigator.storage;
+  Object.defineProperty(navigator, 'storage', { configurable: true, value: undefined });
+  try {
+    await expect(writeBytes('media/story/a.png', new Uint8Array([1]))).rejects.toThrow(
+      'Origin Private File System is not available',
+    );
+  } finally {
+    Object.defineProperty(navigator, 'storage', { configurable: true, value: storage });
+  }
+});
+
+it('hydrates the whole nested tree and tolerates a failing listing', async () => {
+  const root = new Map<string, Entry>();
+  installMemoryOpfs(root);
+  await writeBytes('media/story/a.png', new Uint8Array([1]));
+  await writeBytes('media/story/nested/b.png', new Uint8Array([2]));
+
+  // The earlier test already hydrated this backend; flip to Electron and back so the listing
+  // actually runs again over the nested tree.
+  (window as { keresMedia?: unknown }).keresMedia = {
+    listAllFiles: async () => [],
+  };
+  await hydrate();
+  delete (window as { keresMedia?: unknown }).keresMedia;
+  await hydrate();
+
+  expect(existsSync('media/story/a.png')).toBe(true);
+  expect(existsSync('media/story/nested/b.png')).toBe(true);
+
+  // A listing that throws hydrates nothing instead of breaking boot.
+  (window as { keresMedia?: unknown }).keresMedia = {
+    listAllFiles: async () => ['media/story/a.png'],
+  };
+  await hydrate();
+  delete (window as { keresMedia?: unknown }).keresMedia;
+  Object.defineProperty(navigator, 'storage', {
+    configurable: true,
+    value: {
+      async getDirectory() {
+        throw new Error('opfs gone');
+      },
+    },
+  });
+  try {
+    await hydrate();
+    expect(existsSync('media/story/a.png')).toBe(false);
+  } finally {
+    installMemoryOpfs(root);
+  }
+});
+
+it('removes the whole media root when asked to delete the empty path', async () => {
+  const root = new Map<string, Entry>();
+  installMemoryOpfs(root);
+  await writeBytes('media/story/a.png', new Uint8Array([1]));
+  expect(root.has('keres-media')).toBe(true);
+
+  await deleteDirectory('');
+
+  expect(root.has('keres-media')).toBe(false);
+});

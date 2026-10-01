@@ -1,33 +1,32 @@
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import Button from '@/src/components/common/controls/Button/Button';
 import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import type { BoardCanvasHandle } from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvas from '@/src/components/features/boards/BoardCanvas';
 import BoardCanvasHeaderActions from '@/src/components/features/boards/BoardCanvasHeaderActions';
+import BoardCanvasTools from '@/src/components/features/boards/BoardCanvasTools';
 import BoardConnectionModal from '@/src/components/features/boards/BoardConnectionModal';
 import BoardNodeSheet from '@/src/components/features/boards/BoardNodeSheet';
+import OverlaySheet from '@/src/components/features/graphs/CanvasOverlay/OverlaySheet';
 import GraphCanvasControls from '@/src/components/features/graphs/GraphCanvasControls/GraphCanvasControls';
 import type { BoardContentType, BoardNodeType, BoardPinEntity } from '@keres/shared';
 import { generateBoardLocalId } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import type { BoardSelect } from '../../db/schema';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBoardCanvasLayout } from '../../hooks/useBoardCanvasLayout';
-import {
-  decodeBoardPinValue,
-  useBoardPinOptions,
-  type BoardPinOption,
-} from '../../hooks/useBoardPinOptions';
+import { useCanvasOverlayActions } from '../../hooks/useCanvasOverlayActions';
+import { useBoardNodeTitles } from '../../hooks/useBoardNodeTitles';
+import { decodeBoardPinValue, useBoardPinOptions } from '../../hooks/useBoardPinOptions';
 import { useNavigateToEntityDetail } from '../../hooks/useNavigateToEntityDetail';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { BoardStackParamList } from '../../navigation/MainSystemStack';
@@ -40,16 +39,10 @@ import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { loadBoardEntitySummary, type BoardEntitySummary } from '../../utils/boardEntitySummary';
 import type { BoardGalleryMedia, BoardGalleryMediaById } from '../../utils/boardLayout';
-import { nextStaggeredPosition } from '../../utils/boardLayout';
-import {
-  boardPinAppearanceType,
-  boardPinTypeKey,
-  getBoardPinAppearance,
-  worldPieceSectionFromBoardPinGroup,
-} from '../../utils/boardPinAppearance';
+import { galleryMediaForNode, nextStaggeredPosition } from '../../utils/boardLayout';
 import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
-import { buildBoardMapFileName, deliverSvgMap } from '../../utils/storyTransfer';
+import { buildBoardMapFileName, deliverMapExport } from '../../utils/storyTransfer';
 import { buildStandaloneBoardSvg } from '../../utils/storyMapSvgExport';
 
 const BoardCanvasScreen = () => {
@@ -78,9 +71,7 @@ const BoardCanvasScreen = () => {
   const [connectionMode, setConnectionMode] = useState(false);
   const [connectionPair, setConnectionPair] = useState<{ from: string; to: string } | null>(null);
   const [pickerValues, setPickerValues] = useState<string[]>([]);
-  const [livePins, setLivePins] = useState<
-    Record<string, { label: string; group: BoardPinOption['group'] }>
-  >({});
+  const { titles, nodeTitles } = useBoardNodeTitles(content.nodes, options);
   const [exporting, setExporting] = useState(false);
   const [galleryMediaById, setGalleryMediaById] = useState<BoardGalleryMediaById>({});
   const [selectedSummary, setSelectedSummary] = useState<BoardEntitySummary | null>(null);
@@ -89,12 +80,52 @@ const BoardCanvasScreen = () => {
   );
   const { handleMoveNode, handleResizeNode, moveNodeLayer } = useBoardCanvasLayout(setContent);
 
+  const addNote = () => {
+    let created: BoardNodeType | null = null;
+    setContent((current) => {
+      const existing = new Set([
+        ...current.nodes.map((node) => node.id),
+        ...current.edges.map((edge) => edge.id),
+      ]);
+      const center = canvasRef.current?.viewportWorldCenter() ?? { x: 200, y: 160 };
+      const position = nextStaggeredPosition(current, { x: center.x - 110, y: center.y - 40 });
+      created = {
+        id: generateBoardLocalId(existing),
+        kind: 'note',
+        x: position.x,
+        y: position.y,
+        title: '',
+        body: null,
+      };
+      return { ...current, nodes: [...current.nodes, created] };
+    });
+    if (created) setSelected(created);
+  };
+
+  const generateOverlayId = useCallback(
+    () =>
+      generateBoardLocalId(
+        new Set([
+          ...content.nodes.map((node) => node.id),
+          ...content.edges.map((edge) => edge.id),
+          ...(content.overlays ?? []).map((overlay) => overlay.id),
+        ]),
+      ),
+    [content],
+  );
+  const overlayActions = useCanvasOverlayActions({
+    setContent,
+    generateOverlayId,
+    onAddNote: addNote,
+  });
+
   const dirty = JSON.stringify(content) !== JSON.stringify(savedContent);
 
   useBackButtonHandler({
     showWebBackButton: true,
     onBack: () => navigation.goBack(),
   });
+  useScreenTour('BoardCanvas', canEdit);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,23 +161,20 @@ const BoardCanvasScreen = () => {
   }, [boardId, db, showNotification, storyId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- `load` sets loading synchronously for its event callers and everything else after `await`; the rule cannot verify across the callback boundary.
     void load();
   }, [load]);
 
-  useEffect(() => {
-    const next: Record<string, { label: string; group: BoardPinOption['group'] }> = {};
-    for (const option of options) {
-      next[`${option.entityType}:${option.entityId}`] = {
-        label: option.label,
-        group: option.group,
-      };
+  const [prevStoryId, setPrevStoryId] = useState(storyId);
+  if (storyId !== prevStoryId) {
+    setPrevStoryId(storyId);
+    if (!storyId) {
+      setGalleryMediaById({});
     }
-    setLivePins(next);
-  }, [options]);
+  }
 
   useEffect(() => {
     if (!storyId) {
-      setGalleryMediaById({});
       return;
     }
     let cancelled = false;
@@ -169,9 +197,16 @@ const BoardCanvasScreen = () => {
     };
   }, [db, storyId]);
 
+  const [prevDb, setPrevDb] = useState(db);
+  const [prevSelected, setPrevSelected] = useState(selected);
+  if (db !== prevDb || selected !== prevSelected) {
+    setPrevDb(db);
+    setPrevSelected(selected);
+    setSelectedSummary(null);
+  }
+
   useEffect(() => {
     let cancelled = false;
-    setSelectedSummary(null);
     if (!selected || selected.kind !== 'entity') return;
     (async () => {
       const summary = await loadBoardEntitySummary(
@@ -237,83 +272,11 @@ const BoardCanvasScreen = () => {
     renderActions: useCallback(
       () =>
         canEdit ? (
-          <BoardCanvasHeaderActions
-            dirty={dirty}
-            layoutEditing={layoutEditing}
-            connectionMode={connectionMode}
-            onRevert={revert}
-            onSave={() => void save()}
-            onToggleLayout={() => {
-              setLayoutEditing((current) => !current);
-              setConnectionMode(false);
-              setLayoutSelectedNodeId(null);
-            }}
-            onToggleConnectionMode={() => {
-              setConnectionMode((current) => !current);
-              setLayoutEditing(false);
-              setLayoutSelectedNodeId(null);
-            }}
-          />
+          <BoardCanvasHeaderActions dirty={dirty} onRevert={revert} onSave={() => void save()} />
         ) : null,
-      [canEdit, dirty, layoutEditing, connectionMode, revert, save],
+      [canEdit, dirty, revert, save],
     ),
   });
-
-  const titles = useMemo(() => {
-    const map: Record<
-      string,
-      {
-        title: string;
-        typeLabel: string;
-        appearanceType?: string;
-        appearance?: { color: string; icon: string };
-        ghost?: boolean;
-      }
-    > = {};
-    for (const node of content.nodes) {
-      const live =
-        node.kind === 'entity' ? livePins[`${node.entityType}:${node.entityId}`] : undefined;
-      const appearanceType = boardPinAppearanceType(
-        node.kind,
-        node.kind === 'entity' ? node.entityType : undefined,
-        live?.group,
-      );
-      const worldPieceSection = worldPieceSectionFromBoardPinGroup(live?.group);
-      const typeLabel = worldPieceSection
-        ? t(`world_piece_section_${worldPieceSection}`)
-        : t(
-            boardPinTypeKey(
-              node.kind,
-              node.kind === 'entity' ? node.entityType : undefined,
-              live?.group,
-            ),
-          );
-      const appearance = getBoardPinAppearance(
-        node.kind,
-        node.kind === 'entity' ? node.entityType : undefined,
-        live?.group,
-      );
-      if (node.kind === 'note') {
-        map[node.id] = {
-          title: node.title.trim() || t('board_note'),
-          typeLabel,
-          appearanceType,
-          appearance,
-        };
-        continue;
-      }
-      map[node.id] = live
-        ? { title: live.label, typeLabel, appearanceType, appearance }
-        : {
-            title: node.labelAtPin || t('board_deleted_entity'),
-            typeLabel: `${typeLabel} · ${t('board_deleted_entity')}`,
-            appearanceType,
-            appearance,
-            ghost: true,
-          };
-    }
-    return map;
-  }, [content.nodes, livePins, t]);
 
   const handleExport = useCallback(async () => {
     if (!selectedStory) return;
@@ -332,14 +295,16 @@ const BoardCanvasScreen = () => {
           text: colors.text,
           textSecondary: colors.textSecondary,
           border: colors.border,
+          primary: colors.primary,
         },
         titles,
         galleryMediaById,
         summaries: summariesByNode,
       });
-      const result = await deliverSvgMap(
+      const result = await deliverMapExport(
         svg,
         buildBoardMapFileName(selectedStory.title, board?.name ?? 'board'),
+        useUserSettingsStore.getState().exportFormat,
       );
       if (result.delivered) {
         showNotification(t('board_export_success', { fileName: result.fileName }), 'success');
@@ -366,12 +331,6 @@ const BoardCanvasScreen = () => {
     t,
     titles,
   ]);
-
-  const nodeTitles = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const [id, meta] of Object.entries(titles)) map[id] = meta.title;
-    return map;
-  }, [titles]);
 
   const addEntities = (values: string[]) => {
     let created: BoardNodeType[] = [];
@@ -416,39 +375,25 @@ const BoardCanvasScreen = () => {
     }
   };
 
-  const addNote = () => {
-    let created: BoardNodeType | null = null;
-    setContent((current) => {
-      const existing = new Set([
-        ...current.nodes.map((node) => node.id),
-        ...current.edges.map((edge) => edge.id),
-      ]);
-      const center = canvasRef.current?.viewportWorldCenter() ?? { x: 200, y: 160 };
-      const position = nextStaggeredPosition(current, { x: center.x - 110, y: center.y - 40 });
-      created = {
-        id: generateBoardLocalId(existing),
-        kind: 'note',
-        x: position.x,
-        y: position.y,
-        title: '',
-        body: null,
-      };
-      return { ...current, nodes: [...current.nodes, created] };
-    });
-    if (created) setSelected(created);
+  const handlePickEntity = (values: string[]) => {
+    const selectedValue = values[0];
+    if (!selectedValue) {
+      setPickerValues([]);
+      return;
+    }
+    // A board picker is an action, not a persistent filter: every selection creates a
+    // fresh pin, so the same entity must be immediately available for another pin.
+    addEntities([selectedValue]);
+    setPickerValues([selectedValue]);
+    requestAnimationFrame(() => setPickerValues([]));
   };
+
+  const sheetOverlay =
+    (content.overlays ?? []).find((overlay) => overlay.id === overlayActions.sheetOverlayId) ??
+    null;
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    tools: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    toolRow: { flexDirection: 'row', gap: 8 },
-    toolControl: { flex: 1 },
   });
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
@@ -465,35 +410,42 @@ const BoardCanvasScreen = () => {
   return (
     <View style={styles.container}>
       {canEdit && (
-        <View style={styles.tools}>
-          <View style={styles.toolRow}>
-            <MultiSelectPill
-              style={styles.toolControl}
-              groups={groupedOptions}
-              selectedValues={pickerValues}
-              onSelectionChange={(values) => {
-                const selectedValue = values[0];
-                if (!selectedValue) {
-                  setPickerValues([]);
-                  return;
-                }
-                // A board picker is an action, not a persistent filter: every selection creates a
-                // fresh pin, so the same entity must be immediately available for another pin.
-                addEntities([selectedValue]);
-                setPickerValues([selectedValue]);
-                requestAnimationFrame(() => setPickerValues([]));
-              }}
-              placeholder={t('board_add_entity')}
-              noOptionsText={t('board_no_entities')}
-              singleSelect
-            />
-            <View style={styles.toolControl}>
-              <Button onPress={addNote} style={{ height: 50 }}>
-                {t('board_add_note')}
-              </Button>
-            </View>
-          </View>
-        </View>
+        <BoardCanvasTools
+          groupedOptions={groupedOptions}
+          pickerValues={pickerValues}
+          onPickEntity={handlePickEntity}
+          onAddNote={addNote}
+          onObjectsAction={overlayActions.handleObjectsAction}
+          drawTool={overlayActions.drawTool}
+          canFinish={overlayActions.canFinish}
+          onFinishDraw={overlayActions.finishDraft}
+          onCancelDraw={overlayActions.cancelDraw}
+          layoutEditing={layoutEditing}
+          connectionMode={connectionMode}
+          overlayEditing={overlayActions.selectMode}
+          onToggleLayout={() => {
+            setLayoutEditing((current) => !current);
+            setConnectionMode(false);
+            overlayActions.cancelSelect();
+            setLayoutSelectedNodeId(null);
+          }}
+          onToggleConnectionMode={() => {
+            setConnectionMode((current) => !current);
+            setLayoutEditing(false);
+            overlayActions.cancelSelect();
+            setLayoutSelectedNodeId(null);
+          }}
+          onToggleOverlayEdit={() => {
+            if (overlayActions.selectMode) {
+              overlayActions.cancelInteraction();
+              return;
+            }
+            overlayActions.handleObjectsAction('select');
+            setLayoutEditing(false);
+            setConnectionMode(false);
+            setLayoutSelectedNodeId(null);
+          }}
+        />
       )}
       <BoardCanvas
         ref={canvasRef}
@@ -502,9 +454,11 @@ const BoardCanvasScreen = () => {
         selectedNodeId={layoutEditing ? layoutSelectedNodeId : null}
         layoutEditing={layoutEditing}
         connectionMode={connectionMode}
+        overlayEditing={overlayActions.selectMode}
         galleryMediaById={galleryMediaById}
         summaries={summariesByNode}
         onSelectNode={(node) => {
+          overlayActions.cancelInteraction();
           if (layoutEditing) setLayoutSelectedNodeId(node.id);
           else setSelected(node);
         }}
@@ -514,6 +468,10 @@ const BoardCanvasScreen = () => {
         onBringNodeToFront={(id) => moveNodeLayer(id, 'front')}
         onSendNodeToBack={(id) => moveNodeLayer(id, 'back')}
         onConnectNodes={(from, to) => setConnectionPair({ from, to })}
+        interactionMode={overlayActions.interactionMode}
+        draft={overlayActions.draft}
+        selectedOverlayId={overlayActions.selectedOverlayId}
+        overlayCallbacks={overlayActions}
       />
       <GraphCanvasControls
         onZoomIn={() => canvasRef.current?.zoomBy(1.25)}
@@ -530,6 +488,7 @@ const BoardCanvasScreen = () => {
           typeLabel={titles[selected.id]?.typeLabel ?? ''}
           ghost={!!titles[selected.id]?.ghost}
           summary={selectedSummary}
+          galleryMedia={galleryMediaForNode(selected, galleryMediaById)}
           content={content}
           nodeTitles={nodeTitles}
           canEdit={canEdit}
@@ -579,6 +538,16 @@ const BoardCanvasScreen = () => {
           nodeTitles={nodeTitles}
           setContent={setContent}
           onClose={() => setConnectionPair(null)}
+        />
+      )}
+      {sheetOverlay && (
+        <OverlaySheet
+          overlay={sheetOverlay}
+          canEdit={canEdit}
+          defaultColor={colors.text}
+          onChange={(patch) => overlayActions.updateOverlay(sheetOverlay.id, patch)}
+          onRemove={() => overlayActions.deleteOverlay(sheetOverlay.id)}
+          onClose={overlayActions.closeOverlaySheet}
         />
       )}
     </View>

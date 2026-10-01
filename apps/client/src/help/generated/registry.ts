@@ -61,6 +61,8 @@ import gettingAround_en from '../content/getting-around/en';
 import gettingAround_pt from '../content/getting-around/pt';
 import glossary_en from '../content/glossary/en';
 import glossary_pt from '../content/glossary/pt';
+import guidedTours_en from '../content/guided-tours/en';
+import guidedTours_pt from '../content/guided-tours/pt';
 import howKeresOrganizes_en from '../content/how-keres-organizes/en';
 import howKeresOrganizes_pt from '../content/how-keres-organizes/pt';
 import importExport_en from '../content/import-export/en';
@@ -75,6 +77,8 @@ import locationMap_en from '../content/location-map/en';
 import locationMap_pt from '../content/location-map/pt';
 import locations_en from '../content/locations/en';
 import locations_pt from '../content/locations/pt';
+import manuscript_en from '../content/manuscript/en';
+import manuscript_pt from '../content/manuscript/pt';
 import narrativeElements_en from '../content/narrative-elements/en';
 import narrativeElements_pt from '../content/narrative-elements/pt';
 import notes_en from '../content/notes/en';
@@ -105,6 +109,8 @@ import storyList_en from '../content/story-list/en';
 import storyList_pt from '../content/story-list/pt';
 import storyMap_en from '../content/story-map/en';
 import storyMap_pt from '../content/story-map/pt';
+import storyNavigator_en from '../content/story-navigator/en';
+import storyNavigator_pt from '../content/story-navigator/pt';
 import storySettings_en from '../content/story-settings/en';
 import storySettings_pt from '../content/story-settings/pt';
 import storyState_en from '../content/story-state/en';
@@ -165,6 +171,7 @@ export type GeneratedHelpPageId =
   | 'gallery'
   | 'getting-around'
   | 'glossary'
+  | 'guided-tours'
   | 'how-keres-organizes'
   | 'import-export'
   | 'item-journeys'
@@ -172,6 +179,7 @@ export type GeneratedHelpPageId =
   | 'lists-and-search'
   | 'location-map'
   | 'locations'
+  | 'manuscript'
   | 'narrative-elements'
   | 'notes'
   | 'packs'
@@ -187,6 +195,7 @@ export type GeneratedHelpPageId =
   | 'story-devices'
   | 'story-list'
   | 'story-map'
+  | 'story-navigator'
   | 'story-settings'
   | 'story-state'
   | 'story-type'
@@ -323,6 +332,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
     en: glossary_en,
     pt: glossary_pt,
   },
+  'guided-tours': {
+    en: guidedTours_en,
+    pt: guidedTours_pt,
+  },
   'how-keres-organizes': {
     en: howKeresOrganizes_en,
     pt: howKeresOrganizes_pt,
@@ -350,6 +363,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   locations: {
     en: locations_en,
     pt: locations_pt,
+  },
+  manuscript: {
+    en: manuscript_en,
+    pt: manuscript_pt,
   },
   'narrative-elements': {
     en: narrativeElements_en,
@@ -410,6 +427,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'story-map': {
     en: storyMap_en,
     pt: storyMap_pt,
+  },
+  'story-navigator': {
+    en: storyNavigator_en,
+    pt: storyNavigator_pt,
   },
   'story-settings': {
     en: storySettings_en,

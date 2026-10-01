@@ -1,8 +1,18 @@
 import {
   buildPublicationLabel,
   buildStoryZipBytes,
+  compileStoryManuscript,
+  compileStoryReader,
   CURRENT_STORY_FORMAT_VERSION,
+  FORMAT_META,
+  ManuscriptOptionsSchema,
+  ReaderOptionsSchema,
+  type FullStoryExportType,
+  type ManuscriptFormat,
+  type ManuscriptOptions,
+  type ManuscriptOptionsInput,
   type PublicationLabelMode,
+  type ReaderOptionsInput,
   type ShowcaseVisibility,
   type StoryPublicationSnapshot,
 } from '@keres/shared';
@@ -13,10 +23,16 @@ import { db } from '../db';
 import { stories, storyPermissions, storyPublications, storyShowcaseEntries } from '../db/schema';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
+import { createExclusiveGate } from '../utils/exclusive';
 import { mediaStorageService } from './MediaStorageService';
 import { publicationStorageService } from './PublicationStorageService';
 import { showcaseSettingsService } from './ShowcaseSettingsService';
+import { compileInputOf } from './publicationCompileInput';
+import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { StoryExportImportService } from './StoryExportImportService';
+
+/** One manuscript or reader is compiled at a time: the memory a book costs is not worth multiplying. */
+const compileGate = createExclusiveGate();
 
 /**
  * How many versions of a story the server keeps. Publishing the sixth deletes the oldest, package
@@ -115,6 +131,117 @@ export class StoryPublicationService {
     }
   }
 
+  /**
+   * Validates the requested manuscript options against the story, without compiling anything.
+   *
+   * A branching story is exported whole, as a gamebook, so it takes no route. The arc, when one is
+   * asked, must be one of this story's live ones, read from the same export the manuscript will be
+   * compiled from.
+   */
+  private parseManuscriptOptions(
+    storyExport: FullStoryExportType,
+    manuscript: ManuscriptOptionsInput,
+  ): ManuscriptOptions {
+    const parsed = ManuscriptOptionsSchema.safeParse(manuscript);
+    if (!parsed.success) {
+      const details = parsed.error.issues
+        .map((issue) => `${issue.path.join('.') || 'manuscript'}: ${issue.message}`)
+        .join('; ');
+      throw new AppError(400, `Invalid manuscript options: ${details}.`);
+    }
+    this.assertArcBelongs(storyExport, parsed.data.arcId);
+    return parsed.data;
+  }
+
+  /** The reader takes the manuscript's choices (arc, names, typography...) and its own words. */
+  private parseReaderOptions(
+    storyExport: FullStoryExportType,
+    reader: ReaderOptionsInput,
+  ): ReaderOptionsInput {
+    const parsed = ReaderOptionsSchema.safeParse(reader);
+    if (!parsed.success) {
+      const details = parsed.error.issues
+        .map((issue) => `${issue.path.join('.') || 'reader'}: ${issue.message}`)
+        .join('; ');
+      throw new AppError(400, `Invalid reader options: ${details}.`);
+    }
+    this.assertArcBelongs(storyExport, parsed.data.arcId);
+    return parsed.data;
+  }
+
+  private assertArcBelongs(storyExport: FullStoryExportType, arcId: string | undefined): void {
+    if (!arcId) return;
+    const belongs = (storyExport.storyArcs ?? []).some(
+      (arc) => arc.id === arcId && arc.storyId === storyExport.story.id && !arc.isDeleted,
+    );
+    if (!belongs) {
+      throw new AppError(400, `Arc "${arcId}" does not belong to this story.`);
+    }
+  }
+
+  /** Compiles the manuscript from the already-fetched export. Oversized output is the caller's fault. */
+  private async compileManuscript(
+    storyExport: FullStoryExportType,
+    options: ManuscriptOptions,
+  ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
+    try {
+      const compiled = await compileStoryManuscript(
+        compileInputOf(storyExport),
+        // The book's author defaults to the story's, as on the device.
+        {
+          ...options,
+          author: options.author === undefined ? storyExport.story.author : options.author,
+        },
+      );
+      return { bytes: compiled.bytes, format: options.format };
+    } catch (error) {
+      // The compiler throws a plain Error for input-caused failures (output past the
+      // byte cap). Those are 400s; anything else (a renderer bug) keeps bubbling as a 500.
+      if (error instanceof Error && /exceeds the .* limit/.test(error.message)) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  }
+
+  /** Compiles the online reader page from the same export, with the same guarantees. */
+  private compileReader(
+    storyExport: FullStoryExportType,
+    options: ReaderOptionsInput,
+  ): { bytes: Uint8Array } {
+    try {
+      return compileStoryReader(compileInputOf(storyExport), {
+        ...options,
+        author: options.author === undefined ? storyExport.story.author : options.author,
+      });
+    } catch (error) {
+      if (error instanceof Error && /exceeds the .* limit/.test(error.message)) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  }
+
+  /** Removes a version's blobs: the .zip and, when they were published, the manuscript and reader siblings. */
+  private async deleteVersionBlobs(
+    storyId: string,
+    publicationId: string,
+    published: { manuscriptFormat: string | null; readerByteSize: number | null },
+  ): Promise<void> {
+    await publicationStorageService.delete(storyId, publicationId).catch(() => undefined);
+    if (published.manuscriptFormat) {
+      const extension =
+        (FORMAT_META as Record<string, { extension: string }>)[published.manuscriptFormat]
+          ?.extension ?? published.manuscriptFormat;
+      await publicationStorageService
+        .deleteManuscript(storyId, publicationId, extension)
+        .catch(() => undefined);
+    }
+    if (published.readerByteSize != null) {
+      await publicationStorageService.deleteReader(storyId, publicationId).catch(() => undefined);
+    }
+  }
+
   async publish(
     userId: string,
     storyId: string,
@@ -122,6 +249,9 @@ export class StoryPublicationService {
     labelMode: PublicationLabelMode,
     visibility: ShowcaseVisibility = 'public',
     password?: string,
+    manuscript?: ManuscriptOptionsInput,
+    reader?: ReaderOptionsInput,
+    includePackage = true,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
@@ -139,18 +269,66 @@ export class StoryPublicationService {
       throw new AppError(400, 'A password is required for password-protected stories.');
     }
 
+    // A version with nothing to offer is no version: the package may be left out only when a
+    // manuscript or the online reader is there instead.
+    if (!includePackage && manuscript === undefined && reader === undefined) {
+      throw new AppError(
+        400,
+        'Select at least one of the story package, the manuscript and the online reader.',
+      );
+    }
+
+    // Before any packaging or compiling: a refused publication costs nothing. 429, not 403 - the
+    // client already reads 403 as "the showcase is off".
+    try {
+      await tierEnforcementService.assertCanPublish(userId);
+    } catch (error) {
+      if (error instanceof TierLimitExceededError) {
+        throw new AppError(429, error.message);
+      }
+      throw error;
+    }
+
     const storyExport = await this.exportImportService.exportStory(storyId, userId);
     const publicationId = ulid();
-    const zip = await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash));
+    // Left out when the publisher asked for a manuscript and/or the reader only: no packaging cost.
+    const zip = includePackage
+      ? await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash))
+      : null;
+
+    // Validated and compiled before any blob is written, so a refused manuscript leaves no litter -
+    // the same guarantee the .zip gets from the rollback below. `includeLooseScenes` needs no
+    // branching branch here: the route compiler ignores it by construction.
+    const manuscriptOptions =
+      manuscript === undefined ? null : this.parseManuscriptOptions(storyExport, manuscript);
+    const compiledManuscript = manuscriptOptions
+      ? await compileGate(() => this.compileManuscript(storyExport, manuscriptOptions))
+      : null;
+    const readerOptions =
+      reader === undefined ? null : this.parseReaderOptions(storyExport, reader);
+    const compiledReader = readerOptions
+      ? await compileGate(() => this.compileReader(storyExport, readerOptions))
+      : null;
 
     // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
-    // no row is invisible. If the transaction below fails, the file is removed in the `catch` - without
+    // no row is invisible. If the transaction below fails, the files are removed in the `catch` - without
     // that, every refused publication would leave an orphaned .zip taking up disk.
-    await publicationStorageService.store(storyId, publicationId, zip.bytes);
+    if (zip) await publicationStorageService.store(storyId, publicationId, zip.bytes);
+    if (compiledManuscript) {
+      await publicationStorageService.storeManuscript(
+        storyId,
+        publicationId,
+        compiledManuscript.bytes,
+        compiledManuscript.format,
+      );
+    }
+    if (compiledReader) {
+      await publicationStorageService.storeReader(storyId, publicationId, compiledReader.bytes);
+    }
 
     const passwordHash = visibility === 'password' ? await hashPassword(password!) : null;
 
-    const prunedIds = await this.runPublishTransaction(
+    const pruned = await this.runPublishTransaction(
       async (tx) => {
         const existing = await tx
           .select({ label: storyPublications.label })
@@ -168,6 +346,8 @@ export class StoryPublicationService {
             set: { labelMode, visibility, passwordHash, updatedAt: new Date() },
           });
 
+        await tierEnforcementService.recordPublication(tx, userId, storyId);
+
         await tx.insert(storyPublications).values({
           id: publicationId,
           storyId,
@@ -180,16 +360,24 @@ export class StoryPublicationService {
           ),
           operationVersion: story.lastOperationVersion,
           formatVersion: CURRENT_STORY_FORMAT_VERSION,
-          byteSize: zip.bytes.byteLength,
-          mediaIncluded: zip.includedCount,
-          mediaTotal: zip.totalCount,
+          byteSize: zip ? zip.bytes.byteLength : 0,
+          mediaIncluded: zip ? zip.includedCount : 0,
+          mediaTotal: zip ? zip.totalCount : 0,
+          packageIncluded: zip !== null,
+          manuscriptFormat: compiledManuscript?.format ?? null,
+          manuscriptByteSize: compiledManuscript ? compiledManuscript.bytes.byteLength : null,
+          readerByteSize: compiledReader ? compiledReader.bytes.byteLength : null,
           snapshot: this.snapshotOf(story),
         });
 
         // The trimming is done here rather than in SQL because `OFFSET` without `LIMIT` is invalid on SQLite,
         // and there are at most six rows per story - not worth an artificial `LIMIT` just for that.
         const existingIds = await tx
-          .select({ id: storyPublications.id })
+          .select({
+            id: storyPublications.id,
+            manuscriptFormat: storyPublications.manuscriptFormat,
+            readerByteSize: storyPublications.readerByteSize,
+          })
           .from(storyPublications)
           .where(eq(storyPublications.storyId, storyId))
           .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id));
@@ -198,17 +386,26 @@ export class StoryPublicationService {
         if (surplus.length > 0) {
           const ids = surplus.map((row) => row.id);
           await tx.delete(storyPublications).where(inArray(storyPublications.id, ids));
-          return ids;
+          return surplus;
         }
         return [];
       },
-      () => publicationStorageService.delete(storyId, publicationId),
+      async () => {
+        if (zip) await publicationStorageService.delete(storyId, publicationId);
+        if (compiledManuscript) {
+          const extension = FORMAT_META[compiledManuscript.format].extension;
+          await publicationStorageService.deleteManuscript(storyId, publicationId, extension);
+        }
+        if (compiledReader) {
+          await publicationStorageService.deleteReader(storyId, publicationId);
+        }
+      },
     );
 
     // After the commit: if a blob delete fails, the worst case is an orphaned file, not a version listed
     // on the site whose download no longer exists.
-    for (const id of prunedIds) {
-      await publicationStorageService.delete(storyId, id).catch(() => undefined);
+    for (const row of pruned) {
+      await this.deleteVersionBlobs(storyId, row.id, row);
     }
 
     await this.notifyAudience(storyId, userId);
@@ -336,7 +533,7 @@ export class StoryPublicationService {
       }
     });
 
-    await publicationStorageService.delete(storyId, publicationId).catch(() => undefined);
+    await this.deleteVersionBlobs(storyId, publicationId, publication);
     await this.notifyAudience(storyId, userId);
   }
 
@@ -345,16 +542,20 @@ export class StoryPublicationService {
 
     const removed = await db.transaction(async (tx) => {
       const publications = await tx
-        .select({ id: storyPublications.id })
+        .select({
+          id: storyPublications.id,
+          manuscriptFormat: storyPublications.manuscriptFormat,
+          readerByteSize: storyPublications.readerByteSize,
+        })
         .from(storyPublications)
         .where(eq(storyPublications.storyId, storyId));
       await tx.delete(storyPublications).where(eq(storyPublications.storyId, storyId));
       await tx.delete(storyShowcaseEntries).where(eq(storyShowcaseEntries.storyId, storyId));
-      return publications.map((row) => row.id);
+      return publications;
     });
 
-    for (const id of removed) {
-      await publicationStorageService.delete(storyId, id).catch(() => undefined);
+    for (const row of removed) {
+      await this.deleteVersionBlobs(storyId, row.id, row);
     }
     await this.notifyAudience(storyId, userId);
   }

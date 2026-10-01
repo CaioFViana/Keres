@@ -143,7 +143,12 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
         ),
       )
       .all();
-    if (config.entityType === 'CharacterRelation') {
+    // By type string, not by `config.entityType`: both the Character and the CharacterRelation
+    // handlers declare `characterRelation_type` as a suggestions source (the character advanced
+    // search filters by it), and `getSuggestionSource` returns the first match, so the config
+    // always resolves to `Character` here. The rename below already switches on `type` for the
+    // same reason.
+    if (type === 'characterRelation_type') {
       const ids = Array.from(
         new Set(rows.flatMap((row: any) => [row.character1Id, row.character2Id])),
       );

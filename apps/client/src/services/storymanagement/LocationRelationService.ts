@@ -3,10 +3,15 @@ import { and, eq, or, sql } from 'drizzle-orm';
 import type { AppDrizzleClient, LocationRelationSelect } from '../../db';
 import { locationRelations } from '../../db';
 import { entityEventEmitter } from '../../utils/EventEmitter';
-import { getUserIdForOperation, recordLocalOperation } from '../../utils/syncUtils';
+import {
+  assertStoryIsWritable,
+  getUserIdForOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
+} from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
-/** Mesmo limite defensivo do handler no servidor - ver LocationRelationSyncHandler.ts (API). */
+/** Same defensive limit as the server-side handler - see LocationRelationSyncHandler.ts (API). */
 const MAX_ANCESTOR_WALK = 500;
 
 export interface LocationRelationService {
@@ -105,11 +110,9 @@ const getExistingConnection = async (
 export const createLocationRelationService = (db: AppDrizzleClient): LocationRelationService => {
   const serverService = createServerService(db);
 
-  const softDeleteRelation = async (
-    currentUserId: string,
-    relation: LocationRelationSelect,
-  ): Promise<void> => {
-    const [updated] = await db
+  // Synchronous: runs inside the caller's `runLocalWrite` unit.
+  const softDeleteRelation = (userIdToLog: string, relation: LocationRelationSelect): void => {
+    const updated = db
       .update(locationRelations)
       .set({
         isDeleted: true,
@@ -118,19 +121,14 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
         version: sql`${locationRelations.version} + 1`,
       })
       .where(eq(locationRelations.id, relation.id))
-      .returning({ id: locationRelations.id, version: locationRelations.version });
+      .returning({ id: locationRelations.id, version: locationRelations.version })
+      .get();
 
     if (!updated) {
       throw new Error(`Failed to delete location relation ${relation.id}.`);
     }
 
-    const userIdToLog = await getUserIdForOperation(
-      db,
-      serverService,
-      relation.storyId,
-      currentUserId,
-    );
-    await recordLocalOperation(
+    recordLocalOperationSync(
       db,
       relation.storyId,
       userIdToLog,
@@ -225,6 +223,7 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
     },
 
     async setParent(currentUserId, storyId, childId, newParentId) {
+      await assertStoryIsWritable(db, storyId);
       if (newParentId === childId) {
         throw new Error('Validation Error: a Location cannot be its own parent.');
       }
@@ -240,7 +239,15 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
 
       if (newParentId === null) {
         if (existingParentEdge) {
-          await softDeleteRelation(currentUserId, existingParentEdge);
+          const userIdToLog = await getUserIdForOperation(
+            db,
+            serverService,
+            existingParentEdge.storyId,
+            currentUserId,
+          );
+          await runLocalWrite(db, storyId, () =>
+            softDeleteRelation(userIdToLog, existingParentEdge),
+          );
           entityEventEmitter.emit('location_relation_changed', storyId, childId);
         }
         return;
@@ -252,10 +259,6 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
         throw new Error(
           'Validation Error: setting this parent would create a cycle in the Location hierarchy.',
         );
-      }
-
-      if (existingParentEdge) {
-        await softDeleteRelation(currentUserId, existingParentEdge);
       }
 
       const newRelationData = {
@@ -270,25 +273,33 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
         isDeleted: false,
         deletedAt: null,
       };
-      const [inserted] = await db.insert(locationRelations).values(newRelationData).returning();
-      if (!inserted) {
-        throw new Error('Failed to create parent relation.');
-      }
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'create',
-        'LocationRelation',
-        inserted.id,
-        { ...inserted },
-      );
+      // One unit for the swap: the old edge never goes without the new one landing with it.
+      await runLocalWrite(db, storyId, () => {
+        if (existingParentEdge) {
+          softDeleteRelation(userIdToLog, existingParentEdge);
+        }
+
+        const inserted = db.insert(locationRelations).values(newRelationData).returning().get();
+        if (!inserted) {
+          throw new Error('Failed to create parent relation.');
+        }
+
+        recordLocalOperationSync(
+          db,
+          storyId,
+          userIdToLog,
+          'create',
+          'LocationRelation',
+          inserted.id,
+          { ...inserted },
+        );
+      });
       entityEventEmitter.emit('location_relation_changed', storyId, childId);
     },
 
     async addConnection(currentUserId, storyId, locationAId, locationBId) {
+      await assertStoryIsWritable(db, storyId);
       if (locationAId === locationBId) {
         throw new Error('Validation Error: a Location cannot be connected to itself.');
       }
@@ -310,21 +321,18 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
         isDeleted: false,
         deletedAt: null,
       };
-      const [inserted] = await db.insert(locationRelations).values(newRelationData).returning();
-      if (!inserted) {
-        throw new Error('Failed to create connection.');
-      }
-
       const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-      await recordLocalOperation(
-        db,
-        storyId,
-        userIdToLog,
-        'create',
-        'LocationRelation',
-        inserted.id,
-        { ...inserted },
-      );
+      const inserted = await runLocalWrite(db, storyId, () => {
+        const row = db.insert(locationRelations).values(newRelationData).returning().get();
+        if (!row) {
+          throw new Error('Failed to create connection.');
+        }
+
+        recordLocalOperationSync(db, storyId, userIdToLog, 'create', 'LocationRelation', row.id, {
+          ...row,
+        });
+        return row;
+      });
       entityEventEmitter.emit('location_relation_changed', storyId, locationAId);
 
       return inserted;
@@ -337,8 +345,15 @@ export const createLocationRelationService = (db: AppDrizzleClient): LocationRel
       if (!relation || relation.isDeleted) {
         return false;
       }
+      await assertStoryIsWritable(db, relation.storyId);
 
-      await softDeleteRelation(currentUserId, relation);
+      const userIdToLog = await getUserIdForOperation(
+        db,
+        serverService,
+        relation.storyId,
+        currentUserId,
+      );
+      await runLocalWrite(db, relation.storyId, () => softDeleteRelation(userIdToLog, relation));
       entityEventEmitter.emit('location_relation_changed', relation.storyId, relation.locationAId);
       return true;
     },

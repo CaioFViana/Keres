@@ -9,7 +9,7 @@ import { buildStoryGraphLayout } from '@keres/shared/graphs/storyGraphLayout';
 import { renderStoryMapSvg } from '@keres/shared/graphs/storyGraphSvg';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../../../db';
 import type {
@@ -37,7 +37,12 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { buildStoryMapFileName, deliverSvgMap } from '../../../utils/storyTransfer';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
+import {
+  buildStoryMapFileName,
+  deliverMapExport,
+  exportFileLanguage,
+} from '../../../utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
 
 /**
@@ -64,7 +69,7 @@ interface SceneNodeConnection {
 
 const ChoiceViewScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { definition: calendar } = useStoryCalendar();
   const navigation =
@@ -137,7 +142,7 @@ const ChoiceViewScreen = () => {
     }
   }, [drizzleDb, storyId, t]);
 
-  // Recarrega ao focar: cenas e escolhas podem ter mudado em outra tela.
+  // Reload on focus: scenes and choices may have changed on another screen.
   useFocusEffect(
     useCallback(() => {
       loadGraph();
@@ -339,7 +344,11 @@ const ChoiceViewScreen = () => {
         },
       });
 
-      const result = await deliverSvgMap(svg, buildStoryMapFileName(selectedStory.title));
+      const result = await deliverMapExport(
+        svg,
+        buildStoryMapFileName(selectedStory.title, new Date(), exportFileLanguage(i18n.language)),
+        useUserSettingsStore.getState().exportFormat,
+      );
       if (result.delivered) {
         showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');
       } else {
@@ -358,7 +367,7 @@ const ChoiceViewScreen = () => {
     } finally {
       setExporting(false);
     }
-  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t]);
+  }, [colors, layout, mapSubtitle, selectedStory, showEdgeLabels, showNotification, t, i18n]);
 
   return (
     <ChoiceViewContent

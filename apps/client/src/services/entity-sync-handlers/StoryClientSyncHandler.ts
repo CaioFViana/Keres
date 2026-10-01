@@ -1,19 +1,19 @@
-import type { CreateStoryUpdate, DeleteStoryUpdate, Story, UpdateStoryUpdate } from '@keres/shared'; // Assuming Story entity is shared
+import type { CreateStoryUpdate, DeleteStoryUpdate, Story, UpdateStoryUpdate } from '@keres/shared';
 import { eq } from 'drizzle-orm';
-import type { AppDrizzleClient } from '../../db';
+import type { AppDrizzleClient, AppDrizzleTransaction } from '../../db';
 import * as schema from '../../db/schema';
 import { omitClientProtectedFields, toEntityColumns } from '../entityTableRegistry';
 import type { ClientSyncEntityHandler } from './ClientSyncEntityHandler';
 
 export class StoryClientSyncHandler implements ClientSyncEntityHandler {
   entityName: string = 'Story';
-  private dbInstance: AppDrizzleClient | null = null; // Use a private property for the db instance
+  private dbInstance: AppDrizzleClient | AppDrizzleTransaction | null = null;
 
-  setDb(dbInstance: AppDrizzleClient): void {
+  setDb(dbInstance: AppDrizzleClient | AppDrizzleTransaction): void {
     this.dbInstance = dbInstance;
   }
 
-  private get db(): AppDrizzleClient {
+  private get db(): AppDrizzleClient | AppDrizzleTransaction {
     if (!this.dbInstance) {
       throw new Error('StoryClientSyncHandler: Drizzle client (db) not set.');
     }
@@ -23,7 +23,6 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
   async applyCreate(storyId: string, update: CreateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
-    // Ensure the ID is available for a create operation
     if (!update.id) {
       console.error(`Missing ID for create operation on ${this.entityName}`);
       return;
@@ -42,6 +41,8 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
       deletedAt: storyData.deletedAt ? new Date(storyData.deletedAt) : null,
       version: storyData.version ?? 1,
       isDeleted: storyData.isDeleted ?? false,
+      // A remotely created story arrives without local sync state; cursors start at zero and
+      // the role/server link is resolved later by the engine, never trusted from the payload.
       lastOperationLog: 0,
       lastServerSyncedLog: 0,
       lastPublicFavoriteLog: 0,
@@ -54,13 +55,12 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
   async applyUpdate(storyId: string, update: UpdateStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
-    // Ensure ID and changes are available
     if (!update.id || !update.changes) {
       console.error(`Missing ID or changes for update operation on ${this.entityName}`);
       return;
     }
 
-    // Assuming update.changes contains partial story object with updated fields
+    // `changes` carries a partial entity; keys outside the table are dropped by `toEntityColumns`.
     const storyChanges = toEntityColumns(
       this.entityName,
       omitClientProtectedFields(this.entityName, update.changes as Partial<Story>),
@@ -79,7 +79,6 @@ export class StoryClientSyncHandler implements ClientSyncEntityHandler {
   async applyDelete(storyId: string, update: DeleteStoryUpdate): Promise<void> {
     if (update.entity !== this.entityName) return;
 
-    // Ensure ID is available
     if (!update.id) {
       console.error(`Missing ID for delete operation on ${this.entityName}`);
       return;

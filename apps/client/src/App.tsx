@@ -1,24 +1,24 @@
 import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
+import GuideHost from '@/src/components/common/feedback/GuideHost/GuideHost';
+import SvgRasterHost from '@/src/components/features/export/SvgRasterHost';
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
 import WebScrollbarTheme from '@/src/components/features/app/WebScrollbarTheme';
+import { NavigationBar } from 'expo-navigation-bar';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import {
-  DefaultTheme as DefaultNavigationTheme,
-  ThemeProvider as NavigationThemeProvider,
-} from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AppDrizzleClient } from './db';
 import { DrizzleContext, initializeDrizzle, useDrizzle } from './db';
 import { migrate } from './db/migrate';
 import AppNavigator from './navigation/AppNavigator';
 import apiClient from './services/apiClient';
 import { authTokenManager, setAuthDb } from './services/AuthTokenManager';
+import { setEditorDraftDb } from './services/EditorDraftService';
 import { restoreHostedCookieSession } from './services/HostedCookieSession';
 import { hydrate as hydrateWebMediaStore } from './services/webMediaStore';
 import { useUserSettingsStore } from './state/userSettingsStore';
@@ -30,12 +30,12 @@ import { useTheme } from './theme';
 import { isColorLight } from './theme/commonStyles';
 import { ThemeProvider } from './theme/ThemeProvider';
 import i18n from './utils/i18n';
+import { keepPageOutOfBackForwardCache } from './utils/pageLifecycle';
+import { isServerless } from './utils/serverless';
 
-// Create a wrapper component for safe area
 const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme(); // Get theme colors
-  // Determine status bar style based on background color lightness
+  const { colors } = useTheme();
   const statusBarStyle = isColorLight(colors.background) ? 'dark' : 'light';
 
   // The native window's background shows for an instant during stack and Modal transitions. Keeping it
@@ -54,53 +54,32 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       }}
     >
       <StatusBar style={statusBarStyle} />
+      {/* The system's back/home buttons: their tint follows the app's palette, not the phone's scheme. */}
+      {Platform.OS === 'android' ? <NavigationBar style={statusBarStyle} /> : null}
       <WebScrollbarTheme />
       {children}
       <DocumentTitleSync />
       <NotificationPopup />
-      {/* AppAlert.alert() precisa poder ser chamado de qualquer tela, então o Modal que o
-          renderiza mora aqui, não em cada tela. */}
+      {/* AppAlert.alert() must be callable from any screen, so the Modal that renders it
+          lives here, not in each screen. */}
       <AppAlertHost />
+      {/* The first-open guided tours follow the same pattern: a single store-driven Modal. */}
+      <GuideHost />
+      {/* Every export's PNG is rasterized by this hidden canvas, so it also
+          lives here, next to AppAlertHost. */}
+      <SvgRasterHost />
     </View>
   );
 };
 
-/**
- * Drawers and headers read React Navigation's theme, while the application reads its own
- * ThemeProvider. Keeping the two in sync prevents navigation's light default border from
- * appearing as a white divider in a dark story or dark mode.
- */
-const NavigationThemeBridge = ({ children }: { children: React.ReactNode }) => {
-  const { colors, isDarkMode } = useTheme();
-  const navigationTheme = React.useMemo(
-    () => ({
-      ...DefaultNavigationTheme,
-      dark: isDarkMode,
-      colors: {
-        ...DefaultNavigationTheme.colors,
-        primary: colors.primary,
-        background: colors.background,
-        card: colors.surface,
-        text: colors.text,
-        border: colors.border,
-        notification: colors.notification,
-      },
-    }),
-    [colors, isDarkMode],
-  );
-
-  return <NavigationThemeProvider value={navigationTheme}>{children}</NavigationThemeProvider>;
-};
-
-// New ThemeInitializer component to provide drizzleClient to ThemeProvider
 const ThemeInitializer = ({ children }: { children: React.ReactNode }) => {
-  const drizzleClient = useDrizzle(); // Get drizzleClient from context
+  const drizzleClient = useDrizzle();
 
+  // The navigation theme mapping lives with the navigator itself
+  // (see navigation/navigationTheme.ts), which hands it to its NavigationContainer.
   return (
     <ThemeProvider drizzleClient={drizzleClient}>
-      <NavigationThemeBridge>
-        <SafeAreaWrapper>{children}</SafeAreaWrapper>
-      </NavigationThemeBridge>
+      <SafeAreaWrapper>{children}</SafeAreaWrapper>
     </ThemeProvider>
   );
 };
@@ -112,7 +91,28 @@ const DatabaseInitializer = () => {
   const [userSettingsLoaded, setUserSettingsLoaded] = useState(false);
   const initializeUserSettings = useUserSettingsStore((state) => state.initializeSettings);
 
+  // The serverless web build (GitHub Pages) only: its database file is held open by a worker until
+  // the page is gone (see `keepPageOutOfBackForwardCache`). A page brought back from that cache anyway
+  // - a browser that ignores both signals - had its worker suspended, so it starts over instead of
+  // limping on. The web client the API serves and the desktop shell are left as they were.
   useEffect(() => {
+    if (!isServerless() || Platform.OS !== 'web') return;
+    if (typeof globalThis.addEventListener !== 'function') return;
+    const leaveCache = keepPageOutOfBackForwardCache();
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted) globalThis.location.reload();
+    };
+    globalThis.addEventListener('pageshow', restore);
+    return () => {
+      leaveCache();
+      globalThis.removeEventListener('pageshow', restore);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Boot order is load-bearing: the web media cache must exist before anything calls
+    // `exists()`, auth tokens hydrate before the first API use, and the language applies
+    // only after settings load. Screens mount only once all three are done (see below).
     const initialize = async () => {
       console.log('DatabaseInitializer: Starting database initialization...');
       try {
@@ -130,10 +130,9 @@ const DatabaseInitializer = () => {
         setDbInitialized(true);
         console.log('DatabaseInitializer: Database initialized successfully.');
 
-        // Initialize AuthTokenManager with the Drizzle DB instance
         setAuthDb(initializedDrizzle);
+        setEditorDraftDb(initializedDrizzle);
         await authTokenManager.hydrateTokens();
-        // Set the authTokenManager as the token provider for the API client
         apiClient.setTokenProvider(authTokenManager);
         await restoreHostedCookieSession(initializedDrizzle);
 
@@ -175,12 +174,17 @@ const DatabaseInitializer = () => {
 };
 
 export default function App() {
+  // SafeAreaWrapper (and form hooks deep in the tree) read insets via useSafeAreaInsets(),
+  // which throws without this provider. expo-router/entry used to supply it implicitly;
+  // with the entry registering <App /> directly, it lives here explicitly.
   return (
-    <SQLiteProvider databaseName={'keres.db'}>
-      <I18nextProvider i18n={i18n}>
-        <DatabaseInitializer />
-      </I18nextProvider>
-    </SQLiteProvider>
+    <SafeAreaProvider>
+      <SQLiteProvider databaseName={'keres.db'}>
+        <I18nextProvider i18n={i18n}>
+          <DatabaseInitializer />
+        </I18nextProvider>
+      </SQLiteProvider>
+    </SafeAreaProvider>
   );
 }
 

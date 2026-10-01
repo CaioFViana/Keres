@@ -1,9 +1,11 @@
 /**
  * @jest-environment node
  */
-import { operationLogs, stories } from '../../src/db/schema';
+import axios from 'axios';
+import { eq } from 'drizzle-orm';
+import { comments, favorites, operationLogs, servers, stories } from '../../src/db/schema';
 import { createStoryService } from '../../src/services/storymanagement/StoryService';
-import { entityBase, seedLocalStory, TEST_STORY_ID } from '../helpers/storyTestData';
+import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
 let database: TestDatabase;
@@ -12,10 +14,12 @@ beforeEach(async () => {
   database = await createTestDatabase();
   await seedLocalStory(database);
   jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterEach(() => {
   database.close();
+  delete (axios.defaults as any).adapter;
   jest.restoreAllMocks();
 });
 
@@ -82,5 +86,93 @@ describe('StoryService lifecycle', () => {
         choices: [],
       }),
     );
+  });
+});
+
+describe('StoryService unlinkFromServer', () => {
+  const seedLinkedStory = async () => {
+    await database.db
+      .update(stories)
+      .set({ serverId: 'server-1', myRole: 'owner' })
+      .where(eq(stories.id, TEST_STORY_ID));
+  };
+
+  const seedOwnComment = async (authorUserId: string) => {
+    await database.db.insert(comments).values({
+      id: 'comment-1',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      entityId: 'char-1',
+      commentText: 'hello',
+      criticality: 0,
+      authorUserId,
+      ...entityBase,
+      deletedAt: null,
+    });
+  };
+
+  const seedOwnFavorite = async (userId: string) => {
+    await database.db.insert(favorites).values({
+      id: 'fav-1',
+      storyId: TEST_STORY_ID,
+      entityType: 'Character',
+      entityId: 'char-1',
+      userId,
+      ...entityBase,
+      deletedAt: null,
+    });
+  };
+
+  const commentAuthor = async () =>
+    (
+      await database.db.query.comments.findFirst({
+        where: eq(comments.id, 'comment-1'),
+      })
+    )?.authorUserId;
+
+  it('migrates the owner comments back to the local identity when the server is gone', async () => {
+    await seedLinkedStory();
+    await seedOwnComment('server-user');
+    const service = createStoryService(database.db);
+
+    await service.unlinkFromServer(TEST_USER_ID, TEST_STORY_ID);
+
+    expect(await commentAuthor()).toBe(TEST_USER_ID);
+    expect((await service.getStoryById(TEST_STORY_ID))?.serverId).toBeNull();
+  });
+
+  it('migrates owner comments and favourites back after deleting the server copy', async () => {
+    await database.db.insert(servers).values({
+      id: 'server-1',
+      idUser: 'server-user',
+      userName: 'owner',
+      name: 'Home',
+      url: 'https://home.example',
+      ...entityBase,
+      deletedAt: null,
+    });
+    await seedLinkedStory();
+    await seedOwnComment('server-user');
+    await seedOwnFavorite('server-user');
+    (axios.defaults as any).adapter = async (config: any) => ({
+      data: { conflicts: [] },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    });
+    const service = createStoryService(database.db);
+
+    await service.unlinkFromServer(TEST_USER_ID, TEST_STORY_ID);
+
+    expect(await commentAuthor()).toBe(TEST_USER_ID);
+    expect(
+      (
+        await database.db.query.favorites.findFirst({
+          where: eq(favorites.id, 'fav-1'),
+        })
+      )?.userId,
+    ).toBe(TEST_USER_ID);
+    expect((await service.getStoryById(TEST_STORY_ID))?.serverId).toBeNull();
   });
 });

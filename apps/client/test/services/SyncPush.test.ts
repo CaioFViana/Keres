@@ -30,7 +30,7 @@ const operation = (
     operationVersion: 1,
     operationType,
     entityType: 'Character',
-    entityId: 'character-1',
+    entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
     payload: JSON.stringify({ name: 'Local', version: 2 }),
     createdAt: NOW,
     isSynced: false,
@@ -64,6 +64,8 @@ beforeEach(async () => {
     pushedUpdates: jest.fn(),
     pushFailed: jest.fn(),
     syncFailed: jest.fn(),
+    protocolMismatch: jest.fn(),
+    storyNotFound: jest.fn(),
     message: jest.fn(),
   };
   push = new SyncPush({
@@ -84,7 +86,8 @@ afterEach(() => {
 });
 
 describe('operation mapping', () => {
-  const build = (value: OperationLogSelect) => (push as any).buildStoryUpdateFromLocalOp(value);
+  const build = (value: OperationLogSelect) =>
+    (push as any).tryBuildStoryUpdateFromLocalOp(value).update;
 
   it('maps create, update and delete envelopes and strips local-only columns', () => {
     const create = build(
@@ -106,46 +109,15 @@ describe('operation mapping', () => {
     expect(deletion).toMatchObject({ type: 'delete', version: 1 });
   });
 
-  it('maps chapter and story reorder payloads', () => {
-    const reorderItems = [{ id: 'one', newIndex: 1 }];
-    const chapter = build(
-      operation('chapter', 'reorder', {
-        entityType: 'Chapter',
-        entityId: 'chapter-1',
-        payload: JSON.stringify({ reorderItems, version: 2 }),
-      }),
-    );
-    const story = build(
-      operation('story', 'reorder', {
-        entityType: 'Story',
-        entityId: STORY_ID,
-        payload: JSON.stringify({
-          reorderItems,
-          reorderTarget: 'schemaFields',
-          schemaEntityType: 'Character',
-          version: 2,
-        }),
-      }),
-    );
-
-    expect(chapter).toMatchObject({ type: 'reorder', entity: 'Chapter', reorderItems });
-    expect(story).toMatchObject({
-      type: 'reorder',
-      entity: 'Story',
-      reorderItems,
-      reorderTarget: 'schemaFields',
-    });
-  });
-
   it.each([
     operation('missing-version', 'update', { payload: JSON.stringify({ name: 'Invalid' }) }),
     operation('missing-delete-version', 'delete', {
       entityType: 'StoryArc',
-      entityId: 'arc-1',
-      payload: JSON.stringify({ id: 'arc-1', isDeleted: true }),
+      entityId: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ id: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ', isDeleted: true }),
     }),
     operation('missing-id', 'create', { entityId: '' }),
-    operation('bad-reorder', 'reorder', { entityType: 'Character' }),
+    operation('container-order', 'reorder' as never, { entityType: 'Chapter' }),
     operation('unknown', 'rename' as never),
   ])('skips an operation the server cannot safely accept', (value) => {
     expect(build(value)).toBeNull();
@@ -156,8 +128,8 @@ describe('operation mapping', () => {
     const deletion = build(
       operation('arc-delete', 'delete', {
         entityType: 'StoryArc',
-        entityId: 'arc-1',
-        payload: JSON.stringify({ id: 'arc-1', isDeleted: true, version: 2 }),
+        entityId: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ',
+        payload: JSON.stringify({ id: 'ARC1ZZZZZZZZZZZZZZZZZZZZZZ', isDeleted: true, version: 2 }),
       }),
     );
     expect(deletion).toMatchObject({ type: 'delete', entity: 'StoryArc', version: 1 });
@@ -165,26 +137,45 @@ describe('operation mapping', () => {
 });
 
 describe('pending operations and rebasing', () => {
-  it('groups only pushable operations by entity in operation-version order', async () => {
+  it('reads every unsynced operation of one entity in operation-version order, held ones included', async () => {
     await seedOperation(operation('second', 'update', { operationVersion: 2 }));
     await seedOperation(operation('first', 'update', { operationVersion: 1 }));
     await seedOperation(
       operation('blocked', 'update', { operationVersion: 3, conflictState: 'conflicted' }),
     );
+    await seedOperation(
+      operation('synced', 'update', {
+        operationVersion: 4,
+        isSynced: true,
+        serverOperationVersion: 9,
+      }),
+    );
+    await seedOperation(
+      operation('other', 'update', { operationVersion: 5, entityId: 'CHARACTER2ZZZZZZZZZZZZZZZZ' }),
+    );
 
-    const grouped = await push.getPendingOperationsByEntity();
+    const unsynced = await push.getUnsyncedOperationsForEntity(
+      'Character',
+      'CHARACTER1ZZZZZZZZZZZZZZZZ',
+    );
 
-    expect(grouped.get('Character:character-1')?.map((entry) => entry.id)).toEqual([
-      'first',
-      'second',
-    ]);
+    expect(unsynced.map((entry) => entry.id)).toEqual(['first', 'second', 'blocked']);
   });
 
   it('chains rebased versions and ignores a missing server version', async () => {
     const first = operation('first', 'update');
-    const second = operation('second', 'update');
+    const second = operation('second', 'update', { operationVersion: 2 });
     await seedOperation(first);
     await seedOperation(second);
+    await database.db.insert(schema.characters).values({
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Local',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+      isDeleted: false,
+    });
 
     await push.rebasePendingOperations([first, second], undefined);
     expect(
@@ -200,6 +191,9 @@ describe('pending operations and rebasing', () => {
     expect(
       rows.map((row) => JSON.parse(row.payload).version).sort((left, right) => left - right),
     ).toEqual([9, 10]);
+    // The row follows the chain's end (last base + 1), so the next edit rests on a base the
+    // server will actually hold once these operations push.
+    expect(await database.db.query.characters.findFirst()).toMatchObject({ version: 10 });
   });
 });
 
@@ -255,7 +249,7 @@ describe('push result handling', () => {
     });
     const conflict = {
       entity: 'Character',
-      entityId: 'character-1',
+      entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       type: 'update',
       reason: 'concurrent_edit',
       message: 'conflict',
@@ -263,6 +257,8 @@ describe('push result handling', () => {
       serverVersion: 4,
     };
 
+    await seedOperation(first);
+    await seedOperation(second);
     const result = await push.applyPushResult(
       { applied: [], conflicts: [conflict, { ...conflict, message: 'again' }] } as never,
       [first, second],
@@ -282,12 +278,12 @@ describe('push result handling', () => {
   it('does not put an accepted create into a later update conflict for the same entity', async () => {
     const create = operation('board-create', 'create', {
       entityType: 'Board',
-      entityId: 'board-1',
+      entityId: 'BOARD1ZZZZZZZZZZZZZZZZZZZZ',
       payload: JSON.stringify({ name: 'Board', content: { nodes: [], edges: [] }, version: 1 }),
     });
     const update = operation('board-update', 'update', {
       entityType: 'Board',
-      entityId: 'board-1',
+      entityId: 'BOARD1ZZZZZZZZZZZZZZZZZZZZ',
       operationVersion: 2,
       payload: JSON.stringify({ content: { nodes: [], edges: [] }, version: 2 }),
     });
@@ -301,7 +297,7 @@ describe('push result handling', () => {
           {
             clientOperationId: 'board-update',
             entity: 'Board',
-            entityId: 'board-1',
+            entityId: 'BOARD1ZZZZZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'validation',
             message: 'invalid update',
@@ -350,9 +346,170 @@ describe('push result handling', () => {
     );
   });
 
+  it('keeps an operation skipped behind another refusal queued, deciding nothing', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Local name',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 4,
+      isDeleted: false,
+    });
+    const local = operation('skipped', 'update', {
+      payload: JSON.stringify({ name: 'Local name', version: 4 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: local.id,
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'Skipped: an earlier operation on this entity in this batch conflicted.',
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    // No snapshot is no judgement: recorded, it would read as "the server does not have it".
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: false,
+      conflictState: null,
+    });
+    expect(await database.db.query.characters.findFirst()).toMatchObject({ isDeleted: false });
+  });
+
+  /**
+   * A chapter and its scene go in one push; the chapter does not land (skipped here, folded or
+   * rewritten elsewhere) and the scene is refused for pointing at a chapter the server lacks. The
+   * chapter is on its way: the scene waits for it instead of asking the user about a reference
+   * that is about to exist.
+   */
+  it('keeps a refusal for a missing reference queued while a create of the push is on its way', async () => {
+    const chapter = operation('chapter', 'create', {
+      operationVersion: 1,
+      entityType: 'Chapter',
+      entityId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ name: 'Um', version: 1 }),
+    });
+    const scene = operation('scene', 'create', {
+      operationVersion: 2,
+      entityType: 'Scene',
+      entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({
+        name: 'Porto',
+        chapterId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+        version: 1,
+      }),
+    });
+    await seedOperation(chapter);
+    await seedOperation(scene);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: chapter.id,
+            entity: 'Chapter',
+            entityId: 'CHAPTER1ZZZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'version_conflict',
+            message: 'Skipped: an earlier operation on this entity in this batch conflicted.',
+          },
+          {
+            clientOperationId: scene.id,
+            entity: 'Scene',
+            entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'referenced_entity_deleted',
+            message: 'Chapter not found.',
+          },
+        ],
+      } as never,
+      [chapter, scene],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    for (const op of await database.db.query.operationLogs.findMany()) {
+      expect(op).toMatchObject({ isSynced: false, conflictState: null });
+    }
+  });
+
+  it('never lets two refusals for missing references wait on each other', async () => {
+    const first = operation('first', 'create', {
+      entityType: 'TagRelation',
+      entityId: 'RELATION1ZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ tagId: 'GONE', version: 1 }),
+    });
+    const second = operation('second', 'create', {
+      operationVersion: 2,
+      entityType: 'TagRelation',
+      entityId: 'RELATION2ZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ tagId: 'GONE', version: 1 }),
+    });
+    await seedOperation(first);
+    await seedOperation(second);
+
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [first, second].map((op) => ({
+          clientOperationId: op.id,
+          entity: 'TagRelation',
+          entityId: op.entityId,
+          type: 'create',
+          reason: 'referenced_entity_deleted',
+          message: 'Tag not found.',
+        })),
+      } as never,
+      [first, second],
+    );
+
+    expect(recordConflict).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks about a missing reference when nothing of the push is on its way', async () => {
+    const scene = operation('scene', 'create', {
+      entityType: 'Scene',
+      entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ name: 'Porto', chapterId: 'GONE', version: 1 }),
+    });
+    await seedOperation(scene);
+
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            clientOperationId: scene.id,
+            entity: 'Scene',
+            entityId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'referenced_entity_deleted',
+            message: 'Chapter not found.',
+          },
+        ],
+      } as never,
+      [scene],
+    );
+
+    expect(recordConflict).toHaveBeenCalledTimes(1);
+  });
+
   it('silently merges disjoint stale fields and rebases the local edit', async () => {
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Old server name',
       description: 'Old description',
@@ -372,7 +529,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -389,7 +546,8 @@ describe('push result handling', () => {
     expect(recordConflict).not.toHaveBeenCalled();
     expect(await database.db.query.characters.findFirst()).toMatchObject({
       name: 'New server name',
-      description: 'Old description',
+      description: 'Local description',
+      version: 8,
     });
     expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
       8,
@@ -398,7 +556,7 @@ describe('push result handling', () => {
 
   it('does not surface a conflict when both sides reached the same value', async () => {
     await database.db.insert(schema.characters).values({
-      id: 'character-1',
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
       storyId: STORY_ID,
       name: 'Same name',
       createdAt: NOW,
@@ -417,7 +575,7 @@ describe('push result handling', () => {
         conflicts: [
           {
             entity: 'Character',
-            entityId: 'character-1',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
             type: 'update',
             reason: 'version_conflict',
             message: 'stale',
@@ -448,32 +606,346 @@ describe('push result handling', () => {
 
     expect(notifier.pushedUpdates).toHaveBeenCalled();
   });
+
+  it('defaults the server version to zero on a legacy response without one', async () => {
+    const local = operation('legacy-bare', 'update');
+    await seedOperation(local);
+
+    const result = await push.applyPushResult({} as SyncPushResult, [local]);
+
+    expect(result).toEqual({ applied: 1, conflicts: 0 });
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 0,
+    });
+  });
+
+  it('stamps a legacy batch back from the max in batch order so echoes still match', async () => {
+    const first = operation('legacy-1', 'update', { operationVersion: 1 });
+    const second = operation('legacy-2', 'update', { operationVersion: 2 });
+    const third = operation('legacy-3', 'update', { operationVersion: 3 });
+    await seedOperation(first);
+    await seedOperation(second);
+    await seedOperation(third);
+
+    const result = await push.applyPushResult({ serverMaxOperationVersion: 9 } as SyncPushResult, [
+      first,
+      second,
+      third,
+    ]);
+
+    expect(result).toEqual({ applied: 3, conflicts: 0 });
+    const rows = await database.db.query.operationLogs.findMany();
+    expect(
+      rows
+        .sort((left, right) => left.id.localeCompare(right.id))
+        .map((row) => row.serverOperationVersion),
+    ).toEqual([7, 8, 9]);
+  });
+
+  it('handles a response that omits the applied list', async () => {
+    const local = operation('refused-only', 'update', {
+      payload: JSON.stringify({ name: 'Mine', version: 2 }),
+    });
+
+    const result = await push.applyPushResult(
+      {
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'validation',
+            message: 'bad',
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 1 });
+    expect(recordConflict).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles a response that omits the conflict list', async () => {
+    const local = operation('applied-only', 'update');
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [{ clientOperationId: local.id, operationVersion: 8 }],
+      } as unknown as SyncPushResult,
+      [local],
+      { silent: true },
+    );
+
+    expect(result).toEqual({ applied: 1, conflicts: 0 });
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 8,
+    });
+  });
+
+  /**
+   * The folded decision keeps the strongest operation type: a refused create resends as a create,
+   * not an update. Recording it as an update would send the entity back through the wrong path -
+   * and the server would refuse it again as `not_found`.
+   */
+  it('folds a refused create as a create', async () => {
+    const create = operation('create-refused', 'create', {
+      payload: JSON.stringify({ name: 'New', version: 1 }),
+    });
+    await seedOperation(create);
+
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'create',
+            reason: 'validation',
+            message: 'bad create',
+          },
+        ],
+      } as never,
+      [create],
+    );
+
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationType: 'create',
+        localOperationIds: ['create-refused'],
+      }),
+    );
+  });
+
+  it('records empty local values when the refused operation is gone and sent nothing', async () => {
+    await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'missing',
+            type: 'create',
+            reason: 'validation',
+            message: 'invalid',
+          },
+        ],
+      } as never,
+      [],
+    );
+
+    expect(recordConflict).toHaveBeenCalledWith(expect.objectContaining({ localValues: {} }));
+  });
+
+  /**
+   * The other side of the silent merge: both sides changed the same field to different values, so
+   * there is a genuine decision to take. Auto-merging here would overwrite one side's edit without
+   * ever asking.
+   */
+  it('records a conflict when the same field changed on both sides', async () => {
+    const local = operation('disputed', 'update', {
+      payload: JSON.stringify({ name: 'Mine', version: 3 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: ['name'],
+            serverEntity: { name: 'Theirs' },
+            serverVersion: 5,
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 1 });
+    expect(recordConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        localOperationType: 'update',
+        serverValues: { name: 'Theirs' },
+      }),
+    );
+  });
+
+  /**
+   * A silent merge for an entity this build does not store: there is no table to write the merged
+   * values to, but the pending operation still has to be rebased onto the server's version -
+   * otherwise it conflicts again on the next push.
+   */
+  it('rebases without writing when the merged entity has no local table', async () => {
+    const local = operation('future', 'update', {
+      entityType: 'SomethingFromTheFuture',
+      entityId: 'X1ZZZZZZZZZZZZZZZZZZZZZZZZ',
+      payload: JSON.stringify({ name: 'A', version: 3 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'SomethingFromTheFuture',
+            entityId: 'X1ZZZZZZZZZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: ['name'],
+            serverEntity: { name: 'A' },
+            serverVersion: 5,
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
+      6,
+    );
+  });
+
+  /**
+   * A silent merge whose server side carries nothing this build stores (only fields from a newer
+   * schema): the local edits still overlay, so the row keeps showing them instead of being left
+   * on whatever it held before.
+   */
+  it('overlays the local edits when the server side maps to no local column', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Original',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+    const local = operation('future-fields', 'update', {
+      payload: JSON.stringify({ name: 'A', version: 3 }),
+    });
+    await seedOperation(local);
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: [],
+            serverEntity: { someFutureField: 1 },
+            serverVersion: 5,
+          },
+        ],
+      } as never,
+      [local],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(await database.db.query.characters.findFirst()).toMatchObject({
+      name: 'A',
+      version: 6,
+    });
+    expect(JSON.parse((await database.db.query.operationLogs.findFirst())!.payload).version).toBe(
+      6,
+    );
+  });
+
+  /**
+   * A silent merge with nothing writable on either side (unknown server fields, no local
+   * operations for the entity). Writing an empty column set would be a no-op at best; the
+   * merge must skip the write and still count the conflict as handled.
+   */
+  it('skips the write when neither side maps to a local column', async () => {
+    await database.db.insert(schema.characters).values({
+      id: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+      storyId: STORY_ID,
+      name: 'Original',
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 1,
+      isDeleted: false,
+    });
+
+    const result = await push.applyPushResult(
+      {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'version_conflict',
+            message: 'stale',
+            changedFields: [],
+            serverEntity: { someFutureField: 1 },
+            serverVersion: 5,
+            attemptedChanges: {},
+          },
+        ],
+      } as never,
+      [],
+    );
+
+    expect(result).toEqual({ applied: 0, conflicts: 0 });
+    expect(recordConflict).not.toHaveBeenCalled();
+    expect(await database.db.query.characters.findFirst()).toMatchObject({
+      name: 'Original',
+      version: 1,
+    });
+  });
 });
 
 describe('push loop', () => {
   it('pushes offline Plot membership and Route traversal creations without dropping their links', async () => {
     const plot = operation('plot', 'create', {
       entityType: 'Plot',
-      entityId: 'plot-1',
+      entityId: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
       payload: JSON.stringify({ name: 'The thread', details: null, version: 1 }),
     });
     const plotScene = operation('plot-scene', 'create', {
       entityType: 'PlotScene',
-      entityId: 'plot-scene-1',
-      payload: JSON.stringify({ plotId: 'plot-1', sceneId: 'scene-1', note: null, version: 1 }),
+      entityId: 'PLOTSCENE1ZZZZZZZZZZZZZZZZ',
+      operationVersion: 2,
+      payload: JSON.stringify({
+        plotId: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
+        sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+        note: null,
+        version: 1,
+      }),
     });
     const route = operation('route', 'create', {
       entityType: 'Route',
-      entityId: 'route-1',
+      entityId: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
+      operationVersion: 3,
       payload: JSON.stringify({ name: 'Possible path', details: null, version: 1 }),
     });
     const routeStep = operation('route-step', 'create', {
       entityType: 'RouteStep',
-      entityId: 'route-step-1',
+      entityId: 'ROUTESTEP1ZZZZZZZZZZZZZZZZ',
+      operationVersion: 4,
       payload: JSON.stringify({
-        routeId: 'route-1',
+        routeId: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
         position: 1,
-        sceneId: 'scene-1',
+        sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
         selectedChoiceId: null,
         version: 1,
       }),
@@ -496,23 +968,29 @@ describe('push loop', () => {
       expect.arrayContaining([
         expect.objectContaining({
           entity: 'Plot',
-          id: 'plot-1',
+          id: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
           data: { name: 'The thread', details: null, version: 1 },
         }),
         expect.objectContaining({
           entity: 'PlotScene',
-          id: 'plot-scene-1',
-          data: expect.objectContaining({ plotId: 'plot-1', sceneId: 'scene-1' }),
+          id: 'PLOTSCENE1ZZZZZZZZZZZZZZZZ',
+          data: expect.objectContaining({
+            plotId: 'PLOT1ZZZZZZZZZZZZZZZZZZZZZ',
+            sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+          }),
         }),
         expect.objectContaining({
           entity: 'Route',
-          id: 'route-1',
+          id: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
           data: expect.objectContaining({ name: 'Possible path' }),
         }),
         expect.objectContaining({
           entity: 'RouteStep',
-          id: 'route-step-1',
-          data: expect.objectContaining({ routeId: 'route-1', sceneId: 'scene-1' }),
+          id: 'ROUTESTEP1ZZZZZZZZZZZZZZZZ',
+          data: expect.objectContaining({
+            routeId: 'ROUTE1ZZZZZZZZZZZZZZZZZZZZ',
+            sceneId: 'SCENE1ZZZZZZZZZZZZZZZZZZZZ',
+          }),
         }),
       ]),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
@@ -542,6 +1020,40 @@ describe('push loop', () => {
     expect(post).toHaveBeenCalledTimes(1);
   });
 
+  it('releases a quarantined operation back to the queue when recording the conflict fails', async () => {
+    await seedOperation(
+      operation('bad', 'update', {
+        operationVersion: 1,
+        payload: JSON.stringify({ name: 'No version' }),
+      }),
+    );
+    await seedOperation(operation('good', 'update', { operationVersion: 2 }));
+    // An Error on the first round, a foreign non-Error throw on the retry: the release must
+    // not depend on the shape of what was thrown.
+    recordConflict
+      .mockRejectedValueOnce(new Error('disk I/O'))
+      .mockRejectedValue('plain string failure');
+    post.mockResolvedValue({
+      data: { applied: [{ clientOperationId: 'good', operationVersion: 3 }], conflicts: [] },
+    });
+
+    await expect(push.pushPendingOperations()).resolves.toEqual({ offline: false });
+
+    // The valid op still went out; the failed quarantine released its op for the next push
+    // instead of parking it conflicted with no conflict row to resolve it.
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(
+      await database.db.query.operationLogs.findFirst({
+        where: eq(schema.operationLogs.id, 'good'),
+      }),
+    ).toMatchObject({ isSynced: true });
+    expect(
+      await database.db.query.operationLogs.findFirst({
+        where: eq(schema.operationLogs.id, 'bad'),
+      }),
+    ).toMatchObject({ isSynced: false, conflictState: null });
+  });
+
   it('reports accumulated accepted operations and conflicts once', async () => {
     await seedOperation(operation('accepted', 'update'));
     post.mockResolvedValue({
@@ -554,5 +1066,92 @@ describe('push loop', () => {
     await push.pushPendingOperations();
 
     expect(notifier.pushedUpdates).toHaveBeenCalled();
+  });
+
+  /**
+   * A queue longer than one batch: the loop keeps pushing while each round makes progress, and
+   * only stops when the queue is empty. A writer returning from a week offline can easily have
+   * more than 200 pending operations.
+   */
+  it('drains a queue longer than one batch across several rounds', async () => {
+    const ops = Array.from({ length: 201 }, (_, index) =>
+      operation(`bulk-${index}`, 'update', {
+        operationVersion: index + 1,
+        entityId: `CHAR${index}`.padEnd(26, 'Z'),
+      }),
+    );
+    await database.db.insert(schema.operationLogs).values(ops);
+    post.mockImplementation(async (_url: string, body: { clientOperationId: string }[]) => ({
+      data: {
+        applied: body.map((entry) => ({
+          clientOperationId: entry.clientOperationId,
+          operationVersion: 1,
+        })),
+        conflicts: [],
+      },
+    }));
+
+    await push.pushPendingOperations();
+
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(
+      (await database.db.query.operationLogs.findMany()).every((entry) => entry.isSynced),
+    ).toBe(true);
+    expect(notifier.pushedUpdates).toHaveBeenCalledWith(201);
+  });
+
+  /**
+   * A refused operation surfaces exactly one notification for the whole push, after the loop ends -
+   * not one per batch, and not from inside the silent result handling.
+   */
+  it('reports refused operations once after the loop ends', async () => {
+    await seedOperation(operation('refused', 'update'));
+    post.mockResolvedValue({
+      data: {
+        applied: [],
+        conflicts: [
+          {
+            entity: 'Character',
+            entityId: 'CHARACTER1ZZZZZZZZZZZZZZZZ',
+            type: 'update',
+            reason: 'validation',
+            message: 'bad',
+          },
+        ],
+      },
+    });
+
+    await push.pushPendingOperations();
+
+    expect(recordConflict).toHaveBeenCalledTimes(1);
+    expect(notifier.conflictsDetected).toHaveBeenCalledTimes(1);
+    expect(notifier.conflictsDetected).toHaveBeenCalledWith(1);
+    expect(notifier.pushedUpdates).not.toHaveBeenCalled();
+  });
+
+  it('keeps operations pending when the push response is lost, and lands them on resend', async () => {
+    await seedOperation(operation('lost', 'update'));
+    // First attempt: the server applies it, but the response never arrives.
+    post.mockRejectedValueOnce(new Error('socket hang up'));
+    post.mockResolvedValue({
+      data: {
+        applied: [{ clientOperationId: 'lost', operationVersion: 5 }],
+        conflicts: [],
+      },
+    });
+
+    await expect(push.pushPendingOperations()).rejects.toThrow('socket hang up');
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({ isSynced: false });
+
+    await expect(push.pushPendingOperations()).resolves.toEqual({ offline: false });
+
+    expect(post).toHaveBeenCalledTimes(2);
+    // The resend carries the identical envelope, so the server recognises its own work.
+    expect(post.mock.calls[1][1]).toEqual(post.mock.calls[0][1]);
+    expect(await database.db.query.operationLogs.findFirst()).toMatchObject({
+      isSynced: true,
+      serverOperationVersion: 5,
+    });
+    expect(recordConflict).not.toHaveBeenCalled();
   });
 });

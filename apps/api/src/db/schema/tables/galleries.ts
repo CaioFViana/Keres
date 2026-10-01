@@ -87,11 +87,21 @@ export const mediaBlobs = table(
     hash: text('hash').primaryKey(),
     mimeType: text('mime_type').notNull(),
     sizeBytes: integer('size_bytes').notNull(),
-    /** Caminho relativo à raiz de armazenamento configurada. */
+    /** Path relative to the configured storage root. */
     storagePath: text('storage_path').notNull(),
     createdAt: timestampNow('created_at'),
+    /**
+     * When the blob was first seen with no live gallery referencing it. Null while referenced.
+     * Bytes are only deleted after the grace period past this stamp, so a delete followed by a
+     * conflict resolution that keeps the media (or any other resurrection) does not find the
+     * bytes already gone.
+     */
+    unreferencedSince: timestamp('unreferenced_since'),
   },
-  (table) => [uniqueIndex('media_blobs_storage_path_idx').on(table.storagePath)],
+  (table) => [
+    uniqueIndex('media_blobs_storage_path_idx').on(table.storagePath),
+    index('media_blobs_unreferenced_since_idx').on(table.unreferencedSince),
+  ],
 );
 
 export const galleriesRelations = relations(galleries, ({ one, many }) => ({

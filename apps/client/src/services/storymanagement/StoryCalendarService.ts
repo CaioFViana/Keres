@@ -9,7 +9,8 @@ import { entityEventEmitter } from '../../utils/EventEmitter';
 import {
   assertStoryIsWritable,
   getUserIdForOperation,
-  recordLocalOperation,
+  recordLocalOperationSync,
+  runLocalWrite,
 } from '../../utils/syncUtils';
 import { createServerService } from '../ServerService';
 
@@ -61,24 +62,56 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
   const liveInStory = (storyId: string) =>
     and(eq(storyCalendars.storyId, storyId), eq(storyCalendars.isDeleted, false));
 
-  const logOperation = async (
-    currentUserId: string,
+  const userIdFor = (currentUserId: string, storyId: string) =>
+    getUserIdForOperation(db, serverService, storyId, currentUserId);
+
+  /** Inside a unit. */
+  const logOperation = (
+    userIdToLog: string,
     storyId: string,
     type: 'create' | 'update' | 'delete',
     calendarId: string,
     payload: Record<string, unknown>,
   ) => {
-    const userIdToLog = await getUserIdForOperation(db, serverService, storyId, currentUserId);
-    await recordLocalOperation(
-      db,
-      storyId,
-      userIdToLog,
-      type,
-      'StoryCalendar',
-      calendarId,
-      payload,
-    );
-    entityEventEmitter.emit('story_calendar_changed', storyId, calendarId);
+    recordLocalOperationSync(db, storyId, userIdToLog, type, 'StoryCalendar', calendarId, payload);
+  };
+
+  const emitChanged = (storyId: string, calendarIds: string[]) => {
+    for (const calendarId of calendarIds) {
+      entityEventEmitter.emit('story_calendar_changed', storyId, calendarId);
+    }
+  };
+
+  /**
+   * Inside a unit: leaves `primaryId` (or none) as the only primary among `calendars`.
+   *
+   * Every row that changes is logged separately, including the demotions. A single "promote"
+   * operation would leave the other devices to infer the demotions, and an inference the log
+   * does not state is one the other device can get wrong.
+   */
+  const applyPrimary = (
+    userIdToLog: string,
+    storyId: string,
+    calendars: StoryCalendarSelect[],
+    primaryId: string | null,
+  ): string[] => {
+    const changedIds: string[] = [];
+    for (const calendar of calendars) {
+      const shouldBePrimary = calendar.id === primaryId;
+      if (calendar.isPrimary === shouldBePrimary) continue;
+
+      db.update(storyCalendars)
+        .set({
+          isPrimary: shouldBePrimary,
+          updatedAt: new Date(),
+          version: sql`${storyCalendars.version} + 1`,
+        })
+        .where(eq(storyCalendars.id, calendar.id))
+        .run();
+      logOperation(userIdToLog, storyId, 'update', calendar.id, { isPrimary: shouldBePrimary });
+      changedIds.push(calendar.id);
+    }
+    return changedIds;
   };
 
   const service: StoryCalendarService = {
@@ -124,13 +157,17 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
         ...data,
         isPrimary: data.isPrimary ?? false,
       });
-      const result = await db.insert(storyCalendars).values(calendar).returning().get();
+      const userIdToLog = await userIdFor(currentUserId, calendar.storyId);
 
-      if (result.isPrimary && existing.length > 0) {
-        await service.setPrimary(currentUserId, result.id);
-      }
-
-      await logOperation(currentUserId, calendar.storyId, 'create', calendar.id, { ...result });
+      const { result, demotedIds } = await runLocalWrite(db, calendar.storyId, () => {
+        const inserted = db.insert(storyCalendars).values(calendar).returning().get();
+        logOperation(userIdToLog, calendar.storyId, 'create', calendar.id, { ...inserted });
+        const demoted = inserted.isPrimary
+          ? applyPrimary(userIdToLog, calendar.storyId, existing, inserted.id)
+          : [];
+        return { result: inserted, demotedIds: demoted };
+      });
+      emitChanged(calendar.storyId, [...demotedIds, calendar.id]);
       return result;
     },
 
@@ -144,22 +181,27 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
       delete changed.updatedAt;
       if (Object.keys(changed).length === 0) return original;
 
-      await db
-        .update(storyCalendars)
-        .set({ ...changes, updatedAt: new Date(), version: sql`${storyCalendars.version} + 1` })
-        .where(eq(storyCalendars.id, calendarId));
+      const userIdToLog = await userIdFor(currentUserId, original.storyId);
+      const updated = await runLocalWrite(db, original.storyId, () => {
+        db.update(storyCalendars)
+          .set({ ...changes, updatedAt: new Date(), version: sql`${storyCalendars.version} + 1` })
+          .where(eq(storyCalendars.id, calendarId))
+          .run();
 
-      const updated = await service.getById(calendarId);
-      if (!updated) throw new Error(`Failed to retrieve updated StoryCalendar ${calendarId}.`);
+        const row = db.select().from(storyCalendars).where(eq(storyCalendars.id, calendarId)).get();
+        if (!row) throw new Error(`Failed to retrieve updated StoryCalendar ${calendarId}.`);
 
-      const operationChanges = getChangedFields(original, updated);
-      // A calendar definition is validated as one document. A recursive diff can retain only a
-      // changed scalar (for example `daysPerWeek`) and omit required parts such as `months`.
-      if (operationChanges.definition !== undefined) {
-        operationChanges.definition = updated.definition;
-      }
+        const operationChanges = getChangedFields(original, row);
+        // A calendar definition is validated as one document. A recursive diff can retain only a
+        // changed scalar (for example `daysPerWeek`) and omit required parts such as `months`.
+        if (operationChanges.definition !== undefined) {
+          operationChanges.definition = row.definition;
+        }
 
-      await logOperation(currentUserId, updated.storyId, 'update', calendarId, operationChanges);
+        logOperation(userIdToLog, row.storyId, 'update', calendarId, operationChanges);
+        return row;
+      });
+      emitChanged(updated.storyId, [calendarId]);
       return updated;
     },
 
@@ -169,44 +211,22 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
       await assertStoryIsWritable(db, target.storyId);
 
       const calendars = await service.getCalendarsForStory(target.storyId);
-      /*
-       * Every row that changes is logged separately, including the demotions. A single "promote"
-       * operation would leave the other devices to infer the demotions, and an inference the log
-       * does not state is one the other device can get wrong.
-       */
-      for (const calendar of calendars) {
-        const shouldBePrimary = calendar.id === calendarId;
-        if (calendar.isPrimary === shouldBePrimary) continue;
-
-        await db
-          .update(storyCalendars)
-          .set({
-            isPrimary: shouldBePrimary,
-            updatedAt: new Date(),
-            version: sql`${storyCalendars.version} + 1`,
-          })
-          .where(eq(storyCalendars.id, calendar.id));
-
-        await logOperation(currentUserId, target.storyId, 'update', calendar.id, {
-          isPrimary: shouldBePrimary,
-        });
-      }
+      const userIdToLog = await userIdFor(currentUserId, target.storyId);
+      const changedIds = await runLocalWrite(db, target.storyId, () =>
+        applyPrimary(userIdToLog, target.storyId, calendars, calendarId),
+      );
+      emitChanged(target.storyId, changedIds);
     },
 
     async clearPrimary(currentUserId, storyId) {
       await assertStoryIsWritable(db, storyId);
       const calendars = await service.getCalendarsForStory(storyId);
-      for (const calendar of calendars.filter((candidate) => candidate.isPrimary)) {
-        await db
-          .update(storyCalendars)
-          .set({
-            isPrimary: false,
-            updatedAt: new Date(),
-            version: sql`${storyCalendars.version} + 1`,
-          })
-          .where(eq(storyCalendars.id, calendar.id));
-        await logOperation(currentUserId, storyId, 'update', calendar.id, { isPrimary: false });
-      }
+      if (!calendars.some((calendar) => calendar.isPrimary)) return;
+      const userIdToLog = await userIdFor(currentUserId, storyId);
+      const changedIds = await runLocalWrite(db, storyId, () =>
+        applyPrimary(userIdToLog, storyId, calendars, null),
+      );
+      emitChanged(storyId, changedIds);
     },
 
     async deleteCalendar(currentUserId, calendarId) {
@@ -217,28 +237,34 @@ export const createStoryCalendarService = (db: AppDrizzleClient): StoryCalendarS
       }
       await assertStoryIsWritable(db, calendar.storyId);
 
-      const [updated] = await db
-        .update(storyCalendars)
-        .set({
-          isDeleted: true,
-          deletedAt: new Date(),
-          updatedAt: new Date(),
-          version: sql`${storyCalendars.version} + 1`,
-        })
-        .where(eq(storyCalendars.id, calendarId))
-        .returning({
-          id: storyCalendars.id,
-          storyId: storyCalendars.storyId,
-          isDeleted: storyCalendars.isDeleted,
-          version: storyCalendars.version,
-        });
-      if (!updated) throw new Error(`Failed to delete StoryCalendar ${calendarId}.`);
+      const userIdToLog = await userIdFor(currentUserId, calendar.storyId);
+      const updated = await runLocalWrite(db, calendar.storyId, () => {
+        const deleted = db
+          .update(storyCalendars)
+          .set({
+            isDeleted: true,
+            deletedAt: new Date(),
+            updatedAt: new Date(),
+            version: sql`${storyCalendars.version} + 1`,
+          })
+          .where(eq(storyCalendars.id, calendarId))
+          .returning({
+            id: storyCalendars.id,
+            storyId: storyCalendars.storyId,
+            isDeleted: storyCalendars.isDeleted,
+            version: storyCalendars.version,
+          })
+          .get();
+        if (!deleted) throw new Error(`Failed to delete StoryCalendar ${calendarId}.`);
 
-      await logOperation(currentUserId, updated.storyId, 'delete', calendarId, {
-        id: updated.id,
-        isDeleted: updated.isDeleted,
-        version: updated.version,
+        logOperation(userIdToLog, deleted.storyId, 'delete', calendarId, {
+          id: deleted.id,
+          isDeleted: deleted.isDeleted,
+          version: deleted.version,
+        });
+        return deleted;
       });
+      emitChanged(updated.storyId, [calendarId]);
     },
   };
 

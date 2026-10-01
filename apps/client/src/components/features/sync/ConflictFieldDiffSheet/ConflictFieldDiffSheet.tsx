@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ConflictSummary } from '../../../../services/ConflictSummaryService';
@@ -39,13 +39,17 @@ const ConflictFieldDiffSheet: React.FC<ConflictFieldDiffSheetProps> = ({
 
   const [fieldChoices, setFieldChoices] = useState<Record<string, FieldChoice>>({});
 
-  useEffect(() => {
+  const [prevConflictId, setPrevConflictId] = useState(conflict.id);
+  const [prevDiffFields, setPrevDiffFields] = useState(summary.diffFields);
+  if (conflict.id !== prevConflictId || summary.diffFields !== prevDiffFields) {
+    setPrevConflictId(conflict.id);
+    setPrevDiffFields(summary.diffFields);
     const defaults: Record<string, FieldChoice> = {};
     for (const field of summary.diffFields) {
       defaults[field.field] = 'local';
     }
     setFieldChoices(defaults);
-  }, [conflict.id, summary.diffFields]);
+  }
 
   const hasServerChoice = useMemo(
     () => Object.values(fieldChoices).some((choice) => choice === 'server'),

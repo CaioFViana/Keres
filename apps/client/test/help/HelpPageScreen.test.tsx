@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react-native';
-import React from 'react';
 import { HelpPageScreen } from '../../src/screens/help/HelpPageScreen';
 
 jest.mock('@react-navigation/native', () => ({

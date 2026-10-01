@@ -20,8 +20,6 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     });
   }
 
-  // No existence validation for entityId (Scene or Choice) - polymorphic, no database FK, the same
-  // pattern as CommentSyncHandler for entityType/entityId.
   private async validateRelatedEntities(
     storyId: string,
     itemId: string | null,
@@ -49,6 +47,13 @@ export class EffectSyncHandler extends BaseSyncEntityHandler<
     const validatedData = this.createSchema.parse(update.data);
 
     await this.validateRelatedEntities(storyId, validatedData.itemId, database);
+    // Polymorphic (Scene or Choice), so no foreign key holds it to this story.
+    await this.assertEntityInStory(
+      validatedData.entityType,
+      validatedData.entityId,
+      storyId,
+      database,
+    );
 
     const currentEffect = await this.findById(update.id!, database);
     if (currentEffect) {

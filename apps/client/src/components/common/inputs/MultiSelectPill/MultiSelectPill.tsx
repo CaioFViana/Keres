@@ -78,6 +78,11 @@ interface MultiSelectPillProps {
   pillStyle?: StyleProp<ViewStyle>;
   /** Compact text for large selections, without losing the real selection inside the modal. */
   selectionSummary?: string;
+  /**
+   * Replaces the pill frame with a custom trigger (an icon button in a toolbar); the modal
+   * stays identical. The frame's label and margins are skipped - the caller lays out.
+   */
+  trigger?: (open: () => void) => React.ReactNode;
 }
 
 const FLAT_GROUP_KEY = '__flat__';
@@ -106,6 +111,7 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   triggerStyle,
   pillStyle,
   selectionSummary,
+  trigger,
 }) => {
   const { colors, isDarkMode } = useTheme();
   const { t } = useTranslation();
@@ -415,55 +421,59 @@ const MultiSelectPill: React.FC<MultiSelectPillProps> = ({
   });
 
   return (
-    <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <TouchableOpacity
-        testID="multiselect-trigger"
-        onPress={openModal}
-        disabled={disabled}
-        style={[
-          styles.pillContainer,
-          singleValueAppearance && styles.singleValueContainer,
-          disabled && styles.disabled,
-          triggerStyle,
-        ]}
-      >
-        <View
-          testID="multiselect-trigger-content"
-          style={[styles.triggerContent, singleValueAppearance && styles.singleValueContent]}
+    <View style={trigger ? style : [styles.container, style]}>
+      {!trigger && label && <Text style={styles.label}>{label}</Text>}
+      {trigger ? (
+        trigger(disabled ? () => undefined : openModal)
+      ) : (
+        <TouchableOpacity
+          testID="multiselect-trigger"
+          onPress={openModal}
+          disabled={disabled}
+          style={[
+            styles.pillContainer,
+            singleValueAppearance && styles.singleValueContainer,
+            disabled && styles.disabled,
+            triggerStyle,
+          ]}
         >
-          {selectionSummary ? (
-            <Text style={styles.selectionSummary}>{selectionSummary}</Text>
-          ) : singleValueAppearance && selectedOptionDetails[0] ? (
-            <Text style={styles.singleValueText} numberOfLines={1}>
-              {selectedOptionDetails[0].label}
-            </Text>
-          ) : selectedOptionDetails.length > 0 ? (
-            selectedOptionDetails.map((option) => {
-              const pillBackgroundColor = option.color || colors.primaryContainer;
-              const pillTextColor = getContrastTextColor(pillBackgroundColor);
-              return (
-                <View
-                  key={option.value}
-                  testID={`multiselect-pill-${option.value}`}
-                  style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
-                >
-                  <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
-                </View>
-              );
-            })
-          ) : (
-            <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
-          )}
-        </View>
-        <View testID="multiselect-trigger-icon" style={styles.triggerIcon}>
-          <Ionicons
-            name={singleValueAppearance ? 'chevron-down' : 'add-circle'}
-            size={24}
-            color={colors.primary}
-          />
-        </View>
-      </TouchableOpacity>
+          <View
+            testID="multiselect-trigger-content"
+            style={[styles.triggerContent, singleValueAppearance && styles.singleValueContent]}
+          >
+            {selectionSummary ? (
+              <Text style={styles.selectionSummary}>{selectionSummary}</Text>
+            ) : singleValueAppearance && selectedOptionDetails[0] ? (
+              <Text style={styles.singleValueText} numberOfLines={1}>
+                {selectedOptionDetails[0].label}
+              </Text>
+            ) : selectedOptionDetails.length > 0 ? (
+              selectedOptionDetails.map((option) => {
+                const pillBackgroundColor = option.color || colors.primaryContainer;
+                const pillTextColor = getContrastTextColor(pillBackgroundColor);
+                return (
+                  <View
+                    key={option.value}
+                    testID={`multiselect-pill-${option.value}`}
+                    style={[styles.pill, pillStyle, { backgroundColor: pillBackgroundColor }]}
+                  >
+                    <Text style={[styles.pillText, { color: pillTextColor }]}>{option.label}</Text>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.placeholderText}>{placeholder || t('select_tags')}</Text>
+            )}
+          </View>
+          <View testID="multiselect-trigger-icon" style={styles.triggerIcon}>
+            <Ionicons
+              name={singleValueAppearance ? 'chevron-down' : 'add-circle'}
+              size={24}
+              color={colors.primary}
+            />
+          </View>
+        </TouchableOpacity>
+      )}
 
       <ResponsiveModal
         visible={modalVisible}

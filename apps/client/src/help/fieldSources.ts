@@ -4,7 +4,7 @@ export { entityMetadataHelpPages, fieldSources } from './visibleFieldSources';
 export const visibleEntityProperties = fieldSources;
 
 export type EntityPropertyClassification = {
-  /** Campos apresentados ao leitor em uma tela, fluxo ou artigo de ajuda. */
+  /** Fields presented to the reader on a screen, flow, or help article. */
   documented: string[];
   /** Identity, synchronization or internal-link keys that are not editable fields. */
   invisible: string[];
@@ -56,7 +56,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   Character: {
     documented: [
@@ -162,7 +162,10 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'use24HourTime',
       'dateDisplayFormat',
       'showContextualHelp',
+      'showTutorials',
+      'seenTutorials',
       'suggestLiteraryDevices',
+      'exportFormat',
       'createdAt',
       'updatedAt',
     ],
@@ -174,7 +177,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   Stat: {
     documented: ['name', 'isPrimary', 'createdAt', 'updatedAt'],
-    invisible: ['id', 'storyId', 'order', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'order', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   StatStrength: {
     documented: ['label', 'minValue', 'createdAt', 'updatedAt'],
@@ -336,6 +339,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'name',
       'index',
       'summary',
+      // The Editor's manuscript prose: writer-facing content, like the summary above it.
+      'body',
       'gap',
       'gapType',
       'calendarDateOverride',
@@ -349,7 +354,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   SeeAlsoRelation: {
     documented: ['entityAType', 'entityAId', 'entityBType', 'entityBId', 'createdAt', 'updatedAt'],
@@ -379,7 +384,17 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   ShowcaseVersion: {
     documented: [],
-    invisible: ['id', 'label', 'byteSize', 'mediaIncluded', 'mediaTotal', 'createdAt'],
+    invisible: [
+      'id',
+      'label',
+      'byteSize',
+      'mediaIncluded',
+      'mediaTotal',
+      'createdAt',
+      'packageIncluded',
+      'manuscript',
+      'reader',
+    ],
   },
   StoryPublication: {
     documented: [],
@@ -393,6 +408,9 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'byteSize',
       'mediaIncluded',
       'mediaTotal',
+      'manuscriptFormat',
+      'readerByteSize',
+      'packageIncluded',
       'createdAt',
     ],
   },
@@ -451,7 +469,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt', 'rank'],
   },
   Suggestion: {
     documented: ['type', 'value', 'createdAt', 'updatedAt'],
@@ -474,6 +492,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'maxEntitiesTotal',
       'maxStorageBytesPerStory',
       'maxStorageBytesTotal',
+      'maxPublicationsPerDay',
       'createdAt',
       'updatedAt',
     ],

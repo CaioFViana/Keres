@@ -1,22 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BoardNodeType } from '@keres/shared';
-import React, { useMemo, useRef } from 'react';
-import {
-  Image,
-  PanResponder,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Image } from 'expo-image';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../theme';
 import { useResolvedMediaUri } from '../../../hooks/useResolvedMediaUri';
 import { getBoardPinAppearance, type BoardCardAppearance } from '../../../utils/boardPinAppearance';
 import {
   boardNodeSize,
+  galleryDisplayPath,
   galleryHasImage,
-  BOARD_GALLERY_IMAGE_HEIGHT,
   BOARD_NOTE_BODY_MAX_LINES,
   type BoardGalleryMedia,
 } from '../../../utils/boardLayout';
@@ -34,12 +27,9 @@ interface Props {
   selected: boolean;
   layoutEditing: boolean;
   connectionMode: boolean;
+  /** While set, the pin ignores taps and drags: only overlay shapes respond. */
+  overlayEditing: boolean;
   scale: number;
-  /** Surface translation for the world-coordinate canvas. */
-  positionOffsetX?: number;
-  positionOffsetY?: number;
-  /** Baked viewport scale so the native surface can stay in screen pixels. */
-  positionScale?: number;
   /** The gallery's media, when this is a Gallery pin - decides whether the card shows its image. */
   galleryMedia?: BoardGalleryMedia | null;
   summary?: BoardEntitySummary | null;
@@ -67,10 +57,8 @@ const BoardNodeView: React.FC<Props> = ({
   selected,
   layoutEditing,
   connectionMode,
+  overlayEditing,
   scale,
-  positionOffsetX = 0,
-  positionOffsetY = 0,
-  positionScale = 1,
   galleryMedia,
   summary,
   onSelect,
@@ -91,22 +79,16 @@ const BoardNodeView: React.FC<Props> = ({
    * The responder is created once. Recreating it on every parent render (each `onMove`) drops the
    * mouse on the web as soon as the pin leaves the original hit box.
    */
-  const origin = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
+  const origin = useRef({ x: node.x, y: node.y });
   const dragging = useRef(false);
   const nodeRef = useRef(node);
-  nodeRef.current = node;
   const nodeId = useRef(node.id);
-  nodeId.current = node.id;
-  const position = useRef({ x: node.x + positionOffsetX, y: node.y + positionOffsetY });
-  position.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  const position = useRef({ x: node.x, y: node.y });
   const scaleRef = useRef(scale);
-  scaleRef.current = scale;
   const layoutEditingRef = useRef(layoutEditing);
-  layoutEditingRef.current = layoutEditing;
   const connectionModeRef = useRef(connectionMode);
-  connectionModeRef.current = connectionMode;
+  const overlayEditingRef = useRef(overlayEditing);
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const handlers = useRef({
     onSelect,
     onMove,
@@ -121,37 +103,53 @@ const BoardNodeView: React.FC<Props> = ({
     onConnectionEnd,
     onConnectionCancel,
   });
-  handlers.current = {
-    onSelect,
-    onMove,
-    onResize,
-    onDragStart,
-    onDragEnd,
-    onOpenDetails,
-    onBringToFront,
-    onSendToBack,
-    onConnectionStart,
-    onConnectionMove,
-    onConnectionEnd,
-    onConnectionCancel,
-  };
+  useEffect(() => {
+    // Latest-ref sync for the responders below: every reader runs on gestures, after effects
+    // have flushed. No dependency array - the sync unconditionally followed every render.
+    nodeRef.current = node;
+    nodeId.current = node.id;
+    position.current = { x: node.x, y: node.y };
+    scaleRef.current = scale;
+    layoutEditingRef.current = layoutEditing;
+    connectionModeRef.current = connectionMode;
+    overlayEditingRef.current = overlayEditing;
+    selectedRef.current = selected;
+    handlers.current = {
+      onSelect,
+      onMove,
+      onResize,
+      onDragStart,
+      onDragEnd,
+      onOpenDetails,
+      onBringToFront,
+      onSendToBack,
+      onConnectionStart,
+      onConnectionMove,
+      onConnectionEnd,
+      onConnectionCancel,
+    };
+  });
 
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponderCapture: () => false,
         // A selected card in layout mode exposes real controls inside itself. Let those controls
         // own the gesture; otherwise the parent responder steals a resize after a rerender.
         onStartShouldSetPanResponder: () => {
+          if (overlayEditingRef.current) return false;
           if (connectionModeRef.current) return true;
           if (layoutEditingRef.current && selectedRef.current) return false;
           handlers.current.onDragStart(nodeId.current);
           return true;
         },
         onMoveShouldSetPanResponderCapture: () =>
+          !overlayEditingRef.current &&
           (dragging.current || connectionModeRef.current) &&
           !(layoutEditingRef.current && selectedRef.current),
         onMoveShouldSetPanResponder: (_event, gesture) =>
+          !overlayEditingRef.current &&
           (connectionModeRef.current || !(layoutEditingRef.current && selectedRef.current)) &&
           Math.hypot(gesture.dx, gesture.dy) > DRAG_THRESHOLD,
         onPanResponderTerminationRequest: () => false,
@@ -210,17 +208,15 @@ const BoardNodeView: React.FC<Props> = ({
     [],
   );
 
-  if (!dragging.current)
-    origin.current = { x: node.x + positionOffsetX, y: node.y + positionOffsetY };
+  useEffect(() => {
+    // While a drag is in flight `origin` stays frozen at the gesture's start; otherwise it
+    // tracks the node's committed position. Readers are gesture handlers (post-commit).
+    if (!dragging.current) origin.current = { x: node.x, y: node.y };
+  }, [node.x, node.y]);
 
   const hasGalleryImage =
     node.kind === 'entity' && node.entityType === 'Gallery' && galleryHasImage(galleryMedia);
-  const galleryImagePath =
-    hasGalleryImage && galleryMedia
-      ? galleryMedia.mediaType === 'image'
-        ? galleryMedia.localPath
-        : galleryMedia.thumbnailPath
-      : null;
+  const galleryImagePath = hasGalleryImage ? galleryDisplayPath(galleryMedia) : null;
   const resolvedGalleryUri = useResolvedMediaUri(galleryImagePath);
   const size = boardNodeSize(node, galleryMedia);
   const showSummary =
@@ -233,10 +229,13 @@ const BoardNodeView: React.FC<Props> = ({
     !!node.cardNote;
   const detailLines = Math.max(2, Math.floor((size.height - (hasGalleryImage ? 180 : 66)) / 18));
   const sizeRef = useRef(size);
-  sizeRef.current = size;
+  useEffect(() => {
+    sizeRef.current = size;
+  }, [size]);
   const resizeOrigin = useRef(size);
   const resizePan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- handlers touch refs only on gestures; create wires them without invoking any during render.
       PanResponder.create({
         onStartShouldSetPanResponder: () => layoutEditing,
         onMoveShouldSetPanResponder: () => layoutEditing,
@@ -263,12 +262,10 @@ const BoardNodeView: React.FC<Props> = ({
       StyleSheet.create({
         node: {
           position: 'absolute',
-          left: (node.x + positionOffsetX) * positionScale,
-          top: (node.y + positionOffsetY) * positionScale,
+          left: node.x,
+          top: node.y,
           width: size.width,
           height: size.height,
-          transform: [{ scale: positionScale }],
-          transformOrigin: 'top left' as const,
           borderRadius: 10,
           borderWidth: selected ? 2 : 1,
           borderColor: selected ? colors.primary : colors.border,
@@ -284,9 +281,11 @@ const BoardNodeView: React.FC<Props> = ({
             ? ({ userSelect: 'none', cursor: 'grab' } as Record<string, string>)
             : {}),
         },
+        // The picture takes whatever the pin's data leaves: resizing a gallery pin grows the
+        // image, and the title block stays a compact footer.
         galleryImage: {
           width: '100%',
-          height: BOARD_GALLERY_IMAGE_HEIGHT,
+          flex: 1,
           backgroundColor: colors.surface,
         },
         galleryInfo: { paddingTop: 8 },
@@ -359,17 +358,7 @@ const BoardNodeView: React.FC<Props> = ({
           zIndex: 2,
         },
       }),
-    [
-      colors,
-      ghost,
-      hasGalleryImage,
-      node,
-      positionOffsetX,
-      positionOffsetY,
-      positionScale,
-      selected,
-      size,
-    ],
+    [colors, ghost, hasGalleryImage, node, selected, size],
   );
 
   const cardAppearance =
@@ -425,7 +414,10 @@ const BoardNodeView: React.FC<Props> = ({
           <Image
             source={resolvedGalleryUri ? { uri: resolvedGalleryUri } : undefined}
             style={styles.galleryImage}
-            resizeMode="cover"
+            contentFit="cover"
+            // Hit-transparent: the pin owns the gesture, and on web a hittable <img>
+            // would arm the native drag instead of the pin's responder.
+            pointerEvents="none"
           />
           <View style={styles.galleryInfo} pointerEvents="none">
             <View style={styles.row}>

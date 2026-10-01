@@ -41,12 +41,33 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 export const HOSTED_CLIENT_META = '<meta name="keres-hosted" content="1" />';
 
 /**
- * Expo Router only has the `/` file route. React Navigation writes the screen's name into the bar
- * (`/StorySelection`, …); the Router treats that as unmatched (404). The simplest solution: the hosted
- * URL always stays at `/`. F5 reloads the client; the screens' state is React Navigation's, not the
- * path's. Electron never sees this script.
+ * Where the web client lives on the origin: `/client`, so the root stays free. The client export that
+ * is served here is built for exactly this prefix (`KERES_WEB_BASE_URL=/client`, see
+ * `build:hosted` in apps/client) - the base path is baked into every asset URL it contains, which
+ * is why it is a different export from the desktop shell's, built for the root.
  */
-export const HOSTED_CLIENT_HISTORY_GUARD = `<script>(function(){function here(){return "/"+location.search+location.hash}var push=history.pushState.bind(history),rep=history.replaceState.bind(history);history.pushState=function(){return push(null,"",here())};history.replaceState=function(){return rep(null,"",here())};try{rep(null,"",here())}catch(e){}})();</script>`;
+export const HOSTED_CLIENT_PATH_PREFIX = '/client';
+
+/** Whether a request path belongs to the hosted client: its entry page, its assets, its screens. */
+export function isHostedClientPath(pathname: string): boolean {
+  return (
+    pathname === HOSTED_CLIENT_PATH_PREFIX || pathname.startsWith(`${HOSTED_CLIENT_PATH_PREFIX}/`)
+  );
+}
+
+/** The request path as the export sees it: `/client/_expo/a.js` is `/_expo/a.js`, `/client` is `/`. */
+export function hostedClientRelativePath(pathname: string): string {
+  const rest = pathname.slice(HOSTED_CLIENT_PATH_PREFIX.length);
+  return rest === '' ? '/' : rest;
+}
+
+/**
+ * The URL always stays at `/client/`. React Navigation can write a screen's name into the bar
+ * (`/client/StorySelection`), and an F5 there would ask the server for a path the client has no file for;
+ * keeping the address where it started makes a reload come back to the client. The screens' state is
+ * React Navigation's, not the path's. Electron never sees this script.
+ */
+export const HOSTED_CLIENT_HISTORY_GUARD = `<script>(function(){function here(){return "${HOSTED_CLIENT_PATH_PREFIX}/"+location.search+location.hash}var push=history.pushState.bind(history),rep=history.replaceState.bind(history);history.pushState=function(){return push(null,"",here())};history.replaceState=function(){return rep(null,"",here())};try{rep(null,"",here())}catch(e){}})();</script>`;
 
 export function rewriteHostedClientHtml(html: string): string {
   let next = html;
@@ -73,7 +94,8 @@ export function hostedClientMimeType(filePath: string): string {
 }
 
 /**
- * Resolves a request at the origin's root to a file from the Expo export. With no extension (an SPA /
+ * Resolves a request path (already relative to the client's prefix, see `hostedClientRelativePath`) to a
+ * file from the Expo export. With no extension (an SPA /
  * React Navigation route) it falls back to `index.html`.
  */
 export function resolveHostedClientFile(
@@ -124,29 +146,6 @@ export function readHostedClientFile(
   };
 }
 
-export function isClientDistRootAssetPath(pathname: string): boolean {
-  return pathname.startsWith('/_expo/') || pathname.startsWith('/assets/');
-}
-
 export function isShowcasePath(pathname: string): boolean {
   return pathname === SHOWCASE_PATH_PREFIX || pathname.startsWith(`${SHOWCASE_PATH_PREFIX}/`);
-}
-
-export function readClientDistRootAsset(
-  clientDist: string,
-  requestPath: string,
-): { body: Uint8Array; contentType: string } | null {
-  const relative = decodeURIComponent(requestPath.replace(/^\/+/, ''));
-  const filePath = path.normalize(path.join(clientDist, relative));
-  const root = path.normalize(clientDist);
-  if (filePath !== root && !filePath.startsWith(root + path.sep)) {
-    return null;
-  }
-  if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-    return null;
-  }
-  return {
-    body: new Uint8Array(readFileSync(filePath)),
-    contentType: hostedClientMimeType(filePath),
-  };
 }

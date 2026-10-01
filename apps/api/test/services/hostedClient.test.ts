@@ -4,11 +4,13 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CLIENT_APP_ISOLATION_HEADERS,
+  HOSTED_CLIENT_HISTORY_GUARD,
   HOSTED_CLIENT_META,
+  HOSTED_CLIENT_PATH_PREFIX,
   hostedClientMimeType,
-  isClientDistRootAssetPath,
+  hostedClientRelativePath,
+  isHostedClientPath,
   isShowcasePath,
-  readClientDistRootAsset,
   readHostedClientFile,
   rewriteHostedClientHtml,
   resolveHostedClientFile,
@@ -23,10 +25,11 @@ describe('rewriteHostedClientHtml', () => {
     expect(rewritten).toContain('src="/_expo/entry.js"');
   });
 
-  it('keeps the browser URL on / so Expo Router never sees a React Navigation path', () => {
+  it('keeps the browser URL at /client/ so a reload never asks for a screen name as a path', () => {
     const rewritten = rewriteHostedClientHtml('<head></head>');
     expect(rewritten).toContain('history.replaceState');
-    expect(rewritten).toContain('return "/"');
+    expect(rewritten).toContain('return "/client/"');
+    expect(HOSTED_CLIENT_HISTORY_GUARD).not.toContain('return "/"+');
   });
 
   it('leaves a page that already carries the markers untouched', () => {
@@ -91,15 +94,53 @@ describe('resolveHostedClientFile', () => {
   });
 });
 
-describe('readClientDistRootAsset', () => {
-  it('serves /_expo and /assets from the dist root and refuses escape', () => {
-    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-root-asset-'));
+describe('the client under its prefix', () => {
+  it('lives at /client, leaving the root free', () => {
+    expect(HOSTED_CLIENT_PATH_PREFIX).toBe('/client');
+  });
+
+  it('claims /client and what is under it, and nothing that only starts with the same letters', () => {
+    expect(isHostedClientPath('/client')).toBe(true);
+    expect(isHostedClientPath('/client/')).toBe(true);
+    expect(isHostedClientPath('/client/_expo/static/js/web/a.js')).toBe(true);
+    expect(isHostedClientPath('/')).toBe(false);
+    expect(isHostedClientPath('/clients')).toBe(false);
+    expect(isHostedClientPath('/clientele/x')).toBe(false);
+    expect(isHostedClientPath('/_expo/static/js/web/a.js')).toBe(false);
+    expect(isHostedClientPath('/assets/logo.png')).toBe(false);
+  });
+
+  it('sees a request path as the export does: the prefix is not a folder of it', () => {
+    expect(hostedClientRelativePath('/client')).toBe('/');
+    expect(hostedClientRelativePath('/client/')).toBe('/');
+    expect(hostedClientRelativePath('/client/_expo/a.js')).toBe('/_expo/a.js');
+    expect(hostedClientRelativePath('/client/StorySelection')).toBe('/StorySelection');
+  });
+
+  it('serves the entry, its assets and a screen path from the export, refusing escape', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'keres-prefixed-'));
+    writeFileSync(
+      path.join(root, 'index.html'),
+      '<head></head><script src="/client/_expo/worker.js"></script>',
+    );
     mkdirSync(path.join(root, '_expo'), { recursive: true });
     writeFileSync(path.join(root, '_expo', 'worker.js'), 'onmessage=()=>{}');
-    expect(isClientDistRootAssetPath('/_expo/worker.js')).toBe(true);
-    expect(readClientDistRootAsset(root, '/_expo/worker.js')?.contentType).toContain('javascript');
-    expect(readClientDistRootAsset(root, '/_expo/../secret')).toBeNull();
-    expect(readClientDistRootAsset(root, '/..')).toBeNull();
+
+    const entry = readHostedClientFile(root, hostedClientRelativePath('/client/'));
+    expect(entry?.contentType).toContain('text/html');
+    expect(entry?.body).toContain('src="/client/_expo/worker.js"');
+    expect(
+      readHostedClientFile(root, hostedClientRelativePath('/client/_expo/worker.js'))?.contentType,
+    ).toContain('javascript');
+    expect(
+      typeof readHostedClientFile(root, hostedClientRelativePath('/client/Stories'))?.body,
+    ).toBe('string');
+    expect(
+      readHostedClientFile(root, hostedClientRelativePath('/client/_expo/../../secret')),
+    ).toBeNull();
+    expect(
+      readHostedClientFile(root, hostedClientRelativePath('/client/_expo/missing.js')),
+    ).toBeNull();
   });
 });
 

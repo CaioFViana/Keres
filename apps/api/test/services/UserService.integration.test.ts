@@ -18,7 +18,8 @@ describe('UserService', () => {
 
     await expect(service.getUserByTag('hErOiNe')).resolves.toMatchObject({
       id: ana.userId,
-      tag: 'Heroine',
+      // Stored as a slug, whatever the capitals it was written with.
+      tag: 'heroine',
     });
     await expect(service.updateUserTag(bia.userId, 'heroine')).rejects.toBeInstanceOf(
       TagAlreadyTakenError,

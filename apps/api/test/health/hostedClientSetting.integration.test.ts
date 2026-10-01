@@ -41,5 +41,15 @@ describe('hosted client setting', () => {
     expect(html).toContain('href="/admin"');
     expect(html).toContain('href="/showcase"');
     expect(html).not.toContain('keres-hosted');
+
+    // The entry is what the setting switches off; the client's own address answers 404 too.
+    const entry = await app.handle(new Request('http://localhost/client/'));
+    expect(entry.status).toBe(404);
+
+    const back = await request('PUT', '/admin/showcase-settings', {
+      token: admin.token,
+      body: { isHostedClientEnabled: true },
+    });
+    expect(back.data.isHostedClientEnabled).toBe(true);
   });
 });

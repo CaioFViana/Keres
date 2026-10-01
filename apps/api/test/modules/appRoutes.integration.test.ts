@@ -48,8 +48,8 @@ const rootRequest = async (path: string, headers: Record<string, string> = {}) =
  */
 const resolveRuntimeBundlePath = () => {
   const html = readFileSync(`${clientDistPath()}/index.html`, 'utf8');
-  const match = html.match(/src="(\/_expo\/[^"]+\.js)"/);
-  if (!match) throw new Error('client dist index.html references no _expo bundle');
+  const match = html.match(/src="(\/client\/_expo\/[^"]+\.js)"/);
+  if (!match) throw new Error('client dist index.html references no /client/_expo bundle');
   return match[1];
 };
 
@@ -123,8 +123,16 @@ describe('hosted bottleneck routes', () => {
       expect(text.length).toBeGreaterThan(0);
     }
 
-    expect((await rootRequest('/_expo/static/js/web/does-not-exist.js')).status).toBe(404);
-    expect((await rootRequest('/assets/does-not-exist.png')).status).toBe(404);
+    expect((await rootRequest('/client/_expo/static/js/web/does-not-exist.js')).status).toBe(404);
+    expect((await rootRequest('/client/assets/does-not-exist.png')).status).toBe(404);
+  });
+
+  it('leaves /_expo and /assets at the root unanswered now that the client lives under /client', async () => {
+    if (existsSync(`${clientDistPath()}/index.html`)) {
+      const bundle = resolveRuntimeBundlePath().replace(/^\/client/, '');
+      expect((await rootRequest(bundle)).status).not.toBe(200);
+    }
+    expect((await rootRequest('/assets/does-not-exist.png')).status).not.toBe(200);
   });
 
   it('treats a malformed bearer token like no token on public routes', async () => {

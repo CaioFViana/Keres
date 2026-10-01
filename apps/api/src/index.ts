@@ -13,9 +13,10 @@ import {
 } from './config/resourceRoot';
 import {
   CLIENT_APP_ISOLATION_HEADERS,
-  isClientDistRootAssetPath,
+  HOSTED_CLIENT_PATH_PREFIX,
+  hostedClientRelativePath,
+  isHostedClientPath,
   isShowcasePath,
-  readClientDistRootAsset,
   readHostedClientFile,
   SHOWCASE_PATH_PREFIX,
 } from './services/hostedClient';
@@ -110,20 +111,31 @@ function applyClientAppIsolationHeaders(set: { headers: Record<string, string | 
   }
 }
 
-function isClientAppPath(pathname: string): boolean {
-  return pathname === '/' || isClientDistRootAssetPath(pathname);
-}
-
-function serveClientRootAsset(
+/**
+ * The hosted client: its entry page and everything it loads, all under `/client`. The entry is what the
+ * administrator can switch off (`isHostedClientEnabled`); the assets it asks for are served regardless,
+ * as they always were - without the entry nobody asks for them, and a database query per asset would be
+ * a poor trade.
+ */
+async function serveHostedClient(
   set: { status?: number | string; headers: Record<string, string | number> },
   request: Request,
-): Uint8Array | { message: string } {
+): Promise<Uint8Array | string | { message: string }> {
   if (!clientUiAvailable) {
     set.status = 404;
     return { message: 'Not found' };
   }
-  const file = readClientDistRootAsset(clientDistPath, new URL(request.url).pathname);
+  const file = readHostedClientFile(
+    clientDistPath,
+    hostedClientRelativePath(new URL(request.url).pathname),
+  );
   if (!file) {
+    set.status = 404;
+    return { message: 'Not found' };
+  }
+  const isEntry = typeof file.body === 'string';
+  // The same default as the root had: on while the database is starting up or is down.
+  if (isEntry && !(await showcaseSettingsService.isHostedClientEnabled().catch(() => true))) {
     set.status = 404;
     return { message: 'Not found' };
   }
@@ -146,7 +158,7 @@ if (!adminUiAvailable) {
 
 if (!clientUiAvailable) {
   logger.warn(
-    `Hosted client not built - / will not serve the web app. Run 'bun run client:build' to enable it.`,
+    `Hosted client not built - /client will not serve the web app. Run 'bun run client:build:hosted' to enable it.`,
   );
 }
 
@@ -294,21 +306,18 @@ export async function createApp() {
       .get(
         '/',
         async ({ set }) => {
-          // The root is the web client (the same export Electron uses), so Expo Router lives at `/` as it does
-          // on the desktop. The administrator can swap that for a minimal landing page. The root has always
-          // served the client without depending on the database. Preserving that path while the database is
-          // still starting up or is down avoids trading a useful page for a 503; the configuration's default is
-          // also "on".
+          // The web client lives at /client now (see HOSTED_CLIENT_PATH_PREFIX), so the root is free for
+          // whatever comes to it. Until then it keeps being the way in: it sends people to the client, which
+          // is what it always was; the administrator can still swap that for a minimal landing page. It has
+          // never depended on the database: while it is starting up or is down, the configuration's default
+          // ("on") applies rather than trading a useful page for a 503.
           const hostedClientEnabled = await showcaseSettingsService
             .isHostedClientEnabled()
             .catch(() => true);
           if (clientUiAvailable && hostedClientEnabled) {
-            const file = readHostedClientFile(clientDistPath, '/');
-            if (file) {
-              applyClientAppIsolationHeaders(set);
-              set.headers['content-type'] = file.contentType;
-              return file.body;
-            }
+            set.status = 302;
+            set.headers.location = `${HOSTED_CLIENT_PATH_PREFIX}/`;
+            return;
           }
           if (!hostedClientEnabled) {
             applyServerLandingSecurityHeaders(set);
@@ -326,13 +335,26 @@ export async function createApp() {
         },
         {
           detail: {
-            summary: 'Hosted Keres client (or showcase / Swagger)',
+            summary: 'Origin root (to the hosted client, or showcase / Swagger)',
             description:
-              'Serves the web export of apps/client at the origin root, with COOP/COEP so expo-sqlite can use SharedArrayBuffer. Falls back to /showcase or /api/swagger when the export is missing.',
+              'Sends the root to the hosted web client at /client. Falls back to a landing page, /showcase or /api/swagger when the client is switched off or not built.',
             tags: ['Client'],
           },
         },
       )
+      // `/client` and `/client/` are one path to the router, so there is no redirect between them: it
+      // would answer itself forever. The entry is the same either way.
+      .get('/client', ({ set, request }) => serveHostedClient(set, request), {
+        detail: { summary: 'Hosted Keres client (entry)', tags: ['Client'] },
+      })
+      .get('/client/*', ({ set, request }) => serveHostedClient(set, request), {
+        detail: {
+          summary: 'Hosted Keres client',
+          description:
+            'Serves the web export of apps/client built for /client (KERES_WEB_BASE_URL), with COOP/COEP so expo-sqlite can use SharedArrayBuffer. A path with no file falls back to the entry page.',
+          tags: ['Client'],
+        },
+      })
       .get(
         '/favicon.ico',
         ({ set }) => {
@@ -366,7 +388,7 @@ export async function createApp() {
       .use(createApiRoutes())
       .onAfterHandle(({ request, set }) => {
         const pathname = new URL(request.url).pathname;
-        if (isClientAppPath(pathname)) {
+        if (isHostedClientPath(pathname)) {
           applyClientAppIsolationHeaders(set);
           return;
         }
@@ -431,7 +453,7 @@ export async function createApp() {
         {
           detail: {
             summary: 'Legacy hosted-client path',
-            description: 'The web client used to live at /app; it now occupies the origin root.',
+            description: 'The web client used to live at /app, and then at the root; it is under /client now.',
             tags: ['Client'],
           },
         },
@@ -486,18 +508,6 @@ export async function createApp() {
           },
         },
       )
-      .get('/_expo/*', ({ set, request }) => serveClientRootAsset(set, request), {
-        detail: {
-          summary: 'Expo web runtime (worker and bundles requested from origin root)',
-          tags: ['Client'],
-        },
-      })
-      .get('/assets/*', ({ set, request }) => serveClientRootAsset(set, request), {
-        detail: {
-          summary: 'Expo web static assets requested from origin root',
-          tags: ['Client'],
-        },
-      })
       .use(
         showcaseUiAvailable
           ? await staticPlugin({
@@ -507,9 +517,8 @@ export async function createApp() {
             })
           : new Elysia(),
       )
-      // Expo Router only recognises `/`. An F5 on `/StorySelection` (or whatever React Navigation has
-      // written into the bar) has to come back to the root, not serve the index at that path - otherwise
-      // the Router shows unmatched. The API and /showcase were already registered above.
+      // A path nobody answers - an old bookmark, a stale reload - goes back to the root, which sends it
+      // on. The API, /showcase and /client were already registered above.
       .get(
         '/*',
         ({ set, path: requestPath }) => {
@@ -527,9 +536,8 @@ export async function createApp() {
         },
         {
           detail: {
-            summary: 'Refresh fallback to the hosted client',
-            description:
-              'Unknown non-API paths redirect to / so a refresh never lands on an Expo Router unmatched screen.',
+            summary: 'Fallback to the root',
+            description: 'Unknown non-API paths redirect to /.',
             tags: ['Client'],
           },
         },

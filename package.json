@@ -10,6 +10,7 @@
     "client:start": "bun run --cwd apps/client start",
     "client:android": "bun run --cwd apps/client android",
     "client:build": "bun run --cwd apps/client build",
+    "client:build:hosted": "bun run --cwd apps/client build:hosted",
     "client:db:generate": "bun run --cwd apps/client db:generate",
     "api:start": "bun run --cwd apps/api start",
     "api:build": "bun run --cwd apps/api build",

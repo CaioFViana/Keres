@@ -10,6 +10,7 @@
     "ios": "expo run:ios",
     "prebuild": "bun scripts/generate-indexes.ts",
     "build": "expo export -p web",
+    "build:hosted": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client expo export -p web --output-dir dist-hosted",
     "build:pages": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_SERVERLESS=1 expo export -p web --output-dir dist-pages",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "expo lint",

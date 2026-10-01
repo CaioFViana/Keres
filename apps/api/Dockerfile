@@ -30,7 +30,7 @@ COPY apps/admin apps/admin
 COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
 RUN cd apps/admin && bun run build
 
-# ---- client-web-build: Expo web export served by the API at / ----
+# ---- client-web-build: Expo web export served by the API at /client ----
 # Só client + shared. Copiar o workspace inteiro (desktop/site/api/admin) faz o `bun install`
 # puxar Electron e, pior, `better-sqlite3` — devDependency só dos testes do client, módulo
 # nativo cujo `install` dispara node-gyp e exige Python/g++ que esta imagem não tem (e que
@@ -59,7 +59,7 @@ ENV EXPO_NO_TELEMETRY=1
 ENV NODE_OPTIONS=--max-old-space-size=3072
 WORKDIR /app/apps/client
 RUN bun scripts/generate-indexes.ts \
- && node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web
+ && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web --output-dir dist-hosted
 
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
 # Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
@@ -108,10 +108,10 @@ COPY apps/api/drizzle-sqlite ./apps/api/drizzle-sqlite
 # apps/admin/dist-showcase), independente de process.cwd().
 COPY --from=admin-build /app/apps/admin/dist ./apps/admin/dist
 COPY --from=admin-build /app/apps/admin/dist-showcase ./apps/admin/dist-showcase
-# Cliente web co-hospedado em /app (o mesmo export que o Electron empacota). Sem
-# este estágio a API sobe, só o /app 404. Expo fica isolado deste stage para o
-# runtime continuar só com Bun.
-COPY --from=client-web-build /app/apps/client/dist ./apps/client/dist
+# Cliente web co-hospedado em /client: um export próprio (baseUrl=/client), não o `dist` que o
+# Electron empacota, que é feito para a raiz. Sem este estágio a API sobe, só o /client 404. Expo
+# fica isolado deste stage para o runtime continuar só com Bun.
+COPY --from=client-web-build /app/apps/client/dist-hosted ./apps/client/dist-hosted
 
 WORKDIR /app/apps/api
 

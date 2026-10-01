@@ -149,7 +149,12 @@ copyWebBundle(
   'dist-showcase',
   'admin:build',
 );
-copyWebBundle(path.join(repoRoot, 'apps', 'client', 'dist'), 'client-dist', 'client:build');
+// The export made for /client (not the `dist` of the desktop shell, which is made for the root).
+copyWebBundle(
+  path.join(repoRoot, 'apps', 'client', 'dist-hosted'),
+  'client-dist',
+  'client:build:hosted',
+);
 cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),
   path.join(bundleDir, 'desktop_icon.png'),

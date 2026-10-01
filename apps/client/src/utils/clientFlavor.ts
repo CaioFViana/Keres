@@ -46,10 +46,15 @@ export function isOfficialApp(flavor: ClientFlavor = getClientFlavor()): boolean
 }
 
 /**
- * The web client co-hosted by the API: its HTML carries `meta[name=keres-hosted]`, which is what
- * makes it keep the session in an HttpOnly cookie and talk to the server that served it, only.
+ * The web client co-hosted by the API, at `/client`: the export made for it says so itself
+ * (`EXPO_PUBLIC_HOSTED=1`, set by `build:hosted` like the serverless build's flag), and the HTML the
+ * API serves carries `meta[name=keres-hosted]` as well - either marks the client that keeps the session
+ * in an HttpOnly cookie and talks to the server that served it, only. A local web build
+ * (`expo start --web`) has neither.
  */
 export function isHostedByApi(): boolean {
-  if (getClientFlavor() !== 'web' || typeof document === 'undefined') return false;
+  if (getClientFlavor() !== 'web') return false;
+  if (process.env.EXPO_PUBLIC_HOSTED === '1') return true;
+  if (typeof document === 'undefined') return false;
   return document.querySelector('meta[name="keres-hosted"]') !== null;
 }

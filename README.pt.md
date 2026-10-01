@@ -110,7 +110,7 @@ Serviços disponíveis:
 - API e Swagger: `http://localhost:3000/api/swagger`
 - Health check: `http://localhost:3000/api/kerescheck`
 - Painel administrativo compilado: `http://localhost:3000/admin`
-- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/` — precisa de `bun run client:build`
+- Cliente web (mesmo origin, COOP/COEP): `http://localhost:3000/client/` — precisa de `bun run client:build:hosted` (um export feito para `/client`, não o de `client:build`)
 - Vitrine de histórias publicadas: `http://localhost:3000/showcase`
 - Painel administrativo com hot reload: `bun run admin:start` e abra `http://localhost:5173/admin/`
 

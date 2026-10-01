@@ -108,9 +108,9 @@
   },
   "showcaseSettings": {
     "title": "Hosted Pages",
-    "description": "The showcase lists published stories. The hosted client is the web app served at the root; when disabled, the root shows a simple page linking to administration and the showcase.",
+    "description": "The showcase lists published stories. The hosted client is the web app served at /client; when disabled, /client is gone and the root shows a simple page linking to administration and the showcase.",
     "enabled": "Showcase enabled",
-    "hostedClientEnabled": "Enable the hosted client at the root",
+    "hostedClientEnabled": "Enable the hosted client at /client",
     "loadFailed": "Failed to load.",
     "branding": "Site branding",
     "siteName": "Site name",

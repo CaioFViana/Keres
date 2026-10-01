@@ -7,7 +7,11 @@ import {
   isServerless,
 } from '../../src/utils/clientFlavor';
 
-const original = { os: Platform.OS, serverless: process.env.EXPO_PUBLIC_SERVERLESS };
+const original = {
+  os: Platform.OS,
+  serverless: process.env.EXPO_PUBLIC_SERVERLESS,
+  hosted: process.env.EXPO_PUBLIC_HOSTED,
+};
 const setOs = (os: 'ios' | 'android' | 'web') => {
   Platform.OS = os;
 };
@@ -17,6 +21,8 @@ afterEach(() => {
   Platform.OS = original.os;
   if (original.serverless === undefined) delete process.env.EXPO_PUBLIC_SERVERLESS;
   else process.env.EXPO_PUBLIC_SERVERLESS = original.serverless;
+  if (original.hosted === undefined) delete process.env.EXPO_PUBLIC_HOSTED;
+  else process.env.EXPO_PUBLIC_HOSTED = original.hosted;
   delete bridges.keresAuth;
   delete bridges.keresMedia;
   document.head.innerHTML = '';
@@ -66,6 +72,20 @@ describe('what the flavor means', () => {
     expect(isOfficialApp('desktop')).toBe(true);
     expect(isOfficialApp('web')).toBe(false);
     expect(isOfficialApp('serverless-web')).toBe(false);
+  });
+
+  it('is hosted by the API when the export says so, with no marker in the page', () => {
+    setOs('web');
+    expect(isHostedByApi()).toBe(false);
+    process.env.EXPO_PUBLIC_HOSTED = '1';
+    expect(isHostedByApi()).toBe(true);
+
+    // The desktop shell and the serverless build are never it, whatever the flag.
+    bridges.keresAuth = {};
+    expect(isHostedByApi()).toBe(false);
+    delete bridges.keresAuth;
+    process.env.EXPO_PUBLIC_SERVERLESS = '1';
+    expect(isHostedByApi()).toBe(false);
   });
 
   it('is hosted by the API only on the web build whose HTML carries the marker', () => {

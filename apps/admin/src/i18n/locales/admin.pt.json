@@ -108,9 +108,9 @@
   },
   "showcaseSettings": {
     "title": "Páginas hospedadas",
-    "description": "A vitrine lista histórias publicadas. O cliente hospedado é o aplicativo web servido na raiz; ao desligá-lo, a raiz mostra uma página simples com links para administração e vitrine.",
+    "description": "A vitrine lista histórias publicadas. O cliente hospedado é o aplicativo web servido em /client; ao desligá-lo, /client deixa de existir e a raiz mostra uma página simples com links para administração e vitrine.",
     "enabled": "Vitrine ativada",
-    "hostedClientEnabled": "Cliente hospedado ativado na raiz",
+    "hostedClientEnabled": "Cliente hospedado ativado em /client",
     "loadFailed": "Não foi possível carregar.",
     "branding": "Identidade do site",
     "siteName": "Nome do site",

@@ -66,7 +66,8 @@ interface StoryRow {
  *
  * Assembled here from `servers.url` because the app already knows where the server lives - the
  * showcase is served by the same process and on the same origin as the API, under `/showcase` (the
- * root is the web client; see `SHOWCASE_PATH_PREFIX` in apps/api/src/services/hostedClient.ts), so
+ * web client is under `/client`; see `SHOWCASE_PATH_PREFIX` and `HOSTED_CLIENT_PATH_PREFIX` in
+ * apps/api/src/services/hostedClient.ts), so
  * there is nothing to ask the server.
  */
 export function buildStoryPublicUrl(serverUrl: string, storyId: string): string {

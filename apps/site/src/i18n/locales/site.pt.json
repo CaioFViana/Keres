@@ -330,11 +330,11 @@
       },
       "keresServer": {
         "title": "Keres Server",
-        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra. O cliente web fica na raiz deste mesmo processo; a vitrine de histórias, em /showcase."
+        "body": "A API em SQLite, com assistente em português e inglês. Sem Docker, sem Postgres: descompacte e corra. O cliente web fica em /client neste mesmo processo; a vitrine de histórias, em /showcase."
       },
       "docker": {
         "title": "Docker",
-        "body": "Imagem no GHCR com PostgreSQL, painel /admin, cliente web na raiz, vitrine em /showcase e armazenamento de mídia. Para quem opera um servidor de verdade."
+        "body": "Imagem no GHCR com PostgreSQL, painel /admin, cliente web em /client, vitrine em /showcase e armazenamento de mídia. Para quem opera um servidor de verdade."
       }
     }
   },
@@ -407,7 +407,7 @@
     "lead": "As mesmas peças descritas na documentação do repositório.",
     "client": "React Native + Expo, SQLite local, store Zustand e um motor de sincronização próprio.",
     "desktop": "Electron empacota a build web do cliente para o aplicativo de desktop. A mesma build, na API, é o cliente na raiz do servidor.",
-    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa. Serve o cliente web na raiz, no mesmo origin.",
+    "api": "Bun, Elysia, Drizzle. PostgreSQL no Docker; SQLite no Keres Server de casa. Serve o cliente web em /client, no mesmo origin.",
     "admin": "Painel React servido pela API em /admin, para contas, planos e cadastro.",
     "shared": "Entidades, contratos Zod e paletas compartilhados entre os apps."
   },

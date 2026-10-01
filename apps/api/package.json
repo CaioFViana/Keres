@@ -5,7 +5,7 @@
   "scripts": {
     "start": "bun run src/server.ts",
     "start:launcher": "bun run src/launcher.ts",
-    "prebuild": "bun run --cwd ../admin build && bun run --cwd ../client build",
+    "prebuild": "bun run --cwd ../admin build && bun run --cwd ../client build:hosted",
     "build": "bun scripts/package-server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts vitest.integration.config.ts --ext .ts",

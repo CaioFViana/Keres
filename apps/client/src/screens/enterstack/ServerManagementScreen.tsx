@@ -1,3 +1,4 @@
+import { normalizeUserTag, USER_TAG_MAX_LENGTH, USER_TAG_MIN_LENGTH } from '@keres/shared';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -199,9 +200,14 @@ const ServerManagementScreen = () => {
   };
 
   const handleSaveTag = async (server: ServerWithStatus) => {
-    const newTag = editingTagValue.trim();
+    // Sent the way it is stored (lowercase, no spaces), so what is checked is what is saved.
+    const newTag = normalizeUserTag(editingTagValue);
     if (!newTag || newTag === server.tag) {
       handleCancelEditTag();
+      return;
+    }
+    if (newTag.length < USER_TAG_MIN_LENGTH || newTag.length > USER_TAG_MAX_LENGTH) {
+      AppAlert.alert(t('error'), t('invalid_friend_id_format'));
       return;
     }
 

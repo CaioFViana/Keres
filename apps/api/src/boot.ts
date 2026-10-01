@@ -5,6 +5,7 @@ import { persistApiLog } from './services/ApiLogService';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
 import { reconcileRootAdmin } from './services/RootAdminService';
+import { normalizeStoredUserTags } from './services/UserTagMaintenance';
 import { logger, setLogSink } from './utils/logger';
 
 export type ListeningAddress = { hostname: string; port: number };
@@ -23,6 +24,8 @@ export async function preparePersistence(): Promise<void> {
   if (abandonedMediaUploads > 0) {
     logger.info(`Removed ${abandonedMediaUploads} abandoned temporary media upload(s).`);
   }
+  // Before the root admin: its own tag, when it already exists, is one of those that may need it.
+  await normalizeStoredUserTags();
   await reconcileRootAdmin();
 }
 

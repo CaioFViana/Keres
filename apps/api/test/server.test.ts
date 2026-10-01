@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   createApp: vi.fn(),
   listen: vi.fn(),
   loggerInfo: vi.fn(),
+  normalizeTags: vi.fn(),
   reconcile: vi.fn(),
   runMigrations: vi.fn(),
   setLogSink: vi.fn(),
@@ -15,6 +16,9 @@ vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 *
 vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
 vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
 vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
+vi.mock('../src/services/UserTagMaintenance', () => ({
+  normalizeStoredUserTags: mocks.normalizeTags,
+}));
 vi.mock('../src/services/MediaStorageConfigurationService', () => ({
   assertMediaStorageConfiguration: mocks.assertStorage,
 }));
@@ -31,6 +35,7 @@ beforeAll(async () => {
   mocks.runMigrations.mockResolvedValue(undefined);
   mocks.assertStorage.mockResolvedValue(undefined);
   mocks.cleanup.mockResolvedValue(2);
+  mocks.normalizeTags.mockResolvedValue(0);
   mocks.reconcile.mockResolvedValue(undefined);
   mocks.createApp.mockResolvedValue({
     listen: mocks.listen.mockImplementation(
@@ -49,7 +54,12 @@ describe('production server bootstrap', () => {
     expect(mocks.setLogSink).toHaveBeenCalledOnce();
     expect(mocks.assertStorage).toHaveBeenCalledOnce();
     expect(mocks.cleanup).toHaveBeenCalledOnce();
+    expect(mocks.normalizeTags).toHaveBeenCalledOnce();
     expect(mocks.reconcile).toHaveBeenCalledOnce();
+    // Tags are brought to their shape before the root admin is reconciled: its own may need it.
+    expect(mocks.normalizeTags.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.reconcile.mock.invocationCallOrder[0],
+    );
     expect(mocks.listen).toHaveBeenCalledWith(
       { port: '3000', maxRequestBodySize: 50 * 1024 * 1024 + 8 * 1024 * 1024 },
       expect.any(Function),

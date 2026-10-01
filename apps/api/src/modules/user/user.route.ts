@@ -87,7 +87,9 @@ export const userRoutes = new Elysia()
     },
     {
       params: t.Object({
-        tag: t.String({ minLength: 1, maxLength: 20 }),
+        // Looser than a stored tag on purpose: it is typed by hand ("@Caio Viana"), and read the way a
+        // tag is stored before it is compared. A tag nobody holds is just a 404.
+        tag: t.String({ minLength: 1, maxLength: 64 }),
       }),
       response: {
         200: userResponseSchema,
@@ -97,7 +99,7 @@ export const userRoutes = new Elysia()
       detail: {
         summary: 'Resolve a user by their @tag',
         description:
-          'Looks up a user by their friend-discovery tag (case-insensitive), for adding friends without sharing a raw ID.',
+          'Looks up a user by their friend-discovery tag, for adding friends without sharing a raw ID. Case, accents, a leading "@" and spaces do not matter: "@Caio Viana" finds `caio_viana`.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },
@@ -140,7 +142,8 @@ export const userRoutes = new Elysia()
       },
       detail: {
         summary: 'Change your own @tag',
-        description: "Updates the current user's friend-discovery tag. Can be changed at any time.",
+        description:
+          'Updates the current user\'s friend-discovery tag. Can be changed at any time. It is stored as a slug - lowercase letters, digits and underscores, 3 to 20 - so "Caio Viana" becomes `caio_viana`; the response carries the tag as stored.',
         tags: ['User'],
         security: [{ bearerAuth: [] }],
       },

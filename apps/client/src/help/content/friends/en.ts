@@ -21,7 +21,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Open Friends from the main menu and tap add.',
-        'Choose the server, enter the person’s @tag, and tap check.',
+        'Choose the server, enter the person’s @tag, and tap check. Capitals, accents, the @ and spaces do not matter: a tag is read as lowercase letters, numbers and underscores, so “@Caio Viana” finds caio_viana.',
         'Confirm the request once the found account is correct.',
         'In the list, open a received request to accept, decline, or undo a friendship.',
         'Story invitations from friends appear at the top of the list: accepting downloads the story to this device, declining leaves it out.',

@@ -39,6 +39,42 @@ describe('POST /auth/register', () => {
     expect(data.message).toBe('User already exists');
   });
 
+  it('seeds the tag with a slug of the username: lowercase, no spaces, within the limits', async () => {
+    const spaced = await request('POST', '/auth/register', {
+      body: { username: 'Caio Viana', password: 'senha-forte-123' },
+    });
+    expect(spaced.data.tag).toBe('caio_viana');
+
+    const long = await request('POST', '/auth/register', {
+      body: { username: 'A Rather Long Username With Spaces', password: 'senha-forte-123' },
+    });
+    expect(long.data.tag).toMatch(/^[a-z0-9_]{3,20}$/);
+    expect(long.data.tag).toBe('a_rather_long_userna');
+  });
+
+  it('gives a username too short to be a tag one that is valid, and still findable', async () => {
+    const { data } = await request('POST', '/auth/register', {
+      body: { username: 'ab', password: 'senha-forte-123' },
+    });
+
+    expect(data.tag).toMatch(/^ab[a-z0-9]{4}$/);
+    const lookup = await request('GET', `/user/by-tag/${data.tag}`, { token: data.accessToken });
+    expect(lookup.data.id).toBe(data.userId);
+  });
+
+  it('settles two usernames that make the same slug with a suffix, whatever their capitals', async () => {
+    await request('POST', '/auth/register', {
+      body: { username: 'Caio Viana', password: 'senha-forte-123' },
+    });
+    const second = await request('POST', '/auth/register', {
+      body: { username: 'caio viana', password: 'senha-forte-123' },
+    });
+
+    expect(second.status).toBe(200);
+    expect(second.data.tag).toMatch(/^caio_viana[a-z0-9]{4}$/);
+    expect(second.data.tag.length).toBeLessThanOrEqual(20);
+  });
+
   it('falls back to a suffixed tag when another account already claimed that tag', async () => {
     const first = await registerUser('ana');
     await request('PUT', '/user/tag', { token: first.token, body: { tag: 'bia' } });

@@ -217,6 +217,34 @@ describe('ServerManagementScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', {});
   });
 
+  it('sends the tag in the shape it is stored: lowercase, spaces made underscores', async () => {
+    mockUpdateOwnTag.mockResolvedValue({ tag: 'ana_maria' });
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('@alice');
+    await fireEvent.press(view.getByText('@alice'));
+    await fireEvent.changeText(view.getByTestId('tag-input'), '  @Ana Maria ');
+    await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
+
+    await waitFor(() =>
+      expect(mockUpdateOwnTag).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'srv-1' }),
+        'ana_maria',
+      ),
+    );
+    await view.findByText('@ana_maria');
+  });
+
+  it('does not ask the server about a tag that cannot be one', async () => {
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('@alice');
+    await fireEvent.press(view.getByText('@alice'));
+    await fireEvent.changeText(view.getByTestId('tag-input'), 'a!');
+    await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
+
+    expect(mockUpdateOwnTag).not.toHaveBeenCalled();
+    expect(mockAlert).toHaveBeenCalledWith('error', 'invalid_friend_id_format');
+  });
+
   it('edits and saves a server tag', async () => {
     const view = await render(<ServerManagementScreen />);
     await view.findByText('@alice');

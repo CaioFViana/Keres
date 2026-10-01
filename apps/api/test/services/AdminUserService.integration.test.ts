@@ -9,6 +9,53 @@ import { truncateAll } from '../helpers/database';
 
 beforeEach(truncateAll);
 
+describe('tags made by the administrative panel', () => {
+  it('stores the tag an admin typed as a slug, and makes one from the username otherwise', async () => {
+    const service = new AdminUserService();
+    const typed = await service.create({
+      username: 'Maria Souza',
+      password: 'secure-password',
+      tag: 'Maria Souza',
+      isAdmin: false,
+      tierId: null,
+    });
+    const derived = await service.create({
+      username: 'João Lima',
+      password: 'secure-password',
+      isAdmin: false,
+      tierId: null,
+    });
+
+    expect(typed.tag).toBe('maria_souza');
+    expect(derived.tag).toBe('joao_lima');
+  });
+
+  it('keeps an edited tag in the same shape, and refuses one another account holds', async () => {
+    const service = new AdminUserService();
+    const first = await service.create({
+      username: 'first',
+      password: 'secure-password',
+      isAdmin: false,
+      tierId: null,
+    });
+    const second = await service.create({
+      username: 'second',
+      password: 'secure-password',
+      isAdmin: false,
+      tierId: null,
+    });
+
+    const updated = await service.update(second.id, { tag: 'Second One' });
+    expect(updated?.tag).toBe('second_one');
+
+    await expect(service.update(second.id, { tag: 'FIRST' })).rejects.toThrow(
+      'Tag is already taken.',
+    );
+    // Its own tag, written in other capitals, is not a clash.
+    expect((await service.update(first.id, { tag: 'First' }))?.tag).toBe('first');
+  });
+});
+
 describe('AdminUserService integration', () => {
   it('creates users, prevents duplicate usernames, and filters the administrative list', async () => {
     const service = new AdminUserService();

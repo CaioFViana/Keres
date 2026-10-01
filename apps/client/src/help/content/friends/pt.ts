@@ -21,7 +21,7 @@ const page: HelpPage = {
       type: 'steps',
       items: [
         'Abra Amigos no menu principal e toque em adicionar.',
-        'Escolha o servidor, informe a @tag da pessoa e toque em verificar.',
+        'Escolha o servidor, informe a @tag da pessoa e toque em verificar. Maiúsculas, acentos, o @ e espaços não importam: a tag é lida como letras minúsculas, números e sublinhados, então “@Caio Viana” encontra caio_viana.',
         'Confirme o pedido quando a conta encontrada estiver correta.',
         'Na lista, abra um pedido recebido para aceitar, recusar ou desfazer uma amizade.',
         'Convites de amigos para histórias aparecem no topo da lista: aceitar baixa a história neste dispositivo; recusar a deixa de fora.',

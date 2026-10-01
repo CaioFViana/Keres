@@ -1,5 +1,6 @@
 import type { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
-import { and, asc, count, eq, or } from 'drizzle-orm';
+import { deriveUserTag, normalizeUserTag } from '@keres/shared';
+import { and, asc, count, eq, or, sql } from 'drizzle-orm';
 import { insensitiveLike } from '../db/sqlOperators';
 import { ulid } from 'ulid';
 import { hashPassword } from '../config/bcrypt';
@@ -9,6 +10,7 @@ import { tiers, users } from '../db/schema';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { recoveryCodeService } from './RecoveryCodeService';
 import { TierNotFoundError } from './TierService';
+import { TagAlreadyTakenError } from './UserService';
 
 export class UsernameAlreadyTakenError extends Error {
   constructor() {
@@ -142,7 +144,9 @@ export class AdminUserService {
 
     const hashedPassword = await hashPassword(input.password);
     const id = ulid();
-    const desiredTag = input.tag ?? input.username;
+    // The tag the admin typed, as a slug; otherwise one made from the username. Whoever calls this,
+    // the stored tag is in the shape lookups expect and always a valid one (see deriveUserTag).
+    const desiredTag = deriveUserTag(input.tag ?? input.username, id);
 
     // The same suffix fallback as self-registration (auth.route.ts): the tag may already be taken even
     // when the username is not, since the two columns do not share uniqueness.
@@ -167,7 +171,7 @@ export class AdminUserService {
             .values({
               id,
               username: input.username,
-              tag: `${desiredTag}${id.slice(-4)}`,
+              tag: deriveUserTag(input.tag ?? input.username, id, { suffixed: true }),
               password: hashedPassword,
               isAdmin: input.isAdmin,
               tierId: input.tierId ?? null,
@@ -219,9 +223,22 @@ export class AdminUserService {
       await this.assertTierExists(patch.tierId);
     }
 
+    const changes = { ...patch };
+    if (patch.tag !== undefined) {
+      // Stored in the one shape lookups expect, and never one somebody else already holds.
+      changes.tag = normalizeUserTag(patch.tag);
+      const holder = await db.query.users.findFirst({
+        columns: { id: true },
+        where: sql`lower(${users.tag}) = ${changes.tag}`,
+      });
+      if (holder && holder.id !== id) {
+        throw new TagAlreadyTakenError();
+      }
+    }
+
     const [updated] = await db
       .update(users)
-      .set({ ...patch, updatedAt: new Date() })
+      .set({ ...changes, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
     return updated;

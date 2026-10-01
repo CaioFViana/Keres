@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Tier } from '@keres/shared';
+import { slugifyUserTag } from '@keres/shared';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
 
@@ -190,7 +191,8 @@ export function UserFormPage() {
           <input
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            placeholder={isNew ? username || t('userForm.tagPlaceholder') : ''}
+            // The tag the account will start with: the username read as a slug (see deriveUserTag).
+            placeholder={isNew ? slugifyUserTag(username) || t('userForm.tagPlaceholder') : ''}
           />
         </label>
         {!isNew && (

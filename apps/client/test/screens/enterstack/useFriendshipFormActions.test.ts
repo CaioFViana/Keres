@@ -92,6 +92,29 @@ it('rejects an invalid friend tag before lookup', async () => {
   expect(state.setFriendFound).toHaveBeenCalledWith(null);
 });
 
+it('looks the tag up the way it is stored, however it was typed', async () => {
+  const state = createState({ friendTag: '  @Caio Viana ' });
+  const view = await renderActions(state);
+
+  await act(async () => {
+    await view.result.current.handleCheckFriendTag();
+  });
+
+  expect(mockGetUserByTag).toHaveBeenCalledWith(selectedServer, 'caio_viana');
+});
+
+it('refuses a tag too long to exist before asking the server', async () => {
+  const state = createState({ friendTag: 'a'.repeat(21) });
+  const view = await renderActions(state);
+
+  await act(async () => {
+    await view.result.current.handleCheckFriendTag();
+  });
+
+  expect(mockAlert).toHaveBeenCalledWith('error', 'invalid_friend_id_format');
+  expect(mockGetUserByTag).not.toHaveBeenCalled();
+});
+
 it('resolves a friend tag against the selected server', async () => {
   const state = createState({
     resolvedFriendUserId: null,

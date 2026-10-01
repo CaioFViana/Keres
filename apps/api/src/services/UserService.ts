@@ -1,4 +1,5 @@
 import type { UpdateUserProfileType, UserPublicInfo } from '@keres/shared';
+import { deriveUserTag, normalizeUserTag } from '@keres/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
 import { db } from '../db';
@@ -65,7 +66,8 @@ export class UserService {
   }
 
   /**
-   * Inserts a new account. On a tag collision, retries with a unique suffix. Returns `taken`
+   * Inserts a new account, its tag made from the username (a slug: lowercase, no spaces - see
+   * `deriveUserTag`). On a tag collision, retries with a unique suffix. Returns `taken`
    * when the username is already claimed, including a race between the pre-check and the insert.
    */
   async createAccount(input: {
@@ -83,7 +85,7 @@ export class UserService {
     try {
       const [created] = await db
         .insert(users)
-        .values({ ...values, tag: input.username })
+        .values({ ...values, tag: deriveUserTag(input.username, input.id) })
         .returning({ id: users.id, username: users.username, tag: users.tag });
       if (!created) throw new Error('Failed to create user');
       return created;
@@ -92,7 +94,10 @@ export class UserService {
         try {
           const [created] = await db
             .insert(users)
-            .values({ ...values, tag: `${input.username}${input.id.slice(-4)}` })
+            .values({
+              ...values,
+              tag: deriveUserTag(input.username, input.id, { suffixed: true }),
+            })
             .returning({ id: users.id, username: users.username, tag: users.tag });
           if (!created) throw new Error('Failed to create user');
           return created;
@@ -114,25 +119,30 @@ export class UserService {
     return user;
   }
 
-  // Case-insensitive lookup, matching the case-insensitive uniqueness the tag column
-  // enforces (see users_tag_lower_idx) - "@Caio" and "@caio" must resolve to the same user.
+  // The tag is read the way it is stored (`normalizeUserTag`): "@Caio Viana", "caio viana" and
+  // "CAIO_VIANA" are all the same person. The comparison stays case-insensitive on the column too,
+  // matching the uniqueness it enforces (see users_tag_lower_idx).
   async getUserByTag(tag: string): Promise<UserPublicInfo | undefined> {
+    const wanted = normalizeUserTag(tag);
+    if (!wanted) return undefined;
     const user = await db.query.users.findFirst({
       columns: PUBLIC_INFO_COLUMNS,
-      where: sql`lower(${users.tag}) = lower(${tag})`,
+      where: sql`lower(${users.tag}) = ${wanted}`,
     });
     return user;
   }
 
   async updateUserTag(userId: string, newTag: string): Promise<UserPublicInfo> {
-    const existing = await this.getUserByTag(newTag);
+    // Stored in the one shape lookups expect, whoever validated it before.
+    const tag = normalizeUserTag(newTag);
+    const existing = await this.getUserByTag(tag);
     if (existing && existing.id !== userId) {
       throw new TagAlreadyTakenError();
     }
 
     const [updated] = await db
       .update(users)
-      .set({ tag: newTag, updatedAt: new Date() })
+      .set({ tag, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning(PUBLIC_INFO_RETURNING);
 

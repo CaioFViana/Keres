@@ -12,6 +12,7 @@ import {
   UsernameAlreadyTakenError,
 } from '../../services/AdminUserService';
 import { TierNotFoundError } from '../../services/TierService';
+import { TagAlreadyTakenError } from '../../services/UserService';
 import { requireAdmin } from '../../utils/adminAuth';
 import { AppError } from '../../utils/errors';
 
@@ -150,6 +151,9 @@ export const adminUserRoutes = new Elysia()
         }
         if (error instanceof TierNotFoundError) {
           throw new AppError(404, error.message);
+        }
+        if (error instanceof TagAlreadyTakenError) {
+          throw new AppError(409, error.message);
         }
         throw error;
       }

@@ -1,3 +1,4 @@
+import { normalizeUserTag, USER_TAG_MAX_LENGTH, USER_TAG_MIN_LENGTH } from '@keres/shared';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RefObject } from 'react';
@@ -29,7 +30,9 @@ export function useFriendshipFormActions({
   const { t } = useTranslation();
 
   const handleCheckFriendTag = useCallback(async () => {
-    if (!state.friendTag || state.friendTag.trim().length < 3) {
+    // Read the way tags are stored: "@Caio Viana", "caio viana" and "CAIO_VIANA" are one tag.
+    const friendTag = normalizeUserTag(state.friendTag);
+    if (friendTag.length < USER_TAG_MIN_LENGTH || friendTag.length > USER_TAG_MAX_LENGTH) {
       AppAlert.alert(t('error'), t('invalid_friend_id_format'));
       state.setFriendUsername(null);
       state.setFriendFound(null);
@@ -46,10 +49,7 @@ export function useFriendshipFormActions({
     state.setFriendUsername(null);
     state.setResolvedFriendUserId(null);
     try {
-      const userDetails = await userApiService.getUserByTag(
-        state.selectedServer,
-        state.friendTag.trim(),
-      );
+      const userDetails = await userApiService.getUserByTag(state.selectedServer, friendTag);
       if (userDetails) {
         state.setFriendUsername(userDetails.username);
         state.setResolvedFriendUserId(userDetails.id);

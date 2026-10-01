@@ -1,3 +1,4 @@
+import { deriveUserTag } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { hashPassword } from '../config/bcrypt';
@@ -44,7 +45,7 @@ export async function reconcileRootAdmin(): Promise<void> {
   await db.insert(users).values({
     id,
     username: env.ROOT_ADMIN_USERNAME,
-    tag: env.ROOT_ADMIN_USERNAME,
+    tag: deriveUserTag(env.ROOT_ADMIN_USERNAME, id),
     password: hashedPassword,
     isAdmin: true,
   });

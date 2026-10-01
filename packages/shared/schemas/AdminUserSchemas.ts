@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { UlidSchema } from './SyncSchemas';
+import { UserTagSchema } from './UserTagSchemas';
 
 export const AdminCreateUserSchema = z.object({
   username: z.string().min(1, 'Username cannot be empty'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
-  /** Defaults to `username` if omitted, same fallback as self-service registration. */
-  tag: z.string().min(1).optional(),
+  /** Defaults to one made from `username` if omitted, same fallback as self-service registration. */
+  tag: UserTagSchema.optional(),
   isAdmin: z.boolean().default(false),
   tierId: UlidSchema.nullable().optional(),
 });
@@ -19,7 +20,7 @@ export type AdminCreateUser = z.infer<typeof AdminCreateUserSchema>;
 export const AdminUpdateUserSchema = z.object({
   isAdmin: z.boolean().optional(),
   tierId: UlidSchema.nullable().optional(),
-  tag: z.string().min(1).optional(),
+  tag: UserTagSchema.optional(),
   avatarColor: z.string().nullable().optional(),
   avatarIcon: z.string().nullable().optional(),
   bio: z.string().max(200).nullable().optional(),

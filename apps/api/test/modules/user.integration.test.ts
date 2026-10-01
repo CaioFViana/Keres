@@ -63,6 +63,25 @@ describe('GET /user/by-tag/:tag', () => {
     expect(data.id).toBe(ana.userId);
   });
 
+  it('reads the tag the way it is stored: a leading @, spaces and accents do not matter', async () => {
+    const caio = await registerUser('caio_viana');
+
+    for (const typed of ['@Caio Viana', 'caio viana', 'CAIO_VIANA', ' Cáio_Viana ']) {
+      const { status, data } = await request('GET', `/user/by-tag/${encodeURIComponent(typed)}`, {
+        token: ana.token,
+      });
+      expect([typed, status, data.id]).toEqual([typed, 200, caio.userId]);
+    }
+  });
+
+  it('never mistakes a longer input for the tag it starts with', async () => {
+    const { status } = await request('GET', `/user/by-tag/${'ana'.padEnd(40, 'x')}`, {
+      token: ana.token,
+    });
+
+    expect(status).toBe(404);
+  });
+
   it('answers 404 for a tag nobody claimed', async () => {
     const { status } = await request('GET', '/user/by-tag/ninguem', { token: ana.token });
 
@@ -86,6 +105,47 @@ describe('PUT /user/tag', () => {
     expect(status).toBe(200);
     const lookup = await request('GET', '/user/by-tag/aninha', { token: ana.token });
     expect(lookup.data.id).toBe(ana.userId);
+  });
+
+  it('stores the tag as a slug - lowercase, no spaces - and answers with it as stored', async () => {
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: ana.token,
+      body: { tag: '@Ana Maria' },
+    });
+
+    expect(status).toBe(200);
+    expect(data.tag).toBe('ana_maria');
+    const lookup = await request('GET', '/user/by-tag/ANA%20MARIA', { token: ana.token });
+    expect(lookup.data.id).toBe(ana.userId);
+  });
+
+  it('refuses a tag another account holds even when it is written another way', async () => {
+    const bia = await registerUser('bia');
+
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: bia.token,
+      body: { tag: 'ANA' },
+    });
+
+    expect(status).toBe(409);
+    expect(data.message).toBe('Tag is already taken.');
+  });
+
+  it('lets a person write their own tag in other capitals', async () => {
+    const { status, data } = await request('PUT', '/user/tag', {
+      token: ana.token,
+      body: { tag: 'ANA' },
+    });
+
+    expect(status).toBe(200);
+    expect(data.tag).toBe('ana');
+  });
+
+  it('rejects what leaves fewer than 3 letters or digits, or more than 20', async () => {
+    for (const tag of ['a!', '!!!', 'x'.repeat(21)]) {
+      const { status } = await request('PUT', '/user/tag', { token: ana.token, body: { tag } });
+      expect([tag, status]).toEqual([tag, 400]);
+    }
   });
 
   it('frees the previous tag for someone else to take', async () => {

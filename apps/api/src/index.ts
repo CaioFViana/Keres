@@ -1,7 +1,6 @@
 import { cookie } from '@elysiajs/cookie';
 import { cors } from '@elysiajs/cors';
 import { jwt } from '@elysiajs/jwt';
-import { staticPlugin } from '@elysiajs/static';
 import { Elysia, t } from 'elysia';
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
@@ -21,7 +20,9 @@ import {
   resolveHostedClientFile,
   SHOWCASE_PATH_PREFIX,
 } from './services/hostedClient';
+import { deliverDistFile } from './services/distStaticDelivery';
 import { hostedClientDelivery, hostedClientDeliveryInput } from './services/hostedClientDelivery';
+import type { StaticDeliveryResult } from './services/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
@@ -99,6 +100,23 @@ function applyClientAppIsolationHeaders(set: { headers: Record<string, string | 
 }
 
 /**
+ * Puts a `StaticDelivery` answer on the response: its headers (lowercase, as the CORS plugin writes its
+ * own - a second spelling of `Vary` would be joined to its `*` rather than replace it), its status, and
+ * its body. A 304 has no body, not even an empty one: a `Response` with a null-body status refuses a string.
+ */
+function sendStaticDelivery(
+  set: { status?: number | string; headers: Record<string, string | number> },
+  delivery: StaticDeliveryResult,
+): Uint8Array | Response {
+  for (const [name, value] of Object.entries(delivery.headers)) {
+    set.headers[name.toLowerCase()] = value;
+  }
+  set.status = delivery.status;
+  if (delivery.status === 304) return new Response(null, { status: 304 });
+  return delivery.body ?? new Uint8Array();
+}
+
+/**
  * The hosted client: its entry page and everything it loads, all under `/client`. The entry is what the
  * administrator can switch off (`isHostedClientEnabled`); the assets it asks for are served regardless,
  * as they always were - without the entry nobody asks for them, and a database query per asset would be
@@ -133,14 +151,7 @@ async function serveHostedClient(
     },
   });
   applyClientAppIsolationHeaders(set);
-  // Lowercase, as the CORS plugin writes its own: a second spelling of `Vary` would be joined to its `*`
-  // rather than replace it.
-  for (const [name, value] of Object.entries(delivery.headers)) {
-    set.headers[name.toLowerCase()] = value;
-  }
-  // A 304 has no body, not even an empty one: a `Response` with a null-body status refuses a string.
-  if (delivery.status === 304) return new Response(null, { status: 304 });
-  return delivery.body ?? '';
+  return sendStaticDelivery(set, delivery);
 }
 
 if (!showcaseUiAvailable) {
@@ -413,17 +424,10 @@ export async function createApp() {
         set.status = 404;
         return { message: 'Not found' };
       })
-      .use(
-        adminUiAvailable
-          ? await staticPlugin({ assets: adminDistPath, prefix: '/admin', alwaysStatic: true })
-          : new Elysia(),
-      )
       .get(
         '/admin/*',
-        ({ set, path: requestPath }) => {
-          // `staticPlugin` and the SPA fallback are both compiled by Elysia; for paths that look like a panel
-          // route, the fallback takes precedence over the `.all()` above. Do not let the removed
-          // `/admin/api/*` contract become a 200 with index.html.
+        async ({ set, request, path: requestPath }) => {
+          // Do not let the removed `/admin/api/*` contract become a 200 with index.html.
           if (requestPath === '/admin/api' || requestPath.startsWith('/admin/api/')) {
             set.status = 404;
             return { message: 'Not found' };
@@ -433,7 +437,14 @@ export async function createApp() {
             return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
           }
           applyAdminUiSecurityHeaders(set);
-          // SPA fallback: any panel route that is not a real static file (say, /admin/users, a React Router
+          // A file of the build (compressed and cacheable, see `StaticDelivery`)...
+          const file = await deliverDistFile(
+            adminDistPath,
+            requestPath.slice('/admin'.length),
+            request,
+          );
+          if (file) return sendStaticDelivery(set, file);
+          // ...otherwise, the SPA fallback: any panel route that is not a real static file (say, /admin/users, a React Router
           // client route) gets the same index.html, which then resolves the route in the browser. Without this,
           // an F5 on /admin/users would give a 404.
           // Node/Vitest has no `Bun.file`; the HTML is tiny so a sync read is fine.
@@ -513,23 +524,39 @@ export async function createApp() {
           },
         },
       )
-      .use(
-        showcaseUiAvailable
-          ? await staticPlugin({
-              assets: showcaseDistPath,
-              prefix: '/_showcase',
-              alwaysStatic: true,
-            })
-          : new Elysia(),
+      // The static files of the public site and of the landing page, under the prefix Vite built them for.
+      // Their pages are served at the root and at /showcase; only what they load comes from here.
+      .get(
+        '/_showcase/*',
+        async ({ set, request, path: requestPath }) => {
+          const file = showcaseUiAvailable
+            ? await deliverDistFile(
+                showcaseDistPath,
+                requestPath.slice('/_showcase'.length),
+                request,
+              )
+            : null;
+          if (!file) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          return sendStaticDelivery(set, file);
+        },
+        { detail: { summary: 'Showcase static files', tags: ['Showcase'] } },
       )
-      .use(
-        landingUiAvailable
-          ? await staticPlugin({
-              assets: landingDistPath,
-              prefix: '/_landing',
-              alwaysStatic: true,
-            })
-          : new Elysia(),
+      .get(
+        '/_landing/*',
+        async ({ set, request, path: requestPath }) => {
+          const file = landingUiAvailable
+            ? await deliverDistFile(landingDistPath, requestPath.slice('/_landing'.length), request)
+            : null;
+          if (!file) {
+            set.status = 404;
+            return { message: 'Not found' };
+          }
+          return sendStaticDelivery(set, file);
+        },
+        { detail: { summary: 'Landing page static files', tags: ['Client'] } },
       )
       // A path nobody answers - an old bookmark, a stale reload - goes back to the root, which sends it
       // on. The API, /showcase, /client and /_landing were already registered above.

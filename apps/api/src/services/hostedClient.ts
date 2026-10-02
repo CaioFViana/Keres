@@ -31,6 +31,7 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
+  '.webp': 'image/webp',
   '.map': 'application/json',
 };
 

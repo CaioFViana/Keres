@@ -500,6 +500,51 @@ function withVaultLock<T>(task: () => Promise<T>): Promise<T> {
   return result;
 }
 
+/**
+ * Every write to the vault still running. The app can be closed in the middle of one (the window shut right
+ * after a login or a sign-out), and what the process had not yet written to the vault is gone with it: the
+ * quit waits for these (see `handleBeforeQuit`).
+ */
+const pendingVaultWork = new Set<Promise<unknown>>();
+
+function trackVaultWork<T>(work: Promise<T>): Promise<T> {
+  pendingVaultWork.add(work);
+  const done = () => {
+    pendingVaultWork.delete(work);
+  };
+  work.then(done, done);
+  return work;
+}
+
+/** Resolves once the vault writes in flight have landed, or after `timeoutMs` - a quit must not hang on a disk. */
+export async function flushVaultWrites(timeoutMs = 3000): Promise<void> {
+  if (pendingVaultWork.size === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, timeoutMs);
+  });
+  await Promise.race([Promise.allSettled([...pendingVaultWork]), timeout]);
+  clearTimeout(timer);
+}
+
+let quitFlushed = false;
+
+/**
+ * Holds the first quit until the vault writes in flight have landed, then quits again. The second pass goes
+ * straight through. Exported so the test can drive it without Electron's event loop.
+ */
+export function handleBeforeQuit(event: { preventDefault: () => void }): void {
+  if (quitFlushed || pendingVaultWork.size === 0) return;
+  event.preventDefault();
+  quitFlushed = true;
+  void flushVaultWrites().finally(() => app.quit());
+}
+
+/** Test seam: lets a quit be held again after one went through. */
+export function resetQuitFlushForTests(): void {
+  quitFlushed = false;
+}
+
 /** Exported so the test can register the channels without needing the app to be ready. */
 export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
@@ -531,17 +576,23 @@ export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:remove', async (event, serverId: string) => {
     assertTrustedRenderer(event);
     assertValidServerId(serverId);
-    await withVaultLock(async () => {
-      const vault = await readAuthVault();
-      if (serverId in vault) {
-        delete vault[serverId];
-        await writeAuthVault(vault);
-      }
-    });
+    await trackVaultWork(
+      withVaultLock(async () => {
+        const vault = await readAuthVault();
+        if (serverId in vault) {
+          delete vault[serverId];
+          await writeAuthVault(vault);
+        }
+      }),
+    );
   });
 }
 
-async function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
+function saveTokens(serverId: string, tokens: TokenPair): Promise<void> {
+  return trackVaultWork(saveTokensNow(serverId, tokens));
+}
+
+async function saveTokensNow(serverId: string, tokens: TokenPair): Promise<void> {
   if (!(await secureStorageAvailable())) {
     throw new Error('Secure credential storage is unavailable on this device.');
   }
@@ -648,6 +699,8 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+app.on('before-quit', handleBeforeQuit);
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

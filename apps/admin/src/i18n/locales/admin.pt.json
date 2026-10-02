@@ -139,7 +139,8 @@
       "admin_message_deleted": "Mensagem excluída por um admin",
       "admin_activity_exported": "Registro de atividade exportado",
       "admin_request": "Outra alteração de admin",
-      "system_server_started": "Servidor iniciado"
+      "system_server_started": "Servidor iniciado",
+      "system_server_stopped": "Servidor encerrado"
     }
   },
   "appearance": {

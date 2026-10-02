@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   reconcile: vi.fn(),
   runMigrations: vi.fn(),
   setLogSink: vi.fn(),
+  createShutdown: vi.fn(() => ({ run: vi.fn(), onSignal: vi.fn() })),
+  installShutdownHandlers: vi.fn(),
 }));
 
 vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
@@ -23,6 +25,10 @@ vi.mock('../src/services/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
 vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('../src/shutdown', () => ({
+  createShutdown: mocks.createShutdown,
+  installShutdownHandlers: mocks.installShutdownHandlers,
+}));
 vi.mock('../src/utils/logger', () => ({
   logger: { info: mocks.loggerInfo },
   setLogSink: mocks.setLogSink,

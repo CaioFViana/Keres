@@ -96,6 +96,9 @@ function exposeCompatibleDb(database: unknown): CompatibleDb {
   return database as unknown as CompatibleDb;
 }
 
+/** Ends the connection the database was opened with; set by whichever engine is in use. */
+let closeConnection: () => Promise<void> = async () => undefined;
+
 function createPostgresDb(): PostgresDb {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -115,6 +118,7 @@ function createPostgresDb(): PostgresDb {
     logger.error('Postgres pool error on an idle client', error);
   });
 
+  closeConnection = () => pool.end();
   return drizzlePostgres(pool, { schema, logger: false });
 }
 
@@ -186,6 +190,7 @@ function createSqliteDb(): SqliteDb {
   // SQLITE_BUSY (surfacing as a spurious sync conflict); waiting a few seconds lets the
   // short sync transactions serialize instead.
   void client.execute('PRAGMA busy_timeout = 5000');
+  closeConnection = async () => client.close();
   return drizzleLibsql(client, { schema, logger: false });
 }
 
@@ -244,3 +249,12 @@ export function withTransaction<T>(fn: (tx: CompatibleDb) => Promise<T>): Promis
 
 /** Ordinary connection. Transactional work must use the `tx` from `withTransaction` / `withWriteTransaction`. */
 export const db: CompatibleDb = rawDb;
+
+/**
+ * Closes the connection (the Postgres pool, or the SQLite file) at the end of the process. Postgres then
+ * learns the clients are gone at once instead of waiting for them to time out, and SQLite folds its WAL
+ * back into the file. Nothing may use `db` after this.
+ */
+export async function closeDatabase(): Promise<void> {
+  await closeConnection();
+}

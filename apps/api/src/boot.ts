@@ -1,4 +1,5 @@
 import { env } from './config/env';
+import { closeDatabase } from './db';
 import { runMigrations } from './db/migrate';
 import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
@@ -10,6 +11,8 @@ import { assertMediaStorageConfiguration } from './services/MediaStorageConfigur
 import { mediaStorageService } from './services/MediaStorageService';
 import { reconcileRootAdmin } from './services/RootAdminService';
 import { normalizeStoredUserTags } from './services/UserTagMaintenance';
+import { createShutdown, installShutdownHandlers } from './shutdown';
+import { drainBackground, trackBackground } from './utils/backgroundWork';
 import { logger, setLogSink } from './utils/logger';
 
 export type ListeningAddress = { hostname: string; port: number };
@@ -39,57 +42,78 @@ export async function preparePersistence(): Promise<void> {
  * before anything is deleted, so overlapping runs - or two processes sweeping at once - can only
  * repeat idempotent work, never delete a referenced blob.
  */
-function startMediaBlobSweepScheduler(): void {
+function startMediaBlobSweepScheduler(): () => void {
   const sweep = () => {
-    mediaStorageService
-      .sweepExpiredUnreferencedBlobs()
-      .then((examined) => {
-        if (examined > 0) {
-          logger.info(`Media blob sweep examined ${examined} expired blob(s).`);
-        }
-      })
-      .catch((error: unknown) => {
-        logger.error('Media blob sweep failed', error);
-      });
+    trackBackground(
+      mediaStorageService
+        .sweepExpiredUnreferencedBlobs()
+        .then((examined) => {
+          if (examined > 0) {
+            logger.info(`Media blob sweep examined ${examined} expired blob(s).`);
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error('Media blob sweep failed', error);
+        }),
+    );
   };
   // One early run collects whatever expired while the server was down; the hourly cadence bounds
   // how long past the grace period bytes linger.
-  setTimeout(sweep, 60_000);
-  setInterval(sweep, 60 * 60_000);
+  const first = setTimeout(sweep, 60_000);
+  const every = setInterval(sweep, 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
 }
 
 /**
  * Keeps the activity record to its retention: once at start (what aged while the server was down) and
  * daily after. Best-effort like the media sweep - a failed run only leaves old lines for the next one.
  */
-function startAuditRetentionScheduler(): void {
+function startAuditRetentionScheduler(): () => void {
   const prune = () => {
-    auditService
-      .prune()
-      .then((removed) => {
-        if (removed > 0) {
-          logger.info(
-            `Activity record: dropped ${removed} line(s) older than ${env.AUDIT_RETENTION_DAYS} days.`,
-          );
-        }
-      })
-      .catch((error: unknown) => {
-        logger.error('Activity record retention failed', error);
-      });
+    trackBackground(
+      auditService
+        .prune()
+        .then((removed) => {
+          if (removed > 0) {
+            logger.info(
+              `Activity record: dropped ${removed} line(s) older than ${env.AUDIT_RETENTION_DAYS} days.`,
+            );
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error('Activity record retention failed', error);
+        }),
+    );
   };
-  setTimeout(prune, 30_000);
-  setInterval(prune, 24 * 60 * 60_000);
+  const first = setTimeout(prune, 30_000);
+  const every = setInterval(prune, 24 * 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
 }
 
 /** Drops the lockout counters whose window is long over: once at start and daily after, like the activity record. */
-function startAttemptLimitPruneScheduler(): void {
+function startAttemptLimitPruneScheduler(): () => void {
   const prune = () => {
-    pruneAttemptLimits().catch((error: unknown) => {
-      logger.error('Attempt counter cleanup failed', error);
-    });
+    trackBackground(
+      pruneAttemptLimits().then(
+        () => undefined,
+        (error: unknown) => {
+          logger.error('Attempt counter cleanup failed', error);
+        },
+      ),
+    );
   };
-  setTimeout(prune, 45_000);
-  setInterval(prune, 24 * 60 * 60_000);
+  const first = setTimeout(prune, 45_000);
+  const every = setInterval(prune, 24 * 60 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
 }
 
 export async function bootAndListen(options?: {
@@ -108,9 +132,30 @@ export async function bootAndListen(options?: {
   }
 
   const app = await createApp();
-  startMediaBlobSweepScheduler();
-  startAuditRetentionScheduler();
-  startAttemptLimitPruneScheduler();
+  const stopSchedulers = [
+    startMediaBlobSweepScheduler(),
+    startAuditRetentionScheduler(),
+    startAttemptLimitPruneScheduler(),
+  ];
+  const startedAt = Date.now();
+  const shutdown = createShutdown({
+    getServer: () => app.server,
+    stopSchedulers: () => {
+      for (const stop of stopSchedulers) stop();
+    },
+    announce: (reason) =>
+      auditService.record({
+        category: 'system',
+        action: 'system.server_stopped',
+        meta: { reason, uptimeSeconds: Math.round((Date.now() - startedAt) / 1000) },
+      }),
+    drainBackground,
+    closeDatabase,
+    exit: (code) => process.exit(code),
+    log: logger,
+    requestGraceMs: env.SHUTDOWN_GRACE_MS,
+  });
+  installShutdownHandlers(shutdown, logger);
   auditService.record({
     category: 'system',
     action: 'system.server_started',

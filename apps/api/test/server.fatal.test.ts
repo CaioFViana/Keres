@@ -62,5 +62,6 @@ describe('production server bootstrap - fatal startup error', () => {
     expect(mocks.listen).not.toHaveBeenCalled();
 
     exitSpy.mockRestore();
-  });
+    // `resetModules` re-imports the whole application cold, which is slow while other suites share the machine.
+  }, 30_000);
 });

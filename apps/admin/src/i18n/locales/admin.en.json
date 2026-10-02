@@ -139,7 +139,8 @@
       "admin_message_deleted": "Message deleted by an admin",
       "admin_activity_exported": "Activity record exported",
       "admin_request": "Other admin change",
-      "system_server_started": "Server started"
+      "system_server_started": "Server started",
+      "system_server_stopped": "Server stopped"
     }
   },
   "appearance": {

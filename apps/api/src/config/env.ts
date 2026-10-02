@@ -79,6 +79,12 @@ const envSchema = z.object({
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
   /** How many days the admin's activity record keeps its lines; older ones are dropped once a day. */
   AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(365),
+  /**
+   * How long a stopping server lets the requests already running finish before closing them, in
+   * milliseconds. `docker stop` waits 10 s by default before killing, so the default leaves room for the
+   * rest of the shutdown; raise both together (`stop_grace_period`).
+   */
+  SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).optional().default(7000),
 });
 
 export const env = envSchema.parse(process.env);

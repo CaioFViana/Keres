@@ -23,6 +23,9 @@ services:
     image: ghcr.io/caiofviana/keres:${KERES_IMAGE_TAG:-latest}
     pull_policy: always
     restart: unless-stopped
+    # The server stops in order (requests finish, the record is written, the database closed): give it the
+    # time. SHUTDOWN_GRACE_MS must stay below this.
+    stop_grace_period: 30s
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -33,6 +36,7 @@ services:
       ROOT_ADMIN_PASSWORD: ${ROOT_ADMIN_PASSWORD:?Define ROOT_ADMIN_PASSWORD no arquivo .env}
       # Local is the default. For S3, fill in MEDIA_S3_* in the deploy .env; the server blocks a backend
       # switch when the database already holds media, to avoid losing files.
+      SHUTDOWN_GRACE_MS: "20000"
       MEDIA_STORAGE_DRIVER: ${MEDIA_STORAGE_DRIVER:-local}
       MEDIA_STORAGE_PATH: /app/apps/api/media-storage
       MEDIA_MAX_BYTES: ${MEDIA_MAX_BYTES:-52428800}

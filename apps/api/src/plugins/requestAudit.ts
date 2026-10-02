@@ -2,6 +2,7 @@ import { Elysia } from 'elysia';
 import { classifyRequest, isAdminApiPath, outcomeOf } from '../audit/requestAuditRules';
 import type { JWTPayload } from '../index';
 import { type AuditInput, auditService } from '../services/AuditService';
+import { trackBackground } from '../utils/backgroundWork';
 
 /** What the audit needs of a finished request. */
 export interface FinishedRequest {
@@ -168,15 +169,17 @@ export const requestAudit = new Elysia({ name: 'request-audit' })
       error: reasons.get(request),
     });
     if (!decision) return;
-    void (async () => {
-      try {
-        const { input, lookupUsername } = decision;
-        if (lookupUsername) {
-          input.actorUserId = await auditService.findUserIdByUsername(lookupUsername);
+    trackBackground(
+      (async () => {
+        try {
+          const { input, lookupUsername } = decision;
+          if (lookupUsername) {
+            input.actorUserId = await auditService.findUserIdByUsername(lookupUsername);
+          }
+          await auditService.recordNow(input);
+        } catch (error) {
+          console.error('Failed to record an audit event', error);
         }
-        await auditService.recordNow(input);
-      } catch (error) {
-        console.error('Failed to record an audit event', error);
-      }
-    })();
+      })(),
+    );
   });

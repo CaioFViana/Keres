@@ -23,6 +23,9 @@ services:
       context: ../../ # Build context is the monorepo root
       dockerfile: apps/api/Dockerfile # Dockerfile is in apps/api
     restart: always
+    # The server stops in order (requests finish, the record is written, the database closed): give it the
+    # time. SHUTDOWN_GRACE_MS (default 7 s) must stay below this.
+    stop_grace_period: 30s
     ports:
       - "3000:3000"
     env_file:

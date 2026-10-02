@@ -119,6 +119,16 @@ describe('desktop startup', () => {
     expect(electronMocks.BrowserWindow).toHaveBeenCalledTimes(2);
   });
 
+  it('registers the hold that lets vault writes finish before quitting', () => {
+    const event = { preventDefault: vi.fn() };
+
+    electronMocks.events.get('before-quit')?.(event);
+
+    expect(electronMocks.events.has('before-quit')).toBe(true);
+    // Nothing is being written in this run, so the quit goes straight through.
+    expect(event.preventDefault).not.toHaveBeenCalled();
+  });
+
   it('quits when all windows close outside macOS', () => {
     electronMocks.events.get('window-all-closed')?.();
 

@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   reconcile: vi.fn(),
   runMigrations: vi.fn(),
   setLogSink: vi.fn(),
+  createShutdown: vi.fn((_dependencies: unknown) => ({ run: vi.fn(), onSignal: vi.fn() })),
+  installShutdownHandlers: vi.fn(),
 }));
 
 vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
@@ -27,6 +29,10 @@ vi.mock('../src/services/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
 vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+vi.mock('../src/shutdown', () => ({
+  createShutdown: mocks.createShutdown,
+  installShutdownHandlers: mocks.installShutdownHandlers,
+}));
 vi.mock('../src/utils/logger', () => ({
   logger: { info: mocks.loggerInfo },
   setLogSink: mocks.setLogSink,
@@ -67,5 +73,21 @@ describe('production server bootstrap', () => {
     );
     expect(mocks.loggerInfo).toHaveBeenCalledWith('Removed 2 abandoned temporary media upload(s).');
     expect(mocks.loggerInfo).toHaveBeenCalledWith('Elysia is running at http://127.0.0.1:3000');
+  });
+
+  it('installs the orderly shutdown, over the server it started', () => {
+    expect(mocks.installShutdownHandlers).toHaveBeenCalledOnce();
+    expect(mocks.createShutdown).toHaveBeenCalledOnce();
+    const dependencies = mocks.createShutdown.mock.calls[0][0] as {
+      getServer: () => unknown;
+      exit: unknown;
+      closeDatabase: unknown;
+      drainBackground: unknown;
+    };
+    expect(typeof dependencies.exit).toBe('function');
+    expect(typeof dependencies.closeDatabase).toBe('function');
+    expect(typeof dependencies.drainBackground).toBe('function');
+    // The mocked app has no server (it never listened for real): the shutdown copes with that.
+    expect(dependencies.getServer()).toBeUndefined();
   });
 });

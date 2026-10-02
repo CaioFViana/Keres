@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
+import { app } from 'electron';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
@@ -66,12 +67,14 @@ const invoke = (channel: string, event: unknown, ...args: any[]) => {
 
 const TOKENS = { accessToken: 'access-1', refreshToken: 'refresh-1' };
 
+let main: typeof import('../src/main');
+
 beforeAll(async () => {
   electronMocks.handle.mockImplementation((channel: string, handler: Handler) => {
     handlers.set(channel, handler);
   });
 
-  const main = await import('../src/main');
+  main = await import('../src/main');
   main.registerAuthIpcHandlers();
   main.registerMediaIpcHandlers();
 });
@@ -397,5 +400,81 @@ describe('media channels', () => {
     await expect(invoke('media:write', trustedEvent, '../escapou.png', BYTES)).rejects.toThrow();
 
     await expect(fs.access(path.join(USER_DATA, 'escapou.png'))).rejects.toThrow();
+  });
+});
+
+describe('closing the app while the vault is being written', () => {
+  const readVault = async () =>
+    JSON.parse(await fs.readFile(path.join(USER_DATA, 'auth-vault.json'), 'utf8')) as Record<
+      string,
+      string
+    >;
+  /** An encryption that takes a while, as the system keychain does. */
+  const slowEncryption = (ms: number) =>
+    electronMocks.encryptStringAsync.mockImplementationOnce(async (plain: string) => {
+      await new Promise((resolve) => setTimeout(resolve, ms));
+      return Buffer.from(`enc:${plain}`);
+    });
+
+  beforeEach(() => main.resetQuitFlushForTests());
+
+  it('waits for a write still in flight, so the token it carries is not lost', async () => {
+    slowEncryption(150);
+    const writing = invoke('auth:write', trustedEvent, 'server-1', TOKENS);
+
+    await main.flushVaultWrites();
+
+    expect(Object.keys(await readVault())).toEqual(['server-1']);
+    await writing;
+  });
+
+  it('holds the first quit until the write has landed, then quits', async () => {
+    slowEncryption(150);
+    const writing = invoke('auth:write', trustedEvent, 'server-1', TOKENS);
+    const event = { preventDefault: vi.fn() };
+
+    main.handleBeforeQuit(event);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(app.quit).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(app.quit).toHaveBeenCalledOnce());
+    expect(Object.keys(await readVault())).toEqual(['server-1']);
+    await writing;
+
+    // The quit that comes back through is not held again.
+    const second = { preventDefault: vi.fn() };
+    main.handleBeforeQuit(second);
+    expect(second.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('holds a sign-out in flight too', async () => {
+    await invoke('auth:write', trustedEvent, 'server-1', TOKENS);
+    const removing = invoke('auth:remove', trustedEvent, 'server-1');
+    const event = { preventDefault: vi.fn() };
+
+    main.handleBeforeQuit(event);
+    await removing;
+    await vi.waitFor(() => expect(app.quit).toHaveBeenCalledOnce());
+
+    expect(await readVault()).toEqual({});
+  });
+
+  it('lets the app quit at once when nothing is being written', () => {
+    const event = { preventDefault: vi.fn() };
+
+    main.handleBeforeQuit(event);
+
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
+  it('does not hang on a write that never finishes', async () => {
+    electronMocks.encryptStringAsync.mockImplementationOnce(() => new Promise(() => undefined));
+    void invoke('auth:write', trustedEvent, 'server-1', TOKENS);
+
+    const started = Date.now();
+    await main.flushVaultWrites(60);
+
+    expect(Date.now() - started).toBeLessThan(1000);
   });
 });

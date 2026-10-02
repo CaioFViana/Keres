@@ -16,6 +16,7 @@ import { db } from '../db';
 import { alias } from '../db/schema/columns';
 import { apiLogs, auditEvents, stories, users } from '../db/schema';
 import { insensitiveLike } from '../db/sqlOperators';
+import { trackBackground } from '../utils/backgroundWork';
 
 const STARTED_AT = new Date();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -52,9 +53,11 @@ export class AuditService {
    * console only - the technical log writes through the database too, so it must not be used from here.
    */
   record(input: AuditInput): void {
-    void this.recordNow(input).catch((error: unknown) => {
-      console.error('Failed to record an audit event', error);
-    });
+    trackBackground(
+      this.recordNow(input).catch((error: unknown) => {
+        console.error('Failed to record an audit event', error);
+      }),
+    );
   }
 
   /**

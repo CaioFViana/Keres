@@ -212,6 +212,12 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
+  // Visitor messages to the administrators: exchanged between the landing page and the admin
+  // panel, never shown inside the client itself.
+  ContactMessage: {
+    documented: [],
+    invisible: ['id', 'subject', 'body', 'contactEmail', 'isRead', 'createdAt'],
+  },
   Effect: {
     documented: [
       'entityType',
@@ -330,7 +336,8 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   RegistrationSettings: {
     documented: ['isRegistrationOpen', 'maxUsers', 'autoManage', 'defaultTierId', 'updatedAt'],
-    invisible: ['id'],
+    // The sale currency is an admin-panel concern; the client never prices anything.
+    invisible: ['id', 'currency'],
   },
   Scene: {
     documented: [
@@ -496,7 +503,16 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'isDeleted', 'deletedAt'],
+    // Sale pricing and landing display order live in the admin panel and landing page.
+    invisible: [
+      'id',
+      'priceMonthlyCents',
+      'priceYearlyCents',
+      'isPublicForSale',
+      'sortOrder',
+      'isDeleted',
+      'deletedAt',
+    ],
   },
   UserPublicInfo: {
     documented: ['username', 'tag', 'avatarColor', 'avatarIcon', 'bio'],

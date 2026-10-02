@@ -1,12 +1,17 @@
 import { useTranslation } from 'react-i18next';
+import { ContactSection } from '../components/ContactSection';
+import { OfficialSection } from '../components/OfficialSection';
 import { Showcase } from '../components/Showcase';
+import { TiersSection } from '../components/TiersSection';
 import { DOWNLOADS, FAQ_ITEMS, FEATURE_GROUPS, PILLARS, PLATFORMS } from '../content/catalog';
 import {
   DOCKER_IMAGE,
   GITHUB_RELEASES_URL,
   GITHUB_REPO_URL,
+  HOSTED_CLIENT_URL,
   WEB_CLIENT_URL,
 } from '../content/links';
+import { isLandingBuild } from '../variant';
 import keresLogoUrl from 'virtual:keres-logo';
 
 const DOWNLOAD_HREFS: Record<(typeof DOWNLOADS)[number], string> = {
@@ -36,9 +41,23 @@ export function HomePage() {
           <p className="hero-text">{t('hero.lead')}</p>
           <div className="hero-actions">
             {/* Plain link, not the router: the client is its own app, served from a sibling folder. */}
-            <a className="button button-primary" href={WEB_CLIENT_URL} data-testid="try-web-client">
-              {t('hero.ctaTry')}
-            </a>
+            {isLandingBuild ? (
+              <a
+                className="button button-primary"
+                href={HOSTED_CLIENT_URL}
+                data-testid="try-web-client"
+              >
+                {t('hero.landingCtaTry')}
+              </a>
+            ) : (
+              <a
+                className="button button-primary"
+                href={WEB_CLIENT_URL}
+                data-testid="try-web-client"
+              >
+                {t('hero.ctaTry')}
+              </a>
+            )}
             <a className="button button-primary" href="#download">
               {t('hero.ctaDownload')}
             </a>
@@ -54,9 +73,13 @@ export function HomePage() {
               {t('hero.ctaFeatures')}
             </a>
           </div>
-          <p className="muted hero-note">{t('hero.tryNote')}</p>
+          <p className="muted hero-note">
+            {isLandingBuild ? t('hero.landingTryNote') : t('hero.tryNote')}
+          </p>
         </div>
       </section>
+
+      {isLandingBuild && <OfficialSection />}
 
       <section className="band" id="product">
         <div className="section-inner">
@@ -117,6 +140,8 @@ export function HomePage() {
         </div>
       </section>
 
+      {isLandingBuild && <TiersSection />}
+
       <section className="band" id="download">
         <div className="section-inner">
           <header className="section-head">
@@ -145,31 +170,34 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="band" id="stack">
-        <div className="section-inner">
-          <header className="section-head">
-            <h2>{t('stack.title')}</h2>
-            <p>{t('stack.lead')}</p>
-          </header>
-          <ul className="stack-list">
-            <li>
-              <strong>apps/client.</strong> {t('stack.client')}
-            </li>
-            <li>
-              <strong>apps/desktop.</strong> {t('stack.desktop')}
-            </li>
-            <li>
-              <strong>apps/api.</strong> {t('stack.api')}
-            </li>
-            <li>
-              <strong>apps/admin.</strong> {t('stack.admin')}
-            </li>
-            <li>
-              <strong>packages/shared.</strong> {t('stack.shared')}
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Developer internals: only the GitHub Pages project site names the monorepo pieces. */}
+      {!isLandingBuild && (
+        <section className="band" id="stack">
+          <div className="section-inner">
+            <header className="section-head">
+              <h2>{t('stack.title')}</h2>
+              <p>{t('stack.lead')}</p>
+            </header>
+            <ul className="stack-list">
+              <li>
+                <strong>apps/client.</strong> {t('stack.client')}
+              </li>
+              <li>
+                <strong>apps/desktop.</strong> {t('stack.desktop')}
+              </li>
+              <li>
+                <strong>apps/api.</strong> {t('stack.api')}
+              </li>
+              <li>
+                <strong>apps/admin.</strong> {t('stack.admin')}
+              </li>
+              <li>
+                <strong>packages/shared.</strong> {t('stack.shared')}
+              </li>
+            </ul>
+          </div>
+        </section>
+      )}
 
       <section className="band" id="faq">
         <div className="section-inner">
@@ -180,12 +208,20 @@ export function HomePage() {
             {FAQ_ITEMS.map((item) => (
               <details key={item} className="faq-item">
                 <summary>{t(`faq.items.${item}.q`)}</summary>
-                <p>{t(`faq.items.${item}.a`)}</p>
+                {/* The landing page is served by a Keres Server, so its showcase answer
+                    points at this server's own /showcase instead of someone else's. */}
+                <p>
+                  {item === 'showcase' && isLandingBuild
+                    ? t('faq.items.showcase.aLanding')
+                    : t(`faq.items.${item}.a`)}
+                </p>
               </details>
             ))}
           </div>
         </div>
       </section>
+
+      {isLandingBuild && <ContactSection />}
     </>
   );
 }

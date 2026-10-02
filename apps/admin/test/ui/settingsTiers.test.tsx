@@ -47,6 +47,7 @@ const settings = (over: Record<string, unknown> = {}) => ({
   autoManage: false,
   maxUsers: null,
   defaultTierId: null,
+  currency: 'BRL',
   ...over,
 });
 
@@ -60,6 +61,10 @@ const tier = (over: Record<string, unknown> = {}) => ({
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  priceMonthlyCents: null,
+  priceYearlyCents: null,
+  isPublicForSale: false,
+  sortOrder: 0,
   isDeleted: false,
   ...over,
 });
@@ -122,9 +127,9 @@ describe('registration settings', () => {
     await flush();
     const checkboxes = () => Array.from(view.container.querySelectorAll('input[type="checkbox"]'));
 
-    expect(checkboxes()).toHaveLength(4); // registration ×2, showcase ×2
+    expect(checkboxes()).toHaveLength(5); // registration ×2, hosted pages ×3
     await click(checkboxes()[0]); // auto-manage on
-    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(3);
+    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(4);
 
     await submit(view.container.querySelector('form')!);
     await flush();
@@ -167,6 +172,7 @@ describe('registration settings', () => {
       maxUsers: 500,
       autoManage: false,
       defaultTierId: 'tier-1',
+      currency: 'BRL',
     });
     expect(view.container.querySelector('.success-text')).not.toBeNull();
     await view.unmount();
@@ -218,6 +224,21 @@ describe('registration settings', () => {
     expect(view.container.querySelector('form')).not.toBeNull();
     await view.unmount();
   });
+
+  it('uppercases the typed currency and saves it with the rest', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    const label = Array.from(view.container.querySelectorAll('form label')).find((node) =>
+      node.textContent?.includes('Currency (ISO code)'),
+    )!;
+    await changeInput(label.querySelector('input')!, 'usd');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ currency: 'USD' }));
+    await view.unmount();
+  });
 });
 
 describe('showcase settings card', () => {
@@ -258,6 +279,17 @@ describe('showcase settings card', () => {
     await flush();
 
     expect(view.container.textContent).toContain('Showcase settings are down.');
+    await view.unmount();
+  });
+
+  it('toggles the landing page at the root', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[2]);
+    await flush();
+
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith({ isLandingEnabled: true });
     await view.unmount();
   });
 
@@ -657,6 +689,56 @@ describe('tiers page', () => {
     await flush();
 
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Tiers are down.');
+    await view.unmount();
+  });
+
+  it('saves sale pricing in cents and previews the yearly discount', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const labels = Array.from(view.container.querySelectorAll('.form-card label'));
+    const byText = (text: string) =>
+      labels.find((node) => node.textContent?.includes(text))!.querySelector('input')!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Pro');
+    await changeInput(byText('Price per month'), '19.90');
+    await changeInput(byText('Price per year'), '199');
+    await click(byText('Available for sale'));
+    await changeInput(byText('Display order'), '2');
+
+    // 199.00 against 12 × 19.90: −17%.
+    expect(view.container.querySelector('.form-card')!.textContent).toContain('−17% vs monthly');
+
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({
+        priceMonthlyCents: 1990,
+        priceYearlyCents: 19900,
+        isPublicForSale: true,
+        sortOrder: 2,
+      }),
+    );
+    await view.unmount();
+  });
+
+  it('shows prices formatted and zero as free', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({ priceMonthlyCents: 1990, priceYearlyCents: 0, isPublicForSale: true }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const row = view.container.querySelector('tbody tr')!;
+    expect(row.textContent).toContain('19.90');
+    expect(row.textContent).toContain('Free');
+    expect(row.textContent).toContain('Yes');
     await view.unmount();
   });
 });

@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import { bigintNumber, boolean, integer, table, text, timestamp, timestampNow } from '../columns';
 import { users } from './users';
 
 /**
@@ -17,10 +17,19 @@ export const tiers = table('tiers', {
   maxStories: integer('max_stories'),
   maxEntitiesPerStory: integer('max_entities_per_story'),
   maxEntitiesTotal: integer('max_entities_total'),
-  maxStorageBytesPerStory: integer('max_storage_bytes_per_story'),
-  maxStorageBytesTotal: integer('max_storage_bytes_total'),
+  /** `bigint`: a 32-bit integer tops out at ~2 GB, and tiers comfortably exceed that. */
+  maxStorageBytesPerStory: bigintNumber('max_storage_bytes_per_story'),
+  maxStorageBytesTotal: bigintNumber('max_storage_bytes_total'),
   /** Versions published in any rolling 24 hours (see `publication_log`); 0 forbids publishing. */
   maxPublicationsPerDay: integer('max_publications_per_day'),
+  /** Monthly price in the system's currency minor units; `null` = not priced monthly, 0 = free. */
+  priceMonthlyCents: integer('price_monthly_cents'),
+  /** Yearly price in the system's currency minor units; `null` = not priced yearly, 0 = free. */
+  priceYearlyCents: integer('price_yearly_cents'),
+  /** Listed by `GET /api/public/tiers` for the landing page; off by default like the showcase. */
+  isPublicForSale: boolean('is_public_for_sale').notNull().default(false),
+  /** Display order on the landing page (ascending), then by name. */
+  sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   isDeleted: boolean('is_deleted').notNull().default(false),

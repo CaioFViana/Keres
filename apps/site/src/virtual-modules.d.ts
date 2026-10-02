@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  /** Set to `landing` by `vite.landing.config.ts`; unset means the Pages build. */
+  readonly VITE_SITE_VARIANT?: string;
+}
+
 /**
  * The Keres wordmark is generated at build time from the desktop app's icon, so there is no
  * file on disk for TypeScript to resolve.

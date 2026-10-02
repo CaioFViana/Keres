@@ -22,6 +22,8 @@ export const registrationSettings = table('registration_settings', {
    */
   autoManage: boolean('auto_manage').notNull().default(false),
   defaultTierId: text('default_tier_id').references(() => tiers.id),
+  /** ISO-4217 code: the one currency tier prices are expressed in, system-wide. */
+  currency: text('currency').notNull().default('BRL'),
   updatedAt: timestampNow('updated_at'),
 });
 

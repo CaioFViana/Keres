@@ -13,6 +13,7 @@ vi.mock('../../src/api/apiClient', async (importOriginal) => {
 });
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
+import { ContactApiService } from '../../src/api/ContactApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';
 import { RecoveryApiService } from '../../src/api/RecoveryApiService';
 import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettingsApiService';
@@ -221,5 +222,22 @@ describe('RecoveryApiService', () => {
       params: filters,
     });
     expect(result.pageSize).toBe(50);
+  });
+});
+
+describe('ContactApiService', () => {
+  it('maps list, read and delete to the contact routes', async () => {
+    await ContactApiService.list();
+    await ContactApiService.get('msg-1');
+    await ContactApiService.remove('msg-1');
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/contact');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/contact/msg-1');
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/contact/msg-1');
+  });
+
+  it('refuses unsafe path segments', async () => {
+    await expect(ContactApiService.get('../x')).rejects.toThrow();
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 });

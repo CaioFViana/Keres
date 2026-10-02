@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { SiteApp } from '../../src/App';
-import { FEATURE_GROUPS } from '../../src/content/catalog';
+import { FEATURE_GROUPS, PLATFORMS } from '../../src/content/catalog';
 import { GITHUB_RELEASES_URL, GITHUB_REPO_URL, WEB_CLIENT_URL } from '../../src/content/links';
 import i18n, { SITE_LANGUAGE_KEY } from '../../src/i18n';
 import siteEn from '../../src/i18n/locales/site.en.json';
@@ -132,6 +132,62 @@ describe('landing page', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     await unmount();
     vi.unstubAllGlobals();
+  });
+
+  it('carries no server-backed sections in the Pages build', async () => {
+    const { container, unmount } = await render(<SiteApp />);
+
+    expect(container.querySelector('#tiers')).toBeNull();
+    expect(container.querySelector('#contact')).toBeNull();
+    expect(container.querySelector('#official')).toBeNull();
+    const navHrefs = [...container.querySelectorAll('#site-nav-links a')].map((anchor) =>
+      anchor.getAttribute('href'),
+    );
+    expect(navHrefs).not.toContain('#tiers');
+    expect(navHrefs).not.toContain('#contact');
+
+    await unmount();
+  });
+
+  it('keeps the how-it-is-built section and the project-page answers', async () => {
+    const { container, unmount } = await render(<SiteApp />);
+
+    const stack = container.querySelector('#stack');
+    expect(stack?.textContent).toContain(siteEn.stack.title);
+
+    const answerOf = (question: string): string | null => {
+      const row = [...container.querySelectorAll('#faq details.faq-item')].find(
+        (details) => details.querySelector('summary')?.textContent === question,
+      );
+      return row?.querySelector('p')?.textContent ?? null;
+    };
+    expect(answerOf(siteEn.faq.items.showcase.q)).toBe(siteEn.faq.items.showcase.a);
+    expect(answerOf(siteEn.faq.items.editor.q)).toContain('export');
+
+    await unmount();
+  });
+
+  it('renders feature groups and platforms as cards', async () => {
+    const { container, unmount } = await render(<SiteApp />);
+
+    for (const group of FEATURE_GROUPS) {
+      const sectionId = group.id === 'universe' ? 'universe' : group.id;
+      const cards = [...container.querySelectorAll(`#${sectionId} article.feature-card`)];
+      expect(cards).toHaveLength(group.items.length);
+      expect(cards.map((card) => card.querySelector('h3')?.textContent)).toEqual(
+        group.items.map(
+          (item) =>
+            (siteEn.features as Record<string, { items: Record<string, { title: string }> }>)[
+              group.id
+            ].items[item].title,
+        ),
+      );
+    }
+
+    const platforms = [...container.querySelectorAll('#platforms article.feature-card')];
+    expect(platforms).toHaveLength(PLATFORMS.length);
+
+    await unmount();
   });
 
   it('opens and closes the compact navigation', async () => {

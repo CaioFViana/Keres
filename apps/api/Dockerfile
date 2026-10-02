@@ -61,6 +61,24 @@ WORKDIR /app/apps/client
 RUN bun scripts/generate-indexes.ts \
  && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web --output-dir dist-hosted
 
+# ---- site-landing-build: the landing page the API serves at / ----
+# Só site. Como o admin-build (e ao contrário do client acima), precisa das devDependencies
+# (o `vite build` é o próprio toolchain) - por isso o install aqui é completo, não `--production`.
+# O PNG do ícone entra pelo mesmo motivo do admin-build: favicon e wordmark são gerados dele.
+FROM oven/bun:latest AS site-landing-build
+WORKDIR /app
+# A mesma barreira de serialização do estágio do client: deps → admin → client → site.
+COPY --from=client-web-build /app/apps/client/dist-hosted/index.html /tmp/.client-built
+COPY package.json bun.lock ./
+COPY apps/site/package.json apps/site/package.json
+COPY patches patches
+# Not --frozen-lockfile: partial workspace, same reason as the deps stage above.
+RUN bun install --linker=hoisted
+COPY apps/site apps/site
+COPY apps/client/assets/images/desktop_icon.png apps/client/assets/images/desktop_icon.png
+WORKDIR /app/apps/site
+RUN bun run build:landing
+
 # ---- prod-deps: production-only install, scoped to just what the API needs at runtime ----
 # Deliberately does NOT copy apps/admin/package.json: admin is already built to static files by
 # this point, so its React/Vite toolchain (and every dependency it pulls in) has no reason to
@@ -112,6 +130,9 @@ COPY --from=admin-build /app/apps/admin/dist-showcase ./apps/admin/dist-showcase
 # Electron empacota, que é feito para a raiz. Sem este estágio a API sobe, só o /client 404. Expo
 # fica isolado deste stage para o runtime continuar só com Bun.
 COPY --from=client-web-build /app/apps/client/dist-hosted ./apps/client/dist-hosted
+# Landing page servida em /: um build próprio (baseUrl=/_landing), não o `dist` que o Pages
+# publica, feito para `/Keres/`. Sem este estágio a raiz cai na cadeia de redirects.
+COPY --from=site-landing-build /app/apps/site/dist-landing ./apps/site/dist-landing
 
 WORKDIR /app/apps/api
 

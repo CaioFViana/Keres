@@ -243,10 +243,13 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 - **API modules** (18 `*.route.ts`): `auth`, `sync`, `story` (+`publication`),
   `storyPermission`, `friend`, `user`, `media`, `pack`, `public`, `websocket`,
   `admin*` (users, tiers, registration, recovery, API logs, showcase).
-- Hosts: client web export at `/` (COOP/COEP for SQLite WASM), `/admin`,
-  `/showcase`, Swagger at `/swagger`; session cookie for hosted web.
-- **Admin panel**: user CRUD by tier, tiers, registration settings, recovery,
-  API logs, showcase settings; generated favicon/logo/avatars
+- Hosts: landing page at `/` when enabled (else redirect to `/client/`,
+  `/showcase` or Swagger), client web export at `/client` (COOP/COEP for
+  SQLite WASM), `/admin`, `/showcase`, Swagger at `/swagger`; session cookie
+  for hosted web.
+- **Admin panel**: user CRUD by tier, tiers (limits, sale pricing, order),
+  registration settings (incl. currency), contact messages, recovery,
+  API logs, showcase/landing settings; generated favicon/logo/avatars
   (`vite.keresIcon.ts`); audit remediation plan in
   `finished_planning/ADMIN_AUDIT_REMEDIATION_PLAN.md`.
 - **Media storage**: local-disk or S3 backend, **identity locked at first use**

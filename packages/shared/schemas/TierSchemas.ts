@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CurrencySchema } from './RegistrationSettingsSchemas';
 import { UlidSchema } from './SyncSchemas';
 
 /**
@@ -8,6 +9,11 @@ import { UlidSchema } from './SyncSchemas';
 export const TierCreateInputSchema = z.object({
   name: z.string().min(1, 'Name cannot be empty'),
   isDefault: z.boolean().default(false),
+  // Zero is a price too: a tier for sale at 0 is the free tier.
+  priceMonthlyCents: z.number().int().nonnegative().nullable().optional(),
+  priceYearlyCents: z.number().int().nonnegative().nullable().optional(),
+  isPublicForSale: z.boolean().default(false),
+  sortOrder: z.number().int().default(0),
   maxStories: z.number().int().positive().nullable().optional(),
   maxEntitiesPerStory: z.number().int().positive().nullable().optional(),
   maxEntitiesTotal: z.number().int().positive().nullable().optional(),
@@ -55,3 +61,29 @@ export const StoryPlanSchema = z.object({
   entitiesUsedTotal: z.number().int(),
 });
 export type StoryPlan = z.infer<typeof StoryPlanSchema>;
+
+/**
+ * One tier as the public landing page sees it: no ids of other tables, no timestamps, no
+ * deletion flags - only what a visitor compares before registering. Served by
+ * `GET /api/public/tiers`, already filtered (`isPublicForSale`, not deleted) and ordered.
+ */
+export const PublicTierSchema = z.object({
+  id: UlidSchema,
+  name: z.string(),
+  isDefault: z.boolean(),
+  priceMonthlyCents: z.number().int().nonnegative().nullable(),
+  priceYearlyCents: z.number().int().nonnegative().nullable(),
+  maxStories: z.number().int().positive().nullable(),
+  maxEntitiesPerStory: z.number().int().positive().nullable(),
+  maxEntitiesTotal: z.number().int().positive().nullable(),
+  maxStorageBytesPerStory: z.number().int().positive().nullable(),
+  maxStorageBytesTotal: z.number().int().positive().nullable(),
+  maxPublicationsPerDay: z.number().int().nonnegative().nullable(),
+});
+export type PublicTier = z.infer<typeof PublicTierSchema>;
+
+export const PublicTiersResponseSchema = z.object({
+  currency: CurrencySchema,
+  tiers: z.array(PublicTierSchema),
+});
+export type PublicTiersResponse = z.infer<typeof PublicTiersResponseSchema>;

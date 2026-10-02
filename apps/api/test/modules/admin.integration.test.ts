@@ -28,6 +28,9 @@ describe('requireAdmin gate', () => {
     ['POST', '/admin/api/users/qualquer/regenerate-recovery-codes'],
     ['GET', '/admin/api/tiers'],
     ['POST', '/admin/api/tiers', { name: 'Pro' }],
+    ['GET', '/admin/api/contact'],
+    ['GET', '/admin/api/contact/qualquer'],
+    ['DELETE', '/admin/api/contact/qualquer'],
     ['GET', '/admin/api/registration-settings'],
     ['PUT', '/admin/api/registration-settings', { isRegistrationOpen: false }],
     ['GET', '/admin/api/recovery/deleted'],
@@ -549,6 +552,65 @@ describe('tiers', () => {
     expect(invalidCreate.status).toBe(400);
     expect(invalidUpdate.status).toBe(400);
   });
+
+  it('accepts storage ceilings above the 32-bit range', async () => {
+    // Postgres `integer` tops out at ~2 GB; the storage columns are `bigint` instead.
+    // SQLite never failed here (its INTEGER is 64 bits), so this only bites on Postgres -
+    // which is where the production failure came from.
+    const created = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: {
+        name: 'Heavy',
+        maxStorageBytesPerStory: 2147483648,
+        maxStorageBytesTotal: 10737418240,
+      },
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.data).toMatchObject({
+      maxStorageBytesPerStory: 2147483648,
+      maxStorageBytesTotal: 10737418240,
+    });
+  });
+
+  it('round-trips sale pricing, visibility and display order', async () => {
+    const created = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: {
+        name: 'Pro',
+        priceMonthlyCents: 1990,
+        priceYearlyCents: 19900,
+        isPublicForSale: true,
+        sortOrder: 3,
+      },
+    });
+
+    expect(created.status).toBe(201);
+    expect(created.data).toMatchObject({
+      priceMonthlyCents: 1990,
+      priceYearlyCents: 19900,
+      isPublicForSale: true,
+      sortOrder: 3,
+    });
+
+    const updated = await request('PUT', `/admin/api/tiers/${created.data.id}`, {
+      token: admin.token,
+      body: { priceMonthlyCents: 0, priceYearlyCents: null, sortOrder: 0 },
+    });
+
+    expect(updated.status).toBe(200);
+    expect(updated.data).toMatchObject({
+      priceMonthlyCents: 0,
+      priceYearlyCents: null,
+      sortOrder: 0,
+    });
+
+    const negative = await request('PUT', `/admin/api/tiers/${created.data.id}`, {
+      token: admin.token,
+      body: { priceMonthlyCents: -1 },
+    });
+    expect(negative.status).toBe(400);
+  });
 });
 
 describe('registration settings', () => {
@@ -614,5 +676,23 @@ describe('registration settings', () => {
 
     expect(status).toBe(200);
     expect(data.defaultTierId).toBe(tier.id);
+  });
+
+  it('defaults the currency to BRL and accepts ISO codes', async () => {
+    const first = await request('GET', '/admin/api/registration-settings', { token: admin.token });
+    expect(first.data.currency).toBe('BRL');
+
+    const updated = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { currency: 'USD' },
+    });
+    expect(updated.status).toBe(200);
+    expect(updated.data.currency).toBe('USD');
+
+    const invalid = await request('PUT', '/admin/api/registration-settings', {
+      token: admin.token,
+      body: { currency: 'reais' },
+    });
+    expect(invalid.status).toBe(400);
   });
 });

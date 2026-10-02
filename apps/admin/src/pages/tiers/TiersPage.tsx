@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Tier, TierCreateInput } from '@keres/shared';
+import { yearlyDiscountPercent } from '@keres/shared';
+import { RegistrationSettingsApiService } from '../../api/RegistrationSettingsApiService';
 import { TierApiService } from '../../api/TierApiService';
 import { StorageLimitInput } from './StorageLimitInput';
 import { formatStorage } from './storageUnits';
@@ -14,6 +16,10 @@ const emptyForm: TierCreateInput = {
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  priceMonthlyCents: null,
+  priceYearlyCents: null,
+  isPublicForSale: false,
+  sortOrder: 0,
 };
 
 function toNumberOrNull(value: string): number | null {
@@ -22,8 +28,20 @@ function toNumberOrNull(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Prices are typed in currency units (19.90) and stored in minor units (1990). */
+function toCentsOrNull(value: string): number | null {
+  if (value.trim() === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100);
+}
+
+function fromCents(cents: number | null | undefined): string {
+  return cents === null || cents === undefined ? '' : String(cents / 100);
+}
+
 export function TiersPage() {
-  const { t } = useTranslation('admin');
+  const { t, i18n } = useTranslation('admin');
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   // Bumped whenever a record is loaded into the form, so inputs that keep their own text start over.
@@ -32,6 +50,8 @@ export function TiersPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // The one system currency prices are expressed in; falls back to BRL until it loads.
+  const [currency, setCurrency] = useState('BRL');
 
   const load = () => {
     setLoading(true);
@@ -39,6 +59,9 @@ export function TiersPage() {
       .then(setTiers)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+    RegistrationSettingsApiService.get()
+      .then((settings) => setCurrency(settings.currency ?? 'BRL'))
+      .catch(() => {});
   };
   useEffect(load, []);
 
@@ -54,6 +77,10 @@ export function TiersPage() {
       maxStorageBytesPerStory: tier.maxStorageBytesPerStory,
       maxStorageBytesTotal: tier.maxStorageBytesTotal,
       maxPublicationsPerDay: tier.maxPublicationsPerDay,
+      priceMonthlyCents: tier.priceMonthlyCents ?? null,
+      priceYearlyCents: tier.priceYearlyCents ?? null,
+      isPublicForSale: tier.isPublicForSale ?? false,
+      sortOrder: tier.sortOrder ?? 0,
     });
   };
 
@@ -108,6 +135,34 @@ export function TiersPage() {
     </label>
   );
 
+  const priceInput = (label: string, key: 'priceMonthlyCents' | 'priceYearlyCents') => (
+    <label>
+      {label} ({currency}) <span className="hint">{t('tiers.priceHint')}</span>
+      <input
+        type="number"
+        min="0"
+        step="0.01"
+        value={fromCents(form[key])}
+        onChange={(e) => setForm((f) => ({ ...f, [key]: toCentsOrNull(e.target.value) }))}
+      />
+    </label>
+  );
+
+  const formatPrice = (cents: number | null | undefined): string => {
+    if (cents === null || cents === undefined) return t('common.none');
+    if (cents === 0) return t('tiers.free');
+    try {
+      return new Intl.NumberFormat(i18n.language, {
+        style: 'currency',
+        currency,
+      }).format(cents / 100);
+    } catch {
+      return `${(cents / 100).toFixed(2)} ${currency}`;
+    }
+  };
+
+  const discount = yearlyDiscountPercent(form.priceMonthlyCents, form.priceYearlyCents);
+
   return (
     <div>
       <div className="page-header">
@@ -154,6 +209,30 @@ export function TiersPage() {
             onChange={(bytes) => setForm((f) => ({ ...f, maxStorageBytesTotal: bytes }))}
           />
           {limitInput(t('tiers.maxPublicationsPerDay'), 'maxPublicationsPerDay')}
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={form.isPublicForSale ?? false}
+              onChange={(e) => setForm((f) => ({ ...f, isPublicForSale: e.target.checked }))}
+            />
+            {t('tiers.forSale')}
+          </label>
+          {priceInput(t('tiers.priceMonthly'), 'priceMonthlyCents')}
+          {priceInput(t('tiers.priceYearly'), 'priceYearlyCents')}
+          {discount !== null && (
+            <p className="hint">{t('tiers.yearlyDiscount', { percent: discount })}</p>
+          )}
+          <label>
+            {t('tiers.sortOrder')}
+            <input
+              type="number"
+              step="1"
+              value={form.sortOrder ?? 0}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, sortOrder: toNumberOrNull(e.target.value) ?? 0 }))
+              }
+            />
+          </label>
           <div className="form-actions">
             <button type="submit" disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
@@ -180,6 +259,9 @@ export function TiersPage() {
                 <th>{t('tiers.columnMaxStoragePerStory')}</th>
                 <th>{t('tiers.columnMaxStorageTotal')}</th>
                 <th>{t('tiers.columnMaxPublicationsPerDay')}</th>
+                <th>{t('tiers.columnPriceMonthly')}</th>
+                <th>{t('tiers.columnPriceYearly')}</th>
+                <th>{t('tiers.columnForSale')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -194,6 +276,9 @@ export function TiersPage() {
                   <td>{formatStorage(tier.maxStorageBytesPerStory)}</td>
                   <td>{formatStorage(tier.maxStorageBytesTotal)}</td>
                   <td>{tier.maxPublicationsPerDay ?? '∞'}</td>
+                  <td>{formatPrice(tier.priceMonthlyCents)}</td>
+                  <td>{formatPrice(tier.priceYearlyCents)}</td>
+                  <td>{tier.isPublicForSale ? t('common.yes') : ''}</td>
                   <td>
                     {!tier.isDeleted && (
                       <div className="table-actions">
@@ -217,7 +302,7 @@ export function TiersPage() {
               ))}
               {tiers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="empty-state">
+                  <td colSpan={12} className="empty-state">
                     {t('tiers.empty')}
                   </td>
                 </tr>

@@ -42,6 +42,7 @@ describe('GET /admin/showcase-settings', () => {
       id: 'singleton',
       isShowcaseEnabled: false,
       isHostedClientEnabled: true,
+      isLandingEnabled: false,
       siteName: 'Keres',
       sitePalette: 'default',
       logoContentType: null,
@@ -104,6 +105,15 @@ describe('PUT /admin/showcase-settings', () => {
     });
 
     expect(data).toMatchObject({ isShowcaseEnabled: true, siteName: 'Acme' });
+  });
+
+  it('toggles the landing page at the root', async () => {
+    const { data } = await request('PUT', '/admin/showcase-settings', {
+      token: admin.token,
+      body: { isLandingEnabled: true },
+    });
+
+    expect(data).toMatchObject({ isLandingEnabled: true });
   });
 
   it('requires an admin session', async () => {

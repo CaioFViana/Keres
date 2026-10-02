@@ -281,7 +281,6 @@ a {
 }
 
 .pillar-grid,
-.feature-grid,
 .download-grid {
   display: grid;
   gap: 16px;
@@ -292,13 +291,8 @@ a {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.feature-grid {
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-}
-
 .card,
-.feature-card,
-.faq-item {
+.feature-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -318,8 +312,7 @@ a {
 }
 
 .card p,
-.feature-card p,
-.faq-item p {
+.feature-card p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.92rem;
@@ -387,12 +380,22 @@ code {
   color: var(--color-text);
 }
 
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
 .faq-list {
   display: grid;
   gap: 10px;
 }
 
 .faq-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
   padding: 4px 18px 4px;
 }
 
@@ -403,7 +406,10 @@ code {
 }
 
 .faq-item p {
+  margin: 0;
   padding-bottom: 14px;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
 }
 
 .site-footer {
@@ -478,44 +484,96 @@ code {
    Photos of the app running (1440px wide), so the frame here is only border,
    crop, and shadow: no fake title bar - the photo already carries the header and
    the drawer of the application itself. */
-.showcase-shots {
-  display: flex;
-  flex-direction: column;
-  gap: 44px;
-}
-
-.showcase-shot {
-  margin: 0;
-}
-
 /* The caption comes before the photo: the reader knows what they are looking at before looking. */
-.showcase-shot figcaption {
+.showcase-caption {
   max-width: 62ch;
   margin: 0 0 14px;
 }
 
-.showcase-shot figcaption h3 {
+.showcase-caption h3 {
   margin: 0 0 6px;
   font-size: 1.15rem;
   letter-spacing: -0.01em;
 }
 
-.showcase-shot figcaption p {
+.showcase-caption p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.97rem;
   line-height: 1.55;
 }
 
-.showcase-window {
-  display: block;
+/* The framed stage: a window frame around the photo, so the carousel reads as one
+   object instead of a bare image. The border and shadow moved here from the photo link. */
+.showcase-stage {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  background: var(--color-surface);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.showcase-chrome {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.showcase-chrome i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+/* Fixed 16:10 viewport - the ratio of the tallest shots. Its height only depends on the
+   page width, never on the current slide, so narrower screens letterbox inside it instead
+   of snapping the section shorter. */
+.showcase-viewport {
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   background: var(--color-bg);
   /* The photo follows the page's theme, and its background is the app's: without the same
      background here, a light border showed around a dark screen while the image loaded. */
+}
+
+/* The sliding track: every slide is one viewport wide, so translating by -100% per index
+   moves exactly one screen. The height never changes - only the offset does. */
+.carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.45s ease;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track {
+    transition: none;
+  }
+}
+
+.showcase-window {
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
 .showcase-window:hover {
@@ -524,8 +582,11 @@ code {
 
 .showcase-window img {
   display: block;
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
 }
 
 .showcase-note {
@@ -534,9 +595,91 @@ code {
   color: var(--color-text-secondary);
 }
 
+/* --- Carousel controls ------------------------------------------------------
+   One screen shows at a time; these move between them. Plain buttons and dots,
+   no autoplay and no slide animation, so nothing moves unless the reader asks. */
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.carousel-button {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding-bottom: 4px;
+  cursor: pointer;
+}
+
+.carousel-button:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+/* The pause/play toggle centers an icon instead of a chevron glyph. */
+.carousel-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.carousel-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.carousel-dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.carousel-dot:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+.carousel-dot.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.carousel-counter {
+  margin: 0;
+  min-width: 4.5ch;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.carousel-button:focus-visible,
+.carousel-dot:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 @media (max-width: 640px) {
-  .showcase-shots {
-    gap: 32px;
+  .carousel-slide {
+    padding: 8px;
+  }
+
+  .carousel-controls {
+    gap: 10px;
   }
 }
 
@@ -633,4 +776,149 @@ code {
   background: var(--color-bg-elevated);
   font-size: 0.85rem;
   color: var(--color-text-secondary);
+}
+
+/* Landing build: the tiers, contact, and official sections. Unused by the Pages build. */
+
+/* Pricing cards. Scoped under `.tier-card` on purpose: the generic `.feature-card p`
+   rule (element + class) outranks a lone class, which is how the prices used to render
+   small and grey. Every card renders the same rows - name, hero price, sub-line, limits -
+   so columns of cards stay aligned with each other. */
+.tiers-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr));
+}
+
+.tier-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.tier-card.is-default {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.tier-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 1.2rem;
+}
+
+.tier-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tier-card .tier-prices {
+  margin: 14px 0 0;
+}
+
+.tier-card .tier-price {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.tier-card .tier-price a {
+  color: inherit;
+  font-size: 1.2rem;
+}
+
+.tier-card .tier-subprice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 0;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.tier-card .tier-period {
+  font-size: 0.95em;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.tier-card .tier-limits {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 8px;
+}
+
+.tier-limits li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+.tier-limits span {
+  color: var(--color-text-secondary);
+}
+
+.tier-limits strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tiers-contact {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.contact-form {
+  display: grid;
+  gap: 14px;
+  max-width: 38rem;
+  margin: 0 auto;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.contact-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.contact-form input,
+.contact-form textarea {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+  padding: 10px 12px;
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.form-error {
+  margin: 0;
+  color: #b3261e;
+}
+
+[data-theme="dark"] .form-error {
+  color: #f2b8b5;
 }

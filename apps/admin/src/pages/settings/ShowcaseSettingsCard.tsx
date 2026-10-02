@@ -10,8 +10,9 @@ import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
 /**
  * Controls for the pages hosted on the API's own origin.
  *
- * The showcase starts off, while the hosted client starts on. Turning either off deletes no data:
- * turning it back on restores whatever was already published, or the client at `/`.
+ * The root resolves in order: the landing page when it is enabled, otherwise the hosted client
+ * at `/client`, otherwise the showcase, otherwise the API docs. The showcase and the landing
+ * start off, while the hosted client starts on. Turning any off deletes no data.
  *
  * Branding (name, palette, logo) is the public site's face; the toggles stay immediate while the
  * name and palette save together through one button.
@@ -117,6 +118,15 @@ export function ShowcaseSettingsCard() {
               onChange={(e) => void save({ isHostedClientEnabled: e.target.checked })}
             />
             {t('showcaseSettings.hostedClientEnabled')}
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={settings.isLandingEnabled ?? false}
+              disabled={saving}
+              onChange={(e) => void save({ isLandingEnabled: e.target.checked })}
+            />
+            {t('showcaseSettings.landingEnabled')}
           </label>
 
           <h3>{t('showcaseSettings.branding')}</h3>

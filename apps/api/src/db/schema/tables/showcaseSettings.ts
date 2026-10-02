@@ -13,8 +13,10 @@ export const SHOWCASE_SETTINGS_SINGLETON_ID = 'singleton';
 export const showcaseSettings = table('showcase_settings', {
   id: text('id').primaryKey(),
   isShowcaseEnabled: boolean('is_showcase_enabled').notNull().default(false),
-  /** The Expo client hosted at `/`; when off, the root becomes the server's minimal landing page. */
+  /** The Expo client hosted at `/client`; when off, the root skips it for the next page. */
   isHostedClientEnabled: boolean('is_hosted_client_enabled').notNull().default(true),
+  /** Serves the landing page bundle at `/` instead of redirecting; off by default. */
+  isLandingEnabled: boolean('is_landing_enabled').notNull().default(false),
   /** Branding of the public site. Must stay in sync with the admin panel's defaults. */
   siteName: text('site_name').notNull().default('Keres'),
   /** Key into `themes` from `@keres/shared`; validated by `ShowcaseSettingsService`. */

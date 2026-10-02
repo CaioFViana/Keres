@@ -14,6 +14,7 @@ export * from './schema/tables/choiceCheckGroups';
 export * from './schema/tables/choiceChecks';
 export * from './schema/tables/choices';
 export * from './schema/tables/comments';
+export * from './schema/tables/contactMessages';
 export * from './schema/tables/effects';
 export * from './schema/tables/friendships';
 export * from './schema/tables/galleries';

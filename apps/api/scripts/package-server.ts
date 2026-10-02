@@ -70,10 +70,10 @@ function libsqlNativePackage(): string {
 }
 
 /**
- * Copies one of the three web bundles (panel, showcase, client) and requires an `index.html` at
- * the destination: a missing or half-built `dist` only showed up later, as the server answering
- * 404 - the client's copy was once conditional and a release shipped without it with not a single
- * line of warning.
+ * Copies one of the four web bundles (panel, showcase, client, landing) and requires an
+ * `index.html` at the destination: a missing or half-built `dist` only showed up later, as the
+ * server answering 404 - the client's copy was once conditional and a release shipped without
+ * it with not a single line of warning.
  */
 function copyWebBundle(source: string, bundleFolder: string, buildScript: string): void {
   if (!existsSync(path.join(source, 'index.html'))) {
@@ -121,9 +121,10 @@ async function applyWindowsIcon(exePath: string): Promise<void> {
 rmSync(outRoot, { recursive: true, force: true });
 mkdirSync(bundleDir, { recursive: true });
 
-// The web bundles (panel, showcase, client) come from the API's `prebuild` - see the `package.json`
-// here. This script packages, it does not build; if a bundle is missing, `copyWebBundle` says which
-// one and how to generate it, instead of the zip coming out half-empty and the server answering 404.
+// The web bundles (panel, showcase, client, landing) come from the API's `prebuild` - see the
+// `package.json` here. This script packages, it does not build; if a bundle is missing,
+// `copyWebBundle` says which one and how to generate it, instead of the zip coming out
+// half-empty and the server answering 404.
 
 const exePath = path.join(bundleDir, exeName);
 run('bun', [
@@ -154,6 +155,12 @@ copyWebBundle(
   path.join(repoRoot, 'apps', 'client', 'dist-hosted'),
   'client-dist',
   'client:build:hosted',
+);
+// The landing page served at / (not the `dist` GitHub Pages publishes, made for `/Keres/`).
+copyWebBundle(
+  path.join(repoRoot, 'apps', 'site', 'dist-landing'),
+  'landing-dist',
+  'site:build:landing',
 );
 cpSync(
   path.join(repoRoot, 'apps', 'client', 'assets', 'images', 'desktop_icon.png'),

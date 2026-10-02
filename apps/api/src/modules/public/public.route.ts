@@ -16,7 +16,9 @@ import { DOWNLOAD_URL_TTL_SECONDS, verifyShowcaseToken } from './showcaseAccess'
  * story's owner has not chosen to publish.
  *
  * With the Showcase off (the default), everything here answers 404 - not 403: a server that does not
- * want a public face also does not need to announce that the feature exists.
+ * want a public face also does not need to announce that the feature exists. The landing page's
+ * own calls (`/tiers`, `/contact`) live in `publicLanding.route.ts`, mounted next to this module
+ * but outside its guard.
  */
 
 /** The same window as /login: 5 attempts per 15 minutes, per story and per IP. */
@@ -113,7 +115,7 @@ export const publicRoutes = new Elysia()
       detail: {
         summary: 'Showcase availability',
         description:
-          'Whether this server exposes a public showcase. The only route here that answers while it is disabled.',
+          'Whether this server exposes a public showcase. The only route in this module that answers while it is disabled (the landing calls live in their own module).',
         tags: ['Showcase'],
       },
     },

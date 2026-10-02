@@ -10,6 +10,14 @@ export interface Tier {
   maxStorageBytesTotal: number | null;
   /** Versions the user may publish to the showcase in any 24 hours. */
   maxPublicationsPerDay: number | null;
+  /** Monthly price in the system's currency minor units (`null` = not priced monthly). */
+  priceMonthlyCents: number | null;
+  /** Yearly price in the system's currency minor units (`null` = not priced yearly). */
+  priceYearlyCents: number | null;
+  /** Listed on the public landing page as available for sale. */
+  isPublicForSale: boolean;
+  /** Display order on the public landing page (ascending). */
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
   isDeleted: boolean;

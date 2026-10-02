@@ -38,6 +38,7 @@ export function RegistrationSettingsPage() {
         maxUsers: settings.maxUsers,
         autoManage: settings.autoManage,
         defaultTierId: settings.defaultTierId,
+        currency: settings.currency,
       });
       setSettings(updated);
       setMessage(t('settings.saved'));
@@ -110,6 +111,16 @@ export function RegistrationSettingsPage() {
                 </option>
               ))}
             </select>
+          </label>
+
+          <label>
+            {t('settings.currency')} <span className="hint">{t('settings.currencyHint')}</span>
+            <input
+              type="text"
+              value={settings.currency ?? ''}
+              maxLength={3}
+              onChange={(e) => setSettings({ ...settings, currency: e.target.value.toUpperCase() })}
+            />
           </label>
 
           {tierError && <p className="error-text">{tierError}</p>}

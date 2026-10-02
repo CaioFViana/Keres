@@ -27,6 +27,8 @@ apps/desktop/release
 
 # Build da landing pública (apps/site), publicada no GitHub Pages pelo workflow pages.yml.
 apps/site/dist
+# Segundo build da landing (apps/site), servido pela API na raiz (`bun run site:build:landing`).
+apps/site/dist-landing
 
 # Relatórios de cobertura, gerados por `bun run test:coverage` em cada workspace.
 coverage/

@@ -420,6 +420,10 @@ button.button-danger:hover {
   opacity: 0.7;
 }
 
+.row-unread {
+  font-weight: 600;
+}
+
 .row-deleted .status-badge {
   opacity: 1;
 }

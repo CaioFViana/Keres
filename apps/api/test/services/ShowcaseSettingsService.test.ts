@@ -31,6 +31,7 @@ const existingRow = () => ({
   id: 'singleton',
   isShowcaseEnabled: false,
   isHostedClientEnabled: true,
+  isLandingEnabled: false,
   siteName: 'Keres',
   sitePalette: 'default',
   logoContentType: null,
@@ -98,6 +99,7 @@ describe('ShowcaseSettingsService validation', () => {
         ...existingRow(),
         isShowcaseEnabled: true,
         isHostedClientEnabled: false,
+        isLandingEnabled: true,
         siteName: 'Acme',
         sitePalette: 'forest',
       },
@@ -106,6 +108,7 @@ describe('ShowcaseSettingsService validation', () => {
     const updated = await service.update({
       isShowcaseEnabled: true,
       isHostedClientEnabled: false,
+      isLandingEnabled: true,
       siteName: 'Acme',
       sitePalette: 'forest',
     });
@@ -113,12 +116,14 @@ describe('ShowcaseSettingsService validation', () => {
     expect(updated).toMatchObject({
       isShowcaseEnabled: true,
       isHostedClientEnabled: false,
+      isLandingEnabled: true,
       siteName: 'Acme',
       sitePalette: 'forest',
     });
     expect(captured.patch).toMatchObject({
       isShowcaseEnabled: true,
       isHostedClientEnabled: false,
+      isLandingEnabled: true,
       siteName: 'Acme',
       sitePalette: 'forest',
     });

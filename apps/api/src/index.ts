@@ -9,6 +9,7 @@ import {
   adminDistPath as resolveAdminDistPath,
   clientDistPath as resolveClientDistPath,
   desktopIconPath,
+  landingDistPath as resolveLandingDistPath,
   showcaseDistPath as resolveShowcaseDistPath,
 } from './config/resourceRoot';
 import {
@@ -59,6 +60,18 @@ const showcaseFaviconPath = path.join(showcaseDistPath, 'favicon.ico');
 const clientDistPath = resolveClientDistPath();
 const clientDistIndexPath = path.join(clientDistPath, 'index.html');
 const clientUiAvailable = existsSync(clientDistIndexPath);
+/**
+ * The landing page (`apps/site`'s second build output). Like the showcase, its static files
+ * live under their own prefix (`/_landing/`, Vite's `base`) and the *page* lives at the root:
+ * mounting the files directly at `/` would shadow the API routes. Unlike the other bundles,
+ * a missing one stays silent at boot - the landing is opt-in and off by default, so most
+ * servers will never build it.
+ */
+const landingDistPath = resolveLandingDistPath();
+const landingDistIndexPath = path.join(landingDistPath, 'index.html');
+const landingUiAvailable = existsSync(landingDistIndexPath);
+/** The same .ico, generated from the same PNG, by the landing page's build. */
+const landingFaviconPath = path.join(landingDistPath, 'favicon.ico');
 
 /** Fallback before an admin build exists — same PNG desktop uses, not copied into admin. */
 const desktopIconFilePath = desktopIconPath();
@@ -72,37 +85,10 @@ const ADMIN_UI_SECURITY_HEADERS: Record<string, string> = {
   'X-Frame-Options': 'DENY',
 };
 
-const SERVER_LANDING_SECURITY_HEADERS: Record<string, string> = {
-  'Content-Security-Policy':
-    "default-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'no-referrer',
-  'X-Frame-Options': 'DENY',
-};
-
 function applyAdminUiSecurityHeaders(set: { headers: Record<string, string | number> }): void {
   for (const [name, value] of Object.entries(ADMIN_UI_SECURITY_HEADERS)) {
     set.headers[name] = value;
   }
-}
-
-function applyServerLandingSecurityHeaders(set: {
-  headers: Record<string, string | number>;
-}): void {
-  for (const [name, value] of Object.entries(SERVER_LANDING_SECURITY_HEADERS)) {
-    set.headers[name] = value;
-  }
-}
-
-/** A deliberately static page: the server stays useful without exposing the hosted client. */
-function serverLandingHtml(): string {
-  return `<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keres Server</title><style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#121212;color:#fff;font-family:system-ui,sans-serif}
-main{width:min(34rem,calc(100% - 3rem));padding:2.5rem;border:1px solid #333;border-radius:1rem;background:#1e1e1e;text-align:center}
-h1{margin:0 0 .75rem;color:#bb86fc}p{margin:0 0 2rem;color:#d0c8d8;line-height:1.55}.actions{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}a{padding:.7rem 1rem;border-radius:.55rem;background:#bb86fc;color:#1b1024;text-decoration:none;font-weight:700}a.secondary{background:transparent;color:#eaddff;border:1px solid #bb86fc}
-</style></head><body><main><h1>Keres Server</h1><p>Este endereço hospeda um servidor Keres.</p><div class="actions"><a href="/admin">Administração</a><a class="secondary" href="/showcase">Vitrine</a></div></main></body></html>`;
 }
 
 function applyClientAppIsolationHeaders(set: { headers: Record<string, string | number> }): void {
@@ -306,23 +292,24 @@ export async function createApp() {
       .get(
         '/',
         async ({ set }) => {
-          // The web client lives at /client now (see HOSTED_CLIENT_PATH_PREFIX), so the root is free for
-          // whatever comes to it. Until then it keeps being the way in: it sends people to the client, which
-          // is what it always was; the administrator can still swap that for a minimal landing page. It has
-          // never depended on the database: while it is starting up or is down, the configuration's default
-          // ("on") applies rather than trading a useful page for a 503.
-          const hostedClientEnabled = await showcaseSettingsService
-            .isHostedClientEnabled()
-            .catch(() => true);
+          // The root resolves in order: the landing page when the administrator enabled it, the
+          // hosted client at /client, the showcase, and finally the API docs. Each step needs
+          // both its build and its switch - an enabled page whose bundle was never built falls
+          // through to the next, so the root always answers with something useful. It has never
+          // depended on the database: while it is starting up or is down, the defaults (landing
+          // off, client on) apply rather than trading a useful page for a 503.
+          const settings = await showcaseSettingsService.getOrCreate().catch(() => null);
+          const landingEnabled = settings?.isLandingEnabled ?? false;
+          const hostedClientEnabled = settings?.isHostedClientEnabled ?? true;
+          if (landingUiAvailable && landingEnabled) {
+            applyAdminUiSecurityHeaders(set);
+            set.headers['content-type'] = 'text/html; charset=utf-8';
+            return readFileSync(landingDistIndexPath, 'utf8');
+          }
           if (clientUiAvailable && hostedClientEnabled) {
             set.status = 302;
             set.headers.location = `${HOSTED_CLIENT_PATH_PREFIX}/`;
             return;
-          }
-          if (!hostedClientEnabled) {
-            applyServerLandingSecurityHeaders(set);
-            set.headers['content-type'] = 'text/html; charset=utf-8';
-            return serverLandingHtml();
           }
           if (showcaseUiAvailable && (await showcaseSettingsService.isEnabled())) {
             set.status = 302;
@@ -335,9 +322,9 @@ export async function createApp() {
         },
         {
           detail: {
-            summary: 'Origin root (to the hosted client, or showcase / Swagger)',
+            summary: 'Origin root (landing, hosted client, showcase or Swagger)',
             description:
-              'Sends the root to the hosted web client at /client. Falls back to a landing page, /showcase or /api/swagger when the client is switched off or not built.',
+              'Serves the landing page when enabled, else redirects to the hosted web client at /client, the showcase, or the API docs.',
             tags: ['Client'],
           },
         },
@@ -358,11 +345,11 @@ export async function createApp() {
       .get(
         '/favicon.ico',
         ({ set }) => {
-          // The panel and the public site generate the same .ico, from the same PNG - either one works.
-          // Looking in both keeps the tab from having no icon on a server that only built the site (or only the
-          // panel); the client's PNG is the last resort, for when no build exists yet.
-          const generatedIcoPath = [adminFaviconPath, showcaseFaviconPath].find((candidate) =>
-            existsSync(candidate),
+          // The panel, the public site and the landing page generate the same .ico, from the same
+          // PNG - any one works. Looking in all keeps the tab from having no icon on a server that
+          // only built one of them; the client's PNG is the last resort, for when no build exists yet.
+          const generatedIcoPath = [adminFaviconPath, showcaseFaviconPath, landingFaviconPath].find(
+            (candidate) => existsSync(candidate),
           );
           const filePath = generatedIcoPath ?? desktopIconFilePath;
           const useGeneratedIco = !!generatedIcoPath;
@@ -395,7 +382,11 @@ export async function createApp() {
         if (pathname.startsWith('/admin')) {
           applyAdminUiSecurityHeaders(set);
         }
-        if (isShowcasePath(pathname) || pathname.startsWith('/_showcase')) {
+        if (
+          isShowcasePath(pathname) ||
+          pathname.startsWith('/_showcase') ||
+          pathname.startsWith('/_landing')
+        ) {
           applyAdminUiSecurityHeaders(set);
         }
       })
@@ -453,7 +444,8 @@ export async function createApp() {
         {
           detail: {
             summary: 'Legacy hosted-client path',
-            description: 'The web client used to live at /app, and then at the root; it is under /client now.',
+            description:
+              'The web client used to live at /app, and then at the root; it is under /client now.',
             tags: ['Client'],
           },
         },
@@ -517,8 +509,17 @@ export async function createApp() {
             })
           : new Elysia(),
       )
+      .use(
+        landingUiAvailable
+          ? await staticPlugin({
+              assets: landingDistPath,
+              prefix: '/_landing',
+              alwaysStatic: true,
+            })
+          : new Elysia(),
+      )
       // A path nobody answers - an old bookmark, a stale reload - goes back to the root, which sends it
-      // on. The API, /showcase and /client were already registered above.
+      // on. The API, /showcase, /client and /_landing were already registered above.
       .get(
         '/*',
         ({ set, path: requestPath }) => {

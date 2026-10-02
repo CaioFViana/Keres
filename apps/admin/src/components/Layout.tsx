@@ -37,6 +37,9 @@ export function Layout() {
           <NavLink to="/tiers" className={({ isActive }) => (isActive ? 'active' : '')}>
             {t('nav.tiers')}
           </NavLink>
+          <NavLink to="/contact" className={({ isActive }) => (isActive ? 'active' : '')}>
+            {t('nav.contact')}
+          </NavLink>
           <NavLink to="/settings" className={({ isActive }) => (isActive ? 'active' : '')}>
             {t('nav.settings')}
           </NavLink>

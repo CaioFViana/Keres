@@ -6,7 +6,9 @@
   "license": "MPL-2.0",
   "scripts": {
     "start": "vite",
+    "start:landing": "vite --config vite.landing.config.ts",
     "build": "vite build",
+    "build:landing": "vite build --config vite.landing.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src test vitest.config.ts --ext .ts,.tsx",
     "test": "vitest run",

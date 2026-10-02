@@ -52,6 +52,7 @@ export const adminRegistrationRoutes = new Elysia()
         maxUsers: t.Optional(t.Nullable(t.Number())),
         autoManage: t.Optional(t.Boolean()),
         defaultTierId: t.Optional(t.Nullable(t.String())),
+        currency: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Update registration settings',

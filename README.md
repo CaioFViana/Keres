@@ -112,6 +112,7 @@ Available services:
 - Built administration panel: `http://localhost:3000/admin`
 - Hosted web client (same origin, COOP/COEP): `http://localhost:3000/client/` — requires `bun run client:build:hosted` (an export made for `/client`, not the `client:build` one)
 - Published-story showcase: `http://localhost:3000/showcase`
+- Landing page at the root (opt-in, off by default): enable it in the admin panel under Settings → Hosted Pages — requires `bun run site:build:landing`
 - Administration panel with hot reload: `bun run admin:start`, then open `http://localhost:5173/admin/`
 
 ### Local Docker stack
@@ -167,7 +168,7 @@ Each `v*.*.*` tag attaches the zips to the matching [GitHub Release](https://git
 | Linux x64 | `Keres-Server-linux-x64-<version>.zip` |
 | macOS Apple Silicon | `Keres-Server-macos-arm64-<version>.zip` |
 
-Unzip and run `keres-server` / `keres-server.exe`. Bun, Node, and Docker are not required. The zip holds the executable, the libSQL native addon, migrations, the `/admin` panel, and a `README.md` (setup and backups). Bun's compiler cannot embed libSQL's `.node`, so this is not a single file.
+Unzip and run `keres-server` / `keres-server.exe`. Bun, Node, and Docker are not required. The zip holds the executable, the libSQL native addon, migrations, the hosted web UIs (`/admin` panel, `/client` web client, `/showcase`, landing page), and a `README.md` (setup and backups). Bun's compiler cannot embed libSQL's `.node`, so this is not a single file.
 
 On first run the wizard asks for the database (SQLite by default), local vs S3 media, the port, and whether to listen on this computer only or on the LAN. Data lives **outside** the zip folder (replacing the executable does not wipe the database):
 
@@ -337,6 +338,13 @@ The public project page lives in `apps/site` and is published at [caiofviana.git
 ```bash
 bun run site:start      # http://localhost:5175
 bun run site:build
+```
+
+The same code has a second build for the API to serve at its own root, with the server's plans for sale, a contact form, and the official `keres.me` server:
+
+```bash
+bun run site:start:landing   # http://localhost:5176, /api proxied at the API
+bun run site:build:landing   # apps/site/dist-landing, served at / when enabled
 ```
 
 The screenshots in the landing's showcase are photos of the app itself, taken by opening the

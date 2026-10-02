@@ -91,6 +91,26 @@ export function showcaseDistPath(): string {
 }
 
 /**
+ * The landing page bundle the API serves at `/`: the `build:landing` output of apps/site, made
+ * for the `/_landing` prefix (its base path is part of every URL in it). Not the `dist` the
+ * GitHub Pages workflow publishes, which is made for `/Keres/` - the two cannot share a build.
+ */
+export function landingDistPath(): string {
+  const override = resourceOverride();
+  return (
+    firstExistingPath(
+      [
+        override ? path.join(override, 'landing-dist') : undefined,
+        override ? path.join(override, 'site', 'dist-landing') : undefined,
+        path.join(executableDirectory(), 'landing-dist'),
+        path.join(executableDirectory(), 'site', 'dist-landing'),
+        path.join(thisDirectory, '..', '..', '..', 'site', 'dist-landing'),
+      ].filter((value): value is string => Boolean(value)),
+    ) ?? path.join(thisDirectory, '..', '..', '..', 'site', 'dist-landing')
+  );
+}
+
+/**
  * The client web export the API serves at `/client`: `build:hosted` in apps/client, an export made for
  * that prefix (its base path is part of every URL in it). Not the `dist` Electron consumes over the
  * `app://` protocol, which is made for the root - the two cannot share a build.

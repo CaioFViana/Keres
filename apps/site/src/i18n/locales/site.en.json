@@ -1,4 +1,19 @@
 {
+  "contact": {
+    "title": "Contact the administrators",
+    "lead": "Questions about the plans, the server, or your account. The message goes to whoever runs this server.",
+    "subject": "Subject",
+    "subjectPlaceholder": "e.g. Yearly billing",
+    "email": "Your email",
+    "emailPlaceholder": "you@example.com",
+    "body": "Message",
+    "bodyPlaceholder": "How can we help?",
+    "send": "Send message",
+    "sending": "Sending...",
+    "sent": "Message sent. The administrators will reply to your email.",
+    "sendAnother": "Send another",
+    "failed": "Could not send the message."
+  },
   "download": {
     "title": "Download and start",
     "lead": "Official builds ship on GitHub Releases, together with Keres Server and the Docker image.",
@@ -30,11 +45,11 @@
     "items": {
       "editor": {
         "q": "Does Keres replace my text editor?",
-        "a": "No. It organizes the narrative universe. The manuscript, script, or campaign stays where you already write."
+        "a": "It doesn't have to — but it can. Keres organizes the narrative universe, and each scene can also hold its prose: the manuscript view joins every scene into a single reading document, with export to Word, PDF, EPUB, HTML, Markdown, or plain text. Prefer drafting elsewhere? The prose stays optional; the planning still works."
       },
       "browser": {
         "q": "Does it run in the browser?",
-        "a": "Yes, at the Keres server itself (Docker or Keres Server), at the root. That client only connects to the API it was loaded from. Registering another server in the browser would be cross-origin again: web SQLite needs isolation on the same origin. On phone and desktop you can register any URL. Published stories live at /showcase."
+        "a": "Yes, at the Keres server itself (Docker or Keres Server), at /client. That client only connects to the API it was loaded from. Registering another server in the browser would be cross-origin again: web SQLite needs isolation on the same origin. On phone and desktop you can register any URL. Published stories live at /showcase."
       },
       "offline": {
         "q": "Do I need the internet?",
@@ -58,7 +73,8 @@
       },
       "showcase": {
         "q": "Does this page publish stories?",
-        "a": "No. This is the project landing page. The showcase of published stories is a separate site, served by a Keres Server someone chose to run."
+        "a": "No. This is the project landing page. The showcase of published stories is a separate site, served by a Keres Server someone chose to run.",
+        "aLanding": "Not this page. If this server's operator enabled publishing, its showcase is at /showcase, on this same server."
       }
     }
   },
@@ -67,73 +83,33 @@
       "title": "The narrative universe",
       "lead": "Everything a story needs to keep, linked together.",
       "items": {
-        "characters": {
-          "title": "Characters",
-          "body": "Who takes part, what describes them, and how they stay coherent across the work."
-        },
-        "relations": {
-          "title": "Relationships",
-          "body": "Bonds between people — family, rivalry, mentorship — and a graph of the cast."
-        },
-        "modes": {
-          "title": "Modes",
-          "body": "The forms a character takes: transformations, disguises, lasting states."
+        "cast": {
+          "title": "Cast & relationships",
+          "body": "Who takes part and their bonds — family, rivalry, mentorship — with a graph of the cast."
         },
         "stats": {
           "title": "Stats",
           "body": "Axes you define and a radar chart to compare the cast, with letter or number notation."
         },
         "chapters": {
-          "title": "Chapters",
-          "body": "Group scenes in reading order or in the chronology you choose."
-        },
-        "scenes": {
-          "title": "Scenes",
-          "body": "Each event: where it happens, who is there, and what takes place."
-        },
-        "timing": {
-          "title": "Scene timing",
-          "body": "How long each event lasts and the gap until the next one."
+          "title": "Chapters, scenes & timing",
+          "body": "Scenes grouped in reading order, with where, who, how long, and the gaps between."
         },
         "locations": {
-          "title": "Locations",
-          "body": "The spaces of the story, with containment and path relationships."
-        },
-        "locationMap": {
-          "title": "Location map",
-          "body": "A graph of places inside places and the links between them."
-        },
-        "locationMapCanvas": {
-          "title": "Location map canvas",
-          "body": "Arrange places and markers over a visual map, then keep the routes and containment relations at hand."
+          "title": "Locations & maps",
+          "body": "Spaces inside spaces, routes between them, and a canvas to arrange it all."
         },
         "items": {
-          "title": "Items",
-          "body": "Important objects, their initial state, and who holds them."
-        },
-        "itemJourneys": {
-          "title": "Item journeys",
-          "body": "Scene by scene, when an object changes state or owner."
+          "title": "Items & journeys",
+          "body": "Important objects, who holds them, and how they change scene by scene."
         },
         "worldRules": {
           "title": "World rules",
           "body": "Limits and facts the universe must respect to stay coherent."
         },
         "notes": {
-          "title": "Notes",
-          "body": "Free writing, loose or anchored to any story element."
-        },
-        "tags": {
-          "title": "Tags",
-          "body": "Colored labels, applicable to any kind of element."
-        },
-        "gallery": {
-          "title": "Gallery",
-          "body": "Images, audio, and video, reusable across records."
-        },
-        "favorites": {
-          "title": "Favorites",
-          "body": "Highlight what matters now and filter lists by it."
+          "title": "Notes & tags",
+          "body": "Free writing anchored to any element, with colored labels."
         },
         "boards": {
           "title": "Boards",
@@ -145,29 +121,17 @@
       "title": "Branching stories",
       "lead": "For CYOA, games, and any narrative with more than one path.",
       "items": {
-        "type": {
-          "title": "Linear or branching",
-          "body": "A linear story follows scene order. A branching one links scenes through choices."
-        },
         "choices": {
-          "title": "Choices",
-          "body": "The decision text, the source scene, and the destination."
+          "title": "Choices & paths",
+          "body": "Scenes linked through decisions; a linear story just follows scene order."
         },
         "storyMap": {
           "title": "Story map",
           "body": "A navigable diagram of scenes and transitions, so the graph is visible at once."
         },
-        "conditions": {
-          "title": "Conditions",
-          "body": "A choice only appears if the reader visited a scene, holds an item, or flipped a flag."
-        },
-        "effects": {
-          "title": "Effects",
-          "body": "Give or take an item, turn a flag on or off, when passing through a scene or a decision."
-        },
-        "storyState": {
-          "title": "Reader state",
-          "body": "What the reader carries — visits, inventory, flags — analyzed together with the map."
+        "rules": {
+          "title": "Conditions, effects & state",
+          "body": "Choices gated by visits, inventory or flags — passing through gives, takes or flips, all analyzed against the map."
         }
       }
     },
@@ -176,44 +140,20 @@
       "lead": "Find, extend, and review the plan without leaving the app.",
       "items": {
         "customAttributes": {
-          "title": "Custom attributes",
-          "body": "Your own fields on characters, locations, items, scenes, chapters, notes, and rules: text, number, date, boolean, or suggestion."
-        },
-        "suggestions": {
-          "title": "Suggestions",
-          "body": "Per-story lists for races, genders, relationship types, and whatever else repeats."
+          "title": "Custom fields & lists",
+          "body": "Your own fields on any element, plus per-story lists for what repeats."
         },
         "search": {
           "title": "Search",
           "body": "Global search across every field, including custom attributes, and advanced search on each list."
         },
         "analysis": {
-          "title": "Story analysis",
-          "body": "Orphan scenes, broken choices, and other structural issues an author rarely spots alone."
-        },
-        "dashboard": {
-          "title": "Story dashboard",
-          "body": "A snapshot of what is already planned and shortcuts to what still needs review."
+          "title": "Analysis & dashboard",
+          "body": "Orphan scenes, broken choices, and a snapshot of what still needs review."
         },
         "comments": {
-          "title": "Comments",
-          "body": "Threads anchored to a field or an element, also gathered in one list."
-        },
-        "seeAlso": {
-          "title": "See also",
-          "body": "A free, reciprocal link between two elements, without replacing tags or notes."
-        },
-        "storyDevices": {
-          "title": "Literary devices",
-          "body": "A reference list of narrative techniques — foreshadowing, hooks, ticking clocks — kept apart from your story."
-        },
-        "help": {
-          "title": "Built-in help",
-          "body": "A Portuguese and English catalog, with local search and a help icon on every screen."
-        },
-        "exampleStories": {
-          "title": "Example stories",
-          "body": "Install a ready-made copy to explore Keres without touching your own work."
+          "title": "Comments & links",
+          "body": "Threads anchored to fields or elements, plus free reciprocal links."
         }
       }
     },
@@ -225,33 +165,17 @@
           "title": "Synchronization",
           "body": "Work offline. When you connect, the engine replicates creates, edits, and deletes with version checks."
         },
-        "servers": {
-          "title": "Servers",
-          "body": "Register a Keres Server URL or a Docker API and bind stories to it."
-        },
-        "friends": {
-          "title": "Friends",
-          "body": "Friend requests on the same server, the first step to inviting someone."
-        },
-        "collaborators": {
-          "title": "Collaborators",
-          "body": "Invite friends to read or edit a synced story, with permissions on the story itself."
+        "collaboration": {
+          "title": "Friends & shared editing",
+          "body": "Register a server, add friends, and invite them to read or edit with per-story permissions."
         },
         "conflicts": {
           "title": "Conflicts",
           "body": "If two edits start from the same version, Keres surfaces the conflict instead of silently dropping one."
         },
-        "activityLog": {
-          "title": "Operation log",
-          "body": "An auditable history of what was created, changed, or deleted during sync."
-        },
         "publish": {
-          "title": "Publish",
-          "body": "Some servers run a showcase: a frozen copy of the Keres database, for anyone to download and import."
-        },
-        "importExport": {
-          "title": "Import and export",
-          "body": "A story package on the device, for backup, handing off, or publishing."
+          "title": "Publish & packages",
+          "body": "Frozen copies for a showcase, or a package file for backup and handoff."
         }
       }
     }
@@ -267,6 +191,8 @@
     "lead": "Keres brings characters, locations, chapters, scenes, choices, items, world rules, notes, and media into one workspace. The app keeps working without a network. A server only comes in when you want to sync, collaborate, or publish.",
     "ctaTry": "Try it now, offline",
     "tryNote": "Runs in your browser with no server and no account: your stories stay on this device. Server features (sync, collaboration, publishing) are not part of this version.",
+    "landingCtaTry": "Open the web client",
+    "landingTryNote": "Connected to this server, with sync, collaboration, and publishing.",
     "ctaDownload": "Download",
     "ctaGithub": "View on GitHub",
     "ctaFeatures": "See what's included"
@@ -281,10 +207,18 @@
   "nav": {
     "product": "Product",
     "universe": "Universe",
+    "tiers": "Plans",
     "platforms": "Platforms",
     "download": "Download",
+    "contact": "Contact",
     "github": "GitHub",
     "menu": "Menu"
+  },
+  "official": {
+    "title": "keres.me: the official server",
+    "lead": "Run by the team behind Keres. Register there, or host your own server — the plans below are this server's offer.",
+    "visit": "Visit keres.me",
+    "openClient": "Open its web client"
   },
   "pillars": {
     "offline": {
@@ -292,49 +226,33 @@
       "body": "Every story lives in a local SQLite database. Plan on a train, a plane, or the sofa. When a network and a server are there, sync ships the changes and handles version conflicts."
     },
     "universe": {
-      "title": "The universe, not the manuscript",
-      "body": "Keres is not a text editor. You write the chapter wherever you prefer, and record here who was in the scene, what changed hands, and which world rule that respects."
+      "title": "The universe, and its manuscript",
+      "body": "Record who was in the scene, what changed hands, and which world rule that respects — and write the prose itself scene by scene, then read it as one document or export it."
     },
     "anywhere": {
       "title": "Phone, desktop, and browser",
-      "body": "The same client on Android, iOS, and the desktop app for Windows, macOS, and Linux. In the browser, the API serves the client at the server root — only on that server's origin."
+      "body": "The same client on Android, iOS, and the desktop app for Windows, macOS, and Linux. In the browser, the API serves the client at /client — only on that server's origin."
     }
   },
   "platforms": {
     "title": "Where Keres runs",
     "lead": "One client, several ways to reach it. A server, when you want one.",
     "items": {
-      "android": {
-        "title": "Android",
-        "body": "APK and AAB on each release. The same app as on iOS, with local SQLite."
-      },
-      "ios": {
-        "title": "iOS",
-        "body": "Native Expo client. Plan on the phone and sync with the PC at home."
+      "mobile": {
+        "title": "Android & iOS",
+        "body": "Native apps with local SQLite — APK and AAB on each release; plan on the phone, sync with the PC."
       },
       "web": {
         "title": "Browser",
-        "body": "The API serves the client at the server root, on the same origin. That page only talks to the server it was loaded from: pointing it at another API would be cross-origin, and SQLite in the browser would stop working."
+        "body": "The API serves the client at /client, on the same origin. That page only talks to the server it was loaded from: pointing it at another API would be cross-origin, and SQLite in the browser would stop working."
       },
-      "windows": {
-        "title": "Windows",
-        "body": "Installer and portable executable, produced with every version."
+      "desktop": {
+        "title": "Windows, macOS & Linux",
+        "body": "Installer and portable executable, DMG, AppImage and Flatpak on every release."
       },
-      "macos": {
-        "title": "macOS",
-        "body": "DMG for Apple Silicon and Intel, unsigned until a certificate exists."
-      },
-      "linux": {
-        "title": "Linux",
-        "body": "AppImage and Flatpak on the same releases as everything else."
-      },
-      "keresServer": {
-        "title": "Keres Server",
-        "body": "The API on SQLite, with a Portuguese and English wizard. No Docker, no Postgres: unzip and run. The web client is at /client in this same process; published stories are at /showcase."
-      },
-      "docker": {
-        "title": "Docker",
-        "body": "An image on GHCR with PostgreSQL, the /admin panel, the web client at /client, the showcase at /showcase, and media storage. For whoever runs a real server."
+      "server": {
+        "title": "Self-hosted server",
+        "body": "A SQLite zip with a setup wizard, or Docker with Postgres — both serve the client, the showcase and the API."
       }
     }
   },
@@ -346,54 +264,61 @@
     "title": "See the app",
     "lead": "Every picture below is a screenshot of Keres running, with one of the example stories that ship with the app open in it. Open the same story and you get the same screens.",
     "note": "Six example stories come with the app. Each screen here is from one of them, follows this page's language and light or dark setting, and opens larger when you click it.",
+    "previous": "Previous screen",
+    "next": "Next screen",
+    "chooseScreen": "Choose a screen",
+    "showScreen": "Show {{title}}",
+    "counter": "{{current}} of {{total}}",
+    "pause": "Pause automatic slideshow",
+    "play": "Resume automatic slideshow",
     "items": {
       "narrative-elements": {
         "title": "Chapters and scenes",
-        "body": "The list you spend most of your time in: open a chapter where it sits to see its scenes underneath, still in order."
+        "body": "The working list: chapters with their scenes underneath, in order."
       },
       "story-map": {
         "title": "Story map",
-        "body": "Follow every path a reader can take: where the story forks, where it comes back together, and how each ending is reached."
+        "body": "Every path a reader can take, from each fork to each ending."
       },
       "story-timeline": {
         "title": "How time passes",
-        "body": "How long each scene lasts and how much time slips by between them - minutes, days or years."
+        "body": "How long scenes last, and the time between them."
       },
       "plot-matrix": {
         "title": "Plots across the scenes",
-        "body": "Each narrative line laid over the scenes it touches, with a note saying what that scene does for it."
+        "body": "Each plotline over the scenes it touches."
       },
       "plot-coverage": {
         "title": "How far each plot reaches",
-        "body": "Two plots can cover the same number of scenes and still be nothing alike: one runs through the whole book, the other hides in the last act."
+        "body": "How far each plot reaches across the book."
       },
       "character-list": {
         "title": "Your cast",
-        "body": "Search, filter and sort the cast; open a name where it sits to see the role, the description and the ties, without leaving the list."
+        "body": "Search, filter and sort the cast."
       },
       "character-detail": {
         "title": "A character record",
-        "body": "The everyday detail screen: biography, traits, and names in the text that link to other people in the universe when auto-links are on."
+        "body": "Biography, traits, and links between people."
       },
       "relation-map": {
         "title": "Who knows whom",
-        "body": "The cast as a web of ties - and the little groups your story formed without you noticing."
+        "body": "The cast as a web of ties."
       },
       "location-map": {
         "title": "Your world's map",
-        "body": "Which places sit inside other places, and how someone gets from one to another."
+        "body": "Places inside places, and the routes between them."
       },
       "location-map-canvas": {
         "title": "Map your locations",
-        "body": "Place story locations and free markers on a visual canvas, while keeping their real routes and containment visible."
+        "body": "Story locations and free markers on a canvas."
       },
       "board-canvas": {
         "title": "Make connections on a board",
-        "body": "Put characters, scenes, objects and writing notes together in a canvas made for thinking through a story."
+        "body": "Characters, scenes, objects and notes, together."
       },
       "dashboard": {
         "title": "Where the story stands",
-        "body": "Everything you have written, counted, next to what the story check found - and what changed most recently."
+        "body": "What you wrote, counted - and what changed."
       }
     },
     "lightbox": {
@@ -406,7 +331,7 @@
     "title": "How it is built",
     "lead": "The same pieces described in the repository documentation.",
     "client": "React Native + Expo, local SQLite, Zustand stores, and a custom sync engine.",
-    "desktop": "Electron wraps the client's web build for the desktop app. The same build, on the API, is the client at the server root.",
+    "desktop": "Electron wraps the client's web build for the desktop app. The same build, on the API, is the client at /client.",
     "api": "Bun, Elysia, Drizzle. PostgreSQL in Docker; SQLite in the home Keres Server. Serves the web client at /client, on the same origin.",
     "admin": "A React panel served by the API at /admin, for accounts, plans, and registration.",
     "shared": "Entities, Zod contracts, and palettes shared across the apps."
@@ -415,5 +340,28 @@
     "system": "Theme: System",
     "light": "Theme: Light",
     "dark": "Theme: Dark"
+  },
+  "tiers": {
+    "title": "Plans for syncing",
+    "lead": "Everything local is free forever. A plan only matters when you sync, collaborate, or publish on this server.",
+    "loading": "Loading plans...",
+    "loadFailed": "Could not load the plans.",
+    "retry": "Try again",
+    "empty": "This server has no plans for sale yet.",
+    "free": "Free",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "yearlyDiscount": "−{{percent}}% yearly",
+    "customPrice": "Custom pricing — contact us",
+    "defaultBadge": "Default",
+    "contactCta": "Questions? Contact us",
+    "stories": "Stories",
+    "entitiesPerStory": "Entities per story",
+    "entitiesTotal": "Entities total",
+    "storagePerStory": "Storage per story",
+    "storageTotal": "Storage total",
+    "publicationsPerDay": "Publications per day",
+    "unlimited": "Unlimited",
+    "none": "None"
   }
 }

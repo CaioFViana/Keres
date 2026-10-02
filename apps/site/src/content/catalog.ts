@@ -5,76 +5,43 @@
 
 export const NAV_SECTIONS = ['product', 'universe', 'platforms', 'download'] as const;
 
+/** The landing build additionally links its server-backed sections. */
+export const LANDING_NAV_SECTIONS = [
+  'product',
+  'universe',
+  'tiers',
+  'platforms',
+  'download',
+  'contact',
+] as const;
+
 export const PILLARS = ['offline', 'universe', 'anywhere'] as const;
 
+/**
+ * Curated short on purpose: one row per concept a visitor can hold in their head, with
+ * near-duplicates merged (locations + maps, choices + paths) and plumbing left out. What is
+ * not here is still in the app - the landing sells, it does not document.
+ */
 export const FEATURE_GROUPS = [
   {
     id: 'universe',
-    items: [
-      'characters',
-      'relations',
-      'modes',
-      'stats',
-      'chapters',
-      'scenes',
-      'timing',
-      'locations',
-      'locationMap',
-      'locationMapCanvas',
-      'items',
-      'itemJourneys',
-      'worldRules',
-      'notes',
-      'tags',
-      'gallery',
-      'favorites',
-      'boards',
-    ],
+    items: ['cast', 'stats', 'chapters', 'locations', 'items', 'worldRules', 'notes', 'boards'],
   },
   {
     id: 'branching',
-    items: ['type', 'choices', 'storyMap', 'conditions', 'effects', 'storyState'],
+    items: ['choices', 'storyMap', 'rules'],
   },
   {
     id: 'craft',
-    items: [
-      'customAttributes',
-      'suggestions',
-      'search',
-      'analysis',
-      'dashboard',
-      'comments',
-      'seeAlso',
-      'storyDevices',
-      'help',
-      'exampleStories',
-    ],
+    items: ['customAttributes', 'search', 'analysis', 'comments'],
   },
   {
     id: 'together',
-    items: [
-      'offlineSync',
-      'servers',
-      'friends',
-      'collaborators',
-      'conflicts',
-      'activityLog',
-      'publish',
-      'importExport',
-    ],
+    items: ['offlineSync', 'collaboration', 'conflicts', 'publish'],
   },
 ] as const;
 
-export const PLATFORMS = [
-  'android',
-  'ios',
-  'web',
-  'windows',
-  'macos',
-  'linux',
-  'keresServer',
-  'docker',
-] as const;
+export const PLATFORMS = ['mobile', 'web', 'desktop', 'server'] as const;
 
 /**
  * The showcase: photos of the app running, not drawings made for the page.
@@ -86,7 +53,7 @@ export const PLATFORMS = [
  * the whole showcase taken from a single example gave the impression of a one-story app.
  *
  * The list is short on purpose: account, server, and import screens show plumbing, not
- * writing - they remain text on the feature cards.
+ * writing - they remain text in the feature lists.
  */
 export const SHOWCASE_SCREENS = [
   { id: 'narrative-elements', width: 1440, height: 900 },

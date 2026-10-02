@@ -34,6 +34,14 @@ export class TierService {
     });
   }
 
+  /** Tiers the landing page may show: for sale, not deleted, in display order. */
+  async listPublicForSale() {
+    return db.query.tiers.findMany({
+      where: and(eq(tiers.isDeleted, false), eq(tiers.isPublicForSale, true)),
+      orderBy: (t, { asc }) => [asc(t.sortOrder), asc(t.name)],
+    });
+  }
+
   async getById(id: string) {
     return db.query.tiers.findFirst({ where: eq(tiers.id, id) });
   }

@@ -5,10 +5,11 @@ import { showcaseSettingsService } from '../../services/ShowcaseSettingsService'
 import { requireAdmin } from '../../utils/adminAuth';
 
 /**
- * The public site's switch, in the hands of whoever hosts the server.
+ * The hosted pages' switches, in the hands of whoever hosts the server.
  *
- * The showcase can be turned off without erasing what has already been published. The client hosted
- * at `/` has a control of its own and, when off, gives way to the server's minimal landing page.
+ * The showcase can be turned off without erasing what has already been published. The hosted
+ * client and the landing page have controls of their own; the root serves the first enabled one
+ * in landing → client → showcase order, and the API docs when none is.
  */
 export const adminShowcaseRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -39,12 +40,13 @@ export const adminShowcaseRoutes = new Elysia()
         t.Object({
           isShowcaseEnabled: t.Boolean(),
           isHostedClientEnabled: t.Boolean(),
+          isLandingEnabled: t.Boolean(),
           siteName: t.String(),
           sitePalette: t.String(),
         }),
       ),
       detail: {
-        summary: 'Configure the hosted client and public showcase',
+        summary: 'Configure the hosted client, landing page and public showcase',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

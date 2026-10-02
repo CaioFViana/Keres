@@ -88,12 +88,15 @@ describe('administrative and account contracts', () => {
         maxUsers: null,
         autoManage: false,
         defaultTierId: null,
+        currency: 'BRL',
         updatedAt: '2025-01-01',
       }).updatedAt,
     ).toBeInstanceOf(Date);
     expect(TierCreateInputSchema.parse({ name: 'Free' })).toEqual({
       name: 'Free',
       isDefault: false,
+      isPublicForSale: false,
+      sortOrder: 0,
     });
     // The daily publication ceiling: absent and null are unlimited, zero forbids publishing.
     expect(TierCreateInputSchema.parse({ name: 'T', maxPublicationsPerDay: 5 })).toMatchObject({

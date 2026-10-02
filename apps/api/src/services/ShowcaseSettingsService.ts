@@ -10,6 +10,7 @@ export const SHOWCASE_SITE_NAME_MAX_LENGTH = 60;
 export interface ShowcaseSettingsPatch {
   isShowcaseEnabled?: boolean;
   isHostedClientEnabled?: boolean;
+  isLandingEnabled?: boolean;
   siteName?: string;
   sitePalette?: string;
 }
@@ -59,6 +60,9 @@ export class ShowcaseSettingsService {
     }
     if (patch.isHostedClientEnabled !== undefined) {
       validated.isHostedClientEnabled = patch.isHostedClientEnabled;
+    }
+    if (patch.isLandingEnabled !== undefined) {
+      validated.isLandingEnabled = patch.isLandingEnabled;
     }
     if (patch.siteName !== undefined) {
       validated.siteName = validateSiteName(patch.siteName);

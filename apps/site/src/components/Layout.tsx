@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import keresLogoUrl from 'virtual:keres-logo';
-import { NAV_SECTIONS } from '../content/catalog';
+import { LANDING_NAV_SECTIONS, NAV_SECTIONS } from '../content/catalog';
 import { GITHUB_README_URL, GITHUB_REPO_URL } from '../content/links';
+import { isLandingBuild } from '../variant';
 import { LanguageSelect } from '../i18n/LanguageSelect';
 import { SITE_LANGUAGE_KEY } from '../i18n';
 import { useSiteTheme } from '../theme/SiteThemeProvider';
@@ -51,7 +52,7 @@ export function Layout({ children }: { children: ReactNode }) {
               {t('nav.menu')}
             </button>
             <div id="site-nav-links" className={menuOpen ? 'nav-links is-open' : 'nav-links'}>
-              {NAV_SECTIONS.map((section) => (
+              {(isLandingBuild ? LANDING_NAV_SECTIONS : NAV_SECTIONS).map((section) => (
                 <a key={section} href={`#${section}`} onClick={() => setMenuOpen(false)}>
                   {t(`nav.${section}`)}
                 </a>

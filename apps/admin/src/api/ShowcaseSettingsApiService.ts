@@ -5,6 +5,7 @@ export interface ShowcaseSettings {
   id: string;
   isShowcaseEnabled: boolean;
   isHostedClientEnabled: boolean;
+  isLandingEnabled: boolean;
   siteName: string;
   sitePalette: string;
   logoContentType: string | null;
@@ -15,6 +16,7 @@ export interface ShowcaseSettings {
 export interface ShowcaseSettingsPatch {
   isShowcaseEnabled?: boolean;
   isHostedClientEnabled?: boolean;
+  isLandingEnabled?: boolean;
   siteName?: string;
   sitePalette?: string;
 }

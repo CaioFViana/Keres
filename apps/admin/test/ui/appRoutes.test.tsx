@@ -25,6 +25,9 @@ const mocks = vi.hoisted(() => ({
   restoreDeleted: vi.fn(),
   browseOperationLog: vi.fn(),
   listLogs: vi.fn(),
+  listContact: vi.fn(),
+  getContact: vi.fn(),
+  removeContact: vi.fn(),
 }));
 
 vi.mock('../../src/api/AdminAuthService', () => ({
@@ -72,6 +75,13 @@ vi.mock('../../src/api/RecoveryApiService', () => ({
   },
 }));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('../../src/api/ContactApiService', () => ({
+  ContactApiService: {
+    list: mocks.listContact,
+    get: mocks.getContact,
+    remove: mocks.removeContact,
+  },
+}));
 
 const renderRoute = (route: string) =>
   render(
@@ -99,6 +109,7 @@ beforeEach(() => {
   mocks.listDeleted.mockResolvedValue([]);
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
+  mocks.listContact.mockResolvedValue([]);
   mocks.login.mockResolvedValue({ userId: 'admin-1', username: 'admin' });
 });
 
@@ -124,6 +135,7 @@ describe('admin routes', () => {
     ['/recovery', 'Recovery'],
     ['/logs', 'Logs'],
     ['/tiers', 'Tiers'],
+    ['/contact', 'Contact messages'],
     ['/settings', 'Settings'],
   ])('renders the protected %s route', async (route, heading) => {
     setToken('admin-token');
@@ -138,14 +150,24 @@ describe('admin routes', () => {
   it('loads each screen through its intended API service', async () => {
     setToken('admin-token');
     const views = [];
-    for (const route of ['/users', '/users/new', '/recovery', '/logs', '/tiers', '/settings']) {
+    for (const route of [
+      '/users',
+      '/users/new',
+      '/recovery',
+      '/logs',
+      '/tiers',
+      '/contact',
+      '/settings',
+    ]) {
       views.push(await renderRoute(route));
       await flush();
     }
 
     expect(mocks.listUsers).toHaveBeenCalled();
     expect(mocks.listTiers).toHaveBeenCalled();
-    expect(mocks.getSettings).toHaveBeenCalledOnce();
+    expect(mocks.listContact).toHaveBeenCalled();
+    // Twice: the tiers screen also loads the settings, for the price currency.
+    expect(mocks.getSettings).toHaveBeenCalledTimes(2);
     expect(mocks.listLogs).toHaveBeenCalled();
     // Sequential unmount: each helper wraps `root.unmount()` in `act()`, and React 19
     // rejects overlapping act() calls when several roots tear down in parallel.

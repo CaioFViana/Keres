@@ -41,7 +41,7 @@ export function ContactSection() {
           <p>{t('contact.lead')}</p>
         </header>
         {sent ? (
-          <div className="card">
+          <div className="card contact-sent">
             <p>{t('contact.sent')}</p>
             <button type="button" className="button button-ghost" onClick={sendAnother}>
               {t('contact.sendAnother')}
@@ -49,29 +49,31 @@ export function ContactSection() {
           </div>
         ) : (
           <form className="contact-form" onSubmit={(e) => void submit(e)}>
-            <label>
-              {t('contact.subject')}
-              <input
-                type="text"
-                value={subject}
-                maxLength={120}
-                required
-                placeholder={t('contact.subjectPlaceholder')}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </label>
-            <label>
-              {t('contact.email')}
-              <input
-                type="email"
-                value={contactEmail}
-                maxLength={254}
-                required
-                placeholder={t('contact.emailPlaceholder')}
-                onChange={(e) => setContactEmail(e.target.value)}
-              />
-            </label>
-            <label>
+            <div className="contact-fields">
+              <label className="contact-field contact-subject">
+                {t('contact.subject')}
+                <input
+                  type="text"
+                  value={subject}
+                  maxLength={120}
+                  required
+                  placeholder={t('contact.subjectPlaceholder')}
+                  onChange={(e) => setSubject(e.target.value)}
+                />
+              </label>
+              <label className="contact-field contact-email">
+                {t('contact.email')}
+                <input
+                  type="email"
+                  value={contactEmail}
+                  maxLength={254}
+                  required
+                  placeholder={t('contact.emailPlaceholder')}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                />
+              </label>
+            </div>
+            <label className="contact-field contact-message">
               {t('contact.body')}
               <textarea
                 value={body}
@@ -83,9 +85,11 @@ export function ContactSection() {
               />
             </label>
             {error && <p className="form-error">{error}</p>}
-            <button type="submit" className="button button-primary" disabled={sending}>
-              {sending ? t('contact.sending') : t('contact.send')}
-            </button>
+            <div className="contact-actions">
+              <button type="submit" className="button button-primary" disabled={sending}>
+                {sending ? t('contact.sending') : t('contact.send')}
+              </button>
+            </div>
           </form>
         )}
       </div>

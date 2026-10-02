@@ -881,11 +881,18 @@ code {
   text-align: center;
 }
 
+/* Full section width so the card edges line up with the section. On wide screens
+   subject and email stack with a fixed gap in the left column while the message
+   fills the right one; rows size to content so nothing stretches on resize. */
 .contact-form {
   display: grid;
-  gap: 14px;
-  max-width: 38rem;
-  margin: 0 auto;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "fields message"
+    "error error"
+    "actions actions";
+  align-items: start;
+  gap: 16px;
   padding: 24px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -897,6 +904,59 @@ code {
   gap: 6px;
   font-weight: 600;
   text-align: left;
+  align-content: start;
+}
+
+.contact-fields {
+  grid-area: fields;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.contact-message {
+  grid-area: message;
+  align-content: stretch;
+}
+
+.contact-message textarea {
+  height: 100%;
+  min-height: 12rem;
+}
+
+.contact-form .form-error {
+  grid-area: error;
+}
+
+.contact-actions {
+  grid-area: actions;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.contact-sent {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.contact-sent p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .contact-form {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "fields"
+      "message"
+      "error"
+      "actions";
+  }
+
+  .contact-message textarea {
+    min-height: 8rem;
+  }
 }
 
 .contact-form input,

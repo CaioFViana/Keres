@@ -244,6 +244,21 @@ describe('landing build', () => {
     await unmount();
   });
 
+  it('spreads the contact form across the full section width', async () => {
+    const { container, unmount } = await renderLanding();
+    await flush();
+
+    const form = container.querySelector<HTMLFormElement>('#contact form')!;
+    // Subject and email stack with a fixed gap in one column, the message fills the other.
+    const fields = form.querySelector(':scope > .contact-fields')!;
+    expect(fields.querySelector('.contact-subject input[type="text"]')).toBeTruthy();
+    expect(fields.querySelector('.contact-email input[type="email"]')).toBeTruthy();
+    expect(form.querySelector(':scope > .contact-message textarea')).toBeTruthy();
+    expect(form.querySelector(':scope > .contact-actions button[type="submit"]')).toBeTruthy();
+
+    await unmount();
+  });
+
   it('shows the server rejection when contact fails', async () => {
     fetchMock.mockImplementation((url: string) =>
       Promise.resolve(

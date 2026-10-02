@@ -7,6 +7,7 @@ import {
   HOSTED_CLIENT_HISTORY_GUARD,
   HOSTED_CLIENT_META,
   HOSTED_CLIENT_PATH_PREFIX,
+  hostedClientCacheControl,
   hostedClientMimeType,
   hostedClientRelativePath,
   isHostedClientPath,
@@ -91,6 +92,30 @@ describe('resolveHostedClientFile', () => {
   it('declares the isolation headers expo-sqlite needs', () => {
     expect(CLIENT_APP_ISOLATION_HEADERS['Cross-Origin-Opener-Policy']).toBe('same-origin');
     expect(CLIENT_APP_ISOLATION_HEADERS['Cross-Origin-Embedder-Policy']).toBe('require-corp');
+  });
+});
+
+describe('hostedClientCacheControl', () => {
+  it('keeps what the export names by its hash for a year, never to be asked about again', () => {
+    for (const file of [
+      '/_expo/static/js/web/index-cd2f273f.js',
+      '/_expo/static/css/EnrichedText-9bd60ad5.css',
+      '/assets/__node_modules/canvaskit-wasm/bin/full/canvaskit.d614134b.wasm',
+      '/assets/assets/images/welcome-emblem.a9c2fa17.png',
+    ]) {
+      expect([file, hostedClientCacheControl(file, false)]).toEqual([
+        file,
+        'public, max-age=31536000, immutable',
+      ]);
+    }
+  });
+
+  it('has the browser check the entry page, and whatever has no hash, every time', () => {
+    expect(hostedClientCacheControl('/index.html', true)).toBe('no-cache');
+    // A screen path answers with the entry page too, whatever the URL looks like.
+    expect(hostedClientCacheControl('/_expo/static/anything', true)).toBe('no-cache');
+    expect(hostedClientCacheControl('/favicon.ico', false)).toBe('no-cache');
+    expect(hostedClientCacheControl('/coi-sw.js', false)).toBe('no-cache');
   });
 });
 

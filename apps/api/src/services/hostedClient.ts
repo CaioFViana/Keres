@@ -89,6 +89,20 @@ export function rewriteHostedClientHtml(html: string): string {
   return next;
 }
 
+/**
+ * How long a browser may keep a file of the export without asking. The export names everything under
+ * `/_expo/static` and `/assets` after a hash of its bytes, so a URL there never changes meaning: a
+ * year, and `immutable` so a reload does not even ask. Everything else - the entry page above all, which
+ * is what points at those names after an update - is kept but checked every time (an `ETag` makes
+ * that check a 304 with no body).
+ */
+export function hostedClientCacheControl(relativePath: string, html: boolean): string {
+  if (!html && (relativePath.startsWith('/_expo/static/') || relativePath.startsWith('/assets/'))) {
+    return 'public, max-age=31536000, immutable';
+  }
+  return 'no-cache';
+}
+
 export function hostedClientMimeType(filePath: string): string {
   return MIME_BY_EXTENSION[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream';
 }

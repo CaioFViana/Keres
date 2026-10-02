@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../src/config/env', () => ({ env: { PORT: '3000', MEDIA_MAX_BYTES: 50 * 1024 * 1024 } }));
 vi.mock('../src/db/migrate', () => ({ runMigrations: mocks.runMigrations }));
 vi.mock('../src/index', () => ({ createApp: mocks.createApp }));
+vi.mock('../src/services/hostedClientDelivery', () => ({ warmHostedClientDelivery: vi.fn() }));
 vi.mock('../src/services/RootAdminService', () => ({ reconcileRootAdmin: mocks.reconcile }));
 vi.mock('../src/services/UserTagMaintenance', () => ({
   normalizeStoredUserTags: mocks.normalizeTags,

@@ -18,9 +18,10 @@ import {
   hostedClientRelativePath,
   isHostedClientPath,
   isShowcasePath,
-  readHostedClientFile,
+  resolveHostedClientFile,
   SHOWCASE_PATH_PREFIX,
 } from './services/hostedClient';
+import { hostedClientDelivery, hostedClientDeliveryInput } from './services/hostedClientDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
@@ -106,28 +107,40 @@ function applyClientAppIsolationHeaders(set: { headers: Record<string, string | 
 async function serveHostedClient(
   set: { status?: number | string; headers: Record<string, string | number> },
   request: Request,
-): Promise<Uint8Array | string | { message: string }> {
+): Promise<Uint8Array | string | Response | { message: string }> {
   if (!clientUiAvailable) {
     set.status = 404;
     return { message: 'Not found' };
   }
-  const file = readHostedClientFile(
+  const resolved = resolveHostedClientFile(
     clientDistPath,
     hostedClientRelativePath(new URL(request.url).pathname),
   );
-  if (!file) {
+  if (!resolved) {
     set.status = 404;
     return { message: 'Not found' };
   }
-  const isEntry = typeof file.body === 'string';
   // The same default as the root had: on while the database is starting up or is down.
-  if (isEntry && !(await showcaseSettingsService.isHostedClientEnabled().catch(() => true))) {
+  if (resolved.html && !(await showcaseSettingsService.isHostedClientEnabled().catch(() => true))) {
     set.status = 404;
     return { message: 'Not found' };
   }
+  const delivery = await hostedClientDelivery.deliver({
+    ...hostedClientDeliveryInput(clientDistPath, resolved.filePath, resolved.html),
+    request: {
+      acceptEncoding: request.headers.get('accept-encoding'),
+      ifNoneMatch: request.headers.get('if-none-match'),
+    },
+  });
   applyClientAppIsolationHeaders(set);
-  set.headers['content-type'] = file.contentType;
-  return file.body;
+  // Lowercase, as the CORS plugin writes its own: a second spelling of `Vary` would be joined to its `*`
+  // rather than replace it.
+  for (const [name, value] of Object.entries(delivery.headers)) {
+    set.headers[name.toLowerCase()] = value;
+  }
+  // A 304 has no body, not even an empty one: a `Response` with a null-body status refuses a string.
+  if (delivery.status === 304) return new Response(null, { status: 304 });
+  return delivery.body ?? '';
 }
 
 if (!showcaseUiAvailable) {

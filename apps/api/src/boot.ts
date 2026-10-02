@@ -1,7 +1,9 @@
 import { env } from './config/env';
 import { runMigrations } from './db/migrate';
+import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
+import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
 import { reconcileRootAdmin } from './services/RootAdminService';
@@ -71,6 +73,9 @@ export async function bootAndListen(options?: {
 
   const app = await createApp();
   startMediaBlobSweepScheduler();
+  // After listening is not required, and it is not awaited: the server answers from the first second,
+  // and the first visitor finds the client already compressed rather than waiting for it.
+  void warmHostedClientDelivery(clientDistPath());
   app.listen(
     {
       port: env.PORT,

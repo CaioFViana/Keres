@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
-import { landingDistPath } from '../../src/config/resourceRoot';
+import { landingDistPath, showcaseDistPath } from '../../src/config/resourceRoot';
 import { createApp } from '../../src/index';
 import { request, registerUser, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
@@ -19,6 +19,7 @@ beforeEach(async () => {
 afterAll(truncateAll);
 
 const landingBuilt = () => existsSync(`${landingDistPath()}/index.html`);
+const showcaseBuilt = () => existsSync(`${showcaseDistPath()}/index.html`);
 
 async function rootLocation(): Promise<{ status: number; location: string | null }> {
   const app = await createApp();
@@ -46,14 +47,15 @@ describe('hosted client setting', () => {
     expect(docs.status).toBe(302);
     expect(docs.location).toBe('/api/swagger');
 
-    // Showcase on: the root sends people there instead.
+    // Showcase on: the root sends people there instead - when its bundle was built. CI never builds it, so
+    // there the root still falls through to the API docs: an enabled page with no files is skipped.
     await request('PUT', '/admin/showcase-settings', {
       token: admin.token,
       body: { isShowcaseEnabled: true },
     });
     const showcase = await rootLocation();
     expect(showcase.status).toBe(302);
-    expect(showcase.location).toBe('/showcase');
+    expect(showcase.location).toBe(showcaseBuilt() ? '/showcase' : '/api/swagger');
 
     // The entry is what the setting switches off; the client's own address answers 404 too.
     const app = await createApp();

@@ -2,6 +2,11 @@
   "contact": {
     "title": "Fale com os administradores",
     "lead": "Dúvidas sobre os planos, o servidor ou a sua conta. A mensagem vai para quem opera este servidor.",
+    "points": {
+      "plans": "Planos, preços e limites",
+      "server": "Hospedar ou entrar em um servidor",
+      "account": "Sua conta e seus dados"
+    },
     "subject": "Assunto",
     "subjectPlaceholder": "ex. Cobrança anual",
     "email": "Seu e-mail",

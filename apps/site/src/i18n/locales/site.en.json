@@ -2,6 +2,11 @@
   "contact": {
     "title": "Contact the administrators",
     "lead": "Questions about the plans, the server, or your account. The message goes to whoever runs this server.",
+    "points": {
+      "plans": "Plans, prices and limits",
+      "server": "Running or joining a server",
+      "account": "Your account and your data"
+    },
     "subject": "Subject",
     "subjectPlaceholder": "e.g. Yearly billing",
     "email": "Your email",

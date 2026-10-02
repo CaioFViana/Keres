@@ -174,6 +174,10 @@ describe('landing page', () => {
       const sectionId = group.id === 'universe' ? 'universe' : group.id;
       const cards = [...container.querySelectorAll(`#${sectionId} article.feature-card`)];
       expect(cards).toHaveLength(group.items.length);
+      // The stylesheet picks the column count from this, so no row ends in a lone card.
+      expect(
+        container.querySelector(`#${sectionId} .feature-grid`)?.getAttribute('data-count'),
+      ).toBe(String(group.items.length));
       expect(cards.map((card) => card.querySelector('h3')?.textContent)).toEqual(
         group.items.map(
           (item) =>
@@ -186,6 +190,9 @@ describe('landing page', () => {
 
     const platforms = [...container.querySelectorAll('#platforms article.feature-card')];
     expect(platforms).toHaveLength(PLATFORMS.length);
+    expect(container.querySelector('#platforms .feature-grid')?.getAttribute('data-count')).toBe(
+      String(PLATFORMS.length),
+    );
 
     await unmount();
   });

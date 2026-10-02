@@ -42,6 +42,7 @@ export function Showcase() {
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
+  const running = !(paused || suspended || reducedMotion);
   const total = SHOWCASE_SCREENS.length;
   const screen = SHOWCASE_SCREENS[index];
   const openedScreen = SHOWCASE_SCREENS.find((candidate) => candidate.id === opened);
@@ -52,14 +53,14 @@ export function Showcase() {
 
   // The timer restarts on every slide change, so touching any control buys a full pause.
   useEffect(() => {
-    if (paused || suspended || reducedMotion) {
+    if (!running) {
       return;
     }
     const timer = setInterval(() => {
       setIndex((current) => (current + 1) % total);
     }, AUTOPLAY_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [index, paused, suspended, reducedMotion, total]);
+  }, [index, running, total]);
 
   return (
     <section className="band" id="showcase">
@@ -96,6 +97,15 @@ export function Showcase() {
               <i />
               <i />
               <i />
+              {/* Counts down to the next slide. It restarts with the timer: a change of slide,
+                  a pause or a hover remounts it, so it never claims time the timer does not have. */}
+              {running && (
+                <span
+                  key={index}
+                  className="showcase-progress"
+                  style={{ animationDuration: `${AUTOPLAY_INTERVAL_MS}ms` }}
+                />
+              )}
             </div>
             <div className="showcase-viewport">
               <div className="carousel-track" style={{ transform: `translateX(-${index * 100}%)` }}>

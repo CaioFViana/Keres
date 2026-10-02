@@ -2,6 +2,41 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LandingApiError, sendContactMessage } from '../api/landing';
 
+const BODY_LIMIT = 5000;
+
+/** What people write in for, so the page says what is welcome before they have to guess. */
+const POINTS = ['plans', 'server', 'account'] as const;
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" focusable="false">
+      <path
+        d="M4.5 10.5l3.5 3.5 7.5-8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">
+      <path
+        d="M3 10h13m0 0l-5-5m5 5l-5 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function ContactSection() {
   const { t } = useTranslation();
   const [subject, setSubject] = useState('');
@@ -35,13 +70,26 @@ export function ContactSection() {
 
   return (
     <section className="band" id="contact">
-      <div className="section-inner">
-        <header className="section-head">
+      <div className="section-inner contact-layout">
+        <header className="section-head contact-intro">
           <h2>{t('contact.title')}</h2>
           <p>{t('contact.lead')}</p>
+          <ul className="contact-points">
+            {POINTS.map((point) => (
+              <li key={point}>
+                <span className="contact-point-icon">
+                  <CheckIcon />
+                </span>
+                {t(`contact.points.${point}`)}
+              </li>
+            ))}
+          </ul>
         </header>
         {sent ? (
           <div className="card contact-sent">
+            <span className="contact-sent-icon">
+              <CheckIcon />
+            </span>
             <p>{t('contact.sent')}</p>
             <button type="button" className="button button-ghost" onClick={sendAnother}>
               {t('contact.sendAnother')}
@@ -77,17 +125,21 @@ export function ContactSection() {
               {t('contact.body')}
               <textarea
                 value={body}
-                maxLength={5000}
+                maxLength={BODY_LIMIT}
                 required
-                rows={6}
+                rows={7}
                 placeholder={t('contact.bodyPlaceholder')}
                 onChange={(e) => setBody(e.target.value)}
               />
             </label>
             {error && <p className="form-error">{error}</p>}
             <div className="contact-actions">
+              <span className="contact-counter">
+                {body.length} / {BODY_LIMIT}
+              </span>
               <button type="submit" className="button button-primary" disabled={sending}>
                 {sending ? t('contact.sending') : t('contact.send')}
+                {!sending && <SendIcon />}
               </button>
             </div>
           </form>

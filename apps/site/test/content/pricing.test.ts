@@ -16,6 +16,11 @@ describe('landing pricing display', () => {
     expect(formatPrice(1990, 'USD', 'en')).toContain('19.90');
   });
 
+  it('falls back to a plain amount when the currency code is not one the runtime knows', () => {
+    // `Intl.NumberFormat` throws a RangeError on a malformed code; the server's currency is data.
+    expect(formatPrice(1990, 'NOT_A_CURRENCY', 'en')).toBe('19.90 NOT_A_CURRENCY');
+  });
+
   it('formats byte limits', () => {
     expect(formatBytes(0)).toBe('0 B');
     expect(formatBytes(512)).toBe('512 B');

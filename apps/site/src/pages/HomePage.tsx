@@ -111,7 +111,7 @@ export function HomePage() {
               <h2>{t(`features.${group.id}.title`)}</h2>
               <p>{t(`features.${group.id}.lead`)}</p>
             </header>
-            <div className="feature-grid">
+            <div className="feature-grid" data-count={group.items.length}>
               {group.items.map((item) => (
                 <article key={item} className="feature-card">
                   <h3>{t(`features.${group.id}.items.${item}.title`)}</h3>
@@ -129,7 +129,7 @@ export function HomePage() {
             <h2>{t('platforms.title')}</h2>
             <p>{t('platforms.lead')}</p>
           </header>
-          <div className="feature-grid">
+          <div className="feature-grid" data-count={PLATFORMS.length}>
             {PLATFORMS.map((platform) => (
               <article key={platform} className="feature-card">
                 <h3>{t(`platforms.items.${platform}.title`)}</h3>

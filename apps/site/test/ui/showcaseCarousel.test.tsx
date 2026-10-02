@@ -175,6 +175,29 @@ describe('showcase carousel', () => {
     await unmount();
   });
 
+  it('draws the countdown to the next slide only while it is counting down', async () => {
+    vi.useFakeTimers();
+    const { container, unmount } = await renderShowcase();
+    const carousel = container.querySelector('.showcase-carousel')!;
+    const countdown = () => container.querySelector<HTMLElement>('.showcase-progress');
+
+    // It runs for as long as the timer does.
+    expect(countdown()?.style.animationDuration).toBe('6000ms');
+
+    // Paused by hover: no countdown claiming time that is not passing.
+    await hover(carousel);
+    expect(countdown()).toBeNull();
+
+    // Resumed: a fresh one, in step with the restarted timer.
+    await unhover(carousel);
+    expect(countdown()).not.toBeNull();
+
+    await click(container.querySelector('.carousel-toggle')!);
+    expect(countdown()).toBeNull();
+
+    await unmount();
+  });
+
   it('holds still while hovered and resumes after', async () => {
     vi.useFakeTimers();
     const { container, unmount } = await renderShowcase();
@@ -187,6 +210,54 @@ describe('showcase carousel', () => {
     await unhover(carousel);
     await advanceTime(6000);
     expect(captionTitle(container)).toBe(titleOf(SHOWCASE_SCREENS[1].id));
+
+    await unmount();
+  });
+
+  it('holds still while something inside has focus, and resumes when focus leaves it', async () => {
+    vi.useFakeTimers();
+    const { container, unmount } = await renderShowcase();
+    const carousel = container.querySelector('.showcase-carousel')!;
+    const control = carousel.querySelector('button')!;
+
+    await act(async () => {
+      control.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    });
+    await advanceTime(12000);
+    expect(captionTitle(container)).toBe(titleOf(SHOWCASE_SCREENS[0].id));
+
+    // Focus moving to another control of the carousel is still inside it: it keeps holding still.
+    const other = carousel.querySelectorAll('button')[1];
+    await act(async () => {
+      control.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: other }));
+    });
+    await advanceTime(12000);
+    expect(captionTitle(container)).toBe(titleOf(SHOWCASE_SCREENS[0].id));
+
+    // Out of the carousel altogether: it plays on.
+    await act(async () => {
+      other.dispatchEvent(
+        new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body }),
+      );
+    });
+    await advanceTime(6000);
+    expect(captionTitle(container)).toBe(titleOf(SHOWCASE_SCREENS[1].id));
+
+    await unmount();
+  });
+
+  it('leaves a modified click on a screen to the browser, and does not open the lightbox', async () => {
+    const { container, unmount } = await renderShowcase();
+    const screenLink = activeSlide(container).querySelector('.showcase-window')!;
+
+    for (const modifier of ['ctrlKey', 'metaKey', 'shiftKey'] as const) {
+      await act(async () => {
+        screenLink.dispatchEvent(
+          new MouseEvent('click', { bubbles: true, cancelable: true, [modifier]: true }),
+        );
+      });
+      expect(container.querySelector<HTMLDialogElement>('dialog')?.open ?? false).toBe(false);
+    }
 
     await unmount();
   });

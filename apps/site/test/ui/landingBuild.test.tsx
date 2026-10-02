@@ -244,6 +244,57 @@ describe('landing build', () => {
     await unmount();
   });
 
+  it('offers a fresh form after a message was sent', async () => {
+    fetchMock.mockImplementation((url: string) =>
+      Promise.resolve(
+        url === '/api/public/tiers'
+          ? jsonResponse({ currency: 'BRL', tiers: [] })
+          : jsonResponse({ id: 'msg-1' }, 201),
+      ),
+    );
+    const { container, unmount } = await renderLanding();
+    await flush();
+    const form = container.querySelector<HTMLFormElement>('#contact form')!;
+    const [subject, email] = [...form.querySelectorAll('input')];
+    await changeInput(subject, 'Plans');
+    await changeInput(email, 'visitor@example.com');
+    await changeInput(form.querySelector('textarea')!, 'Hello');
+    await submitForm(form);
+    await flush();
+    expect(container.querySelector('#contact form')).toBeNull();
+
+    await click(container.querySelector('#contact .contact-sent button')!);
+
+    const again = container.querySelector<HTMLFormElement>('#contact form')!;
+    expect(again).toBeTruthy();
+    // Nothing of the last message is left in it.
+    expect([...again.querySelectorAll('input')].map((input) => input.value)).toEqual(['', '']);
+    expect(again.querySelector('textarea')!.value).toBe('');
+
+    await unmount();
+  });
+
+  it('says what the form is for, and counts the message against its limit', async () => {
+    const { container, unmount } = await renderLanding();
+    await flush();
+
+    const points = [...container.querySelectorAll('#contact .contact-points li')].map(
+      (item) => item.textContent,
+    );
+    expect(points).toEqual([
+      siteEn.contact.points.plans,
+      siteEn.contact.points.server,
+      siteEn.contact.points.account,
+    ]);
+
+    const counter = container.querySelector('#contact .contact-counter')!;
+    expect(counter.textContent).toBe('0 / 5000');
+    await changeInput(container.querySelector('#contact textarea')!, 'Hello there');
+    expect(counter.textContent).toBe('11 / 5000');
+
+    await unmount();
+  });
+
   it('spreads the contact form across the full section width', async () => {
     const { container, unmount } = await renderLanding();
     await flush();

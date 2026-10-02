@@ -275,6 +275,18 @@ a {
   letter-spacing: -0.02em;
 }
 
+/* A short bar above every section title: the eye finds where a section starts while scrolling a
+   long page of look-alike blocks. */
+.section-head h2::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+}
+
 .section-head p {
   margin: 0;
   color: var(--color-text-secondary);
@@ -301,7 +313,51 @@ a {
 
 .card,
 .feature-card {
-  padding: 18px 20px;
+  position: relative;
+  padding: 22px 24px;
+}
+
+/* The accent line on top of a card: a short stub at rest, the full edge on hover. */
+.feature-card,
+.pillar-grid .card {
+  overflow: hidden;
+}
+
+.feature-card::before,
+.pillar-grid .card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: width 0.25s ease;
+}
+
+.feature-card:hover::before {
+  width: 100%;
+}
+
+/* The three pillars read as a sequence: offline, universe, anywhere. */
+.pillar-grid {
+  counter-reset: pillar;
+}
+
+.pillar-grid .card {
+  counter-increment: pillar;
+  padding-top: 26px;
+}
+
+.pillar-grid .card h3::before {
+  content: counter(pillar, decimal-leading-zero);
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-primary);
 }
 
 .card h3,
@@ -380,10 +436,42 @@ code {
   color: var(--color-text);
 }
 
+/* Columns by how many cards there are, so the last row is never a lone orphan: groups of 4 and 8
+   run 4 / 2 / 1 wide, a group of 3 runs 3 / 1. */
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+}
+
+.feature-grid[data-count="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .feature-grid,
+  .feature-grid[data-count="4"],
+  .feature-grid[data-count="8"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .feature-grid[data-count="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .feature-grid[data-count="3"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .feature-grid,
+  .feature-grid[data-count="4"],
+  .feature-grid[data-count="8"] {
+    grid-template-columns: 1fr;
+  }
 }
 
 .faq-list {
@@ -487,7 +575,32 @@ code {
 /* The caption comes before the photo: the reader knows what they are looking at before looking. */
 .showcase-caption {
   max-width: 62ch;
-  margin: 0 0 14px;
+  /* Slides carry captions of different lengths: reserving two lines keeps the stage from
+     jumping up and down as the carousel moves. */
+  min-height: 5.6rem;
+  margin: 0 0 18px;
+  padding-left: 16px;
+  border-left: 3px solid var(--color-primary);
+}
+
+/* A soft glow of the brand colour behind the stage, so the photo floats instead of sitting
+   on the page. It stays inside the carousel's own box: nothing here can widen the page. */
+.showcase-carousel {
+  position: relative;
+  isolation: isolate;
+}
+
+.showcase-carousel::before {
+  content: "";
+  position: absolute;
+  inset: 70px 0 0;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 40%,
+    color-mix(in srgb, var(--color-primary) 22%, transparent),
+    transparent 72%
+  );
+  pointer-events: none;
 }
 
 .showcase-caption h3 {
@@ -507,25 +620,61 @@ code {
    object instead of a bare image. The border and shadow moved here from the photo link. */
 .showcase-stage {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
-  box-shadow: var(--shadow-card);
+  box-shadow:
+    var(--shadow-card),
+    0 28px 60px -28px color-mix(in srgb, var(--color-primary) 55%, transparent);
   overflow: hidden;
 }
 
 .showcase-chrome {
+  position: relative;
   display: flex;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-elevated);
 }
 
 .showcase-chrome i {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   background: var(--color-border);
+}
+
+/* The window buttons keep a hint of the usual colours - enough to read as a window, quiet
+   enough not to compete with the photo. */
+.showcase-chrome i:nth-child(1) {
+  background: color-mix(in srgb, #ff5f57 70%, var(--color-border));
+}
+
+.showcase-chrome i:nth-child(2) {
+  background: color-mix(in srgb, #febc2e 70%, var(--color-border));
+}
+
+.showcase-chrome i:nth-child(3) {
+  background: color-mix(in srgb, #28c840 70%, var(--color-border));
+}
+
+/* The time left on this slide, drawn along the chrome's lower edge. */
+.showcase-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: showcase-progress linear forwards;
+}
+
+@keyframes showcase-progress {
+  to {
+    transform: scaleX(1);
+  }
 }
 
 /* Fixed 16:10 viewport - the ratio of the tallest shots. Its height only depends on the
@@ -602,26 +751,35 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 24px auto 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .carousel-button {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex: none;
-  border: 1px solid var(--color-border);
+  border: 0;
   border-radius: 50%;
-  background: var(--color-surface);
+  background: transparent;
   color: var(--color-text);
   font-size: 1.5rem;
   line-height: 1;
   padding-bottom: 4px;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
 .carousel-button:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
 /* The pause/play toggle centers an icon instead of a chevron glyph. */
@@ -640,21 +798,25 @@ code {
 }
 
 .carousel-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-secondary) 40%, transparent);
   cursor: pointer;
+  transition:
+    width 0.25s ease,
+    background 0.15s;
 }
 
 .carousel-dot:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 60%, transparent);
 }
 
+/* The current screen is the long one: where you are shows without reading the counter. */
 .carousel-dot.is-active {
-  border-color: var(--color-primary);
+  width: 26px;
   background: var(--color-primary);
 }
 
@@ -673,13 +835,26 @@ code {
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .carousel-dot,
+  .feature-card::before {
+    transition: none;
+  }
+}
+
 @media (max-width: 640px) {
   .carousel-slide {
     padding: 8px;
   }
 
+  /* Twelve dots do not fit beside the buttons on a phone: previous / counter / pause / next
+     stay on one line, and the counter says where you are. */
+  .carousel-dots {
+    display: none;
+  }
+
   .carousel-controls {
-    gap: 10px;
+    gap: 16px;
   }
 }
 
@@ -881,77 +1056,140 @@ code {
   text-align: center;
 }
 
-/* Full section width so the card edges line up with the section. On wide screens
-   subject and email stack with a fixed gap in the left column while the message
-   fills the right one; rows size to content so nothing stretches on resize. */
+/* Contact. On a wide screen the section is two columns - what this is for on the left, the form
+   on the right - so the form never stretches across the whole width with its fields lost in it. On a
+   narrow one the intro sits above the form. */
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.contact-intro {
+  margin-bottom: 0;
+  max-width: none;
+}
+
+.contact-intro p {
+  max-width: 44ch;
+}
+
+.contact-points {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.contact-points li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.contact-point-icon,
+.contact-sent-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
+  color: var(--color-primary);
+}
+
 .contact-form {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-areas:
-    "fields message"
-    "error error"
-    "actions actions";
-  align-items: start;
-  gap: 16px;
-  padding: 24px;
+  gap: 20px;
+  padding: 32px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .contact-form label {
   display: grid;
-  gap: 6px;
+  gap: 8px;
+  font-size: 0.9rem;
   font-weight: 600;
   text-align: left;
   align-content: start;
 }
 
+/* Subject and email share a row; the message gets the width. */
 .contact-fields {
-  grid-area: fields;
   display: grid;
-  gap: 16px;
-  align-content: start;
-}
-
-.contact-message {
-  grid-area: message;
-  align-content: stretch;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
 .contact-message textarea {
-  height: 100%;
-  min-height: 12rem;
-}
-
-.contact-form .form-error {
-  grid-area: error;
+  min-height: 11rem;
 }
 
 .contact-actions {
-  grid-area: actions;
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contact-actions .button {
+  gap: 8px;
+  padding: 12px 22px;
+}
+
+.contact-counter {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .contact-sent {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   justify-items: start;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+}
+
+.contact-sent-icon {
+  width: 38px;
+  height: 38px;
+  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
+  color: var(--color-accent);
+}
+
+[data-theme="light"] .contact-sent-icon {
+  color: #00873a;
 }
 
 .contact-sent p {
   margin: 0;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 900px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
 
 @media (max-width: 640px) {
-  .contact-form {
+  .contact-form,
+  .contact-sent {
+    padding: 22px 18px;
+  }
+
+  .contact-fields {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "fields"
-      "message"
-      "error"
-      "actions";
   }
 
   .contact-message textarea {
@@ -967,7 +1205,17 @@ code {
   color: var(--color-text);
   font: inherit;
   font-weight: 400;
-  padding: 10px 12px;
+  padding: 12px 14px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.contact-form input:focus-visible,
+.contact-form textarea:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .contact-form textarea {

@@ -259,7 +259,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   (refuses silent switches while blobs exist); status ≤500, validated
   multipart upload, immutable-cache GET.
 - **Keres Server launcher**: dependency-free binary/zip (Bun + libSQL + admin
-  dist), per-OS data dir (`KeresServer/keres.db`), `--backup` snapshots,
+  dist), per-OS data dir (`KeresServer/keres.db`), `--backup` snapshots (the database is copied by SQLite itself, `VACUUM INTO`, so it is consistent even with the server running; built in a `.partial` folder and verified before it counts),
   `packaging/README.md` (pt+en); `api:build` produces
   `Keres-Server-<os>-<arch>-<version>.zip`, attached to GitHub Releases.
 - **Docker + CI**: `docker-compose.yml` (dev PG16 + API:3000, test, ghcr

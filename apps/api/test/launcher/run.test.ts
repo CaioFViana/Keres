@@ -8,6 +8,7 @@ import {
   type LauncherSecrets,
 } from '../../src/launcher/config';
 import type { LauncherIo } from '../../src/launcher/io';
+import { createClient } from '@libsql/client';
 import { runLauncher } from '../../src/launcher/run';
 import { assertDriverNotChanged } from '../../src/launcher/wizard';
 import { createTranslator } from '../../src/launcher/i18n';
@@ -65,7 +66,11 @@ describe('runLauncher', () => {
 
   it('runs --backup without starting the HTTP server', async () => {
     const dataDir = mkdtempSync(path.join(os.tmpdir(), 'keres-run-bak-'));
-    writeFileSync(path.join(dataDir, 'keres.db'), 'db');
+    const database = createClient({
+      url: `file:${path.join(dataDir, 'keres.db').replace(/\\/g, '/')}`,
+    });
+    await database.execute('CREATE TABLE notes (body TEXT)');
+    database.close();
     const configPath = writeConfig(dataDir);
     const parent = mkdtempSync(path.join(os.tmpdir(), 'keres-out-bak-'));
     const { lines, io } = fakeIo([], false);

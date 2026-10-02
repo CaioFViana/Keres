@@ -9,7 +9,7 @@ Usage:
   keres-server --config PATH   Use this config.json
   keres-server --non-interactive
                                Fail if config is missing (no prompts)
-  keres-server --backup [DIR]  Copy data into a dated folder (stop the server first)
+  keres-server --backup [DIR]  Copy data into a dated folder (best with the server stopped)
   keres-server --help
   keres-server --version`,
   language_title: 'Language / Idioma',
@@ -80,7 +80,7 @@ Uso:
   keres-server --config PATH   Usa este config.json
   keres-server --non-interactive
                                Falha se não houver config (sem perguntas)
-  keres-server --backup [DIR]  Copia os dados para uma pasta com data (pare o servidor antes)
+  keres-server --backup [DIR]  Copia os dados para uma pasta com data (melhor com o servidor parado)
   keres-server --help
   keres-server --version`,
   language_title: 'Idioma / Language',

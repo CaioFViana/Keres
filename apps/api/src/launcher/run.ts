@@ -64,7 +64,7 @@ export async function runLauncher(
     }
     const t = createTranslator(existing.language);
     try {
-      const result = createDataBackup({
+      const result = await createDataBackup({
         config: existing,
         destinationParent: args.destinationParent,
       });

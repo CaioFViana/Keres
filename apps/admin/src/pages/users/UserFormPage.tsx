@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Tier } from '@keres/shared';
 import { slugifyUserTag } from '@keres/shared/utils/userTag';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
@@ -166,6 +166,11 @@ export function UserFormPage() {
     <div>
       <div className="page-header">
         <h1>{isNew ? t('userForm.newTitle') : t('userForm.editTitle', { username })}</h1>
+        {!isNew && id && (
+          <Link to={`/activity?user=${encodeURIComponent(id)}`} className="button button-secondary">
+            {t('users.viewActivity')}
+          </Link>
+        )}
       </div>
       <form className="form-card" onSubmit={(e) => void onSubmit(e)}>
         {isNew && (

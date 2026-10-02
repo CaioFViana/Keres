@@ -3,6 +3,7 @@ import { runMigrations } from './db/migrate';
 import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
+import { auditService } from './services/AuditService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
@@ -56,6 +57,29 @@ function startMediaBlobSweepScheduler(): void {
   setInterval(sweep, 60 * 60_000);
 }
 
+/**
+ * Keeps the activity record to its retention: once at start (what aged while the server was down) and
+ * daily after. Best-effort like the media sweep - a failed run only leaves old lines for the next one.
+ */
+function startAuditRetentionScheduler(): void {
+  const prune = () => {
+    auditService
+      .prune()
+      .then((removed) => {
+        if (removed > 0) {
+          logger.info(
+            `Activity record: dropped ${removed} line(s) older than ${env.AUDIT_RETENTION_DAYS} days.`,
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        logger.error('Activity record retention failed', error);
+      });
+  };
+  setTimeout(prune, 30_000);
+  setInterval(prune, 24 * 60 * 60_000);
+}
+
 export async function bootAndListen(options?: {
   onListening?: (address: ListeningAddress) => void;
 }): Promise<void> {
@@ -73,6 +97,12 @@ export async function bootAndListen(options?: {
 
   const app = await createApp();
   startMediaBlobSweepScheduler();
+  startAuditRetentionScheduler();
+  auditService.record({
+    category: 'system',
+    action: 'system.server_started',
+    meta: { databaseDriver: env.DATABASE_DRIVER, port: env.PORT },
+  });
   // After listening is not required, and it is not awaited: the server answers from the first second,
   // and the first visitor finds the client already compressed rather than waiting for it.
   void warmHostedClientDelivery(clientDistPath());

@@ -288,6 +288,13 @@
       "when": 1790951699468,
       "tag": "0040_drop_contact_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1790966819376,
+      "tag": "0041_audit_events",
+      "breakpoints": true
     }
   ]
 }

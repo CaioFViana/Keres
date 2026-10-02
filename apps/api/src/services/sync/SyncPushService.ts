@@ -36,6 +36,7 @@ import { findIdempotentHit } from './SyncPushIdempotency';
 import { shouldCompactStoryNow, storyUpdateFlipsFavorites } from './pushPolicy';
 import type { SyncOperationLogService } from './SyncOperationLogService';
 import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
+import { auditService } from '../AuditService';
 
 /**
  * Transactional write side of the API sync protocol. It authorizes a story-level batch, delegates
@@ -407,6 +408,17 @@ export class SyncPushService {
       } catch (error) {
         if (error instanceof TierLimitExceededError) {
           recordConflict('limit_exceeded', error.message, conflictContext());
+          // A device that keeps pushing what the plan refuses would say so every few seconds: one line per
+          // story is enough for the administrators to see a user is up against their plan.
+          auditService.recordThrottled(`sync-limit:${userId}:${storyId}`, 10 * 60_000, {
+            category: 'limits',
+            action: 'limits.exceeded',
+            outcome: 'denied',
+            actorUserId: userId,
+            targetType: 'story',
+            targetId: storyId,
+            meta: { route: 'sync', entity: update.entity, reason: error.message },
+          });
           continue;
         }
         if (error instanceof SyncConflictError) {

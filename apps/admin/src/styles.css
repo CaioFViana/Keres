@@ -734,3 +734,121 @@ button.button-danger:hover {
 .message-reply textarea {
   resize: vertical;
 }
+
+/* --- Activity ------------------------------------------------------------- */
+.activity-summary {
+  margin-bottom: 1.5rem;
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  border-left: 4px solid var(--color-primary);
+}
+
+.stat-card.is-warn {
+  border-left-color: var(--color-warn);
+}
+
+.stat-card.is-bad {
+  border-left-color: var(--color-error);
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.activity-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.activity-panels .form-card {
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  height: 5rem;
+}
+
+.bar-chart .bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar-chart .bar span {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+  background: var(--color-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.plain-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.system-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+}
+
+.system-info dt {
+  color: var(--color-text-secondary);
+}
+
+.system-info dd {
+  margin: 0;
+}
+
+.status-badge.outcome-success {
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+  color: var(--color-success);
+}
+
+.status-badge.outcome-failure {
+  background: color-mix(in srgb, var(--color-error) 20%, transparent);
+  color: var(--color-error);
+}
+
+.status-badge.outcome-denied {
+  background: color-mix(in srgb, var(--color-warn) 22%, transparent);
+  color: var(--color-warn);
+}
+
+.filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

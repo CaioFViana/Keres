@@ -55,6 +55,9 @@ export function Layout() {
           <NavLink to="/recovery" className={({ isActive }) => (isActive ? 'active' : '')}>
             {t('nav.recovery')}
           </NavLink>
+          <NavLink to="/activity" className={({ isActive }) => (isActive ? 'active' : '')}>
+            {t('nav.activity')}
+          </NavLink>
           <NavLink to="/logs" className={({ isActive }) => (isActive ? 'active' : '')}>
             {t('nav.logs')}
           </NavLink>

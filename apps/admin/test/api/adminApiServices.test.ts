@@ -14,6 +14,7 @@ vi.mock('../../src/api/apiClient', async (importOriginal) => {
 });
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
+import { ActivityApiService } from '../../src/api/ActivityApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';
 import { MessagesApiService } from '../../src/api/MessagesApiService';
 import { RecoveryApiService } from '../../src/api/RecoveryApiService';
@@ -169,6 +170,23 @@ describe('ShowcaseSettingsApiService', () => {
 
     expect(mocks.put).toHaveBeenCalledWith('/admin/showcase-settings', {
       isShowcaseEnabled: true,
+    });
+  });
+});
+
+describe('ActivityApiService', () => {
+  it('maps the record, its summary and its export to the activity routes', async () => {
+    await ActivityApiService.list({ category: 'auth', page: 2 });
+    await ActivityApiService.summary(168);
+    await ActivityApiService.exportCsv({ outcome: 'failure' });
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/activity', {
+      params: { category: 'auth', page: 2 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/activity/summary', { params: { hours: 168 } });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/activity/export', {
+      params: { outcome: 'failure' },
+      responseType: 'blob',
     });
   });
 });

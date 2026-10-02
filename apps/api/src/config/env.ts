@@ -77,6 +77,8 @@ const envSchema = z.object({
    */
   SYNC_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().optional().default(120),
   ROOT_ADMIN_PASSWORD: z.string().min(8).optional(),
+  /** How many days the admin's activity record keeps its lines; older ones are dropped once a day. */
+  AUDIT_RETENTION_DAYS: z.coerce.number().int().min(1).optional().default(365),
 });
 
 export const env = envSchema.parse(process.env);

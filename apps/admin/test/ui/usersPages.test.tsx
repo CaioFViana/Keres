@@ -321,6 +321,23 @@ describe('user form', () => {
     await view.unmount();
   });
 
+  it('links an existing account to its activity, and a new one to nothing', async () => {
+    mocks.getUser.mockResolvedValue(user({ tag: 'ana-writes' }));
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const edit = await renderFormAt('/users/user-1');
+    await flush();
+
+    expect(edit.container.querySelector('.page-header a')!.getAttribute('href')).toBe(
+      '/activity?user=user-1',
+    );
+    await edit.unmount();
+
+    const created = await renderFormAt('/users/new');
+    await flush();
+    expect(created.container.querySelector('.page-header a')).toBeNull();
+    await created.unmount();
+  });
+
   it('shows a failure when the account fails to load', async () => {
     mocks.getUser.mockRejectedValue(new Error('User is gone.'));
     const view = await renderFormAt('/users/user-1');

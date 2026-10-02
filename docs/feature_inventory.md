@@ -250,9 +250,10 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   for hosted web.
 - **Admin panel**: user CRUD by tier, tiers (limits, sale pricing, order),
   registration settings (incl. currency), the messages inbox (what the site's contact form and users send to the administrators: filter by origin/read/archived, sort, search, reply inside the platform to a registered user, unread badge), recovery,
-  API logs, showcase/landing settings; generated favicon/logo/avatars
+  API logs, the activity record (below), showcase/landing settings; generated favicon/logo/avatars
   (`vite.keresIcon.ts`); audit remediation plan in
   `finished_planning/ADMIN_AUDIT_REMEDIATION_PLAN.md`.
+- **Activity record** (`audit_events`, admin page Activity): who did what to whom, from where and how it ended - sign-ins (failed ones by the name tried), accounts, friendships, messages (that they were sent, never what they say), story collaboration, publishing, every administrative change, administrators opening a user's message, refusals at the admin door, rate limiting and plan limits met. Made from the requests by a table of rules (`audit/requestAuditRules.ts`) so a new route is one line; never holds passwords, tokens, recovery codes or message text. The page shows a summary of the last hours (counts, failed sign-in addresses, events per day) with how the server is doing (version, uptime, database, memory, users, error logs), filters by area/outcome/action/user/date, a per-user view, CSV export (formula-safe) and a retention (`AUDIT_RETENTION_DAYS`, 365 by default, pruned daily).
 - **Media storage**: local-disk or S3 backend, **identity locked at first use**
   (refuses silent switches while blobs exist); status ≤500, validated
   multipart upload, immutable-cache GET.

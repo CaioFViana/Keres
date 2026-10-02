@@ -25,6 +25,7 @@ import { hostedClientDelivery, hostedClientDeliveryInput } from './services/host
 import { sendStaticDelivery } from './services/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
+import { requestAudit } from './plugins/requestAudit';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
 import { AppError } from './utils/errors';
 import { logger } from './utils/logger';
@@ -278,6 +279,8 @@ export async function createApp() {
           return { user: null };
         }
       })
+      // Who did what, for the administrators: after the session is known, before any route.
+      .use(requestAudit)
       .onError(({ code, error, set, path, request, user, params }) => {
         const err = error instanceof Error ? error : new Error(String(error));
         const label = `${request.method} ${path}`;

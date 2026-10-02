@@ -25,6 +25,8 @@ const mocks = vi.hoisted(() => ({
   restoreDeleted: vi.fn(),
   browseOperationLog: vi.fn(),
   listLogs: vi.fn(),
+  listActivity: vi.fn(),
+  activitySummary: vi.fn(),
   listMessages: vi.fn(),
   unreadMessages: vi.fn(),
 }));
@@ -74,6 +76,13 @@ vi.mock('../../src/api/RecoveryApiService', () => ({
   },
 }));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('../../src/api/ActivityApiService', () => ({
+  ActivityApiService: {
+    list: mocks.listActivity,
+    summary: mocks.activitySummary,
+    exportCsv: vi.fn(),
+  },
+}));
 vi.mock('../../src/api/MessagesApiService', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/api/MessagesApiService')>()),
   MessagesApiService: { list: mocks.listMessages, unreadCount: mocks.unreadMessages },
@@ -105,6 +114,8 @@ beforeEach(() => {
   mocks.listDeleted.mockResolvedValue([]);
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
+  mocks.listActivity.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
+  mocks.activitySummary.mockResolvedValue(null);
   mocks.listMessages.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.unreadMessages.mockResolvedValue({ unread: 0 });
   mocks.login.mockResolvedValue({ userId: 'admin-1', username: 'admin' });
@@ -130,6 +141,7 @@ describe('admin routes', () => {
     ['/users', 'Users'],
     ['/users/new', 'New user'],
     ['/recovery', 'Recovery'],
+    ['/activity', 'Activity'],
     ['/logs', 'Logs'],
     ['/tiers', 'Tiers'],
     ['/messages', 'Messages'],
@@ -152,6 +164,7 @@ describe('admin routes', () => {
       '/users',
       '/users/new',
       '/recovery',
+      '/activity',
       '/logs',
       '/tiers',
       '/messages',
@@ -167,6 +180,7 @@ describe('admin routes', () => {
     // Twice: the tiers screen also loads the settings, for the price currency.
     expect(mocks.getSettings).toHaveBeenCalledTimes(2);
     expect(mocks.listLogs).toHaveBeenCalled();
+    expect(mocks.listActivity).toHaveBeenCalled();
     // Sequential unmount: each helper wraps `root.unmount()` in `act()`, and React 19
     // rejects overlapping act() calls when several roots tear down in parallel.
     for (const view of views) {

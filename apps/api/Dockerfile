@@ -59,7 +59,8 @@ ENV EXPO_NO_TELEMETRY=1
 ENV NODE_OPTIONS=--max-old-space-size=3072
 WORKDIR /app/apps/client
 RUN bun scripts/generate-indexes.ts \
- && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web --output-dir dist-hosted
+ && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client node --max-old-space-size=3072 "$(node -p "require('path').join(require('path').dirname(require.resolve('expo/package.json')), 'bin/cli')")" export -p web --output-dir dist-hosted \
+ && bun scripts/inject-web-preloads.ts dist-hosted
 
 # ---- site-landing-build: the landing page the API serves at / ----
 # Só site. Como o admin-build (e ao contrário do client acima), precisa das devDependencies

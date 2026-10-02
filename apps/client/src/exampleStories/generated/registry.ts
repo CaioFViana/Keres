@@ -2,60 +2,95 @@
 // Do not modify this file directly.
 import type { ExampleStoryEntry } from '../types';
 
-import aliceInWonderland_en from '../content/alice-in-wonderland/en.json';
-import aliceInWonderland_pt from '../content/alice-in-wonderland/pt.json';
-import beautyAndTheBeast_en from '../content/beauty-and-the-beast/en.json';
-import beautyAndTheBeast_pt from '../content/beauty-and-the-beast/pt.json';
-import cinderella_en from '../content/cinderella/en.json';
-import cinderella_pt from '../content/cinderella/pt.json';
-import goldilocks_en from '../content/goldilocks/en.json';
-import goldilocks_pt from '../content/goldilocks/pt.json';
-import littleMermaid_en from '../content/little-mermaid/en.json';
-import littleMermaid_pt from '../content/little-mermaid/pt.json';
-import princessKaguya_en from '../content/princess-kaguya/en.json';
-import princessKaguya_pt from '../content/princess-kaguya/pt.json';
-
 export const exampleStoryRegistry: ExampleStoryEntry[] = [
   {
     slug: 'alice-in-wonderland',
     languages: [
-      { language: 'en', story: aliceInWonderland_en },
-      { language: 'pt', story: aliceInWonderland_pt },
+      {
+        language: 'en',
+        meta: {"title":"Alice in Wonderland","description":"Chasing after a hurried rabbit, a young girl falls into a world where nothing follows the rules she knows.","type":"branching","author":"Lewis Carroll"},
+        load: () => import('../content/alice-in-wonderland/en.json').then((module) => module.default),
+      },
+      {
+        language: 'pt',
+        meta: {"title":"Alice no País das Maravilhas","description":"Ao seguir um coelho apressado, uma jovem cai em um mundo onde nada segue as regras que ela conhece.","type":"branching","author":"Lewis Carroll"},
+        load: () => import('../content/alice-in-wonderland/pt.json').then((module) => module.default),
+      },
     ],
   },
   {
     slug: 'beauty-and-the-beast',
     languages: [
-      { language: 'en', story: beautyAndTheBeast_en },
-      { language: 'pt', story: beautyAndTheBeast_pt },
+      {
+        language: 'en',
+        meta: {"title":"Beauty and the Beast","description":"A young woman offers to live in a cursed beast's castle in her father's place, and learns to look past appearances.","type":"branching","author":"Gabrielle-Suzanne de Villeneuve & Jeanne-Marie Leprince de Beaumont"},
+        load: () => import('../content/beauty-and-the-beast/en.json').then((module) => module.default),
+      },
+      {
+        language: 'pt',
+        meta: {"title":"A Bela e a Fera","description":"Uma jovem se oferece para viver no castelo de uma fera amaldiçoada no lugar de seu pai, e aprende a olhar além das aparências.","type":"branching","author":"Gabrielle-Suzanne de Villeneuve e Jeanne-Marie Leprince de Beaumont"},
+        load: () => import('../content/beauty-and-the-beast/pt.json').then((module) => module.default),
+      },
     ],
   },
   {
     slug: 'cinderella',
     languages: [
-      { language: 'en', story: cinderella_en },
-      { language: 'pt', story: cinderella_pt },
+      {
+        language: 'en',
+        meta: {"title":"Cinderella","description":"Mistreated by her stepmother and stepsisters, a young woman finds a chance to change her fate in a single night at a ball.","type":"linear","author":"Charles Perrault"},
+        load: () => import('../content/cinderella/en.json').then((module) => module.default),
+      },
+      {
+        language: 'pt',
+        meta: {"title":"Cinderela","description":"Maltratada pela madrasta e irmãs postiças, uma jovem encontra a chance de mudar seu destino em uma única noite de baile.","type":"linear","author":"Charles Perrault"},
+        load: () => import('../content/cinderella/pt.json').then((module) => module.default),
+      },
     ],
   },
   {
     slug: 'goldilocks',
     languages: [
-      { language: 'en', story: goldilocks_en },
-      { language: 'pt', story: goldilocks_pt },
+      {
+        language: 'en',
+        meta: {"title":"Goldilocks and the Three Bears","description":"Lost in the forest, a girl wanders into the empty home of a family of bears and tries out everything she finds.","type":"linear","author":"Traditional English folklore"},
+        load: () => import('../content/goldilocks/en.json').then((module) => module.default),
+      },
+      {
+        language: 'pt',
+        meta: {"title":"Cachinhos Dourados e os Três Ursos","description":"Perdida na floresta, uma garota entra na casa vazia de uma família de ursos e experimenta tudo o que encontra pela frente.","type":"linear","author":"Conto popular tradicional inglês"},
+        load: () => import('../content/goldilocks/pt.json').then((module) => module.default),
+      },
     ],
   },
   {
     slug: 'little-mermaid',
     languages: [
-      { language: 'en', story: littleMermaid_en },
-      { language: 'pt', story: littleMermaid_pt },
+      {
+        language: 'en',
+        meta: {"title":"The Little Mermaid","description":"A young mermaid trades her voice and her very nature for a chance at human love - and an immortal soul.","type":"linear","author":"Hans Christian Andersen"},
+        load: () => import('../content/little-mermaid/en.json').then((module) => module.default),
+      },
+      {
+        language: 'pt',
+        meta: {"title":"A Pequena Sereia","description":"Uma jovem sereia troca sua voz e sua própria natureza por uma chance de amor humano - e de uma alma imortal.","type":"linear","author":"Hans Christian Andersen"},
+        load: () => import('../content/little-mermaid/pt.json').then((module) => module.default),
+      },
     ],
   },
   {
     slug: 'princess-kaguya',
     languages: [
-      { language: 'en', story: princessKaguya_en },
-      { language: 'pt', story: princessKaguya_pt },
+      {
+        language: 'en',
+        meta: {"title":"Princess Kaguya","description":"A bamboo cutter finds a tiny, glowing girl inside a bamboo stalk - and raises a princess of the Moon who must one day return home.","type":"linear","author":"Traditional Japanese folklore (The Tale of the Bamboo Cutter, 10th century)"},
+        load: () => import('../content/princess-kaguya/en.json').then((module) => module.default),
+      },
+      {
+        language: 'pt',
+        meta: {"title":"Princesa Kaguya","description":"Um cortador de bambu encontra uma menininha brilhante dentro de um bambu - e cria uma princesa da Lua que um dia precisará voltar para casa.","type":"linear","author":"Folclore tradicional japonês (O Conto do Cortador de Bambu, século X)"},
+        load: () => import('../content/princess-kaguya/pt.json').then((module) => module.default),
+      },
     ],
   },
 ];

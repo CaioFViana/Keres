@@ -138,14 +138,14 @@ describe('FavoriteButton', () => {
   it('shows the state and toggles on press', async () => {
     const onPress = jest.fn();
     const off = await render(<FavoriteButton isFavorite={false} onPress={onPress} />);
-    const offIcon = off.container.queryAll((node) => node.type === 'MIcon')[0];
+    const offIcon = off.container.queryAll((node) => node.type === 'Icon')[0];
     expect(offIcon.props.name).toBe('star-outline');
     expect(offIcon.props.color).toBe('#555555');
     await fireEvent.press(offIcon);
     expect(onPress).toHaveBeenCalledTimes(1);
 
     const on = await render(<FavoriteButton isFavorite onPress={() => {}} />);
-    const onIcon = on.container.queryAll((node) => node.type === 'MIcon')[0];
+    const onIcon = on.container.queryAll((node) => node.type === 'Icon')[0];
     expect(onIcon.props.name).toBe('star');
     expect(onIcon.props.color).toBe('#0000ff');
   });
@@ -155,7 +155,7 @@ describe('ViewDetailsButton', () => {
   it('uses the primary color by default and forwards presses', async () => {
     const onPress = jest.fn();
     const screen = await render(<ViewDetailsButton onPress={onPress} />);
-    const icon = screen.container.queryAll((node) => node.type === 'MIcon')[0];
+    const icon = screen.container.queryAll((node) => node.type === 'Icon')[0];
     expect(icon.props.name).toBe('eye');
     expect(icon.props.color).toBe('#0000ff');
     await fireEvent.press(icon);
@@ -164,7 +164,7 @@ describe('ViewDetailsButton', () => {
 
   it('accepts a color override', async () => {
     const screen = await render(<ViewDetailsButton onPress={() => {}} color="#123456" />);
-    expect(screen.container.queryAll((node) => node.type === 'MIcon')[0].props.color).toBe(
+    expect(screen.container.queryAll((node) => node.type === 'Icon')[0].props.color).toBe(
       '#123456',
     );
   });
@@ -184,7 +184,7 @@ describe('GenericExpandedListItemWithActions', () => {
 
   const chevron = (screen: Awaited<ReturnType<typeof render>>) =>
     screen.container.queryAll(
-      (node) => node.type === 'MIcon' && ['chevron-up', 'chevron-down'].includes(node.props.name),
+      (node) => node.type === 'Icon' && ['chevron-up', 'chevron-down'].includes(node.props.name),
     )[0].props.name;
 
   it('toggles uncontrolled state and reports it', async () => {
@@ -209,7 +209,7 @@ describe('GenericExpandedListItemWithActions', () => {
     const onToggleFavorite = jest.fn();
     const screen = await renderRow({ item: { isFavorite: false }, onToggleFavorite });
     const star = screen.container.queryAll(
-      (node) => node.type === 'MIcon' && node.props.name === 'star-outline',
+      (node) => node.type === 'Icon' && node.props.name === 'star-outline',
     )[0];
     await fireEvent.press(star);
     expect(onToggleFavorite).toHaveBeenCalledWith('x', true);
@@ -219,7 +219,7 @@ describe('GenericExpandedListItemWithActions', () => {
     const screen = await renderRow({ onToggleFavorite: () => {} });
     expect(
       screen.container.queryAll(
-        (node) => node.type === 'MIcon' && String(node.props.name).startsWith('star'),
+        (node) => node.type === 'Icon' && String(node.props.name).startsWith('star'),
       ),
     ).toHaveLength(0);
   });
@@ -228,7 +228,7 @@ describe('GenericExpandedListItemWithActions', () => {
     const onViewDetails = jest.fn();
     const screen = await renderRow({ onViewDetails });
     const eye = screen.container.queryAll(
-      (node) => node.type === 'MIcon' && node.props.name === 'eye',
+      (node) => node.type === 'Icon' && node.props.name === 'eye',
     )[0];
     await fireEvent.press(eye);
     expect(onViewDetails).toHaveBeenCalledWith('x');

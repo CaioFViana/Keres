@@ -59,7 +59,7 @@ function seedRegistry() {
   mockRegistry.length = 0;
   mockRegistry.push({
     slug: 'alice',
-    languages: [{ language: 'en', story: { story: { title: 'Alice' } } }],
+    languages: [{ language: 'en', meta: { title: 'Alice' }, load: async () => ({}) }],
   });
 }
 

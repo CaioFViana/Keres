@@ -347,7 +347,7 @@ const SettingsScreen = () => {
           accessibilityRole="button"
         >
           <Image
-            source={require('../../../assets/images/desktop_icon.png')}
+            source={require('../../../assets/images/desktop_icon_512.png')}
             style={[styles.brandImage, { height: brandImageSize, width: brandImageSize }]}
             resizeMode="contain"
             accessibilityLabel="Keres"

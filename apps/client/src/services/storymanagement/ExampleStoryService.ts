@@ -17,6 +17,8 @@ import { createStoryService } from './StoryService';
 export type InstallExampleStoryResult =
   | { status: 'installed'; storyId: string }
   | { status: 'not_found' }
+  /** The story's file could not be fetched (a web build that went offline before it was needed). */
+  | { status: 'load_failed' }
   | { status: 'invalid_content' };
 
 export interface ExampleStoryServiceInterface {
@@ -48,10 +50,17 @@ export const createExampleStoryService = (db: AppDrizzleClient): ExampleStorySer
         return { status: 'not_found' };
       }
 
-      // The packaged JSON never had its dates revived (it is a static `import` of a `.json`,
-      // just like the `JSON.parse` of a file chosen by the user) - the same care as
-      // `pickStoryExportFile`.
-      const parsed = FullStoryExportSchema.safeParse(reviveDates(languageEntry.story));
+      let story: unknown;
+      try {
+        story = await languageEntry.load();
+      } catch (loadError) {
+        console.error(`ExampleStoryService: could not load ${slug}/${language}.`, loadError);
+        return { status: 'load_failed' };
+      }
+
+      // The packaged JSON never had its dates revived (it is a `.json` module, just like the
+      // `JSON.parse` of a file chosen by the user) - the same care as `pickStoryExportFile`.
+      const parsed = FullStoryExportSchema.safeParse(reviveDates(story));
       if (!parsed.success) {
         console.error(
           `ExampleStoryService: bundled content for ${slug}/${language} failed validation.`,

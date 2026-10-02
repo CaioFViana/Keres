@@ -18,6 +18,26 @@ import { buildStoryAnalysisReport } from '../../src/utils/storyAnalysisChecks';
 
 let database: TestDatabase;
 
+/**
+ * The registry with every story loaded. The registry itself only holds each story's `meta` and a
+ * `load()` (the stories are separate chunks on the web); what is checked below is what `load()` returns.
+ */
+let loadedRegistry: { slug: string; languages: { language: string; story: unknown }[] }[];
+
+beforeAll(async () => {
+  loadedRegistry = await Promise.all(
+    exampleStoryRegistry.map(async (entry) => ({
+      slug: entry.slug,
+      languages: await Promise.all(
+        entry.languages.map(async (language) => ({
+          language: language.language,
+          story: await language.load(),
+        })),
+      ),
+    })),
+  );
+});
+
 beforeEach(async () => {
   database = await createTestDatabase();
   (
@@ -43,7 +63,7 @@ it('exposes the bundled example catalog and rejects an unknown slug-language pai
 });
 
 it('ships every public-domain example as a complete showcase of applicable features', () => {
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     for (const language of entry.languages) {
       const rawPackage = language.story as Record<string, unknown>;
       const parsed = FullStoryExportSchema.safeParse(reviveDates(language.story));
@@ -161,13 +181,13 @@ it('ships every public-domain example as a complete showcase of applicable featu
 
 it('uses the documented current-feature showcase matrix', () => {
   const packageFor = (slug: string) => {
-    const entry = exampleStoryRegistry.find((candidate) => candidate.slug === slug);
+    const entry = loadedRegistry.find((candidate) => candidate.slug === slug);
     const english = entry?.languages.find((language) => language.language === 'en');
     expect(english).toBeDefined();
     return reviveDates(english!.story) as any;
   };
 
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     for (const language of entry.languages) {
       const story = reviveDates(language.story) as any;
       expect(story.galleryItems).toHaveLength(1);
@@ -218,7 +238,7 @@ it('uses the documented current-feature showcase matrix', () => {
  * never be published in the first place.
  */
 it('ships no bundled example that contradicts itself', () => {
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     for (const language of entry.languages) {
       const violations = findStoryExportIntegrityViolations(
         reviveDates(language.story) as { story: { id: string } },
@@ -237,7 +257,7 @@ it('ships no bundled example that contradicts itself', () => {
  * authored in `scripts/lib/narratives/` and counted here by the same parser the renderers use.
  */
 it('ships every bundled example scene with short manuscript prose', () => {
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     for (const language of entry.languages) {
       const story = language.story as { scenes: { name: string; body: unknown }[] };
       const failures = story.scenes.flatMap((scene) => {
@@ -257,12 +277,11 @@ it('ships every bundled example scene with short manuscript prose', () => {
 
 it('keeps example ids valid, unique, referentially sound, bilingual, and bundle-sized', () => {
   const ulid = /^[0-7][0-9A-HJKMNP-TV-Z]{25}$/;
-  const collectionNames = Object.keys(exampleStoryRegistry[0].languages[0].story as object).filter(
-    (key) =>
-      Array.isArray((exampleStoryRegistry[0].languages[0].story as Record<string, unknown>)[key]),
+  const collectionNames = Object.keys(loadedRegistry[0].languages[0].story as object).filter(
+    (key) => Array.isArray((loadedRegistry[0].languages[0].story as Record<string, unknown>)[key]),
   );
 
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     const english = entry.languages.find((language) => language.language === 'en')?.story as Record<
       string,
       any
@@ -351,7 +370,7 @@ it('keeps example ids valid, unique, referentially sound, bilingual, and bundle-
  * would become a synchronization conflict.
  */
 it('numbers every bundled example the way the app does: chapters 1..N, scenes 1..M per chapter', () => {
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     for (const language of entry.languages) {
       const story = language.story as {
         chapters: { id: string; index: number }[];
@@ -372,7 +391,7 @@ it('numbers every bundled example the way the app does: chapters 1..N, scenes 1.
 });
 
 it('uses every bundled example as a clean story-analysis reference', async () => {
-  for (const entry of exampleStoryRegistry) {
+  for (const entry of loadedRegistry) {
     for (const language of entry.languages) {
       const story = language.story as Record<string, any>;
       const findings = await buildStoryAnalysisReport({
@@ -420,7 +439,7 @@ it('installs the plots of a linear example bound to the copy, not to the package
   expect(installed).toMatchObject({ status: 'installed' });
   if (installed.status !== 'installed') return;
 
-  const packaged = exampleStoryRegistry
+  const packaged = loadedRegistry
     .find((entry) => entry.slug === 'cinderella')
     ?.languages.find((entry) => entry.language === 'en')?.story as { plots: { id: string }[] };
   const plots = await database.db.query.plots.findMany();
@@ -492,4 +511,37 @@ it('keeps every custom field reachable from its own suggestion catalogue after i
   const orphaned = [...new Set(customTypes)].filter((type) => !liveTypes.has(type));
 
   expect(orphaned).toEqual([]);
+});
+
+it('keeps the list light: each language has what its card shows, and loads its story only on demand', async () => {
+  for (const entry of exampleStoryRegistry) {
+    for (const language of entry.languages) {
+      expect(typeof language.meta.title).toBe('string');
+      expect(typeof language.load).toBe('function');
+      // The card's copy is the story's own: nothing drifts between the file and the registry.
+      const story = (await language.load()) as { story: { title: string; type: string } };
+      expect(language.meta.title).toBe(story.story.title);
+      expect(language.meta.type).toBe(story.story.type);
+    }
+  }
+});
+
+it('reports a story it could not fetch, instead of throwing into the install screen', async () => {
+  const entry = exampleStoryRegistry[0];
+  const language = entry.languages[0];
+  const original = language.load;
+  const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  language.load = () => Promise.reject(new Error('Loading chunk failed'));
+  try {
+    await expect(
+      createExampleStoryService(database.db).installExampleStory(
+        'local-user',
+        entry.slug,
+        language.language,
+      ),
+    ).resolves.toEqual({ status: 'load_failed' });
+  } finally {
+    language.load = original;
+    errorSpy.mockRestore();
+  }
 });

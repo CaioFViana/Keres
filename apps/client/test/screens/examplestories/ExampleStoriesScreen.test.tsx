@@ -113,14 +113,15 @@ jest.mock('react-i18next', () => ({
 
 import ExampleStoriesScreen from '../../../src/screens/examplestories/ExampleStoriesScreen';
 
+const mockLoad = jest.fn().mockResolvedValue({});
+
 const makeEntry = (overrides = {}) => ({
   slug: 'tale',
   languages: [
     {
       language: 'en',
-      story: {
-        story: { title: 'The Tale', description: 'A tale', type: 'linear', author: 'Author' },
-      },
+      meta: { title: 'The Tale', description: 'A tale', type: 'linear', author: 'Author' },
+      load: mockLoad,
     },
   ],
   ...overrides,
@@ -160,9 +161,8 @@ it('renders entry previews with the story type icon', async () => {
       languages: [
         {
           language: 'pt',
-          story: {
-            story: { title: '  ', description: 42, type: 'branching', author: '   ' },
-          },
+          meta: { title: '  ', description: 42, type: 'branching', author: '   ' },
+          load: mockLoad,
         },
       ],
     }),
@@ -190,8 +190,8 @@ it('prefers the app language and installs the chosen one', async () => {
     makeEntry({
       slug: 'tale',
       languages: [
-        { language: 'en', story: { story: { title: 'The Tale' } } },
-        { language: 'pt', story: { story: { title: 'O Conto' } } },
+        { language: 'en', meta: { title: 'The Tale' }, load: mockLoad },
+        { language: 'pt', meta: { title: 'O Conto' }, load: mockLoad },
       ],
     }),
   ]);
@@ -211,8 +211,8 @@ it('falls back to the first language and tracks dropdown changes', async () => {
   mockListExampleStories.mockReturnValue([
     makeEntry({
       languages: [
-        { language: 'en', story: { story: { title: 'The Tale' } } },
-        { language: 'pt', story: { story: { title: 'O Conto' } } },
+        { language: 'en', meta: { title: 'The Tale' }, load: mockLoad },
+        { language: 'pt', meta: { title: 'O Conto' }, load: mockLoad },
       ],
     }),
   ]);

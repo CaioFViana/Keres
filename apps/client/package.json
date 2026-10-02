@@ -9,9 +9,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "prebuild": "bun scripts/generate-indexes.ts",
-    "build": "expo export -p web",
-    "build:hosted": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client expo export -p web --output-dir dist-hosted",
-    "build:pages": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_SERVERLESS=1 expo export -p web --output-dir dist-pages",
+    "build": "expo export -p web && bun scripts/inject-web-preloads.ts dist",
+    "build:hosted": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_HOSTED=1 KERES_WEB_BASE_URL=/client expo export -p web --output-dir dist-hosted && bun scripts/inject-web-preloads.ts dist-hosted",
+    "build:pages": "bun scripts/generate-indexes.ts && EXPO_PUBLIC_SERVERLESS=1 expo export -p web --output-dir dist-pages && bun scripts/inject-web-preloads.ts dist-pages",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "expo lint",
     "test": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB",
@@ -69,6 +69,7 @@
     "@testing-library/react-native": "^14.0.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/jest": "29.5.14",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "~19.2.0",
     "@types/spark-md5": "^3.0.5",
     "better-sqlite3": "^13.0.3",
@@ -78,6 +79,7 @@
     "jest": "~29.7.0",
     "jest-expo": "~57.0.5",
     "jszip": "^3.10.2",
+    "pngjs": "^7.0.0",
     "typescript": "~5.9.2"
   },
   "expo": {

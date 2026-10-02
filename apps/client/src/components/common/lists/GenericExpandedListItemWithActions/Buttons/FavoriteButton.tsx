@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../../theme';
@@ -20,7 +20,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ isFavorite, onPress, si
       }}
       style={styles.button}
     >
-      <MaterialCommunityIcons
+      <Ionicons
         name={isFavorite ? 'star' : 'star-outline'}
         size={size}
         color={isFavorite ? colors.primary : colors.textSecondary}

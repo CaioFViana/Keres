@@ -52,12 +52,9 @@ export async function prepareShowcase(
     // The packaged example's title identifies the installed story. Searching by language alone made the
     // second photo reuse the first one's story - every screen came out of the same story, regardless of
     // which was requested.
-    const packaged = exampleStoryRegistry
+    const expectedTitle = exampleStoryRegistry
       .find((entry) => entry.slug === request.story)
-      ?.languages.find((entry) => entry.language === request.language)?.story as
-      | { story?: { title?: string } }
-      | undefined;
-    const expectedTitle = packaged?.story?.title;
+      ?.languages.find((entry) => entry.language === request.language)?.meta.title;
     const existing = (await storyService.getAllStories(userId)).find(
       (story) => !story.isDeleted && story.title === expectedTitle,
     );

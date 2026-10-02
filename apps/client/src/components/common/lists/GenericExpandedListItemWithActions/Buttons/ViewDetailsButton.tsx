@@ -1,4 +1,4 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../../../theme';
@@ -21,7 +21,7 @@ const ViewDetailsButton: React.FC<ViewDetailsButtonProps> = ({ onPress, size = 2
       }}
       style={styles.button}
     >
-      <MaterialCommunityIcons name="eye" size={size} color={iconColor} />
+      <Ionicons name="eye" size={size} color={iconColor} />
     </TouchableOpacity>
   );
 };

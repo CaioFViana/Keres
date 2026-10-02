@@ -32,7 +32,9 @@ import { useTheme } from '../../theme';
  * an ever-taller column of buttons.
  *
  * The catalog itself (`exampleStoryRegistry`) is static - folk and fairy tales packaged under
- * `exampleStories/content/` (en+pt). The empty state only shows if the registry ever empties.
+ * `exampleStories/content/` (en+pt). The empty state only shows if the registry ever empties. The cards
+ * draw from each story's `meta`; the story itself is fetched on install, and started on its way as soon
+ * as the list opens, so that tapping Install does not depend on the connection of a web build.
  */
 
 /** The preferred language to pre-select in the dropdown: the app's current one, failing that the first */
@@ -50,11 +52,7 @@ interface StoryPreview {
 
 /** A defensive read - the content is only really validated (`FullStoryExportSchema`) on installation. */
 function getStoryPreview(language: ExampleStoryLanguage, fallbackTitle: string): StoryPreview {
-  const story = (
-    language.story as {
-      story?: { title?: unknown; description?: unknown; type?: unknown; author?: unknown };
-    } | null
-  )?.story;
+  const story = language.meta;
   return {
     title: typeof story?.title === 'string' && story.title.trim() ? story.title : fallbackTitle,
     description: typeof story?.description === 'string' ? story.description : null,
@@ -84,8 +82,18 @@ const ExampleStoriesScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setEntries(createExampleStoryService(drizzleDb).listExampleStories());
-    }, [drizzleDb]),
+      const listed = createExampleStoryService(drizzleDb).listExampleStories();
+      setEntries(listed);
+      // The language each card opens on is the one most likely to be installed: fetch those now (a
+      // failure is no news here, the install reports it if the story is still not there).
+      for (const entry of listed) {
+        const preferred = pickPreferredLanguage(entry, i18n.language);
+        entry.languages
+          .find((language) => language.language === preferred)
+          ?.load()
+          .catch(() => undefined);
+      }
+    }, [drizzleDb, i18n.language]),
   );
 
   const handleInstall = useCallback(

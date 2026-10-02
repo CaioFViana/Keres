@@ -4,13 +4,13 @@ import React from 'react';
 /**
  * Showcase-mode coverage for AppNavigator.
  *
- * NOTE: AppNavigator loads `../showcase/prepareShowcase` with a dynamic `import()`, which the
- * babel preset leaves untransformed; under jest that always rejects (a cross-realm TypeError),
- * so the ready-path (opening straight into `MainSystem`) cannot be exercised here and a
- * `jest.mock` of `prepareShowcase` could never take effect. These tests pin what is observable:
- * a showcase request skips the normal settings flow, and any preparation failure falls back to
- * onboarding with an error log.
+ * AppNavigator loads `../showcase/prepareShowcase` with a dynamic `import()`. Jest cannot run one, so the
+ * test babel config turns it into a `require` (`babel/dynamicImportToRequire.js`) - which is also what lets
+ * `jest.mock` replace the module here. These tests pin the flow: a showcase request skips the normal
+ * settings flow, a prepared showcase opens straight into `MainSystem`, and any preparation failure
+ * falls back to onboarding with an error log.
  */
+const mockPrepareShowcase = jest.fn();
 
 const mockScreens: Array<Record<string, unknown>> = [];
 const mockRootNavigatorProps: Array<Record<string, unknown>> = [];
@@ -44,6 +44,10 @@ jest.mock('../../src/state/themeStore', () => ({
 jest.mock('../../src/theme', () => ({
   __esModule: true,
   useTheme: () => ({ colors: { background: '#101010' } }),
+}));
+jest.mock('../../src/showcase/prepareShowcase', () => ({
+  __esModule: true,
+  prepareShowcase: (...args: unknown[]) => mockPrepareShowcase(...args),
 }));
 jest.mock('../../src/showcase/showcaseRequest', () => ({
   __esModule: true,
@@ -92,6 +96,7 @@ beforeEach(() => {
   (readShowcaseRequest as jest.Mock).mockReturnValue(showcase);
   initializeSettings.mockResolvedValue(undefined);
   initializeTheme.mockResolvedValue(undefined);
+  mockPrepareShowcase.mockRejectedValue(new Error('the capture window is gone'));
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -102,6 +107,17 @@ async function renderNavigator() {
   await waitFor(() => expect(mockScreens.some((entry) => entry.name === 'ColdInstall')).toBe(true));
   return mockRootNavigatorProps.at(-1);
 }
+
+it('opens straight into the system, on the story the showcase chose, once it is prepared', async () => {
+  mockPrepareShowcase.mockResolvedValue(true);
+
+  await render(<AppNavigator dbInitialized />);
+  await waitFor(() => expect(mockRootNavigatorProps.length).toBeGreaterThan(0));
+
+  expect(mockPrepareShowcase).toHaveBeenCalledWith(db, showcase);
+  expect(mockRootNavigatorProps.at(-1)).toMatchObject({ initialRouteName: 'MainSystem' });
+  expect(initializeTheme).toHaveBeenCalledWith(db);
+});
 
 it('skips the settings lookup and user-settings init when a showcase is requested', async () => {
   await renderNavigator();
@@ -120,10 +136,8 @@ it('falls back to onboarding when showcase preparation fails', async () => {
 it('logs showcase preparation failures', async () => {
   await renderNavigator();
 
-  // `expect.any(Error)` cannot match here: the rejection is a cross-realm TypeError, so
-  // `instanceof` fails. Any thrown value logged alongside the message is the contract.
   expect(console.error).toHaveBeenCalledWith(
     'Error checking for client settings:',
-    expect.anything(),
+    expect.any(Error),
   );
 });

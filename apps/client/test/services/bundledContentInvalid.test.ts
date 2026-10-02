@@ -4,7 +4,12 @@
 jest.mock('../../src/exampleStories/generated/registry', () => ({
   __esModule: true,
   exampleStoryRegistry: [
-    { slug: 'broken', languages: [{ language: 'en', story: { nope: true } }] },
+    {
+      slug: 'broken',
+      languages: [
+        { language: 'en', meta: { title: 'Broken' }, load: async () => ({ nope: true }) },
+      ],
+    },
   ],
 }));
 jest.mock('../../src/shippedPacks/generated/registry', () => ({

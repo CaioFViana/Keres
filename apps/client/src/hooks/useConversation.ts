@@ -1,4 +1,5 @@
 import type { ChatMessage, MessageLimits } from '@keres/shared';
+import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDrizzle } from '../db';
@@ -44,20 +45,25 @@ export function useConversation(serverId: string, peer: MessagePeerRef) {
     [peerId],
   );
 
+  // A stack keeps the conversation mounted after the user leaves it (to another menu entry, say). Only
+  // while it is in front is it "the conversation on screen": otherwise a message arriving in it would be
+  // taken as read and never announced.
+  const isFocused = useIsFocused();
   useEffect(() => {
+    if (!isFocused) return undefined;
     setOpenConversation(conversationKey(serverId, stablePeer));
     return () => setOpenConversation(null);
-  }, [serverId, stablePeer]);
+  }, [isFocused, serverId, stablePeer]);
 
   // Whatever is on screen is seen: opening the conversation, and a message arriving in it, clear its mark.
   const newestMessageId = messages[0]?.id;
   useEffect(() => {
-    if (newestMessageId) {
-      useUnseenMessagesStore
+    if (isFocused && newestMessageId) {
+      void useUnseenMessagesStore
         .getState()
         .markSeen(conversationKey(serverId, stablePeer), newestMessageId);
     }
-  }, [serverId, stablePeer, newestMessageId]);
+  }, [isFocused, serverId, stablePeer, newestMessageId]);
 
   const reportFailure = useCallback(
     (error: unknown, fallbackKey: string) => {

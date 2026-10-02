@@ -13,6 +13,11 @@ const mockSetOpen = jest.fn();
 const mockMarkSeen = jest.fn();
 const mockListeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
+const mockFocus = { value: true };
+jest.mock('@react-navigation/native', () => ({
+  __esModule: true,
+  useIsFocused: () => mockFocus.value,
+}));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({ t: mockT }),
@@ -84,6 +89,7 @@ async function renderConversation(peer: { kind: string; userId?: string } = ADMI
 beforeEach(() => {
   jest.clearAllMocks();
   mockListeners.clear();
+  mockFocus.value = true;
   mockIsOffline.mockReturnValue(false);
   mockService.getMessages.mockResolvedValue({ items: [msg('03'), msg('02')], nextBefore: null });
   mockService.getLimits.mockResolvedValue(limits(5, 1));
@@ -119,6 +125,27 @@ describe('useConversation', () => {
     });
 
     expect(mockMarkSeen).toHaveBeenLastCalledWith('server-1|user-1', '09');
+  });
+
+  it('is not the open conversation, and marks nothing seen, while another screen is in front', async () => {
+    mockFocus.value = false;
+
+    const { result } = await renderConversation(FRIEND);
+
+    expect(result.current.messages).toHaveLength(2);
+    expect(mockSetOpen).not.toHaveBeenCalledWith('server-1|user-1');
+    expect(mockMarkSeen).not.toHaveBeenCalled();
+  });
+
+  it('becomes the open conversation, and marks what it holds seen, when it comes to the front', async () => {
+    mockFocus.value = false;
+    const hook = await renderConversation(FRIEND);
+
+    mockFocus.value = true;
+    await hook.rerender({});
+
+    expect(mockSetOpen).toHaveBeenCalledWith('server-1|user-1');
+    expect(mockMarkSeen).toHaveBeenLastCalledWith('server-1|user-1', '03');
   });
 
   it('marks nothing seen in an empty conversation', async () => {

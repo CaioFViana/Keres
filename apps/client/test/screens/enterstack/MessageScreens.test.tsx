@@ -165,6 +165,11 @@ describe('ConversationScreen', () => {
     const view = await render(<ConversationScreen />);
 
     expect(view.getByText('conversation_empty')).toBeTruthy();
+    // Drawn outside the inverted list and not flipped: a flip came out mirrored on a phone.
+    expect(view.getByText('conversation_empty').props.style).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ transform: expect.anything() })]),
+    );
+    expect(view.queryByTestId('conversation-list')).toBeNull();
     expect(view.getByText('messages_unavailable')).toBeTruthy();
   });
 

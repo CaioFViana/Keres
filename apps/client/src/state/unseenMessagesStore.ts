@@ -28,7 +28,7 @@ interface UnseenMessagesState {
   /** What one server's inbox says now. Messages already there the first time are taken as seen. */
   observe: (serverId: string, conversations: ObservedConversation[]) => Promise<void>;
   /** The user opened (or wrote in) the conversation: everything up to `messageId` is seen. */
-  markSeen: (key: string, messageId: string) => void;
+  markSeen: (key: string, messageId: string) => Promise<void>;
   /** Forgets what is unseen on servers that are no longer registered. */
   retainServers: (serverIds: string[]) => void;
   reset: () => void;
@@ -92,7 +92,9 @@ export const useUnseenMessagesStore = create<UnseenMessagesState>((set, get) => 
     persist({ seen: nextSeen, baselined: nextBaselined });
   },
 
-  markSeen: (key, messageId) => {
+  markSeen: async (key, messageId) => {
+    // After what was kept is read: a mark made before that would be overwritten by it.
+    await get().hydrate();
     const { seen, unseen, baselined } = get();
     const nextSeen = (seen[key] ?? '') < messageId ? { ...seen, [key]: messageId } : seen;
     const unseenId = unseen[key];

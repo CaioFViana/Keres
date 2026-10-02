@@ -81,33 +81,39 @@ const ConversationScreen = () => {
       {conversation.unavailable && (
         <Text style={[styles.banner, { color: colors.error }]}>{t('messages_unavailable')}</Text>
       )}
-      <FlatList
-        testID="conversation-list"
-        style={styles.list}
-        // Newest first, drawn from the bottom up: the latest message sits next to the field, and
-        // older ones are loaded as the reader scrolls toward them.
-        inverted
-        data={conversation.messages}
-        keyExtractor={(message) => message.id}
-        renderItem={({ item }) => (
-          <MessageBubble
-            body={item.body}
-            mine={item.mine}
-            when={when(item.createdAt)}
-            onDelete={() => conversation.deleteMessage(item.id)}
-          />
-        )}
-        onEndReached={() => void conversation.loadOlder()}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          conversation.loadingMore ? <ActivityIndicator color={colors.primary} /> : <View />
-        }
-        ListEmptyComponent={
+      {conversation.messages.length === 0 ? (
+        // Outside the list on purpose: an inverted list is drawn upside down and each platform turns its empty
+        // state back differently (React Native does it itself, the web does not), so a flip applied here came
+        // out mirrored on a phone.
+        <View style={styles.emptyContainer}>
           <Text style={[styles.empty, { color: colors.textSecondary }]}>
             {t('conversation_empty')}
           </Text>
-        }
-      />
+        </View>
+      ) : (
+        <FlatList
+          testID="conversation-list"
+          style={styles.list}
+          // Newest first, drawn from the bottom up: the latest message sits next to the field, and
+          // older ones are loaded as the reader scrolls toward them.
+          inverted
+          data={conversation.messages}
+          keyExtractor={(message) => message.id}
+          renderItem={({ item }) => (
+            <MessageBubble
+              body={item.body}
+              mine={item.mine}
+              when={when(item.createdAt)}
+              onDelete={() => conversation.deleteMessage(item.id)}
+            />
+          )}
+          onEndReached={() => void conversation.loadOlder()}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            conversation.loadingMore ? <ActivityIndicator color={colors.primary} /> : <View />
+          }
+        />
+      )}
       <MessageComposer
         maxLength={MESSAGE_BODY_MAX_LENGTH}
         sending={conversation.sending}
@@ -122,8 +128,8 @@ const styles = StyleSheet.create({
   screen: { paddingBottom: 12 },
   list: { flex: 1 },
   banner: { fontSize: 13, textAlign: 'center', marginBottom: 8 },
-  // The list is inverted, so its empty state is turned back the right way up.
-  empty: { textAlign: 'center', paddingVertical: 24, transform: [{ scaleY: -1 }] },
+  emptyContainer: { flex: 1, justifyContent: 'center' },
+  empty: { textAlign: 'center', paddingVertical: 24 },
 });
 
 export default ConversationScreen;

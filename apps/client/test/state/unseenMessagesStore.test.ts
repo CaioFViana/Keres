@@ -68,10 +68,10 @@ describe('unseenMessagesStore', () => {
     await store().observe('srv-1', [conversation('srv-1|u1', '07')]);
     await store().observe('srv-1', [conversation('srv-1|u1', '09')]);
 
-    store().markSeen('srv-1|u1', '08');
+    await store().markSeen('srv-1|u1', '08');
     expect(store().unseen).toEqual({ 'srv-1|u1': '09' });
 
-    store().markSeen('srv-1|u1', '09');
+    await store().markSeen('srv-1|u1', '09');
     expect(store().unseen).toEqual({});
     expect(store().seen['srv-1|u1']).toBe('09');
   });
@@ -80,7 +80,7 @@ describe('unseenMessagesStore', () => {
     await store().observe('srv-1', [conversation('srv-1|u1', '07')]);
     mockSetItem.mockClear();
 
-    store().markSeen('srv-1|u1', '03');
+    await store().markSeen('srv-1|u1', '03');
 
     expect(mockSetItem).not.toHaveBeenCalled();
   });
@@ -113,7 +113,7 @@ describe('unseenMessagesStore', () => {
   it('keeps what was seen across runs, so a message already opened does not come back', async () => {
     await store().observe('srv-1', [conversation('srv-1|u1', '07')]);
     await store().observe('srv-1', [conversation('srv-1|u1', '09')]);
-    store().markSeen('srv-1|u1', '09');
+    await store().markSeen('srv-1|u1', '09');
     const saved = mockStorage.get(KEY)!;
 
     store().reset();

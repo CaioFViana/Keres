@@ -2,6 +2,12 @@ import { isAbortError, isOfflineError } from '../apiClient';
 
 /** Normal cadence while the server is responding. */
 export const SYNC_INTERVAL_MS = 30_000;
+/**
+ * Cadence while the realtime socket is proven alive (it ticks a heartbeat, so silence would have been
+ * noticed): the timer is then only the net under a nudge that was lost, not the way changes arrive.
+ * The moment the socket is lost the cadence goes back to `SYNC_INTERVAL_MS`.
+ */
+export const LIVE_SYNC_INTERVAL_MS = 300_000;
 /** Fast cadence used while the configured server is unreachable. */
 export const OFFLINE_RETRY_MS = 5_000;
 /** Base delay for the backoff after a failed cycle; doubled per consecutive failure. */
@@ -48,11 +54,16 @@ interface SyncSchedulerOptions {
   readiness: () => SyncReadiness;
   /** Receives the cycle AbortSignal; aborted when `stop` / `stopAndWait` runs. */
   performSync: (signal: AbortSignal) => Promise<SyncCycleOutcome>;
+  /** True while the realtime channel of the active server is alive; the healthy cadence relaxes then. */
+  isRealtimeLive?: () => boolean;
 }
 
 /** Owns cycle scheduling and guarantees that timer and on-demand cycles never overlap. */
 export class SyncScheduler {
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private timerDueAt = 0;
+  /** Schedules the next timer-driven cycle of the current run; null while stopped. */
+  private arm: ((delayMs: number) => void) | null = null;
   private running = false;
   private inFlight = false;
   private queued = false;
@@ -115,10 +126,28 @@ export class SyncScheduler {
       }
 
       if (!this.running || this.generation !== generation) return;
-      this.timer = setTimeout(runCycle, this.delayForOutcome(outcome));
+      this.arm?.(this.delayForOutcome(outcome));
+    };
+
+    this.arm = (delayMs) => {
+      if (this.timer) clearTimeout(this.timer);
+      this.timerDueAt = Date.now() + delayMs;
+      this.timer = setTimeout(runCycle, delayMs);
     };
 
     void runCycle();
+  }
+
+  /**
+   * The realtime channel came or went. A lost channel must not leave the next cycle waiting out the
+   * relaxed cadence: a timer due later than the normal interval is pulled in to it. A channel that came
+   * back needs nothing here - it asks for a sync of its own on opening, and the cadence relaxes after it.
+   */
+  public realtimeLinkChanged(): void {
+    if (!this.running || !this.arm || !this.timer) return;
+    if (this.options.isRealtimeLive?.()) return;
+    const dueIn = this.timerDueAt - Date.now();
+    if (dueIn > this.intervalTimeMs) this.arm(this.intervalTimeMs);
   }
 
   public request(): void {
@@ -135,6 +164,7 @@ export class SyncScheduler {
     this.running = false;
     this.generation += 1;
     this.queued = false;
+    this.arm = null;
     this.cycleAbort?.abort();
     if (this.timer) {
       clearTimeout(this.timer);
@@ -184,7 +214,9 @@ export class SyncScheduler {
       return failedRetryDelayMs(this.consecutiveFailures);
     }
     this.consecutiveFailures = 0;
-    return this.intervalTimeMs;
+    return this.options.isRealtimeLive?.()
+      ? Math.max(this.intervalTimeMs, LIVE_SYNC_INTERVAL_MS)
+      : this.intervalTimeMs;
   }
 
   /**

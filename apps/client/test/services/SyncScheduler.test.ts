@@ -4,6 +4,7 @@
 import { NO_RESPONSE_ERROR } from '../../src/services/apiClient';
 import {
   FAILED_RETRY_MAX_MS,
+  LIVE_SYNC_INTERVAL_MS,
   OFFLINE_RETRY_MS,
   SYNC_INTERVAL_MS,
   SyncScheduler,
@@ -419,6 +420,93 @@ describe('SyncScheduler', () => {
       jest.advanceTimersByTime(1);
       await flush();
       expect(performSync).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('while the realtime channel is alive', () => {
+    let live: boolean;
+    let relaxed: SyncScheduler;
+
+    beforeEach(() => {
+      live = true;
+      relaxed = new SyncScheduler({
+        readiness: () => ready,
+        performSync,
+        isRealtimeLive: () => live,
+      });
+    });
+
+    afterEach(() => relaxed.stop());
+
+    it('waits the relaxed interval after a good cycle instead of the normal one', async () => {
+      relaxed.start();
+      await flush();
+      performSync.mockClear();
+
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(LIVE_SYNC_INTERVAL_MS - SYNC_INTERVAL_MS * 2);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('never relaxes below an interval the caller asked for', async () => {
+      relaxed.start(LIVE_SYNC_INTERVAL_MS * 2);
+      await flush();
+      performSync.mockClear();
+
+      jest.advanceTimersByTime(LIVE_SYNC_INTERVAL_MS * 2 - 1);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+    });
+
+    it('pulls a relaxed timer back to the normal interval when the channel is lost', async () => {
+      relaxed.start();
+      await flush();
+      performSync.mockClear();
+      jest.advanceTimersByTime(60_000);
+
+      live = false;
+      relaxed.realtimeLinkChanged();
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS - 1);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(1);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not push a timer that is already due sooner back out, nor act while still alive', async () => {
+      relaxed.start();
+      await flush();
+      performSync.mockClear();
+
+      relaxed.realtimeLinkChanged(); // still alive: nothing moves
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
+      await flush();
+      expect(performSync).not.toHaveBeenCalled();
+
+      live = false;
+      jest.advanceTimersByTime(LIVE_SYNC_INTERVAL_MS - SYNC_INTERVAL_MS * 2 - 10_000);
+      relaxed.realtimeLinkChanged(); // due in 10s, under the normal interval: left as it is
+      jest.advanceTimersByTime(10_000);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the normal cadence when no probe is given, and ignores a link change while stopped', async () => {
+      scheduler.realtimeLinkChanged();
+      scheduler.start();
+      await flush();
+      performSync.mockClear();
+
+      jest.advanceTimersByTime(SYNC_INTERVAL_MS);
+      await flush();
+      expect(performSync).toHaveBeenCalledTimes(1);
+
+      scheduler.stop();
+      expect(() => scheduler.realtimeLinkChanged()).not.toThrow();
     });
   });
 

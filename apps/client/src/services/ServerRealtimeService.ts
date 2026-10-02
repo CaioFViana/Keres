@@ -32,6 +32,8 @@ type ServerEvent =
 
 export interface RealtimeSyncEngine {
   requestSync(reason: 'websocket'): void;
+  /** This server's socket was lost: the sync timer may have been relaxed while it was alive. */
+  realtimeLinkChanged?(serverId: string): void;
   fetchServerStoryPreviews(server: ServerSelect): Promise<ServerStoryPreview[]>;
   downloadAndImportStory(
     queriedServerId: string,
@@ -69,6 +71,19 @@ export class ServerRealtimeService {
     private readonly syncEngine: RealtimeSyncEngine,
   ) {}
 
+  /**
+   * Alive and proven so: open, the server has shown it ticks, and it was heard from within the silence
+   * the watchdog tolerates. The sync cadence relaxes only while this holds.
+   */
+  get isLive(): boolean {
+    return (
+      !this.stopped &&
+      this.heartbeatArmed &&
+      this.socket?.readyState === WebSocket.OPEN &&
+      Date.now() - this.lastMessageAt <= SILENCE_LIMIT_MS
+    );
+  }
+
   start(storyId?: string): void {
     this.storyId = storyId;
     this.stopped = false;
@@ -105,6 +120,8 @@ export class ServerRealtimeService {
     this.watchdogTimer = null;
     this.socket?.close();
     this.socket = null;
+    this.heartbeatArmed = false;
+    this.syncEngine.realtimeLinkChanged?.(this.server.id);
     await Promise.allSettled(Array.from(this.activeTasks));
   }
 
@@ -196,6 +213,8 @@ export class ServerRealtimeService {
         // socket (after an explicit reconnect, or a stale attempt) must not open a second one.
         if (this.socket !== socket) return;
         this.socket = null;
+        this.heartbeatArmed = false;
+        this.syncEngine.realtimeLinkChanged?.(this.server.id);
         this.scheduleReconnect();
       };
     } catch (error) {
@@ -261,6 +280,7 @@ export class ServerRealtimeService {
     this.connectionAttempt += 1;
     // A fresh window for the new socket, re-armed by its opening heartbeat.
     this.heartbeatArmed = false;
+    this.syncEngine.realtimeLinkChanged?.(this.server.id);
     this.lastMessageAt = Date.now();
     previous?.close();
     this.track(this.connect());

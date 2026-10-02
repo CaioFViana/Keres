@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { comparePassword, hashPassword } from '../config/bcrypt';
 import { db } from '../db';
 import { users, userRecoveryCodes } from '../db/schema';
-import { createAttemptLimiter } from '../utils/rateLimiter';
+import { createPersistentAttemptLimiter } from './AttemptLimitService';
 
 export class InvalidRecoveryCodeError extends Error {
   constructor() {
@@ -31,7 +31,7 @@ const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODES_PER_USER = 8;
 
 /** Without this, the endpoint would be the only one in the API accepting unlimited attempts with no */
-const recoveryAttemptLimiter = createAttemptLimiter({
+const recoveryAttemptLimiter = createPersistentAttemptLimiter('recovery', {
   maxAttempts: 5,
   windowMs: 15 * 60 * 1000,
 });
@@ -96,9 +96,9 @@ export class RecoveryCodeService {
     const name = username.trim();
     const code = normalizeRecoveryCode(plainCode);
 
-    if (!recoveryAttemptLimiter.registerAttempt(name)) {
+    if (!(await recoveryAttemptLimiter.registerAttempt(name))) {
       throw new RecoveryAttemptsLockedError(
-        Math.max(1, Math.ceil(recoveryAttemptLimiter.retryAfterMs(name) / 60000)),
+        Math.max(1, Math.ceil((await recoveryAttemptLimiter.retryAfterMs(name)) / 60000)),
       );
     }
 
@@ -152,7 +152,7 @@ export class RecoveryCodeService {
         .where(eq(users.id, user.id));
     });
 
-    recoveryAttemptLimiter.clearAttempts(name);
+    await recoveryAttemptLimiter.clearAttempts(name);
     return { id: user.id, username: user.username, tag: user.tag };
   }
 }

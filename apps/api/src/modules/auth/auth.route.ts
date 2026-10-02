@@ -10,17 +10,18 @@ import {
   RecoveryAttemptsLockedError,
   recoveryCodeService,
 } from '../../services/RecoveryCodeService';
+import { createPersistentAttemptLimiter } from '../../services/AttemptLimitService';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { userService } from '../../services/UserService';
 import { AppError } from '../../utils/errors';
-import { createAttemptLimiter } from '../../utils/rateLimiter';
 import type { JWTPayload } from '../../index';
 import { createWebSocketTicket } from '../webSocket/webSocket.route';
 
-/** Same window as /forgot-password's limiter (RecoveryCodeService) - this one just never got
- *  backported when that concept was introduced, leaving /login the only credential-checking
- *  endpoint with no attempt limiting at all. */
-const loginAttemptLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 * 1000 });
+/** Same window as /forgot-password's limiter (RecoveryCodeService); both keep their counters in the database. */
+const loginAttemptLimiter = createPersistentAttemptLimiter('login', {
+  maxAttempts: 5,
+  windowMs: 15 * 60 * 1000,
+});
 
 /** Every rejection branch across this file returns exactly this shape. */
 const MessageResponseSchema = t.Object({ message: t.String() });
@@ -80,7 +81,7 @@ export const authRoutes = new Elysia()
     async ({ jwt, jwtRefresh, body, cookie }) => {
       const { username, password } = body;
 
-      if (!loginAttemptLimiter.registerAttempt(username)) {
+      if (!(await loginAttemptLimiter.registerAttempt(username))) {
         throw new AppError(401, 'Invalid credentials');
       }
 
@@ -99,7 +100,7 @@ export const authRoutes = new Elysia()
         throw new AppError(401, 'Invalid credentials');
       }
 
-      loginAttemptLimiter.clearAttempts(username);
+      await loginAttemptLimiter.clearAttempts(username);
 
       const accessToken = await jwt.sign({ userId: user.id, username: user.username });
       const refreshToken = await jwtRefresh.sign({ userId: user.id, username: user.username });

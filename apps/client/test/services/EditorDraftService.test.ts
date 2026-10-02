@@ -7,6 +7,7 @@ import {
   clearBoundEditorDraft,
   clearEditorDraft,
   clearStoryEditorDrafts,
+  flushPendingEditorDrafts,
   readBoundEditorDraft,
   readEditorDraft,
   resetEditorDraftDbForTests,
@@ -281,6 +282,30 @@ describe('bound-database wrappers', () => {
     await jest.advanceTimersByTimeAsync(500);
 
     expect(await rowCount()).toBe(0);
+    jest.useRealTimers();
+  });
+
+  it('writes at once what is still waiting out its debounce, with the latest content', async () => {
+    jest.useFakeTimers();
+    setEditorDraftDb(database.db);
+
+    scheduleWriteEditorDraft(draft.storyId, draft.entityType, draft.entityId, draft.field, 'um');
+    scheduleWriteEditorDraft(draft.storyId, draft.entityType, draft.entityId, draft.field, 'dois');
+    expect(await rowCount()).toBe(0);
+
+    await flushPendingEditorDrafts();
+
+    const row = await readBoundEditorDraft(
+      draft.storyId,
+      draft.entityType,
+      draft.entityId,
+      draft.field,
+    );
+    expect(row?.content).toBe('dois');
+    // The timer is gone: nothing is written a second time, and flushing again is a no-op.
+    await jest.advanceTimersByTimeAsync(500);
+    await flushPendingEditorDrafts();
+    expect(await rowCount()).toBe(1);
     jest.useRealTimers();
   });
 });

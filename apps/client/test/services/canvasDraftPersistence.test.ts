@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   clearAllCanvasDrafts,
   clearCanvasDraft,
+  flushPendingCanvasDrafts,
   readCanvasDraft,
   scheduleWriteCanvasDraft,
   writeCanvasDraftNow,
@@ -99,6 +100,21 @@ describe('canvasDraftPersistence', () => {
       );
     } finally {
       jest.restoreAllMocks();
+    }
+  });
+
+  it('writes at once what is still waiting out its debounce', async () => {
+    jest.useFakeTimers();
+    try {
+      const draft = { boardId: 'b', storyId: 's', content: { nodes: [], edges: [] } };
+      scheduleWriteCanvasDraft('board', 's', 'b', draft);
+      expect(await readCanvasDraft('board', 's', 'b')).toBeNull();
+
+      await flushPendingCanvasDrafts();
+
+      expect(await readCanvasDraft('board', 's', 'b')).toEqual(draft);
+    } finally {
+      jest.useRealTimers();
     }
   });
 });

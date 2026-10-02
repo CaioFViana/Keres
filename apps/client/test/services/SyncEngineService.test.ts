@@ -1294,6 +1294,30 @@ describe('startSync', () => {
     expect(performSyncSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('relaxes the cadence while the active server socket is alive, and pulls it back when that one is lost', async () => {
+    (engine as any).activeServer = { id: 'srv-1' };
+    let live = true;
+    engine.setRealtimeProbe((serverId) => serverId === 'srv-1' && live);
+    engine.startSync();
+    await flush();
+    performSyncSpy.mockClear();
+
+    jest.advanceTimersByTime(SYNC_INTERVAL_MS * 2);
+    await flush();
+    expect(performSyncSpy).not.toHaveBeenCalled();
+
+    live = false;
+    engine.realtimeLinkChanged('other-server'); // not the active server: nothing moves
+    jest.advanceTimersByTime(SYNC_INTERVAL_MS);
+    await flush();
+    expect(performSyncSpy).not.toHaveBeenCalled();
+
+    engine.realtimeLinkChanged('srv-1');
+    jest.advanceTimersByTime(SYNC_INTERVAL_MS);
+    await flush();
+    expect(performSyncSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('stops the chain for good once stopSync is called', async () => {
     engine.startSync();
     await flush();

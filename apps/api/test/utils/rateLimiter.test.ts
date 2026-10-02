@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createAttemptLimiter } from '../../src/utils/rateLimiter';
+import { createAttemptLimiter, MAX_TRACKED_KEYS } from '../../src/utils/rateLimiter';
 
 describe('createAttemptLimiter', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -32,6 +32,22 @@ describe('createAttemptLimiter', () => {
     limiter.clearAttempts('ana');
 
     expect(limiter.registerAttempt('ana')).toBe(true);
+  });
+
+  it('does not keep every key it ever saw: expired ones go first, then the oldest, past the cap', () => {
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
+    const limiter = createAttemptLimiter({ maxAttempts: 1, windowMs: 1_000 });
+    for (let i = 0; i < MAX_TRACKED_KEYS + 5; i += 1) limiter.registerAttempt(`scan-${i}`);
+
+    // Every window is still live, so the cap alone dropped the oldest ones: a retry of the first
+    // key starts a fresh count instead of being locked out by an entry that should be gone.
+    expect(limiter.registerAttempt('scan-0')).toBe(true);
+    // A recent key is still counted.
+    expect(limiter.registerAttempt(`scan-${MAX_TRACKED_KEYS + 4}`)).toBe(false);
+
+    vi.advanceTimersByTime(2_000);
+    limiter.registerAttempt('late');
+    expect(limiter.registerAttempt(`scan-${MAX_TRACKED_KEYS + 4}`)).toBe(true);
   });
 
   it('says how long a locked-out key still has to wait, and nothing when it is not locked', () => {

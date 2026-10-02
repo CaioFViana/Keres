@@ -3,6 +3,7 @@ import { runMigrations } from './db/migrate';
 import { clientDistPath } from './config/resourceRoot';
 import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
+import { pruneAttemptLimits } from './services/AttemptLimitService';
 import { auditService } from './services/AuditService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
@@ -80,6 +81,17 @@ function startAuditRetentionScheduler(): void {
   setInterval(prune, 24 * 60 * 60_000);
 }
 
+/** Drops the lockout counters whose window is long over: once at start and daily after, like the activity record. */
+function startAttemptLimitPruneScheduler(): void {
+  const prune = () => {
+    pruneAttemptLimits().catch((error: unknown) => {
+      logger.error('Attempt counter cleanup failed', error);
+    });
+  };
+  setTimeout(prune, 45_000);
+  setInterval(prune, 24 * 60 * 60_000);
+}
+
 export async function bootAndListen(options?: {
   onListening?: (address: ListeningAddress) => void;
 }): Promise<void> {
@@ -98,6 +110,7 @@ export async function bootAndListen(options?: {
   const app = await createApp();
   startMediaBlobSweepScheduler();
   startAuditRetentionScheduler();
+  startAttemptLimitPruneScheduler();
   auditService.record({
     category: 'system',
     action: 'system.server_started',

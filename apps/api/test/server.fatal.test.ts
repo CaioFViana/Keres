@@ -24,6 +24,11 @@ vi.mock('../src/services/MediaStorageService', () => ({
   mediaStorageService: { cleanupTemporaryFiles: mocks.cleanup },
 }));
 vi.mock('../src/services/ApiLogService', () => ({ persistApiLog: vi.fn() }));
+// Not what this test is about, and importing them pulls the whole database layer in cold (past the test's 5 s under load).
+vi.mock('../src/services/AuditService', () => ({
+  auditService: { record: vi.fn(), prune: vi.fn() },
+}));
+vi.mock('../src/services/AttemptLimitService', () => ({ pruneAttemptLimits: vi.fn() }));
 vi.mock('../src/utils/logger', () => ({
   logger: { info: mocks.loggerInfo, error: mocks.loggerError },
   setLogSink: mocks.setLogSink,

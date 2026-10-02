@@ -91,6 +91,7 @@ const mockSyncEngine = {
   ),
   downloadAndImportStory: jest.fn(async () => {}),
   requestSync: jest.fn(),
+  setRealtimeProbe: jest.fn(),
   deactivateStory: jest.fn(async () => {}),
   activateStory: jest.fn(async () => {}),
   startSync: jest.fn(),

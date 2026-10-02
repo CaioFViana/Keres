@@ -123,12 +123,15 @@ export function isEditorDraftDbBound(): boolean {
 /** Test helper: drop a bound database so one suite cannot leak it into the next. */
 export function resetEditorDraftDbForTests(): void {
   boundDb = null;
-  for (const timer of pendingWrites.values()) clearTimeout(timer);
+  for (const { timer } of pendingWrites.values()) clearTimeout(timer);
   pendingWrites.clear();
 }
 
-/** In-flight durable writes, keyed so rapid edits coalesce. */
-const pendingWrites = new Map<string, ReturnType<typeof setTimeout>>();
+/** In-flight durable writes, keyed so rapid edits coalesce. `flush` is the write itself, to run it ahead of the timer. */
+const pendingWrites = new Map<
+  string,
+  { timer: ReturnType<typeof setTimeout>; flush: () => Promise<void> }
+>();
 const WRITE_DEBOUNCE_MS = 400;
 
 const scheduleKey = (
@@ -156,16 +159,26 @@ export function scheduleWriteEditorDraft(
   }
   const key = scheduleKey(storyId, entityType, entityId, field);
   const existing = pendingWrites.get(key);
-  if (existing) clearTimeout(existing);
-  pendingWrites.set(
-    key,
-    setTimeout(() => {
-      pendingWrites.delete(key);
-      void writeEditorDraft(db, storyId, entityType, entityId, field, content).catch((error) => {
-        console.error('Failed to write editor draft:', error);
-      });
-    }, WRITE_DEBOUNCE_MS),
-  );
+  if (existing) clearTimeout(existing.timer);
+  const flush = async () => {
+    pendingWrites.delete(key);
+    try {
+      await writeEditorDraft(db, storyId, entityType, entityId, field, content);
+    } catch (error) {
+      console.error('Failed to write editor draft:', error);
+    }
+  };
+  pendingWrites.set(key, { timer: setTimeout(() => void flush(), WRITE_DEBOUNCE_MS), flush });
+}
+
+/**
+ * Writes now every draft still waiting out its debounce. A phone that backgrounds the app may suspend or kill
+ * it before the timer fires, and what was typed in the last moments would be the one thing lost.
+ */
+export async function flushPendingEditorDrafts(): Promise<void> {
+  const waiting = [...pendingWrites.values()];
+  for (const { timer } of waiting) clearTimeout(timer);
+  await Promise.all(waiting.map(({ flush }) => flush()));
 }
 
 export async function writeEditorDraftNow(
@@ -183,7 +196,7 @@ export async function writeEditorDraftNow(
   const key = scheduleKey(storyId, entityType, entityId, field);
   const existing = pendingWrites.get(key);
   if (existing) {
-    clearTimeout(existing);
+    clearTimeout(existing.timer);
     pendingWrites.delete(key);
   }
   await writeEditorDraft(db, storyId, entityType, entityId, field, content);
@@ -210,7 +223,7 @@ export async function clearBoundEditorDraft(
   const key = scheduleKey(storyId, entityType, entityId, field);
   const existing = pendingWrites.get(key);
   if (existing) {
-    clearTimeout(existing);
+    clearTimeout(existing.timer);
     pendingWrites.delete(key);
   }
   await clearEditorDraft(boundDb, storyId, entityType, entityId, field);
@@ -218,7 +231,7 @@ export async function clearBoundEditorDraft(
 
 export async function clearAllBoundEditorDrafts(): Promise<void> {
   if (!boundDb) return;
-  for (const timer of pendingWrites.values()) clearTimeout(timer);
+  for (const { timer } of pendingWrites.values()) clearTimeout(timer);
   pendingWrites.clear();
   await clearAllEditorDrafts(boundDb);
 }

@@ -3,6 +3,7 @@ export * from './schema/enums';
 
 // Tables
 export * from './schema/tables/apiLogs';
+export * from './schema/tables/attemptLimits';
 export * from './schema/tables/auditEvents';
 export * from './schema/tables/attributeValues';
 export * from './schema/tables/boards';

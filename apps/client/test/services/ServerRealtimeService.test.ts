@@ -38,6 +38,7 @@ const mockFriendshipService = { syncFriendshipsWithServer: jest.fn() };
 const mockPublicationService = { syncPublicationsWithServer: jest.fn() };
 const mockSyncEngine = {
   requestSync: jest.fn(),
+  realtimeLinkChanged: jest.fn(),
   fetchServerStoryPreviews: jest.fn(),
   downloadAndImportStory: jest.fn(),
 };
@@ -293,6 +294,60 @@ describe('catalog-driven resubscription', () => {
       globalThis.fetch = realFetch;
       jest.useRealTimers();
     }
+  });
+});
+
+describe('isLive and the link notification', () => {
+  const heartbeat = JSON.stringify({ type: 'server.heartbeat' });
+
+  it('is live only once the server has ticked, and not after the socket closes', async () => {
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+    expect(service.isLive).toBe(false);
+    service.start('story');
+    await flush();
+
+    const socket = MockWebSocket.instances[0];
+    socket.onopen?.();
+    expect(service.isLive).toBe(false); // open, but an old server may never tick
+
+    socket.onmessage?.({ data: heartbeat });
+    await flush();
+    expect(service.isLive).toBe(true);
+
+    socket.onclose?.();
+    expect(service.isLive).toBe(false);
+    expect(mockSyncEngine.realtimeLinkChanged).toHaveBeenCalledWith('server');
+    await service.stop();
+  });
+
+  it('stops being live when it was silent for longer than the watchdog tolerates', async () => {
+    jest.useFakeTimers();
+    try {
+      const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+      service.start('story');
+      await jest.advanceTimersByTimeAsync(0);
+      const socket = MockWebSocket.instances[0];
+      socket.onopen?.();
+      socket.onmessage?.({ data: heartbeat });
+      expect(service.isLive).toBe(true);
+
+      jest.setSystemTime(Date.now() + 80_000);
+      expect(service.isLive).toBe(false);
+      await service.stop();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('tells the engine when it is stopped or reconnected on purpose', async () => {
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+    service.start('story');
+    await flush();
+    MockWebSocket.instances[0].onopen?.();
+    mockSyncEngine.realtimeLinkChanged.mockClear();
+
+    await service.stop();
+    expect(mockSyncEngine.realtimeLinkChanged).toHaveBeenCalledWith('server');
   });
 });
 

@@ -73,6 +73,8 @@ export class SyncEngineService {
   private activeServer: ServerSelect | null = null;
   private client: KeresAxiosInstance;
   private scheduler: SyncScheduler;
+  /** Whether the realtime socket of a server is alive: asked of the app, which owns the sockets. */
+  private realtimeProbe: ((serverId: string) => boolean) | null = null;
   private pull: SyncPull;
   private push: SyncPush;
   private media: SyncMedia;
@@ -103,6 +105,8 @@ export class SyncEngineService {
         hasDatabase: Boolean(this._db),
       }),
       performSync: (signal) => this.performSync(signal),
+      isRealtimeLive: () =>
+        Boolean(this.activeServer && this.realtimeProbe?.(this.activeServer.id)),
     });
     this.entityHandlers = dependencies.createEntityHandlers();
     const syncContext: SyncContext = {
@@ -206,6 +210,19 @@ export class SyncEngineService {
 
   public requestSync(_reason: 'websocket' | 'initial' | 'local-change' = 'websocket'): void {
     this.scheduler.request();
+  }
+
+  /**
+   * Lets the timer-driven cycle relax while the active server's socket is alive (the socket nudges, the timer
+   * is only the net under a lost nudge). Without a probe the cadence stays the plain interval.
+   */
+  public setRealtimeProbe(probe: ((serverId: string) => boolean) | null): void {
+    this.realtimeProbe = probe;
+  }
+
+  /** A server's socket came or went: when it is the active one, a relaxed timer is pulled back in. */
+  public realtimeLinkChanged(serverId: string): void {
+    if (this.activeServer?.id === serverId) this.scheduler.realtimeLinkChanged();
   }
 
   public stopSync(): void {

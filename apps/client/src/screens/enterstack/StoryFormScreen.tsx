@@ -165,6 +165,7 @@ const StoryFormScreen = () => {
 
   return (
     <EntityFormContainer
+      planUsage={false}
       title={isEditing ? t('edit_story') : t('create_new_story_screen_title')}
       description={
         isEditing ? t('edit_story_description') : t('create_new_story_screen_description')

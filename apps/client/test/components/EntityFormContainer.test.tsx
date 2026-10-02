@@ -12,6 +12,10 @@ jest.mock('../../src/theme', () => ({
     colors: { text: '#111', background: '#fff', primary: '#00f', onPrimary: '#fff' },
   }),
 }));
+jest.mock('../../src/components/common/feedback/PlanUsageBanner/PlanUsageBanner', () => {
+  const { Text } = require('react-native');
+  return { __esModule: true, default: () => <Text>plan-usage-banner</Text> };
+});
 jest.mock('../../src/hooks/useResponsiveLayout', () => ({
   useResponsiveLayout: () => ({ isCompact: false }),
 }));
@@ -81,4 +85,26 @@ it('owns detail bottom clearance and keeps the title and footer inside the singl
   expect(StyleSheet.flatten(scroll.props.contentContainerStyle).paddingBottom).toBe(58);
   expect(screen.getByRole('header').props.children).toBe('Item');
   expect(screen.getByText('Back')).toBeTruthy();
+});
+
+describe('the plan usage banner', () => {
+  it('is shown above the fields by default, since these forms create what a plan counts', async () => {
+    const view = await render(
+      <EntityFormContainer title="Edit">
+        <Text>field</Text>
+      </EntityFormContainer>,
+    );
+
+    expect(view.getByText('plan-usage-banner')).toBeTruthy();
+  });
+
+  it('can be left out of the forms that are not about the open story', async () => {
+    const view = await render(
+      <EntityFormContainer title="Edit" planUsage={false}>
+        <Text>field</Text>
+      </EntityFormContainer>,
+    );
+
+    expect(view.queryByText('plan-usage-banner')).toBeNull();
+  });
 });

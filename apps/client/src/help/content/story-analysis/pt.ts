@@ -57,7 +57,7 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'O primeiro cartão é a mesma contagem que o plano de um servidor usa para limitar quanto uma história pode ter: o que você cria, sem os vínculos e valores do segundo cartão, nem a própria história, favoritos e comentários. Para uma história que está só neste dispositivo, nada a limita e a tela apenas mostra o que existe. Para uma história ligada a um servidor, a tela mostra também o nome do plano e o quanto falta para os limites, por exemplo 251 / 500 para esta história, e o total de todas as histórias que o plano cobre, quando ele tem um. A barra muda para a cor de aviso perto do limite, e fica vermelha no limite.',
+      text: 'O primeiro cartão é a mesma contagem que o plano de um servidor usa para limitar quanto uma história pode ter: o que você cria, sem os vínculos e valores do segundo cartão, nem a própria história, favoritos e comentários. Para uma história que está só neste dispositivo, nada a limita e a tela apenas mostra o que existe. Para uma história ligada a um servidor, a tela mostra também o nome do plano e o quanto falta para os limites, por exemplo 251 / 500 para esta história, e o total de todas as histórias que o plano cobre, quando ele tem um. A barra muda para a cor de aviso a partir de 90% de um limite, e para a cor de alerta a partir de 95%.',
     },
     {
       type: 'callout',

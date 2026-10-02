@@ -62,6 +62,10 @@ const mockRealtimeClass = jest.fn(() => ({
   stop: mockRtStop,
   subscribeToStory: mockRtSubscribe,
 }));
+const mockPlanUsageWatcher = jest.fn();
+jest.mock('../../src/hooks/usePlanUsageWatcher', () => ({
+  usePlanUsageWatcher: (...args: unknown[]) => mockPlanUsageWatcher(...args),
+}));
 jest.mock('../../src/services/ServerRealtimeService', () => ({
   get ServerRealtimeService() {
     return mockRealtimeClass;
@@ -224,6 +228,12 @@ describe('SyncInitializer', () => {
     expect(mockEEOn).toHaveBeenCalledWith('operation_log_updated', expect.any(Function));
     expect(mockEEOn).toHaveBeenCalledWith('sync_conflicts_changed', expect.any(Function));
     expect(mockInitialLoad).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it('keeps the plan usage of the open story watched, app-wide', async () => {
+    await render(<SyncInitializer>{null}</SyncInitializer>);
+
+    expect(mockPlanUsageWatcher).toHaveBeenCalled();
   });
 
   it('skips reconciliation without a signed-in user', async () => {

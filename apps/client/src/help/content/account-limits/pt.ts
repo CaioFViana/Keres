@@ -20,6 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
+        'A partir de 90% de um limite, os formulários onde você cria itens mostram um aviso de quanto do plano a história está usando; aos 95%, uma notificação avisa uma vez. Ler isso cedo dá tempo de liberar espaço ou pedir mais capacidade.',
         'Leia a mensagem exibida quando uma criação ou sincronização é recusada por limite.',
         'Libere espaço removendo mídias ou conteúdo que não precisa manter no servidor, quando isso for adequado.',
         'Se precisar de mais capacidade, consulte o administrador do servidor.',

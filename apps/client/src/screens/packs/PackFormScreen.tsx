@@ -115,6 +115,7 @@ const PackFormScreen = () => {
 
   return (
     <EntityFormContainer
+      planUsage={false}
       actions={
         <>
           <Button onPress={handleSave} disabled={saving} testID="save-pack">

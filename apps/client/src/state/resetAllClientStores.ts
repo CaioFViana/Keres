@@ -10,6 +10,7 @@ import { useLocationMapDraftStore } from './locationMapDraftStore';
 import { useLocationStore } from './locationStore';
 import { useNoteStore } from './noteStore';
 import { useNotificationStore } from './notificationStore';
+import { usePlanUsageStore } from './planUsageStore';
 import { useSceneStore } from './sceneStore';
 import { useStoryListStore } from './storyListStore';
 import { useStoryStore } from './storyStore';
@@ -32,6 +33,7 @@ export function resetAllClientStores(): void {
   useGalleryMediaViewerStore.getState().close();
   useGuideStore.getState().reset();
   useUnseenMessagesStore.getState().reset();
+  usePlanUsageStore.getState().clear();
 
   useChapterStore.getState().resetStore();
   useCharacterStore.getState().resetStore();

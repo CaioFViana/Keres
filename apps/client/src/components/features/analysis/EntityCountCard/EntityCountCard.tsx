@@ -5,15 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { getEntityTypeBadge } from '../../../../utils/entityTypeBadge';
+import { planUsageLevel } from '../../../../utils/planUsage';
 
 type SortKey = 'name' | 'count';
 type SortDirection = 'asc' | 'desc';
 
 /** What a first tap on a header means: names read A to Z, quantities from the biggest. */
 const DEFAULT_DIRECTION: Record<SortKey, SortDirection> = { name: 'asc', count: 'desc' };
-
-/** From here on the usage bar warns; at the ceiling it is the error color. */
-const NEAR_LIMIT = 0.8;
 
 interface EntityCountCardProps {
   /** The sum of `byType`: what the plan's entity ceiling sees for this story. */
@@ -74,8 +72,11 @@ const EntityCountCard = ({
         : { key, direction: DEFAULT_DIRECTION[key] },
     );
 
-  const usageColor = (used: number, limit: number) =>
-    used >= limit ? colors.error : used >= limit * NEAR_LIMIT ? colors.accent : colors.primary;
+  // The same marks as the editor's indicator: warning colour from 90%, alert colour from 95%.
+  const usageColor = (used: number, limit: number) => {
+    const level = planUsageLevel(used, limit);
+    return level === 'alert' ? colors.error : level === 'warning' ? colors.accent : colors.primary;
+  };
 
   const styles = StyleSheet.create({
     card: {

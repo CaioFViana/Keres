@@ -376,6 +376,7 @@ const ServerRegistrationScreen = () => {
 
   return (
     <EntityFormContainer
+      planUsage={false}
       title={serverId ? t('edit_server') : t('register_new_server')}
       description={serverId ? t('edit_server_description') : t('register_new_server_description')}
       actions={

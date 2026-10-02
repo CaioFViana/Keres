@@ -50,7 +50,7 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'The first card is the same count a server plan uses to limit how much one story can hold: what you create, but not the links and values of the second card, nor the story itself, favorites and comments. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color as you get close, and red at the limit.',
+      text: 'The first card is the same count a server plan uses to limit how much one story can hold: what you create, but not the links and values of the second card, nor the story itself, favorites and comments. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color from 90% of a limit, and to the alert color from 95%.',
     },
     {
       type: 'callout',

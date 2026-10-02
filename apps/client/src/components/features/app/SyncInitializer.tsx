@@ -8,6 +8,7 @@ import { setEditorDraftDb } from '../../../services/EditorDraftService';
 import { createFriendshipService } from '../../../services/FriendshipService';
 import { createStoryInvitationService } from '../../../services/StoryInvitationService';
 import { createServerService } from '../../../services/ServerService';
+import { usePlanUsageWatcher } from '../../../hooks/usePlanUsageWatcher';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
 import type { ServerStoryPreview } from '../../../services/SyncEngineService';
@@ -40,6 +41,8 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   const { fetchStories: fetchStoryList } = useStoryListStore();
   const { selectedStory } = useStoryStore(); // Get selectedStory from useStoryStore
   const { t } = useTranslation();
+  // How close the open story is to its plan: the editor's indicator and the alert notification read it.
+  usePlanUsageWatcher(drizzleClient, selectedStory);
   const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
   // Connections outlive story switches, so the subscription applier reads the current story
   // from a ref instead of closing over the render's value. Synced in an effect (not during

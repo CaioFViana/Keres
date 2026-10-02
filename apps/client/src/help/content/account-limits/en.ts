@@ -20,6 +20,7 @@ const page: HelpPage = {
     {
       type: 'steps',
       items: [
+        'From 90% of a limit, the forms where you create items show a note saying how much of your plan the story is using; at 95% a notification warns you once. Reading it early leaves time to free space or ask for more capacity.',
         'Read the message shown when creation or synchronization is refused due to a limit.',
         'Free space by removing media or content you do not need to keep on the server, when appropriate.',
         'If you need more capacity, contact the server administrator.',

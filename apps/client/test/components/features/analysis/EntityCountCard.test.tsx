@@ -118,6 +118,34 @@ describe('EntityCountCard', () => {
     expect(view.getByTestId('entity-count-sort-name-desc')).toBeTruthy();
   });
 
+  it('colours the plan bar at the marks of the editor indicator: warning from 90%, alert from 95%', async () => {
+    const colorOf = async (used: number) => {
+      const view = await render(
+        <EntityCountCard
+          total={used}
+          byType={{ Character: used }}
+          labelFor={labelFor}
+          plan={{
+            tierName: 'Pro',
+            maxEntitiesPerStory: 100,
+            maxEntitiesTotal: null,
+            entitiesUsedTotal: 0,
+          }}
+          onServer
+        />,
+      );
+      // The first filled bar in the tree is the plan's (the rows come after it).
+      const tree = JSON.stringify(view.toJSON());
+      return /"width":"[0-9.]+%"[^}]*?"backgroundColor":"(#[0-9a-fA-F]+)"/.exec(tree)?.[1];
+    };
+
+    expect(await colorOf(89)).toContain('#0000ff'); // primary
+    expect(await colorOf(90)).toContain('#ffaa00'); // warning
+    expect(await colorOf(94)).toContain('#ffaa00');
+    expect(await colorOf(95)).toContain('#ff0000'); // alert
+    expect(await colorOf(100)).toContain('#ff0000');
+  });
+
   it('says so, and offers no sorting, for a story with nothing in it', async () => {
     const view = await render(
       <EntityCountCard total={0} byType={{}} labelFor={labelFor} plan={null} onServer={false} />,

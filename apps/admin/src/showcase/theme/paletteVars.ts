@@ -1,4 +1,5 @@
-import { themes, type ThemeColors } from '@keres/shared';
+import type { ThemeColors } from '@keres/shared';
+import { themes } from '@keres/shared/theme/palettes/index';
 
 /**
  * A bridge between the app's palettes (token objects, made for React Native's `StyleSheet`) and

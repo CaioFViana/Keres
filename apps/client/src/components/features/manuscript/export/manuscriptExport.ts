@@ -1,11 +1,12 @@
 import type {
   CompiledManuscript,
-  ManuscriptEpubMetadata,
   ManuscriptFormat,
   ManuscriptRenderOptions,
   ManuscriptStyle,
 } from '@keres/shared';
-import { presentManuscript, renderManuscript, renderOptionsOf } from '@keres/shared';
+import { presentManuscript, renderOptionsOf } from '@keres/shared';
+import type { ManuscriptEpubMetadata } from '@keres/shared/manuscript/export';
+import { renderManuscript } from '@keres/shared/manuscript/export';
 import {
   buildManuscriptFileName,
   deliverFile,

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Tier } from '@keres/shared';
-import { slugifyUserTag } from '@keres/shared';
+import { slugifyUserTag } from '@keres/shared/utils/userTag';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
 

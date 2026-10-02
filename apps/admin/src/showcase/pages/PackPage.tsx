@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
-import {
-  STORY_SCHEMA_ENTITY_TYPES,
-  type ShowcasePackDetail,
-  type StorySchemaEntityType,
-} from '@keres/shared';
+import type { ShowcasePackDetail, StorySchemaEntityType } from '@keres/shared';
+import { STORY_SCHEMA_ENTITY_TYPES } from '@keres/shared/metadata/StorySchemaEntityType';
 import { fetchPack } from '../api/showcaseApi';
 import { OwnerAvatar } from '../components/OwnerAvatar';
 

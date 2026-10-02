@@ -1,9 +1,7 @@
 import JSZip from 'jszip';
 import { describe, expect, expectTypeOf, it } from 'vitest';
-import {
-  compileStoryManuscript,
-  type CompileStoryManuscriptInput,
-} from '../../../manuscript/compile/compileStoryManuscript';
+import { compileStoryManuscript } from '../../../manuscript/compile/compileStoryManuscript';
+import type { CompileStoryManuscriptInput } from '../../../manuscript/compile/presentedManuscript';
 import type { ManuscriptChoice } from '../../../manuscript/compile/export/manuscriptCompiler';
 import {
   DEFAULT_MANUSCRIPT_LABELS,

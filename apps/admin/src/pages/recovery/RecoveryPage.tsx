@@ -1,7 +1,7 @@
 import type { FormEvent, KeyboardEvent } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared';
+import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared/metadata/recoverableEntityTypes';
 import type { DeletedItem, OperationLogEntry } from '../../api/RecoveryApiService';
 import { RecoveryApiService } from '../../api/RecoveryApiService';
 

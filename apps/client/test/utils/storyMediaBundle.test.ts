@@ -1,7 +1,5 @@
-import {
-  CURRENT_STORY_FORMAT_VERSION,
-  extractStoryZip as extractSharedStoryZip,
-} from '@keres/shared';
+import { CURRENT_STORY_FORMAT_VERSION } from '@keres/shared';
+import { extractStoryZip as extractSharedStoryZip } from '@keres/shared/utils/storyZip';
 import { File } from 'expo-file-system';
 import { mediaFileService } from '../../src/services/MediaFileService';
 import type { StoryImportError } from '../../src/utils/StoryImportError';

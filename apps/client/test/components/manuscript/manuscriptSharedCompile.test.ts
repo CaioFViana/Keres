@@ -1,12 +1,12 @@
 /** @jest-environment node */
 import {
-  buildManuscriptDocxBytes,
   buildManuscriptHtml,
   buildManuscriptMarkdown,
   buildManuscriptText,
   compileLinearManuscript,
   compileGamebookManuscript,
 } from '@keres/shared';
+import { buildManuscriptDocxBytes } from '@keres/shared/manuscript/export';
 
 // Guards the client's shared-compile wiring end to end: the unit coverage of
 // each stage lives in @keres/shared; this file pins the pipeline the export

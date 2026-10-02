@@ -1,7 +1,5 @@
 import {
   buildPublicationLabel,
-  buildStoryZipBytes,
-  compileStoryManuscript,
   compileStoryReader,
   CURRENT_STORY_FORMAT_VERSION,
   FORMAT_META,
@@ -16,6 +14,8 @@ import {
   type ShowcaseVisibility,
   type StoryPublicationSnapshot,
 } from '@keres/shared';
+import { compileStoryManuscript } from '@keres/shared/manuscript/export';
+import { buildStoryZipBytes } from '@keres/shared/utils/storyZip';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { hashPassword } from '../config/bcrypt';

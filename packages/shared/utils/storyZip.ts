@@ -4,6 +4,7 @@ import { FullStoryExportSchema, type FullStoryExportType } from '../schemas/Full
 import type { GalleryType } from '../schemas/GallerySchemas';
 import { migrateStoryExport, StoryExportVersionError } from '../schemas/storyExportMigrations';
 import { reviveDates } from './reviveDates';
+import { stripUtf8Bom } from './stripUtf8Bom';
 
 /**
  * Packaging a story together with its gallery media, in the shape client and server share.
@@ -28,11 +29,6 @@ import { reviveDates } from './reviveDates';
 
 export const STORY_JSON_ENTRY = 'story.json';
 export const MEDIA_DIR_PREFIX = 'media/';
-
-/** Removes a UTF-8 BOM from the start of JSON text, if present. */
-export function stripUtf8Bom(text: string): string {
-  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-}
 
 /**
  * Returns a media file's bytes, or `null` when the packager does not have that file (not downloaded

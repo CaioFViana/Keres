@@ -159,7 +159,8 @@ export * from './utils/colorUtils';
 export * from './utils/tierPricing';
 export * from './metadata/TimingUnit';
 export * from './utils/storyCalendar';
-export * from './utils/storyZip';
+export * from './utils/stripUtf8Bom';
+// `./utils/storyZip` (jszip) is imported by path: `@keres/shared/utils/storyZip`.
 export * from './utils/reviveDates';
 export * from './theme/ThemeColors';
 export * from './theme/getOnColorForFill';
@@ -192,14 +193,12 @@ export * from './manuscript/choiceAnnotations';
 export * from './manuscript/compile/manuscriptSections';
 export * from './manuscript/compile/export/manuscriptCompiler';
 export * from './manuscript/compile/export/manuscriptText';
-export * from './manuscript/compile/export/manuscriptDocx';
-export * from './manuscript/compile/export/manuscriptEpub';
+// DOCX/EPUB and the dispatching entry points live in `@keres/shared/manuscript/export` (docx, jszip).
 export * from './manuscript/compile/export/manuscriptHtml';
 export * from './manuscript/compile/export/manuscriptPdf';
 export * from './manuscript/compile/manuscriptContracts';
-export * from './manuscript/compile/manuscriptRender';
 export * from './manuscript/compile/manuscriptStyle';
-export * from './manuscript/compile/compileStoryManuscript';
+export * from './manuscript/compile/presentedManuscript';
 export * from './manuscript/reader/storyReader';
 // The reader's block collides with the editor model's `ManuscriptBlock`, so it
 // exports under its own name; the file itself stays as-is.

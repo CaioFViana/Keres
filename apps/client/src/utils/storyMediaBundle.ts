@@ -1,14 +1,14 @@
+import type { FullStoryExportType } from '@keres/shared';
 import {
   buildStoryZipBytes as buildSharedStoryZipBytes,
   extractStoryZip as extractSharedStoryZip,
   StoryZipReadError,
-} from '@keres/shared';
+} from '@keres/shared/utils/storyZip';
 import type {
   BuildStoryZipResult,
   ExtractedStoryZip,
   ExtractedStoryZipMedia,
-  FullStoryExportType,
-} from '@keres/shared';
+} from '@keres/shared/utils/storyZip';
 import { File } from 'expo-file-system';
 import { mediaFileService } from '../services/MediaFileService';
 import { StoryImportError } from './StoryImportError';

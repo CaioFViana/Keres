@@ -9,7 +9,7 @@ import {
 import {
   presentedManuscriptOf,
   type CompileStoryManuscriptInput,
-} from '../compile/compileStoryManuscript';
+} from '../compile/presentedManuscript';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
   MAX_MANUSCRIPT_BYTES,

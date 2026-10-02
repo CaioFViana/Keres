@@ -1,9 +1,6 @@
-import {
-  avatarColorFromSeed,
-  DEFAULT_AVATAR_ICON,
-  isColorLight,
-  type ShowcaseOwner,
-} from '@keres/shared';
+import type { ShowcaseOwner } from '@keres/shared';
+import { avatarColorFromSeed, DEFAULT_AVATAR_ICON } from '@keres/shared/metadata/avatar';
+import { isColorLight } from '@keres/shared/utils/colorUtils';
 import avatarIcons from 'virtual:keres-avatar-icons';
 
 /**

@@ -1,4 +1,6 @@
-import { getContrastTextColor, themes, type ThemeColors } from '@keres/shared';
+import type { ThemeColors } from '@keres/shared';
+import { themes } from '@keres/shared/theme/palettes/index';
+import { getContrastTextColor } from '@keres/shared/utils/colorUtils';
 import type { ResolvedTheme } from '../../theme/theme';
 
 /**

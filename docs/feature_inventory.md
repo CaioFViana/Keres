@@ -148,6 +148,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   user tags (3–20 chars) and recovery codes; tiered account limits (stories, entities, storage, and versions published per rolling 24 hours - counted from `publication_log`, so deleting a version does not refund it; over the limit the publish answers 429).
 - **Friends**: request flow w/ `PENDING`/`FRIEND`/`BLACKLISTED`, reader/writer
   grants, blacklist; friend detail/list/form screens.
+- **Messages** (`/api/messages`, one `messages` table): between friends (`direct`), between a user and the administrators (`admin`, two ways - the administrators answer from the panel) and from the landing page form (`site`, no account). Each side deletes for itself (a row goes when both have); "read" and archiving exist only on the administrators' side, so a user never learns whether a message was read. Daily limits over a rolling 24 hours counted from `message_log` (deleting does not refund): messages to users follow the tier (`maxMessagesPerDay`, `null` unlimited, `0` silences), messages to the administrators have one fixed ceiling for everybody (`ADMIN_MESSAGES_PER_DAY`); over the limit the send answers 429. Realtime: `messages.changed` nudges the client to read again.
 - **Story roles**: owner/writer/reader; readers may only write own favourites
   and (if allowed) own comments; owner-only story fields enforced on both
   client and server.
@@ -248,7 +249,7 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   SQLite WASM), `/admin`, `/showcase`, Swagger at `/swagger`; session cookie
   for hosted web.
 - **Admin panel**: user CRUD by tier, tiers (limits, sale pricing, order),
-  registration settings (incl. currency), contact messages, recovery,
+  registration settings (incl. currency), the messages inbox (what the site's contact form and users send to the administrators: filter by origin/read/archived, sort, search, reply inside the platform to a registered user, unread badge), recovery,
   API logs, showcase/landing settings; generated favicon/logo/avatars
   (`vite.keresIcon.ts`); audit remediation plan in
   `finished_planning/ADMIN_AUDIT_REMEDIATION_PLAN.md`.

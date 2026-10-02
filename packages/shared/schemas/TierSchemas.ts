@@ -21,6 +21,8 @@ export const TierCreateInputSchema = z.object({
   maxStorageBytesTotal: z.number().int().positive().nullable().optional(),
   // Zero is a ceiling too: a tier that may not publish at all.
   maxPublicationsPerDay: z.number().int().nonnegative().nullable().optional(),
+  // Zero silences the user; messages to the administrators have a fixed cap of their own.
+  maxMessagesPerDay: z.number().int().nonnegative().nullable().optional(),
 });
 export type TierCreateInput = z.infer<typeof TierCreateInputSchema>;
 

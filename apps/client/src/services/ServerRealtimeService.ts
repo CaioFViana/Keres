@@ -3,6 +3,7 @@ import type { ServerSelect } from '../db/schema';
 import { apiBaseUrl, apiUrl, createKeresAxiosInstance } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { createFriendshipService } from './FriendshipService';
+import { createMessageService } from './MessageService';
 import { createPublicationService } from './PublicationService';
 import { createStoryInvitationService } from './StoryInvitationService';
 import { entityEventEmitter } from '../utils/EventEmitter';
@@ -26,6 +27,7 @@ type ServerEvent =
   | { type: 'story.collaborators-changed'; storyId: string }
   | { type: 'story-invitations.changed' }
   | { type: 'story.published'; storyId: string }
+  | { type: 'messages.changed' }
   | { type: 'server.heartbeat' };
 
 export interface RealtimeSyncEngine {
@@ -155,6 +157,15 @@ export class ServerRealtimeService {
               ),
             ),
         );
+        // And for messages: a nudge missed while offline is not redelivered, so the conversations are looked
+        // at again here. The first look at a server only takes note; a later one announces what arrived.
+        this.track(
+          createMessageService(this.db)
+            .handleServerNudge(this.server)
+            .catch((error) =>
+              console.log('Realtime message refresh failed:', (error as Error)?.message || error),
+            ),
+        );
         // The same reason, for publications: whoever was offline while a story they read gained a public
         // version only finds out here - the notice comes from the difference against the local mirror, not from
         // the event itself.
@@ -229,6 +240,8 @@ export class ServerRealtimeService {
       entityEventEmitter.emit('story_collaborators_changed', event.storyId, this.server.id);
     } else if (event.type === 'story-invitations.changed') {
       await createStoryInvitationService(this.db).syncWithServer(this.server);
+    } else if (event.type === 'messages.changed') {
+      await createMessageService(this.db).handleServerNudge(this.server);
     }
   }
 

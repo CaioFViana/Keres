@@ -6,6 +6,7 @@ import {
   ScreenError,
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
+import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
@@ -37,7 +38,13 @@ type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<
 >;
 
 const ChangePasswordScreen = () => {
-  useBackButtonHandler({ showWebBackButton: true });
+  // In "recover" mode the way back is to "change", not out of the screen: the header's back arrow and the
+  // hardware button both say so, which is why the mode has no small link of its own to return.
+  const [mode, setMode] = useState<'change' | 'recover'>('change');
+  useBackButtonHandler({
+    showWebBackButton: true,
+    onBack: mode === 'recover' ? () => setMode('change') : undefined,
+  });
   const { t } = useTranslation();
 
   const { colors } = useTheme();
@@ -61,7 +68,6 @@ const ChangePasswordScreen = () => {
   const [recoveryCodesToShow, setRecoveryCodesToShow] = useState<string[] | null>(null);
   // 'recover' changes the password with a recovery code instead of the current password - the same path as
   // ServerRegistrationScreen, but without asking for the username/address again: the server is already known.
-  const [mode, setMode] = useState<'change' | 'recover'>('change');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [recovering, setRecovering] = useState(false);
 
@@ -291,13 +297,11 @@ const ChangePasswordScreen = () => {
         <>
           <FormField label={t('current_password')}>
             {(fieldAccessibility) => (
-              <TextInput
+              <PasswordInput
                 {...fieldAccessibility}
                 placeholder={t('current_password_placeholder')}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
-                style={commonInputStyles.input}
-                secureTextEntry
               />
             )}
           </FormField>
@@ -328,26 +332,22 @@ const ChangePasswordScreen = () => {
 
       <FormField label={t('new_password')}>
         {(fieldAccessibility) => (
-          <TextInput
+          <PasswordInput
             {...fieldAccessibility}
             placeholder={t('new_password_placeholder')}
             value={newPassword}
             onChangeText={setNewPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
           />
         )}
       </FormField>
 
       <FormField label={t('confirm_new_password')}>
         {(fieldAccessibility) => (
-          <TextInput
+          <PasswordInput
             {...fieldAccessibility}
             placeholder={t('confirm_new_password_placeholder')}
             value={confirmNewPassword}
             onChangeText={setConfirmNewPassword}
-            style={commonInputStyles.input}
-            secureTextEntry
           />
         )}
       </FormField>
@@ -369,9 +369,6 @@ const ChangePasswordScreen = () => {
           >
             {recovering ? t('resetting_password') : t('reset_password_button')}
           </Button>
-          <TouchableOpacity onPress={() => setMode('change')} style={styles.linkRow}>
-            <Text style={styles.linkText}>{t('back_to_change_password')}</Text>
-          </TouchableOpacity>
         </>
       )}
 

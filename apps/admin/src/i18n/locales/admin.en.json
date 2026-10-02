@@ -27,18 +27,6 @@
     "actionFailed": "Action failed.",
     "blankUnlimited": "(blank = unlimited)"
   },
-  "contact": {
-    "title": "Contact messages",
-    "columnStatus": "Status",
-    "columnSubject": "Subject",
-    "columnEmail": "Email",
-    "columnWhen": "When",
-    "unread": "Unread",
-    "open": "Open",
-    "replyByEmail": "Reply by email",
-    "empty": "No messages.",
-    "confirmDelete": "Delete message \"{{subject}}\"?"
-  },
   "language": {
     "label": "Language"
   },
@@ -67,6 +55,69 @@
     "empty": "No entries. Search above.",
     "detail": "Log detail"
   },
+  "messages": {
+    "title": "Messages",
+    "searchPlaceholder": "Text, address, user or tag…",
+    "searchAriaLabel": "Search messages",
+    "filterSource": "Origin",
+    "filterRead": "Status",
+    "filterArchived": "Archive",
+    "sortBy": "Sort by",
+    "order": "Order",
+    "source": {
+      "all": "All",
+      "site": "From the site",
+      "user": "From a registered user"
+    },
+    "read": {
+      "all": "Any",
+      "unread": "Unread",
+      "read": "Read"
+    },
+    "archived": {
+      "active": "Inbox",
+      "archived": "Archived",
+      "all": "All"
+    },
+    "sort": {
+      "date": "Date",
+      "sender": "Sender",
+      "subject": "Subject"
+    },
+    "orderOption": {
+      "desc": "Newest first",
+      "asc": "Oldest first"
+    },
+    "columnStatus": "Status",
+    "columnOrigin": "Origin",
+    "columnFrom": "From",
+    "columnMessage": "Message",
+    "columnWhen": "When",
+    "unread": "Unread",
+    "originSite": "Site",
+    "originUser": "User",
+    "archivedBadge": "Archived",
+    "deletedAccount": "(account closed)",
+    "open": "Open",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "replyByEmail": "Reply by email",
+    "reply": "Reply",
+    "replyPlaceholder": "Write your answer…",
+    "replyHint": "The user sees this as a message from the administrators",
+    "send": "Send reply",
+    "replyFailed": "Could not send the reply.",
+    "conversation": "Conversation",
+    "fromAdmins": "Administrators",
+    "fromUser": "Message from {{name}}",
+    "noSubject": "(no subject)",
+    "siteReplyHint": "This message came from the site: reply to the address it left.",
+    "empty": "No messages.",
+    "confirmDelete": "Delete this message?",
+    "confirmDeleteReply": "Delete this reply?"
+  },
   "nav": {
     "title": "Keres Admin",
     "menu": "Menu",
@@ -75,11 +126,12 @@
     "recovery": "Recovery",
     "logs": "Logs",
     "tiers": "Tiers",
-    "contact": "Contact",
+    "messages": "Messages",
     "settings": "Settings",
     "signedIn": "Signed in",
     "signOut": "Sign out",
-    "ariaLabel": "Admin"
+    "ariaLabel": "Admin",
+    "unreadMessages": "{{count}} unread"
   },
   "recovery": {
     "title": "Recovery",
@@ -159,6 +211,7 @@
     "unitMegabytes": "Megabytes",
     "unitGigabytes": "Gigabytes",
     "maxPublicationsPerDay": "Max publications per day",
+    "maxMessagesPerDay": "Max messages to users per day",
     "priceMonthly": "Price per month",
     "priceYearly": "Price per year",
     "priceHint": "(blank = not offered; 0 = free)",
@@ -171,6 +224,7 @@
     "columnMaxStoragePerStory": "Max storage/story",
     "columnMaxStorageTotal": "Max storage total",
     "columnMaxPublicationsPerDay": "Publications/day",
+    "columnMaxMessagesPerDay": "Messages/day",
     "columnPriceMonthly": "Price/mo",
     "columnPriceYearly": "Price/yr",
     "columnForSale": "For sale",

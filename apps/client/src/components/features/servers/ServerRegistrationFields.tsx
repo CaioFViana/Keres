@@ -1,4 +1,5 @@
 import FormField from '@/src/components/common/forms/FormField/FormField';
+import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useTranslation } from 'react-i18next';
 import {
@@ -149,13 +150,11 @@ export default function ServerRegistrationFields({
       {!serverId && (mode === 'login' || mode === 'register') && (
         <FormField label={t('password')}>
           {(fieldAccessibility) => (
-            <TextInput
+            <PasswordInput
               {...fieldAccessibility}
               placeholder={t('password_placeholder')}
               value={password}
               onChangeText={onPasswordChange}
-              style={inputStyle}
-              secureTextEntry
             />
           )}
         </FormField>
@@ -172,13 +171,11 @@ export default function ServerRegistrationFields({
       {!serverId && mode === 'register' && (
         <FormField label={t('confirm_new_password')}>
           {(fieldAccessibility) => (
-            <TextInput
+            <PasswordInput
               {...fieldAccessibility}
               placeholder={t('confirm_new_password_placeholder')}
               value={confirmPassword}
               onChangeText={onConfirmPasswordChange}
-              style={inputStyle}
-              secureTextEntry
             />
           )}
         </FormField>
@@ -202,25 +199,21 @@ export default function ServerRegistrationFields({
           </FormField>
           <FormField label={t('new_password')}>
             {(fieldAccessibility) => (
-              <TextInput
+              <PasswordInput
                 {...fieldAccessibility}
                 placeholder={t('new_password_placeholder')}
                 value={password}
                 onChangeText={onPasswordChange}
-                style={inputStyle}
-                secureTextEntry
               />
             )}
           </FormField>
           <FormField label={t('confirm_new_password')}>
             {(fieldAccessibility) => (
-              <TextInput
+              <PasswordInput
                 {...fieldAccessibility}
                 placeholder={t('confirm_new_password_placeholder')}
                 value={confirmPassword}
                 onChangeText={onConfirmPasswordChange}
-                style={inputStyle}
-                secureTextEntry
               />
             )}
           </FormField>
@@ -234,13 +227,11 @@ export default function ServerRegistrationFields({
         <>
           <FormField label={t('new_password_optional')}>
             {(fieldAccessibility) => (
-              <TextInput
+              <PasswordInput
                 {...fieldAccessibility}
                 placeholder={t('new_password_placeholder')}
                 value={password}
                 onChangeText={onPasswordChange}
-                style={inputStyle}
-                secureTextEntry
               />
             )}
           </FormField>

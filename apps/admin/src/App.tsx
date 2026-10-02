@@ -3,8 +3,8 @@ import { AuthProvider } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
-import { ContactPage } from './pages/contact/ContactPage';
 import { LogsPage } from './pages/logs/LogsPage';
+import { MessagesPage } from './pages/messages/MessagesPage';
 import { RecoveryPage } from './pages/recovery/RecoveryPage';
 import { RegistrationSettingsPage } from './pages/settings/RegistrationSettingsPage';
 import { TiersPage } from './pages/tiers/TiersPage';
@@ -28,7 +28,9 @@ export function App() {
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/tiers" element={<TiersPage />} />
-              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/messages" element={<MessagesPage />} />
+              {/* The page used to be called Contact. */}
+              <Route path="/contact" element={<Navigate to="/messages" replace />} />
               <Route path="/settings" element={<RegistrationSettingsPage />} />
             </Route>
           </Route>

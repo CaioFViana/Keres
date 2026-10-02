@@ -8,7 +8,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'Each server can set limits for account stories, elements, and media storage.',
+      text: 'Each server can set limits for account stories, elements, media storage, and how many messages you can send to other users per day.',
     },
     { type: 'heading', level: 2, text: 'What it is for' },
     {
@@ -30,7 +30,7 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Content remains local until it can synchronize, but a limit conflict requires your decision. Limits and registration rules depend on the server, not the app.',
     },
-    { type: 'seeAlso', pages: ['sync-conflicts', 'gallery', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['sync-conflicts', 'gallery', 'data-and-backup', 'messages'] },
   ],
 };
 export default page;

@@ -642,3 +642,95 @@ button.button-danger:hover {
     min-width: 0;
   }
 }
+
+/* --- Messages ------------------------------------------------------------- */
+.nav-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  min-width: 1.3rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 0.72rem;
+  line-height: 1.3rem;
+  text-align: center;
+}
+
+.sidebar-links .nav-badge {
+  background: var(--color-sidebar-text);
+  color: var(--color-sidebar-bg);
+}
+
+.status-badge.accent {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  color: var(--color-primary);
+}
+
+.row-archived {
+  opacity: 0.7;
+}
+
+.message-cell {
+  max-width: 28rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-card.message-detail {
+  max-width: 48rem;
+}
+
+.message-body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-thread {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message-thread li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  max-width: 85%;
+}
+
+.message-thread li.from-user {
+  align-self: flex-start;
+  background: var(--color-surface);
+}
+
+.message-thread li.from-admin {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+}
+
+.message-thread li.is-opened {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.message-thread li button {
+  align-self: flex-end;
+}
+
+.message-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.message-reply textarea {
+  resize: vertical;
+}

@@ -22,6 +22,8 @@ export const tiers = table('tiers', {
   maxStorageBytesTotal: bigintNumber('max_storage_bytes_total'),
   /** Versions published in any rolling 24 hours (see `publication_log`); 0 forbids publishing. */
   maxPublicationsPerDay: integer('max_publications_per_day'),
+  /** Messages to other users in any rolling 24 hours (see `message_log`); 0 silences the user. */
+  maxMessagesPerDay: integer('max_messages_per_day'),
   /** Monthly price in the system's currency minor units; `null` = not priced monthly, 0 = free. */
   priceMonthlyCents: integer('price_monthly_cents'),
   /** Yearly price in the system's currency minor units; `null` = not priced yearly, 0 = free. */

@@ -6,20 +6,13 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import type { PublicationLabelMode, StoryPublication } from '@keres/shared';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import PasswordInput from '@/src/components/common/inputs/PasswordInput/PasswordInput';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { and, eq, isNull } from 'drizzle-orm';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Linking,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useDrizzle } from '../../db';
 import * as schema from '../../db/schema';
 import type { ServerSelect, StorySelect } from '../../db/schema';
@@ -577,13 +570,10 @@ const PublishStoryScreen = () => {
                   )}
                   {usePassword && (
                     <>
-                      <TextInput
-                        style={styles.input}
+                      <PasswordInput
                         value={password}
                         onChangeText={setPassword}
                         placeholder={t('publish_password_placeholder')}
-                        placeholderTextColor={colors.textSecondary}
-                        secureTextEntry
                       />
                       {showcase?.hasPassword && (
                         // Publishing again saves the password typed now, so leaving the field blank is not "keep the existing

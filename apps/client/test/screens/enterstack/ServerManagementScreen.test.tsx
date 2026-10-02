@@ -1,19 +1,11 @@
-const mockT = (key: string) => key;
+const mockT = (key: string, options?: Record<string, unknown>) =>
+  options ? `${key}:${JSON.stringify(options)}` : key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
-const mockAlert = jest.fn();
-const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
-const mockNavigation = {
-  goBack: (...args: unknown[]) => mockGoBack(...args),
-  navigate: (...args: unknown[]) => mockNavigate(...args),
-};
+const mockNavigation = { navigate: (...args: unknown[]) => mockNavigate(...args) };
 const mockUseScreenHeader = jest.fn();
 const mockDrizzle = {};
 const mockGetAllServers = jest.fn();
-const mockGetOwnedStories = jest.fn();
-const mockUpdateServer = jest.fn();
-const mockDeleteServer = jest.fn();
-const mockUpdateOwnTag = jest.fn();
 const mockApiGet = jest.fn();
 const mockSetTheme = jest.fn();
 const mockColors = {
@@ -27,6 +19,7 @@ const mockColors = {
   textSecondary: '#555555',
   background: '#ffffff',
   surface: '#f5f5f5',
+  card: '#fafafa',
   border: '#cccccc',
   error: '#ff0000',
   onError: '#ffffff',
@@ -73,57 +66,22 @@ jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
   useBackButtonHandler: () => {},
 }));
 
-jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
-  useFormScrollBottomPadding: () => 20,
-}));
-
 jest.mock('../../../src/db', () => ({
   useDrizzle: () => mockDrizzle,
 }));
 
-jest.mock('../../../src/utils/AppAlert', () => ({
-  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
+jest.mock('../../../src/services/ServerService', () => ({
+  createServerService: () => ({
+    getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
+  }),
 }));
-
-jest.mock('../../../src/services/ServerService', () => {
-  class ServerHasOwnedStoriesError extends Error {
-    ownedStories: Array<{ title: string }>;
-    constructor(ownedStories: Array<{ title: string }>) {
-      super('has owned stories');
-      this.ownedStories = ownedStories;
-    }
-  }
-  return {
-    ServerHasOwnedStoriesError,
-    createServerService: () => ({
-      getAllServers: (...args: unknown[]) => mockGetAllServers(...args),
-      getOwnedStories: (...args: unknown[]) => mockGetOwnedStories(...args),
-      updateServer: (...args: unknown[]) => mockUpdateServer(...args),
-      deleteServer: (...args: unknown[]) => mockDeleteServer(...args),
-    }),
-  };
-});
 
 jest.mock('../../../src/services/apiClient', () => ({
   __esModule: true,
   default: { get: (...args: unknown[]) => mockApiGet(...args) },
   apiUrl: (base: string, path: string) => `${base}${path}`,
-  isOfflineError: (err: unknown) => !!(err as { isOffline?: boolean } | null)?.isOffline,
+  isOfflineError: () => false,
 }));
-
-jest.mock('../../../src/services/UserApiService', () => ({
-  userApiService: {
-    updateOwnTag: (...args: unknown[]) => mockUpdateOwnTag(...args),
-  },
-}));
-
-jest.mock('../../../src/components/common/inputs/TextInput/TextInput', () => {
-  const { TextInput } = require('react-native');
-  return {
-    __esModule: true,
-    default: (props: Record<string, unknown>) => <TextInput testID="tag-input" {...props} />,
-  };
-});
 
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import ServerManagementScreen from '../../../src/screens/enterstack/ServerManagementScreen';
@@ -146,12 +104,6 @@ const offline = {
   lastSyncDate: null,
 };
 
-type AlertButton = { text: string; onPress?: () => void | Promise<void> };
-
-function alertButtons(callIndex = 0): AlertButton[] {
-  return mockAlert.mock.calls[callIndex][2] as AlertButton[];
-}
-
 describe('ServerManagementScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -162,30 +114,57 @@ describe('ServerManagementScreen', () => {
         ? Promise.resolve({ status: 200, data: { version: '1.2.3' } })
         : Promise.reject(new Error('unreachable')),
     );
-    mockGetOwnedStories.mockResolvedValue([]);
-    mockDeleteServer.mockResolvedValue(undefined);
-    mockUpdateServer.mockResolvedValue(undefined);
-    mockUpdateOwnTag.mockResolvedValue({ tag: 'newtag' });
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it('loads servers and pings each of them', async () => {
+  it('lists every server with where it is, who the user is there, and its tag', async () => {
     const view = await render(<ServerManagementScreen />);
     await view.findByText('Main');
+
     expect(view.getByText('Backup')).toBeTruthy();
     expect(view.getByText('https://a.example')).toBeTruthy();
-    expect(view.getAllByText(/User:/)).toHaveLength(2);
+    expect(view.getByText(/server_user_label:{"name":"alice"}.*@alice/)).toBeTruthy();
+    expect(view.getByText(/server_user_label:{"name":"bob"}.*no_tag_set/)).toBeTruthy();
     expect(view.getByText(/last_sync/)).toBeTruthy();
-    expect(view.getByText('@alice')).toBeTruthy();
-    expect(view.getByText('no_tag_set')).toBeTruthy();
+  });
+
+  it('pings each of them, and says in words which answer', async () => {
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Main');
+
     await waitFor(() => expect(mockApiGet).toHaveBeenCalledTimes(2));
     expect(mockApiGet).toHaveBeenCalledWith(
       'https://a.example/kerescheck',
       expect.objectContaining({ timeout: 5000 }),
     );
+    await view.findByText(/server_status_online.*server_api_version:{"version":"1.2.3"}/);
+    await view.findByText('server_status_offline');
+  });
+
+  it('has no buttons of its own on a server: it only opens it', async () => {
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Main');
+
+    expect(view.queryByTestId('icon-trash-outline-24')).toBeNull();
+    expect(view.queryByTestId('icon-key-outline-24')).toBeNull();
+    expect(view.queryByTestId('icon-person-circle-outline-24')).toBeNull();
+    await fireEvent.press(view.getByLabelText('Backup'));
+    expect(mockNavigate).toHaveBeenCalledWith('ServerDetail', { serverId: 'srv-2' });
+  });
+
+  it('registers a new server from the header action', async () => {
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Main');
+
+    const header = mockUseScreenHeader.mock.calls[0][0] as {
+      actions: Array<{ onPress: () => void }>;
+    };
+    header.actions[0].onPress();
+
+    expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', {});
   });
 
   it('shows the error and empty states', async () => {
@@ -197,185 +176,6 @@ describe('ServerManagementScreen', () => {
       mockGetAllServers.mockResolvedValue([]);
       const empty = await render(<ServerManagementScreen />);
       await empty.findByText('no_servers_found');
-    });
-  });
-
-  it('navigates to profile, password and edit screens', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('Main');
-    await fireEvent.press(view.getAllByTestId('icon-person-circle-outline-24')[0]);
-    expect(mockNavigate).toHaveBeenCalledWith('MyProfile', { serverId: 'srv-1' });
-    await fireEvent.press(view.getAllByTestId('icon-key-outline-24')[0]);
-    expect(mockNavigate).toHaveBeenCalledWith('ChangePassword', { serverId: 'srv-1' });
-    await fireEvent.press(view.getAllByTestId('icon-pencil-outline-24')[0]);
-    expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', { serverId: 'srv-1' });
-
-    const header = mockUseScreenHeader.mock.calls[0][0] as {
-      actions: Array<{ onPress: () => void }>;
-    };
-    header.actions[0].onPress();
-    expect(mockNavigate).toHaveBeenCalledWith('ServerRegistration', {});
-  });
-
-  it('sends the tag in the shape it is stored: lowercase, spaces made underscores', async () => {
-    mockUpdateOwnTag.mockResolvedValue({ tag: 'ana_maria' });
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('@alice');
-    await fireEvent.press(view.getByText('@alice'));
-    await fireEvent.changeText(view.getByTestId('tag-input'), '  @Ana Maria ');
-    await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
-
-    await waitFor(() =>
-      expect(mockUpdateOwnTag).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'srv-1' }),
-        'ana_maria',
-      ),
-    );
-    await view.findByText('@ana_maria');
-  });
-
-  it('does not ask the server about a tag that cannot be one', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('@alice');
-    await fireEvent.press(view.getByText('@alice'));
-    await fireEvent.changeText(view.getByTestId('tag-input'), 'a!');
-    await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
-
-    expect(mockUpdateOwnTag).not.toHaveBeenCalled();
-    expect(mockAlert).toHaveBeenCalledWith('error', 'invalid_friend_id_format');
-  });
-
-  it('edits and saves a server tag', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('@alice');
-    await fireEvent.press(view.getByText('@alice'));
-    const input = view.getByTestId('tag-input');
-    expect(input.props.value).toBe('alice');
-    await fireEvent.changeText(input, 'newtag');
-    await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
-    await waitFor(() =>
-      expect(mockUpdateOwnTag).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'srv-1' }),
-        'newtag',
-      ),
-    );
-    expect(mockUpdateServer).toHaveBeenCalledWith('srv-1', { tag: 'newtag' });
-    await view.findByText('@newtag');
-  });
-
-  it('cancels tag editing and ignores unchanged tags', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('@alice');
-    await fireEvent.press(view.getByText('@alice'));
-    await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
-    expect(mockUpdateOwnTag).not.toHaveBeenCalled();
-    await view.findByText('@alice');
-
-    await fireEvent.press(view.getByText('@alice'));
-    await fireEvent.press(view.getByTestId('icon-close-outline-20'));
-    await view.findByText('@alice');
-    expect(mockUpdateOwnTag).not.toHaveBeenCalled();
-  });
-
-  it('maps tag save failures to specific messages', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('@alice');
-
-    for (const [error, message] of [
-      [{ isOffline: true }, 'server_unreachable'],
-      [{ response: { status: 409 } }, 'tag_already_taken'],
-      [{ response: { status: 400 } }, 'invalid_tag_format'],
-      [new Error('boom'), 'failed_to_update_tag'],
-    ] as const) {
-      mockUpdateOwnTag.mockRejectedValueOnce(error);
-      await fireEvent.press(view.getByText('@alice'));
-      await fireEvent.changeText(view.getByTestId('tag-input'), 'taken');
-      await fireEvent.press(view.getByTestId('icon-checkmark-outline-20'));
-      await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', message));
-      await fireEvent.press(view.getByTestId('icon-close-outline-20'));
-      await view.findByText('@alice');
-    }
-  });
-
-  it('deletes a server after confirmation', async () => {
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('Backup');
-    await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[1]);
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith(
-        'delete_server_title',
-        'delete_server_message',
-        expect.any(Array),
-        { cancelable: true },
-      ),
-    );
-    const del = alertButtons(0).find((b) => b.text === 'delete');
-    await act(async () => {
-      await del?.onPress?.();
-    });
-    await waitFor(() => expect(mockDeleteServer).toHaveBeenCalledWith('srv-2'));
-    expect(mockAlert).toHaveBeenCalledWith('success', 'server_deleted_successfully');
-    expect(view.queryByText('Backup')).toBeNull();
-  });
-
-  it('blocks deletion while the server owns stories', async () => {
-    mockGetOwnedStories.mockResolvedValue([{ title: 'Epic' }]);
-    const view = await render(<ServerManagementScreen />);
-    await view.findByText('Main');
-    await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-    await waitFor(() =>
-      expect(mockAlert).toHaveBeenCalledWith(
-        'cannot_delete_server_owned_stories_title',
-        'cannot_delete_server_owned_stories_message',
-      ),
-    );
-    expect(mockDeleteServer).not.toHaveBeenCalled();
-  });
-
-  it('reports deletion failures', async () => {
-    await withSilencedConsole(['error'], async () => {
-      const view = await render(<ServerManagementScreen />);
-      await view.findByText('Main');
-
-      mockGetOwnedStories.mockRejectedValueOnce(new Error('db down'));
-      await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-      await waitFor(() =>
-        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
-      );
-
-      const { ServerHasOwnedStoriesError } = jest.requireMock(
-        '../../../src/services/ServerService',
-      ) as { ServerHasOwnedStoriesError: new (s: Array<{ title: string }>) => Error };
-      mockDeleteServer.mockRejectedValueOnce(new ServerHasOwnedStoriesError([{ title: 'Epic' }]));
-      await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-      await waitFor(() =>
-        expect(mockAlert).toHaveBeenCalledWith(
-          'delete_server_title',
-          'delete_server_message',
-          expect.any(Array),
-          { cancelable: true },
-        ),
-      );
-      const owned = alertButtons(mockAlert.mock.calls.length - 1).find((b) => b.text === 'delete');
-      await act(async () => {
-        await owned?.onPress?.();
-      });
-      await waitFor(() =>
-        expect(mockAlert).toHaveBeenCalledWith(
-          'cannot_delete_server_owned_stories_title',
-          'cannot_delete_server_owned_stories_message',
-        ),
-      );
-
-      mockDeleteServer.mockRejectedValueOnce(new Error('boom'));
-      await fireEvent.press(view.getAllByTestId('icon-trash-outline-24')[0]);
-      const del = alertButtons(mockAlert.mock.calls.length - 1).find((b) => b.text === 'delete');
-      await act(async () => {
-        await del?.onPress?.();
-      });
-      await waitFor(() =>
-        expect(mockAlert).toHaveBeenCalledWith('error', 'failed_to_delete_server'),
-      );
     });
   });
 
@@ -399,5 +199,28 @@ describe('ServerManagementScreen', () => {
     });
     await view.findByText('Main');
     expect(mockGetAllServers.mock.calls.length).toBe(callsAfterMount + 1);
+  });
+
+  it('keeps what it knew about a server while asking again, instead of blinking back to checking', async () => {
+    jest.useFakeTimers();
+    try {
+      const view = await render(<ServerManagementScreen />);
+      await view.findByText(/server_status_online/);
+
+      // Hold the next answer back: during the wait the old status must still be there.
+      let release: (value: unknown) => void = () => {};
+      mockApiGet.mockImplementation(() => new Promise((resolve) => (release = resolve)));
+      await act(async () => {
+        jest.advanceTimersByTime(7000);
+      });
+      expect(view.queryByText('server_status_checking')).toBeNull();
+      expect(view.getByText(/server_status_online/)).toBeTruthy();
+
+      await act(async () => {
+        release({ status: 200, data: { version: '1.2.4' } });
+      });
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

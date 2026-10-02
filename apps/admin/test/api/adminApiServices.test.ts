@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
   put: vi.fn(),
+  patch: vi.fn(),
   delete: vi.fn(),
 }));
 
@@ -13,8 +14,8 @@ vi.mock('../../src/api/apiClient', async (importOriginal) => {
 });
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
-import { ContactApiService } from '../../src/api/ContactApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';
+import { MessagesApiService } from '../../src/api/MessagesApiService';
 import { RecoveryApiService } from '../../src/api/RecoveryApiService';
 import { RegistrationSettingsApiService } from '../../src/api/RegistrationSettingsApiService';
 import { ShowcaseSettingsApiService } from '../../src/api/ShowcaseSettingsApiService';
@@ -27,7 +28,7 @@ import { TierApiService } from '../../src/api/TierApiService';
  */
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const method of [mocks.get, mocks.post, mocks.put, mocks.delete]) {
+  for (const method of [mocks.get, mocks.post, mocks.put, mocks.patch, mocks.delete]) {
     method.mockResolvedValue({ data: { ok: true } });
   }
 });
@@ -225,19 +226,30 @@ describe('RecoveryApiService', () => {
   });
 });
 
-describe('ContactApiService', () => {
-  it('maps list, read and delete to the contact routes', async () => {
-    await ContactApiService.list();
-    await ContactApiService.get('msg-1');
-    await ContactApiService.remove('msg-1');
+describe('MessagesApiService', () => {
+  it('maps the inbox calls to the message routes', async () => {
+    await MessagesApiService.list({ source: 'site', page: 2 });
+    await MessagesApiService.open('msg-1');
+    await MessagesApiService.patch('msg-1', { archived: true });
+    await MessagesApiService.reply('msg-1', 'Hello');
+    await MessagesApiService.remove('msg-1');
+    await MessagesApiService.unreadCount();
 
-    expect(mocks.get).toHaveBeenCalledWith('/admin/contact');
-    expect(mocks.get).toHaveBeenCalledWith('/admin/contact/msg-1');
-    expect(mocks.delete).toHaveBeenCalledWith('/admin/contact/msg-1');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/messages', {
+      params: { source: 'site', page: 2 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/messages/msg-1');
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/messages/msg-1', { archived: true });
+    expect(mocks.post).toHaveBeenCalledWith('/admin/messages/msg-1/reply', { body: 'Hello' });
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/messages/msg-1');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/messages/unread-count');
   });
 
   it('refuses unsafe path segments', async () => {
-    await expect(ContactApiService.get('../x')).rejects.toThrow();
+    await expect(MessagesApiService.open('../x')).rejects.toThrow();
+    await expect(MessagesApiService.patch('../x', { read: true })).rejects.toThrow();
+    await expect(MessagesApiService.reply('../x', 'hi')).rejects.toThrow();
+    await expect(MessagesApiService.remove('../x')).rejects.toThrow();
     expect(mocks.get).not.toHaveBeenCalled();
   });
 });

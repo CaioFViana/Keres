@@ -25,9 +25,8 @@ const mocks = vi.hoisted(() => ({
   restoreDeleted: vi.fn(),
   browseOperationLog: vi.fn(),
   listLogs: vi.fn(),
-  listContact: vi.fn(),
-  getContact: vi.fn(),
-  removeContact: vi.fn(),
+  listMessages: vi.fn(),
+  unreadMessages: vi.fn(),
 }));
 
 vi.mock('../../src/api/AdminAuthService', () => ({
@@ -75,12 +74,9 @@ vi.mock('../../src/api/RecoveryApiService', () => ({
   },
 }));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
-vi.mock('../../src/api/ContactApiService', () => ({
-  ContactApiService: {
-    list: mocks.listContact,
-    get: mocks.getContact,
-    remove: mocks.removeContact,
-  },
+vi.mock('../../src/api/MessagesApiService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/api/MessagesApiService')>()),
+  MessagesApiService: { list: mocks.listMessages, unreadCount: mocks.unreadMessages },
 }));
 
 const renderRoute = (route: string) =>
@@ -109,7 +105,8 @@ beforeEach(() => {
   mocks.listDeleted.mockResolvedValue([]);
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
-  mocks.listContact.mockResolvedValue([]);
+  mocks.listMessages.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
+  mocks.unreadMessages.mockResolvedValue({ unread: 0 });
   mocks.login.mockResolvedValue({ userId: 'admin-1', username: 'admin' });
 });
 
@@ -135,7 +132,8 @@ describe('admin routes', () => {
     ['/recovery', 'Recovery'],
     ['/logs', 'Logs'],
     ['/tiers', 'Tiers'],
-    ['/contact', 'Contact messages'],
+    ['/messages', 'Messages'],
+    ['/contact', 'Messages'],
     ['/settings', 'Settings'],
   ])('renders the protected %s route', async (route, heading) => {
     setToken('admin-token');
@@ -156,7 +154,7 @@ describe('admin routes', () => {
       '/recovery',
       '/logs',
       '/tiers',
-      '/contact',
+      '/messages',
       '/settings',
     ]) {
       views.push(await renderRoute(route));
@@ -165,7 +163,7 @@ describe('admin routes', () => {
 
     expect(mocks.listUsers).toHaveBeenCalled();
     expect(mocks.listTiers).toHaveBeenCalled();
-    expect(mocks.listContact).toHaveBeenCalled();
+    expect(mocks.listMessages).toHaveBeenCalled();
     // Twice: the tiers screen also loads the settings, for the price currency.
     expect(mocks.getSettings).toHaveBeenCalledTimes(2);
     expect(mocks.listLogs).toHaveBeenCalled();

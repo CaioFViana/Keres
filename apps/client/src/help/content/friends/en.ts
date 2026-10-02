@@ -32,7 +32,7 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Friendship only applies to the selected server. Once accepted, the person can be selected as a collaborator; undoing it does not delete stories, but removes the collaboration and any open story invitations between you.',
     },
-    { type: 'seeAlso', pages: ['your-profile', 'collaborators', 'what-is-a-server'] },
+    { type: 'seeAlso', pages: ['messages', 'your-profile', 'collaborators', 'what-is-a-server'] },
   ],
 };
 export default page;

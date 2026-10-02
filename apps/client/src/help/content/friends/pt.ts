@@ -32,7 +32,7 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'A amizade só vale no servidor escolhido. Depois de aceita, a pessoa pode ser selecionada como colaboradora; desfazer a amizade não apaga histórias, mas encerra a colaboração e os convites abertos entre vocês.',
     },
-    { type: 'seeAlso', pages: ['your-profile', 'collaborators', 'what-is-a-server'] },
+    { type: 'seeAlso', pages: ['messages', 'your-profile', 'collaborators', 'what-is-a-server'] },
   ],
 };
 export default page;

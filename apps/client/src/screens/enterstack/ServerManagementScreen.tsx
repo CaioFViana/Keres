@@ -1,250 +1,31 @@
-import { normalizeUserTag, USER_TAG_MAX_LENGTH, USER_TAG_MIN_LENGTH } from '@keres/shared';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
-import { Ionicons } from '@expo/vector-icons';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { useDrizzle } from '../../db';
-import type { ServerSelect } from '../../db/schema';
-import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack'; // Updated import
-import apiClient, { apiUrl, isOfflineError } from '../../services/apiClient'; // Import axios and AxiosError
-import type { OwnedServerStory } from '../../services/ServerService';
-import { createServerService, ServerHasOwnedStoriesError } from '../../services/ServerService';
-import { userApiService } from '../../services/UserApiService';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import ServerListItem from '../../components/features/servers/ServerListItem';
+import { useServerStatuses } from '../../hooks/useServerStatuses';
+import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { useTheme } from '../../theme';
-import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
-import { AppAlert } from '../../utils/AppAlert';
-
-interface ServerWithStatus extends ServerSelect {
-  pingStatus: 'idle' | 'pending' | 'online' | 'offline';
-  apiVersion: string | null;
-}
+import { getCommonContainerStyles } from '../../theme/commonStyles';
 
 type ServerManagementScreenNavigationProp = NativeStackNavigationProp<
   ServerManagementStackParamList,
   'ServerManagement'
 >;
 
+/**
+ * The servers this device knows, each with whether it answers. Everything the user can do with one
+ * - profile, password, connection, messages, removal - is on the server's own screen.
+ */
 const ServerManagementScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
-
   const { colors } = useTheme();
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);
-  const commonCardStyles = getCommonCardStyles(colors);
-  const drizzleDb = useDrizzle();
-  const [serverService] = useState(() => createServerService(drizzleDb));
-  const isFocused = useIsFocused();
-
-  const [servers, setServers] = useState<ServerWithStatus[]>([]);
-  const [loading, setLoading] = useState(true); // Set to true initially to load servers
-  const [error, setError] = useState<string | null>(null);
-  const [editingTagServerId, setEditingTagServerId] = useState<string | null>(null);
-  const [editingTagValue, setEditingTagValue] = useState('');
-  const [savingTag, setSavingTag] = useState(false);
-
-  const pingServer = async (server: ServerWithStatus): Promise<ServerWithStatus> => {
-    try {
-      const checkUrl = apiUrl(server.url, '/kerescheck');
-      const response = await apiClient.get(checkUrl, {
-        timeout: 5000, // 5 seconds timeout
-        validateStatus: () => true, // Always resolve, don't reject on HTTP status codes
-      });
-
-      if (response.status === 200 && response.data && typeof response.data.version === 'string') {
-        return { ...server, pingStatus: 'online', apiVersion: response.data.version };
-      } else {
-        return { ...server, pingStatus: 'offline', apiVersion: null };
-      }
-    } catch {
-      return Promise.resolve({ ...server, pingStatus: 'offline', apiVersion: null });
-    }
-  };
-
-  /**
-   * Re-reads the servers from the local DB (so fields like `lastSyncDate`, kept fresh by
-   * the background sync engine, show up without needing to leave and re-enter the screen)
-   * and pings them right away - not on a delay, so the pulse icon isn't stuck gray/idle
-   * until the first interval tick fires.
-   */
-  const loadAndPingServers = useCallback(async () => {
-    try {
-      const fetchedServers = await serverService.getAllServers();
-      const serversWithStatus: ServerWithStatus[] = fetchedServers.map((s) => ({
-        ...s,
-        pingStatus: 'pending',
-        apiVersion: null,
-      }));
-      setServers(serversWithStatus);
-      setError(null);
-
-      if (serversWithStatus.length > 0) {
-        const pinged = await Promise.all(serversWithStatus.map(pingServer));
-        setServers(pinged);
-      }
-    } catch (err) {
-      console.error('Failed to load servers:', err);
-      setError(t('failed_to_load_servers'));
-    }
-  }, [serverService, t]);
-
-  const [prevIsFocused, setPrevIsFocused] = useState(isFocused);
-  const [prevLoadAndPingServers, setPrevLoadAndPingServers] = useState(() => loadAndPingServers);
-  if (isFocused !== prevIsFocused || loadAndPingServers !== prevLoadAndPingServers) {
-    setPrevIsFocused(isFocused);
-    // Wrapped: the state holds the callback itself, and an unwrapped function argument would
-    // run as a state updater instead - invoking a DB read during render on every focus change
-    // and looping into "Too many re-renders".
-    setPrevLoadAndPingServers(() => loadAndPingServers);
-    if (isFocused) {
-      setLoading(true);
-    }
-  }
-
-  useEffect(() => {
-    if (!isFocused) {
-      return;
-    }
-
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- `loadAndPingServers` only reaches setState after `await`; the rule cannot verify across the callback boundary.
-    loadAndPingServers().finally(() => {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    });
-
-    const intervalId = setInterval(loadAndPingServers, 7000); // Refresh + ping every 7 seconds
-    return () => {
-      cancelled = true;
-      clearInterval(intervalId);
-    };
-  }, [isFocused, loadAndPingServers]);
-
-  const showOwnedStoriesBlock = useCallback(
-    (ownedStories: OwnedServerStory[]) => {
-      AppAlert.alert(
-        t('cannot_delete_server_owned_stories_title'),
-        t('cannot_delete_server_owned_stories_message', {
-          stories: ownedStories.map((story) => story.title).join(', '),
-        }),
-      );
-    },
-    [t],
-  );
-
-  const handleDeleteServer = async (serverId: string) => {
-    try {
-      const ownedStories = await serverService.getOwnedStories(serverId);
-      if (ownedStories.length > 0) {
-        showOwnedStoriesBlock(ownedStories);
-        return;
-      }
-    } catch (err) {
-      console.error('Failed to check stories before deleting server:', err);
-      AppAlert.alert(t('error'), t('failed_to_delete_server'));
-      return;
-    }
-
-    AppAlert.alert(
-      t('delete_server_title'),
-      t('delete_server_message'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('delete'),
-          onPress: async () => {
-            try {
-              await serverService.deleteServer(serverId); // Delete from the database
-              setServers((prev) => prev.filter((server) => server.id !== serverId)); // Update servers state directly
-              AppAlert.alert(t('success'), t('server_deleted_successfully'));
-            } catch (err) {
-              console.error('Failed to delete server:', err);
-              if (err instanceof ServerHasOwnedStoriesError) {
-                showOwnedStoriesBlock(err.ownedStories);
-              } else {
-                AppAlert.alert(t('error'), t('failed_to_delete_server'));
-              }
-            }
-          },
-          style: 'destructive',
-        },
-      ],
-      { cancelable: true },
-    );
-  };
-
-  const handleStartEditTag = (server: ServerWithStatus) => {
-    setEditingTagServerId(server.id);
-    setEditingTagValue(server.tag || '');
-  };
-
-  const handleCancelEditTag = () => {
-    setEditingTagServerId(null);
-    setEditingTagValue('');
-  };
-
-  const handleSaveTag = async (server: ServerWithStatus) => {
-    // Sent the way it is stored (lowercase, no spaces), so what is checked is what is saved.
-    const newTag = normalizeUserTag(editingTagValue);
-    if (!newTag || newTag === server.tag) {
-      handleCancelEditTag();
-      return;
-    }
-    if (newTag.length < USER_TAG_MIN_LENGTH || newTag.length > USER_TAG_MAX_LENGTH) {
-      AppAlert.alert(t('error'), t('invalid_friend_id_format'));
-      return;
-    }
-
-    setSavingTag(true);
-    try {
-      const updated = await userApiService.updateOwnTag(server, newTag);
-      await serverService.updateServer(server.id, { tag: updated.tag });
-      setServers((prev) => prev.map((s) => (s.id === server.id ? { ...s, tag: updated.tag } : s)));
-      handleCancelEditTag();
-    } catch (err: any) {
-      if (isOfflineError(err)) {
-        AppAlert.alert(t('error'), t('server_unreachable'));
-      } else if (err?.response?.status === 409) {
-        AppAlert.alert(t('error'), t('tag_already_taken'));
-      } else if (err?.response?.status === 400) {
-        AppAlert.alert(t('error'), t('invalid_tag_format'));
-      } else {
-        AppAlert.alert(t('error'), t('failed_to_update_tag'));
-      }
-    } finally {
-      setSavingTag(false);
-    }
-  };
-
-  const getPingIconColor = (status: ServerWithStatus['pingStatus']) => {
-    switch (status) {
-      case 'pending':
-        return '#FFD700'; // Gold/Yellow
-      case 'online':
-        return '#32CD32'; // Lime Green
-      case 'offline':
-        return colors.error; // Red
-      case 'idle':
-      default:
-        return colors.textSecondary; // Grayish
-    }
-  };
+  const { servers, loading, error } = useServerStatuses();
 
   useScreenHeader({
     target: 'parent',
@@ -258,93 +39,6 @@ const ServerManagementScreen = () => {
       },
     ],
   });
-
-  const renderServerItem = ({ item }: { item: ServerWithStatus }) => (
-    <View
-      style={[commonCardStyles.cardContainer, styles.serverItem, { borderColor: colors.border }]}
-    >
-      <View style={styles.serverInfo}>
-        <Text style={[styles.serverName, { color: colors.text }]}>{item.name}</Text>
-        <Text style={[styles.serverUrl, { color: colors.textSecondary }]}>{item.url}</Text>
-        <Text style={[styles.serverUser, { color: colors.textSecondary }]}>
-          User: {item.userName}
-        </Text>
-        {editingTagServerId === item.id ? (
-          <View style={styles.tagEditRow}>
-            <Text style={[styles.tagAtPrefix, { color: colors.textSecondary }]}>@</Text>
-            <TextInput
-              style={[styles.tagInput, { color: colors.text, borderColor: colors.border }]}
-              value={editingTagValue}
-              onChangeText={setEditingTagValue}
-              autoCapitalize="none"
-              autoFocus
-              editable={!savingTag}
-            />
-            {savingTag ? (
-              <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />
-            ) : (
-              <>
-                <TouchableOpacity onPress={() => handleSaveTag(item)} style={{ marginLeft: 8 }}>
-                  <Ionicons name="checkmark-outline" size={20} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleCancelEditTag} style={{ marginLeft: 8 }}>
-                  <Ionicons name="close-outline" size={20} color={colors.error} />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.tagEditRow} onPress={() => handleStartEditTag(item)}>
-            <Text style={[styles.serverTag, { color: colors.primary }]}>
-              {item.tag ? `@${item.tag}` : t('no_tag_set')}
-            </Text>
-            <Ionicons
-              name="pencil-outline"
-              size={14}
-              color={colors.textSecondary}
-              style={{ marginLeft: 6 }}
-            />
-          </TouchableOpacity>
-        )}
-        {item.lastSyncDate && (
-          <Text style={[styles.serverDetail, { color: colors.textSecondary }]}>
-            {t('last_sync')}: {new Date(item.lastSyncDate).toLocaleString()}
-          </Text>
-        )}
-      </View>
-      <View style={styles.serverActions}>
-        <Ionicons
-          name="pulse-outline"
-          size={24}
-          color={getPingIconColor(item.pingStatus)}
-          style={{ marginRight: 10 }}
-        />
-        <TouchableOpacity
-          onPress={() => navigation.navigate('MyProfile', { serverId: item.id })}
-          style={{ marginRight: 10 }}
-        >
-          <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ChangePassword', { serverId: item.id })}
-          style={{ marginRight: 10 }}
-        >
-          <Ionicons name="key-outline" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ServerRegistration', { serverId: item.id })}
-        >
-          <Ionicons name="pencil-outline" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => void handleDeleteServer(item.id)}
-          style={{ marginLeft: 10 }}
-        >
-          <Ionicons name="trash-outline" size={24} color={colors.error} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 
   if (loading) {
     return (
@@ -367,7 +61,18 @@ const ServerManagementScreen = () => {
     <View style={commonContainerStyles.container}>
       <FlatList
         data={servers}
-        renderItem={renderServerItem}
+        renderItem={({ item }) => (
+          <ServerListItem
+            name={item.name}
+            url={item.url}
+            userName={item.userName}
+            tag={item.tag}
+            lastSync={item.lastSyncDate ? new Date(item.lastSyncDate).toLocaleString() : null}
+            status={item.pingStatus}
+            apiVersion={item.apiVersion}
+            onPress={() => navigation.navigate('ServerDetail', { serverId: item.id })}
+          />
+        )}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
@@ -384,58 +89,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  serverItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  serverInfo: {
-    flex: 1,
-  },
-  serverName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  serverUrl: {
-    fontSize: 14,
-  },
-  serverUser: {
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  serverTag: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  tagEditRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-    marginBottom: 2,
-  },
-  tagAtPrefix: {
-    fontSize: 13,
-  },
-  tagInput: {
-    fontSize: 13,
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    width: 140,
-    height: 30,
-    marginBottom: 0,
-  },
-  serverDetail: {
-    fontSize: 12,
-  },
-  serverActions: {
-    flexDirection: 'row',
   },
 });
 

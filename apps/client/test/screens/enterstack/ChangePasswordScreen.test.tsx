@@ -54,8 +54,9 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: () => {},
 }));
 
+const mockBackOptions = jest.fn();
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
-  useBackButtonHandler: () => {},
+  useBackButtonHandler: (options: unknown) => mockBackOptions(options),
 }));
 
 jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
@@ -134,6 +135,8 @@ describe('ChangePasswordScreen', () => {
     expect(view.getByText('save')).toBeTruthy();
     expect(view.getByText('forgot_current_password_link')).toBeTruthy();
     expect(view.getByText('regenerate_recovery_codes_title')).toBeTruthy();
+    // Every password has an eye to check what was typed.
+    expect(view.getAllByLabelText('show_password')).toHaveLength(3);
   });
 
   it('shows the error screen when the server is missing', async () => {
@@ -301,7 +304,14 @@ describe('ChangePasswordScreen', () => {
     await waitFor(() => expect(mockAlert).toHaveBeenCalledWith('error', 'recovery_code_invalid'));
     expect(mockGoBack).not.toHaveBeenCalled();
 
-    await fireEvent.press(view.getByText('back_to_change_password'));
+    // The way back from recovering with a code is back to changing the password: the header's back
+    // arrow and the hardware button do it, not a small link of the screen's own.
+    expect(view.queryByText('back_to_change_password')).toBeNull();
+    await act(async () => {
+      mockBackOptions.mock.calls.at(-1)![0].onBack();
+    });
     await view.findByText('current_password');
+    // Back in "change" mode, back leaves the screen as usual.
+    expect(mockBackOptions.mock.calls.at(-1)![0].onBack).toBeUndefined();
   });
 });

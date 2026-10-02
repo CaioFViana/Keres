@@ -16,6 +16,7 @@ const emptyForm: TierCreateInput = {
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
   isPublicForSale: false,
@@ -77,6 +78,7 @@ export function TiersPage() {
       maxStorageBytesPerStory: tier.maxStorageBytesPerStory,
       maxStorageBytesTotal: tier.maxStorageBytesTotal,
       maxPublicationsPerDay: tier.maxPublicationsPerDay,
+      maxMessagesPerDay: tier.maxMessagesPerDay,
       priceMonthlyCents: tier.priceMonthlyCents ?? null,
       priceYearlyCents: tier.priceYearlyCents ?? null,
       isPublicForSale: tier.isPublicForSale ?? false,
@@ -209,6 +211,7 @@ export function TiersPage() {
             onChange={(bytes) => setForm((f) => ({ ...f, maxStorageBytesTotal: bytes }))}
           />
           {limitInput(t('tiers.maxPublicationsPerDay'), 'maxPublicationsPerDay')}
+          {limitInput(t('tiers.maxMessagesPerDay'), 'maxMessagesPerDay')}
           <label className="checkbox-label">
             <input
               type="checkbox"
@@ -259,6 +262,7 @@ export function TiersPage() {
                 <th>{t('tiers.columnMaxStoragePerStory')}</th>
                 <th>{t('tiers.columnMaxStorageTotal')}</th>
                 <th>{t('tiers.columnMaxPublicationsPerDay')}</th>
+                <th>{t('tiers.columnMaxMessagesPerDay')}</th>
                 <th>{t('tiers.columnPriceMonthly')}</th>
                 <th>{t('tiers.columnPriceYearly')}</th>
                 <th>{t('tiers.columnForSale')}</th>
@@ -276,6 +280,7 @@ export function TiersPage() {
                   <td>{formatStorage(tier.maxStorageBytesPerStory)}</td>
                   <td>{formatStorage(tier.maxStorageBytesTotal)}</td>
                   <td>{tier.maxPublicationsPerDay ?? '∞'}</td>
+                  <td>{tier.maxMessagesPerDay ?? '∞'}</td>
                   <td>{formatPrice(tier.priceMonthlyCents)}</td>
                   <td>{formatPrice(tier.priceYearlyCents)}</td>
                   <td>{tier.isPublicForSale ? t('common.yes') : ''}</td>
@@ -302,7 +307,7 @@ export function TiersPage() {
               ))}
               {tiers.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="empty-state">
+                  <td colSpan={13} className="empty-state">
                     {t('tiers.empty')}
                   </td>
                 </tr>

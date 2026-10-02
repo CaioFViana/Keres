@@ -100,6 +100,7 @@ export const helpSections: HelpSection[] = [
       'your-profile',
       'change-password',
       'friends',
+      'messages',
       'collaborators',
       'account-limits',
     ],

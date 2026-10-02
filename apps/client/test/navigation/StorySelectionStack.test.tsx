@@ -131,6 +131,14 @@ jest.mock('../../src/screens/enterstack/FriendshipListScreen', () => ({
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/enterstack/ConversationScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/enterstack/MessageInboxScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/enterstack/ImportExportScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -140,6 +148,10 @@ jest.mock('../../src/screens/enterstack/PublishStoryScreen', () => ({
   default: () => null,
 }));
 jest.mock('../../src/screens/enterstack/MyProfileScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/enterstack/ServerDetailScreen', () => ({
   __esModule: true,
   default: () => null,
 }));

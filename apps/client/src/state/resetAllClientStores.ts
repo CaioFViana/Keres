@@ -16,6 +16,7 @@ import { useStoryStore } from './storyStore';
 import { useSummaryStore } from './summaryStore';
 import { useSyncConflictStore } from './syncConflictStore';
 import { useTagStore } from './tagStore';
+import { useUnseenMessagesStore } from './unseenMessagesStore';
 import { useWorldRuleStore } from './worldRuleStore';
 
 /** Clears every store that can retain data tied to the SQLite database being reset. */
@@ -30,6 +31,7 @@ export function resetAllClientStores(): void {
   useNotificationStore.getState().clearAll();
   useGalleryMediaViewerStore.getState().close();
   useGuideStore.getState().reset();
+  useUnseenMessagesStore.getState().reset();
 
   useChapterStore.getState().resetStore();
   useCharacterStore.getState().resetStore();

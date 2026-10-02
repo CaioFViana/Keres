@@ -83,7 +83,7 @@ An **Electron** wrapper around `apps/client`'s web export. `main.ts`:
 
 ## `apps/admin`
 
-An SPA in **React + Vite + react-router-dom**, served by the API itself under `/admin/*`. It is an **internal** panel, not aimed at the end user (the writer): it manages users, subscription tiers/plans (limits, sale pricing, order), the system currency, contact messages, registration-opening settings, the hosted pages (client, landing, showcase) and account recovery. The same project also generates the **Showcase** (`vite.showcase.config.ts`, output in `dist-showcase/`), the showcase of published stories served by the API — a distinct thing from the GitHub Pages landing page.
+An SPA in **React + Vite + react-router-dom**, served by the API itself under `/admin/*`. It is an **internal** panel, not aimed at the end user (the writer): it manages users, subscription tiers/plans (limits, sale pricing, order), the system currency, the messages inbox (landing form and user messages; reply, archive, filters), registration-opening settings, the hosted pages (client, landing, showcase) and account recovery. The same project also generates the **Showcase** (`vite.showcase.config.ts`, output in `dist-showcase/`), the showcase of published stories served by the API — a distinct thing from the GitHub Pages landing page.
 
 ---
 

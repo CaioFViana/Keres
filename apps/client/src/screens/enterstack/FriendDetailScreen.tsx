@@ -47,7 +47,6 @@ const statusLabelKey = (status: string) => {
 const FriendDetailScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
-  useScreenHeader({ target: 'parent', title: t('friend_detail_title') });
   const { colors } = useTheme();
   const navigation = useNavigation<FriendDetailScreenNavigationProp>();
   const route = useRoute<FriendDetailScreenRouteProp>();
@@ -63,6 +62,29 @@ const FriendDetailScreen = () => {
   const [friendship, setFriendship] = useState<FriendshipWithServer | null>(null);
   const [server, setServer] = useState<ServerSelect | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Messages are for friends only (the API refuses anybody else), so the way in only shows for them.
+  const openConversation = useCallback(() => {
+    if (!friendship) return;
+    navigation.navigate('Conversation', {
+      serverId: friendship.serverId,
+      peer: friendship.otherUserId,
+      peerName: friendship.friendUsername,
+    });
+  }, [friendship, navigation]);
+  useScreenHeader({
+    target: 'parent',
+    title: t('friend_detail_title'),
+    actions: [
+      {
+        id: 'send-message',
+        icon: 'chatbubble-outline',
+        label: t('send_message'),
+        onPress: openConversation,
+        visible: friendship?.status === FriendStatus.FRIEND,
+      },
+    ],
+  });
 
   // `load` is wired to three independent triggers below (mount, the `focus` listener, and
   // the `friendship_changed` event), so a single action that deletes this friendship (e.g.

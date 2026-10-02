@@ -9,6 +9,7 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import FriendshipDrawerIcon from '../components/features/messages/FriendshipDrawerIcon';
 import { TouchableOpacity, View } from 'react-native';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
@@ -26,7 +27,9 @@ import ChangePasswordScreen from '../screens/enterstack/ChangePasswordScreen';
 import CreditsScreen from '../screens/enterstack/CreditsScreen';
 import FriendDetailScreen from '../screens/enterstack/FriendDetailScreen';
 import FriendshipFormScreen from '../screens/enterstack/FriendshipFormScreen';
+import ConversationScreen from '../screens/enterstack/ConversationScreen';
 import FriendshipListScreen from '../screens/enterstack/FriendshipListScreen';
+import MessageInboxScreen from '../screens/enterstack/MessageInboxScreen';
 import ImportExportScreen from '../screens/enterstack/ImportExportScreen';
 import PackBrowseScreen from '../screens/packs/PackBrowseScreen';
 import PackFormScreen from '../screens/packs/PackFormScreen';
@@ -34,6 +37,7 @@ import PackListScreen from '../screens/packs/PackListScreen';
 import ShippedPacksScreen from '../screens/packs/ShippedPacksScreen';
 import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
+import ServerDetailScreen from '../screens/enterstack/ServerDetailScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
@@ -59,6 +63,9 @@ export type StorySelectionMainStackParamList = {
 
 export type ServerManagementStackParamList = {
   ServerManagement: undefined;
+  ServerDetail: { serverId: string };
+  /** The same screen as the friendship stack's: opened from a server, back returns to the server. */
+  Conversation: { serverId: string; peer: string; peerName?: string };
   ServerRegistration: { serverId?: string };
   MyProfile: { serverId: string };
   ChangePassword: { serverId: string };
@@ -68,6 +75,9 @@ export type FriendshipStackParamList = {
   FriendshipList: undefined;
   FriendshipForm: undefined;
   FriendDetail: { friendshipId: string };
+  MessageInbox: undefined;
+  /** `peer` is `admin` or the friend's id on that server; `peerName` is only for the header. */
+  Conversation: { serverId: string; peer: string; peerName?: string };
 };
 
 /**
@@ -171,6 +181,16 @@ const ServerManagementStackNavigator = () => {
         options={{ headerTitle: t('manage_servers') }}
       />
       <ServerManagementStack.Screen
+        name="ServerDetail"
+        component={ServerDetailScreen}
+        options={{ headerTitle: t('server_detail_title') }}
+      />
+      <ServerManagementStack.Screen
+        name="Conversation"
+        component={ConversationScreen}
+        options={{ headerTitle: t('messages_title') }}
+      />
+      <ServerManagementStack.Screen
         name="ServerRegistration"
         component={ServerRegistrationScreen}
         options={({ route }) => ({
@@ -214,6 +234,16 @@ const FriendshipStackNavigator = () => {
         name="FriendDetail"
         component={FriendDetailScreen}
         options={{ headerTitle: t('friend_detail_title') }}
+      />
+      <FriendshipStack.Screen
+        name="MessageInbox"
+        component={MessageInboxScreen}
+        options={{ headerTitle: t('messages_title') }}
+      />
+      <FriendshipStack.Screen
+        name="Conversation"
+        component={ConversationScreen}
+        options={{ headerTitle: t('messages_title') }}
       />
     </FriendshipStack.Navigator>
   );
@@ -430,7 +460,7 @@ const StorySelectionNavigator = () => {
               options={{
                 title: t('manage_friendships'),
                 drawerLabel: t('manage_friendships'),
-                drawerIcon: drawerIcon('people-outline'),
+                drawerIcon: ({ color, size }) => <FriendshipDrawerIcon color={color} size={size} />,
               }}
               listeners={drawerItemListeners('FriendshipDrawer', 'FriendshipList')}
             />

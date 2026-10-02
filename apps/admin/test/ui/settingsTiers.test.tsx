@@ -61,6 +61,7 @@ const tier = (over: Record<string, unknown> = {}) => ({
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
   isPublicForSale: false,
@@ -440,6 +441,44 @@ describe('tiers page', () => {
     await flush();
     expect(mocks.createTier).toHaveBeenLastCalledWith(
       expect.objectContaining({ maxPublicationsPerDay: null }),
+    );
+    await view.unmount();
+  });
+
+  it('asks for the messages per day, and keeps 0 (silenced) apart from empty (unlimited)', async () => {
+    mocks.listTiers.mockResolvedValue([tier({ maxMessagesPerDay: 12 })]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    expect(view.container.querySelector('thead')!.textContent).toContain('Messages/day');
+    expect(view.container.querySelector('tbody tr')!.textContent).toContain('12');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.form-card label')).find((node) =>
+      node.textContent?.includes('Max messages to users per day'),
+    )!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Quiet');
+    await changeInput(label.querySelector('input')!, '0');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxMessagesPerDay: 0 }),
+    );
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    await changeInput(view.container.querySelector('.form-card input')!, 'Open');
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+    expect(mocks.createTier).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxMessagesPerDay: null }),
     );
     await view.unmount();
   });

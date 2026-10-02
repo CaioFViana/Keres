@@ -449,6 +449,19 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
+  MessageInbox: {
+    id: 'MessageInbox',
+    drawerId: 'story-selection',
+    helpPageId: 'messages',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Messages', 'list')],
+        titleKey: 'tour_messages_list_title',
+        bodyKey: 'tour_messages_list_body',
+      },
+    ],
+  },
   BoardCanvas: {
     id: 'BoardCanvas',
     drawerId: 'main-system',

@@ -212,12 +212,6 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     ],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
-  // Visitor messages to the administrators: exchanged between the landing page and the admin
-  // panel, never shown inside the client itself.
-  ContactMessage: {
-    documented: [],
-    invisible: ['id', 'subject', 'body', 'contactEmail', 'isRead', 'createdAt'],
-  },
   Effect: {
     documented: [
       'entityType',
@@ -500,6 +494,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'maxStorageBytesPerStory',
       'maxStorageBytesTotal',
       'maxPublicationsPerDay',
+      'maxMessagesPerDay',
       'createdAt',
       'updatedAt',
     ],

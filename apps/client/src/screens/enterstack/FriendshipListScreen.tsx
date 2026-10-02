@@ -18,6 +18,7 @@ import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService'; // Import createServerService
 import { createStoryInvitationService } from '../../services/StoryInvitationService';
 import { useNotificationStore } from '../../state/notificationStore';
+import { useHasUnseenMessages } from '../../state/unseenMessagesStore';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { getCommonCardStyles, getCommonContainerStyles } from '../../theme/commonStyles';
@@ -107,11 +108,23 @@ const FriendshipListScreen = () => {
     navigation.navigate('FriendshipForm');
   }, [navigation]);
 
+  const hasUnseenMessages = useHasUnseenMessages();
+  const handleOpenInbox = useCallback(() => {
+    navigation.navigate('MessageInbox');
+  }, [navigation]);
+
   useScreenHeader({
     target: 'parent',
     title: t('manage_friendships'),
     actions: [
       { id: 'action-0', icon: 'add', label: t('add_new_friendship'), onPress: handleAddFriendship },
+      {
+        id: 'inbox',
+        // The inbox icon says when something is waiting in it.
+        icon: hasUnseenMessages ? 'mail-unread-outline' : 'chatbubbles-outline',
+        label: hasUnseenMessages ? t('messages_unseen') : t('messages_title'),
+        onPress: handleOpenInbox,
+      },
     ],
   });
 
@@ -243,6 +256,20 @@ const FriendshipListScreen = () => {
 
           {item.status === FriendStatus.FRIEND && (
             <>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate('Conversation', {
+                    serverId: item.serverId,
+                    peer: item.otherUserId,
+                    peerName: item.friendUsername,
+                  })
+                }
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel={t('send_message')}
+              >
+                <Ionicons name="chatbubble-outline" size={24} color={colors.primary} />
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => handleUnfriendUser(item.id, item.serverId)}
                 style={styles.actionButton}

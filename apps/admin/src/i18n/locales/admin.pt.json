@@ -27,18 +27,6 @@
     "actionFailed": "A ação falhou.",
     "blankUnlimited": "(em branco = ilimitado)"
   },
-  "contact": {
-    "title": "Mensagens de contato",
-    "columnStatus": "Estado",
-    "columnSubject": "Assunto",
-    "columnEmail": "E-mail",
-    "columnWhen": "Quando",
-    "unread": "Não lida",
-    "open": "Abrir",
-    "replyByEmail": "Responder por e-mail",
-    "empty": "Sem mensagens.",
-    "confirmDelete": "Excluir a mensagem \"{{subject}}\"?"
-  },
   "language": {
     "label": "Idioma"
   },
@@ -67,6 +55,69 @@
     "empty": "Nenhuma entrada. Faça uma busca acima.",
     "detail": "Detalhe do registro"
   },
+  "messages": {
+    "title": "Mensagens",
+    "searchPlaceholder": "Texto, endereço, usuário ou tag…",
+    "searchAriaLabel": "Buscar mensagens",
+    "filterSource": "Origem",
+    "filterRead": "Estado",
+    "filterArchived": "Arquivo",
+    "sortBy": "Ordenar por",
+    "order": "Ordem",
+    "source": {
+      "all": "Todas",
+      "site": "Vindas do site",
+      "user": "De usuário registrado"
+    },
+    "read": {
+      "all": "Qualquer",
+      "unread": "Não lidas",
+      "read": "Lidas"
+    },
+    "archived": {
+      "active": "Caixa de entrada",
+      "archived": "Arquivadas",
+      "all": "Todas"
+    },
+    "sort": {
+      "date": "Data",
+      "sender": "Remetente",
+      "subject": "Assunto"
+    },
+    "orderOption": {
+      "desc": "Mais recentes primeiro",
+      "asc": "Mais antigas primeiro"
+    },
+    "columnStatus": "Estado",
+    "columnOrigin": "Origem",
+    "columnFrom": "De",
+    "columnMessage": "Mensagem",
+    "columnWhen": "Quando",
+    "unread": "Não lida",
+    "originSite": "Site",
+    "originUser": "Usuário",
+    "archivedBadge": "Arquivada",
+    "deletedAccount": "(conta encerrada)",
+    "open": "Abrir",
+    "archive": "Arquivar",
+    "unarchive": "Restaurar",
+    "markRead": "Marcar como lida",
+    "markUnread": "Marcar como não lida",
+    "replyByEmail": "Responder por e-mail",
+    "reply": "Resposta",
+    "replyPlaceholder": "Escreva a resposta…",
+    "replyHint": "O usuário vê isto como uma mensagem dos administradores",
+    "send": "Enviar resposta",
+    "replyFailed": "Não foi possível enviar a resposta.",
+    "conversation": "Conversa",
+    "fromAdmins": "Administradores",
+    "fromUser": "Mensagem de {{name}}",
+    "noSubject": "(sem assunto)",
+    "siteReplyHint": "Esta mensagem veio do site: responda para o endereço que ela deixou.",
+    "empty": "Sem mensagens.",
+    "confirmDelete": "Excluir esta mensagem?",
+    "confirmDeleteReply": "Excluir esta resposta?"
+  },
   "nav": {
     "title": "Keres Admin",
     "menu": "Menu",
@@ -75,11 +126,12 @@
     "recovery": "Recuperação",
     "logs": "Registros",
     "tiers": "Planos",
-    "contact": "Contato",
+    "messages": "Mensagens",
     "settings": "Configurações",
     "signedIn": "Conectado",
     "signOut": "Sair",
-    "ariaLabel": "Administração"
+    "ariaLabel": "Administração",
+    "unreadMessages": "{{count}} não lidas"
   },
   "recovery": {
     "title": "Recuperação",
@@ -159,6 +211,7 @@
     "unitMegabytes": "Megabytes",
     "unitGigabytes": "Gigabytes",
     "maxPublicationsPerDay": "Máximo de publicações por dia",
+    "maxMessagesPerDay": "Máximo de mensagens a usuários por dia",
     "priceMonthly": "Preço mensal",
     "priceYearly": "Preço anual",
     "priceHint": "(vazio = não oferecido; 0 = grátis)",
@@ -171,6 +224,7 @@
     "columnMaxStoragePerStory": "Armazenamento/história",
     "columnMaxStorageTotal": "Armazenamento total",
     "columnMaxPublicationsPerDay": "Publicações/dia",
+    "columnMaxMessagesPerDay": "Mensagens/dia",
     "columnPriceMonthly": "Preço/mês",
     "columnPriceYearly": "Preço/ano",
     "columnForSale": "À venda",

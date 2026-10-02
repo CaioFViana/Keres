@@ -231,6 +231,65 @@ describe('FriendshipListScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('FriendshipForm');
   });
 
+  it('opens the inbox from the header, next to the add action', async () => {
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('your_friendships');
+    const header = mockUseScreenHeader.mock.calls[0][0] as {
+      actions: Array<{ id: string; icon: string; onPress: () => void }>;
+    };
+
+    expect(header.actions.map((action) => action.icon)).toEqual(['add', 'chatbubbles-outline']);
+    header.actions[1].onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('MessageInbox');
+  });
+
+  it('changes the inbox icon when a message has not been opened', async () => {
+    const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('your_friendships');
+    const lastActions = () =>
+      (
+        mockUseScreenHeader.mock.calls.at(-1)![0] as {
+          actions: Array<{ icon: string; label: string }>;
+        }
+      ).actions;
+    expect(lastActions()[1]).toMatchObject({
+      icon: 'chatbubbles-outline',
+      label: 'messages_title',
+    });
+
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|u1': '09' } });
+    });
+    expect(lastActions()[1]).toMatchObject({
+      icon: 'mail-unread-outline',
+      label: 'messages_unseen',
+    });
+
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: {} });
+    });
+  });
+
+  it('opens the conversation with a friend from their row, and only for friends', async () => {
+    mockGetAllFriendships.mockResolvedValue([pendingReceived, friend]);
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('status_friend');
+
+    const icons = view.getAllByTestId('icon-chatbubble-outline-24');
+    expect(icons).toHaveLength(1);
+    await fireEvent.press(icons[0]);
+
+    expect(mockNavigate).toHaveBeenCalledWith('Conversation', {
+      serverId: friend.serverId,
+      peer: friend.otherUserId,
+      peerName: friend.friendUsername,
+    });
+  });
+
   it('navigates to the friend detail on row press', async () => {
     const view = await render(<FriendshipListScreen />);
     await focusLast();

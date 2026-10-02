@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { PublicTiersResponseSchema } from '@keres/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '../../src/db';
-import { contactMessages, tiers } from '../../src/db/schema';
+import { messages, tiers } from '../../src/db/schema';
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 
@@ -143,14 +143,15 @@ describe('POST /public/contact', () => {
     });
 
     expect(status).toBe(201);
-    const stored = await db.query.contactMessages.findFirst({
-      where: eq(contactMessages.id, data.id),
-    });
+    const stored = await db.query.messages.findFirst({ where: eq(messages.id, data.id) });
     expect(stored).toMatchObject({
+      channel: 'site',
+      senderId: null,
+      recipientId: null,
       subject: 'Plans',
       body: 'Do you offer yearly billing?',
       contactEmail: 'a@b.co',
-      isRead: false,
+      adminReadAt: null,
     });
   });
 
@@ -187,78 +188,5 @@ describe('POST /public/contact', () => {
     }
 
     expect(statuses).toContain(429);
-  });
-});
-
-describe('admin contact messages', () => {
-  // Straight into the table: the rate-limit test above already spent this file's POST budget.
-  async function store(subject: string): Promise<string> {
-    const id = newId();
-    await db.insert(contactMessages).values({
-      id,
-      subject,
-      body: 'Hello',
-      contactEmail: 'a@b.co',
-    });
-    return id;
-  }
-
-  it('lists messages newest first', async () => {
-    const firstId = newId();
-    const secondId = newId();
-    await db.insert(contactMessages).values({
-      id: firstId,
-      subject: 'First',
-      body: 'one',
-      contactEmail: 'a@b.co',
-      createdAt: new Date('2025-01-01T00:00:00Z'),
-    });
-    await db.insert(contactMessages).values({
-      id: secondId,
-      subject: 'Second',
-      body: 'two',
-      contactEmail: 'a@b.co',
-      createdAt: new Date('2025-06-01T00:00:00Z'),
-    });
-
-    const { status, data } = await request('GET', '/admin/api/contact', { token: admin.token });
-
-    expect(status).toBe(200);
-    expect(data.map((row: { id: string }) => row.id)).toEqual([secondId, firstId]);
-  });
-
-  it('marks a message read when opened, and deletes it', async () => {
-    const id = await store('Plans');
-
-    const read = await request('GET', `/admin/api/contact/${id}`, { token: admin.token });
-    expect(read.status).toBe(200);
-    expect(read.data).toMatchObject({ id, subject: 'Plans', isRead: true });
-
-    const deleted = await request('DELETE', `/admin/api/contact/${id}`, { token: admin.token });
-    expect(deleted.status).toBe(200);
-
-    const gone = await request('GET', `/admin/api/contact/${id}`, { token: admin.token });
-    expect(gone.status).toBe(404);
-  });
-
-  it('answers 404 for a message that does not exist', async () => {
-    const missing = newId();
-
-    const read = await request('GET', `/admin/api/contact/${missing}`, { token: admin.token });
-    const deleted = await request('DELETE', `/admin/api/contact/${missing}`, {
-      token: admin.token,
-    });
-
-    expect(read.status).toBe(404);
-    expect(deleted.status).toBe(404);
-  });
-
-  it('stays behind the admin gate', async () => {
-    const anonymous = await request('GET', '/admin/api/contact');
-    expect(anonymous.status).toBe(401);
-
-    const comum = await registerUser('ana');
-    const forbidden = await request('GET', '/admin/api/contact', { token: comum.token });
-    expect(forbidden.status).toBe(403);
   });
 });

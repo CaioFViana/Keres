@@ -185,3 +185,20 @@ export class StaticDelivery {
     await this.variant(entry, 'gzip', input.load);
   }
 }
+
+/**
+ * Puts a `StaticDelivery` answer on the response: its headers (lowercase, as the CORS plugin writes its
+ * own - a second spelling of `Vary` would be joined to its `*` rather than replace it), its status, and
+ * its body. A 304 has no body, not even an empty one: a `Response` with a null-body status refuses a string.
+ */
+export function sendStaticDelivery(
+  set: { status?: number | string; headers: Record<string, string | number> },
+  delivery: StaticDeliveryResult,
+): Uint8Array | Response {
+  for (const [name, value] of Object.entries(delivery.headers)) {
+    set.headers[name.toLowerCase()] = value;
+  }
+  set.status = delivery.status;
+  if (delivery.status === 304) return new Response(null, { status: 304 });
+  return delivery.body ?? new Uint8Array();
+}

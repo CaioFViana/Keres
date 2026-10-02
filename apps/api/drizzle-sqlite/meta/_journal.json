@@ -274,6 +274,20 @@
       "when": 1790899275886,
       "tag": "0038_fine_kid_colt",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "6",
+      "when": 1790951689973,
+      "tag": "0039_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "6",
+      "when": 1790951699468,
+      "tag": "0040_drop_contact_messages",
+      "breakpoints": true
     }
   ]
 }

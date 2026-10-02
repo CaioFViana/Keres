@@ -17,6 +17,7 @@ describe('screenGuides', () => {
       'LocationsStack',
       'MainDashboard',
       'Manuscript',
+      'MessageInbox',
       'NarrativeElementsStack',
       'NotesStack',
       'OperationLogStack',

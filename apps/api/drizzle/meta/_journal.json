@@ -372,6 +372,20 @@
       "when": 1790902634867,
       "tag": "0052_kind_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1790951688617,
+      "tag": "0053_messaging",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1790951698229,
+      "tag": "0054_drop_contact_messages",
+      "breakpoints": true
     }
   ]
 }

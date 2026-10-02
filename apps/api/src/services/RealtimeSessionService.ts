@@ -18,7 +18,13 @@ export type RealtimeEvent =
    * authoritative GET - the bus is in memory and resends nothing to whoever was offline, so the client
    * also redoes that GET on every reconnection.
    */
-  | { type: 'story.published'; storyId: string };
+  | { type: 'story.published'; storyId: string }
+  /**
+   * A message arrived in (or left, or was removed from) one of the user's conversations. Again only a
+   * nudge: the client reads the inbox and the open conversation over REST, so a message sent while it
+   * was offline is simply there on the next read.
+   */
+  | { type: 'messages.changed' };
 
 type EventBus = {
   on: (key: string, callback: (event: never) => void) => void;

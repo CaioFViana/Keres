@@ -8,7 +8,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Cada servidor pode definir limites para histórias, elementos e espaço de mídia da conta.',
+      text: 'Cada servidor pode definir limites para histórias, elementos, espaço de mídia da conta e quantas mensagens você pode enviar a outros usuários por dia.',
     },
     { type: 'heading', level: 2, text: 'Para que serve' },
     {
@@ -30,7 +30,7 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'O conteúdo continua local até poder ser sincronizado, mas um conflito de limite exige sua decisão. Limites e regras de cadastro dependem do servidor, não do aplicativo.',
     },
-    { type: 'seeAlso', pages: ['sync-conflicts', 'gallery', 'data-and-backup'] },
+    { type: 'seeAlso', pages: ['sync-conflicts', 'gallery', 'data-and-backup', 'messages'] },
   ],
 };
 export default page;

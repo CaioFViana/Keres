@@ -2,10 +2,13 @@ const mockT = (key: string) => key;
 const mockI18n = { t: mockT, i18n: { language: 'en' } };
 const mockAlert = jest.fn();
 const mockGoBack = jest.fn();
+const mockNavigate = jest.fn();
+const mockHeader = jest.fn();
 const mockCanGoBack = jest.fn();
 const mockUnsubscribe = jest.fn();
 const mockFocusListeners: Array<() => void> = [];
 const mockNavigation = {
+  navigate: (...args: unknown[]) => mockNavigate(...args),
   goBack: (...args: unknown[]) => mockGoBack(...args),
   canGoBack: (...args: unknown[]) => mockCanGoBack(...args),
   addListener: (_event: string, cb: () => void) => {
@@ -67,7 +70,7 @@ jest.mock('../../../src/theme', () => {
 });
 
 jest.mock('../../../src/hooks/useScreenHeader', () => ({
-  useScreenHeader: () => {},
+  useScreenHeader: (options: unknown) => mockHeader(options),
 }));
 
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
@@ -175,6 +178,33 @@ describe('FriendDetailScreen', () => {
     });
     await waitFor(() => expect(mockAccept).toHaveBeenCalledWith('f1', 'me-on-server'));
     expect(mockNotify).toHaveBeenCalledWith('request_accepted_successfully', 'success');
+  });
+
+  it('offers the way to message a friend in the header, and only for a friend', async () => {
+    mockGetAllFriendships.mockResolvedValue([
+      friendship({ status: FriendStatus.FRIEND, senderId: 'me-on-server', receiverId: 'them' }),
+    ]);
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    const action = mockHeader.mock.calls.at(-1)![0].actions[0];
+    expect(action).toMatchObject({ icon: 'chatbubble-outline', visible: true });
+    action.onPress();
+    expect(mockNavigate).toHaveBeenCalledWith('Conversation', {
+      serverId: 'srv-1',
+      peer: 'them',
+      peerName: 'Zoe',
+    });
+  });
+
+  it('hides the message action while it is only a request', async () => {
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    expect(mockHeader.mock.calls.at(-1)![0].actions[0].visible).toBe(false);
+    // Nothing to open before the friendship is loaded.
+    mockHeader.mock.calls[0][0].actions[0].onPress();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('shows a sent request with a single cancel action', async () => {

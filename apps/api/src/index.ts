@@ -22,7 +22,7 @@ import {
 } from './services/hostedClient';
 import { deliverDistFile } from './services/distStaticDelivery';
 import { hostedClientDelivery, hostedClientDeliveryInput } from './services/hostedClientDelivery';
-import type { StaticDeliveryResult } from './services/staticDelivery';
+import { sendStaticDelivery } from './services/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
@@ -100,20 +100,35 @@ function applyClientAppIsolationHeaders(set: { headers: Record<string, string | 
 }
 
 /**
- * Puts a `StaticDelivery` answer on the response: its headers (lowercase, as the CORS plugin writes its
- * own - a second spelling of `Vary` would be joined to its `*` rather than replace it), its status, and
- * its body. A 304 has no body, not even an empty one: a `Response` with a null-body status refuses a string.
+ * The admin panel: a file of its build, or - for a route of the panel that is not a file (say,
+ * /admin/users, which React Router resolves in the browser) - the same index.html. Without that
+ * fallback an F5 on /admin/users would give a 404.
+ *
+ * Shared by `/admin` and `/admin/*`: the router sees them as two paths, and only one of them used to be
+ * registered, so `/admin` fell to the catch-all and was sent to the root while `/admin/` opened the panel.
  */
-function sendStaticDelivery(
+async function serveAdminUi(
   set: { status?: number | string; headers: Record<string, string | number> },
-  delivery: StaticDeliveryResult,
-): Uint8Array | Response {
-  for (const [name, value] of Object.entries(delivery.headers)) {
-    set.headers[name.toLowerCase()] = value;
+  request: Request,
+  requestPath: string,
+): Promise<Uint8Array | string | Response | { message: string }> {
+  // Do not let the removed `/admin/api/*` contract become a 200 with index.html.
+  if (requestPath === '/admin/api' || requestPath.startsWith('/admin/api/')) {
+    set.status = 404;
+    return { message: 'Not found' };
   }
-  set.status = delivery.status;
-  if (delivery.status === 304) return new Response(null, { status: 304 });
-  return delivery.body ?? new Uint8Array();
+  if (!adminUiAvailable) {
+    set.status = 404;
+    return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
+  }
+  applyAdminUiSecurityHeaders(set);
+  // A file of the build (compressed and cacheable, see `StaticDelivery`)...
+  const file = await deliverDistFile(adminDistPath, requestPath.slice('/admin'.length), request);
+  if (file) return sendStaticDelivery(set, file);
+  // ...otherwise, the SPA fallback.
+  // Node/Vitest has no `Bun.file`; the HTML is tiny so a sync read is fine.
+  set.headers['content-type'] = 'text/html; charset=utf-8';
+  return readFileSync(adminDistIndexPath, 'utf8');
 }
 
 /**
@@ -425,32 +440,18 @@ export async function createApp() {
         return { message: 'Not found' };
       })
       .get(
-        '/admin/*',
-        async ({ set, request, path: requestPath }) => {
-          // Do not let the removed `/admin/api/*` contract become a 200 with index.html.
-          if (requestPath === '/admin/api' || requestPath.startsWith('/admin/api/')) {
-            set.status = 404;
-            return { message: 'Not found' };
-          }
-          if (!adminUiAvailable) {
-            set.status = 404;
-            return { message: "Admin UI not built. Run 'bun run build' in apps/api first." };
-          }
-          applyAdminUiSecurityHeaders(set);
-          // A file of the build (compressed and cacheable, see `StaticDelivery`)...
-          const file = await deliverDistFile(
-            adminDistPath,
-            requestPath.slice('/admin'.length),
-            request,
-          );
-          if (file) return sendStaticDelivery(set, file);
-          // ...otherwise, the SPA fallback: any panel route that is not a real static file (say, /admin/users, a React Router
-          // client route) gets the same index.html, which then resolves the route in the browser. Without this,
-          // an F5 on /admin/users would give a 404.
-          // Node/Vitest has no `Bun.file`; the HTML is tiny so a sync read is fine.
-          set.headers['content-type'] = 'text/html; charset=utf-8';
-          return readFileSync(adminDistIndexPath, 'utf8');
+        '/admin',
+        ({ set, request, path: requestPath }) => serveAdminUi(set, request, requestPath),
+        {
+          detail: {
+            summary: 'Admin panel (single-page app, entry without the slash)',
+            tags: ['Admin'],
+          },
         },
+      )
+      .get(
+        '/admin/*',
+        ({ set, request, path: requestPath }) => serveAdminUi(set, request, requestPath),
         {
           detail: {
             summary: 'Admin panel (single-page app)',

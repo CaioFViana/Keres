@@ -45,7 +45,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Quantas coisas a história tem' },
     {
       type: 'paragraph',
-      text: 'O botão de gráfico no canto superior direito abre uma segunda tela que conta tudo o que há na história, tipo por tipo: personagens, cenas, escolhas, tags, arquivos de mídia e também as ligações entre eles, como uma tag aplicada a um personagem ou um personagem colocado em uma cena. Cada tipo tem seu ícone, e a barra ao lado mostra como ele se compara ao maior.',
+      text: 'O botão de gráfico no canto superior direito abre uma segunda tela que conta tudo o que há na história, tipo por tipo: personagens, cenas, escolhas, tags, arquivos de mídia, campos personalizados e atributos. Abaixo, um segundo cartão lista as ligações entre eles (uma tag aplicada a um personagem, um personagem colocado em uma cena) e os valores de campos personalizados e de atributos; ele é só para informação. Cada tipo tem seu ícone, e a barra ao lado mostra como ele se compara ao maior.',
     },
     {
       type: 'steps',
@@ -57,7 +57,7 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'É a mesma contagem que o plano de um servidor usa para limitar quanto uma história pode ter. Para uma história que está só neste dispositivo, nada a limita e a tela apenas mostra o que existe. Para uma história ligada a um servidor, a tela mostra também o nome do plano e o quanto falta para os limites, por exemplo 251 / 500 para esta história, e o total de todas as histórias que o plano cobre, quando ele tem um. A barra muda para a cor de aviso perto do limite, e fica vermelha no limite.',
+      text: 'O primeiro cartão é a mesma contagem que o plano de um servidor usa para limitar quanto uma história pode ter: o que você cria, sem os vínculos e valores do segundo cartão, nem a própria história, favoritos e comentários. Para uma história que está só neste dispositivo, nada a limita e a tela apenas mostra o que existe. Para uma história ligada a um servidor, a tela mostra também o nome do plano e o quanto falta para os limites, por exemplo 251 / 500 para esta história, e o total de todas as histórias que o plano cobre, quando ele tem um. A barra muda para a cor de aviso perto do limite, e fica vermelha no limite.',
     },
     {
       type: 'callout',

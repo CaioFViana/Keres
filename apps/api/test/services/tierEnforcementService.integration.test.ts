@@ -7,6 +7,8 @@ import {
   mediaBlobs,
   registrationSettings,
   stories,
+  tagRelations,
+  tags,
   tiers,
   users,
 } from '../../src/db/schema';
@@ -231,6 +233,50 @@ describe('TierEnforcementService entity limits', () => {
     await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
       /Entity limit for this story reached for your plan \(1\)/,
     );
+  });
+});
+
+describe('TierEnforcementService what counts as an entity', () => {
+  async function seedTagWithRelations(relations: number) {
+    const tagId = newId();
+    await db.insert(tags).values({ id: tagId, storyId, name: 'Magic' } as never);
+    for (let i = 0; i < relations; i++) {
+      await db.insert(tagRelations).values({
+        id: newId(),
+        storyId,
+        tagId,
+        relationId: newId(),
+        relationType: 'Character',
+      } as never);
+    }
+  }
+
+  it('does not count the rows that only link entities, however many there are', async () => {
+    await assignTier(await seedTier({ maxEntitiesPerStory: 2 }));
+    // One tag is one entity; its five assignments are not.
+    await seedTagWithRelations(5);
+
+    await expect(
+      tierEnforcementService.assertCanCreateEntity(userId, storyId),
+    ).resolves.toBeUndefined();
+  });
+
+  it('still counts what the writer creates', async () => {
+    await assignTier(await seedTier({ maxEntitiesPerStory: 1 }));
+    await seedTagWithRelations(5);
+
+    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
+      /Entity limit for this story reached for your plan \(1\)/,
+    );
+  });
+
+  it('leaves the links out of what the owner has used of the total ceiling', async () => {
+    await assignTier(await seedTier({ maxEntitiesTotal: 900 }));
+    await seedTagWithRelations(5);
+
+    const plan = await tierEnforcementService.getStoryPlan(storyId);
+
+    expect(plan.entitiesUsedTotal).toBe(1);
   });
 });
 

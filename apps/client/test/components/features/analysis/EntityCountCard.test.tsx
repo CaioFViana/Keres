@@ -46,6 +46,50 @@ const order = (view: Awaited<ReturnType<typeof render>>) => {
     .map((entry) => entry.type);
 };
 
+describe('EntityCountCard as the links and values card', () => {
+  it('has its own title, note and ids, and never shows a plan', async () => {
+    const view = await render(
+      <EntityCountCard
+        variant="relations"
+        total={11}
+        byType={{ TagRelation: 9, Scene: 2 }}
+        labelFor={labelFor}
+        plan={{
+          tierName: 'Pro',
+          maxEntitiesPerStory: 500,
+          maxEntitiesTotal: null,
+          entitiesUsedTotal: 0,
+        }}
+        onServer
+      />,
+    );
+
+    expect(view.getByTestId('entity-count-relations-card')).toBeTruthy();
+    expect(view.getByTestId('entity-count-relations-total').props.children).toBe(11);
+    expect(view.getByText('entity_count_relations_title')).toBeTruthy();
+    expect(view.getByText('entity_count_relations_hint')).toBeTruthy();
+    expect(view.queryByTestId('entity-count-plan')).toBeNull();
+    expect(view.queryByText('entity_count_hint')).toBeNull();
+    expect(view.getByTestId('entity-count-relations-TagRelation')).toBeTruthy();
+    expect(view.getByTestId('entity-count-relations-sort-count')).toBeTruthy();
+  });
+
+  it('says so when there is nothing to show', async () => {
+    const view = await render(
+      <EntityCountCard
+        variant="relations"
+        total={0}
+        byType={{}}
+        labelFor={labelFor}
+        plan={null}
+        onServer={false}
+      />,
+    );
+
+    expect(view.getByText('entity_count_relations_empty')).toBeTruthy();
+  });
+});
+
 describe('EntityCountCard', () => {
   it('lists the types most numerous first, and flips each header on a second tap', async () => {
     const view = await render(

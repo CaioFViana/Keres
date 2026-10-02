@@ -38,7 +38,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'How many things the story holds' },
     {
       type: 'paragraph',
-      text: 'The chart button at the top right opens a second screen that counts everything in the story, type by type: characters, scenes, choices, tags, media files, and also the links between them, such as a tag applied to a character or a character placed in a scene. Each type has its own icon, and the bar beside it shows how it compares with the biggest one.',
+      text: 'The chart button at the top right opens a second screen that counts everything in the story, type by type: characters, scenes, choices, tags, media files, and custom fields and stats. Below that, a second card lists the links between them (a tag applied to a character, a character placed in a scene) and the values of custom fields and stats; it is only for information. Each type has its own icon, and the bar beside it shows how it compares with the biggest one.',
     },
     {
       type: 'steps',
@@ -50,7 +50,7 @@ const page: HelpPage = {
     },
     {
       type: 'paragraph',
-      text: 'This is the same count a server plan uses to limit how much one story can hold. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color as you get close, and red at the limit.',
+      text: 'The first card is the same count a server plan uses to limit how much one story can hold: what you create, but not the links and values of the second card, nor the story itself, favorites and comments. For a story that is only on this device, nothing limits it and the screen just tells you what is there. For a story linked to a server, the screen also shows the plan name and how far you are from its limits, for example 251 / 500 for this story, and the total across all the stories the plan covers when it has one. The bar turns to a warning color as you get close, and red at the limit.',
     },
     {
       type: 'callout',

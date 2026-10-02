@@ -23,9 +23,9 @@ import { isStoryVocabularyEntityType } from '../../vocabulary/resolveStoryTerm';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 
 /**
- * What each synchronized entity type is called in the count. The types the story's vocabulary renames
- * (characters, scenes...) are labelled through it instead; these are the rest, relations and links
- * included, because the plan counts those too.
+ * What each synchronized entity type is called in the counts. The types the story's vocabulary renames
+ * (characters, scenes...) are labelled through it instead; these are the rest, the links and values of the
+ * second card included.
  */
 const ENTITY_COUNT_LABEL_KEYS: Record<string, string> = {
   AttributeValue: 'entity_count_attribute_value',
@@ -90,6 +90,7 @@ const StoryEntityCountScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
 
   const [counts, setCounts] = useState<StoryEntityCounts | null>(null);
+  const [relations, setRelations] = useState<StoryEntityCounts | null>(null);
   const [plan, setPlan] = useState<StoryPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +101,13 @@ const StoryEntityCountScreen = () => {
     if (!storyId) return;
     try {
       setError(null);
-      setCounts(await createStoryEntityCountService(drizzleDb).countForStory(storyId));
+      const service = createStoryEntityCountService(drizzleDb);
+      const [counted, linked] = await Promise.all([
+        service.countForStory(storyId),
+        service.countRelationsForStory(storyId),
+      ]);
+      setCounts(counted);
+      setRelations(linked);
     } catch (countError) {
       console.error('StoryEntityCountScreen: failed to count entities.', countError);
       setError(t('entity_count_failed'));
@@ -156,6 +163,17 @@ const StoryEntityCountScreen = () => {
         plan={plan}
         onServer={!!serverId}
       />
+      {relations && (
+        // For information only: no plan counts these, so this card never shows a limit.
+        <EntityCountCard
+          variant="relations"
+          total={relations.total}
+          byType={relations.byType}
+          labelFor={labelFor}
+          plan={null}
+          onServer={!!serverId}
+        />
+      )}
     </ScrollView>
   );
 };

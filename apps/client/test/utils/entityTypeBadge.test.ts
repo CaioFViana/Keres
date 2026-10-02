@@ -1,4 +1,4 @@
-import { getTierCountedEntityTypes } from '@keres/shared';
+import { getTierCountedEntityTypes, getTierRelationalEntityTypes } from '@keres/shared';
 import { getEntityTypeBadge, isLinkEntityType } from '../../src/utils/entityTypeBadge';
 
 describe('getEntityTypeBadge', () => {
@@ -14,6 +14,14 @@ describe('getEntityTypeBadge', () => {
 
   it('leaves no counted entity type with the placeholder icon', () => {
     const unknown = getTierCountedEntityTypes().filter(
+      (type) => !isLinkEntityType(type) && getEntityTypeBadge(type, '#000').icon === 'ellipse',
+    );
+
+    expect(unknown).toEqual([]);
+  });
+
+  it('leaves none of the links and values the second card lists with the placeholder icon', () => {
+    const unknown = getTierRelationalEntityTypes().filter(
       (type) => !isLinkEntityType(type) && getEntityTypeBadge(type, '#000').icon === 'ellipse',
     );
 

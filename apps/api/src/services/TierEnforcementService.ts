@@ -1,4 +1,4 @@
-import { type StoryPlan, TIER_EXEMPT_ENTITY_TYPES } from '@keres/shared';
+import { getTierCountedEntityTypes, type StoryPlan } from '@keres/shared';
 import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
@@ -139,12 +139,13 @@ export class TierEnforcementService {
 
   /**
    * The live entities of these stories as the plan's entity ceilings count them. The rule is shared
-   * with the client, which reports the same count (TIER_EXEMPT_ENTITY_TYPES says why Favorite and
-   * Comment are out).
+   * with the client, which reports the same count: the shared counted-types rule leaves out the Story, favorites and
+   * comments, and the rows that only link or fill in other entities (relations, custom field values).
    */
   private async countEntities(storyIds: string[]): Promise<number> {
-    const handlers = [...syncService.getEntityHandlers().values()].filter(
-      (h) => !TIER_EXEMPT_ENTITY_TYPES.includes(h.entityName),
+    const counted = new Set<string>(getTierCountedEntityTypes());
+    const handlers = [...syncService.getEntityHandlers().values()].filter((h) =>
+      counted.has(h.entityName),
     );
     const counts = await Promise.all(handlers.map((h) => h.countForStoryIds(storyIds)));
     return counts.reduce((sum, c) => sum + c, 0);

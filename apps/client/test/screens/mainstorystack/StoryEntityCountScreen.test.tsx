@@ -4,6 +4,7 @@ const mockGoBack = jest.fn();
 const mockUseScreenHeader = jest.fn();
 const mockUseScreenTour = jest.fn();
 const mockCountForStory = jest.fn();
+const mockCountRelations = jest.fn();
 const mockGetPlan = jest.fn();
 
 let mockSelectedStory: { id: string; serverId?: string | null } | null = { id: 'story-1' };
@@ -50,7 +51,10 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
 }));
 jest.mock('../../../src/services/storymanagement/StoryEntityCountService', () => ({
   __esModule: true,
-  createStoryEntityCountService: () => ({ countForStory: mockCountForStory }),
+  createStoryEntityCountService: () => ({
+    countForStory: mockCountForStory,
+    countRelationsForStory: mockCountRelations,
+  }),
 }));
 jest.mock('../../../src/services/StoryPlanService', () => ({
   __esModule: true,
@@ -104,6 +108,7 @@ describe('StoryEntityCountScreen', () => {
     jest.clearAllMocks();
     mockSelectedStory = { id: 'story-1' };
     mockCountForStory.mockResolvedValue({ total: 0, byType: {} });
+    mockCountRelations.mockResolvedValue({ total: 0, byType: {} });
     mockGetPlan.mockResolvedValue(null);
   });
 
@@ -119,22 +124,54 @@ describe('StoryEntityCountScreen', () => {
 
   it('reports how many entities the story has, by type, the way the plan counts them', async () => {
     mockCountForStory.mockResolvedValue({
-      total: 14,
-      byType: { Character: 3, TagRelation: 9, Gallery: 2 },
+      total: 5,
+      byType: { Character: 3, Gallery: 2 },
     });
     const view = await render(<StoryEntityCountScreen />);
 
     await waitFor(() => expect(mockCountForStory).toHaveBeenCalledWith('story-1'));
     await waitFor(() => expect(view.queryByTestId('entity-count-card')).not.toBeNull());
-    expect(view.getByTestId('entity-count-total').props.children).toBe(14);
+    expect(view.getByTestId('entity-count-total').props.children).toBe(5);
     // A vocabulary type takes the story's own word, the others a plain label.
     expect(view.getByText('Characters')).toBeTruthy();
-    expect(view.getByText('entity_count_tag_relation')).toBeTruthy();
     expect(view.getByText('entity_count_gallery')).toBeTruthy();
     expect(view.queryByTestId('entity-count-Location')).toBeNull();
     // Only on this device: no plan, and the note says nothing limits it.
     expect(view.queryByTestId('entity-count-plan')).toBeNull();
     expect(view.getByText('entity_count_hint_local')).toBeTruthy();
+  });
+
+  it('shows the links and values in a second card of their own, with no plan and no limit', async () => {
+    mockSelectedStory = { id: 'story-1', serverId: 'server-1' };
+    mockCountForStory.mockResolvedValue({ total: 4, byType: { Character: 4 } });
+    mockCountRelations.mockResolvedValue({
+      total: 11,
+      byType: { TagRelation: 9, AttributeValue: 2 },
+    });
+    mockGetPlan.mockResolvedValue({
+      tierName: 'Pro',
+      maxEntitiesPerStory: 500,
+      maxEntitiesTotal: null,
+      entitiesUsedTotal: 0,
+    });
+    const view = await render(<StoryEntityCountScreen />);
+
+    await waitFor(() => expect(view.queryByTestId('entity-count-relations-card')).not.toBeNull());
+    expect(mockCountRelations).toHaveBeenCalledWith('story-1');
+    expect(view.getByTestId('entity-count-relations-total').props.children).toBe(11);
+    expect(view.getByText('entity_count_tag_relation')).toBeTruthy();
+    expect(view.getByText('entity_count_attribute_value')).toBeTruthy();
+    expect(view.getByText('entity_count_relations_hint')).toBeTruthy();
+    // The plan's bars belong to the first card only: this one counts toward nothing.
+    expect(view.getAllByTestId('entity-count-plan')).toHaveLength(1);
+    expect(view.getByTestId('entity-count-total').props.children).toBe(4);
+  });
+
+  it('says there are no links or values yet, when there are none', async () => {
+    const view = await render(<StoryEntityCountScreen />);
+
+    await waitFor(() => expect(view.queryByTestId('entity-count-relations-card')).not.toBeNull());
+    expect(view.getByText('entity_count_relations_empty')).toBeTruthy();
   });
 
   it('shows the owner plan against the count when the story lives on a server', async () => {

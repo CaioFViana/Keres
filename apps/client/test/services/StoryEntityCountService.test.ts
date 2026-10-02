@@ -1,7 +1,11 @@
 /**
  * @jest-environment node
  */
-import { getTierCountedEntityTypes, TIER_EXEMPT_ENTITY_TYPES } from '@keres/shared';
+import {
+  getTierCountedEntityTypes,
+  getTierRelationalEntityTypes,
+  TIER_EXEMPT_ENTITY_TYPES,
+} from '@keres/shared';
 import { getTableColumns } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { ENTITY_TABLES, getEntityTable } from '../../src/services/entityTableRegistry';
@@ -36,7 +40,7 @@ describe('what the count covers', () => {
   it('names only types the local database can count, and never the exempt ones', () => {
     const counted = getTierCountedEntityTypes();
 
-    expect(counted.length).toBeGreaterThan(30);
+    expect(counted.length).toBeGreaterThan(20);
     for (const type of counted) {
       const columns = Object.keys(getTableColumns(getEntityTable(type) as never));
       expect([type, columns.includes('storyId'), columns.includes('isDeleted')]).toEqual([
@@ -48,6 +52,23 @@ describe('what the count covers', () => {
     for (const exempt of TIER_EXEMPT_ENTITY_TYPES) {
       expect(counted).not.toContain(exempt);
       expect(Object.hasOwn(ENTITY_TABLES, exempt)).toBe(true);
+    }
+  });
+});
+
+describe('what the second count covers', () => {
+  it('names only types the local database can count, apart from the ones the plan counts', () => {
+    const relational = getTierRelationalEntityTypes();
+
+    expect(relational.length).toBeGreaterThan(5);
+    for (const type of relational) {
+      const columns = Object.keys(getTableColumns(getEntityTable(type) as never));
+      expect([type, columns.includes('storyId'), columns.includes('isDeleted')]).toEqual([
+        type,
+        true,
+        true,
+      ]);
+      expect(getTierCountedEntityTypes()).not.toContain(type);
     }
   });
 });
@@ -84,5 +105,66 @@ describe('createStoryEntityCountService', () => {
     const counts = await createStoryEntityCountService(database.db).countForStory(TEST_STORY_ID);
 
     expect(counts).toEqual({ total: 0, byType: {} });
+  });
+});
+
+describe('countRelationsForStory', () => {
+  const insertTagRelation = (
+    id: string,
+    over: Partial<typeof schema.tagRelations.$inferInsert> = {},
+  ) =>
+    database.db.insert(schema.tagRelations).values({
+      id,
+      storyId: TEST_STORY_ID,
+      tagId: 'tag-1',
+      relationId: id,
+      relationType: 'Character',
+      ...entityBase,
+      deletedAt: null,
+      ...over,
+    } as typeof schema.tagRelations.$inferInsert);
+
+  beforeEach(async () => {
+    await database.db.insert(schema.tags).values({
+      id: 'tag-1',
+      storyId: TEST_STORY_ID,
+      name: 'Magic',
+      ...entityBase,
+      deletedAt: null,
+    } as typeof schema.tags.$inferInsert);
+  });
+
+  it('counts the links and values apart from what the plan counts', async () => {
+    await insertCharacter('char-1');
+    await insertTagRelation('rel-1');
+    await insertTagRelation('rel-2');
+    const service = createStoryEntityCountService(database.db);
+
+    // The tag and the character count; the two assignments do not - and show up in the second count.
+    expect(await service.countForStory(TEST_STORY_ID)).toEqual({
+      total: 2,
+      byType: { Character: 1, Tag: 1 },
+    });
+    expect(await service.countRelationsForStory(TEST_STORY_ID)).toEqual({
+      total: 2,
+      byType: { TagRelation: 2 },
+    });
+  });
+
+  it('leaves out deleted rows and other stories, and is empty for a story with no links', async () => {
+    await insertTagRelation('rel-live');
+    await insertTagRelation('rel-gone', { isDeleted: true });
+    await seedLocalStory(database, { id: 'other-story' });
+    await insertTagRelation('rel-elsewhere', { storyId: 'other-story' });
+    const service = createStoryEntityCountService(database.db);
+
+    expect(await service.countRelationsForStory(TEST_STORY_ID)).toEqual({
+      total: 1,
+      byType: { TagRelation: 1 },
+    });
+    expect(await service.countRelationsForStory('story-with-nothing')).toEqual({
+      total: 0,
+      byType: {},
+    });
   });
 });

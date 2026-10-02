@@ -24,14 +24,29 @@ interface EntityCountCardProps {
   plan: StoryPlan | null;
   /** Whether the story is linked to a server at all (its plan may still be unreachable). */
   onServer: boolean;
+  /**
+   * `relations` is the second card: the links and values no plan counts, shown for information. It has no
+   * plan and no usage bars, and its own title and explanation.
+   */
+  variant?: 'counted' | 'relations';
 }
 
 /**
  * How many entities the story has, by type, and - when the story is on a server - against what its
  * owner's plan allows. Information only: nothing here blocks anything, the server is what enforces.
  */
-const EntityCountCard = ({ total, byType, labelFor, plan, onServer }: EntityCountCardProps) => {
+const EntityCountCard = ({
+  total,
+  byType,
+  labelFor,
+  plan,
+  onServer,
+  variant = 'counted',
+}: EntityCountCardProps) => {
   const { t } = useTranslation();
+  const isRelations = variant === 'relations';
+  // Both cards can be on one screen: their test ids must not collide.
+  const prefix = isRelations ? 'entity-count-relations' : 'entity-count';
   const { colors } = useTheme();
   const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
     key: 'count',
@@ -165,7 +180,7 @@ const EntityCountCard = ({ total, byType, labelFor, plan, onServer }: EntityCoun
         onPress={() => pressHeader(key)}
         style={styles.headerButton}
         accessibilityRole="button"
-        testID={`entity-count-sort-${key}`}
+        testID={`${prefix}-sort-${key}`}
       >
         <Text style={[styles.headerText, active && styles.headerTextActive]}>{label}</Text>
         {active && (
@@ -173,7 +188,7 @@ const EntityCountCard = ({ total, byType, labelFor, plan, onServer }: EntityCoun
             name={sort.direction === 'asc' ? 'arrow-up' : 'arrow-down'}
             size={14}
             color={colors.primary}
-            testID={`entity-count-sort-${key}-${sort.direction}`}
+            testID={`${prefix}-sort-${key}-${sort.direction}`}
           />
         )}
       </TouchableOpacity>
@@ -181,18 +196,24 @@ const EntityCountCard = ({ total, byType, labelFor, plan, onServer }: EntityCoun
   };
 
   return (
-    <View style={styles.card} testID="entity-count-card">
+    <View style={styles.card} testID={`${prefix}-card`}>
       <View style={styles.titleRow}>
         <View style={styles.titleIcon}>
-          <Ionicons name="layers-outline" size={20} color={colors.onPrimaryContainer} />
+          <Ionicons
+            name={isRelations ? 'git-network-outline' : 'layers-outline'}
+            size={20}
+            color={colors.onPrimaryContainer}
+          />
         </View>
-        <Text style={styles.title}>{t('entity_count_title')}</Text>
-        <Text style={styles.totalNumber} testID="entity-count-total">
+        <Text style={styles.title}>
+          {t(isRelations ? 'entity_count_relations_title' : 'entity_count_title')}
+        </Text>
+        <Text style={styles.totalNumber} testID={`${prefix}-total`}>
           {total}
         </Text>
       </View>
 
-      {plan && (
+      {plan && !isRelations && (
         <View style={styles.plan} testID="entity-count-plan">
           <Text style={styles.planTitle}>
             {plan.tierName
@@ -216,11 +237,17 @@ const EntityCountCard = ({ total, byType, labelFor, plan, onServer }: EntityCoun
       )}
 
       <Text style={styles.hint}>
-        {onServer ? t('entity_count_hint') : t('entity_count_hint_local')}
+        {isRelations
+          ? t('entity_count_relations_hint')
+          : onServer
+            ? t('entity_count_hint')
+            : t('entity_count_hint_local')}
       </Text>
 
       {rows.length === 0 ? (
-        <Text style={styles.empty}>{t('entity_count_empty')}</Text>
+        <Text style={styles.empty}>
+          {t(isRelations ? 'entity_count_relations_empty' : 'entity_count_empty')}
+        </Text>
       ) : (
         <>
           <View style={styles.headerRow}>
@@ -230,11 +257,7 @@ const EntityCountCard = ({ total, byType, labelFor, plan, onServer }: EntityCoun
           {rows.map((row) => {
             const badge = getEntityTypeBadge(row.entityType, colors.secondary);
             return (
-              <View
-                key={row.entityType}
-                style={styles.row}
-                testID={`entity-count-${row.entityType}`}
-              >
+              <View key={row.entityType} style={styles.row} testID={`${prefix}-${row.entityType}`}>
                 <View style={styles.rowTop}>
                   <View style={[styles.rowIcon, { backgroundColor: `${badge.color}22` }]}>
                     <Ionicons name={badge.icon} size={16} color={badge.color} />

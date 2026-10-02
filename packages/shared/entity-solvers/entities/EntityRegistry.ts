@@ -186,16 +186,52 @@ export function getStorySyncEntityTypes(): readonly OperationLogEntityType[] {
 }
 
 /**
- * What a plan's entity ceilings (`maxEntitiesPerStory`, `maxEntitiesTotal`) do not count. The Story
- * itself has its own ceiling (`maxStories`); a Favorite and a Comment are personal annotations, not
- * story content. Everything else a story synchronizes counts, one per live row - relations and
- * links included.
+ * What a plan's entity ceilings (`maxEntitiesPerStory`, `maxEntitiesTotal`) do not count at all. The Story
+ * itself has its own ceiling (`maxStories`); a Favorite and a Comment are personal annotations, not story
+ * content.
  */
 export const TIER_EXEMPT_ENTITY_TYPES: readonly string[] = ['Story', 'Favorite', 'Comment'];
 
+/**
+ * Rows that only connect or fill in other entities. They are kept, synchronized and shown to the user,
+ * but no plan counts them: what a plan limits is what the writer creates (characters, scenes, custom
+ * field and stat definitions...), not how many times those are tied together or given a value.
+ *
+ *  - links between two entities: character, location, note, tag, gallery and see-also relations, the
+ *    characters of a scene, the scenes of a plot, the steps of a route, an item's journey through scenes;
+ *  - values: what a custom field holds for an entity (`AttributeValue`) and a character's value of a stat
+ *    (`StatRelation`). The definitions they fill in - `StorySchemaField`, `Stat` and its ladder levels
+ *    (`StatStrength`) - do count.
+ */
+export const TIER_RELATIONAL_ENTITY_TYPES: readonly string[] = [
+  'CharacterRelation',
+  'LocationRelation',
+  'NoteRelation',
+  'TagRelation',
+  'GalleryRelation',
+  'SeeAlsoRelation',
+  'CharacterScene',
+  'PlotScene',
+  'RouteStep',
+  'ItemJourney',
+  'AttributeValue',
+  'StatRelation',
+];
+
 /** The entity types the plan's entity ceilings count; the API enforces them, the client reports them. */
 export function getTierCountedEntityTypes(): readonly OperationLogEntityType[] {
-  return getStorySyncEntityTypes().filter((type) => !TIER_EXEMPT_ENTITY_TYPES.includes(type));
+  return getStorySyncEntityTypes().filter(
+    (type) =>
+      !TIER_EXEMPT_ENTITY_TYPES.includes(type) && !TIER_RELATIONAL_ENTITY_TYPES.includes(type),
+  );
+}
+
+/**
+ * The entity types a story synchronizes that no plan counts because they only link or fill in others
+ * (see `TIER_RELATIONAL_ENTITY_TYPES`). The client shows them apart, for information.
+ */
+export function getTierRelationalEntityTypes(): readonly OperationLogEntityType[] {
+  return getStorySyncEntityTypes().filter((type) => TIER_RELATIONAL_ENTITY_TYPES.includes(type));
 }
 
 /**

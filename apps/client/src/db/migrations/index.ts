@@ -48,6 +48,7 @@ import migration_44 from './0043_neat_salo';
 import migration_45 from './0044_absurd_mad_thinker';
 import migration_46 from './0045_purple_iceman';
 import migration_47 from './0046_lazy_skrulls';
+import migration_48 from './0047_previous_wither';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -97,6 +98,7 @@ const migrations = [
   { id: 45, name: '0044_absurd_mad_thinker', run: migration_45 },
   { id: 46, name: '0045_purple_iceman', run: migration_46 },
   { id: 47, name: '0046_lazy_skrulls', run: migration_47 },
+  { id: 48, name: '0047_previous_wither', run: migration_48 },
 ];
 
 export default migrations;

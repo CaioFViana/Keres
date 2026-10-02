@@ -6,6 +6,8 @@ import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
 import { pruneAttemptLimits } from './services/AttemptLimitService';
 import { auditService } from './services/AuditService';
+import { loadPaymentPlugin } from './services/payments/PaymentPluginRegistry';
+import { subscriptionService } from './services/payments/SubscriptionService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
@@ -96,6 +98,33 @@ function startAuditRetentionScheduler(): () => void {
   };
 }
 
+/**
+ * Marks the subscriptions whose paid period ran out (and closes the payment attempts nobody finished). Runs
+ * whether or not a payment plugin is installed: what was paid keeps expiring on its date either way.
+ */
+function startPaymentsScheduler(): () => void {
+  const run = () => {
+    trackBackground(
+      subscriptionService
+        .markDue()
+        .then(({ due, ended }) => {
+          if (due > 0 || ended > 0) {
+            logger.info(`Payments: ${due} subscription(s) now due, ${ended} ended.`);
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error('Marking due subscriptions failed', error);
+        }),
+    );
+  };
+  const first = setTimeout(run, 50_000);
+  const every = setInterval(run, 15 * 60_000);
+  return () => {
+    clearTimeout(first);
+    clearInterval(every);
+  };
+}
+
 /** Drops the lockout counters whose window is long over: once at start and daily after, like the activity record. */
 function startAttemptLimitPruneScheduler(): () => void {
   const prune = () => {
@@ -132,7 +161,9 @@ export async function bootAndListen(options?: {
   }
 
   const app = await createApp();
+  await loadPaymentPlugin();
   const stopSchedulers = [
+    startPaymentsScheduler(),
     startMediaBlobSweepScheduler(),
     startAuditRetentionScheduler(),
     startAttemptLimitPruneScheduler(),

@@ -153,6 +153,21 @@ export const AUDIT_RULES: readonly AuditRule[] = [
     targetGroup: 'storyId',
   },
 
+  // --- payments: the attempt to pay is the person's act; what the provider reports is noted by the service
+  {
+    method: 'POST',
+    pattern: /^\/payments\/checkout$/,
+    category: 'payment',
+    action: 'payment.checkout_started',
+  },
+  {
+    method: 'POST',
+    pattern: /^\/payments\/webhook$/,
+    category: 'payment',
+    action: 'payment.webhook_rejected',
+    onlyFailures: true,
+  },
+
   // --- messages: that they were sent, never what they say
   {
     method: 'POST',

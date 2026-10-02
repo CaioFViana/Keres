@@ -52,7 +52,16 @@ describe('panel layout', () => {
     await flush();
 
     expect(view.container.textContent).toContain('users page');
-    for (const link of ['Users', 'Recovery', 'Logs', 'Tiers', 'Messages', 'Activity', 'Settings']) {
+    for (const link of [
+      'Users',
+      'Recovery',
+      'Logs',
+      'Tiers',
+      'Messages',
+      'Activity',
+      'Payments',
+      'Settings',
+    ]) {
       expect(view.container.textContent).toContain(link);
     }
     await view.unmount();

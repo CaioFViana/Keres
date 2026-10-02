@@ -66,6 +66,10 @@ const mockPlanUsageWatcher = jest.fn();
 jest.mock('../../src/hooks/usePlanUsageWatcher', () => ({
   usePlanUsageWatcher: (...args: unknown[]) => mockPlanUsageWatcher(...args),
 }));
+const mockPaymentDueWatcher = jest.fn();
+jest.mock('../../src/hooks/usePaymentDueWatcher', () => ({
+  usePaymentDueWatcher: (...args: unknown[]) => mockPaymentDueWatcher(...args),
+}));
 jest.mock('../../src/services/ServerRealtimeService', () => ({
   get ServerRealtimeService() {
     return mockRealtimeClass;
@@ -235,6 +239,12 @@ describe('SyncInitializer', () => {
     await render(<SyncInitializer>{null}</SyncInitializer>);
 
     expect(mockPlanUsageWatcher).toHaveBeenCalled();
+  });
+
+  it('lets the payment reminder watch every server for the signed-in user', async () => {
+    await render(<SyncInitializer>{null}</SyncInitializer>);
+
+    expect(mockPaymentDueWatcher).toHaveBeenCalledWith(expect.anything(), expect.any(String));
   });
 
   it('skips reconciliation without a signed-in user', async () => {

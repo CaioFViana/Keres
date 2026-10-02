@@ -1,8 +1,8 @@
 import type { PartialTier, TierCreateInput } from '@keres/shared';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
-import { registrationSettings, tiers, users } from '../db/schema';
+import { paymentSubscriptions, registrationSettings, tiers, users } from '../db/schema';
 
 export class TierNotFoundError extends Error {
   constructor() {
@@ -96,6 +96,17 @@ export class TierService {
     });
     if (assignedUser) {
       throw new TierInUseError('one or more active users are assigned to it.');
+    }
+
+    const subscription = await db.query.paymentSubscriptions.findFirst({
+      where: and(
+        eq(paymentSubscriptions.tierId, id),
+        inArray(paymentSubscriptions.status, ['active', 'due']),
+      ),
+      columns: { userId: true },
+    });
+    if (subscription) {
+      throw new TierInUseError('someone has a subscription to it.');
     }
 
     const [updated] = await db

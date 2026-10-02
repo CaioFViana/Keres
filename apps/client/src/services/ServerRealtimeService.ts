@@ -7,6 +7,7 @@ import { createMessageService } from './MessageService';
 import { createPublicationService } from './PublicationService';
 import { createStoryInvitationService } from './StoryInvitationService';
 import { entityEventEmitter } from '../utils/EventEmitter';
+import { PAYMENTS_CHANGED } from '../utils/paymentEvents';
 import type { ServerStoryPreview } from './SyncEngineService';
 import { importNewServerStories } from './sync/importNewServerStories';
 
@@ -28,6 +29,7 @@ type ServerEvent =
   | { type: 'story-invitations.changed' }
   | { type: 'story.published'; storyId: string }
   | { type: 'messages.changed' }
+  | { type: 'payments.changed' }
   | { type: 'server.heartbeat' };
 
 export interface RealtimeSyncEngine {
@@ -261,6 +263,9 @@ export class ServerRealtimeService {
       await createStoryInvitationService(this.db).syncWithServer(this.server);
     } else if (event.type === 'messages.changed') {
       await createMessageService(this.db).handleServerNudge(this.server);
+    } else if (event.type === 'payments.changed') {
+      // A payment arrived, a period ran out or a subscription was cancelled: whoever shows the plan reads it again.
+      entityEventEmitter.emit(PAYMENTS_CHANGED, this.server.id);
     }
   }
 

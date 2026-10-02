@@ -57,6 +57,48 @@ describe('classifyRequest', () => {
   });
 });
 
+describe('payments', () => {
+  it('records the person starting to pay, with what happened to it', () => {
+    expect(classifyRequest('POST', '/api/payments/checkout').rule?.action).toBe(
+      'payment.checkout_started',
+    );
+    const refused = decideAudit(
+      finished({ method: 'POST', path: '/payments/checkout', status: 400, user: ana }),
+    );
+    expect(refused?.input).toMatchObject({
+      category: 'payment',
+      action: 'payment.checkout_started',
+      outcome: 'failure',
+      actorUserId: 'user-ana',
+    });
+  });
+
+  it('records a notice of the provider only when it was refused, and never what it said', () => {
+    expect(
+      decideAudit(finished({ method: 'POST', path: '/payments/webhook', status: 200 })),
+    ).toBeNull();
+    const refused = decideAudit(
+      finished({
+        method: 'POST',
+        path: '/payments/webhook',
+        status: 400,
+        body: '{"card":"4111111111111111"}',
+      }),
+    );
+    expect(refused?.input).toMatchObject({
+      category: 'payment',
+      action: 'payment.webhook_rejected',
+      outcome: 'failure',
+    });
+    expect(JSON.stringify(refused)).not.toContain('4111');
+  });
+
+  it('leaves reads of the plan out of the record', () => {
+    expect(classifyRequest('GET', '/api/payments').rule).toBeNull();
+    expect(classifyRequest('GET', '/api/payments/checkout/c1').rule).toBeNull();
+  });
+});
+
 describe('outcomeOf', () => {
   it('tells a refusal for who asked or how often from one for what was asked', () => {
     expect(outcomeOf(200)).toBe('success');

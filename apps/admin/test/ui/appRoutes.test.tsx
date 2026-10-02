@@ -26,6 +26,9 @@ const mocks = vi.hoisted(() => ({
   browseOperationLog: vi.fn(),
   listLogs: vi.fn(),
   listActivity: vi.fn(),
+  paymentsSummary: vi.fn(),
+  paymentsSubscriptions: vi.fn(),
+  paymentsEvents: vi.fn(),
   activitySummary: vi.fn(),
   listMessages: vi.fn(),
   unreadMessages: vi.fn(),
@@ -76,6 +79,13 @@ vi.mock('../../src/api/RecoveryApiService', () => ({
   },
 }));
 vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.listLogs } }));
+vi.mock('../../src/api/PaymentsApiService', () => ({
+  PaymentsApiService: {
+    summary: mocks.paymentsSummary,
+    subscriptions: mocks.paymentsSubscriptions,
+    events: mocks.paymentsEvents,
+  },
+}));
 vi.mock('../../src/api/ActivityApiService', () => ({
   ActivityApiService: {
     list: mocks.listActivity,
@@ -115,6 +125,9 @@ beforeEach(() => {
   mocks.browseOperationLog.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listActivity.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
+  mocks.paymentsSummary.mockResolvedValue(null);
+  mocks.paymentsSubscriptions.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
+  mocks.paymentsEvents.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.activitySummary.mockResolvedValue(null);
   mocks.listMessages.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.unreadMessages.mockResolvedValue({ unread: 0 });
@@ -142,6 +155,7 @@ describe('admin routes', () => {
     ['/users/new', 'New user'],
     ['/recovery', 'Recovery'],
     ['/activity', 'Activity'],
+    ['/payments', 'Payments'],
     ['/logs', 'Logs'],
     ['/tiers', 'Tiers'],
     ['/messages', 'Messages'],
@@ -165,6 +179,7 @@ describe('admin routes', () => {
       '/users/new',
       '/recovery',
       '/activity',
+      '/payments',
       '/logs',
       '/tiers',
       '/messages',
@@ -181,6 +196,7 @@ describe('admin routes', () => {
     expect(mocks.getSettings).toHaveBeenCalledTimes(2);
     expect(mocks.listLogs).toHaveBeenCalled();
     expect(mocks.listActivity).toHaveBeenCalled();
+    expect(mocks.paymentsSubscriptions).toHaveBeenCalled();
     // Sequential unmount: each helper wraps `root.unmount()` in `act()`, and React 19
     // rejects overlapping act() calls when several roots tear down in parallel.
     for (const view of views) {

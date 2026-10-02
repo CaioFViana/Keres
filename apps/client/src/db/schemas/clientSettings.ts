@@ -22,6 +22,11 @@ export const clientSettings = sqliteTable('client_settings', {
   exportFormat: text('export_format', { enum: ['svg', 'png'] })
     .notNull()
     .default('svg'),
+  /**
+   * Whether the app reminds the user that a paid period is about to end. Only ever relevant on a server that
+   * sells plans, and only shown while that server answers - a switch so it can never be intrusive.
+   */
+  warnPaymentDue: integer('warn_payment_due', { mode: 'boolean' }).notNull().default(true),
   /** Master switch for the guided first-open tours on this device. */
   showTutorials: integer('show_tutorials', { mode: 'boolean' }).notNull().default(true),
   /** JSON `{version, seen[]}` with the tour ids already completed or skipped (see `tutorialProgress`). */

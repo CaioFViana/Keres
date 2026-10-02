@@ -24,7 +24,12 @@ export type RealtimeEvent =
    * nudge: the client reads the inbox and the open conversation over REST, so a message sent while it
    * was offline is simply there on the next read.
    */
-  | { type: 'messages.changed' };
+  | { type: 'messages.changed' }
+  /**
+   * The user's subscription changed (a payment arrived, a period ran out, it was cancelled): a nudge for the
+   * client to read it again. Like the others it carries nothing.
+   */
+  | { type: 'payments.changed' };
 
 type EventBus = {
   on: (key: string, callback: (event: never) => void) => void;

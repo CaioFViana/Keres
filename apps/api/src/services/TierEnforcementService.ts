@@ -11,6 +11,7 @@ import {
   tiers,
   users,
 } from '../db/schema';
+import { entitledTierId } from './payments/entitlement';
 import { syncService } from './SyncService';
 
 /**
@@ -36,8 +37,19 @@ type TierRow = typeof tiers.$inferSelect;
  * rigour ever becomes necessary, the fix is a `SELECT ... FOR UPDATE` per user, not new infrastructure.
  */
 export class TierEnforcementService {
-  /** The user's tier; failing that, the default signup tier; failing that, unlimited (`null`). */
+  /**
+   * The user's tier: the one their payments entitle them to, if their subscription is paid up; failing that,
+   * the one an administrator assigned; failing that, the default signup tier; failing that, unlimited (`null`).
+   */
   async getEffectiveTier(userId: string): Promise<TierRow | null> {
+    const paidTierId = await entitledTierId(userId);
+    if (paidTierId) {
+      const paidTier = await db.query.tiers.findFirst({ where: eq(tiers.id, paidTierId) });
+      if (paidTier) {
+        return paidTier;
+      }
+    }
+
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       columns: { tierId: true },

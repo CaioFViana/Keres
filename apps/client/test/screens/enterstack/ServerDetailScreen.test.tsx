@@ -18,6 +18,7 @@ const mockDeleteServer = jest.fn();
 const mockUpdateOwnTag = jest.fn();
 const mockGetOwnProfile = jest.fn();
 const mockApiGet = jest.fn();
+const mockPaymentOverview = jest.fn();
 const mockColors = {
   primary: '#0000ff',
   onPrimary: '#ffffff',
@@ -75,6 +76,9 @@ jest.mock('../../../src/hooks/useFormScrollBottomPadding', () => ({
   useFormScrollBottomPadding: () => 20,
 }));
 jest.mock('../../../src/db', () => ({ useDrizzle: () => mockDrizzle }));
+jest.mock('../../../src/hooks/usePaymentOverview', () => ({
+  usePaymentOverview: (...args: unknown[]) => mockPaymentOverview(...args),
+}));
 jest.mock('../../../src/utils/AppAlert', () => ({
   AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
 }));
@@ -144,6 +148,7 @@ describe('ServerDetailScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockRoute.params = { serverId: 'srv-1' };
+    mockPaymentOverview.mockReturnValue({ overview: null, loading: false, reload: jest.fn() });
     mockGetAllServers.mockResolvedValue([server, { ...server, id: 'srv-2', name: 'Other' }]);
     mockApiGet.mockResolvedValue({ status: 200, data: { version: '1.2.3' } });
     mockGetOwnedStories.mockResolvedValue([]);
@@ -224,6 +229,81 @@ describe('ServerDetailScreen', () => {
     await fireEvent.press(view.getByTestId('server-action-messages'));
 
     expect(mockNavigate).toHaveBeenCalledWith('Conversation', { serverId: 'srv-1', peer: 'admin' });
+  });
+
+  describe('plan and payment', () => {
+    const subscription = {
+      tierId: 't1',
+      tierName: 'Pro',
+      interval: 'monthly',
+      status: 'active',
+      paidUntil: '2026-04-03T12:00:00.000Z',
+      lastPaymentAt: null,
+      amountCents: 1990,
+      currency: 'BRL',
+      cancelAtPeriodEnd: false,
+      canCancelHere: true,
+    };
+    const overview = (sub: unknown) => ({
+      overview: { info: { enabled: true, subscription: sub }, plans: null },
+      loading: false,
+      reload: jest.fn(),
+    });
+
+    it('shows nothing about payments on a server that sells no plans, or while it is offline', async () => {
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.queryByTestId('plan-status-card')).toBeNull();
+      expect(view.queryByTestId('server-action-plan')).toBeNull();
+      expect(view.queryByText('server_plan_section')).toBeNull();
+    });
+
+    it('does not ask the payment hook while the server is offline', async () => {
+      mockApiGet.mockRejectedValue(new Error('down'));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('server_status_offline');
+
+      expect(mockPaymentOverview.mock.calls.at(-1)![1]).toBe(false);
+    });
+
+    it('asks the payment hook once the server answers', async () => {
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText(/server_status_online/);
+
+      await waitFor(() => expect(mockPaymentOverview.mock.calls.at(-1)![1]).toBe(true));
+    });
+
+    it('shows the plan with its dates, and the way to the plans, for a user with a paid plan', async () => {
+      mockPaymentOverview.mockReturnValue(overview(subscription));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.getByText('server_plan_section')).toBeTruthy();
+      expect(view.getByTestId('plan-status-card')).toBeTruthy();
+      expect(view.getByText('payment_status_active')).toBeTruthy();
+      expect(view.getByTestId('server-action-plan')).toBeTruthy();
+    });
+
+    it('offers the plans, with no card of dates, to a user on a free plan', async () => {
+      mockPaymentOverview.mockReturnValue(overview(null));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.queryByTestId('plan-status-card')).toBeNull();
+      expect(view.queryByText('server_plan_section')).toBeNull();
+      expect(view.getByTestId('server-action-plan')).toBeTruthy();
+    });
+
+    it('opens the plans of this server in the same stack', async () => {
+      mockPaymentOverview.mockReturnValue(overview(subscription));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      await fireEvent.press(view.getByTestId('server-action-plan'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('ServerPlan', { serverId: 'srv-1' });
+    });
   });
 
   it('sends the tag in the shape it is stored: lowercase, spaces made underscores', async () => {

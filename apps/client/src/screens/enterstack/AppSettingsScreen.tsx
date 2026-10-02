@@ -58,6 +58,7 @@ const SettingsScreen = () => {
     suggestLiteraryDevices,
     exportFormat,
     showTutorials,
+    warnPaymentDue,
     setUsername,
     setLanguage,
     setUse24HourTime,
@@ -66,6 +67,7 @@ const SettingsScreen = () => {
     setSuggestLiteraryDevices,
     setExportFormat,
     setShowTutorials,
+    setWarnPaymentDue,
     resetSeenTutorials,
     resetSettings,
   } = useUserSettingsStore();
@@ -115,6 +117,10 @@ const SettingsScreen = () => {
 
   const handleShowTutorialsToggle = (value: boolean) => {
     setShowTutorials(drizzleClient, value);
+  };
+
+  const handleWarnPaymentDueToggle = (value: boolean) => {
+    setWarnPaymentDue(drizzleClient, value);
   };
 
   const handleResetSeenTutorials = async () => {
@@ -327,6 +333,22 @@ const SettingsScreen = () => {
           <ThemedSwitch
             value={showTutorials}
             onValueChange={handleShowTutorialsToggle}
+            style={styles.contextualHelpSwitch}
+          />
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('warn_payment_due')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
+            </Text>
+          </View>
+          <ThemedSwitch
+            value={warnPaymentDue}
+            onValueChange={handleWarnPaymentDueToggle}
             style={styles.contextualHelpSwitch}
           />
         </View>

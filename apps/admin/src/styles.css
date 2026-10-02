@@ -852,3 +852,40 @@ button.button-danger:hover {
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+
+/* Payments: tabs, the notice shown with no payment plugin, and the badges of a subscription and the ledger. */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.tab.active {
+  background: var(--color-primary);
+  color: var(--color-on-primary, #fff);
+}
+
+.notice {
+  padding: 0.75rem 1rem;
+  background: var(--color-card);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--color-warn);
+}
+
+.status-badge.subscription-active,
+.status-badge.ledger-payment_succeeded {
+  background: color-mix(in srgb, var(--color-success) 20%, transparent);
+  color: var(--color-success);
+}
+
+.status-badge.subscription-due,
+.status-badge.ledger-subscription_due,
+.status-badge.ledger-checkout_expired {
+  background: color-mix(in srgb, var(--color-warn) 22%, transparent);
+  color: var(--color-warn);
+}
+
+.status-badge.ledger-payment_failed {
+  background: color-mix(in srgb, var(--color-error) 20%, transparent);
+  color: var(--color-error);
+}

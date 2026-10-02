@@ -18,6 +18,7 @@ export const AUDIT_CATEGORIES = [
   'security',
   'limits',
   'contact',
+  'payment',
   'system',
 ] as const;
 export type AuditCategory = (typeof AUDIT_CATEGORIES)[number];
@@ -40,6 +41,7 @@ export const AUDIT_ACTIONS = {
   adminDenied: 'security.admin_access_denied',
   rateLimited: 'security.rate_limited',
   limitExceeded: 'limits.exceeded',
+  paymentFailed: 'payment.failed',
 } as const;
 
 /** Largest export of the record in one request. */

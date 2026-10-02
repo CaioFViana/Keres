@@ -4,6 +4,7 @@ import { LoginPage } from './auth/LoginPage';
 import { RequireAdmin } from './auth/RequireAdmin';
 import { Layout } from './components/Layout';
 import { ActivityPage } from './pages/activity/ActivityPage';
+import { PaymentsPage } from './pages/payments/PaymentsPage';
 import { LogsPage } from './pages/logs/LogsPage';
 import { MessagesPage } from './pages/messages/MessagesPage';
 import { RecoveryPage } from './pages/recovery/RecoveryPage';
@@ -28,6 +29,7 @@ export function App() {
               <Route path="/users/:id" element={<UserFormPage />} />
               <Route path="/recovery" element={<RecoveryPage />} />
               <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/tiers" element={<TiersPage />} />
               <Route path="/messages" element={<MessagesPage />} />

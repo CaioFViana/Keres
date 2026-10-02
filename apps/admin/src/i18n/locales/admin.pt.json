@@ -74,7 +74,8 @@
       "security": "Segurança",
       "limits": "Limites do plano",
       "contact": "Contato do site",
-      "system": "Sistema"
+      "system": "Sistema",
+      "payment": "Pagamentos"
     },
     "outcomes": {
       "success": "Concluído",
@@ -140,7 +141,13 @@
       "admin_activity_exported": "Registro de atividade exportado",
       "admin_request": "Outra alteração de admin",
       "system_server_started": "Servidor iniciado",
-      "system_server_stopped": "Servidor encerrado"
+      "system_server_stopped": "Servidor encerrado",
+      "payment_checkout_started": "Começou a pagar um plano",
+      "payment_succeeded": "Pagamento recebido",
+      "payment_failed": "Pagamento falhou",
+      "payment_subscription_canceled": "Assinatura cancelada ou encerrada",
+      "payment_subscription_due": "Período pago venceu",
+      "payment_webhook_rejected": "Aviso do provedor recusado"
     }
   },
   "appearance": {
@@ -269,6 +276,7 @@
     "users": "Usuários",
     "recovery": "Recuperação",
     "activity": "Atividade",
+    "payments": "Pagamentos",
     "logs": "Registros",
     "tiers": "Planos",
     "messages": "Mensagens",
@@ -277,6 +285,57 @@
     "signOut": "Sair",
     "ariaLabel": "Administração",
     "unreadMessages": "{{count}} não lidas"
+  },
+  "payments": {
+    "title": "Pagamentos",
+    "intro": "Quem pagou por um plano, quem está atrasado e o que entrou. O pagamento é feito entre a pessoa e o provedor: nada aqui altera um pagamento, e nenhum meio de pagamento é guardado em lugar algum.",
+    "noPlugin": "Este servidor não tem plugin de pagamento: não vende planos e nada sobre pagamento aparece para os usuários. Os planos são dados atribuindo-os aos usuários. Para vender, instale um plugin e defina PAYMENT_PLUGIN.",
+    "provider": "Os pagamentos são recebidos por {{name}}.",
+    "active": "Em dia",
+    "due": "Vencidas",
+    "canceled": "Encerradas",
+    "endingSoon": "Terminam em {{days}} dias",
+    "received30": "Recebido, 30 dias",
+    "payments30": "Pagamentos, 30 dias",
+    "failures30": "Falhas, 30 dias",
+    "monthlyRecurring": "Valor recorrente mensal",
+    "tabs": {
+      "subscriptions": "Assinaturas",
+      "ledger": "Registro"
+    },
+    "searchPlaceholder": "Usuário, tag ou referência do provedor",
+    "status": "Situação",
+    "statusAll": "Todas",
+    "statuses": {
+      "active": "Em dia",
+      "due": "Vencida",
+      "canceled": "Encerrada"
+    },
+    "intervals": {
+      "monthly": "mensal",
+      "yearly": "anual"
+    },
+    "leaving": "(não vai renovar)",
+    "deletedAccount": "(conta encerrada)",
+    "columnUser": "Usuário",
+    "columnPlan": "Plano",
+    "columnStatus": "Situação",
+    "columnPaidUntil": "Pago até",
+    "columnLastPayment": "Último pagamento",
+    "columnAmount": "Valor",
+    "columnProvider": "Provedor",
+    "columnWhen": "Quando",
+    "columnEvent": "Evento",
+    "columnDetail": "Detalhe",
+    "emptySubscriptions": "Nenhuma assinatura para estes filtros.",
+    "emptyLedger": "O provedor ainda não informou nada.",
+    "kinds": {
+      "payment_succeeded": "Pagamento recebido",
+      "payment_failed": "Pagamento falhou",
+      "subscription_canceled": "Assinatura encerrada",
+      "subscription_due": "Período venceu sem pagamento",
+      "checkout_expired": "Tentativa expirada"
+    }
   },
   "recovery": {
     "title": "Recuperação",

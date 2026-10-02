@@ -21,6 +21,7 @@ const mockSetShowContextualHelp = jest.fn();
 const mockSetSuggestLiteraryDevices = jest.fn();
 const mockSetExportFormat = jest.fn();
 const mockSetShowTutorials = jest.fn();
+const mockSetWarnPaymentDue = jest.fn();
 const mockResetSeenTutorials = jest.fn();
 const mockResetSettings = jest.fn();
 const mockUserSettings = {
@@ -32,6 +33,7 @@ const mockUserSettings = {
   suggestLiteraryDevices: false,
   exportFormat: 'svg',
   showTutorials: true,
+  warnPaymentDue: true,
   setUsername: (...args: unknown[]) => mockSetUsername(...args),
   setLanguage: (...args: unknown[]) => mockSetLanguage(...args),
   setUse24HourTime: (...args: unknown[]) => mockSetUse24HourTime(...args),
@@ -40,6 +42,7 @@ const mockUserSettings = {
   setSuggestLiteraryDevices: (...args: unknown[]) => mockSetSuggestLiteraryDevices(...args),
   setExportFormat: (...args: unknown[]) => mockSetExportFormat(...args),
   setShowTutorials: (...args: unknown[]) => mockSetShowTutorials(...args),
+  setWarnPaymentDue: (...args: unknown[]) => mockSetWarnPaymentDue(...args),
   resetSeenTutorials: (...args: unknown[]) => mockResetSeenTutorials(...args),
   resetSettings: (...args: unknown[]) => mockResetSettings(...args),
 };
@@ -307,7 +310,7 @@ describe('AppSettingsScreen', () => {
     const view = await render(<SettingsScreen />);
     await view.findByText('dark_mode');
     const switches = view.getAllByRole('switch');
-    expect(switches).toHaveLength(5);
+    expect(switches).toHaveLength(6);
     await fireEvent.press(switches[0]);
     expect(mockSetDarkMode).toHaveBeenCalledWith(mockDrizzle, true);
     await fireEvent.press(switches[1]);
@@ -318,6 +321,15 @@ describe('AppSettingsScreen', () => {
     expect(mockSetShowContextualHelp).toHaveBeenCalledWith(mockDrizzle, false);
     await fireEvent.press(switches[4]);
     expect(mockSetShowTutorials).toHaveBeenCalledWith(mockDrizzle, false);
+    await fireEvent.press(switches[5]);
+    expect(mockSetWarnPaymentDue).toHaveBeenCalledWith(mockDrizzle, false);
+  });
+
+  it('says what the payment reminder does, on and off', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByText('warn_payment_due');
+
+    expect(view.getByText('warn_payment_due_on')).toBeTruthy();
   });
 
   it('resets the seen tutorials and confirms', async () => {

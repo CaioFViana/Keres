@@ -163,6 +163,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'dateDisplayFormat',
       'showContextualHelp',
       'showTutorials',
+      'warnPaymentDue',
       'seenTutorials',
       'suggestLiteraryDevices',
       'exportFormat',

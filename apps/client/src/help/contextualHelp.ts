@@ -23,6 +23,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   ServerManagementDrawer: 'what-is-a-server',
   ServerManagement: 'what-is-a-server',
   ServerDetail: 'what-is-a-server',
+  ServerPlan: 'what-is-a-server',
   ServerRegistration: 'add-server',
   MyProfile: 'your-profile',
   ChangePassword: 'change-password',

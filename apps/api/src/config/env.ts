@@ -84,6 +84,12 @@ const envSchema = z.object({
    * milliseconds. `docker stop` waits 10 s by default before killing, so the default leaves room for the
    * rest of the shutdown; raise both together (`stop_grace_period`).
    */
+  /**
+   * The payment plugin: a module (a path, or a package name) whose default export creates a `PaymentPlugin` - see
+   * `@keres/shared/payments/PaymentPlugin`. Absent, the server sells nothing and nothing about payments is shown.
+   * The plugin reads its own keys from the environment; Keres never looks at them.
+   */
+  PAYMENT_PLUGIN: optionalEnvironmentString,
   SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).optional().default(7000),
 });
 

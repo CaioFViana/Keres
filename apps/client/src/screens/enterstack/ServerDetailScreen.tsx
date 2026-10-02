@@ -14,9 +14,11 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
 import ServerActionRow from '../../components/features/servers/ServerActionRow';
 import ServerStatusPill from '../../components/features/servers/ServerStatusPill';
 import { useDrizzle } from '../../db';
+import { usePaymentOverview } from '../../hooks/usePaymentOverview';
 import { useServerDeletion } from '../../hooks/useServerDeletion';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
 import { useServerTagEditor } from '../../hooks/useServerTagEditor';
@@ -75,6 +77,10 @@ const ServerDetailScreen = () => {
       cancelled = true;
     };
   }, [server, online, profile]);
+
+  // Plans and payment appear only while the server answers and only if it sells plans: a user working offline,
+  // or on a server with no payment plugin, is never shown (or asked for) anything about payment.
+  const { overview: payments } = usePaymentOverview(server, online);
 
   const openMessages = () => {
     navigation.navigate('Conversation', { serverId, peer: 'admin' });
@@ -222,6 +228,13 @@ const ServerDetailScreen = () => {
         )}
       </View>
 
+      {payments?.info.subscription ? (
+        <>
+          <Text style={styles.sectionTitle}>{t('server_plan_section')}</Text>
+          <PlanStatusCard subscription={payments.info.subscription} />
+        </>
+      ) : null}
+
       <Text style={styles.sectionTitle}>{t('server_detail_actions')}</Text>
       <ServerActionRow
         icon="chatbubbles-outline"
@@ -230,6 +243,15 @@ const ServerDetailScreen = () => {
         onPress={openMessages}
         testID="server-action-messages"
       />
+      {payments ? (
+        <ServerActionRow
+          icon="card-outline"
+          title={t('server_action_plan')}
+          description={t('server_action_plan_hint')}
+          onPress={() => navigation.navigate('ServerPlan', { serverId })}
+          testID="server-action-plan"
+        />
+      ) : null}
       <ServerActionRow
         icon="person-circle-outline"
         title={t('server_action_profile')}

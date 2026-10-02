@@ -169,6 +169,40 @@ describe('setSuggestLiteraryDevices', () => {
   });
 });
 
+describe('setWarnPaymentDue', () => {
+  it('is on until the user turns it off, and persists the choice before the screens read it', async () => {
+    expect(store().warnPaymentDue).toBe(true);
+
+    await store().setWarnPaymentDue(db, false);
+
+    expect(mockClientSettings.updateClientSettings).toHaveBeenCalledWith(db, {
+      warnPaymentDue: false,
+    });
+    expect(store().warnPaymentDue).toBe(false);
+  });
+
+  it('is read from what was saved, and on when an older database does not have it yet', async () => {
+    mockClientSettings.getClientSettings.mockResolvedValueOnce({
+      ...SETTINGS,
+      warnPaymentDue: false,
+    });
+    await store().initializeSettings(db);
+    expect(store().warnPaymentDue).toBe(false);
+
+    mockClientSettings.getClientSettings.mockResolvedValueOnce({ ...SETTINGS });
+    await store().initializeSettings(db);
+    expect(store().warnPaymentDue).toBe(true);
+  });
+
+  it('goes back to on when the settings are reset', async () => {
+    await store().setWarnPaymentDue(db, false);
+
+    store().resetSettings();
+
+    expect(store().warnPaymentDue).toBe(true);
+  });
+});
+
 describe('active server', () => {
   it('remembers the server the user signed into', () => {
     store().setActiveServer(server);

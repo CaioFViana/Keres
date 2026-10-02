@@ -31,6 +31,11 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Histórias sem servidor continuam locais. Histórias ligadas a um servidor podem sincronizar mídias, mostrar atividade, usar colaboração e exigir resolução de conflitos quando a mesma informação é alterada em lugares diferentes.',
     },
+    { type: 'heading', level: 2, text: 'Planos e pagamento' },
+    {
+      type: 'paragraph',
+      text: 'Alguns servidores vendem planos com limites maiores. Quando o servidor ao qual você está conectado vende, a tela dele mostra a linha Plano e pagamento: você escolhe um plano, com que frequência pagar e um método, e o pagamento é feito na página do próprio provedor de pagamento - os dados do seu cartão ou conta nunca são digitados no Keres. Um plano pago mostra até quando está pago, e você pode parar a renovação; quando o período termina sem pagamento, o plano deixa de valer até ser pago. Isso só aparece enquanto o servidor responde, então trabalhar offline nunca é interrompido, e em Configurações você escolhe se quer ser lembrado uma vez quando um pagamento estiver perto.',
+    },
     { type: 'seeAlso', pages: ['add-server', 'sync-basics', 'collaborators', 'data-and-backup'] },
   ],
 };

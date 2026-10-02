@@ -9,6 +9,7 @@ import { createFriendshipService } from '../../../services/FriendshipService';
 import { createStoryInvitationService } from '../../../services/StoryInvitationService';
 import { createServerService } from '../../../services/ServerService';
 import { useFlushDraftsOnBackground } from '../../../hooks/useFlushDraftsOnBackground';
+import { usePaymentDueWatcher } from '../../../hooks/usePaymentDueWatcher';
 import { usePlanUsageWatcher } from '../../../hooks/usePlanUsageWatcher';
 import { ServerRealtimeService } from '../../../services/ServerRealtimeService';
 import { createStoryService } from '../../../services/storymanagement/StoryService';
@@ -45,6 +46,8 @@ const SyncInitializer: React.FC<SyncInitializerProps> = ({ children }) => {
   // How close the open story is to its plan: the editor's indicator and the alert notification read it.
   usePlanUsageWatcher(drizzleClient, selectedStory);
   useFlushDraftsOnBackground();
+  // A paid plan about to run out, said once and only if the user allowed it (see the setting).
+  usePaymentDueWatcher(drizzleClient, userId);
   const realtimeByServerRef = useRef(new Map<string, ServerRealtimeService>());
   // Connections outlive story switches, so the subscription applier reads the current story
   // from a ref instead of closing over the render's value. Synced in an effect (not during

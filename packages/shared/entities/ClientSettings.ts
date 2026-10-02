@@ -18,6 +18,8 @@ export interface ClientSettings {
   suggestLiteraryDevices: boolean;
   /** File format for map, graph, board and timeline exports on this device. */
   exportFormat: MapExportFormat;
+  /** When on, the app reminds the user that a paid period is about to end (on servers that sell plans). */
+  warnPaymentDue: boolean;
   /** When on, first-open guided tours may appear on this device. */
   showTutorials: boolean;
   /** Raw JSON `{version, seen[]}` with the tour ids already completed or skipped. */

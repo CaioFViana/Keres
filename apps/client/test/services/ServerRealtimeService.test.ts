@@ -297,6 +297,28 @@ describe('catalog-driven resubscription', () => {
   });
 });
 
+describe('payments.changed', () => {
+  it('tells whoever shows the plan which server changed, and does nothing else', async () => {
+    const { entityEventEmitter } = jest.requireActual('../../src/utils/EventEmitter');
+    const listener = jest.fn();
+    entityEventEmitter.on('payments_changed', listener);
+    const service = new ServerRealtimeService({} as any, server, 'me', mockSyncEngine);
+    service.start('story');
+    await flush();
+    const socket = MockWebSocket.instances[0];
+    socket.onopen?.();
+    mockSyncEngine.requestSync.mockClear();
+
+    socket.onmessage?.({ data: JSON.stringify({ type: 'payments.changed' }) });
+    await flush();
+
+    expect(listener).toHaveBeenCalledWith('server');
+    expect(mockSyncEngine.requestSync).not.toHaveBeenCalled();
+    entityEventEmitter.off('payments_changed', listener);
+    await service.stop();
+  });
+});
+
 describe('isLive and the link notification', () => {
   const heartbeat = JSON.stringify({ type: 'server.heartbeat' });
 

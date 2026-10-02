@@ -74,7 +74,8 @@
       "security": "Security",
       "limits": "Plan limits",
       "contact": "Site contact",
-      "system": "System"
+      "system": "System",
+      "payment": "Payments"
     },
     "outcomes": {
       "success": "Succeeded",
@@ -140,7 +141,13 @@
       "admin_activity_exported": "Activity record exported",
       "admin_request": "Other admin change",
       "system_server_started": "Server started",
-      "system_server_stopped": "Server stopped"
+      "system_server_stopped": "Server stopped",
+      "payment_checkout_started": "Started paying for a plan",
+      "payment_succeeded": "Payment received",
+      "payment_failed": "Payment failed",
+      "payment_subscription_canceled": "Subscription cancelled or ended",
+      "payment_subscription_due": "Paid period ran out",
+      "payment_webhook_rejected": "Provider notice refused"
     }
   },
   "appearance": {
@@ -269,6 +276,7 @@
     "users": "Users",
     "recovery": "Recovery",
     "activity": "Activity",
+    "payments": "Payments",
     "logs": "Logs",
     "tiers": "Tiers",
     "messages": "Messages",
@@ -277,6 +285,57 @@
     "signOut": "Sign out",
     "ariaLabel": "Admin",
     "unreadMessages": "{{count}} unread"
+  },
+  "payments": {
+    "title": "Payments",
+    "intro": "Who has paid for a plan, who is late and what came in. Payments are made between the person and the payment provider: nothing here can change one, and no way to pay is kept anywhere.",
+    "noPlugin": "This server has no payment plugin, so it does not sell plans and nothing about payments is shown to users. Plans are handed out by assigning them to users. To sell plans, install a plugin and set PAYMENT_PLUGIN.",
+    "provider": "Payments are taken by {{name}}.",
+    "active": "Paid up",
+    "due": "Due",
+    "canceled": "Ended",
+    "endingSoon": "Ending in {{days}} days",
+    "received30": "Received, 30 days",
+    "payments30": "Payments, 30 days",
+    "failures30": "Failures, 30 days",
+    "monthlyRecurring": "Monthly recurring value",
+    "tabs": {
+      "subscriptions": "Subscriptions",
+      "ledger": "Ledger"
+    },
+    "searchPlaceholder": "User, tag or provider reference",
+    "status": "Status",
+    "statusAll": "All",
+    "statuses": {
+      "active": "Paid up",
+      "due": "Due",
+      "canceled": "Ended"
+    },
+    "intervals": {
+      "monthly": "monthly",
+      "yearly": "yearly"
+    },
+    "leaving": "(will not renew)",
+    "deletedAccount": "(account closed)",
+    "columnUser": "User",
+    "columnPlan": "Plan",
+    "columnStatus": "Status",
+    "columnPaidUntil": "Paid until",
+    "columnLastPayment": "Last payment",
+    "columnAmount": "Amount",
+    "columnProvider": "Provider",
+    "columnWhen": "When",
+    "columnEvent": "Event",
+    "columnDetail": "Detail",
+    "emptySubscriptions": "No subscriptions for these filters.",
+    "emptyLedger": "Nothing reported by the provider yet.",
+    "kinds": {
+      "payment_succeeded": "Payment received",
+      "payment_failed": "Payment failed",
+      "subscription_canceled": "Subscription ended",
+      "subscription_due": "Period ran out unpaid",
+      "checkout_expired": "Attempt expired"
+    }
   },
   "recovery": {
     "title": "Recovery",

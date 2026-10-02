@@ -48,6 +48,7 @@ export * from './schema/tables/storyInvitations';
 export * from './schema/tables/storyPermissions';
 export * from './schema/tables/publicationLog';
 export * from './schema/tables/messageLog';
+export * from './schema/tables/payments';
 export * from './schema/tables/storyPublications';
 export * from './schema/tables/storyShowcaseEntries';
 export * from './schema/tables/storySchemaFields';

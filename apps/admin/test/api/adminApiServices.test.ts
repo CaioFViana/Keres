@@ -15,6 +15,7 @@ vi.mock('../../src/api/apiClient', async (importOriginal) => {
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
 import { ActivityApiService } from '../../src/api/ActivityApiService';
+import { PaymentsApiService } from '../../src/api/PaymentsApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';
 import { MessagesApiService } from '../../src/api/MessagesApiService';
 import { RecoveryApiService } from '../../src/api/RecoveryApiService';
@@ -171,6 +172,20 @@ describe('ShowcaseSettingsApiService', () => {
     expect(mocks.put).toHaveBeenCalledWith('/admin/showcase-settings', {
       isShowcaseEnabled: true,
     });
+  });
+});
+
+describe('PaymentsApiService', () => {
+  it('maps the summary, the subscriptions and the ledger to the payments routes', async () => {
+    await PaymentsApiService.summary();
+    await PaymentsApiService.subscriptions({ status: 'due', page: 2 });
+    await PaymentsApiService.events({ page: 3 });
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/summary');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/subscriptions', {
+      params: { status: 'due', page: 2 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/events', { params: { page: 3 } });
   });
 });
 

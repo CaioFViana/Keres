@@ -232,7 +232,12 @@ export function RecoveryPage() {
 
             {selectedEntry && (
               <div className="detail-panel">
-                <h3>{t('recovery.operationDetail')}</h3>
+                <div className="detail-header">
+                  <h3>{t('recovery.operationDetail')}</h3>
+                  <button type="button" onClick={() => setSelectedEntry(null)}>
+                    {t('common.close')}
+                  </button>
+                </div>
                 <dl>
                   <dt>{t('recovery.columnType')}</dt>
                   <dd>{selectedEntry.operationType}</dd>

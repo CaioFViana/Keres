@@ -5,5 +5,6 @@ import { createSimpleEntityHandler } from './createSimpleEntityHandler';
 export const userEntityHandler = createSimpleEntityHandler({
   entityType: OperationLogEntityType.User,
   syncable: false,
-  displayField: 'displayName',
+  // The users table carries `username` (login handle); there is no `displayName` column.
+  displayField: 'username',
 });

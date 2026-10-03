@@ -184,6 +184,30 @@ describe('logs page', () => {
     await flush();
   });
 
+  it('closes the detail and gives the table its width back', async () => {
+    mocks.listLogs.mockResolvedValue({
+      items: [logEntry()],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    });
+    const view = await withRouter(<LogsPage />);
+    await flush();
+
+    await click(view.container.querySelector('tbody tr')!);
+    await flush();
+    expect(view.container.querySelector('.detail-panel')).not.toBeNull();
+
+    const close = Array.from(view.container.querySelectorAll('.detail-panel button')).find(
+      (button) => button.textContent === 'Close',
+    )!;
+    await click(close);
+    await flush();
+
+    expect(view.container.querySelector('.detail-panel')).toBeNull();
+    await view.unmount();
+  });
+
   it('shows dashes in the detail when the entry carries no names', async () => {
     mocks.listLogs.mockResolvedValue({
       items: [logEntry({ storyTitle: null, storyId: null, username: null, userId: null })],
@@ -476,6 +500,31 @@ describe('recovery page', () => {
     await flush();
 
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Log browse is down.');
+    await view.unmount();
+  });
+
+  it('closes the operation detail and gives the table its width back', async () => {
+    mocks.browseOperationLog.mockResolvedValue({
+      items: [logRow()],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    });
+    const view = await withRouter(<RecoveryPage />);
+
+    await submit(view.container.querySelectorAll('form')[1]);
+    await flush();
+    await click(view.container.querySelectorAll('table')[1].querySelector('tbody tr')!);
+    await flush();
+    expect(view.container.querySelector('.detail-panel')).not.toBeNull();
+
+    const close = Array.from(view.container.querySelectorAll('.detail-panel button')).find(
+      (button) => button.textContent === 'Close',
+    )!;
+    await click(close);
+    await flush();
+
+    expect(view.container.querySelector('.detail-panel')).toBeNull();
     await view.unmount();
   });
 

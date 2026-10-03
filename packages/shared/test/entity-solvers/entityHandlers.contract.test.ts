@@ -51,6 +51,8 @@ const row = {
   content: 'Content',
   text: 'Text',
   isFavorite: true,
+  username: 'ana',
+  commentText: 'Looks good',
 } as Record<string, unknown>;
 
 const context: EntitySolverContext = {
@@ -91,8 +93,11 @@ describe('entity handler contract', () => {
       await expect(
         resolveAdvancedOperationLogEntityName(context, entityType, 'entity-id'),
       ).resolves.toEqual(expect.anything());
-      const compactName = await resolveCompactEntityName(context, entityType, 'entity-id');
-      expect(compactName === undefined || typeof compactName === 'string').toBe(true);
+      // Every handler must produce a compact name for a present row: the recovery lists have no
+      // other label source, and an undefined here renders as a permanently blank "name" column.
+      await expect(
+        resolveCompactEntityName(context, entityType, 'entity-id'),
+      ).resolves.toEqual(expect.any(String));
       await expect(resolveCompactEntityLabel(context, entityType, 'entity-id')).resolves.toEqual(
         expect.any(String),
       );

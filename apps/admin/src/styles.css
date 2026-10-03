@@ -552,6 +552,17 @@ button.button-danger:hover {
   font-size: 0.85rem;
 }
 
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.detail-header h3 {
+  margin: 0;
+}
+
 .detail-panel dl {
   display: grid;
   grid-template-columns: auto 1fr;

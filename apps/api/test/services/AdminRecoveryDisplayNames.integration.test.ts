@@ -13,6 +13,7 @@ import {
   routes,
   scenes,
   stories,
+  storyCalendars,
   storySchemaFields,
   stats,
   tags,
@@ -282,6 +283,17 @@ describe('enrichDeletedDisplayNames', () => {
     }
   });
 
+  it('names a calendar tombstone from its own name column', async () => {
+    expect(
+      await label(
+        deleted('StoryCalendar', newId(), {
+          storyId: ids.story,
+          name: 'Calendário Imperial',
+        }),
+      ),
+    ).toBe('Calendário Imperial');
+  });
+
   it('falls back to a short id or a question mark when a reference cannot be resolved', async () => {
     expect(
       await label(
@@ -436,6 +448,29 @@ describe('enrichOperationLogNames', () => {
       storyTitle: 'A Queda',
       username: 'ana',
     });
+  });
+
+  it('names a calendar operation from the stored row', async () => {
+    const calendarId = newId();
+    await db.insert(storyCalendars).values({
+      id: calendarId,
+      storyId: ids.story,
+      name: 'Calendário Imperial',
+      definition: {},
+    } as never);
+    const logId = newId();
+    const result = await enrichOperationLogNames([
+      {
+        id: logId,
+        entityType: 'StoryCalendar',
+        entityId: calendarId,
+        storyId: ids.story,
+        userId: ids.user,
+        payload: {},
+      },
+    ]);
+
+    expect(result.get(logId)?.entityName).toBe('Calendário Imperial');
   });
 
   it('merges the stored row with the payload so a delete still composes a label', async () => {

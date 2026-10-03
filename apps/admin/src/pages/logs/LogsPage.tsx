@@ -196,7 +196,12 @@ export function LogsPage() {
 
           {selectedEntry && (
             <div className="detail-panel">
-              <h3>{t('logs.detail')}</h3>
+              <div className="detail-header">
+                <h3>{t('logs.detail')}</h3>
+                <button type="button" onClick={() => setSelectedEntry(null)}>
+                  {t('common.close')}
+                </button>
+              </div>
               <dl>
                 <dt>{t('logs.columnLevel')}</dt>
                 <dd className={LEVEL_CLASS[selectedEntry.level]}>{selectedEntry.level}</dd>

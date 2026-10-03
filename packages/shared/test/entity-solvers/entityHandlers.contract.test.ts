@@ -95,9 +95,9 @@ describe('entity handler contract', () => {
       ).resolves.toEqual(expect.anything());
       // Every handler must produce a compact name for a present row: the recovery lists have no
       // other label source, and an undefined here renders as a permanently blank "name" column.
-      await expect(
-        resolveCompactEntityName(context, entityType, 'entity-id'),
-      ).resolves.toEqual(expect.any(String));
+      await expect(resolveCompactEntityName(context, entityType, 'entity-id')).resolves.toEqual(
+        expect.any(String),
+      );
       await expect(resolveCompactEntityLabel(context, entityType, 'entity-id')).resolves.toEqual(
         expect.any(String),
       );

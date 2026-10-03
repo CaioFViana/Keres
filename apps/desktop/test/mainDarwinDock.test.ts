@@ -77,8 +77,6 @@ afterAll(() => {
 
 describe('macOS dock icon', () => {
   it('sets the dock icon instead of showing the generic Electron one', () => {
-    expect(electronMocks.setIcon).toHaveBeenCalledWith(
-      expect.stringContaining('desktop_icon.png'),
-    );
+    expect(electronMocks.setIcon).toHaveBeenCalledWith(expect.stringContaining('desktop_icon.png'));
   });
 });

@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import * as electron from 'electron';
 import { BrowserWindow } from 'electron';
+import { existsSync } from 'fs';
 
 const electronMocks = vi.hoisted(() => {
   const events = new Map<string, (...args: any[]) => unknown>();
@@ -196,6 +197,22 @@ describe('a second launch, from the instance that is running', () => {
       expect(electronMocks.BrowserWindow.mock.calls.length).toBeGreaterThan(before),
     );
   });
+
+  it('logs when no window can be opened for the second launch', async () => {
+    (existsSync as Mock).mockReturnValueOnce(false);
+    getAllWindows().mockReturnValueOnce([]);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    electronMocks.events.get('second-instance')?.();
+
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(
+        '[desktop] could not open a window for the second launch:',
+        expect.any(Error),
+      ),
+    );
+    error.mockRestore();
+  });
 });
 
 describe('external links', () => {
@@ -292,6 +309,18 @@ describe('graceful shutdown on OS signals', () => {
     main.handleProcessSignal('SIGINT');
     main.resetSignalShutdownForTests();
     main.handleProcessSignal('SIGTERM');
+
+    expect(electronMocks.quit).toHaveBeenCalledTimes(2);
+    expect(electronMocks.exit).not.toHaveBeenCalled();
+  });
+
+  it('routes the named SIGINT and SIGTERM listeners through the graceful shutdown', () => {
+    main.handleSigint();
+
+    expect(electronMocks.quit).toHaveBeenCalledTimes(1);
+
+    main.resetSignalShutdownForTests();
+    main.handleSigterm();
 
     expect(electronMocks.quit).toHaveBeenCalledTimes(2);
     expect(electronMocks.exit).not.toHaveBeenCalled();

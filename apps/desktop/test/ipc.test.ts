@@ -223,6 +223,22 @@ describe('auth channels', () => {
     await expect(invoke('auth:read', trustedEvent, 'server-1')).resolves.toBeNull();
   });
 
+  it('propagates a corrupt vault file instead of returning null', async () => {
+    await fs.writeFile(path.join(USER_DATA, 'auth-vault.json'), 'not-json{{{');
+
+    await expect(invoke('auth:read', trustedEvent, 'server-1')).rejects.toThrow();
+  });
+
+  it('keeps the vault queue usable after a failed write', async () => {
+    await fs.writeFile(path.join(USER_DATA, 'auth-vault.json'), 'not-json{{{');
+
+    await expect(invoke('auth:write', trustedEvent, 'server-1', TOKENS)).rejects.toThrow();
+    await fs.rm(path.join(USER_DATA, 'auth-vault.json'), { force: true });
+
+    await expect(invoke('auth:write', trustedEvent, 'server-1', TOKENS)).resolves.toBeUndefined();
+    await expect(invoke('auth:read', trustedEvent, 'server-1')).resolves.toEqual(TOKENS);
+  });
+
   it('returns null instead of decrypting when secure storage went away', async () => {
     await invoke('auth:write', trustedEvent, 'server-1', TOKENS);
     electronMocks.isAsyncEncryptionAvailable.mockResolvedValue(false);
@@ -368,6 +384,13 @@ describe('media channels', () => {
 
   it('returns an empty list when no media was ever written', async () => {
     await expect(invoke('media:list-all', trustedEvent)).resolves.toEqual([]);
+  });
+
+  it('skips a stray entry directly inside the media directory', async () => {
+    await invoke('media:write', trustedEvent, 'media/story-1/a.png', BYTES);
+    await fs.writeFile(path.join(MEDIA_ROOT, 'media', 'stray.txt'), BYTES);
+
+    await expect(invoke('media:list-all', trustedEvent)).resolves.toEqual(['media/story-1/a.png']);
   });
 
   it('asks the OS to open a stored file at the resolved path', async () => {

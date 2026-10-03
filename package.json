@@ -14,6 +14,7 @@
     "client:db:generate": "bun run --cwd apps/client db:generate",
     "api:start": "bun run --cwd apps/api start",
     "api:build": "bun run --cwd apps/api build",
+    "api:start:paydemo": "PAYMENT_DEMO=true bun run --cwd apps/api start",
     "db:generate": "bun run api:db:generate && bun run api:db:generate:sqlite && bun run client:db:generate && bun run --cwd apps/client prestart",
     "api:db:generate": "bun run --cwd apps/api db:generate",
     "api:db:generate:sqlite": "bun run --cwd apps/api db:generate:sqlite",

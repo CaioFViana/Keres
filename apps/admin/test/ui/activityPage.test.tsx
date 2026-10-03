@@ -234,6 +234,22 @@ describe('activity page: the record', () => {
     expect(panel.querySelector('pre')!.textContent).toContain('"status": 201');
   });
 
+  it('closes the event detail and gives the table its width back', async () => {
+    const view = await renderPage();
+    await flush();
+
+    await click(view.container.querySelector('tbody tr')!);
+    expect(view.container.querySelector('.detail-panel')).not.toBeNull();
+
+    const close = Array.from(view.container.querySelectorAll('.detail-panel button')).find(
+      (button) => button.textContent === 'Close',
+    )!;
+    await click(close);
+    await flush();
+
+    expect(view.container.querySelector('.detail-panel')).toBeNull();
+  });
+
   it('opens an event from the keyboard', async () => {
     const view = await renderPage();
     await flush();

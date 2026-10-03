@@ -6,11 +6,17 @@ import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
 import { pruneAttemptLimits } from './services/AttemptLimitService';
 import { auditService } from './services/AuditService';
-import { loadPaymentPlugin } from './services/payments/PaymentPluginRegistry';
+import { createConfiguredDemoPlugin, demoBaseUrl } from './services/payments/demo/DemoPayService';
+import {
+  getPaymentPlugin,
+  loadPaymentPlugin,
+  setPaymentPlugin,
+} from './services/payments/PaymentPluginRegistry';
 import { subscriptionService } from './services/payments/SubscriptionService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
+import { registrationSettingsService } from './services/RegistrationSettingsService';
 import { reconcileRootAdmin } from './services/RootAdminService';
 import { normalizeStoredUserTags } from './services/UserTagMaintenance';
 import { createShutdown, installShutdownHandlers } from './shutdown';
@@ -36,6 +42,28 @@ export async function preparePersistence(): Promise<void> {
   // Before the root admin: its own tag, when it already exists, is one of those that may need it.
   await normalizeStoredUserTags();
   await reconcileRootAdmin();
+}
+
+/**
+ * A server that sells plans needs a default plan: it is where somebody goes when their paid period ends and no
+ * plan was assigned to them. Without one they are not limited at all, so a lapsed subscription would be worth
+ * more than a free plan. Said at every start, loudly, because nothing fails to make it visible otherwise.
+ */
+export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
+  if (!getPaymentPlugin()) return false;
+  try {
+    const { defaultTierId } = await registrationSettingsService.getOrCreate();
+    if (defaultTierId) return false;
+  } catch (error) {
+    logger.warn('Could not check for a default plan', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+  logger.warn(
+    'Payments are on but the server has no default plan: people whose paid period ends, and who have no plan assigned, will have NO limits. Set a default plan in the admin panel (Registration).',
+  );
+  return true;
 }
 
 /**
@@ -162,6 +190,14 @@ export async function bootAndListen(options?: {
 
   const app = await createApp();
   await loadPaymentPlugin();
+  if (env.PAYMENT_DEMO) {
+    // The fake provider wins over a configured plugin: asking for the demo is asking to see it working.
+    setPaymentPlugin(createConfiguredDemoPlugin());
+    logger.warn(
+      `PAYMENT_DEMO is on: payments are FAKE and anyone signed in can grant themselves a paid plan at ${demoBaseUrl()}/buy. Never run a real server like this.`,
+    );
+  }
+  await warnIfPaymentsHaveNoDefaultPlan();
   const stopSchedulers = [
     startPaymentsScheduler(),
     startMediaBlobSweepScheduler(),

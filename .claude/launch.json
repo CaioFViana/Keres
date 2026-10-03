@@ -18,6 +18,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "site:start"],
       "port": 5175
+    },
+    {
+      "name": "payments-demo",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "--cwd", "apps/api", "payments:demo"],
+      "port": 3100
     }
   ]
 }

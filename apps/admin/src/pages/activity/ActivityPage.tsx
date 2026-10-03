@@ -462,7 +462,12 @@ export function ActivityPage() {
 
           {selected && (
             <div className="detail-panel">
-              <h3>{actionLabel(selected.action)}</h3>
+              <div className="detail-header">
+                <h3>{actionLabel(selected.action)}</h3>
+                <button type="button" onClick={() => setSelected(null)}>
+                  {t('common.close')}
+                </button>
+              </div>
               <dl>
                 <dt>{t('activity.columnWhen')}</dt>
                 <dd>{when(selected.createdAt)}</dd>

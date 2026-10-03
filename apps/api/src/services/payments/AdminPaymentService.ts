@@ -7,6 +7,7 @@ import type {
   AdminSubscription,
   AdminSubscriptionListQuery,
   AdminSubscriptionPage,
+  AdminUserSubscription,
 } from '@keres/shared';
 import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
 import { and, asc, count, desc, eq, gte, inArray, lte, or, sql, sum, type SQL } from 'drizzle-orm';
@@ -22,6 +23,32 @@ type UserRow = { id: string; username: string; tag: string; isDeleted: boolean }
 
 const toUser = (row: UserRow | undefined): AdminPaymentUser | null =>
   row ? { id: row.id, username: row.username, tag: row.tag, isDeleted: row.isDeleted } : null;
+
+type SubscriptionJoin = {
+  subscription: typeof paymentSubscriptions.$inferSelect;
+  user: UserRow | null;
+  tierName: string | null;
+};
+
+const toAdminSubscription = ({
+  subscription,
+  user,
+  tierName,
+}: SubscriptionJoin): AdminSubscription => ({
+  user: toUser(user ?? undefined),
+  tierId: subscription.tierId,
+  tierName: tierName ?? 'Plan',
+  interval: subscription.interval,
+  status: subscription.status,
+  paidUntil: subscription.paidUntil.toISOString(),
+  lastPaymentAt: subscription.lastPaymentAt?.toISOString() ?? null,
+  amountCents: subscription.amountCents,
+  currency: subscription.currency,
+  cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+  providerId: subscription.providerId,
+  providerReference: subscription.providerReference,
+  createdAt: subscription.createdAt.toISOString(),
+});
 
 async function usersById(ids: (string | null)[]): Promise<Map<string, UserRow>> {
   const unique = [...new Set(ids.filter((id): id is string => !!id))];
@@ -41,7 +68,7 @@ async function usersById(ids: (string | null)[]): Promise<Map<string, UserRow>> 
 export class AdminPaymentService {
   async summary(now = new Date()): Promise<AdminPaymentSummary> {
     const plugin = getPaymentPlugin();
-    const { currency } = await registrationSettingsService.getOrCreate();
+    const { currency, defaultTierId } = await registrationSettingsService.getOrCreate();
 
     const perStatus = await db
       .select({ status: paymentSubscriptions.status, total: count() })
@@ -84,6 +111,8 @@ export class AdminPaymentService {
       0,
     );
 
+    const sellsOrGives =
+      plugin !== null || subscriptions.active + subscriptions.due + subscriptions.canceled > 0;
     return {
       enabled: plugin !== null,
       provider: plugin ? { id: plugin.id, displayName: plugin.displayName } : null,
@@ -96,6 +125,7 @@ export class AdminPaymentService {
         amountCents: Number(received?.amount ?? 0),
       },
       monthlyRecurringCents,
+      noDefaultTier: sellsOrGives && !defaultTierId,
     };
   }
 
@@ -141,22 +171,29 @@ export class AdminPaymentService {
         .where(where),
     ]);
 
-    const items: AdminSubscription[] = rows.map(({ subscription, user, tierName }) => ({
-      user: toUser(user ?? undefined),
-      tierId: subscription.tierId,
-      tierName: tierName ?? 'Plan',
-      interval: subscription.interval,
-      status: subscription.status,
-      paidUntil: subscription.paidUntil.toISOString(),
-      lastPaymentAt: subscription.lastPaymentAt?.toISOString() ?? null,
-      amountCents: subscription.amountCents,
-      currency: subscription.currency,
-      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-      providerId: subscription.providerId,
-      providerReference: subscription.providerReference,
-      createdAt: subscription.createdAt.toISOString(),
-    }));
+    const items = rows.map(toAdminSubscription);
     return { items, total, page: query.page, pageSize: query.pageSize };
+  }
+
+  /** One person's subscription, and whether the plugin could stop the provider charging it - what giving them a plan needs. */
+  async subscriptionOfUser(userId: string): Promise<AdminUserSubscription> {
+    const [row] = await db
+      .select({ subscription: paymentSubscriptions, user: users, tierName: tiers.name })
+      .from(paymentSubscriptions)
+      .leftJoin(users, eq(users.id, paymentSubscriptions.userId))
+      .leftJoin(tiers, eq(tiers.id, paymentSubscriptions.tierId))
+      .where(eq(paymentSubscriptions.userId, userId))
+      .limit(1);
+    const plugin = getPaymentPlugin();
+    return {
+      subscription: row ? toAdminSubscription(row) : null,
+      canCancelAtProvider: Boolean(
+        row &&
+          plugin?.cancelSubscription &&
+          row.subscription.providerReference &&
+          row.subscription.providerId === plugin.id,
+      ),
+    };
   }
 
   async listEvents(query: AdminPaymentEventListQuery): Promise<AdminPaymentEventPage> {

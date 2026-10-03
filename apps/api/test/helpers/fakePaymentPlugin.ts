@@ -3,6 +3,7 @@ import {
   type CheckoutResult,
   type DueSubscription,
   type PaymentEvent,
+  type PaymentMethodOption,
   type PaymentPlugin,
   PaymentWebhookRejectedError,
   type WebhookRequest,
@@ -24,7 +25,7 @@ export const FAKE_VALID_SIGNATURE = 'valid';
 export interface FakePluginOptions {
   /** What `createCheckout` answers; the default is a hosted checkout. */
   action?: (request: CheckoutRequest) => CheckoutResult['action'];
-  methods?: { id: string; label: string }[];
+  methods?: PaymentMethodOption[];
   withStatusPolling?: boolean;
   withCancel?: boolean;
   withDueHook?: boolean;

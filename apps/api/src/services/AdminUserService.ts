@@ -1,4 +1,9 @@
-import type { AdminCreateUser, AdminUpdateUser, AdminUserListQuery } from '@keres/shared';
+import type {
+  AdminCreateUser,
+  AdminUpdateUser,
+  AdminUserListQuery,
+  UserTierSource,
+} from '@keres/shared';
 import { deriveUserTag, normalizeUserTag } from '@keres/shared';
 import { and, asc, count, eq, or, sql } from 'drizzle-orm';
 import { insensitiveLike } from '../db/sqlOperators';
@@ -8,7 +13,9 @@ import { env } from '../config/env';
 import { db } from '../db';
 import { tiers, users } from '../db/schema';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
+import { entitledTierIds } from './payments/entitlement';
 import { recoveryCodeService } from './RecoveryCodeService';
+import { registrationSettingsService } from './RegistrationSettingsService';
 import { TierNotFoundError } from './TierService';
 import { TagAlreadyTakenError } from './UserService';
 
@@ -113,7 +120,7 @@ export class AdminUserService {
     }
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const [items, [{ total }]] = await Promise.all([
+    const [rows, [{ total }]] = await Promise.all([
       db.query.users.findMany({
         columns: ADMIN_USER_COLUMNS,
         where,
@@ -124,11 +131,48 @@ export class AdminUserService {
       db.select({ total: count() }).from(users).where(where),
     ]);
 
-    return { items, total, page: query.page, pageSize: query.pageSize };
+    return {
+      items: await this.withEffectiveTier(rows),
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+    };
   }
 
   async getById(id: string) {
-    return db.query.users.findFirst({ columns: ADMIN_USER_COLUMNS, where: eq(users.id, id) });
+    const row = await db.query.users.findFirst({
+      columns: ADMIN_USER_COLUMNS,
+      where: eq(users.id, id),
+    });
+    return row ? (await this.withEffectiveTier([row]))[0] : undefined;
+  }
+
+  /**
+   * Adds the plan each person is on right now, and why. The `tierId` column is the plan an administrator
+   * assigned; what the person actually gets is their paid plan when their subscription is paid up, and only
+   * otherwise that one (then the server's default) - so a list that showed the column alone said "Free" about
+   * somebody who had just paid for a bigger plan.
+   */
+  private async withEffectiveTier<T extends { id: string; tierId: string | null }>(
+    rows: T[],
+  ): Promise<(T & { effectiveTierId: string | null; tierSource: UserTierSource })[]> {
+    const [paid, settings] = await Promise.all([
+      entitledTierIds(rows.map((row) => row.id)),
+      registrationSettingsService.getOrCreate(),
+    ]);
+    return rows.map((row) => {
+      const subscription = paid.get(row.id);
+      if (subscription) {
+        return { ...row, effectiveTierId: subscription, tierSource: 'subscription' as const };
+      }
+      if (row.tierId) {
+        return { ...row, effectiveTierId: row.tierId, tierSource: 'assigned' as const };
+      }
+      if (settings.defaultTierId) {
+        return { ...row, effectiveTierId: settings.defaultTierId, tierSource: 'default' as const };
+      }
+      return { ...row, effectiveTierId: null, tierSource: 'none' as const };
+    });
   }
 
   async create(input: AdminCreateUser) {

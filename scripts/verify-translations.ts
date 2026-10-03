@@ -295,6 +295,21 @@ function scanFile(filePath: string): ScanResult {
       const arg = node.arguments[0];
       if (ts.isStringLiteral(arg) || ts.isNoSubstitutionTemplateLiteral(arg)) {
         exactUsages.push({ key: arg.text, file: filePath, line: lineOf(arg.getStart(sourceFile)) });
+        // i18next context: `t('key', { context: 'official' })` reads `key_official` where it exists and `key`
+        // elsewhere. The variants are never written out in code, so a call that passes a context is the evidence
+        // of use for every `key_<context>` (evidence only: a variant is optional, so none existing is no error).
+        const options = node.arguments[1];
+        if (
+          options &&
+          ts.isObjectLiteralExpression(options) &&
+          options.properties.some(
+            (property) =>
+              (ts.isPropertyAssignment(property) || ts.isShorthandPropertyAssignment(property)) &&
+              property.name.getText(sourceFile) === 'context',
+          )
+        ) {
+          allTemplatePatterns.push(new RegExp(`^${escapeRegExp(arg.text)}_[^.]+$`));
+        }
       } else if (ts.isTemplateExpression(arg)) {
         dynamicPatterns.push({
           pattern: patternFromTemplate(arg),

@@ -16,6 +16,8 @@ apps/api/media-storage/
 apps/api/*.db
 apps/api/*.db-wal
 apps/api/*.db-shm
+# Dados da demonstração do plugin de pagamento (`bun run payments:demo`).
+apps/api/payments-demo-data/
 
 # Build output do client web (apps/client) - gerado por `bun run export:web`, consumido
 # pelo Electron (ver apps/desktop). Não é código-fonte.

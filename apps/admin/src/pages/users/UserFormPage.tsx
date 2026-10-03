@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import type { Tier } from '@keres/shared';
+import type { Tier, UserTierSource } from '@keres/shared';
 import { slugifyUserTag } from '@keres/shared/utils/userTag';
+import { GiftPlanSection } from './GiftPlanSection';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
 
@@ -19,6 +20,10 @@ export function UserFormPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [initialIsAdmin, setInitialIsAdmin] = useState(false);
   const [tierId, setTierId] = useState<string>('');
+  // The plan the person is on now, which is not the one assigned when they have paid for another.
+  const [inUse, setInUse] = useState<{ tierId: string | null; source: UserTierSource } | null>(
+    null,
+  );
   const [bio, setBio] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -48,6 +53,7 @@ export function UserFormPage() {
         setIsAdmin(u.isAdmin);
         setInitialIsAdmin(u.isAdmin);
         setTierId(u.tierId ?? '');
+        setInUse(u.tierSource ? { tierId: u.effectiveTierId ?? null, source: u.tierSource } : null);
         setBio(u.bio ?? '');
       })
       .catch((err) => {
@@ -217,6 +223,18 @@ export function UserFormPage() {
             ))}
           </select>
         </label>
+        {inUse && (inUse.source === 'subscription' || inUse.source === 'default') && (
+          <p className="hint" data-testid="tier-in-use">
+            {t(
+              inUse.source === 'subscription'
+                ? 'userForm.tierInUseSubscription'
+                : 'userForm.tierInUseDefault',
+              {
+                name: tiers.find((entry) => entry.id === inUse.tierId)?.name ?? inUse.tierId ?? '',
+              },
+            )}
+          </p>
+        )}
         {tierError && <p className="error-text">{tierError}</p>}
         <label className="checkbox-label">
           <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
@@ -232,6 +250,7 @@ export function UserFormPage() {
           </button>
         </div>
       </form>
+      {!isNew && id && <GiftPlanSection userId={id} username={username} tiers={tiers} />}
 
       {!isNew && (
         <div className="form-card">

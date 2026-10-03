@@ -51,6 +51,26 @@ describe('PaymentApiService', () => {
     });
   });
 
+  it('asks what changing plan would do to the time left, and reads nothing as nothing', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        quote: { fromTierName: 'Plus', toTierName: 'Max', remainingDays: 20, convertedDays: 7 },
+      },
+    });
+    mockGet.mockResolvedValueOnce({ data: { quote: null } });
+    mockGet.mockResolvedValueOnce({ data: null });
+
+    await expect(paymentApi.getSwitchQuote(server, 't2', 'monthly')).resolves.toMatchObject({
+      convertedDays: 7,
+    });
+    await expect(paymentApi.getSwitchQuote(server, 't2', 'monthly')).resolves.toBeNull();
+    await expect(paymentApi.getSwitchQuote(server, 't2', 'monthly')).resolves.toBeNull();
+
+    expect(mockGet).toHaveBeenNthCalledWith(1, '/payments/switch-quote', {
+      params: { tierId: 't2', interval: 'monthly' },
+    });
+  });
+
   it('falls back to English when it has no language', async () => {
     mockPost.mockResolvedValue({ data: {} });
 

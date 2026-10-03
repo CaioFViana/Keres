@@ -1,3 +1,4 @@
+import { addBillingPeriod } from '@keres/shared/utils/billingPeriod';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from '../../src/db';
@@ -10,6 +11,7 @@ import {
 } from '../../src/db/schema';
 import { setPaymentPlugin } from '../../src/services/payments/PaymentPluginRegistry';
 import { subscriptionService } from '../../src/services/payments/SubscriptionService';
+import { tierEnforcementService } from '../../src/services/TierEnforcementService';
 import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 import {
@@ -274,6 +276,294 @@ describe('cancelling when it cannot go as usual', () => {
     expect(status).toBe(200);
     expect(data.cancelAtPeriodEnd).toBe(true);
     expect(fake.cancelSubscription).not.toHaveBeenCalled();
+  });
+});
+
+describe('changing plan while time is left', () => {
+  let cheapId: string;
+  let dearId: string;
+  const DAYS = (n: number) => n * DAY;
+  const daysBetween = (from: Date, to: Date) => (to.getTime() - from.getTime()) / DAY;
+
+  beforeEach(async () => {
+    cheapId = newId();
+    dearId = newId();
+    await db.insert(tiers).values([
+      {
+        id: cheapId,
+        name: 'Plus',
+        priceMonthlyCents: 2500,
+        priceYearlyCents: 25000,
+        isPublicForSale: true,
+      },
+      {
+        id: dearId,
+        name: 'Max',
+        priceMonthlyCents: 7000,
+        priceYearlyCents: 70000,
+        isPublicForSale: true,
+      },
+    ]);
+  });
+
+  /** A running subscription with `left` days to go on a plan, as a payment would have left it. */
+  async function subscribedTo(
+    user: TestUser,
+    tierId: string,
+    left: number,
+    over: Partial<typeof paymentSubscriptions.$inferInsert> = {},
+  ) {
+    await db.insert(paymentSubscriptions).values({
+      userId: user.userId,
+      tierId,
+      interval: 'monthly',
+      status: 'active',
+      paidUntil: new Date(Date.now() + DAYS(left)),
+      amountCents: 2500,
+      currency: 'BRL',
+      providerId: 'fakepay',
+      providerReference: `sub_${user.username}`,
+      ...over,
+    });
+  }
+
+  async function buyPlan(user: TestUser, tierId: string, interval = 'monthly') {
+    const opened = await request('POST', '/payments/checkout', {
+      token: user.token,
+      body: { tierId, interval, methodId: 'card' },
+    });
+    expect(opened.status).toBe(201);
+    const paidAt = new Date();
+    await webhook([
+      paid({
+        checkoutId: opened.data.id,
+        subscriptionReference: `sub_${user.username}`,
+        paidAt: paidAt.toISOString(),
+        amountCents: opened.data.amountCents,
+      }),
+    ]);
+    return paidAt;
+  }
+
+  /** How many days past one bought period from `paidAt` the subscription now runs: what the time left became. */
+  const extraDays = async (user: TestUser, paidAt: Date) =>
+    daysBetween(addBillingPeriod(paidAt, 'monthly'), (await subscriptionOf(user)).paidUntil);
+
+  it('converts twenty days of a R$ 25 plan into about seven days of a R$ 70 one, on top of what was bought', async () => {
+    await subscribedTo(ana, cheapId, 20);
+
+    const paidAt = await buyPlan(ana, dearId);
+
+    expect((await subscriptionOf(ana)).tierId).toBe(dearId);
+    // 20 days × 25/70 ≈ 7.1 - nowhere near the 20 a plain carry-over would have kept.
+    const extra = await extraDays(ana, paidAt);
+    expect(extra).toBeGreaterThan(6);
+    expect(extra).toBeLessThan(8);
+    expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).toBe(dearId);
+  });
+
+  it('converts into more days when the new plan is the cheaper one', async () => {
+    await subscribedTo(ana, dearId, 20, { amountCents: 7000 });
+
+    const paidAt = await buyPlan(ana, cheapId);
+
+    const extra = await extraDays(ana, paidAt);
+    expect(extra).toBeGreaterThan(20 * (70 / 25) - 3);
+    expect(extra).toBeLessThan(20 * (70 / 25) + 3);
+  });
+
+  it('does not turn a year of a cheap plan into a year of an expensive one', async () => {
+    await subscribedTo(ana, cheapId, 360, { interval: 'yearly', amountCents: 25000 });
+
+    const paidAt = await buyPlan(ana, dearId);
+
+    const total = daysBetween(paidAt, (await subscriptionOf(ana)).paidUntil);
+    // About 107 days from the R$ 250 and a month from the R$ 70: not 360 + 30.
+    expect(total).toBeLessThan(150);
+    expect(total).toBeGreaterThan(120);
+  });
+
+  it('values time that was given at the plan’s price, not at the nothing it cost', async () => {
+    await subscribedTo(ana, cheapId, 20, {
+      amountCents: 0,
+      providerId: 'admin',
+      providerReference: null,
+    });
+
+    const paidAt = await buyPlan(ana, dearId);
+
+    const extra = await extraDays(ana, paidAt);
+    expect(extra).toBeGreaterThan(5);
+    expect(extra).toBeLessThan(9);
+  });
+
+  it('converts nothing when the old plan has no price at all to value the time by', async () => {
+    const odd = newId();
+    await db.insert(tiers).values({ id: odd, name: 'Odd', isPublicForSale: false });
+    await subscribedTo(ana, odd, 20, { amountCents: 0 });
+
+    const paidAt = await buyPlan(ana, dearId);
+
+    expect(Math.abs(await extraDays(ana, paidAt))).toBeLessThan(0.01);
+  });
+
+  it('keeps carrying the time over for the same plan, and starts from the payment for one that lapsed', async () => {
+    await subscribedTo(ana, dearId, 20, { amountCents: 7000 });
+    const same = await buyPlan(ana, dearId);
+    expect(await extraDays(ana, same)).toBeGreaterThan(19.9);
+
+    await subscribedTo(bia, cheapId, -5, { status: 'due' });
+    const lapsed = await buyPlan(bia, dearId);
+    expect(Math.abs(await extraDays(bia, lapsed))).toBeLessThan(0.01);
+  });
+
+  it('says what happened in the ledger, and applies it once however often the notice arrives', async () => {
+    await subscribedTo(ana, cheapId, 20);
+    const opened = await request('POST', '/payments/checkout', {
+      token: ana.token,
+      body: { tierId: dearId, interval: 'monthly', methodId: 'card' },
+    });
+    const notice = paid({
+      checkoutId: opened.data.id,
+      subscriptionReference: 'sub_ana',
+      amountCents: 7000,
+      eventId: 'evt_convert_once',
+    });
+
+    await webhook([notice]);
+    const once = (await subscriptionOf(ana)).paidUntil.getTime();
+    await webhook([notice]);
+
+    expect((await subscriptionOf(ana)).paidUntil.getTime()).toBe(once);
+    const [line] = await db
+      .select()
+      .from(paymentEvents)
+      .where(eq(paymentEvents.kind, 'payment_succeeded'));
+    expect(line.detail).toMatch(/Changed from Plus: 20 day\(s\) left became [67]\./);
+  });
+
+  describe('the quote, before paying', () => {
+    const quote = (user: TestUser, tierId: string, interval = 'monthly') =>
+      request('GET', '/payments/switch-quote', { token: user.token, query: { tierId, interval } });
+
+    it('says what the days left would become, with the same numbers the payment will use', async () => {
+      await subscribedTo(ana, cheapId, 20);
+
+      const { status, data } = await quote(ana, dearId);
+
+      expect(status).toBe(200);
+      expect(data.quote).toEqual({
+        fromTierName: 'Plus',
+        toTierName: 'Max',
+        remainingDays: 20,
+        convertedDays: 7,
+      });
+    });
+
+    it('has nothing to say for the same plan, for no subscription, for a lapsed one or for a plan not for sale', async () => {
+      await subscribedTo(ana, cheapId, 20);
+      expect((await quote(ana, cheapId)).data.quote).toBeNull();
+      expect((await quote(bia, dearId)).data.quote).toBeNull();
+      await db
+        .update(paymentSubscriptions)
+        .set({ status: 'due', paidUntil: new Date(Date.now() - DAY) })
+        .where(eq(paymentSubscriptions.userId, ana.userId));
+      expect((await quote(ana, dearId)).data.quote).toBeNull();
+      await db
+        .update(paymentSubscriptions)
+        .set({ status: 'active', paidUntil: new Date(Date.now() + DAYS(20)) })
+        .where(eq(paymentSubscriptions.userId, ana.userId));
+      expect((await quote(ana, 'nope')).data.quote).toBeNull();
+    });
+
+    it('refuses what is not an interval, and needs a signed-in user', async () => {
+      expect((await quote(ana, dearId, 'weekly')).status).toBe(400);
+      expect((await request('GET', '/payments/switch-quote')).status).toBe(401);
+    });
+  });
+});
+
+describe('the demo provider, when it was not asked for', () => {
+  it('is not there: /buy is a path nobody answers, and a real plugin may not send people to plain http', async () => {
+    const app = await getApp();
+
+    for (const route of ['/buy', '/buy/api/mine', '/buy/api/charge/x']) {
+      const response = await app.handle(
+        new Request(`http://localhost${route}`, { redirect: 'manual' }),
+      );
+      expect([route, response.status]).toEqual([route, 302]);
+      expect(response.headers.get('location')).toBe('/');
+    }
+    fake.plugin.createCheckout = async () => ({
+      providerReference: 'x',
+      action: { kind: 'redirect', url: 'http://pay.example.test/x' },
+    });
+    const { status } = await request('POST', '/payments/checkout', {
+      token: ana.token,
+      body: { tierId: proId, interval: 'monthly', methodId: 'card' },
+    });
+    expect(status).toBe(502);
+  });
+});
+
+describe('whether a subscription renews by itself', () => {
+  const infoOf = async (user: TestUser) =>
+    (await request('GET', '/payments', { token: user.token })).data.subscription;
+
+  it('follows the method of the last payment: a plugin says which methods are charged again by the provider', async () => {
+    const plugin = createFakePaymentPlugin({
+      withCancel: true,
+      methods: [
+        { id: 'card', label: 'Card' },
+        { id: 'pix', label: 'PIX', recurring: false },
+      ],
+    });
+    setPaymentPlugin(plugin.plugin);
+    const withCard = await openCheckout(ana);
+    await webhook([paid({ checkoutId: withCard.id, subscriptionReference: 'sub_ana' })]);
+    const withPix = await request('POST', '/payments/checkout', {
+      token: bia.token,
+      body: { tierId: proId, interval: 'monthly', methodId: 'pix' },
+    });
+    await webhook([paid({ checkoutId: withPix.data.id, subscriptionReference: 'sub_bia' })]);
+
+    expect((await infoOf(ana)).autoRenews).toBe(true);
+    expect((await infoOf(bia)).autoRenews).toBe(false);
+  });
+
+  it('counts as renewing when the plugin does not say, or when nothing says how it was paid', async () => {
+    // The fake plugin's methods carry no `recurring`: the answer before this existed.
+    await subscribe(ana);
+    expect((await infoOf(ana)).autoRenews).toBe(true);
+
+    await db.insert(paymentSubscriptions).values({
+      userId: bia.userId,
+      tierId: proId,
+      interval: 'monthly',
+      status: 'active',
+      paidUntil: new Date(Date.now() + 5 * DAY),
+      amountCents: 1990,
+      currency: 'BRL',
+      providerId: 'fakepay',
+    });
+    expect((await infoOf(bia)).autoRenews).toBe(true);
+  });
+
+  it('is still answered when the plugin cannot list its methods', async () => {
+    await subscribe(ana);
+    fake.plugin.listMethods = (() => Promise.reject(new Error('boom'))) as never;
+
+    expect((await infoOf(ana)).autoRenews).toBe(true);
+  });
+
+  it('is part of the answer to cancelling, and is true with no plugin', async () => {
+    await subscribe(ana);
+    const { data } = await request('POST', '/payments/subscription/cancel', { token: ana.token });
+    expect(data.autoRenews).toBe(true);
+
+    setPaymentPlugin(null);
+    const row = await subscriptionOf(ana);
+    expect(await subscriptionService.toWire(row, null)).toMatchObject({ autoRenews: true });
   });
 });
 

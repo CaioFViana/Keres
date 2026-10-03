@@ -46,6 +46,8 @@ const subscription = (over: Record<string, unknown> = {}) =>
     currency: 'BRL',
     cancelAtPeriodEnd: false,
     canCancelHere: true,
+    autoRenews: true,
+    complimentary: false,
     ...over,
   }) as never;
 

@@ -747,6 +747,8 @@ describe('the person’s own view', () => {
       currency: 'BRL',
       cancelAtPeriodEnd: false,
       canCancelHere: true,
+      autoRenews: true,
+      complimentary: false,
     });
     // Another person's subscription is nowhere in it.
     expect((await request('GET', '/payments', { token: bia.token })).data.subscription).toBeNull();
@@ -846,6 +848,34 @@ describe('what the administrators see', () => {
     ).toEqual(['ana', 'bia']);
   });
 
+  it('warns when payments are in use and the server has no default plan', async () => {
+    const flag = async () =>
+      (await request('GET', '/admin/api/payments/summary', { token: admin.token })).data
+        .noDefaultTier;
+
+    await db.update(registrationSettings).set({ defaultTierId: null });
+    expect(await flag()).toBe(true);
+
+    await db.update(registrationSettings).set({ defaultTierId: freeId });
+    expect(await flag()).toBe(false);
+
+    // With no plugin the warning is only for a server that has subscriptions (a plan given by hand) to end.
+    setPaymentPlugin(null);
+    await db.update(registrationSettings).set({ defaultTierId: null });
+    expect(await flag()).toBe(false);
+    await db.insert(paymentSubscriptions).values({
+      userId: ana.userId,
+      tierId: proId,
+      interval: 'monthly',
+      status: 'active',
+      paidUntil: new Date(Date.now() + DAY),
+      amountCents: 0,
+      currency: 'BRL',
+      providerId: 'gone',
+    });
+    expect(await flag()).toBe(true);
+  });
+
   it('is for administrators only', async () => {
     expect((await request('GET', '/admin/api/payments/summary', { token: ana.token })).status).toBe(
       403,
@@ -880,6 +910,74 @@ describe('what the administrators see', () => {
       const columns = Object.keys(table).join(',');
       expect(columns).not.toMatch(/card|cvv|cvc|iban|pan/i);
     }
+  });
+});
+
+describe('the plan an administrator sees a person on', () => {
+  const rowOf = async (id: string) => {
+    const list = await request('GET', '/admin/api/users', {
+      token: admin.token,
+      query: { pageSize: 100 },
+    });
+    return list.data.items.find((item: { id: string }) => item.id === id);
+  };
+
+  it('is the paid one while the subscription is paid up, though the plan assigned stays as it was', async () => {
+    await db.update(users).set({ tierId: freeId }).where(eq(users.id, ana.userId));
+    const mine = await openCheckout(ana);
+    await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
+
+    const inList = await rowOf(ana.userId);
+    const detail = await request('GET', `/admin/api/users/${ana.userId}`, { token: admin.token });
+
+    for (const row of [inList, detail.data]) {
+      expect(row).toMatchObject({
+        tierId: freeId,
+        effectiveTierId: proId,
+        tierSource: 'subscription',
+      });
+    }
+    // Somebody who paid for nothing is on what they were given.
+    expect(await rowOf(bia.userId)).toMatchObject({
+      tierSource: expect.stringMatching(/assigned|default|none/),
+    });
+  });
+
+  it('goes back to the assigned plan when the paid period ends, and to the default one when there is none', async () => {
+    await db.update(users).set({ tierId: freeId }).where(eq(users.id, ana.userId));
+    const mine = await openCheckout(ana);
+    await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
+    await db
+      .update(paymentSubscriptions)
+      .set({ paidUntil: new Date(Date.now() - 1000) })
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+
+    expect(await rowOf(ana.userId)).toMatchObject({
+      effectiveTierId: freeId,
+      tierSource: 'assigned',
+    });
+
+    await db.update(users).set({ tierId: null }).where(eq(users.id, ana.userId));
+    await db.update(registrationSettings).set({ defaultTierId: proId });
+    expect(await rowOf(ana.userId)).toMatchObject({
+      effectiveTierId: proId,
+      tierSource: 'default',
+    });
+
+    await db.update(registrationSettings).set({ defaultTierId: null });
+    expect(await rowOf(ana.userId)).toMatchObject({ effectiveTierId: null, tierSource: 'none' });
+  });
+
+  it('does not count a canceled subscription, even before its date', async () => {
+    await db.update(users).set({ tierId: freeId }).where(eq(users.id, ana.userId));
+    const mine = await openCheckout(ana);
+    await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
+    await db
+      .update(paymentSubscriptions)
+      .set({ status: 'canceled' })
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+
+    expect(await rowOf(ana.userId)).toMatchObject({ tierSource: 'assigned' });
   });
 });
 

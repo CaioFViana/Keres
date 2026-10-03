@@ -12,6 +12,7 @@ const mockStart = jest.fn();
 const mockReset = jest.fn();
 const mockOpenProviderPage = jest.fn();
 const mockAskCancel = jest.fn();
+const mockSwitchQuote = jest.fn();
 const mockColors = {
   primary: '#0000ff',
   text: '#111111',
@@ -55,6 +56,9 @@ jest.mock('../../../src/hooks/usePaymentOverview', () => ({
 jest.mock('../../../src/hooks/usePlanCheckout', () => ({
   usePlanCheckout: (...args: unknown[]) => mockCheckout(...args),
 }));
+jest.mock('../../../src/hooks/useSwitchQuote', () => ({
+  useSwitchQuote: (...args: unknown[]) => mockSwitchQuote(...args),
+}));
 jest.mock('../../../src/hooks/usePlanCancellation', () => ({
   usePlanCancellation: (...args: unknown[]) => mockCancelRenewal(...args),
 }));
@@ -88,6 +92,8 @@ const subscription = (over: Record<string, unknown> = {}) => ({
   currency: 'BRL',
   cancelAtPeriodEnd: false,
   canCancelHere: true,
+  autoRenews: true,
+  complimentary: false,
   ...over,
 });
 const overview = (over: Record<string, unknown> = {}, subscriptionValue: unknown = null) => ({
@@ -144,6 +150,7 @@ const setup = (
     ...options.checkout,
   });
   mockCancelRenewal.mockReturnValue(mockAskCancel);
+  mockSwitchQuote.mockReturnValue(null);
 };
 
 beforeEach(() => {
@@ -303,7 +310,7 @@ describe('ServerPlanScreen: the current plan', () => {
     expect(view.getByText('payment_current_plan')).toBeTruthy();
     expect(view.getByTestId('plan-status-card')).toBeTruthy();
     await fireEvent.press(view.getByTestId('plan-cancel-renewal'));
-    expect(mockAskCancel).toHaveBeenCalledWith('2026-04-03T12:00:00.000Z');
+    expect(mockAskCancel).toHaveBeenCalledWith('2026-04-03T12:00:00.000Z', true);
     expect(view.queryByTestId('plan-not-renewing')).toBeNull();
   });
 
@@ -324,6 +331,157 @@ describe('ServerPlanScreen: the current plan', () => {
 
     expect(view.getByTestId('plan-cancel-at-provider')).toBeTruthy();
     expect(view.queryByTestId('plan-cancel-renewal')).toBeNull();
+  });
+
+  describe('a method the person pays again each time (PIX, boleto)', () => {
+    const manual = (over: Record<string, unknown> = {}) =>
+      overview({}, subscription({ autoRenews: false, ...over }));
+
+    it('says it does not renew by itself, with the date to pay before, instead of offering to stop a renewal', async () => {
+      setup({ overviewValue: manual({ canCancelHere: false }) });
+
+      const view = await render(<ServerPlanScreen />);
+
+      expect(view.getByTestId('plan-manual-renewal')).toBeTruthy();
+      expect(view.getByText('payment_cancel_no_renewal')).toBeTruthy();
+      expect(view.queryByText('payment_cancel_renewal')).toBeNull();
+      // There is nothing at the provider to stop: it is not sent there.
+      expect(view.queryByTestId('plan-cancel-at-provider')).toBeNull();
+    });
+
+    it('lets the person say they will not renew, and the confirmation is told so', async () => {
+      setup({ overviewValue: manual() });
+
+      const view = await render(<ServerPlanScreen />);
+      await fireEvent.press(view.getByTestId('plan-cancel-renewal'));
+
+      expect(mockAskCancel).toHaveBeenCalledWith('2026-04-03T12:00:00.000Z', false);
+    });
+
+    it('has no reminder to pay again once the person said they will not', async () => {
+      setup({ overviewValue: manual({ cancelAtPeriodEnd: true }) });
+
+      const view = await render(<ServerPlanScreen />);
+
+      expect(view.queryByTestId('plan-manual-renewal')).toBeNull();
+      expect(view.queryByTestId('plan-cancel-renewal')).toBeNull();
+      expect(view.getByTestId('plan-not-renewing')).toBeTruthy();
+    });
+
+    it('says nothing of paying again for a plan that is already late', async () => {
+      setup({ overviewValue: manual({ status: 'due' }) });
+
+      const view = await render(<ServerPlanScreen />);
+
+      expect(view.queryByTestId('plan-manual-renewal')).toBeNull();
+      expect(view.queryByTestId('plan-cancel-renewal')).toBeNull();
+    });
+  });
+
+  describe('a plan the administrators gave', () => {
+    const gift = (over: Record<string, unknown> = {}) =>
+      subscription({
+        complimentary: true,
+        cancelAtPeriodEnd: true,
+        autoRenews: false,
+        canCancelHere: false,
+        amountCents: 0,
+        ...over,
+      });
+
+    it('says it is a gift until its date, with nothing to stop and no talk of renewing', async () => {
+      setup({ overviewValue: overview({}, gift()) });
+
+      const view = await render(<ServerPlanScreen />);
+
+      expect(view.getByTestId('plan-gift')).toBeTruthy();
+      expect(view.getByText('payment_status_gift')).toBeTruthy();
+      expect(view.queryByTestId('plan-not-renewing')).toBeNull();
+      expect(view.queryByTestId('plan-cancel-renewal')).toBeNull();
+      expect(view.queryByTestId('plan-manual-renewal')).toBeNull();
+      expect(view.queryByTestId('plan-cancel-at-provider')).toBeNull();
+      // It can still be paid for, which is what keeps a plan after it.
+      expect(view.getByTestId('plan-offer-tier-pro')).toBeTruthy();
+    });
+
+    it('says nothing of a gift for a plan that is paid for', async () => {
+      setup({ overviewValue: overview({}, subscription()) });
+
+      const view = await render(<ServerPlanScreen />);
+
+      expect(view.queryByTestId('plan-gift')).toBeNull();
+    });
+  });
+
+  describe('changing plan while time is left', () => {
+    const quote = { fromTierName: 'Pro', toTierName: 'Plus', remainingDays: 20, convertedDays: 7 };
+
+    it('says what the days left would become, before paying, once another plan is chosen', async () => {
+      setup({
+        overviewValue: overview({}, subscription({ tierId: 'tier-pro' })),
+      });
+      mockSwitchQuote.mockReturnValue(quote);
+
+      const view = await render(<ServerPlanScreen />);
+      await fireEvent.press(view.getByTestId('plan-offer-tier-plus'));
+
+      const note = view.getByTestId('plan-switch-quote').props.children as string;
+      expect(note).toContain('payment_switch_quote');
+      expect(note).toContain('"current":"Pro"');
+      expect(note).toContain('"plan":"Plus"');
+    });
+
+    it('asks about the plan that was chosen, only while the subscription is running and the plan is another one', async () => {
+      setup({ overviewValue: overview({}, subscription({ tierId: 'tier-pro' })) });
+      const view = await render(<ServerPlanScreen />);
+
+      // Nothing chosen yet: nothing to ask about.
+      expect(mockSwitchQuote).toHaveBeenLastCalledWith(expect.anything(), null, null, false);
+
+      await fireEvent.press(view.getByTestId('plan-offer-tier-plus'));
+      expect(mockSwitchQuote).toHaveBeenLastCalledWith(
+        expect.anything(),
+        'tier-plus',
+        'monthly',
+        true,
+      );
+
+      // The plan already on: nothing converts.
+      await fireEvent.press(view.getByTestId('plan-offer-tier-pro'));
+      expect(mockSwitchQuote).toHaveBeenLastCalledWith(
+        expect.anything(),
+        'tier-pro',
+        'monthly',
+        false,
+      );
+    });
+
+    it('does not ask, and says nothing, for a subscription that is not running', async () => {
+      setup({
+        overviewValue: overview({}, subscription({ tierId: 'tier-pro', status: 'due' })),
+      });
+      const view = await render(<ServerPlanScreen />);
+      await fireEvent.press(view.getByTestId('plan-offer-tier-plus'));
+
+      expect(mockSwitchQuote).toHaveBeenLastCalledWith(
+        expect.anything(),
+        'tier-plus',
+        'monthly',
+        false,
+      );
+      expect(view.queryByTestId('plan-switch-quote')).toBeNull();
+    });
+  });
+
+  it('reads a server that does not say whether it renews as one that does', async () => {
+    const { autoRenews: _omitted, ...legacy } = subscription();
+    setup({ overviewValue: overview({}, legacy) });
+
+    const view = await render(<ServerPlanScreen />);
+
+    expect(view.queryByTestId('plan-manual-renewal')).toBeNull();
+    await fireEvent.press(view.getByTestId('plan-cancel-renewal'));
+    expect(mockAskCancel).toHaveBeenCalledWith('2026-04-03T12:00:00.000Z', true);
   });
 
   it('shows a due plan with its dates and nothing to cancel, and still offers to pay', async () => {

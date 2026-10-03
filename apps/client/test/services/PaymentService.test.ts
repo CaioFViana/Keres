@@ -7,6 +7,7 @@ const mockApi = {
   startCheckout: jest.fn(),
   getCheckout: jest.fn(),
   cancelSubscription: jest.fn(),
+  getSwitchQuote: jest.fn(),
 };
 jest.mock('../../src/services/PaymentApiService', () => ({
   __esModule: true,
@@ -16,12 +17,14 @@ jest.mock('../../src/services/PaymentApiService', () => ({
     startCheckout: (...args: unknown[]) => mockApi.startCheckout(...args),
     getCheckout: (...args: unknown[]) => mockApi.getCheckout(...args),
     cancelSubscription: (...args: unknown[]) => mockApi.cancelSubscription(...args),
+    getSwitchQuote: (...args: unknown[]) => mockApi.getSwitchQuote(...args),
   },
 }));
 
 import {
   cancelSubscription,
   getCheckout,
+  getSwitchQuote,
   loadPaymentOverview,
   PAYMENTS_CHANGED,
   startCheckout,
@@ -95,5 +98,16 @@ describe('the attempt and the subscription', () => {
 
   it('names the event the screens listen to', () => {
     expect(PAYMENTS_CHANGED).toBe('payments_changed');
+  });
+});
+
+describe('getSwitchQuote', () => {
+  it('asks the server what the time left on the current plan becomes on another', async () => {
+    const quote = { fromTierName: 'Plus', toTierName: 'Max', remainingDays: 20, convertedDays: 7 };
+    mockApi.getSwitchQuote.mockResolvedValue(quote);
+
+    await expect(getSwitchQuote(server, 'tier-2', 'monthly')).resolves.toEqual(quote);
+
+    expect(mockApi.getSwitchQuote).toHaveBeenCalledWith(server, 'tier-2', 'monthly');
   });
 });

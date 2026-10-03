@@ -251,6 +251,50 @@ describe('the periodic jobs', () => {
   });
 });
 
+describe('a server that sells plans, and its default plan', () => {
+  it('says so, loudly, when there is none to fall back to - and only then', async () => {
+    const { db } = await import('../src/db');
+    const { registrationSettings, tiers } = await import('../src/db/schema');
+    const { warnIfPaymentsHaveNoDefaultPlan } = await import('../src/boot');
+    const { setPaymentPlugin, getPaymentPlugin } = await import(
+      '../src/services/payments/PaymentPluginRegistry'
+    );
+    const { logger } = await import('../src/utils/logger');
+    const warn = spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const before = getPaymentPlugin();
+
+    // No payments: a default plan is nobody's business here.
+    setPaymentPlugin(null);
+    await db.update(registrationSettings).set({ defaultTierId: null });
+    expect(await warnIfPaymentsHaveNoDefaultPlan()).toBe(false);
+
+    // Payments on, nothing to fall back to.
+    setPaymentPlugin({
+      id: 'fakepay',
+      displayName: 'Fake',
+      listMethods: () => [],
+      createCheckout: async () => ({ providerReference: 'x', action: { kind: 'none' } }),
+      handleWebhook: async () => [],
+    });
+    expect(await warnIfPaymentsHaveNoDefaultPlan()).toBe(true);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no default plan'));
+
+    // Payments on, and a default plan.
+    const id = 'tier-default-for-boot-test';
+    await db
+      .insert(tiers)
+      .values({ id, name: 'Boot default', maxStories: 2 })
+      .onConflictDoNothing();
+    await db.update(registrationSettings).set({ defaultTierId: id });
+    warn.mockClear();
+    expect(await warnIfPaymentsHaveNoDefaultPlan()).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+
+    await db.update(registrationSettings).set({ defaultTierId: null });
+    setPaymentPlugin(before);
+  });
+});
+
 describe('a start that cannot be completed', () => {
   it('says why, and ends the process, when the database cannot be prepared', async () => {
     const { runMigrations } = await import('../src/db/migrate');

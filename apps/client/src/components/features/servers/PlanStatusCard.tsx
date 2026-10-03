@@ -21,12 +21,16 @@ const PlanStatusCard: React.FC<PlanStatusCardProps> = ({ subscription, showAmoun
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const paidUntil = new Date(subscription.paidUntil).toLocaleDateString(i18n.language);
+  // A plan the administrators gave is not "paid up" and has no amount: it is a gift until its date.
+  const gift = subscription.complimentary === true && subscription.status === 'active';
   const statusKey =
     subscription.status === 'due'
       ? 'payment_status_due'
-      : subscription.cancelAtPeriodEnd
-        ? 'payment_status_ending'
-        : 'payment_status_active';
+      : gift
+        ? 'payment_status_gift'
+        : subscription.cancelAtPeriodEnd
+          ? 'payment_status_ending'
+          : 'payment_status_active';
 
   const row = (label: string, value: string, last = false, tone?: 'bad') => (
     <View style={[styles.row, last && styles.lastRow]}>
@@ -41,7 +45,9 @@ const PlanStatusCard: React.FC<PlanStatusCardProps> = ({ subscription, showAmoun
     <View style={styles.card} testID="plan-status-card">
       {row(
         t('payment_plan_field'),
-        `${subscription.tierName} · ${t(`payment_interval_${subscription.interval}`)}`,
+        gift
+          ? subscription.tierName
+          : `${subscription.tierName} · ${t(`payment_interval_${subscription.interval}`)}`,
       )}
       {row(
         t('payment_status_field'),
@@ -52,9 +58,9 @@ const PlanStatusCard: React.FC<PlanStatusCardProps> = ({ subscription, showAmoun
       {row(
         subscription.status === 'due' ? t('payment_paid_until_was') : t('payment_paid_until'),
         paidUntil,
-        !showAmount,
+        !showAmount || gift,
       )}
-      {showAmount
+      {showAmount && !gift
         ? row(
             t('payment_last_amount'),
             formatMoney(subscription.amountCents, subscription.currency, i18n.language),

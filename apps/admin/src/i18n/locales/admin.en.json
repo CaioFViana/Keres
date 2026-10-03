@@ -147,7 +147,8 @@
       "payment_failed": "Payment failed",
       "payment_subscription_canceled": "Subscription cancelled or ended",
       "payment_subscription_due": "Paid period ran out",
-      "payment_webhook_rejected": "Provider notice refused"
+      "payment_webhook_rejected": "Provider notice refused",
+      "payment_gift_granted": "Plan given by an administrator"
     }
   },
   "appearance": {
@@ -335,8 +336,11 @@
       "payment_failed": "Payment failed",
       "subscription_canceled": "Subscription ended",
       "subscription_due": "Period ran out unpaid",
-      "checkout_expired": "Attempt expired"
-    }
+      "checkout_expired": "Attempt expired",
+      "gift_granted": "Plan given"
+    },
+    "noDefaultTier": "This server has no default plan. When somebody’s paid period ends and no plan was assigned to them, they end up with no limits at all - more than a free plan gives. Create a free plan and set it as the default in Registration.",
+    "giftProvider": "Gift (administrator)"
   },
   "recovery": {
     "title": "Recovery",
@@ -460,7 +464,30 @@
     "regenerating": "Regenerating...",
     "confirmRegenerate": "Regenerate {{username}}'s recovery codes? All of their previous codes will stop working.",
     "regenerateFailed": "Failed to regenerate recovery codes.",
-    "loadTiersFailed": "Failed to load tiers."
+    "loadTiersFailed": "Failed to load tiers.",
+    "tierInUseSubscription": "On {{name}} now, through a paid subscription. The plan above is the one that applies when no subscription is paid up.",
+    "tierInUseDefault": "On {{name}} now: no plan is assigned, so the server’s default plan applies.",
+    "gift": {
+      "title": "Give a plan",
+      "hint": "A month given is a payment of zero: it extends the plan the person is on, or opens a period if they have none. Nothing renews it, and what they pay afterwards starts where it ends. For another plan, the time they have left is converted by value.",
+      "now": "Now: {{plan}} - {{status}}, until {{date}}.",
+      "isGift": "It is a gift.",
+      "renewing": "It renews.",
+      "notRenewing": "It does not renew.",
+      "none": "This person has no subscription.",
+      "plan": "Plan",
+      "choose": "(choose a plan)",
+      "months": "Months",
+      "give": "Give",
+      "cancelAndGive": "Cancel their renewal and give",
+      "needsCancel": "This person has a paid {{current}} subscription that is still being charged. To give another plan, its renewal has to be cancelled first.",
+      "cannotCancelAtProvider": "The payment plugin cannot cancel at the provider: you will have to confirm that the provider stopped charging.",
+      "confirm": "Give {{months}} month(s) of {{plan}} to {{username}}?",
+      "confirmCancel": "I confirm that {{username}} agreed to cancel the renewal of their {{current}} subscription and to receive {{months}} month(s) of {{plan}} as a gift. What is left of {{current}} is converted into {{plan}} by value.",
+      "confirmCancelManual": "I also confirm that the provider has stopped charging them.",
+      "done": "Gave {{months}} month(s) of {{plan}} to {{username}}. It runs until {{date}}.",
+      "failed": "Could not give the plan."
+    }
   },
   "users": {
     "title": "Users",
@@ -479,6 +506,8 @@
     "empty": "No users found.",
     "confirmDelete": "Soft-delete user \"{{username}}\"?",
     "confirmDeleteAdmin": "Soft-delete admin \"{{username}}\"? They will lose access until restored.",
-    "viewActivity": "View activity"
+    "viewActivity": "View activity",
+    "tierPaid": "paid",
+    "tierAssignedTitle": "Assigned plan: {{name}}. The paid subscription takes precedence while it is paid up."
   }
 }

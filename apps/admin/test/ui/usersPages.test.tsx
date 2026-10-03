@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   restoreUser: vi.fn(),
   regenerateRecoveryCodes: vi.fn(),
   listTiers: vi.fn(),
+  userSubscription: vi.fn(),
 }));
 
 vi.mock('../../src/api/AdminUserApiService', () => ({
@@ -26,6 +27,9 @@ vi.mock('../../src/api/AdminUserApiService', () => ({
     restore: mocks.restoreUser,
     regenerateRecoveryCodes: mocks.regenerateRecoveryCodes,
   },
+}));
+vi.mock('../../src/api/PaymentsApiService', () => ({
+  PaymentsApiService: { userSubscription: mocks.userSubscription, giveGift: vi.fn() },
 }));
 vi.mock('../../src/api/TierApiService', () => ({
   TierApiService: { list: mocks.listTiers },
@@ -84,6 +88,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.listTiers.mockResolvedValue([]);
+  mocks.userSubscription.mockResolvedValue({ subscription: null, canCancelAtProvider: false });
   mocks.getUser.mockResolvedValue(user());
   mocks.createUser.mockResolvedValue({ id: 'user-9', recoveryCodes: [] });
   mocks.updateUser.mockResolvedValue({});
@@ -296,9 +301,100 @@ describe('users list', () => {
     expect(view.container.textContent).toContain('Pro');
     await view.unmount();
   });
+
+  it('shows the plan a person is on now, marked as paid, with the assigned one as its tooltip', async () => {
+    mocks.listTiers.mockResolvedValue([tier(), tier({ id: 'tier-free', name: 'Free' })]);
+    mocks.listUsers.mockResolvedValue({
+      items: [
+        user({ tierId: 'tier-free', effectiveTierId: 'tier-1', tierSource: 'subscription' }),
+        user({
+          id: 'user-2',
+          username: 'bia',
+          tierId: 'tier-free',
+          effectiveTierId: 'tier-free',
+          tierSource: 'assigned',
+        }),
+      ],
+      total: 2,
+      page: 1,
+      pageSize: 25,
+    });
+    const view = await renderList();
+    await flush();
+
+    const cells = Array.from(view.container.querySelectorAll('tbody tr')).map(
+      (row) => row.querySelectorAll('td')[3],
+    );
+    expect(cells[0].textContent).toContain('Pro');
+    expect(cells[0].textContent).not.toContain('Free');
+    const badge = cells[0].querySelector('.status-badge');
+    expect(badge?.textContent).toBe('paid');
+    expect(badge?.getAttribute('title')).toContain('Free');
+    // One that is on what it was given has no badge.
+    expect(cells[1].textContent).toBe('Free');
+    expect(cells[1].querySelector('.status-badge')).toBeNull();
+    await view.unmount();
+  });
+
+  it('keeps showing the assigned plan when an older server does not say which one applies', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    mocks.listUsers.mockResolvedValue({
+      items: [user({ tierId: 'tier-1' })],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    });
+    const view = await renderList();
+    await flush();
+
+    expect(view.container.querySelectorAll('tbody td')[3].textContent).toBe('Pro');
+    await view.unmount();
+  });
 });
 
 describe('user form', () => {
+  it('says which plan the person is on now when it is not the one assigned', async () => {
+    mocks.listTiers.mockResolvedValue([tier(), tier({ id: 'tier-free', name: 'Free' })]);
+    mocks.getUser.mockResolvedValue(
+      user({ tierId: 'tier-free', effectiveTierId: 'tier-1', tierSource: 'subscription' }),
+    );
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    const note = view.container.querySelector('[data-testid="tier-in-use"]');
+    expect(note?.textContent).toContain('Pro');
+    expect(note?.textContent).toContain('paid subscription');
+    // What is saved is still the assigned plan: a payment is not something this form rewrites.
+    await submit(view.container.querySelector('form')!);
+    await flush();
+    expect(mocks.updateUser).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ tierId: 'tier-free' }),
+    );
+    await view.unmount();
+  });
+
+  it('says the default plan applies when none is assigned, and says nothing when the assigned one does', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    mocks.getUser.mockResolvedValue(
+      user({ tierId: null, effectiveTierId: 'tier-1', tierSource: 'default' }),
+    );
+    const first = await renderFormAt('/users/user-1');
+    await flush();
+    expect(first.container.querySelector('[data-testid="tier-in-use"]')?.textContent).toContain(
+      'default',
+    );
+    await first.unmount();
+
+    mocks.getUser.mockResolvedValue(
+      user({ tierId: 'tier-1', effectiveTierId: 'tier-1', tierSource: 'assigned' }),
+    );
+    const second = await renderFormAt('/users/user-1');
+    await flush();
+    expect(second.container.querySelector('[data-testid="tier-in-use"]')).toBeNull();
+    await second.unmount();
+  });
+
   it('loads the account into the edit form and saves through update', async () => {
     mocks.getUser.mockResolvedValue(
       user({ tag: 'ana-writes', isAdmin: false, tierId: 'tier-1', bio: 'Writes things.' }),
@@ -319,6 +415,20 @@ describe('user form', () => {
     });
     expect(view.container.textContent).toContain('users list');
     await view.unmount();
+  });
+
+  it('offers to give a plan to an existing account, and not to one that is being created', async () => {
+    mocks.getUser.mockResolvedValue(user());
+    const existing = await renderFormAt('/users/user-1');
+    await flush();
+    expect(existing.container.querySelector('[data-testid="gift-plan"]')).not.toBeNull();
+    expect(mocks.userSubscription).toHaveBeenCalledWith('user-1');
+    await existing.unmount();
+
+    const fresh = await renderFormAt('/users/new');
+    await flush();
+    expect(fresh.container.querySelector('[data-testid="gift-plan"]')).toBeNull();
+    await fresh.unmount();
   });
 
   it('links an existing account to its activity, and a new one to nothing', async () => {

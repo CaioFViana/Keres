@@ -1,4 +1,4 @@
-import { and, eq, gt, ne } from 'drizzle-orm';
+import { and, eq, gt, inArray, ne } from 'drizzle-orm';
 import { db } from '../../db';
 import { paymentSubscriptions } from '../../db/schema';
 
@@ -23,4 +23,23 @@ export async function entitledTierId(
     columns: { tierId: true },
   });
   return row?.tierId ?? null;
+}
+
+/** `entitledTierId` for several people at once (the administrators' lists): who is paid up, and for which plan. */
+export async function entitledTierIds(
+  userIds: string[],
+  now: Date = new Date(),
+): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  const rows = await db
+    .select({ userId: paymentSubscriptions.userId, tierId: paymentSubscriptions.tierId })
+    .from(paymentSubscriptions)
+    .where(
+      and(
+        inArray(paymentSubscriptions.userId, userIds),
+        ne(paymentSubscriptions.status, 'canceled'),
+        gt(paymentSubscriptions.paidUntil, now),
+      ),
+    );
+  return new Map(rows.map((row) => [row.userId, row.tierId]));
 }

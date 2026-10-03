@@ -90,6 +90,23 @@ const envSchema = z.object({
    * The plugin reads its own keys from the environment; Keres never looks at them.
    */
   PAYMENT_PLUGIN: optionalEnvironmentString,
+  /**
+   * A fake payment provider, for trying the whole flow on a real server: `true` installs the demo plugin (it wins
+   * over `PAYMENT_PLUGIN`) and serves its hosted page at `/buy`, where any signed-in user can confirm their own
+   * payment. Plans are granted for nothing - never on a server people really use. See docs/payment_plugins.md.
+   */
+  PAYMENT_DEMO: z
+    .enum(['true', 'false'])
+    .optional()
+    .default('false')
+    .transform((value) => value === 'true'),
+  /** Where the demo provider's page is reached from the app (a phone needs the machine's address, not localhost). */
+  PAYMENT_DEMO_BASE_URL: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.url().optional(),
+  ),
+  /** The key the demo provider signs its notices with; derived from the JWT secret when absent. */
+  PAYMENT_DEMO_SECRET: optionalEnvironmentString,
   SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).optional().default(7000),
 });
 

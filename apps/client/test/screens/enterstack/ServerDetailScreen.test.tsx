@@ -243,6 +243,8 @@ describe('ServerDetailScreen', () => {
       currency: 'BRL',
       cancelAtPeriodEnd: false,
       canCancelHere: true,
+      autoRenews: true,
+      complimentary: false,
     };
     const overview = (sub: unknown) => ({
       overview: { info: { enabled: true, subscription: sub }, plans: null },

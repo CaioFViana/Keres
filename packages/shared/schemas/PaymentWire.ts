@@ -22,6 +22,26 @@ export interface Subscription {
   cancelAtPeriodEnd: boolean;
   /** Whether the provider can be told to stop charging from here (otherwise the person does it at the provider). */
   canCancelHere: boolean;
+  /**
+   * Whether the provider charges this subscription again by itself (a saved card). `false` when each period has to
+   * be paid again by the person (PIX, boleto). A server that predates the field does not send it: read that as true.
+   */
+  autoRenews: boolean;
+  /** The plan is a gift from the administrators: it ends on its date and nothing charges it. */
+  complimentary: boolean;
+}
+
+/**
+ * What changing plan does to the time a person has left, said before they pay. The time left on the old plan
+ * is worth what it cost and buys days of the new one at its price: it is not carried over day for day.
+ */
+export interface SwitchQuote {
+  fromTierName: string;
+  toTierName: string;
+  /** Days left on the plan they are on. */
+  remainingDays: number;
+  /** What those days become on the new plan, before the period they are paying for is added. */
+  convertedDays: number;
 }
 
 /** What a server says about payments: whether it sells plans at all, how, and where the person stands. */
@@ -78,6 +98,13 @@ export interface AdminSubscription {
   createdAt: string;
 }
 
+/** A person's subscription as an administrator needs it to give them a plan, and what giving would involve. */
+export interface AdminUserSubscription {
+  subscription: AdminSubscription | null;
+  /** Whether the payment plugin can stop the provider charging (otherwise the administrator confirms it was stopped). */
+  canCancelAtProvider: boolean;
+}
+
 export interface AdminSubscriptionPage {
   items: AdminSubscription[];
   total: number;
@@ -119,4 +146,9 @@ export interface AdminPaymentSummary {
   last30Days: { payments: number; failures: number; amountCents: number };
   /** The monthly value of the active subscriptions (yearly ones divided by twelve), in minor units. */
   monthlyRecurringCents: number;
+  /**
+   * Payments (or plans given by hand) are in use but the server has no default plan: when somebody's paid period
+   * ends and no plan was assigned to them, nothing limits them any more - the opposite of what a plan is for.
+   */
+  noDefaultTier: boolean;
 }

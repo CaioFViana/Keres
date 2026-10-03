@@ -187,6 +187,35 @@ describe('PaymentsApiService', () => {
     });
     expect(mocks.get).toHaveBeenCalledWith('/admin/payments/events', { params: { page: 3 } });
   });
+
+  it('reads one person’s subscription, and gives a plan, on the routes of that person', async () => {
+    mocks.get.mockResolvedValue({ data: { subscription: null, canCancelAtProvider: false } });
+    mocks.post.mockResolvedValue({ data: { subscription: null, canCancelAtProvider: false } });
+
+    await expect(PaymentsApiService.userSubscription('user-1')).resolves.toEqual({
+      subscription: null,
+      canCancelAtProvider: false,
+    });
+    await PaymentsApiService.giveGift('user-1', {
+      tierId: 'tier-1',
+      months: 2,
+      cancelRenewal: true,
+      consent: true,
+    });
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/users/user-1/subscription');
+    expect(mocks.post).toHaveBeenCalledWith('/admin/payments/users/user-1/gift', {
+      tierId: 'tier-1',
+      months: 2,
+      cancelRenewal: true,
+      consent: true,
+    });
+  });
+
+  it('refuses an id that is not a single path segment, rather than sending it', async () => {
+    await expect(PaymentsApiService.userSubscription('../users')).rejects.toThrow();
+    await expect(PaymentsApiService.giveGift('a/b', { tierId: 't', months: 1 })).rejects.toThrow();
+  });
 });
 
 describe('ActivityApiService', () => {

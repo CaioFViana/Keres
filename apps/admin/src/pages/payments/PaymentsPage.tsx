@@ -7,7 +7,11 @@ import type {
   AdminPaymentUser,
   AdminSubscription,
 } from '@keres/shared';
-import { PAYMENT_WARNING_DAYS, SUBSCRIPTION_STATUSES } from '@keres/shared/metadata/Payments';
+import {
+  GIFT_PROVIDER_ID,
+  PAYMENT_WARNING_DAYS,
+  SUBSCRIPTION_STATUSES,
+} from '@keres/shared/metadata/Payments';
 import { PaymentsApiService } from '../../api/PaymentsApiService';
 
 const PAGE_SIZE = 25;
@@ -123,6 +127,9 @@ export function PaymentsPage() {
       return `${(cents / 100).toFixed(2)} ${code}`;
     }
   };
+  // A plan given by an administrator has no provider: say what it is, not the id it is stored under.
+  const providerLabel = (providerId: string) =>
+    providerId === GIFT_PROVIDER_ID ? t('payments.giftProvider') : providerId;
   const day = (iso: string) => new Date(iso).toLocaleDateString(i18n.language);
   const when = (iso: string) => new Date(iso).toLocaleString(i18n.language);
 
@@ -140,6 +147,11 @@ export function PaymentsPage() {
       {summary && !summary.enabled && (
         <p className="notice" role="status">
           {t('payments.noPlugin')}
+        </p>
+      )}
+      {summary?.noDefaultTier && (
+        <p className="notice" role="alert" data-testid="no-default-tier">
+          {t('payments.noDefaultTier')}
         </p>
       )}
       {summary?.enabled && summary.provider && (
@@ -271,7 +283,7 @@ export function PaymentsPage() {
                   <td>{item.lastPaymentAt ? day(item.lastPaymentAt) : '-'}</td>
                   <td>{money(item.amountCents, item.currency)}</td>
                   <td>
-                    {item.providerId}
+                    {providerLabel(item.providerId)}
                     {item.providerReference && (
                       <>
                         {' '}
@@ -320,7 +332,7 @@ export function PaymentsPage() {
                   <td>{item.tierName ?? '-'}</td>
                   <td>{money(item.amountCents, item.currency)}</td>
                   <td>
-                    {item.providerId}
+                    {providerLabel(item.providerId)}
                     {item.providerReference && (
                       <>
                         {' '}

@@ -7,6 +7,7 @@ import type {
 } from '@keres/shared/payments/PaymentPlugin';
 import { and, count, eq, gte } from 'drizzle-orm';
 import { ulid } from 'ulid';
+import { env } from '../../config/env';
 import { db } from '../../db';
 import { paymentCheckouts, tiers, users } from '../../db/schema';
 import { AppError } from '../../utils/errors';
@@ -31,9 +32,13 @@ const lastPolled = new Map<string, number>();
 
 /**
  * What the plugin said to do, checked: a redirect is `https` (a plugin must not be able to send the person to
- * `javascript:` or to a local file), and every text is bounded. Anything else is the plugin's mistake.
+ * `javascript:` or to a local file), and every text is bounded. Anything else is the plugin's mistake. Plain `http`
+ * is let through only for the demo provider (`PAYMENT_DEMO`), whose page is on the developer's own machine.
  */
-export function sanitizeAction(action: PaymentAction): PaymentAction {
+export function sanitizeAction(
+  action: PaymentAction,
+  options: { allowHttp?: boolean } = {},
+): PaymentAction {
   switch (action.kind) {
     case 'none':
       return { kind: 'none' };
@@ -44,7 +49,8 @@ export function sanitizeAction(action: PaymentAction): PaymentAction {
       } catch {
         throw new Error('The checkout address is not a valid URL.');
       }
-      if (url.protocol !== 'https:' || action.url.length > MAX_URL) {
+      const allowed = url.protocol === 'https:' || (options.allowHttp && url.protocol === 'http:');
+      if (!allowed || action.url.length > MAX_URL) {
         throw new Error('The checkout address must be an https URL.');
       }
       return { kind: 'redirect', url: url.toString() };
@@ -164,7 +170,7 @@ export class CheckoutService {
         methodId: input.methodId,
         language,
       });
-      action = sanitizeAction(result.action);
+      action = sanitizeAction(result.action, { allowHttp: env.PAYMENT_DEMO });
     } catch (error) {
       logger.error('Payment plugin could not start a checkout', error);
       await db

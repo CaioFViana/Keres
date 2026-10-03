@@ -140,7 +140,19 @@ export function UsersListPage() {
                   </td>
                   <td>@{u.tag}</td>
                   <td>{u.isAdmin ? t('common.yes') : ''}</td>
-                  <td>{tierName(u.tierId)}</td>
+                  <td>
+                    {/* The plan the person is on, which a paid subscription decides; the assigned one is its tooltip. */}
+                    {tierName(u.effectiveTierId === undefined ? u.tierId : u.effectiveTierId)}
+                    {u.tierSource === 'subscription' && ' '}
+                    {u.tierSource === 'subscription' && (
+                      <span
+                        className="status-badge"
+                        title={t('users.tierAssignedTitle', { name: tierName(u.tierId) })}
+                      >
+                        {t('users.tierPaid')}
+                      </span>
+                    )}
+                  </td>
                   <td>{new Date(u.createdAt).toLocaleDateString(i18n.language)}</td>
                   <td>
                     <span className={`status-badge${u.isDeleted ? ' deleted' : ''}`}>

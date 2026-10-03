@@ -4,6 +4,7 @@ import type {
   PaymentsInfo,
   PublicTiersResponse,
   Subscription,
+  SwitchQuote,
 } from '@keres/shared';
 import type { ServerSelect } from '../db/schema';
 import { paymentApi } from './PaymentApiService';
@@ -45,3 +46,10 @@ export const getCheckout = (server: ServerSelect, id: string): Promise<Checkout>
 
 export const cancelSubscription = (server: ServerSelect): Promise<Subscription> =>
   paymentApi.cancelSubscription(server);
+
+/** Said before paying: the time left on the current plan, and what it becomes on the one being chosen. */
+export const getSwitchQuote = (
+  server: ServerSelect,
+  tierId: string,
+  interval: string,
+): Promise<SwitchQuote | null> => paymentApi.getSwitchQuote(server, tierId, interval);

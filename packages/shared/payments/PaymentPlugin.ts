@@ -41,6 +41,12 @@ export interface PaymentMethodOption {
   label: string;
   /** A line under the label, when the method needs one. */
   description?: string;
+  /**
+   * Whether the provider charges this method again by itself every period (a saved card). Defaults to true. Say
+   * `false` for what the person has to pay again each time (PIX, boleto, a bank transfer): the app then tells them
+   * so, and does not talk of "stopping the renewal" - there is nothing to stop.
+   */
+  recurring?: boolean;
 }
 
 export interface CheckoutRequest {

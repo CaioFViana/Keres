@@ -26,7 +26,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'tierId', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'tierId', 'effectiveTierId', 'tierSource', 'isDeleted', 'deletedAt'],
   },
   AttributeValue: {
     documented: ['value', 'createdAt', 'updatedAt'],

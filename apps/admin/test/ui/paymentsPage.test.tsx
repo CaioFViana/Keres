@@ -62,6 +62,7 @@ const summary = (over: Record<string, unknown> = {}) => ({
   endingSoon: 1,
   last30Days: { payments: 6, failures: 2, amountCents: 11940 },
   monthlyRecurringCents: 7960,
+  noDefaultTier: false,
   ...over,
 });
 
@@ -131,6 +132,24 @@ describe('payments page: the summary', () => {
       'PAYMENT_PLUGIN',
     );
     expect(view.container.textContent).not.toContain('Payments are taken by');
+  });
+
+  it('warns that the server has no default plan, and says what that costs', async () => {
+    mocks.summary.mockResolvedValue(summary({ noDefaultTier: true }));
+    const view = await renderPage();
+    await flush();
+
+    const warning = view.container.querySelector('[data-testid="no-default-tier"]');
+    expect(warning?.getAttribute('role')).toBe('alert');
+    expect(warning?.textContent).toContain('no default plan');
+    expect(warning?.textContent).toContain('no limits');
+  });
+
+  it('says nothing of a default plan when there is one', async () => {
+    const view = await renderPage();
+    await flush();
+
+    expect(view.container.querySelector('[data-testid="no-default-tier"]')).toBeNull();
   });
 
   it('shows the error when the summary cannot be read, and carries on with the list', async () => {
@@ -277,6 +296,18 @@ describe('payments page: subscriptions', () => {
 
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
+  });
+
+  it('says a plan given by an administrator is a gift, and not the id it is stored under', async () => {
+    mocks.subscriptions.mockResolvedValue(
+      page([subscription({ providerId: 'admin', providerReference: null, amountCents: 0 })]),
+    );
+    const view = await renderPage();
+    await flush();
+
+    const row = view.container.querySelector('tbody tr')?.textContent ?? '';
+    expect(row).toContain('Gift (administrator)');
+    expect(row).not.toContain('admin ');
   });
 
   it('shows the error when the list cannot be read', async () => {

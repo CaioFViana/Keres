@@ -151,8 +151,8 @@ describe('listDeleted', () => {
       name: 'Lia',
       version: 1,
     });
-    // ChapterAnchor has neither a simple name nor a composite: the panel shows a blank.
-    expect(items[0]).toMatchObject({ entityType: 'ChapterAnchor', name: null });
+    // A ChapterAnchor has no simple name: it is named by its chapter and its title (the shared handler resolves it).
+    expect(items[0]).toMatchObject({ entityType: 'ChapterAnchor', name: 'Capítulo 1 · A chegada' });
     // A story tombstone carries no storyId, but still resolves its own title.
     expect(items[2]).toMatchObject({
       entityType: 'Story',

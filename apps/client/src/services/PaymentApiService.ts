@@ -4,6 +4,7 @@ import type {
   PaymentsInfo,
   PublicTiersResponse,
   Subscription,
+  SwitchQuote,
 } from '@keres/shared';
 import type { ServerSelect } from '../db/schemas/servers';
 import { createKeresAxiosInstance } from './apiClient';
@@ -53,6 +54,18 @@ export class PaymentApiService {
       `/payments/checkout/${encodeURIComponent(checkoutId)}`,
     );
     return response.data;
+  }
+
+  /** What changing to this plan would do to the time left on the current one; null when nothing converts. */
+  async getSwitchQuote(
+    server: ServerSelect,
+    tierId: string,
+    interval: string,
+  ): Promise<SwitchQuote | null> {
+    const response = await this.clientFor(server).get('/payments/switch-quote', {
+      params: { tierId, interval },
+    });
+    return response.data?.quote ?? null;
   }
 
   async cancelSubscription(server: ServerSelect): Promise<Subscription> {

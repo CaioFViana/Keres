@@ -147,7 +147,8 @@
       "payment_failed": "Pagamento falhou",
       "payment_subscription_canceled": "Assinatura cancelada ou encerrada",
       "payment_subscription_due": "Período pago venceu",
-      "payment_webhook_rejected": "Aviso do provedor recusado"
+      "payment_webhook_rejected": "Aviso do provedor recusado",
+      "payment_gift_granted": "Plano dado por um administrador"
     }
   },
   "appearance": {
@@ -335,8 +336,11 @@
       "payment_failed": "Pagamento falhou",
       "subscription_canceled": "Assinatura encerrada",
       "subscription_due": "Período venceu sem pagamento",
-      "checkout_expired": "Tentativa expirada"
-    }
+      "checkout_expired": "Tentativa expirada",
+      "gift_granted": "Plano dado"
+    },
+    "noDefaultTier": "Este servidor não tem plano padrão. Quando o período pago de alguém termina e nenhum plano foi atribuído a essa pessoa, ela fica sem limite nenhum - mais do que um plano gratuito dá. Crie um plano gratuito e defina-o como padrão em Cadastro.",
+    "giftProvider": "Presente (administrador)"
   },
   "recovery": {
     "title": "Recuperação",
@@ -460,7 +464,30 @@
     "regenerating": "Gerando...",
     "confirmRegenerate": "Gerar novos códigos de recuperação de {{username}}? Todos os códigos anteriores deixam de funcionar.",
     "regenerateFailed": "Não foi possível gerar os códigos de recuperação.",
-    "loadTiersFailed": "Não foi possível carregar os planos."
+    "loadTiersFailed": "Não foi possível carregar os planos.",
+    "tierInUseSubscription": "Em {{name}} agora, por uma assinatura paga. O plano acima é o que vale quando nenhuma assinatura está em dia.",
+    "tierInUseDefault": "Em {{name}} agora: nenhum plano foi atribuído, então vale o plano padrão do servidor.",
+    "gift": {
+      "title": "Dar um plano",
+      "hint": "Um mês dado é um pagamento de valor zero: estende o plano em que a pessoa está, ou abre um período se ela não tiver nenhum. Nada o renova, e o que ela pagar depois começa onde ele termina. Para outro plano, o tempo que ela tem sobrando é convertido pelo valor.",
+      "now": "Agora: {{plan}} - {{status}}, até {{date}}.",
+      "isGift": "É um presente.",
+      "renewing": "Renova.",
+      "notRenewing": "Não renova.",
+      "none": "Esta pessoa não tem assinatura.",
+      "plan": "Plano",
+      "choose": "(escolha um plano)",
+      "months": "Meses",
+      "give": "Dar",
+      "cancelAndGive": "Cancelar a renovação dela e dar",
+      "needsCancel": "Esta pessoa tem uma assinatura paga do {{current}} que ainda está sendo cobrada. Para dar outro plano, a renovação precisa ser cancelada antes.",
+      "cannotCancelAtProvider": "O plugin de pagamento não consegue cancelar no provedor: você terá de confirmar que o provedor parou de cobrar.",
+      "confirm": "Dar {{months}} mês(es) do {{plan}} para {{username}}?",
+      "confirmCancel": "Confirmo que {{username}} concordou em cancelar a renovação da assinatura do {{current}} e em receber {{months}} mês(es) do {{plan}} de presente. O que sobrar do {{current}} é convertido em {{plan}} pelo valor.",
+      "confirmCancelManual": "Confirmo também que o provedor parou de cobrar essa pessoa.",
+      "done": "Dei {{months}} mês(es) do {{plan}} para {{username}}. Vale até {{date}}.",
+      "failed": "Não foi possível dar o plano."
+    }
   },
   "users": {
     "title": "Usuários",
@@ -479,6 +506,8 @@
     "empty": "Nenhum usuário encontrado.",
     "confirmDelete": "Excluir o usuário \"{{username}}\"?",
     "confirmDeleteAdmin": "Excluir o admin \"{{username}}\"? Ele perde o acesso até ser restaurado.",
-    "viewActivity": "Ver atividade"
+    "viewActivity": "Ver atividade",
+    "tierPaid": "pago",
+    "tierAssignedTitle": "Plano atribuído: {{name}}. A assinatura paga tem precedência enquanto estiver em dia."
   }
 }

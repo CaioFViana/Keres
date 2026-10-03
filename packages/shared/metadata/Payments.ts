@@ -26,8 +26,19 @@ export const PAYMENT_LEDGER_KINDS = [
   'subscription_canceled',
   'subscription_due',
   'checkout_expired',
+  'gift_granted',
 ] as const;
 export type PaymentLedgerKind = (typeof PAYMENT_LEDGER_KINDS)[number];
+
+/**
+ * The `providerId` of a subscription that is a plan given by an administrator: a period paid for with nothing, by
+ * the same rules as one paid with money (it extends a running period, and what is paid for afterwards extends it).
+ * No provider charges it, so it never renews: it ends on its date.
+ */
+export const GIFT_PROVIDER_ID = 'admin';
+
+/** The most months an administrator can give at once. */
+export const GIFT_MAX_MONTHS = 24;
 
 /** How many days before a paid period ends the client may remind the person (if they allowed it). */
 export const PAYMENT_WARNING_DAYS = 5;

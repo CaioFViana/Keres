@@ -1,10 +1,15 @@
-import type { PaymentsInfo, Subscription } from '@keres/shared';
-import { addBillingPeriod, nextPeriodStart } from '@keres/shared/utils/billingPeriod';
-import type { PaymentEvent, PaymentPlugin } from '@keres/shared/payments/PaymentPlugin';
-import type { PaymentLedgerKind } from '@keres/shared/metadata/Payments';
-import { and, eq, inArray, lte } from 'drizzle-orm';
+import type { PaymentsInfo, Subscription, SwitchQuote } from '@keres/shared';
+import { addBillingPeriod } from '@keres/shared/utils/billingPeriod';
+import type {
+  BillingInterval,
+  PaymentEvent,
+  PaymentMethodOption,
+  PaymentPlugin,
+} from '@keres/shared/payments/PaymentPlugin';
+import { GIFT_PROVIDER_ID } from '@keres/shared/metadata/Payments';
+import { and, desc, eq, inArray, lte } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { db, withWriteTransaction, type CompatibleDb } from '../../db';
+import { db, withWriteTransaction } from '../../db';
 import {
   paymentCheckouts,
   paymentEvents,
@@ -17,30 +22,17 @@ import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { auditService } from '../AuditService';
 import { registrationSettingsService } from '../RegistrationSettingsService';
+import { clipDetail as clip, noteLedger, tierNameOf } from './paymentLedger';
 import { getPaymentPlugin } from './PaymentPluginRegistry';
+import { periodStartFor } from './periodConversion';
 
 type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;
 
 /** A period left unpaid this long ends the subscription for good: the administrators' list does not fill with them. */
 export const DUE_ABANDONED_AFTER_DAYS = 60;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MAX_DETAIL = 200;
-
-const clip = (value: string | undefined | null) => (value ? value.slice(0, MAX_DETAIL) : null);
 
 export type EventOutcome = 'applied' | 'duplicate' | 'unmatched';
-
-interface LedgerInput {
-  kind: PaymentLedgerKind;
-  providerId: string;
-  providerEventId?: string | null;
-  userId?: string | null;
-  tierName?: string | null;
-  amountCents?: number | null;
-  currency?: string | null;
-  providerReference?: string | null;
-  detail?: string | null;
-}
 
 /**
  * Who has paid for what, and until when.
@@ -63,18 +55,46 @@ export class SubscriptionService {
     });
   }
 
-  private async tierNameOf(tierId: string): Promise<string> {
-    const tier = await db.query.tiers.findFirst({
-      where: eq(tiers.id, tierId),
-      columns: { name: true },
+  /**
+   * Whether the provider charges this subscription again by itself. The subscription does not keep the method it
+   * was paid with; the person's last paid attempt does, and the plugin says whether that method is recurring (a
+   * saved card is, PIX and boleto are not). A plugin that does not say, or a subscription with no attempt behind
+   * it, counts as recurring: what the app showed before this was known.
+   */
+  private async autoRenews(
+    row: SubscriptionRow,
+    plugin: PaymentPlugin | null,
+    knownMethods?: PaymentMethodOption[],
+  ): Promise<boolean> {
+    // A plan given by hand is not charged by anybody: the person has to pay for what comes after it.
+    if (row.providerId === GIFT_PROVIDER_ID) return false;
+    if (!plugin) return true;
+    const last = await db.query.paymentCheckouts.findFirst({
+      where: and(
+        eq(paymentCheckouts.userId, row.userId),
+        eq(paymentCheckouts.status, 'paid'),
+        eq(paymentCheckouts.providerId, row.providerId),
+      ),
+      orderBy: desc(paymentCheckouts.updatedAt),
+      columns: { methodId: true },
     });
-    return tier?.name ?? 'Plan';
+    if (!last) return true;
+    const methods =
+      knownMethods ??
+      (await Promise.resolve(plugin.listMethods(row.currency)).catch(
+        () => [] as PaymentMethodOption[],
+      ));
+    return methods.find((method) => method.id === last.methodId)?.recurring ?? true;
   }
 
-  async toWire(row: SubscriptionRow, plugin: PaymentPlugin | null): Promise<Subscription> {
+  async toWire(
+    row: SubscriptionRow,
+    plugin: PaymentPlugin | null,
+    knownMethods?: PaymentMethodOption[],
+  ): Promise<Subscription> {
     return {
       tierId: row.tierId,
-      tierName: await this.tierNameOf(row.tierId),
+      tierName: await tierNameOf(row.tierId),
       interval: row.interval,
       status: row.status,
       paidUntil: row.paidUntil.toISOString(),
@@ -85,6 +105,8 @@ export class SubscriptionService {
       canCancelHere: Boolean(
         plugin?.cancelSubscription && row.providerReference && row.providerId === plugin.id,
       ),
+      autoRenews: await this.autoRenews(row, plugin, knownMethods),
+      complimentary: row.providerId === GIFT_PROVIDER_ID,
     };
   }
 
@@ -107,7 +129,7 @@ export class SubscriptionService {
       provider: { id: plugin.id, displayName: plugin.displayName },
       currency,
       methods,
-      subscription: row ? await this.toWire(row, plugin) : null,
+      subscription: row ? await this.toWire(row, plugin, methods) : null,
     };
   }
 
@@ -139,7 +161,7 @@ export class SubscriptionService {
       providerId: row.providerId,
       kind: 'subscription_canceled',
       userId,
-      tierName: await this.tierNameOf(row.tierId),
+      tierName: await tierNameOf(row.tierId),
       providerReference: row.providerReference,
       detail: 'Asked by the user; it ends when the paid period does.',
     });
@@ -157,24 +179,30 @@ export class SubscriptionService {
     emitUserEvent(userId, { type: 'payments.changed' });
   }
 
-  private async note(tx: CompatibleDb, ledger: LedgerInput): Promise<boolean> {
-    const inserted = await tx
-      .insert(paymentEvents)
-      .values({
-        id: ulid(),
-        providerId: ledger.providerId,
-        providerEventId: ledger.providerEventId ?? null,
-        kind: ledger.kind,
-        userId: ledger.userId ?? null,
-        tierName: ledger.tierName ?? null,
-        amountCents: ledger.amountCents ?? null,
-        currency: ledger.currency ?? null,
-        providerReference: ledger.providerReference ?? null,
-        detail: clip(ledger.detail),
-      })
-      .onConflictDoNothing()
-      .returning({ id: paymentEvents.id });
-    return inserted.length > 0;
+  /**
+   * What changing to another plan would do to the time the person has left, said before they pay: the same
+   * conversion the payment will apply, so the app can show it. Null when nothing converts (no running
+   * subscription, or the same plan).
+   */
+  async quoteSwitch(
+    userId: string,
+    tierId: string,
+    interval: BillingInterval,
+    now = new Date(),
+  ): Promise<SwitchQuote | null> {
+    const existing = await this.findByUser(userId);
+    if (!existing || existing.status !== 'active' || existing.paidUntil <= now) return null;
+    if (existing.tierId === tierId) return null;
+    const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, tierId) });
+    const price = interval === 'yearly' ? tier?.priceYearlyCents : tier?.priceMonthlyCents;
+    if (!tier || !price || price <= 0) return null;
+    const { conversion } = await periodStartFor(
+      db,
+      existing,
+      { tierId, interval, amountCents: price },
+      now,
+    );
+    return conversion ? { ...conversion, toTierName: tier.name } : null;
   }
 
   /**
@@ -220,7 +248,7 @@ export class SubscriptionService {
       if (!userId) {
         // A notice for something this server never opened (another environment, a deleted attempt): kept in
         // the ledger so an administrator can see it arrived, and nothing changes.
-        const fresh = await this.note(tx, {
+        const fresh = await noteLedger(tx, {
           ...base,
           kind: event.type === 'payment.succeeded' ? 'payment_succeeded' : 'payment_failed',
           detail: `Unmatched ${event.type}`,
@@ -240,8 +268,14 @@ export class SubscriptionService {
           const tierId = checkout?.tierId ?? existing?.tierId;
           const interval = checkout?.interval ?? existing?.interval;
           if (!tierId || !interval) return 'unmatched';
-          const tierName = checkout?.tierName ?? (await this.tierNameOf(tierId));
-          const fresh = await this.note(tx, {
+          const tierName = checkout?.tierName ?? (await tierNameOf(tierId));
+          const { start, conversion } = await periodStartFor(
+            tx,
+            existing,
+            { tierId, interval, amountCents: event.amountCents },
+            event.paidAt,
+          );
+          const fresh = await noteLedger(tx, {
             ...base,
             kind: 'payment_succeeded',
             userId,
@@ -249,13 +283,11 @@ export class SubscriptionService {
             amountCents: event.amountCents,
             currency: event.currency,
             providerReference: subscriptionReference ?? checkout?.providerReference ?? null,
+            detail: conversion
+              ? `Changed from ${conversion.fromTierName}: ${conversion.remainingDays} day(s) left became ${conversion.convertedDays}.`
+              : null,
           });
           if (!fresh) return 'duplicate';
-
-          const start = nextPeriodStart(
-            existing && existing.status === 'active' ? existing.paidUntil : null,
-            event.paidAt,
-          );
           const values = {
             tierId,
             interval,
@@ -282,17 +314,21 @@ export class SubscriptionService {
           }
           audit.push({
             action: 'payment.succeeded',
-            meta: { tier: tierName, interval, amountCents: event.amountCents },
+            meta: {
+              tier: tierName,
+              interval,
+              amountCents: event.amountCents,
+              ...(conversion ? { changedFrom: conversion.fromTierName } : {}),
+            },
           });
           return 'applied';
         }
         case 'payment.failed': {
-          const fresh = await this.note(tx, {
+          const fresh = await noteLedger(tx, {
             ...base,
             kind: 'payment_failed',
             userId,
-            tierName:
-              checkout?.tierName ?? (existing ? await this.tierNameOf(existing.tierId) : null),
+            tierName: checkout?.tierName ?? (existing ? await tierNameOf(existing.tierId) : null),
             providerReference: subscriptionReference ?? checkout?.providerReference ?? null,
             detail: event.reason,
           });
@@ -313,11 +349,11 @@ export class SubscriptionService {
         }
         case 'subscription.canceled': {
           if (!existing) return 'unmatched';
-          const fresh = await this.note(tx, {
+          const fresh = await noteLedger(tx, {
             ...base,
             kind: 'subscription_canceled',
             userId,
-            tierName: await this.tierNameOf(existing.tierId),
+            tierName: await tierNameOf(existing.tierId),
             providerReference: existing.providerReference,
             detail: 'Canceled at the provider.',
           });
@@ -336,7 +372,7 @@ export class SubscriptionService {
         }
         case 'checkout.expired': {
           if (!checkout) return 'unmatched';
-          const fresh = await this.note(tx, {
+          const fresh = await noteLedger(tx, {
             ...base,
             kind: 'checkout_expired',
             userId,
@@ -386,7 +422,7 @@ export class SubscriptionService {
         and(eq(paymentSubscriptions.status, 'active'), lte(paymentSubscriptions.paidUntil, now)),
       );
     for (const row of lapsed) {
-      const tierName = await this.tierNameOf(row.tierId);
+      const tierName = await tierNameOf(row.tierId);
       const ending = row.cancelAtPeriodEnd;
       const done = await withWriteTransaction(async (tx) => {
         // The row may have been paid since it was read: only a still-active, still-lapsed one changes.
@@ -402,7 +438,7 @@ export class SubscriptionService {
           )
           .returning({ userId: paymentSubscriptions.userId });
         if (changed.length === 0) return false;
-        await this.note(tx, {
+        await noteLedger(tx, {
           providerId: row.providerId,
           kind: ending ? 'subscription_canceled' : 'subscription_due',
           userId: row.userId,
@@ -446,7 +482,7 @@ export class SubscriptionService {
           providerId: row.providerId,
           kind: 'subscription_canceled',
           userId: row.userId,
-          tierName: await this.tierNameOf(row.tierId),
+          tierName: await tierNameOf(row.tierId),
           providerReference: row.providerReference,
           detail: `Unpaid for ${DUE_ABANDONED_AFTER_DAYS} days.`,
         });
@@ -462,7 +498,7 @@ export class SubscriptionService {
         });
         await plugin.onSubscriptionDue({
           payer: { userId: row.userId, username: user?.username ?? '' },
-          tier: { id: row.tierId, name: await this.tierNameOf(row.tierId) },
+          tier: { id: row.tierId, name: await tierNameOf(row.tierId) },
           interval: row.interval,
           amountCents: row.amountCents,
           currency: row.currency,

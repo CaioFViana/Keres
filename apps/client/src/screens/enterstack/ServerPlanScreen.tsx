@@ -17,6 +17,7 @@ import PaymentActionPanel from '../../components/features/servers/PaymentActionP
 import PlanStatusCard from '../../components/features/servers/PlanStatusCard';
 import { usePaymentOverview } from '../../hooks/usePaymentOverview';
 import { usePlanCancellation } from '../../hooks/usePlanCancellation';
+import { useSwitchQuote } from '../../hooks/useSwitchQuote';
 import { usePlanCheckout } from '../../hooks/usePlanCheckout';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
@@ -89,6 +90,15 @@ const ServerPlanScreen = () => {
   const price = selected?.prices.find((entry) => entry.interval === interval) ?? null;
   const subscription = overview?.info.subscription ?? null;
   const currency = overview?.info.currency ?? 'BRL';
+  // Changing plan while time is left converts it by value: said before paying, with the server's own numbers.
+  const switching =
+    online &&
+    subscription?.status === 'active' &&
+    selected !== null &&
+    selected.tier.id !== subscription.tierId;
+  const days = (count: number) =>
+    t(count === 1 ? 'payment_day_count_one' : 'payment_day_count_other', { count });
+  const switchQuote = useSwitchQuote(server, selected?.tier.id ?? null, interval, switching);
 
   const pick = (offer: PlanOffer) => {
     setTierId(offer.tier.id);
@@ -190,10 +200,12 @@ const ServerPlanScreen = () => {
   }
 
   const choosing = checkout.phase === 'idle';
-  const canStop =
-    subscription?.status === 'active' &&
-    !subscription.cancelAtPeriodEnd &&
-    subscription.canCancelHere;
+  // A server that predates the field says nothing: it renews, as it always did.
+  const renewsItself = subscription?.autoRenews !== false;
+  const running = subscription?.status === 'active' && !subscription.cancelAtPeriodEnd;
+  // With a method the provider charges by itself, stopping it is for the provider to do (or not, when it cannot).
+  // With one the person pays again each time there is nothing at the provider to stop: only to say they will not.
+  const canStop = running && (subscription.canCancelHere || !renewsItself);
 
   return (
     <DetailContainer>
@@ -212,7 +224,16 @@ const ServerPlanScreen = () => {
               {t('payment_due_fallback')}
             </Text>
           ) : null}
-          {subscription.cancelAtPeriodEnd && subscription.status === 'active' ? (
+          {subscription.complimentary && subscription.status === 'active' ? (
+            <Text style={styles.hint} testID="plan-gift">
+              {t('payment_gift_until', {
+                date: new Date(subscription.paidUntil).toLocaleDateString(i18n.language),
+              })}
+            </Text>
+          ) : null}
+          {subscription.cancelAtPeriodEnd &&
+          subscription.status === 'active' &&
+          !subscription.complimentary ? (
             <Text style={styles.hint} testID="plan-not-renewing">
               {t('payment_not_renewing', {
                 date: new Date(subscription.paidUntil).toLocaleDateString(i18n.language),
@@ -221,16 +242,21 @@ const ServerPlanScreen = () => {
           ) : null}
           {canStop ? (
             <Button
-              onPress={() => cancelRenewal(subscription.paidUntil)}
+              onPress={() => cancelRenewal(subscription.paidUntil, renewsItself)}
               style={styles.cancelButton}
               testID="plan-cancel-renewal"
             >
-              {t('payment_cancel_renewal')}
+              {t(renewsItself ? 'payment_cancel_renewal' : 'payment_cancel_no_renewal')}
             </Button>
           ) : null}
-          {subscription.status === 'active' &&
-          !subscription.cancelAtPeriodEnd &&
-          !subscription.canCancelHere ? (
+          {running && !renewsItself ? (
+            <Text style={styles.hint} testID="plan-manual-renewal">
+              {t('payment_manual_renewal', {
+                date: new Date(subscription.paidUntil).toLocaleDateString(i18n.language),
+              })}
+            </Text>
+          ) : null}
+          {running && renewsItself && !subscription.canCancelHere ? (
             <Text style={styles.hint} testID="plan-cancel-at-provider">
               {t('payment_cancel_at_provider')}
             </Text>
@@ -307,6 +333,16 @@ const ServerPlanScreen = () => {
               </View>
               {overview.info.methods.length === 0 ? (
                 <Text style={styles.hint}>{t('payment_no_methods')}</Text>
+              ) : null}
+              {switchQuote ? (
+                <Text style={styles.hint} testID="plan-switch-quote">
+                  {t('payment_switch_quote', {
+                    current: switchQuote.fromTierName,
+                    plan: switchQuote.toTierName,
+                    remaining: days(switchQuote.remainingDays),
+                    converted: days(switchQuote.convertedDays),
+                  })}
+                </Text>
               ) : null}
               <Text style={styles.hint}>{t('payment_privacy_note')}</Text>
               {checkout.error ? <Text style={styles.error}>{checkout.error}</Text> : null}

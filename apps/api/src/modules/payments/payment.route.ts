@@ -113,6 +113,30 @@ export const paymentRoutes = new Elysia()
     },
   )
 
+  .get(
+    '/switch-quote',
+    async ({ userId, query }) => {
+      const parsed = CheckoutCreateSchema.pick({ tierId: true, interval: true }).safeParse(query);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid request');
+      }
+      return {
+        quote: await subscriptionService.quoteSwitch(
+          userId,
+          parsed.data.tierId,
+          parsed.data.interval,
+        ),
+      };
+    },
+    {
+      query: t.Object({ tierId: t.String(), interval: t.String() }),
+      detail: {
+        summary: 'What changing to this plan would do to the time left on the current one',
+        tags: ['Payments'],
+      },
+    },
+  )
+
   .get('/checkout/:id', ({ userId, params }) => checkoutService.get(userId, params.id), {
     params: t.Object({ id: t.String() }),
     detail: { summary: 'Where an attempt to pay stands', tags: ['Payments'] },

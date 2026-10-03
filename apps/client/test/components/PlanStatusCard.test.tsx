@@ -28,6 +28,8 @@ const subscription = (over: Record<string, unknown> = {}) =>
     currency: 'BRL',
     cancelAtPeriodEnd: false,
     canCancelHere: true,
+    autoRenews: true,
+    complimentary: false,
     ...over,
   }) as never;
 
@@ -50,6 +52,24 @@ describe('PlanStatusCard', () => {
 
     expect(view.getByText('payment_last_amount')).toBeTruthy();
     expect(view.getByText('R$19.90')).toBeTruthy();
+  });
+
+  it('calls a plan the administrators gave a gift, with no interval and no amount', async () => {
+    const gift = subscription({
+      complimentary: true,
+      cancelAtPeriodEnd: true,
+      amountCents: 0,
+      autoRenews: false,
+      canCancelHere: false,
+    });
+    const view = await render(<PlanStatusCard subscription={gift} showAmount />);
+
+    expect(view.getByText('Pro')).toBeTruthy();
+    expect(view.queryByText('Pro · payment_interval_monthly')).toBeNull();
+    expect(view.getByText('payment_status_gift')).toBeTruthy();
+    expect(view.queryByText('payment_status_ending')).toBeNull();
+    expect(view.queryByText('payment_last_amount')).toBeNull();
+    expect(view.getByText('payment_paid_until')).toBeTruthy();
   });
 
   it('says it ends at the end of the period when it will not renew', async () => {

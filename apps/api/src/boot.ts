@@ -6,12 +6,8 @@ import { createApp } from './index';
 import { persistApiLog } from './services/ApiLogService';
 import { pruneAttemptLimits } from './services/AttemptLimitService';
 import { auditService } from './services/AuditService';
-import { createConfiguredDemoPlugin, demoBaseUrl } from './services/payments/demo/DemoPayService';
-import {
-  getPaymentPlugin,
-  loadPaymentPlugin,
-  setPaymentPlugin,
-} from './services/payments/PaymentPluginRegistry';
+import { startPaymentConnector } from './services/payments/connector/startConnector';
+import { getPaymentConnector } from './services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from './services/payments/SubscriptionService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
@@ -50,7 +46,7 @@ export async function preparePersistence(): Promise<void> {
  * more than a free plan. Said at every start, loudly, because nothing fails to make it visible otherwise.
  */
 export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
-  if (!getPaymentPlugin()) return false;
+  if (!getPaymentConnector()) return false;
   try {
     if (await effectiveDefaultTierId()) return false;
   } catch (error) {
@@ -188,16 +184,10 @@ export async function bootAndListen(options?: {
   }
 
   const app = await createApp();
-  await loadPaymentPlugin();
-  if (env.PAYMENT_DEMO) {
-    // The fake provider wins over a configured plugin: asking for the demo is asking to see it working.
-    setPaymentPlugin(createConfiguredDemoPlugin());
-    logger.warn(
-      `PAYMENT_DEMO is on: payments are FAKE and anyone signed in can grant themselves a paid plan at ${demoBaseUrl()}/buy. Never run a real server like this.`,
-    );
-  }
-  await warnIfPaymentsHaveNoDefaultPlan();
   const stopSchedulers = [
+    // In the background, and again until it answers: a connector that starts after the server must not leave it without
+    // payments. Once connected, the one thing that needs it is checked: that there is a default plan to fall back to.
+    startPaymentConnector({ onConnected: () => void warnIfPaymentsHaveNoDefaultPlan() }),
     startPaymentsScheduler(),
     startMediaBlobSweepScheduler(),
     startAuditRetentionScheduler(),

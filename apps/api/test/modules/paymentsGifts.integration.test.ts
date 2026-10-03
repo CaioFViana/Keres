@@ -11,17 +11,13 @@ import {
   users,
 } from '../../src/db/schema';
 import { auditService } from '../../src/services/AuditService';
-import { setPaymentPlugin } from '../../src/services/payments/PaymentPluginRegistry';
+import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from '../../src/services/payments/SubscriptionService';
 import { tierEnforcementService } from '../../src/services/TierEnforcementService';
-import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
+import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
-import {
-  createFakePaymentPlugin,
-  FAKE_SIGNATURE_HEADER,
-  FAKE_VALID_SIGNATURE,
-  webhookBody,
-} from '../helpers/fakePaymentPlugin';
+import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
+import { postEvents } from '../helpers/paymentEvents';
 
 /**
  * A plan given by an administrator is a payment of zero: it extends a running period, switches plan with the
@@ -33,22 +29,14 @@ const daysBetween = (from: Date, to: Date) => (to.getTime() - from.getTime()) / 
 let admin: TestUser;
 let ana: TestUser;
 let bia: TestUser;
-let fake: ReturnType<typeof createFakePaymentPlugin>;
+let fake: ReturnType<typeof createFakePaymentConnector>;
 let plusId: string;
 let maxId: string;
 let freeId: string;
 
-async function webhook(events: Record<string, unknown>[]) {
-  const app = await getApp();
-  const response = await app.handle(
-    new Request('http://localhost/api/payments/webhook', {
-      method: 'POST',
-      headers: { 'content-type': 'text/plain', [FAKE_SIGNATURE_HEADER]: FAKE_VALID_SIGNATURE },
-      body: webhookBody(events),
-    }),
-  );
-  return response.status;
-}
+/** The connector's events, delivered as it would deliver them. A signature given stands for one that is not its own. */
+const webhook = (events: Record<string, unknown>[], signature?: string) =>
+  postEvents(events, { forged: signature !== undefined });
 
 const paid = (over: Record<string, unknown>) => ({
   type: 'payment.succeeded',
@@ -98,8 +86,8 @@ const give = (
 
 beforeEach(async () => {
   await truncateAll();
-  fake = createFakePaymentPlugin({ withCancel: true, withDueHook: true });
-  setPaymentPlugin(fake.plugin);
+  fake = createFakePaymentConnector({ withCancel: true, withDueHook: true });
+  setPaymentConnector(fake.connector);
   admin = await registerUser('root');
   await promoteToAdmin(admin.userId);
   ana = await registerUser('ana');
@@ -130,7 +118,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  setPaymentPlugin(null);
+  setPaymentConnector(null);
   vi.restoreAllMocks();
 });
 
@@ -209,7 +197,7 @@ describe('giving a plan to somebody with none', () => {
   });
 
   it('works on a server with no payment plugin, which is where plans are otherwise only handed out by hand', async () => {
-    setPaymentPlugin(null);
+    setPaymentConnector(null);
 
     expect((await give(ana, maxId)).status).toBe(201);
 
@@ -389,7 +377,7 @@ describe('giving another plan to somebody a provider is still charging', () => {
   });
 
   it('goes ahead on the administrator’s word when the plugin cannot cancel at the provider', async () => {
-    setPaymentPlugin(createFakePaymentPlugin().plugin);
+    setPaymentConnector(createFakePaymentConnector().connector);
 
     const { status } = await give(ana, maxId, { cancelRenewal: true, consent: true });
 

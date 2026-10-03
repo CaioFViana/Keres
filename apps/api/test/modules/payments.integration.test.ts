@@ -15,24 +15,20 @@ import * as webSocket from '../../src/modules/webSocket/webSocket.route';
 import { auditService } from '../../src/services/AuditService';
 import { languageOf } from '../../src/modules/payments/payment.route';
 import { sanitizeAction } from '../../src/services/payments/CheckoutService';
-import { setPaymentPlugin } from '../../src/services/payments/PaymentPluginRegistry';
+import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from '../../src/services/payments/SubscriptionService';
 import { tierEnforcementService } from '../../src/services/TierEnforcementService';
 import { newId, getApp, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
-import {
-  createFakePaymentPlugin,
-  FAKE_SIGNATURE_HEADER,
-  FAKE_VALID_SIGNATURE,
-  webhookBody,
-} from '../helpers/fakePaymentPlugin';
+import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
+import { postEvents } from '../helpers/paymentEvents';
 
 const DAY = 24 * 60 * 60 * 1000;
 
 let admin: TestUser;
 let ana: TestUser;
 let bia: TestUser;
-let fake: ReturnType<typeof createFakePaymentPlugin>;
+let fake: ReturnType<typeof createFakePaymentConnector>;
 let proId: string;
 let freeId: string;
 let hiddenId: string;
@@ -41,18 +37,9 @@ const checkout = (user: TestUser, body: Record<string, unknown>) =>
   request('POST', '/payments/checkout', { token: user.token, body });
 
 /** The provider calling the webhook, as a real one would: the raw text of the body, a header to say who it is. */
-async function webhook(events: Record<string, unknown>[], signature = FAKE_VALID_SIGNATURE) {
-  const app = await getApp();
-  const response = await app.handle(
-    new Request('http://localhost/api/payments/webhook', {
-      method: 'POST',
-      headers: { 'content-type': 'text/plain', [FAKE_SIGNATURE_HEADER]: signature },
-      body: webhookBody(events),
-    }),
-  );
-  const text = await response.text();
-  return { status: response.status, data: text ? JSON.parse(text) : null };
-}
+/** The connector's events, delivered as it would deliver them. A signature given stands for one that is not its own. */
+const webhook = (events: Record<string, unknown>[], signature?: string) =>
+  postEvents(events, { forged: signature !== undefined });
 
 const paid = (over: Record<string, unknown>) => ({
   type: 'payment.succeeded',
@@ -76,8 +63,12 @@ const subscriptionOf = async (user: TestUser) =>
 
 beforeEach(async () => {
   await truncateAll();
-  fake = createFakePaymentPlugin({ withCancel: true, withDueHook: true, withStatusPolling: true });
-  setPaymentPlugin(fake.plugin);
+  fake = createFakePaymentConnector({
+    withCancel: true,
+    withDueHook: true,
+    withStatusPolling: true,
+  });
+  setPaymentConnector(fake.connector);
   admin = await registerUser('root');
   await promoteToAdmin(admin.userId);
   ana = await registerUser('ana');
@@ -100,12 +91,12 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  setPaymentPlugin(null);
+  setPaymentConnector(null);
   vi.restoreAllMocks();
 });
 
 describe('a server with no payment plugin', () => {
-  beforeEach(() => setPaymentPlugin(null));
+  beforeEach(() => setPaymentConnector(null));
 
   it('says payments are off, and nothing else about them answers', async () => {
     const info = await request('GET', '/payments', { token: ana.token });
@@ -303,7 +294,7 @@ describe('starting to pay', () => {
     ['no address at all', { kind: 'redirect', url: 'not a url' }],
     ['an action that does not exist', { kind: 'launch-missiles' }],
   ])('refuses a plugin that answers %s', async (_label, action) => {
-    setPaymentPlugin(createFakePaymentPlugin({ action: () => action as never }).plugin);
+    setPaymentConnector(createFakePaymentConnector({ action: () => action as never }).connector);
 
     const { status } = await checkout(ana, {
       tierId: proId,
@@ -390,7 +381,7 @@ describe('the provider’s notices', () => {
 
     const { status } = await webhook([paid({ checkoutId: mine.id })], 'forged');
 
-    expect(status).toBe(400);
+    expect(status).toBe(401);
     expect(await db.select().from(paymentSubscriptions)).toHaveLength(0);
     expect(await db.select().from(paymentEvents)).toHaveLength(0);
   });
@@ -577,7 +568,7 @@ describe('the provider’s notices', () => {
     const rows = await db
       .select()
       .from(auditEvents)
-      .where(eq(auditEvents.action, 'payment.webhook_rejected'));
+      .where(eq(auditEvents.action, 'payment.events_rejected'));
     // Lines from the previous test may still be landing: all that matters is that this one is there.
     expect(rows.length).toBeGreaterThanOrEqual(1);
     expect(rows.every((row) => row.outcome === 'failure')).toBe(true);
@@ -719,7 +710,7 @@ describe('cancelling', () => {
   });
 
   it('says the person has to cancel at the provider when the plugin cannot', async () => {
-    setPaymentPlugin(createFakePaymentPlugin().plugin);
+    setPaymentConnector(createFakePaymentConnector().connector);
     const mine = await openCheckout(ana);
     await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
 
@@ -860,7 +851,7 @@ describe('what the administrators see', () => {
     expect(await flag()).toBe(false);
 
     // With no plugin the warning is only for a server that has subscriptions (a plan given by hand) to end.
-    setPaymentPlugin(null);
+    setPaymentConnector(null);
     await db.update(registrationSettings).set({ defaultTierId: null });
     expect(await flag()).toBe(false);
     await db.insert(paymentSubscriptions).values({

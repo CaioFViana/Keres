@@ -34,3 +34,8 @@ process.env.NODE_ENV = 'test';
 import * as os from 'node:os';
 import * as path from 'node:path';
 process.env.MEDIA_STORAGE_PATH ??= path.join(os.tmpdir(), 'keres-media-test');
+
+// The keys shared with a payment connector (see docs/payment_connectors.md). The tests that play the connector sign
+// with these; one per direction, as the server requires.
+process.env.PAYMENT_EVENTS_SECRET ??= 'test-events-secret-test-events-secret-000';
+process.env.PAYMENT_CONNECTOR_SECRET ??= 'test-connector-secret-test-connector-0001';

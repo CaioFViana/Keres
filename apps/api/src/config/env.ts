@@ -14,6 +14,18 @@ const optionalEnvironmentString = z.preprocess(
   z.string().min(1).optional(),
 );
 
+/** A key shared with the payment connector: long enough to be a key and not a word (see `MIN_SECRET_LENGTH`). */
+const connectorSecret = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string().min(32, 'must have at least 32 characters').optional(),
+);
+
+const isLoopbackHost = (hostname: string) =>
+  hostname === 'localhost' ||
+  hostname === '127.0.0.1' ||
+  hostname === '[::1]' ||
+  hostname === '::1';
+
 const envSchema = z.object({
   /**
    * Which database engine to use. `postgres` needs a server; `sqlite` keeps everything in a local
@@ -85,32 +97,84 @@ const envSchema = z.object({
    * rest of the shutdown; raise both together (`stop_grace_period`).
    */
   /**
-   * The payment plugin: a module (a path, or a package name) whose default export creates a `PaymentPlugin` - see
-   * `@keres/shared/payments/PaymentPlugin`. Absent, the server sells nothing and nothing about payments is shown.
-   * The plugin reads its own keys from the environment; Keres never looks at them.
+   * The payment connector this server sells plans through: the address of a separate service that speaks to one
+   * payment provider (see docs/payment_connectors.md). Absent, the server sells nothing and nothing about payments
+   * is shown. It must be `https`, unless it is this machine (`localhost`) or `PAYMENT_CONNECTOR_ALLOW_INSECURE` says
+   * the network between them can be trusted with what is not secret: every message is signed whatever the transport,
+   * but only TLS keeps them private.
    */
-  PAYMENT_PLUGIN: optionalEnvironmentString,
-  /**
-   * A fake payment provider, for trying the whole flow on a real server: `true` installs the demo plugin (it wins
-   * over `PAYMENT_PLUGIN`) and serves its hosted page at `/buy`, where any signed-in user can confirm their own
-   * payment. Plans are granted for nothing - never on a server people really use. See docs/payment_plugins.md.
-   */
-  PAYMENT_DEMO: z
+  PAYMENT_CONNECTOR_URL: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.url().optional(),
+  ),
+  /** Signs what Keres sends the connector, and is what Keres checks the connector's answers with. At least 32 characters. */
+  PAYMENT_CONNECTOR_SECRET: connectorSecret,
+  /** The key that was in use before, still accepted for the connector's answers while a key is being replaced. */
+  PAYMENT_CONNECTOR_SECRET_PREVIOUS: connectorSecret,
+  /** What Keres checks the connector's events with: another key than the one above, on purpose. At least 32 characters. */
+  PAYMENT_EVENTS_SECRET: connectorSecret,
+  /** The key that was in use before, still accepted for events while a key is being replaced. */
+  PAYMENT_EVENTS_SECRET_PREVIOUS: connectorSecret,
+  /** How long a call to the connector may take before it is given up on, in milliseconds. */
+  PAYMENT_CONNECTOR_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(60_000)
+    .optional()
+    .default(10_000),
+  /** Allows a connector at an address that is not `https` and not this machine (a private network between containers). */
+  PAYMENT_CONNECTOR_ALLOW_INSECURE: z
     .enum(['true', 'false'])
     .optional()
     .default('false')
     .transform((value) => value === 'true'),
-  /** Where the demo provider's page is reached from the app (a phone needs the machine's address, not localhost). */
-  PAYMENT_DEMO_BASE_URL: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.url().optional(),
-  ),
-  /** The key the demo provider signs its notices with; derived from the JWT secret when absent. */
-  PAYMENT_DEMO_SECRET: optionalEnvironmentString,
+  /**
+   * Lets a payment page open at a plain `http` address. For development only, with a connector on this machine: a
+   * redirect to `http` can be read and altered on the way, which is why it is refused by default.
+   */
+  PAYMENT_ALLOW_INSECURE_REDIRECTS: z
+    .enum(['true', 'false'])
+    .optional()
+    .default('false')
+    .transform((value) => value === 'true'),
   SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).optional().default(7000),
 });
 
-export const env = envSchema.parse(process.env);
+export const env = envSchema
+  .superRefine((value, context) => {
+    const url = value.PAYMENT_CONNECTOR_URL;
+    if (!url) return;
+    const issue = (path: string, message: string) =>
+      context.addIssue({ code: 'custom', path: [path], message });
+    if (!value.PAYMENT_CONNECTOR_SECRET) {
+      issue('PAYMENT_CONNECTOR_SECRET', 'is required with PAYMENT_CONNECTOR_URL');
+    }
+    if (!value.PAYMENT_EVENTS_SECRET) {
+      issue('PAYMENT_EVENTS_SECRET', 'is required with PAYMENT_CONNECTOR_URL');
+    }
+    if (
+      value.PAYMENT_CONNECTOR_SECRET &&
+      value.PAYMENT_CONNECTOR_SECRET === value.PAYMENT_EVENTS_SECRET
+    ) {
+      issue(
+        'PAYMENT_EVENTS_SECRET',
+        'must differ from PAYMENT_CONNECTOR_SECRET: one key per direction',
+      );
+    }
+    const { protocol, hostname } = new URL(url);
+    if (
+      protocol !== 'https:' &&
+      !isLoopbackHost(hostname) &&
+      !value.PAYMENT_CONNECTOR_ALLOW_INSECURE
+    ) {
+      issue(
+        'PAYMENT_CONNECTOR_URL',
+        'must be https (or this machine); set PAYMENT_CONNECTOR_ALLOW_INSECURE=true only for a network you trust',
+      );
+    }
+  })
+  .parse(process.env);
 
 if (env.DATABASE_DRIVER === 'postgres' && !/^postgres(ql)?:\/\//.test(env.DATABASE_URL)) {
   throw new Error(

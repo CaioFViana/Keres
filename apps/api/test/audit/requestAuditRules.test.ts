@@ -75,19 +75,19 @@ describe('payments', () => {
 
   it('records a notice of the provider only when it was refused, and never what it said', () => {
     expect(
-      decideAudit(finished({ method: 'POST', path: '/payments/webhook', status: 200 })),
+      decideAudit(finished({ method: 'POST', path: '/payments/events', status: 200 })),
     ).toBeNull();
     const refused = decideAudit(
       finished({
         method: 'POST',
-        path: '/payments/webhook',
+        path: '/payments/events',
         status: 400,
         body: '{"card":"4111111111111111"}',
       }),
     );
     expect(refused?.input).toMatchObject({
       category: 'payment',
-      action: 'payment.webhook_rejected',
+      action: 'payment.events_rejected',
       outcome: 'failure',
     });
     expect(JSON.stringify(refused)).not.toContain('4111');

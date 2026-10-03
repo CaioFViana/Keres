@@ -43,7 +43,7 @@ export const paymentSubscriptions = table(
     currency: text('currency').notNull(),
     /** It will not renew: it ends at `paidUntil`. */
     cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
-    /** The plugin that took the payment (`PaymentPlugin.id`). */
+    /** The plugin that took the payment (`PaymentConnector.id`). */
     providerId: text('provider_id').notNull(),
     /** The provider's own subscription, when it has one: what a renewal's notice is matched by. */
     providerReference: text('provider_reference'),

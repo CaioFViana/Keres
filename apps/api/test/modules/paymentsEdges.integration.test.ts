@@ -9,17 +9,13 @@ import {
   tiers,
   users,
 } from '../../src/db/schema';
-import { setPaymentPlugin } from '../../src/services/payments/PaymentPluginRegistry';
+import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
 import { subscriptionService } from '../../src/services/payments/SubscriptionService';
 import { tierEnforcementService } from '../../src/services/TierEnforcementService';
 import { getApp, newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
-import {
-  createFakePaymentPlugin,
-  FAKE_SIGNATURE_HEADER,
-  FAKE_VALID_SIGNATURE,
-  webhookBody,
-} from '../helpers/fakePaymentPlugin';
+import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
+import { postEvents } from '../helpers/paymentEvents';
 
 /**
  * The corners of the payment services the main suite (payments.integration.test.ts) walks past: notices that
@@ -32,21 +28,12 @@ let admin: TestUser;
 let ana: TestUser;
 let bia: TestUser;
 let cris: TestUser;
-let fake: ReturnType<typeof createFakePaymentPlugin>;
+let fake: ReturnType<typeof createFakePaymentConnector>;
 let proId: string;
 
-async function webhook(events: Record<string, unknown>[]) {
-  const app = await getApp();
-  const response = await app.handle(
-    new Request('http://localhost/api/payments/webhook', {
-      method: 'POST',
-      headers: { 'content-type': 'text/plain', [FAKE_SIGNATURE_HEADER]: FAKE_VALID_SIGNATURE },
-      body: webhookBody(events),
-    }),
-  );
-  const text = await response.text();
-  return { status: response.status, data: text ? JSON.parse(text) : null };
-}
+/** The connector's events, delivered as it would deliver them. A signature given stands for one that is not its own. */
+const webhook = (events: Record<string, unknown>[], signature?: string) =>
+  postEvents(events, { forged: signature !== undefined });
 
 const paid = (over: Record<string, unknown>) => ({
   type: 'payment.succeeded',
@@ -88,8 +75,12 @@ const names = (items: { user: { username: string } | null }[]) =>
 
 beforeEach(async () => {
   await truncateAll();
-  fake = createFakePaymentPlugin({ withCancel: true, withDueHook: true, withStatusPolling: true });
-  setPaymentPlugin(fake.plugin);
+  fake = createFakePaymentConnector({
+    withCancel: true,
+    withDueHook: true,
+    withStatusPolling: true,
+  });
+  setPaymentConnector(fake.connector);
   admin = await registerUser('root');
   await promoteToAdmin(admin.userId);
   ana = await registerUser('ana');
@@ -107,7 +98,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-  setPaymentPlugin(null);
+  setPaymentConnector(null);
   vi.restoreAllMocks();
 });
 
@@ -131,23 +122,23 @@ describe('notices about something that is not there to change', () => {
     });
   });
 
-  it('does nothing for a cancellation of a subscription that was never paid', async () => {
-    const mine = await openCheckout(ana);
+  it('does nothing for a cancellation of a subscription it does not have', async () => {
+    // The person has an attempt open, but there is no subscription of the provider's to cancel yet.
+    await openCheckout(ana);
 
-    // The attempt gives the person, but there is no subscription to cancel yet.
     const { data } = await webhook([
-      { type: 'subscription.canceled', eventId: 'evt_c', checkoutId: mine.id },
+      { type: 'subscription.canceled', eventId: 'evt_c', subscriptionReference: 'sub_never_paid' },
     ]);
 
     expect(data).toEqual({ received: 1, applied: 0 });
     expect(await db.select().from(paymentSubscriptions)).toHaveLength(0);
   });
 
-  it('does nothing for an expiry of an attempt it does not know, found only by the subscription', async () => {
+  it('does nothing for an expiry of an attempt it does not know', async () => {
     await subscribe(ana);
 
     const { data } = await webhook([
-      { type: 'checkout.expired', eventId: 'evt_e', subscriptionReference: 'sub_ana' },
+      { type: 'checkout.expired', eventId: 'evt_e', checkoutId: 'an-attempt-of-another-server' },
     ]);
 
     expect(data).toEqual({ received: 1, applied: 0 });
@@ -232,7 +223,7 @@ describe('notices about something that is not there to change', () => {
 describe('cancelling when it cannot go as usual', () => {
   it('has nothing to cancel with no plugin', async () => {
     await subscribe(ana);
-    setPaymentPlugin(null);
+    setPaymentConnector(null);
 
     expect(
       (await request('POST', '/payments/subscription/cancel', { token: ana.token })).status,
@@ -249,8 +240,8 @@ describe('cancelling when it cannot go as usual', () => {
   });
 
   it('only flags it, without calling the provider, when the plugin cannot cancel', async () => {
-    const limited = createFakePaymentPlugin();
-    setPaymentPlugin(limited.plugin);
+    const limited = createFakePaymentConnector();
+    setPaymentConnector(limited.connector);
     await subscribe(ana);
 
     const { status, data } = await request('POST', '/payments/subscription/cancel', {
@@ -494,7 +485,7 @@ describe('the demo provider, when it was not asked for', () => {
       expect([route, response.status]).toEqual([route, 302]);
       expect(response.headers.get('location')).toBe('/');
     }
-    fake.plugin.createCheckout = async () => ({
+    fake.connector.createCheckout = async () => ({
       providerReference: 'x',
       action: { kind: 'redirect', url: 'http://pay.example.test/x' },
     });
@@ -511,14 +502,14 @@ describe('whether a subscription renews by itself', () => {
     (await request('GET', '/payments', { token: user.token })).data.subscription;
 
   it('follows the method of the last payment: a plugin says which methods are charged again by the provider', async () => {
-    const plugin = createFakePaymentPlugin({
+    const plugin = createFakePaymentConnector({
       withCancel: true,
       methods: [
         { id: 'card', label: 'Card' },
         { id: 'pix', label: 'PIX', recurring: false },
       ],
     });
-    setPaymentPlugin(plugin.plugin);
+    setPaymentConnector(plugin.connector);
     const withCard = await openCheckout(ana);
     await webhook([paid({ checkoutId: withCard.id, subscriptionReference: 'sub_ana' })]);
     const withPix = await request('POST', '/payments/checkout', {
@@ -551,7 +542,7 @@ describe('whether a subscription renews by itself', () => {
 
   it('is still answered when the plugin cannot list its methods', async () => {
     await subscribe(ana);
-    fake.plugin.listMethods = (() => Promise.reject(new Error('boom'))) as never;
+    fake.connector.listMethods = (() => Promise.reject(new Error('boom'))) as never;
 
     expect((await infoOf(ana)).autoRenews).toBe(true);
   });
@@ -561,7 +552,7 @@ describe('whether a subscription renews by itself', () => {
     const { data } = await request('POST', '/payments/subscription/cancel', { token: ana.token });
     expect(data.autoRenews).toBe(true);
 
-    setPaymentPlugin(null);
+    setPaymentConnector(null);
     const row = await subscriptionOf(ana);
     expect(await subscriptionService.toWire(row, null)).toMatchObject({ autoRenews: true });
   });
@@ -569,7 +560,7 @@ describe('whether a subscription renews by itself', () => {
 
 describe('what the person sees of payments', () => {
   it('still answers when the plugin cannot list its ways to pay', async () => {
-    fake.plugin.listMethods = (() => Promise.reject(new Error('boom'))) as never;
+    fake.connector.listMethods = (() => Promise.reject(new Error('boom'))) as never;
     const { status, data } = await request('GET', '/payments', { token: ana.token });
 
     expect(status).toBe(200);
@@ -596,8 +587,8 @@ describe('what the person sees of payments', () => {
 
 describe('when the paid period runs out, and the plugin does less', () => {
   it('marks it due without a word to a plugin that has no due hook', async () => {
-    const quiet = createFakePaymentPlugin({ withCancel: true });
-    setPaymentPlugin(quiet.plugin);
+    const quiet = createFakePaymentConnector({ withCancel: true });
+    setPaymentConnector(quiet.connector);
     await subscribe(ana);
 
     expect(await subscriptionService.markDue(new Date(Date.now() + 31 * DAY))).toEqual({

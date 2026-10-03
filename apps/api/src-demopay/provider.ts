@@ -1,4 +1,4 @@
-import type { BillingInterval } from '@keres/shared/payments/PaymentPlugin';
+import type { BillingInterval } from '@keres/shared/payments/PaymentConnector';
 import { ulid } from 'ulid';
 
 /**

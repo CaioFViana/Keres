@@ -1,5 +1,5 @@
-import type { PaymentAction, PaymentMethodOption } from '../payments/PaymentPlugin';
-import type { BillingInterval } from '../payments/PaymentPlugin';
+import type { PaymentAction, PaymentMethodOption } from '../payments/PaymentConnector';
+import type { BillingInterval } from '../payments/PaymentConnector';
 import type { CheckoutStatus, PaymentLedgerKind, SubscriptionStatus } from '../metadata/Payments';
 
 /**

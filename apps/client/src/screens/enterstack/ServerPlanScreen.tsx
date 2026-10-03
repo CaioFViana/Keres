@@ -6,7 +6,7 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
-import type { BillingInterval } from '@keres/shared/payments/PaymentPlugin';
+import type { BillingInterval } from '@keres/shared/payments/PaymentConnector';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';

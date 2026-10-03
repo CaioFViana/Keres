@@ -3,8 +3,8 @@ import { CHECKOUT_DEFAULT_LIFETIME_HOURS } from '@keres/shared/metadata/Payments
 import type {
   CheckoutResult,
   PaymentAction,
-  PaymentPlugin,
-} from '@keres/shared/payments/PaymentPlugin';
+  PaymentConnector,
+} from '@keres/shared/payments/PaymentConnector';
 import { and, count, eq, gte } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { env } from '../../config/env';
@@ -13,7 +13,7 @@ import { paymentCheckouts, tiers, users } from '../../db/schema';
 import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { registrationSettingsService } from '../RegistrationSettingsService';
-import { getPaymentPlugin } from './PaymentPluginRegistry';
+import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { subscriptionService } from './SubscriptionService';
 
 type CheckoutRow = typeof paymentCheckouts.$inferSelect;
@@ -33,7 +33,7 @@ const lastPolled = new Map<string, number>();
 /**
  * What the plugin said to do, checked: a redirect is `https` (a plugin must not be able to send the person to
  * `javascript:` or to a local file), and every text is bounded. Anything else is the plugin's mistake. Plain `http`
- * is let through only for the demo provider (`PAYMENT_DEMO`), whose page is on the developer's own machine.
+ * is let through only when the operator says so (`PAYMENT_ALLOW_INSECURE_REDIRECTS`): for a connector on the developer's own machine.
  */
 export function sanitizeAction(
   action: PaymentAction,
@@ -90,8 +90,8 @@ function toWire(row: CheckoutRow): Checkout {
   };
 }
 
-function requirePlugin(): PaymentPlugin {
-  const plugin = getPaymentPlugin();
+function requirePlugin(): PaymentConnector {
+  const plugin = getPaymentConnector();
   if (!plugin) throw new AppError(404, 'Payments are not enabled on this server.');
   return plugin;
 }
@@ -170,7 +170,7 @@ export class CheckoutService {
         methodId: input.methodId,
         language,
       });
-      action = sanitizeAction(result.action, { allowHttp: env.PAYMENT_DEMO });
+      action = sanitizeAction(result.action, { allowHttp: env.PAYMENT_ALLOW_INSECURE_REDIRECTS });
     } catch (error) {
       logger.error('Payment plugin could not start a checkout', error);
       await db
@@ -216,7 +216,7 @@ export class CheckoutService {
       row ??= (await db.query.paymentCheckouts.findFirst({ where: eq(paymentCheckouts.id, id) }))!;
     }
 
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     if (
       row.status === 'pending' &&
       row.providerReference &&

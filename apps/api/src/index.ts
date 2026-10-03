@@ -25,7 +25,6 @@ import { hostedClientDelivery, hostedClientDeliveryInput } from './services/host
 import { sendStaticDelivery } from './services/staticDelivery';
 import { env } from './config/env';
 import { createApiRoutes, isApiOrLegacyApiPath } from './api';
-import { demoPayRoutes } from './modules/paymentsDemo/demoPay.route';
 import { requestAudit } from './plugins/requestAudit';
 import { showcaseSettingsService } from './services/ShowcaseSettingsService';
 import { AppError } from './utils/errors';
@@ -416,9 +415,6 @@ export async function createApp() {
         },
       )
       .use(createApiRoutes())
-      // The demo payment provider's page, only on a server started with PAYMENT_DEMO=true. Not mounted
-      // otherwise, so /buy is then a path like any other that nobody answers.
-      .use((env.PAYMENT_DEMO ? demoPayRoutes : new Elysia()) as typeof demoPayRoutes)
       .onAfterHandle(({ request, set }) => {
         const pathname = new URL(request.url).pathname;
         if (isHostedClientPath(pathname)) {

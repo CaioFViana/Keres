@@ -4,8 +4,8 @@ Keres does not charge anybody itself. A server that wants to sell its plans inst
 module that speaks to one payment provider. Everything money-related happens between that provider and the person
 paying; Keres asks the plugin for a way to pay and listens to what the provider reports.
 
-The contract is `packages/shared/payments/PaymentPlugin.ts` (types only; import it as
-`@keres/shared/payments/PaymentPlugin`). Keres ships **no** provider. Plugins are not part of Keres and are not
+The contract is `packages/shared/payments/PaymentConnector.ts` (types only; import it as
+`@keres/shared/payments/PaymentConnector`). Keres ships **no** provider. Plugins are not part of Keres and are not
 covered by its licence - each fork or operator brings its own.
 
 A server with no plugin works exactly as before: plans are handed out by assigning them to users in the admin
@@ -46,12 +46,12 @@ notice is idempotent (the provider's `eventId` is unique), so a retry is always 
 ```ts
 import {
   PaymentWebhookRejectedError,
-  type PaymentPlugin,
-  type PaymentPluginFactory,
-} from '@keres/shared/payments/PaymentPlugin';
+  type PaymentConnector,
+  type PaymentConnectorFactory,
+} from '@keres/shared/payments/PaymentConnector';
 
-const create: PaymentPluginFactory = ({ env }) => {
-  const plugin: PaymentPlugin = {
+const create: PaymentConnectorFactory = ({ env }) => {
+  const plugin: PaymentConnector = {
     id: 'acmepay', // short and stable: kept with every subscription
     displayName: 'Acme Pay',
     listMethods: (currency) => (currency === 'BRL' ? [{ id: 'pix', label: 'PIX' }] : []),
@@ -77,7 +77,7 @@ const create: PaymentPluginFactory = ({ env }) => {
 export default create;
 ```
 
-`test/helpers/fakePaymentPlugin.ts` in `apps/api` is a complete reference implementation (every optional part
+`test/helpers/fakePaymentConnector.ts` in `apps/api` is a complete reference implementation (every optional part
 included) and what the test suite runs against.
 
 ## Seeing it work: the demo provider

@@ -905,7 +905,7 @@ button.button-danger:hover {
   flex-wrap: wrap;
 }
 
-/* Payments: tabs, the notice shown with no payment plugin, and the badges of a subscription and the ledger. */
+/* Payments: tabs, the notice shown with no payment connector, and the badges of a subscription and the ledger. */
 .tabs {
   display: flex;
   gap: 0.5rem;

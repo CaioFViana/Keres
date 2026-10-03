@@ -1,4 +1,4 @@
-import type { BillingInterval } from '../payments/PaymentPlugin';
+import type { BillingInterval } from '../payments/PaymentConnector';
 
 /**
  * The end of a paid period that starts at `from`: one month, or one year, later - on the same day of the

@@ -147,7 +147,7 @@
       "payment_failed": "Pagamento falhou",
       "payment_subscription_canceled": "Assinatura cancelada ou encerrada",
       "payment_subscription_due": "Período pago venceu",
-      "payment_webhook_rejected": "Aviso do provedor recusado",
+      "payment_events_rejected": "Aviso do conector recusado",
       "payment_gift_granted": "Plano dado por um administrador"
     }
   },
@@ -301,7 +301,7 @@
   "payments": {
     "title": "Pagamentos",
     "intro": "Quem pagou por um plano, quem está atrasado e o que entrou. O pagamento é feito entre a pessoa e o provedor: nada aqui altera um pagamento, e nenhum meio de pagamento é guardado em lugar algum.",
-    "noPlugin": "Este servidor não tem plugin de pagamento: não vende planos e nada sobre pagamento aparece para os usuários. Os planos são dados atribuindo-os aos usuários. Para vender, instale um plugin e defina PAYMENT_PLUGIN.",
+    "noConnector": "Este servidor não tem conector de pagamento: não vende planos e nada sobre pagamento aparece para os usuários. Os planos são dados atribuindo-os aos usuários (ou dando por um tempo). Para vender, execute um conector de pagamento e defina PAYMENT_CONNECTOR_URL.",
     "provider": "Os pagamentos são recebidos por {{name}}.",
     "active": "Em dia",
     "due": "Vencidas",
@@ -502,7 +502,7 @@
       "give": "Dar",
       "cancelAndGive": "Cancelar a renovação dela e dar",
       "needsCancel": "Esta pessoa tem uma assinatura paga do {{current}} que ainda está sendo cobrada. Para dar outro plano, a renovação precisa ser cancelada antes.",
-      "cannotCancelAtProvider": "O plugin de pagamento não consegue cancelar no provedor: você terá de confirmar que o provedor parou de cobrar.",
+      "cannotCancelAtProvider": "O conector de pagamento não consegue cancelar no provedor: você terá de confirmar que o provedor parou de cobrar.",
       "confirm": "Dar {{months}} mês(es) do {{plan}} para {{username}}?",
       "confirmCancel": "Confirmo que {{username}} concordou em cancelar a renovação da assinatura do {{current}} e em receber {{months}} mês(es) do {{plan}} de presente. O que sobrar do {{current}} é convertido em {{plan}} pelo valor.",
       "confirmCancelManual": "Confirmo também que o provedor parou de cobrar essa pessoa.",

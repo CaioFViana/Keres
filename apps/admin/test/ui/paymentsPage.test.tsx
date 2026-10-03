@@ -120,16 +120,16 @@ describe('payments page: the summary', () => {
     expect(view.container.querySelector('.stat-card.is-bad')).toBeNull();
   });
 
-  it('says there is no payment plugin, and that plans are then handed out by hand', async () => {
+  it('says there is no payment connector, and that plans are then handed out by hand', async () => {
     mocks.summary.mockResolvedValue(summary({ enabled: false, provider: null }));
     const view = await renderPage();
     await flush();
 
     expect(view.container.querySelector('[role="status"]')?.textContent).toContain(
-      'no payment plugin',
+      'no payment connector',
     );
     expect(view.container.querySelector('[role="status"]')?.textContent).toContain(
-      'PAYMENT_PLUGIN',
+      'PAYMENT_CONNECTOR_URL',
     );
     expect(view.container.textContent).not.toContain('Payments are taken by');
   });

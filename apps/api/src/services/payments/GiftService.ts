@@ -15,7 +15,7 @@ import { logger } from '../../utils/logger';
 import { auditService } from '../AuditService';
 import { registrationSettingsService } from '../RegistrationSettingsService';
 import { noteLedger } from './paymentLedger';
-import { getPaymentPlugin } from './PaymentPluginRegistry';
+import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { dailyValueOf } from './periodConversion';
 import { subscriptionService } from './SubscriptionService';
 
@@ -46,7 +46,7 @@ export class GiftService {
     if (!tier || tier.isDeleted) throw new AppError(404, 'Plan not found.');
 
     const before = await subscriptionService.findByUser(userId);
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     // A provider that may still charge the person, for a plan other than the one being given.
     const chargedElsewhere =
       !!before &&

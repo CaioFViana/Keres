@@ -16,7 +16,7 @@ import { paymentEvents, paymentSubscriptions, tiers, users } from '../../db/sche
 import { insensitiveLike } from '../../db/sqlOperators';
 import { effectiveDefaultTierId } from '../defaultTier';
 import { registrationSettingsService } from '../RegistrationSettingsService';
-import { getPaymentPlugin } from './PaymentPluginRegistry';
+import { getPaymentConnector } from './PaymentConnectorRegistry';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -68,7 +68,7 @@ async function usersById(ids: (string | null)[]): Promise<Map<string, UserRow>> 
  */
 export class AdminPaymentService {
   async summary(now = new Date()): Promise<AdminPaymentSummary> {
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     const { currency } = await registrationSettingsService.getOrCreate();
     const defaultTierId = await effectiveDefaultTierId();
 
@@ -186,7 +186,7 @@ export class AdminPaymentService {
       .leftJoin(tiers, eq(tiers.id, paymentSubscriptions.tierId))
       .where(eq(paymentSubscriptions.userId, userId))
       .limit(1);
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     return {
       subscription: row ? toAdminSubscription(row) : null,
       canCancelAtProvider: Boolean(

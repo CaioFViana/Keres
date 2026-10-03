@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { PaymentWebhookRejectedError } from '../../payments/PaymentPlugin';
 import {
   AdminPaymentEventListQuerySchema,
   AdminSubscriptionListQuerySchema,
@@ -55,15 +54,5 @@ describe('the admin list queries', () => {
     });
     expect(AdminSubscriptionListQuerySchema.safeParse({ pageSize: '500' }).success).toBe(false);
     expect(AdminSubscriptionListQuerySchema.safeParse({ status: 'paused' }).success).toBe(false);
-  });
-});
-
-describe('PaymentWebhookRejectedError', () => {
-  it('is an Error a plugin can throw, with a name to recognise it by', () => {
-    const error = new PaymentWebhookRejectedError('bad signature');
-    expect(error).toBeInstanceOf(Error);
-    expect(error.name).toBe('PaymentWebhookRejectedError');
-    expect(error.message).toBe('bad signature');
-    expect(new PaymentWebhookRejectedError().message).toBe('Webhook rejected');
   });
 });

@@ -1,5 +1,5 @@
 import type { PublicTier, PublicTiersResponse, Subscription } from '@keres/shared';
-import type { BillingInterval } from '@keres/shared/payments/PaymentPlugin';
+import type { BillingInterval } from '@keres/shared/payments/PaymentConnector';
 import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
 import { daysUntil } from '@keres/shared/utils/billingPeriod';
 

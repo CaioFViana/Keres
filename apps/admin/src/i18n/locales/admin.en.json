@@ -147,7 +147,7 @@
       "payment_failed": "Payment failed",
       "payment_subscription_canceled": "Subscription cancelled or ended",
       "payment_subscription_due": "Paid period ran out",
-      "payment_webhook_rejected": "Provider notice refused",
+      "payment_events_rejected": "Connector notice refused",
       "payment_gift_granted": "Plan given by an administrator"
     }
   },
@@ -301,7 +301,7 @@
   "payments": {
     "title": "Payments",
     "intro": "Who has paid for a plan, who is late and what came in. Payments are made between the person and the payment provider: nothing here can change one, and no way to pay is kept anywhere.",
-    "noPlugin": "This server has no payment plugin, so it does not sell plans and nothing about payments is shown to users. Plans are handed out by assigning them to users. To sell plans, install a plugin and set PAYMENT_PLUGIN.",
+    "noConnector": "This server has no payment connector, so it does not sell plans and nothing about payments is shown to users. Plans are handed out by assigning them to users (or giving them for a while). To sell plans, run a payment connector and set PAYMENT_CONNECTOR_URL.",
     "provider": "Payments are taken by {{name}}.",
     "active": "Paid up",
     "due": "Due",
@@ -502,7 +502,7 @@
       "give": "Give",
       "cancelAndGive": "Cancel their renewal and give",
       "needsCancel": "This person has a paid {{current}} subscription that is still being charged. To give another plan, its renewal has to be cancelled first.",
-      "cannotCancelAtProvider": "The payment plugin cannot cancel at the provider: you will have to confirm that the provider stopped charging.",
+      "cannotCancelAtProvider": "The payment connector cannot cancel at the provider: you will have to confirm that the provider stopped charging.",
       "confirm": "Give {{months}} month(s) of {{plan}} to {{username}}?",
       "confirmCancel": "I confirm that {{username}} agreed to cancel the renewal of their {{current}} subscription and to receive {{months}} month(s) of {{plan}} as a gift. What is left of {{current}} is converted into {{plan}} by value.",
       "confirmCancelManual": "I also confirm that the provider has stopped charging them.",

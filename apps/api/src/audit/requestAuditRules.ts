@@ -162,9 +162,9 @@ export const AUDIT_RULES: readonly AuditRule[] = [
   },
   {
     method: 'POST',
-    pattern: /^\/payments\/webhook$/,
+    pattern: /^\/payments\/events$/,
     category: 'payment',
-    action: 'payment.webhook_rejected',
+    action: 'payment.events_rejected',
     onlyFailures: true,
   },
 

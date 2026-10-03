@@ -148,7 +148,7 @@ export function PaymentsPage() {
       {summaryError && <p className="error-text">{summaryError}</p>}
       {summary && !summary.enabled && (
         <p className="notice" role="status">
-          {t('payments.noPlugin')}
+          {t('payments.noConnector')}
         </p>
       )}
       {summary?.noDefaultTier && (

@@ -4,8 +4,8 @@ import type {
   BillingInterval,
   PaymentEvent,
   PaymentMethodOption,
-  PaymentPlugin,
-} from '@keres/shared/payments/PaymentPlugin';
+  PaymentConnector,
+} from '@keres/shared/payments/PaymentConnector';
 import { GIFT_PROVIDER_ID } from '@keres/shared/metadata/Payments';
 import { and, desc, eq, inArray, lte } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -23,7 +23,7 @@ import { logger } from '../../utils/logger';
 import { auditService } from '../AuditService';
 import { registrationSettingsService } from '../RegistrationSettingsService';
 import { clipDetail as clip, noteLedger, tierNameOf } from './paymentLedger';
-import { getPaymentPlugin } from './PaymentPluginRegistry';
+import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { periodStartFor } from './periodConversion';
 
 type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;
@@ -63,7 +63,7 @@ export class SubscriptionService {
    */
   private async autoRenews(
     row: SubscriptionRow,
-    plugin: PaymentPlugin | null,
+    plugin: PaymentConnector | null,
     knownMethods?: PaymentMethodOption[],
   ): Promise<boolean> {
     // A plan given by hand is not charged by anybody: the person has to pay for what comes after it.
@@ -89,7 +89,7 @@ export class SubscriptionService {
 
   async toWire(
     row: SubscriptionRow,
-    plugin: PaymentPlugin | null,
+    plugin: PaymentConnector | null,
     knownMethods?: PaymentMethodOption[],
   ): Promise<Subscription> {
     return {
@@ -112,7 +112,7 @@ export class SubscriptionService {
 
   /** What the server says about payments to a person: whether it sells plans, how, and where they stand. */
   async getInfo(userId: string): Promise<PaymentsInfo> {
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     const { currency } = await registrationSettingsService.getOrCreate();
     if (!plugin) {
       return { enabled: false, provider: null, currency, methods: [], subscription: null };
@@ -135,7 +135,7 @@ export class SubscriptionService {
 
   /** Stops the subscription renewing: it runs out its last paid period and ends. */
   async cancel(userId: string): Promise<Subscription> {
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     const row = await this.findByUser(userId);
     if (!plugin || !row || row.status !== 'active') {
       throw new AppError(404, 'There is no active subscription to cancel.');
@@ -209,7 +209,7 @@ export class SubscriptionService {
    * Applies what the provider reported. Each notice is applied once whatever the number of times it arrives:
    * the ledger line and the change it causes are written together, and the ledger refuses a notice id it has.
    */
-  async applyEvents(plugin: PaymentPlugin, events: PaymentEvent[], now = new Date()) {
+  async applyEvents(plugin: PaymentConnector, events: PaymentEvent[], now = new Date()) {
     const outcomes: EventOutcome[] = [];
     for (const event of events) {
       outcomes.push(await this.applyEvent(plugin, event, now));
@@ -218,7 +218,7 @@ export class SubscriptionService {
   }
 
   async applyEvent(
-    plugin: PaymentPlugin,
+    plugin: PaymentConnector,
     event: PaymentEvent,
     now = new Date(),
   ): Promise<EventOutcome> {
@@ -411,7 +411,7 @@ export class SubscriptionService {
    * ends too. Safe to run as often as wanted - it only acts on what changed.
    */
   async markDue(now = new Date()): Promise<{ due: number; ended: number }> {
-    const plugin = getPaymentPlugin();
+    const plugin = getPaymentConnector();
     let due = 0;
     let ended = 0;
 

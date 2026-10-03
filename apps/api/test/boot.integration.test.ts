@@ -256,12 +256,12 @@ describe('a server that sells plans, and its default plan', () => {
     const { db } = await import('../src/db');
     const { registrationSettings, tiers } = await import('../src/db/schema');
     const { warnIfPaymentsHaveNoDefaultPlan } = await import('../src/boot');
-    const { setPaymentPlugin, getPaymentPlugin } = await import(
-      '../src/services/payments/PaymentPluginRegistry'
+    const { setPaymentConnector, getPaymentConnector } = await import(
+      '../src/services/payments/PaymentConnectorRegistry'
     );
     const { logger } = await import('../src/utils/logger');
     const warn = spyOn(logger, 'warn').mockImplementation(() => undefined);
-    const before = getPaymentPlugin();
+    const before = getPaymentConnector();
     // The settings row is made on first use; the test changes it directly, so it has to be there.
     const { registrationSettingsService } = await import(
       '../src/services/RegistrationSettingsService'
@@ -269,17 +269,16 @@ describe('a server that sells plans, and its default plan', () => {
     await registrationSettingsService.getOrCreate();
 
     // No payments: a default plan is nobody's business here.
-    setPaymentPlugin(null);
+    setPaymentConnector(null);
     await db.update(registrationSettings).set({ defaultTierId: null });
     expect(await warnIfPaymentsHaveNoDefaultPlan()).toBe(false);
 
     // Payments on, nothing to fall back to.
-    setPaymentPlugin({
+    setPaymentConnector({
       id: 'fakepay',
       displayName: 'Fake',
       listMethods: () => [],
       createCheckout: async () => ({ providerReference: 'x', action: { kind: 'none' } }),
-      handleWebhook: async () => [],
     });
     expect(await warnIfPaymentsHaveNoDefaultPlan()).toBe(true);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('no default plan'));
@@ -296,7 +295,7 @@ describe('a server that sells plans, and its default plan', () => {
     expect(warn).not.toHaveBeenCalled();
 
     await db.update(registrationSettings).set({ defaultTierId: null });
-    setPaymentPlugin(before);
+    setPaymentConnector(before);
   });
 });
 

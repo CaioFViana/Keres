@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 /**
  * The server's own life, over the real services and database: what it prepares before it listens, the
@@ -40,9 +40,19 @@ const handlers = new Map<string, (...args: unknown[]) => void>();
 const exitCodes: number[] = [];
 
 /** The jobs are the timers `boot.ts` asks for (the rest of the app has long timers of its own): held, and run by hand. */
-const JOB_DELAYS = new Set([30_000, 45_000, 50_000, 60_000, 15 * 60_000, 60 * 60_000, 24 * 60 * 60_000]);
+const JOB_DELAYS = new Set([
+  30_000,
+  45_000,
+  50_000,
+  60_000,
+  15 * 60_000,
+  60 * 60_000,
+  24 * 60 * 60_000,
+]);
 const isJobDelay = (delay: unknown) =>
-  typeof delay === 'number' && JOB_DELAYS.has(delay) && new Error().stack?.includes('boot.ts') === true;
+  typeof delay === 'number' &&
+  JOB_DELAYS.has(delay) &&
+  new Error().stack?.includes('boot.ts') === true;
 
 beforeAll(() => {
   vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
@@ -90,7 +100,8 @@ afterEach(() => {
 });
 
 const flush = async () => {
-  for (let turn = 0; turn < 20; turn += 1) await new Promise((resolve) => realSetTimeout(resolve, 5));
+  for (let turn = 0; turn < 20; turn += 1)
+    await new Promise((resolve) => realSetTimeout(resolve, 5));
 };
 
 describe('starting the server', () => {

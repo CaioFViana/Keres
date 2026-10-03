@@ -172,7 +172,10 @@ describe('notices about something that is not there to change', () => {
       { type: 'subscription.canceled', eventId: 'evt_d', subscriptionReference: 'sub_ana' },
     ]);
 
-    expect(await subscriptionOf(ana)).toMatchObject({ status: 'canceled', cancelAtPeriodEnd: true });
+    expect(await subscriptionOf(ana)).toMatchObject({
+      status: 'canceled',
+      cancelAtPeriodEnd: true,
+    });
   });
 
   it('counts a repeated expiry or failure of an attempt once, and leaves a finished attempt alone', async () => {
@@ -344,10 +347,7 @@ describe('what the administrators see, ordered and searched', () => {
     await seed();
 
     expect(names((await list({ sort: 'user', order: 'asc' })).data.items)).toEqual(['ana', 'bia']);
-    expect(names((await list({ sort: 'user', order: 'desc' })).data.items)).toEqual([
-      'bia',
-      'ana',
-    ]);
+    expect(names((await list({ sort: 'user', order: 'desc' })).data.items)).toEqual(['bia', 'ana']);
     const byDate = (await list({ sort: 'createdAt', order: 'asc' })).data.items;
     expect(names(byDate)).toEqual(['ana', 'bia']);
     expect(names((await list({ sort: 'createdAt', order: 'desc' })).data.items)).toEqual([

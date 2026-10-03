@@ -78,11 +78,7 @@ async function get(app: App, pathname: string, headers: Record<string, string> =
   };
 }
 
-const setSettings = (values: {
-  landing?: boolean;
-  hostedClient?: boolean;
-  showcase?: boolean;
-}) =>
+const setSettings = (values: { landing?: boolean; hostedClient?: boolean; showcase?: boolean }) =>
   db
     .insert(showcaseSettings)
     .values({

@@ -9,6 +9,7 @@ import {
   type ManuscriptSection,
 } from '../manuscriptSections';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
+import type { BlockPresenter } from '../manuscriptStyle';
 
 /** The minimum the pipeline needs to know about a choice. */
 export interface ManuscriptChoice {
@@ -118,6 +119,12 @@ type SectionsInput = {
    * choice into a scene that is not in the export ends there, saying so with `endLabel`.
    */
   gamebook?: { showNames: boolean; endLabel: string };
+  /**
+   * Presents each block at creation (the pipeline's fused path): the parsed
+   * inlines never survive beside a second full copy of the spans. Absent, blocks
+   * come out raw exactly as before.
+   */
+  present?: BlockPresenter;
 };
 
 function sectionsToBlocks({
@@ -129,6 +136,7 @@ function sectionsToBlocks({
   resetSceneNumbersPerChapter,
   sceneSeparator,
   gamebook,
+  present,
 }: SectionsInput): CompiledBlock[] {
   // First occurrence wins: a looping route bookmarks the scene once, and every choice
   // points at that bookmark.
@@ -146,6 +154,9 @@ function sectionsToBlocks({
   }
   const emitted = new Set<string>();
   const blocks: CompiledBlock[] = [];
+  const emit = (block: CompiledBlock): void => {
+    blocks.push(present ? present(block) : block);
+  };
   // Per-group scene counters for restarted numbering: each container and the
   // appendix count their own scenes from 1. Routes never open a group, so the
   // single implicit group reproduces the global positions exactly.
@@ -154,7 +165,7 @@ function sectionsToBlocks({
   for (const section of sections) {
     if (section.kind === 'container') {
       groupKey = section.containerId;
-      blocks.push({
+      emit({
         kind: 'chapter',
         id: section.containerId,
         number: section.containerType === 'chapter' ? section.index : null,
@@ -165,7 +176,7 @@ function sectionsToBlocks({
     }
     if (section.kind === 'loose-heading') {
       groupKey = APPENDIX_BOOKMARK_ID;
-      blocks.push({
+      emit({
         kind: 'loose-heading',
         label: looseHeadingLabel,
         bookmarkId: APPENDIX_BOOKMARK_ID,
@@ -177,13 +188,13 @@ function sectionsToBlocks({
     // A separator marks where one scene ends and the next begins inside a chapter - never
     // before a chapter's first scene, which its heading already opens.
     if (sceneSeparator !== null && groupNumber > 1) {
-      blocks.push({ kind: 'scene-break', text: sceneSeparator });
+      emit({ kind: 'scene-break', text: sceneSeparator });
     }
     const bookmarkId = bookmarkFor.get(section.scene.id) ?? null;
     // Without scene names there is no heading to hang the bookmark on, so
     // choices degrade to bare text: any reference would name a scene.
     if (includeSceneNames || gamebook) {
-      blocks.push({
+      emit({
         kind: 'scene-heading',
         id: section.scene.id,
         number: resetSceneNumbersPerChapter ? groupNumber : section.position,
@@ -194,17 +205,17 @@ function sectionsToBlocks({
     if (bookmarkId) emitted.add(bookmarkId);
     if (section.scene.body) {
       for (const parsed of parseManuscriptMarkdown(section.scene.body)) {
-        if (parsed.kind === 'bullet') blocks.push({ kind: 'bullet', spans: toSpans(parsed) });
+        if (parsed.kind === 'bullet') emit({ kind: 'bullet', spans: toSpans(parsed) });
         else if (parsed.kind === 'ordered')
-          blocks.push({ kind: 'ordered', index: parsed.index, spans: toSpans(parsed) });
-        else blocks.push({ kind: 'paragraph', spans: toSpans(parsed) });
+          emit({ kind: 'ordered', index: parsed.index, spans: toSpans(parsed) });
+        else emit({ kind: 'paragraph', spans: toSpans(parsed) });
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {
       if (gamebook) {
         const targetBookmarkId = bookmarkFor.get(choice.nextSceneId) ?? null;
         const targetPosition = positionOf.get(choice.nextSceneId);
-        blocks.push({
+        emit({
           kind: 'choice',
           id: choice.id,
           text: targetBookmarkId ? choice.text : `${choice.text} — ${gamebook.endLabel}`,
@@ -222,7 +233,7 @@ function sectionsToBlocks({
         });
         continue;
       }
-      blocks.push({
+      emit({
         kind: 'choice',
         id: choice.id,
         text: choice.text,
@@ -285,6 +296,11 @@ export type CompileLinearOptions = {
   arcId?: string | null;
   /** Text drawn between two scenes of a chapter (`#`, `* * *`...). Defaults to none. */
   sceneSeparator?: string | null;
+  /**
+   * Presents each block at creation (the pipeline's fused path). Absent, blocks
+   * come out raw exactly as before.
+   */
+  present?: BlockPresenter;
 };
 
 /**
@@ -312,15 +328,17 @@ export function compileLinearManuscript({
   resetSceneNumbersPerChapter = false,
   arcId = null,
   sceneSeparator = null,
+  present,
 }: CompileLinearOptions): CompiledManuscript {
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
   let sections = linearManuscriptSections(chapters, scenes, { arcId });
   if (!includeLooseScenes) sections = withoutLooseSections(sections, chaptersById);
   if (arcId) sections = renumberArcChapters(sections);
+  const at = (block: CompiledBlock): CompiledBlock => (present ? present(block) : block);
   return {
     title,
     blocks: [
-      { kind: 'title', text: title },
+      at({ kind: 'title', text: title }),
       ...sectionsToBlocks({
         sections,
         choicesBySceneId: groupChoices(choices),
@@ -329,6 +347,7 @@ export function compileLinearManuscript({
         includeSceneNames,
         resetSceneNumbersPerChapter,
         sceneSeparator,
+        present,
       }),
     ],
   };
@@ -353,6 +372,11 @@ export type CompileGamebookOptions = {
   startLabels: { choose: string; begin: string };
   /** Text drawn between two consecutive scenes. Defaults to none. */
   sceneSeparator?: string | null;
+  /**
+   * Presents each block at creation (the pipeline's fused path). Absent, blocks
+   * come out raw exactly as before.
+   */
+  present?: BlockPresenter;
 };
 
 /**
@@ -369,6 +393,7 @@ export function compileGamebookManuscript({
   endLabel,
   startLabels,
   sceneSeparator = null,
+  present,
 }: CompileGamebookOptions): CompiledManuscript {
   const sections = gamebookManuscriptSections(scenes, choices, { order, seed });
   const positionOf = new Map(
@@ -404,11 +429,12 @@ export function compileGamebookManuscript({
           ),
         ]
       : [];
+  const at = (block: CompiledBlock): CompiledBlock => (present ? present(block) : block);
   return {
     title,
     blocks: [
-      { kind: 'title', text: title },
-      ...opening,
+      at({ kind: 'title', text: title }),
+      ...opening.map(at),
       ...sectionsToBlocks({
         sections,
         choicesBySceneId: groupChoices(choices),
@@ -418,6 +444,7 @@ export function compileGamebookManuscript({
         resetSceneNumbersPerChapter: false,
         sceneSeparator,
         gamebook: { showNames: showSceneNames, endLabel },
+        present,
       }),
     ],
   };

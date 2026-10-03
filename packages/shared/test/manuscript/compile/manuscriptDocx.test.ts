@@ -254,6 +254,32 @@ describe('buildManuscriptDocxBytes', () => {
     expect(footerXml).toContain('NUMPAGES');
   });
 
+  it('fuses adjacent same-style spans into one run', async () => {
+    const manuscript: CompiledManuscript = {
+      title: 'Runs',
+      blocks: [
+        {
+          kind: 'paragraph',
+          spans: [
+            { text: 'ab', bold: false, italic: false, underline: false, strikethrough: false },
+            { text: 'cd', bold: false, italic: false, underline: false, strikethrough: false },
+            { text: 'ef', bold: true, italic: false, underline: false, strikethrough: false },
+          ],
+        },
+      ],
+    };
+    const xml = await documentXml(
+      await buildManuscriptDocxBytes(manuscript, {
+        goToPage: 'Go to page',
+        tocHeading: 'Contents',
+      }),
+    );
+
+    // One run for 'abcd', one for bold 'ef': no run multiplies behind the spans.
+    expect(xml).toContain('abcd');
+    expect(xml).not.toContain('ab</w:t>');
+  });
+
   it('renders list items as indented paragraphs with markers', async () => {
     const listed = compileLinearManuscript({
       title: 'My Story',

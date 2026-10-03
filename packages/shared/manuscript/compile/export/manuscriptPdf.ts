@@ -62,13 +62,20 @@ class PdfWriter {
   private chunks: Uint8Array[] = [];
   private offsets: number[] = [];
   private length = 0;
+  // Coalesced ascii: thousands of tiny dictionary writes share one buffer
+  // instead of one Uint8Array each. Flushed before anything position- or
+  // order-sensitive (offsets, binary, snapshot), so byte order never changes.
+  private pending = '';
 
   private push(bytes: Uint8Array): void {
     this.chunks.push(bytes);
     this.length += bytes.length;
   }
 
-  ascii(text: string): void {
+  private flush(): void {
+    if (this.pending === '') return;
+    const text = this.pending;
+    this.pending = '';
     const bytes = new Uint8Array(text.length);
     for (let index = 0; index < text.length; index += 1) {
       bytes[index] = text.charCodeAt(index) & 0xff;
@@ -76,11 +83,17 @@ class PdfWriter {
     this.push(bytes);
   }
 
+  ascii(text: string): void {
+    this.pending += text;
+  }
+
   raw(bytes: Uint8Array): void {
+    this.flush();
     this.push(bytes);
   }
 
   snapshot(): Uint8Array {
+    this.flush();
     const out = new Uint8Array(this.length);
     let at = 0;
     for (const chunk of this.chunks) {
@@ -91,10 +104,12 @@ class PdfWriter {
   }
 
   literal(text: string): void {
+    this.flush();
     this.push(Uint8Array.from([0x28, ...escapeLiteral(text), 0x29]));
   }
 
   object(body: (writer: PdfWriter) => void): number {
+    this.flush();
     const id = this.offsets.length + 1;
     this.offsets.push(this.length);
     this.ascii(`${id} 0 obj\n`);
@@ -104,6 +119,7 @@ class PdfWriter {
   }
 
   finish(rootId: number, infoId: number): Uint8Array {
+    this.flush();
     const xrefAt = this.length;
     this.ascii(`xref\n0 ${this.offsets.length + 1}\n0000000000 65535 f \n`);
     for (const offset of this.offsets) {
@@ -112,6 +128,7 @@ class PdfWriter {
     this.ascii(
       `trailer\n<< /Size ${this.offsets.length + 1} /Root ${rootId} 0 R /Info ${infoId} 0 R >>\nstartxref\n${xrefAt}\n%%EOF`,
     );
+    this.flush();
     const out = new Uint8Array(this.length);
     let at = 0;
     for (const chunk of this.chunks) {
@@ -318,12 +335,19 @@ export function buildManuscriptPdf(
     anchors = laid.anchors;
   }
   const { streams, annots } = laid!;
+  laid = null;
   const pageCount = streams.length;
   // Page content streams ride deflated (`/Filter /FlateDecode`): the same
   // drawing commands at roughly a tenth of the bytes, so a novel-length book
   // stays far from the manuscript size cap. `pako` is pure JS with no
   // platform imports, like every other dependency of this renderer.
-  const compressed = streams.map((page) => deflate(page));
+  // Each raw page is released right after its own compression, so the raw
+  // (~1.7x the text) and deflated copies never sit side by side in full.
+  const compressed: Uint8Array[] = new Array(pageCount);
+  for (let index = 0; index < pageCount; index += 1) {
+    compressed[index] = deflate(streams[index]);
+    streams[index] = new Uint8Array(0);
+  }
 
   const writer = new PdfWriter();
   writer.ascii('%PDF-1.7\n');

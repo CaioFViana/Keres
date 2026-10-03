@@ -1,13 +1,18 @@
 import {
   compileLinearManuscript,
   compileGamebookManuscript,
+  type CompiledBlock,
   type CompiledManuscript,
   type ManuscriptChoice,
 } from './export/manuscriptCompiler';
 import type { ManuscriptLabels, ManuscriptOptions } from './manuscriptContracts';
 import { sceneMatchesArc } from './manuscriptSections';
 import type { ManuscriptChapter, ManuscriptScene } from './manuscriptSections';
-import { presentManuscript, sceneSeparatorText } from './manuscriptStyle';
+import {
+  blockPresenterFor,
+  finishPresentedManuscript,
+  sceneSeparatorText,
+} from './manuscriptStyle';
 
 /*
  * The half of the manuscript pipeline that needs no renderer: the blocks, presented as the options
@@ -39,12 +44,18 @@ export function presentedManuscriptOf(
 ): CompiledManuscript {
   const title =
     (parsed.arcId && input.arcs?.find((arc) => arc.id === parsed.arcId)?.title) || input.storyTitle;
-  let compiled: CompiledManuscript;
+  // Fused path: each block is presented at creation, so the parsed inlines
+  // never survive beside a second full copy of the spans. Identical blocks
+  // either way (each block is independent); only the tail (front matter and
+  // title fill) still runs over the finished array.
+  const language = parsed.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+  const present = blockPresenterFor(parsed.style, language);
+  let blocks: CompiledBlock[];
   if (input.storyType === 'branching') {
     // The whole book, in the order asked. An arc keeps only its own scenes (scenes inherit their
     // chapter's arc), and its edge ends a choice.
     const chaptersById = new Map(input.chapters.map((chapter) => [chapter.id, chapter]));
-    compiled = compileGamebookManuscript({
+    blocks = compileGamebookManuscript({
       title,
       scenes: input.scenes.filter((scene) => sceneMatchesArc(scene, chaptersById, parsed.arcId)),
       choices: input.choices,
@@ -54,9 +65,10 @@ export function presentedManuscriptOf(
       endLabel: labels.endOfExcerpt,
       startLabels: { choose: labels.chooseStart, begin: labels.beginAt },
       sceneSeparator: sceneSeparatorText(parsed.style),
-    });
+      present,
+    }).blocks;
   } else {
-    compiled = compileLinearManuscript({
+    blocks = compileLinearManuscript({
       title,
       chapters: input.chapters,
       scenes: input.scenes,
@@ -67,11 +79,8 @@ export function presentedManuscriptOf(
       includeSceneNames: parsed.includeSceneNames,
       resetSceneNumbersPerChapter: parsed.resetSceneNumbers,
       sceneSeparator: sceneSeparatorText(parsed.style),
-    });
+      present,
+    }).blocks;
   }
-  return presentManuscript(
-    compiled,
-    parsed.style,
-    parsed.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en',
-  );
+  return finishPresentedManuscript(title, blocks, parsed.style);
 }

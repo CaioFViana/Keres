@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { inflate } from 'pako';
 import { describe, expect, it } from 'vitest';
 import {
+  compileGamebookManuscript,
   compileLinearManuscript,
   type CompiledManuscript,
 } from '../../../manuscript/compile/export/manuscriptCompiler';
@@ -13,6 +14,11 @@ import {
   buildManuscriptText,
 } from '../../../manuscript/compile/export/manuscriptText';
 import {
+  DEFAULT_MANUSCRIPT_LABELS,
+  ManuscriptOptionsSchema,
+} from '../../../manuscript/compile/manuscriptContracts';
+import type { ManuscriptStyle } from '../../../manuscript/compile/manuscriptStyle';
+import {
   MANUSCRIPT_PRESET_SETTINGS,
   ManuscriptStyleSchema,
   numberInWords,
@@ -21,6 +27,7 @@ import {
   romanNumeral,
   sceneSeparatorText,
 } from '../../../manuscript/compile/manuscriptStyle';
+import { presentedManuscriptOf } from '../../../manuscript/compile/presentedManuscript';
 
 const labels = { goToPage: 'Go to page', goToScene: 'See', tocHeading: 'Contents' };
 
@@ -136,6 +143,103 @@ describe('presentManuscript', () => {
       { kind: 'subtitle', text: 'by Ana' },
       { kind: 'subtitle', text: '© 2026 Ana' },
     ]);
+  });
+
+  it('presents identically fused at creation or mapped afterwards', () => {
+    const style: ManuscriptStyle = {
+      quotes: 'curly',
+      collapseSpaces: true,
+      placeholders: { author: 'Ana' },
+      frontMatter: ['by <$author>'],
+      chapterNumbering: 'words',
+    };
+    const scenes = [
+      {
+        id: 's-1',
+        chapterId: 'ch-1',
+        name: 'One',
+        index: 1,
+        body: 'He said "hi"  there.\n\n- one\n- two',
+        isDeleted: false,
+        isStart: true,
+      },
+      {
+        id: 's-2',
+        chapterId: 'ch-1',
+        name: 'Two',
+        index: 2,
+        body: "It's <$author>'s.",
+        isDeleted: false,
+      },
+    ];
+    const chapters = [{ id: 'ch-1', name: 'Arrival', index: 1, type: 'chapter' as const }];
+    const choices = [{ id: 'c-1', sceneId: 's-1', nextSceneId: 's-2', text: 'Go "on" <$author>' }];
+
+    // Linear: fused through presentedManuscriptOf vs compile-then-present.
+    const parsed = ManuscriptOptionsSchema.parse({
+      format: 'pdf',
+      includeSceneNames: true,
+      style,
+      language: 'en',
+    });
+    const input = {
+      storyTitle: 'My <$author> Story',
+      storyType: 'linear' as const,
+      chapters,
+      scenes,
+      choices,
+    };
+    const fused = presentedManuscriptOf(input, parsed, DEFAULT_MANUSCRIPT_LABELS);
+    const unfused = presentManuscript(
+      compileLinearManuscript({
+        title: input.storyTitle,
+        chapters,
+        scenes,
+        choices,
+        includeLooseScenes: parsed.includeLooseScenes,
+        looseHeadingLabel: DEFAULT_MANUSCRIPT_LABELS.looseHeading,
+        includeSceneNames: parsed.includeSceneNames,
+        resetSceneNumbersPerChapter: parsed.resetSceneNumbers,
+        sceneSeparator: sceneSeparatorText(parsed.style),
+      }),
+      parsed.style,
+      'en',
+    );
+    expect(fused).toEqual(unfused);
+
+    // Branching with two starts: covers the gamebook opening blocks too.
+    const branching = {
+      ...input,
+      storyType: 'branching' as const,
+      scenes: [
+        { ...scenes[0], chapterId: null },
+        { ...scenes[1], chapterId: null, isStart: true },
+      ],
+    };
+    const fusedGamebook = presentedManuscriptOf(
+      branching,
+      ManuscriptOptionsSchema.parse({ format: 'pdf', style, language: 'en' }),
+      DEFAULT_MANUSCRIPT_LABELS,
+    );
+    const unfusedGamebook = presentManuscript(
+      compileGamebookManuscript({
+        title: branching.storyTitle,
+        scenes: branching.scenes,
+        choices,
+        order: 'discovery',
+        seed: undefined,
+        showSceneNames: false,
+        endLabel: DEFAULT_MANUSCRIPT_LABELS.endOfExcerpt,
+        startLabels: {
+          choose: DEFAULT_MANUSCRIPT_LABELS.chooseStart,
+          begin: DEFAULT_MANUSCRIPT_LABELS.beginAt,
+        },
+        sceneSeparator: sceneSeparatorText(style),
+      }),
+      style,
+      'en',
+    );
+    expect(fusedGamebook).toEqual(unfusedGamebook);
   });
 });
 

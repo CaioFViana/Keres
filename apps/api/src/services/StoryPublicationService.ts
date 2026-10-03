@@ -289,10 +289,11 @@ export class StoryPublicationService {
       throw error;
     }
 
-    const storyExport = await this.exportImportService.exportStory(storyId, userId);
+    let storyExport: FullStoryExportType | null =
+      await this.exportImportService.exportStory(storyId, userId);
     const publicationId = ulid();
     // Left out when the publisher asked for a manuscript and/or the reader only: no packaging cost.
-    const zip = includePackage
+    let zip = includePackage
       ? await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash))
       : null;
 
@@ -301,14 +302,17 @@ export class StoryPublicationService {
     // branching branch here: the route compiler ignores it by construction.
     const manuscriptOptions =
       manuscript === undefined ? null : this.parseManuscriptOptions(storyExport, manuscript);
-    const compiledManuscript = manuscriptOptions
-      ? await compileGate(() => this.compileManuscript(storyExport, manuscriptOptions))
+    let compiledManuscript = manuscriptOptions
+      ? await compileGate(() => this.compileManuscript(storyExport!, manuscriptOptions))
       : null;
     const readerOptions =
       reader === undefined ? null : this.parseReaderOptions(storyExport, reader);
-    const compiledReader = readerOptions
-      ? await compileGate(() => this.compileReader(storyExport, readerOptions))
+    let compiledReader = readerOptions
+      ? await compileGate(() => this.compileReader(storyExport!, readerOptions))
       : null;
+    // Explicit release between stages: the export fed every compile above and nothing below reads
+    // it, so drop it now instead of carrying a whole book beside its compiled outputs.
+    storyExport = null;
 
     // Bytes before the row: a row with no blob is a broken download exposed on the site, while a blob with
     // no row is invisible. If the transaction below fails, the files are removed in the `catch` - without
@@ -325,6 +329,18 @@ export class StoryPublicationService {
     if (compiledReader) {
       await publicationStorageService.storeReader(storyId, publicationId, compiledReader.bytes);
     }
+    // The row below only needs scalars: release every staged byte blob now so a
+    // package + manuscript + reader never sit side by side any longer than storage needs.
+    const packageByteSize = zip ? zip.bytes.byteLength : 0;
+    const packageMediaIncluded = zip ? zip.includedCount : 0;
+    const packageMediaTotal = zip ? zip.totalCount : 0;
+    const packageIncluded = zip !== null;
+    const manuscriptFormat = compiledManuscript?.format ?? null;
+    const manuscriptByteSize = compiledManuscript ? compiledManuscript.bytes.byteLength : null;
+    const readerByteSize = compiledReader ? compiledReader.bytes.byteLength : null;
+    zip = null;
+    compiledManuscript = null;
+    compiledReader = null;
 
     const passwordHash = visibility === 'password' ? await hashPassword(password!) : null;
 
@@ -360,13 +376,13 @@ export class StoryPublicationService {
           ),
           operationVersion: story.lastOperationVersion,
           formatVersion: CURRENT_STORY_FORMAT_VERSION,
-          byteSize: zip ? zip.bytes.byteLength : 0,
-          mediaIncluded: zip ? zip.includedCount : 0,
-          mediaTotal: zip ? zip.totalCount : 0,
-          packageIncluded: zip !== null,
-          manuscriptFormat: compiledManuscript?.format ?? null,
-          manuscriptByteSize: compiledManuscript ? compiledManuscript.bytes.byteLength : null,
-          readerByteSize: compiledReader ? compiledReader.bytes.byteLength : null,
+          byteSize: packageByteSize,
+          mediaIncluded: packageMediaIncluded,
+          mediaTotal: packageMediaTotal,
+          packageIncluded,
+          manuscriptFormat,
+          manuscriptByteSize,
+          readerByteSize,
           snapshot: this.snapshotOf(story),
         });
 
@@ -390,13 +406,15 @@ export class StoryPublicationService {
         }
         return [];
       },
+      // Rollback reads the captured scalars, not the released blobs above: by the time this runs,
+      // `zip`/`compiledManuscript`/`compiledReader` are already null, but storage still holds the bytes.
       async () => {
-        if (zip) await publicationStorageService.delete(storyId, publicationId);
-        if (compiledManuscript) {
-          const extension = FORMAT_META[compiledManuscript.format].extension;
+        if (packageIncluded) await publicationStorageService.delete(storyId, publicationId);
+        if (manuscriptFormat) {
+          const extension = FORMAT_META[manuscriptFormat].extension;
           await publicationStorageService.deleteManuscript(storyId, publicationId, extension);
         }
-        if (compiledReader) {
+        if (readerByteSize !== null) {
           await publicationStorageService.deleteReader(storyId, publicationId);
         }
       },

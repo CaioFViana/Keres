@@ -67,7 +67,28 @@ function documentStyles(options: ManuscriptRenderOptions) {
 }
 
 function spansToRuns(spans: CompiledSpan[]): TextRun[] {
-  return spans.map(
+  // Adjacent spans with identical marks ride one run: the parsers already
+  // merge, so this is normally a no-op pass — kept so a future span source
+  // can never multiply runs (and the document) behind the renderers' backs.
+  // Newlines never merge: break handling stays exactly where each span put it.
+  const merged: CompiledSpan[] = [];
+  for (const span of spans) {
+    const prev = merged[merged.length - 1];
+    if (
+      prev &&
+      !prev.text.includes('\n') &&
+      !span.text.includes('\n') &&
+      prev.bold === span.bold &&
+      prev.italic === span.italic &&
+      prev.underline === span.underline &&
+      prev.strikethrough === span.strikethrough
+    ) {
+      merged[merged.length - 1] = { ...prev, text: prev.text + span.text };
+    } else {
+      merged.push({ ...span });
+    }
+  }
+  return merged.map(
     (span) =>
       new TextRun({
         text: span.text,

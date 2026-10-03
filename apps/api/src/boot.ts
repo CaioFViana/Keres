@@ -16,7 +16,7 @@ import { subscriptionService } from './services/payments/SubscriptionService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
 import { mediaStorageService } from './services/MediaStorageService';
-import { registrationSettingsService } from './services/RegistrationSettingsService';
+import { effectiveDefaultTierId } from './services/defaultTier';
 import { reconcileRootAdmin } from './services/RootAdminService';
 import { normalizeStoredUserTags } from './services/UserTagMaintenance';
 import { createShutdown, installShutdownHandlers } from './shutdown';
@@ -52,8 +52,7 @@ export async function preparePersistence(): Promise<void> {
 export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
   if (!getPaymentPlugin()) return false;
   try {
-    const { defaultTierId } = await registrationSettingsService.getOrCreate();
-    if (defaultTierId) return false;
+    if (await effectiveDefaultTierId()) return false;
   } catch (error) {
     logger.warn('Could not check for a default plan', {
       error: error instanceof Error ? error.message : String(error),
@@ -61,7 +60,7 @@ export async function warnIfPaymentsHaveNoDefaultPlan(): Promise<boolean> {
     return false;
   }
   logger.warn(
-    'Payments are on but the server has no default plan: people whose paid period ends, and who have no plan assigned, will have NO limits. Set a default plan in the admin panel (Registration).',
+    'Payments are on but the server has no default plan: people whose paid period ends, and who have no plan assigned, will have NO limits. Mark a plan as the default in the admin panel (the "default" box of a plan, or Registration).',
   );
   return true;
 }

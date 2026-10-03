@@ -153,7 +153,9 @@ Keres keeps the date up to which each period is paid:
 The plan a person is entitled to is, in order: the one their paid subscription grants, the one an administrator
 assigned, the server's default plan, and - if there is none of those - no limits at all. That last step is why a
 server that sells plans must have a **default plan**: without one, a lapsed subscription is worth more than a free
-plan. The server says so in its log at every start and in the administrators' **Payments** page. A plan cannot be
+plan. The server says so in its log at every start and in the administrators' **Payments** page. The default plan is
+one setting with two ways to set it - the "default" box on the plan, or the choice in Registration - kept together; a
+server that only has a plan ticked treats that plan as the default. A plan cannot be
 deleted while somebody is subscribed to it.
 
 ### Plans given by an administrator

@@ -14,6 +14,7 @@ import { and, asc, count, desc, eq, gte, inArray, lte, or, sql, sum, type SQL } 
 import { db } from '../../db';
 import { paymentEvents, paymentSubscriptions, tiers, users } from '../../db/schema';
 import { insensitiveLike } from '../../db/sqlOperators';
+import { effectiveDefaultTierId } from '../defaultTier';
 import { registrationSettingsService } from '../RegistrationSettingsService';
 import { getPaymentPlugin } from './PaymentPluginRegistry';
 
@@ -68,7 +69,8 @@ async function usersById(ids: (string | null)[]): Promise<Map<string, UserRow>> 
 export class AdminPaymentService {
   async summary(now = new Date()): Promise<AdminPaymentSummary> {
     const plugin = getPaymentPlugin();
-    const { currency, defaultTierId } = await registrationSettingsService.getOrCreate();
+    const { currency } = await registrationSettingsService.getOrCreate();
+    const defaultTierId = await effectiveDefaultTierId();
 
     const perStatus = await db
       .select({ status: paymentSubscriptions.status, total: count() })

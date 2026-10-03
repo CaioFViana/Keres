@@ -2,7 +2,8 @@ import type { PartialTier, TierCreateInput } from '@keres/shared';
 import { and, eq, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
-import { paymentSubscriptions, registrationSettings, tiers, users } from '../db/schema';
+import { paymentSubscriptions, tiers, users } from '../db/schema';
+import { effectiveDefaultTierId, isSettingDefaultTier, setDefaultTier } from './defaultTier';
 
 export class TierNotFoundError extends Error {
   constructor() {
@@ -55,6 +56,10 @@ export class TierService {
       .insert(tiers)
       .values({ id: ulid(), ...input })
       .returning();
+    // Ticking "default" on a plan makes it the default for real, and the one that was is no longer.
+    if (created.isDefault) {
+      await setDefaultTier(created.id);
+    }
     return created;
   }
 
@@ -74,7 +79,13 @@ export class TierService {
       .set({ ...patch, updatedAt: new Date() })
       .where(eq(tiers.id, id))
       .returning();
-    return updated;
+    if (patch.isDefault === true) {
+      await setDefaultTier(id);
+    } else if (patch.isDefault === false && (await isSettingDefaultTier(id))) {
+      // Unticking the plan that is the default leaves the server with none - said by the administrators' warning.
+      await setDefaultTier(null);
+    }
+    return { ...updated, isDefault: patch.isDefault ?? updated.isDefault };
   }
 
   async softDelete(id: string) {
@@ -83,10 +94,7 @@ export class TierService {
       throw new TierNotFoundError();
     }
 
-    const defaultingSettings = await db.query.registrationSettings.findFirst({
-      where: eq(registrationSettings.defaultTierId, id),
-    });
-    if (defaultingSettings) {
+    if ((await effectiveDefaultTierId()) === id) {
       throw new TierInUseError('it is the default tier for new registrations.');
     }
 

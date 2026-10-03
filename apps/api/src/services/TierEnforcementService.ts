@@ -2,15 +2,8 @@ import { getTierCountedEntityTypes, type StoryPlan } from '@keres/shared';
 import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
-import {
-  galleries,
-  mediaBlobs,
-  publicationLog,
-  registrationSettings,
-  stories,
-  tiers,
-  users,
-} from '../db/schema';
+import { galleries, mediaBlobs, publicationLog, stories, tiers, users } from '../db/schema';
+import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierId } from './payments/entitlement';
 import { syncService } from './SyncService';
 
@@ -61,11 +54,9 @@ export class TierEnforcementService {
       }
     }
 
-    const settings = await db.query.registrationSettings.findFirst({
-      where: eq(registrationSettings.id, 'singleton'),
-    });
-    if (settings?.defaultTierId) {
-      const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, settings.defaultTierId) });
+    const defaultTierId = await effectiveDefaultTierId();
+    if (defaultTierId) {
+      const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, defaultTierId) });
       if (tier) {
         return tier;
       }

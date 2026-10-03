@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ContactCreateSchema,
   CurrencySchema,
+  PartialTierSchema,
   PublicTiersResponseSchema,
   TierCreateInputSchema,
   UpdateRegistrationSettingsSchema,
@@ -102,5 +103,34 @@ describe('public tier and contact contracts', () => {
         contactEmail: 'a@b.co'.padEnd(255, 'x'),
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('what a tier update may carry', () => {
+  it('keeps to what it says: a field left out stays as it was, not reset to its default', () => {
+    expect(PartialTierSchema.parse({ maxStories: 3 })).toEqual({ maxStories: 3 });
+    expect(PartialTierSchema.parse({})).toEqual({});
+    // Saying so is how a flag is changed.
+    expect(
+      PartialTierSchema.parse({ isDefault: false, isPublicForSale: true, sortOrder: 4 }),
+    ).toEqual({
+      isDefault: false,
+      isPublicForSale: true,
+      sortOrder: 4,
+    });
+  });
+
+  it('still refuses what a tier may not be', () => {
+    expect(PartialTierSchema.safeParse({ name: '' }).success).toBe(false);
+    expect(PartialTierSchema.safeParse({ maxStories: 0 }).success).toBe(false);
+    expect(PartialTierSchema.safeParse({ sortOrder: 1.5 }).success).toBe(false);
+  });
+
+  it('keeps the defaults of a tier that is created', () => {
+    expect(TierCreateInputSchema.parse({ name: 'T' })).toMatchObject({
+      isDefault: false,
+      isPublicForSale: false,
+      sortOrder: 0,
+    });
   });
 });

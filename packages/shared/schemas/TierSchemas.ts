@@ -6,14 +6,11 @@ import { UlidSchema } from './SyncSchemas';
  * Every ceiling is nullable; `null` means "unlimited". See `tiers` in
  * `apps/api/src/db/schema/tables/tiers.ts` for the same convention on the database side.
  */
-export const TierCreateInputSchema = z.object({
+const tierFields = {
   name: z.string().min(1, 'Name cannot be empty'),
-  isDefault: z.boolean().default(false),
   // Zero is a price too: a tier for sale at 0 is the free tier.
   priceMonthlyCents: z.number().int().nonnegative().nullable().optional(),
   priceYearlyCents: z.number().int().nonnegative().nullable().optional(),
-  isPublicForSale: z.boolean().default(false),
-  sortOrder: z.number().int().default(0),
   maxStories: z.number().int().positive().nullable().optional(),
   maxEntitiesPerStory: z.number().int().positive().nullable().optional(),
   maxEntitiesTotal: z.number().int().positive().nullable().optional(),
@@ -23,6 +20,13 @@ export const TierCreateInputSchema = z.object({
   maxPublicationsPerDay: z.number().int().nonnegative().nullable().optional(),
   // Zero silences the user; messages to the administrators have a fixed cap of their own.
   maxMessagesPerDay: z.number().int().nonnegative().nullable().optional(),
+};
+
+export const TierCreateInputSchema = z.object({
+  ...tierFields,
+  isDefault: z.boolean().default(false),
+  isPublicForSale: z.boolean().default(false),
+  sortOrder: z.number().int().default(0),
 });
 export type TierCreateInput = z.infer<typeof TierCreateInputSchema>;
 
@@ -36,7 +40,19 @@ export const TierSchema = TierCreateInputSchema.extend({
   deletedAt: z.coerce.date().nullable().optional(),
 });
 
-export const PartialTierSchema = TierCreateInputSchema.partial();
+/**
+ * What an update may carry: any of the fields, and nothing it leaves out. Not `TierCreateInputSchema.partial()`: that
+ * keeps the defaults, so an update that said nothing of `isDefault`, `isPublicForSale` or `sortOrder` would have
+ * been read as saying `false`, `false` and `0` - resetting them.
+ */
+export const PartialTierSchema = z
+  .object({
+    ...tierFields,
+    isDefault: z.boolean(),
+    isPublicForSale: z.boolean(),
+    sortOrder: z.number().int(),
+  })
+  .partial();
 export type PartialTier = z.infer<typeof PartialTierSchema>;
 
 /** A snapshot of a user's current usage against their effective tier's ceilings. See GET /user/tier-usage. */

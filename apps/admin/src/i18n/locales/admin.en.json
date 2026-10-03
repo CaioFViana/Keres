@@ -339,7 +339,7 @@
       "checkout_expired": "Attempt expired",
       "gift_granted": "Plan given"
     },
-    "noDefaultTier": "This server has no default plan. When somebody’s paid period ends and no plan was assigned to them, they end up with no limits at all - more than a free plan gives. Create a free plan and set it as the default in Registration.",
+    "noDefaultTier": "This server has no default plan. When somebody’s paid period ends and no plan was assigned to them, they end up with no limits at all - more than a free plan gives. Create a free plan and mark it as the default: tick \"Default tier\" on the plan, or choose it in Registration (the two are the same setting).",
     "giftProvider": "Gift (administrator)"
   },
   "recovery": {

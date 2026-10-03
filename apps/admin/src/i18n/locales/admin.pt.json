@@ -339,7 +339,7 @@
       "checkout_expired": "Tentativa expirada",
       "gift_granted": "Plano dado"
     },
-    "noDefaultTier": "Este servidor não tem plano padrão. Quando o período pago de alguém termina e nenhum plano foi atribuído a essa pessoa, ela fica sem limite nenhum - mais do que um plano gratuito dá. Crie um plano gratuito e defina-o como padrão em Cadastro.",
+    "noDefaultTier": "Este servidor não tem plano padrão. Quando o período pago de alguém termina e nenhum plano foi atribuído a essa pessoa, ela fica sem limite nenhum - mais do que um plano gratuito dá. Crie um plano gratuito e marque-o como padrão: marque \"Plano padrão\" no próprio plano, ou escolha-o em Cadastro (as duas coisas são a mesma configuração).",
     "giftProvider": "Presente (administrador)"
   },
   "recovery": {

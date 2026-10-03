@@ -13,9 +13,9 @@ import { env } from '../config/env';
 import { db } from '../db';
 import { tiers, users } from '../db/schema';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
+import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierIds } from './payments/entitlement';
 import { recoveryCodeService } from './RecoveryCodeService';
-import { registrationSettingsService } from './RegistrationSettingsService';
 import { TierNotFoundError } from './TierService';
 import { TagAlreadyTakenError } from './UserService';
 
@@ -156,9 +156,9 @@ export class AdminUserService {
   private async withEffectiveTier<T extends { id: string; tierId: string | null }>(
     rows: T[],
   ): Promise<(T & { effectiveTierId: string | null; tierSource: UserTierSource })[]> {
-    const [paid, settings] = await Promise.all([
+    const [paid, defaultTierId] = await Promise.all([
       entitledTierIds(rows.map((row) => row.id)),
-      registrationSettingsService.getOrCreate(),
+      effectiveDefaultTierId(),
     ]);
     return rows.map((row) => {
       const subscription = paid.get(row.id);
@@ -168,8 +168,8 @@ export class AdminUserService {
       if (row.tierId) {
         return { ...row, effectiveTierId: row.tierId, tierSource: 'assigned' as const };
       }
-      if (settings.defaultTierId) {
-        return { ...row, effectiveTierId: settings.defaultTierId, tierSource: 'default' as const };
+      if (defaultTierId) {
+        return { ...row, effectiveTierId: defaultTierId, tierSource: 'default' as const };
       }
       return { ...row, effectiveTierId: null, tierSource: 'none' as const };
     });

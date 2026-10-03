@@ -7,6 +7,7 @@ import {
   tiers,
   users,
 } from '../db/schema';
+import { syncDefaultTierFlags } from './defaultTier';
 import { TierNotFoundError } from './TierService';
 
 /**
@@ -56,6 +57,10 @@ export class RegistrationSettingsService {
       .set({ ...patch, updatedAt: new Date() })
       .where(eq(registrationSettings.id, REGISTRATION_SETTINGS_SINGLETON_ID))
       .returning();
+    // The plan's own "default" flag says what the setting says, so the two never disagree.
+    if (patch.defaultTierId !== undefined) {
+      await syncDefaultTierFlags(patch.defaultTierId ?? null);
+    }
     return updated;
   }
 

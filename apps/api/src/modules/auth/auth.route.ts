@@ -11,6 +11,7 @@ import {
   recoveryCodeService,
 } from '../../services/RecoveryCodeService';
 import { createPersistentAttemptLimiter } from '../../services/AttemptLimitService';
+import { effectiveDefaultTierId } from '../../services/defaultTier';
 import { registrationSettingsService } from '../../services/RegistrationSettingsService';
 import { userService } from '../../services/UserService';
 import { AppError } from '../../utils/errors';
@@ -158,7 +159,7 @@ export const authRoutes = new Elysia()
 
       const hashedPassword = await hashPassword(password);
       const newUserId = ulid();
-      const { defaultTierId } = await registrationSettingsService.getOrCreate();
+      const defaultTierId = await effectiveDefaultTierId();
 
       // Seed the @tag with the username so every account has a valid one from the
       // start - the user can freely change it later via PUT /user/tag. On the rare

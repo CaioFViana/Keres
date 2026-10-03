@@ -274,6 +274,26 @@ describe('ServerDetailScreen', () => {
       await waitFor(() => expect(mockPaymentOverview.mock.calls.at(-1)![1]).toBe(true));
     });
 
+    it("badges the way to the messages when this server's administrators wrote", async () => {
+      const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+      await act(async () => {
+        useUnseenMessagesStore.setState({ unseen: { 'srv-1|admin': '09' } });
+      });
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      expect(view.getByTestId('server-action-badge')).toBeTruthy();
+      expect(view.getByLabelText(/server_action_messages\. messages_unseen_admin_on/)).toBeTruthy();
+
+      await act(async () => {
+        useUnseenMessagesStore.setState({ unseen: { 'srv-2|admin': '09', 'srv-1|u1': '09' } });
+      });
+      expect(view.queryByTestId('server-action-badge')).toBeNull();
+      await act(async () => {
+        useUnseenMessagesStore.setState({ unseen: {} });
+      });
+    });
+
     it('shows the plan with its dates, and the way to the plans, for a user with a paid plan', async () => {
       mockPaymentOverview.mockReturnValue(overview(subscription));
       const view = await render(<ServerDetailScreen />);

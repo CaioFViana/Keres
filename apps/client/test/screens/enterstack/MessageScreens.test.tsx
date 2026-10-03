@@ -4,6 +4,8 @@ const mockRoute: { params: { serverId: string; peer: string; peerName?: string }
   params: { serverId: 'srv-1', peer: 'admin' },
 };
 const mockUseConversation = jest.fn();
+const mockKeyboard = { overlap: 0, onLayout: jest.fn() };
+const mockUseKeyboardOverlap = jest.fn();
 const mockUseMessageInbox = jest.fn();
 const mockColors = {
   primary: '#0000ff',
@@ -57,6 +59,9 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({ useBackButtonHandler: () => {} }));
 jest.mock('../../../src/guides/useScreenTour', () => ({ useScreenTour: jest.fn() }));
 jest.mock('../../../src/guides/useGuideAnchor', () => ({ useScreenAnchor: () => null }));
+jest.mock('../../../src/hooks/useKeyboardOverlap', () => ({
+  useKeyboardOverlap: (...args: unknown[]) => mockUseKeyboardOverlap(...args),
+}));
 jest.mock('../../../src/hooks/useConversation', () => ({
   useConversation: (...args: unknown[]) => mockUseConversation(...args),
 }));
@@ -89,7 +94,10 @@ jest.mock('@/src/components/common/inputs/MultiSelectPill/MultiSelectPill', () =
 });
 
 import { act, fireEvent, render } from '@testing-library/react-native';
-import ConversationScreen from '../../../src/screens/enterstack/ConversationScreen';
+import ConversationScreen, {
+  keyboardRoom,
+  liftAboveKeyboard,
+} from '../../../src/screens/enterstack/ConversationScreen';
 import MessageInboxScreen from '../../../src/screens/enterstack/MessageInboxScreen';
 
 const conversation = (over: Record<string, unknown> = {}) => ({
@@ -112,11 +120,71 @@ const conversation = (over: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockUseKeyboardOverlap.mockReturnValue({ ...mockKeyboard, ref: { current: null } });
   mockRoute.params = { serverId: 'srv-1', peer: 'admin' };
   mockUseConversation.mockReturnValue(conversation());
 });
 
 describe('ConversationScreen', () => {
+  describe('the keyboard', () => {
+    const paddingBottom = (
+      view: ReturnType<typeof render> extends Promise<infer V> ? V : never,
+    ) => {
+      const style = view.getByTestId('conversation-screen').props.style;
+      return (Array.isArray(style) ? style.flat(Infinity) : [style]).reduce(
+        (found: number | undefined, entry: { paddingBottom?: number } | undefined) =>
+          entry?.paddingBottom ?? found,
+        undefined,
+      );
+    };
+
+    it('measures how much of the bottom the keyboard covers, and watches it', async () => {
+      await render(<ConversationScreen />);
+
+      expect(mockUseKeyboardOverlap).toHaveBeenCalledWith(true);
+    });
+
+    it('keeps its usual margin below the field while the keyboard is down', async () => {
+      const view = await render(<ConversationScreen />);
+
+      expect(paddingBottom(view)).toBe(12);
+    });
+
+    it('lifts the field by what the keyboard covers plus a little room, so its last line is not left behind it', async () => {
+      mockUseKeyboardOverlap.mockReturnValue({ ...mockKeyboard, overlap: 310 });
+      const view = await render(<ConversationScreen />);
+
+      expect(paddingBottom(view)).toBe(12 + 310 + keyboardRoom());
+    });
+
+    it('adds that room only while the keyboard is up', () => {
+      expect(liftAboveKeyboard(0, 40)).toBe(0);
+      expect(liftAboveKeyboard(-5, 40)).toBe(0);
+      expect(liftAboveKeyboard(1, 40)).toBe(41);
+    });
+
+    it('leaves at least the minimum room on every platform, and the status bar plus a margin when that is more', () => {
+      expect(keyboardRoom(0)).toBe(40);
+      // A thin status bar does not shrink it below the minimum...
+      expect(keyboardRoom(24)).toBe(40);
+      // ...and a tall one (or a cutout) grows it: on Android the lift falls short by about the status bar.
+      expect(keyboardRoom(48)).toBe(60);
+    });
+
+    it('lets the measuring hook see the screen, so the cover can be measured', async () => {
+      const view = await render(<ConversationScreen />);
+
+      expect(view.getByTestId('conversation-screen').props.onLayout).toBe(mockKeyboard.onLayout);
+      expect(view.getByTestId('conversation-screen').props.collapsable).toBe(false);
+    });
+
+    it('lets a tap on a message or on send act at once while the keyboard is open', async () => {
+      const view = await render(<ConversationScreen />);
+
+      expect(view.getByTestId('conversation-list').props.keyboardShouldPersistTaps).toBe('handled');
+    });
+  });
+
   it("opens the administrators' conversation, with a note on who reads it", async () => {
     const view = await render(<ConversationScreen />);
 
@@ -379,5 +447,49 @@ describe('MessageInboxScreen', () => {
     const view = await render(<MessageInboxScreen />);
 
     expect(view.getByText('Beta')).toBeTruthy();
+  });
+});
+
+describe('MessageInboxScreen: which conversation has news', () => {
+  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+
+  beforeEach(() => {
+    mockUseMessageInbox.mockReturnValue(inboxState());
+    useUnseenMessagesStore.getState().reset();
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: {} });
+    });
+  });
+
+  it('marks the conversation of the friend who wrote, and only that one', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|user-1': '09' } });
+    });
+    const view = await render(<MessageInboxScreen />);
+
+    expect(view.getAllByTestId('conversation-unseen-mark')).toHaveLength(1);
+    expect(view.getByLabelText(/messages_unseen_from.*Bia/)).toBeTruthy();
+  });
+
+  it('marks the administrators of the server they wrote from, naming the server', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|admin': '09' } });
+    });
+    const view = await render(<MessageInboxScreen />);
+
+    expect(view.getAllByTestId('conversation-unseen-mark')).toHaveLength(1);
+    expect(view.getByLabelText(/messages_unseen_admin_on.*Main/)).toBeTruthy();
+  });
+
+  it('marks nothing when nothing is new, and not for a conversation of another server', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-9|user-1': '09' } });
+    });
+    const view = await render(<MessageInboxScreen />);
+
+    expect(view.queryByTestId('conversation-unseen-mark')).toBeNull();
   });
 });

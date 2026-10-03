@@ -202,3 +202,68 @@ describe('the compact burger menu and the status bar', () => {
     expect(StyleSheet.flatten(panel.props.style).marginTop).toBe(8);
   });
 });
+
+describe('a badge on an action', () => {
+  it('puts a dot on that action only, and on none when no action has one', async () => {
+    const plain = await render(
+      <HeaderActions
+        actions={[{ id: 'chat', icon: 'chatbubble-outline', label: 'Chat', onPress: jest.fn() }]}
+      />,
+    );
+    expect(plain.queryByTestId('header-action-badge-chat')).toBeNull();
+
+    const badged = await render(
+      <HeaderActions
+        actions={[
+          {
+            id: 'chat',
+            icon: 'chatbubble-ellipses',
+            label: 'Chat',
+            badge: true,
+            onPress: jest.fn(),
+          },
+          { id: 'edit', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+    expect(badged.getByTestId('header-action-badge-chat')).toBeTruthy();
+    expect(badged.queryByTestId('header-action-badge-edit')).toBeNull();
+  });
+
+  it('shows the dot on the burger, so a badged action hidden in the menu is not lost', async () => {
+    mockLayout.mockReturnValue(COMPACT);
+    const screen = await render(
+      <HeaderActions
+        actions={[
+          {
+            id: 'chat',
+            icon: 'chatbubble-ellipses',
+            label: 'Chat',
+            badge: true,
+            onPress: jest.fn(),
+          },
+          { id: 'edit', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId('header-actions-menu-badge')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('header-actions-menu'));
+    expect(screen.getByTestId('header-menu-badge-chat')).toBeTruthy();
+    expect(screen.queryByTestId('header-menu-badge-edit')).toBeNull();
+  });
+
+  it('leaves the burger bare when nothing behind it is badged', async () => {
+    mockLayout.mockReturnValue(COMPACT);
+    const screen = await render(
+      <HeaderActions
+        actions={[
+          { id: 'a', icon: 'add', label: 'Add', onPress: jest.fn() },
+          { id: 'b', icon: 'pencil-outline', label: 'Edit', onPress: jest.fn() },
+        ]}
+      />,
+    );
+
+    expect(screen.queryByTestId('header-actions-menu-badge')).toBeNull();
+  });
+});

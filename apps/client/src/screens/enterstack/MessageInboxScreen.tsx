@@ -13,8 +13,10 @@ import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useMessageInbox } from '../../hooks/useMessageInbox';
 import type { FriendshipStackParamList } from '../../navigation/StorySelectionStack';
 import type { InboxEntry, MessageContact } from '../../services/MessageService';
+import { useUnseenMessagesStore } from '../../state/unseenMessagesStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
+import { type ConversationPeer, conversationKey } from '../../utils/conversationKey';
 
 type MessageInboxNavigationProp = NativeStackNavigationProp<
   FriendshipStackParamList,
@@ -25,6 +27,10 @@ type MessageInboxNavigationProp = NativeStackNavigationProp<
 const contactValue = (contact: Pick<MessageContact, 'serverId' | 'kind' | 'userId'>) =>
   `${contact.serverId}|${contact.kind === 'admin' ? 'admin' : contact.userId}`;
 
+/** The conversation an entry of the inbox stands for, as `conversationKey` wants it. */
+const peerOfEntry = (entry: Pick<InboxEntry, 'kind' | 'userId'>): ConversationPeer =>
+  entry.kind === 'admin' ? { kind: 'admin' } : { kind: 'direct', userId: entry.userId ?? '' };
+
 /** The inbox: every conversation over the registered servers, and a way to start a new one. */
 const MessageInboxScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -32,6 +38,7 @@ const MessageInboxScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation<MessageInboxNavigationProp>();
   const { inbox, contacts, loading } = useMessageInbox();
+  const unseen = useUnseenMessagesStore((state) => state.unseen);
   const [picking, setPicking] = useState(false);
   useScreenTour('MessageInbox');
   const listAnchorRef = useScreenAnchor('Messages', 'list');
@@ -100,6 +107,12 @@ const MessageInboxScreen = () => {
           icon: item.avatarIcon,
           seed: item.userId ?? item.serverId,
         }}
+        unseen={unseen[conversationKey(item.serverId, peerOfEntry(item))] !== undefined}
+        unseenLabel={
+          item.kind === 'admin'
+            ? t('messages_unseen_admin_on', { server: item.serverName })
+            : t('messages_unseen_from', { name: item.name })
+        }
         onPress={() => open(item)}
       />
     );

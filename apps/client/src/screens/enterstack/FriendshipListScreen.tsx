@@ -7,6 +7,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import FriendChatButton from '../../components/features/messages/FriendChatButton';
 import StoryInvitationList from '../../components/features/story/StoryInvitationList/StoryInvitationList';
 import { useDrizzle } from '../../db';
 import type { ServerSelect } from '../../db/schemas/servers'; // Import ServerSelect
@@ -256,7 +257,10 @@ const FriendshipListScreen = () => {
 
           {item.status === FriendStatus.FRIEND && (
             <>
-              <TouchableOpacity
+              <FriendChatButton
+                serverId={item.serverId}
+                friendUserId={item.otherUserId}
+                friendName={item.friendUsername}
                 onPress={() =>
                   navigation.navigate('Conversation', {
                     serverId: item.serverId,
@@ -265,11 +269,7 @@ const FriendshipListScreen = () => {
                   })
                 }
                 style={styles.actionButton}
-                accessibilityRole="button"
-                accessibilityLabel={t('send_message')}
-              >
-                <Ionicons name="chatbubble-outline" size={24} color={colors.primary} />
-              </TouchableOpacity>
+              />
               <TouchableOpacity
                 onPress={() => handleUnfriendUser(item.id, item.serverId)}
                 style={styles.actionButton}

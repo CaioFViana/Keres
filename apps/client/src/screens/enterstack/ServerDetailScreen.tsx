@@ -24,8 +24,10 @@ import { useServerStatuses } from '../../hooks/useServerStatuses';
 import { useServerTagEditor } from '../../hooks/useServerTagEditor';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { createServerService } from '../../services/ServerService';
+import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
 import { userApiService } from '../../services/UserApiService';
 import { useTheme } from '../../theme';
+import { adminConversationKey } from '../../utils/conversationKey';
 
 type ServerDetailRouteProp = RouteProp<ServerManagementStackParamList, 'ServerDetail'>;
 type ServerDetailNavigationProp = NativeStackNavigationProp<
@@ -81,6 +83,8 @@ const ServerDetailScreen = () => {
   // Plans and payment appear only while the server answers and only if it sells plans: a user working offline,
   // or on a server with no payment plugin, is never shown (or asked for) anything about payment.
   const { overview: payments } = usePaymentOverview(server, online);
+
+  const hasUnseenAdminMessage = useIsConversationUnseen(adminConversationKey(serverId));
 
   const openMessages = () => {
     navigation.navigate('Conversation', { serverId, peer: 'admin' });
@@ -241,6 +245,8 @@ const ServerDetailScreen = () => {
         title={t('server_action_messages')}
         description={t('server_action_messages_hint')}
         onPress={openMessages}
+        badge={hasUnseenAdminMessage}
+        badgeLabel={t('messages_unseen_admin_on', { server: server.name })}
         testID="server-action-messages"
       />
       {payments ? (

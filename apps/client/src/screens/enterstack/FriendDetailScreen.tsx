@@ -24,7 +24,9 @@ import type { FriendshipWithServer } from '../../services/FriendshipService';
 import { createFriendshipService } from '../../services/FriendshipService';
 import { createServerService } from '../../services/ServerService';
 import { useNotificationStore } from '../../state/notificationStore';
+import { useIsConversationUnseen } from '../../state/unseenMessagesStore';
 import { useTheme } from '../../theme';
+import { directConversationKey } from '../../utils/conversationKey';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 
 type FriendDetailScreenRouteProp = RouteProp<FriendshipStackParamList, 'FriendDetail'>;
@@ -72,16 +74,23 @@ const FriendDetailScreen = () => {
       peerName: friendship.friendUsername,
     });
   }, [friendship, navigation]);
+  const hasUnseenMessage = useIsConversationUnseen(
+    friendship ? directConversationKey(friendship.serverId, friendship.otherUserId) : '',
+  );
   useScreenHeader({
     target: 'parent',
     title: t('friend_detail_title'),
     actions: [
       {
         id: 'send-message',
-        icon: 'chatbubble-outline',
-        label: t('send_message'),
+        // A friend who wrote something unopened shows in the header too, so the way in says there is news.
+        icon: hasUnseenMessage ? 'chatbubble-ellipses' : 'chatbubble-outline',
+        label: hasUnseenMessage
+          ? t('messages_unseen_from', { name: friendship?.friendUsername })
+          : t('send_message'),
         onPress: openConversation,
         visible: friendship?.status === FriendStatus.FRIEND,
+        badge: hasUnseenMessage,
       },
     ],
   });

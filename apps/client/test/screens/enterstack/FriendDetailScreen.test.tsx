@@ -292,3 +292,65 @@ describe('FriendDetailScreen', () => {
     });
   });
 });
+
+describe('FriendDetailScreen: news from this friend', () => {
+  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+  const friendOf = (over: Record<string, unknown> = {}) =>
+    friendship({
+      status: FriendStatus.FRIEND,
+      senderId: 'me-on-server',
+      receiverId: 'them',
+      ...over,
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFocusListeners.length = 0;
+    mockRoute.params = { friendshipId: 'f1' };
+    mockGetAllServers.mockResolvedValue([server]);
+    mockGetAllFriendships.mockResolvedValue([friendOf()]);
+    useUnseenMessagesStore.getState().reset();
+  });
+
+  afterEach(async () => {
+    await cleanup();
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: {} });
+    });
+  });
+
+  const lastAction = () => mockHeader.mock.calls.at(-1)![0].actions[0];
+
+  it('keeps the plain chat action when this friend wrote nothing new', async () => {
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    expect(lastAction()).toMatchObject({
+      icon: 'chatbubble-outline',
+      label: 'send_message',
+      badge: false,
+    });
+  });
+
+  it('shows a badge on the chat action, and names the friend in its label, when they wrote', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|them': '09' } });
+    });
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    expect(lastAction()).toMatchObject({ icon: 'chatbubble-ellipses', badge: true });
+    // This file's translations return the key; the name is interpolated by the real ones (see FriendChatButton).
+    expect(lastAction().label).toBe('messages_unseen_from');
+  });
+
+  it('is not badged by another friend or by the administrators', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|other': '09', 'srv-1|admin': '09' } });
+    });
+    const view = await render(<FriendDetailScreen />);
+    await view.findByText('Zoe');
+
+    expect(lastAction().badge).toBe(false);
+  });
+});

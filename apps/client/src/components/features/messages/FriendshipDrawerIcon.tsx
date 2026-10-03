@@ -1,9 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
-import { useUnseenMessagesStore } from '../../../state/unseenMessagesStore';
-import { useTheme } from '../../../theme';
+import { useHasUnseenMessages } from '../../../state/unseenMessagesStore';
+import DrawerIconWithMark from './DrawerIconWithMark';
 
 interface FriendshipDrawerIconProps {
   color: string;
@@ -17,35 +15,15 @@ interface FriendshipDrawerIconProps {
  */
 const FriendshipDrawerIcon: React.FC<FriendshipDrawerIconProps> = ({ color, size }) => {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const hasUnseen = useUnseenMessagesStore((state) => Object.keys(state.unseen).length > 0);
-
   return (
-    <View
-      style={{ width: size, height: size }}
-      accessibilityLabel={hasUnseen ? t('messages_unseen') : undefined}
-    >
-      <Ionicons name="people-outline" color={color} size={size} />
-      {hasUnseen ? (
-        <View
-          testID="unseen-messages-mark"
-          style={[styles.mark, { backgroundColor: colors.background }]}
-        >
-          <Ionicons name="chatbubble" color={colors.error} size={Math.round(size * 0.6)} />
-        </View>
-      ) : null}
-    </View>
+    <DrawerIconWithMark
+      name="people-outline"
+      color={color}
+      size={size}
+      marked={useHasUnseenMessages()}
+      markedLabel={t('messages_unseen')}
+    />
   );
 };
-
-const styles = StyleSheet.create({
-  mark: {
-    position: 'absolute',
-    top: -5,
-    right: -7,
-    borderRadius: 999,
-    padding: 1,
-  },
-});
 
 export default FriendshipDrawerIcon;

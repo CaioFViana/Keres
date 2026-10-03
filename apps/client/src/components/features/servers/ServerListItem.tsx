@@ -17,6 +17,8 @@ export interface ServerListItemProps {
   lastSync: string | null;
   status: ServerStatusPillStatus;
   apiVersion: string | null;
+  /** The server's administrators wrote something the user has not opened. */
+  hasUnseenAdminMessage?: boolean;
   onPress: () => void;
 }
 
@@ -32,6 +34,7 @@ const ServerListItem: React.FC<ServerListItemProps> = ({
   lastSync,
   status,
   apiVersion,
+  hasUnseenAdminMessage,
   onPress,
 }) => {
   const { t } = useTranslation();
@@ -42,7 +45,9 @@ const ServerListItem: React.FC<ServerListItemProps> = ({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={name}
+      accessibilityLabel={
+        hasUnseenAdminMessage ? `${name}. ${t('messages_unseen_admin_on', { server: name })}` : name
+      }
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       <View style={styles.body}>
@@ -51,6 +56,12 @@ const ServerListItem: React.FC<ServerListItemProps> = ({
             {name}
           </Text>
           <ServerStatusPill status={status} apiVersion={apiVersion} />
+          {hasUnseenAdminMessage ? (
+            <View style={styles.unseen} testID="server-unseen-admin">
+              <Ionicons name="chatbubble-ellipses" size={16} color={colors.error} />
+              <Text style={styles.unseenText}>{t('messages_unseen_admin_short')}</Text>
+            </View>
+          ) : null}
         </View>
         <Text style={styles.url} numberOfLines={1}>
           {url}
@@ -90,6 +101,8 @@ const createStyles = (colors: ThemeColors) =>
     name: { flexShrink: 1, fontSize: 18, fontWeight: 'bold', color: colors.text },
     url: { fontSize: 14, color: colors.textSecondary },
     meta: { fontSize: 12, color: colors.textSecondary },
+    unseen: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    unseenText: { fontSize: 12, fontWeight: '600', color: colors.error },
   });
 
 export default ServerListItem;

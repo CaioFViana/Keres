@@ -25,6 +25,31 @@ export interface HeaderAction {
   busy?: boolean;
   /** Toggle-style actions show their icon (and menu label) in the primary color when on. */
   active?: boolean;
+  /** A dot on the icon: something new is behind this action. The burger shows it too while it hides this one. */
+  badge?: boolean;
+}
+
+/** The dot of an action's `badge`. */
+function BadgeDot({ testID }: { testID: string }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      testID={testID}
+      pointerEvents="none"
+      style={[styles.badge, { backgroundColor: colors.error, borderColor: colors.background }]}
+    />
+  );
+}
+
+/** The icon, wrapped with its dot only when there is one: an unbadged action keeps the bare icon. */
+function withBadge(icon: React.ReactElement, badge: boolean | undefined, testID: string) {
+  if (!badge) return icon;
+  return (
+    <View>
+      {icon}
+      <BadgeDot testID={testID} />
+    </View>
+  );
 }
 
 export default function HeaderActions({ actions }: { actions: readonly HeaderAction[] }) {
@@ -58,11 +83,15 @@ export default function HeaderActions({ actions }: { actions: readonly HeaderAct
           {action.busy ? (
             <ActivityIndicator color={colors.text} />
           ) : (
-            <Ionicons
-              name={action.icon}
-              size={24}
-              color={action.active ? colors.primary : colors.text}
-            />
+            withBadge(
+              <Ionicons
+                name={action.icon}
+                size={24}
+                color={action.active ? colors.primary : colors.text}
+              />,
+              action.badge,
+              `header-action-badge-${action.id}`,
+            )
           )}
         </Pressable>
       ))}
@@ -85,7 +114,11 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
         onPress={() => setOpen(true)}
         style={({ pressed }) => [styles.action, { opacity: pressed ? 0.6 : 1 }]}
       >
-        <Ionicons name="menu" size={24} color={colors.text} />
+        {withBadge(
+          <Ionicons name="menu" size={24} color={colors.text} />,
+          actions.some((action) => action.badge),
+          'header-actions-menu-badge',
+        )}
       </Pressable>
       <Modal
         visible={open}
@@ -133,11 +166,15 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
                   {action.busy ? (
                     <ActivityIndicator color={colors.text} />
                   ) : (
-                    <Ionicons
-                      name={action.icon}
-                      size={22}
-                      color={action.active ? colors.primary : colors.text}
-                    />
+                    withBadge(
+                      <Ionicons
+                        name={action.icon}
+                        size={22}
+                        color={action.active ? colors.primary : colors.text}
+                      />,
+                      action.badge,
+                      `header-menu-badge-${action.id}`,
+                    )
                   )}
                   <Text
                     style={[
@@ -160,6 +197,15 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', marginRight: 8, gap: 4 },
   action: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -3,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    borderWidth: 2,
+  },
   menuOverlay: {
     flex: 1,
     alignItems: 'flex-end',

@@ -224,3 +224,44 @@ describe('ServerManagementScreen', () => {
     }
   });
 });
+
+describe('ServerManagementScreen: which server has news', () => {
+  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsFocused.value = true;
+    mockGetAllServers.mockResolvedValue([online, offline]);
+    mockApiGet.mockResolvedValue({ status: 200, data: { version: '1.2.3' } });
+    useUnseenMessagesStore.getState().reset();
+  });
+
+  afterEach(async () => {
+    await cleanup();
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: {} });
+    });
+  });
+
+  it('marks the server whose administrators wrote, and no other', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-2|admin': '09' } });
+    });
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Backup');
+
+    expect(view.getAllByTestId('server-unseen-admin')).toHaveLength(1);
+    expect(view.getByLabelText(/Backup.*messages_unseen_admin_on/)).toBeTruthy();
+    expect(view.queryByLabelText(/Main.*messages_unseen_admin_on/)).toBeNull();
+  });
+
+  it('marks nothing for the messages of friends', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|u1': '09' } });
+    });
+    const view = await render(<ServerManagementScreen />);
+    await view.findByText('Main');
+
+    expect(view.queryByTestId('server-unseen-admin')).toBeNull();
+  });
+});

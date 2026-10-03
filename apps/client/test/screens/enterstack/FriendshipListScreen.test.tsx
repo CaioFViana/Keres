@@ -413,3 +413,74 @@ describe('FriendshipListScreen', () => {
     await view.findByText('no_friendships_found');
   });
 });
+
+describe('FriendshipListScreen: which chat has news', () => {
+  const { useUnseenMessagesStore } = require('../../../src/state/unseenMessagesStore');
+  const bo = friendship({
+    id: 'f6',
+    status: FriendStatus.FRIEND,
+    friendUsername: 'Bo',
+    otherUserId: 'them6',
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockFocusListeners.length = 0;
+    mockUserSettings.userId = 'local-user';
+    mockGetAllServers.mockResolvedValue([server]);
+    mockGetAllFriendships.mockResolvedValue([friend, bo]);
+    useUnseenMessagesStore.getState().reset();
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: {} });
+    });
+  });
+
+  it('marks the chat button of the friend who wrote, and only theirs', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|them6': '09' } });
+    });
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Bo');
+
+    expect(view.getAllByTestId('friend-unseen-mark')).toHaveLength(1);
+    expect(view.getAllByLabelText('messages_unseen_from')).toHaveLength(1);
+    // Ana's button is the plain one.
+    expect(view.getAllByTestId('icon-chatbubble-outline-24')).toHaveLength(1);
+  });
+
+  it('marks nobody for the messages of the administrators', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|admin': '09' } });
+    });
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Bo');
+
+    expect(view.queryByTestId('friend-unseen-mark')).toBeNull();
+  });
+
+  it('drops the mark once the conversation was opened from the button', async () => {
+    await act(async () => {
+      useUnseenMessagesStore.setState({ unseen: { 'srv-1|them6': '09' } });
+    });
+    const view = await render(<FriendshipListScreen />);
+    await focusLast();
+    await view.findByText('Bo');
+
+    await fireEvent.press(view.getByLabelText('messages_unseen_from'));
+    expect(mockNavigate).toHaveBeenCalledWith('Conversation', {
+      serverId: 'srv-1',
+      peer: 'them6',
+      peerName: 'Bo',
+    });
+
+    await act(async () => {
+      await useUnseenMessagesStore.getState().markSeen('srv-1|them6', '09');
+    });
+    expect(view.queryByTestId('friend-unseen-mark')).toBeNull();
+  });
+});

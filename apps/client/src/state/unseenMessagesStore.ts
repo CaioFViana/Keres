@@ -122,6 +122,16 @@ export const useUnseenMessagesStore = create<UnseenMessagesState>((set, get) => 
   },
 }));
 
+/** Whether this conversation (see `conversationKey`) has a message the user has not opened. */
+export const useIsConversationUnseen = (key: string): boolean =>
+  useUnseenMessagesStore((state) => state.unseen[key] !== undefined);
+
+/** Whether any server's administrators have written something the user has not opened. */
+export const useHasUnseenAdminMessages = (): boolean =>
+  useUnseenMessagesStore((state) =>
+    Object.keys(state.unseen).some((key) => key.endsWith('|admin')),
+  );
+
 /** Whether any conversation has a message the user has not opened. */
 export const useHasUnseenMessages = (): boolean =>
   useUnseenMessagesStore((state) => Object.keys(state.unseen).length > 0);

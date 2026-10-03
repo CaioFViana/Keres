@@ -4,6 +4,7 @@ import type { AppDrizzleClient } from '../db';
 import type { ServerSelect } from '../db/schema';
 import { useNotificationStore } from '../state/notificationStore';
 import { useUnseenMessagesStore } from '../state/unseenMessagesStore';
+import { conversationKey } from '../utils/conversationKey';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import i18n from '../utils/i18n';
 import { isOfflineError } from './apiClient';
@@ -42,9 +43,7 @@ export interface Inbox {
 
 export const createMessageService = (db: AppDrizzleClient) => new MessageService(db);
 
-/** A conversation's identity across servers, as a string: `serverId|admin` or `serverId|userId`. */
-export const conversationKey = (serverId: string, peer: MessagePeerRef) =>
-  `${serverId}|${peer.kind === 'admin' ? 'admin' : peer.userId}`;
+export { conversationKey };
 
 /**
  * What the conversation open on screen is (if any), so a message that arrives in it is not also

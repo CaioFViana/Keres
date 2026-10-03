@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import ServerListItem from '../../components/features/servers/ServerListItem';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
+import { useUnseenMessagesStore } from '../../state/unseenMessagesStore';
+import { adminConversationKey } from '../../utils/conversationKey';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
@@ -26,6 +28,7 @@ const ServerManagementScreen = () => {
   const navigation = useNavigation<ServerManagementScreenNavigationProp>();
   const commonContainerStyles = getCommonContainerStyles(colors);
   const { servers, loading, error } = useServerStatuses();
+  const unseen = useUnseenMessagesStore((state) => state.unseen);
 
   useScreenHeader({
     target: 'parent',
@@ -70,6 +73,7 @@ const ServerManagementScreen = () => {
             lastSync={item.lastSyncDate ? new Date(item.lastSyncDate).toLocaleString() : null}
             status={item.pingStatus}
             apiVersion={item.apiVersion}
+            hasUnseenAdminMessage={unseen[adminConversationKey(item.id)] !== undefined}
             onPress={() => navigation.navigate('ServerDetail', { serverId: item.id })}
           />
         )}

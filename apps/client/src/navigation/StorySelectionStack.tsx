@@ -10,6 +10,7 @@ import {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import FriendshipDrawerIcon from '../components/features/messages/FriendshipDrawerIcon';
+import ServerDrawerIcon from '../components/features/messages/ServerDrawerIcon';
 import { TouchableOpacity, View } from 'react-native';
 import DrawerMenuButton from '../components/common/navigation/DrawerMenuButton/DrawerMenuButton';
 import NavigationBackButton from '../components/common/navigation/NavigationBackButton/NavigationBackButton';
@@ -458,7 +459,7 @@ const StorySelectionNavigator = () => {
               options={{
                 title: t('manage_servers'),
                 drawerLabel: t('manage_servers'),
-                drawerIcon: drawerIcon('server-outline'),
+                drawerIcon: ({ color, size }) => <ServerDrawerIcon color={color} size={size} />,
               }}
               listeners={drawerItemListeners('ServerManagementDrawer', 'ServerManagement')}
             />

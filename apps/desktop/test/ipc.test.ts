@@ -31,6 +31,7 @@ const electronMocks = vi.hoisted(() => ({
 vi.mock('electron', () => ({
   app: {
     setName: vi.fn(),
+    requestSingleInstanceLock: vi.fn(() => true),
     commandLine: { appendSwitch: vi.fn() },
     isPackaged: false,
     // Never resolves: the `whenReady` callback brings up the window and the protocol, and none of

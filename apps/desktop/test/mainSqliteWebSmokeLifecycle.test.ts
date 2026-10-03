@@ -46,6 +46,7 @@ const electronMocks = vi.hoisted(() => {
 vi.mock('electron', () => ({
   app: {
     setName: vi.fn(),
+    requestSingleInstanceLock: vi.fn(() => true),
     commandLine: { appendSwitch: vi.fn() },
     isPackaged: false,
     whenReady: vi.fn(async () => {}),

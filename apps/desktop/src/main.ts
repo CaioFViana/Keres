@@ -28,6 +28,21 @@ import {
 // "Access denied" on .../File System/Origins/LOCK). Must be set before app.whenReady().
 app.setName('Keres');
 
+/**
+ * One running instance per profile. The profile (`userData`) holds the client's SQLite database (OPFS, in a
+ * worker) and the token vault, and Chromium locks that storage for whoever opened it first: a second instance
+ * on the same profile cannot use it and only fails with storage errors. So the second one does not start: it
+ * leaves at once and the one already running comes to the front (see `focusRunningInstance`).
+ *
+ * After `setName` on purpose: the lock is taken per `userData` path, which comes from the name. Runs with their
+ * own `--user-data-dir` (the screen capture, the smoke test) have a profile of their own, so they never
+ * collide with the app the user has open.
+ */
+export const hasInstanceLock = app.requestSingleInstanceLock();
+if (!hasInstanceLock) {
+  app.quit();
+}
+
 // AppImages don't have Flatpak's Secret portal. Prefer the cross-desktop Secret
 // Service there instead of Chromium silently selecting its plaintext backend.
 app.commandLine.appendSwitch('password-store', 'gnome-libsecret');
@@ -136,6 +151,23 @@ async function handleAppRequest(request: Request): Promise<Response> {
   );
   const response = await net.fetch(pathToFileURL(filePath).toString());
   return withIsolationHeaders(response);
+}
+
+/**
+ * What the instance that is already running does when somebody tries to open another: shows its window -
+ * restored if it was minimised, in front, with focus - or opens one if the app is running with none (on macOS
+ * the app outlives its last window).
+ */
+export function focusRunningInstance(): void {
+  const [window] = BrowserWindow.getAllWindows();
+  if (!window) {
+    void createWindow().catch((error: unknown) => {
+      console.error('[desktop] could not open a window for the second launch:', error);
+    });
+    return;
+  }
+  if (window.isMinimized()) window.restore();
+  window.focus();
 }
 
 async function createWindow() {
@@ -675,6 +707,9 @@ export function registerMediaIpcHandlers() {
 }
 
 app.whenReady().then(async () => {
+  // The second instance is already on its way out: it opens nothing and touches no storage.
+  if (!hasInstanceLock) return;
+
   // `Cache-Control: no-store` (withIsolationHeaders above) stops *new* responses from being
   // cached, but doesn't touch whatever Chromium already cached in a previous run under this
   // same userData profile (HTTP cache and, separately, the V8 code cache) - during active
@@ -699,6 +734,8 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+if (hasInstanceLock) app.on('second-instance', focusRunningInstance);
 
 app.on('before-quit', handleBeforeQuit);
 

@@ -1,4 +1,6 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import * as electron from 'electron';
+import { BrowserWindow } from 'electron';
 
 const electronMocks = vi.hoisted(() => {
   const events = new Map<string, (...args: any[]) => unknown>();
@@ -40,6 +42,7 @@ const electronMocks = vi.hoisted(() => {
 vi.mock('electron', () => ({
   app: {
     setName: vi.fn(),
+    requestSingleInstanceLock: vi.fn(() => true),
     commandLine: { appendSwitch: vi.fn() },
     isPackaged: false,
     whenReady: vi.fn(async () => {}),
@@ -133,6 +136,61 @@ describe('desktop startup', () => {
     electronMocks.events.get('window-all-closed')?.();
 
     expect(electronMocks.quit).toHaveBeenCalledOnce();
+  });
+});
+
+describe('a second launch, from the instance that is running', () => {
+  const window = (over: Record<string, unknown> = {}) => ({
+    isMinimized: vi.fn(() => false),
+    restore: vi.fn(),
+    focus: vi.fn(),
+    ...over,
+  });
+  const getAllWindows = () => (BrowserWindow as unknown as { getAllWindows: Mock }).getAllWindows;
+
+  it('holds the instance lock, and listens for the others that try', () => {
+    expect(electron.app.requestSingleInstanceLock).toHaveBeenCalledOnce();
+    expect(electronMocks.events.get('second-instance')).toBeTypeOf('function');
+  });
+
+  it('takes the lock after the app got its name and before it touched anything else', () => {
+    const lock = electron.app.requestSingleInstanceLock as Mock;
+    const name = electron.app.setName as Mock;
+    expect(name.mock.invocationCallOrder[0]).toBeLessThan(lock.mock.invocationCallOrder[0]);
+    expect(lock.mock.invocationCallOrder[0]).toBeLessThan(
+      electronMocks.clearCache.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('brings the window it has to the front', () => {
+    const open = window();
+    getAllWindows().mockReturnValueOnce([open]);
+
+    electronMocks.events.get('second-instance')?.();
+
+    expect(open.focus).toHaveBeenCalledOnce();
+    expect(open.restore).not.toHaveBeenCalled();
+  });
+
+  it('restores a window that was minimised before focusing it', () => {
+    const open = window({ isMinimized: vi.fn(() => true) });
+    getAllWindows().mockReturnValueOnce([open]);
+
+    electronMocks.events.get('second-instance')?.();
+
+    expect(open.restore).toHaveBeenCalledOnce();
+    expect(open.focus).toHaveBeenCalledOnce();
+  });
+
+  it('opens a window when it is running with none', async () => {
+    getAllWindows().mockReturnValueOnce([]);
+    const before = electronMocks.BrowserWindow.mock.calls.length;
+
+    electronMocks.events.get('second-instance')?.();
+
+    await vi.waitFor(() =>
+      expect(electronMocks.BrowserWindow.mock.calls.length).toBeGreaterThan(before),
+    );
   });
 });
 

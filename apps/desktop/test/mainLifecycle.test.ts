@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import * as electron from 'electron';
 import { BrowserWindow } from 'electron';
 
@@ -34,6 +34,7 @@ const electronMocks = vi.hoisted(() => {
     handle: vi.fn(),
     protocolHandle: vi.fn(),
     quit: vi.fn(),
+    exit: vi.fn(),
     registerSchemesAsPrivileged: vi.fn(),
     windows,
   };
@@ -51,6 +52,7 @@ vi.mock('electron', () => ({
       electronMocks.events.set(event, handler),
     ),
     quit: electronMocks.quit,
+    exit: electronMocks.exit,
   },
   BrowserWindow: Object.assign(electronMocks.BrowserWindow, { getAllWindows: vi.fn(() => []) }),
   ipcMain: { handle: electronMocks.handle },
@@ -77,8 +79,10 @@ vi.mock('electron', () => ({
 
 vi.mock('fs', () => ({ existsSync: vi.fn(() => true) }));
 
+let main: typeof import('../src/main');
+
 beforeAll(async () => {
-  await import('../src/main');
+  main = await import('../src/main');
   await vi.waitFor(() => expect(electronMocks.windows).toHaveLength(1));
 });
 
@@ -244,5 +248,52 @@ describe('external links', () => {
 
     expect(event.preventDefault).not.toHaveBeenCalled();
     expect(electronMocks.openExternal).not.toHaveBeenCalled();
+  });
+});
+
+describe('graceful shutdown on OS signals', () => {
+  beforeEach(() => {
+    main.resetSignalShutdownForTests();
+    electronMocks.quit.mockClear();
+    electronMocks.exit.mockClear();
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('wires SIGINT and SIGTERM to the graceful shutdown', () => {
+    const target = { on: vi.fn() };
+
+    main.registerProcessSignalHandlers(target);
+
+    expect(target.on).toHaveBeenCalledWith('SIGINT', main.handleSigint);
+    expect(target.on).toHaveBeenCalledWith('SIGTERM', main.handleSigterm);
+  });
+
+  it('routes the first signal through app.quit so before-quit can flush the vault', () => {
+    main.handleProcessSignal('SIGINT');
+
+    expect(electronMocks.quit).toHaveBeenCalledOnce();
+    expect(electronMocks.exit).not.toHaveBeenCalled();
+  });
+
+  it('forces an immediate exit on a second signal instead of hanging', () => {
+    main.handleProcessSignal('SIGTERM');
+    main.handleProcessSignal('SIGINT');
+
+    expect(electronMocks.quit).toHaveBeenCalledOnce();
+    expect(electronMocks.exit).toHaveBeenCalledTimes(1);
+    expect(electronMocks.exit).toHaveBeenCalledWith(1);
+  });
+
+  it('lets a quit be initiated again after the test seam resets it', () => {
+    main.handleProcessSignal('SIGINT');
+    main.resetSignalShutdownForTests();
+    main.handleProcessSignal('SIGTERM');
+
+    expect(electronMocks.quit).toHaveBeenCalledTimes(2);
+    expect(electronMocks.exit).not.toHaveBeenCalled();
   });
 });

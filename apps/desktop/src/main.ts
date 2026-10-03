@@ -577,6 +577,54 @@ export function resetQuitFlushForTests(): void {
   quitFlushed = false;
 }
 
+let signalQuitInitiated = false;
+
+/**
+ * Graceful shutdown for OS signals (Ctrl+C in a terminal, SIGTERM from systemd/Docker).
+ *
+ * Registering any `process.on('SIGINT')` listener replaces Node's default "die with the
+ * signal" behavior, so without this the process never reaches `before-quit` and the vault
+ * flush in `handleBeforeQuit` is skipped. Routing the first signal through `app.quit()`
+ * keeps that flush: `before-quit` fires, pending vault writes land (up to 3s), then the app
+ * exits normally. A second signal while the first is still being handled forces an
+ * immediate exit instead of hanging on a stuck disk write. Exported so tests can drive it.
+ */
+export function handleProcessSignal(signal: 'SIGINT' | 'SIGTERM'): void {
+  if (signalQuitInitiated) {
+    console.log(`[desktop] received a second ${signal}, exiting immediately.`);
+    app.exit(1);
+    return;
+  }
+  signalQuitInitiated = true;
+  console.log(`[desktop] received ${signal}, quitting gracefully.`);
+  app.quit();
+}
+
+/** Named listeners so tests can assert the wiring and remove them from the real process. */
+export function handleSigint(): void {
+  handleProcessSignal('SIGINT');
+}
+
+/** Named listeners so tests can assert the wiring and remove them from the real process. */
+export function handleSigterm(): void {
+  handleProcessSignal('SIGTERM');
+}
+
+type SignalTarget = {
+  on(event: 'SIGINT' | 'SIGTERM', listener: () => void): unknown;
+};
+
+/** Wires both signals to the graceful shutdown above. The target is injectable for tests. */
+export function registerProcessSignalHandlers(target: SignalTarget = process): void {
+  target.on('SIGINT', handleSigint);
+  target.on('SIGTERM', handleSigterm);
+}
+
+/** Test seam: lets a signal quit be initiated again after one went through. */
+export function resetSignalShutdownForTests(): void {
+  signalQuitInitiated = false;
+}
+
 /** Exported so the test can register the channels without needing the app to be ready. */
 export function registerAuthIpcHandlers() {
   ipcMain.handle('auth:status', async (event) => {
@@ -735,7 +783,13 @@ app.whenReady().then(async () => {
   });
 });
 
-if (hasInstanceLock) app.on('second-instance', focusRunningInstance);
+if (hasInstanceLock) {
+  app.on('second-instance', focusRunningInstance);
+  // Ctrl+C / SIGTERM must go through app.quit() (and therefore before-quit's vault flush)
+  // instead of killing the process with the signal. Only the primary instance touches
+  // storage, so only it needs these.
+  registerProcessSignalHandlers();
+}
 
 app.on('before-quit', handleBeforeQuit);
 

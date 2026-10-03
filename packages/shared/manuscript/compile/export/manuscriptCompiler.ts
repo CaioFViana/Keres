@@ -47,6 +47,10 @@ export type CompiledBlock =
     }
   | { kind: 'loose-heading'; label: string; bookmarkId: string }
   | { kind: 'paragraph'; spans: CompiledSpan[] }
+  /** One bulleted list item; consecutive items group into one list per renderer. */
+  | { kind: 'bullet'; spans: CompiledSpan[] }
+  /** One numbered list item; renderers number consecutive items from 1. */
+  | { kind: 'ordered'; index: number; spans: CompiledSpan[] }
   /** Between two scenes of one chapter, when a separator is asked for: drawn centered. */
   | { kind: 'scene-break'; text: string }
   | {
@@ -190,7 +194,10 @@ function sectionsToBlocks({
     if (bookmarkId) emitted.add(bookmarkId);
     if (section.scene.body) {
       for (const parsed of parseManuscriptMarkdown(section.scene.body)) {
-        blocks.push({ kind: 'paragraph', spans: toSpans(parsed) });
+        if (parsed.kind === 'bullet') blocks.push({ kind: 'bullet', spans: toSpans(parsed) });
+        else if (parsed.kind === 'ordered')
+          blocks.push({ kind: 'ordered', index: parsed.index, spans: toSpans(parsed) });
+        else blocks.push({ kind: 'paragraph', spans: toSpans(parsed) });
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {

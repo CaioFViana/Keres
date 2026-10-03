@@ -489,3 +489,27 @@ describe('manuscriptTocEntries', () => {
     ]);
   });
 });
+
+describe('compileLinearManuscript lists', () => {
+  it('compiles body items to bullet and ordered blocks in order', () => {
+    const manuscript = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'Intro.\n\n- one\n\n9. nine' })],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Appendix',
+    });
+
+    expect(kinds(manuscript.blocks)).toEqual([
+      'title',
+      'chapter',
+      'scene-heading',
+      'paragraph',
+      'bullet',
+      'ordered',
+    ]);
+    expect(manuscript.blocks[4]).toMatchObject({ kind: 'bullet' });
+    expect(manuscript.blocks[5]).toMatchObject({ kind: 'ordered', index: 9 });
+  });
+});

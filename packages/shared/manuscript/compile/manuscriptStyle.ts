@@ -305,6 +305,8 @@ export function presentManuscript(
         break;
       }
       case 'paragraph':
+      case 'bullet':
+      case 'ordered':
         blocks.push({ ...block, spans: presentSpans(block.spans, style, fill) });
         break;
       case 'choice':

@@ -68,6 +68,7 @@ export function pdfGeometry(options: ManuscriptRenderOptions = {}): PdfGeometry 
 
 const CHOICE_INDENT = 18;
 const TOC_INDENT = 18;
+const LIST_INDENT = 18;
 
 /**
  * The manuscript is set in Times, one of PDF's fourteen standard fonts: no
@@ -369,7 +370,10 @@ export function* iterateRuns(
 
   let prevBlockKind: string | null = null;
   let tocEmitted = false;
+  // Display numbers of one ordered run; any other block restarts the run at 1.
+  let orderedCount = 0;
   for (const block of manuscript.blocks) {
+    if (block.kind !== 'ordered') orderedCount = 0;
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) {
@@ -470,6 +474,48 @@ export function* iterateRuns(
           keepWithNext: true,
         });
         break;
+      case 'bullet':
+      case 'ordered': {
+        if (block.kind === 'ordered') orderedCount += 1;
+        const marker = block.kind === 'bullet' ? '•' : `${orderedCount}.`;
+        const markerWord: Word = {
+          text: marker,
+          font: 'times',
+          width: widthOfTextAtSize(marker, 'times', BODY_SIZE),
+          underline: false,
+          strikethrough: false,
+        };
+        const groups = hardLineGroups(block.spans, BODY_SIZE);
+        groups.forEach((group, groupIndex) => {
+          const words = groupIndex === 0 ? [markerWord, ...group] : group;
+          const { lines, indents } = wrapGroup(
+            words,
+            BODY_SIZE,
+            CONTENT_WIDTH,
+            LIST_INDENT,
+            LIST_INDENT,
+          );
+          lines.forEach((lineWords, index) => {
+            const lastOfItem =
+              groups.indexOf(group) === groups.length - 1 && index === lines.length - 1;
+            runs.push({
+              words: lineWords,
+              size: BODY_SIZE,
+              leading: BODY_LEADING,
+              indent: indents[index],
+              spaceBefore: 0,
+              spaceAfter: lastOfItem ? geometry.paragraphGap : 0,
+              centered: false,
+              gray: INK,
+              bookmarkId: null,
+              linkTarget: null,
+              keepWithNext: false,
+              forcePageBreak: false,
+            });
+          });
+        });
+        break;
+      }
       case 'choice': {
         const page = block.targetBookmarkId
           ? (anchors.get(block.targetBookmarkId)?.page ?? null)

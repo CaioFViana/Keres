@@ -183,9 +183,11 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   and ID remap; language-aware file naming (slug + date).
 - **Manuscript pipeline** (`packages/shared/manuscript`): styled runs,
   never-throw markdown parser with whitespace round-trip, 50 MB cap
-  (`MAX_MANUSCRIPT_BYTES`); compiles **DOCX** (TOC/bookmarks/PAGEREF/footer),
-  **MD**, **TXT**, **HTML**, **EPUB** and **PDF** (pure-TS renderer, one text
-  object per line, TOC links and real choice page numbers) - on the device and
+  (`MAX_MANUSCRIPT_BYTES`); paragraphs plus single-line list items
+  (`- `, `1. `, stored backslash-escaped when literal); compiles **DOCX**
+  (TOC/bookmarks/PAGEREF/footer), **MD**, **TXT**, **HTML**, **EPUB** and
+  **PDF** (pure-TS renderer, one text object per line, FlateDecode-compressed
+  streams, TOC links and real choice page numbers) - on the device and
   on the server alike. A branching story compiles as a whole **gamebook**
   (`compileGamebookManuscript`): every scene reachable from its start(s),
   numbered as met or shuffled by seed (`sceneOrder`), unreachable ones last,

@@ -153,6 +153,10 @@ function blockXhtml(
     }
     case 'paragraph':
       return `<p>${spansToHtml(block.spans)}</p>`;
+    case 'bullet':
+    case 'ordered':
+      // Grouped by blocksXhtml below: a lone item renders as its own list.
+      return `<${block.kind === 'bullet' ? 'ul' : 'ol'}>\n<li>${spansToHtml(block.spans)}</li>\n</${block.kind === 'bullet' ? 'ul' : 'ol'}>`;
     case 'scene-break':
       return `<p class="scene-break">${escapeHtml(block.text)}</p>`;
     case 'choice': {
@@ -170,6 +174,38 @@ function blockXhtml(
       return lines.join('\n');
     }
   }
+}
+
+/** Consecutive items share one list element; any other block closes it. */
+function blocksXhtml(
+  blocks: CompiledBlock[],
+  labels: ManuscriptEpubLabels,
+  href: (bookmarkId: string) => string,
+): string[] {
+  const parts: string[] = [];
+  let openList: 'ul' | 'ol' | null = null;
+  const closeList = () => {
+    if (openList) {
+      parts.push(`</${openList}>`);
+      openList = null;
+    }
+  };
+  for (const block of blocks) {
+    if (block.kind === 'bullet' || block.kind === 'ordered') {
+      const tag = block.kind === 'bullet' ? 'ul' : 'ol';
+      if (openList !== tag) {
+        closeList();
+        parts.push(`<${tag}>`);
+        openList = tag;
+      }
+      parts.push(`<li>${spansToHtml(block.spans)}</li>`);
+      continue;
+    }
+    closeList();
+    parts.push(blockXhtml(block, labels, href));
+  }
+  closeList();
+  return parts;
 }
 
 /** The whole package, before zipping: path → text. Exposed for tests. */
@@ -203,7 +239,7 @@ export function buildManuscriptEpubEntries(
   const texts = files
     .filter((file) => file.blocks.length > 0 || file === files[0])
     .map((file, index) => {
-      const parts = file.blocks.map((block) => blockXhtml(block, labels, href));
+      const parts = blocksXhtml(file.blocks, labels, href);
       // The in-book index, when asked for, follows the title block like in every other format.
       if (index === 0 && options.includeToc && entries.length > 0) {
         parts.push(

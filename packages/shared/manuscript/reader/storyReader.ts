@@ -167,15 +167,36 @@ function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
   const prompt: string[] = [];
   const opening: { to: string }[] = [];
   let current: ReaderStoryData['scenes'][string] | null = null;
+  // Consecutive items share one list element inside the scene's html.
+  let openList: 'ul' | 'ol' | null = null;
+  const closeList = () => {
+    if (current && openList) current.html += `</${openList}>`;
+    openList = null;
+  };
+  const pushListItem = (tag: 'ul' | 'ol', inner: string) => {
+    if (!current) return;
+    if (openList !== tag) {
+      if (openList) current.html += `</${openList}>`;
+      current.html += `<${tag}>`;
+      openList = tag;
+    }
+    current.html += `<li>${inner}</li>`;
+  };
   for (const block of blocks) {
     if (block.kind === 'scene-heading') {
+      closeList();
       current = { name: block.name, number: block.number, html: '', choices: [], effects: [] };
       scenes[block.id] = current;
       order.push(block.id);
     } else if (block.kind === 'paragraph') {
+      closeList();
       if (current) current.html += `<p>${spansToHtml(block.spans)}</p>`;
       else prompt.push(block.spans.map((span) => span.text).join(''));
+    } else if (block.kind === 'bullet' || block.kind === 'ordered') {
+      if (current) pushListItem(block.kind === 'bullet' ? 'ul' : 'ol', spansToHtml(block.spans));
+      else prompt.push(`- ${block.spans.map((span) => span.text).join('')}`);
     } else if (block.kind === 'choice') {
+      closeList();
       if (current) {
         current.choices.push({
           i: block.id,
@@ -187,6 +208,7 @@ function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
       }
     }
   }
+  closeList();
   const promptText = prompt.join(' ').trim();
   const options =
     opening.length > 0

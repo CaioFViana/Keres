@@ -1,3 +1,4 @@
+import { inflate } from 'pako';
 import { describe, expect, it } from 'vitest';
 import type {
   CompiledBlock,
@@ -23,12 +24,31 @@ function raw(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString('latin1');
 }
 
+/**
+ * Decompressed page contents, concatenated: what the viewer draws. Sliced by
+ * the declared `/Length` (never by scanning for `endstream`, which deflated
+ * bytes could mimic), so binary content can never confuse the harness.
+ */
+function pageContent(bytes: Uint8Array): string {
+  const bin = raw(bytes);
+  const header = /\/Length (\d+) \/Filter \/FlateDecode >>\nstream\n/g;
+  const contents: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = header.exec(bin)) !== null) {
+    const length = Number(match[1]);
+    const start = match.index + match[0].length;
+    const slice = bin.slice(start, start + length);
+    contents.push(Buffer.from(inflate(Buffer.from(slice, 'latin1'))).toString('latin1'));
+  }
+  return contents.join('\n');
+}
+
 /** Every word the renderer shows, in draw order. */
 function shownText(bytes: Uint8Array): string {
   const shown: string[] = [];
   const textPattern = /\((?:\\.|[^\\()])*\) Tj/g;
   let text: RegExpExecArray | null;
-  const content = raw(bytes);
+  const content = pageContent(bytes);
   while ((text = textPattern.exec(content)) !== null) {
     shown.push(text[0].replace(/^\(|\) Tj$/g, '').replace(/\\(.)/g, '$1'));
   }
@@ -193,7 +213,7 @@ describe('buildManuscriptPdf', () => {
   });
 
   it('trims phantom lines from empty headings', () => {
-    const text = raw(
+    const text = pageContent(
       buildManuscriptPdf(
         { title: '', blocks: [{ kind: 'title', text: '' }, paragraph('First line.')] },
         LABELS,
@@ -205,7 +225,7 @@ describe('buildManuscriptPdf', () => {
   });
 
   it('trims paragraphs that degrade to nothing', () => {
-    const text = raw(
+    const text = pageContent(
       buildManuscriptPdf(
         manuscript([paragraph(String.fromCharCode(0x200b)), paragraph('Visible.')]),
         LABELS,
@@ -224,7 +244,9 @@ describe('buildManuscriptPdf', () => {
 
   it('lays out proportionally: narrow words start further right when centered', () => {
     const xOf = (title: string): number => {
-      const text = raw(buildManuscriptPdf(manuscript([{ kind: 'title', text: title }]), LABELS));
+      const text = pageContent(
+        buildManuscriptPdf(manuscript([{ kind: 'title', text: title }]), LABELS),
+      );
       return Number(text.match(/1 0 0 1 (\S+) \S+ Tm/)?.[1]);
     };
 
@@ -330,8 +352,10 @@ describe('buildManuscriptPdf', () => {
     };
 
     // Three marked words, two rules: the contiguous underline shares one.
-    expect(raw(buildManuscriptPdf(marked, LABELS)).match(/re f/g)).toHaveLength(2);
-    expect(raw(buildManuscriptPdf(manuscript([paragraph('plain')]), LABELS))).not.toContain('re f');
+    expect(pageContent(buildManuscriptPdf(marked, LABELS)).match(/re f/g)).toHaveLength(2);
+    expect(pageContent(buildManuscriptPdf(manuscript([paragraph('plain')]), LABELS))).not.toContain(
+      're f',
+    );
   });
 
   it('omits the index unless enabled', () => {
@@ -403,14 +427,16 @@ describe('buildManuscriptPdf', () => {
 
   describe('content stream size', () => {
     it('sets a line of one face as a single string', () => {
-      const text = raw(buildManuscriptPdf(manuscript([paragraph('one two three')]), LABELS));
+      const text = pageContent(
+        buildManuscriptPdf(manuscript([paragraph('one two three')]), LABELS),
+      );
       expect(text).toContain('(one two three) Tj');
     });
 
     it('starts a new string only when the face changes, the space riding with the next word', () => {
       const bold = { bold: true, italic: false, underline: false, strikethrough: false };
       const plain = { bold: false, italic: false, underline: false, strikethrough: false };
-      const text = raw(
+      const text = pageContent(
         buildManuscriptPdf(
           manuscript([
             {
@@ -437,6 +463,83 @@ describe('buildManuscriptPdf', () => {
         blocks.push(paragraph(line));
       }
       expect(buildManuscriptPdf(manuscript(blocks), LABELS).length).toBeLessThan(characters * 3);
+    });
+  });
+
+  describe('deflated content streams', () => {
+    it('declares FlateDecode on every page stream', () => {
+      const bytes = buildManuscriptPdf(
+        manuscript([
+          { kind: 'chapter', id: 'c-1', number: 1, name: 'First', bookmarkId: 'chapter-c1' },
+          paragraph('First.'),
+          { kind: 'chapter', id: 'c-2', number: 2, name: 'Second', bookmarkId: 'chapter-c2' },
+          paragraph('Second.'),
+        ]),
+        LABELS,
+      );
+      const text = raw(bytes);
+
+      expect(text).toContain('/Filter /FlateDecode');
+      // One declaration per page: title plus first chapter share one, the
+      // second chapter opens another.
+      expect(text.match(/\/Filter \/FlateDecode/g)).toHaveLength(2);
+    });
+
+    it('round-trips every drawn word through inflate', () => {
+      const bytes = buildManuscriptPdf(
+        manuscript([paragraph('Once upon a time, “Olá” — the end.')]),
+        LABELS,
+      );
+
+      expectSoundXref(bytes);
+      expect(shownText(bytes)).toContain('Once upon a time,');
+      expect(shownText(bytes)).toContain('the end.');
+    });
+
+    it('packs a book of prose into fewer bytes than its text', () => {
+      const blocks: CompiledBlock[] = [{ kind: 'title', text: 'My Story' }];
+      let characters = 0;
+      for (let index = 0; index < 400; index += 1) {
+        const line = `Paragraph ${index} walks slowly through the empty square while the rain keeps falling.`;
+        characters += line.length;
+        blocks.push(paragraph(line));
+      }
+      const bytes = buildManuscriptPdf(manuscript(blocks), LABELS);
+
+      expectSoundXref(bytes);
+      expect(bytes.length).toBeLessThan(characters);
+    });
+  });
+
+  describe('lists', () => {
+    const spansOf = (text: string) => [
+      { text, bold: false, italic: false, underline: false, strikethrough: false },
+    ];
+
+    it('draws bullets with a bullet marker and ordered items numbered from 1', () => {
+      const text = shownText(
+        buildManuscriptPdf(
+          manuscript([
+            { kind: 'bullet', spans: spansOf('First item') },
+            { kind: 'bullet', spans: spansOf('Second item') },
+            { kind: 'ordered', index: 7, spans: spansOf('First step') },
+            { kind: 'ordered', index: 9, spans: spansOf('Second step') },
+          ]),
+          LABELS,
+        ),
+      );
+
+      expectSoundXref(
+        buildManuscriptPdf(manuscript([{ kind: 'bullet', spans: spansOf('First item') }]), LABELS),
+      );
+      // The bullet rides WinAnsi (0x95), read back as Latin-1 like the punctuation tests.
+      expect(text).toContain(String.fromCharCode(0x95));
+      expect(text).toContain('First item');
+      expect(text).toContain('Second item');
+      expect(text).toContain('1.');
+      expect(text).toContain('First step');
+      expect(text).toContain('2.');
+      expect(text).toContain('Second step');
     });
   });
 });

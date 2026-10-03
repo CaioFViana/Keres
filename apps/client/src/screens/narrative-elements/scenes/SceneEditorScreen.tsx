@@ -11,7 +11,6 @@ import {
 import Button from '../../../components/common/controls/Button/Button';
 import type { HeaderAction } from '../../../components/common/navigation/HeaderActions/HeaderActions';
 import CommentThreadModal from '../../../components/features/comments/CommentThreadModal/CommentThreadModal';
-import type { ManuscriptMark } from '@keres/shared';
 import { MarkdownPreview } from '../../../components/features/manuscript/MarkdownPreview/MarkdownPreview';
 import { manuscriptTextMetrics } from '../../../components/features/manuscript/manuscriptTextMetrics';
 import { RichBodyEditor } from '../../../components/features/manuscript/RichBodyEditor/RichBodyEditor';
@@ -130,7 +129,7 @@ function SceneEditorContent({
   // passage stays exactly where it was instead of jumping back to the top.
   const scrollRef = useRef<ScrollView | null>(null);
   const handleToolbarAction = useCallback(
-    (kind: ManuscriptMark) => {
+    (kind: Parameters<typeof applyFormat>[0]) => {
       applyFormat(kind);
       // A real editor keeps the caret: reassert input focus so typing
       // continues in the toggled style with the keyboard up.

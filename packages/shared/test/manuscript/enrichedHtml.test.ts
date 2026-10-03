@@ -153,4 +153,54 @@ describe('enrichedHtmlToDocument', () => {
 
     expect(serializeDocumentToMarkdown(back)).toBe('a\n\nb');
   });
+
+  it('groups consecutive items into one list element', () => {
+    expect(
+      documentToEnrichedHtml({
+        blocks: [
+          paragraph('a'),
+          { kind: 'bullet', spans: [{ text: 'one', marks: [] }] },
+          { kind: 'bullet', spans: [{ text: 'two', marks: ['bold'] }] },
+          { kind: 'ordered', index: 1, spans: [{ text: 'first', marks: [] }] },
+          { kind: 'ordered', index: 2, spans: [{ text: 'second', marks: [] }] },
+          paragraph('b'),
+        ],
+      }),
+    ).toBe(
+      '<html><p>a</p><ul><li>one</li><li><b>two</b></li></ul>' +
+        '<ol><li>first</li><li>second</li></ol><p>b</p></html>',
+    );
+  });
+
+  it('reads lists back as items, keeping marks and order', () => {
+    const doc = enrichedHtmlToDocument(
+      '<html><p>a</p><ul><li>one</li><li><b>two</b></li></ul>' +
+        '<ol><li>first</li><li>second</li></ol></html>',
+    );
+
+    expect(doc.blocks.map((block) => block.kind)).toEqual([
+      'paragraph',
+      'bullet',
+      'bullet',
+      'ordered',
+      'ordered',
+    ]);
+    expect(doc.blocks[2].spans).toEqual([{ text: 'two', marks: ['bold'] }]);
+    expect(doc.blocks[3]).toMatchObject({ kind: 'ordered', index: 1 });
+    expect(doc.blocks[4]).toMatchObject({ kind: 'ordered', index: 2 });
+    expect(documentTextContent(doc)).toBe('a\n\none\n\ntwo\n\nfirst\n\nsecond');
+  });
+
+  it('round-trips lists through HTML without changing markdown', () => {
+    const markdown = 'Intro.\n\n- one\n- **two**\n\n1. first\n2. second\n\nOutro.';
+    const back = enrichedHtmlToDocument(documentToEnrichedHtml(parseMarkdownToDocument(markdown)));
+
+    expect(serializeDocumentToMarkdown(back)).toBe(markdown);
+  });
+
+  it('flattens breaks inside items to spaces', () => {
+    const doc = enrichedHtmlToDocument('<html><ul><li>a<br>b</li></ul></html>');
+
+    expect(doc.blocks).toEqual([{ kind: 'bullet', spans: [{ text: 'a b', marks: [] }] }]);
+  });
 });

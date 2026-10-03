@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { inflate } from 'pako';
 import { describe, expect, it } from 'vitest';
 import {
   compileLinearManuscript,
@@ -166,7 +167,19 @@ describe('scene separators', () => {
     expect(buildManuscriptText(manuscript, labels)).toContain('\n* * *\n');
     const hashed = compile('#');
     expect(buildManuscriptMarkdown(hashed, labels)).toContain('\n\\#\n');
-    const pdf = Buffer.from(buildManuscriptPdf(manuscript, labels)).toString('latin1');
+    // Page streams ride deflated: inflate before reading the drawn strings.
+    const bin = Buffer.from(buildManuscriptPdf(manuscript, labels)).toString('latin1');
+    const header = /\/Length (\d+) \/Filter \/FlateDecode >>\nstream\n/g;
+    let pdf = '';
+    let match: RegExpExecArray | null;
+    while ((match = header.exec(bin)) !== null) {
+      const length = Number(match[1]);
+      const slice = bin.slice(
+        match.index + match[0].length,
+        match.index + match[0].length + length,
+      );
+      pdf += Buffer.from(inflate(Buffer.from(slice, 'latin1'))).toString('latin1');
+    }
     // The PDF sets the line as one string: three asterisks, centered.
     expect(pdf.match(/\(\* \* \*\) Tj/g)).toHaveLength(1);
     const docx = await buildManuscriptDocxBytes(manuscript, labels);

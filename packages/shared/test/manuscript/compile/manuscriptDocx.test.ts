@@ -253,4 +253,24 @@ describe('buildManuscriptDocxBytes', () => {
     expect(footerXml).toContain('PAGE');
     expect(footerXml).toContain('NUMPAGES');
   });
+
+  it('renders list items as indented paragraphs with markers', async () => {
+    const listed = compileLinearManuscript({
+      title: 'My Story',
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'Intro.\n\n- one\n- two\n\n4. four\n5. five' })],
+      choices: [],
+      includeLooseScenes: true,
+      looseHeadingLabel: 'Loose',
+    });
+    const xml = await documentXml(
+      await buildManuscriptDocxBytes(listed, { goToPage: 'Go to page', tocHeading: 'Contents' }),
+    );
+
+    expect(xml).toContain('•  ');
+    expect(xml).toContain('one');
+    expect(xml).toContain('1.  ');
+    expect(xml).toContain('2.  ');
+    expect(xml).toContain('five');
+  });
 });

@@ -122,11 +122,14 @@ export function buildManuscriptDocument(
   };
   let firstContent = true;
   let tocEmitted = false;
+  // Display numbers of one ordered run; any other block restarts the run at 1.
+  let orderedNumber = 0;
   for (const block of manuscript.blocks) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) pushToc(manuscriptTocEntries(manuscript.blocks));
     }
+    if (block.kind !== 'ordered') orderedNumber = 0;
     switch (block.kind) {
       case 'title':
         children.push(
@@ -204,6 +207,26 @@ export function buildManuscriptDocument(
           ),
         );
         break;
+      case 'bullet':
+        children.push(
+          new Paragraph({
+            indent: { left: 360 },
+            spacing: { after: PARAGRAPH_SPACING_AFTER },
+            children: [new TextRun('•  '), ...spansToRuns(block.spans)],
+          }),
+        );
+        break;
+      case 'ordered': {
+        orderedNumber += 1;
+        children.push(
+          new Paragraph({
+            indent: { left: 360 },
+            spacing: { after: PARAGRAPH_SPACING_AFTER },
+            children: [new TextRun(`${orderedNumber}.  `), ...spansToRuns(block.spans)],
+          }),
+        );
+        break;
+      }
       case 'scene-break':
         children.push(
           new Paragraph({

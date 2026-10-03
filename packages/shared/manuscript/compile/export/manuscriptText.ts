@@ -101,11 +101,13 @@ export function buildManuscriptMarkdown(
   const anchorFor = (bookmarkId: string | null) =>
     options.includeToc && bookmarkId !== null ? `<a id="${bookmarkId}"></a>` : null;
   let tocEmitted = false;
+  let orderedNumber = 0;
   for (const block of manuscript.blocks) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) pushToc();
     }
+    if (block.kind !== 'ordered') orderedNumber = 0;
     switch (block.kind) {
       case 'title':
         lines.push(`# ${block.text}`, '');
@@ -138,6 +140,13 @@ export function buildManuscriptMarkdown(
         // A literal leading hash would read as a heading; escape it per line.
         lines.push(spansToMarkdown(block.spans).replace(/^(#{1,3} )/gm, '\\$1'), '');
         break;
+      case 'bullet':
+        lines.push(`- ${spansToMarkdown(block.spans)}`, '');
+        break;
+      case 'ordered':
+        orderedNumber += 1;
+        lines.push(`${orderedNumber}. ${spansToMarkdown(block.spans)}`, '');
+        break;
       case 'scene-break':
         // A bare `#` would read as a heading; asterisks and dashes read as a rule, as meant.
         lines.push(block.text.replace(/^#/, '\\#'), '');
@@ -165,7 +174,9 @@ export function buildManuscriptText(
 ): string {
   const lines: string[] = [];
   const underline = (text: string, char: string) => [text, char.repeat(text.length), ''];
+  let orderedNumber = 0;
   for (const block of manuscript.blocks) {
+    if (block.kind !== 'ordered') orderedNumber = 0;
     switch (block.kind) {
       case 'title':
         lines.push(...underline(block.text, '='));
@@ -186,6 +197,13 @@ export function buildManuscriptText(
         break;
       case 'paragraph':
         lines.push(spansToText(block.spans), '');
+        break;
+      case 'bullet':
+        lines.push(`- ${spansToText(block.spans)}`, '');
+        break;
+      case 'ordered':
+        orderedNumber += 1;
+        lines.push(`${orderedNumber}. ${spansToText(block.spans)}`, '');
         break;
       case 'scene-break':
         lines.push(block.text, '');

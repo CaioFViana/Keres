@@ -149,12 +149,14 @@ export function useSceneBodyDraft({
   const onMarksChange = useCallback((marks: ManuscriptMark[]) => {
     setActiveMarks(marks);
   }, []);
-  const applyFormat = useCallback((kind: ManuscriptMark) => {
+  const applyFormat = useCallback((kind: ManuscriptMark | 'bullet' | 'ordered') => {
     const instance = editorRef.current;
     if (!instance) return;
     if (kind === 'bold') instance.toggleBold();
     else if (kind === 'italic') instance.toggleItalic();
     else if (kind === 'underline') instance.toggleUnderline();
+    else if (kind === 'bullet') instance.toggleUnorderedList();
+    else if (kind === 'ordered') instance.toggleOrderedList();
     else instance.toggleStrikeThrough();
   }, []);
 

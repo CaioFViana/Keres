@@ -91,11 +91,30 @@ export function buildManuscriptHtml(
     );
   };
   let tocEmitted = false;
+  // Consecutive items share one list element; any other block closes it.
+  let openList: 'ul' | 'ol' | null = null;
+  const closeList = () => {
+    if (openList) {
+      parts.push(`</${openList}>`);
+      openList = null;
+    }
+  };
   for (const block of manuscript.blocks) {
     if (!tocEmitted && block.kind !== 'title' && block.kind !== 'subtitle') {
       tocEmitted = true;
       if (options.includeToc) pushToc();
     }
+    if (block.kind === 'bullet' || block.kind === 'ordered') {
+      const tag = block.kind === 'bullet' ? 'ul' : 'ol';
+      if (openList !== tag) {
+        closeList();
+        parts.push(`<${tag}>`);
+        openList = tag;
+      }
+      parts.push(`<li>${spansToHtml(block.spans)}</li>`);
+      continue;
+    }
+    closeList();
     switch (block.kind) {
       case 'title':
         parts.push(`<h1 class="title">${escapeHtml(block.text)}</h1>`);
@@ -142,6 +161,7 @@ export function buildManuscriptHtml(
       }
     }
   }
+  closeList();
   const extraCss = typographyCss(
     options,
     manuscript.blocks.some((block) => block.kind === 'scene-break'),

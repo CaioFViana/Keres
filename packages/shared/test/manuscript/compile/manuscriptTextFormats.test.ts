@@ -504,3 +504,38 @@ describe('choice requirements and effects', () => {
     expect(html).not.toContain('choice-detail">');
   });
 });
+
+describe('manuscript lists across formats', () => {
+  const listed = compileLinearManuscript({
+    title: 'My Story',
+    chapters: [chapter],
+    scenes: [
+      {
+        id: 's-1',
+        chapterId: 'ch-1',
+        name: 'Opening',
+        index: 1,
+        body: 'Intro.\n\n- one\n- **two**\n\n5. five\n7. seven',
+        isDeleted: false,
+      },
+    ],
+    choices: [],
+    includeLooseScenes: true,
+    looseHeadingLabel: 'Loose',
+  });
+
+  it('renders grouped items in markdown and plain text, numbered from 1', () => {
+    const md = buildManuscriptMarkdown(listed, { goToScene: 'See', tocHeading: 'Contents' });
+    const text = buildManuscriptText(listed, { goToScene: 'See', tocHeading: 'Contents' });
+
+    expect(md).toContain('Intro.\n\n- one\n\n- **two**\n\n1. five\n\n2. seven\n');
+    expect(text).toContain('Intro.\n\n- one\n\n- two\n\n1. five\n\n2. seven\n');
+  });
+
+  it('renders grouped items as one html list element', () => {
+    const html = buildManuscriptHtml(listed, { goToScene: 'See', tocHeading: 'Contents' });
+
+    expect(html).toContain('<ul>\n<li>one</li>\n<li><strong>two</strong></li>\n</ul>');
+    expect(html).toContain('<ol>\n<li>five</li>\n<li>seven</li>\n</ol>');
+  });
+});

@@ -12,15 +12,17 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@types/pako": "1",
     "@typescript-eslint/eslint-plugin": "^8.66.0",
     "@typescript-eslint/parser": "^8.66.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.25.0",
-    "vitest": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "docx": "^9.7.1",
     "jszip": "^3.10.1",
+    "pako": "~1.0.2",
     "zod": "^4.1.12"
   }
 }

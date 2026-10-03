@@ -1,3 +1,4 @@
+import { deflate } from 'pako';
 import type { CompiledManuscript, ManuscriptRenderOptions } from './manuscriptCompiler';
 import {
   iterateRuns,
@@ -318,6 +319,11 @@ export function buildManuscriptPdf(
   }
   const { streams, annots } = laid!;
   const pageCount = streams.length;
+  // Page content streams ride deflated (`/Filter /FlateDecode`): the same
+  // drawing commands at roughly a tenth of the bytes, so a novel-length book
+  // stays far from the manuscript size cap. `pako` is pure JS with no
+  // platform imports, like every other dependency of this renderer.
+  const compressed = streams.map((page) => deflate(page));
 
   const writer = new PdfWriter();
   writer.ascii('%PDF-1.7\n');
@@ -343,7 +349,7 @@ export function buildManuscriptPdf(
     annotIdsByPage[annot.pageIndex].push(id);
   });
   const fontBase = firstPageId + 2 * pageCount;
-  streams.forEach((_, index) => {
+  compressed.forEach((page, index) => {
     const contentId = firstPageId + 2 * index + 1;
     const annotRefs = annotIdsByPage[index].map((id) => `${id} 0 R`).join(' ');
     const annotsEntry = annotRefs === '' ? '' : ` /Annots [${annotRefs}]`;
@@ -356,8 +362,8 @@ export function buildManuscriptPdf(
       );
     });
     writer.object((body) => {
-      body.ascii(`<< /Length ${streams[index].length} >>\nstream\n`);
-      body.raw(streams[index]);
+      body.ascii(`<< /Length ${page.length} /Filter /FlateDecode >>\nstream\n`);
+      body.raw(page);
       body.ascii('endstream\n');
     });
   });

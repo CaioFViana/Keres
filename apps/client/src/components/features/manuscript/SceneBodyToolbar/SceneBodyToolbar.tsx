@@ -4,17 +4,25 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import type { ManuscriptMark } from '@keres/shared';
 
-const ACTIONS: { kind: ManuscriptMark; glyph: string; labelKey: string }[] = [
+export type ManuscriptBlockAction = 'bullet' | 'ordered';
+
+const MARK_ACTIONS: { kind: ManuscriptMark; glyph: string; labelKey: string }[] = [
   { kind: 'bold', glyph: 'B', labelKey: 'manuscript_format_bold' },
   { kind: 'italic', glyph: 'I', labelKey: 'manuscript_format_italic' },
   { kind: 'underline', glyph: 'U', labelKey: 'manuscript_format_underline' },
   { kind: 'strikethrough', glyph: 'S', labelKey: 'manuscript_format_strikethrough' },
 ];
 
+const LIST_ACTIONS: { kind: ManuscriptBlockAction; glyph: string; labelKey: string }[] = [
+  { kind: 'bullet', glyph: '•', labelKey: 'manuscript_format_bullet' },
+  { kind: 'ordered', glyph: '1.', labelKey: 'manuscript_format_ordered' },
+];
+
 /**
- * Fixed formatting row above the prose input: bold, italic, underline and
- * strikethrough. A dumb button row - the native editor owns the logic and
- * the `active` map (from its style state) drives the primary highlight.
+ * Fixed formatting row above the prose input: bold, italic, underline,
+ * strikethrough, plus bulleted and numbered lists. A dumb button row - the
+ * native editor owns the logic and the `active` map (from its style state)
+ * drives the primary highlight (marks only: the editor reports no list state).
  */
 export function SceneBodyToolbar({
   onAction,
@@ -22,7 +30,7 @@ export function SceneBodyToolbar({
   active = {},
   testID,
 }: {
-  onAction(kind: ManuscriptMark): void;
+  onAction(kind: ManuscriptMark | ManuscriptBlockAction): void;
   disabled?: boolean;
   active?: Partial<Record<ManuscriptMark, boolean>>;
   testID?: string;
@@ -44,6 +52,7 @@ export function SceneBodyToolbar({
         },
         button: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
         glyph: { color: colors.text, fontSize: 17 },
+        glyphList: { fontWeight: '700', fontSize: 15 },
         glyphBold: { fontWeight: '700' },
         glyphItalic: { fontStyle: 'italic' },
         glyphUnderline: { textDecorationLine: 'underline' },
@@ -55,7 +64,7 @@ export function SceneBodyToolbar({
   );
   return (
     <View style={styles.row} testID={testID}>
-      {ACTIONS.map((action) => {
+      {MARK_ACTIONS.map((action) => {
         const isActive = active[action.kind] ?? false;
         return (
           <TouchableOpacity
@@ -86,6 +95,21 @@ export function SceneBodyToolbar({
           </TouchableOpacity>
         );
       })}
+      {LIST_ACTIONS.map((action) => (
+        <TouchableOpacity
+          key={action.kind}
+          testID={testID ? `${testID}.${action.kind}` : undefined}
+          // Like the marks above: formatting must not steal the caret.
+          focusable={false}
+          accessibilityRole="button"
+          accessibilityLabel={t(action.labelKey)}
+          style={[styles.button, disabled && styles.disabled]}
+          disabled={disabled}
+          onPress={() => onAction(action.kind)}
+        >
+          <Text style={[styles.glyph, styles.glyphList]}>{action.glyph}</Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }

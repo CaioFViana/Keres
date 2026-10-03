@@ -322,6 +322,23 @@ describe('RichBodyEditor', () => {
     expect(enrichedMock.__enrichedTest.refHolder.current).toBe(inputRef);
   });
 
+  it('paints list markers with the theme text color', async () => {
+    const view = await renderEditor();
+
+    // The host draws bullets black by default: invisible on a dark surface.
+    expect(view.getByTestId('editor.input').props.htmlStyle).toEqual({
+      ul: { bulletColor: '#111' },
+      ol: { markerColor: '#111' },
+    });
+  });
+
+  it('disables type-to-format shortcuts so hyphen dialogue stays text', async () => {
+    const view = await renderEditor();
+
+    // No `- `/`1. ` auto-lists: lists stay explicit through the toolbar.
+    expect(view.getByTestId('editor.input').props.textShortcuts).toEqual([]);
+  });
+
   it('keeps theme selection over the shared manuscript metrics', async () => {
     const view = await renderEditor();
 
@@ -391,10 +408,22 @@ describe('SceneBodyToolbar', () => {
     }
   });
 
+  it.each([
+    ['bullet', '•'],
+    ['ordered', '1.'],
+  ] as const)('dispatches %s from its list button', async (kind, glyph) => {
+    const onAction = jest.fn();
+    const view = await render(<SceneBodyToolbar onAction={onAction} testID="toolbar" />);
+
+    expect(view.getByText(glyph)).toBeTruthy();
+    await fireEvent.press(view.getByTestId(`toolbar.${kind}`));
+    expect(onAction).toHaveBeenCalledWith(kind);
+  });
+
   it('never steals the editor input focus', async () => {
     const view = await render(<SceneBodyToolbar onAction={jest.fn()} testID="toolbar" />);
 
-    for (const kind of ['bold', 'italic', 'underline', 'strikethrough']) {
+    for (const kind of ['bold', 'italic', 'underline', 'strikethrough', 'bullet', 'ordered']) {
       expect(view.getByTestId(`toolbar.${kind}`).props.focusable).toBe(false);
     }
   });
@@ -482,6 +511,20 @@ describe('MarkdownPreview', () => {
 
     expect(view.getByText('Old title')).toBeTruthy();
     expect(view.queryByText('# Old title')).toBeNull();
+  });
+
+  it('renders list items with markers and sequential numbers', async () => {
+    const view = await render(
+      <MarkdownPreview text={'- one\n- two\n\n7. seven\n9. nine'} testID="preview" />,
+    );
+
+    expect(view.getAllByText('•')).toHaveLength(2);
+    expect(view.getByText('one')).toBeTruthy();
+    expect(view.getByText('two')).toBeTruthy();
+    expect(view.getByText('1.')).toBeTruthy();
+    expect(view.getByText('2.')).toBeTruthy();
+    expect(view.getByText('seven')).toBeTruthy();
+    expect(view.queryByText('7.')).toBeNull();
   });
 
   it('renders body text with the shared manuscript metrics', async () => {

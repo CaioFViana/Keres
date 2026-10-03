@@ -364,6 +364,44 @@ describe('a branching reader', () => {
   });
 });
 
+describe('reader lists', () => {
+  it('keeps list structure inside branching scenes', () => {
+    const input: CompileStoryReaderInput = {
+      storyTitle: 'Packed',
+      storyType: 'branching',
+      chapters: [],
+      scenes: [
+        scene('a', 'Hall', 1, 'You pack:\n\n- rope\n- **torch**\n\n1. light it\n2. wait', {
+          isStart: true,
+        }),
+      ],
+      choices: [],
+      rules: rules(),
+    };
+    const { document } = open(decode(compileStoryReader(input, READER_OPTIONS).bytes));
+    const data = JSON.parse(document.getElementById('story-data')!.textContent!);
+
+    expect(data.scenes.a.html).toContain('<ul>');
+    expect(data.scenes.a.html).toContain('<li>rope</li>');
+    expect(data.scenes.a.html).toContain('<li><strong>torch</strong></li>');
+    expect(data.scenes.a.html).toContain('<ol>');
+  });
+
+  it('keeps list structure on the linear manuscript page', () => {
+    const input: CompileStoryReaderInput = {
+      storyTitle: 'Packed',
+      storyType: 'linear',
+      chapters: [{ id: 'ch', name: 'Arrival', index: 1, type: 'chapter' }],
+      scenes: [scene('a', 'Hall', 1, 'You pack:\n\n- rope\n- torch', { chapterId: 'ch' })],
+      choices: [],
+    };
+    const html = decode(compileStoryReader(input, READER_OPTIONS).bytes);
+
+    expect(html).toContain('<ul>');
+    expect(html).toContain('<li>rope</li>');
+  });
+});
+
 describe('a linear reader', () => {
   const linear = (): CompileStoryReaderInput => ({
     storyTitle: 'Long Road',

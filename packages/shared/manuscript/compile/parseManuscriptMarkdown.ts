@@ -8,7 +8,10 @@ export type ManuscriptInline = {
   strikethrough?: boolean;
 };
 
-export type ManuscriptBlock = { key: string; kind: 'paragraph'; inlines: ManuscriptInline[] };
+export type ManuscriptBlock =
+  | { key: string; kind: 'paragraph'; inlines: ManuscriptInline[] }
+  | { key: string; kind: 'bullet'; inlines: ManuscriptInline[] }
+  | { key: string; kind: 'ordered'; index: number; inlines: ManuscriptInline[] };
 
 /** Reader spans to flat export inlines: only true flags are set. */
 function toInline(span: ManuscriptSpan): ManuscriptInline {
@@ -73,11 +76,12 @@ function restoreEscapes(text: string): string {
 
 /**
  * Reader-visible text: the stored source minus the markdown markers (`**`, `*`,
- * `__`, `~~`), legacy `# ` prefixes and whole-line separators (`---`, `***`).
- * Fresh `#` is literal prose (the editor escapes it); only unescaped legacy
- * prefixes strip, mirroring the parser. Unmatched markers stay literal (and
- * counted), exactly as they render. Escaped literals (`\*`) count as their
- * char. Newlines are kept: they are prose structure, not markup.
+ * `__`, `~~`), legacy `# ` prefixes, list markers (`- `, `1. `) and
+ * whole-line separators (`---`, `***`). Fresh `#` is literal prose (the editor
+ * escapes it); only unescaped legacy prefixes strip, mirroring the parser.
+ * Unmatched markers stay literal (and counted), exactly as they render.
+ * Escaped literals (`\*`) count as their char. Newlines are kept: they are
+ * prose structure, not markup.
  */
 export function stripManuscriptMarkers(markdown: string): string {
   const stripped = protectEscapes(markdown)
@@ -86,6 +90,9 @@ export function stripManuscriptMarkers(markdown: string): string {
     .replace(/^(?:[ \t]*[*\-_]){3,}[ \t]*$/gm, '')
     // Legacy `# `/`## `/`### ` prefixes (a `#` without a trailing space is prose).
     .replace(/^#{1,3}[ \t]+(?=\S)/gm, '')
+    // List markers: unescaped ones are structure, escaped ones keep one literal char.
+    .replace(/^ {0,3}(?:- |\d{1,9}\. )/gm, '')
+    .replace(/^(\s{0,3})\\(- |\d{1,9}\. )/gm, '$1$2')
     // Paired inline markers, `**` before `*` so bold pairs are not half-eaten.
     .replace(/__(.+?)__/g, '$1')
     .replace(/~~(.+?)~~/g, '$1')
@@ -121,13 +128,52 @@ export function getManuscriptSizeStatus(storageCharCount: number): ManuscriptSiz
   return 'ok';
 }
 
+/** A stored marker backslash-escaped, so it reads as literal prose. */
+const LIST_ESCAPE_PATTERN = /^ {0,3}\\(- |\d{1,9}\. )/;
+
+function clampListIndex(index: number): number {
+  if (!Number.isFinite(index)) return 1;
+  return Math.min(9999, Math.max(1, Math.floor(index)));
+}
+
+/** Whether this raw line opens a list item (and which kind). */
+function listMarkerOf(
+  line: string,
+): { kind: 'bullet' } | { kind: 'ordered'; index: number } | null {
+  if (LIST_ESCAPE_PATTERN.test(line)) return null;
+  if (/^ {0,3}- ?$/.test(line)) return { kind: 'bullet' };
+  if (/^ {0,3}- (.*)$/.test(line)) return { kind: 'bullet' };
+  const bareOrdered = line.match(/^ {0,3}(\d{1,9})\.$/);
+  if (bareOrdered) return { kind: 'ordered', index: clampListIndex(Number(bareOrdered[1])) };
+  const ordered = line.match(/^ {0,3}(\d{1,9})\. (.*)$/);
+  if (ordered) return { kind: 'ordered', index: clampListIndex(Number(ordered[1])) };
+  return null;
+}
+
+function listItemRest(line: string): string {
+  const withContent = line.match(/^ {0,3}(?:- |\d{1,9}\. )(.*)$/);
+  if (withContent) return withContent[1];
+  if (/^ {0,3}(?:-|\d{1,9}\.)$/.test(line)) return '';
+  return line;
+}
+
+function parseInlineLines(lines: string[]): ManuscriptInline[] {
+  const inlines: ManuscriptInline[] = [];
+  lines.forEach((line, lineIndex) => {
+    if (lineIndex > 0) inlines.push({ text: '\n' });
+    for (const span of parseInlineLine(line)) inlines.push(toInline(span));
+  });
+  return mergeInlines(inlines);
+}
+
 /**
  * Minimal manuscript markdown: `**bold**`, `*italic*`, `__underline__`,
- * `~~strikethrough~~`, backslash escapes, blank-line separated blocks. Single
- * newlines inside a block survive as their own inlines (dialogue lines),
- * unmatched markers stay literal, legacy `# ` prefixes degrade to plain
- * paragraphs. Deliberately dependency-free: prose needs nothing more, and a
- * new renderer dependency is a Hermes-compat risk for zero gain.
+ * `~~strikethrough~~`, `- `/`1. ` list items, backslash escapes, blank-line
+ * separated blocks. Single newlines inside a block survive as their own
+ * inlines (dialogue lines), unmatched markers stay literal, legacy `# `
+ * prefixes degrade to plain paragraphs. Deliberately dependency-free: prose
+ * needs nothing more, and a new renderer dependency is a Hermes-compat risk
+ * for zero gain.
  *
  * Inline parsing IS the reader's: every line runs through the app's own stack
  * machine, so the export styles exactly what the app shows (nesting
@@ -138,17 +184,56 @@ export function parseManuscriptMarkdown(markdown: string): ManuscriptBlock[] {
     .split(/\n\s*\n/)
     .map((chunk) => chunk.trim())
     .filter(Boolean);
-  return chunks.map((chunk, index) => {
-    const key = `block-${index}`;
-    const lines = chunk
-      .replace(/^#{1,3}[ \t]+/, '')
-      .replace(/\r\n?/g, '\n')
-      .split('\n');
-    const inlines: ManuscriptInline[] = [];
-    lines.forEach((line, lineIndex) => {
-      if (lineIndex > 0) inlines.push({ text: '\n' });
-      for (const span of parseInlineLine(line)) inlines.push(toInline(span));
-    });
-    return { key, kind: 'paragraph', inlines: mergeInlines(inlines) };
-  });
+  const blocks: ManuscriptBlock[] = [];
+  let counter = 0;
+  const push = (
+    block:
+      | { kind: 'paragraph'; inlines: ManuscriptInline[] }
+      | { kind: 'bullet'; inlines: ManuscriptInline[] }
+      | { kind: 'ordered'; index: number; inlines: ManuscriptInline[] },
+  ) => {
+    blocks.push({ ...block, key: `block-${counter}` });
+    counter += 1;
+  };
+  for (const chunk of chunks) {
+    const lines = chunk.replace(/\r\n?/g, '\n').split('\n');
+    let pending: string[] = [];
+    // Whether the pending paragraph opens the chunk: only then does the
+    // legacy `# ` prefix degrade (a `# ` mid-chunk stays literal, as before).
+    let pendingFromStart = false;
+    const flushPending = () => {
+      if (pending.length === 0) return;
+      const [first, ...rest] = pending;
+      const content = pendingFromStart
+        ? [first.replace(/^#{1,3}[ \t]+/, ''), ...rest]
+        : [first, ...rest];
+      push({ kind: 'paragraph', inlines: parseInlineLines(content) });
+      pending = [];
+      pendingFromStart = false;
+    };
+    let chunkStart = true;
+    for (const line of lines) {
+      if (LIST_ESCAPE_PATTERN.test(line)) {
+        if (chunkStart) pendingFromStart = true;
+        pending.push(line.replace(/^(\s{0,3})\\(- |\d{1,9}\. )/, '$1$2'));
+        chunkStart = false;
+        continue;
+      }
+      const marker = listMarkerOf(line);
+      if (marker) {
+        flushPending();
+        chunkStart = false;
+        const rest = listItemRest(line);
+        const inlines = rest === '' ? [] : parseInlineLines([rest]);
+        if (marker.kind === 'ordered') push({ kind: 'ordered', index: marker.index, inlines });
+        else push({ kind: 'bullet', inlines });
+        continue;
+      }
+      if (chunkStart) pendingFromStart = true;
+      pending.push(line);
+      chunkStart = false;
+    }
+    flushPending();
+  }
+  return blocks;
 }

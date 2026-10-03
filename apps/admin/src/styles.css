@@ -5,6 +5,7 @@
 
 :root,
 [data-theme="light"] {
+  color-scheme: light;
   --color-primary: #6200ee;
   --color-primary-variant: #3700b3;
   --color-primary-hover: #4b00c4;
@@ -36,6 +37,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --color-primary: #bb86fc;
   --color-primary-variant: #3700b3;
   --color-primary-hover: #d0bcff;
@@ -108,6 +110,7 @@ a:hover {
 .login-card {
   background: var(--color-card);
   padding: 2.5rem;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-login);
   display: flex;
@@ -257,7 +260,9 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
   flex-wrap: wrap;
 }
 
@@ -301,6 +306,12 @@ section {
 .toolbar .checkbox-label {
   /* Match roughly the vertical padding of adjacent inputs. */
   min-height: 2.15rem;
+}
+
+/* A switch keeps its row layout inside a toolbar instead of stacking like other labels. */
+.toolbar .checkbox-label.switch {
+  flex-direction: row;
+  padding-bottom: 0.2rem;
 }
 
 .checkbox-label {
@@ -405,6 +416,7 @@ button.button-danger:hover {
 .data-table th {
   background: var(--color-table-head);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .data-table a {
@@ -468,6 +480,7 @@ button.button-danger:hover {
 .form-card {
   background: var(--color-card);
   padding: 1.5rem;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   display: flex;
@@ -475,6 +488,13 @@ button.button-danger:hover {
   gap: 1rem;
   max-width: 480px;
   margin-bottom: 1.5rem;
+}
+
+/* Sub-sections inside a card, e.g. showcase branding below its toggles. */
+.form-card > h3:not(:first-child) {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
 }
 
 .form-card label {
@@ -546,6 +566,7 @@ button.button-danger:hover {
   width: auto;
   max-width: none;
   background: var(--color-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
   padding: 1rem;
@@ -671,6 +692,26 @@ button.button-danger:hover {
 .sidebar-links .nav-badge {
   background: var(--color-sidebar-text);
   color: var(--color-sidebar-bg);
+}
+
+/* A name with an inline badge, e.g. the admin shield after a username. */
+.username-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-shield {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+/* An icon-only pill, e.g. an outcome mark folded into another cell. */
+.status-badge--icon {
+  min-width: 1.7rem;
+  padding: 0.1rem 0.35rem;
+  text-align: center;
+  font-weight: 700;
 }
 
 .status-badge.accent {
@@ -881,6 +922,15 @@ button.button-danger:hover {
   background: var(--color-card);
   border-radius: var(--radius-md);
   border-left: 4px solid var(--color-warn);
+  margin-bottom: 1rem;
+}
+
+.notice p {
+  margin: 0 0 0.5rem;
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
 }
 
 .status-badge.subscription-active,
@@ -899,4 +949,537 @@ button.button-danger:hover {
 .status-badge.ledger-payment_failed {
   background: color-mix(in srgb, var(--color-error) 20%, transparent);
   color: var(--color-error);
+}
+
+/* --- Shared polish: compact tables, switches, segmented control, motion --- */
+
+/* Denser tables for wide, mostly-numeric listings such as tiers. */
+.data-table--compact th,
+.data-table--compact td {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.data-table .muted {
+  color: var(--color-text-secondary);
+}
+
+/* Group super-headers, e.g. tiers' Limites / Armazenamento / Preços. */
+.data-table .group-head th {
+  background: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Keeps the row label visible while a wide table scrolls sideways. */
+.table-scroll--sticky-first .data-table th:first-child,
+.table-scroll--sticky-first .data-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--color-card);
+  z-index: 1;
+}
+
+.table-scroll--sticky-first .data-table thead th:first-child {
+  background: var(--color-table-head);
+  z-index: 2;
+}
+
+/* Settings: one tabbed section at a time. */
+.settings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 56rem;
+}
+
+.settings-sections .form-card {
+  max-width: none;
+  margin-bottom: 0;
+}
+
+/* A file input that looks like the button it is, instead of the native control. */
+.file-picker {
+  position: relative;
+  display: inline-flex;
+}
+
+.file-picker input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+}
+
+.file-picker-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.file-picker:hover .file-picker-button {
+  background: var(--color-primary-hover);
+}
+
+.file-picker:focus-within {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.file-picker-name {
+  align-self: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A checkbox that reads as a switch. The input stays a real checkbox, so keyboard,
+   screen-reader and form behaviour do not change - only the paint does. */
+.switch {
+  position: relative;
+  padding-left: 2.75rem;
+  min-height: 1.5rem;
+  cursor: pointer;
+}
+
+.switch input[type="checkbox"] {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2.25rem;
+  height: 1.25rem;
+  margin: 0;
+  transform: translateY(-50%);
+  appearance: none;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--color-border);
+  cursor: pointer;
+}
+
+.switch input[type="checkbox"]:checked {
+  background: var(--color-primary);
+}
+
+.switch input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.25rem - 4px);
+  height: calc(1.25rem - 4px);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px var(--color-shadow);
+}
+
+.switch input[type="checkbox"]:checked::after {
+  left: calc(100% - 1.25rem + 2px);
+}
+
+.switch input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.switch:has(input[type="checkbox"]:disabled) {
+  cursor: default;
+}
+
+/* A visible choice between a few options, e.g. the theme preference. */
+.segmented-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.segmented-field .hint {
+  font-weight: 400;
+}
+
+/* Live miniature of the panel: it uses the same variables, so picking a theme or
+   palette repaints it instantly with no preview-specific code. */
+.appearance-preview {
+  display: flex;
+  gap: 0.4rem;
+  height: 7rem;
+  padding: 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.appearance-preview-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 32%;
+  padding: 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-sidebar-bg);
+}
+
+.appearance-preview-sidebar span {
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--color-sidebar-muted);
+}
+
+.appearance-preview-sidebar span.active {
+  background: var(--color-sidebar-text);
+}
+
+.appearance-preview-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.45rem;
+}
+
+.appearance-preview-title {
+  height: 0.55rem;
+  width: 55%;
+  border-radius: 2px;
+  background: var(--color-text);
+}
+
+.appearance-preview-button {
+  height: 0.8rem;
+  width: 38%;
+  border-radius: 3px;
+  background: var(--color-primary);
+}
+
+.appearance-preview-card {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-card);
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.segmented button {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  padding: 0.35rem 0.8rem;
+}
+
+.segmented button:hover {
+  background: var(--color-row-hover);
+  color: var(--color-text);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.segmented button[aria-pressed="true"]:hover {
+  background: var(--color-primary-hover);
+  color: var(--color-on-primary);
+}
+
+/* Sidebar grouping and a clearer active item. */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+}
+
+.nav-group:last-child {
+  padding-bottom: 0;
+}
+
+.nav-group-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* Full text colour, not the muted mix: at this size the mix fails contrast on
+     saturated sidebar backgrounds such as Sea Of Stars' yellow. */
+  color: var(--color-sidebar-text);
+  padding: 0.5rem 0.75rem 0.15rem;
+}
+
+.sidebar a.active {
+  background: var(--color-sidebar-hover);
+  color: #ffffff;
+  box-shadow: inset 3px 0 0 var(--color-sidebar-text);
+}
+
+.sidebar-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Compact square buttons for icon-only actions such as theme and sign-out. */
+.icon-button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.icon-button svg {
+  display: block;
+}
+
+/* Separates the nav groups the way the footer is separated from the links. */
+.nav-group + .nav-group {
+  border-top: 1px solid var(--color-sidebar-hover);
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.sidebar-footer-row .sidebar-user {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Subtle motion: state changes ease instead of snapping. */
+button,
+a.button,
+.sidebar a,
+.clickable-row,
+.nav-badge,
+.file-picker-button {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.detail-panel {
+  animation: detail-in 180ms ease;
+}
+
+@keyframes detail-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Tier cards: every limit visible at once, no sideways scrolling. */
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.tier-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tier-card.is-deleted {
+  opacity: 0.7;
+}
+
+.tier-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tier-card-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.tier-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.tier-card section h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.tier-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.tier-fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.tier-fact dt {
+  color: var(--color-text-secondary);
+}
+
+.tier-fact dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tier-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Filters read as one unit instead of loose controls. */
+.toolbar {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.9rem 1rem;
+}
+
+/* A dialog over the page with scrollable content. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  animation: overlay-in 150ms ease;
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: min(36rem, 100%);
+  max-height: min(85vh, 60rem);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-login);
+  animation: modal-in 180ms ease;
+}
+
+/* A dialog opened over another dialog (giving a plan, recovery codes) sits above it. */
+.modal-overlay .modal-overlay {
+  z-index: 60;
+}
+
+/* The row of secondary actions below a modal form (activity, gift, recovery). */
+.modal-secondary-actions {
+  margin-top: 1rem;
+}
+
+.modal-head {
+  padding: 1.25rem 1.25rem 0;
+}
+
+.modal-head h3 {
+  margin: 0;
+}
+
+.modal-body {
+  padding: 1rem 1.25rem 1.25rem;
+  overflow-y: auto;
+}
+
+/* A card form keeps its selectors when hosted inside a modal instead of the page. */
+.modal-body .form-card {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Native dropdown lists follow the page instead of the OS defaults. */
+select option {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none;
+    transition: none;
+  }
 }

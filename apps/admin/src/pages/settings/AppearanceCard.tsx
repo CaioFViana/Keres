@@ -12,12 +12,30 @@ import { useTheme } from '../../theme/ThemeProvider';
  */
 export function AppearanceCard() {
   const { t } = useTranslation('admin');
-  const { palette, setPalette, preference, cyclePreference } = useTheme();
+  const { palette, setPalette, preference, setPreference } = useTheme();
+  const options = ['system', 'light', 'dark'] as const;
 
   return (
     <div className="form-card">
       <h2>{t('appearance.title')}</h2>
       <p className="hint">{t('appearance.hint')}</p>
+
+      <div className="segmented-field">
+        <span id="appearance-theme-label">{t('appearance.themeLabel')}</span>
+        <div className="segmented" role="group" aria-labelledby="appearance-theme-label">
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={preference === option}
+              onClick={() => setPreference(option)}
+            >
+              {t(`appearance.themeOptions.${option}`)}
+            </button>
+          ))}
+        </div>
+        {preference === 'system' && <p className="hint">{t('appearance.followingSystem')}</p>}
+      </div>
 
       <label>
         {t('appearance.palette')}
@@ -30,11 +48,17 @@ export function AppearanceCard() {
         </select>
       </label>
 
-      <div className="form-actions">
-        <button type="button" onClick={cyclePreference}>
-          {t(`theme.${preference}`)}
-        </button>
-        {preference === 'system' && <span className="hint">{t('appearance.followingSystem')}</span>}
+      <div className="appearance-preview" aria-hidden="true">
+        <div className="appearance-preview-sidebar">
+          <span />
+          <span className="active" />
+          <span />
+        </div>
+        <div className="appearance-preview-main">
+          <span className="appearance-preview-title" />
+          <span className="appearance-preview-button" />
+          <span className="appearance-preview-card" />
+        </div>
       </div>
     </div>
   );

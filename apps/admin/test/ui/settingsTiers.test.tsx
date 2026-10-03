@@ -42,6 +42,15 @@ const withProviders = (page: ReactElement) =>
     </MemoryRouter>,
   );
 
+const showTab = async (container: HTMLDivElement, label: string) => {
+  await click(
+    Array.from(container.querySelectorAll('[role="tab"]')).find(
+      (tab) => tab.textContent === label,
+    )!,
+  );
+  await flush();
+};
+
 const settings = (over: Record<string, unknown> = {}) => ({
   isRegistrationOpen: true,
   autoManage: false,
@@ -123,14 +132,27 @@ describe('registration settings', () => {
     await view.unmount();
   });
 
+  it('says, by the default plan, what people have without paying and what no default means', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    const hint =
+      view.container.querySelector('[data-testid="default-tier-hint"]')?.textContent ?? '';
+    expect(hint).toContain('without paying');
+    expect(hint).toContain('free plan');
+    expect(hint).toContain('paid-only');
+    expect(hint).toContain('no limits');
+    await view.unmount();
+  });
+
   it('hides the manual switch while registration is automatic', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
     const checkboxes = () => Array.from(view.container.querySelectorAll('input[type="checkbox"]'));
 
-    expect(checkboxes()).toHaveLength(5); // registration ×2, hosted pages ×3
+    expect(checkboxes()).toHaveLength(2); // registration ×2; other tabs stay hidden
     await click(checkboxes()[0]); // auto-manage on
-    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(4);
+    expect(view.container.querySelectorAll('input[type="checkbox"]')).toHaveLength(1);
 
     await submit(view.container.querySelector('form')!);
     await flush();
@@ -226,6 +248,49 @@ describe('registration settings', () => {
     await view.unmount();
   });
 
+  it('switches sections through tabs, one at a time', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    const tabs = Array.from(view.container.querySelectorAll('[role="tab"]'));
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Registration',
+      'Hosted Pages',
+      'Appearance',
+    ]);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(view.container.querySelector('.settings-sections form')).not.toBeNull();
+    expect(view.container.querySelector('.appearance-preview')).toBeNull();
+
+    await click(tabs[2]);
+    await flush();
+
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+    expect(view.container.querySelector('.settings-sections form')).toBeNull();
+    expect(view.container.querySelector('.appearance-preview')).not.toBeNull();
+    await view.unmount();
+  });
+
+  it('disables save until something changes, then reports the draft state', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    const form = view.container.querySelector('form')!;
+    const save = () =>
+      Array.from(form.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Save',
+      )! as HTMLButtonElement;
+
+    expect(save().disabled).toBe(true);
+    expect(form.textContent).toContain('All changes saved.');
+
+    await changeInput(form.querySelector('input[type="number"]')!, '500');
+    await flush();
+
+    expect(save().disabled).toBe(false);
+    expect(form.textContent).toContain('Unsaved changes.');
+    await view.unmount();
+  });
+
   it('uppercases the typed currency and saves it with the rest', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
@@ -240,6 +305,21 @@ describe('registration settings', () => {
     expect(mocks.updateSettings).toHaveBeenCalledWith(expect.objectContaining({ currency: 'USD' }));
     await view.unmount();
   });
+
+  it('refuses a negative max users instead of saving it', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+
+    await changeInput(view.container.querySelector('input[type="number"]')!, '-5');
+    await submit(view.container.querySelector('form')!);
+    await flush();
+
+    expect(mocks.updateSettings).not.toHaveBeenCalled();
+    expect(view.container.querySelector('.error-text')?.textContent).toBe(
+      'Enter a whole number of 0 or more.',
+    );
+    await view.unmount();
+  });
 });
 
 describe('showcase settings card', () => {
@@ -248,29 +328,51 @@ describe('showcase settings card', () => {
       node.textContent?.includes('Hosted Pages'),
     )!;
 
-  it('toggles the public site on and off', async () => {
+  it('holds toggle edits as a draft until saved once', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
+    const save = () =>
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!;
 
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[0]);
+    await click(card.querySelectorAll('input[type="checkbox"]')[0]);
     await flush();
 
-    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith({ isShowcaseEnabled: true });
-    expect(showcaseCard(view.container).querySelector('.success-text')).not.toBeNull();
+    expect(mocks.updateShowcaseSettings).not.toHaveBeenCalled();
+    expect(card.textContent).toContain('Unsaved changes.');
+
+    await click(save());
+    await flush();
+
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledTimes(1);
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith({
+      isShowcaseEnabled: true,
+      isHostedClientEnabled: true,
+      isLandingEnabled: false,
+      siteName: 'Keres',
+      sitePalette: 'default',
+    });
+    expect(card.querySelector('.success-text')).not.toBeNull();
+    expect(card.textContent).toContain('All changes saved.');
     await view.unmount();
   });
 
-  it('reports a toggle failure', async () => {
+  it('reports a save failure', async () => {
     mocks.updateShowcaseSettings.mockRejectedValue(new Error('Read-only mode.'));
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
 
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[1]);
+    await click(card.querySelectorAll('input[type="checkbox"]')[1]);
+    await flush();
+    await click(
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!,
+    );
     await flush();
 
-    expect(showcaseCard(view.container).querySelector('.error-text')?.textContent).toBe(
-      'Read-only mode.',
-    );
+    expect(card.querySelector('.error-text')?.textContent).toBe('Read-only mode.');
     await view.unmount();
   });
 
@@ -278,19 +380,28 @@ describe('showcase settings card', () => {
     mocks.getShowcaseSettings.mockRejectedValue(new Error('Showcase settings are down.'));
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
 
     expect(view.container.textContent).toContain('Showcase settings are down.');
     await view.unmount();
   });
 
-  it('toggles the landing page at the root', async () => {
+  it('saves the landing page toggle with the rest of the draft', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
 
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[2]);
+    await click(card.querySelectorAll('input[type="checkbox"]')[2]);
+    await flush();
+    await click(
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!,
+    );
     await flush();
 
-    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith({ isLandingEnabled: true });
+    expect(mocks.updateShowcaseSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ isLandingEnabled: true }),
+    );
     await view.unmount();
   });
 
@@ -298,6 +409,7 @@ describe('showcase settings card', () => {
     mocks.getShowcaseSettings.mockRejectedValue(undefined);
     const failed = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(failed.container, 'Hosted Pages');
     expect(failed.container.textContent).toContain('Failed to load.');
     await failed.unmount();
 
@@ -310,19 +422,55 @@ describe('showcase settings card', () => {
     mocks.updateShowcaseSettings.mockRejectedValue(undefined);
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
-    await click(showcaseCard(view.container).querySelectorAll('input[type="checkbox"]')[0]);
+    await showTab(view.container, 'Hosted Pages');
+    const card = showcaseCard(view.container);
+    await click(card.querySelectorAll('input[type="checkbox"]')[0]);
     await flush();
-    expect(showcaseCard(view.container).querySelector('.error-text')?.textContent).toBe(
-      'Save failed.',
+    await click(
+      Array.from(card.querySelectorAll('button')).find((button) => button.textContent === 'Save')!,
     );
+    await flush();
+    expect(card.querySelector('.error-text')?.textContent).toBe('Save failed.');
     await view.unmount();
   });
 });
 
 describe('appearance card', () => {
+  it('switches the theme through the segmented control', async () => {
+    localStorage.removeItem('keres_admin_theme_preference');
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    await showTab(view.container, 'Appearance');
+
+    const dark = Array.from(view.container.querySelectorAll('.segmented button')).find(
+      (button) => button.textContent === 'Dark',
+    )!;
+    expect(dark.getAttribute('aria-pressed')).toBe('false');
+
+    await click(dark);
+    await flush();
+
+    expect(localStorage.getItem('keres_admin_theme_preference')).toBe('dark');
+    expect(dark.getAttribute('aria-pressed')).toBe('true');
+    await view.unmount();
+  });
+
+  it('previews the panel with the live theme variables', async () => {
+    const view = await withProviders(<RegistrationSettingsPage />);
+    await flush();
+    await showTab(view.container, 'Appearance');
+
+    const preview = view.container.querySelector('.appearance-preview')!;
+    expect(preview.querySelector('.appearance-preview-sidebar')).not.toBeNull();
+    expect(preview.querySelector('.appearance-preview-button')).not.toBeNull();
+    expect(preview.querySelector('.appearance-preview-card')).not.toBeNull();
+    await view.unmount();
+  });
+
   it('remembers the chosen palette in this browser', async () => {
     const view = await withProviders(<RegistrationSettingsPage />);
     await flush();
+    await showTab(view.container, 'Appearance');
 
     const selects = view.container.querySelectorAll('select');
     const paletteSelect = selects[selects.length - 1];
@@ -336,6 +484,60 @@ describe('appearance card', () => {
 });
 
 describe('tiers page', () => {
+  it('says to keep a free plan as the default, and that a free plan at 0 makes the server paid-only', async () => {
+    mocks.listTiers.mockResolvedValue([]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const note = view.container.querySelector('[data-testid="free-plan-note"]')?.textContent ?? '';
+    expect(note).toContain('Always keep a free plan');
+    expect(note).toContain('no limits at all');
+    expect(note).toContain('0 allows nothing');
+    expect(note).toContain('paid-only');
+    // What 0 does to a person is said, not left to be found out.
+    expect(note).toContain('cannot create stories');
+    expect(note).toContain('collaborate');
+    await view.unmount();
+  });
+
+  it('tells, on the plan being edited, that ticking default is the same setting as in Settings', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+    expect(view.container.querySelector('[data-testid="default-note"]')).toBeNull();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+
+    const note = view.container.querySelector('[data-testid="default-note"]')?.textContent ?? '';
+    expect(note).toContain('free plan');
+    expect(note).toContain('paid period ends');
+    expect(note).toContain('same setting');
+    await view.unmount();
+  });
+
+  it('says on every ceiling that blank is unlimited and 0 is none', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Edit',
+      )!,
+    );
+
+    const hints = Array.from(view.container.querySelectorAll('.form-card label .hint')).map(
+      (hint) => hint.textContent,
+    );
+    expect(hints.filter((hint) => hint === '(blank = unlimited, 0 = none)').length).toBeGreaterThan(
+      5,
+    );
+    await view.unmount();
+  });
+
   it('edits an existing tier and saves through update', async () => {
     mocks.listTiers.mockResolvedValue([tier()]);
     const view = await withProviders(<TiersPage />);
@@ -410,9 +612,13 @@ describe('tiers page', () => {
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    // The column and its value.
-    expect(view.container.querySelector('thead')!.textContent).toContain('Publications/day');
-    expect(view.container.querySelector('tbody tr')!.textContent).toContain('3');
+    // The card groups and the value.
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Limits');
+    expect(card.textContent).toContain('Storage');
+    expect(card.textContent).toContain('Prices');
+    expect(card.textContent).toContain('Publications/day');
+    expect(card.textContent).toContain('3');
 
     await click(
       Array.from(view.container.querySelectorAll('button')).find(
@@ -450,8 +656,9 @@ describe('tiers page', () => {
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    expect(view.container.querySelector('thead')!.textContent).toContain('Messages/day');
-    expect(view.container.querySelector('tbody tr')!.textContent).toContain('12');
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Messages/day');
+    expect(card.textContent).toContain('12');
 
     await click(
       Array.from(view.container.querySelectorAll('button')).find(
@@ -510,11 +717,9 @@ describe('tiers page', () => {
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    const cells = Array.from(view.container.querySelectorAll('tbody tr td')).map(
-      (cell) => cell.textContent,
-    );
-    expect(cells).toContain('100 MB');
-    expect(cells).toContain('2 GB');
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('100 MB');
+    expect(card.textContent).toContain('2 GB');
 
     await click(
       Array.from(view.container.querySelectorAll('button')).find(
@@ -640,7 +845,7 @@ describe('tiers page', () => {
     );
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Tier in use.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Tier in use.');
     await view.unmount();
   });
 
@@ -658,9 +863,9 @@ describe('tiers page', () => {
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    const row = view.container.querySelector('tbody tr')!;
-    expect(row.textContent).toContain('Yes');
-    expect(row.textContent).toContain('∞');
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('Default');
+    expect(card.textContent).toContain('∞');
     await view.unmount();
   });
 
@@ -681,12 +886,18 @@ describe('tiers page', () => {
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Save failed.');
 
     await click(
-      Array.from(view.container.querySelectorAll('tbody button')).find(
+      Array.from(view.container.querySelectorAll('.modal button')).find(
+        (button) => button.textContent === 'Cancel',
+      )!,
+    );
+    await flush();
+    await click(
+      Array.from(view.container.querySelectorAll('.tier-card button')).find(
         (button) => button.textContent === 'Delete',
       )!,
     );
     await flush();
-    expect(window.alert).toHaveBeenCalledWith('Delete failed.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Delete failed.');
     await view.unmount();
   });
 
@@ -697,7 +908,7 @@ describe('tiers page', () => {
 
     expect(view.container.querySelector('.status-badge.deleted')).not.toBeNull();
     expect(
-      Array.from(view.container.querySelectorAll('tbody button')).find(
+      Array.from(view.container.querySelectorAll('.tier-card button')).find(
         (button) => button.textContent === 'Edit',
       ),
     ).toBeUndefined();
@@ -719,6 +930,30 @@ describe('tiers page', () => {
     await flush();
 
     expect(view.container.querySelector('.error-text')?.textContent).toBe('Name taken.');
+    await view.unmount();
+  });
+
+  it('refuses a negative ceiling instead of sending it to the API', async () => {
+    mocks.listTiers.mockResolvedValue([tier()]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const label = Array.from(view.container.querySelectorAll('.modal label')).find((node) =>
+      node.textContent?.includes('Max stories'),
+    )!;
+    await changeInput(label.querySelector('input')!, '-3');
+    await submit(view.container.querySelector('.modal form')!);
+    await flush();
+
+    expect(mocks.createTier).not.toHaveBeenCalled();
+    expect(view.container.querySelector('.error-text')?.textContent).toBe(
+      'Enter a whole number of 0 or more.',
+    );
     await view.unmount();
   });
 
@@ -774,10 +1009,10 @@ describe('tiers page', () => {
     const view = await withProviders(<TiersPage />);
     await flush();
 
-    const row = view.container.querySelector('tbody tr')!;
-    expect(row.textContent).toContain('19.90');
-    expect(row.textContent).toContain('Free');
-    expect(row.textContent).toContain('Yes');
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('19.90');
+    expect(card.textContent).toContain('Free');
+    expect(card.textContent).toContain('For sale');
     await view.unmount();
   });
 });

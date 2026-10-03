@@ -77,7 +77,9 @@ describe('showcase branding card', () => {
     );
     await flush();
 
-    expect(mocks.update).toHaveBeenCalledWith({ siteName: 'New Name', sitePalette: 'ocean' });
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ siteName: 'New Name', sitePalette: 'ocean' }),
+    );
     expect(view.container.querySelector('.success-text')).not.toBeNull();
     await view.unmount();
   });
@@ -87,6 +89,7 @@ describe('showcase branding card', () => {
     const view = await render(<ShowcaseSettingsCard />);
     await flush();
 
+    await changeInput(view.container.querySelector('input[type="text"]')!, 'New Name');
     await click(
       [...view.container.querySelectorAll('button')].find(
         (button) => button.textContent === 'Save',
@@ -104,6 +107,7 @@ describe('showcase branding card', () => {
     const view = await render(<ShowcaseSettingsCard />);
     await flush();
 
+    await changeInput(view.container.querySelector('input[type="text"]')!, 'New Name');
     await click(
       [...view.container.querySelectorAll('button')].find(
         (button) => button.textContent === 'Save',

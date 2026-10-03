@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import type { AdminUserInfo, Tier } from '@keres/shared';
 import { AdminUserApiService } from '../../api/AdminUserApiService';
 import { TierApiService } from '../../api/TierApiService';
+import { Modal } from '../../components/Modal';
 
 export function UsersListPage() {
   const { t, i18n } = useTranslation('admin');
@@ -17,6 +18,7 @@ export function UsersListPage() {
   const [reloadToken, setReloadToken] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const pageSize = 25;
 
   useEffect(() => {
@@ -33,7 +35,8 @@ export function UsersListPage() {
     setError(null);
     AdminUserApiService.list({
       search: appliedSearch || undefined,
-      isDeleted: showDeleted || undefined,
+      // Off means active only; on means everyone, deleted included.
+      isDeleted: showDeleted ? undefined : false,
       page,
       pageSize,
     })
@@ -78,7 +81,7 @@ export function UsersListPage() {
       }
       setReloadToken((n) => n + 1);
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.actionFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.actionFailed'));
     }
   };
 
@@ -101,7 +104,7 @@ export function UsersListPage() {
             aria-label={t('users.searchAriaLabel')}
           />
         </label>
-        <label className="checkbox-label">
+        <label className="checkbox-label switch">
           <input
             type="checkbox"
             checked={showDeleted}
@@ -125,10 +128,8 @@ export function UsersListPage() {
               <tr>
                 <th>{t('users.columnUsername')}</th>
                 <th>{t('users.columnTag')}</th>
-                <th>{t('users.columnAdmin')}</th>
                 <th>{t('users.columnTier')}</th>
                 <th>{t('users.columnCreated')}</th>
-                <th>{t('users.columnStatus')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -136,10 +137,29 @@ export function UsersListPage() {
               {users.map((u) => (
                 <tr key={u.id} className={u.isDeleted ? 'row-deleted' : ''}>
                   <td>
-                    <Link to={`/users/${u.id}`}>{u.username}</Link>
+                    <span className="username-cell">
+                      <Link to={`/users/${u.id}`}>{u.username}</Link>
+                      {u.isAdmin && (
+                        <svg
+                          className="admin-shield"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          role="img"
+                          aria-label={t('users.adminBadge')}
+                        >
+                          <title>{t('users.adminBadge')}</title>
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                      )}
+                    </span>
                   </td>
                   <td>@{u.tag}</td>
-                  <td>{u.isAdmin ? t('common.yes') : ''}</td>
                   <td>
                     {/* The plan the person is on, which a paid subscription decides; the assigned one is its tooltip. */}
                     {tierName(u.effectiveTierId === undefined ? u.tierId : u.effectiveTierId)}
@@ -154,11 +174,6 @@ export function UsersListPage() {
                     )}
                   </td>
                   <td>{new Date(u.createdAt).toLocaleDateString(i18n.language)}</td>
-                  <td>
-                    <span className={`status-badge${u.isDeleted ? ' deleted' : ''}`}>
-                      {u.isDeleted ? t('users.statusDeleted') : t('users.statusActive')}
-                    </span>
-                  </td>
                   <td>
                     <button
                       type="button"
@@ -201,6 +216,12 @@ export function UsersListPage() {
           {t('common.next')}
         </button>
       </div>
+
+      {notice && (
+        <Modal title={t('common.notice')} onClose={() => setNotice(null)}>
+          <p>{notice}</p>
+        </Modal>
+      )}
     </div>
   );
 }

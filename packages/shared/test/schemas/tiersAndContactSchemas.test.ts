@@ -122,8 +122,29 @@ describe('what a tier update may carry', () => {
 
   it('still refuses what a tier may not be', () => {
     expect(PartialTierSchema.safeParse({ name: '' }).success).toBe(false);
-    expect(PartialTierSchema.safeParse({ maxStories: 0 }).success).toBe(false);
+    expect(PartialTierSchema.safeParse({ maxStories: -1 }).success).toBe(false);
     expect(PartialTierSchema.safeParse({ sortOrder: 1.5 }).success).toBe(false);
+  });
+
+  it('lets any ceiling be zero, which allows nothing, and keeps blank as unlimited', () => {
+    const everythingAtZero = {
+      name: 'Free',
+      maxStories: 0,
+      maxEntitiesPerStory: 0,
+      maxEntitiesTotal: 0,
+      maxStorageBytesPerStory: 0,
+      maxStorageBytesTotal: 0,
+      maxPublicationsPerDay: 0,
+      maxMessagesPerDay: 0,
+    };
+    expect(TierCreateInputSchema.parse(everythingAtZero)).toMatchObject(everythingAtZero);
+    expect(PartialTierSchema.parse({ maxStorageBytesTotal: 0 })).toEqual({
+      maxStorageBytesTotal: 0,
+    });
+    expect(TierCreateInputSchema.parse({ name: 'Free', maxStories: null }).maxStories).toBeNull();
+    for (const field of Object.keys(everythingAtZero).filter((key) => key !== 'name')) {
+      expect(TierCreateInputSchema.safeParse({ name: 'T', [field]: -1 }).success).toBe(false);
+    }
   });
 
   it('keeps the defaults of a tier that is created', () => {

@@ -232,7 +232,9 @@ describe('messages page', () => {
     await submit(view.container.querySelector('.message-reply') as HTMLFormElement);
     await flush();
 
-    expect(alert).toHaveBeenCalledWith('This user no longer has an account.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain(
+      'This user no longer has an account.',
+    );
     expect(
       view.container.querySelector<HTMLTextAreaElement>('.message-reply textarea')!.value,
     ).toBe('Hello');
@@ -353,10 +355,12 @@ describe('messages page', () => {
 
     mocks.patch.mockRejectedValue(new Error('Patch failed.'));
     await click(buttonNamed(view.container, 'Archive'));
-    expect(alert).toHaveBeenCalledWith('Patch failed.');
+    await flush();
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Patch failed.');
     mocks.remove.mockRejectedValue(new Error('Delete failed.'));
     await click(buttonNamed(view.container, 'Delete'));
-    expect(alert).toHaveBeenCalledWith('Delete failed.');
+    await flush();
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Delete failed.');
     await view.unmount();
   });
 
@@ -412,10 +416,12 @@ describe('messages page', () => {
 
     mocks.patch.mockRejectedValue('nope');
     await click(buttonNamed(view.container.querySelectorAll('tbody tr')[0], 'Archive'));
-    expect(alert).toHaveBeenLastCalledWith('Action failed.');
+    await flush();
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Action failed.');
     mocks.remove.mockRejectedValue('nope');
     await click(buttonNamed(view.container.querySelectorAll('tbody tr')[0], 'Delete'));
-    expect(alert).toHaveBeenLastCalledWith('Delete failed.');
+    await flush();
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Delete failed.');
 
     mocks.open.mockResolvedValue({
       message: userMessage(),
@@ -427,12 +433,15 @@ describe('messages page', () => {
     await click(
       buttonNamed(view.container.querySelector('.message-thread li.from-admin')!, 'Delete'),
     );
-    expect(alert).toHaveBeenLastCalledWith('Delete failed.');
+    await flush();
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Delete failed.');
     mocks.reply.mockRejectedValue('nope');
     await changeInput(view.container.querySelector('.message-reply textarea')!, 'Hi');
     await submit(view.container.querySelector('.message-reply') as HTMLFormElement);
     await flush();
-    expect(alert).toHaveBeenLastCalledWith('Could not send the reply.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain(
+      'Could not send the reply.',
+    );
     await view.unmount();
   });
 

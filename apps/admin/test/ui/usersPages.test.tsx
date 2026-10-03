@@ -84,6 +84,40 @@ const deleteButton = (container: HTMLDivElement) =>
     (button) => button.textContent === 'Delete',
   )!;
 
+/**
+ * The edit dialog sits over the list, which has its own forms and buttons -
+ * everything below scopes into the dialogs. The topmost one is the edit
+ * dialog itself, or the gift/recovery dialog stacked over it.
+ */
+const topModal = (container: HTMLDivElement) => {
+  const modals = Array.from(container.querySelectorAll('.modal'));
+  return modals[modals.length - 1] as HTMLElement;
+};
+
+const modalForm = (container: HTMLDivElement) =>
+  (container.querySelector('.modal') as HTMLElement).querySelector('form')!;
+
+const clickDialogButton = async (container: HTMLDivElement, text: string) => {
+  await click(
+    Array.from(topModal(container).querySelectorAll('button')).find(
+      (entry) => entry.textContent === text,
+    )!,
+  );
+};
+
+const topModalError = (container: HTMLDivElement) =>
+  topModal(container).querySelector('.error-text')?.textContent;
+
+/** The recovery dialog asks twice - open it, ask, then confirm - never natively. */
+const confirmRegenerate = async (container: HTMLDivElement) => {
+  await clickDialogButton(container, 'Recovery codes');
+  await flush();
+  await clickDialogButton(container, 'Regenerate recovery codes');
+  await flush();
+  await clickDialogButton(container, 'Regenerate recovery codes');
+  await flush();
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.listUsers.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
@@ -111,22 +145,25 @@ afterEach(() => {
 });
 
 describe('users list', () => {
-  it('searches and shows deleted users on demand', async () => {
+  it('lists active users until deleted ones are asked for too', async () => {
     const view = await renderList();
     await flush();
+    expect(mocks.listUsers).toHaveBeenLastCalledWith(
+      expect.objectContaining({ isDeleted: false, page: 1 }),
+    );
 
     await changeInput(view.container.querySelector('.toolbar input')!, 'ana');
     await submit(view.container.querySelector('form')!);
     await flush();
     expect(mocks.listUsers).toHaveBeenLastCalledWith(
-      expect.objectContaining({ search: 'ana', page: 1 }),
+      expect.objectContaining({ search: 'ana', isDeleted: false, page: 1 }),
     );
 
     await click(view.container.querySelector('.toolbar input[type="checkbox"]')!);
     await flush();
-    expect(mocks.listUsers).toHaveBeenLastCalledWith(
-      expect.objectContaining({ isDeleted: true, page: 1 }),
-    );
+    const last = mocks.listUsers.mock.calls.at(-1)![0] as Record<string, unknown>;
+    expect(last.page).toBe(1);
+    expect(last.isDeleted).toBeUndefined();
     await view.unmount();
   });
 
@@ -199,6 +236,23 @@ describe('users list', () => {
     await view.unmount();
   });
 
+  it('marks an admin with a shield by the name instead of a column', async () => {
+    mocks.listUsers.mockResolvedValue({
+      items: [user({ isAdmin: true })],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    });
+    const view = await renderList();
+    await flush();
+
+    expect(view.container.querySelector('thead')!.textContent).not.toContain('Admin');
+    const shield = view.container.querySelector('.admin-shield')!;
+    expect(shield.getAttribute('aria-label')).toBe('Administrator');
+    expect(shield.querySelector('title')?.textContent).toBe('Administrator');
+    await view.unmount();
+  });
+
   it('deletes nothing when the operator cancels', async () => {
     vi.stubGlobal(
       'confirm',
@@ -224,7 +278,7 @@ describe('users list', () => {
     await click(deleteButton(view.container));
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Last admin.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Last admin.');
     await view.unmount();
   });
 
@@ -257,7 +311,7 @@ describe('users list', () => {
     await click(deleteButton(view.container));
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Action failed.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Action failed.');
     await view.unmount();
   });
 
@@ -323,7 +377,7 @@ describe('users list', () => {
     await flush();
 
     const cells = Array.from(view.container.querySelectorAll('tbody tr')).map(
-      (row) => row.querySelectorAll('td')[3],
+      (row) => row.querySelectorAll('td')[2],
     );
     expect(cells[0].textContent).toContain('Pro');
     expect(cells[0].textContent).not.toContain('Free');
@@ -347,7 +401,7 @@ describe('users list', () => {
     const view = await renderList();
     await flush();
 
-    expect(view.container.querySelectorAll('tbody td')[3].textContent).toBe('Pro');
+    expect(view.container.querySelectorAll('tbody td')[2].textContent).toBe('Pro');
     await view.unmount();
   });
 });
@@ -365,7 +419,7 @@ describe('user form', () => {
     expect(note?.textContent).toContain('Pro');
     expect(note?.textContent).toContain('paid subscription');
     // What is saved is still the assigned plan: a payment is not something this form rewrites.
-    await submit(view.container.querySelector('form')!);
+    await submit(modalForm(view.container));
     await flush();
     expect(mocks.updateUser).toHaveBeenCalledWith(
       'user-1',
@@ -404,7 +458,7 @@ describe('user form', () => {
     await flush();
 
     expect(view.container.textContent).toContain('ana');
-    await submit(view.container.querySelector('form')!);
+    await submit(modalForm(view.container));
     await flush();
 
     expect(mocks.updateUser).toHaveBeenCalledWith('user-1', {
@@ -421,14 +475,58 @@ describe('user form', () => {
     mocks.getUser.mockResolvedValue(user());
     const existing = await renderFormAt('/users/user-1');
     await flush();
+    expect(existing.container.querySelector('[data-testid="gift-plan"]')).toBeNull();
+    expect(mocks.userSubscription).not.toHaveBeenCalled();
+
+    await clickDialogButton(existing.container, 'Give a plan');
+    await flush();
     expect(existing.container.querySelector('[data-testid="gift-plan"]')).not.toBeNull();
     expect(mocks.userSubscription).toHaveBeenCalledWith('user-1');
     await existing.unmount();
 
     const fresh = await renderFormAt('/users/new');
     await flush();
-    expect(fresh.container.querySelector('[data-testid="gift-plan"]')).toBeNull();
+    expect(
+      Array.from(topModal(fresh.container).querySelectorAll('button')).some(
+        (button) => button.textContent === 'Give a plan',
+      ),
+    ).toBe(false);
     await fresh.unmount();
+  });
+
+  it('spaces the secondary actions below the edit form', async () => {
+    mocks.getUser.mockResolvedValue(user());
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    // The margin between the two button rows hangs on this hook.
+    expect(view.container.querySelector('.modal-secondary-actions')).not.toBeNull();
+    await view.unmount();
+  });
+
+  it('stacks giving a plan over the edit dialog and closes back to it', async () => {
+    mocks.getUser.mockResolvedValue(user());
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    await clickDialogButton(view.container, 'Give a plan');
+    await flush();
+    expect(view.container.querySelectorAll('.modal')).toHaveLength(2);
+
+    await clickDialogButton(view.container, 'Close');
+    await flush();
+    expect(view.container.querySelectorAll('.modal')).toHaveLength(1);
+    expect(view.container.querySelector('[data-testid="gift-plan"]')).toBeNull();
+    await view.unmount();
+  });
+
+  it('keeps the card layout inside the dialog so fields stack vertically', async () => {
+    const view = await renderFormAt('/users/user-1');
+    await flush();
+
+    // Without form-card the labels fall back to inline and crush into one row.
+    expect(modalForm(view.container).classList.contains('form-card')).toBe(true);
+    await view.unmount();
   });
 
   it('links an existing account to its activity, and a new one to nothing', async () => {
@@ -437,14 +535,14 @@ describe('user form', () => {
     const edit = await renderFormAt('/users/user-1');
     await flush();
 
-    expect(edit.container.querySelector('.page-header a')!.getAttribute('href')).toBe(
+    expect(edit.container.querySelector('.modal a')!.getAttribute('href')).toBe(
       '/activity?user=user-1',
     );
     await edit.unmount();
 
     const created = await renderFormAt('/users/new');
     await flush();
-    expect(created.container.querySelector('.page-header a')).toBeNull();
+    expect(created.container.querySelector('.modal a')).toBeNull();
     await created.unmount();
   });
 
@@ -453,7 +551,7 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    expect(view.container.querySelector('.error-text')?.textContent).toBe('User is gone.');
+    expect(topModalError(view.container)).toBe('User is gone.');
     await view.unmount();
   });
 
@@ -463,7 +561,7 @@ describe('user form', () => {
     await flush();
 
     expect(view.container.textContent).toContain('Tiers are down.');
-    expect(view.container.querySelector('form')).not.toBeNull();
+    expect(modalForm(view.container)).not.toBeNull();
     await view.unmount();
   });
 
@@ -473,12 +571,14 @@ describe('user form', () => {
     const view = await renderFormAt('/users/new');
     await flush();
 
-    const [username, password, tag] = Array.from(view.container.querySelectorAll('input'));
+    const [username, password, tag] = Array.from(
+      modalForm(view.container).querySelectorAll('input'),
+    );
     await changeInput(username, 'bob');
     await changeInput(password, 'password123');
     await changeInput(tag, 'bob-writes');
-    await changeInput(view.container.querySelector('form select')!, 'tier-1');
-    await submit(view.container.querySelector('form')!);
+    await changeInput(modalForm(view.container).querySelector('select')!, 'tier-1');
+    await submit(modalForm(view.container));
     await flush();
 
     expect(mocks.createUser).toHaveBeenCalledWith({
@@ -495,8 +595,8 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await changeInput(view.container.querySelector('form textarea')!, 'Loves maps.');
-    await submit(view.container.querySelector('form')!);
+    await changeInput(modalForm(view.container).querySelector('textarea')!, 'Loves maps.');
+    await submit(modalForm(view.container));
     await flush();
 
     expect(mocks.updateUser).toHaveBeenCalledWith(
@@ -514,10 +614,10 @@ describe('user form', () => {
     const view = await renderFormAt('/users/new');
     await flush();
 
-    await changeInput(view.container.querySelectorAll('input')[0], 'root');
-    await changeInput(view.container.querySelectorAll('input')[1], 'password123');
-    await click(view.container.querySelector('input[type="checkbox"]')!);
-    await submit(view.container.querySelector('form')!);
+    await changeInput(modalForm(view.container).querySelectorAll('input')[0], 'root');
+    await changeInput(modalForm(view.container).querySelectorAll('input')[1], 'password123');
+    await click(modalForm(view.container).querySelector('input[type="checkbox"]')!);
+    await submit(modalForm(view.container));
     await flush();
 
     expect(window.confirm).toHaveBeenCalledOnce();
@@ -529,8 +629,8 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await click(view.container.querySelector('input[type="checkbox"]')!);
-    await submit(view.container.querySelector('form')!);
+    await click(modalForm(view.container).querySelector('input[type="checkbox"]')!);
+    await submit(modalForm(view.container));
     await flush();
 
     expect(window.confirm).toHaveBeenCalledOnce();
@@ -546,13 +646,13 @@ describe('user form', () => {
     const view = await renderFormAt('/users/new');
     await flush();
 
-    await changeInput(view.container.querySelectorAll('input')[0], 'ana');
-    await changeInput(view.container.querySelectorAll('input')[1], 'password123');
-    await submit(view.container.querySelector('form')!);
+    await changeInput(modalForm(view.container).querySelectorAll('input')[0], 'ana');
+    await changeInput(modalForm(view.container).querySelectorAll('input')[1], 'password123');
+    await submit(modalForm(view.container));
     await flush();
 
-    expect(view.container.querySelector('.error-text')?.textContent).toBe('Username taken.');
-    expect(view.container.querySelector('form')).not.toBeNull();
+    expect(topModalError(view.container)).toBe('Username taken.');
+    expect(modalForm(view.container)).not.toBeNull();
     await view.unmount();
   });
 
@@ -561,25 +661,18 @@ describe('user form', () => {
     const view = await renderFormAt('/users/new');
     await flush();
 
-    await changeInput(view.container.querySelectorAll('input')[0], 'ana');
-    await changeInput(view.container.querySelectorAll('input')[1], 'password123');
-    await submit(view.container.querySelector('form')!);
+    await changeInput(modalForm(view.container).querySelectorAll('input')[0], 'ana');
+    await changeInput(modalForm(view.container).querySelectorAll('input')[1], 'password123');
+    await submit(modalForm(view.container));
     await flush();
-    expect(view.container.querySelector('.error-text')?.textContent).toBe('Save failed.');
+    expect(topModalError(view.container)).toBe('Save failed.');
     await view.unmount();
 
     mocks.regenerateRecoveryCodes.mockRejectedValue(undefined);
     const edit = await renderFormAt('/users/user-1');
     await flush();
-    await click(
-      Array.from(edit.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Regenerate recovery codes',
-      )!,
-    );
-    await flush();
-    expect(edit.container.querySelector('.error-text')?.textContent).toBe(
-      'Failed to regenerate recovery codes.',
-    );
+    await confirmRegenerate(edit.container);
+    expect(topModalError(edit.container)).toBe('Failed to regenerate recovery codes.');
     await edit.unmount();
   });
 
@@ -588,34 +681,35 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Regenerate recovery codes',
-      )!,
-    );
-    await flush();
+    await confirmRegenerate(view.container);
 
     expect(mocks.regenerateRecoveryCodes).toHaveBeenCalledWith('user-1');
+    expect(window.confirm).not.toHaveBeenCalled();
     expect(view.container.textContent).toContain('CCCCC-33333');
     await view.unmount();
   });
 
   it('regenerates nothing when the operator cancels', async () => {
-    vi.stubGlobal(
-      'confirm',
-      vi.fn(() => false),
-    );
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Regenerate recovery codes',
-      )!,
-    );
+    await clickDialogButton(view.container, 'Recovery codes');
+    await flush();
+    await clickDialogButton(view.container, 'Regenerate recovery codes');
+    await flush();
+    // The dialog asks instead of the native confirm(): old codes stay valid until confirmed.
+    expect(topModal(view.container).textContent).toContain('stop working');
+    expect(window.confirm).not.toHaveBeenCalled();
+    await clickDialogButton(view.container, 'Cancel');
     await flush();
 
     expect(mocks.regenerateRecoveryCodes).not.toHaveBeenCalled();
+    // Back at the first step with the dialog still open.
+    expect(
+      Array.from(topModal(view.container).querySelectorAll('button')).some(
+        (button) => button.textContent === 'Regenerate recovery codes',
+      ),
+    ).toBe(true);
     await view.unmount();
   });
 
@@ -624,14 +718,9 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Regenerate recovery codes',
-      )!,
-    );
-    await flush();
+    await confirmRegenerate(view.container);
 
-    expect(view.container.querySelector('.error-text')?.textContent).toBe('Vault is locked.');
+    expect(topModalError(view.container)).toBe('Vault is locked.');
     await view.unmount();
   });
 
@@ -642,21 +731,12 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Regenerate recovery codes',
-      )!,
-    );
-    await flush();
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Copy codes',
-      )!,
-    );
+    await confirmRegenerate(view.container);
+    await clickDialogButton(view.container, 'Copy codes');
     await flush();
 
     expect(writeText).toHaveBeenCalledWith('CCCCC-33333');
-    expect(view.container.querySelector('.success-text')).not.toBeNull();
+    expect(topModal(view.container).querySelector('.success-text')).not.toBeNull();
     await view.unmount();
   });
 
@@ -667,20 +747,13 @@ describe('user form', () => {
     const view = await renderFormAt('/users/user-1');
     await flush();
 
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Regenerate recovery codes',
-      )!,
-    );
-    await flush();
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Copy codes',
-      )!,
-    );
+    await confirmRegenerate(view.container);
+    await clickDialogButton(view.container, 'Copy codes');
     await flush();
 
-    expect(view.container.querySelector('.success-text')?.textContent).toContain('Could not copy');
+    expect(topModal(view.container).querySelector('.success-text')?.textContent).toContain(
+      'Could not copy',
+    );
     await view.unmount();
   });
 
@@ -688,11 +761,7 @@ describe('user form', () => {
     const view = await renderFormAt('/users/new');
     await flush();
 
-    await click(
-      Array.from(view.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Cancel',
-      )!,
-    );
+    await clickDialogButton(view.container, 'Cancel');
     await flush();
     expect(view.container.textContent).toContain('users list');
     await view.unmount();
@@ -700,15 +769,14 @@ describe('user form', () => {
     mocks.createUser.mockResolvedValue({ id: 'user-9', recoveryCodes: ['DDDDD-44444'] });
     const created = await renderFormAt('/users/new');
     await flush();
-    await changeInput(created.container.querySelectorAll('input')[0], 'bob');
-    await changeInput(created.container.querySelectorAll('input')[1], 'password123');
-    await submit(created.container.querySelector('form')!);
+    await changeInput(modalForm(created.container).querySelectorAll('input')[0], 'bob');
+    await changeInput(modalForm(created.container).querySelectorAll('input')[1], 'password123');
+    await submit(modalForm(created.container));
     await flush();
-    await click(
-      Array.from(created.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Done',
-      )!,
-    );
+    // The fresh codes open stacked over the edit dialog, shown exactly once.
+    expect(created.container.querySelectorAll('.modal')).toHaveLength(2);
+    expect(created.container.textContent).toContain('DDDDD-44444');
+    await clickDialogButton(created.container, 'Done');
     await flush();
     expect(created.container.textContent).toContain('users list');
     await created.unmount();

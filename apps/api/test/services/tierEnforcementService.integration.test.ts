@@ -439,3 +439,52 @@ describe('TierEnforcementService getStoryPlan', () => {
     expect(plan.entitiesUsedTotal).toBe(0);
   });
 });
+
+describe('a free plan with every ceiling at 0', () => {
+  const everythingAtZero = {
+    maxStories: 0,
+    maxEntitiesPerStory: 0,
+    maxEntitiesTotal: 0,
+    maxStorageBytesPerStory: 0,
+    maxStorageBytesTotal: 0,
+    maxPublicationsPerDay: 0,
+  };
+
+  beforeEach(async () => {
+    await assignTier(await seedTier(everythingAtZero));
+  });
+
+  it('allows nothing: no story, no entity, no media, no publication', async () => {
+    await expect(tierEnforcementService.assertCanCreateStory(userId)).rejects.toThrow(
+      /Story limit reached for your plan \(0\)/,
+    );
+    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
+      /limit/i,
+    );
+    await expect(tierEnforcementService.assertCanUploadMedia(userId, storyId, 1)).rejects.toThrow(
+      TierLimitExceededError,
+    );
+    await expect(tierEnforcementService.assertCanPublish(userId)).rejects.toThrow(
+      /Publication limit/,
+    );
+  });
+
+  it('is a plan, not the absence of one: it is what a person with no plan has when it is the default', async () => {
+    const zero = (await db.query.users.findFirst({ where: eq(users.id, userId) }))!.tierId!;
+    await db.update(users).set({ tierId: null }).where(eq(users.id, userId));
+    await db.insert(registrationSettings).values({ id: 'singleton', defaultTierId: zero } as never);
+
+    await expect(tierEnforcementService.assertCanCreateStory(userId)).rejects.toThrow(
+      TierLimitExceededError,
+    );
+  });
+
+  it('is told apart from a ceiling left blank, which is unlimited', async () => {
+    await assignTier(await seedTier({ ...everythingAtZero, maxStories: null }));
+
+    await expect(tierEnforcementService.assertCanCreateStory(userId)).resolves.toBeUndefined();
+    await expect(tierEnforcementService.assertCanCreateEntity(userId, storyId)).rejects.toThrow(
+      /limit/i,
+    );
+  });
+});

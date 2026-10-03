@@ -139,8 +139,10 @@ export function PaymentsPage() {
   };
 
   return (
-    <div className="page">
-      <h1>{t('payments.title')}</h1>
+    <div>
+      <div className="page-header">
+        <h1>{t('payments.title')}</h1>
+      </div>
       <p className="hint">{t('payments.intro')}</p>
 
       {summaryError && <p className="error-text">{summaryError}</p>}

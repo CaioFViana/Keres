@@ -14,10 +14,13 @@ export function GiftPlanSection({
   userId,
   username,
   tiers,
+  titleHidden = false,
 }: {
   userId: string;
   username: string;
   tiers: Tier[];
+  /** The dialog over it already names the flow, so the section heading would repeat it. */
+  titleHidden?: boolean;
 }) {
   const { t, i18n } = useTranslation('admin');
   const [current, setCurrent] = useState<AdminUserSubscription | null>(null);
@@ -92,7 +95,7 @@ export function GiftPlanSection({
 
   return (
     <section className="form-card" data-testid="gift-plan">
-      <h2>{t('userForm.gift.title')}</h2>
+      {!titleHidden && <h2>{t('userForm.gift.title')}</h2>}
       <p className="hint">{t('userForm.gift.hint')}</p>
       <p data-testid="gift-current">
         {subscription

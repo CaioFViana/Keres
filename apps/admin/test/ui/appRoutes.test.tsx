@@ -151,23 +151,26 @@ describe('admin routes', () => {
   });
 
   it.each([
-    ['/users', 'Users'],
-    ['/users/new', 'New user'],
-    ['/recovery', 'Recovery'],
-    ['/activity', 'Activity'],
-    ['/payments', 'Payments'],
-    ['/logs', 'Logs'],
-    ['/tiers', 'Tiers'],
-    ['/messages', 'Messages'],
-    ['/contact', 'Messages'],
-    ['/settings', 'Settings'],
-  ])('renders the protected %s route', async (route, heading) => {
+    ['/users', 'Users', 'h1'],
+    // Creating an account is a dialog over the list, so its title is the dialog's, not the page's.
+    ['/users/new', 'New user', '.modal h3'],
+    ['/recovery', 'Recovery', 'h1'],
+    ['/activity', 'Activity', 'h1'],
+    ['/payments', 'Payments', 'h1'],
+    ['/logs', 'Logs', 'h1'],
+    ['/tiers', 'Tiers', 'h1'],
+    ['/messages', 'Messages', 'h1'],
+    ['/contact', 'Messages', 'h1'],
+    ['/settings', 'Settings', 'h1'],
+  ])('renders the protected %s route', async (route, heading, selector) => {
     setToken('admin-token');
     const view = await renderRoute(route);
     await flush();
 
-    expect(view.container.querySelector('h1')?.textContent).toContain(heading);
-    expect(view.container.textContent).toContain('Sign out');
+    expect(view.container.querySelector(selector)?.textContent).toContain(heading);
+    expect(
+      view.container.querySelector('.sidebar-footer button[aria-label="Sign out"]'),
+    ).not.toBeNull();
     await view.unmount();
   });
 

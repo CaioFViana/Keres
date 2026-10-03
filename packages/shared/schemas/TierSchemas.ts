@@ -3,7 +3,8 @@ import { CurrencySchema } from './RegistrationSettingsSchemas';
 import { UlidSchema } from './SyncSchemas';
 
 /**
- * Every ceiling is nullable; `null` means "unlimited". See `tiers` in
+ * Every ceiling is nullable; `null` means "unlimited", and zero allows nothing: a free plan with every ceiling at 0
+ * makes a server paid-only in practice. See `tiers` in
  * `apps/api/src/db/schema/tables/tiers.ts` for the same convention on the database side.
  */
 const tierFields = {
@@ -11,11 +12,11 @@ const tierFields = {
   // Zero is a price too: a tier for sale at 0 is the free tier.
   priceMonthlyCents: z.number().int().nonnegative().nullable().optional(),
   priceYearlyCents: z.number().int().nonnegative().nullable().optional(),
-  maxStories: z.number().int().positive().nullable().optional(),
-  maxEntitiesPerStory: z.number().int().positive().nullable().optional(),
-  maxEntitiesTotal: z.number().int().positive().nullable().optional(),
-  maxStorageBytesPerStory: z.number().int().positive().nullable().optional(),
-  maxStorageBytesTotal: z.number().int().positive().nullable().optional(),
+  maxStories: z.number().int().nonnegative().nullable().optional(),
+  maxEntitiesPerStory: z.number().int().nonnegative().nullable().optional(),
+  maxEntitiesTotal: z.number().int().nonnegative().nullable().optional(),
+  maxStorageBytesPerStory: z.number().int().nonnegative().nullable().optional(),
+  maxStorageBytesTotal: z.number().int().nonnegative().nullable().optional(),
   // Zero is a ceiling too: a tier that may not publish at all.
   maxPublicationsPerDay: z.number().int().nonnegative().nullable().optional(),
   // Zero silences the user; messages to the administrators have a fixed cap of their own.
@@ -91,11 +92,11 @@ export const PublicTierSchema = z.object({
   isDefault: z.boolean(),
   priceMonthlyCents: z.number().int().nonnegative().nullable(),
   priceYearlyCents: z.number().int().nonnegative().nullable(),
-  maxStories: z.number().int().positive().nullable(),
-  maxEntitiesPerStory: z.number().int().positive().nullable(),
-  maxEntitiesTotal: z.number().int().positive().nullable(),
-  maxStorageBytesPerStory: z.number().int().positive().nullable(),
-  maxStorageBytesTotal: z.number().int().positive().nullable(),
+  maxStories: z.number().int().nonnegative().nullable(),
+  maxEntitiesPerStory: z.number().int().nonnegative().nullable(),
+  maxEntitiesTotal: z.number().int().nonnegative().nullable(),
+  maxStorageBytesPerStory: z.number().int().nonnegative().nullable(),
+  maxStorageBytesTotal: z.number().int().nonnegative().nullable(),
   maxPublicationsPerDay: z.number().int().nonnegative().nullable(),
 });
 export type PublicTier = z.infer<typeof PublicTierSchema>;

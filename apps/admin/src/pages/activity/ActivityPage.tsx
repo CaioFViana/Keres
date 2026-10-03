@@ -5,9 +5,17 @@ import { Link, useSearchParams } from 'react-router-dom';
 import type { AuditEvent, AuditSummary, AuditUserRef } from '@keres/shared';
 import { AUDIT_CATEGORIES, AUDIT_OUTCOMES } from '@keres/shared/metadata/AuditEvents';
 import { ActivityApiService, type ActivityFilters } from '../../api/ActivityApiService';
+import { Modal } from '../../components/Modal';
 
 const PAGE_SIZE = 50;
 const WINDOWS = [1, 24, 168, 720] as const;
+
+/** The outcome column folded into the action cell: a coloured mark with the word as its label. */
+const OUTCOME_MARKS = {
+  success: '✓',
+  failure: '✕',
+  denied: '!',
+} as const;
 
 /** `a.b_c` -> `a_b_c`: the locale files nest on dots, so an action's dot cannot be part of a key. */
 const actionKey = (action: string) => action.replace('.', '_');
@@ -117,6 +125,7 @@ export function ActivityPage() {
   const [summary, setSummary] = useState<AuditSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -183,7 +192,7 @@ export function ActivityPage() {
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('activity.exportFailed'));
+      setNotice(err instanceof Error ? err.message : t('activity.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -411,7 +420,6 @@ export function ActivityPage() {
                 <tr>
                   <th>{t('activity.columnWhen')}</th>
                   <th>{t('activity.columnAction')}</th>
-                  <th>{t('activity.columnOutcome')}</th>
                   <th>{t('activity.columnActor')}</th>
                   <th>{t('activity.columnSubject')}</th>
                   <th>{t('activity.columnIp')}</th>
@@ -430,15 +438,17 @@ export function ActivityPage() {
                   >
                     <td>{when(entry.createdAt)}</td>
                     <td>
+                      <span
+                        className={`status-badge status-badge--icon outcome-${entry.outcome}`}
+                        title={t(`activity.outcomes.${entry.outcome}`)}
+                        aria-label={t(`activity.outcomes.${entry.outcome}`)}
+                      >
+                        {OUTCOME_MARKS[entry.outcome]}
+                      </span>{' '}
                       <span className="status-badge">
                         {t(`activity.categories.${entry.category}`)}
                       </span>{' '}
                       {actionLabel(entry.action)}
-                    </td>
-                    <td>
-                      <span className={`status-badge outcome-${entry.outcome}`}>
-                        {t(`activity.outcomes.${entry.outcome}`)}
-                      </span>
                     </td>
                     <td>
                       <UserCell user={entry.actor} />
@@ -451,7 +461,7 @@ export function ActivityPage() {
                 ))}
                 {events.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="empty-state">
+                    <td colSpan={5} className="empty-state">
                       {t('activity.empty')}
                     </td>
                   </tr>
@@ -521,6 +531,12 @@ export function ActivityPage() {
           {t('common.next')}
         </button>
       </div>
+
+      {notice && (
+        <Modal title={t('common.notice')} onClose={() => setNotice(null)}>
+          <p>{notice}</p>
+        </Modal>
+      )}
     </div>
   );
 }

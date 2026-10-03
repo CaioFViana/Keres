@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import type { AdminMessage, AdminMessageDetail, AdminMessageListQuery } from '@keres/shared';
 import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
 import { announceMessagesChanged, MessagesApiService } from '../../api/MessagesApiService';
+import { Modal } from '../../components/Modal';
 
 type Source = AdminMessageListQuery['source'];
 type ReadFilter = AdminMessageListQuery['read'];
@@ -60,6 +61,13 @@ export function MessagesPage() {
   const [detail, setDetail] = useState<AdminMessageDetail | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const noticeModal = notice && (
+    <Modal title={t('common.notice')} onClose={() => setNotice(null)}>
+      <p>{notice}</p>
+    </Modal>
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -133,7 +141,7 @@ export function MessagesPage() {
       );
       reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.actionFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.actionFailed'));
     }
   };
 
@@ -144,7 +152,7 @@ export function MessagesPage() {
       setDetail(null);
       reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.deleteFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.deleteFailed'));
     }
   };
 
@@ -158,7 +166,7 @@ export function MessagesPage() {
           : current,
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.deleteFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.deleteFailed'));
     }
   };
 
@@ -175,7 +183,7 @@ export function MessagesPage() {
       setReplyText('');
       reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('messages.replyFailed'));
+      setNotice(err instanceof Error ? err.message : t('messages.replyFailed'));
     } finally {
       setReplying(false);
     }
@@ -296,6 +304,7 @@ export function MessagesPage() {
             </button>
           </div>
         </div>
+        {noticeModal}
       </div>
     );
   }
@@ -472,6 +481,7 @@ export function MessagesPage() {
           {t('common.next')}
         </button>
       </div>
+      {noticeModal}
     </div>
   );
 }

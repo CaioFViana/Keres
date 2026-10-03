@@ -155,6 +155,12 @@
     "title": "Appearance",
     "hint": "Saved in this browser only.",
     "palette": "Palette",
+    "themeLabel": "Theme",
+    "themeOptions": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "followingSystem": "Following your device setting."
   },
   "common": {
@@ -163,6 +169,7 @@
     "saving": "Saving...",
     "cancel": "Cancel",
     "close": "Close",
+    "notice": "Notice",
     "search": "Search",
     "edit": "Edit",
     "delete": "Delete",
@@ -178,7 +185,8 @@
     "deleteFailed": "Delete failed.",
     "restoreFailed": "Restore failed.",
     "actionFailed": "Action failed.",
-    "blankUnlimited": "(blank = unlimited)"
+    "blankUnlimited": "(blank = unlimited, 0 = none)",
+    "nonNegativeInteger": "Enter a whole number of 0 or more."
   },
   "language": {
     "label": "Language"
@@ -275,6 +283,8 @@
     "title": "Keres Admin",
     "menu": "Menu",
     "hideMenu": "Hide menu",
+    "groupContent": "Content",
+    "groupSystem": "System",
     "users": "Users",
     "recovery": "Recovery",
     "activity": "Activity",
@@ -380,7 +390,11 @@
     "currency": "Currency (ISO code)",
     "currencyHint": "3 letters, e.g. BRL. Every tier price uses it.",
     "saved": "Saved.",
-    "loadTiersFailed": "Failed to load tiers."
+    "loadTiersFailed": "Failed to load tiers.",
+    "sectionsLabel": "Settings sections",
+    "unsavedChanges": "Unsaved changes.",
+    "allSaved": "All changes saved.",
+    "defaultTierHint": "What people have without paying: new accounts, and anybody whose paid period ends. Keep a free plan here, even one with every ceiling at 0 (that makes the server paid-only). With none, people have no limits."
   },
   "showcaseSettings": {
     "title": "Hosted Pages",
@@ -437,9 +451,15 @@
     "columnPriceMonthly": "Price/mo",
     "columnPriceYearly": "Price/yr",
     "columnForSale": "For sale",
+    "groupLimits": "Limits",
+    "groupStorage": "Storage",
+    "groupPrices": "Prices",
     "statusDeleted": "Deleted",
     "empty": "No tiers yet.",
-    "confirmDelete": "Delete tier \"{{name}}\"?"
+    "confirmDelete": "Delete tier \"{{name}}\"?",
+    "freePlanNote": "Always keep a free plan, even one with every ceiling at 0, and mark it as the default: it is what people have when they have not paid - new accounts, and anybody whose paid period ended. With no default plan they have no limits at all.",
+    "paidOnlyNote": "A ceiling left blank is unlimited; 0 allows nothing. A free plan with every ceiling at 0 makes the server paid-only in practice: people can register, sign in and write to the administrators, but cannot create stories, add entities, upload media, publish or message other users until they subscribe or are given a plan. Limits count against the owner of a story, so they can still collaborate on stories of people who have a plan.",
+    "defaultNote": "Tick this on your free plan. It is the plan of new accounts and of anybody with no plan assigned, including when a paid period ends - the same setting as the default plan in Settings."
   },
   "userForm": {
     "newTitle": "New user",
@@ -458,6 +478,7 @@
     "copyCodes": "Copy codes",
     "copied": "Copied to clipboard.",
     "copyFailed": "Could not copy automatically — select the codes manually.",
+    "openRecovery": "Recovery codes",
     "lockedOutTitle": "Locked out of their account?",
     "lockedOutHint": "Issues a fresh batch of recovery codes and invalidates any old ones. Hand a code to the user - they use it to set their own new password, which you never see.",
     "regenerate": "Regenerate recovery codes",
@@ -497,12 +518,9 @@
     "showDeleted": "Show deleted",
     "columnUsername": "Username",
     "columnTag": "Tag",
-    "columnAdmin": "Admin",
+    "adminBadge": "Administrator",
     "columnTier": "Tier",
     "columnCreated": "Created",
-    "columnStatus": "Status",
-    "statusActive": "Active",
-    "statusDeleted": "Deleted",
     "empty": "No users found.",
     "confirmDelete": "Soft-delete user \"{{username}}\"?",
     "confirmDeleteAdmin": "Soft-delete admin \"{{username}}\"? They will lose access until restored.",

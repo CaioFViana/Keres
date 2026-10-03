@@ -64,6 +64,10 @@ describe('panel layout', () => {
     ]) {
       expect(view.container.textContent).toContain(link);
     }
+    const groups = Array.from(view.container.querySelectorAll('.nav-group-title')).map(
+      (node) => node.textContent,
+    );
+    expect(groups).toEqual(['Content', 'System']);
     await view.unmount();
   });
 
@@ -115,14 +119,23 @@ describe('panel layout', () => {
   it('signs out from the footer', async () => {
     const view = await renderShell();
 
-    await click(
-      Array.from(view.container.querySelectorAll('.sidebar-footer button')).find(
-        (button) => button.textContent === 'Sign out',
-      )!,
-    );
+    const signOut = view.container.querySelector('.sidebar-footer button[aria-label="Sign out"]')!;
+    expect(signOut.getAttribute('title')).toBe('Sign out');
+    await click(signOut);
     await flush();
 
     expect(mocks.logout).toHaveBeenCalledOnce();
+    await view.unmount();
+  });
+
+  it('shows the theme action as an icon with its name on hover', async () => {
+    const view = await renderShell();
+    await flush();
+
+    const theme = view.container.querySelectorAll('.sidebar-footer .icon-button')[0];
+    expect(theme.getAttribute('aria-label')).toBe('Theme: System');
+    expect(theme.getAttribute('title')).toBe('Theme: System');
+    expect(theme.querySelector('svg')).not.toBeNull();
     await view.unmount();
   });
 

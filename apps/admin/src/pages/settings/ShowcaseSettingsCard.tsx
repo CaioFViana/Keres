@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ShowcaseSettingsApiService,
   type ShowcaseSettings,
-  type ShowcaseSettingsPatch,
 } from '../../api/ShowcaseSettingsApiService';
 import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
 
@@ -20,36 +19,51 @@ import { PALETTE_NAMES, paletteLabel } from '../../theme/theme';
 export function ShowcaseSettingsCard() {
   const { t } = useTranslation('admin');
   const [settings, setSettings] = useState<ShowcaseSettings | null>(null);
+  const [toggles, setToggles] = useState({
+    isShowcaseEnabled: false,
+    isHostedClientEnabled: false,
+    isLandingEnabled: false,
+  });
   const [siteName, setSiteName] = useState('');
   const [sitePalette, setSitePalette] = useState('default');
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  // Drafts follow the server once, on load - afterwards they are the operator's until saved, so a
-  // toggle round-trip in between does not wipe what is being typed.
-  const draftsInitialised = useRef(false);
 
+  // Drafts follow the server once, on load - afterwards they are the operator's until saved.
   useEffect(() => {
     ShowcaseSettingsApiService.get()
       .then((loaded) => {
         setSettings(loaded);
-        if (!draftsInitialised.current) {
-          draftsInitialised.current = true;
-          setSiteName(loaded.siteName ?? 'Keres');
-          setSitePalette(loaded.sitePalette ?? 'default');
-        }
+        const draft = {
+          isShowcaseEnabled: loaded.isShowcaseEnabled,
+          isHostedClientEnabled: loaded.isHostedClientEnabled,
+          isLandingEnabled: loaded.isLandingEnabled ?? false,
+        };
+        setToggles(draft);
+        const name = loaded.siteName ?? 'Keres';
+        const palette = loaded.sitePalette ?? 'default';
+        setSiteName(name);
+        setSitePalette(palette);
+        setSavedSnapshot(JSON.stringify({ ...draft, siteName: name, sitePalette: palette }));
       })
       .catch((err) =>
         setError(err instanceof Error ? err.message : t('showcaseSettings.loadFailed')),
       );
   }, []);
 
-  const save = async (patch: ShowcaseSettingsPatch) => {
+  const draft = { ...toggles, siteName, sitePalette };
+  const dirty = savedSnapshot !== null && JSON.stringify(draft) !== savedSnapshot;
+
+  const save = async () => {
     setSaving(true);
     setError(null);
     setMessage(null);
     try {
-      setSettings(await ShowcaseSettingsApiService.update(patch));
+      setSettings(await ShowcaseSettingsApiService.update(draft));
+      setSavedSnapshot(JSON.stringify(draft));
       setMessage(t('settings.saved'));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.saveFailed'));
@@ -97,34 +111,45 @@ export function ShowcaseSettingsCard() {
       <h2>{t('showcaseSettings.title')}</h2>
       <p className="hint">{t('showcaseSettings.description')}</p>
 
-      {!settings && !error && <p className="loading-text">{t('common.loading')}</p>}
+      {!settings &&
+        (error ? (
+          <p className="error-text">{error}</p>
+        ) : (
+          <p className="loading-text">{t('common.loading')}</p>
+        ))}
 
       {settings && (
         <>
-          <label className="checkbox-label">
+          <label className="checkbox-label switch">
             <input
               type="checkbox"
-              checked={settings.isShowcaseEnabled}
+              checked={toggles.isShowcaseEnabled}
               disabled={saving}
-              onChange={(e) => void save({ isShowcaseEnabled: e.target.checked })}
+              onChange={(e) =>
+                setToggles((prev) => ({ ...prev, isShowcaseEnabled: e.target.checked }))
+              }
             />
             {t('showcaseSettings.enabled')}
           </label>
-          <label className="checkbox-label">
+          <label className="checkbox-label switch">
             <input
               type="checkbox"
-              checked={settings.isHostedClientEnabled}
+              checked={toggles.isHostedClientEnabled}
               disabled={saving}
-              onChange={(e) => void save({ isHostedClientEnabled: e.target.checked })}
+              onChange={(e) =>
+                setToggles((prev) => ({ ...prev, isHostedClientEnabled: e.target.checked }))
+              }
             />
             {t('showcaseSettings.hostedClientEnabled')}
           </label>
-          <label className="checkbox-label">
+          <label className="checkbox-label switch">
             <input
               type="checkbox"
-              checked={settings.isLandingEnabled ?? false}
+              checked={toggles.isLandingEnabled}
               disabled={saving}
-              onChange={(e) => void save({ isLandingEnabled: e.target.checked })}
+              onChange={(e) =>
+                setToggles((prev) => ({ ...prev, isLandingEnabled: e.target.checked }))
+              }
             />
             {t('showcaseSettings.landingEnabled')}
           </label>
@@ -154,14 +179,15 @@ export function ShowcaseSettingsCard() {
               ))}
             </select>
           </label>
+          {error && <p className="error-text">{error}</p>}
+          {message && <p className="success-text">{message}</p>}
           <div className="form-actions">
-            <button
-              type="button"
-              disabled={saving}
-              onClick={() => void save({ siteName, sitePalette })}
-            >
+            <button type="button" disabled={saving || !dirty} onClick={() => void save()}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
+            <span className={dirty ? 'hint' : 'success-text'} role="status">
+              {dirty ? t('settings.unsavedChanges') : t('settings.allSaved')}
+            </span>
           </div>
 
           <h3>{t('showcaseSettings.logo')}</h3>
@@ -171,19 +197,27 @@ export function ShowcaseSettingsCard() {
               <img src={logoUrl} alt={t('showcaseSettings.logoPreview')} height={40} />
             </p>
           )}
-          <label>
-            {t('showcaseSettings.uploadLogo')}
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              disabled={saving}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = '';
-                if (file) void upload(file);
-              }}
-            />
-          </label>
+          <span>{t('showcaseSettings.uploadLogo')}</span>
+          <div className="form-actions">
+            <label className="file-picker">
+              <span className="file-picker-button" aria-hidden="true">
+                {fileName ?? t('showcaseSettings.uploadLogo')}
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={saving}
+                aria-label={t('showcaseSettings.uploadLogo')}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  setFileName(file.name);
+                  void upload(file);
+                }}
+              />
+            </label>
+          </div>
           {logoUrl && (
             <div className="form-actions">
               <button type="button" disabled={saving} onClick={() => void removeLogo()}>
@@ -193,9 +227,6 @@ export function ShowcaseSettingsCard() {
           )}
         </>
       )}
-
-      {error && <p className="error-text">{error}</p>}
-      {message && <p className="success-text">{message}</p>}
     </div>
   );
 }

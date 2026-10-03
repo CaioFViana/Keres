@@ -185,3 +185,37 @@ describe('with no default at all', () => {
     expect(await getApp()).toBeTruthy();
   });
 });
+
+describe('a free plan with every ceiling at 0, made in the admin panel', () => {
+  const zeros = {
+    maxStories: 0,
+    maxEntitiesPerStory: 0,
+    maxEntitiesTotal: 0,
+    maxStorageBytesPerStory: 0,
+    maxStorageBytesTotal: 0,
+    maxPublicationsPerDay: 0,
+    maxMessagesPerDay: 0,
+  };
+
+  it('is accepted, and is kept as zero - not as the blank that means unlimited', async () => {
+    const { status, data } = await request('POST', '/admin/api/tiers', {
+      token: admin.token,
+      body: { name: 'Nothing', isDefault: true, ...zeros },
+    });
+
+    expect(status).toBe(201);
+    expect(data).toMatchObject(zeros);
+    expect(await settingOf()).toBe(data.id);
+  });
+
+  it('can be reached by editing one ceiling at a time, and a negative one is still refused', async () => {
+    const edit = (body: Record<string, unknown>) => putTier(freeId, body);
+
+    expect((await edit({ maxStories: 0 })).data.maxStories).toBe(0);
+    expect((await edit({ maxStorageBytesTotal: 0 })).data).toMatchObject({
+      maxStories: 0,
+      maxStorageBytesTotal: 0,
+    });
+    expect((await edit({ maxEntitiesTotal: -1 })).status).toBe(400);
+  });
+});

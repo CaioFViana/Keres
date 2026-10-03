@@ -155,7 +155,14 @@ assigned, the server's default plan, and - if there is none of those - no limits
 server that sells plans must have a **default plan**: without one, a lapsed subscription is worth more than a free
 plan. The server says so in its log at every start and in the administrators' **Payments** page. The default plan is
 one setting with two ways to set it - the "default" box on the plan, or the choice in Registration - kept together; a
-server that only has a plan ticked treats that plan as the default. A plan cannot be
+server that only has a plan ticked treats that plan as the default.
+
+Keep a free plan there even if every one of its ceilings is **0**. A ceiling left blank is unlimited, and 0 allows
+nothing (stories, entities, storage, publications, messages to other users), so a free plan with every ceiling at 0
+makes the server **paid-only in practice**: people can register, sign in and write to the administrators (a cap of its
+own, not the plan's), but create and upload nothing until they subscribe or are given a plan. Ceilings count against
+the owner of a story, so they can still collaborate on stories of people who have a plan. The price of a plan changes
+none of this: it is read only to charge, never to limit. A plan cannot be
 deleted while somebody is subscribed to it.
 
 ### Plans given by an administrator

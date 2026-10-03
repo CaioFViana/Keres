@@ -155,6 +155,12 @@
     "title": "Aparência",
     "hint": "Salvo apenas neste navegador.",
     "palette": "Paleta",
+    "themeLabel": "Tema",
+    "themeOptions": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Escuro"
+    },
     "followingSystem": "Seguindo a configuração do seu dispositivo."
   },
   "common": {
@@ -163,6 +169,7 @@
     "saving": "Salvando...",
     "cancel": "Cancelar",
     "close": "Fechar",
+    "notice": "Aviso",
     "search": "Buscar",
     "edit": "Editar",
     "delete": "Excluir",
@@ -178,7 +185,8 @@
     "deleteFailed": "Não foi possível excluir.",
     "restoreFailed": "Não foi possível restaurar.",
     "actionFailed": "A ação falhou.",
-    "blankUnlimited": "(em branco = ilimitado)"
+    "blankUnlimited": "(em branco = ilimitado, 0 = nenhum)",
+    "nonNegativeInteger": "Informe um número inteiro de 0 ou mais."
   },
   "language": {
     "label": "Idioma"
@@ -275,6 +283,8 @@
     "title": "Keres Admin",
     "menu": "Menu",
     "hideMenu": "Ocultar menu",
+    "groupContent": "Conteúdo",
+    "groupSystem": "Sistema",
     "users": "Usuários",
     "recovery": "Recuperação",
     "activity": "Atividade",
@@ -380,7 +390,11 @@
     "currency": "Moeda (código ISO)",
     "currencyHint": "3 letras, ex. BRL. Todos os preços usam esta moeda.",
     "saved": "Salvo.",
-    "loadTiersFailed": "Não foi possível carregar os planos."
+    "loadTiersFailed": "Não foi possível carregar os planos.",
+    "sectionsLabel": "Seções das configurações",
+    "unsavedChanges": "Alterações não salvas.",
+    "allSaved": "Todas as alterações salvas.",
+    "defaultTierHint": "O que as pessoas têm sem pagar: contas novas e quem teve o período pago encerrado. Mantenha aqui um plano gratuito, mesmo que com todos os tetos em 0 (isso torna o servidor pago). Sem plano padrão, elas ficam sem limite."
   },
   "showcaseSettings": {
     "title": "Páginas hospedadas",
@@ -437,9 +451,15 @@
     "columnPriceMonthly": "Preço/mês",
     "columnPriceYearly": "Preço/ano",
     "columnForSale": "À venda",
+    "groupLimits": "Limites",
+    "groupStorage": "Armazenamento",
+    "groupPrices": "Preços",
     "statusDeleted": "Excluído",
     "empty": "Nenhum plano ainda.",
-    "confirmDelete": "Excluir o plano \"{{name}}\"?"
+    "confirmDelete": "Excluir o plano \"{{name}}\"?",
+    "freePlanNote": "Mantenha sempre um plano gratuito, mesmo que todos os tetos dele sejam 0, e marque-o como padrão: é o que as pessoas têm quando não pagaram - contas novas e quem teve o período pago encerrado. Sem plano padrão, elas ficam sem limite nenhum.",
+    "paidOnlyNote": "Um teto em branco é ilimitado; 0 não permite nada. Um plano gratuito com todos os tetos em 0 torna o servidor pago na prática: as pessoas podem se cadastrar, entrar e escrever aos administradores, mas não conseguem criar histórias, adicionar entidades, enviar mídia, publicar nem mandar mensagens a outros usuários até assinarem ou ganharem um plano. Os limites contam contra o dono da história, então elas ainda colaboram nas histórias de quem tem plano.",
+    "defaultNote": "Marque no seu plano gratuito. É o plano das contas novas e de quem não tem plano atribuído, inclusive quando um período pago termina - a mesma configuração do plano padrão em Configurações."
   },
   "userForm": {
     "newTitle": "Novo usuário",
@@ -458,6 +478,7 @@
     "copyCodes": "Copiar códigos",
     "copied": "Copiado para a área de transferência.",
     "copyFailed": "Não foi possível copiar automaticamente — selecione os códigos à mão.",
+    "openRecovery": "Códigos de recuperação",
     "lockedOutTitle": "Perdeu o acesso à conta?",
     "lockedOutHint": "Gera um lote novo de códigos de recuperação e invalida os antigos. Entregue um código à pessoa - é com ele que ela define a própria senha nova, que você nunca vê.",
     "regenerate": "Gerar novos códigos de recuperação",
@@ -497,12 +518,9 @@
     "showDeleted": "Mostrar excluídos",
     "columnUsername": "Usuário",
     "columnTag": "Tag",
-    "columnAdmin": "Admin",
+    "adminBadge": "Administrador",
     "columnTier": "Plano",
     "columnCreated": "Criado em",
-    "columnStatus": "Situação",
-    "statusActive": "Ativo",
-    "statusDeleted": "Excluído",
     "empty": "Nenhum usuário encontrado.",
     "confirmDelete": "Excluir o usuário \"{{username}}\"?",
     "confirmDeleteAdmin": "Excluir o admin \"{{username}}\"? Ele perde o acesso até ser restaurado.",

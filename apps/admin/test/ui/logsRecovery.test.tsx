@@ -314,8 +314,17 @@ describe('recovery page', () => {
     );
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Already restored.');
+    const modal = view.container.querySelector('.modal')!;
+    expect(modal.textContent).toContain('Already restored.');
     expect(view.container.textContent).toContain('Ana');
+
+    await click(
+      Array.from(modal.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Close',
+      )!,
+    );
+    await flush();
+    expect(view.container.querySelector('.modal')).toBeNull();
     await view.unmount();
   });
 
@@ -352,7 +361,7 @@ describe('recovery page', () => {
     );
     await flush();
 
-    expect(window.alert).toHaveBeenCalledWith('Restore failed.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Restore failed.');
     await view.unmount();
   });
 

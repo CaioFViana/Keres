@@ -175,7 +175,7 @@ describe('activity page: the record', () => {
     const row = view.container.querySelector('tbody tr')!;
     expect(row.textContent).toContain('Messages');
     expect(row.textContent).toContain('Message to a friend');
-    expect(row.textContent).toContain('Succeeded');
+    expect(row.querySelector('.outcome-success')?.getAttribute('aria-label')).toBe('Succeeded');
     expect(row.textContent).toContain('@ana_s');
     expect(row.textContent).toContain('@bia');
     expect(row.textContent).toContain('203.0.113.9');
@@ -205,7 +205,7 @@ describe('activity page: the record', () => {
     expect(rows[0].textContent).toContain('-');
     expect(rows[1].textContent).toContain('(account closed)');
     // The closed account is named, but no longer a link to a page that is gone.
-    expect(rows[1].querySelectorAll('td')[3].querySelector('a')).toBeNull();
+    expect(rows[1].querySelectorAll('td')[2].querySelector('a')).toBeNull();
     expect(rows[2].textContent).toContain('ghost');
   });
 
@@ -216,8 +216,13 @@ describe('activity page: the record', () => {
     const view = await renderPage();
     await flush();
 
-    expect(view.container.querySelector('.outcome-failure')?.textContent).toBe('Failed');
-    expect(view.container.querySelector('.outcome-denied')?.textContent).toBe('Refused');
+    const failure = view.container.querySelector('.outcome-failure')!;
+    expect(failure.textContent).toBe('✕');
+    expect(failure.getAttribute('aria-label')).toBe('Failed');
+    const denied = view.container.querySelector('.outcome-denied')!;
+    expect(denied.textContent).toBe('!');
+    expect(denied.getAttribute('aria-label')).toBe('Refused');
+    expect(view.container.querySelector('thead')!.textContent).not.toContain('Outcome');
   });
 
   it('opens an event with everything about it, and what the request said', async () => {
@@ -402,7 +407,7 @@ describe('activity page: export', () => {
     );
     await flush();
 
-    expect(alert).toHaveBeenCalledWith('Export failed.');
+    expect(view.container.querySelector('.modal')?.textContent).toContain('Export failed.');
   });
 });
 

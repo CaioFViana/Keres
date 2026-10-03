@@ -27,10 +27,20 @@ export const AdminUpdateUserSchema = z.object({
 });
 export type AdminUpdateUser = z.infer<typeof AdminUpdateUserSchema>;
 
+/**
+ * Query strings arrive as text (`?isDeleted=false`), and `z.coerce.boolean()`
+ * follows JavaScript truthiness - `Boolean('false')` is `true`, so an
+ * "active only" filter would silently become "deleted only". Only the exact
+ * strings the admin client sends via axios params are accepted.
+ */
+const QueryBooleanSchema = z
+  .union([z.boolean(), z.enum(['true', 'false'])])
+  .transform((value) => value === true || value === 'true');
+
 export const AdminUserListQuerySchema = z.object({
   search: z.string().optional(),
-  isAdmin: z.coerce.boolean().optional(),
-  isDeleted: z.coerce.boolean().optional(),
+  isAdmin: QueryBooleanSchema.optional(),
+  isDeleted: QueryBooleanSchema.optional(),
   tierId: UlidSchema.optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),

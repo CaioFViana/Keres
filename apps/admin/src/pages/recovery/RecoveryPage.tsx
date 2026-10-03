@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { RECOVERABLE_ENTITY_TYPES } from '@keres/shared/metadata/recoverableEntityTypes';
 import type { DeletedItem, OperationLogEntry } from '../../api/RecoveryApiService';
 import { RecoveryApiService } from '../../api/RecoveryApiService';
+import { Modal } from '../../components/Modal';
 
 export function RecoveryPage() {
   const { t, i18n } = useTranslation('admin');
@@ -20,6 +21,7 @@ export function RecoveryPage() {
   const [selectedEntry, setSelectedEntry] = useState<OperationLogEntry | null>(null);
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const search = (e?: FormEvent) => {
     e?.preventDefault();
@@ -44,7 +46,7 @@ export function RecoveryPage() {
         prev.filter((i) => !(i.entityType === item.entityType && i.id === item.id)),
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : t('common.restoreFailed'));
+      setNotice(err instanceof Error ? err.message : t('common.restoreFailed'));
     }
   };
 
@@ -269,6 +271,12 @@ export function RecoveryPage() {
           </div>
         )}
       </section>
+
+      {notice && (
+        <Modal title={t('common.notice')} onClose={() => setNotice(null)}>
+          <p>{notice}</p>
+        </Modal>
+      )}
     </div>
   );
 }

@@ -139,11 +139,12 @@ describe('admin page actions', () => {
   it('creates a user from the new-user form and shows the recovery codes once', async () => {
     const view = await withRouter(<UserFormPage />, '/users/new');
     await flush();
-    const inputs = view.container.querySelectorAll('input');
+    // The form lives in the dialog over the list; the list's own search box is not it.
+    const inputs = view.container.querySelectorAll<HTMLInputElement>('.modal input');
 
     await changeInput(inputs[0], 'ana');
     await changeInput(inputs[1], 'password123');
-    await submit(view.container.querySelector('form')!);
+    await submit(view.container.querySelector('.modal form')!);
     await flush();
 
     expect(mocks.createUser).toHaveBeenCalledWith(

@@ -1,7 +1,9 @@
 {
   "contact": {
     "title": "Contact the administrators",
+    "title_official": "Contact the Keres team",
     "lead": "Questions about the plans, the server, or your account. The message goes to whoever runs this server.",
+    "lead_official": "Questions about the plans, the service, or your account. The message goes to the team behind Keres.",
     "points": {
       "plans": "Plans, prices and limits",
       "server": "Running or joining a server",
@@ -79,7 +81,8 @@
       "showcase": {
         "q": "Does this page publish stories?",
         "a": "No. This is the project landing page. The showcase of published stories is a separate site, served by a Keres Server someone chose to run.",
-        "aLanding": "Not this page. If this server's operator enabled publishing, its showcase is at /showcase, on this same server."
+        "aLanding": "Not this page. If this server's operator enabled publishing, its showcase is at /showcase, on this same server.",
+        "aLanding_official": "Not this page. Published stories are in the showcase at /showcase, here on keres.me."
       }
     }
   },
@@ -198,6 +201,7 @@
     "tryNote": "Runs in your browser with no server and no account: your stories stay on this device. Server features (sync, collaboration, publishing) are not part of this version.",
     "landingCtaTry": "Open the web client",
     "landingTryNote": "Connected to this server, with sync, collaboration, and publishing.",
+    "landingTryNote_official": "Connected to Keres, with sync, collaboration, and publishing.",
     "ctaDownload": "Download",
     "ctaGithub": "View on GitHub",
     "ctaFeatures": "See what's included"
@@ -207,7 +211,8 @@
   },
   "meta": {
     "title": "Keres — Organize universes, connect narratives",
-    "description": "An offline-first story planning platform for phone, desktop, and the browser, served by the Keres server itself."
+    "description": "An offline-first story planning platform for phone, desktop, and the browser, served by the Keres server itself.",
+    "description_official": "An offline-first story planning platform for phone, desktop, and the browser, with the official Keres service at keres.me."
   },
   "nav": {
     "product": "Product",
@@ -221,9 +226,12 @@
   },
   "official": {
     "title": "keres.me: the official server",
+    "title_official": "Keres, the official service",
     "lead": "Run by the team behind Keres. Register there, or host your own server — the plans below are this server's offer.",
+    "lead_official": "You are on keres.me, run by the team behind Keres. Register here, or host your own server — the plans below are the official ones.",
     "visit": "Visit keres.me",
-    "openClient": "Open its web client"
+    "openClient": "Open its web client",
+    "openClient_official": "Open the web client"
   },
   "pillars": {
     "offline": {
@@ -349,10 +357,12 @@
   "tiers": {
     "title": "Plans for syncing",
     "lead": "Everything local is free forever. A plan only matters when you sync, collaborate, or publish on this server.",
+    "lead_official": "Everything local is free forever. A plan only matters when you sync, collaborate, or publish on Keres.",
     "loading": "Loading plans...",
     "loadFailed": "Could not load the plans.",
     "retry": "Try again",
     "empty": "This server has no plans for sale yet.",
+    "empty_official": "Keres has no plans for sale yet.",
     "free": "Free",
     "perMonth": "/month",
     "perYear": "/year",

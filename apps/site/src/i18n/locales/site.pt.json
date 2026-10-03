@@ -1,7 +1,9 @@
 {
   "contact": {
     "title": "Fale com os administradores",
+    "title_official": "Fale com a equipe do Keres",
     "lead": "Dúvidas sobre os planos, o servidor ou a sua conta. A mensagem vai para quem opera este servidor.",
+    "lead_official": "Dúvidas sobre os planos, o serviço ou a sua conta. A mensagem vai para a equipe por trás do Keres.",
     "points": {
       "plans": "Planos, preços e limites",
       "server": "Hospedar ou entrar em um servidor",
@@ -79,7 +81,8 @@
       "showcase": {
         "q": "Esta página publica histórias?",
         "a": "Não. Esta é a landing do projeto. A vitrine de histórias publicadas é um site separado, servido por um Keres Server que alguém escolheu manter.",
-        "aLanding": "Não esta página. Se o operador deste servidor habilitou a publicação, a vitrine dele está em /showcase, neste mesmo servidor."
+        "aLanding": "Não esta página. Se o operador deste servidor habilitou a publicação, a vitrine dele está em /showcase, neste mesmo servidor.",
+        "aLanding_official": "Não esta página. As histórias publicadas ficam na vitrine, em /showcase, aqui mesmo em keres.me."
       }
     }
   },
@@ -198,6 +201,7 @@
     "tryNote": "Roda no seu navegador, sem servidor nem conta: suas histórias ficam neste aparelho. Os recursos de servidor (sincronização, colaboração, publicação) não fazem parte desta versão.",
     "landingCtaTry": "Abrir o cliente web",
     "landingTryNote": "Conectado a este servidor, com sincronização, colaboração e publicação.",
+    "landingTryNote_official": "Conectado ao Keres, com sincronização, colaboração e publicação.",
     "ctaDownload": "Baixar",
     "ctaGithub": "Ver no GitHub",
     "ctaFeatures": "Ver o que inclui"
@@ -207,7 +211,8 @@
   },
   "meta": {
     "title": "Keres — Organize universos, conecte narrativas",
-    "description": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, servida pelo próprio servidor Keres."
+    "description": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, servida pelo próprio servidor Keres.",
+    "description_official": "Plataforma offline-first para planejar histórias no celular, no desktop e no navegador, com o serviço oficial do Keres em keres.me."
   },
   "nav": {
     "product": "Produto",
@@ -221,9 +226,12 @@
   },
   "official": {
     "title": "keres.me: o servidor oficial",
+    "title_official": "Keres, o serviço oficial",
     "lead": "Operado pela equipe do Keres. Cadastre-se lá ou hospede o seu próprio servidor — os planos abaixo são a oferta deste servidor.",
+    "lead_official": "Você está em keres.me, operado pela equipe por trás do Keres. Cadastre-se aqui ou hospede o seu próprio servidor — os planos abaixo são os oficiais.",
     "visit": "Visitar keres.me",
-    "openClient": "Abrir o cliente web dele"
+    "openClient": "Abrir o cliente web dele",
+    "openClient_official": "Abrir o cliente web"
   },
   "pillars": {
     "offline": {
@@ -349,10 +357,12 @@
   "tiers": {
     "title": "Planos para sincronizar",
     "lead": "Tudo que é local é grátis para sempre. Um plano só importa quando você sincroniza, colabora ou publica neste servidor.",
+    "lead_official": "Tudo que é local é grátis para sempre. Um plano só importa quando você sincroniza, colabora ou publica no Keres.",
     "loading": "Carregando planos...",
     "loadFailed": "Não foi possível carregar os planos.",
     "retry": "Tentar de novo",
     "empty": "Este servidor ainda não tem planos à venda.",
+    "empty_official": "O Keres ainda não tem planos à venda.",
     "free": "Grátis",
     "perMonth": "/mês",
     "perYear": "/ano",

@@ -1,3 +1,5 @@
+import { KERES_OFFICIAL_URL } from './content/links';
+
 /**
  * Which site this build is.
  *
@@ -15,3 +17,24 @@ export const SITE_VARIANT: SiteVariant =
   import.meta.env.VITE_SITE_VARIANT === 'landing' ? 'landing' : 'pages';
 
 export const isLandingBuild = SITE_VARIANT === 'landing';
+
+const OFFICIAL_HOST = new URL(KERES_OFFICIAL_URL).hostname;
+
+/** The official server's own host, with or without `www`. Anything else is a server somebody else runs. */
+export const isOfficialHost = (hostname: string): boolean =>
+  hostname === OFFICIAL_HOST || hostname === `www.${OFFICIAL_HOST}`;
+
+/**
+ * Whether this page is the official Keres service itself: a landing build, served from keres.me.
+ * Any other landing build is the front of whichever server its operator runs, and says "this
+ * server"; here the same words say "Keres". Only the landing build can be official - the Pages
+ * site has no server behind it. Read once, at module load, like the variant.
+ */
+export const isOfficialSite =
+  isLandingBuild && typeof location !== 'undefined' && isOfficialHost(location.hostname);
+
+/**
+ * i18next context for the texts that speak of the server hosting the page: with it, `key_official`
+ * is read where it exists and the plain `key` everywhere else.
+ */
+export const SITE_TEXT_CONTEXT: string | undefined = isOfficialSite ? 'official' : undefined;

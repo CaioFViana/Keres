@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchLandingTiers, type LandingTier, type LandingTiersResponse } from '../api/landing';
 import { formatBytes, formatPrice, yearlyDiscountPercent } from '../content/pricing';
+import { SITE_TEXT_CONTEXT } from '../variant';
 
 type TiersState =
   | { status: 'loading' }
@@ -95,7 +96,7 @@ export function TiersSection() {
       <div className="section-inner">
         <header className="section-head">
           <h2>{t('tiers.title')}</h2>
-          <p>{t('tiers.lead')}</p>
+          <p>{t('tiers.lead', { context: SITE_TEXT_CONTEXT })}</p>
         </header>
         {state.status === 'loading' && <p className="muted">{t('tiers.loading')}</p>}
         {state.status === 'error' && (
@@ -108,7 +109,7 @@ export function TiersSection() {
         )}
         {state.status === 'ready' &&
           (state.data.tiers.length === 0 ? (
-            <p className="muted">{t('tiers.empty')}</p>
+            <p className="muted">{t('tiers.empty', { context: SITE_TEXT_CONTEXT })}</p>
           ) : (
             <>
               <div className="tiers-grid">

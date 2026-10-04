@@ -562,6 +562,29 @@
     "showCollaborators": "Ver",
     "noCollaborators": "Sem colaboradores.",
     "confirmNsfw": "Marcar \"{{title}}\" como só para adultos? Todo colaborador não verificado perderá o acesso de uma vez.",
-    "confirmRemove": "Remover {{name}} de \"{{title}}\"?"
+    "confirmRemove": "Remover {{name}} de \"{{title}}\"?",
+    "columnContent": "Conteúdo",
+    "showContent": "Conteúdo",
+    "hideContent": "Ocultar",
+    "content": {
+      "tabs": {
+        "media": "Mídia",
+        "boards": "Boards",
+        "maps": "Mapas",
+        "entities": "Entidades"
+      },
+      "emptyMedia": "Nenhum arquivo de mídia.",
+      "emptyBoards": "Nenhum board.",
+      "emptyMaps": "Nenhum mapa de local.",
+      "entityType": "Tipo de entidade",
+      "emptyEntities": "Nenhuma linha deste tipo.",
+      "previewFailed": "Prévia indisponível.",
+      "favorite": "favorito",
+      "download": "Baixar",
+      "boardCounts": "{{nodes}} pins, {{edges}} setas",
+      "edgeLabels": "Rótulos das setas",
+      "mapCounts": "{{images}} bases, {{nodes}} pontos, {{markers}} marcadores",
+      "relationTexts": "Rótulos de relação"
+    }
   }
 }

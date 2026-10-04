@@ -14,6 +14,7 @@ vi.mock('../../src/api/apiClient', async (importOriginal) => {
 });
 
 import { AdminUserApiService } from '../../src/api/AdminUserApiService';
+import { AdminStoryApiService } from '../../src/api/AdminStoryApiService';
 import { ActivityApiService } from '../../src/api/ActivityApiService';
 import { PaymentsApiService } from '../../src/api/PaymentsApiService';
 import { LogsApiService } from '../../src/api/LogsApiService';
@@ -93,6 +94,59 @@ describe('AdminUserApiService', () => {
     mocks.get.mockRejectedValue(new Error('Username already taken.'));
 
     await expect(AdminUserApiService.get('user-1')).rejects.toThrow('Username already taken.');
+  });
+});
+
+describe('AdminStoryApiService', () => {
+  it('maps moderation reads to the admin story content routes', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await AdminStoryApiService.list({ nsfw: true, page: 1 });
+    await AdminStoryApiService.collaborators('story-1');
+    await AdminStoryApiService.media('story-1');
+    await AdminStoryApiService.boards('story-1');
+    await AdminStoryApiService.locationMaps('story-1');
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories', {
+      params: { nsfw: true, page: 1 },
+    });
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/collaborators');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/media');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/boards');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/location-maps');
+  });
+
+  it('downloads blobs as binary through the story-bound admin route', async () => {
+    const bytes = new Blob(['bytes']);
+    mocks.get.mockResolvedValue({ data: bytes });
+
+    await expect(AdminStoryApiService.blob('story-1', 'a'.repeat(32))).resolves.toBe(bytes);
+    expect(mocks.get).toHaveBeenCalledWith(`/admin/stories/story-1/blobs/${'a'.repeat(32)}`, {
+      responseType: 'blob',
+    });
+  });
+
+  it('refuses unsafe story ids and hashes before sending', async () => {
+    await expect(AdminStoryApiService.media('../x')).rejects.toThrow();
+    await expect(AdminStoryApiService.blob('story-1', '../../etc')).rejects.toThrow();
+    expect(mocks.get).not.toHaveBeenCalled();
+  });
+
+  it('maps the entity browser to the story entities routes', async () => {
+    mocks.get.mockResolvedValue({ data: [] });
+
+    await AdminStoryApiService.entityTypes('story-1');
+    await AdminStoryApiService.entities('story-1', 'Character', 2, 10);
+
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/entities');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/entities/Character', {
+      params: { page: 2, pageSize: 10 },
+    });
+  });
+
+  it('refuses an unsafe entity type before sending', async () => {
+    await expect(AdminStoryApiService.entities('story-1', '../x')).rejects.toThrow();
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 });
 

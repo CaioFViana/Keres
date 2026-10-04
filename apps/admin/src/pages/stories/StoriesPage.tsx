@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -6,6 +6,7 @@ import {
   type AdminStoryCollaborator,
   type AdminStoryItem,
 } from '../../api/AdminStoryApiService';
+import { StoryContent } from './StoryContent';
 
 type NsfwFilter = 'all' | 'nsfw' | 'safe';
 
@@ -78,6 +79,7 @@ export function StoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [contentOpenId, setContentOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -176,46 +178,70 @@ export function StoriesPage() {
                 <th>{t('stories.columnNsfw')}</th>
                 <th>{t('stories.columnUpdated')}</th>
                 <th>{t('stories.columnCollaborators')}</th>
+                <th>{t('stories.columnContent')}</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {items.map((story) => (
-                <tr key={story.id} className={story.isDeleted ? 'row-deleted' : ''}>
-                  <td>{story.title}</td>
-                  <td>
-                    <Link to={`/users/${story.ownerUserId}`}>@{story.ownerTag}</Link>{' '}
-                    <span className="hint">
-                      {story.ownerUsername}
-                      {story.ownerDeleted ? ` ${t('stories.ownerDeleted')}` : ''}
-                    </span>
-                  </td>
-                  <td>
-                    {story.isNsfw ? (
-                      <span className="status-badge accent">{t('stories.nsfwBadge')}</span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td>{new Date(story.updatedAt).toLocaleDateString(i18n.language)}</td>
-                  <td>
-                    <Collaborators story={story} />
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className="button-secondary"
-                      disabled={toggling === story.id}
-                      onClick={() => void toggleNsfw(story)}
-                    >
-                      {story.isNsfw ? t('stories.clearNsfw') : t('stories.flagNsfw')}
-                    </button>
-                  </td>
-                </tr>
+                <Fragment key={story.id}>
+                  <tr className={story.isDeleted ? 'row-deleted' : ''}>
+                    <td>{story.title}</td>
+                    <td>
+                      <Link to={`/users/${story.ownerUserId}`}>@{story.ownerTag}</Link>{' '}
+                      <span className="hint">
+                        {story.ownerUsername}
+                        {story.ownerDeleted ? ` ${t('stories.ownerDeleted')}` : ''}
+                      </span>
+                    </td>
+                    <td>
+                      {story.isNsfw ? (
+                        <span className="status-badge accent">{t('stories.nsfwBadge')}</span>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td>{new Date(story.updatedAt).toLocaleDateString(i18n.language)}</td>
+                    <td>
+                      <Collaborators story={story} />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        aria-expanded={contentOpenId === story.id}
+                        onClick={() =>
+                          setContentOpenId((current) => (current === story.id ? null : story.id))
+                        }
+                      >
+                        {contentOpenId === story.id
+                          ? t('stories.hideContent')
+                          : t('stories.showContent')}
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        disabled={toggling === story.id}
+                        onClick={() => void toggleNsfw(story)}
+                      >
+                        {story.isNsfw ? t('stories.clearNsfw') : t('stories.flagNsfw')}
+                      </button>
+                    </td>
+                  </tr>
+                  {contentOpenId === story.id && (
+                    <tr>
+                      <td colSpan={7}>
+                        <StoryContent story={story} />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="empty-state">
+                  <td colSpan={7} className="empty-state">
                     {t('stories.empty')}
                   </td>
                 </tr>

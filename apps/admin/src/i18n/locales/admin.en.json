@@ -562,6 +562,29 @@
     "showCollaborators": "Show",
     "noCollaborators": "No collaborators.",
     "confirmNsfw": "Flag \"{{title}}\" as adults-only? Every collaborator who is not age-verified will lose access at once.",
-    "confirmRemove": "Remove {{name}} from \"{{title}}\"?"
+    "confirmRemove": "Remove {{name}} from \"{{title}}\"?",
+    "columnContent": "Content",
+    "showContent": "Content",
+    "hideContent": "Hide",
+    "content": {
+      "tabs": {
+        "media": "Media",
+        "boards": "Boards",
+        "maps": "Maps",
+        "entities": "Entities"
+      },
+      "emptyMedia": "No media files.",
+      "emptyBoards": "No boards.",
+      "emptyMaps": "No location maps.",
+      "entityType": "Entity type",
+      "emptyEntities": "No rows of this type.",
+      "previewFailed": "Preview unavailable.",
+      "favorite": "favorite",
+      "download": "Download",
+      "boardCounts": "{{nodes}} pins, {{edges}} arrows",
+      "edgeLabels": "Arrow labels",
+      "mapCounts": "{{images}} bases, {{nodes}} points, {{markers}} markers",
+      "relationTexts": "Relation labels"
+    }
   }
 }

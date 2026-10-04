@@ -1,6 +1,9 @@
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
-import { adminStoryService } from '../../services/AdminStoryService';
+import {
+  ADMIN_ENTITY_DEFAULT_PAGE_SIZE,
+  adminStoryService,
+} from '../../services/AdminStoryService';
 import { requireAdmin } from '../../utils/adminAuth';
 import { AppError } from '../../utils/errors';
 
@@ -8,8 +11,9 @@ const security = [{ bearerAuth: [] }];
 
 /**
  * Story-level moderation, mounted at `/api/admin/stories`: finding stories by NSFW flag,
- * toggling the flag (turning it on expels non-verified collaborators at once), and removing
- * a collaborator without the friendship the owner's own revocation requires.
+ * toggling the flag (turning it on expels non-verified collaborators at once), removing
+ * a collaborator without the friendship the owner's own revocation requires, and reading a
+ * story's media, boards and location maps (plus media bytes) for moderation review.
  */
 export const adminStoryRoutes = new Elysia()
   .decorate('user', null as JWTPayload | null)
@@ -91,15 +95,126 @@ export const adminStoryRoutes = new Elysia()
   )
 
   .delete(
-    '/:storyId/collaborators/:userId',
+    '/:id/collaborators/:userId',
     async ({ params, user }) => {
       await requireAdmin(user);
-      return adminStoryService.removeCollaborator(params.storyId, params.userId);
+      return adminStoryService.removeCollaborator(params.id, params.userId);
     },
     {
-      params: t.Object({ storyId: t.String(), userId: t.String() }),
+      params: t.Object({ id: t.String(), userId: t.String() }),
       detail: {
         summary: 'Remove a collaborator from a story',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
+    '/:id/media',
+    async ({ params, user }) => {
+      await requireAdmin(user);
+      return adminStoryService.media(params.id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      detail: {
+        summary: 'List the live media metadata of a story (bytes stay behind the blob route)',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
+    '/:id/boards',
+    async ({ params, user }) => {
+      await requireAdmin(user);
+      return adminStoryService.boards(params.id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      detail: {
+        summary: 'List the boards of a story with a moderation summary of each drawing',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
+    '/:id/location-maps',
+    async ({ params, user }) => {
+      await requireAdmin(user);
+      return adminStoryService.locationMaps(params.id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      detail: {
+        summary: 'List the location maps of a story with a moderation summary of each drawing',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
+    '/:id/entities',
+    async ({ params, user }) => {
+      await requireAdmin(user);
+      return adminStoryService.entityTypes(params.id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      detail: {
+        summary: 'List the browsable entity types of a story with live row counts',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
+    '/:id/entities/:entityType',
+    async ({ params, query, user }) => {
+      await requireAdmin(user);
+      // The service rejects unknown types and out-of-range pages with a 400.
+      return adminStoryService.entities(
+        params.id,
+        params.entityType,
+        query.page ?? 1,
+        query.pageSize ?? ADMIN_ENTITY_DEFAULT_PAGE_SIZE,
+      );
+    },
+    {
+      params: t.Object({ id: t.String(), entityType: t.String() }),
+      query: t.Object({
+        page: t.Optional(t.Numeric()),
+        pageSize: t.Optional(t.Numeric()),
+      }),
+      detail: {
+        summary: 'List the raw rows of one story entity type for moderation analysis',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
+    '/:id/blobs/:hash',
+    async ({ params, set, user }) => {
+      await requireAdmin(user);
+      // The service proves the story/hash binding; only administrators reach this route.
+      const blob = await adminStoryService.blob(params.id, params.hash);
+      set.headers['content-type'] = blob.mimeType;
+      // A hash's content never changes, so it can be cached indefinitely.
+      set.headers['cache-control'] = 'private, max-age=31536000, immutable';
+      return blob.body;
+    },
+    {
+      params: t.Object({ id: t.String(), hash: t.String() }),
+      detail: {
+        summary: 'Download a story media blob for moderation viewing',
         tags: ['Admin'],
         security,
       },

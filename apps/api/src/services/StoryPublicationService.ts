@@ -25,6 +25,7 @@ import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 import { createExclusiveGate } from '../utils/exclusive';
 import { mediaStorageService } from './MediaStorageService';
+import { publicationPdfFontMatrices } from './publicationPdfFonts';
 import { publicationStorageService } from './PublicationStorageService';
 import { showcaseSettingsService } from './ShowcaseSettingsService';
 import { compileInputOf } from './publicationCompileInput';
@@ -192,6 +193,8 @@ export class StoryPublicationService {
           ...options,
           author: options.author === undefined ? storyExport.story.author : options.author,
         },
+        // Serif matrices when the image carries them (undefined = Times, same bytes as ever).
+        await publicationPdfFontMatrices(),
       );
       return { bytes: compiled.bytes, format: options.format };
     } catch (error) {
@@ -289,8 +292,10 @@ export class StoryPublicationService {
       throw error;
     }
 
-    let storyExport: FullStoryExportType | null =
-      await this.exportImportService.exportStory(storyId, userId);
+    let storyExport: FullStoryExportType | null = await this.exportImportService.exportStory(
+      storyId,
+      userId,
+    );
     const publicationId = ulid();
     // Left out when the publisher asked for a manuscript and/or the reader only: no packaging cost.
     let zip = includePackage

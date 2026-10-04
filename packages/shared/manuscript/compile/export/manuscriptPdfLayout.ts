@@ -78,6 +78,13 @@ const LIST_INDENT = 18;
  */
 export type PdfFont = TimesFontKey;
 
+/**
+ * Advance measurement. The default sums the static Times AFM table (the legacy
+ * WinAnsi path); an embedded-font pack passes its own shaped measurer so
+ * layout counts exactly what the subset font draws.
+ */
+export type PdfMeasure = (text: string, font: PdfFont, size: number) => number;
+
 function fontFor(span: Pick<CompiledSpan, 'bold' | 'italic'>): PdfFont {
   if (span.bold && span.italic) return 'times-bolditalic';
   if (span.bold) return 'times-bold';
@@ -172,7 +179,7 @@ export type LineRun = {
  */
 const ZERO_WIDTH_PATTERN = /[\u200b\u200c\u200d]/g;
 
-function wordsOf(text: string, font: PdfFont, size: number): Word[] {
+function wordsOf(text: string, font: PdfFont, size: number, measure: PdfMeasure): Word[] {
   return text
     .split(/(\s+)/)
     .map((part) => part.replace(ZERO_WIDTH_PATTERN, ''))
@@ -180,14 +187,14 @@ function wordsOf(text: string, font: PdfFont, size: number): Word[] {
     .map((part) => ({
       text: part,
       font,
-      width: widthOfTextAtSize(part, font, size),
+      width: measure(part, font, size),
       underline: false,
       strikethrough: false,
     }));
 }
 
 /** Span text split on hard breaks first, so `\n` behaves like the HTML `<br />`. */
-function hardLineGroups(spans: CompiledSpan[], size: number): Word[][] {
+function hardLineGroups(spans: CompiledSpan[], size: number, measure: PdfMeasure): Word[][] {
   const groups: Word[][] = [[]];
   for (const span of spans) {
     const font = fontFor(span);
@@ -199,7 +206,7 @@ function hardLineGroups(spans: CompiledSpan[], size: number): Word[][] {
         groups[groups.length - 1].push({
           text: clean,
           font,
-          width: widthOfTextAtSize(clean, font, size),
+          width: measure(clean, font, size),
           underline: span.underline,
           strikethrough: span.strikethrough,
         });
@@ -215,6 +222,7 @@ function wrapGroup(
   maxWidth: number,
   firstIndent: number,
   restIndent: number,
+  measure: PdfMeasure,
 ): { lines: Word[][]; indents: number[] } {
   if (words.length === 0) return { lines: [[]], indents: [firstIndent] };
   const lines: Word[][] = [];
@@ -225,7 +233,7 @@ function wrapGroup(
   for (const word of words) {
     // The gap before a word sets in that word's font, so mixed-style lines
     // measure exactly what drawLine advances.
-    const space = widthOfTextAtSize(' ', word.font, size);
+    const space = measure(' ', word.font, size);
     if (line.length > 0 && width + space + word.width > maxWidth) {
       lines.push(line);
       indents.push(indent);
@@ -266,6 +274,7 @@ export function* iterateRuns(
   labels: ManuscriptPdfLabels,
   anchors: Map<string, PdfAnchor>,
   options: ManuscriptRenderOptions,
+  measure: PdfMeasure = widthOfTextAtSize,
 ): Generator<LineRun, void, undefined> {
   const geometry = pdfGeometry(options);
   const { contentWidth: CONTENT_WIDTH, bodySize: BODY_SIZE, bodyLeading: BODY_LEADING } = geometry;
@@ -277,7 +286,14 @@ export function* iterateRuns(
     leading: number,
     opts: Partial<LineRun> & { spaceAfter: number },
   ) => {
-    const { lines, indents } = wrapGroup(wordsOf(text, font, size), size, CONTENT_WIDTH, 0, 0);
+    const { lines, indents } = wrapGroup(
+      wordsOf(text, font, size, measure),
+      size,
+      CONTENT_WIDTH,
+      0,
+      0,
+      measure,
+    );
     lines.forEach((words, index) => {
       runs.push({
         words,
@@ -303,10 +319,10 @@ export function* iterateRuns(
       const font: PdfFont = entry.level === 0 ? 'times-bold' : 'times';
       const indent = entry.level === 0 ? 0 : TOC_INDENT;
       const page = anchors.get(entry.bookmarkId)?.page ?? null;
-      const nameWidth = widthOfTextAtSize(entry.text, font, BODY_SIZE);
+      const nameWidth = measure(entry.text, font, BODY_SIZE);
       const numberText = page === null ? '' : String(page);
-      const numberWidth = numberText === '' ? 0 : widthOfTextAtSize(numberText, font, BODY_SIZE);
-      const dotWidth = widthOfTextAtSize('.', font, BODY_SIZE);
+      const numberWidth = numberText === '' ? 0 : measure(numberText, font, BODY_SIZE);
+      const dotWidth = measure('.', font, BODY_SIZE);
       const dotCount =
         numberText === ''
           ? 0
@@ -317,18 +333,19 @@ export function* iterateRuns(
                   indent -
                   nameWidth -
                   numberWidth -
-                  2 * widthOfTextAtSize(' ', font, BODY_SIZE)) /
+                  2 * measure(' ', font, BODY_SIZE)) /
                   dotWidth,
               ),
             );
       const text =
         numberText === '' ? entry.text : `${entry.text} ${'.'.repeat(dotCount)} ${numberText}`;
       const { lines, indents } = wrapGroup(
-        wordsOf(text, font, BODY_SIZE),
+        wordsOf(text, font, BODY_SIZE, measure),
         BODY_SIZE,
         CONTENT_WIDTH,
         indent,
         indent,
+        measure,
       );
       lines.forEach((words, index) => {
         runs.push({
@@ -434,7 +451,7 @@ export function* iterateRuns(
         });
         break;
       case 'paragraph': {
-        const groups = hardLineGroups(block.spans, BODY_SIZE);
+        const groups = hardLineGroups(block.spans, BODY_SIZE, measure);
         let firstLine = true;
         groups.forEach((group) => {
           const { lines, indents } = wrapGroup(
@@ -443,6 +460,7 @@ export function* iterateRuns(
             CONTENT_WIDTH,
             firstLine ? geometry.firstLineIndent : 0,
             0,
+            measure,
           );
           lines.forEach((words, index) => {
             const lastOfParagraph =
@@ -481,11 +499,11 @@ export function* iterateRuns(
         const markerWord: Word = {
           text: marker,
           font: 'times',
-          width: widthOfTextAtSize(marker, 'times', BODY_SIZE),
+          width: measure(marker, 'times', BODY_SIZE),
           underline: false,
           strikethrough: false,
         };
-        const groups = hardLineGroups(block.spans, BODY_SIZE);
+        const groups = hardLineGroups(block.spans, BODY_SIZE, measure);
         groups.forEach((group, groupIndex) => {
           const words = groupIndex === 0 ? [markerWord, ...group] : group;
           const { lines, indents } = wrapGroup(
@@ -494,6 +512,7 @@ export function* iterateRuns(
             CONTENT_WIDTH,
             LIST_INDENT,
             LIST_INDENT,
+            measure,
           );
           lines.forEach((lineWords, index) => {
             const lastOfItem =
@@ -523,11 +542,12 @@ export function* iterateRuns(
         const annotations = [...(block.requirements ?? []), ...(block.effects ?? [])];
         const pushWrapped = (text: string, indent: number, trailing: number) => {
           const { lines, indents } = wrapGroup(
-            wordsOf(text, 'times', BODY_SIZE),
+            wordsOf(text, 'times', BODY_SIZE, measure),
             BODY_SIZE,
             CONTENT_WIDTH,
             indent,
             indent,
+            measure,
           );
           lines.forEach((words, index) => {
             runs.push({
@@ -568,8 +588,9 @@ export function flattenRuns(
   labels: ManuscriptPdfLabels,
   anchors: Map<string, PdfAnchor>,
   options: ManuscriptRenderOptions,
+  measure: PdfMeasure = widthOfTextAtSize,
 ): LineRun[] {
-  return Array.from(iterateRuns(manuscript, labels, anchors, options));
+  return Array.from(iterateRuns(manuscript, labels, anchors, options, measure));
 }
 
 export type PlacedRun = { run: LineRun; y: number };

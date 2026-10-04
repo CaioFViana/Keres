@@ -8,7 +8,7 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { APP_RELEASE } from '@keres/shared';
@@ -20,6 +20,12 @@ import type { SettingsStackParamList } from '../../navigation/StorySelectionStac
 import { authTokenManager, setAuthDb } from '../../services/AuthTokenManager';
 import { setEditorDraftDb } from '../../services/EditorDraftService';
 import { mediaFileService } from '../../services/MediaFileService';
+import {
+  CJK_PACK_SIZE_LABEL,
+  cjkPackState,
+  deleteCjkPack,
+  downloadCjkPack,
+} from '../../components/features/manuscript/export/cjkFontPack';
 import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useGuideStore } from '../../state/guideStore';
 import { useNotificationStore } from '../../state/notificationStore';
@@ -121,6 +127,50 @@ const SettingsScreen = () => {
 
   const handleWarnPaymentDueToggle = (value: boolean) => {
     setWarnPaymentDue(drizzleClient, value);
+  };
+
+  // The downloadable CJK serif for PDF exports: app-private fonts dir on
+  // native (in memory on web), managed here instead of hiding inside the
+  // export flow.
+  const [cjkPack, setCjkPack] = useState<'missing' | 'ready' | 'working'>('missing');
+  useEffect(() => {
+    cjkPackState().then((state) => setCjkPack(state));
+  }, []);
+
+  const handleCjkInstall = async () => {
+    setCjkPack('working');
+    showNotification(
+      t('export_manuscript_cjk_downloading', { size: CJK_PACK_SIZE_LABEL }),
+      'info',
+    );
+    try {
+      await downloadCjkPack();
+      setCjkPack('ready');
+      showNotification(t('export_manuscript_cjk_ready'), 'success');
+    } catch (error) {
+      setCjkPack('missing');
+      showNotification(
+        t('export_manuscript_cjk_failed', {
+          reason: (error as Error)?.message ?? 'unknown error',
+        }),
+        'error',
+      );
+    }
+  };
+
+  const handleCjkDelete = () => {
+    AppAlert.alert(t('settings_cjk_delete_title'), t('settings_cjk_delete_message'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('settings_cjk_delete'),
+        style: 'destructive',
+        onPress: async () => {
+          await deleteCjkPack();
+          setCjkPack('missing');
+          showNotification(t('settings_cjk_deleted'), 'success');
+        },
+      },
+    ]);
   };
 
   const handleResetSeenTutorials = async () => {
@@ -351,6 +401,26 @@ const SettingsScreen = () => {
             onValueChange={handleWarnPaymentDueToggle}
             style={styles.contextualHelpSwitch}
           />
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingTextWrap}>
+            <Text style={[styles.settingLabel, { color: colors.text }]}>
+              {t('settings_cjk_title')}
+            </Text>
+            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+              {cjkPack === 'ready'
+                ? t('settings_cjk_installed', { size: CJK_PACK_SIZE_LABEL })
+                : t('settings_cjk_missing')}
+            </Text>
+          </View>
+          {cjkPack === 'ready' ? (
+            <Button onPress={handleCjkDelete}>{t('settings_cjk_delete')}</Button>
+          ) : (
+            <Button onPress={handleCjkInstall} disabled={cjkPack === 'working'}>
+              {t('settings_cjk_install')}
+            </Button>
+          )}
         </View>
 
         <Button onPress={handleResetSeenTutorials} style={{ marginTop: 10 }}>

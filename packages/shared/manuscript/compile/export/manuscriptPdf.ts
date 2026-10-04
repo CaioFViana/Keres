@@ -12,8 +12,10 @@ import {
   type PdfAnchor,
   type PdfFont,
   type PdfGeometry,
+  type PdfMeasure,
   type Word,
 } from './manuscriptPdfLayout';
+import { loadPdfFontPack, type PdfFontMatrices, type PdfFontPack } from './manuscriptPdfFonts';
 
 export type { ManuscriptPdfLabels } from './manuscriptPdfLayout';
 
@@ -139,14 +141,28 @@ class PdfWriter {
   }
 }
 
-function drawLine(run: LineRun, y: number, writer: PdfWriter, geometry: PdfGeometry): void {
+function hex4(value: number): string {
+  return value.toString(16).toUpperCase().padStart(4, '0');
+}
+
+function drawLine(
+  run: LineRun,
+  y: number,
+  writer: PdfWriter,
+  geometry: PdfGeometry,
+  measure: PdfMeasure = widthOfTextAtSize,
+  pack: PdfFontPack | null = null,
+): void {
   const fontIndex = (font: PdfFont): number => FONT_KEYS.indexOf(font) + 1;
+  // Base faces ride /F1../F4; CJK matrices add /F5../F8 in the same face order.
+  const resourceOf = (font: PdfFont, cjk: boolean): number =>
+    fontIndex(font) + (cjk ? FONT_KEYS.length : 0);
   let x = geometry.margin + run.indent;
   if (run.centered) {
     const width = run.words.reduce((sum, word) => sum + word.width, 0);
     const gaps = run.words
       .slice(1)
-      .reduce((sum, word) => sum + widthOfTextAtSize(' ', word.font, run.size), 0);
+      .reduce((sum, word) => sum + measure(' ', word.font, run.size), 0);
     x = geometry.margin + (geometry.contentWidth - (width + gaps)) / 2;
   }
   const gray = run.gray.toFixed(2);
@@ -157,7 +173,7 @@ function drawLine(run: LineRun, y: number, writer: PdfWriter, geometry: PdfGeome
   // change of face starts a new string.
   const segments: { font: PdfFont; text: string }[] = [];
   run.words.forEach((word, index) => {
-    if (index > 0) x += widthOfTextAtSize(' ', word.font, run.size);
+    if (index > 0) x += measure(' ', word.font, run.size);
     placed.push({ word, x });
     x += word.width;
     const last = segments[segments.length - 1];
@@ -166,11 +182,25 @@ function drawLine(run: LineRun, y: number, writer: PdfWriter, geometry: PdfGeome
     else segments.push({ font: word.font, text: piece });
   });
   if (segments.length > 0) {
+    // Glyph collection happens on the anchor-settling passes, never here: by
+    // emit time the subset is finished and `cidOf` resolves.
     writer.ascii(`BT ${gray} g 1 0 0 1 ${trim(placed[0].x)} ${trim(y - run.size)} Tm`);
     for (const segment of segments) {
-      writer.ascii(` /F${fontIndex(segment.font)} ${trim(run.size)} Tf `);
-      writer.literal(segment.text);
-      writer.ascii(' Tj');
+      if (pack) {
+        // Identity-H: two bytes per glyph, resolved after the final pass; a
+        // mixed-script segment splits into one string per matrix (/F1../F8).
+        for (const part of pack.splitRuns(segment.font, segment.text)) {
+          writer.ascii(` /F${resourceOf(segment.font, part.cjk)} ${trim(run.size)} Tf `);
+          writer.ascii(
+            `<${[...part.text].map((char) => hex4(pack.cidOf(segment.font, char))).join('')}>`,
+          );
+          writer.ascii(' Tj');
+        }
+      } else {
+        writer.ascii(` /F${fontIndex(segment.font)} ${trim(run.size)} Tf `);
+        writer.literal(segment.text);
+        writer.ascii(' Tj');
+      }
     }
     writer.ascii(' ET\n');
   }
@@ -236,16 +266,36 @@ function layoutPass(
   anchors: Map<string, PdfAnchor>,
   options: ManuscriptRenderOptions,
   geometry: PdfGeometry,
+  measure: PdfMeasure = widthOfTextAtSize,
+  pack: PdfFontPack | null = null,
+  emit = true,
 ): LaidPass {
   const streams: Uint8Array[] = [];
   const links: { pageIndex: number; rect: number[]; target: string }[] = [];
   const { anchors: found } = paginateStream(
-    iterateRuns(manuscript, labels, anchors, options),
+    iterateRuns(manuscript, labels, anchors, options, measure),
     geometry,
     (page, pageIndex) => {
+      if (!emit) {
+        // Anchor-settling pass: no bytes, but every drawn word's glyphs join
+        // the subset, so `finish()` below sees the whole book. Spaces ride
+        // inside drawn segments (collected explicitly here); the footer
+        // counter never reaches a writer on these passes, so its digits are
+        // collected explicitly too.
+        if (pack) {
+          for (const { run } of page) {
+            for (const word of run.words) {
+              pack.collect(word.font, word.text);
+              pack.collect(word.font, ' ');
+            }
+          }
+          pack.collect('times', `${pageIndex + 1}`);
+        }
+        return;
+      }
       const content = new PdfWriter();
       for (const { run, y } of page) {
-        drawLine(run, y, content, geometry);
+        drawLine(run, y, content, geometry, measure, pack);
         if (run.linkTarget) {
           links.push({
             pageIndex,
@@ -266,7 +316,7 @@ function layoutPass(
             {
               text: label,
               font: 'times',
-              width: widthOfTextAtSize(label, 'times', 9),
+              width: measure(label, 'times', 9),
               underline: false,
               strikethrough: false,
             },
@@ -286,6 +336,8 @@ function layoutPass(
         geometry.footerY + 9,
         content,
         geometry,
+        measure,
+        pack,
       );
       streams.push(content.snapshot());
     },
@@ -398,6 +450,172 @@ export function buildManuscriptPdf(
       );
     });
   });
+  const infoId = writer.object((body) => {
+    body.ascii(`<< /Title <${utf16beHex(manuscript.title)}>`);
+    body.ascii(' /Producer ');
+    body.literal('Keres');
+    body.ascii(' >>\n');
+  });
+  return writer.finish(catalogId, infoId);
+}
+
+/**
+ * The manuscript as PDF with the platform's serif embedded as per-face
+ * subsets (Identity-H + ToUnicode), so any Unicode the matrices cover draws
+ * instead of degrading to `?`. Layout measures with the same advances the
+ * subset carries; anchor-settling passes collect glyphs without emitting
+ * bytes, the subset is finished once, and a final pass draws with resolved
+ * CIDs. Font objects land after the pages (the xref resolves by offset, so
+ * file order never matters) - five per face: Type0, CIDFontType2, descriptor,
+ * ToUnicode, and the deflated subset stream.
+ */
+export async function buildManuscriptPdfAsync(
+  manuscript: CompiledManuscript,
+  labels: ManuscriptPdfLabels,
+  options: ManuscriptRenderOptions,
+  matrices: PdfFontMatrices,
+): Promise<Uint8Array> {
+  const pack = await loadPdfFontPack(matrices);
+  const measure: PdfMeasure = (text, font, size) => pack.measure(text, font, size);
+  const geometry = pdfGeometry(options);
+  let anchors = new Map<string, PdfAnchor>();
+  for (let pass = 0; pass < 3; pass += 1) {
+    const settled = layoutPass(
+      manuscript,
+      labels,
+      anchors,
+      options,
+      geometry,
+      measure,
+      pack,
+      false,
+    );
+    if (sameAnchorPages(anchors, settled.anchors)) {
+      anchors = settled.anchors;
+      break;
+    }
+    anchors = settled.anchors;
+  }
+  const faces = await pack.finish();
+  const laid = layoutPass(manuscript, labels, anchors, options, geometry, measure, pack, true);
+  const { streams, annots } = laid;
+  // TEMP-DIAG (corrupted-PDF investigation): structural dump of what the
+  // writer is about to embed. Removed after diagnosis; never breaks export.
+  try {
+    const fingerprint = (bytes: Uint8Array): string => {
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < bytes.length; i += 1) {
+        hash ^= bytes[i] ?? 0;
+        hash = Math.imul(hash, 0x01000193);
+      }
+      return (hash >>> 0).toString(16);
+    };
+    const stats = faces
+      .map(
+        (face) =>
+          `${face.font}/${face.cjk ? 'cjk' : 'base'}:${face.subsetBytes.length}B` +
+          `/${fingerprint(face.subsetBytes)}` +
+          `/${face.widthRuns.length}runs/${face.widthRuns[0]?.first ?? '-'}` +
+          `:[${face.widthRuns[0]?.advances.slice(0, 4).join(',') ?? ''}]`,
+      )
+      .join(' ');
+    console.info(`[manuscript] pdf faces: ${stats}`);
+    const head = Array.from(streams[0].slice(0, 900), (byte) => String.fromCharCode(byte)).join('');
+    console.info(`[manuscript] pdf page0: ${head}`);
+  } catch {
+    // Diagnostics never break export.
+  }
+  const pageCount = streams.length;
+  const compressed: Uint8Array[] = new Array(pageCount);
+  for (let index = 0; index < pageCount; index += 1) {
+    compressed[index] = deflate(streams[index]);
+    streams[index] = new Uint8Array(0);
+  }
+
+  const writer = new PdfWriter();
+  writer.ascii('%PDF-1.7\n');
+  const catalogId = writer.object((body) => {
+    body.ascii('<< /Type /Catalog /Pages 2 0 R >>\n');
+  });
+  const firstPageId = 3 + annots.length;
+  const kids = compressed.map((_, index) => `${firstPageId + 2 * index} 0 R`).join(' ');
+  const pagesId = writer.object((body) => {
+    body.ascii(`<< /Type /Pages /Kids [${kids}] /Count ${pageCount} >>\n`);
+  });
+  const annotIdsByPage: number[][] = compressed.map(() => []);
+  annots.forEach((annot) => {
+    const id = writer.object((body) => {
+      const destPageId = firstPageId + 2 * annot.destPageIndex;
+      body.ascii(
+        `<< /Type /Annot /Subtype /Link /Rect [${annot.rect.map(trim).join(' ')}]` +
+          ` /Border [0 0 0] /Dest [${destPageId} 0 R /XYZ null ${trim(annot.destY)} null] >>\n`,
+      );
+    });
+    annotIdsByPage[annot.pageIndex].push(id);
+  });
+  const fontBase = firstPageId + 2 * pageCount;
+  // /F1../F4 are the base faces, /F5../F8 the CJK faces when matrices carry
+  // them - in `finish()` order, so the resource index always matches.
+  const fontResources = faces
+    .map((_, faceIndex) => ` /F${faceIndex + 1} ${fontBase + faceIndex * 5} 0 R`)
+    .join('');
+  compressed.forEach((page, index) => {
+    const contentId = firstPageId + 2 * index + 1;
+    const annotRefs = annotIdsByPage[index].map((id) => `${id} 0 R`).join(' ');
+    const annotsEntry = annotRefs === '' ? '' : ` /Annots [${annotRefs}]`;
+    writer.object((body) => {
+      body.ascii(
+        `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${geometry.pageWidth} ${geometry.pageHeight}]` +
+          ` /Contents ${contentId} 0 R${annotsEntry} /Resources << /Font <<${fontResources} >> >> >>\n`,
+      );
+    });
+    writer.object((body) => {
+      body.ascii(`<< /Length ${page.length} /Filter /FlateDecode >>\nstream\n`);
+      body.raw(page);
+      body.ascii('endstream\n');
+    });
+  });
+  for (let faceIndex = 0; faceIndex < faces.length; faceIndex += 1) {
+    const face = faces[faceIndex];
+    const base = fontBase + faceIndex * 5;
+    const baseFont = `/${face.baseFontName}`;
+    const widths = face.widthRuns
+      .map((run) => `${run.first} [${run.advances.join(' ')}]`)
+      .join(' ');
+    const deflatedSubset = deflate(face.subsetBytes);
+    face.subsetBytes = new Uint8Array(0);
+    writer.object((body) => {
+      body.ascii(
+        `<< /Type /Font /Subtype /Type0 /BaseFont ${baseFont} /Encoding /Identity-H` +
+          ` /DescendantFonts [${base + 1} 0 R] /ToUnicode ${base + 3} 0 R >>\n`,
+      );
+    });
+    writer.object((body) => {
+      body.ascii(
+        `<< /Type /Font /Subtype /CIDFontType2 /BaseFont ${baseFont}` +
+          ` /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >>` +
+          ` /FontDescriptor ${base + 2} 0 R /DW 1000 /W [${widths}] >>\n`,
+      );
+    });
+    writer.object((body) => {
+      const [x1, y1, x2, y2] = face.descriptor.bbox;
+      // Flags 32 (nonsymbolic Latin) for the base serif, 4 (symbolic) for CJK.
+      body.ascii(
+        `<< /Type /FontDescriptor /FontName ${baseFont} /Flags ${face.cjk ? 4 : 32}` +
+          ` /FontBBox [${x1} ${y1} ${x2} ${y2}] /ItalicAngle ${face.descriptor.italicAngle}` +
+          ` /Ascent ${face.descriptor.ascent} /Descent ${face.descriptor.descent}` +
+          ` /CapHeight ${face.descriptor.capHeight} /StemV 80 /FontFile2 ${base + 4} 0 R >>\n`,
+      );
+    });
+    writer.object((body) => {
+      body.ascii(`<< /Length ${face.toUnicode.length} >>\nstream\n${face.toUnicode}\nendstream\n`);
+    });
+    writer.object((body) => {
+      body.ascii(`<< /Length ${deflatedSubset.length} /Filter /FlateDecode >>\nstream\n`);
+      body.raw(deflatedSubset);
+      body.ascii('endstream\n');
+    });
+  }
   const infoId = writer.object((body) => {
     body.ascii(`<< /Title <${utf16beHex(manuscript.title)}>`);
     body.ascii(' /Producer ');

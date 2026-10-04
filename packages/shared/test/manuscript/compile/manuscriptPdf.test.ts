@@ -1,10 +1,16 @@
 import { inflate } from 'pako';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type {
   CompiledBlock,
   CompiledManuscript,
 } from '../../../manuscript/compile/export/manuscriptCompiler';
-import { buildManuscriptPdf } from '../../../manuscript/compile/export/manuscriptPdf';
+import {
+  buildManuscriptPdf,
+  buildManuscriptPdfAsync,
+} from '../../../manuscript/compile/export/manuscriptPdf';
 import { TIMES_WIDTHS } from '../../../manuscript/compile/export/timesWidths';
 
 const LABELS = { goToPage: 'Go to page', tocHeading: 'Contents' };
@@ -541,5 +547,147 @@ describe('buildManuscriptPdf', () => {
       expect(text).toContain('2.');
       expect(text).toContain('Second step');
     });
+  });
+});
+
+describe('buildManuscriptPdfAsync', () => {
+  const ROBOTO = new Uint8Array(
+    readFileSync(
+      join(
+        dirname(fileURLToPath(import.meta.url)),
+        '..',
+        '..',
+        'fixtures',
+        'fonts',
+        'Roboto-Regular.ttf',
+      ),
+    ),
+  );
+  const matrices = () => ({ regular: ROBOTO, italic: ROBOTO });
+
+  async function embedded(blocks: CompiledBlock[]): Promise<Uint8Array> {
+    return buildManuscriptPdfAsync(manuscript(blocks), LABELS, {}, matrices());
+  }
+
+  /** Page content streams only (font subset streams share the FlateDecode header). */
+  function embeddedPageContent(bytes: Uint8Array): string {
+    const bin = raw(bytes);
+    const contentsIds = new Set(
+      [...bin.matchAll(/\/Contents (\d+) 0 R/g)].map((match) => match[1]),
+    );
+    const out: string[] = [];
+    const header = /(\d+) 0 obj\n<< \/Length (\d+) \/Filter \/FlateDecode >>\nstream\n/g;
+    let match: RegExpExecArray | null;
+    while ((match = header.exec(bin)) !== null) {
+      if (!contentsIds.has(match[1])) continue;
+      const start = match.index + match[0].length;
+      const slice = bin.slice(start, start + Number(match[2]));
+      out.push(Buffer.from(inflate(Buffer.from(slice, 'latin1'))).toString('latin1'));
+    }
+    return out.join('\n');
+  }
+
+  /** ToUnicode maps in face order (F1..F4), then hex operands decoded per current face. */
+  function shownEmbeddedText(bytes: Uint8Array): string {
+    const bin = raw(bytes);
+    const faceMaps: Map<number, string>[] = [
+      ...bin.matchAll(/beginbfrange\n([\s\S]*?)endbfrange/g),
+    ].map((block) => {
+      const map = new Map<number, string>();
+      for (const line of block[1].trim().split('\n')) {
+        const range = line.match(/<([0-9A-F]+)> <([0-9A-F]+)> <([0-9A-F]+)>/);
+        if (range) {
+          const [, first, last, uni] = range.map((part) => Number.parseInt(part, 16));
+          for (let cid = first; cid <= last; cid += 1) {
+            map.set(cid, String.fromCodePoint(uni + (cid - first)));
+          }
+          continue;
+        }
+        const multi = line.match(/<([0-9A-F]+)> <[0-9A-F]+> \[([0-9A-F<> ]+)\]/);
+        if (multi) {
+          const cid = Number.parseInt(multi[1], 16);
+          const chars = [...multi[2].matchAll(/<([0-9A-F]+)>/g)].map((part) =>
+            String.fromCodePoint(Number.parseInt(part[1], 16)),
+          );
+          map.set(cid, chars.join(''));
+        }
+      }
+      return map;
+    });
+    const shown: string[] = [];
+    let face = 0;
+    const tokens = embeddedPageContent(bytes).match(/\/F([1-8]) [\d.]+ Tf|<([0-9A-F]+)> Tj/g) ?? [];
+    for (const token of tokens) {
+      const select = token.match(/^\/F([1-8])/);
+      if (select) {
+        face = Number(select[1]) - 1;
+        continue;
+      }
+      const hex = token.match(/^<([0-9A-F]+)> Tj$/)?.[1] ?? '';
+      let word = '';
+      for (let at = 0; at < hex.length; at += 4) {
+        const cid = Number.parseInt(hex.slice(at, at + 4), 16);
+        word += faceMaps[face]?.get(cid) ?? '?';
+      }
+      shown.push(word);
+    }
+    return shown.join(' ');
+  }
+
+  it('embeds CID subsets instead of the base-14 Times', async () => {
+    const bytes = await embedded([paragraph('Once upon a time.')]);
+
+    expect(bytes.slice(0, 5)).toEqual(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]));
+    expectSoundXref(bytes);
+    const text = raw(bytes);
+    expect(text).toContain('/Subtype /CIDFontType2');
+    expect(text).toContain('/Encoding /Identity-H');
+    expect(text).toContain('/FontFile2');
+    expect(text).toContain('/ToUnicode');
+    expect(text).not.toContain('/Times-Roman');
+    // One page stream plus one subset stream per face.
+    expect(text.match(/\/Filter \/FlateDecode/g)).toHaveLength(1 + 4);
+  });
+
+  it('round-trips drawn words through the ToUnicode maps', async () => {
+    const bytes = await embedded([
+      { kind: 'title', text: 'My Story' },
+      paragraph('Once upon a time, “Olá” — the end.'),
+    ]);
+
+    expectSoundXref(bytes);
+    const shown = shownEmbeddedText(bytes);
+    expect(shown).toContain('My Story');
+    expect(shown).toContain('Once upon a time,');
+    expect(shown).toContain('“Olá” — the end.');
+  });
+
+  it('degrades glyphs the matrices lack to a visible ?, like the WinAnsi path', async () => {
+    // The Roboto fixture carries no Greek: documents the pack boundary.
+    const bytes = await embedded([paragraph('Alpha Ελληνικά omega')]);
+
+    expect(shownEmbeddedText(bytes)).toContain('Alpha ???????? omega');
+  });
+
+  it('emits CJK faces as /F5../F8 when matrices carry them', async () => {
+    const bytes = await buildManuscriptPdfAsync(
+      manuscript([paragraph('Hi there.')]),
+      LABELS,
+      {},
+      {
+        regular: ROBOTO,
+        italic: ROBOTO,
+        cjk: ROBOTO,
+      },
+    );
+
+    expectSoundXref(bytes);
+    const text = raw(bytes);
+    for (const resource of ['/F5 ', '/F6 ', '/F7 ', '/F8 ']) {
+      expect(text).toContain(resource);
+    }
+    // One page stream plus one subset stream per face.
+    expect(text.match(/\/Filter \/FlateDecode/g)).toHaveLength(1 + 8);
+    expect(shownEmbeddedText(bytes)).toContain('Hi there.');
   });
 });

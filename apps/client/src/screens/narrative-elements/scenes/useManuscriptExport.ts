@@ -4,8 +4,16 @@ import {
   isLooseScene,
   sceneSeparatorText,
 } from '@keres/shared';
+import { containsCjk } from '@keres/shared/manuscript/export';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AppAlert } from '../../../utils/AppAlert';
+import {
+  CJK_PACK_SIZE_LABEL,
+  cjkPackState,
+  downloadCjkPack,
+  loadCjkMatrix,
+} from '../../../components/features/manuscript/export/cjkFontPack';
 import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
 import {
   styleForExport,
@@ -60,6 +68,25 @@ export function useManuscriptExport() {
     ).length;
   }, [isBranching, chapters, scenes, chaptersById, activeArcId]);
 
+  const promptCjkPack = useCallback(
+    () =>
+      new Promise<'download' | 'without' | 'cancel'>((resolve) => {
+        AppAlert.alert(
+          t('export_manuscript_cjk_title'),
+          t('export_manuscript_cjk_message', { size: CJK_PACK_SIZE_LABEL }),
+          [
+            {
+              text: t('export_manuscript_cjk_download', { size: CJK_PACK_SIZE_LABEL }),
+              onPress: () => resolve('download'),
+            },
+            { text: t('export_manuscript_cjk_without'), onPress: () => resolve('without') },
+            { text: t('cancel'), style: 'cancel', onPress: () => resolve('cancel') },
+          ],
+        );
+      }),
+    [t],
+  );
+
   const exportWith = useCallback(
     async (settings: ManuscriptExportSettings) => {
       let made = false;
@@ -79,6 +106,50 @@ export function useManuscriptExport() {
           const exportScenes = settings.arcId
             ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, settings.arcId))
             : scenes;
+          // CJK resolves before compiling: the pack downloads once
+          // (app-private on native, in memory on web), the export retries
+          // with it, and skipping exports with `?` placeholders after a
+          // warning.
+          let cjkMatrix: Uint8Array | null = null;
+          // True once the export owes CJK glyphs: pack ready, or downloaded
+          // just now. A null matrix past this point means a corrupt pack, and
+          // a legacy PDF past this point means the serif failed - both warn.
+          let cjkExpected = false;
+          const needsCjk =
+            settings.format === 'pdf' &&
+            containsCjk([title, ...exportScenes.map((scene) => scene.body ?? '')].join('\n'));
+          if (needsCjk) {
+            if ((await cjkPackState()) === 'ready') {
+              cjkExpected = true;
+              cjkMatrix = await loadCjkMatrix();
+            } else {
+              const choice = await promptCjkPack();
+              if (choice === 'cancel') return;
+              if (choice === 'download') {
+                showNotification(
+                  t('export_manuscript_cjk_downloading', { size: CJK_PACK_SIZE_LABEL }),
+                  'info',
+                );
+                try {
+                  await downloadCjkPack();
+                  cjkExpected = true;
+                  cjkMatrix = await loadCjkMatrix();
+                  showNotification(t('export_manuscript_cjk_ready'), 'success');
+                } catch (error) {
+                  console.log('useManuscriptExport: CJK pack download failed.', error);
+                  showNotification(
+                    t('export_manuscript_cjk_failed', {
+                      reason: (error as Error)?.message ?? 'unknown error',
+                    }),
+                    'error',
+                  );
+                  return;
+                }
+              } else {
+                showNotification(t('export_manuscript_cjk_skipped'), 'warning');
+              }
+            }
+          }
           // Check and effect lines resolve here, at export time: reading never pays for them.
           const annotations = await loadChoiceAnnotations(t);
           const annotatedChoices = choices.map((choice) => {
@@ -118,6 +189,7 @@ export function useManuscriptExport() {
             manuscript,
             format: settings.format,
             labels,
+            cjkMatrix,
             options: { includeToc: settings.includeIndex },
             style: styleForExport(
               settings,
@@ -130,12 +202,18 @@ export function useManuscriptExport() {
             metadata: { author: settings.author.trim() || null, language: i18n.language },
             language: exportFileLanguage(i18n.language),
           });
-          showNotification(
-            result.delivered
-              ? t('export_manuscript_success', { fileName: result.fileName })
-              : t('export_story_no_share_target', { path: result.uri || result.fileName }),
-            result.delivered ? 'success' : 'warning',
-          );
+          // A CJK book on the legacy path exports every such char as `?`:
+          // say so instead of letting the success toast imply it worked.
+          if (cjkExpected && !result.unicodePdf) {
+            showNotification(t('export_manuscript_cjk_fallback'), 'warning');
+          } else {
+            showNotification(
+              result.delivered
+                ? t('export_manuscript_success', { fileName: result.fileName })
+                : t('export_story_no_share_target', { path: result.uri || result.fileName }),
+              result.delivered ? 'success' : 'warning',
+            );
+          }
           made = true;
         } catch (error) {
           console.log('useManuscriptExport: manuscript export failed.', error);
@@ -157,6 +235,7 @@ export function useManuscriptExport() {
       isBranching,
       chapters,
       showNotification,
+      promptCjkPack,
     ],
   );
 

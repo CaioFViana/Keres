@@ -81,9 +81,11 @@ describe('CreditsScreen', () => {
 
     for (const credit of THIRD_PARTY_CREDITS) {
       await view.findByText(credit.project);
-      expect(view.getByText(credit.license)).toBeTruthy();
+      // `getAllByText`: entries can share a license (both Noto faces are OFL).
+      expect(view.getAllByText(credit.license).length).toBeGreaterThan(0);
       for (const author of credit.authors) {
-        expect(view.getByText(author.name)).toBeTruthy();
+        // `getAllByText`: one author can sign several entries (Google Fonts).
+        expect(view.getAllByText(author.name).length).toBeGreaterThan(0);
       }
       if (credit.noteKey) {
         expect(view.getByText(credit.noteKey)).toBeTruthy();

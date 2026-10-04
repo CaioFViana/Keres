@@ -8,6 +8,7 @@ import {
 import { renderManuscript } from './manuscriptRender';
 import { renderOptionsOf } from './manuscriptStyle';
 import { presentedManuscriptOf, type CompileStoryManuscriptInput } from './presentedManuscript';
+import type { PdfFontMatrices } from './export/manuscriptPdfFonts';
 
 export type CompiledStoryManuscript = {
   bytes: Uint8Array;
@@ -21,6 +22,7 @@ export type CompiledStoryManuscript = {
 export async function compileStoryManuscript(
   input: CompileStoryManuscriptInput,
   options: ManuscriptOptionsInput,
+  pdfFonts?: PdfFontMatrices,
 ): Promise<CompiledStoryManuscript> {
   const parsed = ManuscriptOptionsSchema.parse(options);
   const labels = { ...DEFAULT_MANUSCRIPT_LABELS, ...parsed.labels };
@@ -36,6 +38,7 @@ export async function compileStoryManuscript(
       language: parsed.language,
       modified: new Date(),
     },
+    pdfFonts,
   );
   const bytes = typeof rendered === 'string' ? new TextEncoder().encode(rendered) : rendered;
   if (bytes.length > MAX_MANUSCRIPT_BYTES) {

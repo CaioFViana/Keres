@@ -38,8 +38,7 @@ vi.mock('../../src/modules/webSocket/webSocket.route', () => ({
 vi.mock('../../src/db', () => {
   // `where(...)` is awaited directly in one query and extended with `.orderBy(...)` in another, so it
   // resolves to the rows while still carrying the chain.
-  const where = () =>
-    Object.assign(Promise.resolve([]), { orderBy: () => Promise.resolve([]) });
+  const where = () => Object.assign(Promise.resolve([]), { orderBy: () => Promise.resolve([]) });
   const tx = {
     select: () => ({ from: () => ({ where }) }),
     insert: () => ({

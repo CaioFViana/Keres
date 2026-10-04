@@ -1,0 +1,32 @@
+{
+  "$comment": "Pinned PDF font matrices. Client-known and build-fetched: the API downloads these at build time, the client downloads CJK packs at runtime from the same pins. googleFontsCommit makes every URL immutable; every file carries a sha256 the fetcher verifies. Re-pin on purpose (new commit + reader gate), never live.",
+  "googleFontsCommit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+  "files": {
+    "NotoSerif-Variable.ttf": {
+      "path": "ofl/notoserif/NotoSerif[wdth,wght].ttf",
+      "sha256": "4d8e6761424656867019081a1a01336f3cb086982682698714054fc33f782713",
+      "bytes": 1887192
+    },
+    "NotoSerif-Italic-Variable.ttf": {
+      "path": "ofl/notoserif/NotoSerif-Italic[wdth,wght].ttf",
+      "sha256": "e87acbc6c0efd0d9a20d6a8cbbda2b266c14be3a3a6f5af8ec9d7b2460570ad1",
+      "bytes": 2448496
+    },
+    "NotoSerifJP-Variable.ttf": {
+      "path": "ofl/notoserifjp/NotoSerifJP[wght].ttf",
+      "sha256": "2fd527ba12b6a44ec30d796d633360da0aeba6c5d4af1304ce12bb4dc15a7dfc",
+      "bytes": 13574352
+    }
+  },
+  "packs": {
+    "serif-western": {
+      "files": ["NotoSerif-Variable.ttf", "NotoSerif-Italic-Variable.ttf"],
+      "note": "Bundled in the client (expo-asset), fetched into the API image at build."
+    },
+    "serif-cjk-jp": {
+      "files": ["NotoSerifJP-Variable.ttf"],
+      "scripts": ["cjk"],
+      "note": "Client runtime download on first CJK export; API ships it in the image."
+    }
+  }
+}

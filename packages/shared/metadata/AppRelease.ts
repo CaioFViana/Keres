@@ -87,4 +87,20 @@ export const THIRD_PARTY_CREDITS: readonly ReleaseCredit[] = [
     licenseUrl: 'https://www.apache.org/licenses/LICENSE-2.0',
     authors: [{ name: 'Christian Robertson', url: 'https://fonts.google.com/specimen/Roboto' }],
   },
+  {
+    project: 'Noto Serif',
+    projectUrl: 'https://fonts.google.com/noto/specimen/NotoSerif',
+    license: 'SIL Open Font License 1.1',
+    licenseUrl: 'https://openfontlicense.org',
+    authors: [{ name: 'Google Fonts', url: 'https://fonts.google.com' }],
+    noteKey: 'credits_noto_serif_note',
+  },
+  {
+    project: 'Noto Serif JP',
+    projectUrl: 'https://fonts.google.com/noto/specimen/NotoSerifJP',
+    license: 'SIL Open Font License 1.1',
+    licenseUrl: 'https://openfontlicense.org',
+    authors: [{ name: 'Google Fonts', url: 'https://fonts.google.com' }],
+    noteKey: 'credits_noto_cjk_note',
+  },
 ];

@@ -9,5 +9,6 @@
  */
 export * from './compile/export/manuscriptDocx';
 export * from './compile/export/manuscriptEpub';
+export * from './compile/export/manuscriptPdfFonts';
 export * from './compile/manuscriptRender';
 export * from './compile/compileStoryManuscript';

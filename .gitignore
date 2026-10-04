@@ -12,6 +12,9 @@ apps/api/dist-server/
 apps/api/.tools/
 
 apps/api/media-storage/
+# Matrizes serifadas do PDF (`bun run fonts:fetch` na API) - baixadas com pin e
+# hash do manifesto, nunca comitadas; o zip do launcher as carrega junto.
+apps/api/assets/fonts/
 # Banco local do modo DATABASE_DRIVER=sqlite (e os arquivos auxiliares do SQLite).
 apps/api/*.db
 apps/api/*.db-wal

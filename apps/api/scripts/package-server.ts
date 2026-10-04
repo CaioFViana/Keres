@@ -167,6 +167,16 @@ cpSync(
   path.join(bundleDir, 'desktop_icon.png'),
 );
 cpSync(path.join(apiRoot, 'packaging', 'README.md'), path.join(bundleDir, 'README.md'));
+// PDF serif matrices for server-side manuscript compiles: fetched by `fonts:fetch` (cached in
+// `assets/fonts`, never committed), required here - a zip without them silently falls back to
+// Times, and a release is exactly where that silence would hide longest.
+const fontsSource = path.join(apiRoot, 'assets', 'fonts');
+if (!existsSync(path.join(fontsSource, 'NotoSerif-Variable.ttf'))) {
+  throw new Error(
+    `PDF fonts missing in ${fontsSource} - run \`bun run fonts:fetch\` in apps/api first.`,
+  );
+}
+cpSync(fontsSource, path.join(bundleDir, 'assets', 'fonts'), { recursive: true });
 
 const nativeName = libsqlNativePackage();
 const nativeSource = path.join(repoRoot, 'node_modules', ...nativeName.split('/'));

@@ -2,12 +2,11 @@ import {
   app,
   BrowserWindow,
   ipcMain,
-  Menu,
   net,
   protocol,
   safeStorage,
   session,
-  shell,
+  shell
 } from 'electron';
 import { existsSync } from 'fs';
 import * as fs from 'fs/promises';
@@ -686,7 +685,7 @@ async function saveTokensNow(serverId: string, tokens: TokenPair): Promise<void>
   });
 }
 
-Menu.setApplicationMenu(null);
+//Menu.setApplicationMenu(null);
 
 const resolveMediaPath = (relativePath: string) => resolveMediaPathIn(MEDIA_ROOT, relativePath);
 

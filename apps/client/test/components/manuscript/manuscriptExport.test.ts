@@ -1,5 +1,7 @@
 /** @jest-environment node */
 import type { CompiledManuscript } from '@keres/shared';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { Platform } from 'react-native';
 import { exportManuscript } from '../../../src/components/features/manuscript/export/manuscriptExport';
 
@@ -7,11 +9,16 @@ const mockDeliverFile = jest.fn();
 const mockBuildManuscriptFileName = jest.fn(
   (...args: unknown[]) => `${args[0] as string}.${args[1] as string}`,
 );
+const mockPdfFontMatrices = jest.fn();
 
 jest.mock('../../../src/utils/storyTransfer', () => ({
   __esModule: true,
   buildManuscriptFileName: (...args: unknown[]) => mockBuildManuscriptFileName(...args),
   deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
+}));
+jest.mock('../../../src/components/features/manuscript/export/pdfFontAssets', () => ({
+  __esModule: true,
+  pdfFontMatrices: (...args: unknown[]) => mockPdfFontMatrices(...args),
 }));
 
 // Every format runs through the real shared renderers, so this file also guards the wiring.
@@ -24,6 +31,14 @@ const labels = { goToPage: 'Go to page', goToScene: 'See', tocHeading: 'Contents
 beforeEach(() => {
   jest.clearAllMocks();
   mockDeliverFile.mockResolvedValue({ delivered: true, fileName: 'x' });
+  // Every existing test keeps the real serif loader; the wiring tests below
+  // override per case.
+  mockPdfFontMatrices.mockImplementation(
+    () =>
+      jest.requireActual(
+        '../../../src/components/features/manuscript/export/pdfFontAssets',
+      ).pdfFontMatrices(),
+  );
 });
 
 describe('exportManuscript', () => {
@@ -174,6 +189,55 @@ describe('exportManuscript', () => {
       'text/markdown',
       'public.plain-text',
     );
+  });
+
+  it('reports unicodePdf false for non-pdf formats', async () => {
+    const result = await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'docx', labels });
+
+    expect(result.unicodePdf).toBe(false);
+  });
+
+  it('reports unicodePdf false when only the CJK pack is present but the serif failed', async () => {
+    // The reported web bug: the pack downloaded fine, but the serif never
+    // loaded, so the matrix was silently discarded into the legacy path.
+    mockPdfFontMatrices.mockResolvedValue(null);
+
+    const result = await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript,
+      format: 'pdf',
+      labels,
+      cjkMatrix: new Uint8Array([9, 9, 9]),
+    });
+
+    expect(result.unicodePdf).toBe(false);
+    expect(mockDeliverFile).toHaveBeenCalledTimes(1);
+    const [bytes] = mockDeliverFile.mock.calls[0];
+    expect((bytes as Uint8Array).slice(0, 5)).toEqual(
+      new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]),
+    );
+  });
+
+  it('embeds subsets and reports unicodePdf true when both matrices are present', async () => {
+    const roboto = new Uint8Array(
+      readFileSync(
+        join(__dirname, '../../../../../packages/shared/test/fixtures/fonts/Roboto-Regular.ttf'),
+      ),
+    );
+    mockPdfFontMatrices.mockResolvedValue({ regular: roboto, italic: roboto });
+
+    const result = await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript,
+      format: 'pdf',
+      labels,
+      cjkMatrix: roboto,
+    });
+
+    expect(result.unicodePdf).toBe(true);
+    const [bytes] = mockDeliverFile.mock.calls[0];
+    const head = Buffer.from(bytes as Uint8Array).toString('latin1');
+    expect(head).toContain('Identity-H');
   });
 
   it('passes the app language to the file name builder, defaulting to English', async () => {

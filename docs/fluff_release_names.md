@@ -61,3 +61,18 @@ _"Locked in place by the eternal serpent, the young main exists surrounded by th
 
 The very last feature that i heared from friends was support for crossovers and series/overarching stories. So the final release is upon me. Keres 1.8, Arc support, Aion.
 The bulk of the release was the refactoring of the code to catch bugs and issues before they happened, as well as remove some bad practices. Make it work, clean the mess after.
+
+### 1.9 - Hestia.
+
+_"At the heart of the biggest mountain, the flame of home protect us all. The first and the last. Its warmth shall embraces our families forever."_
+
+Keres needed this. The manuscript feature, onboarding, the showcase distribution and online reading feature, so many fixes... It was intended to be the last release but it only marked the beginning...
+Sync engine needed the rework. boards and location maps arent buggy anymore and even have drawings on it. Icon pack was definitly needed, and so much more.
+Very proud of what it became.
+
+### 1.10 - Pandora.
+
+_"The first woman to exist. From her grand curiosity a never ending curse, as the world wont go back to what it was ever again."_
+
+Now with keres.me, there is no going back. Keres has a shot at being a true software among giants. This and polishing of other features including manuscript expansion, onboarding expansion, admin and tier expansion, and so much more including optimizations long overdue.
+

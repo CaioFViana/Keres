@@ -31,6 +31,7 @@ export function UserEditModal({
   const [tag, setTag] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [initialIsAdmin, setInitialIsAdmin] = useState(false);
+  const [isAdultVerified, setIsAdultVerified] = useState(false);
   const [tierId, setTierId] = useState<string>('');
   // The plan the person is on now, which is not the one assigned when they have paid for another.
   const [inUse, setInUse] = useState<{ tierId: string | null; source: UserTierSource } | null>(
@@ -65,6 +66,7 @@ export function UserEditModal({
         setTag(u.tag);
         setIsAdmin(u.isAdmin);
         setInitialIsAdmin(u.isAdmin);
+        setIsAdultVerified(u.isAdultVerified);
         setTierId(u.tierId ?? '');
         setInUse(u.tierSource ? { tierId: u.effectiveTierId ?? null, source: u.tierSource } : null);
         setBio(u.bio ?? '');
@@ -110,6 +112,7 @@ export function UserEditModal({
       } else if (userId) {
         await AdminUserApiService.update(userId, {
           isAdmin,
+          isAdultVerified,
           tierId: tierId || null,
           tag: tag || undefined,
           bio: bio || null,
@@ -199,6 +202,15 @@ export function UserEditModal({
               />
               {t('userForm.adminAccess')}
             </label>
+            <label className="checkbox-label switch">
+              <input
+                type="checkbox"
+                checked={isAdultVerified}
+                onChange={(e) => setIsAdultVerified(e.target.checked)}
+              />
+              {t('userForm.adultVerified')}
+            </label>
+            <p className="hint">{t('userForm.adultVerifiedHint')}</p>
             {error && <p className="error-text">{error}</p>}
             <div className="form-actions">
               <button type="submit" disabled={saving}>

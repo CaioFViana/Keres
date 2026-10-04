@@ -86,6 +86,7 @@ describe('fields only the owner changes', () => {
       'type',
       'favoriteBehavior',
       'allowReaderComments',
+      'isNsfw',
     ]);
   });
 

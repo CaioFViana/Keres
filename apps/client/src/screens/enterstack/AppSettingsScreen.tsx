@@ -139,10 +139,7 @@ const SettingsScreen = () => {
 
   const handleCjkInstall = async () => {
     setCjkPack('working');
-    showNotification(
-      t('export_manuscript_cjk_downloading', { size: CJK_PACK_SIZE_LABEL }),
-      'info',
-    );
+    showNotification(t('export_manuscript_cjk_downloading', { size: CJK_PACK_SIZE_LABEL }), 'info');
     try {
       await downloadCjkPack();
       setCjkPack('ready');

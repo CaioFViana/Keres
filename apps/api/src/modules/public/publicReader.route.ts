@@ -1,10 +1,11 @@
 import { t, Elysia } from 'elysia';
 import { jwtShowcase } from '../../config/jwt';
+import type { JWTPayload } from '../../index';
 import { publicationStorageService } from '../../services/PublicationStorageService';
 import { showcaseService } from '../../services/ShowcaseService';
 import { showcaseSettingsService } from '../../services/ShowcaseSettingsService';
 import { AppError } from '../../utils/errors';
-import { DOWNLOAD_URL_TTL_SECONDS, verifyShowcaseToken } from './showcaseAccess';
+import { DOWNLOAD_URL_TTL_SECONDS, verifyNsfwToken, verifyShowcaseToken } from './showcaseAccess';
 
 /**
  * The online reader of a published version: its page, and the address that opens it. Its own
@@ -28,6 +29,8 @@ const READER_CSP = [
 ].join('; ');
 
 export const publicReaderRoutes = new Elysia()
+  // Same optional session as the other public routes: the global derive fills `user`.
+  .decorate('user', null as JWTPayload | null)
   .use(jwtShowcase)
   // Like everything else public but the config, these only exist with the Showcase on.
   .onBeforeHandle(async () => {
@@ -37,7 +40,7 @@ export const publicReaderRoutes = new Elysia()
   })
   .get(
     '/stories/:storyId/publications/:publicationId/reader',
-    async ({ params, headers, query, jwtShowcase: showcaseJwt, set }) => {
+    async ({ params, headers, query, jwtShowcase: showcaseJwt, set, user }) => {
       const entry = await showcaseService.getEntry(params.storyId);
       if (!entry) {
         throw new AppError(404, 'Not found.');
@@ -54,6 +57,17 @@ export const publicReaderRoutes = new Elysia()
         if (!authorized) {
           throw new AppError(404, 'Not found.');
         }
+      }
+      const includeNsfw =
+        (await showcaseService.viewerIncludesNsfw(user)) ||
+        (await verifyNsfwToken(showcaseJwt, headers['authorization'], params.storyId)) ||
+        (await verifyNsfwToken(
+          showcaseJwt,
+          query.access ? `Showcase ${query.access}` : undefined,
+          params.storyId,
+        ));
+      if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
+        throw new AppError(404, 'Not found.');
       }
 
       const publication = await showcaseService.getPublication(
@@ -73,9 +87,11 @@ export const publicReaderRoutes = new Elysia()
       set.headers['x-content-type-options'] = 'nosniff';
       set.headers['referrer-policy'] = 'no-referrer';
       // A publication never changes after it is created - but a protected story's page is not
-      // for a shared cache, and its address carries a token.
+      // for a shared cache, and its address carries a token. Gated (NSFW) content is private too.
+      // Keyed on the story's flag, not the viewer class, so verified readers keep shared caching
+      // on safe stories.
       set.headers['cache-control'] =
-        entry.visibility === 'password'
+        entry.visibility === 'password' || (await showcaseService.isNsfwStory(params.storyId))
           ? 'private, no-store'
           : 'public, max-age=31536000, immutable';
       return body;
@@ -93,7 +109,7 @@ export const publicReaderRoutes = new Elysia()
   )
   .post(
     '/stories/:storyId/publications/:publicationId/reader/url',
-    async ({ params, headers, jwtShowcase: showcaseJwt }) => {
+    async ({ params, headers, jwtShowcase: showcaseJwt, user }) => {
       const entry = await showcaseService.getEntry(params.storyId);
       if (!entry) {
         throw new AppError(404, 'Not found.');
@@ -102,6 +118,12 @@ export const publicReaderRoutes = new Elysia()
         entry.visibility === 'password' &&
         !(await verifyShowcaseToken(showcaseJwt, headers['authorization'], params.storyId))
       ) {
+        throw new AppError(404, 'Not found.');
+      }
+      const includeNsfw =
+        (await showcaseService.viewerIncludesNsfw(user)) ||
+        (await verifyNsfwToken(showcaseJwt, headers['authorization'], params.storyId));
+      if (!(await showcaseService.isVisibleTo(params.storyId, includeNsfw))) {
         throw new AppError(404, 'Not found.');
       }
 
@@ -113,13 +135,14 @@ export const publicReaderRoutes = new Elysia()
         throw new AppError(404, 'Not found.');
       }
 
-      const access =
-        entry.visibility === 'password'
-          ? await showcaseJwt.sign({
-              storyId: params.storyId,
-              exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
-            })
-          : undefined;
+      const needsToken = entry.visibility === 'password' || includeNsfw;
+      const access = needsToken
+        ? await showcaseJwt.sign({
+            storyId: params.storyId,
+            ...(includeNsfw ? { nsfwOk: true as const } : {}),
+            exp: Math.floor(Date.now() / 1000) + DOWNLOAD_URL_TTL_SECONDS,
+          })
+        : undefined;
 
       const base = `/api/public/stories/${params.storyId}/publications/${params.publicationId}/reader`;
       return { url: access ? `${base}?access=${encodeURIComponent(access)}` : base };

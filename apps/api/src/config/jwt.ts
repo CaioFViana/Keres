@@ -26,5 +26,7 @@ export const jwtShowcase = jwt({
   exp: '1h',
   schema: t.Object({
     storyId: t.String(),
+    /** Carries a verified-adult session through header-less fetches (downloads, reader frames). */
+    nsfwOk: t.Optional(t.Boolean()),
   }),
 });

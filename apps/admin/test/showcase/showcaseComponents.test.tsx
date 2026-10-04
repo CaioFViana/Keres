@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { ShowcaseAuthProvider } from '../../src/showcase/auth/ShowcaseAuthProvider';
 import { Layout } from '../../src/showcase/components/Layout';
 import { PasswordGate } from '../../src/showcase/components/PasswordGate';
 import {
@@ -22,9 +23,11 @@ describe('showcase header theme toggle', () => {
     render(
       <MemoryRouter>
         <ShowcaseThemeProvider>
-          <Layout>
-            <p>page</p>
-          </Layout>
+          <ShowcaseAuthProvider>
+            <Layout>
+              <p>page</p>
+            </Layout>
+          </ShowcaseAuthProvider>
         </ShowcaseThemeProvider>
       </MemoryRouter>,
     );

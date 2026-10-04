@@ -16,6 +16,7 @@ import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierIds } from './payments/entitlement';
 import { recoveryCodeService } from './RecoveryCodeService';
+import { storyNsfwService } from './StoryNsfwService';
 import { TierNotFoundError } from './TierService';
 import { TagAlreadyTakenError } from './UserService';
 
@@ -61,6 +62,7 @@ const ADMIN_USER_COLUMNS = {
   avatarIcon: true,
   bio: true,
   isAdmin: true,
+  isAdultVerified: true,
   tierId: true,
   createdAt: true,
   updatedAt: true,
@@ -76,6 +78,7 @@ const ADMIN_USER_RETURNING = {
   avatarIcon: users.avatarIcon,
   bio: users.bio,
   isAdmin: users.isAdmin,
+  isAdultVerified: users.isAdultVerified,
   tierId: users.tierId,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
@@ -114,6 +117,9 @@ export class AdminUserService {
     }
     if (query.isDeleted !== undefined) {
       conditions.push(eq(users.isDeleted, query.isDeleted));
+    }
+    if (query.adultVerified !== undefined) {
+      conditions.push(eq(users.isAdultVerified, query.adultVerified));
     }
     if (query.tierId) {
       conditions.push(eq(users.tierId, query.tierId));
@@ -285,6 +291,10 @@ export class AdminUserService {
       .set({ ...changes, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
+    if (patch.isAdultVerified === false && existing.isAdultVerified) {
+      // Verification revoked: the user keeps every safe story, but leaves every NSFW one now.
+      await storyNsfwService.removeUserFromNsfwStories(id, 'verification-revoked');
+    }
     return updated;
   }
 
@@ -302,6 +312,9 @@ export class AdminUserService {
       .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning(ADMIN_USER_RETURNING);
+    // A deactivated account leaves every NSFW story now - it must not linger on adults-only
+    // content while banned, and the showcase shadowban (ShowcaseService) hides its publications.
+    await storyNsfwService.removeUserFromNsfwStories(id, 'account-deactivated');
     return updated;
   }
 

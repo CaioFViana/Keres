@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ShowcaseStoryCard } from '@keres/shared';
 import { fetchStories } from '../api/showcaseApi';
+import { useShowcaseAuth } from '../auth/ShowcaseAuthProvider';
 import { StoryCard } from '../components/StoryCard';
 import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
 
@@ -11,6 +12,7 @@ const POLL_INTERVAL_MS = 30_000;
 export function HomePage() {
   const { t } = useTranslation('showcase');
   const config = useShowcaseConfig();
+  const { status: authStatus, seesNsfw } = useShowcaseAuth();
   const [stories, setStories] = useState<ShowcaseStoryCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const etagRef = useRef<string | null>(null);
@@ -29,7 +31,19 @@ export function HomePage() {
     }
   }, [t]);
 
+  // The listing is per viewer class: signing in or out changes what the server shows, so a
+  // class change drops the list and its etag (one class's etag must never validate another's).
+  // Polling starts only once the class is known - otherwise the mount fetches twice.
+  const seenAuthStatus = useRef(authStatus);
   useEffect(() => {
+    if (authStatus === 'loading') {
+      return;
+    }
+    if (seenAuthStatus.current !== authStatus) {
+      seenAuthStatus.current = authStatus;
+      etagRef.current = null;
+      setStories(null);
+    }
     void refresh();
     const timer = window.setInterval(() => void refresh(), POLL_INTERVAL_MS);
     // Coming back to the tab is the most likely moment for something new to exist - it is not worth
@@ -40,7 +54,7 @@ export function HomePage() {
       window.clearInterval(timer);
       window.removeEventListener('focus', onFocus);
     };
-  }, [refresh]);
+  }, [refresh, authStatus]);
 
   return (
     <>
@@ -65,6 +79,8 @@ export function HomePage() {
         {error && <p className="error-text">{error}</p>}
 
         {!stories && !error && <p className="muted">{t('home.loading')}</p>}
+
+        {!seesNsfw && <p className="muted">{t('home.adultHint')}</p>}
 
         {stories && stories.length === 0 && <p className="empty">{t('home.empty')}</p>}
 

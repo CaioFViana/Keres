@@ -33,11 +33,10 @@ beforeEach(() => {
   mockDeliverFile.mockResolvedValue({ delivered: true, fileName: 'x' });
   // Every existing test keeps the real serif loader; the wiring tests below
   // override per case.
-  mockPdfFontMatrices.mockImplementation(
-    () =>
-      jest.requireActual(
-        '../../../src/components/features/manuscript/export/pdfFontAssets',
-      ).pdfFontMatrices(),
+  mockPdfFontMatrices.mockImplementation(() =>
+    jest
+      .requireActual('../../../src/components/features/manuscript/export/pdfFontAssets')
+      .pdfFontMatrices(),
   );
 });
 
@@ -192,7 +191,12 @@ describe('exportManuscript', () => {
   });
 
   it('reports unicodePdf false for non-pdf formats', async () => {
-    const result = await exportManuscript({ storyTitle: 'My Story', manuscript, format: 'docx', labels });
+    const result = await exportManuscript({
+      storyTitle: 'My Story',
+      manuscript,
+      format: 'docx',
+      labels,
+    });
 
     expect(result.unicodePdf).toBe(false);
   });

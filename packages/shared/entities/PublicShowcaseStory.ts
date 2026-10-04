@@ -31,6 +31,11 @@ export interface ShowcaseVersion {
 /** A card on the Showcase's home page. */
 export interface ShowcaseStoryCard {
   storyId: string;
+  /**
+   * Whether the story is flagged adults-only right now. Anonymous viewers never see such cards;
+   * signed-in verified adults do, and the badge tells them why the card exists for them.
+   */
+  isNsfw: boolean;
   snapshot: StoryPublicationSnapshot;
   owner: ShowcaseOwner;
   versionCount: number;

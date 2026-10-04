@@ -88,6 +88,7 @@ export class StoryPublicationService {
       author: story.author,
       type: story.type,
       theme: story.theme,
+      isNsfw: story.isNsfw,
     };
   }
 

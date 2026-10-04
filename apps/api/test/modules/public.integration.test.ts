@@ -143,7 +143,7 @@ describe('GET /public/stories/:storyId', () => {
 
   it('answers null for the detail of a story that was never listed', async () => {
     // The route checks the entry before calling, so only a direct call reaches this branch.
-    await expect(showcaseService.getStoryDetail(newId())).resolves.toBeNull();
+    await expect(showcaseService.getStoryDetail(newId(), false)).resolves.toBeNull();
   });
 
   it('reveals nothing at all about a password-protected story', async () => {

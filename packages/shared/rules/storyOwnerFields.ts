@@ -13,6 +13,7 @@ export const STORY_OWNER_ONLY_FIELDS = [
   'type',
   'favoriteBehavior',
   'allowReaderComments',
+  'isNsfw',
 ] as const;
 
 export type StoryOwnerOnlyField = (typeof STORY_OWNER_ONLY_FIELDS)[number];

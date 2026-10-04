@@ -110,6 +110,9 @@ export function Layout() {
                 </span>
               )}
             </NavLink>
+            <NavLink to="/stories" className={({ isActive }) => (isActive ? 'active' : '')}>
+              {t('nav.stories')}
+            </NavLink>
           </div>
           <div className="nav-group">
             <span className="nav-group-title">{t('nav.groupSystem')}</span>

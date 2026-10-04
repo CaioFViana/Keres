@@ -140,6 +140,7 @@ function makeStory(overrides: Partial<Story> = {}): Story {
     normalizeSceneTiming: false,
     allowReaderComments: false,
     completenessChecks: false,
+    isNsfw: false,
     autoLinkMentions: false,
     statSystem: false,
     statNotation: 'letter',

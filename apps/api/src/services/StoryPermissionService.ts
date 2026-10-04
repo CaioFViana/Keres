@@ -6,6 +6,7 @@ import { FriendStatus } from '@keres/shared';
 import { friendships } from '../db/schema/tables/friendships';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
+import { storyNsfwService } from './StoryNsfwService';
 
 export class StoryPermissionService {
   /** The owner's devices re-read who collaborates on the story. */
@@ -122,6 +123,8 @@ export class StoryPermissionService {
         'This user does not collaborate on the story yet: invite them, and access starts when they accept.',
       );
     }
+    // A role change must not smuggle a non-verified user into an NSFW story.
+    await storyNsfwService.assertNsfwAccessAllowed(storyId, targetUserId);
     const [updatedPermission] = await db
       .update(storyPermissions)
       .set({

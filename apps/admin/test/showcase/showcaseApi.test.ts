@@ -155,6 +155,29 @@ describe('fetchStory', () => {
     });
   });
 
+  it('sends the tab session as a Bearer when signed in', async () => {
+    sessionStorage.setItem('keres_showcase_session', 'session-1');
+    fetchMock.mockResolvedValue(respond({ body: { storyId: 'story-1' } }));
+
+    await fetchStory('story-1');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/public/stories/story-1', {
+      headers: { Authorization: 'Bearer session-1' },
+    });
+  });
+
+  it('combines session and unlock so one fetch proves both', async () => {
+    sessionStorage.setItem('keres_showcase_session', 'session-1');
+    storeUnlockToken('story-1', 'unlock-1');
+    fetchMock.mockResolvedValue(respond({ body: { storyId: 'story-1' } }));
+
+    await fetchStory('story-1');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/public/stories/story-1', {
+      headers: { Authorization: 'Bearer session-1, Showcase unlock-1' },
+    });
+  });
+
   it('encodes the story id', async () => {
     fetchMock.mockResolvedValue(respond({ body: {} }));
 

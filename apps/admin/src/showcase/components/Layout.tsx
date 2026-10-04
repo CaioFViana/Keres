@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useMatch } from 'react-router-dom';
@@ -6,6 +7,7 @@ import { SHOWCASE_LANGUAGE_KEY } from '../../i18n';
 import keresLogoUrl from 'virtual:keres-logo';
 import { useShowcaseConfig } from '../config/ShowcaseConfigProvider';
 import { useShowcaseTheme } from '../theme/ShowcaseThemeProvider';
+import { AuthButton, LoginDialog } from './LoginDialog';
 
 /**
  * The Keres icon - the same artwork as the desktop app and the favicon, scaled down at build time
@@ -53,11 +55,13 @@ export function Layout({ children }: { children: ReactNode }) {
   const { t } = useTranslation('showcase');
   const config = useShowcaseConfig();
   const siteName = config?.siteName || 'Keres';
+  const [loginOpen, setLoginOpen] = useState(false);
   // Reading takes the whole window below the header: one scroll (the reader's), no footer.
   const reading = useMatch('/story/:storyId/read/:publicationId') !== null;
 
   return (
     <div className={reading ? 'site site--reading' : 'site'}>
+      {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)} />}
       <header className="site-header">
         <div className="site-header-inner">
           <Link to="/" className="brand">
@@ -80,6 +84,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <Link to="/about">{t('nav.about')}</Link>
             <LanguageSelect storageKey={SHOWCASE_LANGUAGE_KEY} className="language-select" />
             <ThemeToggle />
+            <AuthButton onSignIn={() => setLoginOpen(true)} />
           </nav>
         </div>
       </header>

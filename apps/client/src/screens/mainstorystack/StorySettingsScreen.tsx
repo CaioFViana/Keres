@@ -53,6 +53,8 @@ const StorySettingsScreen = () => {
   const [normalizeSceneTiming, setNormalizeSceneTiming] = useState(false);
   const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [autoLinkMentions, setAutoLinkMentions] = useState(false);
+  const [isNsfw, setIsNsfw] = useState(false);
+  const [initialIsNsfw, setInitialIsNsfw] = useState(false);
   const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
   const [deleting, setDeleting] = useState(false);
@@ -85,6 +87,8 @@ const StorySettingsScreen = () => {
         setNormalizeSceneTiming(fetchedStory.normalizeSceneTiming);
         setAllowReaderComments(fetchedStory.allowReaderComments);
         setAutoLinkMentions(fetchedStory.autoLinkMentions);
+        setIsNsfw(fetchedStory.isNsfw ?? false);
+        setInitialIsNsfw(fetchedStory.isNsfw ?? false);
       } catch (err) {
         console.error('Failed to load story or servers:', err);
         setError(t('failed_to_load_story_settings'));
@@ -97,45 +101,58 @@ const StorySettingsScreen = () => {
     // every keystroke. `applyStoryIdentity` is stable (useCallback []).
   }, [storyId, storyService, userId, t, applyStoryIdentity]);
 
-  const handleSave = () =>
-    runSave(async () => {
-      if (!storyId) return;
-      if (!identity.title.trim()) {
-        AppAlert.alert(t('error'), t('title_required'));
-        return;
-      }
-      if (!userId) {
-        AppAlert.alert(t('error'), t('user_not_identified'));
-        return;
-      }
-      setError(null);
-      try {
-        const storyData: Partial<
-          Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
-        > = {
-          title: identity.title.trim(),
-          description: identity.description,
-          genre: identity.genre,
-          language: identity.language,
-          author: identity.author,
-          isFavorite: identity.isFavorite,
-          extraNotes: identity.extraNotes,
-          normalizeSceneTiming,
-          autoLinkMentions,
-          ...(canManageStoryPolicy
-            ? { favoriteBehavior: identity.favoriteBehavior, allowReaderComments }
-            : {}),
-        };
-        await storyService().updateStory(userId, storyId, storyData);
-        if (selectedStory) setSelectedStory({ ...selectedStory, ...storyData });
-        AppAlert.alert(t('success'), t('story_updated_successfully'));
-        navigation.goBack();
-      } catch (err) {
-        console.error('Failed to save story settings:', err);
-        setError(t('failed_to_save_story_settings'));
-        AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
-      }
-    });
+  const handleSave = () => {
+    // Flagging adults-only expels every collaborator who is not age-verified, on the server, as
+    // soon as the change syncs - confirm the blast radius before writing it.
+    if (canManageStoryPolicy && isNsfw && !initialIsNsfw) {
+      AppAlert.alert(t('story_nsfw_confirm_title'), t('story_nsfw_confirm_message'), [
+        { text: t('cancel'), style: 'cancel' },
+        { text: t('confirm'), onPress: () => void runSave(doSave) },
+      ]);
+      return;
+    }
+    return runSave(doSave);
+  };
+
+  const doSave = async () => {
+    if (!storyId) return;
+    if (!identity.title.trim()) {
+      AppAlert.alert(t('error'), t('title_required'));
+      return;
+    }
+    if (!userId) {
+      AppAlert.alert(t('error'), t('user_not_identified'));
+      return;
+    }
+    setError(null);
+    try {
+      const storyData: Partial<
+        Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'isDeleted' | 'deletedAt'>
+      > = {
+        title: identity.title.trim(),
+        description: identity.description,
+        genre: identity.genre,
+        language: identity.language,
+        author: identity.author,
+        isFavorite: identity.isFavorite,
+        extraNotes: identity.extraNotes,
+        normalizeSceneTiming,
+        autoLinkMentions,
+        ...(canManageStoryPolicy
+          ? { favoriteBehavior: identity.favoriteBehavior, allowReaderComments, isNsfw }
+          : {}),
+      };
+      await storyService().updateStory(userId, storyId, storyData);
+      if (selectedStory) setSelectedStory({ ...selectedStory, ...storyData });
+      setInitialIsNsfw(isNsfw);
+      AppAlert.alert(t('success'), t('story_updated_successfully'));
+      navigation.goBack();
+    } catch (err) {
+      console.error('Failed to save story settings:', err);
+      setError(t('failed_to_save_story_settings'));
+      AppAlert.alert(t('error'), t('failed_to_save_story_settings'));
+    }
+  };
 
   const handleTypeChange = (newType: 'linear' | 'branching') => {
     if (!storyId || !userId || !canManageStoryPolicy || newType === identity.type) return;
@@ -299,6 +316,21 @@ const StorySettingsScreen = () => {
           { backgroundColor: colors.card, borderColor: colors.border },
         ]}
       >
+        <View
+          style={[
+            styles.preferenceRow,
+            styles.preferenceRowDivider,
+            { borderBottomColor: colors.border },
+          ]}
+        >
+          <View style={styles.preferenceBody}>
+            <Text style={[styles.preferenceTitle, { color: colors.text }]}>{t('story_nsfw')}</Text>
+            <Text style={[styles.preferenceDescription, { color: colors.textSecondary }]}>
+              {t('story_nsfw_description')}
+            </Text>
+          </View>
+          <ThemedSwitch value={isNsfw} onValueChange={setIsNsfw} disabled={!canManageStoryPolicy} />
+        </View>
         <View
           style={[
             styles.preferenceRow,

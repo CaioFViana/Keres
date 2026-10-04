@@ -19,6 +19,8 @@ export type AdminCreateUser = z.infer<typeof AdminCreateUserSchema>;
  */
 export const AdminUpdateUserSchema = z.object({
   isAdmin: z.boolean().optional(),
+  /** Manual +18 verification, set by an administrator. The verification method itself comes later. */
+  isAdultVerified: z.boolean().optional(),
   tierId: UlidSchema.nullable().optional(),
   tag: UserTagSchema.optional(),
   avatarColor: z.string().nullable().optional(),
@@ -41,6 +43,7 @@ export const AdminUserListQuerySchema = z.object({
   search: z.string().optional(),
   isAdmin: QueryBooleanSchema.optional(),
   isDeleted: QueryBooleanSchema.optional(),
+  adultVerified: QueryBooleanSchema.optional(),
   tierId: UlidSchema.optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),

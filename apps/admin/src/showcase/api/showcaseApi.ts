@@ -15,6 +15,8 @@ import type {
  * `sessionStorage` (gone when the tab closes) and scoped to a single story.
  */
 
+import { readSessionToken } from './showcaseAuth';
+
 const UNLOCK_TOKEN_PREFIX = 'keres_showcase_unlock_';
 
 export function readUnlockToken(storyId: string): string | null {
@@ -32,6 +34,27 @@ export function clearUnlockToken(storyId: string): void {
 function unlockHeaders(storyId: string): Record<string, string> {
   const token = readUnlockToken(storyId);
   return token ? { Authorization: `Showcase ${token}` } : {};
+}
+
+/**
+ * The tab's own session, when signed in. Sent as a plain Bearer beside (never inside) the
+ * unlock token: the server reads either credential from the header, and a signed-in verified
+ * adult additionally sees the +18 shelf and its downloads.
+ */
+function sessionHeaders(): Record<string, string> {
+  const token = readSessionToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/**
+ * Both credentials at once, comma-joined: the server reads each half independently, so a
+ * signed-in adult opening a password-protected +18 story proves both facts in one fetch.
+ */
+function storyHeaders(storyId: string): Record<string, string> {
+  const session = sessionHeaders().Authorization;
+  const unlock = unlockHeaders(storyId).Authorization;
+  const combined = [session, unlock].filter(Boolean).join(', ');
+  return combined ? { Authorization: combined } : {};
 }
 
 async function readError(response: Response): Promise<string> {
@@ -74,7 +97,10 @@ export interface StoryListResult {
  */
 export async function fetchStories(previousEtag: string | null): Promise<StoryListResult> {
   const response = await fetch('/api/public/stories', {
-    headers: previousEtag ? { 'If-None-Match': previousEtag } : {},
+    headers: {
+      ...sessionHeaders(),
+      ...(previousEtag ? { 'If-None-Match': previousEtag } : {}),
+    },
   });
   if (response.status === 304) {
     return { stories: null, etag: previousEtag };
@@ -87,7 +113,7 @@ export async function fetchStories(previousEtag: string | null): Promise<StoryLi
 
 export async function fetchStory(storyId: string): Promise<ShowcaseStoryResponse> {
   const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}`, {
-    headers: unlockHeaders(storyId),
+    headers: storyHeaders(storyId),
   });
   if (!response.ok) {
     throw new Error(await readError(response));
@@ -98,7 +124,7 @@ export async function fetchStory(storyId: string): Promise<ShowcaseStoryResponse
 export async function unlockStory(storyId: string, password: string): Promise<ShowcaseStoryDetail> {
   const response = await fetch(`/api/public/stories/${encodeURIComponent(storyId)}/unlock`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...sessionHeaders() },
     body: JSON.stringify({ password }),
   });
   if (!response.ok) {
@@ -128,7 +154,7 @@ export async function fetchDownloadUrl(storyId: string, publicationId: string): 
     `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
       publicationId,
     )}/download-url`,
-    { method: 'POST', headers: unlockHeaders(storyId) },
+    { method: 'POST', headers: storyHeaders(storyId) },
   );
   if (!response.ok) {
     throw new Error(await readError(response));
@@ -149,7 +175,7 @@ export async function fetchManuscriptDownloadUrl(
     `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
       publicationId,
     )}/manuscript/download-url`,
-    { method: 'POST', headers: unlockHeaders(storyId) },
+    { method: 'POST', headers: storyHeaders(storyId) },
   );
   if (!response.ok) {
     throw new Error(await readError(response));
@@ -167,7 +193,7 @@ export async function fetchReaderUrl(storyId: string, publicationId: string): Pr
     `/api/public/stories/${encodeURIComponent(storyId)}/publications/${encodeURIComponent(
       publicationId,
     )}/reader/url`,
-    { method: 'POST', headers: unlockHeaders(storyId) },
+    { method: 'POST', headers: storyHeaders(storyId) },
   );
   if (!response.ok) {
     throw new Error(await readError(response));

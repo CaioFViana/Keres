@@ -23,6 +23,7 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
 
 const card: ShowcaseStoryCard = {
   storyId: 'story-1',
+  isNsfw: false,
   snapshot: {
     title: 'O Vale Silencioso',
     description: 'Uma trilha que ninguém percorre duas vezes.',
@@ -106,6 +107,21 @@ describe('showcase home', () => {
 
     const link = container.querySelector('a.story-card');
     expect(link?.getAttribute('href')).toBe('/story/story-1');
+    await unmount();
+  });
+
+  it('badges an adults-only card, and none on a safe one', async () => {
+    mocks.fetchStories.mockResolvedValue({
+      stories: [{ ...card, isNsfw: true }, card],
+      etag: 'W/"showcase-2"',
+    });
+    const { container, unmount } = await renderAt('/');
+    await flush();
+
+    const cards = [...container.querySelectorAll('a.story-card')];
+    expect(cards).toHaveLength(2);
+    expect(cards[0]?.querySelector('.badge-adult')).not.toBeNull();
+    expect(cards[1]?.querySelector('.badge-adult')).toBeNull();
     await unmount();
   });
 

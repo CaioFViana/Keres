@@ -322,9 +322,11 @@ describe('StorySettingsScreen', () => {
       editable: true,
       typeDisabled: false,
     });
-    // normalizeSceneTiming=true, autoLinkMentions=true from the story.
-    expect(view.getAllByTestId('themed-switch')[0].props.children).toBe('true:enabled');
+    // normalizeSceneTiming=true, autoLinkMentions=true from the story; the adults-only
+    // switch comes first and stays off for an old story without the flag.
+    expect(view.getAllByTestId('themed-switch')[0].props.children).toBe('false:enabled');
     expect(view.getAllByTestId('themed-switch')[1].props.children).toBe('true:enabled');
+    expect(view.getAllByTestId('themed-switch')[2].props.children).toBe('true:enabled');
     expect(jsonOf(view, 'favorite-behavior')).toMatchObject({
       value: 'individual',
       disabled: false,
@@ -352,9 +354,10 @@ describe('StorySettingsScreen', () => {
   it('saves the edited settings and goes back', async () => {
     const view = await render(<StorySettingsScreen />);
     await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
-    // Flip both switches and the collaboration toggle before saving.
-    await fireEvent.press(view.getAllByTestId('themed-switch')[0]);
+    // Flip both preference switches (the adults-only one comes first) and the collaboration
+    // toggle before saving.
     await fireEvent.press(view.getAllByTestId('themed-switch')[1]);
+    await fireEvent.press(view.getAllByTestId('themed-switch')[2]);
     await fireEvent.press(view.getByTestId('collab-toggle'));
     await fireEvent.press(view.getByTestId('favorite-behavior-change'));
     await fireEvent.press(view.getByTestId('btn-update_story'));
@@ -368,10 +371,37 @@ describe('StorySettingsScreen', () => {
         autoLinkMentions: false,
         allowReaderComments: true,
         favoriteBehavior: 'global',
+        isNsfw: false,
       }),
     );
     expect(mockSetSelectedStory).toHaveBeenCalled();
     expect(mockAppAlert).toHaveBeenCalledWith('success', 'story_updated_successfully');
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms before flagging adults-only, and saves only on confirm', async () => {
+    const view = await render(<StorySettingsScreen />);
+    await waitFor(() => expect(view.queryByTestId('form-title')).not.toBeNull());
+    await fireEvent.press(view.getAllByTestId('themed-switch')[0]);
+    await fireEvent.press(view.getByTestId('btn-update_story'));
+
+    await waitFor(() =>
+      expect(mockAppAlert).toHaveBeenCalledWith(
+        'story_nsfw_confirm_title',
+        'story_nsfw_confirm_message',
+        expect.any(Array),
+      ),
+    );
+    expect(mockUpdateStory).not.toHaveBeenCalled();
+
+    const confirm = alertButtons(0).find((button) => button.text === 'confirm');
+    await confirm!.onPress!();
+    await waitFor(() => expect(mockUpdateStory).toHaveBeenCalled());
+    expect(mockUpdateStory).toHaveBeenCalledWith(
+      'user-1',
+      'story-1',
+      expect.objectContaining({ isNsfw: true }),
+    );
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 

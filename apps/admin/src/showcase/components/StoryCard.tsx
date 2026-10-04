@@ -24,6 +24,7 @@ export function StoryCard({ story }: { story: ShowcaseStoryCard }) {
         <div className="story-card-head">
           <h3>{snapshot.title}</h3>
           <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
+          {story.isNsfw && <span className="badge badge-adult">{t('story.adultsOnly')}</span>}
         </div>
 
         {snapshot.description && <p className="story-card-desc">{snapshot.description}</p>}

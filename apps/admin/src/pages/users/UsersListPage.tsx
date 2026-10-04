@@ -14,6 +14,7 @@ export function UsersListPage() {
   const [searchInput, setSearchInput] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [reloadToken, setReloadToken] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -37,6 +38,7 @@ export function UsersListPage() {
       search: appliedSearch || undefined,
       // Off means active only; on means everyone, deleted included.
       isDeleted: showDeleted ? undefined : false,
+      adultVerified: verifiedOnly ? true : undefined,
       page,
       pageSize,
     })
@@ -55,7 +57,7 @@ export function UsersListPage() {
     return () => {
       ignore = true;
     };
-  }, [page, showDeleted, appliedSearch, reloadToken]);
+  }, [page, showDeleted, verifiedOnly, appliedSearch, reloadToken]);
 
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +117,17 @@ export function UsersListPage() {
           />
           {t('users.showDeleted')}
         </label>
+        <label className="checkbox-label switch">
+          <input
+            type="checkbox"
+            checked={verifiedOnly}
+            onChange={(e) => {
+              setVerifiedOnly(e.target.checked);
+              setPage(1);
+            }}
+          />
+          {t('users.verifiedOnly')}
+        </label>
         <button type="submit">{t('common.search')}</button>
       </form>
 
@@ -129,6 +142,7 @@ export function UsersListPage() {
                 <th>{t('users.columnUsername')}</th>
                 <th>{t('users.columnTag')}</th>
                 <th>{t('users.columnTier')}</th>
+                <th>{t('users.columnVerified')}</th>
                 <th>{t('users.columnCreated')}</th>
                 <th></th>
               </tr>
@@ -173,6 +187,15 @@ export function UsersListPage() {
                       </span>
                     )}
                   </td>
+                  <td>
+                    {u.isAdultVerified ? (
+                      <span className="status-badge" title={t('users.verifiedTitle')}>
+                        {t('users.verifiedShort')}
+                      </span>
+                    ) : (
+                      '-'
+                    )}
+                  </td>
                   <td>{new Date(u.createdAt).toLocaleDateString(i18n.language)}</td>
                   <td>
                     <button
@@ -187,7 +210,7 @@ export function UsersListPage() {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="empty-state">
+                  <td colSpan={8} className="empty-state">
                     {t('users.empty')}
                   </td>
                 </tr>

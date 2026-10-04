@@ -417,7 +417,12 @@ export const authRoutes = new Elysia()
       if (!found || found.id !== user.userId) {
         throw new AppError(401, 'Unauthorized');
       }
-      return { userId: found.id, username: found.username, tag: found.tag };
+      return {
+        userId: found.id,
+        username: found.username,
+        tag: found.tag,
+        isAdultVerified: found.isAdultVerified,
+      };
     },
     {
       response: {
@@ -425,6 +430,7 @@ export const authRoutes = new Elysia()
           userId: t.String(),
           username: t.String(),
           tag: t.String(),
+          isAdultVerified: t.Boolean(),
         }),
         401: MessageResponseSchema,
       },

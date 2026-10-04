@@ -337,6 +337,13 @@
       "when": 1790977050472,
       "tag": "0047_previous_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1791127737823,
+      "tag": "0048_square_wolverine",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { BackHandler } from 'react-native';
 import { useUserSettingsStore } from '../../../src/state/userSettingsStore';
 
@@ -42,6 +42,33 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
   __esModule: true,
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
+let mockRole: string | null = 'owner';
+let mockCanReport = false;
+const mockReport = jest.fn();
+jest.mock('../../../src/hooks/useStoryRole', () => ({
+  __esModule: true,
+  useStoryRole: () => ({
+    role: mockRole,
+    canEdit: true,
+    canManageStoryPolicy: true,
+    isLoading: false,
+  }),
+}));
+jest.mock('../../../src/hooks/useStoryReport', () => ({
+  __esModule: true,
+  useStoryReport: () => ({ canReport: mockCanReport, sending: false, report: mockReport }),
+}));
+jest.mock('../../../src/components/features/story/ReportStoryModal/ReportStoryModal', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: { visible: boolean; storyTitle: string }) => (
+      <Text testID="report-modal">
+        {JSON.stringify({ visible: props.visible, title: props.storyTitle })}
+      </Text>
+    ),
+  };
+});
 jest.mock('../../../src/guides/useScreenTour', () => ({
   __esModule: true,
   useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
@@ -156,9 +183,18 @@ describe('MainDashboardScreen', () => {
     jest.clearAllMocks();
     mockSelectedStory = { id: 'story-1', title: 'My Story' };
     mockConflicts = [{ id: 'c-1' }, { id: 'c-2' }];
+    mockRole = 'owner';
+    mockCanReport = false;
     mockGetContentCounts.mockResolvedValue(fullCounts);
     mockAnalyzeStoryCheap.mockResolvedValue({ findings: [{ id: 'f-1' }, { id: 'f-2' }] });
   });
+
+  function reportAction() {
+    const headerCall = mockUseScreenHeader.mock.calls[0][0] as {
+      actions: { id: string; visible?: boolean; onPress: () => void }[];
+    };
+    return headerCall.actions.find((action) => action.id === 'action-report')!;
+  }
 
   it('requests its guided tour', async () => {
     await render(<MainDashboardScreen />);
@@ -273,6 +309,44 @@ describe('MainDashboardScreen', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+
+  it('hides the report action from the owner', async () => {
+    mockRole = 'owner';
+    mockCanReport = true;
+    await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(false);
+  });
+
+  it('shows the report action to a known non-owner and opens the dialog', async () => {
+    mockRole = 'reader';
+    mockCanReport = true;
+    const view = await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(true);
+
+    // Opening the action shows the report dialog for this story.
+    expect(JSON.parse(view.getByTestId('report-modal').props.children)).toMatchObject({
+      visible: false,
+      title: 'My Story',
+    });
+    await act(async () => {
+      reportAction().onPress();
+    });
+    expect(JSON.parse(view.getByTestId('report-modal').props.children).visible).toBe(true);
+  });
+
+  it('hides the report action while the role is unresolved', async () => {
+    mockRole = null;
+    mockCanReport = true;
+    await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(false);
+  });
+
+  it('hides the report action on a local-only story', async () => {
+    mockRole = 'reader';
+    mockCanReport = false;
+    await render(<MainDashboardScreen />);
+    expect(reportAction().visible).toBe(false);
   });
 
   it('keeps the dashboard usable when metrics fail', async () => {

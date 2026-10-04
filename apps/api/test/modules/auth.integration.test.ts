@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { hardDeleteUser, softDeleteUser, truncateAll } from '../helpers/database';
+import { hardDeleteUser, promoteToAdmin, softDeleteUser, truncateAll } from '../helpers/database';
 import { newId, registerUser, request } from '../helpers/app';
 
 beforeEach(truncateAll);
@@ -450,7 +450,12 @@ describe('GET /auth/me', () => {
     const { status, data } = await request('GET', '/auth/me', { token: user.token });
 
     expect(status).toBe(200);
-    expect(data).toEqual({ userId: user.userId, username: 'ana', tag: 'ana' });
+    expect(data).toEqual({
+      userId: user.userId,
+      username: 'ana',
+      tag: 'ana',
+      isAdultVerified: false,
+    });
   });
 
   it('returns the account from the session cookie alone', async () => {
@@ -461,7 +466,30 @@ describe('GET /auth/me', () => {
     });
 
     expect(status).toBe(200);
-    expect(data).toEqual({ userId: user.userId, username: 'ana', tag: 'ana' });
+    expect(data).toEqual({
+      userId: user.userId,
+      username: 'ana',
+      tag: 'ana',
+      isAdultVerified: false,
+    });
+  });
+  it('reflects a later +18 verification', async () => {
+    const user = await registerUser('bia');
+    const admin = await registerUser('root2');
+    await promoteToAdmin(admin.userId);
+
+    await request('PUT', `/admin/api/users/${user.userId}`, {
+      token: admin.token,
+      body: { isAdultVerified: true },
+    });
+
+    const { data } = await request('GET', '/auth/me', { token: user.token });
+    expect(data).toEqual({
+      userId: user.userId,
+      username: 'bia',
+      tag: 'bia',
+      isAdultVerified: true,
+    });
   });
 
   it('rejects a missing session', async () => {

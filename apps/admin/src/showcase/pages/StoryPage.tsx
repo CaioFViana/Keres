@@ -8,6 +8,8 @@ import {
   fetchStory,
   unlockStory,
 } from '../api/showcaseApi';
+import { useShowcaseAuth } from '../auth/ShowcaseAuthProvider';
+import { LoginDialog } from '../components/LoginDialog';
 import { OwnerAvatar } from '../components/OwnerAvatar';
 import { PasswordGate } from '../components/PasswordGate';
 import { formatBytes, formatDate, genreList } from '../format';
@@ -18,12 +20,14 @@ export function StoryPage() {
   const { storyId = '' } = useParams();
   const { resolved } = useShowcaseTheme();
   const { t, i18n } = useTranslation('showcase');
+  const { status: authStatus, seesNsfw } = useShowcaseAuth();
 
   const [detail, setDetail] = useState<ShowcaseStoryDetail | null>(null);
   const [locked, setLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [downloadingManuscript, setDownloadingManuscript] = useState<string | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -41,8 +45,15 @@ export function StoryPage() {
   }, [storyId, t]);
 
   useEffect(() => {
+    // Gating is per viewer class: signing in or out can reveal or hide this very story.
+    if (authStatus === 'loading') {
+      return;
+    }
+    setDetail(null);
+    setLocked(false);
+    setError(null);
     void load();
-  }, [load]);
+  }, [load, authStatus]);
 
   const download = async (publicationId: string) => {
     setDownloading(publicationId);
@@ -73,7 +84,18 @@ export function StoryPage() {
   if (error && !detail && !locked) {
     return (
       <section className="story-page">
+        {loginOpen && <LoginDialog onClose={() => setLoginOpen(false)} />}
         <p className="error-text">{error}</p>
+        {/* A gated (+18) or shadowbanned story answers 404 like an unpublished one: whoever is
+            not signed in as a verified adult gets the sign-in offer, not the distinction. */}
+        {!seesNsfw && (
+          <p className="muted">
+            {t('story.gatedHint')}{' '}
+            <button type="button" className="button-secondary" onClick={() => setLoginOpen(true)}>
+              {t('auth.signIn')}
+            </button>
+          </p>
+        )}
         <Link to="/" className="back-link">
           {t('story.back')}
         </Link>
@@ -109,6 +131,7 @@ export function StoryPage() {
 
       <header className="story-head">
         <span className={`badge badge-${snapshot.type}`}>{t(`story.${snapshot.type}`)}</span>
+        {snapshot.isNsfw && <span className="badge badge-adult">{t('story.adultsOnly')}</span>}
         <h1>{snapshot.title}</h1>
         {/*
           The publisher, always - it is a fact about this page. The work's author is a different

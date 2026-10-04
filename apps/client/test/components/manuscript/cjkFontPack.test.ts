@@ -120,7 +120,9 @@ describe('cjkFontPack', () => {
   it('deletes a bad download and reports the size failure', async () => {
     downloadFileAsync.mockResolvedValueOnce({});
     const deleted = jest.fn();
-    fileCtor.mockImplementation(() => fileStub({ bytes: async () => new Uint8Array(12), delete: deleted }));
+    fileCtor.mockImplementation(() =>
+      fileStub({ bytes: async () => new Uint8Array(12), delete: deleted }),
+    );
 
     const error: CjkPackError = await downloadCjkPack().catch((e) => e);
     expect(error).toBeInstanceOf(CjkPackError);
@@ -185,7 +187,11 @@ describe('cjkFontPack', () => {
     });
 
     it('rejects an HTTP error without storing anything', async () => {
-      fetchMock.mockResolvedValueOnce({ ok: false, status: 503, arrayBuffer: async () => new ArrayBuffer(0) });
+      fetchMock.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        arrayBuffer: async () => new ArrayBuffer(0),
+      });
 
       const error: CjkPackError = await downloadCjkPack().catch((e) => e);
       expect(error).toBeInstanceOf(CjkPackError);

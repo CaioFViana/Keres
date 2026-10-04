@@ -12,6 +12,8 @@ export const StoryPublicationSnapshotSchema = z.object({
   author: z.string().nullable(),
   type: z.enum(['linear', 'branching']),
   theme: z.string().nullable(),
+  // Absent on versions published before the flag existed; readers treat missing as non-NSFW.
+  isNsfw: z.boolean().default(false),
 });
 
 export const StoryPublicationSchema = z.object({

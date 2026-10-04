@@ -7,7 +7,15 @@ import { useStoryListStore } from '../../state/storyListStore';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import i18n from '../../utils/i18n';
 import { createStoryService } from '../storymanagement/StoryService';
+import { takeAccessRevocation, type AccessRevocationReason } from '../accessRevocation';
 import type { ServerStoryPreview } from '../SyncEngineService';
+
+const REVOCATION_MESSAGE_KEYS: Record<AccessRevocationReason, string> = {
+  'nsfw-story': 'story_access_revoked_nsfw',
+  'verification-revoked': 'story_access_revoked_verification',
+  'account-deactivated': 'story_access_revoked_deactivated',
+  'removed-by-admin': 'story_access_revoked_removed',
+};
 
 /**
  * Removes the local copy of every story this device holds as somebody else's collaborator that the
@@ -41,9 +49,12 @@ export async function dropRevokedServerStories(
     try {
       await storyService.discardCollaboratedCopy(story.id);
       dropped.push(story.id);
-      useNotificationStore
-        .getState()
-        .showNotification(i18n.t('story_access_lost', { title: story.title }), 'info');
+      // A noted revocation (NSFW moderation, admin removal) names its reason; anything else
+      // keeps the generic message - e.g. an unfriend, or a revocation from before this device
+      // was online (realtime events are never redelivered).
+      const reason = takeAccessRevocation(story.id);
+      const key = reason ? REVOCATION_MESSAGE_KEYS[reason] : 'story_access_lost';
+      useNotificationStore.getState().showNotification(i18n.t(key, { title: story.title }), 'info');
       // Whatever is showing it - the open story above all - lets go of it.
       entityEventEmitter.emit('story_access_lost', story.id);
     } catch (error) {

@@ -7,6 +7,16 @@ export const MessageSendSchema = z.object({
 });
 export type MessageSend = z.infer<typeof MessageSendSchema>;
 
+/**
+ * Reporting a story to the administrators. The client sends only the free-text reason; the
+ * server injects the story id into the admin message, so no report-specific field is trusted
+ * from the client.
+ */
+export const StoryReportRequestSchema = z.object({
+  reason: z.string().trim().min(1, 'A reason is required').max(MESSAGE_BODY_MAX_LENGTH),
+});
+export type StoryReportRequest = z.infer<typeof StoryReportRequestSchema>;
+
 /** Conversations are read newest first, a page at a time; `before` is the id of the oldest one seen. */
 export const MessagePageQuerySchema = z.object({
   before: z.string().min(1).optional(),
@@ -14,7 +24,7 @@ export const MessagePageQuerySchema = z.object({
 });
 export type MessagePageQuery = z.infer<typeof MessagePageQuerySchema>;
 
-export const ADMIN_MESSAGE_SOURCES = ['all', 'site', 'user'] as const;
+export const ADMIN_MESSAGE_SOURCES = ['all', 'site', 'user', 'report'] as const;
 export const ADMIN_MESSAGE_READ_FILTERS = ['all', 'unread', 'read'] as const;
 export const ADMIN_MESSAGE_ARCHIVE_FILTERS = ['active', 'archived', 'all'] as const;
 export const ADMIN_MESSAGE_SORTS = ['date', 'sender', 'subject'] as const;

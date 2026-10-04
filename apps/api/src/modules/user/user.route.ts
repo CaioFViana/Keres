@@ -21,6 +21,7 @@ const userResponseSchema = t.Object({
   avatarColor: t.Nullable(t.String()),
   avatarIcon: t.Nullable(t.String()),
   bio: t.Nullable(t.String()),
+  isAdultVerified: t.Boolean(),
 });
 
 export const userRoutes = new Elysia()

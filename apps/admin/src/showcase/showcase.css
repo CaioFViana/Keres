@@ -337,6 +337,64 @@ a {
   border-color: currentColor;
 }
 
+.badge-adult {
+  color: var(--color-error);
+  border-color: currentColor;
+}
+
+/* Sign-in lives on the page itself: a quiet header slot and a gate-styled dialog. */
+.auth-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-name {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.button-secondary {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.button-secondary:hover {
+  border-color: var(--color-primary);
+}
+
+.login-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.login-backdrop .gate-card {
+  text-align: left;
+}
+
+.gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gate-actions .button-secondary {
+  padding: 11px 18px;
+  font-weight: 600;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;

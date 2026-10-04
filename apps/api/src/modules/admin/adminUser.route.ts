@@ -39,6 +39,7 @@ export const adminUserRoutes = new Elysia()
         search: t.Optional(t.String()),
         isAdmin: t.Optional(t.String()),
         isDeleted: t.Optional(t.String()),
+        adultVerified: t.Optional(t.String()),
         tierId: t.Optional(t.String()),
         page: t.Optional(t.Numeric()),
         pageSize: t.Optional(t.Numeric()),
@@ -114,6 +115,7 @@ export const adminUserRoutes = new Elysia()
           avatarIcon: t.Nullable(t.String()),
           bio: t.Nullable(t.String()),
           isAdmin: t.Boolean(),
+          isAdultVerified: t.Boolean(),
           tierId: t.Nullable(t.String()),
           createdAt: t.Date(),
           updatedAt: t.Date(),
@@ -164,6 +166,7 @@ export const adminUserRoutes = new Elysia()
       // POST / above.
       body: t.Object({
         isAdmin: t.Optional(t.Boolean()),
+        isAdultVerified: t.Optional(t.Boolean()),
         tierId: t.Optional(t.Nullable(t.String())),
         tag: t.Optional(t.String({ minLength: 1 })),
         avatarColor: t.Optional(t.Nullable(t.String())),
@@ -179,6 +182,7 @@ export const adminUserRoutes = new Elysia()
           avatarIcon: t.Nullable(t.String()),
           bio: t.Nullable(t.String()),
           isAdmin: t.Boolean(),
+          isAdultVerified: t.Boolean(),
           tierId: t.Nullable(t.String()),
           createdAt: t.Date(),
           updatedAt: t.Date(),
@@ -190,7 +194,7 @@ export const adminUserRoutes = new Elysia()
         409: t.Object({ message: t.String() }),
       },
       detail: {
-        summary: 'Update a user (profile, isAdmin, tierId)',
+        summary: 'Update a user (profile, isAdmin, +18 verification, tierId)',
         tags: ['Admin'],
         security: [{ bearerAuth: [] }],
       },

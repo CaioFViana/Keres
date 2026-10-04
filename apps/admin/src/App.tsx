@@ -9,6 +9,7 @@ import { LogsPage } from './pages/logs/LogsPage';
 import { MessagesPage } from './pages/messages/MessagesPage';
 import { RecoveryPage } from './pages/recovery/RecoveryPage';
 import { RegistrationSettingsPage } from './pages/settings/RegistrationSettingsPage';
+import { StoriesPage } from './pages/stories/StoriesPage';
 import { TiersPage } from './pages/tiers/TiersPage';
 import { UserFormPage } from './pages/users/UserFormPage';
 import { UsersListPage } from './pages/users/UsersListPage';
@@ -33,6 +34,7 @@ export function App() {
               <Route path="/logs" element={<LogsPage />} />
               <Route path="/tiers" element={<TiersPage />} />
               <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/stories" element={<StoriesPage />} />
               {/* The page used to be called Contact. */}
               <Route path="/contact" element={<Navigate to="/messages" replace />} />
               <Route path="/settings" element={<RegistrationSettingsPage />} />

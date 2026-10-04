@@ -351,6 +351,7 @@ describe('a story created from a shipped pack', () => {
     allowReaderComments: false,
     autoLinkMentions: true,
     completenessChecks: false,
+    isNsfw: false,
     statSystem: false,
     statNotation: 'letter' as const,
     lastOperationLog: 0,

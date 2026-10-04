@@ -38,6 +38,8 @@ export const stories = sqliteTable('stories', {
   allowReaderComments: integer('allow_reader_comments', { mode: 'boolean' })
     .notNull()
     .default(false),
+  /** Adults-only story: only age-verified (+18) users may be added. Owner-only on the server. */
+  isNsfw: integer('is_nsfw', { mode: 'boolean' }).notNull().default(false),
   /** Renders entity names found in the story's text as links. See `utils/entityMentions.ts`. */
   autoLinkMentions: integer('auto_link_mentions', { mode: 'boolean' }).notNull().default(false),
   /** Story Analysis also reports elements that are not referenced anywhere. Opinion, so opt-in. */

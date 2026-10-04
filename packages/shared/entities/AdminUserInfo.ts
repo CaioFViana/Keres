@@ -13,6 +13,8 @@ export interface AdminUserInfo {
   avatarIcon: string | null;
   bio: string | null;
   isAdmin: boolean;
+  /** Manual +18 verification, set by an administrator. Gates NSFW story access. */
+  isAdultVerified: boolean;
   /** The plan an administrator assigned (or the one given at sign-up). A payment never changes it. */
   tierId: string | null;
   /**

@@ -1,4 +1,5 @@
 import type { ChatMessage, ConversationSummary, MessagePage } from '@keres/shared';
+import { buildNsfwReportBody } from '@keres/shared';
 import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { and, desc, eq, inArray, isNotNull, isNull, lt, max, or, sql, type SQL } from 'drizzle-orm';
 import { monotonicFactory } from 'ulid';
@@ -234,6 +235,16 @@ export class MessageService {
     });
     this.notify(me, peerId);
     return toChatMessage(created, me);
+  }
+
+  /**
+   * A story report to the administrators. The envelope carries the story id - the client only
+   * sends the free-text reason, so nothing report-specific is trusted from it. Same quota and
+   * channel as an ordinary message to the administrators, so reports stay inside the abuse
+   * limits of that channel.
+   */
+  async sendStoryReport(me: string, storyId: string, reason: string): Promise<ChatMessage> {
+    return this.sendToAdmins(me, buildNsfwReportBody(storyId, reason));
   }
 
   async sendToAdmins(me: string, body: string): Promise<ChatMessage> {

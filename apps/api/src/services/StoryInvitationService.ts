@@ -6,6 +6,7 @@ import { alias } from '../db/schema/columns';
 import { stories, storyInvitations, users } from '../db/schema';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
+import { storyNsfwService } from './StoryNsfwService';
 import { storyPermissionService } from './StoryPermissionService';
 
 type PermissionType = 'reader' | 'writer';
@@ -88,6 +89,8 @@ export class StoryInvitationService {
         'This user already collaborates on the story; change their role instead.',
       );
     }
+    // Adults-only stories are closed to whoever is not age-verified, at invitation time.
+    await storyNsfwService.assertNsfwAccessAllowed(storyId, inviteeId);
 
     const now = new Date();
     await db
@@ -132,6 +135,18 @@ export class StoryInvitationService {
       await db.delete(storyInvitations).where(eq(storyInvitations.id, invitation.id));
       this.notify(invitation.inviterId, userId);
       throw new AppError(410, 'This invitation is no longer valid.');
+    }
+    // The story may have been flagged NSFW (or the invitee unverified) after the invitation was
+    // sent: re-check at acceptance, closing the same window the friendship re-check closes below.
+    try {
+      await storyNsfwService.assertNsfwAccessAllowed(invitation.storyId, userId);
+    } catch (error) {
+      if (error instanceof AppError && error.status === 403) {
+        await db.delete(storyInvitations).where(eq(storyInvitations.id, invitation.id));
+        this.notify(invitation.inviterId, userId);
+        throw new AppError(403, 'Only age-verified (+18) users can join NSFW stories.');
+      }
+      throw error;
     }
 
     await withWriteTransaction(async (tx) => {

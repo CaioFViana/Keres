@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { AdminMessage, AdminMessageDetail, AdminMessageListQuery } from '@keres/shared';
 import { MESSAGE_BODY_MAX_LENGTH } from '@keres/shared/metadata/MessageLimits';
+import { parseNsfwReportBody } from '@keres/shared/utils/storyReport';
 import { announceMessagesChanged, MessagesApiService } from '../../api/MessagesApiService';
 import { Modal } from '../../components/Modal';
 
@@ -15,7 +16,7 @@ type Order = AdminMessageListQuery['order'];
 const PAGE_SIZE = 25;
 const PREVIEW_LENGTH = 90;
 
-const SOURCES: Source[] = ['all', 'site', 'user'];
+const SOURCES: Source[] = ['all', 'site', 'user', 'report'];
 const READ_FILTERS: ReadFilter[] = ['all', 'unread', 'read'];
 const ARCHIVE_FILTERS: ArchiveFilter[] = ['active', 'archived', 'all'];
 const SORTS: Sort[] = ['date', 'sender', 'subject'];
@@ -39,8 +40,27 @@ function Sender({ message }: { message: AdminMessage }) {
 }
 
 function preview(message: AdminMessage): string {
-  const text = message.subject ?? message.body;
+  // A report's envelope is for the filter, not for reading: the list shows the reason.
+  const report = parseNsfwReportBody(message.body);
+  const text = report && !message.subject ? report.reason : (message.subject ?? message.body);
   return text.length > PREVIEW_LENGTH ? `${text.slice(0, PREVIEW_LENGTH)}…` : text;
+}
+
+/** A story report behind an admin message: badge with the reported story id, else nothing. */
+function ReportBadge({ body }: { body: string }) {
+  const { t } = useTranslation('admin');
+  const report = parseNsfwReportBody(body);
+  if (!report) {
+    return null;
+  }
+  return (
+    <span
+      className="status-badge accent"
+      title={t('messages.reportStoryId', { id: report.storyId })}
+    >
+      {t('messages.reportBadge')}
+    </span>
+  );
 }
 
 export function MessagesPage() {
@@ -213,9 +233,15 @@ export function MessagesPage() {
             <span className={`status-badge${fromSite ? '' : ' accent'}`}>
               {fromSite ? t('messages.originSite') : t('messages.originUser')}
             </span>{' '}
-            <Sender message={message} /> · {when(message.createdAt)}
+            <ReportBadge body={message.body} /> <Sender message={message} /> ·{' '}
+            {when(message.createdAt)}
             {message.isArchived ? ` · ${t('messages.archivedBadge')}` : ''}
           </p>
+          {parseNsfwReportBody(message.body) && (
+            <p className="hint">
+              {t('messages.reportStoryId', { id: parseNsfwReportBody(message.body)!.storyId })}
+            </p>
+          )}
 
           {fromSite ? (
             <>
@@ -235,7 +261,9 @@ export function MessagesPage() {
                     {entry.fromAdmin ? t('messages.fromAdmins') : `@${entry.user?.tag ?? ''}`} ·{' '}
                     {when(entry.createdAt)}
                   </div>
-                  <p className="message-body">{entry.body}</p>
+                  <p className="message-body">
+                    {parseNsfwReportBody(entry.body)?.reason ?? entry.body}
+                  </p>
                   {entry.fromAdmin && (
                     <button
                       type="button"
@@ -420,7 +448,8 @@ export function MessagesPage() {
                       {message.channel === 'site'
                         ? t('messages.originSite')
                         : t('messages.originUser')}
-                    </span>
+                    </span>{' '}
+                    <ReportBadge body={message.body} />
                   </td>
                   <td>
                     <Sender message={message} />

@@ -171,6 +171,7 @@ export * from './utils/tierPricing';
 export * from './metadata/TimingUnit';
 export * from './utils/storyCalendar';
 export * from './utils/stripUtf8Bom';
+export * from './utils/storyReport';
 // `./utils/storyZip` (jszip) is imported by path: `@keres/shared/utils/storyZip`.
 export * from './utils/reviveDates';
 export * from './theme/ThemeColors';

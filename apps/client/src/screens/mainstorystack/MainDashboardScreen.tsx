@@ -7,6 +7,9 @@ import { BackHandler, Platform } from 'react-native';
 
 import { useDrizzle } from '../../db';
 import { useScreenTour } from '../../guides/useScreenTour';
+import { useStoryReport } from '../../hooks/useStoryReport';
+import { useStoryRole } from '../../hooks/useStoryRole';
+import ReportStoryModal from '../../components/features/story/ReportStoryModal/ReportStoryModal';
 import type { MainSystemDrawerParamList } from '../../navigation/MainSystemStack';
 import { createStoryAnalysisService } from '../../services/storymanagement/StoryAnalysisService';
 import { createStoryContentMetricsService } from '../../services/storymanagement/StoryContentMetricsService';
@@ -30,6 +33,12 @@ const MainDashboardScreen = () => {
   const setFirstStoryProgress = useUserSettingsStore((state) => state.setFirstStoryProgress);
   const conflictCount = useSyncConflictStore((state) => state.conflicts.length);
   const [conflictSheetOpen, setConflictSheetOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  // Only a positively known non-owner reports: an unresolved role (or the owner's own) hides
+  // the action, and local-only stories have no administrators to report to.
+  const { role } = useStoryRole(selectedStory?.id);
+  const storyReport = useStoryReport(selectedStory?.id);
+  const showReportAction = role !== null && role !== 'owner' && storyReport.canReport;
 
   const [characterCount, setCharacterCount] = useState<number | undefined>(undefined);
   const [locationCount, setLocationCount] = useState<number | undefined>(undefined);
@@ -188,42 +197,58 @@ const MainDashboardScreen = () => {
           }
         },
       },
+      {
+        id: 'action-report',
+        icon: 'flag-outline',
+        label: t('report_story_title'),
+        visible: showReportAction,
+        onPress: () => setReportOpen(true),
+      },
     ],
   });
 
   return (
-    <MainDashboardContent
-      story={selectedStory}
-      t={t}
-      conflictCount={conflictCount}
-      conflictSheetOpen={conflictSheetOpen}
-      onOpenConflictSheet={() => setConflictSheetOpen(true)}
-      onCloseConflictSheet={() => setConflictSheetOpen(false)}
-      characterCount={characterCount}
-      locationCount={locationCount}
-      chapterCount={chapterCount}
-      sceneCount={sceneCount}
-      choiceCount={choiceCount}
-      noteCount={noteCount}
-      worldRuleCount={worldRuleCount}
-      itemCount={itemCount}
-      galleryCount={galleryCount}
-      tagCount={tagCount}
-      customAttributeCount={customAttributeCount}
-      forkCount={forkCount}
-      analysisIssueCount={analysisIssueCount}
-      onOpenAnalysis={() => {
-        if (selectedStory?.id) {
-          navigation.navigate('StoryAnalysisStack', {
-            screen: 'StoryAnalysis',
-            params: { storyId: selectedStory.id },
-          });
-        }
-      }}
-      onOpenOperationLog={() => {
-        navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
-      }}
-    />
+    <>
+      <ReportStoryModal
+        visible={reportOpen}
+        sending={storyReport.sending}
+        storyTitle={selectedStory?.title ?? ''}
+        onClose={() => setReportOpen(false)}
+        onSend={storyReport.report}
+      />
+      <MainDashboardContent
+        story={selectedStory}
+        t={t}
+        conflictCount={conflictCount}
+        conflictSheetOpen={conflictSheetOpen}
+        onOpenConflictSheet={() => setConflictSheetOpen(true)}
+        onCloseConflictSheet={() => setConflictSheetOpen(false)}
+        characterCount={characterCount}
+        locationCount={locationCount}
+        chapterCount={chapterCount}
+        sceneCount={sceneCount}
+        choiceCount={choiceCount}
+        noteCount={noteCount}
+        worldRuleCount={worldRuleCount}
+        itemCount={itemCount}
+        galleryCount={galleryCount}
+        tagCount={tagCount}
+        customAttributeCount={customAttributeCount}
+        forkCount={forkCount}
+        analysisIssueCount={analysisIssueCount}
+        onOpenAnalysis={() => {
+          if (selectedStory?.id) {
+            navigation.navigate('StoryAnalysisStack', {
+              screen: 'StoryAnalysis',
+              params: { storyId: selectedStory.id },
+            });
+          }
+        }}
+        onOpenOperationLog={() => {
+          navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+        }}
+      />
+    </>
   );
 };
 

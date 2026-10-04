@@ -6,6 +6,7 @@ import type {
   AdminMessagePatch,
 } from '@keres/shared';
 import { and, asc, count, desc, eq, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { NSFW_REPORT_TAG } from '@keres/shared';
 import { db, withWriteTransaction } from '../db';
 import { messages, users } from '../db/schema';
 import { insensitiveLike } from '../db/sqlOperators';
@@ -75,6 +76,12 @@ export class AdminMessageService {
     const conditions: SQL[] = [INCOMING];
     if (query.source === 'site') conditions.push(eq(messages.channel, 'site'));
     if (query.source === 'user') conditions.push(eq(messages.channel, 'admin'));
+    if (query.source === 'report') {
+      // Reports travel as `admin`-channel messages with a machine-readable envelope (see
+      // `buildNsfwReportBody`): the filter matches the envelope, not free text.
+      conditions.push(eq(messages.channel, 'admin'));
+      conditions.push(insensitiveLike(messages.body, `${NSFW_REPORT_TAG}%`));
+    }
     if (query.read === 'unread') conditions.push(isNull(messages.adminReadAt));
     if (query.read === 'read') conditions.push(isNotNull(messages.adminReadAt));
     if (query.archived === 'active') conditions.push(isNull(messages.adminArchivedAt));

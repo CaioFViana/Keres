@@ -250,7 +250,13 @@ export function useStoryServerCollaboration(storyId: string | undefined) {
       showNotification(t('story_invitation_sent', { name: invitation.inviteeUsername }), 'success');
     } catch (err) {
       console.error('Failed to invite collaborator:', err);
-      AppAlert.alert(t('error'), t('invite_collaborator_failed'));
+      // The server refuses whoever is not age-verified on an NSFW story (403 with the
+      // friendship intact): say so instead of the generic failure.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      AppAlert.alert(
+        t('error'),
+        t(status === 403 ? 'invite_nsfw_blocked' : 'invite_collaborator_failed'),
+      );
     } finally {
       setServerActionLoading(false);
     }

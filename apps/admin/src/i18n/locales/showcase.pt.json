@@ -30,7 +30,8 @@
     "publishedStories": "Histórias publicadas",
     "loading": "Carregando…",
     "empty": "Nada foi publicado neste servidor ainda. Quando alguém publicar uma história, ela aparece aqui.",
-    "loadFailed": "Não foi possível carregar as histórias."
+    "loadFailed": "Não foi possível carregar as histórias.",
+    "adultHint": "Adultos verificados conectados também veem a prateleira +18 aqui."
   },
   "language": {
     "label": "Idioma"
@@ -157,11 +158,26 @@
     "readOnline": "Ler online",
     "preparing": "Preparando…",
     "downloadFailed": "Não foi possível iniciar o download.",
-    "mediaCount": "{{included}}/{{total}} mídias"
+    "mediaCount": "{{included}}/{{total}} mídias",
+    "adultsOnly": "+18",
+    "gatedHint": "Esta história pode ser só para adultos ou estar indisponível. Entre com uma conta verificada para saber."
   },
   "theme": {
     "system": "Tema: Sistema",
     "light": "Tema: Claro",
     "dark": "Tema: Escuro"
+  },
+  "auth": {
+    "signIn": "Entrar",
+    "signingIn": "Entrando…",
+    "signOut": "Sair",
+    "username": "Nome de usuário",
+    "password": "Senha",
+    "loginFailed": "Não foi possível entrar.",
+    "signInHint": "Uma conta do site destrava a prateleira adulta quando verificada. A sessão vive só nesta aba.",
+    "unverified": "não verificado"
+  },
+  "common": {
+    "cancel": "Cancelar"
   }
 }

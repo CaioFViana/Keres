@@ -42,6 +42,11 @@ export interface StoryPublicationSnapshot {
   author: string | null;
   type: 'linear' | 'branching';
   theme: string | null;
+  /**
+   * Whether the story was flagged NSFW when published. Absent on versions published before the
+   * flag existed - readers must treat a missing value as non-NSFW.
+   */
+  isNsfw?: boolean;
 }
 
 /** How the owner wants the versions to be named. */

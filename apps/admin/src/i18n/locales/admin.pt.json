@@ -228,7 +228,8 @@
     "source": {
       "all": "Todas",
       "site": "Vindas do site",
-      "user": "De usuário registrado"
+      "user": "De usuário registrado",
+      "report": "Denúncias"
     },
     "read": {
       "all": "Qualquer",
@@ -277,7 +278,9 @@
     "siteReplyHint": "Esta mensagem veio do site: responda para o endereço que ela deixou.",
     "empty": "Sem mensagens.",
     "confirmDelete": "Excluir esta mensagem?",
-    "confirmDeleteReply": "Excluir esta resposta?"
+    "confirmDeleteReply": "Excluir esta resposta?",
+    "reportBadge": "Denúncia",
+    "reportStoryId": "História denunciada: {{id}}"
   },
   "nav": {
     "title": "Keres Admin",
@@ -296,7 +299,8 @@
     "signedIn": "Conectado",
     "signOut": "Sair",
     "ariaLabel": "Administração",
-    "unreadMessages": "{{count}} não lidas"
+    "unreadMessages": "{{count}} não lidas",
+    "stories": "Histórias"
   },
   "payments": {
     "title": "Pagamentos",
@@ -508,7 +512,9 @@
       "confirmCancelManual": "Confirmo também que o provedor parou de cobrar essa pessoa.",
       "done": "Dei {{months}} mês(es) do {{plan}} para {{username}}. Vale até {{date}}.",
       "failed": "Não foi possível dar o plano."
-    }
+    },
+    "adultVerified": "Adulto verificado (+18)",
+    "adultVerifiedHint": "Controla histórias NSFW: não verificados não podem ser adicionados e perdem acesso às que participam."
   },
   "users": {
     "title": "Usuários",
@@ -526,6 +532,36 @@
     "confirmDeleteAdmin": "Excluir o admin \"{{username}}\"? Ele perde o acesso até ser restaurado.",
     "viewActivity": "Ver atividade",
     "tierPaid": "pago",
-    "tierAssignedTitle": "Plano atribuído: {{name}}. A assinatura paga tem precedência enquanto estiver em dia."
+    "tierAssignedTitle": "Plano atribuído: {{name}}. A assinatura paga tem precedência enquanto estiver em dia.",
+    "verifiedOnly": "Só verificados +18",
+    "columnVerified": "+18",
+    "verifiedShort": "+18",
+    "verifiedTitle": "Adulto verificado (+18)"
+  },
+  "stories": {
+    "title": "Histórias",
+    "description": "Modere histórias: marque conteúdo adulto e remova colaboradores. Ativar a marcação expulsa de uma vez quem não for verificado.",
+    "searchPlaceholder": "Buscar por título…",
+    "searchAriaLabel": "Buscar histórias",
+    "filterNsfw": "Só adultos",
+    "nsfw": {
+      "all": "Todas",
+      "nsfw": "Só adultos",
+      "safe": "Seguras"
+    },
+    "columnTitle": "Título",
+    "columnOwner": "Dono",
+    "columnNsfw": "+18",
+    "columnUpdated": "Atualizada",
+    "columnCollaborators": "Colaboradores",
+    "nsfwBadge": "+18",
+    "flagNsfw": "Marcar +18",
+    "clearNsfw": "Desmarcar",
+    "empty": "Nenhuma história encontrada.",
+    "ownerDeleted": "(conta apagada)",
+    "showCollaborators": "Ver",
+    "noCollaborators": "Sem colaboradores.",
+    "confirmNsfw": "Marcar \"{{title}}\" como só para adultos? Todo colaborador não verificado perderá o acesso de uma vez.",
+    "confirmRemove": "Remover {{name}} de \"{{title}}\"?"
   }
 }

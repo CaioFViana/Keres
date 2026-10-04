@@ -30,7 +30,8 @@
     "publishedStories": "Published stories",
     "loading": "Loading…",
     "empty": "Nothing has been published on this server yet. When an author publishes a story, it shows up here.",
-    "loadFailed": "Could not load the stories."
+    "loadFailed": "Could not load the stories.",
+    "adultHint": "Signed-in verified adults also see the +18 shelf here."
   },
   "language": {
     "label": "Language"
@@ -157,11 +158,26 @@
     "readOnline": "Read online",
     "preparing": "Preparing…",
     "downloadFailed": "Could not start the download.",
-    "mediaCount": "{{included}}/{{total}} media"
+    "mediaCount": "{{included}}/{{total}} media",
+    "adultsOnly": "+18",
+    "gatedHint": "This story may be adults-only or unavailable. Sign in with a verified account to find out."
   },
   "theme": {
     "system": "Theme: System",
     "light": "Theme: Light",
     "dark": "Theme: Dark"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out",
+    "username": "Username",
+    "password": "Password",
+    "loginFailed": "Could not sign in.",
+    "signInHint": "A site account unlocks the adults-only shelf when it is age-verified. The session lives only in this tab.",
+    "unverified": "not verified"
+  },
+  "common": {
+    "cancel": "Cancel"
   }
 }

@@ -13,6 +13,7 @@ import { publicLandingRoutes } from './modules/public/publicLanding.route';
 import { publicRoutes } from './modules/public/public.route';
 import { publicationRoutes } from './modules/story/publication.route';
 import { storyRoutes } from './modules/story/story.route';
+import { storyReportRoutes } from './modules/story/storyReport.route';
 import { storyPermissionRoutes } from './modules/storyPermission/storyPermission.route';
 import { syncRoute } from './modules/sync/sync.route';
 import { userRoutes } from './modules/user/user.route';
@@ -115,7 +116,7 @@ export function createApiRoutes() {
     .group('/admin', (app) => app.use(adminRoutes))
     .group('/auth', (app) => app.use(authRoutes))
     .group('/sync', (app) => app.use(syncRoute))
-    .group('/stories', (app) => app.use(storyRoutes).use(publicationRoutes))
+    .group('/stories', (app) => app.use(storyRoutes).use(storyReportRoutes).use(publicationRoutes))
     .group('/media', (app) => app.use(mediaRoutes))
     .group('/story-permissions', (app) => app.use(storyPermissionRoutes))
     .group('/friend/story-invitations', (app) => app.use(storyInvitationRoutes))

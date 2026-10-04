@@ -33,7 +33,12 @@ import {
 } from './SyncConflictDetails';
 import { compactStoryUpdateHistory } from './SyncHistoryCompaction';
 import { findIdempotentHit } from './SyncPushIdempotency';
-import { shouldCompactStoryNow, storyUpdateFlipsFavorites } from './pushPolicy';
+import {
+  shouldCompactStoryNow,
+  storyUpdateFlipsFavorites,
+  storyUpdateTouchesNsfw,
+} from './pushPolicy';
+import { storyNsfwService } from '../StoryNsfwService';
 import type { SyncOperationLogService } from './SyncOperationLogService';
 import { ensurePublicFavoriteOperationLogs } from './publicFavoriteRepair';
 import { auditService } from '../AuditService';
@@ -102,6 +107,7 @@ export class SyncPushService {
     const applied: SyncAppliedOperation[] = [];
     const conflicts: SyncConflict[] = [];
     let storyBehaviorChanged = false;
+    let storyNsfwTouched = false;
     /**
      * Entities that already conflicted in this batch. The following operations on them were built on
      * top of a base we have just refused, so applying them would corrupt the state - they are refused
@@ -527,6 +533,9 @@ export class SyncPushService {
       if (storyUpdateFlipsFavorites(update)) {
         storyBehaviorChanged = true;
       }
+      if (storyUpdateTouchesNsfw(update)) {
+        storyNsfwTouched = true;
+      }
     }
 
     if (applied.length > 0) {
@@ -554,7 +563,25 @@ export class SyncPushService {
       await this.repairPublicFavoritesAfterStoryChange(storyId);
     }
 
+    if (storyNsfwTouched) {
+      await this.enforceNsfwCollaboratorsAfterStoryChange(storyId);
+    }
+
     return { lastOperationVersion, applied, conflicts };
+  }
+
+  /**
+   * A Story op may have turned `isNsfw` on, which expels whoever is not age-verified - once per
+   * push, not once per operation. Best-effort like the favorite repair above: the method itself
+   * is a no-op unless the story is NSFW now, so turning the flag off (or a concurrent toggle)
+   * needs no extra handling.
+   */
+  private async enforceNsfwCollaboratorsAfterStoryChange(storyId: string): Promise<void> {
+    try {
+      await storyNsfwService.revokeUnverifiedCollaborators(storyId);
+    } catch (error) {
+      logger.error('SyncService: NSFW collaborator enforcement after story change failed', error);
+    }
   }
 
   /**

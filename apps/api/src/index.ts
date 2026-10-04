@@ -251,9 +251,13 @@ export async function createApp() {
         }),
       )
       .derive(async ({ jwt, headers, cookie }) => {
-        let token: string | null | undefined = headers['authorization']?.startsWith('Bearer ')
-          ? headers['authorization'].slice(7)
-          : null;
+        // The showcase sends session and unlock comma-joined (`Bearer <s>, Showcase <u>`): only
+        // the Bearer half is a session here, the Showcase half belongs to the public routes.
+        const bearerHalf = headers['authorization']
+          ?.split(',')
+          .map((half) => half.trim())
+          .find((half) => half.startsWith('Bearer '));
+        let token: string | null | undefined = bearerHalf ? bearerHalf.slice(7) : null;
 
         if (!token && typeof cookie['access_token'].value === 'string') {
           token = cookie['access_token'].value;

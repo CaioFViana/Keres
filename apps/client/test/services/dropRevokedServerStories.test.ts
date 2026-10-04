@@ -25,6 +25,7 @@ jest.mock('../../src/utils/i18n', () => ({
   default: { t: (key: string, params?: { title: string }) => `${key}:${params?.title}` },
 }));
 
+import { noteAccessRevocation } from '../../src/services/accessRevocation';
 import { dropRevokedServerStories } from '../../src/services/sync/dropRevokedServerStories';
 
 const server = { id: 'server-1' } as never;
@@ -69,6 +70,21 @@ describe('dropRevokedServerStories', () => {
 
     expect(mockDiscard).not.toHaveBeenCalled();
     expect(mockFetchStories).not.toHaveBeenCalled();
+  });
+
+  it('names the moderation reason when the server revoked access for one', async () => {
+    noteAccessRevocation('gone', 'nsfw-story');
+    noteAccessRevocation('other', 'removed-by-admin');
+    const db = dbWith([story('gone', 'reader', 'Grown Tales'), story('other', 'reader', 'Old')]);
+
+    await expect(dropRevokedServerStories(db, server, [])).resolves.toEqual(['gone', 'other']);
+
+    expect(mockNotify).toHaveBeenCalledWith('story_access_revoked_nsfw:Grown Tales', 'info');
+    expect(mockNotify).toHaveBeenCalledWith('story_access_revoked_removed:Old', 'info');
+    expect(mockNotify).not.toHaveBeenCalledWith(
+      expect.stringContaining('story_access_lost'),
+      expect.anything(),
+    );
   });
 
   it('keeps going when one copy cannot be removed, and reports only those that went', async () => {

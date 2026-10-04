@@ -30,6 +30,7 @@ const PUBLIC_INFO_COLUMNS = {
   avatarColor: true,
   avatarIcon: true,
   bio: true,
+  isAdultVerified: true,
 } as const;
 
 const PUBLIC_INFO_RETURNING = {
@@ -39,6 +40,7 @@ const PUBLIC_INFO_RETURNING = {
   avatarColor: users.avatarColor,
   avatarIcon: users.avatarIcon,
   bio: users.bio,
+  isAdultVerified: users.isAdultVerified,
 };
 
 export class UserService {

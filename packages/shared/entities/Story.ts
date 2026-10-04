@@ -74,6 +74,11 @@ export interface Story {
    * Purely a reading convenience: it renders and navigates, and never writes a relation.
    */
   autoLinkMentions: boolean;
+  /**
+   * Adults-only story: only age-verified (+18) users may be added as collaborators, and it only
+   * shows in the public showcase to signed-in verified users. Owner-only (see STORY_OWNER_ONLY_FIELDS).
+   */
+  isNsfw: boolean;
   /** Turns on this story's stat system (stats, ladders, radar). */
   statSystem: boolean;
   /** How stat values are displayed. Only matters with `statSystem` on. */

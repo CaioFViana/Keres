@@ -228,7 +228,8 @@
     "source": {
       "all": "All",
       "site": "From the site",
-      "user": "From a registered user"
+      "user": "From a registered user",
+      "report": "Reports"
     },
     "read": {
       "all": "Any",
@@ -277,7 +278,9 @@
     "siteReplyHint": "This message came from the site: reply to the address it left.",
     "empty": "No messages.",
     "confirmDelete": "Delete this message?",
-    "confirmDeleteReply": "Delete this reply?"
+    "confirmDeleteReply": "Delete this reply?",
+    "reportBadge": "Report",
+    "reportStoryId": "Reported story: {{id}}"
   },
   "nav": {
     "title": "Keres Admin",
@@ -296,7 +299,8 @@
     "signedIn": "Signed in",
     "signOut": "Sign out",
     "ariaLabel": "Admin",
-    "unreadMessages": "{{count}} unread"
+    "unreadMessages": "{{count}} unread",
+    "stories": "Stories"
   },
   "payments": {
     "title": "Payments",
@@ -508,7 +512,9 @@
       "confirmCancelManual": "I also confirm that the provider has stopped charging them.",
       "done": "Gave {{months}} month(s) of {{plan}} to {{username}}. It runs until {{date}}.",
       "failed": "Could not give the plan."
-    }
+    },
+    "adultVerified": "Age-verified adult (+18)",
+    "adultVerifiedHint": "Gates NSFW stories: unverified members cannot be added to them, and lose access to the ones they are on."
   },
   "users": {
     "title": "Users",
@@ -526,6 +532,36 @@
     "confirmDeleteAdmin": "Soft-delete admin \"{{username}}\"? They will lose access until restored.",
     "viewActivity": "View activity",
     "tierPaid": "paid",
-    "tierAssignedTitle": "Assigned plan: {{name}}. The paid subscription takes precedence while it is paid up."
+    "tierAssignedTitle": "Assigned plan: {{name}}. The paid subscription takes precedence while it is paid up.",
+    "verifiedOnly": "Verified +18 only",
+    "columnVerified": "+18",
+    "verifiedShort": "+18",
+    "verifiedTitle": "Age-verified adult (+18)"
+  },
+  "stories": {
+    "title": "Stories",
+    "description": "Moderate stories: flag adults-only content, and remove collaborators. Turning the flag on expels whoever is not age-verified at once.",
+    "searchPlaceholder": "Search by title…",
+    "searchAriaLabel": "Search stories",
+    "filterNsfw": "Adults-only",
+    "nsfw": {
+      "all": "All",
+      "nsfw": "Adults-only",
+      "safe": "Safe"
+    },
+    "columnTitle": "Title",
+    "columnOwner": "Owner",
+    "columnNsfw": "+18",
+    "columnUpdated": "Updated",
+    "columnCollaborators": "Collaborators",
+    "nsfwBadge": "+18",
+    "flagNsfw": "Flag +18",
+    "clearNsfw": "Unflag",
+    "empty": "No stories found.",
+    "ownerDeleted": "(deleted account)",
+    "showCollaborators": "Show",
+    "noCollaborators": "No collaborators.",
+    "confirmNsfw": "Flag \"{{title}}\" as adults-only? Every collaborator who is not age-verified will lose access at once.",
+    "confirmRemove": "Remove {{name}} from \"{{title}}\"?"
   }
 }

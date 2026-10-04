@@ -2,6 +2,8 @@ export interface UserPublicInfo {
   id: string;
   username: string;
   tag: string;
+  /** Manual +18 verification, set by an administrator. Gates NSFW story access. */
+  isAdultVerified: boolean;
   /** Hex color for the user's avatar background. `null` until the user picks one. */
   avatarColor: string | null;
   /** Stored icon name for the user's avatar (a plain Ionicons name or `keres:<name>`). `null` until the user picks one. */

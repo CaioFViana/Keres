@@ -26,6 +26,11 @@ export const users = table(
     bio: text('bio'),
     /** Grants access to the /admin panel and /api/admin/* routes. Checked from the DB per request, never trusted from the JWT. */
     isAdmin: boolean('is_admin').notNull().default(false),
+    /**
+     * Manual +18 verification, set by an administrator. Gates access to NSFW stories and their
+     * showcase entries. Checked from the DB per request, never trusted from the JWT.
+     */
+    isAdultVerified: boolean('is_adult_verified').notNull().default(false),
     /** `null` = no tier assigned; TierEnforcementService falls back to the registration settings' default tier, then to unlimited. */
     tierId: text('tier_id').references(() => tiers.id),
     createdAt: timestampNow('created_at'),

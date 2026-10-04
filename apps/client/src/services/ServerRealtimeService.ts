@@ -9,6 +9,7 @@ import { createStoryInvitationService } from './StoryInvitationService';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { PAYMENTS_CHANGED } from '../utils/paymentEvents';
 import type { ServerStoryPreview } from './SyncEngineService';
+import { type AccessRevocationReason, noteAccessRevocation } from './accessRevocation';
 import { importNewServerStories } from './sync/importNewServerStories';
 
 const RETRY_MS = 5_000;
@@ -25,6 +26,12 @@ type ServerEvent =
   | { type: 'story.changed'; storyId: string }
   | { type: 'friendships.changed' }
   | { type: 'stories.catalog-changed' }
+  | {
+      type: 'story.access-revoked';
+      storyId: string;
+      storyTitle: string;
+      reason: AccessRevocationReason;
+    }
   | { type: 'story.collaborators-changed'; storyId: string }
   | { type: 'story-invitations.changed' }
   | { type: 'story.published'; storyId: string }
@@ -248,6 +255,11 @@ export class ServerRealtimeService {
       await createStoryInvitationService(this.db).syncWithServer(this.server);
     } else if (event.type === 'story.published') {
       await createPublicationService(this.db).syncPublicationsWithServer(this.server);
+    } else if (event.type === 'story.access-revoked') {
+      // The `stories.catalog-changed` right behind this one drops the local copy (see
+      // `dropRevokedServerStories`): the reason is noted so the drop explains itself with the
+      // story's title instead of the generic access-lost message.
+      noteAccessRevocation(event.storyId, event.reason);
     } else if (event.type === 'stories.catalog-changed') {
       // A grant or revocation only takes effect on this socket's subscriptions at open: without a
       // fresh connection the socket keeps receiving nudges for stories it can no longer read (each

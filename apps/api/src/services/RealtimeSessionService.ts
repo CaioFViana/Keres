@@ -26,6 +26,18 @@ export type RealtimeEvent =
    */
   | { type: 'messages.changed' }
   /**
+   * The user lost access to a story without deleting it themselves (NSFW moderation: the story was
+   * flagged adults-only while they are not age-verified, their verification was revoked, or their
+   * account was deactivated). Unlike `stories.catalog-changed` it carries the reason, so the client
+   * can explain the removal instead of showing a story that silently vanished.
+   */
+  | {
+      type: 'story.access-revoked';
+      storyId: string;
+      storyTitle: string;
+      reason: 'nsfw-story' | 'verification-revoked' | 'account-deactivated' | 'removed-by-admin';
+    }
+  /**
    * The user's subscription changed (a payment arrived, a period ran out, it was cancelled): a nudge for the
    * client to read it again. Like the others it carries nothing.
    */

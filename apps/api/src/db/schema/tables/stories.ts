@@ -58,6 +58,11 @@ export const stories = table('stories', {
   timelineEpochSeconds: integer('timeline_epoch_seconds'),
   normalizeSceneTiming: boolean('normalize_scene_timing').notNull().default(false),
   allowReaderComments: boolean('allow_reader_comments').notNull().default(false),
+  /**
+   * Adults-only story: only age-verified (+18) users may be added as collaborators, and it only
+   * shows in the public showcase to signed-in verified users. Owner-only (see STORY_OWNER_ONLY_FIELDS).
+   */
+  isNsfw: boolean('is_nsfw').notNull().default(false),
   /** Renders entity names found in the story's text as links. See `entityMentions.ts` on the client. */
   autoLinkMentions: boolean('auto_link_mentions').notNull().default(false),
   /** Story Analysis also reports elements that are not referenced anywhere. Opinion, so opt-in. */

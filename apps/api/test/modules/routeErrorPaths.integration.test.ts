@@ -136,7 +136,7 @@ describe('public showcase routes', () => {
     expect(status).toBe(200);
     expect(data).toEqual([]);
 
-    await expect(showcaseService.getStoryDetail(newId())).resolves.toBeNull();
+    await expect(showcaseService.getStoryDetail(newId(), false)).resolves.toBeNull();
   });
 
   it('falls back to a generic filename when the title carries no slug', async () => {

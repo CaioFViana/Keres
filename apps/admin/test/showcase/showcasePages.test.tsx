@@ -34,6 +34,7 @@ vi.mock('../../src/showcase/api/showcaseApi', () => ({
 
 const card: ShowcaseStoryCard = {
   storyId: 'story-1',
+  isNsfw: false,
   snapshot: {
     title: 'O Vale Silencioso',
     description: 'Uma trilha que ninguém percorre duas vezes.',

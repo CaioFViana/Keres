@@ -10,7 +10,7 @@ import type { BillingInterval } from '@keres/shared/payments/PaymentConnector';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import PaymentActionPanel from '../../components/features/servers/PaymentActionPanel';
@@ -21,8 +21,21 @@ import { useSwitchQuote } from '../../hooks/useSwitchQuote';
 import { usePlanCheckout } from '../../hooks/usePlanCheckout';
 import { useServerStatuses } from '../../hooks/useServerStatuses';
 import type { ServerManagementStackParamList } from '../../navigation/StorySelectionStack';
+import { verifyPlayPurchase } from '../../services/PaymentService';
 import { useTheme } from '../../theme';
-import { formatMoney, offersFrom, type PlanOffer } from '../../utils/paymentPlans';
+import {
+  formatMoney,
+  isMethodSoldForOffer,
+  offerForPlayProduct,
+  offersFrom,
+  playProductForOffer,
+  type PlanOffer,
+} from '../../utils/paymentPlans';
+import { playDriver } from '../../utils/playPurchase';
+import {
+  devicePaymentCapabilities,
+  visiblePaymentMethods,
+} from '../../utils/paymentMethodVisibility';
 
 type ServerPlanRouteProp = RouteProp<ServerManagementStackParamList, 'ServerPlan'>;
 type ServerPlanNavigationProp = NativeStackNavigationProp<
@@ -110,10 +123,81 @@ const ServerPlanScreen = () => {
     );
   };
 
+  // Only what this device can pay with: a method the server sells but this build cannot run
+  // is left out, and the screen says it is unavailable instead of offering it.
+  const serverMethods = overview?.info.methods ?? [];
+  const methods = visiblePaymentMethods(serverMethods, devicePaymentCapabilities());
+  // Then what sells the chosen plan and period: a method the server lists but this plan does not
+  // sell is left out too, with its own notice.
+  const offerMethods =
+    selected && interval
+      ? methods.filter((method) => isMethodSoldForOffer(method, selected.tier, interval))
+      : methods;
+  const usableMethodId = offerMethods.some((method) => method.id === methodId) ? methodId : null;
+  const methodHintKey =
+    serverMethods.length === 0
+      ? 'payment_no_methods'
+      : methods.length === 0
+        ? 'payment_no_methods_device'
+        : 'payment_no_methods_plan';
+
+  const selectedMethod = offerMethods.find((method) => method.id === usableMethodId) ?? null;
+  const isNativeMethod = (selectedMethod?.flow ?? 'redirect') === 'native';
+
   const pay = () => {
-    if (!selected || !interval || !methodId) return;
-    void checkout.start({ tierId: selected.tier.id, interval, methodId });
+    if (!selected || !interval || !usableMethodId) return;
+    if (isNativeMethod) {
+      // The store product selling this plan and period; without one the plan is not sold in the
+      // store (the relay would refuse it too).
+      const productId = playProductForOffer(selected.tier, interval);
+      if (!productId) return;
+      void checkout.startNative({
+        tierId: selected.tier.id,
+        interval,
+        methodId: usableMethodId,
+        productId,
+        packageName: playDriver.packageName(),
+        planName: selected.tier.name,
+        tiers: overview?.plans?.tiers ?? [],
+      });
+      return;
+    }
+    void checkout.start({ tierId: selected.tier.id, interval, methodId: usableMethodId });
   };
+
+  // Picks up store purchases the server confirmed but the store was never told are finished (the app
+  // died mid-payment, the purchase was made on another device): they would otherwise be refunded.
+  const reconciledServer = useRef<string | null>(null);
+  useEffect(() => {
+    if (!online || !overview?.plans || !server || reconciledServer.current === server.id) return;
+    const nativePlay = (overview.info.methods ?? []).some(
+      (method) => (method.flow ?? 'redirect') === 'native',
+    );
+    if (!nativePlay || !playDriver.available) {
+      reconciledServer.current = server.id;
+      return;
+    }
+    reconciledServer.current = server.id;
+    const tiers = overview.plans.tiers;
+    const currentServer = server;
+    void playDriver
+      .reconcileUnfinished(async (ticket) => {
+        const offer = offerForPlayProduct(tiers, ticket.productId);
+        if (!offer) return false;
+        try {
+          const answer = await verifyPlayPurchase(currentServer, {
+            ...offer,
+            productId: ticket.productId,
+            purchaseToken: ticket.purchaseToken,
+            packageName: playDriver.packageName(),
+          });
+          return answer.active;
+        } catch {
+          return false;
+        }
+      })
+      .catch(() => undefined);
+  }, [online, overview, server]);
 
   const styles = StyleSheet.create({
     intro: { fontSize: 14, color: colors.textSecondary, marginBottom: 16 },
@@ -268,6 +352,7 @@ const ServerPlanScreen = () => {
         <PaymentActionPanel
           phase={checkout.phase as 'starting' | 'pending' | 'paid' | 'failed' | 'expired'}
           checkout={checkout.checkout}
+          successPlanName={checkout.paidPlanName}
           onOpenProviderPage={() => void checkout.openProviderPage()}
           onDone={() => {
             checkout.reset();
@@ -321,18 +406,18 @@ const ServerPlanScreen = () => {
               </View>
               <Text style={styles.sectionTitle}>{t('payment_choose_method')}</Text>
               <View style={styles.chips}>
-                {overview.info.methods.map((method) =>
+                {offerMethods.map((method) =>
                   chip(
                     method.id,
                     method.label,
-                    method.id === methodId,
+                    method.id === usableMethodId,
                     () => setMethodId(method.id),
                     `plan-method-${method.id}`,
                   ),
                 )}
               </View>
-              {overview.info.methods.length === 0 ? (
-                <Text style={styles.hint}>{t('payment_no_methods')}</Text>
+              {offerMethods.length === 0 ? (
+                <Text style={styles.hint}>{t(methodHintKey)}</Text>
               ) : null}
               {switchQuote ? (
                 <Text style={styles.hint} testID="plan-switch-quote">
@@ -346,7 +431,7 @@ const ServerPlanScreen = () => {
               ) : null}
               <Text style={styles.hint}>{t('payment_privacy_note')}</Text>
               {checkout.error ? <Text style={styles.error}>{checkout.error}</Text> : null}
-              <Button onPress={pay} disabled={!price || !methodId} testID="plan-pay">
+              <Button onPress={pay} disabled={!price || !usableMethodId} testID="plan-pay">
                 {price
                   ? t('payment_pay_amount', {
                       amount: formatMoney(price.cents, currency, i18n.language),

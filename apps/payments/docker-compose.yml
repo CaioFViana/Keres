@@ -1,0 +1,25 @@
+name: keres-payments
+
+# Production wiring for the official payment microservice. It joins nothing of the Keres
+# server compose: payments run on their own host/port (here behind nginx as buy.keres.me),
+# and the Keres server points at them with PAYMENT_CONNECTOR_URL. Secrets come from a
+# separate env file that never leaves this machine.
+services:
+  payments:
+    build: .
+    image: ghcr.io/caiofviana/keres-payments:${PAYMENTS_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    stop_grace_period: 15s
+    env_file:
+      - ${PAYMENTS_ENV_FILE:-.env}
+    environment:
+      PORT: "3101"
+    # Loopback only: the outside world talks to nginx, never to this port directly.
+    ports:
+      - "${PAYMENTS_BIND_ADDRESS:-127.0.0.1}:${PAYMENTS_PORT:-3101}:3101"
+    healthcheck:
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3101/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s

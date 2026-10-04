@@ -10,7 +10,7 @@ import type { Create } from '../utils/entityUtils';
 import { prepareNewEntityData } from '../utils/entityUtils';
 import { entityEventEmitter } from '../utils/EventEmitter';
 import { isJwtExpired } from '../utils/jwtUtils'; // Added
-import { normalizeServerUrl } from '../utils/serverUrl';
+import { isAllowedServerUrl, normalizeServerUrl } from '../utils/serverUrl';
 import { isOfflineError } from './apiClient';
 import { authTokenManager } from './AuthTokenManager';
 import { mediaFileService } from './MediaFileService';
@@ -32,6 +32,13 @@ export class ServerUrlAlreadyRegisteredError extends Error {
   constructor(public readonly existingServer: ServerSelect) {
     super('A server with this URL is already registered.');
     this.name = 'ServerUrlAlreadyRegisteredError';
+  }
+}
+
+export class ServerUrlNotSecureError extends Error {
+  constructor() {
+    super('Server addresses must use https, except on this device or the local network.');
+    this.name = 'ServerUrlNotSecureError';
   }
 }
 
@@ -76,6 +83,9 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
     },
 
     async createServer(serverData): Promise<ServerSelect> {
+      if (!isAllowedServerUrl(serverData.url)) {
+        throw new ServerUrlNotSecureError();
+      }
       const url = normalizeServerUrl(serverData.url);
       const existing = await this.getServerByUrl(url);
       if (existing) {
@@ -95,6 +105,9 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         const current = await this.getServerById(serverId);
         const urlChanged = !current || normalizeServerUrl(current.url) !== nextData.url;
         if (urlChanged) {
+          if (!isAllowedServerUrl(nextData.url)) {
+            throw new ServerUrlNotSecureError();
+          }
           const existing = await this.getServerByUrl(nextData.url);
           if (existing && existing.id !== serverId) {
             throw new ServerUrlAlreadyRegisteredError(existing);

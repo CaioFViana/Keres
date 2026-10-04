@@ -2,6 +2,8 @@ import type {
   Checkout,
   CheckoutCreate,
   PaymentsInfo,
+  PlayRelayRequest,
+  PlayRelayResponse,
   PublicTiersResponse,
   Subscription,
   SwitchQuote,
@@ -70,6 +72,18 @@ export class PaymentApiService {
 
   async cancelSubscription(server: ServerSelect): Promise<Subscription> {
     const response = await this.clientFor(server).post('/payments/subscription/cancel');
+    return response.data;
+  }
+
+  /**
+   * Hands a store purchase token to the server, which checks it with the provider. The token proves
+   * the purchase; the plan and the price are the server's own - nothing here carries a way to pay.
+   */
+  async verifyPlayPurchase(
+    server: ServerSelect,
+    request: PlayRelayRequest,
+  ): Promise<PlayRelayResponse> {
+    const response = await this.clientFor(server).post('/payments/play/verify', request);
     return response.data;
   }
 }

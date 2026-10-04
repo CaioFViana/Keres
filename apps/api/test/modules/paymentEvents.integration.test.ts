@@ -1,8 +1,15 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
-import { auditEvents, paymentEvents, paymentSubscriptions, tiers } from '../../src/db/schema';
+import {
+  auditEvents,
+  paymentEvents,
+  paymentSubscriptions,
+  playPurchaseClaims,
+  tiers,
+} from '../../src/db/schema';
 import { setPaymentConnector } from '../../src/services/payments/PaymentConnectorRegistry';
+import { hashPurchaseToken } from '../../src/services/payments/playPurchaseClaims';
 import {
   HEADER_NONCE,
   HEADER_SIGNATURE,
@@ -85,6 +92,24 @@ describe('a request that proves itself', () => {
       userId: ana.userId,
       status: 'active',
     });
+  });
+
+  it('refuses a grant for a store token another account claimed first', async () => {
+    const xuxu = await registerUser('xuxu');
+    await db.insert(playPurchaseClaims).values({
+      purchaseTokenHash: hashPurchaseToken('token-abc'),
+      userId: xuxu.userId,
+      productId: 'plus_monthly',
+    });
+    const mine = await openCheckout();
+
+    const { status, data } = await postEvents([
+      succeeded({ checkoutId: mine.id, subscriptionReference: 'token-abc' }),
+    ]);
+
+    expect(status).toBe(200);
+    expect(data).toEqual({ received: 1, applied: 0 });
+    expect(await db.select().from(paymentSubscriptions)).toHaveLength(0);
   });
 
   it('may carry several events, and none', async () => {

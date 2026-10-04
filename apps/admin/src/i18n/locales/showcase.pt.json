@@ -10,6 +10,19 @@
     "responsibilityBody": "As histórias aqui pertencem a quem as publicou, e este servidor é mantido por quem escolheu mantê-lo. O Keres, o aplicativo, não tem vínculo com nenhum dos dois, não hospeda nem modera estas histórias e não toma posição sobre elas.",
     "serverVersion": "Versão do servidor {{version}}"
   },
+  "auth": {
+    "signIn": "Entrar",
+    "signingIn": "Entrando…",
+    "signOut": "Sair",
+    "username": "Nome de usuário",
+    "password": "Senha",
+    "loginFailed": "Não foi possível entrar.",
+    "signInHint": "Uma conta do site destrava a prateleira adulta quando verificada. A sessão vive só nesta aba.",
+    "unverified": "não verificado"
+  },
+  "common": {
+    "cancel": "Cancelar"
+  },
   "footer": {
     "disclaimer": "O Keres é um companheiro de escrita para planejar histórias. Ele não tem vínculo com o servidor que hospeda esta página nem com as histórias publicadas nela, e não as endossa nem modera. Cada história aqui pertence a quem a publicou."
   },
@@ -166,18 +179,5 @@
     "system": "Tema: Sistema",
     "light": "Tema: Claro",
     "dark": "Tema: Escuro"
-  },
-  "auth": {
-    "signIn": "Entrar",
-    "signingIn": "Entrando…",
-    "signOut": "Sair",
-    "username": "Nome de usuário",
-    "password": "Senha",
-    "loginFailed": "Não foi possível entrar.",
-    "signInHint": "Uma conta do site destrava a prateleira adulta quando verificada. A sessão vive só nesta aba.",
-    "unverified": "não verificado"
-  },
-  "common": {
-    "cancel": "Cancelar"
   }
 }

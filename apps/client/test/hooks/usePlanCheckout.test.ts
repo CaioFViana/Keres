@@ -1,5 +1,9 @@
 const mockStart = jest.fn();
 const mockGet = jest.fn();
+const mockVerify = jest.fn();
+const mockBuy = jest.fn();
+const mockReconcile = jest.fn();
+const mockFinish = jest.fn();
 const mockOpenURL = jest.fn();
 const mockIsOffline = jest.fn();
 
@@ -16,12 +20,23 @@ jest.mock('../../src/services/PaymentService', () => ({
   PAYMENTS_CHANGED: 'payments_changed',
   startCheckout: (...args: unknown[]) => mockStart(...args),
   getCheckout: (...args: unknown[]) => mockGet(...args),
+  verifyPlayPurchase: (...args: unknown[]) => mockVerify(...args),
+}));
+jest.mock('../../src/utils/playPurchase', () => ({
+  __esModule: true,
+  playDriver: {
+    available: true,
+    packageName: () => 'com.test.app',
+    buySubscription: (...args: unknown[]) => mockBuy(...args),
+    reconcileUnfinished: (...args: unknown[]) => mockReconcile(...args),
+  },
 }));
 
 import { act, renderHook } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { CHECKOUT_POLL_MS, usePlanCheckout } from '../../src/hooks/usePlanCheckout';
 import { entityEventEmitter } from '../../src/utils/EventEmitter';
+import { PlayPurchaseError } from '../../src/utils/playPurchaseTypes';
 
 const server = { id: 'server-1', name: 'Home', url: 'https://keres.test' } as never;
 const request = { tierId: 'tier-1', interval: 'monthly' as const, methodId: 'pix' };
@@ -41,6 +56,13 @@ beforeEach(() => {
   jest.spyOn(Linking, 'openURL').mockImplementation((...args: unknown[]) => mockOpenURL(...args));
   mockStart.mockResolvedValue(checkout());
   mockGet.mockResolvedValue(checkout());
+  mockVerify.mockResolvedValue({ active: true, subscription: null });
+  mockFinish.mockResolvedValue(undefined);
+  mockBuy.mockResolvedValue({
+    ticket: { purchaseToken: 'token-abc', productId: 'plus_monthly' },
+    finish: (...args: unknown[]) => mockFinish(...args),
+  });
+  mockReconcile.mockResolvedValue([]);
 });
 afterEach(() => {
   jest.useRealTimers();
@@ -215,5 +237,107 @@ describe('usePlanCheckout', () => {
 
     expect(mockStart).not.toHaveBeenCalled();
     expect(result.current.phase).toBe('idle');
+  });
+});
+
+describe('usePlanCheckout natively (the store sheet)', () => {
+  const native = {
+    tierId: 'tier-pro',
+    interval: 'monthly' as const,
+    methodId: 'playbilling',
+    productId: 'plus_monthly',
+    packageName: 'com.test.app',
+    planName: 'Pro',
+    tiers: [
+      {
+        id: 'tier-pro',
+        name: 'Pro',
+        playMonthlyProductId: 'plus_monthly',
+        playYearlyProductId: null,
+      },
+    ],
+  };
+
+  it('buys, checks the token with the server and finishes once it is confirmed', async () => {
+    const { result } = await renderHook(() => usePlanCheckout(server));
+
+    await act(async () => {
+      await result.current.startNative(native);
+    });
+
+    expect(mockBuy).toHaveBeenCalledWith('plus_monthly');
+    expect(mockVerify).toHaveBeenCalledWith(server, {
+      tierId: 'tier-pro',
+      interval: 'monthly',
+      productId: 'plus_monthly',
+      purchaseToken: 'token-abc',
+      packageName: 'com.test.app',
+    });
+    expect(mockFinish).toHaveBeenCalledTimes(1);
+    expect(result.current.phase).toBe('paid');
+    expect(result.current.paidPlanName).toBe('Pro');
+    expect(result.current.error).toBeNull();
+  });
+
+  it('goes quietly back to choosing when the person backs out of the sheet', async () => {
+    mockBuy.mockRejectedValueOnce(new PlayPurchaseError('cancelled'));
+    const { result } = await renderHook(() => usePlanCheckout(server));
+
+    await act(async () => {
+      await result.current.startNative(native);
+    });
+
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.error).toBeNull();
+    expect(mockVerify).not.toHaveBeenCalled();
+  });
+
+  it('says the store is missing when buying is refused there', async () => {
+    mockBuy.mockRejectedValueOnce(new PlayPurchaseError('unavailable'));
+    const { result } = await renderHook(() => usePlanCheckout(server));
+
+    await act(async () => {
+      await result.current.startNative(native);
+    });
+
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.error).toBe('payment_error_play_unavailable');
+  });
+
+  it('picks up a purchase the server already confirmed instead of buying again', async () => {
+    mockReconcile.mockImplementationOnce(async (verify: unknown) => {
+      const confirm = verify as (ticket: unknown) => Promise<boolean>;
+      const ok = await confirm({ purchaseToken: 'token-old', productId: 'plus_monthly' });
+      return ok ? [{ purchaseToken: 'token-old', productId: 'plus_monthly' }] : [];
+    });
+    const { result } = await renderHook(() => usePlanCheckout(server));
+
+    await act(async () => {
+      await result.current.startNative(native);
+    });
+
+    expect(result.current.phase).toBe('paid');
+    expect(result.current.paidPlanName).toBe('Pro');
+    expect(mockBuy).not.toHaveBeenCalled();
+    expect(mockVerify).toHaveBeenCalledWith(server, {
+      tierId: 'tier-pro',
+      interval: 'monthly',
+      productId: 'plus_monthly',
+      purchaseToken: 'token-old',
+      packageName: 'com.test.app',
+    });
+  });
+
+  it('says the store did not confirm the purchase, and finishes nothing', async () => {
+    mockVerify.mockResolvedValueOnce({ active: false, subscription: null });
+    const { result } = await renderHook(() => usePlanCheckout(server));
+
+    await act(async () => {
+      await result.current.startNative(native);
+    });
+
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.error).toBe('payment_error_play_inactive');
+    expect(mockFinish).not.toHaveBeenCalled();
   });
 });

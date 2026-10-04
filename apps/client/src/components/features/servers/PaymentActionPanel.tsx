@@ -13,6 +13,8 @@ export interface PaymentActionPanelProps {
   onOpenProviderPage: () => void;
   /** Leaves this attempt and goes back to choosing a plan. */
   onDone: () => void;
+  /** The plan just paid for, when no checkout row carries its name (a store purchase). */
+  successPlanName?: string | null;
 }
 
 /**
@@ -25,6 +27,7 @@ const PaymentActionPanel: React.FC<PaymentActionPanelProps> = ({
   checkout,
   onOpenProviderPage,
   onDone,
+  successPlanName,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -44,7 +47,9 @@ const PaymentActionPanel: React.FC<PaymentActionPanelProps> = ({
     return (
       <View style={styles.panel} testID="payment-panel-paid">
         <Text style={styles.title}>{t('payment_paid_title')}</Text>
-        <Text style={styles.text}>{t('payment_paid_message', { plan: checkout?.tierName })}</Text>
+        <Text style={styles.text}>
+          {t('payment_paid_message', { plan: checkout?.tierName ?? successPlanName ?? '' })}
+        </Text>
         <Button onPress={onDone} testID="payment-done">
           {t('payment_done')}
         </Button>

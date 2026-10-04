@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PlayRelayRequestSchema,
+  PlayVerifyRequestSchema,
+  PlayVerifyResponseSchema,
+} from '../../schemas/PaymentConnectorSchemas';
+import {
   AdminPaymentEventListQuerySchema,
   AdminSubscriptionListQuerySchema,
   CheckoutCreateSchema,
@@ -32,6 +37,53 @@ describe('CheckoutCreateSchema', () => {
       cardNumber: '4111111111111111',
     });
     expect(Object.keys(parsed).sort()).toEqual(['interval', 'methodId', 'tierId']);
+  });
+});
+
+describe('the store purchase wire', () => {
+  const verified = {
+    userId: 'user-1',
+    packageName: 'com.test.app',
+    productId: 'plus_monthly',
+    purchaseToken: 'token-abc',
+    purchaseKind: 'subscription',
+    amountCents: 1990,
+    currency: 'BRL',
+    checkoutId: 'checkout-1',
+  };
+
+  it('takes a token check naming the attempt and its price', () => {
+    expect(PlayVerifyRequestSchema.parse(verified)).toMatchObject({
+      productId: 'plus_monthly',
+      amountCents: 1990,
+      checkoutId: 'checkout-1',
+    });
+  });
+
+  it.each([
+    ['no token', { ...verified, purchaseToken: '' }],
+    ['no product', { ...verified, productId: '' }],
+    ['a bad kind', { ...verified, purchaseKind: 'lifetime' }],
+  ])('refuses %s', (_label, body) => {
+    expect(PlayVerifyRequestSchema.safeParse(body).success).toBe(false);
+  });
+
+  it('reads whether the token is real, and takes what the app names', () => {
+    expect(PlayVerifyResponseSchema.parse({ ok: true, active: true, orderId: 'GPA.1' })).toEqual({
+      ok: true,
+      active: true,
+      orderId: 'GPA.1',
+    });
+    expect(PlayVerifyResponseSchema.safeParse({ ok: true }).success).toBe(false);
+    expect(
+      PlayRelayRequestSchema.parse({
+        tierId: 't1',
+        interval: 'monthly',
+        productId: 'plus_monthly',
+        purchaseToken: 'token-abc',
+        packageName: 'com.test.app',
+      }),
+    ).toMatchObject({ tierId: 't1', productId: 'plus_monthly' });
   });
 });
 

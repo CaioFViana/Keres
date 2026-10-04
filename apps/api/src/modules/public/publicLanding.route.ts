@@ -41,6 +41,10 @@ export const publicLandingRoutes = new Elysia()
           maxStorageBytesPerStory: tier.maxStorageBytesPerStory,
           maxStorageBytesTotal: tier.maxStorageBytesTotal,
           maxPublicationsPerDay: tier.maxPublicationsPerDay,
+          playMonthlyProductId: tier.playMonthlyProductId,
+          playYearlyProductId: tier.playYearlyProductId,
+          webMonthlyEnabled: tier.webMonthlyEnabled,
+          webYearlyEnabled: tier.webYearlyEnabled,
         })),
       };
       // The list is tiny (a handful of tiers), so hashing the payload itself is the cheapest

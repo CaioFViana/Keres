@@ -1,5 +1,5 @@
 import type { PublicTier, PublicTiersResponse, Subscription } from '@keres/shared';
-import type { BillingInterval } from '@keres/shared/payments/PaymentConnector';
+import type { BillingInterval, PaymentMethodOption } from '@keres/shared/payments/PaymentConnector';
 import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
 import { daysUntil } from '@keres/shared/utils/billingPeriod';
 
@@ -37,6 +37,54 @@ export function formatMoney(cents: number, currency: string, locale?: string): s
   } catch {
     return `${(cents / 100).toFixed(2)} ${currency}`;
   }
+}
+
+/** The tier fields that say where a plan is sold: the store products and the web flags. */
+export type TierSaleInfo = Pick<
+  PublicTier,
+  'playMonthlyProductId' | 'playYearlyProductId' | 'webMonthlyEnabled' | 'webYearlyEnabled'
+>;
+
+/**
+ * The store product id selling this plan for this period (`null` when the plan is not sold in the
+ * store). The app needs the id to open the purchase sheet; the server checks it again at the relay.
+ */
+export function playProductForOffer(tier: TierSaleInfo, interval: BillingInterval): string | null {
+  const productId = interval === 'yearly' ? tier.playYearlyProductId : tier.playMonthlyProductId;
+  return productId ?? null;
+}
+
+/**
+ * Whether a method sells a plan for a period. A store method sells it when the plan names the product
+ * for that period; a web method sells it when the plan says web checkouts sell that period (a plan
+ * from a server predating the flags sells everywhere). The server enforces the same rule - this only
+ * decides what the screen offers.
+ */
+export function isMethodSoldForOffer(
+  method: Pick<PaymentMethodOption, 'flow'>,
+  tier: TierSaleInfo,
+  interval: BillingInterval,
+): boolean {
+  if ((method.flow ?? 'redirect') === 'native') {
+    return playProductForOffer(tier, interval) !== null;
+  }
+  const webSold = interval === 'yearly' ? tier.webYearlyEnabled : tier.webMonthlyEnabled;
+  return webSold ?? true;
+}
+
+/**
+ * The plan and period a store product sells, for reconciling unfinished purchases. Takes only the
+ * fields that name the sale (id plus the store products), so callers without the full plan work too.
+ */
+export function offerForPlayProduct(
+  tiers: readonly Pick<PublicTier, 'id' | 'playMonthlyProductId' | 'playYearlyProductId'>[],
+  productId: string,
+): { tierId: string; interval: BillingInterval } | null {
+  for (const tier of tiers) {
+    if (tier.playMonthlyProductId === productId) return { tierId: tier.id, interval: 'monthly' };
+    if (tier.playYearlyProductId === productId) return { tierId: tier.id, interval: 'yearly' };
+  }
+  return null;
 }
 
 export type PaymentNotice =

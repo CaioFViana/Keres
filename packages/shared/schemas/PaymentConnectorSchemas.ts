@@ -28,12 +28,19 @@ export const ConnectorInfoSchema = z.object({
 });
 export type ConnectorInfo = z.infer<typeof ConnectorInfoSchema>;
 
-/** One way to pay. */
+/**
+ * One way to pay. `flow` tells the client how the method is executed: a `redirect` method opens a
+ * provider page (web checkout), a `native` one is bought inside the mobile app through the device's
+ * store (`store`). It defaults to `redirect`, so a connector that predates the field keeps working
+ * and stays visible wherever web checkouts run.
+ */
 export const PaymentMethodOptionSchema = z.object({
   id: z.string().min(1).max(64),
   label: z.string().min(1).max(80),
   description: z.string().max(200).optional(),
   recurring: z.boolean().optional(),
+  flow: z.enum(['redirect', 'native']).optional().default('redirect'),
+  store: z.enum(['play', 'appstore']).optional(),
 });
 
 /** `GET /v1/methods`. */
@@ -105,6 +112,48 @@ export const PaymentEventsRequestSchema = z.object({
 export const CheckoutStatusResponseSchema = z.object({
   event: PaymentEventWireSchema.nullable(),
 });
+
+/**
+ * `POST /v1/play/verify` request: Keres asks the connector whether a store purchase token is a real,
+ * paid purchase. `amountCents`/`currency` are what the plan costs here (never what the app said); the
+ * connector checks the token with the store and reports the fact as an event, naming this attempt.
+ */
+export const PlayVerifyRequestSchema = z.object({
+  userId: z.string().min(1),
+  packageName: z.string().min(1).max(200),
+  productId: z.string().min(1).max(200),
+  purchaseToken: z.string().min(1).max(1000),
+  purchaseKind: z.enum(['inapp', 'subscription']),
+  amountCents: z.number().int().nonnegative(),
+  currency: z.string().length(3),
+  checkoutId: z.string().min(1).max(64).optional(),
+});
+export type PlayVerifyRequestWire = z.infer<typeof PlayVerifyRequestSchema>;
+
+/**
+ * `POST /v1/play/verify` answer. Behind the Play Bearer, not the signed protocol - the caller holds
+ * the endpoint secret, and the purchase itself is reported as a signed event, not in this answer.
+ */
+export const PlayVerifyResponseSchema = z.object({
+  ok: z.literal(true),
+  active: z.boolean(),
+  orderId: z.string().max(200).optional(),
+});
+export type PlayVerifyResponseWire = z.infer<typeof PlayVerifyResponseSchema>;
+
+/**
+ * `POST /api/payments/play/verify` request, from the app. The user comes from the session and the
+ * price from the tier - the app only names the plan, the period, the store product it bought and the
+ * purchase token, all of which the server checks before asking the connector.
+ */
+export const PlayRelayRequestSchema = z.object({
+  tierId: z.string().min(1).max(64),
+  interval: z.enum(BILLING_INTERVALS),
+  productId: z.string().min(1).max(200),
+  purchaseToken: z.string().min(1).max(1000),
+  packageName: z.string().min(1).max(200),
+});
+export type PlayRelayRequest = z.infer<typeof PlayRelayRequestSchema>;
 
 /** `POST /v1/checkouts` request. The same fields as `CheckoutRequest`. */
 export const CheckoutRequestWireSchema = z.object({

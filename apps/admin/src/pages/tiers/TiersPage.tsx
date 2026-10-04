@@ -21,6 +21,10 @@ const emptyForm: TierCreateInput = {
   maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
+  playMonthlyProductId: null,
+  playYearlyProductId: null,
+  webMonthlyEnabled: true,
+  webYearlyEnabled: true,
   isPublicForSale: false,
   sortOrder: 0,
 };
@@ -94,6 +98,10 @@ export function TiersPage() {
       maxMessagesPerDay: tier.maxMessagesPerDay,
       priceMonthlyCents: tier.priceMonthlyCents ?? null,
       priceYearlyCents: tier.priceYearlyCents ?? null,
+      playMonthlyProductId: tier.playMonthlyProductId ?? null,
+      playYearlyProductId: tier.playYearlyProductId ?? null,
+      webMonthlyEnabled: tier.webMonthlyEnabled ?? true,
+      webYearlyEnabled: tier.webYearlyEnabled ?? true,
       isPublicForSale: tier.isPublicForSale ?? false,
       sortOrder: tier.sortOrder ?? 0,
     });
@@ -182,6 +190,21 @@ export function TiersPage() {
     </label>
   );
 
+  /** The Play Console subscription id selling this period; blank means not sold in the app. */
+  const productInput = (label: string, key: 'playMonthlyProductId' | 'playYearlyProductId') => (
+    <label>
+      {label} <span className="hint">{t('tiers.playProductsHint')}</span>
+      <input
+        type="text"
+        value={form[key] ?? ''}
+        onChange={(e) => {
+          const trimmed = e.target.value.trim();
+          setForm((f) => ({ ...f, [key]: trimmed === '' ? null : trimmed }));
+        }}
+      />
+    </label>
+  );
+
   const formatPrice = (cents: number | null | undefined): string => {
     if (cents === null || cents === undefined) return t('common.none');
     if (cents === 0) return t('tiers.free');
@@ -265,6 +288,24 @@ export function TiersPage() {
             </label>
             {priceInput(t('tiers.priceMonthly'), 'priceMonthlyCents')}
             {priceInput(t('tiers.priceYearly'), 'priceYearlyCents')}
+            {productInput(t('tiers.playMonthlyProduct'), 'playMonthlyProductId')}
+            {productInput(t('tiers.playYearlyProduct'), 'playYearlyProductId')}
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={form.webMonthlyEnabled ?? true}
+                onChange={(e) => setForm((f) => ({ ...f, webMonthlyEnabled: e.target.checked }))}
+              />
+              {t('tiers.webMonthly')} <span className="hint">{t('tiers.webHint')}</span>
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={form.webYearlyEnabled ?? true}
+                onChange={(e) => setForm((f) => ({ ...f, webYearlyEnabled: e.target.checked }))}
+              />
+              {t('tiers.webYearly')} <span className="hint">{t('tiers.webHint')}</span>
+            </label>
             {discount !== null && (
               <p className="hint">{t('tiers.yearlyDiscount', { percent: discount })}</p>
             )}
@@ -342,6 +383,21 @@ export function TiersPage() {
                 <dl className="tier-facts">
                   {fact(t('tiers.columnPriceMonthly'), formatPrice(tier.priceMonthlyCents))}
                   {fact(t('tiers.columnPriceYearly'), formatPrice(tier.priceYearlyCents))}
+                </dl>
+              </section>
+              <section aria-label={t('tiers.groupStores')}>
+                <h4>{t('tiers.groupStores')}</h4>
+                <dl className="tier-facts">
+                  {fact(t('tiers.playMonthlyProduct'), tier.playMonthlyProductId ?? '—')}
+                  {fact(t('tiers.playYearlyProduct'), tier.playYearlyProductId ?? '—')}
+                  {fact(
+                    t('tiers.webMonthly'),
+                    (tier.webMonthlyEnabled ?? true) ? t('tiers.yes') : t('tiers.no'),
+                  )}
+                  {fact(
+                    t('tiers.webYearly'),
+                    (tier.webYearlyEnabled ?? true) ? t('tiers.yes') : t('tiers.no'),
+                  )}
                 </dl>
               </section>
               {!tier.isDeleted && (

@@ -1,4 +1,8 @@
-import { CheckoutCreateSchema, PaymentEventsRequestSchema } from '@keres/shared';
+import {
+  CheckoutCreateSchema,
+  PaymentEventsRequestSchema,
+  PlayRelayRequestSchema,
+} from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { checkoutService } from '../../services/payments/CheckoutService';
@@ -190,6 +194,31 @@ export const paymentRoutes = new Elysia()
     params: t.Object({ id: t.String() }),
     detail: { summary: 'Where an attempt to pay stands', tags: ['Payments'] },
   })
+
+  .post(
+    '/play/verify',
+    async ({ userId, body }) => {
+      const parsed = PlayRelayRequestSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid purchase');
+      }
+      return checkoutService.verifyStorePurchase(userId, parsed.data);
+    },
+    {
+      // Loose on purpose: the Zod schema is the real gate, and Elysia strips undeclared keys.
+      body: t.Object({
+        tierId: t.String(),
+        interval: t.String(),
+        productId: t.String(),
+        purchaseToken: t.String(),
+        packageName: t.String(),
+      }),
+      detail: {
+        summary: 'Relay an in-app purchase bought in the Android app',
+        tags: ['Payments'],
+      },
+    },
+  )
 
   .post('/subscription/cancel', ({ userId }) => subscriptionService.cancel(userId), {
     detail: {

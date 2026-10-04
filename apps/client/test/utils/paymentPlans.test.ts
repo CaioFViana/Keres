@@ -2,7 +2,14 @@
  * @jest-environment node
  */
 import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
-import { evaluatePaymentNotice, formatMoney, offersFrom } from '../../src/utils/paymentPlans';
+import {
+  evaluatePaymentNotice,
+  formatMoney,
+  isMethodSoldForOffer,
+  offerForPlayProduct,
+  offersFrom,
+  playProductForOffer,
+} from '../../src/utils/paymentPlans';
 
 const tier = (over: Record<string, unknown>) => ({
   id: 'tier-1',
@@ -55,6 +62,51 @@ describe('offersFrom', () => {
   it('has no offers when the plans could not be read', () => {
     expect(offersFrom(null)).toEqual([]);
     expect(offersFrom(undefined)).toEqual([]);
+  });
+});
+
+describe('store products', () => {
+  const pro = tier({ playMonthlyProductId: 'plus_monthly', playYearlyProductId: 'plus_yearly' });
+
+  it('names the store product selling a plan and period, null when not sold there', () => {
+    expect(playProductForOffer(pro as never, 'monthly')).toBe('plus_monthly');
+    expect(playProductForOffer(pro as never, 'yearly')).toBe('plus_yearly');
+    expect(playProductForOffer(tier({}) as never, 'monthly')).toBeNull();
+  });
+
+  it('finds the plan and period a store product sells', () => {
+    const tiers = [tier({ id: 'free' }), pro];
+    expect(offerForPlayProduct(tiers as never, 'plus_monthly')).toEqual({
+      tierId: 'tier-1',
+      interval: 'monthly',
+    });
+    expect(offerForPlayProduct(tiers as never, 'plus_yearly')).toEqual({
+      tierId: 'tier-1',
+      interval: 'yearly',
+    });
+    expect(offerForPlayProduct(tiers as never, 'unknown_product')).toBeNull();
+  });
+});
+
+describe('where a method sells a plan', () => {
+  const web = { flow: 'redirect' } as never;
+  const play = { flow: 'native', store: 'play' } as never;
+  const monthly = tier({
+    playMonthlyProductId: 'plus_monthly',
+    playYearlyProductId: null,
+    webMonthlyEnabled: false,
+    webYearlyEnabled: true,
+  });
+
+  it('sells on the web only where the plan says so, and in the store only with a product', () => {
+    expect(isMethodSoldForOffer(web, monthly as never, 'monthly')).toBe(false);
+    expect(isMethodSoldForOffer(web, monthly as never, 'yearly')).toBe(true);
+    expect(isMethodSoldForOffer(play, monthly as never, 'monthly')).toBe(true);
+    expect(isMethodSoldForOffer(play, monthly as never, 'yearly')).toBe(false);
+  });
+
+  it('treats a plan from a server predating the flags as sold everywhere', () => {
+    expect(isMethodSoldForOffer(web, tier({}) as never, 'monthly')).toBe(true);
   });
 });
 

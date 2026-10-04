@@ -123,6 +123,12 @@ const envSchema = z.object({
     .max(60_000)
     .optional()
     .default(10_000),
+  /**
+   * The Bearer [REDACTED] the payments service asks for at `POST /v1/play/verify`. Only the server holds it: the app
+   * proves its purchase to Keres, and Keres proves itself to the service. Absent, store purchases cannot be
+   * relayed (the `playbilling` method should not be listed then either). At least 32 characters.
+   */
+  PAYMENT_PLAY_ENDPOINT_SECRET: connectorSecret,
   /** Allows a connector at an address that is not `https` and not this machine (a private network between containers). */
   PAYMENT_CONNECTOR_ALLOW_INSECURE: z
     .enum(['true', 'false'])

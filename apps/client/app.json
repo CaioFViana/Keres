@@ -38,6 +38,7 @@
         }
       ],
       "expo-sqlite",
+      "expo-iap",
       "expo-secure-store",
       "expo-font",
       "expo-video",

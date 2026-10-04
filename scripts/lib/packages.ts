@@ -23,6 +23,7 @@ export const PACKAGES: Package[] = [
   { name: 'shared', path: 'packages/shared' },
   { name: 'client', path: 'apps/client' },
   { name: 'api', path: 'apps/api' },
+  { name: 'payments', path: 'apps/payments' },
   { name: 'admin', path: 'apps/admin' },
   { name: 'desktop', path: 'apps/desktop' },
   { name: 'site', path: 'apps/site' },

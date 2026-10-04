@@ -5,6 +5,7 @@ import {
   TierInUseError,
   TierNameAlreadyTakenError,
   TierNotFoundError,
+  TierPlayProductAlreadyUsedError,
   tierService,
 } from '../../services/TierService';
 import { requireAdmin } from '../../utils/adminAuth';
@@ -59,6 +60,9 @@ export const adminTierRoutes = new Elysia()
         if (error instanceof TierNameAlreadyTakenError) {
           throw new AppError(409, error.message);
         }
+        if (error instanceof TierPlayProductAlreadyUsedError) {
+          throw new AppError(409, error.message);
+        }
         throw error;
       }
     },
@@ -78,6 +82,10 @@ export const adminTierRoutes = new Elysia()
         maxMessagesPerDay: t.Optional(t.Nullable(t.Number())),
         priceMonthlyCents: t.Optional(t.Nullable(t.Number())),
         priceYearlyCents: t.Optional(t.Nullable(t.Number())),
+        playMonthlyProductId: t.Optional(t.Nullable(t.String())),
+        playYearlyProductId: t.Optional(t.Nullable(t.String())),
+        webMonthlyEnabled: t.Optional(t.Boolean()),
+        webYearlyEnabled: t.Optional(t.Boolean()),
         isPublicForSale: t.Optional(t.Boolean()),
         sortOrder: t.Optional(t.Number()),
       }),
@@ -104,6 +112,9 @@ export const adminTierRoutes = new Elysia()
         if (error instanceof TierNameAlreadyTakenError) {
           throw new AppError(409, error.message);
         }
+        if (error instanceof TierPlayProductAlreadyUsedError) {
+          throw new AppError(409, error.message);
+        }
         throw error;
       }
     },
@@ -123,6 +134,10 @@ export const adminTierRoutes = new Elysia()
         maxMessagesPerDay: t.Optional(t.Nullable(t.Number())),
         priceMonthlyCents: t.Optional(t.Nullable(t.Number())),
         priceYearlyCents: t.Optional(t.Nullable(t.Number())),
+        playMonthlyProductId: t.Optional(t.Nullable(t.String())),
+        playYearlyProductId: t.Optional(t.Nullable(t.String())),
+        webMonthlyEnabled: t.Optional(t.Boolean()),
+        webYearlyEnabled: t.Optional(t.Boolean()),
         isPublicForSale: t.Optional(t.Boolean()),
         sortOrder: t.Optional(t.Number()),
       }),

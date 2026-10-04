@@ -50,6 +50,13 @@ export interface PaymentMethodOption {
    * so, and does not talk of "stopping the renewal" - there is nothing to stop.
    */
   recurring?: boolean;
+  /**
+   * How the client executes this method: `redirect` opens a provider page, `native` buys inside the
+   * mobile app through the device's store. Defaults to `redirect` when absent (older connectors).
+   */
+  flow?: 'redirect' | 'native';
+  /** The device store for a `native` method: Google Play or the App Store. */
+  store?: 'play' | 'appstore';
 }
 
 export interface CheckoutRequest {
@@ -132,6 +139,28 @@ export interface DueSubscription {
   paidUntil: Date;
 }
 
+/** Asking the connector whether a store purchase token is real: Keres relays an in-app purchase. */
+export interface PlayVerifyRequest {
+  userId: string;
+  packageName: string;
+  productId: string;
+  purchaseToken: string;
+  /** Keres only sells renewing plans, so the relay always says `subscription`. */
+  purchaseKind: 'inapp' | 'subscription';
+  /** What the plan costs here, in the minor unit of `currency` - never what the app said. */
+  amountCents: number;
+  /** ISO-4217. */
+  currency: string;
+  /** Keres' id of the attempt, so the reported event names it. */
+  checkoutId?: string;
+}
+
+/** Whether the token is a real, paid purchase. The purchase itself arrives as a signed event. */
+export interface PlayVerifyResponse {
+  active: boolean;
+  orderId?: string;
+}
+
 /**
  * The connector as the rest of the server sees it. The only implementation is the one that speaks the HTTP contract
  * (`HttpConnector`); this interface is the seam the subscriptions, checkouts and tests are written against.
@@ -159,4 +188,10 @@ export interface PaymentConnector {
 
   /** Called once when a period passes unpaid, so the provider can chase it. Optional (capability `due`). */
   onSubscriptionDue?(subscription: DueSubscription): Promise<void>;
+
+  /**
+   * Checks a store purchase token with the provider (Play Billing). Only a connector that sells through
+   * a device store implements it; the app never calls the store endpoint itself - it cannot hold the key.
+   */
+  verifyPlayPurchase?(request: PlayVerifyRequest): Promise<PlayVerifyResponse>;
 }

@@ -224,9 +224,10 @@ describe('asking for the ways to pay', () => {
 
     const methods = await connector.listMethods('BRL');
 
+    // The double predates `flow`: validation fills the redirect default.
     expect(methods).toEqual([
-      { id: 'card', label: 'Card' },
-      { id: 'pix', label: 'PIX', recurring: false },
+      { id: 'card', label: 'Card', flow: 'redirect' },
+      { id: 'pix', label: 'PIX', recurring: false, flow: 'redirect' },
     ]);
     const request = double.seen.at(-1)!;
     expect(request).toMatchObject({
@@ -255,7 +256,9 @@ describe('asking for the ways to pay', () => {
 
     now += 2000;
     down = true;
-    await expect(connector.listMethods('BRL')).resolves.toEqual([{ id: 'card', label: 'Card' }]);
+    await expect(connector.listMethods('BRL')).resolves.toEqual([
+      { id: 'card', label: 'Card', flow: 'redirect' },
+    ]);
     // A currency it has never been asked about has nothing to fall back on.
     await expect(connector.listMethods('USD')).rejects.toBeInstanceOf(ConnectorError);
   });
@@ -445,5 +448,86 @@ describe('the headers it sends', () => {
 
     expect(names).toEqual(['accept', HEADER_NONCE, HEADER_SIGNATURE, HEADER_TIMESTAMP].sort());
     expect(vi.isMockFunction(double.fetchImpl)).toBe(false);
+  });
+});
+
+describe('checking a store purchase', () => {
+  const verified = {
+    userId: 'user-1',
+    packageName: 'com.test.app',
+    productId: 'plus_monthly',
+    purchaseToken: 'token-abc',
+    purchaseKind: 'subscription' as const,
+    amountCents: 1990,
+    currency: 'BRL',
+    checkoutId: 'checkout-1',
+  };
+  const seen: { url: string; init?: RequestInit }[] = [];
+
+  /** The signed double answers `/v1/info`; the store endpoint answers plainly, behind its own key. */
+  const playFetch = (answer: unknown, status = 200) => {
+    const double = connectorDouble();
+    return (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith('/v1/play/verify')) {
+        seen.push({ url, init });
+        return new Response(JSON.stringify(answer), { status });
+      }
+      return double.fetchImpl(input, init);
+    }) as typeof fetch;
+  };
+
+  it('asks with the play key and reads whether the token is real', async () => {
+    seen.length = 0;
+    const connector = await HttpConnector.connect({
+      baseUrl: 'https://connector.test/pay-base',
+      secrets: [KERES_KEY],
+      timeoutMs: 2000,
+      fetchImpl: playFetch({ ok: true, active: true, orderId: 'GPA.1234' }),
+      playSecret: 'play-secret-0123456789abcdef-00',
+    });
+
+    const answer = await connector.verifyPlayPurchase!(verified);
+
+    expect(answer).toEqual({ active: true, orderId: 'GPA.1234' });
+    expect(seen).toHaveLength(1);
+    expect(seen[0].url).toBe('https://connector.test/pay-base/v1/play/verify');
+    const headers = new Headers(seen[0].init?.headers);
+    expect(headers.get('authorization')).toBe('Bearer play-secret-0123456789abcdef-00');
+    expect(JSON.parse(String(seen[0].init?.body))).toMatchObject({
+      purchaseToken: 'token-abc',
+      checkoutId: 'checkout-1',
+      amountCents: 1990,
+    });
+  });
+
+  it('does not speak the store endpoint without the play key', async () => {
+    const connector = await connect(connectorDouble());
+
+    expect(connector.verifyPlayPurchase).toBeUndefined();
+  });
+
+  it('refuses a denial and an answer outside the contract', async () => {
+    const denied = await HttpConnector.connect({
+      baseUrl: 'https://connector.test/pay-base',
+      secrets: [KERES_KEY],
+      timeoutMs: 2000,
+      fetchImpl: playFetch({ message: 'Refused.' }, 401),
+      playSecret: 'play-secret-0123456789abcdef-00',
+    });
+    const refusal = await rejection(denied.verifyPlayPurchase!(verified));
+    expect(refusal.failure).toBe('status');
+    expect(refusal.status).toBe(401);
+
+    const garbled = await HttpConnector.connect({
+      baseUrl: 'https://connector.test/pay-base',
+      secrets: [KERES_KEY],
+      timeoutMs: 2000,
+      fetchImpl: playFetch({ ok: true }),
+      playSecret: 'play-secret-0123456789abcdef-00',
+    });
+    // `active` missing: not what the contract says.
+    const invalid = await rejection(garbled.verifyPlayPurchase!(verified));
+    expect(invalid.failure).toBe('invalid');
   });
 });

@@ -9,6 +9,7 @@ const mockCheckout = jest.fn();
 const mockCancelRenewal = jest.fn();
 const mockReload = jest.fn();
 const mockStart = jest.fn();
+const mockStartNative = jest.fn();
 const mockReset = jest.fn();
 const mockOpenProviderPage = jest.fn();
 const mockAskCancel = jest.fn();
@@ -62,9 +63,22 @@ jest.mock('../../../src/hooks/useSwitchQuote', () => ({
 jest.mock('../../../src/hooks/usePlanCancellation', () => ({
   usePlanCancellation: (...args: unknown[]) => mockCancelRenewal(...args),
 }));
+jest.mock('../../../src/services/PaymentService', () => ({
+  __esModule: true,
+  verifyPlayPurchase: jest.fn().mockResolvedValue({ active: false, subscription: null }),
+}));
+// The device filter defaults to the web build here, so the redirect methods show;
+// one test below switches it to a phone without a purchase runtime.
+jest.mock('../../../src/utils/paymentMethodVisibility', () => {
+  const actual = jest.requireActual('../../../src/utils/paymentMethodVisibility');
+  return { ...actual, devicePaymentCapabilities: jest.fn() };
+});
 
 import { fireEvent, render } from '@testing-library/react-native';
 import ServerPlanScreen from '../../../src/screens/enterstack/ServerPlanScreen';
+import { devicePaymentCapabilities } from '../../../src/utils/paymentMethodVisibility';
+
+const mockDeviceCaps = devicePaymentCapabilities as jest.Mock;
 
 const server = { id: 'srv-1', name: 'Main', url: 'https://a.example', pingStatus: 'online' };
 const tier = (over: Record<string, unknown>) => ({
@@ -96,7 +110,11 @@ const subscription = (over: Record<string, unknown> = {}) => ({
   complimentary: false,
   ...over,
 });
-const overview = (over: Record<string, unknown> = {}, subscriptionValue: unknown = null) => ({
+const overview = (
+  over: Record<string, unknown> = {},
+  subscriptionValue: unknown = null,
+  plansOver: Record<string, unknown> | null = null,
+) => ({
   info: {
     enabled: true,
     provider: { id: 'fakepay', displayName: 'Fake Pay' },
@@ -121,6 +139,7 @@ const overview = (over: Record<string, unknown> = {}, subscriptionValue: unknown
         maxStories: null,
       }),
     ],
+    ...plansOver,
   },
 });
 
@@ -145,6 +164,8 @@ const setup = (
     phase: 'idle',
     error: null,
     start: mockStart,
+    startNative: mockStartNative,
+    paidPlanName: null,
     openProviderPage: mockOpenProviderPage,
     reset: mockReset,
     ...options.checkout,
@@ -155,6 +176,7 @@ const setup = (
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockDeviceCaps.mockReturnValue({ flavor: 'web', platform: 'web', nativePay: false });
   setup();
 });
 
@@ -259,6 +281,62 @@ describe('ServerPlanScreen: the plans', () => {
       interval: 'yearly',
       methodId: 'pix',
     });
+  });
+
+  it('says the methods are unavailable on a device that cannot run any of them', async () => {
+    mockDeviceCaps.mockReturnValue({ flavor: 'native', platform: 'android', nativePay: false });
+    const view = await render(<ServerPlanScreen />);
+    await fireEvent.press(view.getByTestId('plan-offer-tier-pro'));
+
+    expect(view.getByText('payment_no_methods_device')).toBeTruthy();
+    expect(view.queryByTestId('plan-method-card')).toBeNull();
+    expect(view.queryByTestId('plan-method-pix')).toBeNull();
+  });
+
+  it('buys through the store on Android, with the product selling the plan', async () => {
+    mockDeviceCaps.mockReturnValue({ flavor: 'native', platform: 'android', nativePay: true });
+    setup({
+      overviewValue: overview(
+        {
+          methods: [{ id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' }],
+        },
+        null,
+        {
+          tiers: [
+            tier({ playMonthlyProductId: 'plus_monthly', playYearlyProductId: 'plus_yearly' }),
+          ],
+        },
+      ),
+    });
+    const view = await render(<ServerPlanScreen />);
+    await fireEvent.press(view.getByTestId('plan-offer-tier-pro'));
+    await fireEvent.press(view.getByTestId('plan-method-playbilling'));
+    await fireEvent.press(view.getByTestId('plan-pay'));
+
+    expect(mockStart).not.toHaveBeenCalled();
+    expect(mockStartNative).toHaveBeenCalledWith({
+      tierId: 'tier-pro',
+      interval: 'monthly',
+      methodId: 'playbilling',
+      productId: 'plus_monthly',
+      packageName: '',
+      planName: 'Pro',
+      tiers: [tier({ playMonthlyProductId: 'plus_monthly', playYearlyProductId: 'plus_yearly' })],
+    });
+  });
+
+  it('says no method sells the plan when the plan is not sold on the web', async () => {
+    setup({
+      overviewValue: overview({}, null, {
+        tiers: [tier({ webMonthlyEnabled: false, webYearlyEnabled: true })],
+      }),
+    });
+    const view = await render(<ServerPlanScreen />);
+    await fireEvent.press(view.getByTestId('plan-offer-tier-pro'));
+
+    expect(view.getByText('payment_no_methods_plan')).toBeTruthy();
+    expect(view.queryByTestId('plan-method-card')).toBeNull();
+    expect(view.queryByTestId('plan-method-pix')).toBeNull();
   });
 
   it('says so when the server has no payment method, and shows why a payment could not start', async () => {

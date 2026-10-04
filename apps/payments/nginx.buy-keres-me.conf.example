@@ -1,0 +1,58 @@
+# Example reverse-proxy in front of the Keres payment microservice.
+#
+#   buy.keres.me  ->  this file  ->  127.0.0.1:3101 (the compose service above)
+#
+# Copy to /etc/nginx/sites-available/buy.keres.me, symlink into sites-enabled, get a
+# certificate (certbot --nginx -d buy.keres.me) and reload. The Keres server itself stays
+# on its own host: it reaches the service through PAYMENT_CONNECTOR_URL, which should be
+# this same public address so the signed logical paths match what the proxy forwards.
+#
+# Security notes (why the service gets its own host):
+# - PSP webhooks (PayPal, Stripe) arrive here, never at the story server: a webhook
+#   flood or a provider-side retry storm cannot touch stories, and a bug in a return
+#   page cannot read the story database - this machine holds no database at all.
+# - TLS ends here. The service only ever sees plain HTTP from loopback; its signature
+#   checks cover the logical path, not the address, so the proxy does not break them.
+# - Rate-limit the webhook and return locations harder than the rest if the provider
+#   allows bursts; the service answers 429 and the providers retry.
+
+upstream keres_payments {
+    server 127.0.0.1:3101;
+}
+
+server {
+    listen 80;
+    server_name buy.keres.me;
+    # ACME challenge for the first certificate; after that everything redirects to TLS.
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name buy.keres.me;
+
+    # ssl_certificate / ssl_certificate_key managed by certbot.
+    # ssl_certificate /etc/letsencrypt/live/buy.keres.me/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/buy.keres.me/privkey.pem;
+
+    # No static files, no uploads: small bodies only.
+    client_max_body_size 256k;
+
+    location / {
+        proxy_pass http://keres_payments;
+        proxy_http_version 1.1;
+        # The service signs logical paths, not hosts, so no Host rewriting is needed -
+        # but the provider return pages build absolute URLs from PUBLIC_BASE_URL, which
+        # must be https://buy.keres.me for the links to work.
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+}

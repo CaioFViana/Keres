@@ -36,6 +36,7 @@ export function startPaymentConnector(options: StartConnectorOptions = {}): () =
         secrets: config.secrets,
         timeoutMs: config.timeoutMs,
         fetchImpl: options.fetchImpl,
+        ...(config.playSecret ? { playSecret: config.playSecret } : {}),
       });
       if (stopped) return;
       setPaymentConnector(connector);

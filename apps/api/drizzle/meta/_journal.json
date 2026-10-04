@@ -414,6 +414,27 @@
       "when": 1791126788178,
       "tag": "0058_reflective_ricochet",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1791142947679,
+      "tag": "0059_empty_whizzer",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1791145586519,
+      "tag": "0060_left_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1791148153813,
+      "tag": "0061_great_speed",
+      "breakpoints": true
     }
   ]
 }

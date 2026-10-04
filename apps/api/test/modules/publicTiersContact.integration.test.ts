@@ -18,11 +18,15 @@ async function seedTier(input: {
   maxStories?: number | null;
   maxPublicationsPerDay?: number | null;
   isDeleted?: boolean;
+  playMonthlyProductId?: string | null;
+  playYearlyProductId?: string | null;
 }): Promise<string> {
   const id = newId();
   await db.insert(tiers).values({
     id,
     name: input.name,
+    playMonthlyProductId: input.playMonthlyProductId ?? null,
+    playYearlyProductId: input.playYearlyProductId ?? null,
     isDefault: input.isDefault ?? false,
     isPublicForSale: input.isPublicForSale ?? false,
     sortOrder: input.sortOrder ?? 0,
@@ -97,6 +101,35 @@ describe('GET /public/tiers', () => {
     // Nothing the landing page must not see.
     expect(data.tiers[0].isPublicForSale).toBeUndefined();
     expect(data.tiers[0].sortOrder).toBeUndefined();
+  });
+
+  it('exposes the store products selling a tier: the app needs their ids to buy', async () => {
+    await seedTier({
+      name: 'Pro',
+      isPublicForSale: true,
+      priceMonthlyCents: 1990,
+      playMonthlyProductId: 'plus_monthly',
+    });
+
+    const { data } = await request('GET', '/public/tiers');
+
+    expect(data.tiers[0]).toMatchObject({
+      playMonthlyProductId: 'plus_monthly',
+      playYearlyProductId: null,
+      webMonthlyEnabled: true,
+      webYearlyEnabled: true,
+    });
+    expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
+  });
+
+  it('exposes where a tier is sold on the web, for the app to offer', async () => {
+    await seedTier({ name: 'Mobile', isPublicForSale: true, priceMonthlyCents: 990 });
+    await db.update(tiers).set({ webMonthlyEnabled: false }).where(eq(tiers.name, 'Mobile'));
+
+    const { data } = await request('GET', '/public/tiers');
+
+    expect(data.tiers[0]).toMatchObject({ webMonthlyEnabled: false, webYearlyEnabled: true });
+    expect(PublicTiersResponseSchema.safeParse(data).success).toBe(true);
   });
 
   it('reflects the currency the administrator configured', async () => {

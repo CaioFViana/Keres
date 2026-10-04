@@ -14,6 +14,7 @@ import { repoRoot } from './lib/packages';
 const applications: [name: string, path: string][] = [
   ['Shared', 'packages/shared'],
   ['API', 'apps/api'],
+  ['Payments', 'apps/payments'],
   ['ADM', 'apps/admin'],
   ['Client', 'apps/client'],
   ['Desktop', 'apps/desktop'],

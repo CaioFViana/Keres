@@ -27,6 +27,7 @@ import {
   createServerService,
   ServerHasOwnedStoriesError,
   ServerUrlAlreadyRegisteredError,
+  ServerUrlNotSecureError,
 } from '../../services/ServerService';
 import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
@@ -34,7 +35,7 @@ import { getCommonInputStyles } from '../../theme/commonStyles';
 import { AppAlert } from '../../utils/AppAlert';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import { authenticateWithKeresServer, keresAuthAlertMessage } from '../../utils/keresServerAuth';
-import { normalizeServerUrl } from '../../utils/serverUrl';
+import { isAllowedServerUrl, normalizeServerUrl } from '../../utils/serverUrl';
 
 type RootStackParamList = {
   ServerRegistration: { serverId?: string };
@@ -113,6 +114,10 @@ const ServerRegistrationScreen = () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
     if (!addressToSave || !username.trim()) {
       AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit'));
+      return;
+    }
+    if (!isAllowedServerUrl(addressToSave)) {
+      AppAlert.alert(t('error'), t('server_url_must_be_https'));
       return;
     }
     if (!serverId && !password.trim()) {
@@ -223,9 +228,11 @@ const ServerRegistrationScreen = () => {
       const errorMessage =
         err instanceof ServerUrlAlreadyRegisteredError
           ? t('server_url_already_registered')
-          : err instanceof Error
-            ? err.message
-            : t('failed_to_save_server');
+          : err instanceof ServerUrlNotSecureError
+            ? t('server_url_must_be_https')
+            : err instanceof Error
+              ? err.message
+              : t('failed_to_save_server');
       setError(errorMessage);
       AppAlert.alert(t('error'), errorMessage);
     } finally {
@@ -250,6 +257,10 @@ const ServerRegistrationScreen = () => {
     const addressToSave = (lockedServerAddress ?? serverAddress).trim();
     if (!addressToSave || !username.trim() || !recoveryCode.trim()) {
       AppAlert.alert(t('error'), t('all_fields_required_except_password_for_edit'));
+      return;
+    }
+    if (!isAllowedServerUrl(addressToSave)) {
+      AppAlert.alert(t('error'), t('server_url_must_be_https'));
       return;
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
@@ -303,9 +314,11 @@ const ServerRegistrationScreen = () => {
       const errorMessage =
         err instanceof ServerUrlAlreadyRegisteredError
           ? t('server_url_already_registered')
-          : err instanceof Error
-            ? err.message
-            : t('failed_to_save_server');
+          : err instanceof ServerUrlNotSecureError
+            ? t('server_url_must_be_https')
+            : err instanceof Error
+              ? err.message
+              : t('failed_to_save_server');
       setError(errorMessage);
       AppAlert.alert(t('error'), errorMessage);
     } finally {

@@ -28,6 +28,19 @@ export const tiers = table('tiers', {
   priceMonthlyCents: integer('price_monthly_cents'),
   /** Yearly price in the system's currency minor units; `null` = not priced yearly, 0 = free. */
   priceYearlyCents: integer('price_yearly_cents'),
+  /**
+   * Google Play subscription product ids selling this tier (`null` = not sold in the store).
+   * Copied from the Play Console by the administrator; the relay only accepts a purchase token
+   * for the product named for the plan and period being bought.
+   */
+  playMonthlyProductId: text('play_monthly_product_id'),
+  playYearlyProductId: text('play_yearly_product_id'),
+  /**
+   * Whether web checkouts sell this tier on each period (on by default: every tier was web-sold
+   * before, and what the Play store sells is said by the product ids above instead).
+   */
+  webMonthlyEnabled: boolean('web_monthly_enabled').notNull().default(true),
+  webYearlyEnabled: boolean('web_yearly_enabled').notNull().default(true),
   /** Listed by `GET /api/public/tiers` for the landing page; off by default like the showcase. */
   isPublicForSale: boolean('is_public_for_sale').notNull().default(false),
   /** Display order on the landing page (ascending), then by name. */

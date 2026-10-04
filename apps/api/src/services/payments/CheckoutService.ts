@@ -1,11 +1,11 @@
-import type { Checkout, CheckoutCreate } from '@keres/shared';
+import type { Checkout, CheckoutCreate, PlayRelayRequest, PlayRelayResponse } from '@keres/shared';
 import { CHECKOUT_DEFAULT_LIFETIME_HOURS } from '@keres/shared/metadata/Payments';
 import type {
   CheckoutResult,
   PaymentAction,
   PaymentConnector,
 } from '@keres/shared/payments/PaymentConnector';
-import { and, count, eq, gte } from 'drizzle-orm';
+import { and, count, eq, gt, gte, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { env } from '../../config/env';
 import { db } from '../../db';
@@ -14,12 +14,19 @@ import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { registrationSettingsService } from '../RegistrationSettingsService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
+import { claimPurchaseToken } from './playPurchaseClaims';
 import { subscriptionService } from './SubscriptionService';
 
 type CheckoutRow = typeof paymentCheckouts.$inferSelect;
 
 /** Attempts one person may open in an hour: a person who is stuck is helped by the provider, not by retrying. */
 export const MAX_CHECKOUTS_PER_HOUR = 10;
+/**
+ * Store token checks one person may ask for in a minute. Each relay call reaches the store, so
+ * without a cap of its own a script could burn the store API quota with garbage tokens; the web
+ * quota above does not cover the relay (a native retry must stay allowed, see `start`).
+ */
+export const MAX_RELAY_CALLS_PER_MINUTE = 5;
 /** How soon the provider is asked again about the same attempt (for plugins that cannot rely on a webhook). */
 const STATUS_POLL_MS = 5000;
 
@@ -29,6 +36,30 @@ const MAX_COPY = 500;
 const MAX_URL = 2048;
 
 const lastPolled = new Map<string, number>();
+
+/** Recent relay calls per person, as epoch milliseconds (single process, like `lastPolled`). */
+const relayCalls = new Map<string, number[]>();
+
+/** Whether the person may relay another store purchase now, recording the call. */
+export function relayAllowed(userId: string, nowMs: number): boolean {
+  if (relayCalls.size > 10000) {
+    const cutoff = nowMs - 60 * 1000;
+    for (const [other, calls] of relayCalls) {
+      const kept = calls.filter((at) => at > cutoff);
+      if (kept.length === 0) relayCalls.delete(other);
+      else relayCalls.set(other, kept);
+    }
+  }
+  const cutoff = nowMs - 60 * 1000;
+  const calls = (relayCalls.get(userId) ?? []).filter((at) => at > cutoff);
+  if (calls.length >= MAX_RELAY_CALLS_PER_MINUTE) {
+    relayCalls.set(userId, calls);
+    return false;
+  }
+  calls.push(nowMs);
+  relayCalls.set(userId, calls);
+  return true;
+}
 
 /**
  * What the plugin said to do, checked: a redirect is `https` (a plugin must not be able to send the person to
@@ -118,17 +149,59 @@ export class CheckoutService {
     }
     const { currency } = await registrationSettingsService.getOrCreate();
     const methods = await Promise.resolve(plugin.listMethods(currency)).catch(() => []);
-    if (!methods.some((method) => method.id === input.methodId)) {
+    const method = methods.find((candidate) => candidate.id === input.methodId);
+    if (!method) {
       throw new AppError(400, 'That payment method is not available.');
     }
+    const isNative = (method.flow ?? 'redirect') === 'native';
+    if (!isNative) {
+      // A web checkout only sells what the tier says is web-sold: the Play store's share is named
+      // by the tier's product ids instead, and the relay checks that side itself.
+      const webSold = input.interval === 'yearly' ? tier.webYearlyEnabled : tier.webMonthlyEnabled;
+      if (!webSold) {
+        throw new AppError(400, 'That plan is not sold on the web.');
+      }
+    } else {
+      // Retrying a store purchase reuses its attempt for the plan instead of opening another:
+      // the attempt only names what is being bought, so one live attempt per plan is enough - and a
+      // script cannot grow the ledger by retrying. Pending attempts are picked up where they were;
+      // paid ones make the retry idempotent (the event names the same attempt and dedupes, so the
+      // plan is never granted twice). The price is refreshed in case it changed.
+      const [open] = await db
+        .update(paymentCheckouts)
+        .set({
+          amountCents: price,
+          currency,
+          expiresAt: new Date(now.getTime() + CHECKOUT_DEFAULT_LIFETIME_HOURS * 60 * 60 * 1000),
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(paymentCheckouts.userId, userId),
+            eq(paymentCheckouts.tierId, tier.id),
+            eq(paymentCheckouts.interval, input.interval),
+            eq(paymentCheckouts.methodId, input.methodId),
+            inArray(paymentCheckouts.status, ['pending', 'paid']),
+            gt(paymentCheckouts.expiresAt, now),
+          ),
+        )
+        .returning();
+      if (open) return toWire(open);
+    }
 
-    const since = new Date(now.getTime() - 60 * 60 * 1000);
-    const [{ recent }] = await db
-      .select({ recent: count() })
-      .from(paymentCheckouts)
-      .where(and(eq(paymentCheckouts.userId, userId), gte(paymentCheckouts.createdAt, since)));
-    if (recent >= MAX_CHECKOUTS_PER_HOUR) {
-      throw new AppError(429, 'Too many payment attempts. Try again later.');
+    // A store purchase keeps no provider session open (the token is checked at the relay, which
+    // authenticates and verifies every call), so retrying one must not eat the hourly quota meant
+    // to cap provider sessions. One open attempt per person still holds: opening another closes the
+    // one before it below.
+    if (!isNative) {
+      const since = new Date(now.getTime() - 60 * 60 * 1000);
+      const [{ recent }] = await db
+        .select({ recent: count() })
+        .from(paymentCheckouts)
+        .where(and(eq(paymentCheckouts.userId, userId), gte(paymentCheckouts.createdAt, since)));
+      if (recent >= MAX_CHECKOUTS_PER_HOUR) {
+        throw new AppError(429, 'Too many payment attempts. Try again later.');
+      }
     }
 
     // One open attempt at a time: opening another closes the one before it.
@@ -157,6 +230,20 @@ export class CheckoutService {
       where: eq(users.id, userId),
       columns: { username: true },
     });
+    if (isNative) {
+      // The purchase happens in the app through the device's store: there is no provider page to
+      // open, so the attempt waits for the token relay instead of a provider checkout.
+      const [native] = await db
+        .update(paymentCheckouts)
+        .set({
+          action: sanitizeAction({ kind: 'none' }),
+          expiresAt: new Date(now.getTime() + CHECKOUT_DEFAULT_LIFETIME_HOURS * 60 * 60 * 1000),
+          updatedAt: new Date(),
+        })
+        .where(eq(paymentCheckouts.id, id))
+        .returning();
+      return toWire(native);
+    }
     let result: CheckoutResult;
     let action: PaymentAction;
     try {
@@ -198,6 +285,88 @@ export class CheckoutService {
       .where(eq(paymentCheckouts.id, id))
       .returning();
     return toWire(row);
+  }
+
+  /**
+   * Relays an in-app purchase: the app bought through the device's store and hands over the purchase
+   * token; the server checks the plan and the price itself, names the attempt, and asks the connector
+   * whether the token is real. The grant itself arrives as the connector's signed event (naming this
+   * attempt), exactly like a web payment - this only reads the plan after it.
+   */
+  async verifyStorePurchase(
+    userId: string,
+    input: PlayRelayRequest,
+    now = new Date(),
+  ): Promise<PlayRelayResponse> {
+    const plugin = requirePlugin();
+    if (!plugin.verifyPlayPurchase) {
+      throw new AppError(404, 'Store purchases are not enabled on this server.');
+    }
+    const tier = await db.query.tiers.findFirst({ where: eq(tiers.id, input.tierId) });
+    if (!tier || tier.isDeleted || !tier.isPublicForSale) {
+      throw new AppError(404, 'That plan is not for sale.');
+    }
+    const price = input.interval === 'yearly' ? tier.priceYearlyCents : tier.priceMonthlyCents;
+    if (!price || price <= 0) {
+      throw new AppError(400, `That plan is not sold ${input.interval}.`);
+    }
+    const expectedProduct =
+      input.interval === 'yearly' ? tier.playYearlyProductId : tier.playMonthlyProductId;
+    if (!expectedProduct || input.productId !== expectedProduct) {
+      throw new AppError(400, 'That store product does not sell this plan.');
+    }
+    const { currency } = await registrationSettingsService.getOrCreate();
+    const methods = await Promise.resolve(plugin.listMethods(currency)).catch(() => []);
+    const method = methods.find(
+      (candidate) =>
+        (candidate.flow ?? 'redirect') === 'native' && (candidate.store ?? 'play') === 'play',
+    );
+    if (!method) {
+      throw new AppError(400, 'That payment method is not available.');
+    }
+    if (!relayAllowed(userId, now.getTime())) {
+      throw new AppError(429, 'Too many store purchase checks. Try again later.');
+    }
+    await claimPurchaseToken(userId, input.purchaseToken, input.productId);
+    const checkout = await this.start(
+      userId,
+      { tierId: tier.id, interval: input.interval, methodId: method.id },
+      'en',
+      now,
+    );
+    let verification;
+    try {
+      verification = await plugin.verifyPlayPurchase({
+        userId,
+        packageName: input.packageName,
+        productId: input.productId,
+        purchaseToken: input.purchaseToken,
+        purchaseKind: 'subscription',
+        amountCents: price,
+        currency,
+        checkoutId: checkout.id,
+      });
+    } catch (error) {
+      logger.error('Payment plugin could not check a store purchase', error);
+      throw new AppError(502, 'Could not check the purchase. Try again later.');
+    }
+    if (!verification.active) {
+      await db
+        .update(paymentCheckouts)
+        .set({
+          status: 'failed',
+          failureReason: 'The store did not confirm this purchase.',
+          action: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(paymentCheckouts.id, checkout.id));
+      return { active: false, subscription: null };
+    }
+    const subscription = await subscriptionService.findByUser(userId);
+    return {
+      active: true,
+      subscription: subscription ? await subscriptionService.toWire(subscription, plugin) : null,
+    };
   }
 
   /** An attempt of the person's own, brought up to date: expired when its time passed, asked about at the provider if it can be. */

@@ -14,6 +14,7 @@ import {
   paymentCheckouts,
   paymentEvents,
   paymentSubscriptions,
+  playPurchaseClaims,
   tiers,
   users,
 } from '../../db/schema';
@@ -24,6 +25,7 @@ import { auditService } from '../AuditService';
 import { registrationSettingsService } from '../RegistrationSettingsService';
 import { clipDetail as clip, noteLedger, tierNameOf } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
+import { hashPurchaseToken } from './playPurchaseClaims';
 import { periodStartFor } from './periodConversion';
 
 type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;
@@ -265,6 +267,31 @@ export class SubscriptionService {
 
       switch (event.type) {
         case 'payment.succeeded': {
+          // The relay binds a store purchase token to the first account that relayed it; the
+          // check there races under true concurrency, so the application checks the owner again
+          // here, inside the same transaction that would grant. No claim (older data, other
+          // providers) means no binding to enforce.
+          if (subscriptionReference && userId) {
+            const claim = await tx.query.playPurchaseClaims.findFirst({
+              where: eq(
+                playPurchaseClaims.purchaseTokenHash,
+                hashPurchaseToken(subscriptionReference),
+              ),
+            });
+            if (claim && claim.userId !== userId) {
+              await noteLedger(tx, {
+                ...base,
+                kind: 'payment_succeeded',
+                userId,
+                tierName: checkout?.tierName ?? null,
+                amountCents: event.amountCents,
+                currency: event.currency,
+                providerReference: subscriptionReference,
+                detail: 'Refused: the purchase token belongs to another account.',
+              });
+              return 'unmatched';
+            }
+          }
           const tierId = checkout?.tierId ?? existing?.tierId;
           const interval = checkout?.interval ?? existing?.interval;
           if (!tierId || !interval) return 'unmatched';

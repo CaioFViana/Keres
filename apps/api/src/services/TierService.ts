@@ -1,5 +1,5 @@
 import type { PartialTier, TierCreateInput } from '@keres/shared';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, ne } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
 import { paymentSubscriptions, tiers, users } from '../db/schema';
@@ -20,6 +20,17 @@ export class TierNameAlreadyTakenError extends Error {
 }
 
 /** Refuses to delete a tier still in use, so users/config are not left pointing at a dead id. */
+/**
+ * Refuses a store product id another plan already uses: the relay maps a purchase token back to
+ * its plan by that id, so two plans sharing one would both accept the same purchase.
+ */
+export class TierPlayProductAlreadyUsedError extends Error {
+  constructor(productId: string) {
+    super(`Another tier already sells the store product "${productId}".`);
+    this.name = 'TierPlayProductAlreadyUsedError';
+  }
+}
+
 export class TierInUseError extends Error {
   constructor(reason: string) {
     super(`Cannot delete tier: ${reason}`);
@@ -52,6 +63,10 @@ export class TierService {
     if (existing) {
       throw new TierNameAlreadyTakenError();
     }
+    await this.rejectTakenPlayProducts(null, [
+      input.playMonthlyProductId,
+      input.playYearlyProductId,
+    ]);
     const [created] = await db
       .insert(tiers)
       .values({ id: ulid(), ...input })
@@ -73,6 +88,16 @@ export class TierService {
       if (nameTaken) {
         throw new TierNameAlreadyTakenError();
       }
+    }
+    if (patch.playMonthlyProductId !== undefined || patch.playYearlyProductId !== undefined) {
+      await this.rejectTakenPlayProducts(id, [
+        patch.playMonthlyProductId !== undefined
+          ? patch.playMonthlyProductId
+          : existing.playMonthlyProductId,
+        patch.playYearlyProductId !== undefined
+          ? patch.playYearlyProductId
+          : existing.playYearlyProductId,
+      ]);
     }
     const [updated] = await db
       .update(tiers)
@@ -123,6 +148,29 @@ export class TierService {
       .where(eq(tiers.id, id))
       .returning();
     return updated;
+  }
+
+  /**
+   * A store product id names its plan: it must not already sell another plan on any period.
+   * Deleted plans are out of the catalog, so their ids may be reused.
+   */
+  private async rejectTakenPlayProducts(
+    selfId: string | null,
+    candidates: (string | null | undefined)[],
+  ) {
+    const wanted = candidates.filter((candidate): candidate is string => !!candidate);
+    if (wanted.length === 0) return;
+    const others = await db.query.tiers.findMany({
+      where: and(eq(tiers.isDeleted, false), selfId ? ne(tiers.id, selfId) : undefined),
+      columns: { playMonthlyProductId: true, playYearlyProductId: true },
+    });
+    const taken = new Set(
+      others.flatMap((other) => [other.playMonthlyProductId, other.playYearlyProductId]),
+    );
+    const clash = wanted.find((productId) => taken.has(productId));
+    if (clash) {
+      throw new TierPlayProductAlreadyUsedError(clash);
+    }
   }
 }
 

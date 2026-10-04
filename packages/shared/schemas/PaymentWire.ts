@@ -54,6 +54,12 @@ export interface PaymentsInfo {
   subscription: Subscription | null;
 }
 
+/** `POST /api/payments/play/verify` answer: whether the token checked out, and the plan after it. */
+export interface PlayRelayResponse {
+  active: boolean;
+  subscription: Subscription | null;
+}
+
 /** An attempt to pay for a plan. */
 export interface Checkout {
   id: string;

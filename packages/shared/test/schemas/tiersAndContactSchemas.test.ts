@@ -38,6 +38,29 @@ describe('public tier and contact contracts', () => {
     }
   });
 
+  it('takes the store product ids selling a tier, and refuses a malformed one', () => {
+    expect(
+      TierCreateInputSchema.parse({ name: 'T', playMonthlyProductId: 'plus_monthly' }),
+    ).toMatchObject({ playMonthlyProductId: 'plus_monthly' });
+    expect(
+      TierCreateInputSchema.safeParse({ name: 'T', playMonthlyProductId: 'Plus Monthly!' }).success,
+    ).toBe(false);
+    expect(PartialTierSchema.parse({ playYearlyProductId: null })).toMatchObject({
+      playYearlyProductId: null,
+    });
+  });
+
+  it('sells on the web unless the tier says otherwise', () => {
+    expect(TierCreateInputSchema.parse({ name: 'T' })).toMatchObject({
+      webMonthlyEnabled: true,
+      webYearlyEnabled: true,
+    });
+    expect(TierCreateInputSchema.parse({ name: 'T', webMonthlyEnabled: false })).toMatchObject({
+      webMonthlyEnabled: false,
+      webYearlyEnabled: true,
+    });
+  });
+
   it('exposes the public tiers payload the landing page consumes', () => {
     const parsed = PublicTiersResponseSchema.parse({
       currency: 'BRL',
@@ -54,6 +77,10 @@ describe('public tier and contact contracts', () => {
           maxStorageBytesPerStory: null,
           maxStorageBytesTotal: null,
           maxPublicationsPerDay: 0,
+          playMonthlyProductId: null,
+          playYearlyProductId: null,
+          webMonthlyEnabled: true,
+          webYearlyEnabled: true,
         },
       ],
     });

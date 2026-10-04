@@ -114,3 +114,19 @@ export const paymentEvents = table(
     index('payment_events_user_idx').on(table.userId, table.createdAt),
   ],
 );
+
+/**
+ * Who first relayed a store purchase token. Possession of the token alone is enough to relay
+ * it, so the first account to do so owns it here and any other account is refused. Only the
+ * hash is kept, never the token itself.
+ */
+export const playPurchaseClaims = table(
+  'play_purchase_claims',
+  {
+    purchaseTokenHash: text('purchase_token_hash').primaryKey(),
+    userId: text('user_id').notNull(),
+    productId: text('product_id').notNull(),
+    createdAt: timestampNow('created_at'),
+  },
+  (table) => [index('play_purchase_claims_user_idx').on(table.userId, table.createdAt)],
+);

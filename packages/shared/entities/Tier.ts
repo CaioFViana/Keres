@@ -16,6 +16,12 @@ export interface Tier {
   priceMonthlyCents: number | null;
   /** Yearly price in the system's currency minor units (`null` = not priced yearly). */
   priceYearlyCents: number | null;
+  /** Google Play subscription product ids selling this tier (`null` = not sold in the store). */
+  playMonthlyProductId: string | null;
+  playYearlyProductId: string | null;
+  /** Whether web checkouts sell this tier on each period. */
+  webMonthlyEnabled: boolean;
+  webYearlyEnabled: boolean;
   /** Listed on the public landing page as available for sale. */
   isPublicForSale: boolean;
   /** Display order on the public landing page (ascending). */

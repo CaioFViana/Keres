@@ -5,6 +5,8 @@ import type {
   PaymentConnector,
   PaymentEvent,
   PaymentMethodOption,
+  PlayVerifyRequest,
+  PlayVerifyResponse,
 } from '@keres/shared/payments/PaymentConnector';
 import { vi } from 'vitest';
 
@@ -23,6 +25,8 @@ export interface FakeConnectorOptions {
   withStatusPolling?: boolean;
   withCancel?: boolean;
   withDueHook?: boolean;
+  /** Answers `verifyPlayPurchase` like the service would (including reporting the event). */
+  verifyPlay?: (request: PlayVerifyRequest) => Promise<PlayVerifyResponse> | PlayVerifyResponse;
 }
 
 export function createFakePaymentConnector(options: FakeConnectorOptions = {}) {
@@ -62,6 +66,18 @@ export function createFakePaymentConnector(options: FakeConnectorOptions = {}) {
   if (options.withCancel) connector.cancelSubscription = cancelSubscription;
   if (options.withDueHook) connector.onSubscriptionDue = onSubscriptionDue;
   if (options.withStatusPolling) connector.getCheckoutStatus = getCheckoutStatus;
+  const verifyPlayPurchase = vi.fn(
+    async (request: PlayVerifyRequest) => options.verifyPlay?.(request) ?? { active: false },
+  );
+  if (options.verifyPlay) connector.verifyPlayPurchase = verifyPlayPurchase;
 
-  return { connector, requests, state, cancelSubscription, onSubscriptionDue, getCheckoutStatus };
+  return {
+    connector,
+    requests,
+    state,
+    cancelSubscription,
+    onSubscriptionDue,
+    getCheckoutStatus,
+    verifyPlayPurchase,
+  };
 }

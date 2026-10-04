@@ -1015,4 +1015,65 @@ describe('tiers page', () => {
     expect(card.textContent).toContain('For sale');
     await view.unmount();
   });
+
+  it('shows the store products on the card and saves them from the form', async () => {
+    mocks.listTiers.mockResolvedValue([
+      tier({ playMonthlyProductId: 'plus_monthly', playYearlyProductId: null }),
+    ]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    const card = view.container.querySelector('.tier-card')!;
+    expect(card.textContent).toContain('plus_monthly');
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const labels = Array.from(view.container.querySelectorAll('.form-card label'));
+    const byText = (text: string) =>
+      labels.find((node) => node.textContent?.includes(text))!.querySelector('input')!;
+    await changeInput(view.container.querySelector('.form-card input')!, 'Pro');
+    await changeInput(byText('Play product (monthly)'), 'plus_monthly');
+    await changeInput(byText('Play product (yearly)'), 'plus_yearly');
+
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playMonthlyProductId: 'plus_monthly',
+        playYearlyProductId: 'plus_yearly',
+        webMonthlyEnabled: true,
+        webYearlyEnabled: true,
+      }),
+    );
+    await view.unmount();
+  });
+
+  it('sells a plan outside the web when the web sale is unticked', async () => {
+    mocks.listTiers.mockResolvedValue([tier({})]);
+    const view = await withProviders(<TiersPage />);
+    await flush();
+
+    await click(
+      Array.from(view.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'New tier',
+      )!,
+    );
+    const labels = Array.from(view.container.querySelectorAll('.form-card label'));
+    const webMonthly = labels
+      .find((node) => node.textContent?.includes('Web (monthly)'))!
+      .querySelector('input')!;
+    await click(webMonthly);
+
+    await submit(view.container.querySelector('.form-card')!);
+    await flush();
+
+    expect(mocks.createTier).toHaveBeenCalledWith(
+      expect.objectContaining({ webMonthlyEnabled: false, webYearlyEnabled: true }),
+    );
+    await view.unmount();
+  });
 });

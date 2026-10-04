@@ -10,6 +10,19 @@
     "responsibilityBody": "The stories here belong to the people who published them, and this server is run by whoever chose to run it. Keres, the application, is not affiliated with either, does not host or moderate these stories, and takes no position on them.",
     "serverVersion": "Server version {{version}}"
   },
+  "auth": {
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out",
+    "username": "Username",
+    "password": "Password",
+    "loginFailed": "Could not sign in.",
+    "signInHint": "A site account unlocks the adults-only shelf when it is age-verified. The session lives only in this tab.",
+    "unverified": "not verified"
+  },
+  "common": {
+    "cancel": "Cancel"
+  },
   "footer": {
     "disclaimer": "Keres is a writing companion for planning stories. It is not affiliated with the server hosting this page, nor with the stories published on it, and it does not endorse or moderate them. Every story here belongs to the person who published it."
   },
@@ -166,18 +179,5 @@
     "system": "Theme: System",
     "light": "Theme: Light",
     "dark": "Theme: Dark"
-  },
-  "auth": {
-    "signIn": "Sign in",
-    "signingIn": "Signing in…",
-    "signOut": "Sign out",
-    "username": "Username",
-    "password": "Password",
-    "loginFailed": "Could not sign in.",
-    "signInHint": "A site account unlocks the adults-only shelf when it is age-verified. The session lives only in this tab.",
-    "unverified": "not verified"
-  },
-  "common": {
-    "cancel": "Cancel"
   }
 }

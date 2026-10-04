@@ -247,6 +247,31 @@ describe('starting to pay', () => {
     expect(await db.select().from(paymentCheckouts)).toHaveLength(0);
   });
 
+  it('refuses a web checkout for a plan sold only outside the web', async () => {
+    const mobileId = newId();
+    await db.insert(tiers).values([
+      {
+        id: mobileId,
+        name: 'Mobile',
+        maxStories: 5,
+        priceMonthlyCents: 990,
+        playMonthlyProductId: 'mobile_monthly',
+        webMonthlyEnabled: false,
+        isPublicForSale: true,
+      },
+    ]);
+
+    const { status, data } = await checkout(ana, {
+      tierId: mobileId,
+      interval: 'monthly',
+      methodId: 'card',
+    });
+
+    expect(status).toBe(400);
+    expect(data.message).toBe('That plan is not sold on the web.');
+    expect(await db.select().from(paymentCheckouts)).toHaveLength(0);
+  });
+
   it('closes the attempt before when a new one is opened: one at a time', async () => {
     const first = await openCheckout(ana);
     const second = await openCheckout(ana);

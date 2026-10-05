@@ -21,6 +21,9 @@ interface OverlayInteractionLayerProps {
   onDrawRect: (start: SpatialPoint, end: SpatialPoint) => void;
   onPreviewRect: (rect: { start: SpatialPoint; end: SpatialPoint } | null) => void;
   onSelectOverlay: (id: string | null) => void;
+  /** Freehand (sketches): drag collects world points, release commits the stroke. */
+  onPreviewFreehand?: (points: SpatialPoint[] | null) => void;
+  onFreehandCommit?: (points: SpatialPoint[]) => void;
 }
 
 /** A press that barely moves is a tap; anything else is a rect drag. In screen pixels. */
@@ -45,9 +48,12 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
   onDrawRect,
   onPreviewRect,
   onSelectOverlay,
+  onPreviewFreehand,
+  onFreehandCommit,
 }) => {
   const startScreen = useRef({ x: 0, y: 0 });
   const startWorld = useRef<SpatialPoint>({ x: 0, y: 0 });
+  const freehandWorld = useRef<SpatialPoint[]>([]);
   const callbacks = useRef({
     screenToWorld,
     onDrawTap,
@@ -55,10 +61,14 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
     onDrawRect,
     onPreviewRect,
     onSelectOverlay,
+    onPreviewFreehand,
+    onFreehandCommit,
   });
+  const live = useRef({ mode, overlays, scale, snapTargets });
   useEffect(() => {
     // Latest-ref sync for the responder below: every reader runs on gestures, after effects
     // have flushed. No dependency array - the sync unconditionally followed every render.
+    live.current = { mode, overlays, scale, snapTargets };
     callbacks.current = {
       screenToWorld,
       onDrawTap,
@@ -66,7 +76,14 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
       onDrawRect,
       onPreviewRect,
       onSelectOverlay,
+      onPreviewFreehand,
+      onFreehandCommit,
     };
+    // The responder below is created once (see its empty dependency array): values it
+    // reads live behind the `live` ref instead, so a re-render mid-gesture never resets
+    // the accumulated gestureState. Recreating it per render pins web drags near the
+    // press point, because react-native-web recomputes dx/dy from a fresh accumulator
+    // on each new responder config.
   });
 
   const responder = useMemo(
@@ -79,9 +96,30 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
           const at = { x: event.nativeEvent.locationX, y: event.nativeEvent.locationY };
           startScreen.current = at;
           startWorld.current = callbacks.current.screenToWorld(at);
+          freehandWorld.current =
+            live.current.mode.kind === 'draw' && live.current.mode.tool === 'freehand'
+              ? [startWorld.current]
+              : [];
         },
         onPanResponderMove: (event, gesture) => {
-          if (mode.kind !== 'draw' || !isRectDrawTool(mode.tool)) return;
+          if (live.current.mode.kind !== 'draw') return;
+          if (live.current.mode.tool === 'freehand') {
+            const at = {
+              x: startScreen.current.x + gesture.dx,
+              y: startScreen.current.y + gesture.dy,
+            };
+            const world = callbacks.current.screenToWorld(at);
+            const collected = freehandWorld.current;
+            const last = collected[collected.length - 1];
+            // One point per world unit: the commit simplifies anyway, this only bounds the
+            // preview array on long drags.
+            if (!last || Math.hypot(world.x - last.x, world.y - last.y) >= 1) {
+              collected.push(world);
+              callbacks.current.onPreviewFreehand?.([...collected]);
+            }
+            return;
+          }
+          if (!isRectDrawTool(live.current.mode.tool)) return;
           const at = {
             x: startScreen.current.x + gesture.dx,
             y: startScreen.current.y + gesture.dy,
@@ -93,30 +131,44 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
         },
         onPanResponderRelease: (event, gesture) => {
           const moved = Math.hypot(gesture.dx, gesture.dy);
-          const safeScale = scale === 0 ? 1 : scale;
+          const safeScale = live.current.scale === 0 ? 1 : live.current.scale;
           if (moved < TAP_SLOP) {
             callbacks.current.onPreviewRect(null);
             const world = callbacks.current.screenToWorld({
               x: event.nativeEvent.locationX,
               y: event.nativeEvent.locationY,
             });
-            if (mode.kind === 'select') {
-              const hit = hitTestCanvasOverlay(world, overlays ?? [], HIT_SCREEN / safeScale);
+            if (live.current.mode.kind === 'select') {
+              const hit = hitTestCanvasOverlay(
+                world,
+                live.current.overlays ?? [],
+                HIT_SCREEN / safeScale,
+              );
               callbacks.current.onSelectOverlay(hit?.id ?? null);
               return;
             }
-            if (mode.tool === 'stamp') {
+            if (live.current.mode.tool === 'stamp') {
               callbacks.current.onStampPlace(world);
               return;
             }
-            if (!isRectDrawTool(mode.tool)) {
+            // A freehand tap seeds nothing: the pen draws drags, never tap vertices. Letting
+            // taps through would start line-style vertex drafts under the stroke tool.
+            if (live.current.mode.tool === 'freehand') return;
+            if (!isRectDrawTool(live.current.mode.tool)) {
               callbacks.current.onDrawTap(
-                snapPointToTargets(world, snapTargets, SNAP_SCREEN / safeScale),
+                snapPointToTargets(world, live.current.snapTargets, SNAP_SCREEN / safeScale),
               );
             }
             return;
           }
-          if (mode.kind === 'draw' && isRectDrawTool(mode.tool)) {
+          if (live.current.mode.kind === 'draw' && live.current.mode.tool === 'freehand') {
+            const collected = freehandWorld.current;
+            freehandWorld.current = [];
+            callbacks.current.onPreviewFreehand?.(null);
+            if (collected.length > 0) callbacks.current.onFreehandCommit?.(collected);
+            return;
+          }
+          if (live.current.mode.kind === 'draw' && isRectDrawTool(live.current.mode.tool)) {
             const end = callbacks.current.screenToWorld({
               x: startScreen.current.x + gesture.dx,
               y: startScreen.current.y + gesture.dy,
@@ -127,9 +179,15 @@ const OverlayInteractionLayer: React.FC<OverlayInteractionLayerProps> = ({
           }
           callbacks.current.onPreviewRect(null);
         },
-        onPanResponderTerminate: () => callbacks.current.onPreviewRect(null),
+        onPanResponderTerminate: () => {
+          freehandWorld.current = [];
+          callbacks.current.onPreviewFreehand?.(null);
+          callbacks.current.onPreviewRect(null);
+        },
       }),
-    [mode, overlays, scale, snapTargets],
+    // Created once: every value above is read through refs, so preview setStates (one per
+    // mousemove) never swap the responder mid-gesture. See the `live` ref above.
+    [],
   );
 
   return (

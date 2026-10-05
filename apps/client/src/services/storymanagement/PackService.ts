@@ -64,6 +64,7 @@ export interface PackContentCounts {
     worldRules: number;
     notes: number;
     storyBoards: number;
+    storySketches: number;
     storyLocationMaps: number;
   };
 }
@@ -158,6 +159,7 @@ export function countPackContent(content: PackContentType): PackContentCounts {
       worldRules: extras.worldRules.length,
       notes: extras.notes.length,
       storyBoards: extras.storyBoards.length,
+      storySketches: extras.storySketches.length,
       storyLocationMaps: extras.storyLocationMaps.length,
     },
   };
@@ -181,6 +183,7 @@ const EMPTY_EXTRAS: PackContentType['extras'] = {
   worldRules: [],
   notes: [],
   storyBoards: [],
+  storySketches: [],
   storyLocationMaps: [],
   characterScenes: [],
   characterRelations: [],
@@ -384,6 +387,7 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
     const worldRules = await liveRows<Extras['worldRules'][number]>(schema.worldRules);
     const notes = await liveRows<Extras['notes'][number]>(schema.notes);
     const storyBoards = await liveRows<Extras['storyBoards'][number]>(schema.boards);
+    const storySketches = await liveRows<Extras['storySketches'][number]>(schema.sketches);
     const storyLocationMaps = await liveRows<Extras['storyLocationMaps'][number]>(
       schema.locationMaps,
     );
@@ -450,6 +454,8 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       worldRules,
       notes,
       storyBoards,
+      // Packs carry no gallery media: a sketch's snapshot cover cannot follow, so it clears.
+      storySketches: storySketches.map((row) => ({ ...row, coverGalleryId: null })),
       storyLocationMaps: storyLocationMaps.map((row) => ({
         ...row,
         content: {

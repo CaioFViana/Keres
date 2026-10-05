@@ -1,10 +1,12 @@
 import {
+  CANVAS_OVERLAY_TEXT_DEFAULT_WIDTH,
   MAX_CANVAS_OVERLAY_POINTS,
   type CanvasOverlayType,
   type SpatialPoint,
 } from '@keres/shared';
 import {
   canvasOverlayPresetPoints,
+  simplifyStrokePoints,
   type CanvasOverlayPreset,
 } from '@keres/shared/graphs/canvasOverlayGeometry';
 import { useCallback, useMemo, useState } from 'react';
@@ -21,12 +23,19 @@ import { clampCanvasWorldCoordinate } from '../utils/canvasDragBounds';
 const MIN_RECT_WORLD = 8;
 /** The icon a fresh stamp carries until its sheet picks another. */
 const DEFAULT_STAMP_ICON = 'flag';
+/** A freehand tap (no drag) commits nothing: a dot is a stamp's job. */
+const MIN_FREEHAND_WORLD = 4;
 
 interface UseCanvasOverlayActionsOptions<TContent extends { overlays?: CanvasOverlayType[] }> {
   setContent: Dispatch<SetStateAction<TContent>>;
   generateOverlayId: () => string;
   /** Boards add notes through the pill; maps keep their marker button, so this stays unset. */
   onAddNote?: () => void;
+  /**
+   * Sketch layer new overlays land on; undefined means the implicit base layer.
+   * Boards and maps pass nothing.
+   */
+  activeLayerId?: string | null;
 }
 
 /**
@@ -38,7 +47,9 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
   setContent,
   generateOverlayId,
   onAddNote,
+  activeLayerId,
 }: UseCanvasOverlayActionsOptions<TContent>) {
+  const layerTag = activeLayerId ?? undefined;
   const [drawTool, setDrawTool] = useState<OverlayDrawTool | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
@@ -106,16 +117,17 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     if (drawTool !== 'line' && drawTool !== 'polygon') return;
     if (drawTool === 'line' && draftPoints.length < 2) return;
     if (drawTool === 'polygon' && draftPoints.length < 3) return;
-    const overlay: CanvasOverlayType =
+    const base =
       drawTool === 'line'
-        ? { id: generateOverlayId(), kind: 'line', points: draftPoints }
-        : { id: generateOverlayId(), kind: 'polygon', points: draftPoints };
+        ? { id: generateOverlayId(), kind: 'line' as const, points: draftPoints }
+        : { id: generateOverlayId(), kind: 'polygon' as const, points: draftPoints };
+    const overlay: CanvasOverlayType = layerTag ? { ...base, layerId: layerTag } : base;
     patchOverlays((overlays) => [...overlays, overlay]);
     setSelectedOverlayId(overlay.id);
     setSheetOverlayId(overlay.id);
     setDrawTool(null);
     setDraftPoints([]);
-  }, [draftPoints, drawTool, generateOverlayId, patchOverlays]);
+  }, [draftPoints, drawTool, generateOverlayId, layerTag, patchOverlays]);
 
   const commitRectDraw = useCallback(
     (tool: OverlayDrawTool, start: SpatialPoint, end: SpatialPoint) => {
@@ -125,7 +137,7 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
       const width = Math.abs(end.x - start.x);
       const height = Math.abs(end.y - start.y);
       if (width < MIN_RECT_WORLD || height < MIN_RECT_WORLD) return;
-      const overlay: CanvasOverlayType = isPresetDrawTool(tool)
+      const base: CanvasOverlayType = isPresetDrawTool(tool)
         ? {
             id: generateOverlayId(),
             kind: 'polygon',
@@ -147,12 +159,13 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
               width,
               height,
             };
+      const overlay: CanvasOverlayType = layerTag ? { ...base, layerId: layerTag } : base;
       patchOverlays((overlays) => [...overlays, overlay]);
       setSelectedOverlayId(overlay.id);
       setSheetOverlayId(overlay.id);
       setDrawTool(null);
     },
-    [generateOverlayId, patchOverlays],
+    [generateOverlayId, layerTag, patchOverlays],
   );
 
   const handleObjectsAction = useCallback(
@@ -213,19 +226,67 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
 
   const placeStamp = useCallback(
     (point: SpatialPoint) => {
-      const overlay: CanvasOverlayType = {
+      const base: CanvasOverlayType = {
         id: generateOverlayId(),
         kind: 'stamp',
         x: clampCanvasWorldCoordinate(point.x),
         y: clampCanvasWorldCoordinate(point.y),
         icon: DEFAULT_STAMP_ICON,
       };
+      const overlay: CanvasOverlayType = layerTag ? { ...base, layerId: layerTag } : base;
       patchOverlays((overlays) => [...overlays, overlay]);
       setSelectedOverlayId(overlay.id);
       setSheetOverlayId(overlay.id);
       setDrawTool(null);
     },
-    [generateOverlayId, patchOverlays],
+    [generateOverlayId, layerTag, patchOverlays],
+  );
+
+  const commitFreehand = useCallback(
+    (rawPoints: readonly SpatialPoint[]) => {
+      const clamped = rawPoints.map((point) => ({
+        x: clampCanvasWorldCoordinate(point.x),
+        y: clampCanvasWorldCoordinate(point.y),
+      }));
+      const first = clamped[0];
+      const last = clamped[clamped.length - 1];
+      if (!first || !last) return;
+      const span = Math.hypot(last.x - first.x, last.y - first.y);
+      if (span < MIN_FREEHAND_WORLD) return;
+      let points = simplifyStrokePoints(clamped);
+      if (points.length > MAX_CANVAS_OVERLAY_POINTS) {
+        const stride = Math.ceil(points.length / MAX_CANVAS_OVERLAY_POINTS);
+        points = points.filter((_, index) => index % stride === 0);
+        points[points.length - 1] = last;
+      }
+      if (points.length < 2) return;
+      const base: CanvasOverlayType = { id: generateOverlayId(), kind: 'line', points };
+      const overlay: CanvasOverlayType = layerTag ? { ...base, layerId: layerTag } : base;
+      patchOverlays((overlays) => [...overlays, overlay]);
+      setSelectedOverlayId(overlay.id);
+      setDrawTool(null);
+    },
+    [generateOverlayId, layerTag, patchOverlays],
+  );
+
+  const placeText = useCallback(
+    (point: SpatialPoint) => {
+      // Empty content opens the sheet immediately: the caption is typed, not drawn.
+      const base: CanvasOverlayType = {
+        id: generateOverlayId(),
+        kind: 'text',
+        x: clampCanvasWorldCoordinate(point.x),
+        y: clampCanvasWorldCoordinate(point.y),
+        width: CANVAS_OVERLAY_TEXT_DEFAULT_WIDTH,
+        content: '',
+      };
+      const overlay: CanvasOverlayType = layerTag ? { ...base, layerId: layerTag } : base;
+      patchOverlays((overlays) => [...overlays, overlay]);
+      setSelectedOverlayId(overlay.id);
+      setSheetOverlayId(overlay.id);
+      setDrawTool(null);
+    },
+    [generateOverlayId, layerTag, patchOverlays],
   );
 
   const toggleOverlayLock = useCallback(
@@ -248,6 +309,10 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
         icon?: string;
         dashed?: boolean;
         filled?: boolean;
+        content?: string;
+        fontSize?: number;
+        align?: 'left' | 'center';
+        width?: number;
       },
     ) => {
       patchOverlays((overlays) =>
@@ -377,6 +442,9 @@ export function useCanvasOverlayActions<TContent extends { overlays?: CanvasOver
     addDraftPoint,
     finishDraft,
     commitRectDraw,
+    commitFreehand,
+    placeText,
+    placeStamp,
     updateOverlay,
     deleteOverlay,
     commitMove,

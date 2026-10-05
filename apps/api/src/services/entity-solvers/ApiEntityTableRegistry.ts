@@ -11,6 +11,7 @@ type ApiEntityTable = ApplicationTable;
 export const API_ENTITY_TABLES = {
   [OperationLogEntityType.AttributeValue]: schema.attributeValues,
   [OperationLogEntityType.Board]: schema.boards,
+  [OperationLogEntityType.Sketch]: schema.sketches,
   [OperationLogEntityType.Chapter]: schema.chapters,
   [OperationLogEntityType.ChapterAnchor]: schema.chapterAnchors,
   [OperationLogEntityType.Character]: schema.characters,

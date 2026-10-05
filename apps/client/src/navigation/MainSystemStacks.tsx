@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useBackButtonHandler } from '../hooks/useBackButtonHandler';
 import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
 import BoardListScreen from '../screens/boards/BoardListScreen';
+import SketchCanvasScreen from '../screens/sketches/SketchCanvasScreen';
+import SketchListScreen from '../screens/sketches/SketchListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import type { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
@@ -312,6 +314,25 @@ export const BoardsStackNavigator = () => {
       <BoardsStack.Screen name="BoardList" component={BoardListScreen} />
       <BoardsStack.Screen name="BoardCanvas" component={BoardCanvasScreen} />
     </BoardsStack.Navigator>
+  );
+};
+//#endregion
+//#region Sketches
+
+const SketchStack = createNativeStackNavigator<SketchStackParamList>();
+
+export type SketchStackParamList = {
+  SketchList: undefined;
+  SketchCanvas: { sketchId: string };
+};
+
+export const SketchStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <SketchStack.Navigator screenOptions={{ headerShown: false }}>
+      <SketchStack.Screen name="SketchList" component={SketchListScreen} />
+      <SketchStack.Screen name="SketchCanvas" component={SketchCanvasScreen} />
+    </SketchStack.Navigator>
   );
 };
 //#endregion

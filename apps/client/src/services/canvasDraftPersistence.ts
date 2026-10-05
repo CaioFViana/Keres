@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type CanvasDraftKind = 'board' | 'location-map';
+export type CanvasDraftKind = 'board' | 'location-map' | 'sketch';
 
 const KEY_PREFIX = 'keres:canvas-draft:';
 

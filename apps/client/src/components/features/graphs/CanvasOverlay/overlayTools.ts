@@ -12,6 +12,8 @@ export type OverlayDrawTool =
   | 'rect'
   | 'ellipse'
   | 'stamp'
+  | 'freehand'
+  | 'text'
   | `preset:${CanvasOverlayPreset}`;
 
 export type OverlayInteractionMode =

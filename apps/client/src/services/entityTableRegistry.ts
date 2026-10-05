@@ -12,6 +12,7 @@ import * as schema from '../db/schema';
 export const ENTITY_TABLES = {
   AttributeValue: schema.attributeValues,
   Board: schema.boards,
+  Sketch: schema.sketches,
   Chapter: schema.chapters,
   Character: schema.characters,
   ChapterAnchor: schema.chapterAnchors,

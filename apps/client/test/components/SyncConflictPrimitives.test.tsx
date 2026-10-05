@@ -105,6 +105,7 @@ const summary = (overrides: Partial<ConflictSummary> = {}): ConflictSummary => (
   canQuickResolve: true,
   canKeepMine: true,
   offerBoardClone: false,
+  offerSketchClone: false,
   diffFields: [],
   ...overrides,
 });

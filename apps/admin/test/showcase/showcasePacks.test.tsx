@@ -60,6 +60,7 @@ const noExtras: PackContentType['extras'] = {
   worldRules: [],
   notes: [],
   storyBoards: [],
+  storySketches: [],
   storyLocationMaps: [],
   characterScenes: [],
   characterRelations: [],

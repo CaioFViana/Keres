@@ -66,6 +66,7 @@ import {
   NoteStackNavigator,
   OperationLogStackNavigator,
   PlotsStackNavigator,
+  SketchStackNavigator,
   StoryAnalysisStackNavigator,
   TagStackNavigator,
   WorldRuleStackNavigator,
@@ -80,6 +81,7 @@ import {
   type NotesStackParamList,
   type OperationLogStackParamList,
   type PlotsStackParamList,
+  type SketchStackParamList,
   type StoryAnalysisStackParamList,
   type TagsStackParamList,
   type WorldRulesStackParamList,
@@ -98,6 +100,7 @@ export type {
   NotesStackParamList,
   OperationLogStackParamList,
   PlotsStackParamList,
+  SketchStackParamList,
   StoryAnalysisStackParamList,
   TagsStackParamList,
   WorldRulesStackParamList,
@@ -120,6 +123,7 @@ export type MainSystemDrawerParamList = {
   NotesStack: NavigatorScreenParams<NotesStackParamList> | undefined;
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
   BoardsStack: NavigatorScreenParams<BoardStackParamList> | undefined;
+  SketchStack: NavigatorScreenParams<SketchStackParamList> | undefined;
   Settings: undefined;
   // Optional on purpose: the dashboard passes the story explicitly, but arriving straight
   // from the drawer navigates with no param at all (both screens read `selectedStory`).
@@ -430,6 +434,21 @@ const MainSystemNavigator = () => {
             ),
           }}
           listeners={drawerItemListeners('BoardsStack', 'BoardList')}
+        />
+        <Drawer.Screen
+          name="SketchStack"
+          component={SketchStackNavigator}
+          options={{
+            title: t('sketches_title'),
+            drawerLabel: t('sketches_title'),
+            drawerIcon: drawerIcon(
+              getEntityAppearance('Sketch').icon as keyof typeof Ionicons.glyphMap,
+            ),
+            // Sketches live inside Gallery (header pencil button), not in the drawer menu:
+            // the route stays registered so Gallery can navigate to it.
+            drawerItemStyle: { height: 0, overflow: 'hidden' },
+          }}
+          listeners={drawerItemListeners('SketchStack', 'SketchList')}
         />
         <Drawer.Screen
           name="CustomizationStack"

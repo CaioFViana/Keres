@@ -19,6 +19,7 @@ export function packExtrasChips(counts: PackContentCounts, t: Translate): string
     extras.worldRules > 0 && t('packs_chip_worldrules', { count: extras.worldRules }),
     extras.notes > 0 && t('packs_chip_notes', { count: extras.notes }),
     extras.storyBoards > 0 && t('packs_chip_boards', { count: extras.storyBoards }),
+    extras.storySketches > 0 && t('packs_chip_sketches', { count: extras.storySketches }),
     extras.storyLocationMaps > 0 && t('packs_chip_maps', { count: extras.storyLocationMaps }),
   ].filter((chip): chip is string => Boolean(chip));
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BoardSchema } from './BoardSchemas';
+import { SketchSchema } from './SketchSchemas';
 import { ChapterSchema } from './ChapterSchemas';
 import { CharacterRelationSchema } from './CharacterRelationSchemas';
 import { CharacterSceneSchema } from './CharacterSceneSchemas';
@@ -71,6 +72,7 @@ export const PackExtrasSchema = z.object({
   worldRules: z.array(WorldRuleSchema).default([]),
   notes: z.array(NoteSchema).default([]),
   storyBoards: z.array(BoardSchema).default([]),
+  storySketches: z.array(SketchSchema).default([]),
   storyLocationMaps: z.array(LocationMapSchema).default([]),
   characterScenes: z.array(CharacterSceneSchema).default([]),
   characterRelations: z.array(CharacterRelationSchema).default([]),
@@ -120,6 +122,7 @@ export const PackContentSchema = z
       worldRules: [],
       notes: [],
       storyBoards: [],
+      storySketches: [],
       storyLocationMaps: [],
       characterScenes: [],
       characterRelations: [],
@@ -351,6 +354,7 @@ export function summarizePackContent(content: PackContentType): PackContentSumma
     worldRules: [],
     notes: [],
     storyBoards: [],
+    storySketches: [],
     storyLocationMaps: [],
   };
   return {

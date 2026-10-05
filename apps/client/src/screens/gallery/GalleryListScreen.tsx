@@ -168,10 +168,21 @@ const GalleryListScreen = () => {
     });
   }, [importFromPicker, t]);
 
+  const handleOpenSketches = useCallback(() => {
+    navigation.navigate('SketchStack', { screen: 'SketchList' });
+  }, [navigation]);
+
   useScreenHeader({
     target: 'parent',
     title: t('gallery_title'),
     actions: [
+      {
+        id: 'sketches',
+        icon: 'brush-outline',
+        label: t('sketches_title'),
+        onPress: handleOpenSketches,
+        visible: true,
+      },
       {
         id: 'add',
         icon: 'add',

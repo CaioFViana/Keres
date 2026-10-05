@@ -81,6 +81,7 @@ function previewOf(slug: string, language: string, pack: unknown): ShippedPackPr
         worldRules?: unknown;
         notes?: unknown;
         storyBoards?: unknown;
+        storySketches?: unknown;
         storyLocationMaps?: unknown;
       };
     };
@@ -112,6 +113,7 @@ function previewOf(slug: string, language: string, pack: unknown): ShippedPackPr
         worldRules: countOf(extras?.worldRules),
         notes: countOf(extras?.notes),
         storyBoards: countOf(extras?.storyBoards),
+        storySketches: countOf(extras?.storySketches),
         storyLocationMaps: countOf(extras?.storyLocationMaps),
       },
     },

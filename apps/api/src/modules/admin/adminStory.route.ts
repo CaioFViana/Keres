@@ -143,6 +143,22 @@ export const adminStoryRoutes = new Elysia()
   )
 
   .get(
+    '/:id/sketches',
+    async ({ params, user }) => {
+      await requireAdmin(user);
+      return adminStoryService.sketches(params.id);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      detail: {
+        summary: 'List the sketches of a story with a moderation summary of each drawing',
+        tags: ['Admin'],
+        security,
+      },
+    },
+  )
+
+  .get(
     '/:id/location-maps',
     async ({ params, user }) => {
       await requireAdmin(user);

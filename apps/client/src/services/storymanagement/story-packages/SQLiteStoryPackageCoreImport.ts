@@ -26,6 +26,7 @@ import {
   locations,
   notes,
   scenes,
+  sketches,
   stories,
   storyArcs,
   storyCalendars,
@@ -294,6 +295,22 @@ export async function importStoryPackageCore(
         createdAt: new Date(map.createdAt),
         updatedAt: new Date(),
         version: map.version,
+        isDeleted: false,
+        deletedAt: null,
+      })
+      .run();
+  }
+  // Sketch cover links have already been remapped for local clones; snapshots the pack
+  // does not carry clear the cover instead of pointing at a stranger's row.
+  for (const sketch of fullStory.storySketches ?? []) {
+    await tx
+      .insert(sketches)
+      .values({
+        ...sketch,
+        storyId: sketch.storyId,
+        createdAt: new Date(sketch.createdAt),
+        updatedAt: new Date(),
+        version: sketch.version,
         isDeleted: false,
         deletedAt: null,
       })

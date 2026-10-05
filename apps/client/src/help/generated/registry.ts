@@ -99,6 +99,8 @@ import scenes_en from '../content/scenes/en';
 import scenes_pt from '../content/scenes/pt';
 import seeAlso_en from '../content/see-also/en';
 import seeAlso_pt from '../content/see-also/pt';
+import sketch_en from '../content/sketch/en';
+import sketch_pt from '../content/sketch/pt';
 import stats_en from '../content/stats/en';
 import stats_pt from '../content/stats/pt';
 import storyAnalysis_en from '../content/story-analysis/en';
@@ -192,6 +194,7 @@ export type GeneratedHelpPageId =
   | 'scene-timing'
   | 'scenes'
   | 'see-also'
+  | 'sketch'
   | 'stats'
   | 'story-analysis'
   | 'story-dashboard'
@@ -410,6 +413,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   'see-also': {
     en: seeAlso_en,
     pt: seeAlso_pt,
+  },
+  sketch: {
+    en: sketch_en,
+    pt: sketch_pt,
   },
   stats: {
     en: stats_en,

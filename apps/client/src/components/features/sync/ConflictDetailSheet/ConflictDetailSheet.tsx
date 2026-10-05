@@ -16,6 +16,7 @@ interface ConflictDetailSheetProps {
   onKeepMine: () => void;
   onKeepServer: () => void;
   onCloneBoard?: () => void;
+  onCloneSketch?: () => void;
   onCompareFields?: () => void;
 }
 
@@ -73,6 +74,7 @@ const ConflictDetailSheet: React.FC<ConflictDetailSheetProps> = ({
   onKeepMine,
   onKeepServer,
   onCloneBoard,
+  onCloneSketch,
   onCompareFields,
 }) => {
   const { t } = useTranslation();
@@ -153,6 +155,15 @@ const ConflictDetailSheet: React.FC<ConflictDetailSheetProps> = ({
           onPress={onKeepServer}
           disabled={isResolving}
         />
+        {summary.offerSketchClone && onCloneSketch && (
+          <ConflictAction
+            icon="copy-outline"
+            title={t('conflict_clone_sketch')}
+            description={t('conflict_clone_sketch_description')}
+            onPress={onCloneSketch}
+            disabled={isResolving}
+          />
+        )}
         {summary.offerBoardClone && onCloneBoard && (
           <ConflictAction
             icon="copy-outline"

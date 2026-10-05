@@ -12,6 +12,7 @@ export enum OperationLogEntityType {
   StoryArc = 'StoryArc',
   Board = 'Board',
   LocationMap = 'LocationMap',
+  Sketch = 'Sketch',
   Scene = 'Scene',
   Choice = 'Choice',
   Gallery = 'Gallery',

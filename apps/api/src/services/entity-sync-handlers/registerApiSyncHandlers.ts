@@ -2,6 +2,7 @@ import { assertStorySyncHandlerCoverage } from '@keres/shared';
 import { AttributeValueSyncHandler } from './AttributeValueSyncHandler';
 import type { SyncEntityHandler } from './BaseSyncEntityHandler';
 import { BoardSyncHandler } from './BoardSyncHandler';
+import { SketchSyncHandler } from './SketchSyncHandler';
 import { ChapterAnchorSyncHandler } from './ChapterAnchorSyncHandler';
 import { ChapterSyncHandler } from './ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './CharacterRelationSyncHandler';
@@ -65,6 +66,7 @@ export function registerApiSyncHandlers(): Map<string, SyncEntityHandler> {
     () => new StoryCalendarSyncHandler(),
     () => new StoryArcSyncHandler(),
     () => new BoardSyncHandler(),
+    () => new SketchSyncHandler(),
     () => new LocationMapSyncHandler(),
     () => new CharacterRelationSyncHandler(),
     () => new ItemSyncHandler(),

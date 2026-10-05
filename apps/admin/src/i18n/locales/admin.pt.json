@@ -447,11 +447,13 @@
       "tabs": {
         "media": "Mídia",
         "boards": "Boards",
+        "sketches": "Esboços",
         "maps": "Mapas",
         "entities": "Entidades"
       },
       "emptyMedia": "Nenhum arquivo de mídia.",
       "emptyBoards": "Nenhum board.",
+      "emptySketches": "Nenhum esboço.",
       "emptyMaps": "Nenhum mapa de local.",
       "entityType": "Tipo de entidade",
       "emptyEntities": "Nenhuma linha deste tipo.",
@@ -459,6 +461,7 @@
       "favorite": "favorito",
       "download": "Baixar",
       "boardCounts": "{{nodes}} pins, {{edges}} setas",
+      "sketchCounts": "{{overlays}} objetos",
       "edgeLabels": "Rótulos das setas",
       "mapCounts": "{{images}} bases, {{nodes}} pontos, {{markers}} marcadores",
       "relationTexts": "Rótulos de relação"

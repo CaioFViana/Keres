@@ -20,7 +20,7 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  * first-open tour; system entries (ArcContext, Help, Settings, Selection) stay quiet.
  * Nested routes own tours the same way once they matter enough (Manuscript): the focus
  * hook fires for drawer roots and inner screens alike. Canvas screens (BoardCanvas,
- * LocationMap) tour their chrome instead of their content: document actions, the add
+ * SketchCanvas, LocationMap) tour their chrome instead of their content: document actions, the add
  * group, then the mode toggles and how they switch each other off.
  */
 export const screenGuides: Record<string, Guide> = {
@@ -262,6 +262,19 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
+  SketchStack: {
+    id: 'SketchStack',
+    drawerId: 'main-system',
+    helpPageId: 'sketch',
+    steps: [
+      {
+        id: 'list',
+        anchors: [screenAnchorId('Sketches', 'list')],
+        titleKey: 'tour_sketch_start_title',
+        bodyKey: 'tour_sketch_start_body',
+      },
+    ],
+  },
   CustomizationStack: {
     id: 'CustomizationStack',
     drawerId: 'main-system',
@@ -484,6 +497,25 @@ export const screenGuides: Record<string, Guide> = {
         anchors: [screenAnchorId('BoardCanvas', 'modes')],
         titleKey: 'tour_boardcanvas_modes_title',
         bodyKey: 'tour_boardcanvas_modes_body',
+      },
+    ],
+  },
+  SketchCanvas: {
+    id: 'SketchCanvas',
+    drawerId: 'main-system',
+    helpPageId: 'sketch',
+    steps: [
+      {
+        id: 'document',
+        anchors: [screenAnchorId('SketchCanvas', 'document')],
+        titleKey: 'tour_sketchcanvas_document_title',
+        bodyKey: 'tour_sketchcanvas_document_body',
+      },
+      {
+        id: 'add',
+        anchors: [screenAnchorId('SketchCanvas', 'tools')],
+        titleKey: 'tour_sketchcanvas_add_title',
+        bodyKey: 'tour_sketchcanvas_add_body',
       },
     ],
   },

@@ -9,6 +9,7 @@ import { entityEventEmitter } from '../utils/EventEmitter';
 import { withOpLogLock } from '../utils/opLogMutex';
 import { getEntityTable, toEntityColumns } from './entityTableRegistry';
 import { cloneConflictBoard } from './sync/boardConflictClone';
+import { cloneConflictSketch } from './sync/sketchConflictClone';
 import { isRoutePathConflict, landRoutePath } from './sync/routePathDecision';
 import {
   raiseConflictsServerVersion,
@@ -87,6 +88,15 @@ export interface SyncConflictService {
    * The create happens first: if it fails, the local work is still there.
    */
   resolveKeepServerAndCloneBoard(
+    conflictId: string,
+    currentUserId: string,
+    cloneName: string,
+  ): Promise<void>;
+  /**
+   * Saves the local Sketch drawing as a new sketch, then accepts the server's on the original.
+   * The create happens first: if it fails, the local work is still there.
+   */
+  resolveKeepServerAndCloneSketch(
     conflictId: string,
     currentUserId: string,
     cloneName: string,
@@ -721,6 +731,19 @@ export const createSyncConflictService = (db: AppDrizzleClient): SyncConflictSer
         throw new Error('Board clone is only available for a Board content conflict.');
       }
       await cloneConflictBoard(db, conflict, currentUserId, cloneName);
+      await api.resolveKeepServer(conflictId);
+    },
+
+    async resolveKeepServerAndCloneSketch(
+      conflictId: string,
+      currentUserId: string,
+      cloneName: string,
+    ): Promise<void> {
+      const conflict = await getConflict(conflictId);
+      if (!conflict || conflict.entityType !== 'Sketch') {
+        throw new Error('Sketch clone is only available for a Sketch content conflict.');
+      }
+      await cloneConflictSketch(db, conflict, currentUserId, cloneName);
       await api.resolveKeepServer(conflictId);
     },
 

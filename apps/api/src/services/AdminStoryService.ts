@@ -1,4 +1,8 @@
-import type { BoardContentType, LocationMapContentType } from '@keres/shared';
+import type {
+  BoardContentType,
+  LocationMapContentType,
+  SketchContentType,
+} from '@keres/shared';
 import { OperationLogEntityType } from '@keres/shared';
 import { and, asc, count, desc, eq, getTableColumns, type SQL } from 'drizzle-orm';
 import type { Column } from 'drizzle-orm/column';
@@ -7,6 +11,7 @@ import {
   boards,
   galleries,
   locationMaps,
+  sketches,
   stories,
   storyInvitations,
   storyPermissions,
@@ -101,6 +106,29 @@ function summarizeBoardContent(content: BoardContentType | null | undefined) {
       .map((edge) => edge?.label)
       .filter((label): label is string => typeof label === 'string' && label.length > 0),
   };
+}
+
+/**
+ * Same idea for a sketch: overlay counts, free texts and stamp labels. The JSON may
+ * predate the current schema, so everything is read defensively.
+ */
+function summarizeSketchContent(content: SketchContentType | null | undefined) {
+  const overlays = Array.isArray((content as { overlays?: unknown } | null)?.overlays)
+    ? (content as { overlays: Array<Record<string, unknown>> }).overlays
+    : [];
+  const kinds: Record<string, number> = {};
+  const texts: string[] = [];
+  for (const overlay of overlays) {
+    const kind = typeof overlay?.kind === 'string' ? overlay.kind : 'unknown';
+    kinds[kind] = (kinds[kind] ?? 0) + 1;
+    if (kind === 'text' && typeof overlay.content === 'string' && overlay.content.length > 0) {
+      texts.push(overlay.content.slice(0, 500));
+    }
+    if (kind === 'stamp' && typeof overlay.label === 'string' && overlay.label.length > 0) {
+      texts.push(overlay.label.slice(0, 200));
+    }
+  }
+  return { overlayCount: overlays.length, kinds, texts };
 }
 
 /** Same idea for a location map: base images, pinned locations and free-marker texts. */
@@ -317,6 +345,29 @@ export class AdminStoryService {
       description: row.description,
       updatedAt: row.updatedAt,
       summary: summarizeBoardContent(row.content),
+    }));
+  }
+
+  /** Sketches with a moderation summary (overlay kinds and texts) instead of the raw drawing. */
+  async sketches(storyId: string) {
+    await this.requireStory(storyId);
+    const rows = await db
+      .select({
+        id: sketches.id,
+        name: sketches.name,
+        description: sketches.description,
+        content: sketches.content,
+        updatedAt: sketches.updatedAt,
+      })
+      .from(sketches)
+      .where(and(eq(sketches.storyId, storyId), eq(sketches.isDeleted, false)))
+      .orderBy(desc(sketches.updatedAt));
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      updatedAt: row.updatedAt,
+      summary: summarizeSketchContent(row.content),
     }));
   }
 

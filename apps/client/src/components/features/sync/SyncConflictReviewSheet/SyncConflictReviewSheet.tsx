@@ -29,7 +29,8 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
   const { colors } = useTheme();
   const { t } = useTranslation();
   const conflicts = useSyncConflictStore((state) => state.conflicts);
-  const { isResolving, keepLocal, keepServer, keepServerAndCloneBoard } = useSyncConflictActions();
+  const { isResolving, keepLocal, keepServer, keepServerAndCloneBoard, keepServerAndCloneSketch } =
+    useSyncConflictActions();
   const userId = useUserSettingsStore((state) => state.userId);
   const selectedConflictId = useSyncConflictStore((state) => state.selectedConflictId);
   const selectConflict = useSyncConflictStore((state) => state.selectConflict);
@@ -103,6 +104,27 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
       ]);
     },
     [keepServerAndCloneBoard, t, userId],
+  );
+
+  const resolveCloneSketch = useCallback(
+    (conflictId: string, sketchName: string) => {
+      if (!userId) return;
+      AppAlert.alert(t('conflict_confirm_title'), t('conflict_confirm_clone_sketch'), [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('conflict_confirm_action'),
+          onPress: () => {
+            setDetailConflictId(null);
+            void keepServerAndCloneSketch(
+              conflictId,
+              userId,
+              t('sketch_copy_name', { name: sketchName }),
+            );
+          },
+        },
+      ]);
+    },
+    [keepServerAndCloneSketch, t, userId],
   );
 
   const styles = StyleSheet.create({
@@ -184,6 +206,11 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
                     ? () => resolveCloneBoard(item.id, item.title)
                     : undefined
                 }
+                onCloneSketch={
+                  item.offerSketchClone && userId
+                    ? () => resolveCloneSketch(item.id, item.title)
+                    : undefined
+                }
                 onOpenDetails={() => setDetailConflictId(item.id)}
               />
             )}
@@ -203,6 +230,11 @@ const SyncConflictReviewSheet: React.FC<SyncConflictReviewSheetProps> = ({ visib
           onCloneBoard={
             detailSummary.offerBoardClone && userId
               ? () => resolveCloneBoard(detailConflict.id, detailSummary.title)
+              : undefined
+          }
+          onCloneSketch={
+            detailSummary.offerSketchClone && userId
+              ? () => resolveCloneSketch(detailConflict.id, detailSummary.title)
               : undefined
           }
           onCompareFields={() => {

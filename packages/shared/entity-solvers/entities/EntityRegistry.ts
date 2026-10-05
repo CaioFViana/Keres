@@ -22,6 +22,7 @@ import { locationEntityHandler } from './LocationEntityHandler';
 import { noteEntityHandler } from './NoteEntityHandler';
 import { tagEntityHandler } from './TagEntityHandler';
 import { boardEntityHandler } from './BoardEntityHandler';
+import { sketchEntityHandler } from './SketchEntityHandler';
 import { storyEntityHandler } from './StoryEntityHandler';
 import { locationMapEntityHandler } from './LocationMapEntityHandler';
 import { statEntityHandler } from './StatEntityHandler';
@@ -69,6 +70,7 @@ const ENTITY_HANDLERS: ReadonlyMap<OperationLogEntityType, EntityDomainHandler> 
   [noteEntityHandler.entityType, noteEntityHandler],
   [tagEntityHandler.entityType, tagEntityHandler],
   [boardEntityHandler.entityType, boardEntityHandler],
+  [sketchEntityHandler.entityType, sketchEntityHandler],
   [storyEntityHandler.entityType, storyEntityHandler],
   [locationMapEntityHandler.entityType, locationMapEntityHandler],
   [statEntityHandler.entityType, statEntityHandler],

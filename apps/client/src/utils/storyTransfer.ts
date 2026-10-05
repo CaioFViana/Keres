@@ -163,6 +163,15 @@ export function buildLocationMapFileName(
   return `${slugify(mapName)}-${FILE_NAME_SLUGS.map[language]}-${now.toISOString().slice(0, 10)}.svg`;
 }
 
+/** The sketch drawing's file, in the given raster/vector extension. */
+export function buildSketchFileName(
+  sketchName: string,
+  extension: 'svg' | 'png',
+  now: Date = new Date(),
+): string {
+  return `${slugify(sketchName)}-${now.toISOString().slice(0, 10)}.${extension}`;
+}
+
 /** The result of trying to deliver the file to the user. */
 export interface ExportDeliveryResult {
   /** `false` when the platform offers no way at all of sharing a file. */

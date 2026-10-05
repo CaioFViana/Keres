@@ -8,9 +8,10 @@ import {
   type AdminStoryItem,
   type AdminStoryLocationMapSummary,
   type AdminStoryMediaItem,
+  type AdminStorySketchSummary,
 } from '../../api/AdminStoryApiService';
 
-type ContentTab = 'media' | 'boards' | 'maps' | 'entities';
+type ContentTab = 'media' | 'boards' | 'sketches' | 'maps' | 'entities';
 
 const PREVIEWABLE = new Set(['image', 'video', 'audio']);
 
@@ -128,6 +129,33 @@ function Boards({ rows }: { rows: AdminStoryBoardSummary[] }) {
             <p className="hint">
               {t('stories.content.edgeLabels')}: {board.summary.edgeLabels.join(', ')}
             </p>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Sketches({ rows }: { rows: AdminStorySketchSummary[] }) {
+  const { t } = useTranslation('admin');
+  if (rows.length === 0) return <p className="hint">{t('stories.content.emptySketches')}</p>;
+  return (
+    <ul>
+      {rows.map((sketch) => (
+        <li key={sketch.id} className="content-card">
+          <strong>{sketch.name}</strong>{' '}
+          <span className="hint">
+            {t('stories.content.sketchCounts', {
+              overlays: sketch.summary.overlayCount,
+            })}
+          </span>
+          {sketch.description && <p className="hint">{sketch.description}</p>}
+          {sketch.summary.texts.length > 0 && (
+            <ul>
+              {sketch.summary.texts.map((text, index) => (
+                <li key={index}>{text}</li>
+              ))}
+            </ul>
           )}
         </li>
       ))}
@@ -318,6 +346,7 @@ export function StoryContent({ story }: { story: AdminStoryItem }) {
   const [tab, setTab] = useState<ContentTab>('media');
   const [media, setMedia] = useState<AdminStoryMediaItem[] | null>(null);
   const [boards, setBoards] = useState<AdminStoryBoardSummary[] | null>(null);
+  const [sketches, setSketches] = useState<AdminStorySketchSummary[] | null>(null);
   const [maps, setMaps] = useState<AdminStoryLocationMapSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -325,13 +354,15 @@ export function StoryContent({ story }: { story: AdminStoryItem }) {
     setOpen(true);
     if (media !== null) return;
     try {
-      const [mediaRows, boardRows, mapRows] = await Promise.all([
+      const [mediaRows, boardRows, sketchRows, mapRows] = await Promise.all([
         AdminStoryApiService.media(story.id),
         AdminStoryApiService.boards(story.id),
+        AdminStoryApiService.sketches(story.id),
         AdminStoryApiService.locationMaps(story.id),
       ]);
       setMedia(mediaRows);
       setBoards(boardRows);
+      setSketches(sketchRows);
       setMaps(mapRows);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.actionFailed'));
@@ -348,13 +379,13 @@ export function StoryContent({ story }: { story: AdminStoryItem }) {
   if (error) {
     return <span className="error-text">{error}</span>;
   }
-  if (media === null || boards === null || maps === null) {
+  if (media === null || boards === null || sketches === null || maps === null) {
     return <span className="loading-text">{t('common.loading')}</span>;
   }
   return (
     <div className="story-content">
       <div className="tabs" role="tablist">
-        {(['media', 'boards', 'maps', 'entities'] as const).map((entry) => (
+        {(['media', 'boards', 'sketches', 'maps', 'entities'] as const).map((entry) => (
           <button
             key={entry}
             type="button"
@@ -378,6 +409,7 @@ export function StoryContent({ story }: { story: AdminStoryItem }) {
         </>
       )}
       {tab === 'boards' && <Boards rows={boards} />}
+      {tab === 'sketches' && <Sketches rows={sketches} />}
       {tab === 'maps' && <LocationMaps rows={maps} />}
       {tab === 'entities' && <Entities storyId={story.id} />}
     </div>

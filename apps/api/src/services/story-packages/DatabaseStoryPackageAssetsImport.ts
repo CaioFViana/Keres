@@ -1,4 +1,10 @@
-import { OperationLogEntityType, remapBoardContent, remapLocationMapContent } from '@keres/shared';
+import {
+  OperationLogEntityType,
+  remapBoardContent,
+  remapLocationMapContent,
+  remapSketchContent,
+  remapSketchCoverGalleryId,
+} from '@keres/shared';
 import type { DatabaseStoryPackageImportContext } from './DatabaseStoryPackageImportContext';
 import { insertPortableCollection } from './DatabaseStoryPackageCollectionRepository';
 
@@ -175,5 +181,28 @@ export async function importStoryAssets(context: DatabaseStoryPackageImportConte
       OperationLogEntityType.LocationMap,
       newStoryLocationMapsData,
     );
+  }
+
+  /*
+   * Sketches hold a gallery id only as a row-level cover link, remapped here after the
+   * gallery collection is in the id map. A snapshot the package does not carry clears
+   * the cover instead of pointing at a stranger's row.
+   */
+  const newStorySketchesData = (validatedFullStory.storySketches ?? []).map((original) => {
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return {
+      ...original,
+      id: newId,
+      storyId: targetStoryId,
+      content: remapSketchContent(original.content),
+      coverGalleryId: remapSketchCoverGalleryId(original.coverGalleryId, (id) => idMap.get(id)),
+      createdAt: new Date(original.createdAt),
+      updatedAt: new Date(original.updatedAt),
+      deletedAt: original.deletedAt ? new Date(original.deletedAt) : null,
+    };
+  });
+  if (newStorySketchesData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.Sketch, newStorySketchesData);
   }
 }

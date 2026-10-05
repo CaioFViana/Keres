@@ -70,6 +70,18 @@ export interface AdminStoryLocationMapSummary {
   };
 }
 
+export interface AdminStorySketchSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  updatedAt: string;
+  summary: {
+    overlayCount: number;
+    kinds: Record<string, number>;
+    texts: string[];
+  };
+}
+
 export interface AdminStoryEntityType {
   entityType: string;
   liveCount: number;
@@ -123,6 +135,11 @@ export const AdminStoryApiService = {
   async locationMaps(storyId: string): Promise<AdminStoryLocationMapSummary[]> {
     const safeId = assertSafePathSegment(storyId);
     const { data } = await apiClient.get(`/admin/stories/${safeId}/location-maps`);
+    return data;
+  },
+  async sketches(storyId: string): Promise<AdminStorySketchSummary[]> {
+    const safeId = assertSafePathSegment(storyId);
+    const { data } = await apiClient.get(`/admin/stories/${safeId}/sketches`);
     return data;
   },
   async entityTypes(storyId: string): Promise<AdminStoryEntityType[]> {

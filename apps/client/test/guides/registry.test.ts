@@ -23,6 +23,8 @@ describe('screenGuides', () => {
       'OperationLogStack',
       'PackList',
       'PlotsStack',
+      'SketchCanvas',
+      'SketchStack',
       'StatList',
       'StoryAnalysis',
       'StoryAppearance',

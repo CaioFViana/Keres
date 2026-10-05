@@ -1,6 +1,8 @@
 import {
   CANVAS_OVERLAY_STAMP_DEFAULT_SIZE,
   canvasOverlayBounds,
+  canvasOverlayTextFontSize,
+  wrapCanvasOverlayText,
   type CanvasOverlayType,
   type SpatialPoint,
   type SpatialRect,
@@ -68,6 +70,11 @@ export function canvasOverlayExportBounds(overlay: CanvasOverlayType): SpatialRe
 export function renderCanvasOverlaySvg(
   overlays: readonly CanvasOverlayType[] | undefined,
   context: CanvasOverlaySvgContext,
+  /**
+   * Layer opacity (sketches): hidden layers are skipped by the caller, and a layer
+   * below 1 wraps its element in `<g opacity>`. Boards and maps pass nothing.
+   */
+  resolveOpacity?: (overlay: CanvasOverlayType) => number,
 ): CanvasOverlaySvgGroups {
   const groups: CanvasOverlaySvgGroups = { vectors: [], stamps: [] };
   const ordered = (overlays ?? [])
@@ -78,10 +85,16 @@ export function renderCanvasOverlaySvg(
     )
     .map(({ overlay }) => overlay);
   for (const overlay of ordered) {
+    const element =
+      overlay.kind === 'stamp'
+        ? renderStamp(overlay, context)
+        : renderVector(overlay, context);
+    const opacity = resolveOpacity?.(overlay) ?? 1;
+    const painted = opacity < 1 ? `<g opacity="${opacity}">${element}</g>` : element;
     if (overlay.kind === 'stamp') {
-      groups.stamps.push(renderStamp(overlay, context));
+      groups.stamps.push(painted);
     } else {
-      groups.vectors.push(renderVector(overlay, context));
+      groups.vectors.push(painted);
     }
   }
   return groups;
@@ -128,16 +141,17 @@ function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext):
   const color = escapeSvgXml(overlay.color ?? context.stroke);
   const bounds = canvasOverlayBounds(overlay);
   const center = context.shift(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-  const label = overlay.label
-    ? renderLabel(
-        center.x,
-        center.y,
-        overlay.label,
-        color,
-        context.colors.background,
-        CANVAS_OVERLAY_LABEL_FONT_SIZE,
-      )
-    : '';
+  const label =
+    overlay.kind !== 'text' && overlay.label
+      ? renderLabel(
+          center.x,
+          center.y,
+          overlay.label,
+          color,
+          context.colors.background,
+          CANVAS_OVERLAY_LABEL_FONT_SIZE,
+        )
+      : '';
   switch (overlay.kind) {
     case 'line': {
       const shifted = overlay.points.map((point) => shiftedPoint(context, point));
@@ -199,6 +213,23 @@ function renderVector(overlay: VectorOverlay, context: CanvasOverlaySvgContext):
         `<path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"${dashed ? ` stroke-dasharray="${CANVAS_OVERLAY_DASH_INTERVALS.join(' ')}"` : ''}/>` +
         label
       );
+    }
+    case 'text': {
+      // Same wrapped lines the Skia renderer draws: screen and file break identically.
+      const fontSize = canvasOverlayTextFontSize(overlay);
+      const lines = wrapCanvasOverlayText(overlay.content, overlay.width, fontSize);
+      const anchor = (overlay.align ?? 'left') === 'center' ? 'middle' : 'start';
+      const baseX =
+        (overlay.align ?? 'left') === 'center'
+          ? bounds.x + bounds.width / 2
+          : bounds.x;
+      const lineHeight = fontSize * 1.35;
+      return lines
+        .map((line, index) => {
+          const at = context.shift(baseX, bounds.y + fontSize + index * lineHeight);
+          return `<text x="${roundSvg(at.x)}" y="${roundSvg(at.y)}" font-size="${fontSize}" text-anchor="${anchor}" fill="${color}">${escapeSvgXml(line) || ' '}</text>`;
+        })
+        .join('');
     }
   }
 }

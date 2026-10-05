@@ -67,6 +67,11 @@ export interface ConflictSummary {
    * The JSON is not offered field-by-field — two layouts cannot be merged.
    */
   offerBoardClone: boolean;
+  /**
+   * A Sketch whose drawing (`content`) clashed: keep-mine / keep-server, plus
+   * clone-mine-as-a-new-sketch. Same last-write-wins document rule as boards.
+   */
+  offerSketchClone: boolean;
   /** Only populated for `kind === 'content'` with `canQuickResolve === false`. */
   diffFields: ConflictDiffField[];
 }
@@ -253,13 +258,17 @@ export function buildConflictSummaries(
         canQuickResolve: true,
         canKeepMine: keepMineCanLand(conflict),
         offerBoardClone: false,
+        offerSketchClone: false,
         diffFields: [],
       };
     }
 
     const offerBoardClone =
       conflict.entityType === 'Board' && conflict.contestedFields.includes('content');
-    const canQuickResolve = isBinaryContentConflict(conflict) || offerBoardClone;
+    const offerSketchClone =
+      conflict.entityType === 'Sketch' && conflict.contestedFields.includes('content');
+    const canQuickResolve =
+      isBinaryContentConflict(conflict) || offerBoardClone || offerSketchClone;
     const emptyLabel = t('conflict_empty_value');
     // The entity handler owns its display field and fallback (Choice.text, Gallery.fileName,
     // Effect.triggerName, etc.). A deleted_on_server conflict may carry none of them in either
@@ -314,6 +323,7 @@ export function buildConflictSummaries(
       canQuickResolve,
       canKeepMine: keepMineCanLand(conflict),
       offerBoardClone,
+      offerSketchClone,
       diffFields,
     };
   });

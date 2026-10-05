@@ -14,6 +14,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { createVideoPlayer, type VideoPlayer } from 'expo-video';
+import SparkMD5 from 'spark-md5';
 import { Platform } from 'react-native';
 import { decodeFileUriOnce } from '../utils/fileUri';
 import * as webMediaStore from './webMediaStore';
@@ -469,6 +470,41 @@ export const mediaFileService = {
       localPath: destination.uri,
       thumbnailPath,
     };
+  },
+
+  /**
+   * Stores bytes the app itself produced (a sketch snapshot) at the content address, so
+   * identical drawings share one file exactly like identical imports do. Returns the
+   * local path, hash and size for the gallery row. The hash is SparkMD5 over a copy:
+   * uniform on every platform, independent of the file provider.
+   */
+  async saveSnapshot(
+    storyId: string,
+    mimeType: string,
+    bytes: Uint8Array,
+  ): Promise<{ localPath: string; hash: string; sizeBytes: number }> {
+    const copy = bytes.slice();
+    const hash = SparkMD5.ArrayBuffer.hash(
+      copy.buffer.slice(copy.byteOffset, copy.byteOffset + copy.byteLength),
+    );
+    if (isWeb) {
+      const relativePath = webMediaRelativePath(storyId, hash, mimeType);
+      if (!webMediaStore.existsSync(relativePath)) {
+        await webMediaStore.writeBytes(relativePath, bytes);
+      }
+      return {
+        localPath: webMediaStore.DESKTOP_MEDIA_URI_PREFIX + relativePath,
+        hash,
+        sizeBytes: bytes.length,
+      };
+    }
+    const directory = ensureDirectory(storyMediaDirectory(storyId));
+    const destination = new File(directory, `${hash}.${extensionForMimeType(mimeType)}`);
+    if (!destination.exists) {
+      destination.create();
+      destination.write(bytes);
+    }
+    return { localPath: destination.uri, hash, sizeBytes: bytes.length };
   },
 
   /** Writes bytes coming from the server to the local address corresponding to the hash. */

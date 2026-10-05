@@ -2,6 +2,8 @@ import {
   FullStoryExportSchema,
   remapBoardContent,
   remapLocationMapContent,
+  remapSketchContent,
+  remapSketchCoverGalleryId,
   type FullStoryExportType,
 } from '@keres/shared';
 import { createULID } from '../utils/entityUtils';
@@ -45,6 +47,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.storyCalendars);
   registerAll(example.storyArcs);
   registerAll(example.storyBoards);
+  registerAll(example.storySketches);
   registerAll(example.storyLocationMaps);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
@@ -184,6 +187,13 @@ export function cloneExampleStoryForInstall(
       ...cloneEntity(board),
       storyId,
       content: remapBoardContent(board.content, remapId),
+    })),
+    storySketches: example.storySketches?.map((sketch) => ({
+      ...cloneEntity(sketch),
+      storyId,
+      content: remapSketchContent(sketch.content),
+      // A snapshot the package does not carry clears instead of pointing at a stranger's row.
+      coverGalleryId: remapSketchCoverGalleryId(sketch.coverGalleryId, (id) => idMap.get(id)),
     })),
     storyLocationMaps: example.storyLocationMaps?.map((map) => ({
       ...cloneEntity(map),

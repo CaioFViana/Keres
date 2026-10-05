@@ -21,6 +21,15 @@ export const CANVAS_OVERLAY_LOCAL_ID_REGEX = /^[0-9A-HJKMNP-TV-Z]{8}$/;
 export const MAX_CANVAS_OVERLAYS = 200;
 export const MAX_CANVAS_OVERLAY_POINTS = 200;
 export const MAX_CANVAS_OVERLAY_LABEL_LENGTH = 200;
+/** Free text of a `text` overlay: a sketch caption, not a manuscript. */
+export const MAX_CANVAS_OVERLAY_TEXT_LENGTH = 2000;
+/** Smallest/largest point size the text tool offers. */
+export const MIN_CANVAS_OVERLAY_FONT_SIZE = 10;
+export const MAX_CANVAS_OVERLAY_FONT_SIZE = 96;
+/** Default text box width at creation, in world units. */
+export const CANVAS_OVERLAY_TEXT_DEFAULT_WIDTH = 240;
+/** Text sizes the sketch sheet offers. */
+export const CANVAS_OVERLAY_FONT_SIZES = [14, 18, 24, 32] as const;
 /** Diameter of a stamp whose size was never set - slightly smaller than a map point. */
 export const CANVAS_OVERLAY_STAMP_DEFAULT_SIZE = 36;
 export const CANVAS_OVERLAY_SHAPES = ['rect', 'ellipse'] as const;
@@ -45,6 +54,14 @@ const CanvasOverlayLabelSchema = z
 const CanvasOverlayStrokeWidthSchema = z.number().finite().min(0.5).max(24).optional();
 /** Visual stacking order inside the canvas; absent values preserve document order. */
 const CanvasOverlayZIndexSchema = z.number().finite().optional();
+/**
+ * Sketch layer membership. Boards and location maps carry no layers, so their overlays
+ * simply omit it (the implicit base layer); sketches resolve it against `SketchContent.layers`.
+ */
+const CanvasOverlayLayerIdSchema = z
+  .string()
+  .regex(CANVAS_OVERLAY_LOCAL_ID_REGEX, 'Canvas overlay layer ids are 8 Crockford characters')
+  .optional();
 
 const CanvasOverlayLineSchema = z.object({
   id: CanvasOverlayLocalIdSchema,
@@ -59,6 +76,7 @@ const CanvasOverlayLineSchema = z.object({
   /** Locked overlays still select, but their geometry commits are ignored. */
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
+  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayPolygonSchema = z.object({
@@ -75,6 +93,7 @@ const CanvasOverlayPolygonSchema = z.object({
   strokeWidth: CanvasOverlayStrokeWidthSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
+  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayFrameSchema = z.object({
@@ -92,6 +111,7 @@ const CanvasOverlayFrameSchema = z.object({
   filled: z.boolean().optional(),
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
+  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayShapeSchema = z.object({
@@ -109,6 +129,7 @@ const CanvasOverlayShapeSchema = z.object({
   strokeWidth: CanvasOverlayStrokeWidthSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
+  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayStampSchema = z.object({
@@ -124,6 +145,24 @@ const CanvasOverlayStampSchema = z.object({
   label: CanvasOverlayLabelSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
+  layerId: CanvasOverlayLayerIdSchema,
+});
+
+const CanvasOverlayTextSchema = z.object({
+  id: CanvasOverlayLocalIdSchema,
+  kind: z.literal('text'),
+  /** Top-left of the text box; height derives from the wrapped lines. */
+  x: z.number().finite(),
+  y: z.number().finite(),
+  width: z.number().finite().min(24).max(4000),
+  /** Plain multiline text (`\n` breaks lines); no rich text. */
+  content: z.string().max(MAX_CANVAS_OVERLAY_TEXT_LENGTH),
+  fontSize: z.number().finite().min(MIN_CANVAS_OVERLAY_FONT_SIZE).max(MAX_CANVAS_OVERLAY_FONT_SIZE).optional(),
+  align: z.enum(['left', 'center']).optional(),
+  color: CanvasOverlayColorSchema,
+  locked: z.boolean().optional(),
+  zIndex: CanvasOverlayZIndexSchema,
+  layerId: CanvasOverlayLayerIdSchema,
 });
 
 export const CanvasOverlaySchema = z.discriminatedUnion('kind', [
@@ -132,10 +171,70 @@ export const CanvasOverlaySchema = z.discriminatedUnion('kind', [
   CanvasOverlayFrameSchema,
   CanvasOverlayShapeSchema,
   CanvasOverlayStampSchema,
+  CanvasOverlayTextSchema,
 ]);
 
 /** No defaults or transforms: the parsed overlay is exactly the stored overlay. */
 export type CanvasOverlayType = z.infer<typeof CanvasOverlaySchema>;
+
+/** Line height of a `text` overlay, relative to its font size. */
+export const CANVAS_OVERLAY_TEXT_LINE_HEIGHT = 1.35;
+/**
+ * Average glyph advance relative to the font size, for wrapping without font metrics.
+ * Both the Skia renderer and the SVG exporter wrap through this, so the screen and the
+ * exported file break lines identically even though neither measures the real font.
+ */
+export const CANVAS_OVERLAY_TEXT_CHAR_WIDTH = 0.55;
+/** Default point size of a fresh `text` overlay. */
+export const CANVAS_OVERLAY_TEXT_DEFAULT_FONT_SIZE = 18;
+
+/** Effective point size of a text overlay; absent means the default. */
+export function canvasOverlayTextFontSize(overlay: { fontSize?: number }): number {
+  return overlay.fontSize ?? CANVAS_OVERLAY_TEXT_DEFAULT_FONT_SIZE;
+}
+
+/**
+ * Greedy word wrap of one text overlay: explicit `\n` breaks first, then words wrap at
+ * `width`. Long words split mid-word rather than overflowing the box.
+ */
+export function wrapCanvasOverlayText(content: string, width: number, fontSize: number): string[] {
+  const maxChars = Math.max(1, Math.floor(width / (fontSize * CANVAS_OVERLAY_TEXT_CHAR_WIDTH)));
+  const lines: string[] = [];
+  for (const paragraph of content.split('\n')) {
+    if (!paragraph) {
+      lines.push('');
+      continue;
+    }
+    let current = '';
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      if (word.length > maxChars) {
+        if (current) {
+          lines.push(current);
+          current = '';
+        }
+        for (let at = 0; at < word.length; at += maxChars) {
+          lines.push(word.slice(at, at + maxChars));
+        }
+        continue;
+      }
+      const next = current ? `${current} ${word}` : word;
+      if (next.length > maxChars) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = next;
+      }
+    }
+    lines.push(current);
+  }
+  return lines;
+}
+
+/** Height a `text` overlay reserves: wrapped lines at the line height. */
+export function canvasOverlayTextHeight(content: string, width: number, fontSize: number): number {
+  const count = wrapCanvasOverlayText(content, width, fontSize).length;
+  return Math.max(1, count) * fontSize * CANVAS_OVERLAY_TEXT_LINE_HEIGHT;
+}
 
 /**
  * World-space bounds of one overlay. The content schemas feed this into the shared spatial
@@ -164,6 +263,15 @@ export function canvasOverlayBounds(overlay: CanvasOverlayType): SpatialRect {
     case 'stamp': {
       const size = overlay.size ?? CANVAS_OVERLAY_STAMP_DEFAULT_SIZE;
       return { x: overlay.x - size / 2, y: overlay.y - size / 2, width: size, height: size };
+    }
+    case 'text': {
+      const fontSize = canvasOverlayTextFontSize(overlay);
+      return {
+        x: overlay.x,
+        y: overlay.y,
+        width: overlay.width,
+        height: canvasOverlayTextHeight(overlay.content, overlay.width, fontSize),
+      };
     }
   }
 }

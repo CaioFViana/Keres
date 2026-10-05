@@ -12,6 +12,7 @@ import { useNoteStore } from './noteStore';
 import { useNotificationStore } from './notificationStore';
 import { usePlanUsageStore } from './planUsageStore';
 import { useSceneStore } from './sceneStore';
+import { useSketchDraftStore } from './sketchDraftStore';
 import { useStoryListStore } from './storyListStore';
 import { useStoryStore } from './storyStore';
 import { useSummaryStore } from './summaryStore';
@@ -27,6 +28,7 @@ export function resetAllClientStores(): void {
   useSummaryStore.getState().clearSummary();
   useSyncConflictStore.getState().reset();
   useBoardDraftStore.getState().reset();
+  useSketchDraftStore.getState().reset();
   useLocationMapDraftStore.getState().reset();
   useConnectivityStore.getState().reset();
   useNotificationStore.getState().clearAll();

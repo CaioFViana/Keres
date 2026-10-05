@@ -186,6 +186,7 @@ const unorderedPack: ShowcasePackDetail = {
       worldRules: [],
       notes: [],
       storyBoards: [],
+      storySketches: [],
       storyLocationMaps: [],
       characterScenes: [],
       characterRelations: [],

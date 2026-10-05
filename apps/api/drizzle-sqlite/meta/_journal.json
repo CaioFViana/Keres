@@ -337,6 +337,13 @@
       "when": 1791148155232,
       "tag": "0047_colossal_sheva_callister",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1791151179524,
+      "tag": "0048_slippery_callisto",
+      "breakpoints": true
     }
   ]
 }

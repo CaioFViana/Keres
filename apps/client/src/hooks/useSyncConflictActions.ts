@@ -26,6 +26,14 @@ export function useSyncConflictActions() {
       keepServerAndCloneBoardStore(db, conflictId, currentUserId, cloneName),
     [db, keepServerAndCloneBoardStore],
   );
+  const keepServerAndCloneSketchStore = useSyncConflictStore(
+    (state) => state.keepServerAndCloneSketch,
+  );
+  const keepServerAndCloneSketch = useCallback(
+    (conflictId: string, currentUserId: string, cloneName: string) =>
+      keepServerAndCloneSketchStore(db, conflictId, currentUserId, cloneName),
+    [db, keepServerAndCloneSketchStore],
+  );
 
-  return { isResolving, keepLocal, keepServer, keepServerAndCloneBoard };
+  return { isResolving, keepLocal, keepServer, keepServerAndCloneBoard, keepServerAndCloneSketch };
 }

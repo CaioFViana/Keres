@@ -30,6 +30,7 @@ const extrasOf = (overrides: Record<string, unknown> = {}) => ({
   worldRules: [],
   notes: [],
   storyBoards: [],
+  storySketches: [],
   storyLocationMaps: [],
   characterScenes: [],
   characterRelations: [],

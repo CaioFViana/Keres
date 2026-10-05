@@ -11,6 +11,7 @@ interface ConflictRowProps {
   onKeepMine: () => void;
   onKeepServer: () => void;
   onCloneBoard?: () => void;
+  onCloneSketch?: () => void;
   onOpenDetails: () => void;
 }
 
@@ -24,6 +25,7 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
   onKeepMine,
   onKeepServer,
   onCloneBoard,
+  onCloneSketch,
   onOpenDetails,
 }) => {
   const { colors } = useTheme();
@@ -100,6 +102,18 @@ const ConflictRow: React.FC<ConflictRowProps> = ({
               accessibilityRole="button"
               accessibilityLabel={t('conflict_clone_board')}
               accessibilityHint={t('conflict_clone_board_description')}
+            >
+              <Ionicons name="copy-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+          {summary.offerSketchClone && onCloneSketch && (
+            <TouchableOpacity
+              onPress={onCloneSketch}
+              disabled={isResolving}
+              style={styles.actionButton}
+              accessibilityRole="button"
+              accessibilityLabel={t('conflict_clone_sketch')}
+              accessibilityHint={t('conflict_clone_sketch_description')}
             >
               <Ionicons name="copy-outline" size={22} color={colors.primary} />
             </TouchableOpacity>

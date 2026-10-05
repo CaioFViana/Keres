@@ -4,6 +4,7 @@ export const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Character: 'character_changed',
   ChapterAnchor: 'chapter_anchor_changed',
   Board: 'board_changed',
+  Sketch: 'sketch_changed',
   StoryCalendar: 'story_calendar_changed',
   CharacterRelation: 'character_relation_changed',
   CharacterScene: 'character_scene_changed',

@@ -435,6 +435,13 @@
       "when": 1791148153813,
       "tag": "0061_great_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791151177793,
+      "tag": "0062_known_vulcan",
+      "breakpoints": true
     }
   ]
 }

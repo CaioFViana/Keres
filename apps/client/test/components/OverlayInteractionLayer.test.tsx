@@ -30,6 +30,8 @@ async function setup(mode: OverlayCatcherMode, snapTargets: { x: number; y: numb
     onDrawRect: jest.fn(),
     onPreviewRect: jest.fn(),
     onSelectOverlay: jest.fn(),
+    onPreviewFreehand: jest.fn(),
+    onFreehandCommit: jest.fn(),
   };
   const view = await render(
     <OverlayInteractionLayer
@@ -95,6 +97,17 @@ describe('OverlayInteractionLayer', () => {
     expect(callbacks.onDrawTap).not.toHaveBeenCalled();
   });
 
+  it('ignores taps while the freehand pen is armed', async () => {
+    // A pen tap seeds nothing: vertices belong to the line/polygon tools. Letting the
+    // tap through would start vertex drafts under the stroke tool.
+    const { config, callbacks } = await setup({ kind: 'draw', tool: 'freehand' });
+    await config.onPanResponderGrant(tapEvent(5, 5));
+    await config.onPanResponderRelease(tapEvent(5, 5), { dx: 0, dy: 0 });
+    expect(callbacks.onDrawTap).not.toHaveBeenCalled();
+    expect(callbacks.onPreviewFreehand).not.toHaveBeenCalled();
+    expect(callbacks.onFreehandCommit).not.toHaveBeenCalled();
+  });
+
   it('places stamps on tap, free of the vertex snap', async () => {
     const { config, callbacks } = await setup({ kind: 'draw', tool: 'stamp' }, [{ x: 150, y: 50 }]);
     await config.onPanResponderGrant(tapEvent(48, 50));
@@ -114,5 +127,53 @@ describe('OverlayInteractionLayer', () => {
     await config.onPanResponderGrant(tapEvent(500, 500));
     await config.onPanResponderRelease(tapEvent(500, 500), { dx: 0, dy: 0 });
     expect(callbacks.onSelectOverlay).toHaveBeenCalledWith(null);
+  });
+
+  it('keeps one responder across re-renders and keeps calling the latest callbacks', async () => {
+    // Preview setStates re-render on every mousemove; recreating the responder there
+    // resets the accumulated gestureState, which pinned web drags near the press point.
+    const create = jest.spyOn(PanResponder, 'create');
+    const firstPreview = jest.fn();
+    const renderLayer = (onPreviewRect: jest.Mock) =>
+      render(
+        <OverlayInteractionLayer
+          mode={{ kind: 'draw', tool: 'frame' }}
+          screenToWorld={(point) => point}
+          scale={1}
+          overlays={[]}
+          snapTargets={[]}
+          onDrawTap={jest.fn()}
+          onStampPlace={jest.fn()}
+          onDrawRect={jest.fn()}
+          onPreviewRect={onPreviewRect}
+          onSelectOverlay={jest.fn()}
+        />,
+      );
+    const view = await renderLayer(firstPreview);
+    expect(create).toHaveBeenCalledTimes(1);
+    const secondPreview = jest.fn();
+    await view.rerender(
+      <OverlayInteractionLayer
+        mode={{ kind: 'draw', tool: 'frame' }}
+        screenToWorld={(point) => point}
+        scale={1}
+        overlays={[]}
+        snapTargets={[]}
+        onDrawTap={jest.fn()}
+        onStampPlace={jest.fn()}
+        onDrawRect={jest.fn()}
+        onPreviewRect={secondPreview}
+        onSelectOverlay={jest.fn()}
+      />,
+    );
+    expect(create).toHaveBeenCalledTimes(1);
+    const [config] = (create as jest.Mock).mock.calls[0] as any[];
+    await config.onPanResponderGrant(tapEvent(0, 0));
+    await config.onPanResponderMove(tapEvent(30, 20), { dx: 30, dy: 20 });
+    expect(secondPreview).toHaveBeenCalledWith({
+      start: { x: 0, y: 0 },
+      end: { x: 30, y: 20 },
+    });
+    expect(firstPreview).not.toHaveBeenCalled();
   });
 });

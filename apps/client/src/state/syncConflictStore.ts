@@ -25,6 +25,12 @@ interface SyncConflictState {
     currentUserId: string,
     cloneName: string,
   ) => Promise<void>;
+  keepServerAndCloneSketch: (
+    db: AppDrizzleClient,
+    conflictId: string,
+    currentUserId: string,
+    cloneName: string,
+  ) => Promise<void>;
   dismiss: (db: AppDrizzleClient, conflictId: string) => Promise<void>;
   reset: () => void;
 }
@@ -114,6 +120,26 @@ export const useSyncConflictStore = create<SyncConflictState>((set, get) => ({
       );
     } catch (error) {
       console.log('useSyncConflictStore: failed to clone the local board.', error);
+    } finally {
+      set((state) => ({
+        isResolving: false,
+        selectedConflictId:
+          state.selectedConflictId === conflictId ? null : state.selectedConflictId,
+      }));
+      await get().refresh(db, get().lastScope);
+    }
+  },
+
+  keepServerAndCloneSketch: async (db, conflictId, currentUserId, cloneName) => {
+    set({ isResolving: true });
+    try {
+      await createSyncConflictService(db).resolveKeepServerAndCloneSketch(
+        conflictId,
+        currentUserId,
+        cloneName,
+      );
+    } catch (error) {
+      console.log('useSyncConflictStore: failed to clone the local sketch.', error);
     } finally {
       set((state) => ({
         isResolving: false,

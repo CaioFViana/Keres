@@ -60,6 +60,7 @@ export const helpSections: HelpSection[] = [
       'tags',
       'gallery',
       'boards',
+      'sketch',
       'favorites',
     ],
   },

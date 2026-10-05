@@ -40,6 +40,7 @@ const migrateV1ToV2: PackContentMigration = {
             worldRules: [],
             notes: [],
             storyBoards: [],
+            storySketches: [],
             storyLocationMaps: [],
             characterScenes: [],
             characterRelations: [],

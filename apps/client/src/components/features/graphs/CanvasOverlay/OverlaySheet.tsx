@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
+  CANVAS_OVERLAY_FONT_SIZES,
   MAP_ICON_OPTIONS,
   MAX_CANVAS_OVERLAY_LABEL_LENGTH,
+  MAX_CANVAS_OVERLAY_TEXT_LENGTH,
   type CanvasOverlayType,
 } from '@keres/shared';
 import React from 'react';
@@ -25,6 +27,10 @@ interface OverlaySheetProps {
     icon?: string;
     dashed?: boolean;
     filled?: boolean;
+    content?: string;
+    fontSize?: number;
+    align?: 'left' | 'center';
+    width?: number;
   }) => void;
   onRemove: () => void;
   onClose: () => void;
@@ -66,6 +72,20 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
       borderRadius: 8,
       padding: 10,
     },
+    multiline: { minHeight: 88, textAlignVertical: 'top' },
+    row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    chipText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+    chipTextActive: { color: colors.onPrimary },
     remove: { backgroundColor: colors.error, marginTop: 20 },
   });
   return (
@@ -82,16 +102,34 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.label}>{t('overlay_sheet_label')}</Text>
-        <TextInput
-          value={overlay.label ?? ''}
-          editable={canEdit}
-          onChangeText={(value) => onChange({ label: value || null })}
-          placeholder={t('overlay_sheet_label_placeholder')}
-          placeholderTextColor={colors.textSecondary}
-          maxLength={MAX_CANVAS_OVERLAY_LABEL_LENGTH}
-          style={styles.input}
-        />
+        {overlay.kind === 'text' ? (
+          <>
+            <Text style={styles.label}>{t('overlay_sheet_text')}</Text>
+            <TextInput
+              value={overlay.content}
+              editable={canEdit}
+              onChangeText={(value) => onChange({ content: value })}
+              placeholder={t('overlay_sheet_text_placeholder')}
+              placeholderTextColor={colors.textSecondary}
+              maxLength={MAX_CANVAS_OVERLAY_TEXT_LENGTH}
+              multiline
+              style={[styles.input, styles.multiline]}
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.label}>{t('overlay_sheet_label')}</Text>
+            <TextInput
+              value={overlay.label ?? ''}
+              editable={canEdit}
+              onChangeText={(value) => onChange({ label: value || null })}
+              placeholder={t('overlay_sheet_label_placeholder')}
+              placeholderTextColor={colors.textSecondary}
+              maxLength={MAX_CANVAS_OVERLAY_LABEL_LENGTH}
+              style={styles.input}
+            />
+          </>
+        )}
         {canEdit && (
           <>
             {overlay.kind === 'stamp' && (
@@ -120,7 +158,74 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
                 onValueChange={(value) => onChange({ filled: value })}
               />
             )}
-            {overlay.kind !== 'stamp' && (
+            {overlay.kind === 'text' && (
+              <>
+                <Text style={styles.label}>{t('overlay_sheet_font_size')}</Text>
+                <View style={styles.row}>
+                  {CANVAS_OVERLAY_FONT_SIZES.map((size) => {
+                    const active = (overlay.fontSize ?? 18) === size;
+                    return (
+                      <TouchableOpacity
+                        key={size}
+                        onPress={() => onChange({ fontSize: size })}
+                        style={[styles.chip, active && styles.chipActive]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        accessibilityLabel={`${size}`}
+                      >
+                        <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                          {size}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <Text style={styles.label}>{t('overlay_sheet_align')}</Text>
+                <View style={styles.row}>
+                  {(['left', 'center'] as const).map((align) => {
+                    const active = (overlay.align ?? 'left') === align;
+                    return (
+                      <TouchableOpacity
+                        key={align}
+                        onPress={() => onChange({ align })}
+                        style={[styles.chip, active && styles.chipActive]}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        accessibilityLabel={t(`overlay_sheet_align_${align}`)}
+                      >
+                        <Ionicons
+                          name={align === 'left' ? 'text-outline' : 'text'}
+                          size={18}
+                          color={active ? colors.onPrimary : colors.text}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                <Text style={styles.label}>{t('overlay_sheet_width')}</Text>
+                <View style={styles.row}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      onChange({ width: Math.max(24, overlay.width - 40) })
+                    }
+                    style={styles.chip}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('overlay_sheet_width_smaller')}
+                  >
+                    <Ionicons name="remove" size={18} color={colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onChange({ width: overlay.width + 40 })}
+                    style={styles.chip}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('overlay_sheet_width_larger')}
+                  >
+                    <Ionicons name="add" size={18} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            {overlay.kind !== 'stamp' && overlay.kind !== 'text' && (
               <FormSwitchField
                 label={t('overlay_sheet_dashed')}
                 value={

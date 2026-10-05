@@ -150,6 +150,7 @@ const summaryOf = (overrides: Record<string, unknown> = {}): ConflictSummary =>
     canQuickResolve: true,
     canKeepMine: true,
     offerBoardClone: false,
+    offerSketchClone: false,
     diffFields: [],
     ...overrides,
   }) as ConflictSummary;

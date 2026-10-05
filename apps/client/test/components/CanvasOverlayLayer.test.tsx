@@ -1,10 +1,12 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
 import type { SkFont } from '@shopify/react-native-skia';
-import { matchFont } from '@shopify/react-native-skia';
+import { matchFont, Skia } from '@shopify/react-native-skia';
 import type { BoardContentType, CanvasOverlayType, SpatialRect } from '@keres/shared';
 import { StyleSheet, View } from 'react-native';
 import BoardCanvas from '../../src/components/features/boards/BoardCanvas';
-import CanvasOverlayLayer from '../../src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
+import CanvasOverlayLayer, {
+  sizedOverlayFont,
+} from '../../src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
 import CanvasStampView from '../../src/components/features/graphs/CanvasOverlay/CanvasStampView';
 
 jest.mock('../../src/theme', () => ({
@@ -223,6 +225,40 @@ describe('CanvasOverlayLayer', () => {
 
     expect(root.queryAll((node) => node.type === 'SkiaPath')).toHaveLength(0);
     expect(root.queryAll((node) => node.type === 'SkiaText')).toHaveLength(0);
+  });
+
+  it('draws text glyphs at the overlay size, not the base font size', async () => {
+    const face = {};
+    const base = {
+      getTypeface: () => face,
+      getGlyphIDs: (text: string) => [...text].map((_, index) => index),
+      getGlyphWidths: (ids: number[]) => ids.map(() => 6),
+    } as unknown as SkFont;
+    const derived = { __sized: 24 } as unknown as SkFont;
+    const skiaMock = Skia as unknown as { Font?: (face: unknown, size: number) => SkFont };
+    const previousFont = skiaMock.Font;
+    skiaMock.Font = jest.fn(() => derived);
+    try {
+      const root = await renderLayer(
+        [{ id: '07EFGHJK', kind: 'text', x: 0, y: 0, width: 200, content: 'hi', fontSize: 24 }],
+        base,
+      );
+      expect(skiaMock.Font).toHaveBeenCalledWith(face, 24);
+      const [text] = root.queryAll((node) => node.type === 'SkiaText');
+      // One wrapped line, first baseline a full 24 units down, glyphs at size 24.
+      expect(text.props).toMatchObject({ text: 'hi', x: 0, y: 24, font: derived });
+    } finally {
+      if (previousFont === undefined) delete skiaMock.Font;
+      else skiaMock.Font = previousFont;
+    }
+  });
+});
+
+describe('sizedOverlayFont', () => {
+  it('stays null-safe and falls back when nothing can derive', () => {
+    expect(sizedOverlayFont(null, 24)).toBeNull();
+    // The shared mock font has no typeface: the base font stands in.
+    expect(sizedOverlayFont(FONT, 24)).toBe(FONT);
   });
 });
 

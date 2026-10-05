@@ -4,6 +4,7 @@ import {
   canvasOverlayTextHeight,
 } from '../schemas/CanvasOverlaySchemas';
 import type { CanvasOverlayType } from '../schemas/CanvasOverlaySchemas';
+import { balloonContains } from './canvasBalloon';
 import type { SpatialPoint, SpatialRect } from './spatialCanvas';
 
 /**
@@ -82,8 +83,6 @@ export const CANVAS_OVERLAY_PRESETS = [
   'pentagon',
   'hexagon',
   'star',
-  'speech-oval',
-  'speech-rect',
 ] as const;
 export type CanvasOverlayPreset = (typeof CANVAS_OVERLAY_PRESETS)[number];
 
@@ -130,55 +129,7 @@ export function canvasOverlayPresetPoints(
         const ratio = index % 2 === 0 ? 1 : STAR_INNER_RATIO;
         return { x: cx + rx * ratio * Math.cos(angle), y: cy + ry * ratio * Math.sin(angle) };
       });
-    case 'speech-oval':
-      return speechOvalPoints(cx, cy, rx, ry);
-    case 'speech-rect':
-      return speechRectPoints(rect);
   }
-}
-
-/**
- * Speech balloon inscribed in `rect`: an ellipse outline plus a tail spike at the
- * bottom-right. Convention: the LAST point is the tail tip, so pulling it toward the
- * speaker is one vertex drag in the select tool.
- */
-function speechOvalPoints(cx: number, cy: number, rx: number, ry: number): SpatialPoint[] {
-  const baseAngle = 0.5;
-  const samples = 24;
-  const outline = Array.from({ length: samples }, (_, index) => {
-    const angle = baseAngle + (index * 2 * Math.PI) / samples;
-    return { x: cx + rx * Math.cos(angle), y: cy + ry * Math.sin(angle) };
-  });
-  // Past the dragged region's bottom edge, toward the speaker below-right.
-  const tip = {
-    x: cx + rx * 0.85,
-    y: cy + ry + Math.min(rx, ry) * 0.6,
-  };
-  return [...outline, tip];
-}
-
-/**
- * Rectangular speech balloon with a tail spike on its bottom edge. The outline starts
- * at one tail base so the LAST point is the tip, like the oval balloon: pulling it
- * toward the speaker is one vertex drag in the select tool.
- */
-function speechRectPoints(rect: SpatialRect): SpatialPoint[] {
-  const bottom = rect.y + rect.height;
-  const baseA = { x: rect.x + rect.width * 0.75, y: bottom };
-  const tip = {
-    x: rect.x + rect.width * 0.85,
-    y: bottom + Math.min(rect.width, rect.height) * 0.35,
-  };
-  const baseB = { x: rect.x + rect.width * 0.55, y: bottom };
-  return [
-    baseA,
-    { x: rect.x, y: bottom },
-    { x: rect.x, y: rect.y },
-    { x: rect.x + rect.width, y: rect.y },
-    { x: rect.x + rect.width, y: bottom },
-    baseB,
-    tip,
-  ];
 }
 
 /** Shortest distance from `point` to the segment `from`-`to`. */
@@ -196,56 +147,6 @@ export function distPointToSegment(
     Math.max(0, ((point.x - from.x) * dx + (point.y - from.y) * dy) / lengthSquared),
   );
   return Math.hypot(point.x - (from.x + along * dx), point.y - (from.y + along * dy));
-}
-
-/**
- * Ramer-Douglas-Peucker simplification of a freehand drag, with a radial pre-filter.
- * A raw drag carries hundreds of points; the committed `line` keeps its shape with a
- * fraction of them, inside `MAX_CANVAS_OVERLAY_POINTS` without a second pass.
- */
-export function simplifyStrokePoints(
-  points: readonly SpatialPoint[],
-  tolerance = 2.5,
-): SpatialPoint[] {
-  if (points.length <= 2) return [...points];
-  const filtered: SpatialPoint[] = [points[0]];
-  for (const point of points.slice(1)) {
-    const last = filtered[filtered.length - 1];
-    if (Math.hypot(point.x - last.x, point.y - last.y) >= tolerance) filtered.push(point);
-  }
-  if (filtered.length <= 2) {
-    // The stroke ends where the finger lifted, even inside the pre-filter radius.
-    const last = points[points.length - 1];
-    const kept = filtered[filtered.length - 1];
-    if (kept.x !== last.x || kept.y !== last.y) filtered[filtered.length - 1] = last;
-    return filtered;
-  }
-  const keep = new Array<boolean>(filtered.length).fill(false);
-  keep[0] = true;
-  keep[filtered.length - 1] = true;
-  const stack: Array<[number, number]> = [[0, filtered.length - 1]];
-  while (stack.length > 0) {
-    const [from, to] = stack.pop() as [number, number];
-    let bestIndex = -1;
-    let bestDistance = 0;
-    for (let index = from + 1; index < to; index += 1) {
-      const distance = distPointToSegment(filtered[index], filtered[from], filtered[to]);
-      if (distance > bestDistance) {
-        bestDistance = distance;
-        bestIndex = index;
-      }
-    }
-    if (bestDistance > tolerance && bestIndex > 0) {
-      keep[bestIndex] = true;
-      stack.push([from, bestIndex], [bestIndex, to]);
-    }
-  }
-  const simplified = filtered.filter((_, index) => keep[index]);
-  // The stroke ends where the finger lifted, even inside the pre-filter radius.
-  const last = points[points.length - 1];
-  const kept = simplified[simplified.length - 1];
-  if (kept.x !== last.x || kept.y !== last.y) simplified[simplified.length - 1] = last;
-  return simplified;
 }
 
 /** Ray-cast containment; points on the border count as inside. */
@@ -306,6 +207,8 @@ function overlayHit(overlay: CanvasOverlayType, point: SpatialPoint, tolerance: 
       const size = overlay.size ?? CANVAS_OVERLAY_STAMP_DEFAULT_SIZE;
       return Math.hypot(point.x - overlay.x, point.y - overlay.y) <= size / 2 + tolerance;
     }
+    case 'balloon':
+      return balloonContains(overlay, overlay.tail, point, tolerance);
     case 'text': {
       const fontSize = canvasOverlayTextFontSize(overlay);
       const height = canvasOverlayTextHeight(overlay.content, overlay.width, fontSize);

@@ -26,7 +26,11 @@ const SketchCanvasHeaderActions: React.FC<Props> = ({ dirty, onRevert, onSave })
       collapsable={false}
       style={{ flexDirection: 'row', marginRight: 12, gap: 14 }}
     >
-      <TouchableOpacity onPress={onRevert} disabled={!dirty} accessibilityLabel={t('sketch_revert')}>
+      <TouchableOpacity
+        onPress={onRevert}
+        disabled={!dirty}
+        accessibilityLabel={t('sketch_revert')}
+      >
         <Ionicons
           name="arrow-undo-outline"
           size={24}

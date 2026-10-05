@@ -103,7 +103,7 @@ interface Transform {
 /** Wraps an angle to [-PI, PI]; successive twist deltas accumulate without winding up. */
 function wrapAngle(angle: number): number {
   const twoPi = Math.PI * 2;
-  const wrapped = ((angle + Math.PI) % twoPi + twoPi) % twoPi;
+  const wrapped = (((angle + Math.PI) % twoPi) + twoPi) % twoPi;
   return wrapped - Math.PI;
 }
 
@@ -513,7 +513,16 @@ export function useCanvasViewport(
     publish();
     setScaleState(transform.current.scale);
     syncOverlays(true);
-  }, [clamp, fitMode, fitVerticalAlignment, maxScale, minScaleOption, publish, rotationEnabled, syncOverlays]);
+  }, [
+    clamp,
+    fitMode,
+    fitVerticalAlignment,
+    maxScale,
+    minScaleOption,
+    publish,
+    rotationEnabled,
+    syncOverlays,
+  ]);
 
   const viewportWorldCenter = useCallback((): SpatialPoint => {
     const { width, height } = viewport.current;
@@ -775,11 +784,7 @@ export function useCanvasViewport(
           },
           { scale: animatedScale },
         ]
-      : [
-          { translateX: animatedX },
-          { translateY: animatedY },
-          { scale: animatedScale },
-        ],
+      : [{ translateX: animatedX }, { translateY: animatedY }, { scale: animatedScale }],
     /** Live camera for the Skia edge overlay; written in `publish`, never via React state. */
     cameraTransform,
     setChildDragging: (dragging: boolean) => {

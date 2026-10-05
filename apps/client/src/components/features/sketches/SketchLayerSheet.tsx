@@ -1,4 +1,8 @@
-import { MAX_SKETCH_LAYERS, MAX_SKETCH_LAYER_NAME_LENGTH, type SketchLayerType } from '@keres/shared';
+import {
+  MAX_SKETCH_LAYER_NAME_LENGTH,
+  MAX_SKETCH_LAYERS,
+  type SketchLayerDoc,
+} from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,39 +11,43 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useTheme } from '../../../theme';
 import { AppAlert } from '../../../utils/AppAlert';
-
-/** Count key for overlays on the implicit base layer (no `layerId`). */
-export const SKETCH_BASE_LAYER_KEY = '__base';
+import SketchSlider from './SketchSlider';
 
 interface SketchLayerSheetProps {
-  layers: SketchLayerType[];
-  activeLayerId: string | null;
+  /** Bottom first, as stored; the sheet lists the top layer first. */
+  layers: readonly SketchLayerDoc[];
+  activeLayerId: string;
   canEdit: boolean;
-  overlayCounts: Record<string, number>;
-  onSelectActive: (layerId: string | null) => void;
+  onSelectActive: (layerId: string) => void;
   onAdd: () => void;
-  onRename: (layerId: string, name: string) => void;
-  onToggleVisible: (layerId: string) => void;
-  onSetOpacity: (layerId: string, opacity: number) => void;
+  onPatch: (
+    layerId: string,
+    patch: { name?: string; visible?: boolean; opacity?: number; locked?: boolean },
+  ) => void;
+  onMove: (layerId: string, delta: number) => void;
+  onDuplicate: (layerId: string) => void;
+  onMergeDown: (layerId: string) => void;
+  onClear: (layerId: string) => void;
   onDelete: (layerId: string) => void;
   onClose: () => void;
 }
 
 /**
- * Basic layers: a named stack with visibility and opacity. New strokes land on the
- * active layer; deleting a layer deletes its strokes after a confirm. Hidden layers
- * skip hit-testing, rendering and export alike.
+ * Layers of the sketch, top first: pick the one new strokes land on, show/hide, lock, and open a
+ * row for opacity, order, duplicate, merge down, clear and delete. A locked or hidden layer takes
+ * no strokes. Deleting or clearing a layer asks first; both are undoable from the canvas.
  */
 const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
   layers,
   activeLayerId,
   canEdit,
-  overlayCounts,
   onSelectActive,
   onAdd,
-  onRename,
-  onToggleVisible,
-  onSetOpacity,
+  onPatch,
+  onMove,
+  onDuplicate,
+  onMergeDown,
+  onClear,
   onDelete,
   onClose,
 }) => {
@@ -47,6 +55,7 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
   const { colors } = useTheme();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const styles = StyleSheet.create({
     sheet: {
       backgroundColor: colors.surface,
@@ -55,18 +64,13 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
       paddingHorizontal: 20,
       paddingTop: 16,
       paddingBottom: 24,
-      maxHeight: '78%',
+      maxHeight: '82%',
     },
     header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
     title: { color: colors.text, fontSize: 19, fontWeight: 'bold', flex: 1 },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      paddingVertical: 8,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.border,
-    },
+    block: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8 },
+    active: { backgroundColor: colors.border + '55', borderRadius: 8 },
     name: { color: colors.text, fontSize: 15, fontWeight: '600', flex: 1 },
     sub: { color: colors.textSecondary, fontSize: 12 },
     input: {
@@ -78,14 +82,22 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
       flex: 1,
     },
     iconButton: { padding: 6 },
+    more: { paddingBottom: 10, paddingLeft: 30, gap: 8 },
+    moreRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
     footer: { marginTop: 14 },
   });
 
   const commitRename = () => {
-    if (editingId && editingName.trim()) onRename(editingId, editingName.trim());
+    if (editingId && editingName.trim()) onPatch(editingId, { name: editingName.trim() });
     setEditingId(null);
   };
+  const confirm = (title: string, body: string, action: () => void) =>
+    AppAlert.alert(title, body, [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('delete'), style: 'destructive', onPress: action },
+    ]);
 
+  const topFirst = [...layers].reverse();
   return (
     <ResponsiveModal visible onClose={onClose} placement="adaptive" contentStyle={styles.sheet}>
       <View style={styles.header}>
@@ -95,115 +107,184 @@ const SketchLayerSheet: React.FC<SketchLayerSheetProps> = ({
         </TouchableOpacity>
       </View>
       <ScrollView keyboardShouldPersistTaps="handled">
-        <TouchableOpacity
-          onPress={() => onSelectActive(null)}
-          style={styles.row}
-          accessibilityRole="radio"
-          accessibilityState={{ selected: activeLayerId === null }}
-          accessibilityLabel={t('sketch_layer_base')}
-        >
-          <Ionicons
-            name={activeLayerId === null ? 'radio-button-on' : 'radio-button-off'}
-            size={20}
-            color={activeLayerId === null ? colors.primary : colors.textSecondary}
-          />
-          <Text style={styles.name}>{t('sketch_layer_base')}</Text>
-          <Text style={styles.sub}>
-            {t('sketch_layer_strokes', { count: overlayCounts[SKETCH_BASE_LAYER_KEY] ?? 0 })}
-          </Text>
-        </TouchableOpacity>
-        {layers.map((layer) => {
+        {topFirst.map((layer, topIndex) => {
           const active = activeLayerId === layer.id;
-          const count = overlayCounts[layer.id] ?? 0;
+          const expanded = expandedId === layer.id;
+          const isBottom = topIndex === topFirst.length - 1;
+          const isTop = topIndex === 0;
           return (
-            <View key={layer.id} style={styles.row}>
-              <TouchableOpacity
-                onPress={() => onSelectActive(layer.id)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={layer.name}
-                style={styles.iconButton}
-              >
-                <Ionicons
-                  name={active ? 'radio-button-on' : 'radio-button-off'}
-                  size={20}
-                  color={active ? colors.primary : colors.textSecondary}
-                />
-              </TouchableOpacity>
-              {editingId === layer.id ? (
-                <TextInput
-                  value={editingName}
-                  onChangeText={setEditingName}
-                  onSubmitEditing={commitRename}
-                  onBlur={commitRename}
-                  autoFocus
-                  maxLength={MAX_SKETCH_LAYER_NAME_LENGTH}
-                  style={styles.input}
-                />
-              ) : (
+            <View key={layer.id} style={styles.block}>
+              <View style={[styles.row, active && styles.active]}>
                 <TouchableOpacity
-                  style={{ flex: 1 }}
-                  disabled={!canEdit}
-                  onPress={() => {
-                    setEditingId(layer.id);
-                    setEditingName(layer.name);
-                  }}
-                  accessibilityLabel={t('sketch_layer_rename', { name: layer.name })}
+                  onPress={() => onSelectActive(layer.id)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={layer.name}
+                  style={styles.iconButton}
                 >
-                  <Text style={styles.name}>{layer.name}</Text>
-                  <Text style={styles.sub}>
-                    {t('sketch_layer_strokes', { count })}
-                    {` · ${Math.round(layer.opacity * 100)}%`}
-                  </Text>
+                  <Ionicons
+                    name={active ? 'radio-button-on' : 'radio-button-off'}
+                    size={20}
+                    color={active ? colors.primary : colors.textSecondary}
+                  />
                 </TouchableOpacity>
+                {editingId === layer.id ? (
+                  <TextInput
+                    value={editingName}
+                    onChangeText={setEditingName}
+                    onSubmitEditing={commitRename}
+                    onBlur={commitRename}
+                    autoFocus
+                    maxLength={MAX_SKETCH_LAYER_NAME_LENGTH}
+                    style={styles.input}
+                  />
+                ) : (
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    disabled={!canEdit}
+                    onPress={() => {
+                      setEditingId(layer.id);
+                      setEditingName(layer.name);
+                    }}
+                    accessibilityLabel={t('sketch_layer_rename', { name: layer.name })}
+                  >
+                    <Text style={styles.name}>{layer.name}</Text>
+                    <Text style={styles.sub}>
+                      {t('sketch_layer_items', { count: layer.items.length })}
+                      {` · ${Math.round(layer.opacity * 100)}%`}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => onPatch(layer.id, { visible: !layer.visible })}
+                  disabled={!canEdit}
+                  style={styles.iconButton}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: layer.visible }}
+                  accessibilityLabel={t('sketch_layer_visible', { name: layer.name })}
+                >
+                  <Ionicons
+                    name={layer.visible ? 'eye-outline' : 'eye-off-outline'}
+                    size={20}
+                    color={layer.visible ? colors.text : colors.textSecondary}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => onPatch(layer.id, { locked: !layer.locked })}
+                  disabled={!canEdit}
+                  style={styles.iconButton}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: layer.locked }}
+                  accessibilityLabel={t('sketch_layer_lock', { name: layer.name })}
+                >
+                  <Ionicons
+                    name={layer.locked ? 'lock-closed-outline' : 'lock-open-outline'}
+                    size={20}
+                    color={layer.locked ? colors.primary : colors.textSecondary}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setExpandedId(expanded ? null : layer.id)}
+                  style={styles.iconButton}
+                  accessibilityLabel={t('sketch_layer_more', { name: layer.name })}
+                >
+                  <Ionicons
+                    name={expanded ? 'chevron-up' : 'ellipsis-horizontal'}
+                    size={20}
+                    color={colors.text}
+                  />
+                </TouchableOpacity>
+              </View>
+              {expanded && canEdit && (
+                <View style={styles.more}>
+                  <SketchSlider
+                    label={t('sketch_opacity')}
+                    value={layer.opacity}
+                    min={0.05}
+                    max={1}
+                    valueText={`${Math.round(layer.opacity * 100)}%`}
+                    onChange={(opacity) => onPatch(layer.id, { opacity })}
+                  />
+                  <View style={styles.moreRow}>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      disabled={isTop}
+                      onPress={() => onMove(layer.id, 1)}
+                      accessibilityLabel={t('sketch_layer_up')}
+                    >
+                      <Ionicons
+                        name="arrow-up-outline"
+                        size={20}
+                        color={isTop ? colors.textSecondary : colors.text}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      disabled={isBottom}
+                      onPress={() => onMove(layer.id, -1)}
+                      accessibilityLabel={t('sketch_layer_down')}
+                    >
+                      <Ionicons
+                        name="arrow-down-outline"
+                        size={20}
+                        color={isBottom ? colors.textSecondary : colors.text}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      disabled={layers.length >= MAX_SKETCH_LAYERS}
+                      onPress={() => onDuplicate(layer.id)}
+                      accessibilityLabel={t('sketch_layer_duplicate')}
+                    >
+                      <Ionicons name="copy-outline" size={20} color={colors.text} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      disabled={isBottom}
+                      onPress={() => onMergeDown(layer.id)}
+                      accessibilityLabel={t('sketch_layer_merge_down')}
+                    >
+                      <Ionicons
+                        name="git-merge-outline"
+                        size={20}
+                        color={isBottom ? colors.textSecondary : colors.text}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      disabled={layer.items.length === 0}
+                      onPress={() =>
+                        confirm(t('sketch_layer_clear_title'), t('sketch_layer_clear_body'), () =>
+                          onClear(layer.id),
+                        )
+                      }
+                      accessibilityLabel={t('sketch_layer_clear')}
+                    >
+                      <Ionicons
+                        name="refresh-outline"
+                        size={20}
+                        color={layer.items.length === 0 ? colors.textSecondary : colors.text}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      disabled={layers.length <= 1}
+                      onPress={() =>
+                        confirm(t('sketch_layer_delete_title'), t('sketch_layer_delete_body'), () =>
+                          onDelete(layer.id),
+                        )
+                      }
+                      accessibilityLabel={t('sketch_layer_delete', { name: layer.name })}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={layers.length <= 1 ? colors.textSecondary : colors.error}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               )}
-              <TouchableOpacity
-                onPress={() => onToggleVisible(layer.id)}
-                disabled={!canEdit}
-                style={styles.iconButton}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: layer.visible }}
-                accessibilityLabel={t('sketch_layer_visible', { name: layer.name })}
-              >
-                <Ionicons
-                  name={layer.visible ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color={layer.visible ? colors.text : colors.textSecondary}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => onSetOpacity(layer.id, Math.max(0.1, layer.opacity - 0.25))}
-                disabled={!canEdit}
-                style={styles.iconButton}
-                accessibilityLabel={t('sketch_layer_less_opaque')}
-              >
-                <Ionicons name="remove" size={16} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => onSetOpacity(layer.id, Math.min(1, layer.opacity + 0.25))}
-                disabled={!canEdit}
-                style={styles.iconButton}
-                accessibilityLabel={t('sketch_layer_more_opaque')}
-              >
-                <Ionicons name="add" size={16} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  AppAlert.alert(t('sketch_layer_delete_title'), t('sketch_layer_delete_body'), [
-                    { text: t('cancel'), style: 'cancel' },
-                    {
-                      text: t('delete'),
-                      style: 'destructive',
-                      onPress: () => onDelete(layer.id),
-                    },
-                  ])
-                }
-                disabled={!canEdit}
-                style={styles.iconButton}
-                accessibilityLabel={t('sketch_layer_delete', { name: layer.name })}
-              >
-                <Ionicons name="trash-outline" size={18} color={colors.error} />
-              </TouchableOpacity>
             </View>
           );
         })}

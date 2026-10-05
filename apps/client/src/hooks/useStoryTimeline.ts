@@ -42,6 +42,7 @@ import { renderStoryTimelineSvg } from '@keres/shared/graphs/storyTimelineSvg';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryCalendar } from './useStoryCalendar';
+import { chooseExportFormat } from '../utils/exportFormatPrompt';
 
 const formatTime = (definition: CalendarDefinitionType, elapsedSeconds: number) => {
   const secondsPerDay = calendarSecondsPerDay(definition);
@@ -357,6 +358,8 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
 
   const exportTimeline = useCallback(async () => {
     if (!story || !layout.rows.length) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderStoryTimelineSvg(layout, {
@@ -384,7 +387,7 @@ export function useStoryTimeline(calendarOverride?: CalendarDefinitionType | nul
       const result = await deliverMapExport(
         svg,
         buildStoryTimelineFileName(story.title, new Date(), exportFileLanguage(i18n.language)),
-        useUserSettingsStore.getState().exportFormat,
+        format,
       );
       notify(
         result.delivered

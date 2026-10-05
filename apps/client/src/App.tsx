@@ -1,5 +1,6 @@
 import AppAlertHost from '@/src/components/common/feedback/AppAlertHost/AppAlertHost';
 import GuideHost from '@/src/components/common/feedback/GuideHost/GuideHost';
+import ExportFormatHost from '@/src/components/features/export/ExportFormatHost';
 import SvgRasterHost from '@/src/components/features/export/SvgRasterHost';
 import NotificationPopup from '@/src/components/common/feedback/NotificationPopup/NotificationPopup';
 import DocumentTitleSync from '@/src/components/features/app/DocumentTitleSync';
@@ -68,6 +69,8 @@ const SafeAreaWrapper = ({ children }: { children: React.ReactNode }) => {
       {/* Every export's PNG is rasterized by this hidden canvas, so it also
           lives here, next to AppAlertHost. */}
       <SvgRasterHost />
+      {/* Every canvas export asks SVG or PNG through this one chooser. */}
+      <ExportFormatHost />
     </View>
   );
 };

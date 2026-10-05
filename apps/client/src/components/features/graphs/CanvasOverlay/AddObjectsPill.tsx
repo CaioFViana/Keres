@@ -25,8 +25,6 @@ const PRESET_ICONS: Record<string, Glyph | undefined> = {
   pentagon: undefined,
   hexagon: undefined,
   star: 'star-outline',
-  'speech-oval': 'chatbubble-ellipses-outline',
-  'speech-rect': 'chatbubble-outline',
 };
 
 interface AddObjectsPillProps {

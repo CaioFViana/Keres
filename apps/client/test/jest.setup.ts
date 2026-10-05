@@ -125,11 +125,57 @@ jest.mock('@shopify/react-native-skia', () => {
     Text: host('SkiaText'),
     RoundedRect: host('SkiaRoundedRect'),
     ImageSVG: host('SkiaImageSVG'),
+    Picture: host('SkiaPicture'),
     useCanvasRef: () => canvasHolder,
+    // Sketch drawing: pictures record what would be drawn so tests can count and inspect it.
+    createPicture: (draw: (canvas: Record<string, unknown>) => void) => {
+      const commands: unknown[] = [];
+      draw({
+        drawPath: (path: unknown, paint: unknown) => commands.push({ path, paint }),
+        drawPicture: (picture: unknown) => commands.push({ picture }),
+        drawColor: (color: unknown) => commands.push({ color }),
+        scale: () => undefined,
+      });
+      return { __mockPicture: true, commands };
+    },
+    FillType: { Winding: 0, EvenOdd: 1 },
+    PaintStyle: { Fill: 0, Stroke: 1 },
+    StrokeCap: { Butt: 0, Round: 1, Square: 2 },
+    StrokeJoin: { Miter: 0, Round: 1, Bevel: 2 },
+    ColorType: { RGBA_8888: 4 },
+    AlphaType: { Unpremul: 3 },
     Skia: {
       SVG: {
         MakeFromString: (text: string) => (text.includes('<svg') ? { __mockSvg: text } : null),
       },
+      Path: {
+        MakeFromSVGString: (d: string) => ({
+          d,
+          fillType: 0,
+          setFillType(this: { fillType: number }, type: number) {
+            this.fillType = type;
+            return this;
+          },
+        }),
+      },
+      Paint: () => {
+        const paint: Record<string, unknown> = {};
+        const setter = (name: string) => (value: unknown) => {
+          paint[name] = value;
+        };
+        return Object.assign(paint, {
+          setAntiAlias: setter('antiAlias'),
+          setColor: setter('color'),
+          setAlphaf: setter('alpha'),
+          setStyle: setter('style'),
+          setStrokeWidth: setter('strokeWidth'),
+          setStrokeCap: setter('strokeCap'),
+          setStrokeJoin: setter('strokeJoin'),
+        });
+      },
+      Color: (value: string) => value,
+      Matrix: (values?: number[]) => ({ values }),
+      Surface: { MakeOffscreen: () => null },
     },
     // Deterministic measuring so label-centering math stays assertable: six units per
     // glyph, through the same glyph calls the canvases use (`measureText` is
@@ -151,6 +197,14 @@ jest.mock('@shopify/react-native-skia', () => {
     },
   };
 });
+
+// Every canvas export asks SVG or PNG through a modal host that does not exist under Jest. Screens
+// and hooks resolve the choice through this module, so the default answer is SVG; a test that cares
+// about the choice (or a cancel) overrides it per case.
+jest.mock('../src/utils/exportFormatPrompt', () => ({
+  __esModule: true,
+  chooseExportFormat: jest.fn(async () => 'svg'),
+}));
 
 // `react-native-enriched-html` mounts native Fabric views (TipTap on web) that
 // do not exist in Jest. Tests assert our wiring (default HTML, event mapping),

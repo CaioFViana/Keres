@@ -37,13 +37,13 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
 import { describeChoiceCheck, describeEffect } from '../../../utils/choiceCheckEffectDescriptions';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import {
   buildStoryMapFileName,
   deliverMapExport,
   exportFileLanguage,
 } from '../../../utils/storyTransfer';
 import { ChoiceViewContent } from './ChoiceViewContent';
+import { chooseExportFormat } from '../../../utils/exportFormatPrompt';
 
 /**
  * The story map: the scenes and the choices that link one to another.
@@ -321,6 +321,8 @@ const ChoiceViewScreen = () => {
   const handleExport = useCallback(async () => {
     if (!selectedStory || layout.nodes.length === 0) return;
 
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = renderStoryMapSvg(layout, {
@@ -347,7 +349,7 @@ const ChoiceViewScreen = () => {
       const result = await deliverMapExport(
         svg,
         buildStoryMapFileName(selectedStory.title, new Date(), exportFileLanguage(i18n.language)),
-        useUserSettingsStore.getState().exportFormat,
+        format,
       );
       if (result.delivered) {
         showNotification(t('story_map_export_success', { fileName: result.fileName }), 'success');

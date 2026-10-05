@@ -165,6 +165,29 @@ describe('location map export pipeline', () => {
   });
 });
 
+describe('export file names', () => {
+  it('writes exactly one extension whatever suffix the caller passed', async () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>';
+    const rasterize = jest.fn(async (): Promise<Uint8Array> => PNG_BYTES);
+    const cases: Array<[string, 'svg' | 'png', string]> = [
+      ['sketch-2026-01-01.png', 'png', 'sketch-2026-01-01.png'],
+      ['mapa.svg', 'png', 'mapa.png'],
+      ['mapa', 'png', 'mapa.png'],
+      ['sketch-2026-01-01.png', 'svg', 'sketch-2026-01-01.svg'],
+      ['mapa.svg', 'svg', 'mapa.svg'],
+      ['mapa', 'svg', 'mapa.svg'],
+    ];
+    for (const [input, format, expected] of cases) {
+      const stubs = stubBrowserDownload();
+      await expect(deliverMapExport(svg, input, format, rasterize)).resolves.toMatchObject({
+        fileName: expected,
+      });
+      expect(stubs.anchor.download).toBe(expected);
+      restoreDownloadStubs(stubs);
+    }
+  });
+});
+
 describe('board export pipeline', () => {
   const content = {
     nodes: [

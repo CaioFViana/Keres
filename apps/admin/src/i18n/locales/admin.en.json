@@ -461,7 +461,7 @@
       "favorite": "favorite",
       "download": "Download",
       "boardCounts": "{{nodes}} pins, {{edges}} arrows",
-      "sketchCounts": "{{overlays}} objects",
+      "sketchCounts": "{{layers}} layers · {{strokes}} strokes · {{fills}} fills · {{overlays}} objects",
       "edgeLabels": "Arrow labels",
       "mapCounts": "{{images}} bases, {{nodes}} points, {{markers}} markers",
       "relationTexts": "Relation labels"

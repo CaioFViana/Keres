@@ -235,6 +235,10 @@ const freshListState = () => ({
   refetch: mockRefetch,
 });
 
+/** The header leads with the sketches shortcut, so the add action is found by id. */
+const addAction = () =>
+  mockHeaderConfig.current!.actions.find((action: any) => action.id === 'add')!;
+
 describe('GalleryListScreen', () => {
   afterEach(() => {
     cleanup();
@@ -301,7 +305,7 @@ describe('GalleryListScreen', () => {
   it('imports picked media and reports the summary', async () => {
     const view = await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     expect(mockPromptGalleryAddKind).toHaveBeenCalled();
     const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
 
@@ -336,7 +340,7 @@ describe('GalleryListScreen', () => {
     await withSilencedConsole(['log'], async () => {
       await render(<GalleryListScreen />);
 
-      mockHeaderConfig.current?.actions[0].onPress();
+      addAction().onPress();
       const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
       mockPickDocuments.mockRejectedValue(new Error('denied'));
       await act(async () => {
@@ -357,7 +361,7 @@ describe('GalleryListScreen', () => {
     mockCreateGalleryLink.mockResolvedValue({ duplicate: true });
     const view = await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
     await act(async () => {
       choose('link');
@@ -387,7 +391,7 @@ describe('GalleryListScreen', () => {
     mockCreateGalleryLink.mockResolvedValue(null);
     const view = await render(<GalleryListScreen />);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     const choose = mockPromptGalleryAddKind.mock.calls[0][1] as (kind: string) => void;
     await act(async () => {
       choose('link');
@@ -398,7 +402,7 @@ describe('GalleryListScreen', () => {
     await waitFor(() => expect(view.queryByTestId('link-modal')).toBeNull());
     expect(mockLinkModalVisible).toBe(false);
 
-    mockHeaderConfig.current?.actions[0].onPress();
+    addAction().onPress();
     const chooseAgain = mockPromptGalleryAddKind.mock.calls[1][1] as (kind: string) => void;
     await act(async () => {
       chooseAgain('link');

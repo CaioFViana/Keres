@@ -343,18 +343,21 @@ describe('AppSettingsScreen', () => {
     expect(mockShowNotification).toHaveBeenCalledWith('tutorials_reset_success', 'success');
   });
 
-  it('changes date and export formats and ignores invalid values', async () => {
+  it('changes the date format and ignores invalid values', async () => {
     const view = await render(<SettingsScreen />);
     await view.findByTestId('pill-date_display_format-dmy');
     await fireEvent.press(view.getByTestId('pill-date_display_format-dmy'));
     expect(mockSetDateDisplayFormat).toHaveBeenCalledWith(mockDrizzle, 'dmy');
     await fireEvent.press(view.getByTestId('pill-date_display_format-bogus'));
     expect(mockSetDateDisplayFormat).toHaveBeenCalledTimes(1);
+  });
 
-    await fireEvent.press(view.getByTestId('pill-export_format-png'));
-    expect(mockSetExportFormat).toHaveBeenCalledWith(mockDrizzle, 'png');
-    await fireEvent.press(view.getByTestId('pill-export_format-bogus'));
-    expect(mockSetExportFormat).toHaveBeenCalledTimes(1);
+  it('keeps the export format setting out of the screen (each export asks for its own)', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByTestId('pill-date_display_format-dmy');
+    expect(view.queryByTestId('pill-export_format-png')).toBeNull();
+    expect(view.queryByText('export_format')).toBeNull();
+    expect(mockSetExportFormat).not.toHaveBeenCalled();
   });
 
   it('resets the application after confirmation', async () => {

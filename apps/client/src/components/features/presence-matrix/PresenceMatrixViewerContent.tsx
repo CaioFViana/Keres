@@ -15,12 +15,12 @@ import { useNotificationStore } from '../../../state/notificationStore';
 import type { PresenceMatrixViewerRequest } from '../../../state/presenceMatrixViewerStore';
 import { useStoryStore } from '../../../state/storyStore';
 import { useTheme } from '../../../theme';
-import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { deliverMapExport } from '../../../utils/storyTransfer';
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import type { PresenceMatrixCanvasHandle } from './PresenceMatrixCanvas';
 import PresenceMatrixCanvas from './PresenceMatrixCanvas';
 import { MAX_VISIBLE_SERIES, seriesColor } from './presenceMatrixConstants';
+import { chooseExportFormat } from '../../../utils/exportFormatPrompt';
 type BulkOrder = 'appearance' | 'alphabetical';
 
 const PresenceMatrixViewerContent: React.FC<{
@@ -208,6 +208,8 @@ const PresenceMatrixViewerContent: React.FC<{
   ]);
   const exportMap = useCallback(async () => {
     if (!story || !layout.rows.length) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderPresenceMatrixSvg(layout, {
@@ -220,11 +222,7 @@ const PresenceMatrixViewerContent: React.FC<{
         border: colors.border,
         showRowCoverage: request.kind === 'character',
       });
-      const r = await deliverMapExport(
-        svg,
-        `${story.title}-presenca.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const r = await deliverMapExport(svg, `${story.title}-presenca.svg`, format);
       notify(
         r.delivered
           ? t('presence_matrix_export_success', { fileName: r.fileName })

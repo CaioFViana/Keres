@@ -30,8 +30,6 @@ async function setup(mode: OverlayCatcherMode, snapTargets: { x: number; y: numb
     onDrawRect: jest.fn(),
     onPreviewRect: jest.fn(),
     onSelectOverlay: jest.fn(),
-    onPreviewFreehand: jest.fn(),
-    onFreehandCommit: jest.fn(),
   };
   const view = await render(
     <OverlayInteractionLayer
@@ -95,17 +93,6 @@ describe('OverlayInteractionLayer', () => {
     await config.onPanResponderRelease(tapEvent(5, 5), { dx: 0, dy: 0 });
     expect(callbacks.onDrawRect).not.toHaveBeenCalled();
     expect(callbacks.onDrawTap).not.toHaveBeenCalled();
-  });
-
-  it('ignores taps while the freehand pen is armed', async () => {
-    // A pen tap seeds nothing: vertices belong to the line/polygon tools. Letting the
-    // tap through would start vertex drafts under the stroke tool.
-    const { config, callbacks } = await setup({ kind: 'draw', tool: 'freehand' });
-    await config.onPanResponderGrant(tapEvent(5, 5));
-    await config.onPanResponderRelease(tapEvent(5, 5), { dx: 0, dy: 0 });
-    expect(callbacks.onDrawTap).not.toHaveBeenCalled();
-    expect(callbacks.onPreviewFreehand).not.toHaveBeenCalled();
-    expect(callbacks.onFreehandCommit).not.toHaveBeenCalled();
   });
 
   it('places stamps on tap, free of the vertex snap', async () => {

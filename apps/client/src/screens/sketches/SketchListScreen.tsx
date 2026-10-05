@@ -1,4 +1,9 @@
-import { getEntityAppearance } from '@keres/shared';
+import {
+  emptySketchContent,
+  generateSketchLocalId,
+  getEntityAppearance,
+  SKETCH_PAGE_PRESETS,
+} from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -61,7 +66,13 @@ const SketchCover: React.FC<{ storyId: string; sketch: SketchSelect }> = ({ stor
     return (
       <Image
         source={{ uri: resolvedUri }}
-        style={{ width: 48, height: 48, borderRadius: 8, marginRight: 12, backgroundColor: colors.border }}
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 8,
+          marginRight: 12,
+          backgroundColor: colors.border,
+        }}
         contentFit="cover"
         accessibilityLabel={visibleCover.title ?? sketch.name}
       />
@@ -282,7 +293,8 @@ const SketchListScreen = () => {
       <SketchCreateModal
         visible={createVisible}
         onCancel={() => setCreateVisible(false)}
-        onConfirm={async (name, description) => {
+        pickPage
+        onConfirm={async (name, description, pagePreset) => {
           if (!storyId || !userId) return;
           setCreateVisible(false);
           try {
@@ -290,11 +302,16 @@ const SketchListScreen = () => {
               storyId,
               name,
               description,
-              content: {
-                page: { width: 794, height: 1123, preset: 'a4' },
-                layers: [],
-                overlays: [],
-              },
+              content: emptySketchContent(
+                generateSketchLocalId(new Set()),
+                t('sketch_layer_default_name', { count: 1 }),
+                {
+                  ...(SKETCH_PAGE_PRESETS.find((preset) => preset.id === pagePreset) ??
+                    SKETCH_PAGE_PRESETS[0]),
+                  preset: pagePreset,
+                  background: 'paper',
+                },
+              ),
             });
             navigation.navigate('SketchCanvas', { sketchId: created.id });
           } catch (createError) {

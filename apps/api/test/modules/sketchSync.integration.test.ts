@@ -1,3 +1,4 @@
+import { encodeSketchItems, type SketchItem } from '@keres/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SketchSyncHandler } from '../../src/services/entity-sync-handlers/SketchSyncHandler';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
@@ -33,7 +34,9 @@ describe('sketches through the sync endpoint', () => {
         description: null,
         content: {
           page: { width: 794, height: 1123, preset: 'a4' },
-          layers: [],
+          layers: [
+            { id: 'ABCDEFGH', name: 'Layer 1', visible: true, opacity: 1, locked: false, data: '' },
+          ],
           overlays: [],
         },
         coverGalleryId: null,
@@ -49,7 +52,9 @@ describe('sketches through the sync endpoint', () => {
         version: 1,
         content: {
           page: { width: 1080, height: 1080, preset: 'square' },
-          layers: [{ id: 'ABCDEFGH', name: 'Ink', visible: true, opacity: 1 }],
+          layers: [
+            { id: 'ABCDEFGH', name: 'Ink', visible: true, opacity: 1, locked: false, data: '' },
+          ],
           overlays: [],
         },
       },
@@ -80,5 +85,58 @@ describe('sketches through the sync endpoint', () => {
     expect(retriedCreate.data.applied).toEqual([
       expect.objectContaining({ clientOperationId: 'sketch-create', entityVersion: 2 }),
     ]);
+  });
+
+  const drawing: SketchItem[] = [
+    {
+      kind: 'stroke',
+      brush: 'pen',
+      color: '#112233',
+      alpha: 1,
+      size: 3,
+      points: [0, 0, 40, 20, 80, 0],
+    },
+  ];
+  const sketchWith = (data: string) => ({
+    name: 'Drawn',
+    description: null,
+    content: {
+      page: { width: 794, height: 1123, preset: 'a4', background: 'paper' },
+      layers: [{ id: 'ABCDEFGH', name: 'Layer 1', visible: true, opacity: 1, locked: false, data }],
+      overlays: [],
+    },
+    coverGalleryId: null,
+  });
+
+  it('accepts a sketch carrying real drawing data', async () => {
+    const response = await push([
+      {
+        type: 'create',
+        entity: 'Sketch',
+        id: newId(),
+        version: 0,
+        clientOperationId: 'sketch-drawn',
+        data: sketchWith(encodeSketchItems(drawing)),
+      },
+    ]);
+    expect(response.status).toBe(200);
+    expect(response.data.conflicts).toEqual([]);
+    expect(response.data.applied).toEqual([
+      expect.objectContaining({ clientOperationId: 'sketch-drawn' }),
+    ]);
+  });
+
+  it('does not apply a sketch whose drawing data is corrupt', async () => {
+    const response = await push([
+      {
+        type: 'create',
+        entity: 'Sketch',
+        id: newId(),
+        version: 0,
+        clientOperationId: 'sketch-corrupt',
+        data: sketchWith('AAAAAAAA'),
+      },
+    ]);
+    expect(response.data.applied ?? []).toEqual([]);
   });
 });

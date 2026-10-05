@@ -24,6 +24,8 @@ interface CanvasActionBarButtonProps {
   active?: boolean;
   /** Disabled actions dim and stop firing. */
   disabled?: boolean;
+  /** Tighter side padding, for toolbars that must fit a phone's width in one row. */
+  dense?: boolean;
 }
 
 /**
@@ -37,18 +39,19 @@ export const CanvasActionBarButton: React.FC<CanvasActionBarButtonProps> = ({
   testID,
   active = false,
   disabled = false,
+  dense = false,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(
     () =>
       StyleSheet.create({
         button: {
-          paddingHorizontal: 14,
+          paddingHorizontal: dense ? 9 : 14,
           paddingVertical: ACTION_BUTTON_PADDING_VERTICAL,
           borderRadius: 8,
         },
       }),
-    [],
+    [dense],
   );
   return (
     <TouchableOpacity

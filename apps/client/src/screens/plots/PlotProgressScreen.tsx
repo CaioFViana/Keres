@@ -14,9 +14,9 @@ import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { deliverMapExport } from '../../utils/storyTransfer';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
+import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 /**
  * How much of the story each plot covers. **Coverage**, not participation: a scene may
@@ -108,6 +108,8 @@ const PlotProgressScreen = () => {
 
   const exportCoverage = useCallback(async () => {
     if (!selectedStory || entries.length === 0) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderPlotCoverageSvg(entries, {
@@ -120,11 +122,7 @@ const PlotProgressScreen = () => {
         border: colors.border,
         primary: colors.primary,
       });
-      const result = await deliverMapExport(
-        svg,
-        `${selectedStory.title}-cobertura.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const result = await deliverMapExport(svg, `${selectedStory.title}-cobertura.svg`, format);
       notify(
         result.delivered
           ? t('plot_coverage_export_success', { fileName: result.fileName })

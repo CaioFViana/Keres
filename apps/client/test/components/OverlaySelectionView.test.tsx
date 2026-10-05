@@ -18,6 +18,16 @@ const POLYGON: CanvasOverlayType = {
     { x: 50, y: 80 },
   ],
 };
+const BALLOON: CanvasOverlayType = {
+  id: 'ov-3',
+  kind: 'balloon',
+  x: 10,
+  y: 10,
+  width: 100,
+  height: 60,
+  tail: { x: 140, y: 100 },
+  content: 'Hi',
+};
 const FRAME: CanvasOverlayType = { id: 'ov-2', kind: 'frame', x: 10, y: 10, width: 60, height: 40 };
 
 function responderConfigs() {
@@ -32,6 +42,7 @@ async function setup(overlay: CanvasOverlayType, scale = 2) {
     onCommitMove: jest.fn(),
     onCommitVertex: jest.fn(),
     onCommitRect: jest.fn(),
+    onCommitTail: jest.fn(),
     onDetails: jest.fn(),
     onMoveLayer: jest.fn(),
     onToggleLock: jest.fn(),
@@ -57,6 +68,40 @@ describe('OverlaySelectionView', () => {
     expect(frame.view.queryByTestId('overlay-vertex-0')).toBeNull();
     expect(frame.view.getByTestId('overlay-corner-0')).toBeTruthy();
     expect(frame.view.getByTestId('overlay-corner-3')).toBeTruthy();
+  });
+
+  it('gives a balloon four corner handles and one tail handle, nothing per outline point', async () => {
+    const { view } = await setup(BALLOON);
+    for (const corner of [0, 1, 2, 3]) {
+      expect(view.getByTestId(`overlay-corner-${corner}`)).toBeTruthy();
+    }
+    expect(view.getByTestId('overlay-tail')).toBeTruthy();
+    expect(view.queryByTestId('overlay-vertex-0')).toBeNull();
+  });
+
+  it('commits the tail drag as a world point and a corner drag as the ellipse rect', async () => {
+    const { callbacks, configs } = await setup(BALLOON);
+    // Responders: move badge, then the tail handle, then the four corners.
+    const tail = configs[1];
+    await act(async () => {
+      await tail.onPanResponderGrant();
+      await tail.onPanResponderMove({}, { dx: 20, dy: 10 });
+      await tail.onPanResponderRelease();
+    });
+    expect(callbacks.onCommitTail).toHaveBeenCalledWith('ov-3', { x: 150, y: 105 });
+
+    const corner = configs[4];
+    await act(async () => {
+      await corner.onPanResponderGrant();
+      await corner.onPanResponderMove({}, { dx: 20, dy: 20 });
+      await corner.onPanResponderRelease();
+    });
+    expect(callbacks.onCommitRect).toHaveBeenCalledWith('ov-3', {
+      x: 10,
+      y: 10,
+      width: 110,
+      height: 70,
+    });
   });
 
   it('commits moves in world units', async () => {

@@ -28,7 +28,6 @@ import type { RelationGraphNode } from '@keres/shared/graphs/characterRelationGr
 import { buildCharacterRelationGraphLayout } from '@keres/shared/graphs/characterRelationGraphLayout';
 import { renderCharacterRelationMapSvg } from '@keres/shared/graphs/characterRelationGraphSvg';
 import { filterCharacterRelationGraph } from '@keres/shared/graphs/characterRelationGraphFilter';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import {
   buildCharacterRelationMapFileName,
   deliverMapExport,
@@ -36,6 +35,7 @@ import {
 } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { CharactersScreenNavigationProp } from '../../navigation/navigationProps';
+import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 /**
  * The relations map: a story's characters and who knows whom.
@@ -192,6 +192,8 @@ const CharacterRelationGraphScreen = () => {
   const handleExport = useCallback(async () => {
     if (!selectedStory || layout.nodes.length === 0) return;
 
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = renderCharacterRelationMapSvg(layout, {
@@ -220,7 +222,7 @@ const CharacterRelationGraphScreen = () => {
           new Date(),
           exportFileLanguage(i18n.language),
         ),
-        useUserSettingsStore.getState().exportFormat,
+        format,
       );
       if (result.delivered) {
         showNotification(

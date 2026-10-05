@@ -23,6 +23,8 @@ export const MAX_CANVAS_OVERLAY_POINTS = 200;
 export const MAX_CANVAS_OVERLAY_LABEL_LENGTH = 200;
 /** Free text of a `text` overlay: a sketch caption, not a manuscript. */
 export const MAX_CANVAS_OVERLAY_TEXT_LENGTH = 2000;
+/** A balloon's words are short; the ellipse is not a page. */
+export const MAX_CANVAS_OVERLAY_BALLOON_TEXT_LENGTH = 500;
 /** Smallest/largest point size the text tool offers. */
 export const MIN_CANVAS_OVERLAY_FONT_SIZE = 10;
 export const MAX_CANVAS_OVERLAY_FONT_SIZE = 96;
@@ -54,14 +56,6 @@ const CanvasOverlayLabelSchema = z
 const CanvasOverlayStrokeWidthSchema = z.number().finite().min(0.5).max(24).optional();
 /** Visual stacking order inside the canvas; absent values preserve document order. */
 const CanvasOverlayZIndexSchema = z.number().finite().optional();
-/**
- * Sketch layer membership. Boards and location maps carry no layers, so their overlays
- * simply omit it (the implicit base layer); sketches resolve it against `SketchContent.layers`.
- */
-const CanvasOverlayLayerIdSchema = z
-  .string()
-  .regex(CANVAS_OVERLAY_LOCAL_ID_REGEX, 'Canvas overlay layer ids are 8 Crockford characters')
-  .optional();
 
 const CanvasOverlayLineSchema = z.object({
   id: CanvasOverlayLocalIdSchema,
@@ -76,7 +70,6 @@ const CanvasOverlayLineSchema = z.object({
   /** Locked overlays still select, but their geometry commits are ignored. */
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
-  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayPolygonSchema = z.object({
@@ -93,7 +86,6 @@ const CanvasOverlayPolygonSchema = z.object({
   strokeWidth: CanvasOverlayStrokeWidthSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
-  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayFrameSchema = z.object({
@@ -111,7 +103,6 @@ const CanvasOverlayFrameSchema = z.object({
   filled: z.boolean().optional(),
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
-  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayShapeSchema = z.object({
@@ -129,7 +120,6 @@ const CanvasOverlayShapeSchema = z.object({
   strokeWidth: CanvasOverlayStrokeWidthSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
-  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayStampSchema = z.object({
@@ -145,7 +135,6 @@ const CanvasOverlayStampSchema = z.object({
   label: CanvasOverlayLabelSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
-  layerId: CanvasOverlayLayerIdSchema,
 });
 
 const CanvasOverlayTextSchema = z.object({
@@ -157,12 +146,48 @@ const CanvasOverlayTextSchema = z.object({
   width: z.number().finite().min(24).max(4000),
   /** Plain multiline text (`\n` breaks lines); no rich text. */
   content: z.string().max(MAX_CANVAS_OVERLAY_TEXT_LENGTH),
-  fontSize: z.number().finite().min(MIN_CANVAS_OVERLAY_FONT_SIZE).max(MAX_CANVAS_OVERLAY_FONT_SIZE).optional(),
+  fontSize: z
+    .number()
+    .finite()
+    .min(MIN_CANVAS_OVERLAY_FONT_SIZE)
+    .max(MAX_CANVAS_OVERLAY_FONT_SIZE)
+    .optional(),
   align: z.enum(['left', 'center']).optional(),
   color: CanvasOverlayColorSchema,
   locked: z.boolean().optional(),
   zIndex: CanvasOverlayZIndexSchema,
-  layerId: CanvasOverlayLayerIdSchema,
+});
+
+/**
+ * A speech balloon: an ellipse (x/y/width/height, four corner handles to edit) plus a tail. The tail
+ * is one point - its tip - and leaves the ellipse at the nearest of eight axes (see
+ * `graphs/canvasBalloon.ts`), so there is nothing else to place. Text lives inside the balloon.
+ */
+const CanvasOverlayBalloonSchema = z.object({
+  id: CanvasOverlayLocalIdSchema,
+  kind: z.literal('balloon'),
+  /** Top-left of the ellipse's bounding box. */
+  x: z.number().finite(),
+  y: z.number().finite(),
+  width: z.number().finite().min(24).max(4000),
+  height: z.number().finite().min(24).max(4000),
+  /** Tip of the tail, in world coordinates. */
+  tail: CanvasOverlayPointSchema,
+  /** What the character says; plain text wrapped inside the ellipse. */
+  content: z.string().max(MAX_CANVAS_OVERLAY_BALLOON_TEXT_LENGTH),
+  fontSize: z
+    .number()
+    .finite()
+    .min(MIN_CANVAS_OVERLAY_FONT_SIZE)
+    .max(MAX_CANVAS_OVERLAY_FONT_SIZE)
+    .optional(),
+  /** Outline and text color. */
+  color: CanvasOverlayColorSchema,
+  /** Background of the balloon; absent means the page's paper tone. */
+  fillColor: CanvasOverlayColorSchema,
+  strokeWidth: CanvasOverlayStrokeWidthSchema,
+  locked: z.boolean().optional(),
+  zIndex: CanvasOverlayZIndexSchema,
 });
 
 export const CanvasOverlaySchema = z.discriminatedUnion('kind', [
@@ -172,6 +197,7 @@ export const CanvasOverlaySchema = z.discriminatedUnion('kind', [
   CanvasOverlayShapeSchema,
   CanvasOverlayStampSchema,
   CanvasOverlayTextSchema,
+  CanvasOverlayBalloonSchema,
 ]);
 
 /** No defaults or transforms: the parsed overlay is exactly the stored overlay. */
@@ -260,6 +286,14 @@ export function canvasOverlayBounds(overlay: CanvasOverlayType): SpatialRect {
     case 'frame':
     case 'shape':
       return { x: overlay.x, y: overlay.y, width: overlay.width, height: overlay.height };
+    case 'balloon': {
+      // The ellipse and the tail tip: culling, export bounds and the spatial envelope see both.
+      const minX = Math.min(overlay.x, overlay.tail.x);
+      const minY = Math.min(overlay.y, overlay.tail.y);
+      const maxX = Math.max(overlay.x + overlay.width, overlay.tail.x);
+      const maxY = Math.max(overlay.y + overlay.height, overlay.tail.y);
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
     case 'stamp': {
       const size = overlay.size ?? CANVAS_OVERLAY_STAMP_DEFAULT_SIZE;
       return { x: overlay.x - size / 2, y: overlay.y - size / 2, width: size, height: size };

@@ -51,6 +51,81 @@ describe('useCanvasOverlayActions', () => {
     expect(result.current.actions.interactionMode).toBeNull();
   });
 
+  describe('speech balloons', () => {
+    const drawBalloon = async () => {
+      const result = await setup();
+      await act(async () => result.current.actions.handleObjectsAction('draw:balloon'));
+      await act(async () =>
+        result.current.actions.commitRectDraw('balloon', { x: 100, y: 100 }, { x: 300, y: 200 }),
+      );
+      return result;
+    };
+    type Balloon = {
+      kind: 'balloon';
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      tail: { x: number; y: number };
+      content: string;
+    };
+    const balloon = (result: Awaited<ReturnType<typeof setup>>) =>
+      result.current.content.overlays?.[0] as unknown as Balloon;
+
+    it('draws one ellipse with a tail out of the south-east axis and opens its sheet', async () => {
+      const result = await drawBalloon();
+      expect(balloon(result)).toMatchObject({
+        kind: 'balloon',
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 100,
+        content: '',
+      });
+      expect(balloon(result).tail.x).toBeGreaterThan(300 - 40);
+      expect(balloon(result).tail.y).toBeGreaterThan(200 - 40);
+      expect(result.current.actions.sheetOverlayId).toBe('id-1');
+      expect(result.current.actions.interactionMode).toBeNull();
+    });
+
+    it('moves the tail with the body', async () => {
+      const result = await drawBalloon();
+      const before = balloon(result).tail;
+      await act(async () => result.current.actions.commitMove('id-1', 30, -10));
+      expect(balloon(result)).toMatchObject({ x: 130, y: 90 });
+      expect(balloon(result).tail).toEqual({ x: before.x + 30, y: before.y - 10 });
+    });
+
+    it('keeps the tail tip put while the ellipse is resized, and clear of the outline', async () => {
+      const result = await drawBalloon();
+      await act(async () => result.current.actions.commitTail('id-1', { x: 420, y: 320 }));
+      await act(async () =>
+        result.current.actions.commitRectEdit('id-1', { x: 100, y: 100, width: 300, height: 200 }),
+      );
+      // The tip (420,320) would now sit too close to the bigger ellipse, so it is pushed out.
+      const { tail } = balloon(result);
+      const radius = Math.hypot((tail.x - 250) / 150, (tail.y - 200) / 100);
+      expect(radius).toBeGreaterThanOrEqual(1.25 - 1e-9);
+    });
+
+    it('commits a dragged tail tip and ignores locked balloons', async () => {
+      const result = await drawBalloon();
+      await act(async () => result.current.actions.commitTail('id-1', { x: 50, y: 40 }));
+      expect(balloon(result).tail).toEqual({ x: 50, y: 40 });
+      await act(async () => result.current.actions.toggleOverlayLock('id-1'));
+      await act(async () => result.current.actions.commitTail('id-1', { x: 0, y: 0 }));
+      expect(balloon(result).tail).toEqual({ x: 50, y: 40 });
+    });
+
+    it('stores what the character says through the sheet patch', async () => {
+      const result = await drawBalloon();
+      await act(async () =>
+        result.current.actions.updateOverlay('id-1', { content: 'Who goes there?', fontSize: 20 }),
+      );
+      expect(balloon(result).content).toBe('Who goes there?');
+    });
+  });
+
   it('accumulates vertices and finishes valid drafts', async () => {
     const result = await setup();
 

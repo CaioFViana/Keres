@@ -4,6 +4,7 @@ import {
   parseSvgRootSize,
   sanitizeSvgForRaster,
   withPngExtension,
+  withSvgExtension,
 } from '../../src/utils/svgRaster';
 
 describe('parseSvgRootSize', () => {
@@ -69,5 +70,25 @@ describe('withPngExtension', () => {
 
   it('appends when there is no suffix', () => {
     expect(withPngExtension('story-mapa')).toBe('story-mapa.png');
+  });
+
+  it('never doubles the suffix: a name already ending in .png stays as it is', () => {
+    expect(withPngExtension('sketch-2026-01-01.png')).toBe('sketch-2026-01-01.png');
+    expect(withPngExtension('SKETCH.PNG')).toBe('SKETCH.png');
+  });
+
+  it('keeps dots inside the name and only touches the final suffix', () => {
+    expect(withPngExtension('v1.2-mapa.svg')).toBe('v1.2-mapa.png');
+    expect(withPngExtension('v1.2-mapa')).toBe('v1.2-mapa.png');
+    expect(withPngExtension('mapa.svg.png')).toBe('mapa.svg.png');
+  });
+});
+
+describe('withSvgExtension', () => {
+  it('leaves an .svg name alone, swaps a .png one, and appends otherwise', () => {
+    expect(withSvgExtension('mapa.svg')).toBe('mapa.svg');
+    expect(withSvgExtension('mapa.png')).toBe('mapa.svg');
+    expect(withSvgExtension('mapa')).toBe('mapa.svg');
+    expect(withSvgExtension('v1.2-mapa')).toBe('v1.2-mapa.svg');
   });
 });

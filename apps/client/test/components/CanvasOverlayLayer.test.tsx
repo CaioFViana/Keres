@@ -1,12 +1,10 @@
 import { act, render, type RenderResult } from '@testing-library/react-native';
 import type { SkFont } from '@shopify/react-native-skia';
-import { matchFont, Skia } from '@shopify/react-native-skia';
+import { matchFont } from '@shopify/react-native-skia';
 import type { BoardContentType, CanvasOverlayType, SpatialRect } from '@keres/shared';
 import { StyleSheet, View } from 'react-native';
 import BoardCanvas from '../../src/components/features/boards/BoardCanvas';
-import CanvasOverlayLayer, {
-  sizedOverlayFont,
-} from '../../src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
+import CanvasOverlayLayer from '../../src/components/features/graphs/CanvasOverlay/CanvasOverlayLayer';
 import CanvasStampView from '../../src/components/features/graphs/CanvasOverlay/CanvasStampView';
 
 jest.mock('../../src/theme', () => ({
@@ -227,38 +225,107 @@ describe('CanvasOverlayLayer', () => {
     expect(root.queryAll((node) => node.type === 'SkiaText')).toHaveLength(0);
   });
 
-  it('draws text glyphs at the overlay size, not the base font size', async () => {
-    const face = {};
+  it('draws text at the overlay size by scaling the one base font, without deriving a new font', async () => {
+    // The base font reports its own size (11, like the canvases' edge font) and has no typeface to
+    // derive from - the exact situation in which the old approach drew every size the same.
     const base = {
-      getTypeface: () => face,
+      getSize: () => 11,
       getGlyphIDs: (text: string) => [...text].map((_, index) => index),
       getGlyphWidths: (ids: number[]) => ids.map(() => 6),
     } as unknown as SkFont;
-    const derived = { __sized: 24 } as unknown as SkFont;
-    const skiaMock = Skia as unknown as { Font?: (face: unknown, size: number) => SkFont };
-    const previousFont = skiaMock.Font;
-    skiaMock.Font = jest.fn(() => derived);
-    try {
+    const draw = async (fontSize: number) => {
       const root = await renderLayer(
-        [{ id: '07EFGHJK', kind: 'text', x: 0, y: 0, width: 200, content: 'hi', fontSize: 24 }],
+        [{ id: '07EFGHJK', kind: 'text', x: 0, y: 0, width: 400, content: 'hi', fontSize }],
         base,
       );
-      expect(skiaMock.Font).toHaveBeenCalledWith(face, 24);
       const [text] = root.queryAll((node) => node.type === 'SkiaText');
-      // One wrapped line, first baseline a full 24 units down, glyphs at size 24.
-      expect(text.props).toMatchObject({ text: 'hi', x: 0, y: 24, font: derived });
-    } finally {
-      if (previousFont === undefined) delete skiaMock.Font;
-      else skiaMock.Font = previousFont;
-    }
+      const group = root.queryAll(
+        (node) => node.type === 'SkiaGroup' && Array.isArray(node.props.transform),
+      )[0];
+      return { text, transform: group.props.transform };
+    };
+    const small = await draw(11);
+    const large = await draw(44);
+    // The text itself is drawn at the origin with the base font; the transform carries size and place.
+    expect(large.text.props).toMatchObject({ text: 'hi', x: 0, y: 0, font: base });
+    expect(small.transform).toEqual([{ translateX: 0 }, { translateY: 11 }, { scale: 1 }]);
+    expect(large.transform).toEqual([{ translateX: 0 }, { translateY: 44 }, { scale: 4 }]);
+  });
+
+  it('centers a scaled line by its scaled width', async () => {
+    const base = {
+      getSize: () => 10,
+      getGlyphIDs: (text: string) => [...text].map((_, index) => index),
+      getGlyphWidths: (ids: number[]) => ids.map(() => 5),
+    } as unknown as SkFont;
+    const root = await renderLayer(
+      [
+        {
+          id: '07EFGHJK',
+          kind: 'text',
+          x: 0,
+          y: 0,
+          width: 200,
+          content: 'ab',
+          fontSize: 20,
+          align: 'center',
+        },
+      ],
+      base,
+    );
+    const group = root.queryAll(
+      (node) => node.type === 'SkiaGroup' && Array.isArray(node.props.transform),
+    )[0];
+    // 'ab' is 10 units at the base size, 20 at fontSize 20 (scale 2): centered in 200 -> x = 90.
+    expect(group.props.transform[0]).toEqual({ translateX: 90 });
+    expect(group.props.transform[2]).toEqual({ scale: 2 });
   });
 });
 
-describe('sizedOverlayFont', () => {
-  it('stays null-safe and falls back when nothing can derive', () => {
-    expect(sizedOverlayFont(null, 24)).toBeNull();
-    // The shared mock font has no typeface: the base font stands in.
-    expect(sizedOverlayFont(FONT, 24)).toBe(FONT);
+describe('balloon overlays', () => {
+  const BALLOON: CanvasOverlayType = {
+    id: '08BALLON',
+    kind: 'balloon',
+    x: 100,
+    y: 100,
+    width: 200,
+    height: 100,
+    tail: { x: 330, y: 240 },
+    content: 'Who goes there?',
+  };
+
+  it('draws one filled body-and-tail path, its outline, and the words inside', async () => {
+    const root = await renderLayer([BALLOON]);
+    const paths = root.queryAll((node) => node.type === 'SkiaPath');
+    expect(paths).toHaveLength(2);
+    expect(paths[0].props.path).toBe(paths[1].props.path);
+    expect(paths[0].props.path).toContain('A100 50 0 1 1');
+    expect(paths[0].props.path).toContain('L330 240');
+    expect(paths[1].props.style).toBe('stroke');
+    const text = root.queryAll((node) => node.type === 'SkiaText');
+    expect(text.length).toBeGreaterThan(0);
+    expect(text.map((node) => node.props.text).join(' ')).toBe('Who goes there?');
+  });
+
+  it('fills the balloon with its own background color, or the paper tone when it has none', async () => {
+    const plain = await renderLayer([BALLOON]);
+    expect(plain.queryAll((node) => node.type === 'SkiaPath')[0].props.color).toBe('#000');
+    const tinted = await renderLayer([{ ...BALLOON, fillColor: '#ffe08a' }]);
+    const [fill, outline] = tinted.queryAll((node) => node.type === 'SkiaPath');
+    expect(fill.props.color).toBe('#ffe08a');
+    expect(outline.props.style).toBe('stroke');
+    expect(outline.props.color).not.toBe('#ffe08a');
+  });
+
+  it('still draws the balloon when no font is available (only the words are skipped)', async () => {
+    const root = await renderLayer([BALLOON], null);
+    expect(root.queryAll((node) => node.type === 'SkiaPath')).toHaveLength(2);
+    expect(root.queryAll((node) => node.type === 'SkiaText')).toHaveLength(0);
+  });
+
+  it('is culled with its tail: a window that only reaches the tail still draws it', async () => {
+    const root = await renderLayer([BALLOON], FONT, { x: 320, y: 230, width: 40, height: 40 });
+    expect(root.queryAll((node) => node.type === 'SkiaPath')).toHaveLength(2);
   });
 });
 

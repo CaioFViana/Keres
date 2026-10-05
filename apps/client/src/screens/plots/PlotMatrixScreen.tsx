@@ -20,10 +20,10 @@ import { useStoryPlots } from '../../hooks/useStoryPlots';
 import { useNotificationStore } from '../../state/notificationStore';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { deliverMapExport } from '../../utils/storyTransfer';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import type { PlotsScreenNavigationProp } from './PlotListScreen';
+import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 /** Same cap as the presence matrix: the two charts are read side by side. */
 const MAX_VISIBLE_SERIES = 12;
@@ -121,6 +121,8 @@ const PlotMatrixScreen = () => {
 
   const exportMatrix = useCallback(async () => {
     if (!selectedStory || layout.rows.length === 0) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setSaving(true);
     try {
       const svg = renderPresenceMatrixSvg(layout, {
@@ -132,11 +134,7 @@ const PlotMatrixScreen = () => {
         border: colors.border,
         showRowCoverage: true,
       });
-      const result = await deliverMapExport(
-        svg,
-        `${selectedStory.title}-tramas.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const result = await deliverMapExport(svg, `${selectedStory.title}-tramas.svg`, format);
       notify(
         result.delivered
           ? t('plot_matrix_export_success', { fileName: result.fileName })

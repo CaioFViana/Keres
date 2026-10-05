@@ -44,6 +44,7 @@ import type { NavigableEntityType } from '../../utils/entityNavigation';
 import { toNavigableEntityType } from '../../utils/entityNavigation';
 import { buildBoardMapFileName, deliverMapExport } from '../../utils/storyTransfer';
 import { buildStandaloneBoardSvg } from '../../utils/storyMapSvgExport';
+import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 const BoardCanvasScreen = () => {
   const { t } = useTranslation();
@@ -280,6 +281,8 @@ const BoardCanvasScreen = () => {
 
   const handleExport = useCallback(async () => {
     if (!selectedStory) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = await buildStandaloneBoardSvg(content, {
@@ -304,7 +307,7 @@ const BoardCanvasScreen = () => {
       const result = await deliverMapExport(
         svg,
         buildBoardMapFileName(selectedStory.title, board?.name ?? 'board'),
-        useUserSettingsStore.getState().exportFormat,
+        format,
       );
       if (result.delivered) {
         showNotification(t('board_export_success', { fileName: result.fileName }), 'success');

@@ -45,11 +45,24 @@ export function sanitizeSvgForRaster(svg: string): string {
   return svg.replaceAll('font-family="Helvetica, Arial, sans-serif"', 'font-family="sans-serif"');
 }
 
-/** Swaps a `.svg` file name for its `.png` sibling; appends when there is no suffix. */
+/**
+ * Gives a file name the extension of the file about to be written: an `.svg` or `.png` suffix is
+ * replaced (so a name already ending in the right one is left alone, never `x.png.png`), and a name
+ * with neither gets the extension appended.
+ */
+function withExtension(fileName: string, extension: 'svg' | 'png'): string {
+  const stripped = fileName.replace(/\.(svg|png)$/i, '');
+  return `${stripped}.${extension}`;
+}
+
+/** Swaps a `.svg` (or already `.png`) file name for its `.png` form; appends when there is no suffix. */
 export function withPngExtension(fileName: string): string {
-  return fileName.toLowerCase().endsWith('.svg')
-    ? `${fileName.slice(0, -'.svg'.length)}.png`
-    : `${fileName}.png`;
+  return withExtension(fileName, 'png');
+}
+
+/** The `.svg` counterpart of `withPngExtension`. */
+export function withSvgExtension(fileName: string): string {
+  return withExtension(fileName, 'svg');
 }
 
 /**

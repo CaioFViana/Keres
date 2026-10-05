@@ -25,6 +25,52 @@ function render(overlays: CanvasOverlayType[]) {
   return renderCanvasOverlaySvg(overlays, CONTEXT);
 }
 
+it('exports a balloon as one outlined path, filled with the surface, and centered words', () => {
+  const { vectors } = renderCanvasOverlaySvg(
+    [
+      {
+        id: 'ov-b',
+        kind: 'balloon',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        tail: { x: 230, y: 140 },
+        content: 'Who goes there?',
+      },
+    ],
+    CONTEXT,
+  );
+  expect(vectors).toHaveLength(1);
+  // Shifted by (10, 20) like every other overlay in this context.
+  expect(vectors[0]).toContain('L240 160');
+  expect(vectors[0]).toContain(`fill="${COLORS.surface}"`);
+  expect(vectors[0]).toContain('stroke-linejoin="round"');
+  expect(vectors[0]).toContain('text-anchor="middle"');
+  expect(vectors[0]).toContain('Who goes there?');
+});
+
+it('exports a balloon background color when set', () => {
+  const { vectors } = renderCanvasOverlaySvg(
+    [
+      {
+        id: 'ov-b',
+        kind: 'balloon',
+        x: 0,
+        y: 0,
+        width: 200,
+        height: 100,
+        tail: { x: 230, y: 140 },
+        content: 'x',
+        fillColor: '#ffe08a',
+      },
+    ],
+    CONTEXT,
+  );
+  expect(vectors[0]).toContain('fill="#ffe08a"');
+  expect(vectors[0]).not.toContain(`fill="${COLORS.surface}"`);
+});
+
 it('returns empty groups without overlays', () => {
   expect(renderCanvasOverlaySvg(undefined, CONTEXT)).toEqual({ vectors: [], stamps: [] });
   expect(render([])).toEqual({ vectors: [], stamps: [] });

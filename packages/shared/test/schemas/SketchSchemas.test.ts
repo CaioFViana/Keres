@@ -1,92 +1,98 @@
 import { describe, expect, it } from 'vitest';
+import { CanvasOverlaySchema, canvasOverlayBounds } from '../../schemas/CanvasOverlaySchemas';
 import {
-  canvasOverlayPresetPoints,
-  simplifyStrokePoints,
-} from '../../graphs/canvasOverlayGeometry';
-import {
-  validateSketchContent,
   CreateSketchDataSchema,
   EMPTY_SKETCH_PAGE,
+  emptySketchContent,
   generateSketchLocalId,
   remapSketchContent,
   remapSketchCoverGalleryId,
   SketchContentSchema,
+  validateSketchContent,
 } from '../../schemas/SketchSchemas';
-import {
-  CanvasOverlaySchema,
-  canvasOverlayBounds,
-} from '../../schemas/CanvasOverlaySchemas';
+import { encodeSketchItems } from '../../sketch/sketchCodec';
+import { MAX_SKETCH_TOTAL_DATA_LENGTH, type SketchItem } from '../../sketch/sketchTypes';
 
 const overlayId = '01ABCDEF';
 const layerId = '02GHJKMN';
+const otherLayerId = '03PQRSVW';
 
-function contentWith(overlays: unknown[], layers: unknown[] = []) {
-  return validateSketchContent({
-    page: { ...EMPTY_SKETCH_PAGE },
-    layers,
-    overlays,
-  });
+function layer(id: string, data = '') {
+  return { id, name: 'Ink', visible: true, opacity: 1, locked: false, data };
 }
 
+function contentWith(overlays: unknown[], layers: unknown[] = [layer(layerId)]) {
+  return validateSketchContent({ page: { ...EMPTY_SKETCH_PAGE }, layers, overlays });
+}
+
+const oneStroke: SketchItem[] = [
+  {
+    kind: 'stroke',
+    brush: 'pen',
+    color: '#000000',
+    alpha: 1,
+    size: 3,
+    points: [0, 0, 40, 20, 80, 0],
+  },
+];
+
 describe('SketchContentSchema', () => {
-  it('defaults a new sketch to an A4 page with no layers or overlays', () => {
-    expect(CreateSketchDataSchema.parse({ name: 'Throne room' })).toMatchObject({
-      name: 'Throne room',
-      description: null,
-      coverGalleryId: null,
-      content: { page: { width: 794, height: 1123 }, layers: [], overlays: [] },
-    });
+  it('builds a blank sketch with one empty layer on an A4 page', () => {
+    const content = emptySketchContent(layerId, 'Layer 1');
+    expect(validateSketchContent(content)).toEqual(content);
+    expect(content.page).toMatchObject({ width: 794, height: 1123, background: 'paper' });
+    expect(content.layers).toHaveLength(1);
+    expect(content.layers[0].data).toBe('');
   });
 
-  it('accepts text, freehand lines and stamps', () => {
-    const content = contentWith([
-      {
-        id: overlayId,
-        kind: 'line',
-        points: [
-          { x: 0, y: 0 },
-          { x: 30, y: 10 },
-          { x: 60, y: 0 },
-        ],
-      },
-      {
-        id: '03PQRSVW',
-        kind: 'text',
-        x: 10,
-        y: 20,
-        width: 240,
-        content: 'The queen enters',
-      },
-      { id: '04XYZ123', kind: 'stamp', x: 50, y: 50, icon: 'flag' },
-    ]);
-    expect(content.overlays).toHaveLength(3);
-  });
-
-  it('rejects overlays pointing at a missing layer', () => {
+  it('requires content when creating and at least one layer', () => {
+    expect(() => CreateSketchDataSchema.parse({ name: 'Throne room' })).toThrow();
     expect(() =>
-      contentWith(
-        [{ id: overlayId, kind: 'stamp', x: 1, y: 1, icon: 'flag', layerId }],
-        [],
-      ),
-    ).toThrow(/layer that is not on this sketch/);
+      validateSketchContent({ page: { ...EMPTY_SKETCH_PAGE }, layers: [], overlays: [] }),
+    ).toThrow();
+    expect(
+      CreateSketchDataSchema.parse({
+        name: 'Throne room',
+        content: emptySketchContent(layerId, 'Layer 1'),
+      }),
+    ).toMatchObject({ name: 'Throne room', description: null, coverGalleryId: null });
   });
 
-  it('accepts overlays on a declared layer and rejects duplicate layer ids', () => {
-    const layers = [{ id: layerId, name: 'Ink', visible: true, opacity: 1 }];
+  it('accepts encoded layer data, text, balloons and stamps', () => {
     const content = contentWith(
-      [{ id: overlayId, kind: 'stamp', x: 1, y: 1, icon: 'flag', layerId }],
-      layers,
+      [
+        {
+          id: '03PQRSVW',
+          kind: 'text',
+          x: 10,
+          y: 20,
+          width: 240,
+          content: 'The queen enters',
+        },
+        { id: '04XYZ123', kind: 'stamp', x: 50, y: 50, icon: 'flag' },
+      ],
+      [layer(layerId, encodeSketchItems(oneStroke))],
     );
-    expect(content.overlays).toHaveLength(1);
-    expect(() =>
-      contentWith([], [
-        ...layers,
-        { id: layerId, name: 'Second', visible: true, opacity: 1 },
-      ]),
-    ).toThrow(/Duplicate layer id/);
+    expect(content.overlays).toHaveLength(2);
   });
 
-  it('rejects duplicate overlay ids', () => {
+  it('rejects layer data that does not decode', () => {
+    expect(() => contentWith([], [layer(layerId, 'AAAA')])).toThrow(
+      /Invalid layer data|Unsupported|corrupt|Unexpected/,
+    );
+    expect(() => contentWith([], [layer(layerId, '!!!')])).toThrow();
+  });
+
+  it('rejects a sketch whose layers exceed the total size budget', () => {
+    const big = 'A'.repeat(Math.floor(MAX_SKETCH_TOTAL_DATA_LENGTH / 2) + 4);
+    // Each chunk is within the per-layer cap; together they are over budget.
+    expect(() => contentWith([], [layer(layerId, big), layer(otherLayerId, big)])).toThrow(
+      /too large/,
+    );
+  });
+
+  it('rejects duplicate layer ids and duplicate overlay ids', () => {
+    expect(() => contentWith([], [layer(layerId), layer(layerId)])).toThrow(/Duplicate layer id/);
     expect(() =>
       contentWith([
         { id: overlayId, kind: 'stamp', x: 1, y: 1, icon: 'flag' },
@@ -97,7 +103,11 @@ describe('SketchContentSchema', () => {
 
   it('rejects pages outside the supported range', () => {
     expect(() =>
-      validateSketchContent({ page: { width: 10, height: 10 }, layers: [], overlays: [] }),
+      validateSketchContent({
+        page: { width: 10, height: 10 },
+        layers: [layer(layerId)],
+        overlays: [],
+      }),
     ).toThrow();
   });
 
@@ -107,49 +117,38 @@ describe('SketchContentSchema', () => {
     expect(first).toMatch(/^[0-9A-HJKMNP-TV-Z]{8}$/);
   });
 
-  it('remaps the cover gallery on clone and keeps local ids', () => {
+  it('keeps the drawing on clone and remaps only the cover gallery', () => {
     const content = SketchContentSchema.parse({
       page: { ...EMPTY_SKETCH_PAGE },
-      layers: [{ id: layerId, name: 'Ink', visible: true, opacity: 1 }],
-      overlays: [{ id: overlayId, kind: 'stamp', x: 1, y: 1, icon: 'flag', layerId }],
+      layers: [layer(layerId, encodeSketchItems(oneStroke))],
+      overlays: [{ id: overlayId, kind: 'stamp', x: 1, y: 1, icon: 'flag' }],
     });
     expect(remapSketchContent(content)).toEqual(content);
-    expect(remapSketchCoverGalleryId('gallery-1', (id) => (id === 'gallery-1' ? 'gallery-2' : undefined))).toBe(
-      'gallery-2',
-    );
+    expect(
+      remapSketchCoverGalleryId('gallery-1', (id) =>
+        id === 'gallery-1' ? 'gallery-2' : undefined,
+      ),
+    ).toBe('gallery-2');
     expect(remapSketchCoverGalleryId('gallery-9', () => undefined)).toBeNull();
     expect(remapSketchCoverGalleryId(null, () => undefined)).toBeNull();
   });
 });
 
 describe('sketch overlay primitives', () => {
-  it('builds speech balloons with the tail tip last', () => {
-    for (const preset of ['speech-oval', 'speech-rect'] as const) {
-      const points = canvasOverlayPresetPoints(preset, { x: 0, y: 0, width: 200, height: 120 });
-      expect(points.length).toBeGreaterThan(4);
-      const tip = points[points.length - 1];
-      // The tip leaves the dragged region downward-right, toward the speaker.
-      expect(tip.y).toBeGreaterThan(120);
-      expect(tip.x).toBeGreaterThan(100);
-      const parsed = CanvasOverlaySchema.parse({
-        id: overlayId,
-        kind: 'polygon',
-        points,
-      });
-      expect(parsed.kind).toBe('polygon');
-    }
-  });
-
-  it('simplifies a freehand drag while keeping its endpoints', () => {
-    const wobble = Array.from({ length: 120 }, (_, index) => ({
-      x: index,
-      y: Math.sin(index / 4) * 2,
-    }));
-    const simplified = simplifyStrokePoints(wobble);
-    expect(simplified.length).toBeLessThan(wobble.length);
-    expect(simplified[0]).toEqual(wobble[0]);
-    expect(simplified[simplified.length - 1]).toEqual(wobble[wobble.length - 1]);
-    expect(simplifyStrokePoints([{ x: 0, y: 0 }])).toHaveLength(1);
+  it('accepts a balloon and bounds it by the ellipse and its tail', () => {
+    const balloon = CanvasOverlaySchema.parse({
+      id: overlayId,
+      kind: 'balloon',
+      x: 10,
+      y: 20,
+      width: 200,
+      height: 120,
+      tail: { x: 260, y: 200 },
+      content: 'Who goes there?',
+    });
+    expect(balloon.kind).toBe('balloon');
+    expect(canvasOverlayBounds(balloon)).toEqual({ x: 10, y: 20, width: 250, height: 180 });
+    expect(CanvasOverlaySchema.safeParse({ ...balloon, width: 5 }).success).toBe(false);
   });
 
   it('bounds a text overlay from its wrapped lines', () => {

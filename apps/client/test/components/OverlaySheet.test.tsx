@@ -117,6 +117,41 @@ describe('OverlaySheet', () => {
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
+  it('lets a balloon pick its background apart from its outline and text color', async () => {
+    const onChange = jest.fn();
+    const view = await render(
+      <OverlaySheet
+        overlay={{
+          id: 'ov-b',
+          kind: 'balloon',
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 60,
+          tail: { x: 120, y: 90 },
+          content: 'Hi',
+        }}
+        canEdit
+        defaultColor="#85f"
+        defaultFillColor="#eee"
+        onChange={onChange}
+        onRemove={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    );
+    expect(view.getByText('overlay_sheet_balloon_outline')).toBeTruthy();
+    expect(view.getByText('overlay_sheet_balloon_fill')).toBeTruthy();
+    const pickers = view.getAllByTestId('sheet-color');
+    expect(pickers).toHaveLength(2);
+    // Outline first, background second; the background previews the paper default until chosen.
+    expect(pickers[0].props.children).toBe('#85f');
+    expect(pickers[1].props.children).toBe('#eee');
+    await fireEvent.press(pickers[1]);
+    expect(onChange).toHaveBeenLastCalledWith({ fillColor: '#f00' });
+    await fireEvent.press(pickers[0]);
+    expect(onChange).toHaveBeenLastCalledWith({ color: '#f00' });
+  });
+
   it('hides editing controls from readers', async () => {
     const view = await render(
       <OverlaySheet

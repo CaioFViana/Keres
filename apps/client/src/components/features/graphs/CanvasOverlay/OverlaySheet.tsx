@@ -21,9 +21,12 @@ interface OverlaySheetProps {
   canEdit: boolean;
   /** Shown in the color picker while the overlay sets no color of its own. */
   defaultColor: string;
+  /** Balloons: the background shown while the balloon sets none (the page's paper tone). */
+  defaultFillColor?: string;
   onChange: (patch: {
     label?: string | null;
     color?: string | null;
+    fillColor?: string | null;
     icon?: string;
     dashed?: boolean;
     filled?: boolean;
@@ -41,6 +44,7 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
   overlay,
   canEdit,
   defaultColor,
+  defaultFillColor = '#ffffff',
   onChange,
   onRemove,
   onClose,
@@ -102,7 +106,7 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {overlay.kind === 'text' ? (
+        {overlay.kind === 'text' || overlay.kind === 'balloon' ? (
           <>
             <Text style={styles.label}>{t('overlay_sheet_text')}</Text>
             <TextInput
@@ -143,12 +147,28 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
                 />
               </>
             )}
-            <Text style={styles.label}>{t('overlay_sheet_color')}</Text>
+            <Text style={styles.label}>
+              {t(
+                overlay.kind === 'balloon'
+                  ? 'overlay_sheet_balloon_outline'
+                  : 'overlay_sheet_color',
+              )}
+            </Text>
             <ColorPickerInput
               currentColor={overlay.color ?? defaultColor}
               onSelectColor={(value) => onChange({ color: value })}
               placeholder={t('overlay_sheet_color')}
             />
+            {overlay.kind === 'balloon' && (
+              <>
+                <Text style={styles.label}>{t('overlay_sheet_balloon_fill')}</Text>
+                <ColorPickerInput
+                  currentColor={overlay.fillColor ?? defaultFillColor}
+                  onSelectColor={(value) => onChange({ fillColor: value })}
+                  placeholder={t('overlay_sheet_balloon_fill')}
+                />
+              </>
+            )}
             {(overlay.kind === 'polygon' ||
               overlay.kind === 'frame' ||
               overlay.kind === 'shape') && (
@@ -158,12 +178,13 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
                 onValueChange={(value) => onChange({ filled: value })}
               />
             )}
-            {overlay.kind === 'text' && (
+            {(overlay.kind === 'text' || overlay.kind === 'balloon') && (
               <>
                 <Text style={styles.label}>{t('overlay_sheet_font_size')}</Text>
                 <View style={styles.row}>
                   {CANVAS_OVERLAY_FONT_SIZES.map((size) => {
-                    const active = (overlay.fontSize ?? 18) === size;
+                    const active =
+                      (overlay.fontSize ?? (overlay.kind === 'balloon' ? 16 : 18)) === size;
                     return (
                       <TouchableOpacity
                         key={size}
@@ -180,52 +201,54 @@ const OverlaySheet: React.FC<OverlaySheetProps> = ({
                     );
                   })}
                 </View>
-                <Text style={styles.label}>{t('overlay_sheet_align')}</Text>
-                <View style={styles.row}>
-                  {(['left', 'center'] as const).map((align) => {
-                    const active = (overlay.align ?? 'left') === align;
-                    return (
+                {overlay.kind === 'text' && (
+                  <>
+                    <Text style={styles.label}>{t('overlay_sheet_align')}</Text>
+                    <View style={styles.row}>
+                      {(['left', 'center'] as const).map((align) => {
+                        const active = (overlay.align ?? 'left') === align;
+                        return (
+                          <TouchableOpacity
+                            key={align}
+                            onPress={() => onChange({ align })}
+                            style={[styles.chip, active && styles.chipActive]}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: active }}
+                            accessibilityLabel={t(`overlay_sheet_align_${align}`)}
+                          >
+                            <Ionicons
+                              name={align === 'left' ? 'text-outline' : 'text'}
+                              size={18}
+                              color={active ? colors.onPrimary : colors.text}
+                            />
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                    <Text style={styles.label}>{t('overlay_sheet_width')}</Text>
+                    <View style={styles.row}>
                       <TouchableOpacity
-                        key={align}
-                        onPress={() => onChange({ align })}
-                        style={[styles.chip, active && styles.chipActive]}
+                        onPress={() => onChange({ width: Math.max(24, overlay.width - 40) })}
+                        style={styles.chip}
                         accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
-                        accessibilityLabel={t(`overlay_sheet_align_${align}`)}
+                        accessibilityLabel={t('overlay_sheet_width_smaller')}
                       >
-                        <Ionicons
-                          name={align === 'left' ? 'text-outline' : 'text'}
-                          size={18}
-                          color={active ? colors.onPrimary : colors.text}
-                        />
+                        <Ionicons name="remove" size={18} color={colors.text} />
                       </TouchableOpacity>
-                    );
-                  })}
-                </View>
-                <Text style={styles.label}>{t('overlay_sheet_width')}</Text>
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      onChange({ width: Math.max(24, overlay.width - 40) })
-                    }
-                    style={styles.chip}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('overlay_sheet_width_smaller')}
-                  >
-                    <Ionicons name="remove" size={18} color={colors.text} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => onChange({ width: overlay.width + 40 })}
-                    style={styles.chip}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('overlay_sheet_width_larger')}
-                  >
-                    <Ionicons name="add" size={18} color={colors.text} />
-                  </TouchableOpacity>
-                </View>
+                      <TouchableOpacity
+                        onPress={() => onChange({ width: overlay.width + 40 })}
+                        style={styles.chip}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('overlay_sheet_width_larger')}
+                      >
+                        <Ionicons name="add" size={18} color={colors.text} />
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
               </>
             )}
-            {overlay.kind !== 'stamp' && overlay.kind !== 'text' && (
+            {overlay.kind !== 'stamp' && overlay.kind !== 'text' && overlay.kind !== 'balloon' && (
               <FormSwitchField
                 label={t('overlay_sheet_dashed')}
                 value={

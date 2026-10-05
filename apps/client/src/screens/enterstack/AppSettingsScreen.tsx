@@ -44,6 +44,12 @@ type SettingsScreenNavigationProp = NativeStackNavigationProp<
   'SettingsHome'
 >;
 
+/**
+ * Every canvas export now asks for SVG or PNG in its own chooser, so the global default is hidden.
+ * The setting itself (store, database column, sync) is untouched: flip this to bring the row back.
+ */
+const SHOW_EXPORT_FORMAT_SETTING = false;
+
 const SettingsScreen = () => {
   useBackButtonHandler();
   const { t } = useTranslation();
@@ -316,25 +322,29 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('export_format')}</Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {t('export_format_hint')}
-            </Text>
+        {SHOW_EXPORT_FORMAT_SETTING && (
+          <View style={styles.settingItem}>
+            <View style={styles.settingTextWrap}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                {t('export_format')}
+              </Text>
+              <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+                {t('export_format_hint')}
+              </Text>
+            </View>
+            <View style={styles.dateFormatSelectWrapper}>
+              <SingleSelectPill
+                options={[
+                  { label: t('export_format_svg'), value: 'svg' },
+                  { label: t('export_format_png'), value: 'png' },
+                ]}
+                value={exportFormat}
+                onValueChange={handleExportFormatChange}
+                placeholder={t('export_format')}
+              />
+            </View>
           </View>
-          <View style={styles.dateFormatSelectWrapper}>
-            <SingleSelectPill
-              options={[
-                { label: t('export_format_svg'), value: 'svg' },
-                { label: t('export_format_png'), value: 'png' },
-              ]}
-              value={exportFormat}
-              onValueChange={handleExportFormatChange}
-              placeholder={t('export_format')}
-            />
-          </View>
-        </View>
+        )}
 
         <View style={styles.settingItem}>
           <View style={styles.settingTextWrap}>

@@ -13,6 +13,8 @@ interface OverlaySelectionViewProps {
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;
   onCommitRect: (id: string, rect: { x: number; y: number; width: number; height: number }) => void;
+  /** Balloons: the tail tip moved. */
+  onCommitTail?: (id: string, tip: SpatialPoint) => void;
   onDetails: (id: string) => void;
   onMoveLayer: (id: string, direction: 'front' | 'back') => void;
   onToggleLock: (id: string) => void;
@@ -41,6 +43,7 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   onCommitMove,
   onCommitVertex,
   onCommitRect,
+  onCommitTail,
   onDetails,
   onMoveLayer,
   onToggleLock,
@@ -89,7 +92,13 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
   );
 
   const vertices = overlay.kind === 'line' || overlay.kind === 'polygon' ? overlay.points : null;
-  const rect = overlay.kind === 'frame' || overlay.kind === 'shape' ? overlay : null;
+  const rect =
+    overlay.kind === 'frame' || overlay.kind === 'shape' || overlay.kind === 'balloon'
+      ? overlay
+      : null;
+  // A balloon's wrapper spans the ellipse and the tail tip (so the tail handle is touchable), but
+  // the dashed box hugs the ellipse alone: that is what the four corner handles resize.
+  const box = rect ?? bounds;
   const handle = HANDLE_SCREEN / scale;
   const styles = StyleSheet.create({
     wrapper: {
@@ -105,10 +114,10 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
     },
     box: {
       position: 'absolute',
-      left: pad,
-      top: pad,
-      width: bounds.width,
-      height: bounds.height,
+      left: box.x - bounds.x + pad,
+      top: box.y - bounds.y + pad,
+      width: box.width,
+      height: box.height,
       borderWidth: 1.5,
       borderStyle: 'dashed',
       borderColor: colors.primary,
@@ -213,6 +222,23 @@ const OverlaySelectionView: React.FC<OverlaySelectionViewProps> = ({
             }
           />
         ))}
+      {draggable && overlay.kind === 'balloon' && onCommitTail && (
+        <DragHandle
+          testID="overlay-tail"
+          x={overlay.tail.x - bounds.x + pad - handle / 2}
+          y={overlay.tail.y - bounds.y + pad - handle / 2}
+          size={handle}
+          round
+          borderColor={colors.primary}
+          fillColor={colors.primary}
+          scale={scale}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onCommit={(dx, dy) =>
+            onCommitTail(overlay.id, { x: overlay.tail.x + dx, y: overlay.tail.y + dy })
+          }
+        />
+      )}
       {draggable &&
         rect &&
         (

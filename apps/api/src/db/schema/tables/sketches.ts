@@ -4,7 +4,7 @@ import { boolean, integer, json, table, text, timestamp, timestampNow } from '..
 import { stories } from './stories';
 
 /**
- * A quick freehand sketch over a page. See `SketchSchemas.ts` for why the drawing is one
+ * A drawing board page. See `SketchSchemas.ts` for why the drawing is one
  * JSON document. `coverGalleryId` links the gallery snapshot exported from the canvas.
  */
 export const sketches = table('sketches', {

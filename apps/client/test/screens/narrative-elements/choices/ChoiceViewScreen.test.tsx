@@ -1,3 +1,4 @@
+import { chooseExportFormat } from '../../../../src/utils/exportFormatPrompt';
 import {
   act,
   cleanup,
@@ -442,6 +443,7 @@ describe('ChoiceViewScreen', () => {
 
   it('exports the map and notifies success', async () => {
     mockLanguage = 'pt-BR';
+    jest.mocked(chooseExportFormat).mockResolvedValueOnce('png');
     const view = await render(<ChoiceViewScreen />);
     await waitFor(() => expect(jsonOf(view, 'view-content').loading).toBe(false));
     await fireEvent.press(view.getByTestId('content-export'));

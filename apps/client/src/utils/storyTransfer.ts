@@ -24,6 +24,7 @@ import {
   rasterizeMapSvg,
   sanitizeSvgForRaster,
   withPngExtension,
+  withSvgExtension,
 } from './svgRaster';
 
 export { StoryImportError };
@@ -257,7 +258,7 @@ export async function deliverMapExport(
   rasterize: (svg: string, width: number, height: number) => Promise<Uint8Array> = rasterizeMapSvg,
 ): Promise<ExportDeliveryResult> {
   if (format === 'svg') {
-    return deliverSvgMap(svg, fileName);
+    return deliverSvgMap(svg, withSvgExtension(fileName));
   }
   const size = parseSvgRootSize(svg);
   if (!size) {

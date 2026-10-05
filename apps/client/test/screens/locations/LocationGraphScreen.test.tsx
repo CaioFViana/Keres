@@ -1,3 +1,4 @@
+import { chooseExportFormat } from '../../../src/utils/exportFormatPrompt';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 const mockNavigate = jest.fn();
@@ -367,8 +368,22 @@ describe('LocationGraphScreen', () => {
     expect(mockFitToScreen).toHaveBeenCalledTimes(1);
   });
 
+  it('exports nothing when the format chooser is dismissed', async () => {
+    jest.mocked(chooseExportFormat).mockResolvedValueOnce(null);
+    const view = await render(<LocationGraphScreen />);
+    await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
+    await fireEvent.press(view.getByLabelText('location_graph_export'));
+    await waitFor(() => expect(chooseExportFormat).toHaveBeenCalled());
+    expect(mockDeliverMapExport).not.toHaveBeenCalled();
+    expect(mockShowNotification).not.toHaveBeenCalledWith(
+      'location_graph_export_success',
+      'success',
+    );
+  });
+
   it('exports the map and notifies on success', async () => {
     mockLanguage = 'pt-BR';
+    jest.mocked(chooseExportFormat).mockResolvedValueOnce('png');
     const view = await render(<LocationGraphScreen />);
     await waitFor(() => expect(view.queryByTestId('canvas-marker')).not.toBeNull());
     await fireEvent.press(view.getByLabelText('location_graph_export'));

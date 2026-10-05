@@ -13,8 +13,6 @@ interface OverlayDraftViewProps {
   rect: { start: SpatialPoint; end: SpatialPoint } | null;
   color: string;
   scale: number;
-  /** Freehand previews draw hundreds of points: the polyline without per-point dots. */
-  dots?: boolean;
 }
 
 /**
@@ -22,13 +20,7 @@ interface OverlayDraftViewProps {
  * vertices with a dot on each, or a dashed rect while a rect tool drags. Render-only; the
  * draft itself lives in the overlay actions hook (vertices) or the canvas (rect preview).
  */
-const OverlayDraftView: React.FC<OverlayDraftViewProps> = ({
-  points,
-  rect,
-  color,
-  scale,
-  dots = true,
-}) => {
+const OverlayDraftView: React.FC<OverlayDraftViewProps> = ({ points, rect, color, scale }) => {
   const dotRadius = 5 / (scale === 0 ? 1 : scale);
   return (
     <>
@@ -42,10 +34,9 @@ const OverlayDraftView: React.FC<OverlayDraftViewProps> = ({
               strokeWidth={2}
             />
           )}
-          {dots &&
-            points.map((point, index) => (
-              <Circle key={index} cx={point.x} cy={point.y} r={dotRadius} color={color} />
-            ))}
+          {points.map((point, index) => (
+            <Circle key={index} cx={point.x} cy={point.y} r={dotRadius} color={color} />
+          ))}
         </>
       )}
       {rect && (

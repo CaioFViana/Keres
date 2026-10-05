@@ -1,9 +1,5 @@
-import type {
-  BoardContentType,
-  LocationMapContentType,
-  SketchContentType,
-} from '@keres/shared';
-import { OperationLogEntityType } from '@keres/shared';
+import type { BoardContentType, LocationMapContentType, SketchContentType } from '@keres/shared';
+import { decodeSketchItems, OperationLogEntityType } from '@keres/shared';
 import { and, asc, count, desc, eq, getTableColumns, type SQL } from 'drizzle-orm';
 import type { Column } from 'drizzle-orm/column';
 import { db } from '../db';
@@ -108,11 +104,35 @@ function summarizeBoardContent(content: BoardContentType | null | undefined) {
   };
 }
 
+/** Stroke/fill counts of one stored layer; a layer that fails to decode counts as empty. */
+function countSketchLayerItems(data: unknown): { strokes: number; fills: number } {
+  if (typeof data !== 'string') return { strokes: 0, fills: 0 };
+  try {
+    const items = decodeSketchItems(data);
+    return {
+      strokes: items.filter((item) => item.kind === 'stroke').length,
+      fills: items.filter((item) => item.kind === 'fill').length,
+    };
+  } catch {
+    return { strokes: 0, fills: 0 };
+  }
+}
+
 /**
- * Same idea for a sketch: overlay counts, free texts and stamp labels. The JSON may
- * predate the current schema, so everything is read defensively.
+ * Same idea for a sketch: layer/stroke counts, overlay counts, free texts and stamp labels.
+ * The JSON may predate the current schema, so everything is read defensively.
  */
 function summarizeSketchContent(content: SketchContentType | null | undefined) {
+  const layers = Array.isArray((content as { layers?: unknown } | null)?.layers)
+    ? (content as { layers: Array<Record<string, unknown>> }).layers
+    : [];
+  let strokeCount = 0;
+  let fillCount = 0;
+  for (const layer of layers) {
+    const counted = countSketchLayerItems(layer?.data);
+    strokeCount += counted.strokes;
+    fillCount += counted.fills;
+  }
   const overlays = Array.isArray((content as { overlays?: unknown } | null)?.overlays)
     ? (content as { overlays: Array<Record<string, unknown>> }).overlays
     : [];
@@ -121,14 +141,25 @@ function summarizeSketchContent(content: SketchContentType | null | undefined) {
   for (const overlay of overlays) {
     const kind = typeof overlay?.kind === 'string' ? overlay.kind : 'unknown';
     kinds[kind] = (kinds[kind] ?? 0) + 1;
-    if (kind === 'text' && typeof overlay.content === 'string' && overlay.content.length > 0) {
+    if (
+      (kind === 'text' || kind === 'balloon') &&
+      typeof overlay.content === 'string' &&
+      overlay.content.length > 0
+    ) {
       texts.push(overlay.content.slice(0, 500));
     }
     if (kind === 'stamp' && typeof overlay.label === 'string' && overlay.label.length > 0) {
       texts.push(overlay.label.slice(0, 200));
     }
   }
-  return { overlayCount: overlays.length, kinds, texts };
+  return {
+    layerCount: layers.length,
+    strokeCount,
+    fillCount,
+    overlayCount: overlays.length,
+    kinds,
+    texts,
+  };
 }
 
 /** Same idea for a location map: base images, pinned locations and free-marker texts. */

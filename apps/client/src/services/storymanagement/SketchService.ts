@@ -1,5 +1,5 @@
 import type { SketchContentType } from '@keres/shared';
-import { validateSketchContent } from '@keres/shared';
+import { emptySketchContent, generateSketchLocalId, validateSketchContent } from '@keres/shared';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { SketchInsert, SketchSelect } from '../../db/schema';
@@ -54,7 +54,12 @@ export const createSketchService = (db: AppDrizzleClient): SketchService => {
 
   return {
     async getSketchesForStory(storyId) {
-      return db.select().from(sketches).where(liveInStory(storyId)).orderBy(asc(sketches.name)).all();
+      return db
+        .select()
+        .from(sketches)
+        .where(liveInStory(storyId))
+        .orderBy(asc(sketches.name))
+        .all();
     },
 
     async getById(sketchId) {
@@ -64,7 +69,7 @@ export const createSketchService = (db: AppDrizzleClient): SketchService => {
     async createSketch(currentUserId, data) {
       await assertStoryIsWritable(db, data.storyId);
       const content = validateSketchContent(
-        data.content ?? { page: { width: 794, height: 1123 }, layers: [], overlays: [] },
+        data.content ?? emptySketchContent(generateSketchLocalId(new Set()), 'Layer 1'),
       );
       const sketch = prepareNewEntityData<SketchInsert>({ ...data, content });
       const userIdToLog = await userIdFor(currentUserId, sketch.storyId);

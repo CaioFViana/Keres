@@ -31,7 +31,6 @@ import type {
 import { buildLocationGraphLayout } from '@keres/shared/graphs/locationGraphLayout';
 import { renderLocationGraphMapSvg } from '@keres/shared/graphs/locationGraphSvg';
 import { filterLocationGraph } from '@keres/shared/graphs/locationGraphFilter';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import {
   buildLocationGraphMapFileName,
   deliverMapExport,
@@ -39,6 +38,7 @@ import {
 } from '../../utils/storyTransfer';
 import { entityEventEmitter } from '../../utils/EventEmitter';
 import type { LocationsScreenNavigationProp } from './LocationListScreen';
+import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 /**
  * The Locations structure graph: each Location becomes a node, `contains`/`connected_to` become
@@ -223,6 +223,8 @@ const LocationGraphScreen = () => {
   const handleExport = useCallback(async () => {
     if (!selectedStory || layout.nodes.length === 0) return;
 
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = renderLocationGraphMapSvg(layout, {
@@ -252,7 +254,7 @@ const LocationGraphScreen = () => {
           new Date(),
           exportFileLanguage(i18n.language),
         ),
-        useUserSettingsStore.getState().exportFormat,
+        format,
       );
       if (result.delivered) {
         showNotification(

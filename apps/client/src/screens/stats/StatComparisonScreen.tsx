@@ -24,7 +24,6 @@ import { useTheme } from '../../theme';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { getCommonContainerStyles } from '../../theme/commonStyles';
 import { navigateToEntityDetail } from '../../utils/entityNavigation';
-import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { deliverMapExport } from '../../utils/storyTransfer';
 import { formatStatValueDetailed, type StatNotation } from '@keres/shared/graphs/statLadder';
 import {
@@ -33,6 +32,7 @@ import {
 } from '@keres/shared/graphs/statRadarLayout';
 import { renderStatRadarSvg } from '@keres/shared/graphs/statRadarSvg';
 import { resolveStatValue } from '../../utils/statValues';
+import { chooseExportFormat } from '../../utils/exportFormatPrompt';
 
 type StatComparisonNavigationProp = NativeStackNavigationProp<
   CustomizationStackParamList,
@@ -181,6 +181,8 @@ const StatComparisonScreen = () => {
 
   const handleExport = useCallback(async () => {
     if (!layout || !selectedStory) return;
+    const format = await chooseExportFormat();
+    if (!format) return;
     setExporting(true);
     try {
       const svg = renderStatRadarSvg(layout, {
@@ -195,11 +197,7 @@ const StatComparisonScreen = () => {
           border: colors.border,
         },
       });
-      const result = await deliverMapExport(
-        svg,
-        `${selectedStory.title}-stats.svg`,
-        useUserSettingsStore.getState().exportFormat,
-      );
+      const result = await deliverMapExport(svg, `${selectedStory.title}-stats.svg`, format);
       showNotification(
         result.delivered
           ? t('stat_export_success', { fileName: result.fileName })

@@ -12,8 +12,8 @@ export type OverlayDrawTool =
   | 'rect'
   | 'ellipse'
   | 'stamp'
-  | 'freehand'
   | 'text'
+  | 'balloon'
   | `preset:${CanvasOverlayPreset}`;
 
 export type OverlayInteractionMode =
@@ -28,7 +28,7 @@ export type AddObjectsAction =
   | `preset:${CanvasOverlayPreset}`
   | 'select';
 
-export const RECT_DRAW_TOOLS: readonly OverlayDrawTool[] = ['frame', 'rect', 'ellipse'];
+export const RECT_DRAW_TOOLS: readonly OverlayDrawTool[] = ['frame', 'rect', 'ellipse', 'balloon'];
 
 export function isPresetDrawTool(tool: OverlayDrawTool): tool is `preset:${CanvasOverlayPreset}` {
   return tool.startsWith('preset:');
@@ -61,4 +61,6 @@ export interface OverlayCanvasCallbacks {
   onCommitMove: (id: string, dx: number, dy: number) => void;
   onCommitVertex: (id: string, index: number, point: SpatialPoint) => void;
   onCommitRect: (id: string, rect: { x: number; y: number; width: number; height: number }) => void;
+  /** Balloons only: the tail tip moved; the tail re-attaches at the nearest of its eight axes. */
+  onCommitTail?: (id: string, tip: SpatialPoint) => void;
 }

@@ -146,6 +146,9 @@ function Sketches({ rows }: { rows: AdminStorySketchSummary[] }) {
           <strong>{sketch.name}</strong>{' '}
           <span className="hint">
             {t('stories.content.sketchCounts', {
+              layers: sketch.summary.layerCount,
+              strokes: sketch.summary.strokeCount,
+              fills: sketch.summary.fillCount,
               overlays: sketch.summary.overlayCount,
             })}
           </span>

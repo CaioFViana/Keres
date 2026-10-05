@@ -160,6 +160,9 @@ export function focusRunningInstance(): void {
   window.focus();
 }
 
+const MIN_WINDOW_WIDTH = 360;
+const MIN_WINDOW_HEIGHT = 560;
+
 async function createWindow() {
   if (!existsSync(path.join(CLIENT_DIST, 'index.html'))) {
     throw new Error(
@@ -170,6 +173,10 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    // Below this the compact layouts (the sketch toolbar, the shared header) no longer fit their
+    // rows: 360 is a phone's width, 560 leaves the sketch canvas about 400 px under its fixed chrome.
+    minWidth: MIN_WINDOW_WIDTH,
+    minHeight: MIN_WINDOW_HEIGHT,
     title: APP_NAME,
     show: !HEADLESS,
     icon: APP_ICON, // Windows/Linux taskbar + title bar. No-op on macOS - see app.dock.setIcon below.

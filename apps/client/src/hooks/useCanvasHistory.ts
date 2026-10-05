@@ -6,6 +6,8 @@ const MAX_HISTORY_ENTRIES = 50;
 interface HistoryOptions {
   /** Skip pushing when the content serializes identically (e.g. a no-op tap). */
   equals?: (left: unknown, right: unknown) => boolean;
+  /** Entries kept; sketches share structure between snapshots, so they keep many more. */
+  limit?: number;
 }
 
 const defaultEquals = (left: unknown, right: unknown) =>
@@ -24,6 +26,7 @@ const defaultEquals = (left: unknown, right: unknown) =>
  */
 export function useCanvasHistory<T>(initial: T, options?: HistoryOptions) {
   const equals = options?.equals ?? defaultEquals;
+  const limit = options?.limit ?? MAX_HISTORY_ENTRIES;
   const [value, setValueState] = useState<T>(initial);
   const currentRef = useRef<T>(initial);
   const pastRef = useRef<T[]>([]);
@@ -32,7 +35,9 @@ export function useCanvasHistory<T>(initial: T, options?: HistoryOptions) {
   const syncDepth = useCallback(() => {
     const past = pastRef.current.length;
     const future = futureRef.current.length;
-    setDepth((previous) => (previous.past === past && previous.future === future ? previous : { past, future }));
+    setDepth((previous) =>
+      previous.past === past && previous.future === future ? previous : { past, future },
+    );
   }, []);
 
   const set = useCallback(
@@ -41,13 +46,13 @@ export function useCanvasHistory<T>(initial: T, options?: HistoryOptions) {
       const resolved = typeof next === 'function' ? (next as (value: T) => T)(current) : next;
       if (equals(current, resolved)) return;
       pastRef.current.push(current);
-      if (pastRef.current.length > MAX_HISTORY_ENTRIES) pastRef.current.shift();
+      if (pastRef.current.length > limit) pastRef.current.shift();
       futureRef.current = [];
       currentRef.current = resolved;
       setValueState(resolved);
       syncDepth();
     },
-    [syncDepth, equals],
+    [syncDepth, equals, limit],
   );
 
   const reset = useCallback(

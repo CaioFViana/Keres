@@ -20,9 +20,10 @@ import {
   canvasOverlayPolylinePath,
   canvasOverlayRectPath,
 } from '@keres/shared/graphs/canvasOverlayGeometry';
-import { DashPathEffect, Path, Skia, Text as SkiaText } from '@shopify/react-native-skia';
+import { DashPathEffect, Group, Path, Text as SkiaText } from '@shopify/react-native-skia';
 import type { SkFont } from '@shopify/react-native-skia';
 import React, { useMemo } from 'react';
+import { balloonPath, balloonText } from '@keres/shared/graphs/canvasBalloon';
 import { measureEdgeLabelWidth } from '../SkiaEdgeCanvas/measureEdgeLabelWidth';
 import { polygonPointsToPath } from '../SkiaEdgeCanvas/polygonPointsToPath';
 
@@ -35,12 +36,6 @@ interface CanvasOverlayLayerProps {
   labelBackground: string;
   /** Null-safe: without a font the vectors draw and only labels are skipped. */
   font: SkFont | null;
-  /**
-   * Sketch layers: hidden layers skip their overlays, layers below 1 paint them
-   * translucent. Boards and maps pass nothing and keep today's rendering.
-   */
-  isOverlayHidden?: (overlay: CanvasOverlayType) => boolean;
-  overlayOpacity?: (overlay: CanvasOverlayType) => number;
 }
 
 /**
@@ -58,14 +53,11 @@ const CanvasOverlayLayer: React.FC<CanvasOverlayLayerProps> = ({
   stroke,
   labelBackground,
   font,
-  isOverlayHidden,
-  overlayOpacity,
 }) => {
   const visible = useMemo(
     () =>
       (overlays ?? [])
         .filter((overlay) => overlay.kind !== 'stamp')
-        .filter((overlay) => !(isOverlayHidden?.(overlay) ?? false))
         .filter((overlay) => spatialRectIntersects(canvasOverlayBounds(overlay), renderWindow))
         .map((overlay, order) => ({ overlay, order }))
         .sort(
@@ -73,7 +65,7 @@ const CanvasOverlayLayer: React.FC<CanvasOverlayLayerProps> = ({
             (left.overlay.zIndex ?? 0) - (right.overlay.zIndex ?? 0) || left.order - right.order,
         )
         .map(({ overlay }) => overlay),
-    [overlays, renderWindow, isOverlayHidden],
+    [overlays, renderWindow],
   );
   return (
     <>
@@ -85,7 +77,6 @@ const CanvasOverlayLayer: React.FC<CanvasOverlayLayerProps> = ({
           stroke={stroke}
           labelBackground={labelBackground}
           font={font}
-          opacity={overlayOpacity?.(overlay) ?? 1}
         />
       ))}
     </>
@@ -95,21 +86,51 @@ const CanvasOverlayLayer: React.FC<CanvasOverlayLayerProps> = ({
 export default CanvasOverlayLayer;
 
 /**
- * A font at the overlay's own size, derived from the shared base font's typeface. The
- * canvases load one base font (edge labels), while text overlays carry their own size -
- * rendering with the base font would draw every size identically and only move the layout
- * box. Anything that cannot derive (no font, no typeface, mocked Skia) falls back to the
- * base font or null, never throws during render.
+ * Text at the overlay's own size, from the one base font every canvas loads. The font is scaled by
+ * a transform instead of being re-created at the new size: deriving a sized font needs the base
+ * font's typeface, and when that is unavailable (the web build) the derivation quietly fell back to
+ * the base font, so every size drew identically while the box and the wrapping changed. A scale
+ * works on every platform and stays crisp, since Skia rasterizes glyphs at the final matrix.
  */
-export function sizedOverlayFont(base: SkFont | null, fontSize: number): SkFont | null {
-  if (!base) return null;
+function overlayTextScale(font: SkFont, fontSize: number): { scale: number; baseSize: number } {
+  let baseSize = fontSize;
   try {
-    const face = base.getTypeface?.();
-    if (!face) return base;
-    return Skia.Font(face, fontSize);
+    const size = font.getSize?.();
+    if (typeof size === 'number' && size > 0) baseSize = size;
   } catch {
-    return base;
+    // A font that cannot report its size is drawn as is.
   }
+  return { scale: fontSize / baseSize, baseSize };
+}
+
+/** One line of overlay text: `left` is its left edge (or null to center it in `centerWithin`). */
+function OverlayTextLine({
+  font,
+  text,
+  fontSize,
+  baseline,
+  color,
+  left,
+  centerWithin,
+}: {
+  font: SkFont;
+  text: string;
+  fontSize: number;
+  baseline: number;
+  color: string;
+  left?: number;
+  centerWithin?: { x: number; width: number };
+}) {
+  const { scale, baseSize } = overlayTextScale(font, fontSize);
+  const content = text || ' ';
+  // Measured at the base size, then scaled with the glyphs.
+  const width = measureEdgeLabelWidth(font, content, baseSize) * scale;
+  const x = centerWithin ? centerWithin.x + (centerWithin.width - width) / 2 : (left ?? 0);
+  return (
+    <Group transform={[{ translateX: x }, { translateY: baseline }, { scale }]}>
+      <SkiaText x={0} y={0} font={font} text={content} color={color} />
+    </Group>
+  );
 }
 
 const OverlayView = React.memo(function OverlayView({
@@ -118,25 +139,19 @@ const OverlayView = React.memo(function OverlayView({
   stroke,
   labelBackground,
   font,
-  opacity,
 }: {
   overlay: CanvasOverlayType;
   renderWindow: SpatialRect;
   stroke: string;
   labelBackground: string;
   font: SkFont | null;
-  opacity: number;
 }) {
   const bounds = canvasOverlayBounds(overlay);
   const color = overlay.color ?? stroke;
-  const textSize = overlay.kind === 'text' ? canvasOverlayTextFontSize(overlay) : 0;
-  const textFont = useMemo(
-    () => (overlay.kind === 'text' ? sizedOverlayFont(font, textSize) : null),
-    [font, overlay, textSize],
-  );
   const labelX = bounds.x + bounds.width / 2;
   const labelY = bounds.y + bounds.height / 2;
-  const labelled = overlay.kind !== 'text' ? overlay.label : undefined;
+  const labelled =
+    overlay.kind !== 'text' && overlay.kind !== 'balloon' ? overlay.label : undefined;
   const labelVisible =
     !!labelled &&
     !!font &&
@@ -253,32 +268,57 @@ const OverlayView = React.memo(function OverlayView({
     case 'stamp':
       // Native land (`CanvasStampView`); the vector layer never draws stamps.
       return null;
+    case 'balloon': {
+      const path = balloonPath(overlay, overlay.tail);
+      const block = balloonText(overlay);
+      return (
+        <>
+          <Path path={path} color={overlay.fillColor ?? labelBackground} />
+          <Path
+            path={path}
+            style="stroke"
+            color={color}
+            strokeWidth={overlay.strokeWidth ?? CANVAS_OVERLAY_DEFAULT_STROKE_WIDTH}
+            strokeJoin="round"
+          />
+          {font &&
+            block.lines.map((line, index) => (
+              <OverlayTextLine
+                key={index}
+                font={font}
+                text={line}
+                fontSize={block.fontSize}
+                baseline={block.top + block.fontSize + index * block.lineHeight}
+                color={color}
+                centerWithin={{ x: overlay.x, width: overlay.width }}
+              />
+            ))}
+        </>
+      );
+    }
     case 'text': {
       // No font, no text: same null-safe rule as labels. Lines wrap through the shared
       // estimator, so the screen breaks exactly where the SVG exporter does. The font is
       // the overlay's own size, so growing the size grows the glyphs, not just the box.
-      if (!textFont) return null;
+      if (!font) return null;
       const fontSize = canvasOverlayTextFontSize(overlay);
       const lines = wrapCanvasOverlayText(overlay.content, overlay.width, fontSize);
       const lineHeight = fontSize * 1.35;
       const centered = (overlay.align ?? 'left') === 'center';
       return (
         <>
-          {lines.map((line, index) => {
-            const width = measureEdgeLabelWidth(textFont, line || ' ', fontSize);
-            const x = centered ? bounds.x + (bounds.width - width) / 2 : bounds.x;
-            return (
-              <SkiaText
-                key={index}
-                x={x}
-                y={bounds.y + fontSize + index * lineHeight}
-                font={textFont}
-                text={line || ' '}
-                color={color}
-                opacity={opacity}
-              />
-            );
-          })}
+          {lines.map((line, index) => (
+            <OverlayTextLine
+              key={index}
+              font={font}
+              text={line}
+              fontSize={fontSize}
+              baseline={bounds.y + fontSize + index * lineHeight}
+              color={color}
+              left={bounds.x}
+              centerWithin={centered ? { x: bounds.x, width: bounds.width } : undefined}
+            />
+          ))}
         </>
       );
     }

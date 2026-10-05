@@ -76,6 +76,9 @@ export interface AdminStorySketchSummary {
   description: string | null;
   updatedAt: string;
   summary: {
+    layerCount: number;
+    strokeCount: number;
+    fillCount: number;
     overlayCount: number;
     kinds: Record<string, number>;
     texts: string[];

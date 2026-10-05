@@ -3,7 +3,7 @@ import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
- * A quick freehand sketch over a page. `content` is `mode: 'json'` for the same reason a
+ * A drawing board page. `content` is `mode: 'json'` for the same reason a
  * board's is: the operation log serialises the row, and a string column would arrive
  * double-encoded at the server. `coverGalleryId` links the gallery snapshot exported
  * from the canvas; the drawing itself never references gallery rows.

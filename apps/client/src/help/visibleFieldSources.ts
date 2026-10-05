@@ -22,6 +22,7 @@ import {
   storySchemaFieldEntityHandler,
   tagEntityHandler,
   boardEntityHandler,
+  sketchEntityHandler,
   worldRuleEntityHandler,
 } from '@keres/shared';
 
@@ -47,6 +48,7 @@ const noteHelp = noteEntityHandler.help!;
 const tagHelp = tagEntityHandler.help!;
 const galleryHelp = galleryEntityHandler.help!;
 const boardHelp = boardEntityHandler.help!;
+const sketchHelp = sketchEntityHandler.help!;
 const worldRuleHelp = worldRuleEntityHandler.help!;
 const customAttributeHelp = storySchemaFieldEntityHandler.help!;
 
@@ -67,6 +69,7 @@ export const fieldSources: Record<string, string[]> = {
   tags: [...tagHelp.fields],
   gallery: [...galleryHelp.fields],
   boards: [...boardHelp.fields],
+  sketch: [...sketchHelp.fields],
   arcs: [...arcHelp.fields],
   choices: [...choiceHelp.fields],
   plots: [...plotHelp.fields, ...plotSceneHelp.fields],
@@ -87,6 +90,7 @@ export const entityMetadataHelpPages = {
   Chapter: chapterHelp.source,
   Scene: 'scenes',
   Board: 'boards',
+  Sketch: 'sketch',
   Choice: 'choices',
   Mode: 'character-modes',
   Plot: 'plots',

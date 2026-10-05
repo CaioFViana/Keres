@@ -23,7 +23,6 @@ const HINT_KEYS: Record<OverlayDrawTool, string> = {
   rect: 'overlay_draw_rect_hint',
   ellipse: 'overlay_draw_rect_hint',
   stamp: 'overlay_draw_stamp_hint',
-  freehand: 'overlay_draw_freehand_hint',
   text: 'overlay_draw_text_hint',
   'preset:star': 'overlay_draw_rect_hint',
   'preset:diamond': 'overlay_draw_rect_hint',
@@ -31,8 +30,7 @@ const HINT_KEYS: Record<OverlayDrawTool, string> = {
   'preset:triangle': 'overlay_draw_rect_hint',
   'preset:pentagon': 'overlay_draw_rect_hint',
   'preset:hexagon': 'overlay_draw_rect_hint',
-  'preset:speech-oval': 'overlay_draw_rect_hint',
-  'preset:speech-rect': 'overlay_draw_rect_hint',
+  balloon: 'overlay_draw_balloon_hint',
 };
 
 /**

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { flushPendingCanvasDrafts } from '../services/canvasDraftPersistence';
 import { flushPendingEditorDrafts } from '../services/EditorDraftService';
+import { useSketchDraftStore } from '../state/sketchDraftStore';
 
 /**
  * Drafts are written a moment after the last keystroke, not on every one. A phone that sends the app to the
@@ -12,7 +13,11 @@ export function useFlushDraftsOnBackground(): void {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active') return;
-      void Promise.all([flushPendingEditorDrafts(), flushPendingCanvasDrafts()]).catch((error) => {
+      void Promise.all([
+        flushPendingEditorDrafts(),
+        flushPendingCanvasDrafts(),
+        useSketchDraftStore.getState().flush(),
+      ]).catch((error) => {
         console.error('Failed to flush pending drafts:', error);
       });
     });

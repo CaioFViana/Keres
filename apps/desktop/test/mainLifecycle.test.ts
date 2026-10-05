@@ -102,6 +102,9 @@ describe('desktop startup', () => {
     expect(electronMocks.BrowserWindow).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Keres',
+        // The compact layouts stop fitting below a phone's width; the window never goes smaller.
+        minWidth: 360,
+        minHeight: 560,
         webPreferences: expect.objectContaining({ contextIsolation: true, nodeIntegration: false }),
       }),
     );

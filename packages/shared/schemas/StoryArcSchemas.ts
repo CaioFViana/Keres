@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { PAGE_FORMATS } from '../manuscript/compile/pageFormat';
 import { ARC_MEDIUMS } from '../metadata/ArcMedium';
 import { StoryVocabularySchema } from './StorySchemas';
 
 export const ArcMediumSchema = z.enum(ARC_MEDIUMS);
+export const PageFormatSchema = z.enum(PAGE_FORMATS);
 
 // Optional with a default so exports and operations written before these fields still parse
 // (the format version only moves in an official release).
@@ -19,6 +21,7 @@ export const StoryArcSchema = z.object({
   vocabulary: StoryVocabularySchema.nullable().default(null),
   author: z.string().trim().max(120).nullable().default(null),
   coverGalleryId: z.string().min(1).nullable().default(null),
+  pageFormat: PageFormatSchema.nullable().default(null),
   isDefault: z.boolean(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -38,6 +41,7 @@ export const CreateStoryArcDataSchema = z.object({
   vocabulary: StoryVocabularySchema.nullable().default(null),
   author: z.string().trim().max(120).nullable().default(null),
   coverGalleryId: z.string().min(1).nullable().default(null),
+  pageFormat: PageFormatSchema.nullable().default(null),
   isDefault: z.boolean().default(false),
 });
 

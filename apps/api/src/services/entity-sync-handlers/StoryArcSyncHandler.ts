@@ -52,6 +52,7 @@ export class StoryArcSyncHandler extends BaseSyncEntityHandler<
       icon: data.icon ?? null,
       themeOverride: data.themeOverride ?? null,
       medium: data.medium,
+      pageFormat: data.pageFormat ?? null,
       vocabulary: data.vocabulary ?? null,
       author: data.author ?? null,
       coverGalleryId: data.coverGalleryId ?? null,

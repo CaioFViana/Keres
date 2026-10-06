@@ -1,4 +1,5 @@
 import type { ArcMedium } from '../metadata/ArcMedium';
+import type { PageFormat } from '../manuscript/compile/pageFormat';
 import type { StoryVocabulary } from './Story';
 
 /**
@@ -24,6 +25,8 @@ export interface StoryArc {
   author: string | null;
   /** Gallery medium used as this work's cover; a row-level link, never part of the Gallery. */
   coverGalleryId: string | null;
+  /** The frame a page's picture is shown in (comic, storyboard); `null` takes the medium's own. */
+  pageFormat: PageFormat | null;
   /** The migration/create arc. It cannot be deleted while it is the only destination. */
   isDefault: boolean;
   createdAt: Date;

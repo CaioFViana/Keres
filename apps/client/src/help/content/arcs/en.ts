@@ -74,6 +74,13 @@ const page: HelpPage = {
           note: 'Optional. It does not copy or move the image.',
         },
         {
+          key: 'pageFormat',
+          label: 'Page format',
+          whatToWrite:
+            'For a comic or a storyboard: the shape of the frame a page picture is shown in (A5, US comic book, B5 manga or widescreen).',
+          note: 'Optional. Left alone, the medium chooses (a comic uses the US comic book page, a storyboard 16:9).',
+        },
+        {
           key: 'themeOverride',
           label: 'Theme',
           whatToWrite: 'Choose a theme for this arc, or leave it using the story theme.',

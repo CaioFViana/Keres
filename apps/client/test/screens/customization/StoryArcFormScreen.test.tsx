@@ -175,6 +175,24 @@ jest.mock('@/src/components/features/arcs/ArcMediumSelect', () => ({
     );
   },
 }));
+jest.mock('@/src/components/features/arcs/PageFormatSelect', () => ({
+  __esModule: true,
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string | null;
+    onChange: (value: string | null) => void;
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.Text,
+      { testID: 'format-pick', onPress: () => onChange('wide') },
+      `format:${value}`,
+    );
+  },
+}));
 jest.mock('@/src/components/features/gallery/GalleryCoverField', () => ({
   __esModule: true,
   default: ({
@@ -380,6 +398,38 @@ it('saves the form of the work, the author and the cover on create', async () =>
       }),
     ),
   );
+});
+
+it('offers the page format only for a comic or a storyboard, and saves the one picked', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  expect(view.queryByTestId('format-pick')).toBeNull();
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Issue One');
+  await fireEvent.press(view.getByTestId('medium-pick'));
+  expect(view.getByTestId('format-pick').props.children).toBe('format:null');
+  await fireEvent.press(view.getByTestId('format-pick'));
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockCreateArc).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ medium: 'comic', pageFormat: 'wide' }),
+    ),
+  );
+});
+
+it('hydrates a page format of a work that is not a comic, so it is never hidden', async () => {
+  mockArcId = 'arc-1';
+  mockGetArcById.mockResolvedValue({
+    title: 'Pilot',
+    description: null,
+    icon: null,
+    themeOverride: null,
+    medium: 'generic',
+    pageFormat: 'b5',
+  });
+  const view = await render(<StoryArcFormScreen />);
+
+  await waitFor(() => expect(view.getByTestId('format-pick').props.children).toBe('format:b5'));
 });
 
 it('hydrates the form of the work and writes it back on update', async () => {

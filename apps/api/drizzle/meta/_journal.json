@@ -477,6 +477,13 @@
       "when": 1791317631487,
       "tag": "0067_awesome_bushwacker",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1791319424771,
+      "tag": "0068_deep_swordsman",
+      "breakpoints": true
     }
   ]
 }

@@ -118,6 +118,7 @@ function rekeyExtras(extras: PackContentType['extras']): PackContentType['extras
       ...row,
       id: fresh(row.id),
       coverGalleryId: null,
+      coverSourceHash: null,
     })),
     storyLocationMaps: extras.storyLocationMaps.map((row) => ({
       ...row,
@@ -360,6 +361,7 @@ export function buildStoryBundleFromPacks(
         vocabulary: null,
         author: null,
         coverGalleryId: null,
+        pageFormat: null,
         isDefault: true,
         createdAt: now,
         updatedAt: now,

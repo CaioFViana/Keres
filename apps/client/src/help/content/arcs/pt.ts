@@ -73,6 +73,13 @@ const page: HelpPage = {
           note: 'Opcional. Não copia nem move a imagem.',
         },
         {
+          key: 'pageFormat',
+          label: 'Formato de página',
+          whatToWrite:
+            'Para quadrinhos ou storyboard: o formato do quadro em que a imagem de uma página aparece (A5, gibi americano, B5 mangá ou widescreen).',
+          note: 'Opcional. Se ficar em branco, o meio escolhe (quadrinhos usam a página de gibi americano, storyboard 16:9).',
+        },
+        {
           key: 'themeOverride',
           label: 'Tema',
           whatToWrite: 'Escolha um tema para este arco ou mantenha o tema da história.',

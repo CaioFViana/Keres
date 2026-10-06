@@ -1,5 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import type { ArcMedium, StoryVocabulary } from '@keres/shared';
+import type { ArcMedium, PageFormat, StoryVocabulary } from '@keres/shared';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const storyArcs = sqliteTable('story_arcs', {
@@ -12,6 +12,7 @@ export const storyArcs = sqliteTable('story_arcs', {
   icon: text('icon'),
   themeOverride: text('theme_override'),
   medium: text('medium').$type<ArcMedium>().notNull().default('generic'),
+  pageFormat: text('page_format').$type<PageFormat>(),
   vocabulary: text('vocabulary', { mode: 'json' }).$type<StoryVocabulary | null>(),
   author: text('author'),
   coverGalleryId: text('cover_gallery_id'),

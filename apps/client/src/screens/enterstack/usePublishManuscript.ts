@@ -172,6 +172,9 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
           endOfExcerpt: t('export_manuscript_end_of_excerpt'),
           chooseStart: t('export_manuscript_choose_start'),
           beginAt: t('export_manuscript_begin_at'),
+          pageLabel: t('export_manuscript_page_label'),
+          frameLabel: t('export_manuscript_frame_label'),
+          mediaRemoved: t('export_manuscript_media_removed'),
         },
         // Left out when empty so the server credits the work's author, the story's, then the handle.
         ...(settings.author.trim() ? { author: settings.author.trim() } : {}),

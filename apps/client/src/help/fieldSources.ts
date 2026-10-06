@@ -132,6 +132,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'medium',
       'author',
       'coverGalleryId',
+      'pageFormat',
       'createdAt',
       'updatedAt',
     ],

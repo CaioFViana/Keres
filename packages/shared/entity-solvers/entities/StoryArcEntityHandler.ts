@@ -14,7 +14,7 @@ export const storyArcEntityHandler: EntityDomainHandler = {
   displayName: displayField('title'),
   help: {
     source: 'arcs',
-    fields: ['title', 'description', 'themeOverride', 'medium', 'author', 'coverGalleryId'],
+    fields: ['title', 'description', 'themeOverride', 'medium', 'author', 'coverGalleryId', 'pageFormat'],
   },
   async resolveReference(context, entityId) {
     const row = await context.read(OperationLogEntityType.StoryArc, entityId);

@@ -272,6 +272,29 @@ describe('StoryArc ordering and defaults', () => {
     });
   });
 
+  it('keeps the page format of a work, none until one is chosen, and lets it be changed and cleared', async () => {
+    const handler = new StoryArcSyncHandler();
+    const id = newId();
+    await create(id, { title: 'Edição 1', medium: 'comic' });
+    expect((await handler.findByIdOrThrow(id)).pageFormat).toBeNull();
+
+    const change = async (changes: Record<string, unknown>, version: number) =>
+      handler.update(
+        userId,
+        storyId,
+        { type: 'update', entity: 'StoryArc', id, changes: { ...changes, version } } as never,
+        await handler.findByIdOrThrow(id),
+      );
+    await change({ pageFormat: 'wide' }, 1);
+    expect((await handler.findByIdOrThrow(id)).pageFormat).toBe('wide');
+    await change({ pageFormat: null }, 2);
+    expect((await handler.findByIdOrThrow(id)).pageFormat).toBeNull();
+
+    const bornWithOne = newId();
+    await create(bornWithOne, { title: 'Edição 2', pageFormat: 'b5' });
+    expect((await handler.findByIdOrThrow(bornWithOne)).pageFormat).toBe('b5');
+  });
+
   it('refuses a second arc with an id that is already taken', async () => {
     const id = newId();
     await create(id, { title: 'Ato I' });

@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import type { ArcMedium, StoryVocabulary } from '@keres/shared';
+import type { ArcMedium, PageFormat, StoryVocabulary } from '@keres/shared';
 import { boolean, integer, json, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 
@@ -15,6 +15,8 @@ export const storyArcs = table('story_arcs', {
   icon: text('icon'),
   themeOverride: text('theme_override'),
   medium: text('medium').$type<ArcMedium>().notNull().default('generic'),
+  /** The frame page pictures are shown in; `null` takes the medium's own. */
+  pageFormat: text('page_format').$type<PageFormat>(),
   vocabulary: json('vocabulary').$type<StoryVocabulary | null>(),
   author: text('author'),
   coverGalleryId: text('cover_gallery_id'),

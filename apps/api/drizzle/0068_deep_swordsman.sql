@@ -1,0 +1,1 @@
+ALTER TABLE "story_arcs" ADD COLUMN "page_format" text;

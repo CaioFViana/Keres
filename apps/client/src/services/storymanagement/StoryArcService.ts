@@ -38,6 +38,7 @@ export interface StoryArcService {
         | 'vocabulary'
         | 'author'
         | 'coverGalleryId'
+        | 'pageFormat'
       >
     >,
   ): Promise<StoryArcSelect>;
@@ -117,6 +118,7 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         vocabulary: null,
         author: null,
         coverGalleryId: null,
+        pageFormat: null,
         isDefault: true,
       });
     },

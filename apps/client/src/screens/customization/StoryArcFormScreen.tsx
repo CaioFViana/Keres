@@ -22,10 +22,13 @@ import { resolveEffectiveTheme } from '@/src/utils/storyArcFilter';
 import {
   DEFAULT_ARC_MEDIUM,
   isArcMedium,
+  isPageFormat,
   themeDisplayOptions,
   type ArcMedium,
+  type PageFormat,
 } from '@keres/shared';
 import ArcMediumSelect from '@/src/components/features/arcs/ArcMediumSelect';
+import PageFormatSelect from '@/src/components/features/arcs/PageFormatSelect';
 import GalleryCoverField from '@/src/components/features/gallery/GalleryCoverField';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
@@ -45,6 +48,7 @@ type ArcFormDraftFields = {
   medium: ArcMedium;
   author: string;
   coverGalleryId: string | null;
+  pageFormat: PageFormat | null;
 };
 
 const CREATE_PRISTINE: ArcFormDraftFields = {
@@ -55,6 +59,7 @@ const CREATE_PRISTINE: ArcFormDraftFields = {
   medium: DEFAULT_ARC_MEDIUM,
   author: '',
   coverGalleryId: null,
+  pageFormat: null,
 };
 
 const isArcFormDraftFields = (fields: ArcFormDraftFields): boolean =>
@@ -67,7 +72,10 @@ const isArcFormDraftFields = (fields: ArcFormDraftFields): boolean =>
   (fields.author === undefined || typeof fields.author === 'string') &&
   (fields.coverGalleryId === undefined ||
     fields.coverGalleryId === null ||
-    typeof fields.coverGalleryId === 'string');
+    typeof fields.coverGalleryId === 'string') &&
+  (fields.pageFormat === undefined ||
+    fields.pageFormat === null ||
+    isPageFormat(fields.pageFormat));
 
 const StoryArcFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -91,6 +99,7 @@ const StoryArcFormScreen = () => {
   const [medium, setMedium] = useState<ArcMedium>(DEFAULT_ARC_MEDIUM);
   const [author, setAuthor] = useState('');
   const [coverGalleryId, setCoverGalleryId] = useState<string | null>(null);
+  const [pageFormat, setPageFormat] = useState<PageFormat | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const isEditing = !!arcId;
@@ -119,6 +128,7 @@ const StoryArcFormScreen = () => {
         setMedium(arc.medium);
         setAuthor(arc.author ?? '');
         setCoverGalleryId(arc.coverGalleryId);
+        setPageFormat(arc.pageFormat);
         setLoadedPristine({
           title: arc.title,
           description: arc.description ?? '',
@@ -127,6 +137,7 @@ const StoryArcFormScreen = () => {
           medium: arc.medium,
           author: arc.author ?? '',
           coverGalleryId: arc.coverGalleryId,
+          pageFormat: arc.pageFormat,
         });
         setLoadedUpdatedAt(arc.updatedAt?.toISOString?.() ?? null);
         setLoaded(true);
@@ -145,6 +156,7 @@ const StoryArcFormScreen = () => {
     setMedium(fields.medium ?? DEFAULT_ARC_MEDIUM);
     setAuthor(fields.author ?? '');
     setCoverGalleryId(fields.coverGalleryId ?? null);
+    setPageFormat(fields.pageFormat ?? null);
   }, []);
 
   const { clearFormDraft, deleteStoredDraft } = useDurableFormDraft<ArcFormDraftFields>({
@@ -152,7 +164,16 @@ const StoryArcFormScreen = () => {
     entityType: 'StoryArc',
     entityId: arcId,
     enabled: !!story?.id && loaded,
-    snapshot: { title, description, icon, themeOverride, medium, author, coverGalleryId },
+    snapshot: {
+      title,
+      description,
+      icon,
+      themeOverride,
+      medium,
+      author,
+      coverGalleryId,
+      pageFormat,
+    },
     pristine: loadedPristine ?? CREATE_PRISTINE,
     baseUpdatedAt: arcId ? loadedUpdatedAt : undefined,
     onRestore: restoreDraftFields,
@@ -160,8 +181,16 @@ const StoryArcFormScreen = () => {
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
   const isDirty =
-    JSON.stringify({ title, description, icon, themeOverride, medium, author, coverGalleryId }) !==
-    JSON.stringify(pristineFields);
+    JSON.stringify({
+      title,
+      description,
+      icon,
+      themeOverride,
+      medium,
+      author,
+      coverGalleryId,
+      pageFormat,
+    }) !== JSON.stringify(pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -176,6 +205,7 @@ const StoryArcFormScreen = () => {
     setMedium(target.medium);
     setAuthor(target.author);
     setCoverGalleryId(target.coverGalleryId);
+    setPageFormat(target.pageFormat);
     await deleteStoredDraft();
   }, [loadedPristine, deleteStoredDraft]);
 
@@ -207,6 +237,7 @@ const StoryArcFormScreen = () => {
           medium,
           author: author.trim() || null,
           coverGalleryId,
+          pageFormat,
         });
       else
         await service.createArc(userId, {
@@ -221,6 +252,7 @@ const StoryArcFormScreen = () => {
           vocabulary: null,
           author: author.trim() || null,
           coverGalleryId,
+          pageFormat,
           isDefault: false,
         });
       await clearFormDraft();
@@ -291,6 +323,11 @@ const StoryArcFormScreen = () => {
           disabled={!canEdit}
         />
       </FormField>
+      {medium === 'comic' || medium === 'storyboard' || pageFormat ? (
+        <FormField label={t('page_format')}>
+          <PageFormatSelect value={pageFormat} onChange={setPageFormat} disabled={!canEdit} />
+        </FormField>
+      ) : null}
       <FormField label={t('arc_author')}>
         {(fieldAccessibility) => (
           <TextInput

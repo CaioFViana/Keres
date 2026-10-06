@@ -18,6 +18,7 @@ const emptyForm: TierCreateInput = {
   maxStorageBytesPerStory: null,
   maxStorageBytesTotal: null,
   maxPublicationsPerDay: null,
+  maxPublishedArcs: null,
   maxMessagesPerDay: null,
   priceMonthlyCents: null,
   priceYearlyCents: null,
@@ -95,6 +96,7 @@ export function TiersPage() {
       maxStorageBytesPerStory: tier.maxStorageBytesPerStory,
       maxStorageBytesTotal: tier.maxStorageBytesTotal,
       maxPublicationsPerDay: tier.maxPublicationsPerDay,
+      maxPublishedArcs: tier.maxPublishedArcs ?? null,
       maxMessagesPerDay: tier.maxMessagesPerDay,
       priceMonthlyCents: tier.priceMonthlyCents ?? null,
       priceYearlyCents: tier.priceYearlyCents ?? null,
@@ -128,6 +130,7 @@ export function TiersPage() {
       form.maxStorageBytesPerStory,
       form.maxStorageBytesTotal,
       form.maxPublicationsPerDay,
+      form.maxPublishedArcs,
       form.maxMessagesPerDay,
     ];
     if (
@@ -277,6 +280,7 @@ export function TiersPage() {
               onChange={(bytes) => setForm((f) => ({ ...f, maxStorageBytesTotal: bytes }))}
             />
             {limitInput(t('tiers.maxPublicationsPerDay'), 'maxPublicationsPerDay')}
+            {limitInput(t('tiers.maxPublishedArcs'), 'maxPublishedArcs')}
             {limitInput(t('tiers.maxMessagesPerDay'), 'maxMessagesPerDay')}
             <label className="checkbox-label switch">
               <input
@@ -365,6 +369,7 @@ export function TiersPage() {
                   {fact(t('tiers.columnMaxEntitiesPerStory'), tier.maxEntitiesPerStory ?? '∞')}
                   {fact(t('tiers.maxEntitiesTotal'), tier.maxEntitiesTotal ?? '∞')}
                   {fact(t('tiers.columnMaxPublicationsPerDay'), tier.maxPublicationsPerDay ?? '∞')}
+                  {fact(t('tiers.columnMaxPublishedArcs'), tier.maxPublishedArcs ?? '∞')}
                   {fact(t('tiers.columnMaxMessagesPerDay'), tier.maxMessagesPerDay ?? '∞')}
                 </dl>
               </section>

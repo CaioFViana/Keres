@@ -173,7 +173,17 @@
     "downloadFailed": "Não foi possível iniciar o download.",
     "mediaCount": "{{included}}/{{total}} mídias",
     "adultsOnly": "+18",
-    "gatedHint": "Esta história pode ser só para adultos ou estar indisponível. Entre com uma conta verificada para saber."
+    "gatedHint": "Esta história pode ser só para adultos ou estar indisponível. Entre com uma conta verificada para saber.",
+    "universeTitle": "O universo inteiro",
+    "universeIntro": "Versões da história como um todo: o arquivo da história (com todas as obras), um manuscript e a história para ler online.",
+    "workBy": "de {{author}}",
+    "medium": {
+      "generic": "Prosa",
+      "screenplay": "Roteiro",
+      "comic": "Quadrinhos",
+      "storyboard": "Storyboard",
+      "campaign": "Campanha"
+    }
   },
   "theme": {
     "system": "Tema: Sistema",

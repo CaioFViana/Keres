@@ -173,7 +173,17 @@
     "downloadFailed": "Could not start the download.",
     "mediaCount": "{{included}}/{{total}} media",
     "adultsOnly": "+18",
-    "gatedHint": "This story may be adults-only or unavailable. Sign in with a verified account to find out."
+    "gatedHint": "This story may be adults-only or unavailable. Sign in with a verified account to find out.",
+    "universeTitle": "The whole universe",
+    "universeIntro": "Versions of the story as a whole: the story file (with every work in it), a manuscript and the story to read online.",
+    "workBy": "by {{author}}",
+    "medium": {
+      "generic": "Prose",
+      "screenplay": "Screenplay",
+      "comic": "Comic",
+      "storyboard": "Storyboard",
+      "campaign": "Campaign"
+    }
   },
   "theme": {
     "system": "Theme: System",

@@ -74,6 +74,13 @@ function TierCard({ tier, currency }: { tier: LandingTier; currency: string }) {
         ) : (
           limit(t('tiers.publicationsPerDay'), tier.maxPublicationsPerDay)
         )}
+        {tier.maxPublishedArcs === undefined ? null : tier.maxPublishedArcs === 0 ? (
+          <li>
+            <span>{t('tiers.publishedArcs')}</span> <strong>{t('tiers.none')}</strong>
+          </li>
+        ) : (
+          limit(t('tiers.publishedArcs'), tier.maxPublishedArcs)
+        )}
       </ul>
     </article>
   );

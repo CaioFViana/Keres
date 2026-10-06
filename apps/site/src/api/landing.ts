@@ -19,6 +19,8 @@ export interface LandingTier {
   maxStorageBytesPerStory: number | null;
   maxStorageBytesTotal: number | null;
   maxPublicationsPerDay: number | null;
+  /** Absent from servers that predate it; null is unlimited. */
+  maxPublishedArcs?: number | null;
 }
 
 export interface LandingTiersResponse {

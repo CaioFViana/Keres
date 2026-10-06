@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
-import type { ShowcaseStoryDetail } from '@keres/shared';
+import type { ShowcaseStoryDetail, ShowcaseVersion } from '@keres/shared';
 import {
   fetchDownloadUrl,
   fetchManuscriptDownloadUrl,
@@ -120,7 +120,7 @@ export function StoryPage() {
   }
 
   const { snapshot, owner, versions } = detail;
-  const [newest, ...older] = versions;
+  const groups = groupVersions(versions);
 
   return (
     // Here the story's palette does tint the whole page: it is *its* page.
@@ -190,113 +190,158 @@ export function StoryPage() {
         </div>
       </dl>
 
-      <section className="versions">
-        <h2>{t('story.downloadTitle')}</h2>
-        <p className="muted">{t('story.downloadIntro')}</p>
-
-        <ul className="version-list">
-          <li className="version newest">
-            <div>
-              <span className="version-label">{newest.label}</span>
-              <span className="version-sub">
-                {formatDate(newest.createdAt, i18n.language)}
-                {newest.packageIncluded !== false && ` · ${formatBytes(newest.byteSize)}`}
-                {newest.packageIncluded !== false &&
-                  newest.mediaTotal > 0 &&
-                  ` · ${t('story.mediaCount', {
-                    included: newest.mediaIncluded,
-                    total: newest.mediaTotal,
-                  })}`}
-              </span>
-            </div>
-            <div className="version-actions">
-              {/* A version may be only a manuscript and/or the reading: then there is no story file to offer. */}
-              {newest.packageIncluded !== false && (
-                <button
-                  type="button"
-                  className="download-button"
-                  disabled={downloading === newest.id}
-                  onClick={() => void download(newest.id)}
-                >
-                  {downloading === newest.id ? t('story.preparing') : t('story.downloadLatest')}
-                </button>
+      {groups.map((group) => (
+        <section
+          className="versions"
+          key={group.key}
+          data-testid={group.arc ? `work-${group.arc.id}` : 'universe-versions'}
+        >
+          {group.arc ? (
+            <>
+              <h2>{group.arc.title}</h2>
+              <p className="muted work-meta">
+                <span className="badge">{t(`story.medium.${group.arc.medium}`)}</span>
+                {group.arc.author ? ` ${t('story.workBy', { author: group.arc.author })}` : ''}
+              </p>
+              {group.arc.description && (
+                <p className="story-description">{group.arc.description}</p>
               )}
-              {newest.reader && (
-                <Link
-                  to={`/story/${storyId}/read/${newest.id}`}
-                  className="download-button ghost reader-button"
-                >
-                  {t('story.readOnline')}
-                </Link>
-              )}
-              {newest.manuscript && (
-                <button
-                  type="button"
-                  className="download-button ghost manuscript-button"
-                  disabled={downloadingManuscript === newest.id}
-                  onClick={() => void downloadManuscript(newest.id)}
-                >
-                  {downloadingManuscript === newest.id
-                    ? t('story.preparing')
-                    : t('story.manuscriptDownload', {
-                        format: newest.manuscript.format.toUpperCase(),
-                        size: formatBytes(newest.manuscript.byteSize),
-                      })}
-                </button>
-              )}
-            </div>
-          </li>
-
-          {older.map((version) => (
-            <li className="version" key={version.id}>
-              <div>
-                <span className="version-label">{version.label}</span>
-                <span className="version-sub">
-                  {formatDate(version.createdAt, i18n.language)}
-                  {version.packageIncluded !== false && ` · ${formatBytes(version.byteSize)}`}
-                </span>
-              </div>
-              <div className="version-actions">
-                {version.packageIncluded !== false && (
-                  <button
-                    type="button"
-                    className="download-button ghost"
-                    disabled={downloading === version.id}
-                    onClick={() => void download(version.id)}
-                  >
-                    {downloading === version.id ? t('story.preparing') : t('story.download')}
-                  </button>
-                )}
-                {version.reader && (
-                  <Link
-                    to={`/story/${storyId}/read/${version.id}`}
-                    className="download-button ghost reader-button"
-                  >
-                    {t('story.readOnline')}
-                  </Link>
-                )}
-                {version.manuscript && (
-                  <button
-                    type="button"
-                    className="download-button ghost manuscript-button"
-                    disabled={downloadingManuscript === version.id}
-                    onClick={() => void downloadManuscript(version.id)}
-                  >
-                    {downloadingManuscript === version.id
-                      ? t('story.preparing')
-                      : t('story.manuscriptDownload', {
-                          format: version.manuscript.format.toUpperCase(),
-                          size: formatBytes(version.manuscript.byteSize),
-                        })}
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-
-        {error && <p className="error-text">{error}</p>}
-      </section>
+            </>
+          ) : (
+            <>
+              <h2>{groups.length > 1 ? t('story.universeTitle') : t('story.downloadTitle')}</h2>
+              <p className="muted">
+                {groups.length > 1 ? t('story.universeIntro') : t('story.downloadIntro')}
+              </p>
+            </>
+          )}
+          <ul className="version-list">
+            {group.versions.map((version, index) => (
+              <VersionRow
+                key={version.id}
+                version={version}
+                storyId={storyId}
+                newest={index === 0}
+                downloading={downloading === version.id}
+                downloadingManuscript={downloadingManuscript === version.id}
+                onDownload={() => void download(version.id)}
+                onDownloadManuscript={() => void downloadManuscript(version.id)}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+      {error && <p className="error-text">{error}</p>}
     </section>
+  );
+}
+
+/** What the page lists together: the whole universe's versions, then each work's. */
+export type VersionGroup = {
+  key: string;
+  arc: NonNullable<ShowcaseVersion['arc']> | null;
+  versions: ShowcaseVersion[];
+};
+
+/**
+ * The versions grouped by what they release. The universe comes first; each work follows, the one
+ * released most recently before the others. Inside a group the newest version leads.
+ */
+export function groupVersions(versions: readonly ShowcaseVersion[]): VersionGroup[] {
+  const universe: ShowcaseVersion[] = [];
+  const works = new Map<string, VersionGroup>();
+  for (const version of versions) {
+    if (!version.arc) {
+      universe.push(version);
+      continue;
+    }
+    const group = works.get(version.arc.id) ?? {
+      key: version.arc.id,
+      arc: version.arc,
+      versions: [],
+    };
+    group.versions.push(version);
+    works.set(version.arc.id, group);
+  }
+  const groups: VersionGroup[] = [];
+  if (universe.length > 0) groups.push({ key: 'universe', arc: null, versions: universe });
+  return [...groups, ...works.values()];
+}
+
+function VersionRow({
+  version,
+  storyId,
+  newest,
+  downloading,
+  downloadingManuscript,
+  onDownload,
+  onDownloadManuscript,
+}: {
+  version: ShowcaseVersion;
+  storyId: string;
+  newest: boolean;
+  downloading: boolean;
+  downloadingManuscript: boolean;
+  onDownload: () => void;
+  onDownloadManuscript: () => void;
+}) {
+  const { t, i18n } = useTranslation('showcase');
+  return (
+    <li className={newest ? 'version newest' : 'version'}>
+      <div>
+        <span className="version-label">{version.label}</span>
+        <span className="version-sub">
+          {formatDate(version.createdAt, i18n.language)}
+          {version.packageIncluded !== false && ` · ${formatBytes(version.byteSize)}`}
+          {newest &&
+            version.packageIncluded !== false &&
+            version.mediaTotal > 0 &&
+            ` · ${t('story.mediaCount', {
+              included: version.mediaIncluded,
+              total: version.mediaTotal,
+            })}`}
+        </span>
+      </div>
+      <div className="version-actions">
+        {/* A version may be only a manuscript and/or the reading: then there is no story file to offer. */}
+        {version.packageIncluded !== false && (
+          <button
+            type="button"
+            className={newest ? 'download-button' : 'download-button ghost'}
+            disabled={downloading}
+            onClick={onDownload}
+          >
+            {downloading
+              ? t('story.preparing')
+              : newest
+                ? t('story.downloadLatest')
+                : t('story.download')}
+          </button>
+        )}
+        {version.reader && (
+          <Link
+            to={`/story/${storyId}/read/${version.id}`}
+            className="download-button ghost reader-button"
+          >
+            {t('story.readOnline')}
+          </Link>
+        )}
+        {version.manuscript && (
+          <button
+            type="button"
+            className="download-button ghost manuscript-button"
+            disabled={downloadingManuscript}
+            onClick={onDownloadManuscript}
+          >
+            {downloadingManuscript
+              ? t('story.preparing')
+              : t('story.manuscriptDownload', {
+                  format: version.manuscript.format.toUpperCase(),
+                  size: formatBytes(version.manuscript.byteSize),
+                })}
+          </button>
+        )}
+      </div>
+    </li>
   );
 }

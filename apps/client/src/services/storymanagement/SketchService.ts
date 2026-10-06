@@ -27,6 +27,7 @@ export interface SketchService {
       description: string | null;
       content: SketchContentType;
       coverGalleryId: string | null;
+      coverSourceHash: string | null;
     }>,
   ): Promise<SketchSelect>;
   deleteSketch(currentUserId: string, sketchId: string): Promise<void>;

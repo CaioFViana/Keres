@@ -12,6 +12,11 @@ export interface Sketch {
   description: string | null;
   content: SketchContentType;
   coverGalleryId: string | null;
+  /**
+   * Hash of the drawing the cover is a snapshot of (`sketchContentHash`); `null` for a cover that
+   * predates it. The snapshot is fresh while this still matches the content.
+   */
+  coverSourceHash: string | null;
   createdAt: Date;
   updatedAt: Date;
   version: number;

@@ -457,7 +457,11 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       notes,
       storyBoards,
       // Packs carry no gallery media: a sketch's snapshot cover cannot follow, so it clears.
-      storySketches: storySketches.map((row) => ({ ...row, coverGalleryId: null })),
+      storySketches: storySketches.map((row) => ({
+        ...row,
+        coverGalleryId: null,
+        coverSourceHash: null,
+      })),
       storyLocationMaps: storyLocationMaps.map((row) => ({
         ...row,
         content: {

@@ -1,4 +1,4 @@
-import type { SketchDocument } from '@keres/shared';
+import { encodeSketchDocument, sketchContentHash, type SketchDocument } from '@keres/shared';
 import { type MutableRefObject, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '../db';
@@ -139,6 +139,8 @@ export function useSketchExport({
         setSketch(
           await createSketchService(db).updateSketch(userId, sketch.id, {
             coverGalleryId: row.id,
+            // Which drawing this snapshot is of, so a manuscript can tell when it has gone stale.
+            coverSourceHash: sketchContentHash(encodeSketchDocument(docRef.current)),
           }),
         );
         showNotification(t('sketch_gallery_saved'), 'success');

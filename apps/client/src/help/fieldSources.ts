@@ -55,7 +55,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   Sketch: {
     documented: ['name', 'description', 'content', 'coverGalleryId', 'createdAt', 'updatedAt'],
-    invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
+    invisible: ['id', 'storyId', 'coverSourceHash', 'version', 'isDeleted', 'deletedAt'],
   },
   Chapter: {
     documented: [

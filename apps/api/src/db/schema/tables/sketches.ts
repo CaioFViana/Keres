@@ -16,6 +16,8 @@ export const sketches = table('sketches', {
   description: text('description'),
   content: json('content').$type<SketchContentType>().notNull(),
   coverGalleryId: text('cover_gallery_id'),
+  /** Hash of the drawing the cover is a snapshot of; the snapshot is fresh while it matches the content. */
+  coverSourceHash: text('cover_source_hash'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

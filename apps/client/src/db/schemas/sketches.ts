@@ -15,6 +15,7 @@ export const sketches = sqliteTable('sketches', {
   description: text('description'),
   content: text('content', { mode: 'json' }).$type<SketchContentType>().notNull(),
   coverGalleryId: text('cover_gallery_id'),
+  coverSourceHash: text('cover_source_hash'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

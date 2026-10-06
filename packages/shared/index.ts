@@ -95,6 +95,7 @@ export * from './schemas/ScenePageSchemas';
 export * from './schemas/BoardSchemas';
 export * from './schemas/SketchSchemas';
 export * from './sketch/sketchCodec';
+export * from './sketch/sketchSnapshot';
 export * from './sketch/sketchDocument';
 export * from './sketch/sketchFill';
 export * from './sketch/sketchFillErase';

@@ -177,6 +177,8 @@ export const SketchSchema = z.object({
   content: SketchContentSchema,
   /** Gallery export of this sketch (see the canvas "save to gallery"); null while none. */
   coverGalleryId: z.string().min(1).nullable(),
+  // Absent from rows and packages that predate it.
+  coverSourceHash: z.string().min(1).max(64).nullable().default(null),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   version: z.number(),
@@ -189,6 +191,7 @@ export const CreateSketchDataSchema = z.object({
   description: z.string().max(MAX_SKETCH_DESCRIPTION_LENGTH).nullable().default(null),
   content: SketchContentSchema,
   coverGalleryId: z.string().min(1).nullable().default(null),
+  coverSourceHash: z.string().min(1).max(64).nullable().default(null),
 });
 
 export const PartialSketchSchema = CreateSketchDataSchema.partial();

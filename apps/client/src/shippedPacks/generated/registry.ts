@@ -2,6 +2,8 @@
 // Do not modify this file directly.
 import type { ShippedPackEntry } from '../types';
 
+import campaign_en from '../content/campaign/en.json';
+import campaign_pt from '../content/campaign/pt.json';
 import comic_en from '../content/comic/en.json';
 import comic_pt from '../content/comic/pt.json';
 import novelCraft_en from '../content/novel-craft/en.json';
@@ -12,6 +14,13 @@ import threeActSkeleton_en from '../content/three-act-skeleton/en.json';
 import threeActSkeleton_pt from '../content/three-act-skeleton/pt.json';
 
 export const shippedPackRegistry: ShippedPackEntry[] = [
+  {
+    slug: 'campaign',
+    languages: [
+      { language: 'en', pack: campaign_en },
+      { language: 'pt', pack: campaign_pt },
+    ],
+  },
   {
     slug: 'comic',
     languages: [

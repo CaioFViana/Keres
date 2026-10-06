@@ -72,6 +72,10 @@ export interface ShippedPackDefinition {
   stats: StatDefinition[];
   /** The default ladder, shared by every axis that does not define one of its own. */
   ladder: LadderRung[];
+  /** Tags the story starts with. Optional: most packs have none. */
+  tags?: Bilingual[];
+  /** Notes the story starts with (a pack's "world sections"). Optional. */
+  notes?: { title: Bilingual; body: Bilingual }[];
   statSystem: boolean;
   statNotation: 'letter' | 'number';
 }
@@ -433,6 +437,146 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
     statSystem: false,
     statNotation: 'letter',
   },
+  {
+    slug: 'campaign',
+    code: 'CMP',
+    name: { en: 'Tabletop campaign', pt: 'Campanha de mesa' },
+    description: {
+      en: 'A chronicle of what happened at the table: sessions with their real date, who was there, and the threads left open. Notes for the history, not a game system.',
+      pt: 'Uma crônica do que aconteceu na mesa: sessões com a data real, quem estava lá e as pontas soltas. Notas para o histórico, não um sistema de jogo.',
+    },
+    vocabulary: {
+      Character: {
+        singular: { en: 'Character', pt: 'Personagem' },
+        plural: { en: 'Characters', pt: 'Personagens' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Location: {
+        singular: { en: 'Place', pt: 'Local' },
+        plural: { en: 'Places', pt: 'Locais' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Chapter: {
+        singular: { en: 'Session', pt: 'Sessão' },
+        plural: { en: 'Sessions', pt: 'Sessões' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Scene: {
+        singular: { en: 'Scene', pt: 'Cena' },
+        plural: { en: 'Scenes', pt: 'Cenas' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Event: {
+        singular: { en: 'Game Event', pt: 'Evento de jogo' },
+        plural: { en: 'Game Events', pt: 'Eventos de jogo' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      Item: {
+        singular: { en: 'Item', pt: 'Item' },
+        plural: { en: 'Items', pt: 'Itens' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+      WorldRule: {
+        singular: { en: 'Table Rule', pt: 'Regra de mesa' },
+        plural: { en: 'Table Rules', pt: 'Regras de mesa' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Choice: {
+        singular: { en: 'Player Choice', pt: 'Decisão de jogador' },
+        plural: { en: 'Player Choices', pt: 'Decisões de jogador' },
+        grammaticalGender: { en: 'neutral', pt: 'feminine' },
+      },
+      Arc: {
+        singular: { en: 'Module', pt: 'Módulo' },
+        plural: { en: 'Modules', pt: 'Módulos' },
+        grammaticalGender: { en: 'neutral', pt: 'masculine' },
+      },
+    },
+    fields: [
+      {
+        key: 'session_date',
+        entityType: 'Chapter',
+        name: { en: 'Played on', pt: 'Jogada em' },
+        description: {
+          en: 'The real date the table met, not the date in the story.',
+          pt: 'A data real em que a mesa se reuniu, não a data na história.',
+        },
+        type: 'date',
+      },
+      {
+        key: 'at_the_table',
+        entityType: 'Chapter',
+        name: { en: 'At the table', pt: 'Na mesa' },
+        description: {
+          en: 'Who played this session.',
+          pt: 'Quem jogou esta sessão.',
+        },
+        type: 'text',
+      },
+      {
+        key: 'open_threads',
+        entityType: 'Chapter',
+        name: { en: 'Open threads', pt: 'Pontas soltas' },
+        description: {
+          en: 'What was left hanging, to pick up next time.',
+          pt: 'O que ficou pendente, para retomar na próxima.',
+        },
+        type: 'long_text',
+      },
+      {
+        key: 'character_kind',
+        entityType: 'Character',
+        name: { en: 'Role at the table', pt: 'Papel na mesa' },
+        type: 'suggestion',
+        options: [
+          { en: 'Player character', pt: 'Personagem de jogador' },
+          { en: 'NPC', pt: 'NPC' },
+          { en: 'Companion', pt: 'Companheiro' },
+          { en: 'Monster', pt: 'Monstro' },
+        ],
+      },
+      {
+        key: 'played_by',
+        entityType: 'Character',
+        name: { en: 'Played by', pt: 'Jogado por' },
+        type: 'text',
+      },
+    ],
+    stats: [],
+    ladder: [],
+    tags: [
+      { en: 'NPC', pt: 'NPC' },
+      { en: 'Faction', pt: 'Facção' },
+      { en: 'Quest', pt: 'Missão' },
+      { en: 'Magic item', pt: 'Item mágico' },
+      { en: 'Rumor', pt: 'Rumor' },
+    ],
+    notes: [
+      {
+        title: { en: 'Session zero', pt: 'Sessão zero' },
+        body: {
+          en: 'What the table agreed before the first session: tone, limits, how often you meet, who runs the game.',
+          pt: 'O que a mesa combinou antes da primeira sessão: tom, limites, frequência dos encontros, quem conduz o jogo.',
+        },
+      },
+      {
+        title: { en: 'House rules', pt: 'Regras da casa' },
+        body: {
+          en: 'The rules this table plays by, where they differ from the book.',
+          pt: 'As regras pelas quais esta mesa joga, onde diferem do livro.',
+        },
+      },
+      {
+        title: { en: 'Campaign timeline', pt: 'Linha do tempo da campanha' },
+        body: {
+          en: 'The big events in order, session by session.',
+          pt: 'Os grandes acontecimentos em ordem, sessão a sessão.',
+        },
+      },
+    ],
+    statSystem: false,
+    statNotation: 'letter',
+  },
 ];
 
 /**
@@ -446,7 +590,7 @@ export const SHIPPED_PACKS: ShippedPackDefinition[] = [
 export function derivedId(
   code: string,
   language: PackLanguage,
-  kind: 'P' | 'F' | 'S' | 'T' | 'L',
+  kind: 'P' | 'F' | 'S' | 'T' | 'L' | 'G' | 'N',
   index = 0,
 ): string {
   const suffix = String(index).padStart(3, '0');

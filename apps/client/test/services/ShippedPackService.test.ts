@@ -17,7 +17,7 @@ import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
  * worth spending tests on - the files are generated, so nothing else would catch a bad one.
  */
 
-const EXPECTED_SLUGS = ['comic', 'novel-craft', 'tabletop-stats', 'three-act-skeleton'];
+const EXPECTED_SLUGS = ['campaign', 'comic', 'novel-craft', 'tabletop-stats', 'three-act-skeleton'];
 const USER_ID = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 
 let database: TestDatabase;
@@ -39,7 +39,7 @@ describe('the shipped catalogue', () => {
   it('identifies vocabulary in pack previews, and its absence in the skeleton', () => {
     const previews = createShippedPackService(db).previewShippedPacks();
 
-    expect(previews).toHaveLength(8);
+    expect(previews).toHaveLength(10);
     for (const preview of previews) {
       // The skeleton carries elements, not renamed ones: vocabulary would rename entities in
       // every story made from it, which a starter template has no business doing.
@@ -549,5 +549,39 @@ describe('a story created from a shipped pack', () => {
     );
     expect(shotTypes).toHaveLength(9);
     expect(shotTypes.map((suggestion) => suggestion.value)).toContain('Establishing');
+  });
+});
+
+describe('the campaign pack', () => {
+  const contentOf = (slug: string, language: string) => {
+    const entry = shippedPackRegistry.find((row) => row.slug === slug)!;
+    const pack = entry.languages.find((row) => row.language === language)!.pack as {
+      content: unknown;
+    };
+    return PackContentSchema.parse(pack.content);
+  };
+
+  it.each(['en', 'pt'])(
+    'carries the real date of a session, its tags and its starter notes (%s)',
+    (language) => {
+      const content = contentOf('campaign', language);
+
+      const date = content.storySchemaFields.find((field) => field.key === 'session_date');
+      expect(date).toMatchObject({ entityType: 'Chapter', type: 'date' });
+      expect(content.tags.length).toBeGreaterThanOrEqual(4);
+      expect(content.extras.notes).toHaveLength(3);
+      expect(content.settings.statSystem).toBe(false);
+      expect(content.settings.vocabulary?.terms.Chapter.singular).toBe(
+        language === 'pt' ? 'Sessão' : 'Session',
+      );
+    },
+  );
+
+  it('is only an offer: it brings no game system and no elements the table did not ask for', () => {
+    const content = contentOf('campaign', 'en');
+
+    expect(content.stats).toEqual([]);
+    expect(content.extras.chapters).toEqual([]);
+    expect(content.extras.scenes).toEqual([]);
   });
 });

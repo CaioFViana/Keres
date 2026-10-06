@@ -86,6 +86,26 @@ export function buildPack(definition: ShippedPackDefinition, language: PackLangu
     ...rowDates,
   }));
 
+  const tags = (definition.tags ?? []).map((tag, index) => ({
+    id: derivedId(definition.code, language, 'G', index),
+    storyId,
+    name: tag[language],
+    color: null,
+    isFavorite: false,
+    extraNotes: null,
+    ...rowDates,
+  }));
+
+  const notes = (definition.notes ?? []).map((note, index) => ({
+    id: derivedId(definition.code, language, 'N', index),
+    storyId,
+    title: note.title[language],
+    body: note.body[language],
+    isFavorite: false,
+    extraNotes: null,
+    ...rowDates,
+  }));
+
   const vocabulary = {
     version: 1 as const,
     language,
@@ -111,7 +131,9 @@ export function buildPack(definition: ShippedPackDefinition, language: PackLangu
       formatVersion: 1,
       storySchemaFields: fields,
       suggestions,
-      tags: [],
+      tags,
+      // Only what a pack defines: the schema fills every other collection with its default.
+      ...(notes.length > 0 ? { extras: { notes } } : {}),
       stats,
       statStrengths,
       settings: {

@@ -50,6 +50,8 @@ export const stories = sqliteTable('stories', {
   statNotation: text('stat_notation').notNull().default('letter'),
   /** Per-story presentation terminology. Null means the app's standard translated vocabulary. */
   vocabulary: text('vocabulary', { mode: 'json' }).$type<StoryVocabulary | null>(),
+  /** Gallery medium used as the universe cover; a row-level link, remapped on import. */
+  coverGalleryId: text('cover_gallery_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   version: integer('version').notNull(),

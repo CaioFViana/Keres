@@ -114,6 +114,7 @@ export function useStoryFormActions({
             statSystem: false,
             statNotation: 'letter',
             vocabulary: null,
+            coverGalleryId: null,
             lastOperationLog: 0,
             lastServerSyncedLog: 0,
           };

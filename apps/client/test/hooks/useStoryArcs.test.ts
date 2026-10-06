@@ -5,6 +5,7 @@ const mockStoryState = {
   selectedStory: { id: 'story', theme: 'dark' },
   activeArcId: 'arc-1' as string | null,
   setActiveArcId: mockSetActiveArcId,
+  setEffectiveArc: jest.fn(),
 };
 const mockGetArcsForStory = jest.fn();
 

@@ -1,5 +1,5 @@
-import type { EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
-import { STORY_OWNER_ONLY_FIELDS } from '@keres/shared';
+import type { ArcMedium, EffectiveStoryRole, FullStoryExportType } from '@keres/shared';
+import { DEFAULT_ARC_MEDIUM, STORY_OWNER_ONLY_FIELDS } from '@keres/shared';
 import { and, count, eq, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryInsert, StorySelect } from '../../db/schema';
@@ -56,7 +56,12 @@ import {
 export interface StoryService {
   getAllStories(currentLocalUserId?: string): Promise<StorySelect[]>;
   getStoryById(storyId: string, currentLocalUserId?: string): Promise<StorySelect | undefined>;
-  createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect>;
+  /** `options.arcMedium` is the form of the work the story's default Arc starts with. */
+  createStory(
+    currentUserId: string,
+    storyData: Create<StoryInsert>,
+    options?: { arcMedium?: ArcMedium },
+  ): Promise<StorySelect>;
   updateStory(
     currentUserId: string,
     storyId: string,
@@ -153,7 +158,11 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
       };
     },
 
-    async createStory(currentUserId: string, storyData: Create<StoryInsert>): Promise<StorySelect> {
+    async createStory(
+      currentUserId: string,
+      storyData: Create<StoryInsert>,
+      options?: { arcMedium?: ArcMedium },
+    ): Promise<StorySelect> {
       const newStory = prepareNewEntityData<StoryInsert>({ ...storyData, userId: currentUserId });
       // The row getUserIdForOperation would read does not exist until the unit below commits.
       const userIdToLog = await userIdForServer(newStory.serverId, currentUserId);
@@ -174,6 +183,10 @@ export const createStoryService = (db: AppDrizzleClient): StoryService => {
         color: null,
         icon: null,
         themeOverride: null,
+        medium: options?.arcMedium ?? DEFAULT_ARC_MEDIUM,
+        vocabulary: null,
+        author: null,
+        coverGalleryId: null,
         isDefault: true,
       });
 

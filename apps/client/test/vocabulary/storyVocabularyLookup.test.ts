@@ -34,19 +34,52 @@ afterEach(() => {
 });
 
 describe('loadStoryVocabulary', () => {
-  it('returns the stored vocabulary', async () => {
-    const findFirst = jest.fn(async () => ({ vocabulary: comicPt }));
-    const db = { query: { stories: { findFirst } } } as any;
+  const noArcs = { findMany: jest.fn(async () => []) };
 
-    await expect(loadStoryVocabulary(db, 'story-1')).resolves.toBe(comicPt);
+  it('returns the stored vocabulary', async () => {
+    (i18n as { language?: string }).language = 'pt-BR';
+    const findFirst = jest.fn(async () => ({ vocabulary: comicPt }));
+    const db = { query: { stories: { findFirst }, storyArcs: noArcs } } as any;
+
+    await expect(loadStoryVocabulary(db, 'story-1')).resolves.toEqual(comicPt);
     expect(findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ columns: { vocabulary: true } }),
     );
   });
 
+  it('lets the only arc speak for the story, and nobody speak when there are several', async () => {
+    (i18n as { language?: string }).language = 'pt-BR';
+    const findFirst = jest.fn(async () => ({ vocabulary: null }));
+    const one = {
+      query: {
+        stories: { findFirst },
+        storyArcs: { findMany: jest.fn(async () => [{ medium: 'comic', vocabulary: null }]) },
+      },
+    } as any;
+    const several = {
+      query: {
+        stories: { findFirst },
+        storyArcs: {
+          findMany: jest.fn(async () => [
+            { medium: 'comic', vocabulary: null },
+            { medium: 'screenplay', vocabulary: null },
+          ]),
+        },
+      },
+    } as any;
+
+    const withOne = await loadStoryVocabulary(one, 'story-1');
+    expect(withOne?.terms.Arc?.singular).toBe('Edição');
+    await expect(loadStoryVocabulary(several, 'story-1')).resolves.toBeNull();
+  });
+
   it('returns null when the story is missing or has no vocabulary', async () => {
-    const missing = { query: { stories: { findFirst: jest.fn(async () => undefined) } } } as any;
-    const blank = { query: { stories: { findFirst: jest.fn(async () => ({})) } } } as any;
+    const missing = {
+      query: { stories: { findFirst: jest.fn(async () => undefined) }, storyArcs: noArcs },
+    } as any;
+    const blank = {
+      query: { stories: { findFirst: jest.fn(async () => ({})) }, storyArcs: noArcs },
+    } as any;
 
     await expect(loadStoryVocabulary(missing, 'story-1')).resolves.toBeNull();
     await expect(loadStoryVocabulary(blank, 'story-1')).resolves.toBeNull();

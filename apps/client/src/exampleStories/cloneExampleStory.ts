@@ -109,6 +109,9 @@ export function cloneExampleStoryForInstall(
       version: 1,
       isDeleted: false,
       deletedAt: null,
+      coverGalleryId: remapSketchCoverGalleryId(example.story.coverGalleryId ?? null, (id) =>
+        idMap.get(id),
+      ),
     },
     chapters: example.chapters.map((chapter) => ({
       ...cloneEntity(chapter),
@@ -182,6 +185,7 @@ export function cloneExampleStoryForInstall(
     storyArcs: example.storyArcs?.map((arc) => ({
       ...cloneEntity(arc),
       storyId,
+      coverGalleryId: remapSketchCoverGalleryId(arc.coverGalleryId ?? null, (id) => idMap.get(id)),
     })),
     storyBoards: example.storyBoards?.map((board) => ({
       ...cloneEntity(board),

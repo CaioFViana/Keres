@@ -358,6 +358,13 @@
       "when": 1791248241133,
       "tag": "0050_dashing_terror",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1791311193028,
+      "tag": "0051_nifty_vindicator",
+      "breakpoints": true
     }
   ]
 }

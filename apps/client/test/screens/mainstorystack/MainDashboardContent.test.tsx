@@ -145,6 +145,7 @@ function makeStory(overrides: Partial<Story> = {}): Story {
     statSystem: false,
     statNotation: 'letter',
     vocabulary: null,
+    coverGalleryId: null,
     serverId: null,
     lastOperationLog: 0,
     lastServerSyncedLog: 0,

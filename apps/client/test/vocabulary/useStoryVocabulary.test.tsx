@@ -28,11 +28,12 @@ const comicPt = {
 
 async function renderHook(options: {
   story?: any;
+  arc?: any;
   i18n?: any;
 }): Promise<ReturnType<typeof useStoryVocabulary>> {
   (useTranslation as jest.Mock).mockReturnValue({ t, i18n: options.i18n });
   (useStoryStore as unknown as jest.Mock).mockImplementation((selector: any) =>
-    selector({ selectedStory: options.story ?? null }),
+    selector({ selectedStory: options.story ?? null, effectiveArc: options.arc ?? null }),
   );
   let result!: ReturnType<typeof useStoryVocabulary>;
   const Probe = () => {

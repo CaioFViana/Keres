@@ -13,6 +13,7 @@ export function useStoryArcs() {
   const story = useStoryStore((state) => state.selectedStory);
   const activeArcId = useStoryStore((state) => state.activeArcId);
   const setActiveArcId = useStoryStore((state) => state.setActiveArcId);
+  const setEffectiveArc = useStoryStore((state) => state.setEffectiveArc);
   const { setTheme } = useTheme();
   const [arcs, setArcs] = useState<StoryArcSelect[]>([]);
   // Loading is not the same as empty: every mount starts with no arcs, and only
@@ -54,6 +55,25 @@ export function useStoryArcs() {
     () => arcs.find((arc) => arc.id === activeArcId) ?? null,
     [activeArcId, arcs],
   );
+
+  // One Arc in the story is the only work there is, so its medium applies in the every-Arc view too.
+  const effectiveArc = activeArc ?? (arcs.length === 1 ? arcs[0] : null);
+  const effectiveId = effectiveArc?.id ?? null;
+  const effectiveMedium = effectiveArc?.medium ?? null;
+  const effectiveVocabulary = effectiveArc?.vocabulary ?? null;
+  const effectiveAuthor = effectiveArc?.author ?? null;
+  useEffect(() => {
+    if (!effectiveId || !effectiveMedium) {
+      setEffectiveArc(null);
+      return;
+    }
+    setEffectiveArc({
+      id: effectiveId,
+      medium: effectiveMedium,
+      vocabulary: effectiveVocabulary,
+      author: effectiveAuthor,
+    });
+  }, [effectiveAuthor, effectiveId, effectiveMedium, effectiveVocabulary, setEffectiveArc]);
 
   useEffect(() => {
     setTheme(resolveEffectiveTheme(story?.theme, activeArc?.themeOverride));

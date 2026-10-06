@@ -2,6 +2,7 @@ import type { GrammaticalGender, StoryVocabularyEntityType } from '@keres/shared
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStoryStore } from '../state/storyStore';
+import { resolveEffectiveVocabulary } from './effectiveVocabulary';
 import {
   agreeStoryTerm,
   isStoryVocabularyEntityType,
@@ -13,10 +14,15 @@ import {
 /** Resolves optional story terminology without changing any canonical entity model. */
 export function useStoryVocabulary() {
   const { t, i18n } = useTranslation();
-  const vocabulary = useStoryStore((state) => state.selectedStory?.vocabulary ?? null);
+  const storyVocabulary = useStoryStore((state) => state.selectedStory?.vocabulary ?? null);
+  const effectiveArc = useStoryStore((state) => state.effectiveArc);
   // Focused navigation tests provide only `t`; production i18n always exists, but vocabulary must
   // remain a harmless default when a host intentionally supplies no language object.
   const language = localeFamily(i18n?.resolvedLanguage ?? i18n?.language ?? 'en');
+  const vocabulary = useMemo(
+    () => resolveEffectiveVocabulary(storyVocabulary, effectiveArc, language),
+    [effectiveArc, language, storyVocabulary],
+  );
 
   return useMemo(() => {
     return {

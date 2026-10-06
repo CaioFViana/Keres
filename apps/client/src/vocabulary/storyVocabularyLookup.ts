@@ -2,7 +2,8 @@ import type { StoryVocabulary, StoryVocabularyEntityType } from '@keres/shared/e
 import { and, eq } from 'drizzle-orm';
 import i18n, { type TFunction } from 'i18next';
 import type { AppDrizzleClient } from '../db';
-import { stories } from '../db/schemas';
+import { stories, storyArcs } from '../db/schemas';
+import { resolveEffectiveVocabulary } from './effectiveVocabulary';
 import {
   agreeStoryTerm,
   hasStoryTermOverride,
@@ -16,6 +17,11 @@ import {
  * hold `t` and the database handle: `useStoryVocabulary`/`useVocabularyEntityCopy` cover
  * screens and components.
  */
+/**
+ * The terms in effect for a story outside any screen: with exactly one Arc that Arc's medium and
+ * vocabulary apply, as in the every-Arc view of a one-work story; with several there is no single
+ * work to speak for, so only the story's own terms do.
+ */
 export async function loadStoryVocabulary(
   db: AppDrizzleClient,
   storyId: string,
@@ -24,7 +30,16 @@ export async function loadStoryVocabulary(
     where: and(eq(stories.id, storyId), eq(stories.isDeleted, false)),
     columns: { vocabulary: true },
   });
-  return story?.vocabulary ?? null;
+  const arcs = await db.query.storyArcs.findMany({
+    where: and(eq(storyArcs.storyId, storyId), eq(storyArcs.isDeleted, false)),
+    columns: { medium: true, vocabulary: true },
+    limit: 2,
+  });
+  return resolveEffectiveVocabulary(
+    story?.vocabulary ?? null,
+    arcs.length === 1 ? arcs[0] : null,
+    localeFamily(i18n.language),
+  );
 }
 
 export function translateStoryNoun(

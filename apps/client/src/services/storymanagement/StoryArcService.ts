@@ -1,3 +1,4 @@
+import { DEFAULT_ARC_MEDIUM } from '@keres/shared';
 import { and, asc, eq, isNotNull, sql } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import type { StoryArcInsert, StoryArcSelect } from '../../db/schema';
@@ -27,7 +28,16 @@ export interface StoryArcService {
     changes: Partial<
       Pick<
         StoryArcInsert,
-        'title' | 'description' | 'sortOrder' | 'color' | 'icon' | 'themeOverride'
+        | 'title'
+        | 'description'
+        | 'sortOrder'
+        | 'color'
+        | 'icon'
+        | 'themeOverride'
+        | 'medium'
+        | 'vocabulary'
+        | 'author'
+        | 'coverGalleryId'
       >
     >,
   ): Promise<StoryArcSelect>;
@@ -103,6 +113,10 @@ export const createStoryArcService = (db: AppDrizzleClient): StoryArcService => 
         color: null,
         icon: null,
         themeOverride: null,
+        medium: DEFAULT_ARC_MEDIUM,
+        vocabulary: null,
+        author: null,
+        coverGalleryId: null,
         isDefault: true,
       });
     },

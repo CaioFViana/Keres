@@ -34,7 +34,12 @@ export type NewStoryData = Omit<
   | 'serverId'
   | 'timelineEpochSeconds'
   | 'vocabulary'
-> & { timelineEpochSeconds?: number | null; vocabulary?: Story['vocabulary'] };
+  | 'coverGalleryId'
+> & {
+  timelineEpochSeconds?: number | null;
+  vocabulary?: Story['vocabulary'];
+  coverGalleryId?: Story['coverGalleryId'];
+};
 
 export type PackConflictKind =
   | 'attribute_key'

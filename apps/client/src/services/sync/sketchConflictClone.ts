@@ -1,4 +1,4 @@
-import { validateSketchContent } from '@keres/shared';
+import { emptySketchContent, generateSketchLocalId, validateSketchContent } from '@keres/shared';
 import { and, eq, ne } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
@@ -20,7 +20,8 @@ export async function cloneConflictSketch(
   });
   const rawContent = conflict.localValues.content ?? original?.content;
   const content = validateSketchContent(
-    rawContent ?? { page: { width: 794, height: 1123 }, layers: [], overlays: [] },
+    // A sketch needs at least one layer: a drawing that exists nowhere clones as a blank page.
+    rawContent ?? emptySketchContent(generateSketchLocalId(new Set()), 'Layer 1'),
   );
   const name = cloneName.slice(0, 120);
   // Idempotency: the clone commits before keepServer runs, so a failure between the two (or

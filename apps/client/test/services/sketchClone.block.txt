@@ -1,0 +1,143 @@
+describe('resolveKeepServerAndCloneSketch', () => {
+  const page = { width: 794, height: 1123, background: 'paper' as const };
+  const layer = (data: string) => ({
+    id: '01LAYER000000000000000001',
+    name: 'Layer 1',
+    visible: true,
+    opacity: 1,
+    locked: false,
+    data,
+  });
+  const drawing = (data: string) => ({ page, layers: [layer(data)], overlays: [] });
+  const serverSketch = (content: unknown) => ({
+    name: 'Floor plan',
+    content,
+    version: 3,
+  });
+
+  const seedSketch = (over: Partial<typeof schema.sketches.$inferInsert> = {}) =>
+    database.db.insert(schema.sketches).values({
+      id: 'sketch-1',
+      storyId: STORY_ID,
+      name: 'Floor plan',
+      description: 'The house',
+      content: drawing(''),
+      createdAt: NOW,
+      updatedAt: NOW,
+      version: 2,
+      isDeleted: false,
+      ...over,
+    });
+
+  const conflictOf = (over: Partial<RecordConflictInput> = {}) =>
+    baseConflict({
+      entityType: 'Sketch',
+      entityId: 'sketch-1',
+      localValues: { content: drawing('mine') },
+      serverValues: serverSketch(drawing('')),
+      serverVersion: 3,
+      ...over,
+    });
+
+  const clone = async () => {
+    const [pending] = await service.getPendingConflicts();
+    await service.resolveKeepServerAndCloneSketch(pending.id, 'local-user', 'Floor plan (copy)');
+  };
+
+  const readSketches = () =>
+    database.db.query.sketches.findMany({ where: eq(schema.sketches.storyId, STORY_ID) });
+
+  it('creates a copy with the local drawing and the original description, then keeps the server row', async () => {
+    await seedSketch();
+    await database.db
+      .update(schema.stories)
+      .set({ lastOperationLog: 1 })
+      .where(eq(schema.stories.id, STORY_ID));
+    await service.recordConflict(conflictOf());
+
+    await clone();
+
+    const rows = await readSketches();
+    const copy = rows.find((row) => row.id !== 'sketch-1');
+    expect(copy).toMatchObject({
+      name: 'Floor plan (copy)',
+      description: 'The house',
+      content: { layers: [{ data: 'mine' }] },
+    });
+    expect(rows.find((row) => row.id === 'sketch-1')).toMatchObject({
+      name: 'Floor plan',
+      version: 3,
+    });
+  });
+
+  it('refuses to clone when there is no conflict, or when it is not about a Sketch', async () => {
+    await expect(
+      service.resolveKeepServerAndCloneSketch('nao-existe', 'local-user', 'Copy'),
+    ).rejects.toThrow('Sketch clone is only available for a Sketch content conflict.');
+
+    await seedCharacter();
+    await service.recordConflict(baseConflict());
+    const [pending] = await service.getPendingConflicts();
+    await expect(
+      service.resolveKeepServerAndCloneSketch(pending.id, 'local-user', 'Copy'),
+    ).rejects.toThrow('Sketch clone is only available for a Sketch content conflict.');
+  });
+
+  it('falls back to the stored drawing when the conflict carries no content', async () => {
+    await seedSketch({ content: drawing('stored') });
+    await service.recordConflict(conflictOf({ localValues: { name: 'Floor plan' } }));
+
+    await clone();
+
+    const copy = (await readSketches()).find((row) => row.id !== 'sketch-1');
+    expect(copy).toMatchObject({ content: { layers: [{ data: 'stored' }] } });
+  });
+
+  it('creates no second copy when the resolution is retried after the clone committed', async () => {
+    await seedSketch();
+    await database.db
+      .update(schema.stories)
+      .set({ lastOperationLog: 1 })
+      .where(eq(schema.stories.id, STORY_ID));
+    await service.recordConflict(conflictOf());
+    const [pending] = await service.getPendingConflicts();
+
+    await service.resolveKeepServerAndCloneSketch(pending.id, 'local-user', 'Floor plan (copy)');
+    await service.resolveKeepServerAndCloneSketch(pending.id, 'local-user', 'Floor plan (copy)');
+
+    const rows = await readSketches();
+    expect(rows).toHaveLength(2);
+    expect(await service.getPendingConflicts()).toHaveLength(0);
+  });
+
+  it('still clones when the same-named sketch holds a different drawing', async () => {
+    await seedSketch();
+    await seedSketch({
+      id: 'sketch-other',
+      name: 'Floor plan (copy)',
+      content: drawing('elsewhere'),
+    });
+    await service.recordConflict(conflictOf());
+
+    await clone();
+
+    expect(await readSketches()).toHaveLength(3);
+  });
+
+  it('clones a blank page when the drawing exists nowhere, with no description', async () => {
+    await service.recordConflict(
+      conflictOf({ entityId: 'sketch-missing', localValues: { name: 'Floor plan' } }),
+    );
+
+    await clone();
+
+    const rows = await readSketches();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      name: 'Floor plan (copy)',
+      description: null,
+      content: { layers: [], overlays: [] },
+    });
+  });
+});
+

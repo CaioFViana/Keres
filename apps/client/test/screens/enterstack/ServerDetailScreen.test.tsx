@@ -232,12 +232,15 @@ describe('ServerDetailScreen', () => {
   });
 
   describe('plan and payment', () => {
+    /** Ahead of the real clock: whether a plan is shown as paid up depends on the date. */
+    const PAID_UNTIL = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+
     const subscription = {
       tierId: 't1',
       tierName: 'Pro',
       interval: 'monthly',
       status: 'active',
-      paidUntil: '2026-04-03T12:00:00.000Z',
+      paidUntil: PAID_UNTIL,
       lastPaymentAt: null,
       amountCents: 1990,
       currency: 'BRL',

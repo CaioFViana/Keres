@@ -94,6 +94,19 @@ export type PaymentNotice =
   /** The period ran out unpaid: the plan is no longer granted until it is paid. */
   | { kind: 'due' };
 
+/** A subscription that renews and whose date has passed, still granted by the server for a short margin. */
+export function isRenewalBeingConfirmed(
+  subscription: Pick<Subscription, 'status' | 'paidUntil' | 'cancelAtPeriodEnd' | 'complimentary'>,
+  now: Date = new Date(),
+): boolean {
+  return (
+    subscription.status === 'active' &&
+    !subscription.cancelAtPeriodEnd &&
+    !subscription.complimentary &&
+    new Date(subscription.paidUntil).getTime() <= now.getTime()
+  );
+}
+
 /**
  * Whether the user should be reminded about a payment. A subscription that will not renew has nothing to pay,
  * so it is never a reminder; one that is paid up with time left is not either.
@@ -105,6 +118,10 @@ export function evaluatePaymentNotice(
   if (!subscription) return { kind: 'none' };
   if (subscription.status === 'due') return { kind: 'due' };
   if (subscription.status !== 'active' || subscription.cancelAtPeriodEnd) return { kind: 'none' };
+  // The date passed but the server still holds it as paid up: the renewal is being confirmed (the margin it gives
+  // a late notice). Nothing is owed yet and nothing is lost - a reminder now would only be noise; if the renewal
+  // does not come, the server marks it due and the "due" reminder follows.
+  if (new Date(subscription.paidUntil).getTime() <= now.getTime()) return { kind: 'none' };
   const daysLeft = daysUntil(new Date(subscription.paidUntil), now);
   return daysLeft <= PAYMENT_WARNING_DAYS ? { kind: 'soon', daysLeft } : { kind: 'none' };
 }

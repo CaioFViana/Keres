@@ -15,7 +15,9 @@ export const serverPayments = sqliteTable('server_payments', {
   serverId: text('server_id')
     .notNull()
     .references(() => servers.id),
-  kind: text('kind', { enum: ['payment_succeeded', 'payment_failed', 'gift_granted'] }).notNull(),
+  kind: text('kind', {
+    enum: ['payment_succeeded', 'payment_refunded', 'payment_failed', 'gift_granted'],
+  }).notNull(),
   tierName: text('tier_name'),
   /** Minor units of `currency`; null for a line with no amount (a failure). */
   amountCents: integer('amount_cents'),

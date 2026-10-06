@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ThemeColors } from '../../../theme';
 import { useTheme } from '../../../theme';
-import { formatMoney } from '../../../utils/paymentPlans';
+import { formatMoney, isRenewalBeingConfirmed } from '../../../utils/paymentPlans';
 
 export interface PlanStatusCardProps {
   subscription: Subscription;
@@ -26,11 +26,13 @@ const PlanStatusCard: React.FC<PlanStatusCardProps> = ({ subscription, showAmoun
   const statusKey =
     subscription.status === 'due'
       ? 'payment_status_due'
-      : gift
-        ? 'payment_status_gift'
-        : subscription.cancelAtPeriodEnd
-          ? 'payment_status_ending'
-          : 'payment_status_active';
+      : isRenewalBeingConfirmed(subscription)
+        ? 'payment_status_renewing'
+        : gift
+          ? 'payment_status_gift'
+          : subscription.cancelAtPeriodEnd
+            ? 'payment_status_ending'
+            : 'payment_status_active';
 
   const row = (label: string, value: string, last = false, tone?: 'bad') => (
     <View style={[styles.row, last && styles.lastRow]}>

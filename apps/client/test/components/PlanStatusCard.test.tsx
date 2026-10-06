@@ -16,13 +16,16 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 
+/** Ahead of the real clock: whether a plan is shown as paid up depends on the date. */
+const PAID_UNTIL = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+
 const subscription = (over: Record<string, unknown> = {}) =>
   ({
     tierId: 't1',
     tierName: 'Pro',
     interval: 'monthly',
     status: 'active',
-    paidUntil: '2026-04-03T12:00:00.000Z',
+    paidUntil: PAID_UNTIL,
     lastPaymentAt: '2026-03-03T12:00:00.000Z',
     amountCents: 1990,
     currency: 'BRL',
@@ -40,11 +43,22 @@ describe('PlanStatusCard', () => {
     expect(view.getByText('Pro · payment_interval_monthly')).toBeTruthy();
     expect(view.getByText('payment_status_active')).toBeTruthy();
     expect(view.getByText('payment_paid_until')).toBeTruthy();
-    expect(
-      view.getByText(new Date('2026-04-03T12:00:00.000Z').toLocaleDateString('en')),
-    ).toBeTruthy();
+    expect(view.getByText(new Date(PAID_UNTIL).toLocaleDateString('en'))).toBeTruthy();
     // The server's own screen keeps to the dates.
     expect(view.queryByText('payment_last_amount')).toBeNull();
+  });
+
+  it('says the renewal is being confirmed when the date passed and the server still holds it as paid', async () => {
+    const view = await render(
+      <PlanStatusCard
+        subscription={subscription({
+          paidUntil: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+        })}
+      />,
+    );
+
+    expect(view.getByText('payment_status_renewing')).toBeTruthy();
+    expect(view.queryByText('payment_status_active')).toBeNull();
   });
 
   it('adds the amount on the plan screen', async () => {

@@ -111,6 +111,22 @@ describe('ServerPaymentHistoryScreen', () => {
     expect(view.queryByTestId('payment-history-empty')).toBeNull();
   });
 
+  it('shows a refund as money that went back: the amount with a minus, named as a refund', async () => {
+    mockHistory.mockReturnValue(
+      history({
+        items: [
+          row({ id: '01HPAYMENT0000000000000009', kind: 'payment_refunded', amountCents: 2500 }),
+        ],
+      }),
+    );
+    const view = await render(<ServerPaymentHistoryScreen />);
+
+    const refunded = view.getByTestId('payment-history-01HPAYMENT0000000000000009');
+    expect(refunded).toHaveTextContent(has('payment_history_kind_payment_refunded'));
+    expect(refunded).toHaveTextContent(has('-R$'));
+    expect(refunded).toHaveTextContent(has('25.00'));
+  });
+
   it('says there is nothing yet', async () => {
     mockHistory.mockReturnValue(history({ items: [] }));
     const view = await render(<ServerPaymentHistoryScreen />);

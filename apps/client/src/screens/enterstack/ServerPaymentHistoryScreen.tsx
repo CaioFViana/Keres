@@ -86,8 +86,11 @@ const ServerPaymentHistoryScreen = () => {
                     {t('payment_history_id', { id: item.id })}
                   </Text>
                 </View>
-                {item.amountCents !== null && item.currency && item.kind === 'payment_succeeded' ? (
-                  <Text style={styles.amount}>
+                {item.amountCents !== null &&
+                item.currency &&
+                (item.kind === 'payment_succeeded' || item.kind === 'payment_refunded') ? (
+                  <Text style={[styles.amount, item.kind === 'payment_refunded' && styles.refund]}>
+                    {item.kind === 'payment_refunded' ? '-' : ''}
                     {formatMoney(item.amountCents, item.currency, i18n.language)}
                   </Text>
                 ) : null}
@@ -127,6 +130,7 @@ const createStyles = (colors: ThemeColors) =>
     id: { fontSize: 11, color: colors.textSecondary },
     bad: { color: colors.error },
     amount: { fontSize: 15, fontWeight: '600', color: colors.text },
+    refund: { color: colors.error },
   });
 
 export default ServerPaymentHistoryScreen;

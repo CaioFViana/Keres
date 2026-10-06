@@ -5,6 +5,7 @@ import { PAYMENT_WARNING_DAYS } from '@keres/shared/metadata/Payments';
 import {
   evaluatePaymentNotice,
   formatMoney,
+  isRenewalBeingConfirmed,
   isMethodSoldForOffer,
   offerForPlayProduct,
   offersFrom,
@@ -154,6 +155,14 @@ describe('evaluatePaymentNotice', () => {
     expect(evaluatePaymentNotice(subscription({ status: 'due' }), now)).toEqual({ kind: 'due' });
   });
 
+  it('says nothing while the renewal is being confirmed: the date passed, the server still holds it as paid', () => {
+    const justEnded = subscription({ paidUntil: '2026-03-31T09:00:00.000Z' });
+
+    expect(evaluatePaymentNotice(justEnded, now)).toEqual({ kind: 'none' });
+    // If it does not come, the server marks it due and the reminder follows.
+    expect(evaluatePaymentNotice({ ...justEnded, status: 'due' }, now)).toEqual({ kind: 'due' });
+  });
+
   it('never reminds about a subscription that will not renew: there is nothing to pay', () => {
     expect(evaluatePaymentNotice(subscription({ cancelAtPeriodEnd: true }), now)).toEqual({
       kind: 'none',
@@ -161,5 +170,28 @@ describe('evaluatePaymentNotice', () => {
     expect(evaluatePaymentNotice(subscription({ status: 'canceled' }), now)).toEqual({
       kind: 'none',
     });
+  });
+});
+
+describe('isRenewalBeingConfirmed', () => {
+  const now = new Date('2026-04-01T12:00:00.000Z');
+  const base = {
+    status: 'active' as const,
+    cancelAtPeriodEnd: false,
+    complimentary: false,
+    paidUntil: '2026-03-31T09:00:00.000Z',
+  };
+
+  it('is a renewing subscription whose date passed and that the server still holds as paid', () => {
+    expect(isRenewalBeingConfirmed(base, now)).toBe(true);
+  });
+
+  it('is not one with time left, one that is due, ending, or given by an administrator', () => {
+    expect(isRenewalBeingConfirmed({ ...base, paidUntil: '2026-04-20T12:00:00.000Z' }, now)).toBe(
+      false,
+    );
+    expect(isRenewalBeingConfirmed({ ...base, status: 'due' }, now)).toBe(false);
+    expect(isRenewalBeingConfirmed({ ...base, cancelAtPeriodEnd: true }, now)).toBe(false);
+    expect(isRenewalBeingConfirmed({ ...base, complimentary: true }, now)).toBe(false);
   });
 });

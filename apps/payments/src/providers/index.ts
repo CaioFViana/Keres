@@ -26,9 +26,13 @@ export function providerFor(
 
 export function connectorCapabilities(
   providers: readonly Provider[],
-): Array<'status' | 'cancel' | 'due'> {
-  const capabilities: Array<'status' | 'cancel' | 'due'> = [];
+  config?: PaymentsConfig,
+): Array<'status' | 'cancel' | 'due' | 'reconcile'> {
+  const capabilities: Array<'status' | 'cancel' | 'due' | 'reconcile'> = [];
   if (providers.some((provider) => provider.hasStatus)) capabilities.push('status');
-  if (providers.some((provider) => provider.hasCancel)) capabilities.push('cancel');
+  // Cancelling is also what stops a store subscription, once the app's package is known (a cancel names only the token).
+  const cancelsStore = Boolean(config?.play && (config.play.packageName || config.play.mock));
+  if (providers.some((provider) => provider.hasCancel) || cancelsStore) capabilities.push('cancel');
+  if (providers.some((provider) => provider.hasReconcile)) capabilities.push('reconcile');
   return capabilities;
 }

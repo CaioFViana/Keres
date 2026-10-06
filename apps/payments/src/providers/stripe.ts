@@ -135,6 +135,7 @@ export function createStripeProvider(): Provider {
     methodIds: ['googlepay'],
     hasStatus: true,
     hasCancel: true,
+    hasReconcile: true,
 
     // Stripe subscription ids are `sub_...`.
     ownsSubscription: (subscriptionReference) => subscriptionReference.startsWith('sub_'),
@@ -225,9 +226,83 @@ export function createStripeProvider(): Provider {
       return null;
     },
 
+    async listSubscriptionEvents(subscriptionReference, since, context) {
+      const cfg = stripeConfig(context.config);
+      if (!cfg) throw new Error('Google Pay is not configured.');
+      const query = new URLSearchParams({
+        subscription: subscriptionReference,
+        status: 'paid',
+        limit: '100',
+        'created[gte]': String(Math.floor(since.getTime() / 1000)),
+      });
+      const invoices = await stripeCall(
+        cfg,
+        'GET',
+        `/v1/invoices?${query.toString()}`,
+        context.fetchImpl,
+      );
+      if (invoices.status >= 300) {
+        throw new Error(`Stripe could not list the invoices (${invoices.status}).`);
+      }
+      const events: PaymentEventWire[] = [];
+      for (const invoice of (
+        invoices.body as {
+          data?: Array<{
+            id?: string;
+            amount_paid?: number;
+            currency?: string;
+            created?: number;
+            status_transitions?: { paid_at?: number | null };
+          }>;
+        }
+      ).data ?? []) {
+        if (!invoice.id) continue;
+        const paidAtSeconds = invoice.status_transitions?.paid_at ?? invoice.created;
+        events.push({
+          type: 'payment.succeeded',
+          // The invoice's id, as the webhook names it: the first one is also the session's payment.
+          eventId: `stripe-invoice-${invoice.id}`,
+          subscriptionReference,
+          paidAt: new Date((paidAtSeconds ?? Date.now() / 1000) * 1000).toISOString(),
+          amountCents: Math.round(invoice.amount_paid ?? 0),
+          currency: (invoice.currency ?? 'USD').toUpperCase(),
+        });
+      }
+      events.sort((a, b) =>
+        String('paidAt' in a ? a.paidAt : '').localeCompare(String('paidAt' in b ? b.paidAt : '')),
+      );
+      const subscription = await stripeCall(
+        cfg,
+        'GET',
+        `/v1/subscriptions/${encodeURIComponent(subscriptionReference)}`,
+        context.fetchImpl,
+      );
+      if (
+        subscription.status === 200 &&
+        (subscription.body as { status?: string }).status === 'canceled'
+      ) {
+        events.push({
+          type: 'subscription.canceled',
+          eventId: `stripe-cancel-${subscriptionReference}`,
+          subscriptionReference,
+        });
+      }
+      return events;
+    },
+
     async cancelSubscription(subscriptionReference, context) {
       const cfg = stripeConfig(context.config);
       if (!cfg) throw new Error('Google Pay is not configured.');
+      // A subscription that is already canceled is the goal reached; Stripe does not document what cancelling
+      // it twice answers, so it is looked at first - a retry after a cancel that went through must not fail.
+      const current = await stripeCall(
+        cfg,
+        'GET',
+        `/v1/subscriptions/${encodeURIComponent(subscriptionReference)}`,
+        context.fetchImpl,
+      );
+      if (current.status === 200 && (current.body as { status?: string }).status === 'canceled')
+        return;
       const result = await stripeCall(
         cfg,
         'DELETE',
@@ -249,6 +324,7 @@ export function createStripeProvider(): Provider {
       const event = JSON.parse(raw) as {
         type?: string;
         id?: string;
+        created?: number;
         data?: { object?: Record<string, unknown> };
       };
       const object = event.data?.object ?? {};
@@ -292,6 +368,68 @@ export function createStripeProvider(): Provider {
               num(invoice.amount_paid),
               str(invoice.currency) || 'USD',
             ),
+          ];
+        }
+        // Money that went back. A charge no longer names its invoice in recent API versions: the invoice is found
+        // through the payment intent, and the invoice names the subscription.
+        case 'charge.refunded': {
+          const charge = object as {
+            id?: string;
+            amount_refunded?: number;
+            refunded?: boolean;
+            currency?: string;
+            payment_intent?: string;
+            invoice?: string;
+            created?: number;
+          };
+          let invoiceId = str(charge.invoice);
+          if (!invoiceId && charge.payment_intent) {
+            const query = new URLSearchParams({
+              'payment[type]': 'payment_intent',
+              'payment[payment_intent]': str(charge.payment_intent),
+              limit: '1',
+            });
+            const found = await stripeCall(
+              cfg,
+              'GET',
+              `/v1/invoice_payments?${query.toString()}`,
+              context.fetchImpl,
+            );
+            if (found.status >= 300)
+              throw new Error('Stripe could not look up the invoice payment.');
+            invoiceId = str(
+              (found.body as { data?: Array<{ invoice?: string }> }).data?.[0]?.invoice,
+            );
+          }
+          // A charge that is not an invoice's is not what Keres sold.
+          if (!invoiceId) return [];
+          const invoice = await stripeCall(
+            cfg,
+            'GET',
+            `/v1/invoices/${encodeURIComponent(invoiceId)}`,
+            context.fetchImpl,
+          );
+          if (invoice.status >= 300) throw new Error('Stripe could not read the invoice.');
+          const body = invoice.body as {
+            subscription?: string;
+            parent?: { subscription_details?: { subscription?: string } };
+          };
+          const subscription =
+            str(body.subscription) || str(body.parent?.subscription_details?.subscription);
+          if (!subscription) return [];
+          const refundedCents = num(charge.amount_refunded);
+          return [
+            {
+              type: 'payment.refunded',
+              // The total refunded so far is part of the id: a second partial refund is a refund of its own.
+              eventId: `stripe-refund-${str(charge.id)}-${refundedCents}`,
+              subscriptionReference: subscription,
+              refundedAt: new Date((event.created ?? Date.now() / 1000) * 1000).toISOString(),
+              chargedAt: new Date((charge.created ?? Date.now() / 1000) * 1000).toISOString(),
+              amountCents: refundedCents,
+              currency: (str(charge.currency) || 'USD').toUpperCase(),
+              endsAccess: charge.refunded === true,
+            },
           ];
         }
         case 'customer.subscription.deleted': {

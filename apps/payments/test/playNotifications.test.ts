@@ -34,7 +34,6 @@ const subscriptionNotice = (notificationType: number, messageId?: string) =>
         version: '1.0',
         notificationType,
         purchaseToken: 'token-abc',
-        subscriptionId: 'plus_monthly',
       },
     },
     messageId,
@@ -42,10 +41,10 @@ const subscriptionNotice = (notificationType: number, messageId?: string) =>
 
 const ACTIVE = {
   subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
-  currentOrderId: 'GPA.1234-5678-9012-34567..1',
   lineItems: [
     {
       productId: 'plus_monthly',
+      latestSuccessfulOrderId: 'GPA.1234-5678-9012-34567..1',
       autoRenewingPlan: {
         recurringPrice: { currencyCode: 'BRL', units: '25', nanos: 900_000_000 },
       },
@@ -54,12 +53,12 @@ const ACTIVE = {
 };
 
 /** Google as the service sees it: the token endpoint, then one answer for the purchase. */
-function googleSays(subscription: Record<string, unknown>): typeof fetch {
+function googleSays(subscription: Record<string, unknown>, status = 200): typeof fetch {
   return (async (url: string | URL | Request) => {
     if (String(url).includes('oauth2.googleapis.com')) {
       return new Response(JSON.stringify({ access_token: 'google-tok' }));
     }
-    return new Response(JSON.stringify(subscription));
+    return new Response(JSON.stringify(subscription), { status });
   }) as typeof fetch;
 }
 
@@ -98,6 +97,23 @@ describe('Play real-time notifications', () => {
     ]);
   });
 
+  it('also reads a notification from before Google dropped the product id from it', async () => {
+    const legacy = push({
+      packageName: 'me.keres.app',
+      eventTimeMillis: String(EVENT_TIME),
+      subscriptionNotification: {
+        version: '1.0',
+        notificationType: 2,
+        purchaseToken: 'token-abc',
+        subscriptionId: 'plus_monthly',
+      },
+    });
+
+    const events = await playNotificationEvents(live, legacy, googleSays(ACTIVE));
+
+    expect(events).toHaveLength(1);
+  });
+
   it('reports a recovery from a payment hold the same way', async () => {
     const events = await playNotificationEvents(live, subscriptionNotice(1), googleSays(ACTIVE));
     expect(events).toHaveLength(1);
@@ -109,7 +125,10 @@ describe('Play real-time notifications', () => {
   });
 
   it('fails, to be delivered again, when Google does not say what was charged', async () => {
-    const noPrice = { ...ACTIVE, lineItems: [{ productId: 'plus_monthly' }] };
+    const noPrice = {
+      ...ACTIVE,
+      lineItems: [{ productId: 'plus_monthly', latestSuccessfulOrderId: 'GPA.1234..1' }],
+    };
     await expect(
       playNotificationEvents(live, subscriptionNotice(2), googleSays(noPrice)),
     ).rejects.toThrow('what was charged');
@@ -117,7 +136,7 @@ describe('Play real-time notifications', () => {
 
   it("ends the subscription at the store's cancel, expiry or refund, once per delivery", async () => {
     const never = googleSays({});
-    for (const type of [3, 12, 13]) {
+    for (const type of [3, 13]) {
       const [event] = await playNotificationEvents(live, subscriptionNotice(type, 'msg-7'), never);
       expect(event).toMatchObject({
         type: 'subscription.canceled',
@@ -129,6 +148,45 @@ describe('Play real-time notifications', () => {
     const [cancel] = await playNotificationEvents(live, subscriptionNotice(3, 'msg-1'), never);
     const [expiry] = await playNotificationEvents(live, subscriptionNotice(13, 'msg-1'), never);
     expect(cancel.eventId).not.toBe(expiry.eventId);
+  });
+
+  it('takes a revocation as the money going back, ending the period it paid for, once per delivery', async () => {
+    const answer = googleSays({
+      subscriptionState: 'SUBSCRIPTION_STATE_EXPIRED',
+      lineItems: [
+        {
+          productId: 'plus_monthly',
+          latestSuccessfulOrderId: 'GPA.1234..1',
+          autoRenewingPlan: {
+            recurringPrice: { currencyCode: 'BRL', units: '25', nanos: 900_000_000 },
+          },
+        },
+      ],
+    });
+
+    const [event] = await playNotificationEvents(live, subscriptionNotice(12, 'msg-9'), answer);
+    const [again] = await playNotificationEvents(live, subscriptionNotice(12, 'msg-9'), answer);
+
+    expect(event).toMatchObject({
+      type: 'payment.refunded',
+      subscriptionReference: 'token-abc',
+      amountCents: 2590,
+      currency: 'BRL',
+      endsAccess: true,
+      refundedAt: new Date(EVENT_TIME).toISOString(),
+    });
+    expect(again.eventId).toBe(event.eventId);
+  });
+
+  it('still reports a revocation when Google no longer says the price: the amount is then not known', async () => {
+    const [event] = await playNotificationEvents(live, subscriptionNotice(12), googleSays({}, 404));
+
+    expect(event).toMatchObject({
+      type: 'payment.refunded',
+      amountCents: 0,
+      currency: 'XXX',
+      endsAccess: true,
+    });
   });
 
   it('ignores what it does not act on, and what it cannot read', async () => {

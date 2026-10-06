@@ -194,6 +194,7 @@ export function createPayPalProvider(): Provider {
     methodIds: ['paypal'],
     hasStatus: true,
     hasCancel: true,
+    hasReconcile: true,
 
     // PayPal subscription ids are `I-...`.
     ownsSubscription: (subscriptionReference) => subscriptionReference.startsWith('I-'),
@@ -294,6 +295,66 @@ export function createPayPalProvider(): Provider {
       );
     },
 
+    async listSubscriptionEvents(subscriptionReference, since, context) {
+      const cfg = paypalConfig(context.config);
+      if (!cfg) throw new Error('PayPal is not configured.');
+      const access = await tokens(context.fetchImpl)(cfg);
+      const reference = encodeURIComponent(subscriptionReference);
+      const sub = await paypalFetch(
+        cfg,
+        access,
+        `/v1/billing/subscriptions/${reference}`,
+        context.fetchImpl,
+      );
+      if (sub.status >= 300)
+        throw new Error(`PayPal could not read the subscription (${sub.status}).`);
+      const body = sub.body as { status?: string; custom_id?: string };
+      const txns = await paypalFetch(
+        cfg,
+        access,
+        `/v1/billing/subscriptions/${reference}/transactions?start_time=${encodeURIComponent(since.toISOString())}&end_time=${encodeURIComponent(new Date().toISOString())}`,
+        context.fetchImpl,
+      );
+      if (txns.status >= 300)
+        throw new Error(`PayPal could not list the payments (${txns.status}).`);
+      const events: PaymentEventWire[] = [];
+      for (const transaction of (
+        txns.body as {
+          transactions?: Array<{
+            id?: string;
+            status?: string;
+            amount_with_breakdown?: { gross_amount?: { value?: string; currency_code?: string } };
+            time?: string;
+          }>;
+        }
+      ).transactions ?? []) {
+        // Only a charge that went through: the id is the sale's, the same one its webhook carries.
+        if (!transaction.id || (transaction.status && transaction.status !== 'COMPLETED')) continue;
+        const gross = transaction.amount_with_breakdown?.gross_amount;
+        const currency = gross?.currency_code ?? 'USD';
+        events.push(
+          succeededEvent(
+            transaction.id,
+            { checkoutId: body.custom_id || undefined, subscriptionReference },
+            parseMoney(gross?.value, currency),
+            currency,
+            transaction.time ?? new Date().toISOString(),
+          ),
+        );
+      }
+      events.sort((a, b) =>
+        String('paidAt' in a ? a.paidAt : '').localeCompare(String('paidAt' in b ? b.paidAt : '')),
+      );
+      if (body.status === 'CANCELLED' || body.status === 'EXPIRED') {
+        events.push({
+          type: 'subscription.canceled',
+          eventId: `paypal-cancel-${subscriptionReference}`,
+          subscriptionReference,
+        });
+      }
+      return events;
+    },
+
     async cancelSubscription(subscriptionReference, context) {
       const cfg = paypalConfig(context.config);
       if (!cfg) throw new Error('PayPal is not configured.');
@@ -373,6 +434,45 @@ export function createPayPalProvider(): Provider {
               currency,
               str(resource.create_time) || new Date().toISOString(),
             ),
+          ];
+        }
+        // Money that went back. The refund (or the reversed sale) names the sale; the sale names the subscription
+        // it was charged to and what it cost, which is what tells a full refund from a partial one.
+        case 'PAYMENT.SALE.REFUNDED':
+        case 'PAYMENT.SALE.REVERSED': {
+          const reversed = event.event_type === 'PAYMENT.SALE.REVERSED';
+          const saleId = str(resource.sale_id) || (reversed ? str(resource.id) : '');
+          if (!saleId) return [];
+          const sale = await paypalFetch(
+            cfg,
+            access,
+            `/v1/payments/sale/${encodeURIComponent(saleId)}`,
+            context.fetchImpl,
+          );
+          if (sale.status >= 300) throw new Error('PayPal sale could not be read.');
+          const saleBody = sale.body as {
+            billing_agreement_id?: string;
+            amount?: { total?: string; currency?: string };
+            create_time?: string;
+          };
+          // A sale that is not a subscription's is not what Keres sold.
+          const subscription = str(saleBody.billing_agreement_id);
+          if (!subscription) return [];
+          const currency = saleBody.amount?.currency ?? 'USD';
+          const soldFor = parseMoney(saleBody.amount?.total, currency);
+          const refund = resource.amount as { total?: string } | undefined;
+          const refunded = reversed ? soldFor : parseMoney(refund?.total, currency);
+          return [
+            {
+              type: 'payment.refunded',
+              eventId: `paypal-refund-${str(resource.id) || saleId}`,
+              subscriptionReference: subscription,
+              refundedAt: str(resource.create_time) || new Date().toISOString(),
+              chargedAt: str(saleBody.create_time) || new Date().toISOString(),
+              amountCents: refunded,
+              currency,
+              endsAccess: reversed || refunded >= soldFor,
+            },
           ];
         }
         case 'BILLING.SUBSCRIPTION.CANCELLED':

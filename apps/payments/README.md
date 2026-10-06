@@ -37,10 +37,10 @@ Behind nginx, see `apps/payments/nginx.buy-keres-me.conf.example` (`buy.keres.me
 
 ## What it implements
 
-| Method id   | Provider                       | Recurring | Status | Cancel |
-| ----------- | ------------------------------ | --------- | ------ | ------ |
-| `paypal`    | PayPal Subscriptions           | yes       | yes    | yes    |
-| `googlepay` | Google Pay via Stripe Checkout | yes       | yes    | yes    |
+| Method id   | Provider                       | Recurring | Status | Cancel | Reconcile |
+| ----------- | ------------------------------ | --------- | ------ | ------ | --------- |
+| `paypal`    | PayPal Subscriptions           | yes       | yes    | yes    | yes       |
+| `googlepay` | Google Pay via Stripe Checkout | yes       | yes    | yes    | yes       |
 
 Mobile apps do not use either: the Play Store requires Google Play Billing for
 digital goods. The app buys with the Play SDK and sends the purchase token to
@@ -103,9 +103,22 @@ Each push is only a pointer: the service asks Google about the token before repo
 4. Play Billing: closed-testing track purchase (mock off by default), relay grants the plan;
    a token for another product with this product's id is refused; a grace-period subscription
    counts as paid, held/paused/cancelled/expired do not.
-5. Play notifications: send a test from Play Console, renew a test subscription with the app closed
+5. Play: set `PLAY_PACKAGE_NAME`; cancel a test subscription from the app and confirm it is cancelled in the Play
+   Store (still usable until its end, restorable there); a purchase by a license tester is refused unless
+   `PLAY_ACCEPT_TEST_PURCHASES=true` (turn it on for the closed-testing track only); a purchase naming another
+   package is refused; revoke a test purchase and confirm the plan ends (`payment.refunded`).
+5b. Play notifications: send a test from Play Console, renew a test subscription with the app closed
    and confirm `payment.succeeded` reaches Keres; cancel it in the Play Store and confirm
    `subscription.canceled`.
 6. A first PayPal and a first Stripe payment each grant **one** period (not two), and cancelling a
    PayPal and a Stripe subscription from the app ends each at its own provider.
-7. Key rotation: set `*_PREVIOUS`, switch the primary, remove the previous.
+7. Refunds: refund a PayPal and a Stripe sandbox payment in full and confirm the subscription ends and the
+   refund shows on the ledger; refund part of one and confirm the period stands.
+7b. Safety net: stop the service, pay a PayPal and a Stripe sandbox subscription renewal (or move a subscription's
+   paid date back in the admin database), start it again and confirm Keres finds the missed payment on its own
+   within 15 minutes (`/v1/subscriptions/:reference/events`); confirm PayPal accepts the window of dates it is asked.
+   Also compare, for one sandbox renewal, the `id` of `GET /v1/billing/subscriptions/{id}/transactions` with the
+   `resource.id` of its `PAYMENT.SALE.COMPLETED` webhook: PayPal does not document that they are the same, and the
+   service relies on it so that a payment announced by both counts once.
+8. Starting with PayPal on and no `PAYPAL_WEBHOOK_ID` warns in the log (sandbox) or refuses to boot (live).
+9. Key rotation: set `*_PREVIOUS`, switch the primary, remove the previous.

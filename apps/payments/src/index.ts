@@ -1,4 +1,4 @@
-import { assertPlayReady, loadConfig } from './config';
+import { assertPlayReady, configProblems, loadConfig } from './config';
 import { createApp, createState } from './routes';
 
 /** Production entrypoint: reads the environment, then opens the HTTP port. */
@@ -8,6 +8,15 @@ try {
   assertPlayReady(config);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
+
+// Half a pair of variables turns a provider off or half on without failing: say so now, and refuse to sell what
+// cannot work (a live PayPal that would never hear a renewal).
+const problems = configProblems(config);
+for (const warning of problems.warnings) console.warn(`WARNING: ${warning}`);
+if (problems.fatal.length > 0) {
+  for (const message of problems.fatal) console.error(`ERROR: ${message}`);
   process.exit(1);
 }
 

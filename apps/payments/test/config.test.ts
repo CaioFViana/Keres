@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertPlayReady, loadConfig } from '../src/config';
+import { assertPlayReady, configProblems, loadConfig } from '../src/config';
 
 const BASE = {
   KERES_CONNECTOR_SECRET: 'connector-secret-0123456789abcdef',
@@ -32,6 +32,8 @@ describe('payments config', () => {
       endpointSecret: 'play-secret-0123456789abcdef-0000',
       mock: false,
       notificationSecret: null,
+      packageName: null,
+      acceptTestPurchases: false,
     });
   });
 
@@ -94,5 +96,92 @@ describe('payments config', () => {
     expect(() =>
       loadConfig({ ...BASE, ALLOW_INSECURE_HTTP: 'true', KERES_BASE_URL: 'http://example.com' }),
     ).not.toThrow();
+  });
+});
+
+describe('configuration that loads but is half set', () => {
+  const problems = (extra: Record<string, string> = {}) => {
+    const env = { ...BASE, ...extra } as NodeJS.ProcessEnv;
+    return configProblems(loadConfig(env), env);
+  };
+
+  it('has nothing to say about a configuration with nothing half set', () => {
+    expect(problems()).toEqual({ fatal: [], warnings: [] });
+    expect(
+      problems({
+        PAYPAL_CLIENT_ID: 'id',
+        PAYPAL_SECRET: 'secret',
+        PAYPAL_WEBHOOK_ID: 'WH-1',
+        PAYPAL_SANDBOX: 'false',
+        STRIPE_SECRET_KEY: 'sk',
+        STRIPE_WEBHOOK_SECRET: 'whsec',
+      }),
+    ).toEqual({ fatal: [], warnings: [] });
+  });
+
+  it('warns when PayPal is on a sandbox without its webhook: renewals would never be heard', () => {
+    const found = problems({ PAYPAL_CLIENT_ID: 'id', PAYPAL_SECRET: 'secret' });
+
+    expect(found.fatal).toEqual([]);
+    expect(found.warnings.join(' ')).toContain('PAYPAL_WEBHOOK_ID');
+  });
+
+  it('refuses to start a LIVE PayPal without its webhook', () => {
+    const found = problems({
+      PAYPAL_CLIENT_ID: 'id',
+      PAYPAL_SECRET: 'secret',
+      PAYPAL_SANDBOX: 'false',
+    });
+
+    expect(found.fatal.join(' ')).toContain('PAYPAL_WEBHOOK_ID');
+  });
+
+  it('says a provider is off when only half of its pair is set', () => {
+    expect(problems({ PAYPAL_CLIENT_ID: 'id' }).warnings.join(' ')).toContain('PayPal is OFF');
+    expect(problems({ STRIPE_SECRET_KEY: 'sk' }).warnings.join(' ')).toContain(
+      'Google Pay (Stripe) is OFF',
+    );
+    expect(problems({ STRIPE_WEBHOOK_SECRET: 'whsec' }).warnings.join(' ')).toContain(
+      'Google Pay (Stripe) is OFF',
+    );
+  });
+
+  it('warns when live Play has no notification secret, but not in mock mode', () => {
+    const play = { PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000' };
+
+    expect(problems(play).warnings.join(' ')).toContain('PLAY_NOTIFICATION_SECRET');
+    expect(problems({ ...play, PLAY_MOCK: 'true' }).warnings).toEqual([]);
+    expect(
+      problems({
+        ...play,
+        PLAY_NOTIFICATION_SECRET: 'push-secret-0123456789abcdef-0000',
+        PLAY_PACKAGE_NAME: 'me.keres.app',
+      }).warnings,
+    ).toEqual([]);
+  });
+
+  it('warns when live Play has no package name (cancelling from here is off), and when test purchases count', () => {
+    const play = {
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
+      PLAY_NOTIFICATION_SECRET: 'push-secret-0123456789abcdef-0000',
+    };
+
+    expect(problems(play).warnings.join(' ')).toContain('PLAY_PACKAGE_NAME');
+    expect(
+      problems({
+        ...play,
+        PLAY_PACKAGE_NAME: 'me.keres.app',
+        PLAY_ACCEPT_TEST_PURCHASES: 'true',
+      }).warnings.join(' '),
+    ).toContain('PLAY_ACCEPT_TEST_PURCHASES');
+  });
+
+  it('warns about a public address in plain http away from this machine', () => {
+    const found = problems({
+      ALLOW_INSECURE_HTTP: 'true',
+      PUBLIC_BASE_URL: 'http://pay.example.com',
+    });
+
+    expect(found.warnings.join(' ')).toContain('PUBLIC_BASE_URL');
   });
 });

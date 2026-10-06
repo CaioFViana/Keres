@@ -48,6 +48,8 @@ export interface Provider {
   readonly methodIds: readonly string[];
   readonly hasStatus: boolean;
   readonly hasCancel: boolean;
+  /** Whether `listSubscriptionEvents` is implemented (capability `reconcile`). */
+  readonly hasReconcile?: boolean;
   methods(currency: string): PaymentMethodOptionInput[];
   createCheckout(
     request: CheckoutRequestWire,
@@ -59,6 +61,16 @@ export interface Provider {
     context: ProviderContext,
   ): Promise<PaymentEventWire | null>;
   cancelSubscription?(subscriptionReference: string, context: ProviderContext): Promise<void>;
+  /**
+   * What the provider has charged a subscription since `since`, as the events its webhooks would carry - with the
+   * same event ids, so what already arrived counts once - plus its end if it ended. Oldest first. This is how a
+   * notice that never came is found: nothing is read from memory, only from the provider.
+   */
+  listSubscriptionEvents?(
+    subscriptionReference: string,
+    since: Date,
+    context: ProviderContext,
+  ): Promise<PaymentEventWire[]>;
   /**
    * Whether a subscription reference is one of this provider's. A cancel arrives with the reference
    * alone, so with more than one provider it is the only way to send it to the one that holds it.

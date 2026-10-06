@@ -33,6 +33,17 @@ export interface PaymentsConfig {
     mock: boolean;
     /** Guards the Pub/Sub push of Google's real-time notifications; absent: renewals are not heard. */
     notificationSecret: string | null;
+    /**
+     * The one app this service sells for. Set, it is the only package a purchase may name and the one
+     * cancellations are sent for (a cancel names only the token, and Google needs the package). Absent:
+     * any package the app says, and no cancellation from here.
+     */
+    packageName: string | null;
+    /**
+     * Whether a purchase made by a license tester (the closed-testing track) counts as paid. Off by default:
+     * for homologation it has to be on, and then those purchases grant plans for nothing.
+     */
+    acceptTestPurchases: boolean;
   } | null;
 }
 
@@ -112,6 +123,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): PaymentsConfig
           notificationSecret: get('PLAY_NOTIFICATION_SECRET')
             ? sec('PLAY_NOTIFICATION_SECRET')
             : null,
+          packageName: get('PLAY_PACKAGE_NAME') || null,
+          acceptTestPurchases: get('PLAY_ACCEPT_TEST_PURCHASES') === 'true',
         }
       : null,
   };
@@ -130,4 +143,74 @@ export function assertPlayReady(
       'PLAY_SERVICE_ACCOUNT_JSON is required for live Play verification (or set PLAY_MOCK=true for homologation).',
     );
   }
+}
+
+export interface ConfigProblems {
+  /** Starting would sell something that cannot work: the service refuses to boot. */
+  fatal: string[];
+  /** Starting works, but part of what the operator meant to switch on is silently off or half-working. */
+  warnings: string[];
+}
+
+/**
+ * What is wrong with a configuration that still loads. The variables that matter come in pairs (a client id and
+ * its secret, a provider and the webhook that tells us about its renewals), and half a pair does not fail - it
+ * just turns something off without a word: a PayPal without its webhook id takes first payments through the
+ * return page and never hears a renewal, so every subscriber would lapse a month later. Said at the start, where
+ * the operator is looking, instead of discovered from the first lapsed customer.
+ */
+export function configProblems(
+  config: PaymentsConfig,
+  env: NodeJS.ProcessEnv = process.env,
+): ConfigProblems {
+  const fatal: string[] = [];
+  const warnings: string[] = [];
+  const set = (name: string) => Boolean(env[name]);
+
+  if (set('PAYPAL_CLIENT_ID') !== set('PAYPAL_SECRET')) {
+    warnings.push(
+      'PayPal is OFF: PAYPAL_CLIENT_ID and PAYPAL_SECRET are both needed, and only one is set.',
+    );
+  }
+  if (set('STRIPE_SECRET_KEY') !== set('STRIPE_WEBHOOK_SECRET')) {
+    warnings.push(
+      'Google Pay (Stripe) is OFF: STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are both needed, and only one is set.',
+    );
+  }
+  if (config.paypal && !config.paypal.webhookId) {
+    const message =
+      'PAYPAL_WEBHOOK_ID is empty: every PayPal webhook would be refused, so renewals and cancellations never reach Keres' +
+      ' (first payments still arrive through the return page).';
+    if (config.paypal.sandbox)
+      warnings.push(`${message} Fine for a quick sandbox try, not for anything real.`);
+    else
+      fatal.push(`${message} Set it (the id of the webhook PayPal sends to /v1/paypal/webhook).`);
+  }
+  if (config.play && !config.play.mock && !config.play.notificationSecret) {
+    warnings.push(
+      'PLAY_NOTIFICATION_SECRET is empty: renewals and cancellations made in the Play Store are not heard ' +
+        '(a subscription would lapse on Keres a month after its first purchase unless the app is opened).',
+    );
+  }
+  if (config.play && !config.play.mock && !config.play.packageName) {
+    warnings.push(
+      'PLAY_PACKAGE_NAME is empty: any package name the app sends is accepted, and a store subscription cannot be ' +
+        'cancelled from here (the person has to do it in the Play Store).',
+    );
+  }
+  if (config.play?.acceptTestPurchases && !config.play.mock) {
+    warnings.push(
+      'PLAY_ACCEPT_TEST_PURCHASES is on: a purchase by a license tester counts as paid and grants a plan for nothing. ' +
+        'Only for homologation.',
+    );
+  }
+  if (
+    config.publicBaseUrl.startsWith('http://') &&
+    !/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(config.publicBaseUrl)
+  ) {
+    warnings.push(
+      'PUBLIC_BASE_URL is plain http outside this machine: providers will refuse to send webhooks there.',
+    );
+  }
+  return { fatal, warnings };
 }

@@ -64,17 +64,13 @@ describe('Play Billing verification', () => {
   });
 
   it('accepts a live subscription only for the product being bought', async () => {
-    const live = (lineItems: { productId?: string }[]) =>
+    const live = (lineItems: { productId?: string; latestSuccessfulOrderId?: string }[]) =>
       (async (url: string | URL | Request) => {
         if (String(url).includes('oauth2.googleapis.com')) {
           return new Response(JSON.stringify({ access_token: 'google-tok' }));
         }
         return new Response(
-          JSON.stringify({
-            subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
-            currentOrderId: 'GPA.1234',
-            lineItems,
-          }),
+          JSON.stringify({ subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE', lineItems }),
         );
       }) as typeof fetch;
     const request = {
@@ -90,7 +86,7 @@ describe('Play Billing verification', () => {
     const good = await verifyPlayPurchase(
       { serviceAccountJson: serviceAccount, mock: false },
       request,
-      live([{ productId: 'plus_monthly' }]),
+      live([{ productId: 'plus_monthly', latestSuccessfulOrderId: 'GPA.1234' }]),
     );
     expect(good).toEqual({ orderId: 'GPA.1234', active: true });
 
@@ -98,7 +94,7 @@ describe('Play Billing verification', () => {
     const wrong = await verifyPlayPurchase(
       { serviceAccountJson: serviceAccount, mock: false },
       request,
-      live([{ productId: 'basic_monthly' }]),
+      live([{ productId: 'basic_monthly', latestSuccessfulOrderId: 'GPA.9999' }]),
     );
     expect(wrong.active).toBe(false);
   });
@@ -112,8 +108,7 @@ describe('Play Billing verification', () => {
         return new Response(
           JSON.stringify({
             subscriptionState,
-            currentOrderId: 'GPA.1234',
-            lineItems: [{ productId: 'plus_monthly' }],
+            lineItems: [{ productId: 'plus_monthly', latestSuccessfulOrderId: 'GPA.1234' }],
           }),
         );
       }) as typeof fetch;
@@ -145,6 +140,85 @@ describe('Play Billing verification', () => {
       const dead = await verifyPlayPurchase(config, request, live(state));
       expect(dead.active).toBe(false);
     }
+  });
+
+  it('asks the endpoint the API documents for subscriptions, with the token after `/tokens/`', async () => {
+    const calls: string[] = [];
+    const fetchImpl = (async (url: string | URL | Request) => {
+      calls.push(String(url));
+      if (String(url).includes('oauth2.googleapis.com')) {
+        return new Response(JSON.stringify({ access_token: 'google-tok' }));
+      }
+      return new Response(JSON.stringify({}), { status: 404 });
+    }) as typeof fetch;
+
+    await verifyPlayPurchase(
+      { serviceAccountJson: serviceAccount, mock: false },
+      {
+        packageName: 'me.keres.app',
+        productId: 'plus_monthly',
+        purchaseToken: 'token/abc',
+        purchaseKind: 'subscription',
+      },
+      fetchImpl,
+    );
+
+    expect(calls.at(-1)).toBe(
+      'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/me.keres.app/purchases/subscriptionsv2/tokens/token%2Fabc',
+    );
+  });
+
+  it('names the payment by the order of the line item, so every renewal is a different payment', async () => {
+    const answer = (order: string) =>
+      (async (url: string | URL | Request) =>
+        String(url).includes('oauth2.googleapis.com')
+          ? new Response(JSON.stringify({ access_token: 'google-tok' }))
+          : new Response(
+              JSON.stringify({
+                subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
+                lineItems: [{ productId: 'plus_monthly', latestSuccessfulOrderId: order }],
+              }),
+            )) as typeof fetch;
+    const lookup = {
+      packageName: 'me.keres.app',
+      productId: 'plus_monthly',
+      purchaseToken: 'token-abc',
+      purchaseKind: 'subscription' as const,
+    };
+    const config = { serviceAccountJson: serviceAccount, mock: false };
+
+    const first = await verifyPlayPurchase(config, lookup, answer('GPA.1111-2222-3333-44444'));
+    const renewed = await verifyPlayPurchase(config, lookup, answer('GPA.1111-2222-3333-44444..0'));
+
+    expect(first.orderId).toBe('GPA.1111-2222-3333-44444');
+    expect(renewed.orderId).toBe('GPA.1111-2222-3333-44444..0');
+    // Never the token: that would make a renewal the same payment as the purchase.
+    expect(renewed.orderId).not.toBe('token-abc');
+  });
+
+  it('does not call a subscription paid before its first order exists (a pending purchase)', async () => {
+    const pending = (async (url: string | URL | Request) =>
+      String(url).includes('oauth2.googleapis.com')
+        ? new Response(JSON.stringify({ access_token: 'google-tok' }))
+        : new Response(
+            JSON.stringify({
+              subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
+              lineItems: [{ productId: 'plus_monthly' }],
+            }),
+          )) as typeof fetch;
+
+    const verification = await verifyPlayPurchase(
+      { serviceAccountJson: serviceAccount, mock: false },
+      {
+        packageName: 'me.keres.app',
+        productId: 'plus_monthly',
+        purchaseToken: 'token-abc',
+        purchaseKind: 'subscription',
+      },
+      pending,
+    );
+
+    expect(verification).toEqual({ orderId: '', active: false });
   });
 
   it('treats cancelled or unknown purchases as inactive', async () => {
@@ -211,6 +285,8 @@ describe('Play Billing store method', () => {
     endpointSecret: 'play-secret-0123456789abcdef-0000',
     mock: true,
     notificationSecret: null,
+    packageName: null,
+    acceptTestPurchases: false,
   };
 
   it('lists the native Play method while Play verification is configured', () => {

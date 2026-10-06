@@ -125,6 +125,20 @@ describe('Stripe: the first payment is one event', () => {
     ]);
   });
 
+  it('treats a subscription Stripe already has as canceled as cancelled: no second cancel, no failure', async () => {
+    const calls: string[] = [];
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      calls.push(`${init?.method ?? 'GET'} ${String(input)}`);
+      return json({ id: 'sub_1', status: 'canceled' });
+    }) as typeof fetch;
+
+    await expect(
+      createStripeProvider().cancelSubscription?.('sub_1', context(fetchImpl)),
+    ).resolves.toBeUndefined();
+
+    expect(calls.some((call) => call.startsWith('DELETE'))).toBe(false);
+  });
+
   it('owns only its own subscriptions, and says so when Stripe refuses a cancel', async () => {
     const provider = createStripeProvider();
     expect(provider.ownsSubscription?.('sub_1')).toBe(true);

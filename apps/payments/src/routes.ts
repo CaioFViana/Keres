@@ -1,4 +1,5 @@
 import {
+  SubscriptionEventsResponseSchema,
   CheckoutRequestWireSchema,
   CheckoutResultWireSchema,
   CheckoutStatusResponseSchema,
@@ -9,6 +10,9 @@ import {
 import type { PaymentsConfig } from './config';
 import { pushEventsToKeres } from './keres';
 import {
+  cancelPlaySubscription,
+  PlayCancelUnsupported,
+  type PlayConfig,
   playBillingMethods,
   playNotificationEvents,
   playSucceededEvent,
@@ -16,7 +20,7 @@ import {
 } from './playbilling';
 import { NonceCache, safeEqual, signResponseHeaders, verifyRequest } from './protocol/signing';
 import { activeProviders, connectorCapabilities, providerFor } from './providers';
-import { mockDecide, mockPage, MOCK_METHOD_ID } from './providers/mock';
+import { mockDecide, mockPage, mockRenew, MOCK_METHOD_ID } from './providers/mock';
 import { CheckoutStore, type Provider } from './providers/types';
 import { storefrontPage, storeResultPage } from './storefront';
 import type { PaymentEventWire } from './wire';
@@ -231,6 +235,16 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
       }
 
       // Mock approval page (development only; the provider is absent unless mock-enabled).
+      // Development only, like the page above: the fake bank charges a renewal and does not tell Keres.
+      if (request.method === 'POST' && url.pathname === '/v1/mock/renew') {
+        if (!providerFor(state.providers, MOCK_METHOD_ID)) {
+          return new Response('Not enabled.', { status: 404 });
+        }
+        const reference = url.searchParams.get('reference') ?? '';
+        if (!reference.startsWith('mock-'))
+          return new Response('Invalid reference.', { status: 400 });
+        return Response.json({ eventId: mockRenew(reference) });
+      }
       if (url.pathname === '/v1/mock/pay') {
         return mockPay(state, request, url);
       }
@@ -248,7 +262,7 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
             apiVersion: 1 as const,
             id: config.connectorId,
             displayName: config.connectorDisplayName,
-            capabilities: connectorCapabilities(state.providers),
+            capabilities: connectorCapabilities(state.providers, state.config),
           };
           const checked = ConnectorInfoSchema.safeParse(info);
           if (!checked.success) return failure(state, nonce, 500, 'Invalid connector info.');
@@ -311,6 +325,24 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
           return signedJson(state, nonce, 200, { event: null });
         }
 
+        // What the provider charged a subscription since a date: the safety net for a notice that never came.
+        const eventsMatch = /^\/v1\/subscriptions\/([^/]+)\/events$/.exec(url.pathname);
+        if (request.method === 'GET' && eventsMatch) {
+          const reference = decodeURIComponent(eventsMatch[1]);
+          const since = new Date(url.searchParams.get('since') ?? '');
+          if (Number.isNaN(since.getTime())) return failure(state, nonce, 400, 'Invalid since.');
+          // The reference says whose it is; one nobody here owns (a store token) has nothing to list.
+          const provider = state.providers.find(
+            (candidate) => candidate.hasReconcile && candidate.ownsSubscription?.(reference),
+          );
+          const events = provider?.listSubscriptionEvents
+            ? await provider.listSubscriptionEvents(reference, since, contextOf(state))
+            : [];
+          const checked = SubscriptionEventsResponseSchema.safeParse({ events });
+          if (!checked.success) return failure(state, nonce, 502, 'Invalid provider answer.');
+          return signedJson(state, nonce, 200, checked.data);
+        }
+
         const cancelMatch = /^\/v1\/subscriptions\/([^/]+)\/cancel$/.exec(url.pathname);
         if (request.method === 'POST' && cancelMatch) {
           const reference = decodeURIComponent(cancelMatch[1]);
@@ -319,16 +351,23 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
           const provider = state.providers.find(
             (candidate) => candidate.hasCancel && candidate.ownsSubscription?.(reference),
           );
-          if (!provider?.cancelSubscription) {
-            return failure(
-              state,
-              nonce,
-              400,
-              'Cancellation is not supported for this subscription.',
-            );
+          if (provider?.cancelSubscription) {
+            await provider.cancelSubscription(reference, contextOf(state));
+            return signedJson(state, nonce, 200, {});
           }
-          await provider.cancelSubscription(reference, contextOf(state));
-          return signedJson(state, nonce, 200, {});
+          // A reference no provider here owns is a store purchase token, when the store is set up.
+          if (state.config.play) {
+            try {
+              await cancelPlaySubscription(playConfig(state), reference, state.fetchImpl);
+              return signedJson(state, nonce, 200, {});
+            } catch (error) {
+              if (error instanceof PlayCancelUnsupported) {
+                return failure(state, nonce, 400, error.message);
+              }
+              throw error;
+            }
+          }
+          return failure(state, nonce, 400, 'Cancellation is not supported for this subscription.');
         }
 
         if (request.method === 'POST' && url.pathname === '/v1/subscriptions/due') {
@@ -346,6 +385,17 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
         );
       }
     },
+  };
+}
+
+/** What the Play code needs of the configuration: the key to Google, and the rules about whose purchase counts. */
+function playConfig(state: ServiceState): PlayConfig {
+  const play = state.config.play;
+  return {
+    serviceAccountJson: process.env.PLAY_SERVICE_ACCOUNT_JSON ?? '',
+    mock: play?.mock ?? false,
+    packageName: play?.packageName ?? null,
+    acceptTestPurchases: play?.acceptTestPurchases ?? false,
   };
 }
 
@@ -438,13 +488,8 @@ async function playVerify(state: ServiceState, request: Request): Promise<Respon
   }
   const parsed = PlayVerifyRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ message: 'Invalid request.' }, { status: 400 });
-  const serviceAccount = process.env.PLAY_SERVICE_ACCOUNT_JSON ?? '';
   try {
-    const verification = await verifyPlayPurchase(
-      { serviceAccountJson: serviceAccount, mock: play.mock },
-      parsed.data,
-      state.fetchImpl,
-    );
+    const verification = await verifyPlayPurchase(playConfig(state), parsed.data, state.fetchImpl);
     if (!verification.active) return Response.json({ ok: true, active: false });
     const event = playSucceededEvent(parsed.data, verification.orderId);
     await state.report([event]);
@@ -477,11 +522,7 @@ async function playNotification(
   }
   const body = await request.json().catch(() => null);
   try {
-    const events = await playNotificationEvents(
-      { serviceAccountJson: process.env.PLAY_SERVICE_ACCOUNT_JSON ?? '', mock: play.mock },
-      body,
-      state.fetchImpl,
-    );
+    const events = await playNotificationEvents(playConfig(state), body, state.fetchImpl);
     if (events.length > 0) await state.report(events);
     return Response.json({ ok: true });
   } catch (error) {

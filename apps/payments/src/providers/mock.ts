@@ -1,5 +1,5 @@
 import { STORE_CSS } from '../storefront';
-import type { CheckoutRequestWire, PaymentMethodOption } from '../wire';
+import type { CheckoutRequestWire, PaymentEventWire, PaymentMethodOption } from '../wire';
 import type { Provider, ProviderContext } from './types';
 
 /**
@@ -28,6 +28,20 @@ export function mockEnabled(publicBaseUrl: string): boolean {
 
 export function mockOutcome(checkoutId: string): 'confirmed' | 'rejected' | undefined {
   return outcomes.get(checkoutId);
+}
+
+/** Renewals the fake bank charged without telling Keres, per subscription reference (development only). */
+const renewals = new Map<string, string[]>();
+
+/**
+ * The fake bank charges a subscription again and says nothing: the notice that never comes, so the
+ * safety net can be tried end to end. Returns the id the charge is known by.
+ */
+export function mockRenew(subscriptionReference: string): string {
+  const list = renewals.get(subscriptionReference) ?? [];
+  const eventId = `${subscriptionReference}-renewal-${list.length + 1}`;
+  renewals.set(subscriptionReference, [...list, eventId]);
+  return eventId;
 }
 
 export function mockDecide(checkoutId: string, verdict: 'confirmed' | 'rejected'): void {
@@ -90,6 +104,7 @@ export function createMockProvider(): Provider {
     methodIds: [MOCK_METHOD_ID],
     hasStatus: true,
     hasCancel: true,
+    hasReconcile: true,
 
     methods(currency: string): PaymentMethodOption[] {
       if (!/^[A-Z]{3}$/.test(currency)) return [];
@@ -145,6 +160,37 @@ export function createMockProvider(): Provider {
 
     ownsSubscription: (subscriptionReference) => subscriptionReference.startsWith('mock-'),
     ownsCheckoutReference: (providerReference) => providerReference.startsWith('mock-'),
+
+    async listSubscriptionEvents(subscriptionReference, _since, context) {
+      const events: PaymentEventWire[] = [];
+      for (const [checkoutId, record] of context.store.entries()) {
+        if (record.subscriptionReference !== subscriptionReference) continue;
+        if (outcomes.get(checkoutId) !== 'confirmed') continue;
+        events.push({
+          type: 'payment.succeeded',
+          eventId: `mock-${checkoutId}-paid`,
+          checkoutId,
+          subscriptionReference,
+          paidAt: new Date().toISOString(),
+          amountCents: record.amountCents ?? 0,
+          currency: record.currency ?? 'USD',
+        });
+      }
+      const [known] = [...context.store.entries()].filter(
+        ([, record]) => record.subscriptionReference === subscriptionReference,
+      );
+      for (const eventId of renewals.get(subscriptionReference) ?? []) {
+        events.push({
+          type: 'payment.succeeded',
+          eventId,
+          subscriptionReference,
+          paidAt: new Date().toISOString(),
+          amountCents: known?.[1].amountCents ?? 0,
+          currency: known?.[1].currency ?? 'USD',
+        });
+      }
+      return events;
+    },
 
     async cancelSubscription(_subscriptionReference, _context) {
       // Nothing to stop: there was never a real charge.

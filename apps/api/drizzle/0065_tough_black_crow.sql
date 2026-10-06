@@ -1,0 +1,1 @@
+ALTER TABLE "locations" ADD COLUMN "int_ext" text;

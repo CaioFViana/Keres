@@ -456,6 +456,13 @@
       "when": 1791312800153,
       "tag": "0064_oval_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1791313809996,
+      "tag": "0065_tough_black_crow",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,8 @@ export const locations = table('locations', {
   climate: text('climate'),
   culture: text('culture'),
   politics: text('politics'),
+  /** 'interior' | 'exterior' | 'both'; null when it does not apply (see `LOCATION_INT_EXT`). */
+  intExt: text('int_ext'),
   isFavorite: boolean('is_favorite').notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: timestampNow('created_at'),

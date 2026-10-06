@@ -1,16 +1,13 @@
-import { encodeSketchDocument, sketchContentHash, type SketchDocument } from '@keres/shared';
+import type { SketchDocument } from '@keres/shared';
 import { type MutableRefObject, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppDrizzleClient } from '../db';
 import type { SketchSelect } from '../db/schema';
-import { mediaFileService } from '../services/MediaFileService';
-import { createGalleryService } from '../services/storymanagement/GalleryService';
-import { createSketchService } from '../services/storymanagement/SketchService';
+import { saveSketchSnapshot } from '../services/storymanagement/SketchSnapshotService';
 import { useNotificationStore } from '../state/notificationStore';
 import { useTheme } from '../theme';
 import { renderSketchSvg } from '../utils/sketchSvg';
 import { buildSketchFileName, deliverMapExport, deliverSvgMap } from '../utils/storyTransfer';
-import { fitRasterSize, rasterizeMapSvg } from '../utils/svgRaster';
 
 interface UseSketchExportOptions {
   docRef: MutableRefObject<SketchDocument>;
@@ -118,29 +115,10 @@ export function useSketchExport({
     if (!sketch || !storyId || !userId) return;
     await run(
       async () => {
-        const page = docRef.current.page;
-        const pixels = fitRasterSize(page.width, page.height);
-        const bytes = await rasterizeMapSvg(buildSvg(), pixels.width, pixels.height);
-        const snapshot = await mediaFileService.saveSnapshot(storyId, 'image/png', bytes);
-        const galleryService = createGalleryService(db);
-        const existing = await galleryService.getByHash(storyId, snapshot.hash);
-        const row =
-          existing ??
-          (await galleryService.createGallery(userId, {
-            storyId,
-            mediaType: 'image',
-            mimeType: 'image/png',
-            fileName: buildSketchFileName(sketch.name, 'png'),
-            hash: snapshot.hash,
-            sizeBytes: snapshot.sizeBytes,
-            localPath: snapshot.localPath,
-            title: sketch.name,
-          }));
         setSketch(
-          await createSketchService(db).updateSketch(userId, sketch.id, {
-            coverGalleryId: row.id,
-            // Which drawing this snapshot is of, so a manuscript can tell when it has gone stale.
-            coverSourceHash: sketchContentHash(encodeSketchDocument(docRef.current)),
+          await saveSketchSnapshot(db, userId, sketch, docRef.current, {
+            colors: exportColors,
+            paper: colors.surface,
           }),
         );
         showNotification(t('sketch_gallery_saved'), 'success');
@@ -148,7 +126,19 @@ export function useSketchExport({
       'sketch_gallery_save_failed',
       'save sketch to gallery',
     );
-  }, [buildSvg, db, docRef, run, setSketch, showNotification, sketch, storyId, t, userId]);
+  }, [
+    colors.surface,
+    db,
+    docRef,
+    exportColors,
+    run,
+    setSketch,
+    showNotification,
+    sketch,
+    storyId,
+    t,
+    userId,
+  ]);
 
   return { busy, handleExportSvg, handleExportPng, handleSaveToGallery };
 }

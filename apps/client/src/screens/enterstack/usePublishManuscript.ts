@@ -1,4 +1,10 @@
-import { type ArcMedium, isLooseScene, type ReaderLabels } from '@keres/shared';
+import {
+  type ArcMedium,
+  isLooseScene,
+  type PageFormat,
+  pageFormatFor,
+  type ReaderLabels,
+} from '@keres/shared';
 import { useCallback, useState } from 'react';
 import {
   defaultExportSettings,
@@ -23,6 +29,7 @@ export type PublishableArc = {
   title: string;
   author: string | null;
   medium: ArcMedium;
+  pageFormat?: PageFormat | null;
 };
 
 /** The words of the reader's own interface, in the publisher's language. */
@@ -96,6 +103,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
               title: arc.title,
               author: arc.author,
               medium: arc.medium,
+              pageFormat: arc.pageFormat,
             })),
           );
           if (story.type !== 'branching') {
@@ -147,6 +155,17 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
       const branching = story.type === 'branching';
       // What the file can honor follows the format it is made in (the reader is a web page).
       const forFormat = { ...settings, format };
+      // The work in effect frames its pages: the one released, or the only one there is.
+      const arcInEffect = settings.arcId
+        ? manuscriptArcs.find((row) => row.id === settings.arcId)
+        : manuscriptArcs.length === 1
+          ? manuscriptArcs[0]
+          : undefined;
+      const framesPages =
+        arcInEffect &&
+        (arcInEffect.medium === 'comic' ||
+          arcInEffect.medium === 'storyboard' ||
+          arcInEffect.pageFormat);
       return {
         format,
         includeLooseScenes: !branching && settings.includeLooseScenes,
@@ -161,6 +180,13 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
           },
           new Date(),
         ),
+        ...(framesPages && arcInEffect
+          ? {
+              pageNoun:
+                arcInEffect.medium === 'storyboard' ? ('frame' as const) : ('page' as const),
+              pageFormat: pageFormatFor(arcInEffect.medium, arcInEffect.pageFormat),
+            }
+          : {}),
         ...(branching ? { sceneOrder: settings.sceneOrder } : {}),
         ...(settings.arcId ? { arcId: settings.arcId } : {}),
         ...(isScreenplayFormat(format) ? { screenplay: { ...settings.screenplay } } : {}),
@@ -181,7 +207,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
         language,
       };
     },
-    [settings],
+    [settings, manuscriptArcs],
   );
 
   // Render options, never bytes: the server compiles from its own copy in the

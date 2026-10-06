@@ -14,6 +14,8 @@ import { db } from '../db';
 import { users } from '../db/schema';
 import { AppError } from '../utils/errors';
 import { compileInputOf } from './publicationCompileInput';
+import { withScenePages, type ReadMediaBytes } from './publicationPages';
+import { mediaStorageService } from './MediaStorageService';
 import { publicationPdfFontMatrices } from './publicationPdfFonts';
 
 /**
@@ -95,15 +97,34 @@ export async function ownerHandleOf(userId: string): Promise<string | null> {
   return owner?.tag ? `@${owner.tag}` : null;
 }
 
+/** The bytes stored behind a Gallery hash, or `null` when the server does not hold them. */
+export const readStoredMedia: ReadMediaBytes = async (hash) => {
+  const stored = await mediaStorageService.read(hash);
+  if (!stored) return null;
+  const body = stored.body;
+  // A Blob or a Bun file reads itself; anything else is a stream.
+  const buffer =
+    'arrayBuffer' in body && typeof body.arrayBuffer === 'function'
+      ? await body.arrayBuffer()
+      : await new Response(body as ReadableStream<Uint8Array>).arrayBuffer();
+  return new Uint8Array(buffer);
+};
+
 /** Compiles the manuscript from the already-fetched export. Oversized output is the caller's fault. */
 export async function compileManuscript(
   storyExport: FullStoryExportType,
   options: ManuscriptOptions,
   ownerHandle: string | null,
+  readMedia: ReadMediaBytes = readStoredMedia,
 ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
   try {
     const compiled = await compileStoryManuscript(
-      compileInputOf(storyExport),
+      await withScenePages(
+        compileInputOf(storyExport),
+        storyExport,
+        { format: options.format, arcId: options.arcId },
+        readMedia,
+      ),
       // The book's author defaults to the work's, then the story's, as on the device.
       {
         ...options,
@@ -127,13 +148,20 @@ export async function compileManuscript(
 }
 
 /** Compiles the online reader page from the same export, with the same guarantees. */
-export function compileReader(
+export async function compileReader(
   storyExport: FullStoryExportType,
   options: ReaderOptionsInput,
   ownerHandle: string | null,
-): { bytes: Uint8Array } {
+  readMedia: ReadMediaBytes = readStoredMedia,
+): Promise<{ bytes: Uint8Array }> {
   try {
-    return compileStoryReader(compileInputOf(storyExport), {
+    const input = await withScenePages(
+      compileInputOf(storyExport),
+      storyExport,
+      { format: 'reader', arcId: options.arcId },
+      readMedia,
+    );
+    return compileStoryReader(input, {
       ...options,
       author:
         options.author === undefined

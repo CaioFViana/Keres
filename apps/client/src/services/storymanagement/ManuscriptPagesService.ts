@@ -1,4 +1,9 @@
-import { type ManuscriptImage, type ManuscriptPage, readImageInfo } from '@keres/shared';
+import {
+  MAX_MANUSCRIPT_IMAGE_PIXELS,
+  type ManuscriptImage,
+  type ManuscriptPage,
+  readImageInfo,
+} from '@keres/shared';
 import type { AppDrizzleClient } from '../../db';
 import { mediaFileService } from '../MediaFileService';
 import { createGalleryService } from './GalleryService';
@@ -55,7 +60,7 @@ export async function loadManuscriptPages(
       } else if (row && !row.isDeleted && row.localPath) {
         const bytes = await mediaFileService.readBytes(row.localPath);
         const info = readImageInfo(bytes);
-        if (info) {
+        if (info && info.width * info.height <= MAX_MANUSCRIPT_IMAGE_PIXELS) {
           media[galleryId] = { ...info, bytes };
           result = galleryId;
         } else {
@@ -128,4 +133,28 @@ export async function estimateManuscriptPageBytes(
     sizes.set(page.sceneId, list);
   }
   return sizes;
+}
+
+/**
+ * Redraws the snapshot of every Sketch that a page of the story stands on and whose drawing changed
+ * since its snapshot was made, and returns how many were redrawn. A publication is compiled by the
+ * server from what it was sent, so this runs first: the new snapshots are changes that still have to
+ * sync before the publication can show them.
+ */
+export async function refreshStaleSketchSnapshots(
+  db: AppDrizzleClient,
+  userId: string,
+  storyId: string,
+): Promise<number> {
+  const rows = await createScenePageService(db).getPagesForStory(storyId);
+  const sketchIds = [...new Set(rows.flatMap((page) => (page.sketchId ? [page.sketchId] : [])))];
+  let redrawn = 0;
+  for (const sketchId of sketchIds) {
+    try {
+      if ((await ensureSketchSnapshot(db, userId, sketchId))?.regenerated) redrawn += 1;
+    } catch (error) {
+      console.log('refreshStaleSketchSnapshots: could not redraw a snapshot.', error);
+    }
+  }
+  return redrawn;
 }

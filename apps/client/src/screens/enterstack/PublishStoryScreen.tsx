@@ -24,11 +24,13 @@ import {
 } from '../../services/PublicationApiService';
 import { createPublicationService } from '../../services/PublicationService';
 import { createServerService } from '../../services/ServerService';
+import { refreshStaleSketchSnapshots } from '../../services/storymanagement/ManuscriptPagesService';
 import { fetchServerStoryPreviews } from '../../services/sync/StoryTransfer';
 import { PublishManuscriptSection } from './PublishManuscriptSection';
 import { usePublishManuscript } from './usePublishManuscript';
 import { useConnectivityStore } from '../../state/connectivityStore';
 import { useNotificationStore } from '../../state/notificationStore';
+import { useUserSettingsStore } from '../../state/userSettingsStore';
 import { useTheme } from '../../theme';
 import { AppAlert } from '../../utils/AppAlert';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -78,6 +80,7 @@ const PublishStoryScreen = () => {
   useBackButtonHandler();
   const drizzleDb = useDrizzle();
   const { showNotification } = useNotificationStore();
+  const { userId } = useUserSettingsStore();
   const isOffline = useConnectivityStore((state) => state.isOffline);
 
   const [rows, setRows] = useState<StoryRow[]>([]);
@@ -209,6 +212,16 @@ const PublishStoryScreen = () => {
     async (row: StoryRow) => {
       setBusyStoryId(row.story.id);
       try {
+        // The server compiles the pages from what it was sent, so a Sketch changed since its snapshot is
+        // redrawn first. The new snapshot is a change like any other: it has to sync before it can be published.
+        const redrawn = userId
+          ? await refreshStaleSketchSnapshots(drizzleDb, userId, row.story.id)
+          : 0;
+        if (redrawn > 0) {
+          showNotification(t('publish_snapshots_redrawn', { count: redrawn }), 'warning');
+          await load();
+          return;
+        }
         // Visibility travels with the publication, rather than in a second call only when there is a password:
         // that way publishing with the padlock off really does make the story public, and does not silently
         // leave an old password in force.
@@ -275,7 +288,18 @@ const PublishStoryScreen = () => {
         setBusyStoryId(null);
       }
     },
-    [drizzleDb, i18n, labelMode, load, manuscript, password, showNotification, t, usePassword],
+    [
+      drizzleDb,
+      i18n,
+      labelMode,
+      load,
+      manuscript,
+      password,
+      showNotification,
+      t,
+      usePassword,
+      userId,
+    ],
   );
 
   const handlePublish = useCallback(

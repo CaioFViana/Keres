@@ -19,7 +19,6 @@ import { stories, storyPermissions, storyPublications, storyShowcaseEntries } fr
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 import { createExclusiveGate } from '../utils/exclusive';
-import { mediaStorageService } from './MediaStorageService';
 import { publicationStorageService } from './PublicationStorageService';
 import { showcaseSettingsService } from './ShowcaseSettingsService';
 import {
@@ -29,6 +28,7 @@ import {
   ownerHandleOf,
   parseManuscriptOptions,
   parseReaderOptions,
+  readStoredMedia,
 } from './publicationCompile';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { StoryExportImportService } from './StoryExportImportService';
@@ -41,19 +41,6 @@ const compileGate = createExclusiveGate();
  * included - the full history belongs to the author, in the app; here it is only the showcase.
  */
 export const MAX_PUBLICATIONS_PER_STORY = 5;
-
-async function blobFromMediaStorage(hash: string): Promise<Uint8Array | null> {
-  const stored = await mediaStorageService.read(hash);
-  if (!stored) {
-    return null;
-  }
-  const body = stored.body;
-  const buffer =
-    body instanceof Blob
-      ? await body.arrayBuffer()
-      : await new Response(body as ReadableStream<Uint8Array>).arrayBuffer();
-  return new Uint8Array(buffer);
-}
 
 export class StoryPublicationService {
   constructor(private readonly exportImportService = new StoryExportImportService()) {}
@@ -245,7 +232,7 @@ export class StoryPublicationService {
     const publicationId = ulid();
     // Left out when the publisher asked for a manuscript and/or the reader only: no packaging cost.
     let zip = includePackage
-      ? await buildStoryZipBytes(storyExport, (item) => blobFromMediaStorage(item.hash))
+      ? await buildStoryZipBytes(storyExport, (item) => readStoredMedia(item.hash))
       : null;
 
     // Validated and compiled before any blob is written, so a refused manuscript leaves no litter -

@@ -1864,6 +1864,8 @@
   "publish_delete_version_message": "Remove version {{label}} from the public page? Anyone with the link will no longer be able to download it.",
   "publish_delete_version_title": "Remove version",
   "publish_extras_ignored": "The version was published, but the server did not add the manuscript or the online reading. The server may be out of date.",
+  "publish_snapshots_redrawn_one": "{{count}} sketch picture was redrawn because its drawing changed. Sync, then publish again so the server has it.",
+  "publish_snapshots_redrawn_other": "{{count}} sketch pictures were redrawn because their drawings changed. Sync, then publish again so the server has them.",
   "publish_failed": "Could not publish the story.",
   "publish_in_progress": "Publishing...",
   "publish_label_style": "Version name",

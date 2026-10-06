@@ -12,6 +12,13 @@ export interface ManuscriptImage extends ManuscriptImageInfo {
   bytes: Uint8Array;
 }
 
+/**
+ * The largest picture, in pixels, a manuscript embeds. A PDF decodes a PNG into its raw colours, so a
+ * picture is held at width x height x 4 bytes while it is worked: past this it is left out rather than
+ * risk the memory of whoever compiles it.
+ */
+export const MAX_MANUSCRIPT_IMAGE_PIXELS = 40_000_000;
+
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 const u32 = (bytes: Uint8Array, at: number) =>

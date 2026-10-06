@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { deflateSync } from 'node:zlib';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
@@ -9,7 +11,9 @@ import {
   choiceChecks,
   choices,
   effects,
+  galleries,
   items,
+  scenePages,
   scenes,
   showcaseSettings,
   storyArcs,
@@ -17,6 +21,7 @@ import {
 } from '../../src/db/schema';
 import { SHOWCASE_SETTINGS_SINGLETON_ID } from '../../src/db/schema/tables/showcaseSettings';
 import { newId, registerUser, request, type TestUser, uploadTestStory } from '../helpers/app';
+import { mediaStorageService } from '../../src/services/MediaStorageService';
 import { installBunShim } from '../helpers/bunShim';
 import { truncateAll } from '../helpers/database';
 
@@ -439,6 +444,139 @@ describe('manuscript blob lifetime', () => {
       token: ana.token,
     });
     expect(status).toBe(200);
+    expect(await storedPublicationFiles(story.id)).toEqual([]);
+  });
+});
+
+/** A real 6x4 PNG (opaque RGB), so every renderer can embed it. */
+function realPng(): Buffer {
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (bytes: Buffer) => {
+    let c = 0xffffffff;
+    for (const byte of bytes) c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const checksum = Buffer.alloc(4);
+    checksum.writeUInt32BE(crc(body));
+    return Buffer.concat([length, body, checksum]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(6, 0);
+  header.writeUInt32BE(4, 4);
+  header.set([8, 2, 0, 0, 0], 8);
+  const rows = Buffer.concat(
+    Array.from({ length: 4 }, () => Buffer.concat([Buffer.from([0]), Buffer.alloc(6 * 3, 90)])),
+  );
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(rows)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+/** One scene with two pages: a Gallery picture stored on the server, and a page whose picture is gone. */
+async function seedComicContent(storyId: string): Promise<void> {
+  const chapterId = newId();
+  await db.insert(chapters).values({ id: chapterId, storyId, name: 'Issue one', index: 1 });
+  const sceneId = newId();
+  await db
+    .insert(scenes)
+    .values({ id: sceneId, storyId, chapterId, name: 'Opening', index: 1, body: null });
+  const png = realPng();
+  const hash = createHash('md5').update(png).digest('hex');
+  await mediaStorageService.store(
+    hash,
+    'image/png',
+    png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength) as ArrayBuffer,
+  );
+  const galleryId = newId();
+  await db.insert(galleries).values({
+    id: galleryId,
+    storyId,
+    mediaType: 'image',
+    mimeType: 'image/png',
+    fileName: 'panel.png',
+    hash,
+    sizeBytes: png.byteLength,
+  });
+  await db.insert(scenePages).values([
+    { id: newId(), storyId, sceneId, rank: 'a0', galleryId, fit: 'contain', text: 'First panel' },
+    { id: newId(), storyId, sceneId, rank: 'a1', galleryId: null, fit: 'cover', text: 'Lost art' },
+  ]);
+}
+
+async function storedManuscriptBytes(storyId: string): Promise<Buffer> {
+  const files = await storedPublicationFiles(storyId);
+  const manuscript = files.find((file) => file.includes('.manuscript.'));
+  if (!manuscript) throw new Error('Expected a stored manuscript file.');
+  return readFile(path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', storyId, manuscript));
+}
+
+describe('publishing the pages of a comic', () => {
+  it('puts the stored pictures and the page texts in an HTML manuscript, and a note where one is gone', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'html' } });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figcaption>Page 1</figcaption>');
+    expect(html).toContain('data:image/png;base64,');
+    expect(html).toContain('First panel');
+    expect(html).toContain('Lost art');
+    expect(html).toContain('<p class="missing">Image removed</p>');
+  });
+
+  it('embeds the picture in a PDF, in a frame the arc chose', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'pdf', pageFormat: 'wide' },
+    });
+
+    expect(status).toBe(200);
+    const pdf = (await storedManuscriptBytes(story.id)).toString('latin1');
+    expect(pdf).toContain('/Subtype /Image');
+    expect(pdf).toContain('/XObject <<');
+  });
+
+  it('leaves the pictures out of a markdown manuscript but keeps each page and its text', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'md' } });
+
+    expect(status).toBe(200);
+    const md = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(md).toContain('**Page 1**');
+    expect(md).toContain('First panel');
+    expect(md).toContain('*Image removed*');
+    expect(md).not.toContain('data:image');
+  });
+
+  it('refuses a book whose pictures alone would pass the limit, before reading them, and writes nothing', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+    await db
+      .update(galleries)
+      .set({ sizeBytes: 60 * 1024 * 1024 })
+      .where(eq(galleries.storyId, story.id));
+
+    const { status, data } = await publish(ana.token, story.id, { manuscript: { format: 'epub' } });
+
+    expect(status).toBe(400);
+    expect(data.message).toMatch(/exceeds the .* limit/);
     expect(await storedPublicationFiles(story.id)).toEqual([]);
   });
 });

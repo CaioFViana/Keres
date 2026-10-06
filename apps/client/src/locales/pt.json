@@ -1864,6 +1864,8 @@
   "publish_delete_version_message": "Remover a versão {{label}} da página pública? Quem tiver o link não conseguirá mais baixá-la.",
   "publish_delete_version_title": "Remover versão",
   "publish_extras_ignored": "A versão foi publicada, mas o servidor não incluiu o manuscript ou a leitura online. O servidor pode estar desatualizado.",
+  "publish_snapshots_redrawn_one": "{{count}} imagem de esboço foi refeita porque o desenho mudou. Sincronize e publique de novo para o servidor recebê-la.",
+  "publish_snapshots_redrawn_other": "{{count}} imagens de esboço foram refeitas porque os desenhos mudaram. Sincronize e publique de novo para o servidor recebê-las.",
   "publish_failed": "Não foi possível publicar a história.",
   "publish_in_progress": "Publicando...",
   "publish_label_style": "Nome da versão",

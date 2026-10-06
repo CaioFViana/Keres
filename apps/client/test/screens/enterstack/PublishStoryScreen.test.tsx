@@ -190,6 +190,14 @@ jest.mock('../../../src/state/connectivityStore', () => ({
     typeof selector === 'function' ? selector(mockConnectivity) : mockConnectivity,
 }));
 
+const mockRefreshSnapshots = jest.fn();
+jest.mock('../../../src/services/storymanagement/ManuscriptPagesService', () => ({
+  refreshStaleSketchSnapshots: (...args: unknown[]) => mockRefreshSnapshots(...args),
+}));
+jest.mock('../../../src/state/userSettingsStore', () => ({
+  useUserSettingsStore: () => ({ userId: 'user-1' }),
+}));
+
 jest.mock('../../../src/state/notificationStore', () => ({
   useNotificationStore: (selector?: (state: unknown) => unknown) =>
     typeof selector === 'function' ? selector(mockNotificationState) : mockNotificationState,
@@ -219,6 +227,9 @@ const manuscriptLabels = {
   endOfExcerpt: 'export_manuscript_end_of_excerpt',
   chooseStart: 'export_manuscript_choose_start',
   beginAt: 'export_manuscript_begin_at',
+  pageLabel: 'export_manuscript_page_label',
+  frameLabel: 'export_manuscript_frame_label',
+  mediaRemoved: 'export_manuscript_media_removed',
 };
 /** The device export's defaults, as the publish screen sends them. */
 function manuscriptPayload(overrides: Record<string, unknown> = {}) {
@@ -262,6 +273,7 @@ describe('buildStoryPublicUrl', () => {
 describe('PublishStoryScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRefreshSnapshots.mockResolvedValue(0);
     jest.spyOn(Linking, 'openURL').mockResolvedValue(true as never);
     mockGetAllServers.mockResolvedValue([server]);
     mockFindStories.mockResolvedValue([story]);
@@ -381,6 +393,21 @@ describe('PublishStoryScreen', () => {
       await open?.onPress?.();
     });
     expect(Linking.openURL).toHaveBeenCalledWith('https://s.example/showcase/story/story-1');
+  });
+
+  it('redraws a changed sketch picture first and asks for a sync instead of publishing a stale one', async () => {
+    mockRefreshSnapshots.mockResolvedValue(2);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() =>
+      expect(mockNotify).toHaveBeenCalledWith('publish_snapshots_redrawn', 'warning'),
+    );
+    expect(mockRefreshSnapshots).toHaveBeenCalledWith(mockDrizzle, 'user-1', 'story-1');
+    expect(mockPublish).not.toHaveBeenCalled();
   });
 
   it('requires a long enough password when the padlock is on', async () => {
@@ -681,6 +708,29 @@ describe('PublishStoryScreen', () => {
     expect(call[8]).toBe(false);
     expect(call[9]).toBe('arc-1');
     expect(call[6]).toMatchObject({ arcId: 'arc-1', author: 'Arc Author' });
+  });
+
+  it('sends the frame and the noun of the work whose pages it releases, and nothing of the kind for prose', async () => {
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'Board', author: null, medium: 'storyboard', pageFormat: null },
+      { id: 'arc-2', title: 'Book', author: null, medium: 'generic', pageFormat: null },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+    await fireEvent.press(view.getByTestId('route-option-arc-1'));
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ pageNoun: 'frame', pageFormat: 'wide' });
+
+    mockPublish.mockClear();
+    await fireEvent.press(view.getByTestId('route-option-arc-2'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('pageFormat');
+    expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('pageNoun');
   });
 
   it('credits the story author when the released work has none', async () => {

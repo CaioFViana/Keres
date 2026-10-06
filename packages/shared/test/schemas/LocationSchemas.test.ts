@@ -19,18 +19,25 @@ const row = {
   deletedAt: null,
 };
 
+const created = {
+  name: 'Kitchen',
+  description: null,
+  climate: null,
+  culture: null,
+  politics: null,
+  extraNotes: null,
+};
+
 describe('Location interior / exterior', () => {
   it('defaults to none for a row written before the field existed', () => {
     expect(LocationSchema.parse(row).intExt).toBeNull();
-    expect(CreateLocationDataSchema.parse({ name: 'Kitchen' }).intExt).toBeNull();
+    expect(CreateLocationDataSchema.parse(created).intExt).toBeNull();
   });
 
   it('accepts interior, exterior and both, and refuses anything else', () => {
     for (const intExt of LOCATION_INT_EXT) {
-      expect(CreateLocationDataSchema.parse({ name: 'Kitchen', intExt }).intExt).toBe(intExt);
+      expect(CreateLocationDataSchema.parse({ ...created, intExt }).intExt).toBe(intExt);
     }
-    expect(() =>
-      CreateLocationDataSchema.parse({ name: 'Kitchen', intExt: 'underwater' }),
-    ).toThrow();
+    expect(() => CreateLocationDataSchema.parse({ ...created, intExt: 'underwater' })).toThrow();
   });
 });

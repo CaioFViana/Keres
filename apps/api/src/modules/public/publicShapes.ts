@@ -47,7 +47,7 @@ export const SnapshotSchema = t.Object({
 export const VersionSchema = t.Object({
   id: t.String(),
   /** The work this version releases, or null for a version of the whole universe. */
-  arc: t.Nullable(ArcSnapshotSchema),
+  arc: t.Optional(t.Nullable(ArcSnapshotSchema)),
   label: t.String(),
   byteSize: t.Number(),
   mediaIncluded: t.Number(),

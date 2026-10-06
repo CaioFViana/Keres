@@ -25,12 +25,15 @@ resistance - not confidentiality: use TLS.
 Keres calls, all JSON:
 
 - `GET /v1/info` - `{ apiVersion: 1, id, displayName, capabilities }`. The optional parts
-  (`status`, `cancel`, `due`) only exist when listed here.
+  (`status`, `cancel`, `due`, `reconcile`) only exist when listed here.
 - `GET /v1/methods?currency=BRL` - the ways to pay (cached for a minute by Keres).
 - `POST /v1/checkouts` - starts a payment (`checkoutId` is the idempotency key); answers the provider
   reference plus what the person does next (`redirect` to an `https` page, `instructions`, or `none`).
 - `GET /v1/checkouts/:id?providerReference=...` - how an attempt ended, or `null` while open (`status`).
 - `POST /v1/subscriptions/:reference/cancel` (`cancel`), `POST /v1/subscriptions/due` (`due`).
+- `GET /v1/subscriptions/:reference/events?since=<ISO date-time>` (`reconcile`) - what the provider charged the
+  subscription since then (and whether it ended), oldest first, as the events its webhooks carry, **with the same
+  event ids** so what already arrived counts once. See "When a notice never comes".
 
 The connector reports provider facts to `POST /api/payments/events`, signed with the events key (a different
 key from the connector key), up to 100 events per push; Keres applies each `eventId` once, so retries are safe.
@@ -94,6 +97,30 @@ the provider refuses. A notice about something Keres does not know yet is only n
 of its own, so it cannot use up the id of the payment that arrives once there is somebody to apply
 it to.
 
+## The same charge under two ids, and notices out of order
+
+Providers are meant to name a charge the same way everywhere, but the names are theirs. Besides the event id, the
+server refuses to grant a period twice for the same charge: a payment on the same subscription, for the same
+amount, within ten minutes of the last one, with no new attempt behind it, is noted on the ledger as turned down
+("Refused: the same charge was already applied under another id") and grants nothing. A payment for a new attempt
+(somebody paying again, maybe for another plan) is never taken for a repeat.
+
+Notices can also arrive in any order. A renewal that arrives after the cancellation announced next to it does not
+bring a cancelled subscription back: only a new attempt, or a new subscription at the provider, lifts "will not
+renew". A renewal never shortens what is already paid (a switch of plan may, by design).
+
+## Money that went back
+
+The connector reports a refund, a chargeback or a store revoking a purchase as `payment.refunded`: the amount, when
+the money went back, when the refunded payment was made, and `endsAccess`. Only the **latest** payment refunded **in
+full** takes back the period it paid for (the subscription ends then); a partial refund, or one of an earlier payment,
+only goes on the ledger. It shows in the person's own payment history, in the administrators' ledger and in the
+summary (refunded in the last 30 days). The official service reports PayPal's `PAYMENT.SALE.REFUNDED` and
+`PAYMENT.SALE.REVERSED` (the sale names the subscription it was charged to), Stripe's `charge.refunded` (the
+subscription is found through the payment intent and its invoice) and Google's revocation. A refund whose
+subscription cannot be found is not reported at all rather than guessed; the safety net does not look for refunds, so
+a refund whose notice never came has to be seen at the provider.
+
 ## Methods that renew, and methods that do not
 
 A method option may say `recurring: false` (the default is `true`). It means the provider does **not** charge it
@@ -138,15 +165,25 @@ live attempt instead of opening another - scripts can neither burn the store API
 the ledger. A subscription in its grace period counts as paid (the store still entitles it while
 retrying the renewal); held, paused, cancelled or expired do not.
 
+What Google answers is read as its reference documents it: a subscription is checked at
+`purchases/subscriptionsv2/tokens/{token}`, and its payments are named by each line item's `latestSuccessfulOrderId` (the
+object has no order id of its own, and a purchase not yet owned has none - it is not paid). A real-time notification
+carries only the type and the token (no product id), so the purchase's own product is taken.
+
 Renewals do not wait for the app to be opened: Google pushes real-time developer notifications
 (Pub/Sub) to `POST /v1/play/notifications?token=<PLAY_NOTIFICATION_SECRET>`. The connector never
 takes the message as proof - it asks Google about the token, then reports the renewal as
 `payment.succeeded` named by the order id (the same id the relay uses, so one payment is never
 counted twice) with the price Google charged, or `subscription.canceled` when the person cancels in
-the Play Store. A store subscription is stopped in the store: the server offers no cancel for it
-(`canCancelHere` is false, and cancelling answers 409) instead of saying "stopped" while Google
-keeps charging. In the app, buying a store plan while another store plan is live is refused:
-changing plans starts by cancelling the first one in the Play Store. Mock mode is opt-in
+the Play Store, or `payment.refunded` when Google revokes the purchase (a refund). A store subscription can
+be stopped from here too: with `PLAY_PACKAGE_NAME` set the connector cancels it through Google's
+`purchases.subscriptionsv2:cancel` (`USER_REQUESTED_STOP_RENEWALS`: the person keeps what they paid for and can
+restore it in the Play Store), and the server marks it as ending only once Google was told. A connector that
+cannot reach the store (no package name) answers 400, and the person is told to do it in the Play Store. In the app,
+buying a store plan while another store plan is live is refused: changing plans starts by cancelling the first one.
+`PLAY_PACKAGE_NAME` is also the only package a purchase may name and the only one notifications are read for. A
+purchase by a license tester (the closed-testing track) is no money and does not count as paid, unless
+`PLAY_ACCEPT_TEST_PURCHASES=true` (homologation only). Mock mode is opt-in
 (`PLAY_MOCK=true`) and off by default; live verification without `PLAY_SERVICE_ACCOUNT_JSON`
 refuses to boot.
 
@@ -164,9 +201,14 @@ Keres keeps the date up to which each period is paid:
   of the new plan at its price per day. Twenty days of a R$ 25 plan become about seven days of a R$ 70 one, added to
   the period just paid for; a year of the cheap plan does not become a year of the expensive one. The app says it
   before paying (`GET /api/payments/switch-quote`, the same calculation), and the ledger line says what converted;
-- when the date passes with no payment the subscription becomes `due`: the person goes back to the plan they had
-  before subscribing (the one an administrator assigned, else the server's default plan - the date itself decides,
-  not the periodic job) and `onSubscriptionDue` is called once so the provider can chase it. Nothing they created
+- a subscription that is still renewing keeps its plan for a margin of 48 hours after its date
+  (`PAYMENT_RENEWAL_GRACE_HOURS`): a provider charges around the date and tells us by webhook, and neither is on the
+  dot, so a notice a few hours late must not take the plan away and give it back. The margin is only for what is
+  expected to renew - a subscription that was cancelled or is ending, and a plan given by an administrator, end exactly
+  on their date. In the margin the app says "renewal being confirmed" and sends no reminder;
+- when the date (and that margin) passes with no payment the subscription becomes `due`: the person goes back to
+  the plan they had before subscribing (the one an administrator assigned, else the server's default plan - the
+  date itself decides, not the periodic job) and `onSubscriptionDue` is called once so the provider can chase it. Nothing they created
   is removed or locked: plan limits only refuse creating more, and the app says so ("your plan is on hold")
   instead of treating a late payment as a loss;
 - a `due` subscription left unpaid for 60 days ends; one the person (or the provider) cancelled ends when its paid
@@ -210,8 +252,8 @@ goes on charging.
 
 Closing an account (an administrator deleting a user) stops what would charge it again, first: the renewal is cancelled
 at the provider through the connector, and if that fails the account is **not** closed (the error says so) - charging
-somebody who has no account is worse than a retry. A subscription bought in a store (Google Play) cannot be stopped by
-the connector: only a note is kept, and the person has to cancel it in the store. A plan given by an administrator, or
+somebody who has no account is worse than a retry. A subscription bought in a store (Google Play) is stopped at the store when the connector can reach
+it; when it cannot (it answers 400), only a note is kept and the person has to cancel it in the store. A plan given by an administrator, or
 no live subscription, has nothing to stop. What was already paid stays recorded and runs out its period.
 
 ## What the connector remembers, and what happens if it restarts
@@ -225,11 +267,49 @@ because every way a payment reaches Keres is rebuilt from what the provider itse
 - the return page and Keres's own status question (`GET /v1/checkouts/:id`) find the provider by the shape of the
   reference and read the attempt from the provider's data;
 - a cancel is routed by the shape of the subscription reference;
-- PayPal plans are asked for under ids that name them, so a second process reuses the first one's.
+- PayPal plans are asked for under ids that name them (PayPal's `PayPal-Request-Id`, which it keeps for 72 hours for plans), so a
+  process restarted within that time reuses the first one's plan; after it a new plan is made, which is untidy but harmless.
 
-Only the development mock provider is memory-only. What a restart cannot cover is a service that stays down longer than the
-providers keep retrying: that payment is then only found if the person is still watching the attempt (Keres asks
-about it every few seconds) - an administrator can see it at the provider by the reference.
+Only the development mock provider is memory-only.
+
+## When a notice never comes
+
+Everything the server learns about money is the provider's notices, and a notice can fail to arrive: the connector was
+down longer than the provider keeps retrying (about three days), a webhook was never set up, a deploy went wrong.
+Nothing in the notices says one is missing, so the server asks. Every 15 minutes, **before** it marks anything due:
+
+- a subscription whose paid period ran out and that is still meant to renew (or is already late) is asked about with
+  `reconcile`: what the provider charged since a day before its last payment. What comes back is applied exactly like
+  webhooks (same ids, oldest first), so a renewal that did arrive counts once and one that did not is found - and a
+  subscription the provider ended is noted as ended. A renewal that is only just late is asked about at every run (it
+  usually turns up on the next); one late for more than 72 hours every 6 hours. A subscription ending, given by an
+  administrator, or bought in a store is never asked: there is no renewal to look for (a store's own notices come
+  from the store);
+- an attempt that was opened and never seen to finish (still open, or expired within the last three days) is asked
+  about like the person's screen would: a payment made while nobody was looking is found. An attempt older than an
+  hour is asked about every 3 hours.
+
+A provider that does not answer is logged and skipped (the next run asks again); it never stops the job, and it never
+reads as "nothing was charged". A connector without the `reconcile` capability leaves the first part off and still
+gets the second one if it has `status`. Verify the provider's own limits when homologating (PayPal's window for listing
+a subscription's transactions): the official service asks from the date the server gives.
+
+## Letting go of a closed account
+
+`PAYMENT_RETENTION_DAYS` (at least 30; unset keeps everything as it is) says how long after an account was closed its
+payment records may keep pointing at the person. After that the subscription, the attempts and the store claims of
+that account are deleted, and the ledger keeps its lines - what was paid, for which plan, when - without the person
+or the provider's reference. An account that still has a subscription the provider may charge is never touched: it
+has to end first.
+
+## What the administrators see
+
+**Payments** shows the situation and the key values, and a **health** panel: whether the connector is connected, when
+the last notice from a provider came, what the safety net did on its last run (since the server started) and how many
+payments it had to find in the last 7 days (each one a notice that never arrived), what is late, what is stuck, and
+what the server never opened - with warnings in words when something looks wrong. A store purchase token is a
+credential, so the administrators see its ends only; the server keeps the whole token because it needs it to look
+the purchase up (and the connector to cancel it).
 
 ## In the app
 

@@ -312,13 +312,13 @@ check(
   store.data,
 );
 check(
-  'a store subscription is not cancellable here',
-  store.data.subscription?.canCancelHere === false,
+  'a store subscription can be stopped from here (the connector reaches the store)',
+  store.data.subscription?.canCancelHere === true,
 );
 const storeCancel = await call('POST', `${API}/api/payments/subscription/cancel`, { token: bia });
 check(
-  'cancelling it here is refused (it is stopped in the store)',
-  storeCancel.status === 409,
+  'cancelling it here marks it to end with the paid period',
+  storeCancel.status === 200 && storeCancel.data.cancelAtPeriodEnd === true,
   storeCancel.data,
 );
 

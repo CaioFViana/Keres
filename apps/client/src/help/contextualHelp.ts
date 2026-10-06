@@ -48,6 +48,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   Manuscript: 'manuscript',
   SceneDetail: 'scenes',
   SceneEditor: 'manuscript',
+  ScenePages: 'scene-pages',
   SceneForm: 'scenes',
   ChoiceDetail: 'choices',
   ChoiceForm: 'choices',

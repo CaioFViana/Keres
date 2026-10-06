@@ -4,12 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
-import { createChapterService } from '@/src/services/storymanagement/ChapterService';
+import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
 import { createCharacterSceneService } from '@/src/services/storymanagement/CharacterSceneService';
 import { createCharacterService } from '@/src/services/storymanagement/CharacterService';
 import { createLocationService } from '@/src/services/storymanagement/LocationService';
-import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
-import { useStoryStore } from '@/src/state/storyStore';
 import { useTheme } from '@/src/theme';
 import { entityEventEmitter } from '@/src/utils/EventEmitter';
 
@@ -22,35 +20,9 @@ type Place = { name: string; intExt: 'interior' | 'exterior' | 'both' | null } |
  */
 export function useScreenplaySceneContext(scene: SceneSelect, bodyText: string) {
   const db = useDrizzle();
-  const effectiveArc = useStoryStore((state) => state.effectiveArc);
-  const [arcMedium, setArcMedium] = useState<string | null>(null);
+  const arcMedium = useSceneArcMedium(scene);
   const [place, setPlace] = useState<Place>(null);
   const [cast, setCast] = useState<string[]>([]);
-
-  // A scene belongs to the work of its chapter; one filed in no chapter takes the work in effect.
-  useEffect(() => {
-    let alive = true;
-    void (async () => {
-      try {
-        const chapter = scene.chapterId
-          ? await createChapterService(db).getById(scene.chapterId)
-          : undefined;
-        // The arc's medium rides on its row; the store knows the one in effect, which is enough for
-        // a scene with no chapter, and the chapter's arc is read from the arcs when it has one.
-        if (chapter?.arcId) {
-          const arc = await createStoryArcService(db).getById(chapter.arcId);
-          if (alive) setArcMedium(arc?.medium ?? null);
-        } else if (alive) {
-          setArcMedium(effectiveArc?.medium ?? null);
-        }
-      } catch {
-        if (alive) setArcMedium(null);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [db, scene.chapterId, effectiveArc?.medium]);
 
   useEffect(() => {
     let alive = true;

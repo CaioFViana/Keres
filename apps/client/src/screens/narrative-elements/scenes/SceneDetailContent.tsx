@@ -9,6 +9,7 @@ import EntityGalleryManager from '@/src/components/features/gallery/GalleryManag
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager';
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
+import ScenePagesEntry from '@/src/components/features/scenes/ScenePages/ScenePagesEntry';
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
 import SeeAlsoManager from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
@@ -169,6 +170,10 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
           {t('manuscript_unsaved_draft')}
         </Text>
       )}
+      <ScenePagesEntry
+        scene={scene}
+        onOpen={() => navigation.navigate('ScenePages', { sceneId })}
+      />
       {dateForScene(scene) && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
       )}

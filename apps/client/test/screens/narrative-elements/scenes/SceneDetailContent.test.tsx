@@ -29,6 +29,11 @@ jest.mock('../../../../src/theme', () => {
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 
+jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePagesEntry', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {

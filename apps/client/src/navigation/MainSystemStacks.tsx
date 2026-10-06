@@ -41,6 +41,7 @@ import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewSc
 import ManuscriptExportScreen from '../screens/narrative-elements/scenes/ManuscriptExportScreen';
 import ManuscriptScreen from '../screens/narrative-elements/scenes/ManuscriptScreen';
 import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import ScenePagesScreen from '../screens/narrative-elements/scenes/ScenePagesScreen';
 import SceneEditorScreen from '../screens/narrative-elements/scenes/SceneEditorScreen';
 import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
 import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
@@ -182,6 +183,7 @@ export type NarrativeElementsStackParamList = {
   ChapterForm: { chapterId?: string };
   SceneDetail: { sceneId: string; occurrence?: OccurrenceTarget };
   SceneEditor: { sceneId: string };
+  ScenePages: { sceneId: string };
   Manuscript: { routeId?: string };
   ManuscriptExport: undefined;
   SceneForm: { sceneId?: string; chapterId?: string };
@@ -206,6 +208,7 @@ export const NarrativeElementsStackNavigator = () => {
       <NarrativeElementsStack.Screen name="ChapterForm" component={ChapterFormScreen} />
       <NarrativeElementsStack.Screen name="SceneDetail" component={SceneDetailScreen} />
       <NarrativeElementsStack.Screen name="SceneEditor" component={SceneEditorScreen} />
+      <NarrativeElementsStack.Screen name="ScenePages" component={ScenePagesScreen} />
       <NarrativeElementsStack.Screen name="Manuscript" component={ManuscriptScreen} />
       <NarrativeElementsStack.Screen name="ManuscriptExport" component={ManuscriptExportScreen} />
       <NarrativeElementsStack.Screen name="SceneForm" component={SceneFormScreen} />

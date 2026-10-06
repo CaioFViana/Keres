@@ -20,6 +20,7 @@ type OptionsProps = {
   looseCount: number;
   arcs: { id: string; title: string }[];
   screenplayEstimate?: { pages: number; eighths: number } | null;
+  sizeEstimate?: { bytes: number; limit: number; status: string };
 };
 let mockOptionsProps: OptionsProps | null = null;
 
@@ -326,6 +327,60 @@ async function exportWith(
     fireEvent.press(view.getByTestId('export-confirm'));
   });
 }
+
+describe('ManuscriptExportScreen size', () => {
+  it('estimates the size from the text in scope, before anything is compiled', async () => {
+    mockManuscriptData = {
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'x'.repeat(1000) })],
+      choices: [],
+      loading: false,
+    };
+    await renderScreen();
+
+    expect(mockOptionsProps?.sizeEstimate?.status).toBe('ok');
+    expect(mockOptionsProps?.sizeEstimate?.bytes).toBeGreaterThan(1000);
+    expect(mockOptionsProps?.sizeEstimate?.limit).toBe(50 * 1024 * 1024);
+  });
+
+  it('counts a loose scene only when it is asked for, and a scene name only when it is shown', async () => {
+    mockManuscriptData = {
+      chapters: [makeChapter()],
+      scenes: [
+        makeScene({ id: 's-1', body: 'a'.repeat(10_000) }),
+        makeScene({ id: 's-2', chapterId: null, name: 'Loose', body: 'b'.repeat(900_000) }),
+      ],
+      choices: [],
+      loading: false,
+    };
+    await renderScreen();
+    const without = mockOptionsProps?.sizeEstimate?.bytes ?? 0;
+    const props = mockOptionsProps as OptionsProps;
+
+    await act(async () => {
+      props.onChange({ ...props.settings, format: 'md', includeLooseScenes: true });
+    });
+    const withLoose = (mockOptionsProps as OptionsProps).sizeEstimate?.bytes ?? 0;
+
+    expect(withLoose).toBeGreaterThan(without + 800_000);
+  });
+
+  it('calls a very large manuscript over the limit', async () => {
+    mockManuscriptData = {
+      chapters: [makeChapter()],
+      scenes: [makeScene({ body: 'z'.repeat(60 * 1024 * 1024) })],
+      choices: [],
+      loading: false,
+    };
+    await renderScreen();
+    const props = mockOptionsProps as OptionsProps;
+    await act(async () => {
+      props.onChange({ ...props.settings, format: 'md' });
+    });
+
+    expect((mockOptionsProps as OptionsProps).sizeEstimate?.status).toBe('over');
+  });
+});
 
 describe('ManuscriptExportScreen as a screenplay', () => {
   const asScript = () => {

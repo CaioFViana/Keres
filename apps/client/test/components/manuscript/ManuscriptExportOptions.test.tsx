@@ -1,4 +1,4 @@
-import { screenplayGeometry, screenplayPreset } from '@keres/shared';
+import { assessManuscriptSize, screenplayGeometry, screenplayPreset } from '@keres/shared';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { useState } from 'react';
 import ManuscriptExportOptions from '../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
@@ -94,6 +94,50 @@ function ScriptHarness({
     />
   );
 }
+
+describe('ManuscriptExportOptions size', () => {
+  const assess = (bytes: number) => assessManuscriptSize(bytes, 100 * 1024 * 1024);
+
+  function SizeHarness({ size }: { size: ReturnType<typeof assessManuscriptSize> | null }) {
+    const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch
+        looseCount={2}
+        chapterNumberingAvailable
+        arcs={[]}
+        sizeEstimate={size}
+      />
+    );
+  }
+
+  it('says how big the file will be, and warns as it nears and passes the limit', async () => {
+    const ok = await render(<SizeHarness size={assess(5 * 1024 * 1024)} />);
+    expect(ok.getByTestId('export-size-ok').props.children).toContain('export_size_ok');
+    expect(ok.getByTestId('export-size-ok').props.children).toContain('5.0 MB');
+    await ok.unmount();
+
+    const near = await render(<SizeHarness size={assess(90 * 1024 * 1024)} />);
+    expect(near.getByTestId('export-size-near')).toBeTruthy();
+    await near.unmount();
+
+    const over = await render(<SizeHarness size={assess(120 * 1024 * 1024)} />);
+    expect(over.getByTestId('export-size-over')).toBeTruthy();
+  });
+
+  it('shows no figure for what is too small to count, and nothing without an estimate', async () => {
+    const tiny = await render(<SizeHarness size={assess(2048)} />);
+    expect(tiny.getByTestId('export-size-ok').props.children).toContain('< 0.1 MB');
+    await tiny.unmount();
+
+    const none = await render(<SizeHarness size={null} />);
+    expect(none.queryByTestId('export-size-ok')).toBeNull();
+  });
+});
 
 describe('ManuscriptExportOptions for a screenplay', () => {
   it('offers the screenplay formats and swaps the book choices for the screenplay ones', async () => {

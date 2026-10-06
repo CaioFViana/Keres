@@ -34,6 +34,7 @@ const ManuscriptExportScreen = () => {
     storyAuthor,
     exportWith,
     screenplayEstimate,
+    sizeEstimate,
   } = useManuscriptExport();
   const effectiveArc = useStoryStore((state) => state.effectiveArc);
   const [settings, setSettings] = useState(() => defaultExportSettings(storyAuthor));
@@ -74,6 +75,7 @@ const ManuscriptExportScreen = () => {
         onChange={setSettings}
         formats={formats}
         screenplayEstimate={screenplayEstimate(settings)}
+        sizeEstimate={sizeEstimate(settings)}
         branching={isBranching}
         showLooseSwitch={!isBranching && looseCount > 0}
         looseCount={looseCount}

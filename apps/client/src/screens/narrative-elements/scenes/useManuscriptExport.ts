@@ -4,6 +4,11 @@ import {
   isLooseScene,
   sceneSeparatorText,
 } from '@keres/shared';
+import {
+  type ManuscriptSizeAssessment,
+  manuscriptSizeAssessment,
+  utf8ByteLength,
+} from '@keres/shared';
 import { containsCjk } from '@keres/shared/manuscript/export';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -119,6 +124,30 @@ export function useManuscriptExport() {
         isLooseScene(scene, visibleById),
     ).length;
   }, [isBranching, chapters, scenes, chaptersById, activeArcId]);
+
+  /**
+   * How big the file will be, from what is already known - the text in scope - and stood against the
+   * limit. Said before the export, so the writer is not told only after the work is done.
+   */
+  const sizeEstimate = useCallback(
+    (settings: ManuscriptExportSettings): ManuscriptSizeAssessment => {
+      const inScope = scenes.filter(
+        (scene) =>
+          !scene.isDeleted &&
+          sceneBelongsToActiveArc(scene, chaptersById, settings.arcId) &&
+          (isBranching || settings.includeLooseScenes || !isLooseScene(scene, chaptersById)),
+      );
+      const textBytes = inScope.reduce(
+        (sum, scene) =>
+          sum +
+          utf8ByteLength(scene.body ?? '') +
+          (settings.includeSceneNames ? utf8ByteLength(scene.name) + 16 : 0),
+        0,
+      );
+      return manuscriptSizeAssessment({ format: settings.format, textBytes });
+    },
+    [scenes, chaptersById, isBranching],
+  );
 
   const promptCjkPack = useCallback(
     () =>
@@ -327,5 +356,6 @@ export function useManuscriptExport() {
     storyAuthor: selectedStory?.author ?? '',
     exportWith,
     screenplayEstimate,
+    sizeEstimate,
   };
 }

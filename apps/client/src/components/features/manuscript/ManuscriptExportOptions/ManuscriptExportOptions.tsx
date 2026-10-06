@@ -1,6 +1,7 @@
 import {
   MANUSCRIPT_PRESETS,
   type ManuscriptFormat,
+  type ManuscriptSizeAssessment,
   type ManuscriptStyle,
   type ScreenplayEstimate,
 } from '@keres/shared';
@@ -43,6 +44,14 @@ interface ManuscriptExportOptionsProps {
   showFormat?: boolean;
   /** For a screenplay format: how long the script is, and what that number stands on. */
   screenplayEstimate?: ScreenplayEstimate | null;
+  /** How big the file will be, and how that stands against the limit; shown before anything is compiled. */
+  sizeEstimate?: ManuscriptSizeAssessment | null;
+}
+
+/** `12.3 MB`: one decimal, and `< 0.1 MB` for what is not worth a figure. */
+function formatMegabytes(bytes: number): string {
+  const megabytes = bytes / (1024 * 1024);
+  return megabytes < 0.1 ? '< 0.1 MB' : `${megabytes.toFixed(1)} MB`;
 }
 
 const FONT_SIZES = [10, 11, 12, 14] as const;
@@ -76,6 +85,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   arcs,
   showFormat = true,
   screenplayEstimate = null,
+  sizeEstimate = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -133,6 +143,18 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
             />
           ))}
         </>
+      ) : null}
+
+      {showFormat && sizeEstimate ? (
+        <Text
+          testID={`export-size-${sizeEstimate.status}`}
+          style={[styles.note, sizeEstimate.status === 'over' ? { color: colors.error } : null]}
+        >
+          {t(`export_size_${sizeEstimate.status}`, {
+            size: formatMegabytes(sizeEstimate.bytes),
+            limit: formatMegabytes(sizeEstimate.limit),
+          })}
+        </Text>
       ) : null}
 
       {showFormat ? (

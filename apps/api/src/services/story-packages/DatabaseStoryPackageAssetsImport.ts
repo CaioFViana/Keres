@@ -208,6 +208,37 @@ export async function importStoryAssets(context: DatabaseStoryPackageImportConte
     await insertPortableCollection(context, OperationLogEntityType.Sketch, newStorySketchesData);
   }
 
+  /*
+   * The pages of a scene point at a scene (narrative phase), and at a Sketch or a Gallery medium
+   * (both written just above): every id is in the map by now. A page whose image the package does
+   * not carry keeps its text and waits for another image, as it does live.
+   */
+  const newScenePagesData = (validatedFullStory.scenePages ?? []).flatMap((original) => {
+    const sceneId = idMap.get(original.sceneId);
+    // A page of a scene the package lacks has nothing to belong to: it goes, as dangling rows do.
+    if (!sceneId) return [];
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return [
+      {
+        ...original,
+        id: newId,
+        storyId: targetStoryId,
+        sceneId,
+        sketchId: original.sketchId ? (idMap.get(original.sketchId) ?? null) : null,
+        galleryId: original.galleryId ? (idMap.get(original.galleryId) ?? null) : null,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    ];
+  });
+  if (newScenePagesData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.ScenePage, newScenePagesData);
+  }
+
   await relinkCoverGalleryIds(context);
 }
 

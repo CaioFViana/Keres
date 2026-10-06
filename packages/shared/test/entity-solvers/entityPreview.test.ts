@@ -62,7 +62,7 @@ describe('entity previews', () => {
   });
 
   it('derives every portable foreign key from the entity handlers', () => {
-    expect(getStoryExportReferences()).toHaveLength(38);
+    expect(getStoryExportReferences()).toHaveLength(41);
     expect(getStoryExportReferences()).toContainEqual({
       collection: 'scenes',
       field: 'chapterId',

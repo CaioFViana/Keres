@@ -3,6 +3,7 @@ import { AttributeValueSyncHandler } from './AttributeValueSyncHandler';
 import type { SyncEntityHandler } from './BaseSyncEntityHandler';
 import { BoardSyncHandler } from './BoardSyncHandler';
 import { SketchSyncHandler } from './SketchSyncHandler';
+import { ScenePageSyncHandler } from './ScenePageSyncHandler';
 import { ChapterAnchorSyncHandler } from './ChapterAnchorSyncHandler';
 import { ChapterSyncHandler } from './ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './CharacterRelationSyncHandler';
@@ -53,6 +54,7 @@ export function registerApiSyncHandlers(): Map<string, SyncEntityHandler> {
     () => new ChapterSyncHandler(),
     () => new LocationSyncHandler(),
     () => new SceneSyncHandler(),
+    () => new ScenePageSyncHandler(),
     () => new GallerySyncHandler(),
     () => new GalleryRelationSyncHandler(),
     () => new NoteSyncHandler(),

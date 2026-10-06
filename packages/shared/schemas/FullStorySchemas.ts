@@ -4,6 +4,7 @@ import { CharacterSchema } from './CharacterSchemas';
 import { ChapterAnchorSchema } from './ChapterAnchorSchemas';
 import { StoryCalendarSchema } from './StoryCalendarSchemas';
 import { StoryArcSchema } from './StoryArcSchemas';
+import { ScenePageSchema } from './ScenePageSchemas';
 import { BoardSchema } from './BoardSchemas';
 import { SketchSchema } from './SketchSchemas';
 import { LocationMapSchema } from './LocationMapSchemas';
@@ -72,6 +73,8 @@ export const FullStoryExportSchema = z.object({
   storyBoards: z.array(BoardSchema).optional(),
   // Optional so packages from before Sketches remain importable (format bump waits for release).
   storySketches: z.array(SketchSchema).optional(),
+  // Optional so packages from before pages of a scene remain importable.
+  scenePages: z.array(ScenePageSchema).optional(),
   // Optional so packages from before Location Maps remain importable.
   storyLocationMaps: z.array(LocationMapSchema).optional(),
   characterScenes: z.array(CharacterSceneSchema),

@@ -9,7 +9,16 @@ export const locationEntityHandler = createSimpleEntityHandler({
   previewDetailsFields: ['description'],
   help: {
     source: 'locations',
-    fields: ['name', 'description', 'climate', 'culture', 'politics', 'isFavorite', 'extraNotes'],
+    fields: [
+      'name',
+      'description',
+      'intExt',
+      'climate',
+      'culture',
+      'politics',
+      'isFavorite',
+      'extraNotes',
+    ],
   },
   advancedSearch: [
     searchField('name', 'field_name'),

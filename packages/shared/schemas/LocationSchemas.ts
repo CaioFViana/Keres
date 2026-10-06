@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { LOCATION_INT_EXT } from '../entities/Location';
+
+export const LocationIntExtSchema = z.enum(LOCATION_INT_EXT);
 
 export const LocationSchema = z.object({
   id: z.string(),
@@ -8,6 +11,8 @@ export const LocationSchema = z.object({
   climate: z.string().nullable(),
   culture: z.string().nullable(),
   politics: z.string().nullable(),
+  // Optional with a default so rows and operations from before it still parse.
+  intExt: LocationIntExtSchema.nullable().default(null),
   isFavorite: z.boolean(),
   extraNotes: z.string().nullable(),
   createdAt: z.coerce.date(),

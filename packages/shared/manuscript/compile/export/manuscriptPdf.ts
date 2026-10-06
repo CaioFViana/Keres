@@ -17,6 +17,7 @@ import {
 } from './manuscriptPdfLayout';
 import { loadPdfFontPack, type PdfFontMatrices, type PdfFontPack } from './manuscriptPdfFonts';
 import { assertWithinManuscriptLimit } from '../manuscriptSize';
+import { planPdfImages } from './manuscriptPdfImages';
 
 export type { ManuscriptPdfLabels } from './manuscriptPdfLayout';
 
@@ -248,6 +249,28 @@ function trim(value: number): string {
   return String(Math.round(value * 100) / 100);
 }
 
+/** A page's picture: drawn in its frame, cropped to it when it fills the frame. */
+function drawPicture(
+  run: LineRun,
+  y: number,
+  writer: PdfWriter,
+  geometry: PdfGeometry,
+  imageIndex: number,
+): void {
+  const picture = run.image!;
+  const left = geometry.margin + (geometry.contentWidth - picture.frameWidth) / 2;
+  const bottom = y - picture.frameHeight;
+  writer.ascii('q ');
+  if (picture.clip) {
+    writer.ascii(
+      `${trim(left)} ${trim(bottom)} ${trim(picture.frameWidth)} ${trim(picture.frameHeight)} re W n `,
+    );
+  }
+  writer.ascii(
+    `${trim(picture.width)} 0 0 ${trim(picture.height)} ${trim(left + picture.dx)} ${trim(bottom + picture.dy)} cm /Im${imageIndex} Do Q\n`,
+  );
+}
+
 type TocAnnot = { pageIndex: number; rect: number[]; destPageIndex: number; destY: number };
 
 /** One layout of the whole book: the bytes of every page, and where every heading landed. */
@@ -255,6 +278,10 @@ type LaidPass = {
   streams: Uint8Array[];
   annots: TocAnnot[];
   anchors: Map<string, PdfAnchor>;
+  /** The pictures drawn, by the number their `/Im` name carries (1-based, first use first). */
+  imageOrder: Map<string, number>;
+  /** For each page, the numbers of the pictures it draws. */
+  pageImages: number[][];
 };
 
 /**
@@ -274,6 +301,8 @@ function layoutPass(
   emit = true,
 ): LaidPass {
   const streams: Uint8Array[] = [];
+  const imageOrder = new Map<string, number>();
+  const pageImages: number[][] = [];
   const links: { pageIndex: number; rect: number[]; target: string }[] = [];
   const { anchors: found } = paginateStream(
     iterateRuns(manuscript, labels, anchors, options, measure),
@@ -297,7 +326,17 @@ function layoutPass(
         return;
       }
       const content = new PdfWriter();
+      const drawn = new Set<number>();
       for (const { run, y } of page) {
+        if (run.image) {
+          if (!imageOrder.has(run.image.mediaId)) {
+            imageOrder.set(run.image.mediaId, imageOrder.size + 1);
+          }
+          const index = imageOrder.get(run.image.mediaId)!;
+          drawn.add(index);
+          drawPicture(run, y, content, geometry, index);
+          continue;
+        }
         drawLine(run, y, content, geometry, measure, pack);
         if (run.linkTarget) {
           links.push({
@@ -343,6 +382,7 @@ function layoutPass(
         pack,
       );
       streams.push(content.snapshot());
+      pageImages.push([...drawn]);
     },
   );
   const annots: TocAnnot[] = [];
@@ -357,7 +397,7 @@ function layoutPass(
       });
     }
   }
-  return { streams, annots, anchors: found };
+  return { streams, annots, anchors: found, imageOrder, pageImages };
 }
 
 /**
@@ -389,7 +429,7 @@ export function buildManuscriptPdf(
     }
     anchors = laid.anchors;
   }
-  const { streams, annots } = laid!;
+  const { streams, annots, imageOrder, pageImages } = laid!;
   laid = null;
   const pageCount = streams.length;
   // Page content streams ride deflated (`/Filter /FlateDecode`): the same
@@ -428,6 +468,8 @@ export function buildManuscriptPdf(
     annotIdsByPage[annot.pageIndex].push(id);
   });
   const fontBase = firstPageId + 2 * pageCount;
+  // The pictures follow the four faces and the info dictionary.
+  const imagePlan = planPdfImages(manuscript.images, imageOrder, fontBase + FONT_KEYS.length + 1);
   compressed.forEach((page, index) => {
     const contentId = firstPageId + 2 * index + 1;
     const annotRefs = annotIdsByPage[index].map((id) => `${id} 0 R`).join(' ');
@@ -437,7 +479,7 @@ export function buildManuscriptPdf(
         `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${geometry.pageWidth} ${geometry.pageHeight}]` +
           ` /Contents ${contentId} 0 R${annotsEntry} /Resources << /Font <<` +
           ` /F1 ${fontBase} 0 R /F2 ${fontBase + 1} 0 R` +
-          ` /F3 ${fontBase + 2} 0 R /F4 ${fontBase + 3} 0 R >> >> >>\n`,
+          ` /F3 ${fontBase + 2} 0 R /F4 ${fontBase + 3} 0 R >>${imagePlan.resources(pageImages[index])} >> >>\n`,
       );
     });
     writer.object((body) => {
@@ -459,6 +501,7 @@ export function buildManuscriptPdf(
     body.literal('Keres');
     body.ascii(' >>\n');
   });
+  imagePlan.write(writer);
   return writer.finish(catalogId, infoId);
 }
 
@@ -501,7 +544,7 @@ export async function buildManuscriptPdfAsync(
   }
   const faces = await pack.finish();
   const laid = layoutPass(manuscript, labels, anchors, options, geometry, measure, pack, true);
-  const { streams, annots } = laid;
+  const { streams, annots, imageOrder, pageImages } = laid;
   // TEMP-DIAG (corrupted-PDF investigation): structural dump of what the
   // writer is about to embed. Removed after diagnosis; never breaks export.
   try {
@@ -562,6 +605,8 @@ export async function buildManuscriptPdfAsync(
   const fontResources = faces
     .map((_, faceIndex) => ` /F${faceIndex + 1} ${fontBase + faceIndex * 5} 0 R`)
     .join('');
+  // The pictures follow the faces and the info dictionary.
+  const imagePlan = planPdfImages(manuscript.images, imageOrder, fontBase + faces.length * 5 + 1);
   compressed.forEach((page, index) => {
     const contentId = firstPageId + 2 * index + 1;
     const annotRefs = annotIdsByPage[index].map((id) => `${id} 0 R`).join(' ');
@@ -569,7 +614,7 @@ export async function buildManuscriptPdfAsync(
     writer.object((body) => {
       body.ascii(
         `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${geometry.pageWidth} ${geometry.pageHeight}]` +
-          ` /Contents ${contentId} 0 R${annotsEntry} /Resources << /Font <<${fontResources} >> >> >>\n`,
+          ` /Contents ${contentId} 0 R${annotsEntry} /Resources << /Font <<${fontResources} >>${imagePlan.resources(pageImages[index])} >> >>\n`,
       );
     });
     writer.object((body) => {
@@ -625,5 +670,6 @@ export async function buildManuscriptPdfAsync(
     body.literal('Keres');
     body.ascii(' >>\n');
   });
+  imagePlan.write(writer);
   return writer.finish(catalogId, infoId);
 }

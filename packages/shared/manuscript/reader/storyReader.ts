@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import type { CompiledBlock, CompiledManuscript } from '../compile/export/manuscriptCompiler';
+import type { CompiledManuscript } from '../compile/export/manuscriptCompiler';
+import { hasPages, PAGE_CSS, pageFigureMarkup } from '../compile/export/manuscriptPageFigure';
+import { bytesToBase64 } from '../../utils/base64';
 import {
   buildManuscriptHtml,
   escapeHtml,
@@ -161,7 +163,8 @@ export type ReaderStoryData = {
  * scene heading. What comes before the first heading is the opening page of a story with several
  * starts (its prompt and one "begin" choice per start).
  */
-function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
+function scenesOfBlocks(manuscript: CompiledManuscript, beginLabel: string) {
+  const { blocks } = manuscript;
   const scenes: ReaderStoryData['scenes'] = {};
   const order: string[] = [];
   const prompt: string[] = [];
@@ -192,6 +195,16 @@ function scenesOfBlocks(blocks: CompiledBlock[], beginLabel: string) {
       closeList();
       if (current) current.html += `<p>${spansToHtml(block.spans)}</p>`;
       else prompt.push(block.spans.map((span) => span.text).join(''));
+    } else if (block.kind === 'page') {
+      closeList();
+      // The reader is one file with no requests: a page's picture rides inside it.
+      if (current) {
+        current.html += pageFigureMarkup(
+          block,
+          manuscript,
+          (_mediaId, image) => `data:${image.mimeType};base64,${bytesToBase64(image.bytes)}`,
+        );
+      }
     } else if (block.kind === 'bullet' || block.kind === 'ordered') {
       if (current) pushListItem(block.kind === 'bullet' ? 'ul' : 'ol', spansToHtml(block.spans));
       else prompt.push(`- ${block.spans.map((span) => span.text).join('')}`);
@@ -461,11 +474,12 @@ export function compileStoryReader(
   const language = manuscriptOptions.language ?? 'en';
   // The reader has its own size control, so the writer's point size does not apply.
   const renderOptions = { ...renderOptionsOf(manuscriptOptions.style), fontSize: undefined };
-  const css = `${READER_CSS}\n${typographyCss(renderOptions, false)}`;
+  const pagesCss = hasPages(presented.blocks) ? `\n${PAGE_CSS}` : '';
+  const css = `${READER_CSS}\n${typographyCss(renderOptions, false)}${pagesCss}`;
 
   let html: string;
   if (input.storyType === 'branching') {
-    const { scenes, start } = scenesOfBlocks(presented.blocks, labels.beginAt);
+    const { scenes, start } = scenesOfBlocks(presented, labels.beginAt);
     const data: ReaderStoryData = {
       title: presented.title,
       author: manuscriptOptions.author ?? null,

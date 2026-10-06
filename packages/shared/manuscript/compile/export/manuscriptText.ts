@@ -151,6 +151,13 @@ export function buildManuscriptMarkdown(
         // A bare `#` would read as a heading; asterisks and dashes read as a rule, as meant.
         lines.push(block.text.replace(/^#/, '\\#'), '');
         break;
+      case 'page':
+        // Text has no pictures: the caption stands for the page, and the page's text follows it.
+        lines.push(`**${block.label}**`, '');
+        if (!block.image || !manuscript.images?.[block.image.mediaId]) {
+          lines.push(`*${block.placeholder}*`, '');
+        }
+        break;
       case 'choice': {
         const lead = `- ${block.text}`;
         lines.push(
@@ -207,6 +214,12 @@ export function buildManuscriptText(
         break;
       case 'scene-break':
         lines.push(block.text, '');
+        break;
+      case 'page':
+        lines.push(block.label, '');
+        if (!block.image || !manuscript.images?.[block.image.mediaId]) {
+          lines.push(`(${block.placeholder})`, '');
+        }
         break;
       case 'choice': {
         const lead = `* ${block.text}`;

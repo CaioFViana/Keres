@@ -6,6 +6,9 @@ import {
   type ManuscriptRenderOptions,
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
+import type { ManuscriptImage } from '../../images/imageInfo';
+import { pdfImageOf, type PdfImageData } from '../../images/pdfImage';
+import { DEFAULT_PAGE_ASPECT } from './manuscriptPageFigure';
 import { TIMES_WIDTHS, type TimesFontKey } from './timesWidths';
 
 /**
@@ -171,7 +174,83 @@ export type LineRun = {
   linkTarget: string | null;
   keepWithNext: boolean;
   forcePageBreak: boolean;
+  /** A page's picture: this run draws it instead of words, and `leading` is the height of its frame. */
+  image?: PdfPagePicture;
 };
+
+/**
+ * Where a picture goes inside its run: the frame (full text width, `leading` tall) and the picture within
+ * it, in points from the frame's bottom-left. `clip` crops what a `cover` picture spills outside the frame.
+ */
+export type PdfPagePicture = {
+  mediaId: string;
+  frameWidth: number;
+  frameHeight: number;
+  dx: number;
+  dy: number;
+  width: number;
+  height: number;
+  clip: boolean;
+};
+
+/**
+ * A picture's PDF form, worked out once per picture however many pages and passes use it: the layout
+ * asks for it to know whether the picture can be drawn, the serializer to write it. Keyed by the
+ * manuscript's own picture table, so it lives exactly as long as the build that holds it.
+ */
+const PDF_IMAGES = new WeakMap<object, Map<string, PdfImageData | null>>();
+
+export function pdfImageFor(
+  images: Record<string, ManuscriptImage>,
+  mediaId: string,
+): PdfImageData | null {
+  let cache = PDF_IMAGES.get(images);
+  if (!cache) {
+    cache = new Map();
+    PDF_IMAGES.set(images, cache);
+  }
+  if (!cache.has(mediaId)) {
+    const image = images[mediaId];
+    cache.set(mediaId, image ? pdfImageOf(image) : null);
+  }
+  return cache.get(mediaId) ?? null;
+}
+
+/**
+ * The frame a page's picture is placed in. It is as wide as the text and as tall as the frame's shape
+ * makes it, shrunk (still in shape) so that, caption and all, it always fits a page of its own.
+ */
+export function pagePicturePlacement(
+  image: { width: number; height: number },
+  fit: 'contain' | 'cover',
+  aspect: number,
+  geometry: Pick<PdfGeometry, 'contentWidth' | 'topY' | 'bottomY'>,
+  mediaId: string,
+): PdfPagePicture {
+  const room = geometry.topY - geometry.bottomY - 48;
+  let frameWidth = geometry.contentWidth;
+  let frameHeight = frameWidth / aspect;
+  if (frameHeight > room) {
+    frameHeight = room;
+    frameWidth = frameHeight * aspect;
+  }
+  const scale =
+    fit === 'cover'
+      ? Math.max(frameWidth / image.width, frameHeight / image.height)
+      : Math.min(frameWidth / image.width, frameHeight / image.height);
+  const width = image.width * scale;
+  const height = image.height * scale;
+  return {
+    mediaId,
+    frameWidth,
+    frameHeight,
+    dx: (frameWidth - width) / 2,
+    dy: (frameHeight - height) / 2,
+    width,
+    height,
+    clip: fit === 'cover',
+  };
+}
 
 /**
  * Zero-width joiners are not `\s`, so the word splitter would keep them and
@@ -375,7 +454,7 @@ export function* iterateRuns(
   let opensNewPage = false;
   const drain = function* (): Generator<LineRun, void, undefined> {
     for (const run of runs) {
-      if (run.words.length === 0) continue;
+      if (run.words.length === 0 && !run.image) continue;
       if (opensNewPage) {
         run.forcePageBreak = true;
         opensNewPage = false;
@@ -481,6 +560,47 @@ export function* iterateRuns(
             });
           });
           firstLine = false;
+        });
+        break;
+      }
+      case 'page': {
+        pushHeading(block.label, 'times-bold', 10, 13, {
+          spaceBefore: 8,
+          spaceAfter: 3,
+          gray: GRAY,
+          keepWithNext: true,
+        });
+        const image = block.image ? manuscript.images?.[block.image.mediaId] : undefined;
+        // A picture this build cannot draw (an interlaced PNG, a damaged file) is a missing one.
+        if (!block.image || !image || !pdfImageFor(manuscript.images ?? {}, block.image.mediaId)) {
+          pushHeading(block.placeholder, 'times-italic', BODY_SIZE, BODY_LEADING, {
+            spaceAfter: 8,
+            gray: GRAY,
+            keepWithNext: false,
+          });
+          break;
+        }
+        const picture = pagePicturePlacement(
+          image,
+          block.image.fit,
+          manuscript.pageAspect ?? DEFAULT_PAGE_ASPECT,
+          geometry,
+          block.image.mediaId,
+        );
+        runs.push({
+          words: [],
+          size: 0,
+          leading: picture.frameHeight,
+          indent: 0,
+          spaceBefore: 0,
+          spaceAfter: 8,
+          centered: false,
+          gray: INK,
+          bookmarkId: null,
+          linkTarget: null,
+          keepWithNext: false,
+          forcePageBreak: false,
+          image: picture,
         });
         break;
       }

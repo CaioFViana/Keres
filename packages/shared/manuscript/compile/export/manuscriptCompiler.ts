@@ -8,6 +8,7 @@ import {
   type ManuscriptScene,
   type ManuscriptSection,
 } from '../manuscriptSections';
+import type { ManuscriptImage } from '../../images/imageInfo';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
 import type { BlockPresenter } from '../manuscriptStyle';
 
@@ -34,6 +35,9 @@ export type CompiledSpan = {
   strikethrough: boolean;
 };
 
+/** A page's picture as it is placed: which one, and how it sits in its frame. */
+export type CompiledPageImage = { mediaId: string; fit: 'contain' | 'cover' };
+
 export type CompiledBlock =
   | { kind: 'title'; text: string }
   | { kind: 'subtitle'; text: string }
@@ -54,6 +58,17 @@ export type CompiledBlock =
   | { kind: 'ordered'; index: number; spans: CompiledSpan[] }
   /** Between two scenes of one chapter, when a separator is asked for: drawn centered. */
   | { kind: 'scene-break'; text: string }
+  /**
+   * One page of a comic or frame of a storyboard: its caption and its picture. `image` is `null` when
+   * the picture is gone, and `placeholder` says so in its place. The page's text follows as paragraphs.
+   */
+  | {
+      kind: 'page';
+      id: string;
+      label: string;
+      image: CompiledPageImage | null;
+      placeholder: string;
+    }
   | {
       kind: 'choice';
       id: string;
@@ -68,7 +83,14 @@ export type CompiledBlock =
       effects?: string[];
     };
 
-export type CompiledManuscript = { title: string; blocks: CompiledBlock[] };
+export type CompiledManuscript = {
+  title: string;
+  blocks: CompiledBlock[];
+  /** The pictures the `page` blocks point at, by `mediaId`. A page whose picture is absent here is a placeholder. */
+  images?: Record<string, ManuscriptImage>;
+  /** Width over height of the frame pictures are shown in; absent is the comic-book page's. */
+  pageAspect?: number;
+};
 
 /** Word bookmark names start with a letter, hold no spaces and stay under 40 chars. */
 export function bookmarkIdForScene(sceneId: string): string {
@@ -119,6 +141,8 @@ type SectionsInput = {
    * choice into a scene that is not in the export ends there, saying so with `endLabel`.
    */
   gamebook?: { showNames: boolean; endLabel: string };
+  /** What a page is called and what stands in for a picture that is gone. */
+  pageWords?: PageWords;
   /**
    * Presents each block at creation (the pipeline's fused path): the parsed
    * inlines never survive beside a second full copy of the spans. Absent, blocks
@@ -126,6 +150,19 @@ type SectionsInput = {
    */
   present?: BlockPresenter;
 };
+
+/** The words a page block carries: its caption ("Page") and the stand-in for a missing picture. */
+export type PageWords = { caption: string; removed: string };
+
+const DEFAULT_PAGE_WORDS: PageWords = { caption: 'Page', removed: 'Image removed' };
+
+const plainSpan = (text: string): CompiledSpan => ({
+  text,
+  bold: false,
+  italic: false,
+  underline: false,
+  strikethrough: false,
+});
 
 function sectionsToBlocks({
   sections,
@@ -136,8 +173,11 @@ function sectionsToBlocks({
   resetSceneNumbersPerChapter,
   sceneSeparator,
   gamebook,
+  pageWords = DEFAULT_PAGE_WORDS,
   present,
 }: SectionsInput): CompiledBlock[] {
+  // Pages are numbered through the whole manuscript, as the pages of an issue are.
+  let pageNumber = 0;
   // First occurrence wins: a looping route bookmarks the scene once, and every choice
   // points at that bookmark.
   const bookmarkFor = new Map<string, string>();
@@ -209,6 +249,20 @@ function sectionsToBlocks({
         else if (parsed.kind === 'ordered')
           emit({ kind: 'ordered', index: parsed.index, spans: toSpans(parsed) });
         else emit({ kind: 'paragraph', spans: toSpans(parsed) });
+      }
+    }
+    for (const page of section.scene.pages ?? []) {
+      pageNumber += 1;
+      emit({
+        kind: 'page',
+        id: page.id,
+        label: `${pageWords.caption} ${pageNumber}`,
+        image: page.mediaId ? { mediaId: page.mediaId, fit: page.fit } : null,
+        placeholder: pageWords.removed,
+      });
+      // What goes with the page, a line at a time: a script's lines are not one paragraph.
+      for (const line of (page.text ?? '').split(/\r?\n/)) {
+        if (line.trim() !== '') emit({ kind: 'paragraph', spans: [plainSpan(line.trim())] });
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {
@@ -296,6 +350,7 @@ export type CompileLinearOptions = {
   arcId?: string | null;
   /** Text drawn between two scenes of a chapter (`#`, `* * *`...). Defaults to none. */
   sceneSeparator?: string | null;
+  pageWords?: PageWords;
   /**
    * Presents each block at creation (the pipeline's fused path). Absent, blocks
    * come out raw exactly as before.
@@ -328,6 +383,7 @@ export function compileLinearManuscript({
   resetSceneNumbersPerChapter = false,
   arcId = null,
   sceneSeparator = null,
+  pageWords,
   present,
 }: CompileLinearOptions): CompiledManuscript {
   const chaptersById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
@@ -347,6 +403,7 @@ export function compileLinearManuscript({
         includeSceneNames,
         resetSceneNumbersPerChapter,
         sceneSeparator,
+        pageWords,
         present,
       }),
     ],
@@ -372,6 +429,7 @@ export type CompileGamebookOptions = {
   startLabels: { choose: string; begin: string };
   /** Text drawn between two consecutive scenes. Defaults to none. */
   sceneSeparator?: string | null;
+  pageWords?: PageWords;
   /**
    * Presents each block at creation (the pipeline's fused path). Absent, blocks
    * come out raw exactly as before.
@@ -393,6 +451,7 @@ export function compileGamebookManuscript({
   endLabel,
   startLabels,
   sceneSeparator = null,
+  pageWords,
   present,
 }: CompileGamebookOptions): CompiledManuscript {
   const sections = gamebookManuscriptSections(scenes, choices, { order, seed });
@@ -444,6 +503,7 @@ export function compileGamebookManuscript({
         resetSceneNumbersPerChapter: false,
         sceneSeparator,
         gamebook: { showNames: showSceneNames, endLabel },
+        pageWords,
         present,
       }),
     ],

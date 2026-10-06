@@ -52,6 +52,9 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
       endOfExcerpt: 'end of this excerpt',
       chooseStart: 'Choose where to begin',
       beginAt: 'Begin',
+      pageLabel: 'Page',
+      frameLabel: 'Frame',
+      mediaRemoved: 'Image removed',
     });
   });
 });
@@ -64,6 +67,7 @@ describe('ManuscriptOptionsSchema', () => {
       includeLooseScenes: false,
       includeSceneNames: false,
       includeToc: false,
+      pageNoun: 'page',
       resetSceneNumbers: false,
       sceneOrder: 'discovery',
     });

@@ -14,6 +14,7 @@ import {
   type SizedFormat,
 } from '../../../manuscript/compile/manuscriptSize';
 import { compileStoryReader } from '../../../manuscript/reader/storyReader';
+import { encodePng } from '../images/imageFixtures';
 
 describe('utf8ByteLength', () => {
   it('counts the bytes of ascii, accents, other scripts and emoji like the encoder does', () => {
@@ -118,6 +119,55 @@ describe('estimateManuscriptBytes', () => {
     expect(
       estimateManuscriptBytes({ format: 'reader' as SizedFormat, textBytes }),
     ).toBeGreaterThanOrEqual(reader);
+  });
+
+  it('is never lower than the real file with page pictures in it, even ones that do not compress', async () => {
+    let seed = 99;
+    const noise = (length: number) =>
+      Array.from({ length }, () => {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return (seed >> 8) & 255;
+      });
+    const width = 120;
+    const height = 160;
+    const rows = Array.from({ length: height }, () => noise(width * 4));
+    const png = {
+      bytes: encodePng({ width, height, colorType: 6, rows }),
+      mimeType: 'image/png' as const,
+      width,
+      height,
+    };
+    const pages = Array.from({ length: 4 }, (_, index) => ({
+      id: `p${index}`,
+      mediaId: 'noise',
+      fit: 'contain' as const,
+      text: 'A caption.',
+    }));
+    const input = {
+      storyTitle: 'Pictures',
+      storyType: 'linear' as const,
+      chapters: [{ id: 'c', name: 'One', index: 1, type: 'chapter' as const, arcId: null }],
+      scenes: [
+        { id: 's', chapterId: 'c', name: 'S', index: 1, body: null, isDeleted: false, pages },
+      ],
+      choices: [],
+      media: { noise: png },
+    };
+
+    for (const format of ['docx', 'pdf', 'epub', 'html'] as const) {
+      const compiled = await compileStoryManuscript(input, { format });
+      // The same picture is embedded once however many pages show it, in every format but a single HTML.
+      const copies = format === 'html' ? pages.length : 1;
+      const estimate = estimateManuscriptBytes({
+        format,
+        textBytes: 200,
+        imageBytes: Array.from({ length: copies }, () => png.bytes.length),
+      });
+      expect(
+        estimate,
+        `${format}: estimate ${estimate} vs real ${compiled.bytes.length}`,
+      ).toBeGreaterThanOrEqual(compiled.bytes.length);
+    }
   });
 });
 

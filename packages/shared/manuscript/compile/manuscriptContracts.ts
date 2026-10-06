@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PAGE_FORMATS } from './pageFormat';
 import { ManuscriptStyleSchema } from './manuscriptStyle';
 
 /** Manuscript renditions the pipeline produces - every one in pure TypeScript, on any host. */
@@ -57,6 +58,12 @@ export const ManuscriptLabelsSchema = z.object({
   chooseStart: labelSchema,
   /** ...and each start is offered as this, followed by its scene. */
   beginAt: labelSchema,
+  /** A page's caption is this and its number: "Page 3". */
+  pageLabel: labelSchema,
+  /** ...in a storyboard it is a frame: "Frame 3". */
+  frameLabel: labelSchema,
+  /** Said in place of a page's picture when the picture is gone. */
+  mediaRemoved: labelSchema,
 });
 export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 
@@ -69,6 +76,9 @@ export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   endOfExcerpt: 'end of this excerpt',
   chooseStart: 'Choose where to begin',
   beginAt: 'Begin',
+  pageLabel: 'Page',
+  frameLabel: 'Frame',
+  mediaRemoved: 'Image removed',
 };
 
 /** What only a screenplay needs: the paper it is paged on and what its title page and headings say. */
@@ -120,6 +130,10 @@ export const ManuscriptOptionsSchema = z.object({
   identifier: z.string().max(200).optional(),
   /** Book metadata (EPUB): BCP 47 language of the text, e.g. `pt-BR`. */
   language: z.string().max(35).optional(),
+  /** The frame a page's picture is shown in (`pageFormat.ts`); absent is the comic-book page's. */
+  pageFormat: z.enum(PAGE_FORMATS).optional(),
+  /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */
+  pageNoun: z.enum(['page', 'frame']).default('page'),
   /** Only for the `fountain` and `screenplay-pdf` formats. */
   screenplay: ScreenplayOptionsSchema.optional(),
 });

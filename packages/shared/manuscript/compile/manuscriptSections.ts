@@ -12,6 +12,15 @@ export interface ManuscriptChapter {
   arcId?: string | null;
 }
 
+/** One page (or frame) of a scene: a picture and the text that goes with it. */
+export interface ManuscriptPage {
+  id: string;
+  /** Key into the manuscript's pictures; `null` when the page's image is gone. */
+  mediaId: string | null;
+  fit: 'contain' | 'cover';
+  text: string | null;
+}
+
 /** The minimum the pipeline needs to know about a scene. */
 export interface ManuscriptScene {
   id: string;
@@ -27,6 +36,8 @@ export interface ManuscriptScene {
   /** The place of the scene, for a screenplay's scene heading. Absent when the caller has none. */
   locationName?: string | null;
   locationIntExt?: LocationIntExt | null;
+  /** The scene's pages, in order: a comic or a storyboard. Absent when the caller has none. */
+  pages?: ManuscriptPage[];
 }
 
 /** The minimum the pipeline needs to know about a route step. */

@@ -5,7 +5,9 @@ import {
   type CompiledManuscript,
   type ManuscriptChoice,
 } from './export/manuscriptCompiler';
+import type { ManuscriptImage } from '../images/imageInfo';
 import type { ManuscriptLabels, ManuscriptOptions } from './manuscriptContracts';
+import { PAGE_FORMAT_ASPECT } from './pageFormat';
 import { sceneMatchesArc } from './manuscriptSections';
 import type { ManuscriptChapter, ManuscriptScene } from './manuscriptSections';
 import {
@@ -29,6 +31,8 @@ export type CompileStoryManuscriptInput = {
   choices: ManuscriptChoice[];
   /** The story's arcs: an arc export is titled after its arc, as on the device. */
   arcs?: { id: string; title: string }[];
+  /** The pictures the scenes' pages point at, by the `mediaId` of the page. */
+  media?: Record<string, ManuscriptImage>;
 };
 
 /**
@@ -50,6 +54,10 @@ export function presentedManuscriptOf(
   // title fill) still runs over the finished array.
   const language = parsed.language?.toLowerCase().startsWith('pt') ? 'pt' : 'en';
   const present = blockPresenterFor(parsed.style, language);
+  const pageWords = {
+    caption: parsed.pageNoun === 'frame' ? labels.frameLabel : labels.pageLabel,
+    removed: labels.mediaRemoved,
+  };
   let blocks: CompiledBlock[];
   if (input.storyType === 'branching') {
     // The whole book, in the order asked. An arc keeps only its own scenes (scenes inherit their
@@ -65,6 +73,7 @@ export function presentedManuscriptOf(
       endLabel: labels.endOfExcerpt,
       startLabels: { choose: labels.chooseStart, begin: labels.beginAt },
       sceneSeparator: sceneSeparatorText(parsed.style),
+      pageWords,
       present,
     }).blocks;
   } else {
@@ -79,8 +88,16 @@ export function presentedManuscriptOf(
       includeSceneNames: parsed.includeSceneNames,
       resetSceneNumbersPerChapter: parsed.resetSceneNumbers,
       sceneSeparator: sceneSeparatorText(parsed.style),
+      pageWords,
       present,
     }).blocks;
   }
-  return finishPresentedManuscript(title, blocks, parsed.style);
+  const finished = finishPresentedManuscript(title, blocks, parsed.style);
+  return input.media
+    ? {
+        ...finished,
+        images: input.media,
+        pageAspect: PAGE_FORMAT_ASPECT[parsed.pageFormat ?? 'comic-us'],
+      }
+    : finished;
 }

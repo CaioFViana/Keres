@@ -4,6 +4,7 @@ import {
   Document,
   Footer,
   HeadingLevel,
+  ImageRun,
   InternalHyperlink,
   LeaderType,
   Packer,
@@ -23,6 +24,7 @@ import {
   type ManuscriptRenderOptions,
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
+import { DEFAULT_PAGE_ASPECT, pageImageOf } from './manuscriptPageFigure';
 
 export type ManuscriptDocxLabels = {
   /** Prefix of a choice reference, e.g. "Go to page" - the number itself is a PAGEREF field. */
@@ -36,6 +38,9 @@ const FIRST_LINE_INDENT_TWIPS = 720;
 const PARAGRAPH_SPACING_AFTER = 120;
 /** Block paragraphs: no indent, a full line of space between them. */
 const BLOCK_SPACING_AFTER = 240;
+/** The width of a picture on a page: the text width of A4 with 1" margins, in pixels (96 per inch). */
+const PAGE_IMAGE_WIDTH_PX = 600;
+
 /** Index page numbers flush right: A4 (11906 twips) minus 1" margins on both sides. */
 const TOC_TAB_TWIPS = 9026;
 
@@ -244,6 +249,47 @@ export function buildManuscriptDocument(
             indent: { left: 360 },
             spacing: { after: PARAGRAPH_SPACING_AFTER },
             children: [new TextRun(`${orderedNumber}.  `), ...spansToRuns(block.spans)],
+          }),
+        );
+        break;
+      }
+      case 'page': {
+        children.push(
+          new Paragraph({
+            keepNext: true,
+            spacing: { before: 240, after: 80 },
+            children: [new TextRun({ text: block.label, bold: true })],
+          }),
+        );
+        const image = pageImageOf(block, manuscript);
+        if (!block.image || !image) {
+          children.push(
+            new Paragraph({
+              spacing: { after: 240 },
+              children: [new TextRun({ text: block.placeholder, italics: true })],
+            }),
+          );
+          break;
+        }
+        // The picture sits whole in the frame; Word has no crop to give, so a page that fills its
+        // frame is shown whole here too.
+        const frameHeight = PAGE_IMAGE_WIDTH_PX / (manuscript.pageAspect ?? DEFAULT_PAGE_ASPECT);
+        const scale = Math.min(PAGE_IMAGE_WIDTH_PX / image.width, frameHeight / image.height);
+        children.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 240 },
+            children: [
+              new ImageRun({
+                type: image.mimeType === 'image/jpeg' ? 'jpg' : 'png',
+                data: image.bytes,
+                transformation: {
+                  width: Math.max(1, Math.round(image.width * scale)),
+                  height: Math.max(1, Math.round(image.height * scale)),
+                },
+                altText: { name: block.label, title: block.label, description: block.label },
+              }),
+            ],
           }),
         );
         break;

@@ -8,6 +8,7 @@ import {
   type ManuscriptTocEntry,
 } from './manuscriptCompiler';
 import { escapeHtml, spansToHtml, typographyCss } from './manuscriptHtml';
+import { hasPages, PAGE_CSS, pageFigureMarkup, usedPageImages } from './manuscriptPageFigure';
 
 /**
  * The compiled manuscript as an EPUB 3 package, assembled by hand over JSZip: the content is simple
@@ -133,12 +134,28 @@ function tocList(entries: ManuscriptTocEntry[], href: (bookmarkId: string) => st
   return `<ol>\n${items.join('\n')}\n</ol>`;
 }
 
+/** Where a picture lives in the package, by the media it is (one file per picture, however often it is used). */
+function imagePathOf(mediaId: string, mimeType: string, order: Map<string, number>): string {
+  if (!order.has(mediaId)) order.set(mediaId, order.size + 1);
+  return `images/page-${order.get(mediaId)}.${mimeType === 'image/jpeg' ? 'jpg' : 'png'}`;
+}
+
+type PageContext = {
+  manuscript: Pick<CompiledManuscript, 'images' | 'pageAspect'>;
+  order: Map<string, number>;
+};
+
 function blockXhtml(
   block: CompiledBlock,
   labels: ManuscriptEpubLabels,
   href: (bookmarkId: string) => string,
+  pages: PageContext,
 ): string {
   switch (block.kind) {
+    case 'page':
+      return pageFigureMarkup(block, pages.manuscript, (mediaId, image) =>
+        imagePathOf(mediaId, image.mimeType, pages.order),
+      );
     case 'title':
       return `<h1 class="title">${escapeHtml(block.text)}</h1>`;
     case 'subtitle':
@@ -181,6 +198,7 @@ function blocksXhtml(
   blocks: CompiledBlock[],
   labels: ManuscriptEpubLabels,
   href: (bookmarkId: string) => string,
+  pages: PageContext,
 ): string[] {
   const parts: string[] = [];
   let openList: 'ul' | 'ol' | null = null;
@@ -202,7 +220,7 @@ function blocksXhtml(
       continue;
     }
     closeList();
-    parts.push(blockXhtml(block, labels, href));
+    parts.push(blockXhtml(block, labels, href, pages));
   }
   closeList();
   return parts;
@@ -234,12 +252,14 @@ export function buildManuscriptEpubEntries(
     options,
     manuscript.blocks.some((block) => block.kind === 'scene-break'),
   );
-  const stylesheet = extraCss ? `${STYLESHEET}${extraCss}\n` : STYLESHEET;
+  const pageCss = hasPages(manuscript.blocks) ? `${PAGE_CSS}\n` : '';
+  const stylesheet = `${STYLESHEET}${pageCss}${extraCss ? `${extraCss}\n` : ''}`;
+  const pageContext: PageContext = { manuscript, order: new Map() };
 
   const texts = files
     .filter((file) => file.blocks.length > 0 || file === files[0])
     .map((file, index) => {
-      const parts = blocksXhtml(file.blocks, labels, href);
+      const parts = blocksXhtml(file.blocks, labels, href, pageContext);
       // The in-book index, when asked for, follows the title block like in every other format.
       if (index === 0 && options.includeToc && entries.length > 0) {
         parts.push(
@@ -271,6 +291,12 @@ export function buildManuscriptEpubEntries(
         `<item id="text${index}" href="${text.name}" media-type="application/xhtml+xml"/>`,
     ),
   ];
+  for (const { mediaId, image } of usedPageImages(manuscript)) {
+    const path = imagePathOf(mediaId, image.mimeType, pageContext.order);
+    manifest.push(
+      `<item id="img${pageContext.order.get(mediaId)}" href="${path}" media-type="${image.mimeType}"/>`,
+    );
+  }
   const spine = texts.map((_, index) => `<itemref idref="text${index}"/>`);
   const creator = metadata.author?.trim()
     ? `\n    <dc:creator>${escapeHtml(metadata.author.trim())}</dc:creator>`
@@ -316,6 +342,15 @@ export async function buildManuscriptEpubBytes(
     zip.file(path, content, {
       date,
       compression: path === 'mimetype' ? 'STORE' : 'DEFLATE',
+    });
+  }
+  // The pictures of the pages: each once, at the path the pages point at (first use, in book order).
+  const order = new Map<string, number>();
+  for (const { mediaId, image } of usedPageImages(manuscript)) {
+    zip.file(`OEBPS/${imagePathOf(mediaId, image.mimeType, order)}`, image.bytes, {
+      date,
+      // PNG and JPEG are already compressed.
+      compression: 'STORE',
     });
   }
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });

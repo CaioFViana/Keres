@@ -5,6 +5,8 @@ import {
   type CompiledSpan,
   type ManuscriptRenderOptions,
 } from './manuscriptCompiler';
+import { bytesToBase64 } from '../../../utils/base64';
+import { hasPages, PAGE_CSS, pageFigureMarkup } from './manuscriptPageFigure';
 
 export type ManuscriptHtmlLabels = {
   /** Name-based cross-reference, e.g. "See" - the PDF renderer reports no page mapping. */
@@ -91,6 +93,15 @@ export function buildManuscriptHtml(
     );
   };
   let tocEmitted = false;
+  // A picture used twice is encoded once.
+  const dataUris = new Map<string, string>();
+  const dataUriOf = (mediaId: string, image: { mimeType: string; bytes: Uint8Array }) => {
+    const known = dataUris.get(mediaId);
+    if (known) return known;
+    const uri = `data:${image.mimeType};base64,${bytesToBase64(image.bytes)}`;
+    dataUris.set(mediaId, uri);
+    return uri;
+  };
   // Consecutive items share one list element; any other block closes it.
   let openList: 'ul' | 'ol' | null = null;
   const closeList = () => {
@@ -143,6 +154,9 @@ export function buildManuscriptHtml(
       case 'scene-break':
         parts.push(`<p class="scene-break">${escapeHtml(block.text)}</p>`);
         break;
+      case 'page':
+        parts.push(pageFigureMarkup(block, manuscript, dataUriOf));
+        break;
       case 'choice': {
         const lead = `• ${escapeHtml(block.text)}`;
         if (block.targetBookmarkId && block.targetSceneName) {
@@ -162,10 +176,15 @@ export function buildManuscriptHtml(
     }
   }
   closeList();
-  const extraCss = typographyCss(
-    options,
-    manuscript.blocks.some((block) => block.kind === 'scene-break'),
-  );
+  const extraCss = [
+    typographyCss(
+      options,
+      manuscript.blocks.some((block) => block.kind === 'scene-break'),
+    ),
+    hasPages(manuscript.blocks) ? PAGE_CSS : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
   return `<!DOCTYPE html>
 <html>
 <head>

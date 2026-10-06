@@ -48,6 +48,12 @@ const IMAGES_AS_BASE64: ReadonlySet<SizedFormat> = new Set(['html', 'reader']);
 /** Formats that cannot hold an image at all: they drop it, and it costs nothing. */
 const IMAGELESS: ReadonlySet<SizedFormat> = new Set(['md', 'txt', 'fountain', 'screenplay-pdf']);
 
+/**
+ * A PDF decodes a PNG and deflates the colours again (the transparency apart), so a picture can come out
+ * a little larger than the file it began as; a JPEG goes in untouched. Counted for the larger case.
+ */
+const IMAGE_GROWTH: Partial<Record<SizedFormat, number>> = { pdf: 1.5 };
+
 /** Bytes of a string as UTF-8, counted without building the encoded array. */
 export function utf8ByteLength(text: string): number {
   let bytes = 0;
@@ -74,7 +80,9 @@ export function estimateManuscriptBytes({
   const images = IMAGELESS.has(format)
     ? 0
     : imageBytes.reduce((sum, bytes) => {
-        const embedded = IMAGES_AS_BASE64.has(format) ? Math.ceil((bytes * 4) / 3) : bytes;
+        const embedded = IMAGES_AS_BASE64.has(format)
+          ? Math.ceil((bytes * 4) / 3)
+          : Math.ceil(bytes * (IMAGE_GROWTH[format] ?? 1));
         return sum + embedded + PER_IMAGE_OVERHEAD_BYTES;
       }, 0);
   return Math.ceil(textBytes * factor + fixed + images);

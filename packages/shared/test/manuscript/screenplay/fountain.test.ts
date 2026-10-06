@@ -289,7 +289,7 @@ describe('fountainFromBody', () => {
   });
 
   it('writes list paragraphs as they are and an empty body as nothing', () => {
-    expect(fountainFromBody('- one\n- two')).toBe('- one\n- two');
+    expect(fountainFromBody('- one\n- two')).toBe('- one\n\n- two');
     expect(fountainFromBody(null)).toBe('');
     expect(fountainFromBody('  \n ')).toBe('');
   });

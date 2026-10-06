@@ -47,6 +47,19 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'In a branching story the manuscript has a View selector above the text: Read a route shows the scenes of one route in order (choose which one beside it), All scenes shows every scene, and Explore scenes reads the way the Story Navigator walks the story - one scene at a time, with its choices shown as unavailable until the reader holds what they need. In Explore, pick a start scene, choose a choice to move on, and use Restart simulation to begin again. Review works in every view, so comments can be read and added while exploring.',
     },
+    { type: 'heading', level: 2, text: 'Writing a screenplay' },
+    {
+      type: 'paragraph',
+      text: 'When a work (arc) is a screenplay, its scenes show the place, the cast and the scene heading above the text, and the export offers two more formats: Fountain, the plain-text screenplay format that other programs open, and a PDF set the way the industry sets a script (Courier, a wide left margin, every element at its own indent). Choose the form of the work in the arc, and say whether a place is indoors or outdoors in the location.',
+    },
+    {
+      type: 'paragraph',
+      text: 'The script is built from the scenes. A scene that begins with its own heading (INT., EXT. or INT./EXT.) keeps it exactly. One that does not gets a heading written from its location, as INT. KITCHEN, and the screen above the text says which of the two will happen. In the text, each Enter starts a paragraph: write a character name in capitals, then the parenthetical and the speech in the paragraphs right after it, and leave an empty paragraph to end the speech. Everything else is action.',
+    },
+    {
+      type: 'paragraph',
+      text: 'The export screen shows how long the script is and, beside it, the paper, the font, the margins and the indents that number stands on. The PDF is set with the same values, so the same paper gives the same pages; other programs break pages by slightly different rules, and their count may differ by a little.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

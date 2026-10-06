@@ -45,6 +45,8 @@ export interface PublishManuscriptOptions {
   sceneOrder?: 'discovery' | 'shuffled';
   /** When set, only this arc ships, under its title. */
   arcId?: string;
+  /** Only for the screenplay formats: paper, numbering and headings. */
+  screenplay?: { paper: 'letter' | 'a4'; numberScenes: boolean; generateHeadings: boolean };
   labels: ManuscriptLabels;
   /** Absent: the server credits the work's author, then the story's, then the owner's handle. */
   author?: string | null;

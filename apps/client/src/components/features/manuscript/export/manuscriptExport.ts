@@ -45,7 +45,32 @@ const FORMAT_FILES: Record<
   html: { extension: 'html', mimeType: 'text/html', uti: 'public.html' },
   md: { extension: 'md', mimeType: 'text/markdown', uti: 'public.plain-text' },
   txt: { extension: 'txt', mimeType: 'text/plain', uti: 'public.plain-text' },
+  fountain: { extension: 'fountain', mimeType: 'text/plain', uti: 'public.plain-text' },
+  'screenplay-pdf': { extension: 'pdf', mimeType: 'application/pdf', uti: 'com.adobe.pdf' },
 };
+
+/** What a screenplay can be exported as, besides the book formats. */
+export const SCREENPLAY_EXPORT_FORMATS: ManuscriptExportFormat[] = ['fountain', 'screenplay-pdf'];
+
+/**
+ * Hands an already-compiled screenplay (Fountain text or the industry PDF) to the share sheet, named
+ * like every manuscript: the title, the date.
+ */
+export async function deliverScreenplay({
+  storyTitle,
+  bytes,
+  format,
+  language = 'en',
+}: {
+  storyTitle: string;
+  bytes: Uint8Array;
+  format: ManuscriptExportFormat;
+  language?: ExportFileLanguage;
+}): Promise<ExportDeliveryResult> {
+  const file = FORMAT_FILES[format];
+  const fileName = buildManuscriptFileName(storyTitle, file.extension, new Date(), language);
+  return deliverFile(bytes, fileName, file.mimeType, file.uti);
+}
 
 export type ManuscriptExportLabels = {
   goToPage: string;

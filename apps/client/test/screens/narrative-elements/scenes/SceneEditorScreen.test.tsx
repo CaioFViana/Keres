@@ -43,6 +43,26 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+let mockScreenplay = {
+  isScreenplay: false,
+  place: null as { name: string; intExt: string | null } | null,
+  cast: [] as string[],
+  plan: { source: 'none', heading: null as string | null },
+};
+jest.mock(
+  '../../../../src/components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader',
+  () => {
+    const { Text } = require('react-native');
+    return {
+      __esModule: true,
+      useScreenplaySceneContext: () => mockScreenplay,
+      ScreenplaySceneHeader: ({ plan }: { plan: { source: string } }) => (
+        <Text testID="screenplay-header">{plan.source}</Text>
+      ),
+    };
+  },
+);
+
 jest.mock('../../../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,
@@ -284,6 +304,12 @@ beforeEach(() => {
   mockActiveMarks = [];
   mockRestoreSettled = true;
   mockUseSceneBodyDraftOptions = null;
+  mockScreenplay = {
+    isScreenplay: false,
+    place: null,
+    cast: [],
+    plan: { source: 'none', heading: null },
+  };
   mockGetById.mockResolvedValue(makeScene());
   mockUpdateScene.mockImplementation(async (_userId: string, _sceneId: string, data: object) =>
     makeScene({ ...data, updatedAt: new Date('2026-02-01T00:00:00.000Z') }),
@@ -308,6 +334,28 @@ async function pressHeaderAction(id: string) {
     headerAction(id).onPress();
   });
 }
+
+describe('SceneEditorScreen in a screenplay', () => {
+  it('shows the place, the cast and the heading source above the text of a screenplay scene', async () => {
+    mockScreenplay = {
+      isScreenplay: true,
+      place: { name: 'Kitchen', intExt: 'interior' },
+      cast: ['Mom'],
+      plan: { source: 'location', heading: 'INT. KITCHEN' },
+    };
+    const view = await render(<SceneEditorScreen />);
+
+    expect((await view.findByTestId('screenplay-header')).props.children).toBe('location');
+    expect(view.getByTestId('scene-body-editor.input')).toBeTruthy();
+  });
+
+  it('shows nothing of the kind for a scene that is not part of a screenplay', async () => {
+    const view = await render(<SceneEditorScreen />);
+    await view.findByTestId('scene-body-editor.input');
+
+    expect(view.queryByTestId('screenplay-header')).toBeNull();
+  });
+});
 
 describe('SceneEditorScreen', () => {
   it('loads the scene and starts in write mode with the saved body', async () => {

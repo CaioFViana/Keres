@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import {
   defaultExportSettings,
   FORMAT_CAPABILITIES,
+  isScreenplayFormat,
   styleForExport,
   type ManuscriptExportSettings,
 } from '../../components/features/manuscript/export/manuscriptExportSettings';
@@ -162,6 +163,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
         ),
         ...(branching ? { sceneOrder: settings.sceneOrder } : {}),
         ...(settings.arcId ? { arcId: settings.arcId } : {}),
+        ...(isScreenplayFormat(format) ? { screenplay: { ...settings.screenplay } } : {}),
         labels: {
           goToPage: t('export_manuscript_go_to_page'),
           goToScene: t('export_manuscript_go_to_scene'),

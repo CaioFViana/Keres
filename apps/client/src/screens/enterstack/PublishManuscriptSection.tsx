@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { StyleSheet, Text, View } from 'react-native';
 import ManuscriptExportOptions from '../../components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
+import { SCREENPLAY_EXPORT_FORMATS } from '../../components/features/manuscript/export/manuscriptExport';
 import { SERVER_MANUSCRIPT_FORMATS } from '../../services/PublicationApiService';
 import { useTheme } from '../../theme';
 import type { PublishManuscriptState } from './usePublishManuscript';
@@ -44,6 +45,16 @@ export function PublishManuscriptSection({
   const branching = storyType === 'branching';
   const works = manuscript.manuscriptArcs;
   const releasingWork = manuscript.releaseArcId !== null;
+  // A screenplay's own formats are offered for a work that is one (or a story whose only work is).
+  const target = releasingWork
+    ? works.find((work) => work.id === manuscript.releaseArcId)
+    : works.length === 1
+      ? works[0]
+      : undefined;
+  const formats =
+    !branching && target?.medium === 'screenplay'
+      ? [...SERVER_MANUSCRIPT_FORMATS, ...SCREENPLAY_EXPORT_FORMATS]
+      : SERVER_MANUSCRIPT_FORMATS;
   return (
     <>
       {works.length > 1 && (
@@ -109,7 +120,7 @@ export function PublishManuscriptSection({
           <ManuscriptExportOptions
             settings={manuscript.settings}
             onChange={manuscript.setSettings}
-            formats={SERVER_MANUSCRIPT_FORMATS}
+            formats={formats}
             branching={branching}
             showLooseSwitch={!branching && manuscript.manuscriptLooseCount > 0}
             looseCount={manuscript.manuscriptLooseCount}

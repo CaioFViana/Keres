@@ -1,12 +1,15 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import type { ChapterSelect, SceneSelect } from '../../../../src/db/schema';
+import type { ChapterSelect, LocationSelect, SceneSelect } from '../../../../src/db/schema';
 import type { ManuscriptExportSettings } from '../../../../src/components/features/manuscript/export/manuscriptExportSettings';
 import ManuscriptExportScreen from '../../../../src/screens/narrative-elements/scenes/ManuscriptExportScreen';
 
 const mockGoBack = jest.fn();
 const mockExportManuscript = jest.fn();
+const mockDeliverScreenplay = jest.fn();
 const mockNotify = jest.fn();
+let mockLocations: Partial<LocationSelect>[] = [];
+let mockEffectiveMedium: string | null = null;
 
 type OptionsProps = {
   settings: ManuscriptExportSettings;
@@ -16,6 +19,7 @@ type OptionsProps = {
   showLooseSwitch: boolean;
   looseCount: number;
   arcs: { id: string; title: string }[];
+  screenplayEstimate?: { pages: number; eighths: number } | null;
 };
 let mockOptionsProps: OptionsProps | null = null;
 
@@ -57,9 +61,16 @@ jest.mock('../../../../src/state/storyStore', () => ({
     const state = {
       selectedStory: { id: 'story-1', type: mockStoryType, title: mockStoryTitle, author: 'Ana' },
       activeArcId: mockActiveArcId,
+      effectiveArc: mockEffectiveMedium ? { id: 'arc-x', medium: mockEffectiveMedium } : null,
     };
     return typeof selector === 'function' ? selector(state) : state;
   },
+}));
+
+jest.mock('../../../../src/db', () => ({ __esModule: true, useDrizzle: () => ({}) }));
+jest.mock('../../../../src/services/storymanagement/LocationService', () => ({
+  __esModule: true,
+  createLocationService: () => ({ getAllByStoryId: async () => mockLocations }),
 }));
 
 jest.mock('../../../../src/hooks/useStoryArcs', () => ({
@@ -95,7 +106,9 @@ jest.mock(
 jest.mock('../../../../src/components/features/manuscript/export/manuscriptExport', () => ({
   __esModule: true,
   MANUSCRIPT_EXPORT_FORMATS: ['docx', 'pdf', 'epub', 'html', 'md', 'txt'],
+  SCREENPLAY_EXPORT_FORMATS: ['fountain', 'screenplay-pdf'],
   exportManuscript: (...args: unknown[]) => mockExportManuscript(...args),
+  deliverScreenplay: (...args: unknown[]) => mockDeliverScreenplay(...args),
 }));
 
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
@@ -281,8 +294,11 @@ beforeEach(() => {
   mockActiveArcId = null;
   mockArcs = [];
   mockLanguage = 'en';
+  mockLocations = [];
+  mockEffectiveMedium = null;
   mockManuscriptData = linearData();
   mockExportManuscript.mockResolvedValue({ delivered: true, fileName: 'x.docx' });
+  mockDeliverScreenplay.mockResolvedValue({ delivered: true, fileName: 'script.fountain' });
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -310,6 +326,113 @@ async function exportWith(
     fireEvent.press(view.getByTestId('export-confirm'));
   });
 }
+
+describe('ManuscriptExportScreen as a screenplay', () => {
+  const asScript = () => {
+    mockEffectiveMedium = 'screenplay';
+    mockLocations = [{ id: 'loc-1', name: 'Kitchen', intExt: 'interior' }];
+    mockManuscriptData = {
+      chapters: [makeChapter({ id: 'ch-1', name: 'Act One' })],
+      scenes: [
+        makeScene({
+          id: 's-1',
+          chapterId: 'ch-1',
+          locationId: 'loc-1',
+          summary: 'They plan.',
+          body: 'Coffee goes cold.',
+        }),
+      ],
+      choices: [],
+      loading: false,
+    };
+  };
+
+  it('keeps the screenplay formats away from a work that is not a screenplay', async () => {
+    await renderScreen();
+
+    expect(mockOptionsProps?.formats).not.toContain('fountain');
+    expect(mockOptionsProps?.formats).not.toContain('screenplay-pdf');
+  });
+
+  it('offers the screenplay formats for a work that is a screenplay', async () => {
+    asScript();
+    await renderScreen();
+    expect(mockOptionsProps?.formats).toEqual(
+      expect.arrayContaining(['docx', 'fountain', 'screenplay-pdf']),
+    );
+  });
+
+  it('never offers them for a branching story, whose order is a graph and not a script', async () => {
+    asScript();
+    mockStoryType = 'branching';
+    await renderScreen();
+
+    expect(mockOptionsProps?.formats).not.toContain('fountain');
+  });
+
+  it('compiles the script from the scenes and their places, and hands it over as a screenplay', async () => {
+    asScript();
+    const view = await renderScreen();
+
+    await exportWith(view, {
+      format: 'fountain',
+      author: 'Ana',
+      screenplay: { paper: 'letter', numberScenes: true, generateHeadings: true },
+    });
+
+    await waitFor(() => expect(mockDeliverScreenplay).toHaveBeenCalledTimes(1));
+    const call = mockDeliverScreenplay.mock.calls[0][0];
+    const text = new TextDecoder().decode(call.bytes);
+    expect(call).toMatchObject({ storyTitle: 'My Story', format: 'fountain', language: 'en' });
+    expect(text).toContain('Title: My Story');
+    expect(text).toContain('Author: Ana');
+    expect(text).toContain('INT. KITCHEN #1#');
+    expect(text).toContain('= They plan.');
+    expect(text).toContain('Coffee goes cold.');
+    expect(mockExportManuscript).not.toHaveBeenCalled();
+    expect(mockNotify).toHaveBeenCalledWith(
+      'export_manuscript_success:{"fileName":"script.fountain"}',
+      'success',
+    );
+  });
+
+  it('sets the PDF on the paper asked', async () => {
+    asScript();
+    const view = await renderScreen();
+
+    await exportWith(view, {
+      format: 'screenplay-pdf',
+      screenplay: { paper: 'a4', numberScenes: false, generateHeadings: true },
+    });
+
+    await waitFor(() => expect(mockDeliverScreenplay).toHaveBeenCalledTimes(1));
+    const raw = Array.from(mockDeliverScreenplay.mock.calls[0][0].bytes as Uint8Array, (byte) =>
+      String.fromCharCode(byte),
+    ).join('');
+    expect(raw).toContain('/MediaBox [0 0 595.28 841.89]');
+  });
+
+  it('estimates the pages for a screenplay format and for no other', async () => {
+    asScript();
+    await renderScreen();
+    const props = mockOptionsProps as OptionsProps & {
+      screenplayEstimate: (settings: ManuscriptExportSettings) => unknown;
+    };
+    const estimate = (
+      props as unknown as {
+        screenplayEstimate: unknown;
+      }
+    ).screenplayEstimate;
+
+    expect(estimate).toBeNull();
+    await act(async () => {
+      props.onChange({ ...props.settings, format: 'fountain' });
+    });
+    expect((mockOptionsProps as OptionsProps).screenplayEstimate).toMatchObject({
+      pages: 1,
+    });
+  });
+});
 
 describe('ManuscriptExportScreen', () => {
   it('shows the loading state while data resolves', async () => {

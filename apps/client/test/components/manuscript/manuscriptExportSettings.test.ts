@@ -2,6 +2,8 @@ import { MANUSCRIPT_PRESETS, ManuscriptStyleSchema } from '@keres/shared';
 import {
   applyPreset,
   defaultExportSettings,
+  isScreenplayFormat,
+  SCREENPLAY_FORMATS,
   styleForExport,
   withChange,
 } from '../../../src/components/features/manuscript/export/manuscriptExportSettings';
@@ -53,6 +55,40 @@ describe('manuscriptExportSettings', () => {
     const style = styleForExport({ ...withPage, author: ' Ana ' }, LINES, NOW);
     expect(style.frontMatter).toEqual([LINES.byLine, LINES.copyright]);
     expect(style.placeholders).toEqual({ author: 'Ana', year: '2026', date: '2026-09-27' });
+  });
+
+  it('knows the two screenplay formats and no book format among them', () => {
+    expect(SCREENPLAY_FORMATS).toEqual(['fountain', 'screenplay-pdf']);
+    expect(isScreenplayFormat('fountain')).toBe(true);
+    expect(isScreenplayFormat('screenplay-pdf')).toBe(true);
+    for (const format of ['docx', 'pdf', 'epub', 'html', 'md', 'txt'] as const) {
+      expect(isScreenplayFormat(format)).toBe(false);
+    }
+  });
+
+  it('starts a screenplay on Letter, headings written from places, scenes unnumbered', () => {
+    expect(defaultExportSettings().screenplay).toEqual({
+      paper: 'letter',
+      numberScenes: false,
+      generateHeadings: true,
+    });
+  });
+
+  it('changes one screenplay choice at a time and keeps the rest', () => {
+    const changed = withChange(defaultExportSettings(), { screenplay: { paper: 'a4' } });
+
+    expect(changed.screenplay).toEqual({
+      paper: 'a4',
+      numberScenes: false,
+      generateHeadings: true,
+    });
+    expect(changed.preset).toBe('custom');
+  });
+
+  it('keeps the screenplay choices across a preset', () => {
+    const chosen = withChange(defaultExportSettings(), { screenplay: { numberScenes: true } });
+
+    expect(applyPreset(chosen, MANUSCRIPT_PRESETS[0]).screenplay.numberScenes).toBe(true);
   });
 
   it('builds styles the server schema accepts for every preset and format', () => {

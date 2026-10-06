@@ -5,10 +5,14 @@ import Button from '@/src/components/common/controls/Button/Button';
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import ManuscriptExportOptions from '../../../components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
-import { MANUSCRIPT_EXPORT_FORMATS } from '../../../components/features/manuscript/export/manuscriptExport';
+import {
+  MANUSCRIPT_EXPORT_FORMATS,
+  SCREENPLAY_EXPORT_FORMATS,
+} from '../../../components/features/manuscript/export/manuscriptExport';
 import { defaultExportSettings } from '../../../components/features/manuscript/export/manuscriptExportSettings';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
+import { useStoryStore } from '../../../state/storyStore';
 import { useManuscriptExport } from './useManuscriptExport';
 
 /**
@@ -21,10 +25,28 @@ const ManuscriptExportScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const { loading, exporting, isBranching, looseCount, arcs, storyAuthor, exportWith } =
-    useManuscriptExport();
+  const {
+    loading,
+    exporting,
+    isBranching,
+    looseCount,
+    arcs,
+    storyAuthor,
+    exportWith,
+    screenplayEstimate,
+  } = useManuscriptExport();
+  const effectiveArc = useStoryStore((state) => state.effectiveArc);
   const [settings, setSettings] = useState(() => defaultExportSettings(storyAuthor));
   useScreenHeader({ target: 'parent', title: t('export_manuscript_title') });
+
+  // A screenplay's own formats are offered where the work is one: the selected work (or the one the
+  // export is of), never for a branching story, whose order is a graph and not a script.
+  const exportedArc = settings.arcId ? arcs.find((arc) => arc.id === settings.arcId) : undefined;
+  const medium = exportedArc?.medium ?? effectiveArc?.medium ?? 'generic';
+  const formats =
+    !isBranching && medium === 'screenplay'
+      ? [...MANUSCRIPT_EXPORT_FORMATS, ...SCREENPLAY_EXPORT_FORMATS]
+      : MANUSCRIPT_EXPORT_FORMATS;
 
   if (loading) return <ScreenLoading message={t('loading')} padded />;
 
@@ -50,7 +72,8 @@ const ManuscriptExportScreen = () => {
       <ManuscriptExportOptions
         settings={settings}
         onChange={setSettings}
-        formats={MANUSCRIPT_EXPORT_FORMATS}
+        formats={formats}
+        screenplayEstimate={screenplayEstimate(settings)}
         branching={isBranching}
         showLooseSwitch={!isBranching && looseCount > 0}
         looseCount={looseCount}

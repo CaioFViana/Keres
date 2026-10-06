@@ -1,3 +1,4 @@
+import { screenplayGeometry, screenplayPreset } from '@keres/shared';
 import { cleanup, fireEvent, render } from '@testing-library/react-native';
 import { useState } from 'react';
 import ManuscriptExportOptions from '../../../src/components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
@@ -68,6 +69,88 @@ function Harness({
 afterEach(() => {
   cleanup();
   latest = null;
+});
+
+const SCRIPT_FORMATS = [...ALL_FORMATS, 'fountain', 'screenplay-pdf'] as const;
+
+function ScriptHarness({
+  estimate = null,
+}: {
+  estimate?: Parameters<typeof ManuscriptExportOptions>[0]['screenplayEstimate'];
+}) {
+  const [settings, setSettings] = useState(() => defaultExportSettings('Ana'));
+  latest = settings;
+  return (
+    <ManuscriptExportOptions
+      settings={settings}
+      onChange={setSettings}
+      formats={SCRIPT_FORMATS}
+      branching={false}
+      showLooseSwitch
+      looseCount={2}
+      chapterNumberingAvailable
+      arcs={[]}
+      screenplayEstimate={estimate}
+    />
+  );
+}
+
+describe('ManuscriptExportOptions for a screenplay', () => {
+  it('offers the screenplay formats and swaps the book choices for the screenplay ones', async () => {
+    const view = await render(<ScriptHarness />);
+    expect(view.getByTestId('export-format-fountain')).toBeTruthy();
+    expect(view.getByTestId('export-format-screenplay-pdf')).toBeTruthy();
+    expect(view.queryByTestId('export-screenplay-paper-letter')).toBeNull();
+    expect(view.getByTestId('export-scene-names')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('export-format-screenplay-pdf'));
+
+    expect(latest?.format).toBe('screenplay-pdf');
+    expect(view.getByTestId('export-screenplay-paper-letter')).toBeTruthy();
+    expect(view.getByTestId('export-screenplay-numbers')).toBeTruthy();
+    expect(view.getByTestId('export-screenplay-headings')).toBeTruthy();
+    expect(view.getByTestId('export-author')).toBeTruthy();
+    // The book's own choices mean nothing to a script and are not asked.
+    expect(view.queryByTestId('export-scene-names')).toBeNull();
+    expect(view.queryByTestId('export-quotes-curly')).toBeNull();
+    expect(view.queryByTestId('export-preset-ebook')).toBeNull();
+  });
+
+  it('changes the paper, the numbering and the headings, one at a time', async () => {
+    const view = await render(<ScriptHarness />);
+    await fireEvent.press(view.getByTestId('export-format-fountain'));
+
+    await fireEvent.press(view.getByTestId('export-screenplay-paper-a4'));
+    expect(latest?.screenplay.paper).toBe('a4');
+    await fireEvent(view.getByTestId('export-screenplay-numbers'), 'valueChange', true);
+    expect(latest?.screenplay.numberScenes).toBe(true);
+    await fireEvent(view.getByTestId('export-screenplay-headings'), 'valueChange', false);
+    expect(latest?.screenplay).toEqual({
+      paper: 'a4',
+      numberScenes: true,
+      generateHeadings: false,
+    });
+  });
+
+  it('shows the estimate beside the numbers it stands on', async () => {
+    const estimate = {
+      pages: 12,
+      eighths: 12 * 8 - 3,
+      preset: screenplayPreset('letter'),
+      geometry: screenplayGeometry(screenplayPreset('letter')),
+    };
+    const view = await render(<ScriptHarness estimate={estimate} />);
+    await fireEvent.press(view.getByTestId('export-format-fountain'));
+
+    expect(view.getByTestId('screenplay-estimate-pages')).toBeTruthy();
+    expect(view.getByTestId('screenplay-estimate-how').props.children).toContain('Courier');
+  });
+
+  it('shows no estimate for a book format', async () => {
+    const view = await render(<ScriptHarness estimate={null} />);
+
+    expect(view.queryByTestId('screenplay-estimate')).toBeNull();
+  });
 });
 
 describe('ManuscriptExportOptions', () => {

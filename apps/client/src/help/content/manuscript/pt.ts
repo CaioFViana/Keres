@@ -47,6 +47,19 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Numa história ramificada o manuscrito tem um seletor de Visualização acima do texto: Ler uma rota mostra as cenas de uma rota em ordem (escolha qual ao lado), Todas as cenas mostra todas, e Explorar cenas lê do jeito que o Navegador de história percorre a história - uma cena por vez, com as escolhas indisponíveis até o leitor ter o que precisa. Em Explorar, escolha uma cena inicial, toque numa escolha para seguir e use Reiniciar simulação para recomeçar. Revisar funciona em todas as visualizações, então dá para ler e adicionar comentários enquanto se explora.',
     },
+    { type: 'heading', level: 2, text: 'Escrevendo um roteiro' },
+    {
+      type: 'paragraph',
+      text: 'Quando uma obra (arco) é um roteiro, as cenas mostram o local, o elenco e o cabeçalho da cena acima do texto, e a exportação oferece mais dois formatos: Fountain, o formato de roteiro em texto puro que outros programas abrem, e um PDF montado como a indústria monta um roteiro (Courier, margem esquerda larga, cada elemento no seu recuo). Escolha a forma da obra no arco e diga, no local, se ele é interno ou externo.',
+    },
+    {
+      type: 'paragraph',
+      text: 'O roteiro é montado a partir das cenas. Uma cena que começa com um cabeçalho próprio (INT., EXT. ou INT./EXT.) o mantém exatamente. Uma que não começa ganha um cabeçalho escrito a partir do local, como INT. COZINHA, e a tela acima do texto diz qual dos dois vai acontecer. No texto, cada Enter começa um parágrafo: escreva o nome do personagem em maiúsculas, depois o parentético e a fala nos parágrafos logo em seguida, e deixe um parágrafo vazio para encerrar a fala. Todo o resto é ação.',
+    },
+    {
+      type: 'paragraph',
+      text: 'A tela de exportação mostra o tamanho do roteiro e, ao lado, o papel, a fonte, as margens e os recuos em que esse número se apoia. O PDF é montado com os mesmos valores, então o mesmo papel dá as mesmas páginas; outros programas quebram páginas por regras um pouco diferentes, e a contagem deles pode variar um pouco.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

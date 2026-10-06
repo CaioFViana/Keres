@@ -16,6 +16,10 @@ import { manuscriptTextMetrics } from '../../../components/features/manuscript/m
 import { RichBodyEditor } from '../../../components/features/manuscript/RichBodyEditor/RichBodyEditor';
 import { SceneBodyFooter } from '../../../components/features/manuscript/SceneBodyFooter/SceneBodyFooter';
 import { SceneBodyToolbar } from '../../../components/features/manuscript/SceneBodyToolbar/SceneBodyToolbar';
+import {
+  ScreenplaySceneHeader,
+  useScreenplaySceneContext,
+} from '../../../components/features/manuscript/ScreenplaySceneHeader/ScreenplaySceneHeader';
 import type { SceneSelect } from '../../../db/schema';
 import { useDrizzle } from '../../../db';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
@@ -210,8 +214,17 @@ function SceneEditorContent({
     [colors],
   );
 
+  const screenplay = useScreenplaySceneContext(scene, serializedBody);
+
   return (
     <View style={styles.container}>
+      {screenplay.isScreenplay ? (
+        <ScreenplaySceneHeader
+          place={screenplay.place}
+          cast={screenplay.cast}
+          plan={screenplay.plan}
+        />
+      ) : null}
       {mode === 'write' && (
         <SceneBodyToolbar
           testID="scene-body-toolbar"

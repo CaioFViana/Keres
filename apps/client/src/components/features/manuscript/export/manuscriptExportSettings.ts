@@ -3,7 +3,31 @@ import {
   type ManuscriptFormat,
   type ManuscriptPreset,
   type ManuscriptStyle,
+  type ScreenplayPaper,
 } from '@keres/shared';
+
+/** The two formats of a screenplay: Fountain text, and the PDF set the way the industry sets it. */
+export const SCREENPLAY_FORMATS = [
+  'fountain',
+  'screenplay-pdf',
+] as const satisfies readonly ManuscriptFormat[];
+
+export function isScreenplayFormat(format: ManuscriptFormat): boolean {
+  return (SCREENPLAY_FORMATS as readonly ManuscriptFormat[]).includes(format);
+}
+
+/** What only a screenplay export asks. */
+export type ScreenplayExportSettings = {
+  paper: ScreenplayPaper;
+  numberScenes: boolean;
+  generateHeadings: boolean;
+};
+
+export const DEFAULT_SCREENPLAY_SETTINGS: ScreenplayExportSettings = {
+  paper: 'letter',
+  numberScenes: false,
+  generateHeadings: true,
+};
 
 /**
  * Everything the export screen asks, shared by the local export and the publish of a manuscript
@@ -26,6 +50,8 @@ export type ManuscriptExportSettings = {
   /** The book's author (EPUB metadata, title page); the story's by default. */
   author: string;
   style: ManuscriptStyle;
+  /** Only read for a screenplay format. */
+  screenplay: ScreenplayExportSettings;
 };
 
 export function defaultExportSettings(author = ''): ManuscriptExportSettings {
@@ -41,6 +67,7 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     titlePage: false,
     author,
     style: {},
+    screenplay: { ...DEFAULT_SCREENPLAY_SETTINGS },
   };
 }
 
@@ -64,16 +91,18 @@ export function applyPreset(
 /** A change made by hand: the settings no longer are the preset's. */
 export function withChange(
   settings: ManuscriptExportSettings,
-  change: Partial<Omit<ManuscriptExportSettings, 'style' | 'preset'>> & {
+  change: Partial<Omit<ManuscriptExportSettings, 'style' | 'preset' | 'screenplay'>> & {
     style?: Partial<ManuscriptStyle>;
+    screenplay?: Partial<ScreenplayExportSettings>;
   },
 ): ManuscriptExportSettings {
-  const { style, ...rest } = change;
+  const { style, screenplay, ...rest } = change;
   return {
     ...settings,
     ...rest,
     preset: 'custom',
     style: style ? { ...settings.style, ...style } : settings.style,
+    screenplay: screenplay ? { ...settings.screenplay, ...screenplay } : settings.screenplay,
   };
 }
 
@@ -88,6 +117,9 @@ export const FORMAT_CAPABILITIES: Record<
   html: { index: true, face: true, body: true, page: false },
   md: { index: true, face: false, body: false, page: false },
   txt: { index: false, face: false, body: false, page: false },
+  // A screenplay sets its own page: the choices of a book mean nothing to it.
+  fountain: { index: false, face: false, body: false, page: false },
+  'screenplay-pdf': { index: false, face: false, body: false, page: false },
 };
 
 /**

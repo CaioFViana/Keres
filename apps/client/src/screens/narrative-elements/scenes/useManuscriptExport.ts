@@ -5,7 +5,7 @@ import {
   sceneSeparatorText,
 } from '@keres/shared';
 import { containsCjk } from '@keres/shared/manuscript/export';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppAlert } from '../../../utils/AppAlert';
 import {
@@ -14,11 +14,25 @@ import {
   downloadCjkPack,
   loadCjkMatrix,
 } from '../../../services/cjkFontPack';
-import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
 import {
+  deliverScreenplay,
+  exportManuscript,
+} from '../../../components/features/manuscript/export/manuscriptExport';
+import {
+  isScreenplayFormat,
   styleForExport,
   type ManuscriptExportSettings,
 } from '../../../components/features/manuscript/export/manuscriptExportSettings';
+import {
+  compileScreenplayManuscript,
+  screenplayEstimateOf,
+  screenplayInputOf,
+  screenplayOptionsOf,
+} from '../../../components/features/manuscript/export/screenplayExport';
+import { useDrizzle } from '../../../db';
+import type { LocationSelect } from '../../../db/schema';
+import { createLocationService } from '../../../services/storymanagement/LocationService';
+import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
 import { useManuscriptData } from '../../../hooks/useManuscriptData';
 import { useStoryArcs } from '../../../hooks/useStoryArcs';
@@ -37,6 +51,7 @@ import { exportFileLanguage } from '../../../utils/storyTransfer';
  */
 export function useManuscriptExport() {
   const { t, i18n } = useTranslation();
+  const db = useDrizzle();
   const { selectedStory } = useStoryStore();
   const activeArcId = useStoryStore((state) => state.activeArcId);
   const { arcs } = useStoryArcs();
@@ -49,6 +64,43 @@ export function useManuscriptExport() {
   const chaptersById = useMemo(
     () => new Map(chapters.map((chapter) => [chapter.id, chapter])),
     [chapters],
+  );
+  // The places a screenplay writes its scene headings from; read only when the story has them to give.
+  const [locations, setLocations] = useState<LocationSelect[]>([]);
+  const storyId = selectedStory?.id;
+  useEffect(() => {
+    if (!storyId) {
+      setLocations([]);
+      return;
+    }
+    let alive = true;
+    const load = () =>
+      void createLocationService(db)
+        .getAllByStoryId(storyId)
+        .then((rows) => alive && setLocations(rows))
+        .catch(() => alive && setLocations([]));
+    load();
+    entityEventEmitter.on('location_changed', load);
+    return () => {
+      alive = false;
+      entityEventEmitter.off('location_changed', load);
+    };
+  }, [db, storyId]);
+
+  /** The length of the script under the settings, with the layout it stands on; null off screenplay. */
+  const screenplayEstimate = useCallback(
+    (settings: ManuscriptExportSettings) => {
+      if (isBranching || !isScreenplayFormat(settings.format)) return null;
+      const input = screenplayInputOf({
+        title: selectedStory?.title ?? '',
+        chapters,
+        scenes,
+        locations,
+        arcs,
+      });
+      return screenplayEstimateOf(input, settings, i18n.language);
+    },
+    [isBranching, selectedStory, chapters, scenes, locations, arcs, i18n.language],
   );
 
   // The count follows the visible manuscript: other-arc containers are gone, and their scenes
@@ -103,6 +155,32 @@ export function useManuscriptExport() {
             ? (arcs.find((arc) => arc.id === settings.arcId) ?? null)
             : null;
           const title = exportArc?.title ?? selectedStory?.title ?? '';
+          if (isScreenplayFormat(settings.format)) {
+            const compiled = compileScreenplayManuscript(
+              screenplayInputOf({
+                title: selectedStory?.title ?? '',
+                chapters,
+                scenes,
+                locations,
+                arcs,
+              }),
+              screenplayOptionsOf(settings, i18n.language),
+            );
+            const delivered = await deliverScreenplay({
+              storyTitle: title,
+              bytes: compiled.bytes,
+              format: settings.format,
+              language: exportFileLanguage(i18n.language),
+            });
+            showNotification(
+              delivered.delivered
+                ? t('export_manuscript_success', { fileName: delivered.fileName })
+                : t('export_story_no_share_target', { path: delivered.uri || delivered.fileName }),
+              delivered.delivered ? 'success' : 'warning',
+            );
+            made = true;
+            return;
+          }
           const exportScenes = settings.arcId
             ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, settings.arcId))
             : scenes;
@@ -234,6 +312,7 @@ export function useManuscriptExport() {
       choices,
       isBranching,
       chapters,
+      locations,
       showNotification,
       promptCjkPack,
     ],
@@ -247,5 +326,6 @@ export function useManuscriptExport() {
     arcs,
     storyAuthor: selectedStory?.author ?? '',
     exportWith,
+    screenplayEstimate,
   };
 }

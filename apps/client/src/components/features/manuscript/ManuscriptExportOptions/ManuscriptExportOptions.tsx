@@ -1,4 +1,9 @@
-import { MANUSCRIPT_PRESETS, type ManuscriptFormat, type ManuscriptStyle } from '@keres/shared';
+import {
+  MANUSCRIPT_PRESETS,
+  type ManuscriptFormat,
+  type ManuscriptStyle,
+  type ScreenplayEstimate,
+} from '@keres/shared';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -7,10 +12,12 @@ import { useTheme } from '@/src/theme';
 import {
   applyPreset,
   FORMAT_CAPABILITIES,
+  isScreenplayFormat,
   type ManuscriptExportSettings,
   withChange,
 } from '../export/manuscriptExportSettings';
 import { OptionPills, OptionRow, OptionSection, SwitchRow } from './ExportOptionRows';
+import ScreenplayEstimateCard from './ScreenplayEstimateCard';
 
 /** The minimum the arc selector needs to know about an arc. */
 export interface ManuscriptExportArc {
@@ -34,6 +41,8 @@ interface ManuscriptExportOptionsProps {
   arcs: ManuscriptExportArc[];
   /** False when no file is made (only the online reader): the format is not asked. */
   showFormat?: boolean;
+  /** For a screenplay format: how long the script is, and what that number stands on. */
+  screenplayEstimate?: ScreenplayEstimate | null;
 }
 
 const FONT_SIZES = [10, 11, 12, 14] as const;
@@ -66,10 +75,12 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   chapterNumberingAvailable,
   arcs,
   showFormat = true,
+  screenplayEstimate = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const capabilities = FORMAT_CAPABILITIES[settings.format];
+  const screenplay = isScreenplayFormat(settings.format);
   const style = settings.style;
   const change = (patch: Parameters<typeof withChange>[1]) => onChange(withChange(settings, patch));
   const changeStyle = (patch: Partial<ManuscriptStyle>) => change({ style: patch });
@@ -80,21 +91,28 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
 
   return (
     <View>
-      <OptionSection title={t('export_manuscript_preset')} />
-      <OptionPills
-        label={t('export_manuscript_preset_hint')}
-        testID="export-preset"
-        value={settings.preset}
-        onChange={(preset) => {
-          if (preset !== 'custom') onChange(applyPreset(settings, preset));
-        }}
-        options={[
-          ...MANUSCRIPT_PRESETS.filter((preset) =>
-            formats.includes(applyPreset(settings, preset).format),
-          ).map((preset) => ({ value: preset, label: t(`export_manuscript_preset_${preset}`) })),
-          { value: 'custom' as const, label: t('export_manuscript_preset_custom') },
-        ]}
-      />
+      {screenplay ? null : (
+        <>
+          <OptionSection title={t('export_manuscript_preset')} />
+          <OptionPills
+            label={t('export_manuscript_preset_hint')}
+            testID="export-preset"
+            value={settings.preset}
+            onChange={(preset) => {
+              if (preset !== 'custom') onChange(applyPreset(settings, preset));
+            }}
+            options={[
+              ...MANUSCRIPT_PRESETS.filter((preset) =>
+                formats.includes(applyPreset(settings, preset).format),
+              ).map((preset) => ({
+                value: preset,
+                label: t(`export_manuscript_preset_${preset}`),
+              })),
+              { value: 'custom' as const, label: t('export_manuscript_preset_custom') },
+            ]}
+          />
+        </>
+      )}
 
       {arcs.length > 1 ? (
         <>
@@ -148,162 +166,214 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
         </>
       ) : null}
 
-      <OptionSection title={t('export_manuscript_contents')} />
-      <SwitchRow
-        testID="export-scene-names"
-        label={t('export_manuscript_include_scene_names')}
-        value={settings.includeSceneNames}
-        onChange={(includeSceneNames) => change({ includeSceneNames })}
-      />
-      {settings.includeSceneNames && chapterNumberingAvailable ? (
-        <SwitchRow
-          testID="export-reset-numbers"
-          label={t('export_manuscript_reset_numbers')}
-          value={settings.resetSceneNumbers}
-          onChange={(resetSceneNumbers) => change({ resetSceneNumbers })}
-        />
-      ) : null}
-      {showLooseSwitch ? (
-        <SwitchRow
-          testID="export-loose"
-          label={t('export_manuscript_include_loose', { count: looseCount })}
-          value={settings.includeLooseScenes}
-          onChange={(includeLooseScenes) => change({ includeLooseScenes })}
-        />
-      ) : null}
-      {capabilities.index ? (
-        <SwitchRow
-          testID="export-index"
-          label={t('export_manuscript_include_index')}
-          value={settings.includeIndex}
-          onChange={(includeIndex) => change({ includeIndex })}
-        />
-      ) : null}
-
-      <OptionSection title={t('export_manuscript_title_page')} />
-      <SwitchRow
-        testID="export-title-page"
-        label={t('export_manuscript_title_page_switch')}
-        value={settings.titlePage}
-        onChange={(titlePage) => change({ titlePage })}
-      />
-      {settings.titlePage || settings.format === 'epub' ? (
-        <View>
-          <Text style={styles.label}>{t('export_manuscript_author')}</Text>
-          <TextInput
-            testID="export-author"
-            accessibilityLabel={t('export_manuscript_author')}
-            value={settings.author}
-            onChangeText={(author) => change({ author })}
-            maxLength={200}
-          />
-        </View>
-      ) : null}
-
-      {capabilities.body || capabilities.face || capabilities.page ? (
-        <OptionSection title={t('export_manuscript_layout')} />
-      ) : null}
-      {capabilities.page ? (
-        <OptionPills
-          label={t('export_manuscript_page_size')}
-          testID="export-page"
-          value={style.pageSize ?? 'a4'}
-          onChange={(pageSize) => changeStyle({ pageSize })}
-          options={[
-            { value: 'a4', label: t('export_manuscript_page_a4') },
-            { value: '6x9', label: t('export_manuscript_page_6x9') },
-          ]}
-        />
-      ) : null}
-      {capabilities.face ? (
-        <OptionPills
-          label={t('export_manuscript_font')}
-          testID="export-font"
-          value={style.fontFamily ?? 'serif'}
-          onChange={(fontFamily) => changeStyle({ fontFamily })}
-          options={[
-            { value: 'serif', label: t('export_manuscript_font_serif') },
-            { value: 'sans', label: t('export_manuscript_font_sans') },
-          ]}
-        />
-      ) : null}
-      {capabilities.body ? (
+      {screenplay ? (
         <>
+          <OptionSection title={t('export_screenplay_section')} />
           <OptionPills
-            label={t('export_manuscript_font_size')}
-            testID="export-size"
-            value={style.fontSize ?? 0}
-            onChange={(fontSize) => changeStyle({ fontSize: fontSize || undefined })}
+            label={t('export_screenplay_paper')}
+            testID="export-screenplay-paper"
+            value={settings.screenplay.paper}
+            onChange={(paper) => change({ screenplay: { paper } })}
             options={[
-              { value: 0, label: t('export_manuscript_default') },
-              ...FONT_SIZES.map((size) => ({ value: size, label: `${size} pt` })),
+              { value: 'letter', label: t('export_screenplay_paper_letter') },
+              { value: 'a4', label: t('export_screenplay_paper_a4') },
             ]}
           />
-          <OptionPills
-            label={t('export_manuscript_line_spacing')}
-            testID="export-spacing"
-            value={style.lineSpacing ?? 0}
-            onChange={(lineSpacing) => changeStyle({ lineSpacing: lineSpacing || undefined })}
-            options={[
-              { value: 0, label: t('export_manuscript_default') },
-              ...LINE_SPACINGS.map((spacing) => ({ value: spacing, label: `${spacing}×` })),
-            ]}
+          <SwitchRow
+            testID="export-screenplay-numbers"
+            label={t('export_screenplay_number_scenes')}
+            value={settings.screenplay.numberScenes}
+            onChange={(numberScenes) => change({ screenplay: { numberScenes } })}
           />
-          <OptionPills
-            label={t('export_manuscript_paragraphs')}
-            testID="export-paragraphs"
-            value={style.paragraphStyle ?? 'indent'}
-            onChange={(paragraphStyle) => changeStyle({ paragraphStyle })}
-            options={[
-              { value: 'indent', label: t('export_manuscript_paragraphs_indent') },
-              { value: 'block', label: t('export_manuscript_paragraphs_block') },
-            ]}
+          <SwitchRow
+            testID="export-screenplay-headings"
+            label={t('export_screenplay_generate_headings')}
+            value={settings.screenplay.generateHeadings}
+            onChange={(generateHeadings) => change({ screenplay: { generateHeadings } })}
           />
+          <Text style={styles.note}>{t('export_screenplay_generate_headings_hint')}</Text>
+          {showLooseSwitch ? (
+            <SwitchRow
+              testID="export-loose"
+              label={t('export_manuscript_include_loose', { count: looseCount })}
+              value={settings.includeLooseScenes}
+              onChange={(includeLooseScenes) => change({ includeLooseScenes })}
+            />
+          ) : null}
+          <View>
+            <Text style={styles.label}>{t('export_manuscript_author')}</Text>
+            <TextInput
+              testID="export-author"
+              accessibilityLabel={t('export_manuscript_author')}
+              value={settings.author}
+              onChangeText={(author) => change({ author })}
+              maxLength={200}
+            />
+          </View>
+          {screenplayEstimate ? <ScreenplayEstimateCard estimate={screenplayEstimate} /> : null}
         </>
       ) : null}
 
-      <OptionSection title={t('export_manuscript_text')} />
-      <OptionPills
-        label={t('export_manuscript_numbering')}
-        testID="export-numbering"
-        value={style.chapterNumbering ?? 'arabic'}
-        onChange={(chapterNumbering) => changeStyle({ chapterNumbering })}
-        options={[
-          { value: 'arabic', label: SAMPLES.arabic },
-          { value: 'roman', label: SAMPLES.roman },
-          { value: 'words', label: t('export_manuscript_numbering_words') },
-          { value: 'none', label: t('export_manuscript_numbering_none') },
-        ]}
-      />
-      <OptionPills
-        label={t('export_manuscript_separator')}
-        testID="export-separator"
-        value={style.sceneSeparator ?? 'none'}
-        onChange={(sceneSeparator) => changeStyle({ sceneSeparator })}
-        options={[
-          { value: 'none', label: t('export_manuscript_separator_none') },
-          { value: 'hash', label: SAMPLES.hash },
-          { value: 'asterisks', label: SAMPLES.asterisks },
-          { value: 'rule', label: SAMPLES.rule },
-        ]}
-      />
-      <OptionPills
-        label={t('export_manuscript_quotes')}
-        testID="export-quotes"
-        value={style.quotes ?? 'straight'}
-        onChange={(quotes) => changeStyle({ quotes })}
-        options={[
-          { value: 'straight', label: SAMPLES.straight },
-          { value: 'curly', label: SAMPLES.curly },
-          { value: 'guillemets', label: SAMPLES.guillemets },
-        ]}
-      />
-      <SwitchRow
-        testID="export-collapse-spaces"
-        label={t('export_manuscript_collapse_spaces')}
-        value={style.collapseSpaces ?? false}
-        onChange={(collapseSpaces) => changeStyle({ collapseSpaces })}
-      />
+      {screenplay ? null : (
+        <>
+          <OptionSection title={t('export_manuscript_contents')} />
+          <SwitchRow
+            testID="export-scene-names"
+            label={t('export_manuscript_include_scene_names')}
+            value={settings.includeSceneNames}
+            onChange={(includeSceneNames) => change({ includeSceneNames })}
+          />
+          {settings.includeSceneNames && chapterNumberingAvailable ? (
+            <SwitchRow
+              testID="export-reset-numbers"
+              label={t('export_manuscript_reset_numbers')}
+              value={settings.resetSceneNumbers}
+              onChange={(resetSceneNumbers) => change({ resetSceneNumbers })}
+            />
+          ) : null}
+          {showLooseSwitch ? (
+            <SwitchRow
+              testID="export-loose"
+              label={t('export_manuscript_include_loose', { count: looseCount })}
+              value={settings.includeLooseScenes}
+              onChange={(includeLooseScenes) => change({ includeLooseScenes })}
+            />
+          ) : null}
+          {capabilities.index ? (
+            <SwitchRow
+              testID="export-index"
+              label={t('export_manuscript_include_index')}
+              value={settings.includeIndex}
+              onChange={(includeIndex) => change({ includeIndex })}
+            />
+          ) : null}
+
+          <OptionSection title={t('export_manuscript_title_page')} />
+          <SwitchRow
+            testID="export-title-page"
+            label={t('export_manuscript_title_page_switch')}
+            value={settings.titlePage}
+            onChange={(titlePage) => change({ titlePage })}
+          />
+          {settings.titlePage || settings.format === 'epub' ? (
+            <View>
+              <Text style={styles.label}>{t('export_manuscript_author')}</Text>
+              <TextInput
+                testID="export-author"
+                accessibilityLabel={t('export_manuscript_author')}
+                value={settings.author}
+                onChangeText={(author) => change({ author })}
+                maxLength={200}
+              />
+            </View>
+          ) : null}
+
+          {capabilities.body || capabilities.face || capabilities.page ? (
+            <OptionSection title={t('export_manuscript_layout')} />
+          ) : null}
+          {capabilities.page ? (
+            <OptionPills
+              label={t('export_manuscript_page_size')}
+              testID="export-page"
+              value={style.pageSize ?? 'a4'}
+              onChange={(pageSize) => changeStyle({ pageSize })}
+              options={[
+                { value: 'a4', label: t('export_manuscript_page_a4') },
+                { value: '6x9', label: t('export_manuscript_page_6x9') },
+              ]}
+            />
+          ) : null}
+          {capabilities.face ? (
+            <OptionPills
+              label={t('export_manuscript_font')}
+              testID="export-font"
+              value={style.fontFamily ?? 'serif'}
+              onChange={(fontFamily) => changeStyle({ fontFamily })}
+              options={[
+                { value: 'serif', label: t('export_manuscript_font_serif') },
+                { value: 'sans', label: t('export_manuscript_font_sans') },
+              ]}
+            />
+          ) : null}
+          {capabilities.body ? (
+            <>
+              <OptionPills
+                label={t('export_manuscript_font_size')}
+                testID="export-size"
+                value={style.fontSize ?? 0}
+                onChange={(fontSize) => changeStyle({ fontSize: fontSize || undefined })}
+                options={[
+                  { value: 0, label: t('export_manuscript_default') },
+                  ...FONT_SIZES.map((size) => ({ value: size, label: `${size} pt` })),
+                ]}
+              />
+              <OptionPills
+                label={t('export_manuscript_line_spacing')}
+                testID="export-spacing"
+                value={style.lineSpacing ?? 0}
+                onChange={(lineSpacing) => changeStyle({ lineSpacing: lineSpacing || undefined })}
+                options={[
+                  { value: 0, label: t('export_manuscript_default') },
+                  ...LINE_SPACINGS.map((spacing) => ({ value: spacing, label: `${spacing}×` })),
+                ]}
+              />
+              <OptionPills
+                label={t('export_manuscript_paragraphs')}
+                testID="export-paragraphs"
+                value={style.paragraphStyle ?? 'indent'}
+                onChange={(paragraphStyle) => changeStyle({ paragraphStyle })}
+                options={[
+                  { value: 'indent', label: t('export_manuscript_paragraphs_indent') },
+                  { value: 'block', label: t('export_manuscript_paragraphs_block') },
+                ]}
+              />
+            </>
+          ) : null}
+
+          <OptionSection title={t('export_manuscript_text')} />
+          <OptionPills
+            label={t('export_manuscript_numbering')}
+            testID="export-numbering"
+            value={style.chapterNumbering ?? 'arabic'}
+            onChange={(chapterNumbering) => changeStyle({ chapterNumbering })}
+            options={[
+              { value: 'arabic', label: SAMPLES.arabic },
+              { value: 'roman', label: SAMPLES.roman },
+              { value: 'words', label: t('export_manuscript_numbering_words') },
+              { value: 'none', label: t('export_manuscript_numbering_none') },
+            ]}
+          />
+          <OptionPills
+            label={t('export_manuscript_separator')}
+            testID="export-separator"
+            value={style.sceneSeparator ?? 'none'}
+            onChange={(sceneSeparator) => changeStyle({ sceneSeparator })}
+            options={[
+              { value: 'none', label: t('export_manuscript_separator_none') },
+              { value: 'hash', label: SAMPLES.hash },
+              { value: 'asterisks', label: SAMPLES.asterisks },
+              { value: 'rule', label: SAMPLES.rule },
+            ]}
+          />
+          <OptionPills
+            label={t('export_manuscript_quotes')}
+            testID="export-quotes"
+            value={style.quotes ?? 'straight'}
+            onChange={(quotes) => changeStyle({ quotes })}
+            options={[
+              { value: 'straight', label: SAMPLES.straight },
+              { value: 'curly', label: SAMPLES.curly },
+              { value: 'guillemets', label: SAMPLES.guillemets },
+            ]}
+          />
+          <SwitchRow
+            testID="export-collapse-spaces"
+            label={t('export_manuscript_collapse_spaces')}
+            value={style.collapseSpaces ?? false}
+            onChange={(collapseSpaces) => changeStyle({ collapseSpaces })}
+          />
+        </>
+      )}
     </View>
   );
 };

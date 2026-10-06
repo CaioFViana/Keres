@@ -1,3 +1,4 @@
+import { PAYMENT_RENEWAL_GRACE_HOURS } from '@keres/shared/metadata/Payments';
 import { addBillingPeriod } from '@keres/shared/utils/billingPeriod';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,6 +25,20 @@ import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
 import { postEvents } from '../helpers/paymentEvents';
 
 const DAY = 24 * 60 * 60 * 1000;
+const HOUR = 60 * 60 * 1000;
+/** A paid period that ended past the margin renewing subscriptions get: over for good. */
+const pastGrace = () => new Date(Date.now() - (PAYMENT_RENEWAL_GRACE_HOURS + 1) * HOUR);
+/** A moment after a month paid today has ended, margin included. */
+const afterMargin = () =>
+  new Date(Date.now() + 31 * DAY + (PAYMENT_RENEWAL_GRACE_HOURS + 1) * HOUR);
+/** One that ended a few hours ago: inside that margin. */
+const justEnded = () => new Date(Date.now() - 3 * HOUR);
+/** A renewal comes a month after the payment it follows: the one the server took is moved back that far. */
+const agePayment = (user: TestUser) =>
+  db
+    .update(paymentSubscriptions)
+    .set({ lastPaymentAt: new Date(Date.now() - 30 * DAY) })
+    .where(eq(paymentSubscriptions.userId, user.userId));
 
 let admin: TestUser;
 let ana: TestUser;
@@ -132,7 +147,7 @@ describe('a server with no payment plugin', () => {
 
     await db
       .update(paymentSubscriptions)
-      .set({ paidUntil: new Date(Date.now() - 1000) })
+      .set({ paidUntil: pastGrace() })
       .where(eq(paymentSubscriptions.userId, ana.userId));
     expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).not.toBe(proId);
   });
@@ -372,7 +387,7 @@ describe('following an attempt', () => {
     const mine = await openCheckout(ana);
     await db
       .update(paymentCheckouts)
-      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .set({ expiresAt: pastGrace() })
       .where(eq(paymentCheckouts.id, mine.id));
 
     const { data } = await request('GET', `/payments/checkout/${mine.id}`, { token: ana.token });
@@ -467,6 +482,7 @@ describe('the provider’s notices', () => {
     const mine = await openCheckout(ana);
     await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
     const first = (await subscriptionOf(ana)).paidUntil;
+    await agePayment(ana);
 
     await webhook([paid({ subscriptionReference: 'sub_ana' })]);
 
@@ -480,7 +496,11 @@ describe('the provider’s notices', () => {
     await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
     await db
       .update(paymentSubscriptions)
-      .set({ status: 'due', paidUntil: new Date(Date.now() - 20 * DAY) })
+      .set({
+        status: 'due',
+        paidUntil: new Date(Date.now() - 20 * DAY),
+        lastPaymentAt: new Date(Date.now() - 50 * DAY),
+      })
       .where(eq(paymentSubscriptions.userId, ana.userId));
     const paidAt = new Date();
 
@@ -608,7 +628,7 @@ describe('when the paid period runs out', () => {
 
   it('marks it due, stops granting the plan, and tells the plugin once', async () => {
     await subscribe(ana);
-    const afterPeriod = new Date(Date.now() + 31 * DAY);
+    const afterPeriod = afterMargin();
 
     expect(await subscriptionService.markDue(afterPeriod)).toEqual({ due: 1, ended: 0 });
     expect(await subscriptionService.markDue(afterPeriod)).toEqual({ due: 0, ended: 0 });
@@ -628,21 +648,83 @@ describe('when the paid period runs out', () => {
     expect(ledger).toMatchObject({ userId: ana.userId, tierName: 'Pro' });
   });
 
-  it('stops granting the plan at the date itself, before the job has run', async () => {
+  it('stops granting the plan once the margin after the date is over, before the job has run', async () => {
     await subscribe(ana);
     await db
       .update(paymentSubscriptions)
-      .set({ paidUntil: new Date(Date.now() - 1000) })
+      .set({ paidUntil: pastGrace() })
       .where(eq(paymentSubscriptions.userId, ana.userId));
 
     expect((await subscriptionOf(ana)).status).toBe('active');
     expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).not.toBe(proId);
   });
 
+  describe('the margin after the date for a subscription that is still renewing', () => {
+    const endAt = (user: TestUser, when: Date) =>
+      db
+        .update(paymentSubscriptions)
+        .set({ paidUntil: when, lastPaymentAt: new Date(when.getTime() - 30 * DAY) })
+        .where(eq(paymentSubscriptions.userId, user.userId));
+
+    it('keeps the plan, does not mark it due and does not tell the plugin, while the notice may just be late', async () => {
+      await subscribe(ana);
+      await endAt(ana, justEnded());
+
+      expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).toBe(proId);
+      expect(await subscriptionService.markDue()).toEqual({ due: 0, ended: 0 });
+      expect((await subscriptionOf(ana)).status).toBe('active');
+      expect(fake.onSubscriptionDue).not.toHaveBeenCalled();
+    });
+
+    it('is due like any other once the margin is over', async () => {
+      await subscribe(ana);
+      await endAt(ana, pastGrace());
+
+      expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).not.toBe(proId);
+      expect(await subscriptionService.markDue()).toEqual({ due: 1, ended: 0 });
+      expect((await subscriptionOf(ana)).status).toBe('due');
+    });
+
+    it('takes the late renewal in without a gap: nothing was lost in between, and the next period counts from the payment', async () => {
+      await subscribe(ana);
+      await endAt(ana, justEnded());
+      const renewedAt = new Date();
+
+      await webhook([paid({ subscriptionReference: 'sub_ana', paidAt: renewedAt.toISOString() })]);
+
+      const row = await subscriptionOf(ana);
+      expect(row.status).toBe('active');
+      expect(row.paidUntil.getTime()).toBe(addBillingPeriod(renewedAt, 'monthly').getTime());
+      expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).toBe(proId);
+    });
+
+    it('does not give one to what ends on its date: a renewal already stopped is over at once', async () => {
+      await subscribe(ana);
+      await request('POST', '/payments/subscription/cancel', { token: ana.token });
+      await endAt(ana, justEnded());
+
+      expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).not.toBe(proId);
+      expect(await subscriptionService.markDue()).toEqual({ due: 0, ended: 1 });
+      expect((await subscriptionOf(ana)).status).toBe('canceled');
+    });
+
+    it('does not give one to a plan an administrator gave: it ends on its date', async () => {
+      await request('POST', `/admin/api/payments/users/${ana.userId}/gift`, {
+        token: admin.token,
+        body: { tierId: proId, months: 1 },
+      });
+      await endAt(ana, justEnded());
+
+      expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).not.toBe(proId);
+      expect(await subscriptionService.markDue()).toEqual({ due: 0, ended: 1 });
+    });
+  });
+
   it('brings a due subscription back when the payment arrives', async () => {
     await subscribe(ana);
-    await subscriptionService.markDue(new Date(Date.now() + 31 * DAY));
+    await subscriptionService.markDue(afterMargin());
     expect((await subscriptionOf(ana)).status).toBe('due');
+    await agePayment(ana);
 
     await webhook([paid({ subscriptionReference: 'sub_ana' })]);
 
@@ -654,7 +736,7 @@ describe('when the paid period runs out', () => {
     await subscribe(ana);
     await request('POST', '/payments/subscription/cancel', { token: ana.token });
 
-    expect(await subscriptionService.markDue(new Date(Date.now() + 31 * DAY))).toEqual({
+    expect(await subscriptionService.markDue(afterMargin())).toEqual({
       due: 0,
       ended: 1,
     });
@@ -665,7 +747,7 @@ describe('when the paid period runs out', () => {
 
   it('ends a subscription left unpaid for two months', async () => {
     await subscribe(ana);
-    await subscriptionService.markDue(new Date(Date.now() + 31 * DAY));
+    await subscriptionService.markDue(afterMargin());
 
     const result = await subscriptionService.markDue(new Date(Date.now() + 100 * DAY));
 
@@ -676,7 +758,7 @@ describe('when the paid period runs out', () => {
   it('retries telling the plugin when it failed, without marking it told', async () => {
     await subscribe(ana);
     fake.onSubscriptionDue.mockRejectedValueOnce(new Error('provider down'));
-    const when = new Date(Date.now() + 31 * DAY);
+    const when = afterMargin();
 
     await subscriptionService.markDue(when);
     expect((await subscriptionOf(ana)).dueNotifiedAt).toBeNull();
@@ -690,7 +772,7 @@ describe('when the paid period runs out', () => {
     const mine = await openCheckout(ana);
     await db
       .update(paymentCheckouts)
-      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .set({ expiresAt: pastGrace() })
       .where(eq(paymentCheckouts.id, mine.id));
 
     await subscriptionService.markDue();
@@ -965,7 +1047,7 @@ describe('the plan an administrator sees a person on', () => {
     await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
     await db
       .update(paymentSubscriptions)
-      .set({ paidUntil: new Date(Date.now() - 1000) })
+      .set({ paidUntil: pastGrace() })
       .where(eq(paymentSubscriptions.userId, ana.userId));
 
     expect(await rowOf(ana.userId)).toMatchObject({
@@ -1019,7 +1101,7 @@ describe('plans', () => {
 
     await db
       .update(paymentSubscriptions)
-      .set({ paidUntil: new Date(Date.now() - 1000) })
+      .set({ paidUntil: pastGrace() })
       .where(eq(paymentSubscriptions.userId, ana.userId));
 
     expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).toBe(freeId);
@@ -1029,10 +1111,10 @@ describe('plans', () => {
     await db.update(registrationSettings).set({ defaultTierId: freeId });
     const mine = await openCheckout(ana);
     await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
-    await subscriptionService.markDue(new Date(Date.now() + 31 * DAY));
+    await subscriptionService.markDue(afterMargin());
     await db
       .update(paymentSubscriptions)
-      .set({ paidUntil: new Date(Date.now() - 1000) })
+      .set({ paidUntil: pastGrace() })
       .where(eq(paymentSubscriptions.userId, ana.userId));
 
     expect((await tierEnforcementService.getEffectiveTier(ana.userId))?.id).toBe(freeId);

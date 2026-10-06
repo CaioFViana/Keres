@@ -12,6 +12,7 @@ import { hashPurchaseToken } from '../../src/services/payments/playPurchaseClaim
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { truncateAll } from '../helpers/database';
 import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
+import { ConnectorError } from '../../src/services/payments/connector/signedClient';
 import { postEvents } from '../helpers/paymentEvents';
 
 let ana: TestUser;
@@ -267,28 +268,52 @@ describe('a subscription bought in the store', () => {
     return cancellable;
   }
 
-  it('is stopped in the store: this server neither offers to nor pretends to', async () => {
+  it('is stopped in the store through the connector, and only then marked as ending', async () => {
     const cancellable = connectorWithCancel();
     await relay(ana, purchase());
 
     const info = await request('GET', '/payments', { token: ana.token });
     expect(info.data.subscription).toMatchObject({
       status: 'active',
-      canCancelHere: false,
+      canCancelHere: true,
       autoRenews: true,
     });
 
-    // Marking it stopped here would leave Google charging: refused, nothing is touched.
+    const { status, data } = await request('POST', '/payments/subscription/cancel', {
+      token: ana.token,
+    });
+
+    expect(status).toBe(200);
+    expect(data.cancelAtPeriodEnd).toBe(true);
+    expect(cancellable.cancelSubscription).toHaveBeenCalledWith('token-abc');
+  });
+
+  it('is not marked as ending when the store could not be told: Google would keep charging', async () => {
+    const cancellable = connectorWithCancel();
+    await relay(ana, purchase());
+    cancellable.cancelSubscription.mockRejectedValueOnce(new ConnectorError('down', 'timeout'));
+
     const { status } = await request('POST', '/payments/subscription/cancel', { token: ana.token });
-    expect(status).toBe(409);
-    expect(cancellable.cancelSubscription).not.toHaveBeenCalled();
+
+    expect(status).toBe(502);
     const [row] = await db
       .select()
       .from(paymentSubscriptions)
       .where(eq(paymentSubscriptions.userId, ana.userId));
     expect(row.cancelAtPeriodEnd).toBe(false);
+  });
 
-    // What flags it is the store saying the person stopped it there.
+  it('is left to the person when the connector cannot reach the store (it answers 400)', async () => {
+    const cancellable = connectorWithCancel();
+    await relay(ana, purchase());
+    cancellable.cancelSubscription.mockRejectedValueOnce(
+      new ConnectorError('Cancellation is not supported for this subscription.', 'status', 400),
+    );
+
+    const { status } = await request('POST', '/payments/subscription/cancel', { token: ana.token });
+
+    expect(status).toBe(409);
+    // What flags it then is the store saying the person stopped it there.
     await postEvents([
       {
         type: 'subscription.canceled',

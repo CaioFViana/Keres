@@ -5,6 +5,7 @@ import {
   ConnectorInfoSchema,
   ConnectorMethodsResponseSchema,
   PlayVerifyResponseSchema,
+  SubscriptionEventsResponseSchema,
 } from '@keres/shared';
 import type {
   CheckoutRequest,
@@ -51,6 +52,7 @@ export class HttpConnector implements PaymentConnector {
     providerReference: string,
   ) => Promise<PaymentEvent | null>;
   cancelSubscription?: (subscriptionReference: string) => Promise<void>;
+  reconcileSubscription?: (subscriptionReference: string, since: Date) => Promise<PaymentEvent[]>;
   onSubscriptionDue?: (subscription: DueSubscription) => Promise<void>;
   verifyPlayPurchase?: (request: PlayVerifyRequest) => Promise<PlayVerifyResponse>;
 
@@ -84,6 +86,17 @@ export class HttpConnector implements PaymentConnector {
           CheckoutStatusResponseSchema,
         );
         return answer.event ? toPaymentEvent(answer.event) : null;
+      };
+    }
+    if (info.capabilities.includes('reconcile')) {
+      this.reconcileSubscription = async (subscriptionReference, since) => {
+        const answer = await client.call(
+          'GET',
+          `/v1/subscriptions/${encodeURIComponent(subscriptionReference)}/events?since=${encodeURIComponent(since.toISOString())}`,
+          undefined,
+          SubscriptionEventsResponseSchema,
+        );
+        return answer.events.map(toPaymentEvent);
       };
     }
     if (info.capabilities.includes('cancel')) {

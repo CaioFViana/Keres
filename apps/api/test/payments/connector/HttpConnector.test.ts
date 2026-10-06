@@ -9,7 +9,13 @@ import {
   HEADER_SIGNATURE,
   HEADER_TIMESTAMP,
 } from '../../../src/services/payments/connector/signing';
-import { connectorDouble, KERES_KEY, OLD_KEY, type Reply } from '../../helpers/connectorDouble';
+import {
+  connectorDouble,
+  KERES_KEY,
+  OLD_KEY,
+  type Reply,
+  type Seen,
+} from '../../helpers/connectorDouble';
 
 const connect = (
   double: ReturnType<typeof connectorDouble>,
@@ -562,5 +568,86 @@ describe('checking a store purchase', () => {
     // `active` missing: not what the contract says.
     const invalid = await rejection(garbled.verifyPlayPurchase!(verified));
     expect(invalid.failure).toBe('invalid');
+  });
+});
+
+describe('asking what the provider charged a subscription', () => {
+  const events = {
+    events: [
+      {
+        type: 'payment.succeeded',
+        eventId: 'sale_1',
+        subscriptionReference: 'sub_1',
+        paidAt: '2026-10-04T12:00:00.000Z',
+        amountCents: 2500,
+        currency: 'brl',
+      },
+      { type: 'subscription.canceled', eventId: 'cancel_1', subscriptionReference: 'sub_1' },
+    ],
+  };
+  const withReconcile = (replies: Record<string, (seen: Seen) => Reply> = {}) =>
+    connectorDouble({
+      info: { capabilities: ['reconcile'] },
+      replies: { 'GET /v1/subscriptions/sub_1/events': () => ({ body: events }), ...replies },
+    });
+
+  it('exists only when the connector said it has it', async () => {
+    expect((await connect(connectorDouble())).reconcileSubscription).toBeUndefined();
+    expect((await connect(withReconcile())).reconcileSubscription).toBeTypeOf('function');
+  });
+
+  it('signs the path with its date, and hands back events in the terms the subscriptions are written in', async () => {
+    const double = withReconcile();
+    const connector = await connect(double);
+    const since = new Date('2026-09-01T00:00:00.000Z');
+
+    const answer = await connector.reconcileSubscription!('sub_1', since);
+
+    const request = double.seen.at(-1)!;
+    expect(request).toMatchObject({ method: 'GET', verified: true });
+    expect(request.path).toBe(
+      `/v1/subscriptions/sub_1/events?since=${encodeURIComponent(since.toISOString())}`,
+    );
+    expect(answer).toEqual([
+      {
+        type: 'payment.succeeded',
+        eventId: 'sale_1',
+        subscriptionReference: 'sub_1',
+        paidAt: new Date('2026-10-04T12:00:00.000Z'),
+        amountCents: 2500,
+        currency: 'BRL',
+      },
+      { type: 'subscription.canceled', eventId: 'cancel_1', subscriptionReference: 'sub_1' },
+    ]);
+  });
+
+  it("refuses an answer that is not the contract's, and one that is not signed", async () => {
+    const wrong = await connect(
+      withReconcile({
+        'GET /v1/subscriptions/sub_1/events': () => ({
+          body: { events: [{ type: 'payment.succeeded', eventId: 'x' }] },
+        }),
+      }),
+    );
+    expect((await rejection(wrong.reconcileSubscription!('sub_1', new Date()))).failure).toBe(
+      'invalid',
+    );
+
+    const unsigned = await connect(
+      withReconcile({
+        'GET /v1/subscriptions/sub_1/events': () => ({ body: events, unsigned: true }),
+      }),
+    );
+    expect((await rejection(unsigned.reconcileSubscription!('sub_1', new Date()))).failure).toBe(
+      'signature',
+    );
+  });
+
+  it('keeps a reference from leaving its place in the path', async () => {
+    const connector = await connect(withReconcile());
+
+    await expect(
+      connector.reconcileSubscription!('../../v1/info', new Date()),
+    ).rejects.toBeInstanceOf(ConnectorError);
   });
 });

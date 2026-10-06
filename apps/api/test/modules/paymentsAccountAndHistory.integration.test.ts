@@ -6,6 +6,7 @@ import { setPaymentConnector } from '../../src/services/payments/PaymentConnecto
 import { newId, registerUser, request, type TestUser } from '../helpers/app';
 import { promoteToAdmin, truncateAll } from '../helpers/database';
 import { createFakePaymentConnector } from '../helpers/fakePaymentConnector';
+import { ConnectorError } from '../../src/services/payments/connector/signedClient';
 import { postEvents } from '../helpers/paymentEvents';
 
 /**
@@ -142,7 +143,7 @@ describe('closing an account that is being charged', () => {
     expect(fake.cancelSubscription).not.toHaveBeenCalled();
   });
 
-  it('only notes a subscription bought in the store: it is cancelled there, by the person', async () => {
+  it('stops a subscription bought in the store at the store, through the connector', async () => {
     fake = createFakePaymentConnector({
       withCancel: true,
       methods: [{ id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' }],
@@ -158,10 +159,52 @@ describe('closing an account that is being charged', () => {
 
     expect((await closeAccount(ana)).status).toBe(200);
 
-    expect(fake.cancelSubscription).not.toHaveBeenCalled();
+    expect(fake.cancelSubscription).toHaveBeenCalledWith('play-token-ana');
+    expect((await subscriptionOf(ana)).cancelAtPeriodEnd).toBe(true);
+    expect((await accountOf(ana)).isDeleted).toBe(true);
+  });
+
+  it('only notes a store subscription when the connector cannot reach the store: the person cancels it there', async () => {
+    fake = createFakePaymentConnector({
+      withCancel: true,
+      methods: [{ id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' }],
+    });
+    setPaymentConnector(fake.connector);
+    fake.cancelSubscription.mockRejectedValueOnce(
+      new ConnectorError('Cancellation is not supported.', 'status', 400),
+    );
+    const { data } = await request('POST', '/payments/checkout', {
+      token: ana.token,
+      body: { tierId: proId, interval: 'monthly', methodId: 'playbilling' },
+    });
+    await postEvents([
+      paid({ checkoutId: (data as { id: string }).id, subscriptionReference: 'play-token-ana' }),
+    ]);
+
+    expect((await closeAccount(ana)).status).toBe(200);
+
     const lines = await db.select().from(paymentEvents).where(eq(paymentEvents.userId, ana.userId));
     expect(lines.some((line) => line.detail?.includes('cancelled there'))).toBe(true);
     expect((await accountOf(ana)).isDeleted).toBe(true);
+  });
+
+  it('still refuses to close the account when the store cannot be told for any other reason', async () => {
+    fake = createFakePaymentConnector({
+      withCancel: true,
+      methods: [{ id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' }],
+    });
+    setPaymentConnector(fake.connector);
+    fake.cancelSubscription.mockRejectedValueOnce(new ConnectorError('down', 'timeout'));
+    const { data } = await request('POST', '/payments/checkout', {
+      token: ana.token,
+      body: { tierId: proId, interval: 'monthly', methodId: 'playbilling' },
+    });
+    await postEvents([
+      paid({ checkoutId: (data as { id: string }).id, subscriptionReference: 'play-token-ana' }),
+    ]);
+
+    expect((await closeAccount(ana)).status).toBe(502);
+    expect((await accountOf(ana)).isDeleted).toBe(false);
   });
 });
 
@@ -242,7 +285,7 @@ describe('the payment history of a person', () => {
   it('pages, newest first, without repeating or skipping', async () => {
     await subscribe(ana, 'sub_ana');
     for (let index = 0; index < 4; index += 1) {
-      await postEvents([paid({ subscriptionReference: 'sub_ana' })]);
+      await postEvents([paid({ subscriptionReference: 'sub_ana', amountCents: 2000 + index })]);
     }
 
     const first = (await history(ana, { limit: '2' })).data;

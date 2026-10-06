@@ -7,7 +7,7 @@ import type {
   PaymentConnector,
 } from '@keres/shared/payments/PaymentConnector';
 import { GIFT_PROVIDER_ID } from '@keres/shared/metadata/Payments';
-import { and, desc, eq, inArray, lte } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db, withWriteTransaction } from '../../db';
 import {
@@ -16,7 +16,6 @@ import {
   paymentSubscriptions,
   playPurchaseClaims,
   tiers,
-  users,
 } from '../../db/schema';
 import { emitUserEvent } from '../../modules/webSocket/webSocket.route';
 import { AppError } from '../../utils/errors';
@@ -26,13 +25,19 @@ import { registrationSettingsService } from '../RegistrationSettingsService';
 import { clipDetail as clip, noteLedger, REFUSED_DETAIL_PREFIX, tierNameOf } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { hashPurchaseToken } from './playPurchaseClaims';
+import { markSubscriptionsDue } from './subscriptionLapse';
+import { ConnectorError } from './connector/signedClient';
+import {
+  isRenewal,
+  isSameChargeAgain,
+  liftsCancellation,
+  SAME_CHARGE_WINDOW_MS,
+} from './paymentRules';
 import { periodStartFor } from './periodConversion';
 
 type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;
 
-/** A period left unpaid this long ends the subscription for good: the administrators' list does not fill with them. */
-export const DUE_ABANDONED_AFTER_DAYS = 60;
-const DAY_MS = 24 * 60 * 60 * 1000;
+export { DUE_ABANDONED_AFTER_DAYS } from './subscriptionLapse';
 
 /** Whether a method is bought inside a mobile app through the device's store (Google Play, App Store). */
 export function isStoreMethod(method: PaymentMethodOption | null): boolean {
@@ -108,13 +113,10 @@ export class SubscriptionService {
       amountCents: row.amountCents,
       currency: row.currency,
       cancelAtPeriodEnd: row.cancelAtPeriodEnd,
-      // A store subscription is stopped in the store: the connector holds nothing to cancel there, and saying
-      // "stopped" here would leave the store charging.
+      // Whether the connector can be told to stop it: at a provider, and in a store too when the connector
+      // can reach the store's API (a connector that cannot answers 400, which is told apart where it is tried).
       canCancelHere: Boolean(
-        plugin?.cancelSubscription &&
-          row.providerReference &&
-          row.providerId === plugin.id &&
-          !isStoreMethod(method),
+        plugin?.cancelSubscription && row.providerReference && row.providerId === plugin.id,
       ),
       // A plan given by hand is not charged by anybody: the person pays for what comes after it. A plugin that
       // does not say, or no attempt behind it, counts as recurring: what the app showed before this was known.
@@ -156,13 +158,18 @@ export class SubscriptionService {
     if (row.cancelAtPeriodEnd) {
       return this.toWire(row, plugin);
     }
-    if (isStoreMethod(await this.lastMethod(row, plugin))) {
-      throw new AppError(409, 'This subscription is managed in the store it was bought in.');
-    }
     if (plugin.cancelSubscription && row.providerReference && row.providerId === plugin.id) {
       try {
         await plugin.cancelSubscription(row.providerReference);
       } catch (error) {
+        // A store subscription the connector cannot reach the store for (it says 400) is the store's to stop.
+        if (
+          error instanceof ConnectorError &&
+          error.status === 400 &&
+          isStoreMethod(await this.lastMethod(row, plugin))
+        ) {
+          throw new AppError(409, 'This subscription is managed in the store it was bought in.');
+        }
         logger.error('Payment plugin could not cancel a subscription', error);
         throw new AppError(502, 'Could not cancel the subscription now. Try again later.');
       }
@@ -270,7 +277,12 @@ export class SubscriptionService {
         const fresh = await noteLedger(tx, {
           ...base,
           providerEventId: `unmatched:${event.eventId}`,
-          kind: event.type === 'payment.succeeded' ? 'payment_succeeded' : 'payment_failed',
+          kind:
+            event.type === 'payment.succeeded'
+              ? 'payment_succeeded'
+              : event.type === 'payment.refunded'
+                ? 'payment_refunded'
+                : 'payment_failed',
           detail: `Unmatched ${event.type}`,
           providerReference: subscriptionReference ?? null,
         });
@@ -314,6 +326,20 @@ export class SubscriptionService {
           const interval = checkout?.interval ?? existing?.interval;
           if (!tierId || !interval) return 'unmatched';
           const tierName = checkout?.tierName ?? (await tierNameOf(tierId));
+          if (isSameChargeAgain(existing, checkout, event, subscriptionReference)) {
+            // The same charge under another id: noted, and nothing is granted for it.
+            await noteLedger(tx, {
+              ...base,
+              kind: 'payment_succeeded',
+              userId,
+              tierName,
+              amountCents: event.amountCents,
+              currency: event.currency,
+              providerReference: subscriptionReference ?? null,
+              detail: `${REFUSED_DETAIL_PREFIX} the same charge was already applied under another id.`,
+            });
+            return 'duplicate';
+          }
           const { start, conversion } = await periodStartFor(
             tx,
             existing,
@@ -333,15 +359,24 @@ export class SubscriptionService {
               : null,
           });
           if (!fresh) return 'duplicate';
+          const computedUntil = addBillingPeriod(start, interval);
           const values = {
             tierId,
             interval,
             status: 'active' as const,
-            paidUntil: addBillingPeriod(start, interval),
+            // A renewal never shortens what is paid (an old notice arriving late); a switch of plan may, by design.
+            paidUntil:
+              existing &&
+              isRenewal(existing, checkout, subscriptionReference) &&
+              existing.paidUntil > computedUntil
+                ? existing.paidUntil
+                : computedUntil,
             lastPaymentAt: event.paidAt,
             amountCents: event.amountCents,
             currency: event.currency,
-            cancelAtPeriodEnd: false,
+            cancelAtPeriodEnd: liftsCancellation(existing, checkout, subscriptionReference)
+              ? false
+              : (existing?.cancelAtPeriodEnd ?? false),
             providerId: plugin.id,
             providerReference: subscriptionReference ?? existing?.providerReference ?? null,
             dueNotifiedAt: null,
@@ -415,6 +450,45 @@ export class SubscriptionService {
           audit.push({ action: 'payment.subscription_canceled', meta: { by: 'provider' } });
           return 'applied';
         }
+        case 'payment.refunded': {
+          if (!existing) return 'unmatched';
+          // Only the latest payment, refunded in full, takes the period it paid for back.
+          const latest = existing.lastPaymentAt?.getTime() ?? 0;
+          const endsNow =
+            event.endsAccess && event.chargedAt.getTime() >= latest - SAME_CHARGE_WINDOW_MS;
+          const fresh = await noteLedger(tx, {
+            ...base,
+            kind: 'payment_refunded',
+            userId,
+            tierName: await tierNameOf(existing.tierId),
+            amountCents: event.amountCents,
+            currency: event.currency,
+            providerReference: existing.providerReference,
+            detail: endsNow
+              ? 'Refunded in full: the period it paid for ends now.'
+              : event.endsAccess
+                ? 'An earlier payment was refunded: the current period stands.'
+                : 'Partly refunded: the period stands.',
+          });
+          if (!fresh) return 'duplicate';
+          if (endsNow) {
+            await tx
+              .update(paymentSubscriptions)
+              .set({
+                status: 'canceled',
+                cancelAtPeriodEnd: true,
+                paidUntil:
+                  existing.paidUntil > event.refundedAt ? event.refundedAt : existing.paidUntil,
+                updatedAt: now,
+              })
+              .where(eq(paymentSubscriptions.userId, userId));
+          }
+          audit.push({
+            action: 'payment.refunded',
+            meta: { amountCents: event.amountCents, endsAccess: endsNow },
+          });
+          return 'applied';
+        }
         case 'checkout.expired': {
           if (!checkout) return 'unmatched';
           const fresh = await noteLedger(tx, {
@@ -450,133 +524,9 @@ export class SubscriptionService {
     return outcome;
   }
 
-  /**
-   * Marks the subscriptions whose paid period ran out. A cancelled one ends; any other becomes `due`, the
-   * plugin is told once so its provider can chase it, and one left unpaid for `DUE_ABANDONED_AFTER_DAYS`
-   * ends too. Safe to run as often as wanted - it only acts on what changed.
-   */
+  /** See `markSubscriptionsDue`. */
   async markDue(now = new Date()): Promise<{ due: number; ended: number }> {
-    const plugin = getPaymentConnector();
-    let due = 0;
-    let ended = 0;
-
-    const lapsed = await db
-      .select()
-      .from(paymentSubscriptions)
-      .where(
-        and(eq(paymentSubscriptions.status, 'active'), lte(paymentSubscriptions.paidUntil, now)),
-      );
-    for (const row of lapsed) {
-      const tierName = await tierNameOf(row.tierId);
-      const ending = row.cancelAtPeriodEnd;
-      const done = await withWriteTransaction(async (tx) => {
-        // The row may have been paid since it was read: only a still-active, still-lapsed one changes.
-        const changed = await tx
-          .update(paymentSubscriptions)
-          .set({ status: ending ? 'canceled' : 'due', updatedAt: now })
-          .where(
-            and(
-              eq(paymentSubscriptions.userId, row.userId),
-              eq(paymentSubscriptions.status, 'active'),
-              lte(paymentSubscriptions.paidUntil, now),
-            ),
-          )
-          .returning({ userId: paymentSubscriptions.userId });
-        if (changed.length === 0) return false;
-        await noteLedger(tx, {
-          providerId: row.providerId,
-          kind: ending ? 'subscription_canceled' : 'subscription_due',
-          userId: row.userId,
-          tierName,
-          amountCents: row.amountCents,
-          currency: row.currency,
-          providerReference: row.providerReference,
-          detail: ending ? 'The paid period ended.' : `Paid until ${row.paidUntil.toISOString()}.`,
-        });
-        return true;
-      });
-      if (!done) continue;
-      if (ending) ended += 1;
-      else due += 1;
-      this.notify(row.userId);
-      auditService.record({
-        category: 'payment',
-        action: ending ? 'payment.subscription_canceled' : 'payment.subscription_due',
-        subjectUserId: row.userId,
-        meta: { tier: tierName, paidUntil: row.paidUntil.toISOString() },
-      });
-    }
-
-    const waiting = await db
-      .select()
-      .from(paymentSubscriptions)
-      .where(eq(paymentSubscriptions.status, 'due'));
-    for (const row of waiting) {
-      if (now.getTime() - row.paidUntil.getTime() > DUE_ABANDONED_AFTER_DAYS * DAY_MS) {
-        await db
-          .update(paymentSubscriptions)
-          .set({ status: 'canceled', updatedAt: now })
-          .where(
-            and(
-              eq(paymentSubscriptions.userId, row.userId),
-              eq(paymentSubscriptions.status, 'due'),
-            ),
-          );
-        await db.insert(paymentEvents).values({
-          id: ulid(),
-          providerId: row.providerId,
-          kind: 'subscription_canceled',
-          userId: row.userId,
-          tierName: await tierNameOf(row.tierId),
-          providerReference: row.providerReference,
-          detail: `Unpaid for ${DUE_ABANDONED_AFTER_DAYS} days.`,
-        });
-        ended += 1;
-        this.notify(row.userId);
-        continue;
-      }
-      if (row.dueNotifiedAt || !plugin?.onSubscriptionDue || row.providerId !== plugin.id) continue;
-      try {
-        const user = await db.query.users.findFirst({
-          where: eq(users.id, row.userId),
-          columns: { id: true, username: true },
-        });
-        await plugin.onSubscriptionDue({
-          payer: { userId: row.userId, username: user?.username ?? '' },
-          tier: { id: row.tierId, name: await tierNameOf(row.tierId) },
-          interval: row.interval,
-          amountCents: row.amountCents,
-          currency: row.currency,
-          subscriptionReference: row.providerReference ?? undefined,
-          paidUntil: row.paidUntil,
-        });
-        await db
-          .update(paymentSubscriptions)
-          .set({ dueNotifiedAt: now })
-          .where(eq(paymentSubscriptions.userId, row.userId));
-      } catch (error) {
-        // Retried on the next run; the plan is already not granted, so nothing depends on it.
-        logger.error('Payment plugin failed on a subscription that is due', error);
-      }
-    }
-
-    // Attempts nobody finished stop being payable.
-    const open = await db
-      .select({ id: paymentCheckouts.id })
-      .from(paymentCheckouts)
-      .where(and(eq(paymentCheckouts.status, 'pending'), lte(paymentCheckouts.expiresAt, now)));
-    if (open.length > 0) {
-      await db
-        .update(paymentCheckouts)
-        .set({ status: 'expired', action: null, updatedAt: now })
-        .where(
-          inArray(
-            paymentCheckouts.id,
-            open.map((row) => row.id),
-          ),
-        );
-    }
-    return { due, ended };
+    return markSubscriptionsDue(now);
   }
 }
 

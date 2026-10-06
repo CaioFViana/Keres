@@ -144,6 +144,16 @@ const envSchema = z.object({
     .optional()
     .default('false')
     .transform((value) => value === 'true'),
+  /**
+   * How long after an account was closed its payment records are kept in a form that points at the person, in days.
+   * After it the subscription, the attempts and the store claims of that account are deleted and the ledger keeps
+   * its lines (amounts, plans, dates) without the person or the provider's reference. Unset: kept as they are.
+   * At least 30, so a late refund or a dispute can still be tied to the account.
+   */
+  PAYMENT_RETENTION_DAYS: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.number().int().min(30).max(3650).optional(),
+  ),
   SHUTDOWN_GRACE_MS: z.coerce.number().int().min(0).optional().default(7000),
 });
 

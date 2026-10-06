@@ -8,6 +8,7 @@ import { logger } from '../../utils/logger';
 import { auditService } from '../AuditService';
 import { noteLedger, tierNameOf } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
+import { ConnectorError } from './connector/signedClient';
 import { isStoreMethod, subscriptionService } from './SubscriptionService';
 
 export class AccountClosureService {
@@ -16,8 +17,8 @@ export class AccountClosureService {
    * for an account that is gone. What is done depends on where the subscription lives:
    *   - at a provider the connector can reach: the renewal is cancelled there, and if that fails the account is
    *     NOT closed (the error says so) - charging somebody who has no account is worse than a retry;
-   *   - in a store (Google Play): nothing the connector can stop, so only a note is kept - the person has to cancel
-   *     it in the store;
+   *   - in a store (Google Play): the same, when the connector can reach the store's API; when it cannot, only a
+   *     note is kept and the person has to cancel it in the store;
    *   - a plan given by an administrator, or no live subscription: nothing to stop.
    * What was already paid stays recorded and runs out its period, like any other cancellation.
    */
@@ -30,9 +31,6 @@ export class AccountClosureService {
     let detail: string;
     if (row.cancelAtPeriodEnd) {
       detail = 'The account was closed; the renewal had already been stopped.';
-    } else if (isStoreMethod(await subscriptionService.lastMethod(row, plugin))) {
-      detail =
-        'The account was closed; the subscription was bought in the store and has to be cancelled there by the person.';
     } else if (!row.providerReference) {
       detail = 'The account was closed.';
     } else if (plugin && row.providerId === plugin.id && !plugin.cancelSubscription) {
@@ -46,17 +44,28 @@ export class AccountClosureService {
     } else {
       try {
         await plugin.cancelSubscription?.(row.providerReference);
+        detail = 'The account was closed: the renewal was stopped at the provider.';
       } catch (error) {
-        logger.error(
-          'Payment plugin could not stop a subscription of an account being closed',
-          error,
-        );
-        throw new AppError(
-          502,
-          'Could not stop the subscription at the payment provider. The account was not closed; try again.',
-        );
+        // A store subscription the connector cannot reach the store for (it says 400) is the store's to stop:
+        // the account closes with a note, and the person cancels it there.
+        if (
+          error instanceof ConnectorError &&
+          error.status === 400 &&
+          isStoreMethod(await subscriptionService.lastMethod(row, plugin))
+        ) {
+          detail =
+            'The account was closed; the subscription was bought in the store and has to be cancelled there by the person.';
+        } else {
+          logger.error(
+            'Payment plugin could not stop a subscription of an account being closed',
+            error,
+          );
+          throw new AppError(
+            502,
+            'Could not stop the subscription at the payment provider. The account was not closed; try again.',
+          );
+        }
       }
-      detail = 'The account was closed: the renewal was stopped at the provider.';
     }
 
     await db

@@ -8,6 +8,8 @@ import { pruneAttemptLimits } from './services/AttemptLimitService';
 import { auditService } from './services/AuditService';
 import { startPaymentConnector } from './services/payments/connector/startConnector';
 import { getPaymentConnector } from './services/payments/PaymentConnectorRegistry';
+import { paymentReconciliationService } from './services/payments/PaymentReconciliationService';
+import { paymentRetentionService } from './services/payments/PaymentRetentionService';
 import { subscriptionService } from './services/payments/SubscriptionService';
 import { warmHostedClientDelivery } from './services/hostedClientDelivery';
 import { assertMediaStorageConfiguration } from './services/MediaStorageConfigurationService';
@@ -128,8 +130,25 @@ function startAuditRetentionScheduler(): () => void {
 function startPaymentsScheduler(): () => void {
   const run = () => {
     trackBackground(
-      subscriptionService
-        .markDue()
+      // First look for a payment a notice never reported, then mark what is still unpaid: the other way round
+      // would call a renewal that is merely missing from here "due".
+      paymentReconciliationService
+        .run()
+        .then((found) => {
+          if (found.applied > 0) {
+            logger.info(
+              `Payments: found ${found.applied} payment notice(s) that never arrived (${found.subscriptions} subscription(s), ${found.checkouts} attempt(s) asked about).`,
+            );
+          }
+        })
+        .catch((error: unknown) => {
+          logger.error('Looking for missed payment notices failed', error);
+        })
+        .then(() => paymentRetentionService.run())
+        .catch((error: unknown) => {
+          logger.error('Releasing the payment records of closed accounts failed', error);
+        })
+        .then(() => subscriptionService.markDue())
         .then(({ due, ended }) => {
           if (due > 0 || ended > 0) {
             logger.info(`Payments: ${due} subscription(s) now due, ${ended} ended.`);

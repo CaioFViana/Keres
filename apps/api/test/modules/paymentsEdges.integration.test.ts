@@ -1,3 +1,4 @@
+import { PAYMENT_RENEWAL_GRACE_HOURS } from '@keres/shared/metadata/Payments';
 import { addBillingPeriod } from '@keres/shared/utils/billingPeriod';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,6 +24,9 @@ import { postEvents } from '../helpers/paymentEvents';
  * offer less than the whole contract, and the administrators' lists under each ordering.
  */
 const DAY = 24 * 60 * 60 * 1000;
+/** A moment after a month paid today has ended, with the margin renewing subscriptions get after it. */
+const afterMargin = () =>
+  new Date(Date.now() + 31 * DAY + (PAYMENT_RENEWAL_GRACE_HOURS + 1) * 60 * 60 * 1000);
 
 let admin: TestUser;
 let ana: TestUser;
@@ -158,7 +162,7 @@ describe('notices about something that is not there to change', () => {
 
   it('ends at once a subscription the provider cancels while it is already due', async () => {
     await subscribe(ana);
-    await subscriptionService.markDue(new Date(Date.now() + 31 * DAY));
+    await subscriptionService.markDue(afterMargin());
     expect((await subscriptionOf(ana)).status).toBe('due');
 
     await webhook([
@@ -184,14 +188,33 @@ describe('notices about something that is not there to change', () => {
     expect((await db.select().from(paymentCheckouts))[0].status).toBe('expired');
   });
 
-  it('leaves an attempt that was paid as it was when the payment is reported again with a new id', async () => {
+  it('grants nothing twice when the same charge is announced again under a new id', async () => {
     const mine = await subscribe(ana);
     const before = await subscriptionOf(ana);
 
-    await webhook([paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' })]);
+    const { data } = await webhook([
+      paid({ checkoutId: mine.id, subscriptionReference: 'sub_ana' }),
+    ]);
 
+    expect(data).toEqual({ received: 1, applied: 0 });
     expect((await db.select().from(paymentCheckouts))[0].status).toBe('paid');
-    // Paid twice, so the period went on: nothing was lost.
+    expect((await subscriptionOf(ana)).paidUntil.getTime()).toBe(before.paidUntil.getTime());
+    // It is on the ledger, as turned down, so an administrator can see it arrived - and it is no payment of the person's.
+    const lines = await db.select().from(paymentEvents).where(eq(paymentEvents.userId, ana.userId));
+    expect(lines.some((line) => line.detail?.startsWith('Refused:'))).toBe(true);
+  });
+
+  it('still takes a second real payment a month later, with a new id', async () => {
+    await subscribe(ana);
+    const before = await subscriptionOf(ana);
+    await db
+      .update(paymentSubscriptions)
+      .set({ lastPaymentAt: new Date(Date.now() - 30 * DAY) })
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+
+    const { data } = await webhook([paid({ subscriptionReference: 'sub_ana' })]);
+
+    expect(data).toEqual({ received: 1, applied: 1 });
     expect((await subscriptionOf(ana)).paidUntil.getTime()).toBeGreaterThan(
       before.paidUntil.getTime(),
     );
@@ -232,7 +255,7 @@ describe('cancelling when it cannot go as usual', () => {
 
   it('has nothing to cancel once the subscription is due', async () => {
     await subscribe(ana);
-    await subscriptionService.markDue(new Date(Date.now() + 31 * DAY));
+    await subscriptionService.markDue(afterMargin());
 
     expect(
       (await request('POST', '/payments/subscription/cancel', { token: ana.token })).status,
@@ -591,7 +614,7 @@ describe('when the paid period runs out, and the plugin does less', () => {
     setPaymentConnector(quiet.connector);
     await subscribe(ana);
 
-    expect(await subscriptionService.markDue(new Date(Date.now() + 31 * DAY))).toEqual({
+    expect(await subscriptionService.markDue(afterMargin())).toEqual({
       due: 1,
       ended: 0,
     });
@@ -605,7 +628,7 @@ describe('when the paid period runs out, and the plugin does less', () => {
       .set({ providerId: 'another' })
       .where(eq(paymentSubscriptions.userId, ana.userId));
 
-    await subscriptionService.markDue(new Date(Date.now() + 31 * DAY));
+    await subscriptionService.markDue(afterMargin());
 
     expect(fake.onSubscriptionDue).not.toHaveBeenCalled();
   });

@@ -14,6 +14,7 @@ import { and, asc, count, desc, eq, gte, inArray, lte, or, sql, sum, type SQL } 
 import { db } from '../../db';
 import { paymentEvents, paymentSubscriptions, tiers, users } from '../../db/schema';
 import { insensitiveLike } from '../../db/sqlOperators';
+import { maskReference } from './paymentRules';
 import { effectiveDefaultTierId } from '../defaultTier';
 import { registrationSettingsService } from '../RegistrationSettingsService';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
@@ -47,7 +48,7 @@ const toAdminSubscription = ({
   currency: subscription.currency,
   cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
   providerId: subscription.providerId,
-  providerReference: subscription.providerReference,
+  providerReference: maskReference(subscription.providerReference),
   createdAt: subscription.createdAt.toISOString(),
 });
 
@@ -98,6 +99,16 @@ export class AdminPaymentService {
           sql`${paymentEvents.userId} is not null`,
         ),
       );
+    const [refunded] = await db
+      .select({ amount: sum(paymentEvents.amountCents) })
+      .from(paymentEvents)
+      .where(
+        and(
+          eq(paymentEvents.kind, 'payment_refunded'),
+          gte(paymentEvents.createdAt, since),
+          sql`${paymentEvents.userId} is not null`,
+        ),
+      );
     const [failed] = await db
       .select({ failures: count() })
       .from(paymentEvents)
@@ -125,6 +136,7 @@ export class AdminPaymentService {
         payments: received?.payments ?? 0,
         failures: failed?.failures ?? 0,
         amountCents: Number(received?.amount ?? 0),
+        refundedCents: Number(refunded?.amount ?? 0),
       },
       monthlyRecurringCents,
       noDefaultTier: sellsOrGives && !defaultTierId,
@@ -239,7 +251,7 @@ export class AdminPaymentService {
       amountCents: row.amountCents,
       currency: row.currency,
       providerId: row.providerId,
-      providerReference: row.providerReference,
+      providerReference: maskReference(row.providerReference),
       detail: row.detail,
       createdAt: row.createdAt.toISOString(),
     }));

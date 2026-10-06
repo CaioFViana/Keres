@@ -6,6 +6,7 @@ import {
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { adminPaymentService } from '../../services/payments/AdminPaymentService';
+import { paymentHealthService } from '../../services/payments/PaymentHealthService';
 import { giftService } from '../../services/payments/GiftService';
 import { requireAdmin } from '../../utils/adminAuth';
 import { AppError } from '../../utils/errors';
@@ -44,6 +45,21 @@ export const adminPaymentRoutes = new Elysia()
       return adminPaymentService.summary();
     },
     { detail: { summary: 'Payments at a glance', tags: ['Admin'], security } },
+  )
+
+  .get(
+    '/health',
+    async ({ user }) => {
+      await requireAdmin(user);
+      return paymentHealthService.snapshot();
+    },
+    {
+      detail: {
+        summary: 'Whether payments are working: connector, notices, safety net, what is stuck',
+        tags: ['Admin'],
+        security,
+      },
+    },
   )
 
   .get(

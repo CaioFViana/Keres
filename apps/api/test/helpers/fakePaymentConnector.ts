@@ -25,6 +25,8 @@ export interface FakeConnectorOptions {
   withStatusPolling?: boolean;
   withCancel?: boolean;
   withDueHook?: boolean;
+  /** Implements `reconcileSubscription`: it answers with `state.reconcileEvents`. */
+  withReconcile?: boolean;
   /** Answers `verifyPlayPurchase` like the service would (including reporting the event). */
   verifyPlay?: (request: PlayVerifyRequest) => Promise<PlayVerifyResponse> | PlayVerifyResponse;
 }
@@ -35,6 +37,9 @@ export function createFakePaymentConnector(options: FakeConnectorOptions = {}) {
     status: null as PaymentEvent | null,
     createFails: false,
     cancelFails: false,
+    reconcileFails: false,
+    /** What the provider says it charged, whatever the reference asked about. */
+    reconcileEvents: [] as PaymentEvent[],
   };
 
   const connector: PaymentConnector = {
@@ -63,6 +68,11 @@ export function createFakePaymentConnector(options: FakeConnectorOptions = {}) {
   });
   const onSubscriptionDue = vi.fn(async (_subscription: DueSubscription) => undefined);
   const getCheckoutStatus = vi.fn(async (_id: string, _reference: string) => state.status);
+  const reconcileSubscription = vi.fn(async (_reference: string, _since: Date) => {
+    if (state.reconcileFails) throw new Error('the provider is down');
+    return state.reconcileEvents;
+  });
+  if (options.withReconcile) connector.reconcileSubscription = reconcileSubscription;
   if (options.withCancel) connector.cancelSubscription = cancelSubscription;
   if (options.withDueHook) connector.onSubscriptionDue = onSubscriptionDue;
   if (options.withStatusPolling) connector.getCheckoutStatus = getCheckoutStatus;
@@ -76,6 +86,7 @@ export function createFakePaymentConnector(options: FakeConnectorOptions = {}) {
     requests,
     state,
     cancelSubscription,
+    reconcileSubscription,
     onSubscriptionDue,
     getCheckoutStatus,
     verifyPlayPurchase,

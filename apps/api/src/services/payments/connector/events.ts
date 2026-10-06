@@ -32,6 +32,17 @@ export function toPaymentEvent(wire: PaymentEventWire): PaymentEvent {
         eventId: wire.eventId,
         subscriptionReference: wire.subscriptionReference,
       };
+    case 'payment.refunded':
+      return {
+        type: 'payment.refunded',
+        eventId: wire.eventId,
+        subscriptionReference: wire.subscriptionReference,
+        refundedAt: new Date(wire.refundedAt),
+        chargedAt: new Date(wire.chargedAt),
+        amountCents: wire.amountCents,
+        currency: wire.currency.toUpperCase(),
+        endsAccess: wire.endsAccess,
+      };
     case 'checkout.expired':
       return { type: 'checkout.expired', eventId: wire.eventId, checkoutId: wire.checkoutId };
   }

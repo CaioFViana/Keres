@@ -55,6 +55,7 @@ export const StoryCreateInputSchema = z.object({
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
   vocabulary: StoryVocabularySchema.nullable().default(null),
+  coverGalleryId: z.string().min(1).nullable().default(null),
 });
 
 // Schema for the 'data' payload when creating a story via sync
@@ -79,6 +80,7 @@ export const CreateStoryDataSchema = z.object({
   statSystem: z.boolean().default(false),
   statNotation: StatNotationSchema.default('letter'),
   vocabulary: StoryVocabularySchema.nullable().default(null),
+  coverGalleryId: z.string().min(1).nullable().default(null),
 });
 
 // Full Story Schema, including server-managed fields like userId

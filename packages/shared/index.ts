@@ -157,6 +157,7 @@ export * from './payments/PaymentConnector';
 export * from './utils/billingPeriod';
 export * from './metadata/AuditEvents';
 export * from './metadata/AttributeType';
+export * from './metadata/ArcMedium';
 export * from './metadata/AppRelease';
 export * from './metadata/ScenePosition';
 export * from './metadata/ReleaseVersions';

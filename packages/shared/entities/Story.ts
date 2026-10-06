@@ -85,6 +85,8 @@ export interface Story {
   statNotation: StatNotation;
   /** Optional terminology chosen for this story's own language. Null keeps Keres' standard terms. */
   vocabulary: StoryVocabulary | null;
+  /** Gallery medium used as the universe's cover; a row-level link, never part of the Gallery. */
+  coverGalleryId: string | null;
   // Optional: ID of the server this story is synchronized with.
   // This ID references an entry in the local 'Server' entity.
   // If null or undefined, the story is considered offline-only.

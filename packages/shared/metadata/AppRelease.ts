@@ -6,15 +6,15 @@
  * This module is consumed by both the client and the API, so there is no separate server version.
  */
 export const APP_RELEASE = {
-  name: 'Hestia',
-  version: '1.9.0',
+  name: 'Pandora',
+  version: '1.10.0',
   /**
    * The release's line, shown verbatim on the credits screen. English, never translated - it is
    * the release's voice, quoted from `docs/fluff_release_names.md`. Update it by hand with every
    * release (see `docs/release_process.md`).
    */
   phrase:
-    'At the heart of the biggest mountain, the flame of home protect us all. The first and the last. Its warmth shall embraces our families forever.',
+    'The first woman to exist. From her grand curiosity a never ending curse, as the world wont go back to what it was ever again.',
 } as const;
 
 /** Where the source lives; the credits screen links out to it. */

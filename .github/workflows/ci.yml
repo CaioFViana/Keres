@@ -30,6 +30,7 @@ jobs:
           - name: shared
           - name: client
           - name: api
+          - name: payments
           - name: admin
           - name: desktop
           - name: site

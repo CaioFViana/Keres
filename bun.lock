@@ -9,7 +9,7 @@
     },
     "apps/admin": {
       "name": "@keres/admin",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "dependencies": {
         "@keres/shared": "workspace:*",
         "axios": "^1.13.2",
@@ -39,7 +39,7 @@
     },
     "apps/api": {
       "name": "@keres/api",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.817.0",
         "@aws-sdk/s3-request-presigner": "^3.1114.0",
@@ -72,7 +72,7 @@
     },
     "apps/client": {
       "name": "@keres/client",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "dependencies": {
         "@expo/vector-icons": "^15.0.2",
         "@keres/shared": "workspace:*",
@@ -139,7 +139,7 @@
     },
     "apps/desktop": {
       "name": "@keres/desktop",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "devDependencies": {
         "@types/node": "^22.10.2",
         "@typescript-eslint/eslint-plugin": "^8.66.0",
@@ -154,7 +154,7 @@
     },
     "apps/payments": {
       "name": "@keres/payments",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "dependencies": {
         "@keres/shared": "workspace:*",
         "zod": "^4.1.12",
@@ -163,6 +163,7 @@
         "@types/bun": "^1.1.6",
         "@typescript-eslint/eslint-plugin": "^8.66.0",
         "@typescript-eslint/parser": "^8.66.0",
+        "@vitest/coverage-v8": "^4.1.10",
         "eslint": "^9.25.0",
         "typescript": "^5.5.3",
         "vitest": "^4.1.10",
@@ -170,7 +171,7 @@
     },
     "apps/site": {
       "name": "@keres/site",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "dependencies": {
         "i18next": "^26.4.0",
         "react": "19.2.3",
@@ -196,7 +197,7 @@
     },
     "packages/shared": {
       "name": "@keres/shared",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "dependencies": {
         "@pdf-lib/fontkit": "^1.1.1",
         "docx": "^9.7.1",

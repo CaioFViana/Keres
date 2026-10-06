@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "types": ["bun"],
     "paths": {

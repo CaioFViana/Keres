@@ -10,6 +10,7 @@ import type {
 } from '../../../manuscript/compile/manuscriptSections';
 import type { CompileStoryManuscriptInput } from '../../../manuscript/compile/presentedManuscript';
 import { presentedManuscriptOf } from '../../../manuscript/compile/presentedManuscript';
+import { presentManuscript } from '../../../manuscript/compile/manuscriptStyle';
 import {
   DEFAULT_MANUSCRIPT_LABELS,
   ManuscriptOptionsSchema,
@@ -290,5 +291,24 @@ describe('pages in the online reader', () => {
     expect(data.scenes.s1.html).toContain('<figcaption>Page 1</figcaption>');
     expect(data.scenes.s1.html).toContain('data:image/png;base64,');
     expect(html).toContain('figure.page');
+  });
+});
+
+describe('presenting a manuscript with pages', () => {
+  it('keeps the pictures and their frame, which only the words of a style may change', () => {
+    const media = { a: solidPng(4, 4) };
+    const compiled = presentedManuscriptOf(
+      input(media, [scene('s1', 1, [page('p1', 'a', null)])]),
+      ManuscriptOptionsSchema.parse({ format: 'pdf', pageFormat: 'b5' }),
+      DEFAULT_MANUSCRIPT_LABELS,
+    );
+
+    const presented = presentManuscript(compiled, { quotes: 'curly' });
+
+    expect(presented.images).toBe(compiled.images);
+    expect(presented.pageAspect).toBe(compiled.pageAspect);
+    expect(presented.blocks.find((block) => block.kind === 'page')).toMatchObject({
+      label: 'Page 1',
+    });
   });
 });

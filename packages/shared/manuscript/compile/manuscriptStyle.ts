@@ -337,7 +337,17 @@ export function presentManuscript(
   language: 'en' | 'pt' = 'en',
 ): CompiledManuscript {
   const present = blockPresenterFor(style, language);
-  return finishPresentedManuscript(manuscript.title, manuscript.blocks.map(present), style);
+  const finished = finishPresentedManuscript(
+    manuscript.title,
+    manuscript.blocks.map(present),
+    style,
+  );
+  // The pictures and their frame ride along: presenting changes words, never what a page shows.
+  return {
+    ...finished,
+    ...(manuscript.images ? { images: manuscript.images } : {}),
+    ...(manuscript.pageAspect !== undefined ? { pageAspect: manuscript.pageAspect } : {}),
+  };
 }
 
 /**

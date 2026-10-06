@@ -744,6 +744,8 @@
   "export_manuscript_page_label": "Página",
   "export_manuscript_frame_label": "Quadro",
   "export_manuscript_media_removed": "Imagem removida",
+  "export_manuscript_pages_problems_one": "{{count}} imagem de página não pôde ser incluída (apagada, fora deste aparelho ou não é PNG nem JPEG).",
+  "export_manuscript_pages_problems_other": "{{count}} imagens de página não puderam ser incluídas (apagadas, fora deste aparelho ou não são PNG nem JPEG).",
   "export_manuscript_choose_start": "Escolha por onde começar",
   "export_manuscript_cjk_download": "Baixar ({{size}})",
   "export_manuscript_cjk_downloading": "Baixando o pacote de fontes CJK ({{size}})…",

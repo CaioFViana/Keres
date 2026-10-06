@@ -74,6 +74,18 @@ jest.mock('../../../../src/services/storymanagement/LocationService', () => ({
   createLocationService: () => ({ getAllByStoryId: async () => mockLocations }),
 }));
 
+const mockLoadManuscriptPages = jest.fn();
+let mockPageBytes = new Map<string, number[]>();
+jest.mock('../../../../src/services/storymanagement/ManuscriptPagesService', () => ({
+  __esModule: true,
+  loadManuscriptPages: (...args: unknown[]) => mockLoadManuscriptPages(...args),
+  estimateManuscriptPageBytes: async () => mockPageBytes,
+}));
+jest.mock('../../../../src/state/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: () => ({ userId: 'user-1' }),
+}));
+
 jest.mock('../../../../src/hooks/useStoryArcs', () => ({
   __esModule: true,
   useStoryArcs: () => ({ arcs: mockArcs }),
@@ -837,5 +849,102 @@ describe('ManuscriptExportScreen', () => {
     expect(call.storyTitle).toBe('My Story');
     expect(call.manuscript.title).toBe('My Story');
     expect(sceneNames(call)).toEqual(['Opening', 'Leaving', 'Tremor', 'Fragment']);
+  });
+});
+
+describe('ManuscriptExportScreen pages', () => {
+  const picture = { bytes: new Uint8Array([1]), mimeType: 'image/png', width: 10, height: 20 };
+  const loaded = (problems = { missing: 0, unsupported: 0, snapshot: 0 }) => ({
+    pagesByScene: new Map([
+      ['s-1', [{ id: 'p1', mediaId: 'g-1', fit: 'contain', text: 'Caption' }]],
+    ]),
+    media: { 'g-1': picture },
+    problems,
+  });
+
+  it('counts the pictures of the pages in the size, in the formats that carry them', async () => {
+    mockPageBytes = new Map([['s-1', [4_000_000]]]);
+    const view = await renderScreen();
+    await act(async () => {});
+    const before = (mockOptionsProps as OptionsProps).sizeEstimate;
+
+    expect(before?.bytes).toBeGreaterThan(4_000_000);
+    mockPageBytes = new Map();
+    void view;
+  });
+
+  it('reads the pages of the scenes that ship, with their pictures, and frames them as the arc asks', async () => {
+    mockLoadManuscriptPages.mockResolvedValue(loaded());
+    mockArcs = [{ id: 'arc-1', title: 'Issue', medium: 'storyboard', pageFormat: 'b5' }] as never;
+    mockManuscriptData = twoArcData();
+    const view = await renderScreen();
+
+    await exportWith(view, {
+      format: 'pdf',
+      includeSceneNames: true,
+      includeLooseScenes: false,
+      resetSceneNumbers: false,
+      includeIndex: false,
+      arcId: 'arc-1',
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const [, userId, storyId, sceneIds, readPictures] = mockLoadManuscriptPages.mock.calls[0];
+    expect(userId).toBe('user-1');
+    expect(storyId).toBe('story-1');
+    expect([...(sceneIds as Set<string>)]).toEqual(['s-1']);
+    expect(readPictures).toBe(true);
+    const call = mockExportManuscript.mock.calls[0][0];
+    expect(call.manuscript.images).toEqual({ 'g-1': picture });
+    expect(call.manuscript.pageAspect).toBeCloseTo(176 / 250);
+    const page = call.manuscript.blocks.find((block: { kind: string }) => block.kind === 'page');
+    expect(page).toMatchObject({
+      label: 'export_manuscript_frame_label 1',
+      placeholder: 'export_manuscript_media_removed',
+      image: { mediaId: 'g-1', fit: 'contain' },
+    });
+    expect(JSON.stringify(call.manuscript.blocks)).toContain('Caption');
+  });
+
+  it('reads no picture for a format that cannot show one, and still carries the text', async () => {
+    mockLoadManuscriptPages.mockResolvedValue(loaded());
+    const view = await renderScreen();
+
+    await exportWith(view, {
+      format: 'md',
+      includeSceneNames: true,
+      includeLooseScenes: true,
+      resetSceneNumbers: false,
+      includeIndex: false,
+      arcId: null,
+    });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockLoadManuscriptPages.mock.calls[0][4]).toBe(false);
+    expect(mockNotify).not.toHaveBeenCalledWith(
+      expect.stringContaining('pages_problems'),
+      'warning',
+    );
+  });
+
+  it('says how many pictures could not be included, after the file is made', async () => {
+    mockLoadManuscriptPages.mockResolvedValue(loaded({ missing: 2, unsupported: 1, snapshot: 0 }));
+    const view = await renderScreen();
+
+    await exportWith(view, {
+      format: 'docx',
+      includeSceneNames: true,
+      includeLooseScenes: true,
+      resetSceneNumbers: false,
+      includeIndex: false,
+      arcId: null,
+    });
+
+    await waitFor(() =>
+      expect(mockNotify).toHaveBeenCalledWith(
+        'export_manuscript_pages_problems:{"count":3}',
+        'warning',
+      ),
+    );
   });
 });

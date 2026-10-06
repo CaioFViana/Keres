@@ -2,7 +2,10 @@ import {
   compileLinearManuscript,
   compileGamebookManuscript,
   isLooseScene,
+  PAGE_FORMAT_ASPECT,
+  pageFormatFor,
   sceneSeparatorText,
+  type ManuscriptScene,
 } from '@keres/shared';
 import {
   type ManuscriptSizeAssessment,
@@ -37,6 +40,11 @@ import {
 import { useDrizzle } from '../../../db';
 import type { LocationSelect } from '../../../db/schema';
 import { createLocationService } from '../../../services/storymanagement/LocationService';
+import {
+  estimateManuscriptPageBytes,
+  loadManuscriptPages,
+} from '../../../services/storymanagement/ManuscriptPagesService';
+import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
 import { useManuscriptData } from '../../../hooks/useManuscriptData';
@@ -61,6 +69,7 @@ export function useManuscriptExport() {
   const activeArcId = useStoryStore((state) => state.activeArcId);
   const { arcs } = useStoryArcs();
   const { showNotification } = useNotificationStore();
+  const { userId } = useUserSettingsStore();
   const { pending: exporting, run } = useAsyncOperation();
   const isBranching = selectedStory?.type === 'branching';
   const { chapters, scenes, choices, loading, loadChoiceAnnotations } = useManuscriptData(
@@ -89,6 +98,28 @@ export function useManuscriptExport() {
     return () => {
       alive = false;
       entityEventEmitter.off('location_changed', load);
+    };
+  }, [db, storyId]);
+
+  // The pictures of each scene's pages, in bytes, from what is known without reading a file.
+  const [pageBytes, setPageBytes] = useState<Map<string, number[]>>(new Map());
+  useEffect(() => {
+    if (!storyId) {
+      setPageBytes(new Map());
+      return;
+    }
+    let alive = true;
+    const load = () =>
+      void estimateManuscriptPageBytes(db, storyId)
+        .then((sizes) => alive && setPageBytes(sizes))
+        .catch(() => alive && setPageBytes(new Map()));
+    load();
+    entityEventEmitter.on('scene_page_changed', load);
+    entityEventEmitter.on('gallery_changed', load);
+    return () => {
+      alive = false;
+      entityEventEmitter.off('scene_page_changed', load);
+      entityEventEmitter.off('gallery_changed', load);
     };
   }, [db, storyId]);
 
@@ -137,6 +168,7 @@ export function useManuscriptExport() {
           sceneBelongsToActiveArc(scene, chaptersById, settings.arcId) &&
           (isBranching || settings.includeLooseScenes || !isLooseScene(scene, chaptersById)),
       );
+      const imageBytes = inScope.flatMap((scene) => pageBytes.get(scene.id) ?? []);
       const textBytes = inScope.reduce(
         (sum, scene) =>
           sum +
@@ -144,9 +176,9 @@ export function useManuscriptExport() {
           (settings.includeSceneNames ? utf8ByteLength(scene.name) + 16 : 0),
         0,
       );
-      return manuscriptSizeAssessment({ format: settings.format, textBytes });
+      return manuscriptSizeAssessment({ format: settings.format, textBytes, imageBytes });
     },
-    [scenes, chaptersById, isBranching],
+    [scenes, chaptersById, isBranching, pageBytes],
   );
 
   const promptCjkPack = useCallback(
@@ -210,9 +242,57 @@ export function useManuscriptExport() {
             made = true;
             return;
           }
-          const exportScenes = settings.arcId
+          const scenesInArc = settings.arcId
             ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, settings.arcId))
             : scenes;
+          // The pages of the scenes that ship, with their pictures read from this device (a Sketch's
+          // snapshot is redrawn first if the drawing changed). Only formats that can show them read any.
+          const shipping = scenesInArc.filter(
+            (scene) =>
+              !scene.isDeleted &&
+              (isBranching || settings.includeLooseScenes || !isLooseScene(scene, chaptersById)),
+          );
+          // Only these formats can show a picture; the others keep a page's caption and text.
+          const carriesPictures = ['docx', 'pdf', 'epub', 'html'].includes(settings.format);
+          const loadedPages =
+            userId && selectedStory?.id
+              ? await loadManuscriptPages(
+                  db,
+                  userId,
+                  selectedStory.id,
+                  new Set(shipping.map((scene) => scene.id)),
+                  carriesPictures,
+                )
+              : null;
+          const withPages = (list: typeof scenes): typeof scenes =>
+            loadedPages
+              ? list.map((scene) => {
+                  const pages = loadedPages.pagesByScene.get(scene.id);
+                  return pages
+                    ? ({ ...scene, pages } as ManuscriptScene as (typeof scenes)[number])
+                    : scene;
+                })
+              : list;
+          const exportScenes = withPages(scenesInArc);
+          const arcInEffect = settings.arcId
+            ? exportArc
+            : activeArcId
+              ? (arcs.find((arc) => arc.id === activeArcId) ?? null)
+              : arcs.length === 1
+                ? arcs[0]
+                : null;
+          const pageWords = {
+            caption: t(
+              arcInEffect?.medium === 'storyboard'
+                ? 'export_manuscript_frame_label'
+                : 'export_manuscript_page_label',
+            ),
+            removed: t('export_manuscript_media_removed'),
+          };
+          const pageAspect =
+            PAGE_FORMAT_ASPECT[
+              pageFormatFor(arcInEffect?.medium ?? 'generic', arcInEffect?.pageFormat)
+            ];
           // CJK resolves before compiling: the pack downloads once
           // (app-private on native, in memory on web), the export retries
           // with it, and skipping exports with `?` placeholders after a
@@ -277,11 +357,12 @@ export function useManuscriptExport() {
                   begin: t('export_manuscript_begin_at'),
                 },
                 sceneSeparator,
+                pageWords,
               })
             : compileLinearManuscript({
                 title,
                 chapters,
-                scenes,
+                scenes: exportScenes,
                 choices: annotatedChoices,
                 includeLooseScenes: settings.includeLooseScenes,
                 looseHeadingLabel: t('export_manuscript_loose_heading'),
@@ -289,11 +370,14 @@ export function useManuscriptExport() {
                 resetSceneNumbersPerChapter: settings.resetSceneNumbers,
                 arcId: settings.arcId,
                 sceneSeparator,
+                pageWords,
               });
           const now = new Date();
           const result = await exportManuscript({
             storyTitle: title,
-            manuscript,
+            manuscript: loadedPages
+              ? { ...manuscript, images: loadedPages.media, pageAspect }
+              : manuscript,
             format: settings.format,
             labels,
             cjkMatrix,
@@ -320,6 +404,15 @@ export function useManuscriptExport() {
                 : t('export_story_no_share_target', { path: result.uri || result.fileName }),
               result.delivered ? 'success' : 'warning',
             );
+          }
+          // Pages that could not bring their picture are said, not left as a blank nobody explained.
+          const left = loadedPages
+            ? loadedPages.problems.missing +
+              loadedPages.problems.unsupported +
+              loadedPages.problems.snapshot
+            : 0;
+          if (carriesPictures && left > 0) {
+            showNotification(t('export_manuscript_pages_problems', { count: left }), 'warning');
           }
           made = true;
         } catch (error) {

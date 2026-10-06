@@ -154,7 +154,7 @@ export function buildManuscriptMarkdown(
       case 'page':
         // Text has no pictures: the caption stands for the page, and the page's text follows it.
         lines.push(`**${block.label}**`, '');
-        if (!block.image || !manuscript.images?.[block.image.mediaId]) {
+        if (!block.image) {
           lines.push(`*${block.placeholder}*`, '');
         }
         break;
@@ -217,7 +217,7 @@ export function buildManuscriptText(
         break;
       case 'page':
         lines.push(block.label, '');
-        if (!block.image || !manuscript.images?.[block.image.mediaId]) {
+        if (!block.image) {
           lines.push(`(${block.placeholder})`, '');
         }
         break;

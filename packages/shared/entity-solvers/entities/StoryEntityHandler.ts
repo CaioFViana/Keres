@@ -16,6 +16,7 @@ export const storyEntityHandler = createSimpleEntityHandler({
       'isFavorite',
       'extraNotes',
       'theme',
+      'coverGalleryId',
     ],
   },
 });

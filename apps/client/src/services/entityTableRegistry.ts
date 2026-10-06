@@ -13,6 +13,7 @@ export const ENTITY_TABLES = {
   AttributeValue: schema.attributeValues,
   Board: schema.boards,
   Sketch: schema.sketches,
+  ScenePage: schema.scenePages,
   Chapter: schema.chapters,
   Character: schema.characters,
   ChapterAnchor: schema.chapterAnchors,

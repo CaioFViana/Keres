@@ -5,6 +5,7 @@ import type {
   PlotSceneInsert,
   RouteInsert,
   RouteStepInsert,
+  ScenePageInsert,
   TagRelationInsert,
 } from '../../../db/schema';
 import {
@@ -14,6 +15,7 @@ import {
   plots,
   routes,
   routeSteps,
+  scenePages,
   tagRelations,
 } from '../../../db/schema';
 import type { SQLiteStoryPackageImportContext } from './SQLiteStoryPackageImportContext';
@@ -97,6 +99,17 @@ export async function importStoryPackageRelations(
       deletedAt: null,
     };
     await tx.insert(routeSteps).values(row).run();
+  }
+  // A page keeps its text even when its image is not in the package; the ids are the package's own here.
+  for (const page of fullStory.scenePages ?? []) {
+    const row: ScenePageInsert = {
+      ...page,
+      createdAt: new Date(page.createdAt),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    };
+    await tx.insert(scenePages).values(row).run();
   }
 
   for (const relation of fullStory.tagRelations ?? []) {

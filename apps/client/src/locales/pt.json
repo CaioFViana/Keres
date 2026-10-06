@@ -2032,6 +2032,8 @@
   "route_select_start_scene": "Selecione a primeira cena",
   "route_start_scene": "Cena inicial",
   "route_step": "Passo da rota",
+  "scene_page": "Página",
+  "scene_pages": "Páginas",
   "route_step_count": "{{count}} passos",
   "route_step_number": "Passo {{count}}",
   "route_steps": "Passos da rota",

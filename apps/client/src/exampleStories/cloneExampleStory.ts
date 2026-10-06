@@ -48,6 +48,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.storyArcs);
   registerAll(example.storyBoards);
   registerAll(example.storySketches);
+  registerAll(example.scenePages);
   registerAll(example.storyLocationMaps);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
@@ -230,6 +231,13 @@ export function cloneExampleStoryForInstall(
       routeId: remapId(step.routeId),
       sceneId: remapId(step.sceneId),
       selectedChoiceId: remapNullableId(step.selectedChoiceId),
+    })),
+    scenePages: example.scenePages?.map((page) => ({
+      ...cloneEntity(page),
+      storyId,
+      sceneId: remapId(page.sceneId),
+      sketchId: remapNullableId(page.sketchId),
+      galleryId: remapNullableId(page.galleryId),
     })),
     galleryItems: example.galleryItems.map((item) => ({ ...cloneEntity(item), storyId })),
     galleryRelations: example.galleryRelations?.map((relation) => ({

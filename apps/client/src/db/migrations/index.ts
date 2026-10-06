@@ -54,6 +54,7 @@ import migration_50 from './0049_regular_sharon_carter';
 import migration_51 from './0050_dashing_terror';
 import migration_52 from './0051_nifty_vindicator';
 import migration_53 from './0052_violet_preak';
+import migration_54 from './0053_lyrical_mockingbird';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -109,6 +110,7 @@ const migrations = [
   { id: 51, name: '0050_dashing_terror', run: migration_51 },
   { id: 52, name: '0051_nifty_vindicator', run: migration_52 },
   { id: 53, name: '0052_violet_preak', run: migration_53 },
+  { id: 54, name: '0053_lyrical_mockingbird', run: migration_54 },
 ];
 
 export default migrations;

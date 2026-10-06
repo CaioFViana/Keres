@@ -25,7 +25,7 @@
 export const CONNECTOR_API_VERSION = 1;
 
 /** The optional parts of the contract a connector may implement, and says it does in its `/v1/info`. */
-export const CONNECTOR_CAPABILITIES = ['status', 'cancel', 'due'] as const;
+export const CONNECTOR_CAPABILITIES = ['status', 'cancel', 'due', 'reconcile'] as const;
 export type ConnectorCapability = (typeof CONNECTOR_CAPABILITIES)[number];
 
 /** How often a plan is paid for. */
@@ -125,6 +125,23 @@ export type PaymentEvent =
       reason?: string;
     }
   | { type: 'subscription.canceled'; eventId: string; subscriptionReference: string }
+  | {
+      /**
+       * Money went back to the payer (a refund, a chargeback, a store revoking the purchase). A refund of the
+       * latest payment in full - `endsAccess` - takes back the period it paid for; a partial one, or a refund of
+       * an older payment, only goes on the ledger.
+       */
+      type: 'payment.refunded';
+      eventId: string;
+      subscriptionReference: string;
+      /** When the money went back. */
+      refundedAt: Date;
+      /** When the payment that was refunded was made: only the latest one can end the period it paid for. */
+      chargedAt: Date;
+      amountCents: number;
+      currency: string;
+      endsAccess: boolean;
+    }
   | { type: 'checkout.expired'; eventId: string; checkoutId: string };
 
 export interface DueSubscription {
@@ -170,6 +187,8 @@ export interface PaymentConnector {
   readonly id: string;
   /** What the person sees ("Pay with Acme"). */
   readonly displayName: string;
+  /** The optional parts the connector said it implements; absent for one that does not say (a test double). */
+  readonly capabilities?: readonly ConnectorCapability[];
 
   /** The ways to pay a price in `currency`; empty when the provider cannot take that currency. */
   listMethods(currency: string): Promise<PaymentMethodOption[]> | PaymentMethodOption[];
@@ -182,6 +201,15 @@ export interface PaymentConnector {
    * it is still open. Optional (capability `status`).
    */
   getCheckoutStatus?(checkoutId: string, providerReference: string): Promise<PaymentEvent | null>;
+
+  /**
+   * What the provider has charged a subscription since `since` (and whether it ended), as the events its
+   * webhooks would have carried - with the same event ids, so what already arrived counts once. The safety net
+   * for a notice that never came (the connector was down longer than the provider retries, a webhook was never
+   * set up): the server asks about subscriptions whose paid period ran out and applies what comes back.
+   * Optional (capability `reconcile`).
+   */
+  reconcileSubscription?(subscriptionReference: string, since: Date): Promise<PaymentEvent[]>;
 
   /** Stops the provider charging the subscription again. Optional (capability `cancel`). */
   cancelSubscription?(subscriptionReference: string): Promise<void>;

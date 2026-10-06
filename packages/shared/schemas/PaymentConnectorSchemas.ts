@@ -100,6 +100,16 @@ export const PaymentEventWireSchema = z.discriminatedUnion('type', [
     subscriptionReference,
   }),
   z.object({
+    type: z.literal('payment.refunded'),
+    eventId: reference,
+    subscriptionReference,
+    refundedAt: z.iso.datetime({ offset: true }),
+    chargedAt: z.iso.datetime({ offset: true }),
+    amountCents: z.number().int().nonnegative().max(1_000_000_000),
+    currency: z.string().length(3),
+    endsAccess: z.boolean(),
+  }),
+  z.object({
     type: z.literal('checkout.expired'),
     eventId: reference,
     checkoutId: reference,
@@ -113,6 +123,14 @@ export const MAX_EVENTS_PER_REQUEST = 100;
 /** `POST /api/payments/events`, from the connector to Keres. */
 export const PaymentEventsRequestSchema = z.object({
   events: z.array(PaymentEventWireSchema).max(MAX_EVENTS_PER_REQUEST),
+});
+
+/**
+ * `GET /v1/subscriptions/:reference/events?since=<ISO date-time>` answer: what the provider charged the
+ * subscription since then, oldest first, in the events its webhooks carry (same ids). Capability `reconcile`.
+ */
+export const SubscriptionEventsResponseSchema = z.object({
+  events: z.array(PaymentEventWireSchema).max(100),
 });
 
 /** `GET /v1/checkouts/:id` answer: how the attempt ended, or `null` while it is open. */

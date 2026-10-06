@@ -166,6 +166,42 @@ export interface AdminPaymentEventPage {
   pageSize: number;
 }
 
+/**
+ * Whether the money side is working, for the administrators: is the connector there, are the provider's notices
+ * arriving, is the safety net finding things, is anything stuck. Warnings are codes the panel says in words.
+ */
+export type AdminPaymentWarning =
+  | 'no-connector'
+  | 'no-notice'
+  | 'reconcile-failing'
+  | 'reconcile-found'
+  | 'overdue'
+  | 'unmatched'
+  | 'stale-attempts';
+
+export interface AdminPaymentHealth {
+  connector: { connected: boolean; id: string | null; capabilities: string[] };
+  /** The newest notice a provider sent (a line of the ledger carrying a provider's own id); null if none yet. */
+  lastNoticeAt: string | null;
+  /** What the safety net did on its last run since this server started; null before its first run. */
+  reconciliation: {
+    lastRunAt: string;
+    subscriptionsAsked: number;
+    attemptsAsked: number;
+    found: number;
+    failures: number;
+  } | null;
+  /** Notices the safety net had to find in the last 7 days (each one is a notice that never arrived). */
+  foundByReconciliation7d: number;
+  /** Subscriptions past their date: still inside the margin (`renewing`), or already `due`. */
+  overdue: { renewing: number; due: number };
+  /** Attempts open for more than an hour. */
+  staleAttempts: number;
+  /** Notices about something this server never opened, in the last 7 days. */
+  unmatched7d: number;
+  warnings: AdminPaymentWarning[];
+}
+
 /** The numbers an administrator looks at first. */
 export interface AdminPaymentSummary {
   enabled: boolean;
@@ -175,7 +211,7 @@ export interface AdminPaymentSummary {
   /** Active ones whose period ends within the next `PAYMENT_WARNING_DAYS` days. */
   endingSoon: number;
   /** Payments received in the last 30 days: how many, and the sum in the minor unit of `currency`. */
-  last30Days: { payments: number; failures: number; amountCents: number };
+  last30Days: { payments: number; failures: number; amountCents: number; refundedCents: number };
   /** The monthly value of the active subscriptions (yearly ones divided by twelve), in minor units. */
   monthlyRecurringCents: number;
   /**

@@ -23,6 +23,7 @@
     "timelineEpochSeconds": null,
     "normalizeSceneTiming": false,
     "allowReaderComments": true,
+    "isNsfw": false,
     "autoLinkMentions": true,
     "completenessChecks": true,
     "vocabulary": null
@@ -3156,6 +3157,7 @@
     }
   ],
   "storyBoards": [],
+  "storySketches": [],
   "storyLocationMaps": [
     {
       "id": "4NENJ0S29B1R9HV40DQ3594RDQ",

@@ -13,7 +13,7 @@ import {
   cjkPackState,
   downloadCjkPack,
   loadCjkMatrix,
-} from '../../../components/features/manuscript/export/cjkFontPack';
+} from '../../../services/cjkFontPack';
 import { exportManuscript } from '../../../components/features/manuscript/export/manuscriptExport';
 import {
   styleForExport,

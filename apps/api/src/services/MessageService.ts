@@ -4,7 +4,7 @@ import { FriendStatus } from '@keres/shared/metadata/FriendStatus';
 import { and, desc, eq, inArray, isNotNull, isNull, lt, max, or, sql, type SQL } from 'drizzle-orm';
 import { monotonicFactory } from 'ulid';
 import { db, withWriteTransaction } from '../db';
-import { friendships, messages, users } from '../db/schema';
+import { friendships, messages, stories, users } from '../db/schema';
 import { lockUserPair } from '../db/sqlOperators';
 import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
@@ -245,6 +245,21 @@ export class MessageService {
    */
   async sendStoryReport(me: string, storyId: string, reason: string): Promise<ChatMessage> {
     return this.sendToAdmins(me, buildNsfwReportBody(storyId, reason));
+  }
+
+  /** Reports a live story that is not the reporter's own; the route only carries the story id. */
+  async reportStory(me: string, storyId: string, reason: string): Promise<ChatMessage> {
+    const story = await db.query.stories.findFirst({
+      where: eq(stories.id, storyId),
+      columns: { id: true, userId: true, isDeleted: true },
+    });
+    if (!story || story.isDeleted) {
+      throw new AppError(404, 'Story not found.');
+    }
+    if (story.userId === me) {
+      throw new AppError(403, 'You cannot report your own story.');
+    }
+    return this.sendStoryReport(me, story.id, reason);
   }
 
   async sendToAdmins(me: string, body: string): Promise<ChatMessage> {

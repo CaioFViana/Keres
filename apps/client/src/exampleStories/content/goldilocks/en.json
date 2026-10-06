@@ -23,6 +23,7 @@
     "timelineEpochSeconds": 25200,
     "normalizeSceneTiming": false,
     "allowReaderComments": true,
+    "isNsfw": false,
     "autoLinkMentions": true,
     "completenessChecks": true,
     "vocabulary": null
@@ -3123,6 +3124,7 @@
     }
   ],
   "storyBoards": [],
+  "storySketches": [],
   "storyLocationMaps": [],
   "routes": [],
   "routeSteps": [],

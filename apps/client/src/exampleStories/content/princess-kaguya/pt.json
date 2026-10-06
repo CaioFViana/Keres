@@ -23,6 +23,7 @@
     "timelineEpochSeconds": null,
     "normalizeSceneTiming": false,
     "allowReaderComments": true,
+    "isNsfw": false,
     "autoLinkMentions": true,
     "completenessChecks": true,
     "vocabulary": null
@@ -3456,6 +3457,7 @@
     }
   ],
   "storyBoards": [],
+  "storySketches": [],
   "storyLocationMaps": [],
   "routes": [],
   "routeSteps": [],

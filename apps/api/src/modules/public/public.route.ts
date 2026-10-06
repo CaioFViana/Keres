@@ -1,4 +1,4 @@
-import { APP_RELEASE, FORMAT_META } from '@keres/shared';
+import { APP_RELEASE } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import { jwtShowcase } from '../../config/jwt';
 import type { JWTPayload } from '../../index';
@@ -10,6 +10,13 @@ import { showcaseSettingsService } from '../../services/ShowcaseSettingsService'
 import { AppError } from '../../utils/errors';
 import { createAttemptLimiter } from '../../utils/rateLimiter';
 import { publicReaderRoutes } from './publicReader.route';
+import {
+  manuscriptMetaOf,
+  OwnerSchema,
+  SnapshotSchema,
+  slugify,
+  VersionSchema,
+} from './publicShapes';
 import { DOWNLOAD_URL_TTL_SECONDS, verifyNsfwToken, verifyShowcaseToken } from './showcaseAccess';
 
 /**
@@ -28,37 +35,6 @@ const unlockLimiter = createAttemptLimiter({ maxAttempts: 5, windowMs: 15 * 60 *
 /** A single message for "does not exist" and "wrong password" - see the comment on `/unlock`. */
 const UNLOCK_FAILURE = 'Incorrect password.';
 
-function slugify(title: string): string {
-  return (
-    title
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60) || 'story'
-  );
-}
-
-const OwnerSchema = t.Object({
-  username: t.String(),
-  tag: t.String(),
-  avatarColor: t.Nullable(t.String()),
-  avatarIcon: t.Nullable(t.String()),
-});
-
-const SnapshotSchema = t.Object({
-  title: t.String(),
-  description: t.Nullable(t.String()),
-  genre: t.Nullable(t.String()),
-  language: t.Nullable(t.String()),
-  author: t.Nullable(t.String()),
-  type: t.String(),
-  theme: t.Nullable(t.String()),
-  // Absent on versions published before the flag existed.
-  isNsfw: t.Optional(t.Boolean()),
-});
-
 /**
  * Whether this request may see NSFW showcase content: a live age-verified session (resolved by
  * the global derive, from Bearer or cookie), or - for one story - a content token issued to such
@@ -76,37 +52,6 @@ async function maySeeNsfw(
     return true;
   }
   return verifyNsfwToken(showcaseJwt, authorization, storyId);
-}
-
-const VersionSchema = t.Object({
-  id: t.String(),
-  label: t.String(),
-  byteSize: t.Number(),
-  mediaIncluded: t.Number(),
-  mediaTotal: t.Number(),
-  createdAt: t.String(),
-  packageIncluded: t.Boolean(),
-  manuscript: t.Nullable(
-    t.Object({
-      format: t.String(),
-      byteSize: t.Number(),
-    }),
-  ),
-  reader: t.Nullable(t.Object({ byteSize: t.Number() })),
-});
-
-/** A version's manuscript delivery metadata, or null when the version carries no manuscript. */
-function manuscriptMetaOf(publication: {
-  manuscriptFormat: string | null;
-}): { extension: string; mimeType: string } | null {
-  if (!publication.manuscriptFormat) {
-    return null;
-  }
-  return (
-    (FORMAT_META as Record<string, { extension: string; mimeType: string }>)[
-      publication.manuscriptFormat
-    ] ?? null
-  );
 }
 
 export const publicRoutes = new Elysia()

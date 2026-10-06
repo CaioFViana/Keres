@@ -78,6 +78,7 @@ jest.mock('../src/navigation/AppNavigator', () => ({
 }));
 
 jest.mock('@/src/components/common/feedback/AppAlertHost/AppAlertHost', () => () => null);
+jest.mock('@/src/components/features/export/ExportFormatHost', () => () => null);
 jest.mock('@/src/components/common/feedback/NotificationPopup/NotificationPopup', () => () => null);
 jest.mock('@/src/components/features/app/DocumentTitleSync', () => () => null);
 jest.mock('@/src/components/features/app/WebScrollbarTheme', () => () => null);

@@ -7,6 +7,7 @@ vi.mock('../../src/api/AdminStoryApiService', () => ({
   AdminStoryApiService: {
     media: vi.fn(),
     boards: vi.fn(),
+    sketches: vi.fn(),
     locationMaps: vi.fn(),
     blob: vi.fn(),
     entityTypes: vi.fn(),
@@ -69,10 +70,26 @@ const mapRow = {
   },
 };
 
+const sketchRow = {
+  id: 'sketch-1',
+  name: 'Planta baixa',
+  description: null,
+  updatedAt: new Date().toISOString(),
+  summary: {
+    layerCount: 2,
+    strokeCount: 5,
+    fillCount: 1,
+    overlayCount: 1,
+    kinds: { sketch: 1 },
+    texts: ['Entrada secreta'],
+  },
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(AdminStoryApiService.media).mockResolvedValue([mediaItem]);
   vi.mocked(AdminStoryApiService.boards).mockResolvedValue([boardRow]);
+  vi.mocked(AdminStoryApiService.sketches).mockResolvedValue([sketchRow]);
   vi.mocked(AdminStoryApiService.locationMaps).mockResolvedValue([mapRow]);
   vi.mocked(AdminStoryApiService.blob).mockResolvedValue(
     new Blob(['bytes'], { type: 'image/png' }),
@@ -94,6 +111,7 @@ describe('StoryContent moderation viewer', () => {
 
     expect(AdminStoryApiService.media).toHaveBeenCalledWith('story-1');
     expect(AdminStoryApiService.boards).toHaveBeenCalledWith('story-1');
+    expect(AdminStoryApiService.sketches).toHaveBeenCalledWith('story-1');
     expect(AdminStoryApiService.locationMaps).toHaveBeenCalledWith('story-1');
     expect(view.container.textContent).toContain('Retrato');
     await view.unmount();
@@ -117,6 +135,12 @@ describe('StoryContent moderation viewer', () => {
     await flush();
     expect(view.container.textContent).toContain('Herói');
 
+    await click(tabs.find((tab) => tab.textContent === 'Sketches')!);
+    await flush();
+    expect(view.container.textContent).toContain('Planta baixa');
+    expect(view.container.textContent).toContain('2 layers · 5 strokes · 1 fills · 1 objects');
+    expect(view.container.textContent).toContain('Entrada secreta');
+
     await click(tabs.find((tab) => tab.textContent === 'Maps')!);
     await flush();
     expect(view.container.textContent).toContain('Tesouro');
@@ -126,6 +150,7 @@ describe('StoryContent moderation viewer', () => {
   it('shows empty states when the story stores nothing yet', async () => {
     vi.mocked(AdminStoryApiService.media).mockResolvedValue([]);
     vi.mocked(AdminStoryApiService.boards).mockResolvedValue([]);
+    vi.mocked(AdminStoryApiService.sketches).mockResolvedValue([]);
     vi.mocked(AdminStoryApiService.locationMaps).mockResolvedValue([]);
 
     const view = await open();

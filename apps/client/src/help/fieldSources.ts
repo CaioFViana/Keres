@@ -26,7 +26,15 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'createdAt',
       'updatedAt',
     ],
-    invisible: ['id', 'tierId', 'effectiveTierId', 'tierSource', 'isDeleted', 'deletedAt'],
+    invisible: [
+      'id',
+      'tierId',
+      'effectiveTierId',
+      'tierSource',
+      'isDeleted',
+      'deletedAt',
+      'isAdultVerified',
+    ],
   },
   AttributeValue: {
     documented: ['value', 'createdAt', 'updatedAt'],
@@ -382,7 +390,15 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   ShowcaseStoryCard: {
     documented: [],
-    invisible: ['storyId', 'snapshot', 'owner', 'versionCount', 'latestVersion', 'updatedAt'],
+    invisible: [
+      'storyId',
+      'snapshot',
+      'owner',
+      'versionCount',
+      'latestVersion',
+      'updatedAt',
+      'isNsfw',
+    ],
   },
   ShowcaseStoryDetail: {
     documented: [],
@@ -422,7 +438,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   StoryPublicationSnapshot: {
     documented: [],
-    invisible: ['title', 'description', 'genre', 'language', 'author', 'type', 'theme'],
+    invisible: ['title', 'description', 'genre', 'language', 'author', 'type', 'theme', 'isNsfw'],
   },
   Story: {
     documented: [
@@ -440,6 +456,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'timelineEpochSeconds',
       'normalizeSceneTiming',
       'allowReaderComments',
+      'isNsfw',
       'autoLinkMentions',
       'completenessChecks',
       'statSystem',
@@ -509,6 +526,10 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'priceMonthlyCents',
       'priceYearlyCents',
       'isPublicForSale',
+      'webMonthlyEnabled',
+      'webYearlyEnabled',
+      'playMonthlyProductId',
+      'playYearlyProductId',
       'sortOrder',
       'isDeleted',
       'deletedAt',
@@ -516,7 +537,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   UserPublicInfo: {
     documented: ['username', 'tag', 'avatarColor', 'avatarIcon', 'bio'],
-    invisible: ['id'],
+    invisible: ['id', 'isAdultVerified'],
   },
   WorldRule: {
     documented: [

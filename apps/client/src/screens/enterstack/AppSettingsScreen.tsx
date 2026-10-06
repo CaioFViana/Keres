@@ -25,7 +25,7 @@ import {
   cjkPackState,
   deleteCjkPack,
   downloadCjkPack,
-} from '../../components/features/manuscript/export/cjkFontPack';
+} from '../../services/cjkFontPack';
 import { syncEngine } from '../../services/sync/appSyncEngine';
 import { useGuideStore } from '../../state/guideStore';
 import { useNotificationStore } from '../../state/notificationStore';

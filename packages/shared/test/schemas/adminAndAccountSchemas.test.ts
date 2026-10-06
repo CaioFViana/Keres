@@ -105,6 +105,8 @@ describe('administrative and account contracts', () => {
       isDefault: false,
       isPublicForSale: false,
       sortOrder: 0,
+      webMonthlyEnabled: true,
+      webYearlyEnabled: true,
     });
     // The daily publication ceiling: absent and null are unlimited, zero forbids publishing.
     expect(TierCreateInputSchema.parse({ name: 'T', maxPublicationsPerDay: 5 })).toMatchObject({

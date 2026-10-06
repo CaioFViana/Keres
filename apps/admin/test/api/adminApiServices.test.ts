@@ -106,6 +106,7 @@ describe('AdminStoryApiService', () => {
     await AdminStoryApiService.media('story-1');
     await AdminStoryApiService.boards('story-1');
     await AdminStoryApiService.locationMaps('story-1');
+    await AdminStoryApiService.sketches('story-1');
 
     expect(mocks.get).toHaveBeenCalledWith('/admin/stories', {
       params: { nsfw: true, page: 1 },
@@ -114,6 +115,16 @@ describe('AdminStoryApiService', () => {
     expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/media');
     expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/boards');
     expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/location-maps');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/stories/story-1/sketches');
+  });
+
+  it('maps the moderation writes to the story and collaborator routes', async () => {
+    await AdminStoryApiService.setNsfw('story-1', true);
+    await AdminStoryApiService.removeCollaborator('story-1', 'user-2');
+
+    expect(mocks.patch).toHaveBeenCalledWith('/admin/stories/story-1', { isNsfw: true });
+    expect(mocks.delete).toHaveBeenCalledWith('/admin/stories/story-1/collaborators/user-2');
+    await expect(AdminStoryApiService.removeCollaborator('story-1', '../x')).rejects.toThrow();
   });
 
   it('downloads blobs as binary through the story-bound admin route', async () => {
@@ -232,10 +243,12 @@ describe('ShowcaseSettingsApiService', () => {
 describe('PaymentsApiService', () => {
   it('maps the summary, the subscriptions and the ledger to the payments routes', async () => {
     await PaymentsApiService.summary();
+    await PaymentsApiService.health();
     await PaymentsApiService.subscriptions({ status: 'due', page: 2 });
     await PaymentsApiService.events({ page: 3 });
 
     expect(mocks.get).toHaveBeenCalledWith('/admin/payments/summary');
+    expect(mocks.get).toHaveBeenCalledWith('/admin/payments/health');
     expect(mocks.get).toHaveBeenCalledWith('/admin/payments/subscriptions', {
       params: { status: 'due', page: 2 },
     });

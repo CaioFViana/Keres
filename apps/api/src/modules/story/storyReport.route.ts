@@ -1,8 +1,5 @@
 import { StoryReportRequestSchema } from '@keres/shared';
 import { Elysia, t } from 'elysia';
-import { eq } from 'drizzle-orm';
-import { db } from '../../db';
-import { stories } from '../../db/schema';
 import type { JWTPayload } from '../../index';
 import { messageService } from '../../services/MessageService';
 import { AppError } from '../../utils/errors';
@@ -25,17 +22,7 @@ export const storyReportRoutes = new Elysia().decorate('user', null as JWTPayloa
     if (!parsed.success) {
       throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid report');
     }
-    const story = await db.query.stories.findFirst({
-      where: eq(stories.id, params.storyId),
-      columns: { id: true, userId: true, isDeleted: true },
-    });
-    if (!story || story.isDeleted) {
-      throw new AppError(404, 'Story not found.');
-    }
-    if (story.userId === user.userId) {
-      throw new AppError(403, 'You cannot report your own story.');
-    }
-    await messageService.sendStoryReport(user.userId, story.id, parsed.data.reason);
+    await messageService.reportStory(user.userId, params.storyId, parsed.data.reason);
     set.status = 201;
     return { ok: true };
   },

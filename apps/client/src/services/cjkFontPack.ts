@@ -5,8 +5,8 @@ import {
   existsSync as storedBytesExist,
   readBytes as readStoredBytes,
   writeBytes as writeStoredBytes,
-} from '../../../../services/webMediaStore';
-import { getClientFlavor } from '../../../../utils/clientFlavor';
+} from './webMediaStore';
+import { getClientFlavor } from '../utils/clientFlavor';
 
 /**
  * The downloadable CJK serif pack (Noto Serif JP, variable, all weights).

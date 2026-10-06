@@ -1,12 +1,12 @@
 import { Directory, File } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
-import { getClientFlavor } from '../../../src/utils/clientFlavor';
+import { getClientFlavor } from '../../src/utils/clientFlavor';
 import {
   deleteFile as deleteStoredBytes,
   existsSync as storedBytesExist,
   readBytes as readStoredBytes,
   writeBytes as writeStoredBytes,
-} from '../../../src/services/webMediaStore';
+} from '../../src/services/webMediaStore';
 import {
   CJK_PACK,
   CJK_PACK_SIZE_LABEL,
@@ -15,10 +15,10 @@ import {
   deleteCjkPack,
   downloadCjkPack,
   loadCjkMatrix,
-} from '../../../src/components/features/manuscript/export/cjkFontPack';
+} from '../../src/services/cjkFontPack';
 
-jest.mock('../../../src/utils/clientFlavor', () => ({ getClientFlavor: jest.fn() }));
-jest.mock('../../../src/services/webMediaStore', () => ({
+jest.mock('../../src/utils/clientFlavor', () => ({ getClientFlavor: jest.fn() }));
+jest.mock('../../src/services/webMediaStore', () => ({
   deleteFile: jest.fn(),
   existsSync: jest.fn(),
   readBytes: jest.fn(),

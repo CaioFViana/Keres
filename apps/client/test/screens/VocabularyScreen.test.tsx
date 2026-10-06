@@ -1,12 +1,16 @@
 import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
+const mockUpdateArc = jest.fn();
+const mockUpdateStory = jest.fn();
+let mockActiveArc: { id: string; title: string; vocabulary: null } | null = null;
+
 jest.mock('../../src/components/common', () => ({
   __esModule: true,
-  Button: ({ children }: { children: React.ReactNode }) => {
+  Button: ({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
-    return react.createElement(native.Text, null, children);
+    return react.createElement(native.Text, { onPress }, children);
   },
   SingleSelectPill: () => null,
   TextInput: (props: import('react-native').TextInputProps) => {
@@ -30,11 +34,19 @@ jest.mock('../../src/hooks/useBackButtonHandler', () => ({
 }));
 jest.mock('../../src/hooks/useStoryRole', () => ({
   __esModule: true,
-  useStoryRole: () => ({ canManageStoryPolicy: true }),
+  useStoryRole: () => ({ canEdit: true, canManageStoryPolicy: true }),
+}));
+jest.mock('../../src/hooks/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({ activeArc: mockActiveArc }),
+}));
+jest.mock('../../src/services/storymanagement/StoryArcService', () => ({
+  __esModule: true,
+  createStoryArcService: () => ({ updateArc: mockUpdateArc }),
 }));
 jest.mock('../../src/services/storymanagement/StoryService', () => ({
   __esModule: true,
-  createStoryService: () => ({ updateStory: jest.fn() }),
+  createStoryService: () => ({ updateStory: mockUpdateStory }),
 }));
 jest.mock('../../src/theme', () => ({
   __esModule: true,
@@ -85,6 +97,13 @@ jest.mock('../../src/state/storyStore', () => ({
 }));
 
 import VocabularyScreen from '../../src/screens/customization/VocabularyScreen';
+import { useUserSettingsStore } from '../../src/state/userSettingsStore';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockActiveArc = null;
+  useUserSettingsStore.setState({ userId: 'user-1' });
+});
 
 describe('VocabularyScreen draft', () => {
   it('keeps an edited term when the store returns an equivalent Story object', async () => {
@@ -97,5 +116,59 @@ describe('VocabularyScreen draft', () => {
 
     expect(screen.getByTestId('vocabulary-Character-singular').props.value).toBe('Hero');
     expect(screen.getByTestId('vocabulary-footer-spacer')).toBeTruthy();
+  });
+
+  it('says it edits the story terms when no arc is selected', async () => {
+    const story = await render(<VocabularyScreen />);
+    expect(story.getByTestId('vocabulary-scope').props.children).toBe('vocabulary_scope_story');
+  });
+
+  it('says it edits the terms of the selected arc', async () => {
+    mockActiveArc = { id: 'arc-1', title: 'Book I', vocabulary: null };
+    const arc = await render(<VocabularyScreen />);
+    expect(arc.getByTestId('vocabulary-scope').props.children).toBe('vocabulary_scope_arc');
+  });
+
+  it('saves the terms of the selected arc on the arc, not on the story', async () => {
+    mockActiveArc = { id: 'arc-1', title: 'Book I', vocabulary: null };
+    const screen = await render(<VocabularyScreen />);
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId('vocabulary-Character-singular'), 'Hero');
+      fireEvent.changeText(screen.getByTestId('vocabulary-Character-plural'), 'Heroes');
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText('save'));
+    });
+
+    expect(mockUpdateArc).toHaveBeenCalledWith('user-1', 'arc-1', {
+      vocabulary: {
+        version: 1,
+        language: 'en',
+        terms: {
+          Character: { singular: 'Hero', plural: 'Heroes', grammaticalGender: 'masculine' },
+        },
+      },
+    });
+    expect(mockUpdateStory).not.toHaveBeenCalled();
+  });
+
+  it('saves the terms on the story when no arc is selected', async () => {
+    const screen = await render(<VocabularyScreen />);
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId('vocabulary-Character-singular'), 'Hero');
+      fireEvent.changeText(screen.getByTestId('vocabulary-Character-plural'), 'Heroes');
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText('save'));
+    });
+
+    expect(mockUpdateStory).toHaveBeenCalledWith(
+      '01ARZ3NDEKTSV4RRFFQ69G5FUS',
+      '01ARZ3NDEKTSV4RRFFQ69G5FUT',
+      expect.objectContaining({ vocabulary: expect.objectContaining({ language: 'en' }) }),
+    );
+    expect(mockUpdateArc).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, table, text, timestamp, timestampNow } from '../columns';
+import type { ArcMedium, StoryVocabulary } from '@keres/shared';
+import { boolean, integer, json, table, text, timestamp, timestampNow } from '../columns';
 import { stories } from './stories';
 
 export const storyArcs = table('story_arcs', {
@@ -13,6 +14,10 @@ export const storyArcs = table('story_arcs', {
   color: text('color'),
   icon: text('icon'),
   themeOverride: text('theme_override'),
+  medium: text('medium').$type<ArcMedium>().notNull().default('generic'),
+  vocabulary: json('vocabulary').$type<StoryVocabulary | null>(),
+  author: text('author'),
+  coverGalleryId: text('cover_gallery_id'),
   isDefault: boolean('is_default').notNull().default(false),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),

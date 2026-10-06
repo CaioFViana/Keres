@@ -73,6 +73,8 @@ export const stories = table('stories', {
   statNotation: text('stat_notation').notNull().default('letter'),
   /** Per-story presentation terminology. Null means the app's standard translated vocabulary. */
   vocabulary: json('vocabulary').$type<StoryVocabulary | null>(),
+  /** Gallery medium used as the universe cover; a row-level link, remapped on import. */
+  coverGalleryId: text('cover_gallery_id'),
   createdAt: timestampNow('created_at'),
   updatedAt: timestampNow('updated_at'),
   version: integer('version').notNull().default(1),

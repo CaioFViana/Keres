@@ -442,6 +442,13 @@
       "when": 1791151177793,
       "tag": "0062_known_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1791311189348,
+      "tag": "0063_acoustic_zarek",
+      "breakpoints": true
     }
   ]
 }

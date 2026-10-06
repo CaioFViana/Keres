@@ -5,6 +5,8 @@ import {
   remapSketchContent,
   remapSketchCoverGalleryId,
 } from '@keres/shared';
+import { eq } from 'drizzle-orm';
+import { stories, storyArcs } from '../../db/schema';
 import type { DatabaseStoryPackageImportContext } from './DatabaseStoryPackageImportContext';
 import { insertPortableCollection } from './DatabaseStoryPackageCollectionRepository';
 
@@ -204,5 +206,32 @@ export async function importStoryAssets(context: DatabaseStoryPackageImportConte
   });
   if (newStorySketchesData.length > 0) {
     await insertPortableCollection(context, OperationLogEntityType.Sketch, newStorySketchesData);
+  }
+
+  await relinkCoverGalleryIds(context);
+}
+
+/*
+ * The story and its arcs are written in the core phase, before any gallery row has a new id, so
+ * they are inserted without a cover and linked here. A cover the package does not carry stays
+ * empty rather than pointing at a stranger's row.
+ */
+async function relinkCoverGalleryIds(context: DatabaseStoryPackageImportContext): Promise<void> {
+  const { fullStory, idMap, targetStoryId, tx } = context;
+  const storyCover = fullStory.story.coverGalleryId
+    ? idMap.get(fullStory.story.coverGalleryId)
+    : undefined;
+  if (storyCover) {
+    await tx
+      .update(stories)
+      .set({ coverGalleryId: storyCover })
+      .where(eq(stories.id, targetStoryId));
+  }
+  for (const arc of fullStory.storyArcs ?? []) {
+    const arcId = idMap.get(arc.id);
+    const cover = arc.coverGalleryId ? idMap.get(arc.coverGalleryId) : undefined;
+    if (arcId && cover) {
+      await tx.update(storyArcs).set({ coverGalleryId: cover }).where(eq(storyArcs.id, arcId));
+    }
   }
 }

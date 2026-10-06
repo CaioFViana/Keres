@@ -31,6 +31,7 @@ import {
   plotScenes,
   scenes,
   sketches,
+  scenePages,
   routes,
   routeSteps,
   seeAlsoRelations,
@@ -70,6 +71,7 @@ const id = {
   storyArc: '',
   board: '',
   sketch: '',
+  scenePage: '',
   locationMap: '',
   location: '',
   otherLocation: '',
@@ -412,6 +414,17 @@ beforeEach(async () => {
       overlays: [],
     },
   } as never);
+  // A page of a scene: it points at the scene, the sketch and (as the other image) nothing else.
+  await db.insert(scenePages).values({
+    id: id.scenePage,
+    storyId,
+    sceneId: id.sceneA,
+    rank: 'a0',
+    sketchId: id.sketch,
+    galleryId: null,
+    fit: 'cover',
+    text: 'Panel 1: the lantern.',
+  } as never);
   // Map content uses foreign ids too, so the export/import path has to carry and rewrite it.
   await db.insert(locationMaps).values({
     id: id.locationMap,
@@ -622,6 +635,7 @@ async function childrenOf(storyId: string) {
     modes: await rows(modes),
     storyBoards: await rows(boards),
     storySketches: await rows(sketches),
+    scenePages: await rows(scenePages),
     storyLocationMaps: await rows(locationMaps),
     plots: await rows(plots),
     plotScenes: await rows(plotScenes),
@@ -782,6 +796,14 @@ describe('import of a package with one row of every kind', () => {
       content: { layers: [{ id: '01ABCDEF', name: 'Layer 1' }] },
     });
     expect(after.storyLocationMaps[0].id).toBe(id.locationMap);
+    // A page keeps its words and fit, and follows its scene and its sketch to their (here unchanged) ids.
+    expect(after.scenePages[0]).toMatchObject({
+      id: id.scenePage,
+      sceneId: id.sceneA,
+      sketchId: id.sketch,
+      fit: 'cover',
+      text: 'Panel 1: the lantern.',
+    });
     expect(
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,

@@ -37,16 +37,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun install --frozen-lockfile
       # `--only` runs the script in one package (see scripts/run-all.ts), skipping cleanly
       # when the package does not declare it.
       - run: bun scripts/run-all.ts typecheck --only ${{ matrix.name }}
       - run: bun scripts/run-all.ts lint --only ${{ matrix.name }}
       # With coverage, not `bun run test`: that is what enforces the thresholds set in each
-      # workspace. Without it the floors would sit in the file and never be checked.
+      # workspace. Without it the floors would sit in the file and never be checked. `CI` is set
+      # here, so the client runs its `test:coverage:ci` variant: the local script caps Jest at two
+      # workers and 512 MB each so a laptop stays usable; a runner has the machine to itself.
       - run: bun scripts/run-all.ts test:coverage --only ${{ matrix.name }}
       - if: matrix.name == 'client'
         run: bun scripts/coverage-check.ts client
@@ -58,15 +59,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun install --frozen-lockfile
       - run: bun run typecheck:scripts
 
   # Separate from `verify` so a database failure is not mistaken for a code failure, and so both
   # run in parallel. The local equivalent is
   # `docker compose -f apps/api/docker-compose.test.yml up -d && bun run test:integration`.
+  #
+  # The Postgres and SQLite runs are two jobs because each one is serial by design (one shared
+  # database per run, see `vitest.integration.config.ts`): in one job their times added up, in two
+  # the run takes as long as the slower one.
   integration:
     runs-on: ubuntu-latest
     services:
@@ -78,7 +82,10 @@ jobs:
           POSTGRES_DB: keres_test
         ports:
           - 45432:5432
+        # The data directory in memory: the database is disposable and every test truncates and
+        # rewrites tables, so the disk was the part of Postgres doing the most work for nothing.
         options: >-
+          --tmpfs /var/lib/postgresql/data:rw
           --health-cmd "pg_isready -U keres_test"
           --health-interval 5s
           --health-timeout 5s
@@ -105,18 +112,42 @@ jobs:
       JWT_SECRET_REFRESH: ci-refresh-secret-that-is-at-least-thirty-two-characters
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun install --frozen-lockfile
       - run: bun run --cwd apps/api test:integration:coverage
-      # The same suite over SQLite, which is what the Keres Server home binary actually runs. It is
-      # also the only thing that executes `test/db/migrationParity.integration.test.ts`: that test
-      # skips itself under Postgres, and without this step a column added to `drizzle/` and forgotten
-      # in `drizzle-sqlite/` reaches a release green, breaking every home server on its first boot.
-      - run: bun run --cwd apps/api test:integration:sqlite
       # The critical API floors use the union of unit and integration coverage. Produce the small unit
       # report here as well so the sync/export ratchets cannot be hidden by either suite in isolation.
       - run: bun run --cwd apps/api test:coverage
       - run: bun run api:coverage:merge
       - run: bun scripts/coverage-check.ts api
+
+  # The same suite over SQLite, which is what the Keres Server home binary actually runs. It is
+  # also the only thing that executes `test/db/migrationParity.integration.test.ts`: that test
+  # skips itself under Postgres, and without this job a column added to `drizzle/` and forgotten
+  # in `drizzle-sqlite/` reaches a release green, breaking every home server on its first boot.
+  integration-sqlite:
+    runs-on: ubuntu-latest
+    services:
+      seaweedfs:
+        image: chrislusf/seaweedfs
+        env:
+          AWS_ACCESS_KEY_ID: admin
+          AWS_SECRET_ACCESS_KEY: secret
+          S3_BUCKET: my-bucket
+        ports:
+          - 8333:8333
+        options: >-
+          --health-cmd "wget -q -O /dev/null http://localhost:9333/cluster/status"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      JWT_SECRET: ci-jwt-secret-that-is-at-least-thirty-two-characters
+      JWT_SECRET_REFRESH: ci-refresh-secret-that-is-at-least-thirty-two-characters
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun run --cwd apps/api test:integration:sqlite

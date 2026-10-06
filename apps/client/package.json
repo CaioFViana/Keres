@@ -16,6 +16,7 @@
     "lint": "expo lint",
     "test": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB",
     "test:coverage": "jest --maxWorkers=2 --workerIdleMemoryLimit=512MB --coverage",
+    "test:coverage:ci": "jest --ci --coverage",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "example-story:build": "bun scripts/build-example-story.ts",
     "shipped-packs:build": "bun scripts/build-shipped-packs.ts",

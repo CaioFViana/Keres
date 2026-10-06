@@ -1,5 +1,10 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react-native';
-import { emptySketchContent, type SketchDocument } from '@keres/shared';
+import {
+  decodeSketchDocument,
+  emptySketchContent,
+  encodeSketchDocument,
+  type SketchDocument,
+} from '@keres/shared';
 import SketchCanvasScreen from '../../../src/screens/sketches/SketchCanvasScreen';
 import { useSketchToolStore } from '../../../src/state/sketchToolStore';
 
@@ -484,6 +489,102 @@ describe('SketchCanvasScreen', () => {
     expect(items()).toHaveLength(1);
     expect(mockNotify).toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
     expect(header().dirty).toBe(true);
+  });
+
+  describe('opening a sketch that was just saved', () => {
+    // What the draft store still holds after a save and a close: the drawing, with nothing unsaved in it
+    // (`doc` and `savedDoc` are the same object).
+    const savedDrawing = () => {
+      const doc = {
+        page: { width: 200, height: 200, preset: null, background: 'paper' },
+        layers: [
+          {
+            id: 'AAAAAAAA',
+            name: 'Layer 1',
+            visible: true,
+            opacity: 1,
+            locked: false,
+            items: [
+              {
+                kind: 'stroke',
+                brush: 'pen',
+                color: '#000000',
+                alpha: 1,
+                size: 3,
+                points: [0, 0, 9, 9],
+              },
+            ],
+          },
+        ],
+        overlays: [],
+      } as unknown as SketchDocument;
+      const content = encodeSketchDocument(doc);
+      return { content, remembered: decodeSketchDocument(content) };
+    };
+
+    it('is not dirty and does not claim a draft was restored: a draft with nothing unsaved is no draft', async () => {
+      const { content, remembered } = savedDrawing();
+      mockGetSketch.mockResolvedValue({ ...row(3), content });
+      mockHydrate.mockResolvedValue({
+        sketchId: 'sketch-1',
+        storyId: 'story-1',
+        doc: remembered,
+        savedDoc: remembered,
+        baseVersion: 3,
+      });
+
+      await open();
+
+      expect(items()).toHaveLength(1);
+      expect(header().dirty).toBe(false);
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_restored', 'info');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
+    });
+
+    it('shows what the server has now when the saved sketch moved on and nothing was unsaved', async () => {
+      const { content, remembered } = savedDrawing();
+      // The device saved version 3; a sync brought version 4 (an empty page) before it was opened again.
+      mockGetSketch.mockResolvedValue(row(4));
+      mockHydrate.mockResolvedValue({
+        sketchId: 'sketch-1',
+        storyId: 'story-1',
+        doc: remembered,
+        savedDoc: remembered,
+        baseVersion: 3,
+      });
+
+      await open();
+
+      expect(items()).toHaveLength(0);
+      expect(header().dirty).toBe(false);
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
+      expect(content).toBeTruthy();
+    });
+
+    it('still restores real unsaved changes, and stays dirty for them', async () => {
+      const { content, remembered } = savedDrawing();
+      mockGetSketch.mockResolvedValue({ ...row(3), content });
+      const withMore = {
+        ...remembered,
+        layers: remembered.layers.map((layer) => ({
+          ...layer,
+          items: [...layer.items, ...layer.items],
+        })),
+      } as SketchDocument;
+      mockHydrate.mockResolvedValue({
+        sketchId: 'sketch-1',
+        storyId: 'story-1',
+        doc: withMore,
+        savedDoc: remembered,
+        baseVersion: 3,
+      });
+
+      await open();
+
+      expect(items()).toHaveLength(2);
+      expect(header().dirty).toBe(true);
+      expect(mockNotify).toHaveBeenCalledWith('canvas_draft_restored', 'info');
+    });
   });
 
   it('shows an error when the sketch cannot be loaded', async () => {

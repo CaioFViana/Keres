@@ -185,7 +185,14 @@ const SketchCanvasScreen = () => {
         return;
       }
       const saved = decodeSketchDocument(validateSketchContent(row.content));
-      const keep = storyId ? await useSketchDraftStore.getState().hydrate(storyId, sketchId) : null;
+      const remembered = storyId
+        ? await useSketchDraftStore.getState().hydrate(storyId, sketchId)
+        : null;
+      // The store also still holds the drawing of a session that ended clean (saved, then closed): its `doc`
+      // and `savedDoc` are the same object. That is no unsaved work, so it is not restored - and must not be
+      // used as the document, because the dirty check is by identity and the saved copy decoded just above is
+      // a different object: the sketch would open "changed" with nothing changed.
+      const keep = remembered && remembered.doc !== remembered.savedDoc ? remembered : null;
       setSketch(row);
       setSavedDoc(saved);
       if (keep && keep.sketchId === sketchId && keep.storyId === storyId) {

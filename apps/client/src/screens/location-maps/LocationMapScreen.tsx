@@ -131,9 +131,16 @@ const LocationMapScreen = () => {
         setMap(null);
         return;
       }
-      const keep = storyId
+      const remembered = storyId
         ? await useLocationMapDraftStore.getState().hydrate(storyId, mapId)
         : null;
+      // The store also still holds the drawing of a session that ended clean (saved, then closed): its content
+      // equals what it had saved. That is no unsaved work, so it is not "restored" - the map opens from what is
+      // saved now (which may be newer, if a sync brought one), without a notice.
+      const keep =
+        remembered && JSON.stringify(remembered.content) !== JSON.stringify(remembered.savedContent)
+          ? remembered
+          : null;
       setMap(row);
       setLocations(loadedLocations.filter((x) => !x.isDeleted));
       setGalleries(loadedGalleries.filter((x) => !x.isDeleted));

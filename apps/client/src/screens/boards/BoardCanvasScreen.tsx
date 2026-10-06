@@ -137,7 +137,16 @@ const BoardCanvasScreen = () => {
         setBoard(null);
         return;
       }
-      const keep = storyId ? await useBoardDraftStore.getState().hydrate(storyId, boardId) : null;
+      const remembered = storyId
+        ? await useBoardDraftStore.getState().hydrate(storyId, boardId)
+        : null;
+      // The store also still holds the drawing of a session that ended clean (saved, then closed): its content
+      // equals what it had saved. That is no unsaved work, so it is not "restored" - the board opens from what is
+      // saved now (which may be newer, if a sync brought one), without a notice.
+      const keep =
+        remembered && JSON.stringify(remembered.content) !== JSON.stringify(remembered.savedContent)
+          ? remembered
+          : null;
       setBoard(row);
       if (keep && keep.boardId === boardId && keep.storyId === storyId) {
         setContent(keep.content);

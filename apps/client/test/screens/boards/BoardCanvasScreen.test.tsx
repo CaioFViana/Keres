@@ -348,6 +348,72 @@ describe('BoardCanvasScreen', () => {
     mockDeliverExport.mockResolvedValue({ delivered: true, fileName: 'board.svg' });
   });
 
+  describe('opening a board that was just saved', () => {
+    const nodes = (count: number) =>
+      ({
+        nodes: Array.from({ length: count }, (_, index) => ({ id: `n${index}` })),
+        edges: [],
+      }) as any;
+    const headerState = async () => {
+      const Actions = (global as any).__headerActions;
+      const actions = await render(<>{Actions()}</>);
+      return actions.getByTestId('header-dirty').props.children;
+    };
+
+    it('does not claim edits were restored: a draft with nothing unsaved is no draft', async () => {
+      // What the store still holds after a save and a close: the drawing, equal to what was saved.
+      mockGetBoard.mockResolvedValue({ ...board, content: nodes(2) });
+      mockHydrate.mockResolvedValue({
+        boardId: 'board-1',
+        storyId: 'story-1',
+        content: nodes(2),
+        savedContent: nodes(2),
+      });
+
+      const view = await render(<BoardCanvasScreen />);
+      await view.findByTestId('canvas-nodes');
+
+      expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:2');
+      expect(await headerState()).toBe('clean');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_restored', 'info');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
+    });
+
+    it('shows what the server has now when the saved board moved on and nothing was unsaved', async () => {
+      mockGetBoard.mockResolvedValue({ ...board, content: nodes(3) });
+      mockHydrate.mockResolvedValue({
+        boardId: 'board-1',
+        storyId: 'story-1',
+        content: nodes(2),
+        savedContent: nodes(2),
+      });
+
+      const view = await render(<BoardCanvasScreen />);
+      await view.findByTestId('canvas-nodes');
+
+      expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:3');
+      expect(await headerState()).toBe('clean');
+      expect(mockNotify).not.toHaveBeenCalledWith('canvas_draft_conflicts_with_saved', 'warning');
+    });
+
+    it('still restores real unsaved edits, and stays dirty for them', async () => {
+      mockGetBoard.mockResolvedValue({ ...board, content: nodes(2) });
+      mockHydrate.mockResolvedValue({
+        boardId: 'board-1',
+        storyId: 'story-1',
+        content: nodes(4),
+        savedContent: nodes(2),
+      });
+
+      const view = await render(<BoardCanvasScreen />);
+      await view.findByTestId('canvas-nodes');
+
+      expect(view.getByTestId('canvas-nodes').props.children).toBe('nodes:4');
+      expect(await headerState()).toBe('dirty');
+      expect(mockNotify).toHaveBeenCalledWith('canvas_draft_restored', 'info');
+    });
+  });
+
   it('shows the not-found error', async () => {
     mockGetBoard.mockResolvedValue(null);
     const view = await render(<BoardCanvasScreen />);

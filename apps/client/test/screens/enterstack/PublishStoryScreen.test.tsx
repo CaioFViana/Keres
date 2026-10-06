@@ -702,6 +702,26 @@ describe('PublishStoryScreen', () => {
     expect(mockPublish.mock.calls[0][6]).toMatchObject({ arcId: 'arc-2', author: 'Story Author' });
   });
 
+  it('warns that loose scenes go into the release of every work', async () => {
+    mockGetChapters.mockResolvedValue([{ id: 'ch-1', type: 'chapter' }]);
+    mockGetScenes.mockResolvedValue([{ id: 's-2', chapterId: null, isDeleted: false }]);
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'One', author: null, medium: 'generic' },
+      { id: 'arc-2', title: 'Two', author: null, medium: 'generic' },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('route-option-arc-1'));
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    expect(view.queryByTestId('publish-release-loose-hint-story-1')).toBeNull();
+    await fireEvent(view.getByTestId('export-loose'), 'valueChange', true);
+
+    expect(view.getByTestId('publish-release-loose-hint-story-1')).toBeTruthy();
+  });
+
   it('goes back to the whole universe, with the package on again', async () => {
     mockGetArcs.mockResolvedValue([
       { id: 'arc-1', title: 'One', author: null, medium: 'generic' },

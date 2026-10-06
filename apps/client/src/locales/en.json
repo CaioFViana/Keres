@@ -1835,6 +1835,7 @@
   "publish_release_work_hint": "One work goes out as a manuscript and/or the online reader, never as the story file, so nothing from your other works leaves with it. It counts toward the works your plan may show at once.",
   "publish_works_limit_reached": "Your plan allows no more works on show at once. Remove the last version of one to release another.",
   "publish_removed_work": "A removed work",
+  "publish_release_loose_hint": "Scenes filed in no chapter belong to no work, so they go into the release of every work.",
   "publish_link_intro": "Version {{label}} is live at:",
   "publish_link_password_reminder": "Anyone opening it will need the password you just set.",
   "publish_manuscript_attach": "Attach manuscript",

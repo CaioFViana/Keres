@@ -1835,6 +1835,7 @@
   "publish_release_work_hint": "Uma obra sai como manuscrito e/ou leitor online, nunca como o arquivo da história, então nada das suas outras obras vai junto. Ela conta nas obras que o seu plano pode exibir ao mesmo tempo.",
   "publish_works_limit_reached": "Seu plano não permite mais obras expostas ao mesmo tempo. Remova a última versão de uma para lançar outra.",
   "publish_removed_work": "Uma obra removida",
+  "publish_release_loose_hint": "Cenas sem capítulo não pertencem a nenhuma obra, então entram no lançamento de todas as obras.",
   "publish_link_intro": "A versão {{label}} está no ar em:",
   "publish_link_password_reminder": "Quem abrir vai precisar da senha que você acabou de definir.",
   "publish_manuscript_attach": "Anexar manuscrito",

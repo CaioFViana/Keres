@@ -99,6 +99,11 @@ export function PublishManuscriptSection({
         />
       </View>
       <Text style={styles.hint}>{t('publish_reader_hint')}</Text>
+      {releasingWork && manuscript.settings.includeLooseScenes && (
+        <Text style={styles.hint} testID={`publish-release-loose-hint-${storyId}`}>
+          {t('publish_release_loose_hint')}
+        </Text>
+      )}
       {(manuscript.attachManuscript || manuscript.publishReader) && (
         <View style={styles.options} testID={`publish-manuscript-options-${storyId}`}>
           <ManuscriptExportOptions

@@ -505,8 +505,10 @@ describe('the demo provider, when it was not asked for', () => {
       const response = await app.handle(
         new Request(`http://localhost${route}`, { redirect: 'manual' }),
       );
-      expect([route, response.status]).toEqual([route, 302]);
-      expect(response.headers.get('location')).toBe('/');
+      // Nobody answers it: an unknown path goes to the root where the client is built (302), and is a
+      // plain 404 where it is not - CI never builds it. Either way, not the demo's page.
+      expect([route, [302, 404].includes(response.status)]).toEqual([route, true]);
+      if (response.status === 302) expect(response.headers.get('location')).toBe('/');
     }
     fake.connector.createCheckout = async () => ({
       providerReference: 'x',

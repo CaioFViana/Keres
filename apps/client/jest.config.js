@@ -18,6 +18,10 @@ module.exports = {
   // looking for tests in there too.
   testMatch: ['<rootDir>/test/**/*.test.ts', '<rootDir>/test/**/*.test.tsx'],
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
+  // The first test of a file pays for the cold transform of its whole import graph, instrumented for
+  // coverage, while every core of a CI runner is busy with other files: that one test alone went past
+  // the default 5 s without anything being wrong. Locally, with two workers, the default stands.
+  testTimeout: process.env.CI ? 30000 : 5000,
   // Mirrors the `@/*` path alias in tsconfig.json so tests can import components that use it.
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',

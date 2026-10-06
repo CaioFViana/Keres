@@ -24,6 +24,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   ServerManagement: 'what-is-a-server',
   ServerDetail: 'what-is-a-server',
   ServerPlan: 'what-is-a-server',
+  ServerPaymentHistory: 'what-is-a-server',
   ServerRegistration: 'add-server',
   MyProfile: 'your-profile',
   ChangePassword: 'change-password',

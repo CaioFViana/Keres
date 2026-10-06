@@ -23,7 +23,7 @@ import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { auditService } from '../AuditService';
 import { registrationSettingsService } from '../RegistrationSettingsService';
-import { clipDetail as clip, noteLedger, tierNameOf } from './paymentLedger';
+import { clipDetail as clip, noteLedger, REFUSED_DETAIL_PREFIX, tierNameOf } from './paymentLedger';
 import { getPaymentConnector } from './PaymentConnectorRegistry';
 import { hashPurchaseToken } from './playPurchaseClaims';
 import { periodStartFor } from './periodConversion';
@@ -33,6 +33,11 @@ type SubscriptionRow = typeof paymentSubscriptions.$inferSelect;
 /** A period left unpaid this long ends the subscription for good: the administrators' list does not fill with them. */
 export const DUE_ABANDONED_AFTER_DAYS = 60;
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Whether a method is bought inside a mobile app through the device's store (Google Play, App Store). */
+export function isStoreMethod(method: PaymentMethodOption | null): boolean {
+  return (method?.flow ?? 'redirect') === 'native';
+}
 
 export type EventOutcome = 'applied' | 'duplicate' | 'unmatched';
 
@@ -58,19 +63,17 @@ export class SubscriptionService {
   }
 
   /**
-   * Whether the provider charges this subscription again by itself. The subscription does not keep the method it
-   * was paid with; the person's last paid attempt does, and the plugin says whether that method is recurring (a
-   * saved card is, PIX and boleto are not). A plugin that does not say, or a subscription with no attempt behind
-   * it, counts as recurring: what the app showed before this was known.
+   * The method the person's last paid attempt used (the subscription does not keep it). It decides two things:
+   * whether the provider charges again by itself (a saved card does, PIX and boleto do not) and whether the
+   * connector can cancel it at all (a store subscription lives in the store, not at the provider). Null for a plan
+   * given by hand, with no plugin, or with no attempt behind it.
    */
-  private async autoRenews(
+  async lastMethod(
     row: SubscriptionRow,
     plugin: PaymentConnector | null,
     knownMethods?: PaymentMethodOption[],
-  ): Promise<boolean> {
-    // A plan given by hand is not charged by anybody: the person has to pay for what comes after it.
-    if (row.providerId === GIFT_PROVIDER_ID) return false;
-    if (!plugin) return true;
+  ): Promise<PaymentMethodOption | null> {
+    if (row.providerId === GIFT_PROVIDER_ID || !plugin) return null;
     const last = await db.query.paymentCheckouts.findFirst({
       where: and(
         eq(paymentCheckouts.userId, row.userId),
@@ -80,13 +83,13 @@ export class SubscriptionService {
       orderBy: desc(paymentCheckouts.updatedAt),
       columns: { methodId: true },
     });
-    if (!last) return true;
+    if (!last) return null;
     const methods =
       knownMethods ??
       (await Promise.resolve(plugin.listMethods(row.currency)).catch(
         () => [] as PaymentMethodOption[],
       ));
-    return methods.find((method) => method.id === last.methodId)?.recurring ?? true;
+    return methods.find((method) => method.id === last.methodId) ?? null;
   }
 
   async toWire(
@@ -94,6 +97,7 @@ export class SubscriptionService {
     plugin: PaymentConnector | null,
     knownMethods?: PaymentMethodOption[],
   ): Promise<Subscription> {
+    const method = await this.lastMethod(row, plugin, knownMethods);
     return {
       tierId: row.tierId,
       tierName: await tierNameOf(row.tierId),
@@ -104,10 +108,17 @@ export class SubscriptionService {
       amountCents: row.amountCents,
       currency: row.currency,
       cancelAtPeriodEnd: row.cancelAtPeriodEnd,
+      // A store subscription is stopped in the store: the connector holds nothing to cancel there, and saying
+      // "stopped" here would leave the store charging.
       canCancelHere: Boolean(
-        plugin?.cancelSubscription && row.providerReference && row.providerId === plugin.id,
+        plugin?.cancelSubscription &&
+          row.providerReference &&
+          row.providerId === plugin.id &&
+          !isStoreMethod(method),
       ),
-      autoRenews: await this.autoRenews(row, plugin, knownMethods),
+      // A plan given by hand is not charged by anybody: the person pays for what comes after it. A plugin that
+      // does not say, or no attempt behind it, counts as recurring: what the app showed before this was known.
+      autoRenews: row.providerId === GIFT_PROVIDER_ID ? false : (method?.recurring ?? true),
       complimentary: row.providerId === GIFT_PROVIDER_ID,
     };
   }
@@ -144,6 +155,9 @@ export class SubscriptionService {
     }
     if (row.cancelAtPeriodEnd) {
       return this.toWire(row, plugin);
+    }
+    if (isStoreMethod(await this.lastMethod(row, plugin))) {
+      throw new AppError(409, 'This subscription is managed in the store it was bought in.');
     }
     if (plugin.cancelSubscription && row.providerReference && row.providerId === plugin.id) {
       try {
@@ -250,8 +264,12 @@ export class SubscriptionService {
       if (!userId) {
         // A notice for something this server never opened (another environment, a deleted attempt): kept in
         // the ledger so an administrator can see it arrived, and nothing changes.
+        // Under an id of its own: a notice that arrives before the thing it is about exists (a store renewal
+        // pushed before the app relayed the purchase) must not use up the id of the payment that, once
+        // there is somebody to apply it to, arrives again under the same one.
         const fresh = await noteLedger(tx, {
           ...base,
+          providerEventId: `unmatched:${event.eventId}`,
           kind: event.type === 'payment.succeeded' ? 'payment_succeeded' : 'payment_failed',
           detail: `Unmatched ${event.type}`,
           providerReference: subscriptionReference ?? null,
@@ -287,7 +305,7 @@ export class SubscriptionService {
                 amountCents: event.amountCents,
                 currency: event.currency,
                 providerReference: subscriptionReference,
-                detail: 'Refused: the purchase token belongs to another account.',
+                detail: `${REFUSED_DETAIL_PREFIX} the purchase token belongs to another account.`,
               });
               return 'unmatched';
             }

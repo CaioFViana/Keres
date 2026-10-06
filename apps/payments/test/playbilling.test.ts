@@ -207,7 +207,11 @@ describe('Play Billing verification', () => {
 });
 
 describe('Play Billing store method', () => {
-  const play = { endpointSecret: 'play-secret-0123456789abcdef-00', mock: true };
+  const play = {
+    endpointSecret: 'play-secret-0123456789abcdef-0000',
+    mock: true,
+    notificationSecret: null,
+  };
 
   it('lists the native Play method while Play verification is configured', () => {
     expect(playBillingMethods(play, 'BRL')).toEqual([

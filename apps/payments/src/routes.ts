@@ -8,8 +8,13 @@ import {
 } from '@keres/shared';
 import type { PaymentsConfig } from './config';
 import { pushEventsToKeres } from './keres';
-import { playBillingMethods, playSucceededEvent, verifyPlayPurchase } from './playbilling';
-import { NonceCache, signResponseHeaders, verifyRequest } from './protocol/signing';
+import {
+  playBillingMethods,
+  playNotificationEvents,
+  playSucceededEvent,
+  verifyPlayPurchase,
+} from './playbilling';
+import { NonceCache, safeEqual, signResponseHeaders, verifyRequest } from './protocol/signing';
 import { activeProviders, connectorCapabilities, providerFor } from './providers';
 import { mockDecide, mockPage, MOCK_METHOD_ID } from './providers/mock';
 import { CheckoutStore, type Provider } from './providers/types';
@@ -26,11 +31,26 @@ export interface ServiceState {
   report: (events: PaymentEventWire[]) => Promise<void>;
 }
 
+/** How long a call to a provider, to Google or to Keres may take before it is given up on. */
+export const OUTBOUND_TIMEOUT_MS = 15_000;
+
+function withTimeout(inner: typeof fetch): typeof fetch {
+  return ((input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) =>
+    inner(input, {
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(OUTBOUND_TIMEOUT_MS),
+    })) as typeof fetch;
+}
+
+function warn(what: string, error: unknown): void {
+  console.warn(`${what}: ${error instanceof Error ? error.message : 'failed'}`);
+}
+
 export function createState(
   config: PaymentsConfig,
   overrides: Partial<Pick<ServiceState, 'fetchImpl' | 'now' | 'report' | 'providers'>> = {},
 ): ServiceState {
-  const fetchImpl = overrides.fetchImpl ?? fetch;
+  const fetchImpl = overrides.fetchImpl ?? withTimeout(fetch);
   return {
     config,
     providers: overrides.providers ?? activeProviders(config),
@@ -122,16 +142,16 @@ async function providerReturn(
   if (!provider?.getStatus) return new Response('Not enabled.', { status: 404 });
   if (!reference) return new Response('Missing reference.', { status: 400 });
   try {
-    const record = [...state.store.entries()].find(
-      (entry) => entry[1].providerReference === reference,
-    );
-    const event = await provider.getStatus(record?.[0] ?? reference, reference, contextOf(state));
+    // Nothing is looked up in memory: the provider's own data says which attempt this is, so a return
+    // page works the same after this service restarted as before.
+    const event = await provider.getStatus(reference, reference, contextOf(state));
     if (event && event.type === 'payment.succeeded') {
       await state.report([event]);
       return resultPage('Payment confirmed', 'The payment was confirmed.');
     }
     return resultPage('Payment pending', 'The provider has not confirmed the payment yet.');
-  } catch {
+  } catch (error) {
+    warn('Return page could not confirm a payment', error);
     return resultPage('Payment error', 'The payment could not be confirmed.', 502);
   }
 }
@@ -169,6 +189,7 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
           if (events.length > 0) await state.report(events);
           return Response.json({ ok: true });
         } catch (error) {
+          warn('PayPal webhook refused', error);
           return Response.json(
             { message: error instanceof Error ? error.message : 'Webhook rejected.' },
             { status: 400 },
@@ -184,6 +205,7 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
           if (events.length > 0) await state.report(events);
           return Response.json({ ok: true });
         } catch (error) {
+          warn('Stripe webhook refused', error);
           return Response.json(
             { message: error instanceof Error ? error.message : 'Webhook rejected.' },
             { status: 400 },
@@ -202,6 +224,10 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
       // Mobile Play Billing verification, behind its own bearer secret.
       if (request.method === 'POST' && url.pathname === '/v1/play/verify') {
         return playVerify(state, request);
+      }
+      // Google's real-time notifications (Pub/Sub push), behind a secret in the push address.
+      if (request.method === 'POST' && url.pathname === '/v1/play/notifications') {
+        return playNotification(state, request, url);
       }
 
       // Mock approval page (development only; the provider is absent unless mock-enabled).
@@ -264,7 +290,12 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
             ? [providerFor(state.providers, record.methodId)].filter(
                 (candidate): candidate is Provider => !!candidate,
               )
-            : state.providers.filter((provider) => provider.hasStatus);
+            : // Remembered nothing (this service restarted): the reference says whose it is.
+              state.providers.filter(
+                (provider) =>
+                  provider.hasStatus &&
+                  (provider.ownsCheckoutReference?.(providerReference) ?? true),
+              );
           for (const provider of candidates) {
             const event = await provider.getStatus?.(
               checkoutId,
@@ -283,9 +314,18 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
         const cancelMatch = /^\/v1\/subscriptions\/([^/]+)\/cancel$/.exec(url.pathname);
         if (request.method === 'POST' && cancelMatch) {
           const reference = decodeURIComponent(cancelMatch[1]);
-          const provider = state.providers.find((candidate) => candidate.hasCancel);
+          // Only the provider that owns the reference may cancel it: asking another one would stop
+          // nothing and still answer "done" (a store purchase token belongs to none of them).
+          const provider = state.providers.find(
+            (candidate) => candidate.hasCancel && candidate.ownsSubscription?.(reference),
+          );
           if (!provider?.cancelSubscription) {
-            return failure(state, nonce, 400, 'Cancellation is not supported.');
+            return failure(
+              state,
+              nonce,
+              400,
+              'Cancellation is not supported for this subscription.',
+            );
           }
           await provider.cancelSubscription(reference, contextOf(state));
           return signedJson(state, nonce, 200, {});
@@ -297,6 +337,7 @@ export function createApp(state: ServiceState): { fetch: (request: Request) => P
 
         return failure(state, nonce, 404, 'Not found.');
       } catch (error) {
+        warn('A Keres call failed at the provider', error);
         return failure(
           state,
           nonce,
@@ -321,9 +362,11 @@ async function paypalReturn(state: ServiceState, url: URL): Promise<Response> {
   if (url.searchParams.get('cancelled') === '1') {
     return resultPage('Payment cancelled', 'The payment was cancelled.');
   }
+  // PayPal sends the person back with the subscription id as `subscription_id`; its `token` and
+  // `ba_token` are billing-agreement handles, not something the subscription can be looked up by.
   return providerReturn(
     state,
-    url.searchParams.get('token') ?? '',
+    url.searchParams.get('subscription_id') ?? '',
     providerFor(state.providers, 'paypal'),
   );
 }
@@ -390,7 +433,7 @@ async function playVerify(state: ServiceState, request: Request): Promise<Respon
   const play = state.config.play;
   if (!play) return Response.json({ message: 'Not enabled.' }, { status: 404 });
   const authorization = request.headers.get('authorization') ?? '';
-  if (authorization !== `Bearer ${play.endpointSecret}`) {
+  if (!safeEqual(authorization, `Bearer ${play.endpointSecret}`)) {
     return Response.json({ message: 'Refused.' }, { status: 401 });
   }
   const parsed = PlayVerifyRequestSchema.safeParse(await request.json().catch(() => null));
@@ -407,8 +450,44 @@ async function playVerify(state: ServiceState, request: Request): Promise<Respon
     await state.report([event]);
     return Response.json({ ok: true, active: true, orderId: verification.orderId });
   } catch (error) {
+    warn('Play verification failed', error);
     return Response.json(
       { message: error instanceof Error ? error.message : 'Verification failed.' },
+      { status: 502 },
+    );
+  }
+}
+
+/**
+ * Pub/Sub delivers again until it gets a 2xx, so what can never succeed (a message that is not ours
+ * to read) is answered 200 and dropped, and what may succeed later (Google or Keres unreachable) is
+ * answered 502 so it is delivered again.
+ */
+async function playNotification(
+  state: ServiceState,
+  request: Request,
+  url: URL,
+): Promise<Response> {
+  const play = state.config.play;
+  if (!play?.notificationSecret) {
+    return Response.json({ message: 'Not enabled.' }, { status: 404 });
+  }
+  if (!safeEqual(url.searchParams.get('token') ?? '', play.notificationSecret)) {
+    return Response.json({ message: 'Refused.' }, { status: 401 });
+  }
+  const body = await request.json().catch(() => null);
+  try {
+    const events = await playNotificationEvents(
+      { serviceAccountJson: process.env.PLAY_SERVICE_ACCOUNT_JSON ?? '', mock: play.mock },
+      body,
+      state.fetchImpl,
+    );
+    if (events.length > 0) await state.report(events);
+    return Response.json({ ok: true });
+  } catch (error) {
+    warn('Play notification failed', error);
+    return Response.json(
+      { message: error instanceof Error ? error.message : 'Notification failed.' },
       { status: 502 },
     );
   }

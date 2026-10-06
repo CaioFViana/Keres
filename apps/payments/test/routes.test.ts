@@ -109,7 +109,7 @@ describe('connector routes', () => {
       KERES_BASE_URL: 'http://127.0.0.1:3000',
       KERES_EVENTS_SECRET: EVENTS_SECRET,
       PUBLIC_BASE_URL: 'http://127.0.0.1:3101',
-      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-00',
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
     } as NodeJS.ProcessEnv);
     const app = createApp(createState(withPlay, { providers: [stub] }));
 
@@ -136,7 +136,7 @@ describe('connector routes', () => {
       KERES_BASE_URL: 'http://127.0.0.1:3000',
       KERES_EVENTS_SECRET: EVENTS_SECRET,
       PUBLIC_BASE_URL: 'http://127.0.0.1:3101',
-      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-00',
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
     } as NodeJS.ProcessEnv);
     const app = createApp(createState(withPlay, { providers: [stub] }));
 

@@ -264,6 +264,39 @@ describe('asking for the ways to pay', () => {
   });
 });
 
+describe('the store method', () => {
+  const replies = {
+    'GET /v1/methods': () => ({
+      body: {
+        methods: [
+          { id: 'card', label: 'Card' },
+          { id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' },
+        ],
+      },
+    }),
+  };
+
+  it('is not offered while this server cannot check store purchases', async () => {
+    // Without the key to the connector's store endpoint a purchase could not be relayed: the person
+    // would pay the store and be refused after, and the store only refunds days later.
+    const connector = await connect(connectorDouble({ replies }));
+
+    const methods = await connector.listMethods('BRL');
+
+    expect(methods.map((method) => method.id)).toEqual(['card']);
+  });
+
+  it('is offered once this server holds that key', async () => {
+    const connector = await connect(connectorDouble({ replies }), {
+      playSecret: 'play-secret-0123456789abcdef-0000',
+    });
+
+    const methods = await connector.listMethods('BRL');
+
+    expect(methods.map((method) => method.id)).toEqual(['card', 'playbilling']);
+  });
+});
+
 describe('starting a payment', () => {
   const request = {
     checkoutId: 'c1',

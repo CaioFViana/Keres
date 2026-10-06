@@ -117,15 +117,24 @@ describe('PayPal provider', () => {
     });
   });
 
-  it('translates webhook events after verifying the signature', async () => {
+  it('translates a completed sale after verifying the signature, tying it to its attempt', async () => {
     const webhookEvent = {
-      event_type: 'BILLING.SUBSCRIPTION.ACTIVATED',
-      resource: { id: 'I-SUB1', custom_id: 'checkout-1' },
+      event_type: 'PAYMENT.SALE.COMPLETED',
+      resource: {
+        id: 'SALE-1',
+        billing_agreement_id: 'I-SUB1',
+        amount: { total: '25.00', currency: 'BRL' },
+        create_time: '2026-10-04T12:00:00Z',
+      },
     };
     const fetchImpl = (async (url: string | URL | Request, init?: RequestInit) => {
       const address = String(url);
       if (address.endsWith('/v1/oauth2/token')) {
         return jsonResponse({ access_token: 'tok', expires_in: 3600 });
+      }
+      if (address.endsWith('/v1/billing/subscriptions/I-SUB1')) {
+        // The sale does not carry our attempt id; the subscription does.
+        return jsonResponse({ id: 'I-SUB1', custom_id: 'checkout-1' });
       }
       const payload = JSON.parse(init?.body as string) as { webhook_id?: string };
       expect(payload.webhook_id).toBe('webhook-id');
@@ -141,12 +150,17 @@ describe('PayPal provider', () => {
       context(fetchImpl),
     );
 
-    expect(events).toHaveLength(1);
-    expect(events?.[0]).toMatchObject({
-      type: 'payment.succeeded',
-      checkoutId: 'checkout-1',
-      subscriptionReference: 'I-SUB1',
-    });
+    expect(events).toEqual([
+      {
+        type: 'payment.succeeded',
+        eventId: 'SALE-1',
+        checkoutId: 'checkout-1',
+        subscriptionReference: 'I-SUB1',
+        paidAt: '2026-10-04T12:00:00Z',
+        amountCents: 2500,
+        currency: 'BRL',
+      },
+    ]);
   });
 
   it('rejects a webhook PayPal did not confirm', async () => {

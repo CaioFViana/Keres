@@ -321,6 +321,10 @@
     "searchPlaceholder": "User, tag or provider reference",
     "status": "Status",
     "statusAll": "All",
+    "kind": "Event",
+    "kindAll": "All events",
+    "searchLedgerPlaceholder": "User, tag, plan or provider reference",
+    "autoRefresh": "This page looks for new payments by itself every {{seconds}} s while it is open.",
     "statuses": {
       "active": "Paid up",
       "due": "Due",

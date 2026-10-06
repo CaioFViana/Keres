@@ -1,7 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../db';
 import type { ServerInsert, ServerSelect } from '../db/schema';
-import { friendships, servers, stories, storyInvitations, storyPublications } from '../db/schema';
+import {
+  friendships,
+  servers,
+  serverPayments,
+  stories,
+  storyInvitations,
+  storyPublications,
+} from '../db/schema';
 import { useConnectivityStore } from '../state/connectivityStore';
 import { useNotificationStore } from '../state/notificationStore';
 import { useStoryListStore } from '../state/storyListStore';
@@ -171,6 +178,8 @@ export const createServerService = (db: AppDrizzleClient): ServerService => {
         // only this local copy; logging in again will repopulate it from the unchanged API.
         await tx.delete(friendships).where(eq(friendships.serverId, serverId)).run();
         await tx.delete(storyInvitations).where(eq(storyInvitations.serverId, serverId)).run();
+        // The payment history is the server's own record: only this copy goes, and it comes back on the next look.
+        await tx.delete(serverPayments).where(eq(serverPayments.serverId, serverId)).run();
         await tx
           .update(servers)
           .set({ isDeleted: true, deletedAt: new Date(), updatedAt: new Date() })

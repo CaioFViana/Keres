@@ -25,6 +25,7 @@ RUN chown -R bun:bun /app
 # The port the service listens on inside the container. Publish it only to loopback (see
 # docker-compose.yml) and let the reverse proxy (nginx example in this folder) be the only
 # thing facing the internet - PSP webhooks and the Keres server reach it through there.
+ENV HOST=0.0.0.0
 EXPOSE 3101
 USER bun
 WORKDIR /app/apps/payments

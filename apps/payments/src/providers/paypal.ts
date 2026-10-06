@@ -90,28 +90,49 @@ function approveLink(body: unknown): string | null {
   );
 }
 
-async function ensurePlan(
+/**
+ * The PayPal billing plan selling a tier for a period, created once and reused. The price is part of
+ * the key (a plan's price cannot be edited, so a tier whose price changed needs a new plan), and the
+ * pending creation is what is cached, so two checkouts at the same moment share one plan.
+ */
+function ensurePlan(
   cfg: PayPalConfig,
   token: TokenGetter,
-  plans: Map<string, string>,
+  plans: Map<string, Promise<string>>,
   request: CheckoutRequestWire,
   fetchImpl: typeof fetch,
 ): Promise<string> {
-  const key = `${request.tier.id}:${request.interval}:${request.currency}`;
+  const key = `${request.tier.id}:${request.interval}:${request.currency}:${request.amountCents}`;
   const known = plans.get(key);
   if (known) return known;
+  const created = createPlan(cfg, token, request, fetchImpl);
+  plans.set(key, created);
+  created.catch(() => plans.delete(key));
+  return created;
+}
+
+async function createPlan(
+  cfg: PayPalConfig,
+  token: TokenGetter,
+  request: CheckoutRequestWire,
+  fetchImpl: typeof fetch,
+): Promise<string> {
   const access = await token(cfg);
   const product = await paypalFetch(cfg, access, '/v1/catalogs/products', fetchImpl, {
     method: 'POST',
+    headers: { 'paypal-request-id': `keres-product-${request.tier.id}` },
     body: JSON.stringify({ name: request.tier.name, type: 'SERVICE' }),
   });
   const productId = (product.body as { id?: string }).id;
   if (product.status >= 300 || !productId) throw new Error('PayPal refused the product.');
   const plan = await paypalFetch(cfg, access, '/v1/billing/plans', fetchImpl, {
     method: 'POST',
+    headers: {
+      'paypal-request-id': `keres-plan-${request.tier.id}-${request.interval}-${request.currency}-${request.amountCents}`,
+    },
     body: JSON.stringify({
       product_id: productId,
-      name: `${request.tier.name} (${request.interval})`,
+      name: `${request.tier.name} (${request.interval}, ${money(request.amountCents, request.currency)} ${request.currency})`,
       billing_cycles: [
         {
           frequency: {
@@ -134,7 +155,6 @@ async function ensurePlan(
   });
   const planId = (plan.body as { id?: string }).id;
   if (plan.status >= 300 || !planId) throw new Error('PayPal refused the plan.');
-  plans.set(key, planId);
   return planId;
 }
 
@@ -159,7 +179,7 @@ function succeededEvent(
 }
 
 export function createPayPalProvider(): Provider {
-  const plans = new Map<string, string>();
+  const plans = new Map<string, Promise<string>>();
   const tokenCaches = new WeakMap<typeof fetch, TokenGetter>();
   const tokens = (fetchImpl: typeof fetch): TokenGetter => {
     let getter = tokenCaches.get(fetchImpl);
@@ -174,6 +194,11 @@ export function createPayPalProvider(): Provider {
     methodIds: ['paypal'],
     hasStatus: true,
     hasCancel: true,
+
+    // PayPal subscription ids are `I-...`.
+    ownsSubscription: (subscriptionReference) => subscriptionReference.startsWith('I-'),
+    // A PayPal checkout's reference is its subscription id.
+    ownsCheckoutReference: (providerReference) => providerReference.startsWith('I-'),
 
     methods(currency: string): PaymentMethodOption[] {
       if (!SUPPORTED_CURRENCIES.has(currency)) return [];
@@ -228,6 +253,8 @@ export function createPayPalProvider(): Provider {
         context.fetchImpl,
       );
       const status = (sub.body as { status?: string }).status;
+      // The attempt this subscription was made for travels with it; what was asked about is only a fallback.
+      const attempt = (sub.body as { custom_id?: string }).custom_id || checkoutId;
       if (status === 'CANCELLED' || status === 'EXPIRED') {
         return {
           type: 'subscription.canceled',
@@ -253,19 +280,14 @@ export function createPayPalProvider(): Provider {
           }>;
         }
       ).transactions?.[0];
-      const currency = last?.amount_with_breakdown?.gross_amount?.currency_code ?? 'USD';
-      if (!last?.id) {
-        return succeededEvent(
-          `paypal-sub-${providerReference}`,
-          { checkoutId, subscriptionReference: providerReference },
-          0,
-          currency,
-          now,
-        );
-      }
+      // Approved but not charged yet: nothing was paid, so nothing is reported. The charge arrives
+      // as a sale (webhook) or shows up in the transactions on the next look. An event with no
+      // payment behind it would grant a period for free, and a second one for the real charge.
+      if (!last?.id) return null;
+      const currency = last.amount_with_breakdown?.gross_amount?.currency_code ?? 'USD';
       return succeededEvent(
         last.id,
-        { checkoutId, subscriptionReference: providerReference },
+        { checkoutId: attempt, subscriptionReference: providerReference },
         parseMoney(last.amount_with_breakdown?.gross_amount?.value, currency),
         currency,
         last.time ?? now,
@@ -276,13 +298,20 @@ export function createPayPalProvider(): Provider {
       const cfg = paypalConfig(context.config);
       if (!cfg) throw new Error('PayPal is not configured.');
       const access = await tokens(context.fetchImpl)(cfg);
-      await paypalFetch(
+      const result = await paypalFetch(
         cfg,
         access,
         `/v1/billing/subscriptions/${encodeURIComponent(subscriptionReference)}/cancel`,
         context.fetchImpl,
         { method: 'POST', body: JSON.stringify({ reason: 'Canceled by the subscriber.' }) },
       );
+      // A subscription PayPal already considers over cannot be cancelled again; that is the goal reached.
+      const alreadyOver =
+        result.status === 422 &&
+        (result.body as { name?: string } | null)?.name === 'SUBSCRIPTION_STATUS_INVALID';
+      if (result.status >= 300 && !alreadyOver) {
+        throw new Error(`PayPal did not cancel the subscription (${result.status}).`);
+      }
     },
 
     async handleWebhook(request: Request, context: ProviderContext): Promise<PaymentEventWire[]> {
@@ -316,47 +345,33 @@ export function createPayPalProvider(): Provider {
       const resource = event.resource ?? {};
       const str = (value: unknown): string => (typeof value === 'string' ? value : '');
       switch (event.event_type) {
-        case 'PAYMENT.CAPTURE.COMPLETED': {
-          const amount = resource.amount as { value?: string; currency_code?: string } | undefined;
-          const currency = amount?.currency_code ?? 'USD';
-          return [
-            succeededEvent(
-              str(resource.id),
-              { checkoutId: str(resource.custom_id) || undefined },
-              parseMoney(amount?.value, currency),
-              currency,
-              str(resource.create_time) || new Date().toISOString(),
-            ),
-          ];
-        }
-        case 'BILLING.SUBSCRIPTION.ACTIVATED': {
-          const amount = resource.billing_info as
-            | { last_payment?: { amount?: { value?: string; currency_code?: string } } }
-            | undefined;
-          const currency = amount?.last_payment?.amount?.currency_code ?? 'USD';
-          return [
-            succeededEvent(
-              `paypal-sub-${str(resource.id)}`,
-              {
-                checkoutId: str(resource.custom_id) || undefined,
-                subscriptionReference: str(resource.id),
-              },
-              parseMoney(amount?.last_payment?.amount?.value, currency),
-              currency,
-              new Date().toISOString(),
-            ),
-          ];
-        }
+        // One charge, one event: a subscription's every charge (the first included) is a completed
+        // sale, and its id is the event id - the same one the return hop reads from the transactions.
+        // `BILLING.SUBSCRIPTION.ACTIVATED` and a capture notice describe the same charge under other
+        // ids, so reporting them too would grant the period twice; this service sells subscriptions
+        // only, so there is no one-time order to report either.
         case 'PAYMENT.SALE.COMPLETED': {
+          const subscription = str(resource.billing_agreement_id);
+          if (!subscription) return [];
           const amount = resource.amount as { total?: string; currency?: string } | undefined;
           const currency = amount?.currency ?? 'USD';
+          // The sale does not carry our attempt id, the subscription does: it is what ties the first
+          // charge to the person who started it (later charges match by the subscription itself).
+          const detail = await paypalFetch(
+            cfg,
+            access,
+            `/v1/billing/subscriptions/${encodeURIComponent(subscription)}`,
+            context.fetchImpl,
+          );
+          if (detail.status >= 300) throw new Error('PayPal subscription could not be read.');
+          const checkoutId = str((detail.body as { custom_id?: unknown } | null)?.custom_id);
           return [
             succeededEvent(
               str(resource.id),
-              { subscriptionReference: str(resource.billing_agreement_id) || str(resource.id) },
+              { checkoutId: checkoutId || undefined, subscriptionReference: subscription },
               parseMoney(amount?.total, currency),
               currency,
-              new Date().toISOString(),
+              str(resource.create_time) || new Date().toISOString(),
             ),
           ];
         }

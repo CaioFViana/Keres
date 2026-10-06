@@ -24,23 +24,43 @@ describe('payments config', () => {
       PAYPAL_SECRET: 'secret',
       STRIPE_SECRET_KEY: 'sk',
       STRIPE_WEBHOOK_SECRET: 'whsec',
-      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef',
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
     });
     expect(config.paypal?.sandbox).toBe(true);
     expect(config.stripe).not.toBeNull();
     expect(config.play).toEqual({
-      endpointSecret: 'play-secret-0123456789abcdef',
+      endpointSecret: 'play-secret-0123456789abcdef-0000',
       mock: false,
+      notificationSecret: null,
     });
   });
 
   it('enables Play mock only when explicitly asked', () => {
     const config = loadConfig({
       ...BASE,
-      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef',
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
       PLAY_MOCK: 'true',
     });
     expect(config.play?.mock).toBe(true);
+  });
+
+  it('holds the Play secrets to the same length as every other key', () => {
+    expect(() => loadConfig({ ...BASE, PLAY_ENDPOINT_SECRET: 'short' })).toThrow(
+      'at least 32 characters',
+    );
+    const withNotifications = loadConfig({
+      ...BASE,
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
+      PLAY_NOTIFICATION_SECRET: 'push-secret-0123456789abcdef-0000',
+    });
+    expect(withNotifications.play?.notificationSecret).toBe('push-secret-0123456789abcdef-0000');
+    expect(() =>
+      loadConfig({
+        ...BASE,
+        PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
+        PLAY_NOTIFICATION_SECRET: 'short',
+      }),
+    ).toThrow('at least 32 characters');
   });
 
   it('refuses short secrets and equal keys', () => {
@@ -53,14 +73,14 @@ describe('payments config', () => {
   });
 
   it('refuses live Play without the service-account key', () => {
-    const live = loadConfig({ ...BASE, PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef' });
+    const live = loadConfig({ ...BASE, PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000' });
     expect(() => assertPlayReady(live, { ...BASE })).toThrow('PLAY_SERVICE_ACCOUNT_JSON');
     expect(() =>
       assertPlayReady(live, { ...BASE, PLAY_SERVICE_ACCOUNT_JSON: '{"key":"x"}' }),
     ).not.toThrow();
     const mock = loadConfig({
       ...BASE,
-      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef',
+      PLAY_ENDPOINT_SECRET: 'play-secret-0123456789abcdef-0000',
       PLAY_MOCK: 'true',
     });
     expect(() => assertPlayReady(mock, { ...BASE })).not.toThrow();

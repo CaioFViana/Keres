@@ -23,6 +23,14 @@ export const MAX_CLOCK_SKEW_SECONDS = 300;
 const NONCE_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
 const TIMESTAMP_PATTERN = /^\d{1,12}$/;
 
+/** Compares two secrets without leaking, through timing, how much of one matched the other. */
+export function safeEqual(a: string, b: string): boolean {
+  return timingSafeEqual(
+    createHash('sha256').update(a).digest(),
+    createHash('sha256').update(b).digest(),
+  );
+}
+
 export const sha256Hex = (body: string | Uint8Array): string =>
   createHash('sha256').update(body).digest('hex');
 

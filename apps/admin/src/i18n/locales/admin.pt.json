@@ -321,6 +321,10 @@
     "searchPlaceholder": "Usuário, tag ou referência do provedor",
     "status": "Situação",
     "statusAll": "Todas",
+    "kind": "Evento",
+    "kindAll": "Todos os eventos",
+    "searchLedgerPlaceholder": "Usuário, tag, plano ou referência do provedor",
+    "autoRefresh": "Esta página busca novos pagamentos sozinha a cada {{seconds}} s enquanto está aberta.",
     "statuses": {
       "active": "Em dia",
       "due": "Vencida",

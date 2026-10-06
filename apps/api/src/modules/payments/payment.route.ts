@@ -1,11 +1,13 @@
 import {
   CheckoutCreateSchema,
   PaymentEventsRequestSchema,
+  PaymentHistoryQuerySchema,
   PlayRelayRequestSchema,
 } from '@keres/shared';
 import { Elysia, t } from 'elysia';
 import type { JWTPayload } from '../../index';
 import { checkoutService } from '../../services/payments/CheckoutService';
+import { paymentHistoryService } from '../../services/payments/PaymentHistoryService';
 import { eventsSecrets } from '../../services/payments/connector/config';
 import { toPaymentEvent } from '../../services/payments/connector/events';
 import {
@@ -185,6 +187,24 @@ export const paymentRoutes = new Elysia()
       query: t.Object({ tierId: t.String(), interval: t.String() }),
       detail: {
         summary: 'What changing to this plan would do to the time left on the current one',
+        tags: ['Payments'],
+      },
+    },
+  )
+
+  .get(
+    '/history',
+    async ({ userId, query }) => {
+      const parsed = PaymentHistoryQuerySchema.safeParse(query);
+      if (!parsed.success) {
+        throw new AppError(400, parsed.error.issues[0]?.message || 'Invalid request');
+      }
+      return paymentHistoryService.list(userId, parsed.data);
+    },
+    {
+      query: t.Object({ limit: t.Optional(t.Numeric()), before: t.Optional(t.String()) }),
+      detail: {
+        summary: "The user's own payment history (paid, failed, given), newest first",
         tags: ['Payments'],
       },
     },

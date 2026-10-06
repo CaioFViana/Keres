@@ -80,6 +80,19 @@ Live verification needs a service-account key with the Android Publisher scope
 (`PLAY_SERVICE_ACCOUNT_JSON`); `PLAY_MOCK=true` accepts any token - homologation only, never
 production.
 
+**Renewals and store-side cancellations** arrive by Google's real-time developer notifications, not
+by the app: without them a subscription that renews while the app is closed lapses on Keres. Set
+them up once:
+
+1. Play Console > Monetization setup > Real-time developer notifications: create a Pub/Sub topic
+   (grant `google-play-developer-notifications@system.gserviceaccount.com` the Publisher role).
+2. Pub/Sub: a **push** subscription on that topic to
+   `https://buy.keres.me/v1/play/notifications?token=<PLAY_NOTIFICATION_SECRET>`.
+3. Set `PLAY_NOTIFICATION_SECRET` (32+ characters) here. The query string is the secret, so do not
+   log it at the proxy.
+
+Each push is only a pointer: the service asks Google about the token before reporting anything.
+
 ## Homologation checklist (needs real PSP accounts)
 
 1. PayPal sandbox: create a checkout, approve it, confirm `payment.succeeded`
@@ -90,4 +103,9 @@ production.
 4. Play Billing: closed-testing track purchase (mock off by default), relay grants the plan;
    a token for another product with this product's id is refused; a grace-period subscription
    counts as paid, held/paused/cancelled/expired do not.
-5. Key rotation: set `*_PREVIOUS`, switch the primary, remove the previous.
+5. Play notifications: send a test from Play Console, renew a test subscription with the app closed
+   and confirm `payment.succeeded` reaches Keres; cancel it in the Play Store and confirm
+   `subscription.canceled`.
+6. A first PayPal and a first Stripe payment each grant **one** period (not two), and cancelling a
+   PayPal and a Stripe subscription from the app ends each at its own provider.
+7. Key rotation: set `*_PREVIOUS`, switch the primary, remove the previous.

@@ -238,3 +238,109 @@ describe('relaying a store purchase', () => {
     expect(data.methodId).toBe('playbilling');
   });
 });
+
+describe('a subscription bought in the store', () => {
+  const storeMethods = [
+    { id: 'playbilling', label: 'Google Play', flow: 'native', store: 'play' },
+  ] as const;
+
+  function connectorWithCancel() {
+    const cancellable = createFakePaymentConnector({
+      withCancel: true,
+      methods: [...storeMethods],
+      verifyPlay: async (verified) => {
+        await postEvents([
+          {
+            type: 'payment.succeeded',
+            eventId: `evt_${verified.checkoutId}`,
+            checkoutId: verified.checkoutId,
+            subscriptionReference: verified.purchaseToken,
+            paidAt: new Date().toISOString(),
+            amountCents: verified.amountCents,
+            currency: verified.currency,
+          },
+        ]);
+        return { active: true, orderId: 'GPA.1234' };
+      },
+    });
+    setPaymentConnector(cancellable.connector);
+    return cancellable;
+  }
+
+  it('is stopped in the store: this server neither offers to nor pretends to', async () => {
+    const cancellable = connectorWithCancel();
+    await relay(ana, purchase());
+
+    const info = await request('GET', '/payments', { token: ana.token });
+    expect(info.data.subscription).toMatchObject({
+      status: 'active',
+      canCancelHere: false,
+      autoRenews: true,
+    });
+
+    // Marking it stopped here would leave Google charging: refused, nothing is touched.
+    const { status } = await request('POST', '/payments/subscription/cancel', { token: ana.token });
+    expect(status).toBe(409);
+    expect(cancellable.cancelSubscription).not.toHaveBeenCalled();
+    const [row] = await db
+      .select()
+      .from(paymentSubscriptions)
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+    expect(row.cancelAtPeriodEnd).toBe(false);
+
+    // What flags it is the store saying the person stopped it there.
+    await postEvents([
+      {
+        type: 'subscription.canceled',
+        eventId: 'evt_store_cancel',
+        subscriptionReference: 'token-abc',
+      },
+    ]);
+    const [after] = await db
+      .select()
+      .from(paymentSubscriptions)
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+    expect(after.cancelAtPeriodEnd).toBe(true);
+  });
+
+  it('is granted with a long purchase token: the reference is not cut at the length of other ids', async () => {
+    const token = `ofbcjdkhgcdjliaejnmcjhki.${'AO-J1Oy'.repeat(80)}`;
+    expect(token.length).toBeGreaterThan(200);
+
+    const { status, data } = await relay(ana, purchase({ purchaseToken: token }));
+
+    expect(status).toBe(200);
+    expect(data.subscription).toMatchObject({ status: 'active', tierId: proId });
+    const [row] = await db
+      .select()
+      .from(paymentSubscriptions)
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+    expect(row.providerReference).toBe(token);
+  });
+
+  it("is renewed by the store's own notice, with no app open", async () => {
+    await relay(ana, purchase());
+    const [before] = await db
+      .select()
+      .from(paymentSubscriptions)
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+
+    await postEvents([
+      {
+        type: 'payment.succeeded',
+        eventId: 'GPA.1234..1',
+        subscriptionReference: 'token-abc',
+        paidAt: new Date(before.paidUntil.getTime() + 1000).toISOString(),
+        amountCents: 1990,
+        currency: 'BRL',
+      },
+    ]);
+
+    const [after] = await db
+      .select()
+      .from(paymentSubscriptions)
+      .where(eq(paymentSubscriptions.userId, ana.userId));
+    expect(after.paidUntil.getTime()).toBeGreaterThan(before.paidUntil.getTime());
+    expect(after.status).toBe('active');
+  });
+});

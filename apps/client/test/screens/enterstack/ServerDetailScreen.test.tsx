@@ -317,6 +317,16 @@ describe('ServerDetailScreen', () => {
       expect(view.getByTestId('server-action-plan')).toBeTruthy();
     });
 
+    it('opens the payment history of this server, next to the plans', async () => {
+      mockPaymentOverview.mockReturnValue(overview(subscription));
+      const view = await render(<ServerDetailScreen />);
+      await view.findByText('Main');
+
+      await fireEvent.press(view.getByTestId('server-action-payment-history'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('ServerPaymentHistory', { serverId: 'srv-1' });
+    });
+
     it('opens the plans of this server in the same stack', async () => {
       mockPaymentOverview.mockReturnValue(overview(subscription));
       const view = await render(<ServerDetailScreen />);

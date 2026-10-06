@@ -72,8 +72,19 @@ interface StripeSession {
   amount_total?: number;
   currency?: string;
   subscription?: string;
+  /** The first invoice of a subscription session: the same payment the invoice webhook reports. */
+  invoice?: string | null;
   metadata?: Record<string, string>;
   client_reference_id?: string;
+}
+
+/**
+ * The event id of the payment a Checkout Session made. A subscription's first payment reaches us
+ * twice - as the session completing and as its first invoice being paid - and both must be one
+ * event, or the first period would be granted twice. The invoice id is what they share.
+ */
+function sessionEventId(session: StripeSession): string {
+  return session.invoice ? `stripe-invoice-${session.invoice}` : `stripe-session-${session.id}`;
 }
 
 /** Verifies a Stripe webhook signature (`t=...,v1=...`) over the raw bytes. */
@@ -124,6 +135,11 @@ export function createStripeProvider(): Provider {
     methodIds: ['googlepay'],
     hasStatus: true,
     hasCancel: true,
+
+    // Stripe subscription ids are `sub_...`.
+    ownsSubscription: (subscriptionReference) => subscriptionReference.startsWith('sub_'),
+    // A Stripe checkout's reference is its Checkout Session id.
+    ownsCheckoutReference: (providerReference) => providerReference.startsWith('cs_'),
 
     methods(currency: string): PaymentMethodOption[] {
       if (!SUPPORTED_CURRENCIES.has(currency)) return [];
@@ -187,10 +203,12 @@ export function createStripeProvider(): Provider {
       );
       if (fetched.status === 404) return null;
       const session = fetched.body as StripeSession;
+      // The attempt travels with the session (metadata); what was asked about is only a fallback.
+      const attempt = session.metadata?.checkoutId || session.client_reference_id || checkoutId;
       if (session.status === 'complete') {
         return succeeded(
-          `stripe-session-${session.id}`,
-          checkoutId,
+          sessionEventId(session),
+          attempt,
           session.subscription,
           session.amount_total ?? 0,
           session.currency ?? 'USD',
@@ -200,7 +218,7 @@ export function createStripeProvider(): Provider {
         return {
           type: 'payment.failed',
           eventId: `stripe-expired-${session.id}`,
-          checkoutId,
+          checkoutId: attempt,
           reason: 'expired',
         };
       }
@@ -210,12 +228,15 @@ export function createStripeProvider(): Provider {
     async cancelSubscription(subscriptionReference, context) {
       const cfg = stripeConfig(context.config);
       if (!cfg) throw new Error('Google Pay is not configured.');
-      await stripeCall(
+      const result = await stripeCall(
         cfg,
         'DELETE',
         `/v1/subscriptions/${encodeURIComponent(subscriptionReference)}`,
         context.fetchImpl,
       );
+      if (result.status >= 300) {
+        throw new Error(`Stripe did not cancel the subscription (${result.status}).`);
+      }
     },
 
     async handleWebhook(request: Request, context: ProviderContext): Promise<PaymentEventWire[]> {
@@ -240,7 +261,7 @@ export function createStripeProvider(): Provider {
           if (session.payment_status !== 'paid' && !session.subscription) return [];
           return [
             succeeded(
-              `stripe-session-${str(session.id)}`,
+              sessionEventId(session),
               str(session.metadata?.checkoutId) || str(session.client_reference_id) || undefined,
               session.subscription ? str(session.subscription) : undefined,
               num(session.amount_total),
@@ -251,15 +272,23 @@ export function createStripeProvider(): Provider {
         case 'invoice.payment_succeeded': {
           const invoice = object as {
             subscription?: string;
+            parent?: { subscription_details?: { subscription?: string } };
+            billing_reason?: string;
             amount_paid?: number;
             currency?: string;
           };
-          if (!invoice.subscription) return [];
+          // The first invoice of a subscription is the payment the completed session already
+          // reports (same event id, and the session carries our attempt id this one lacks).
+          if (invoice.billing_reason === 'subscription_create') return [];
+          // Newer API versions moved the subscription from the invoice itself under `parent`.
+          const subscription =
+            str(invoice.subscription) || str(invoice.parent?.subscription_details?.subscription);
+          if (!subscription) return [];
           return [
             succeeded(
               `stripe-invoice-${str((object as { id?: string }).id)}`,
               undefined,
-              str(invoice.subscription),
+              subscription,
               num(invoice.amount_paid),
               str(invoice.currency) || 'USD',
             ),

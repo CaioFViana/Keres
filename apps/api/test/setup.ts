@@ -39,3 +39,9 @@ process.env.MEDIA_STORAGE_PATH ??= path.join(os.tmpdir(), 'keres-media-test');
 // with these; one per direction, as the server requires.
 process.env.PAYMENT_EVENTS_SECRET ??= 'test-events-secret-test-events-secret-000';
 process.env.PAYMENT_CONNECTOR_SECRET ??= 'test-connector-secret-test-connector-0001';
+
+// What the developer's own .env says about payments must not change what a test proves: the suites that need a
+// connector install a fake one, and a redirect to plain http is refused unless a test asks otherwise.
+process.env.PAYMENT_ALLOW_INSECURE_REDIRECTS = 'false';
+delete process.env.PAYMENT_CONNECTOR_URL;
+delete process.env.PAYMENT_PLAY_ENDPOINT_SECRET;

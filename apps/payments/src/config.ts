@@ -28,7 +28,12 @@ export interface PaymentsConfig {
   publicBaseUrl: string;
   paypal: { clientId: string; secret: string; sandbox: boolean; webhookId: string } | null;
   stripe: { secretKey: string; webhookSecret: string } | null;
-  play: { endpointSecret: string; mock: boolean } | null;
+  play: {
+    endpointSecret: string;
+    mock: boolean;
+    /** Guards the Pub/Sub push of Google's real-time notifications; absent: renewals are not heard. */
+    notificationSecret: string | null;
+  } | null;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): PaymentsConfig {
@@ -77,7 +82,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): PaymentsConfig
   const paypalSecret = get('PAYPAL_SECRET') ?? '';
   const stripeSecretKey = get('STRIPE_SECRET_KEY') ?? '';
   const stripeWebhookSecret = get('STRIPE_WEBHOOK_SECRET') ?? '';
-  const playEndpointSecret = get('PLAY_ENDPOINT_SECRET') ?? '';
+  const playEndpointSecret = get('PLAY_ENDPOINT_SECRET') ? sec('PLAY_ENDPOINT_SECRET') : '';
 
   return {
     port: Number(get('PORT') ?? 3101),
@@ -101,7 +106,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): PaymentsConfig
         ? { secretKey: stripeSecretKey, webhookSecret: stripeWebhookSecret }
         : null,
     play: playEndpointSecret
-      ? { endpointSecret: playEndpointSecret, mock: get('PLAY_MOCK') === 'true' }
+      ? {
+          endpointSecret: playEndpointSecret,
+          mock: get('PLAY_MOCK') === 'true',
+          notificationSecret: get('PLAY_NOTIFICATION_SECRET')
+            ? sec('PLAY_NOTIFICATION_SECRET')
+            : null,
+        }
       : null,
   };
 }

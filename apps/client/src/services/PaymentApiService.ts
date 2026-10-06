@@ -1,6 +1,7 @@
 import type {
   Checkout,
   CheckoutCreate,
+  PaymentHistoryPage,
   PaymentsInfo,
   PlayRelayRequest,
   PlayRelayResponse,
@@ -68,6 +69,15 @@ export class PaymentApiService {
       params: { tierId, interval },
     });
     return response.data?.quote ?? null;
+  }
+
+  /** One page of the person's own payment history on this server, newest first. */
+  async getHistory(
+    server: ServerSelect,
+    params: { limit?: number; before?: string } = {},
+  ): Promise<PaymentHistoryPage> {
+    const response = await this.clientFor(server).get('/payments/history', { params });
+    return response.data;
   }
 
   async cancelSubscription(server: ServerSelect): Promise<Subscription> {

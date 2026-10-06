@@ -166,13 +166,16 @@ export function usePlanCheckout(server: ServerSelect | undefined) {
         .reconcileUnfinished((ticket) => confirmTicket(server, request, ticket))
         .catch(() => []);
       if (mine !== attempt.current) return;
-      const alreadyPaid = confirmed[0];
-      if (alreadyPaid) {
-        const offer = offerForPlayProduct(request.tiers, alreadyPaid.productId);
-        const tierName =
-          request.tiers.find((tier) => tier.id === offer?.tierId)?.name ?? request.planName;
-        setPaidPlanName(tierName);
+      if (confirmed.some((ticket) => ticket.productId === request.productId)) {
+        setPaidPlanName(request.planName);
         setPhase('paid');
+        return;
+      }
+      // The store holds a live subscription for another plan: buying this one would start a second
+      // charge beside it. Changing plans starts by ending the first, which only the store can do.
+      if (confirmed.length > 0) {
+        setPhase('idle');
+        setError(t('payment_error_play_owned_other'));
         return;
       }
       try {

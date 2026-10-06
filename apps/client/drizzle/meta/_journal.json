@@ -351,6 +351,13 @@
       "when": 1791150723061,
       "tag": "0049_regular_sharon_carter",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791248241133,
+      "tag": "0050_dashing_terror",
+      "breakpoints": true
     }
   ]
 }

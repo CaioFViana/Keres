@@ -72,8 +72,17 @@ export const adminPaymentRoutes = new Elysia()
       return adminPaymentService.listEvents(parse(AdminPaymentEventListQuerySchema, query));
     },
     {
-      query: t.Object({ page: t.Optional(t.Numeric()), pageSize: t.Optional(t.Numeric()) }),
-      detail: { summary: 'The ledger of what the provider reported', tags: ['Admin'], security },
+      query: t.Object({
+        search: t.Optional(t.String()),
+        kind: t.Optional(t.String()),
+        page: t.Optional(t.Numeric()),
+        pageSize: t.Optional(t.Numeric()),
+      }),
+      detail: {
+        summary: 'The ledger of what the provider reported (filterable, paginated)',
+        tags: ['Admin'],
+        security,
+      },
     },
   )
 

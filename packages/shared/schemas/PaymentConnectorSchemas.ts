@@ -69,13 +69,20 @@ export const CheckoutResultWireSchema = z.object({
 
 const optionalReference = reference.optional();
 
+/**
+ * What names a subscription at its provider. A store purchase token is the reference of a store
+ * subscription and can run to 1000 characters (the same bound the verify request puts on it), far
+ * past the 200 any other id needs.
+ */
+const subscriptionReference = z.string().min(1).max(1000);
+
 /** One thing the provider reported, in Keres' terms. `paidAt` is an ISO date-time. */
 export const PaymentEventWireSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('payment.succeeded'),
     eventId: reference,
     checkoutId: optionalReference,
-    subscriptionReference: optionalReference,
+    subscriptionReference: subscriptionReference.optional(),
     paidAt: z.iso.datetime({ offset: true }),
     amountCents: z.number().int().nonnegative().max(1_000_000_000),
     currency: z.string().length(3),
@@ -84,13 +91,13 @@ export const PaymentEventWireSchema = z.discriminatedUnion('type', [
     type: z.literal('payment.failed'),
     eventId: reference,
     checkoutId: optionalReference,
-    subscriptionReference: optionalReference,
+    subscriptionReference: subscriptionReference.optional(),
     reason: z.string().max(200).optional(),
   }),
   z.object({
     type: z.literal('subscription.canceled'),
     eventId: reference,
-    subscriptionReference: reference,
+    subscriptionReference,
   }),
   z.object({
     type: z.literal('checkout.expired'),
@@ -174,6 +181,6 @@ export const DueSubscriptionWireSchema = z.object({
   interval: z.enum(BILLING_INTERVALS),
   amountCents: z.number().int().nonnegative(),
   currency: z.string().length(3),
-  subscriptionReference: reference.optional(),
+  subscriptionReference: subscriptionReference.optional(),
   paidUntil: z.iso.datetime({ offset: true }),
 });

@@ -51,6 +51,7 @@ import migration_47 from './0046_lazy_skrulls';
 import migration_48 from './0047_previous_wither';
 import migration_49 from './0048_square_wolverine';
 import migration_50 from './0049_regular_sharon_carter';
+import migration_51 from './0050_dashing_terror';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -103,6 +104,7 @@ const migrations = [
   { id: 48, name: '0047_previous_wither', run: migration_48 },
   { id: 49, name: '0048_square_wolverine', run: migration_49 },
   { id: 50, name: '0049_regular_sharon_carter', run: migration_50 },
+  { id: 51, name: '0050_dashing_terror', run: migration_51 },
 ];
 
 export default migrations;

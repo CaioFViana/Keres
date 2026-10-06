@@ -1,4 +1,5 @@
-import { createSign } from 'node:crypto';
+import { createHash, createSign } from 'node:crypto';
+import { z } from 'zod';
 import type { PaymentsConfig } from './config';
 import type { PaymentMethodOption, PaymentEventWire } from './wire';
 
@@ -26,9 +27,37 @@ export interface PlayConfig {
   mock: boolean;
 }
 
+/** What identifies a purchase at the store: enough to ask Google about it. */
+export type PlayLookup = Pick<
+  PlayVerifyRequest,
+  'packageName' | 'productId' | 'purchaseToken' | 'purchaseKind'
+>;
+
 export interface PlayVerification {
   orderId: string;
   active: boolean;
+  /** What Google charges each period, when it says so (auto-renewing subscriptions). */
+  recurringPrice?: { amountCents: number; currency: string };
+}
+
+interface PlayLineItem {
+  productId?: string;
+  autoRenewingPlan?: {
+    recurringPrice?: { currencyCode?: string; units?: string; nanos?: number };
+  };
+}
+
+function recurringPriceOf(item: PlayLineItem): PlayVerification['recurringPrice'] {
+  const price = item.autoRenewingPlan?.recurringPrice;
+  const units = Number(price?.units ?? '0');
+  if (!price?.currencyCode || !/^[A-Z]{3}$/.test(price.currencyCode) || !Number.isFinite(units)) {
+    return undefined;
+  }
+  // Money in the API is whole units plus nanos (1e-9); the rest of the system speaks minor units.
+  return {
+    amountCents: Math.round(units * 100 + (price.nanos ?? 0) / 10_000_000),
+    currency: price.currencyCode,
+  };
 }
 
 /** The store method id the Android app pays with. */
@@ -108,7 +137,7 @@ export async function googleAccessToken(
 /** Asks Google about one purchase token. Anything unpaid, cancelled or unknown is not active. */
 export async function verifyPlayPurchase(
   config: PlayConfig,
-  request: PlayVerifyRequest,
+  request: PlayLookup & Partial<PlayVerifyRequest>,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PlayVerification> {
   if (config.mock) {
@@ -127,7 +156,7 @@ export async function verifyPlayPurchase(
     const data = (await response.json()) as {
       subscriptionState?: string;
       currentOrderId?: string;
-      lineItems?: { productId?: string }[];
+      lineItems?: PlayLineItem[];
     };
     // The store still entitles a subscription in its grace period (the renewal failed but Play
     // keeps retrying it), so grace counts as paid here too - denying it would cut off someone the
@@ -141,10 +170,14 @@ export async function verifyPlayPurchase(
     // The token must really be for the product being bought: a token for a cheaper product with the
     // expensive product's id would otherwise pass (the endpoint's path carries no product for
     // subscriptions, unlike one-time purchases where it does).
-    if (!(data.lineItems ?? []).some((item) => item.productId === request.productId)) {
-      return { orderId: data.currentOrderId ?? '', active: false };
-    }
-    return { orderId: data.currentOrderId ?? request.purchaseToken, active: true };
+    const line = (data.lineItems ?? []).find((item) => item.productId === request.productId);
+    if (!line) return { orderId: data.currentOrderId ?? '', active: false };
+    const recurringPrice = recurringPriceOf(line);
+    return {
+      orderId: data.currentOrderId ?? request.purchaseToken,
+      active: true,
+      ...(recurringPrice ? { recurringPrice } : {}),
+    };
   }
   const response = await fetchImpl(
     `${base}/${encodeURIComponent(request.packageName)}/purchases/products/${encodeURIComponent(request.productId)}/tokens/${encodeURIComponent(request.purchaseToken)}`,
@@ -169,4 +202,102 @@ export function playSucceededEvent(request: PlayVerifyRequest, orderId: string):
     amountCents: request.amountCents,
     currency: request.currency,
   };
+}
+
+/**
+ * Google's real-time developer notifications, pushed through Pub/Sub. They are how a renewal (or a
+ * cancellation made in the Play Store) reaches Keres without the person opening the app: the
+ * purchase token is only ever relayed at purchase time, and nothing else tells us the store charged
+ * again. Each push is checked against Google before anything is reported - the message itself is
+ * only a pointer, never proof.
+ */
+const NOTIFICATION = { RECOVERED: 1, RENEWED: 2, CANCELED: 3, REVOKED: 12, EXPIRED: 13 } as const;
+
+const PushEnvelopeSchema = z.object({
+  message: z.object({
+    data: z.string().min(1).max(32_768),
+    messageId: z.string().max(100).optional(),
+  }),
+});
+
+const DeveloperNotificationSchema = z.object({
+  packageName: z.string().min(1).max(200),
+  eventTimeMillis: z.union([z.string(), z.number()]).optional(),
+  subscriptionNotification: z
+    .object({
+      notificationType: z.number().int(),
+      purchaseToken: z.string().min(1).max(1000),
+      subscriptionId: z.string().min(1).max(200),
+    })
+    .optional(),
+});
+
+/** The events one Pub/Sub push stands for. Empty for what Keres does not act on (holds, pauses, tests). */
+export async function playNotificationEvents(
+  config: PlayConfig,
+  body: unknown,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PaymentEventWire[]> {
+  const envelope = PushEnvelopeSchema.safeParse(body);
+  if (!envelope.success) return [];
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(Buffer.from(envelope.data.message.data, 'base64').toString('utf8'));
+  } catch {
+    return [];
+  }
+  const parsed = DeveloperNotificationSchema.safeParse(decoded);
+  const notice = parsed.success ? parsed.data.subscriptionNotification : undefined;
+  if (!parsed.success || !notice) return [];
+  const { packageName } = parsed.data;
+  const { purchaseToken, subscriptionId } = notice;
+  const at = Number(parsed.data.eventTimeMillis);
+  const happenedAt = new Date(Number.isFinite(at) && at > 0 ? at : Date.now()).toISOString();
+
+  switch (notice.notificationType) {
+    case NOTIFICATION.RENEWED:
+    case NOTIFICATION.RECOVERED: {
+      const verification = await verifyPlayPurchase(
+        config,
+        { packageName, productId: subscriptionId, purchaseToken, purchaseKind: 'subscription' },
+        fetchImpl,
+      );
+      // Held, paused or already over by the time we looked: nothing was paid.
+      if (!verification.active) return [];
+      // The charge is whatever Google says it was; an answer without it cannot be reported honestly,
+      // and a thrown error makes Pub/Sub deliver the notice again.
+      if (!verification.recurringPrice) {
+        throw new Error('Google Play did not say what was charged.');
+      }
+      return [
+        {
+          type: 'payment.succeeded',
+          // The order id is the event id: the same order reported by the relay (the person opening the
+          // app) and by this push is one payment, never two.
+          eventId: verification.orderId,
+          subscriptionReference: purchaseToken,
+          paidAt: happenedAt,
+          amountCents: verification.recurringPrice.amountCents,
+          currency: verification.recurringPrice.currency,
+        },
+      ];
+    }
+    // Cancelled in the store (access runs to the end of the paid period), expired or refunded: the
+    // subscription stops renewing and ends with the period Keres already holds.
+    case NOTIFICATION.CANCELED:
+    case NOTIFICATION.REVOKED:
+    case NOTIFICATION.EXPIRED: {
+      const tokenHash = createHash('sha256').update(purchaseToken).digest('hex').slice(0, 24);
+      const delivery = envelope.data.message.messageId ?? happenedAt;
+      return [
+        {
+          type: 'subscription.canceled',
+          eventId: `play-${notice.notificationType}-${delivery}-${tokenHash}`,
+          subscriptionReference: purchaseToken,
+        },
+      ];
+    }
+    default:
+      return [];
+  }
 }

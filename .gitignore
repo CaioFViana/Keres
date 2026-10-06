@@ -43,3 +43,10 @@ coverage-sync/
 
 .tmp*
 .agents/plans/*
+
+# Payments service secrets (PSP keys, Play service account) and local env overrides: never committed.
+apps/payments/.env
+apps/payments/.env.*
+!apps/payments/.env.example
+.env.local
+apps/*/.env.local

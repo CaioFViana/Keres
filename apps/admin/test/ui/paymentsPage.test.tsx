@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { PaymentsPage } from '../../src/pages/payments/PaymentsPage';
+import { PaymentsPage, REFRESH_MS } from '../../src/pages/payments/PaymentsPage';
 import { ThemeProvider } from '../../src/theme/ThemeProvider';
 import { changeInput, click, flush, render, submit } from '../helpers/react';
 
@@ -359,9 +360,12 @@ describe('payments page: the ledger', () => {
     expect(rows[1]).toContain('Card declined');
     expect(rows[2]).toContain('Period ran out unpaid');
     expect(view.container.querySelector('.ledger-payment_failed')).not.toBeNull();
-    // No search form here: the ledger is a plain, newest-first list.
-    expect(view.container.querySelector('form.toolbar')).toBeNull();
-    expect(mocks.events).toHaveBeenCalledWith({ page: 1, pageSize: 25 });
+    expect(mocks.events).toHaveBeenCalledWith({
+      kind: 'all',
+      search: undefined,
+      page: 1,
+      pageSize: 25,
+    });
   });
 
   it('says so when the provider has reported nothing, and goes back to the subscriptions', async () => {
@@ -377,11 +381,101 @@ describe('payments page: the ledger', () => {
     expect(view.container.querySelector('form.toolbar')).not.toBeNull();
   });
 
+  it('filters by kind of event and searches, from the first page', async () => {
+    const view = await openLedger();
+    const form = view.container.querySelector('form.toolbar') as HTMLFormElement;
+    const [input] = Array.from(form.querySelectorAll('input'));
+    const select = form.querySelector('select') as HTMLSelectElement;
+
+    // The ledger's filter is about events, not the subscription statuses.
+    const options = Array.from(select.querySelectorAll('option')).map(
+      (option) => option.textContent,
+    );
+    expect(options).toContain('Payment failed');
+    expect(options).toContain('Plan given');
+    expect(options).not.toContain('Paid up');
+
+    await changeInput(select, 'payment_failed');
+    await flush();
+    expect(mocks.events.mock.calls.at(-1)![0]).toMatchObject({ kind: 'payment_failed', page: 1 });
+
+    await changeInput(input, '  sub_ana ');
+    await submit(form);
+    await flush();
+    expect(mocks.events.mock.calls.at(-1)![0]).toMatchObject({
+      kind: 'payment_failed',
+      search: 'sub_ana',
+      page: 1,
+    });
+  });
+
   it('shows the error when the ledger cannot be read', async () => {
     mocks.events.mockRejectedValue(new Error('ledger down'));
     const view = await openLedger();
 
     expect(view.container.querySelector('.error-text')?.textContent).toContain('ledger down');
+  });
+});
+
+describe('payments page: it keeps itself up to date', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('looks again on its own and shows a payment made meanwhile, without the loading flash', async () => {
+    vi.useFakeTimers();
+    const view = await renderPage();
+    await flush();
+    expect(view.container.querySelector('tbody')!.textContent).toContain('sub_ana');
+    const before = mocks.subscriptions.mock.calls.length;
+
+    mocks.subscriptions.mockResolvedValue(
+      page([subscription(), subscription({ user: bia, providerReference: 'sub_bia' })]),
+    );
+    mocks.summary.mockResolvedValue(summary({ subscriptions: { active: 5, due: 2, canceled: 1 } }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REFRESH_MS + 100);
+    });
+    await flush();
+
+    expect(mocks.subscriptions.mock.calls.length).toBe(before + 1);
+    expect(view.container.querySelector('tbody')!.textContent).toContain('sub_bia');
+    expect(cards(view)).toContain('5Paid up');
+    expect(view.container.querySelector('.loading-text')).toBeNull();
+  });
+
+  it('keeps the page, the filter and what is on screen while it looks again', async () => {
+    vi.useFakeTimers();
+    mocks.subscriptions.mockResolvedValue(page([subscription()], 60));
+    const view = await renderPage();
+    await flush();
+    const next = Array.from(view.container.querySelectorAll('.pagination button')).at(-1)!;
+    await click(next);
+    await flush();
+    expect(mocks.subscriptions.mock.calls.at(-1)![0]).toMatchObject({ page: 2 });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REFRESH_MS + 100);
+    });
+    await flush();
+
+    expect(mocks.subscriptions.mock.calls.at(-1)![0]).toMatchObject({ page: 2 });
+    expect(view.container.querySelector('.loading-text')).toBeNull();
+  });
+
+  it('does not look while the tab is hidden', async () => {
+    vi.useFakeTimers();
+    await renderPage();
+    await flush();
+    const before = mocks.summary.mock.calls.length;
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(REFRESH_MS * 3);
+    });
+
+    expect(mocks.summary.mock.calls.length).toBe(before);
+    visibility.mockRestore();
   });
 });
 

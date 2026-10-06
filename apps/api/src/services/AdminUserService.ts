@@ -15,6 +15,7 @@ import { tiers, users } from '../db/schema';
 import { isUniqueViolation, postgresErrorConstraint } from '../utils/errors';
 import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierIds } from './payments/entitlement';
+import { accountClosureService } from './payments/AccountClosureService';
 import { recoveryCodeService } from './RecoveryCodeService';
 import { storyNsfwService } from './StoryNsfwService';
 import { TierNotFoundError } from './TierService';
@@ -306,6 +307,9 @@ export class AdminUserService {
     if (this.isRootUsername(existing.username)) {
       throw new RootAdminProtectedError();
     }
+
+    // Whatever would charge this account again stops first (and the account stays open if that cannot be done).
+    await accountClosureService.stopForClosedAccount(id);
 
     const [updated] = await db
       .update(users)

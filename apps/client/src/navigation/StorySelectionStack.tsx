@@ -40,6 +40,7 @@ import MyProfileScreen from '../screens/enterstack/MyProfileScreen';
 import PublishStoryScreen from '../screens/enterstack/PublishStoryScreen';
 import ServerDetailScreen from '../screens/enterstack/ServerDetailScreen';
 import ServerManagementScreen from '../screens/enterstack/ServerManagementScreen';
+import ServerPaymentHistoryScreen from '../screens/enterstack/ServerPaymentHistoryScreen';
 import ServerPlanScreen from '../screens/enterstack/ServerPlanScreen';
 import ServerRegistrationScreen from '../screens/enterstack/ServerRegistrationScreen';
 import StoryFormScreen from '../screens/enterstack/StoryFormScreen';
@@ -68,6 +69,7 @@ export type ServerManagementStackParamList = {
   ServerDetail: { serverId: string };
   /** The plans a server sells and the way to pay for one; reached only from a server that sells them. */
   ServerPlan: { serverId: string };
+  ServerPaymentHistory: { serverId: string };
   /** The same screen as the friendship stack's: opened from a server, back returns to the server. */
   Conversation: { serverId: string; peer: string; peerName?: string };
   ServerRegistration: { serverId?: string };
@@ -193,6 +195,11 @@ const ServerManagementStackNavigator = () => {
         name="ServerPlan"
         component={ServerPlanScreen}
         options={{ headerTitle: t('server_plan_title') }}
+      />
+      <ServerManagementStack.Screen
+        name="ServerPaymentHistory"
+        component={ServerPaymentHistoryScreen}
+        options={{ headerTitle: t('payment_history_title') }}
       />
       <ServerManagementStack.Screen
         name="Conversation"

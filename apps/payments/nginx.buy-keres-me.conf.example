@@ -13,8 +13,13 @@
 #   page cannot read the story database - this machine holds no database at all.
 # - TLS ends here. The service only ever sees plain HTTP from loopback; its signature
 #   checks cover the logical path, not the address, so the proxy does not break them.
-# - Rate-limit the webhook and return locations harder than the rest if the provider
-#   allows bursts; the service answers 429 and the providers retry.
+# - The service has no rate limit of its own: it is done here (limit_req below), and the
+#   providers retry a webhook that gets 429.
+# - Google's renewal notifications carry their secret in the query string
+#   (/v1/play/notifications?token=...), so that location is not written to the access log.
+
+# One zone for the whole site (http context; this file is included there).
+limit_req_zone $binary_remote_addr zone=keres_payments:10m rate=10r/s;
 
 upstream keres_payments {
     server 127.0.0.1:3101;
@@ -43,7 +48,18 @@ server {
     # No static files, no uploads: small bodies only.
     client_max_body_size 256k;
 
+    location = /v1/play/notifications {
+        access_log off;
+        limit_req zone=keres_payments burst=30 nodelay;
+        proxy_pass http://keres_payments;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
     location / {
+        limit_req zone=keres_payments burst=30 nodelay;
         proxy_pass http://keres_payments;
         proxy_http_version 1.1;
         # The service signs logical paths, not hosts, so no Host rewriting is needed -

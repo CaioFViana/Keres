@@ -59,6 +59,17 @@ export interface Provider {
     context: ProviderContext,
   ): Promise<PaymentEventWire | null>;
   cancelSubscription?(subscriptionReference: string, context: ProviderContext): Promise<void>;
+  /**
+   * Whether a subscription reference is one of this provider's. A cancel arrives with the reference
+   * alone, so with more than one provider it is the only way to send it to the one that holds it.
+   */
+  ownsSubscription?(subscriptionReference: string): boolean;
+  /**
+   * Whether a checkout's provider reference (what `createCheckout` answered) is one of this provider's. A
+   * status question after this service restarted names only the reference, because what was remembered
+   * about the attempt is gone: the reference is how the right provider is found without asking them all.
+   */
+  ownsCheckoutReference?(providerReference: string): boolean;
   /** Provider webhooks (`POST /v1/<provider>/webhook`): verifies and translates to events. */
   handleWebhook?(request: Request, context: ProviderContext): Promise<PaymentEventWire[]>;
 }

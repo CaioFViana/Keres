@@ -199,15 +199,37 @@ export class AdminPaymentService {
   }
 
   async listEvents(query: AdminPaymentEventListQuery): Promise<AdminPaymentEventPage> {
-    const [rows, [{ total }]] = await Promise.all([
+    const conditions: SQL[] = [];
+    if (query.kind !== 'all') conditions.push(eq(paymentEvents.kind, query.kind));
+    if (query.search) {
+      const like = `%${query.search}%`;
+      conditions.push(
+        or(
+          insensitiveLike(users.username, like),
+          insensitiveLike(users.tag, like),
+          insensitiveLike(paymentEvents.tierName, like),
+          insensitiveLike(paymentEvents.providerReference, like),
+        ) as SQL,
+      );
+    }
+    const where = conditions.length ? and(...conditions) : undefined;
+    // The ledger keeps no foreign key to the user (it outlives accounts), so the join is only for searching.
+    const [found, [{ total }]] = await Promise.all([
       db
-        .select()
+        .select({ event: paymentEvents })
         .from(paymentEvents)
+        .leftJoin(users, eq(users.id, paymentEvents.userId))
+        .where(where)
         .orderBy(desc(paymentEvents.createdAt), desc(paymentEvents.id))
         .limit(query.pageSize)
         .offset((query.page - 1) * query.pageSize),
-      db.select({ total: count() }).from(paymentEvents),
+      db
+        .select({ total: count() })
+        .from(paymentEvents)
+        .leftJoin(users, eq(users.id, paymentEvents.userId))
+        .where(where),
     ]);
+    const rows = found.map((entry) => entry.event);
     const people = await usersById(rows.map((row) => row.userId));
     const items: AdminPaymentEvent[] = rows.map((row) => ({
       id: row.id,

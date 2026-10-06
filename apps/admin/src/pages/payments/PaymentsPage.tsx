@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type {
@@ -9,12 +9,15 @@ import type {
 } from '@keres/shared';
 import {
   GIFT_PROVIDER_ID,
+  PAYMENT_LEDGER_KINDS,
   PAYMENT_WARNING_DAYS,
   SUBSCRIPTION_STATUSES,
 } from '@keres/shared/metadata/Payments';
 import { PaymentsApiService } from '../../api/PaymentsApiService';
 
 const PAGE_SIZE = 25;
+/** A payment can happen at any moment, away from this page: it looks again by itself while it is in view. */
+export const REFRESH_MS = 10_000;
 
 type View = 'subscriptions' | 'ledger';
 
@@ -62,7 +65,11 @@ export function PaymentsPage() {
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [status, setStatus] = useState<string>('all');
+  const [kind, setKind] = useState<string>('all');
   const [page, setPage] = useState(1);
+  // Bumped by the timer: a look at the same page again, without the "loading" flash or losing the place.
+  const [tick, setTick] = useState(0);
+  const silent = useRef(false);
   const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
   const [events, setEvents] = useState<AdminPaymentEvent[]>([]);
   const [total, setTotal] = useState(0);
@@ -73,7 +80,10 @@ export function PaymentsPage() {
     let ignore = false;
     PaymentsApiService.summary()
       .then((result) => {
-        if (!ignore) setSummary(result);
+        if (!ignore) {
+          setSummary(result);
+          setSummaryError(null);
+        }
       })
       .catch((err) => {
         if (!ignore) setSummaryError(err.message);
@@ -81,11 +91,30 @@ export function PaymentsPage() {
     return () => {
       ignore = true;
     };
+  }, [tick]);
+
+  const look = useCallback(() => {
+    if (document.visibilityState === 'hidden') return;
+    silent.current = true;
+    setTick((value) => value + 1);
   }, []);
+  useEffect(() => {
+    const timer = window.setInterval(look, REFRESH_MS);
+    // Coming back to the tab is the likeliest moment for something new to be there.
+    window.addEventListener('focus', look);
+    document.addEventListener('visibilitychange', look);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', look);
+      document.removeEventListener('visibilitychange', look);
+    };
+  }, [look]);
 
   useEffect(() => {
     let ignore = false;
-    setLoading(true);
+    const quiet = silent.current;
+    silent.current = false;
+    if (!quiet) setLoading(true);
     setError(null);
     const load =
       view === 'subscriptions'
@@ -99,7 +128,12 @@ export function PaymentsPage() {
             setSubscriptions(result.items);
             setTotal(result.total);
           })
-        : PaymentsApiService.events({ page, pageSize: PAGE_SIZE }).then((result) => {
+        : PaymentsApiService.events({
+            kind: kind as 'all',
+            search: appliedSearch || undefined,
+            page,
+            pageSize: PAGE_SIZE,
+          }).then((result) => {
             if (ignore) return;
             setEvents(result.items);
             setTotal(result.total);
@@ -114,7 +148,7 @@ export function PaymentsPage() {
     return () => {
       ignore = true;
     };
-  }, [view, status, appliedSearch, page]);
+  }, [view, status, kind, appliedSearch, page, tick]);
 
   const money = (cents: number | null, currency: string | null) => {
     if (cents === null) return '-';
@@ -137,6 +171,10 @@ export function PaymentsPage() {
     setView(next);
     setPage(1);
   };
+  const searchPlaceholder =
+    view === 'subscriptions'
+      ? t('payments.searchPlaceholder')
+      : t('payments.searchLedgerPlaceholder');
 
   return (
     <div>
@@ -205,23 +243,23 @@ export function PaymentsPage() {
         ))}
       </div>
 
-      {view === 'subscriptions' && (
-        <form
-          className="toolbar"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setAppliedSearch(search.trim());
-            setPage(1);
-          }}
-        >
-          <label>
-            {t('common.search')}
-            <input
-              placeholder={t('payments.searchPlaceholder')}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
+      <form
+        className="toolbar"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setAppliedSearch(search.trim());
+          setPage(1);
+        }}
+      >
+        <label>
+          {t('common.search')}
+          <input
+            placeholder={searchPlaceholder}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+        {view === 'subscriptions' ? (
           <label>
             {t('payments.status')}
             <select
@@ -239,9 +277,30 @@ export function PaymentsPage() {
               ))}
             </select>
           </label>
-          <button type="submit">{t('common.search')}</button>
-        </form>
-      )}
+        ) : (
+          <label>
+            {t('payments.kind')}
+            <select
+              value={kind}
+              onChange={(event) => {
+                setKind(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="all">{t('payments.kindAll')}</option>
+              {PAYMENT_LEDGER_KINDS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`payments.kinds.${value}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <button type="submit">{t('common.search')}</button>
+      </form>
+      <p className="hint" data-testid="payments-live">
+        {t('payments.autoRefresh', { seconds: REFRESH_MS / 1000 })}
+      </p>
 
       {error && <p className="error-text">{error}</p>}
       {loading ? (

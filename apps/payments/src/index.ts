@@ -35,9 +35,17 @@ if (methods.includes('mock')) {
 
 const app = createApp(state);
 
+// Loopback unless HOST says otherwise: behind the reverse proxy nothing else should reach this
+// port, and the development mock page grants plans to whoever opens it. The container image sets
+// HOST=0.0.0.0 (its port is published to loopback by the compose file).
+const hostname = process.env.HOST ?? '127.0.0.1';
+
 export default {
+  hostname,
   port: config.port,
   fetch: app.fetch,
+  // Webhooks, pushes and verifications are a few kilobytes; nothing here takes an upload.
+  maxRequestBodySize: 256 * 1024,
 };
 
-console.log(`Keres payments listening on :${config.port}`);
+console.log(`Keres payments listening on ${hostname}:${config.port}`);

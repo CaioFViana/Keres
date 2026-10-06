@@ -6,6 +6,9 @@ import { paymentEvents, tiers } from '../../db/schema';
 
 const MAX_DETAIL = 200;
 
+/** A ledger line that starts like this records a payment that was turned down: it is not a payment the person made. */
+export const REFUSED_DETAIL_PREFIX = 'Refused:';
+
 /** A short free text for the ledger or the record: bounded, because neither is a place for what anybody sends at will. */
 export const clipDetail = (value: string | undefined | null) =>
   value ? value.slice(0, MAX_DETAIL) : null;

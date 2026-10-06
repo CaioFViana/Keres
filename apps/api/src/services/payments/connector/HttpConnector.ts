@@ -131,8 +131,12 @@ export class HttpConnector implements PaymentConnector {
         undefined,
         ConnectorMethodsResponseSchema,
       );
-      this.methods.set(currency, { at: this.now(), methods: answer.methods });
-      return answer.methods;
+      // A store method can only be sold if this server holds the key to check its purchases with.
+      const sellable = answer.methods.filter(
+        (method) => (method.flow ?? 'redirect') !== 'native' || this.verifyPlayPurchase,
+      );
+      this.methods.set(currency, { at: this.now(), methods: sellable });
+      return sellable;
     } catch (error) {
       // A connector that blinked does not take the plan screen down with it: the last list it gave still stands.
       if (cached) return cached.methods;

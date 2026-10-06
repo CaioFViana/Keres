@@ -85,12 +85,15 @@ export function storefrontPage(options: StorefrontOptions): string {
       else if (key === 'text') node.textContent = attributes[key];
       else node.setAttribute(key, attributes[key]);
     });
-    for (var i = 2; i < arguments.length; i++) {
-      var child = arguments[i];
-      if (child === null || child === undefined || child === false) continue;
-      node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
-    }
+    for (var i = 2; i < arguments.length; i++) append(node, arguments[i]);
     return node;
+  }
+
+  // A child may be a node, a string, nothing, or a list of those (the options of a select).
+  function append(node, child) {
+    if (child === null || child === undefined || child === false) return;
+    if (Array.isArray(child)) { child.forEach(function (item) { append(node, item); }); return; }
+    node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
   }
 
   function api(method, path, body, token) {
@@ -164,7 +167,8 @@ export function storefrontPage(options: StorefrontOptions): string {
 
   function renderPlans(token, tiersPayload, info) {
     var tiers = (tiersPayload && tiersPayload.tiers) || tiersPayload || [];
-    var methods = info.methods || [];
+    // A store method is bought inside the mobile app; only redirect methods are bought here.
+    var methods = (info.methods || []).filter(function (m) { return (m.flow || 'redirect') === 'redirect'; });
     var subscription = info.subscription || null;
     var header = h('div', { class: 'row space' },
       h('h2', { text: 'Plans' }),
@@ -173,8 +177,9 @@ export function storefrontPage(options: StorefrontOptions): string {
     if (!tiers.length) cards.appendChild(h('p', { class: 'muted', text: 'No plans on sale.' }));
     tiers.forEach(function (tier) {
       var current = subscription && (subscription.tierId === tier.id || subscription.tierName === tier.name);
-      var monthly = money(tier.priceMonthlyCents, info.currency);
-      var yearly = money(tier.priceYearlyCents, info.currency);
+      // A plan may be sold on the web for one period only; the server refuses the other anyway.
+      var monthly = tier.webMonthlyEnabled === false ? null : money(tier.priceMonthlyCents, info.currency);
+      var yearly = tier.webYearlyEnabled === false ? null : money(tier.priceYearlyCents, info.currency);
       var interval = h('select', {},
         monthly !== null ? h('option', { value: 'monthly', text: 'Monthly - ' + monthly }) : null,
         yearly !== null ? h('option', { value: 'yearly', text: 'Yearly - ' + yearly }) : null);
@@ -209,10 +214,14 @@ export function storefrontPage(options: StorefrontOptions): string {
       children.push(h('div', { class: 'card' },
         h('h2', { text: 'Your subscription' }),
         h('p', { text: 'Plan: ' + (subscription.tierName || subscription.tierId || '') }),
-        h('p', { class: 'muted', text: 'Renews: ' + (subscription.renewsAt || subscription.currentPeriodEnd || '—') }),
-        h('button', { text: 'Stop renewing', onclick: function () {
-          api('POST', '/api/payments/subscription/cancel', {}, token).then(function () { plansView(); });
-        } })));
+        h('p', { class: 'muted', text: (subscription.cancelAtPeriodEnd ? 'Ends: ' : 'Paid until: ') + new Date(subscription.paidUntil).toLocaleDateString() }),
+        // Only a running subscription this server can stop is offered a stop; one bought in the store
+        // is stopped in the store, and one already stopping has nothing left to stop.
+        subscription.status === 'active' && !subscription.cancelAtPeriodEnd && subscription.canCancelHere
+          ? h('button', { text: 'Stop renewing', onclick: function () {
+              api('POST', '/api/payments/subscription/cancel', {}, token).then(function () { plansView(); });
+            } })
+          : null));
     }
     show.apply(null, children);
   }

@@ -188,6 +188,16 @@ it('purges reader and writer stories with their local sync state when leaving a 
     createdAt: TEST_NOW,
   });
 
+  await database.db.insert(schema.serverPayments).values({
+    id: 'payment',
+    serverId: 'shared-server',
+    kind: 'payment_succeeded',
+    tierName: 'Pro',
+    amountCents: 2500,
+    currency: 'BRL',
+    createdAt: TEST_NOW,
+  });
+
   await database.db.insert(schema.storyInvitations).values({
     id: 'invitation',
     serverId: 'shared-server',
@@ -223,6 +233,7 @@ it('purges reader and writer stories with their local sync state when leaving a 
   );
   expect(await database.db.select().from(schema.storyPublications).all()).toEqual([]);
   expect(await database.db.select().from(schema.storyInvitations).all()).toEqual([]);
+  expect(await database.db.select().from(schema.serverPayments).all()).toEqual([]);
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('writer-story');
   expect(mediaFileService.deleteStoryMedia).toHaveBeenCalledWith('reader-story');
 });

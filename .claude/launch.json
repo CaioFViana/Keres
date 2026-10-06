@@ -20,10 +20,10 @@
       "port": 5175
     },
     {
-      "name": "payments-demo",
+      "name": "payments-local",
       "runtimeExecutable": "bun",
-      "runtimeArgs": ["run", "--cwd", "apps/api", "payments:demo"],
-      "port": 3100
+      "runtimeArgs": ["run", "payments:local"],
+      "port": 3300
     }
   ]
 }

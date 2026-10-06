@@ -16,6 +16,8 @@
     "api:build": "bun run --cwd apps/api build",
     "payments:start": "bun run --cwd apps/payments start",
     "payments:dev": "bun run --cwd apps/payments dev",
+    "payments:local": "bun scripts/payments-local.ts",
+    "payments:env-check": "bun scripts/payments-env-check.ts",
     "db:generate": "bun run api:db:generate && bun run api:db:generate:sqlite && bun run client:db:generate && bun run --cwd apps/client prestart",
     "api:db:generate": "bun run --cwd apps/api db:generate",
     "api:db:generate:sqlite": "bun run --cwd apps/api db:generate:sqlite",

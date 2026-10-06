@@ -328,6 +328,34 @@ describe('usePlanCheckout natively (the store sheet)', () => {
     });
   });
 
+  it('does not buy a second plan beside a subscription the store still holds for another', async () => {
+    mockReconcile.mockImplementationOnce(async (verify: unknown) => {
+      const confirm = verify as (ticket: unknown) => Promise<boolean>;
+      const owned = { purchaseToken: 'token-basic', productId: 'basic_monthly' };
+      return (await confirm(owned)) ? [owned] : [];
+    });
+    const { result } = await renderHook(() => usePlanCheckout(server));
+
+    await act(async () => {
+      await result.current.startNative({
+        ...native,
+        tiers: [
+          ...native.tiers,
+          {
+            id: 'tier-basic',
+            name: 'Basic',
+            playMonthlyProductId: 'basic_monthly',
+            playYearlyProductId: null,
+          },
+        ],
+      });
+    });
+
+    expect(result.current.phase).toBe('idle');
+    expect(result.current.error).toBe('payment_error_play_owned_other');
+    expect(mockBuy).not.toHaveBeenCalled();
+  });
+
   it('says the store did not confirm the purchase, and finishes nothing', async () => {
     mockVerify.mockResolvedValueOnce({ active: false, subscription: null });
     const { result } = await renderHook(() => usePlanCheckout(server));

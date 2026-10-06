@@ -143,6 +143,9 @@ export function createMockProvider(): Provider {
       return null;
     },
 
+    ownsSubscription: (subscriptionReference) => subscriptionReference.startsWith('mock-'),
+    ownsCheckoutReference: (providerReference) => providerReference.startsWith('mock-'),
+
     async cancelSubscription(_subscriptionReference, _context) {
       // Nothing to stop: there was never a real charge.
     },

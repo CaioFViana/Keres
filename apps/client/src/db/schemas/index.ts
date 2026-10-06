@@ -33,6 +33,7 @@ export * from './routeSteps';
 export * from './scenes';
 export * from './seeAlsoRelations';
 export * from './sketches';
+export * from './serverPayments';
 export * from './servers';
 export * from './stats';
 export * from './stories';

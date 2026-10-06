@@ -96,7 +96,18 @@ describe('the admin list queries', () => {
       page: 1,
       pageSize: 25,
     });
-    expect(AdminPaymentEventListQuerySchema.parse({})).toEqual({ page: 1, pageSize: 25 });
+    expect(AdminPaymentEventListQuerySchema.parse({})).toEqual({
+      kind: 'all',
+      page: 1,
+      pageSize: 25,
+    });
+  });
+
+  it('filter the ledger by a kind of event it has, and by a trimmed search', () => {
+    expect(
+      AdminPaymentEventListQuerySchema.parse({ kind: 'payment_failed', search: '  sub_1 ' }),
+    ).toMatchObject({ kind: 'payment_failed', search: 'sub_1' });
+    expect(AdminPaymentEventListQuerySchema.safeParse({ kind: 'refund' }).success).toBe(false);
   });
 
   it('read numbers from a query string and refuse a page size past the cap', () => {

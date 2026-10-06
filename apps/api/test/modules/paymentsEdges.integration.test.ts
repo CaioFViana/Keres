@@ -683,6 +683,47 @@ describe('what the administrators see, ordered and searched', () => {
     );
   });
 
+  it('filters the ledger by kind of event and by who or what it is about', async () => {
+    await subscribe(ana, 'sub_ana');
+    await subscribe(bia, 'sub_bia');
+    await webhook([
+      {
+        type: 'payment.failed',
+        eventId: `evt_${newId()}`,
+        subscriptionReference: 'sub_bia',
+        reason: 'Card declined',
+      },
+    ]);
+    const list = async (query: Record<string, string>) =>
+      (await request('GET', '/admin/api/payments/events', { token: admin.token, query })).data;
+
+    const failures = await list({ kind: 'payment_failed' });
+    expect(failures.total).toBe(1);
+    expect(names(failures.items)).toEqual(['bia']);
+
+    const received = await list({ kind: 'payment_succeeded' });
+    expect(received.total).toBe(2);
+
+    // By person (name or tag), by plan and by the provider's own reference, whatever the case.
+    expect(names((await list({ search: 'ANA' })).items)).toEqual(['ana']);
+    expect((await list({ search: 'sub_bia' })).total).toBe(2);
+    expect((await list({ search: 'pro' })).total).toBeGreaterThanOrEqual(2);
+    expect((await list({ search: 'nobody-has-this' })).total).toBe(0);
+
+    // Both together, and the total follows the filter (not the whole ledger).
+    const both = await list({ kind: 'payment_succeeded', search: 'bia' });
+    expect(both.total).toBe(1);
+    expect(names(both.items)).toEqual(['bia']);
+  });
+
+  it('refuses a kind of event that does not exist', async () => {
+    const { status } = await request('GET', '/admin/api/payments/events', {
+      token: admin.token,
+      query: { kind: 'refund' },
+    });
+    expect(status).toBe(400);
+  });
+
   it('pages the ledger', async () => {
     await seed();
 
@@ -693,5 +734,32 @@ describe('what the administrators see, ordered and searched', () => {
 
     expect(data).toMatchObject({ total: 2, page: 2, pageSize: 1 });
     expect(data.items).toHaveLength(1);
+  });
+});
+
+describe('a notice about something that does not exist yet', () => {
+  it('does not use up the id of the payment that later has somebody to apply it to', async () => {
+    // A store renewal pushed before the app relayed the purchase: nothing to apply it to, so it is only noted...
+    const eventId = `evt_${newId()}`;
+    const first = await webhook([paid({ eventId, subscriptionReference: 'sub_late' })]);
+    expect(first.data).toEqual({ received: 1, applied: 0 });
+
+    // ...and when the same payment arrives again with its attempt known, it is still a payment.
+    const mine = await openCheckout(ana);
+    const second = await webhook([
+      paid({ eventId, checkoutId: mine.id, subscriptionReference: 'sub_late' }),
+    ]);
+
+    expect(second.data).toEqual({ received: 1, applied: 1 });
+    expect((await subscriptionOf(ana)).status).toBe('active');
+  });
+
+  it('still counts the same unmatched notice once', async () => {
+    const eventId = `evt_${newId()}`;
+    await webhook([paid({ eventId, subscriptionReference: 'sub_ghost' })]);
+    await webhook([paid({ eventId, subscriptionReference: 'sub_ghost' })]);
+
+    const lines = await db.select().from(paymentEvents);
+    expect(lines.filter((line) => line.providerEventId === `unmatched:${eventId}`)).toHaveLength(1);
   });
 });

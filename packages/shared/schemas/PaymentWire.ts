@@ -1,6 +1,11 @@
 import type { PaymentAction, PaymentMethodOption } from '../payments/PaymentConnector';
 import type { BillingInterval } from '../payments/PaymentConnector';
-import type { CheckoutStatus, PaymentLedgerKind, SubscriptionStatus } from '../metadata/Payments';
+import type {
+  CheckoutStatus,
+  PaymentHistoryKind,
+  PaymentLedgerKind,
+  SubscriptionStatus,
+} from '../metadata/Payments';
 
 /**
  * The wire shapes of the payments feature. Dates are ISO strings, like the other wire types. None of them
@@ -29,6 +34,27 @@ export interface Subscription {
   autoRenews: boolean;
   /** The plan is a gift from the administrators: it ends on its date and nothing charges it. */
   complimentary: boolean;
+}
+
+/**
+ * One line of a person's own payment history. `id` is this server's own id for the payment - never the
+ * provider's reference or a store token, which stay on the server.
+ */
+export interface PaymentHistoryItem {
+  id: string;
+  kind: PaymentHistoryKind;
+  tierName: string | null;
+  /** Minor units of `currency`; null when the line has no amount (a failure). */
+  amountCents: number | null;
+  currency: string | null;
+  /** When this server recorded it. */
+  createdAt: string;
+}
+
+/** A page of the history, newest first. `nextBefore` is what to ask for next; null when there is no more. */
+export interface PaymentHistoryPage {
+  items: PaymentHistoryItem[];
+  nextBefore: string | null;
 }
 
 /**

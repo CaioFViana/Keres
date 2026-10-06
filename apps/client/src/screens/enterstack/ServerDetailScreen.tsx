@@ -258,6 +258,15 @@ const ServerDetailScreen = () => {
           testID="server-action-plan"
         />
       ) : null}
+      {payments ? (
+        <ServerActionRow
+          icon="receipt-outline"
+          title={t('server_action_payment_history')}
+          description={t('server_action_payment_history_hint')}
+          onPress={() => navigation.navigate('ServerPaymentHistory', { serverId })}
+          testID="server-action-payment-history"
+        />
+      ) : null}
       <ServerActionRow
         icon="person-circle-outline"
         title={t('server_action_profile')}

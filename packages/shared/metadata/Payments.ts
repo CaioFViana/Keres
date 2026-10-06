@@ -30,6 +30,14 @@ export const PAYMENT_LEDGER_KINDS = [
 ] as const;
 export type PaymentLedgerKind = (typeof PAYMENT_LEDGER_KINDS)[number];
 
+/** The ledger lines a person sees in their own payment history: what was paid, what failed, what was given. */
+export const PAYMENT_HISTORY_KINDS = [
+  'payment_succeeded',
+  'payment_failed',
+  'gift_granted',
+] as const;
+export type PaymentHistoryKind = (typeof PAYMENT_HISTORY_KINDS)[number];
+
 /**
  * The `providerId` of a subscription that is a plan given by an administrator: a period paid for with nothing, by
  * the same rules as one paid with money (it extends a running period, and what is paid for afterwards extends it).

@@ -63,4 +63,18 @@ describe('buy site', () => {
     expect(text).toContain('Plus');
     expect(text).toContain('Confirm payment');
   });
+
+  it('offers only the web: no store method, no period the plan does not sell on the web', async () => {
+    const app = createApp(createState(config(), { providers: [] }));
+
+    const text = await (await app.fetch(new Request('http://127.0.0.1:3101/'))).text();
+
+    // The store method is bought inside the Android app, never on a web page.
+    expect(text).toContain("(m.flow || 'redirect') === 'redirect'");
+    expect(text).toContain('tier.webMonthlyEnabled === false');
+    expect(text).toContain('tier.webYearlyEnabled === false');
+    // It reads the date the server sends, and offers a stop only where this server can stop it.
+    expect(text).toContain('subscription.paidUntil');
+    expect(text).toContain('subscription.canCancelHere');
+  });
 });

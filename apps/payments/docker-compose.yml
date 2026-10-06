@@ -6,7 +6,10 @@ name: keres-payments
 # separate env file that never leaves this machine.
 services:
   payments:
-    build: .
+    # The Dockerfile copies the workspace root (bun.lock, packages/shared), so the context is the repo root.
+    build:
+      context: ../..
+      dockerfile: apps/payments/Dockerfile
     image: ghcr.io/caiofviana/keres-payments:${PAYMENTS_IMAGE_TAG:-latest}
     restart: unless-stopped
     stop_grace_period: 15s

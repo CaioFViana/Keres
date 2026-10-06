@@ -82,6 +82,18 @@ needs code in the app:
 
 The server refuses anything else (a redirect that is not `https`, an unknown action) and bounds every text.
 
+## One payment, one event
+
+Keres applies each event id once, so the connector must report one charge under one id however many
+ways the provider announces it (webhook, return page, the invoice behind a session). The official
+service names a Stripe session payment after its invoice and skips the first invoice that repeats
+it, and names a PayPal payment after its sale; the activation and capture notices are not payments.
+A cancel names only the subscription, so with several providers the connector sends it to the one
+that owns the reference (`ownsSubscription`) and answers an error, never "done", when none does or
+the provider refuses. A notice about something Keres does not know yet is only noted, under an id
+of its own, so it cannot use up the id of the payment that arrives once there is somebody to apply
+it to.
+
 ## Methods that renew, and methods that do not
 
 A method option may say `recurring: false` (the default is `true`). It means the provider does **not** charge it
@@ -117,13 +129,24 @@ session, so it never eats the hourly checkout quota - retrying a store purchase 
 always allowed. Before opening the store sheet the app reconciles unfinished purchases first: one
 the server already confirmed counts as paid instead of buying again (the store refuses an
 already-owned subscription).
-A store purchase token belongs to the first account that relays it: the server keeps only its
-hash, another account relaying the same token gets 403, and the event application enforces the
+A store purchase token belongs to the first account that relays it: the claim keeps only its
+hash (the subscription itself is named by the token, which is what the connector needs to look it
+up), another account relaying the same token gets 403, and the event application enforces the
 same owner again before granting (so a token taken from someone else's unfinished purchase grants
 nothing). The relay itself is capped per person per minute (5), and retrying reuses the plan's
 live attempt instead of opening another - scripts can neither burn the store API quota nor grow
 the ledger. A subscription in its grace period counts as paid (the store still entitles it while
-retrying the renewal); held, paused, cancelled or expired do not. Mock mode is opt-in
+retrying the renewal); held, paused, cancelled or expired do not.
+
+Renewals do not wait for the app to be opened: Google pushes real-time developer notifications
+(Pub/Sub) to `POST /v1/play/notifications?token=<PLAY_NOTIFICATION_SECRET>`. The connector never
+takes the message as proof - it asks Google about the token, then reports the renewal as
+`payment.succeeded` named by the order id (the same id the relay uses, so one payment is never
+counted twice) with the price Google charged, or `subscription.canceled` when the person cancels in
+the Play Store. A store subscription is stopped in the store: the server offers no cancel for it
+(`canCancelHere` is false, and cancelling answers 409) instead of saying "stopped" while Google
+keeps charging. In the app, buying a store plan while another store plan is live is refused:
+changing plans starts by cancelling the first one in the Play Store. Mock mode is opt-in
 (`PLAY_MOCK=true`) and off by default; live verification without `PLAY_SERVICE_ACCOUNT_JSON`
 refuses to boot.
 
@@ -183,6 +206,31 @@ keeps that the administrator confirmed it). The renewal is cancelled at the prov
 stopped charging, because Keres cannot know. Giving the plan they already pay for just extends it, and the provider
 goes on charging.
 
+## Closing an account
+
+Closing an account (an administrator deleting a user) stops what would charge it again, first: the renewal is cancelled
+at the provider through the connector, and if that fails the account is **not** closed (the error says so) - charging
+somebody who has no account is worse than a retry. A subscription bought in a store (Google Play) cannot be stopped by
+the connector: only a note is kept, and the person has to cancel it in the store. A plan given by an administrator, or
+no live subscription, has nothing to stop. What was already paid stays recorded and runs out its period.
+
+## What the connector remembers, and what happens if it restarts
+
+Nothing that matters. The official service keeps no database and writes no file: the map of attempts in progress and
+the nonces live in memory. A restart between the person paying and the provider telling us loses none of it,
+because every way a payment reaches Keres is rebuilt from what the provider itself says:
+
+- webhooks carry the attempt (PayPal: the subscription's `custom_id`; Stripe: the session's metadata), and the
+  providers retry them for days until the service answers;
+- the return page and Keres's own status question (`GET /v1/checkouts/:id`) find the provider by the shape of the
+  reference and read the attempt from the provider's data;
+- a cancel is routed by the shape of the subscription reference;
+- PayPal plans are asked for under ids that name them, so a second process reuses the first one's.
+
+Only the development mock provider is memory-only. What a restart cannot cover is a service that stays down longer than the
+providers keep retrying: that payment is then only found if the person is still watching the attempt (Keres asks
+about it every few seconds) - an administrator can see it at the provider by the reference.
+
 ## In the app
 
 Only while the server answers and only if it sells plans:
@@ -190,6 +238,10 @@ Only while the server answers and only if it sells plans:
 - the server's own screen shows the plan and its dates (for a paid plan, or one an administrator gave, which is shown as a gift) and a **Plan and payment** row;
 - that screen lists the plans on sale, lets the person choose how often to pay and a method, follows the payment
   until it is paid, failed or expired, and stops a renewal;
+- the server's own screen also has **Payment history**: what was paid, failed or given, when, for which plan and how
+  much, with the server's own id for each payment (never the provider's reference or a store token). It comes from
+  `GET /api/payments/history` (newest first, paged) and a copy is kept on the device (`server_payments`), replaced per server
+  on every look like the story invitations - the server is the only source, so there is nothing to merge and it reads offline;
 - Settings has **Warn when a payment is due** (on by default): once per paid period the app reminds the person
   that a payment is within 5 days, or overdue. It never repeats and never runs on a timer.
 

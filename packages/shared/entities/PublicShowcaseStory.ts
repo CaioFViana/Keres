@@ -12,8 +12,11 @@ export interface ShowcaseOwner {
 /** A downloadable version, as the site lists it. */
 export interface ShowcaseVersion {
   id: string;
-  /** The work this version releases, or `null` for a version of the whole universe. */
-  arc: StoryPublicationArcSnapshot | null;
+  /**
+   * The work this version releases, or `null` for a version of the whole universe. Absent from
+   * servers that predate releases of one work (read as `null`).
+   */
+  arc?: StoryPublicationArcSnapshot | null;
   label: string;
   byteSize: number;
   mediaIncluded: number;

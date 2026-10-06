@@ -5,6 +5,7 @@ import {
   ManuscriptOptionsSchema,
   type ManuscriptOptionsInput,
 } from './manuscriptContracts';
+import { compileScreenplayManuscript } from '../screenplay/compileScreenplay';
 import { renderManuscript } from './manuscriptRender';
 import { renderOptionsOf } from './manuscriptStyle';
 import { presentedManuscriptOf, type CompileStoryManuscriptInput } from './presentedManuscript';
@@ -25,6 +26,11 @@ export async function compileStoryManuscript(
   pdfFonts?: PdfFontMatrices,
 ): Promise<CompiledStoryManuscript> {
   const parsed = ManuscriptOptionsSchema.parse(options);
+  // A screenplay is not a book set in blocks: it is Fountain text, or Courier on the industry's grid.
+  if (parsed.format === 'fountain' || parsed.format === 'screenplay-pdf') {
+    const { bytes, extension, mimeType } = compileScreenplayManuscript(input, parsed);
+    return { bytes, extension, mimeType };
+  }
   const labels = { ...DEFAULT_MANUSCRIPT_LABELS, ...parsed.labels };
   const presented = presentedManuscriptOf(input, parsed, labels);
   const rendered = await renderManuscript(

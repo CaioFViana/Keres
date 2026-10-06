@@ -1,3 +1,4 @@
+import type { LocationIntExt } from '../../entities/Location';
 import type { ChapterType } from '../../metadata/ChapterType';
 import { findAllCaseInsensitiveMatches } from '../../utils/excerptHighlight';
 
@@ -21,6 +22,11 @@ export interface ManuscriptScene {
   isDeleted: boolean;
   /** Where a branching story begins; absent when the caller does not carry the flag. */
   isStart?: boolean;
+  /** The scene's summary: a screenplay writes it as a synopsis. Absent when the caller has none. */
+  summary?: string | null;
+  /** The place of the scene, for a screenplay's scene heading. Absent when the caller has none. */
+  locationName?: string | null;
+  locationIntExt?: LocationIntExt | null;
 }
 
 /** The minimum the pipeline needs to know about a route step. */

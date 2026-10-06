@@ -44,5 +44,11 @@ export async function renderManuscript(
       return buildManuscriptMarkdown(manuscript, labels, options);
     case 'txt':
       return buildManuscriptText(manuscript, labels);
+    case 'fountain':
+    case 'screenplay-pdf':
+      // A screenplay is not blocks: `compileStoryManuscript` hands it to the screenplay compiler first.
+      throw new Error(
+        `The ${format} format is compiled from the script, not rendered from blocks.`,
+      );
   }
 }

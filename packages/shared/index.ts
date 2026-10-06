@@ -221,6 +221,11 @@ export * from './manuscript/compile/export/manuscriptHtml';
 export * from './manuscript/compile/export/manuscriptPdf';
 export * from './manuscript/compile/manuscriptContracts';
 export * from './manuscript/compile/manuscriptStyle';
+export * from './manuscript/screenplay/fountain';
+export * from './manuscript/screenplay/fountainParser';
+export * from './manuscript/screenplay/screenplayLayout';
+export * from './manuscript/screenplay/screenplayPdf';
+export * from './manuscript/screenplay/compileScreenplay';
 export * from './manuscript/compile/presentedManuscript';
 export * from './manuscript/reader/storyReader';
 // The reader's block collides with the editor model's `ManuscriptBlock`, so it

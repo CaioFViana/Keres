@@ -36,6 +36,8 @@ describe('FORMAT_META', () => {
       html: { extension: 'html', mimeType: 'text/html' },
       pdf: { extension: 'pdf', mimeType: 'application/pdf' },
       epub: { extension: 'epub', mimeType: 'application/epub+zip' },
+      fountain: { extension: 'fountain', mimeType: 'text/plain' },
+      'screenplay-pdf': { extension: 'pdf', mimeType: 'application/pdf' },
     });
   });
 });

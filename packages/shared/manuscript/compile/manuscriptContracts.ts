@@ -2,7 +2,17 @@ import { z } from 'zod';
 import { ManuscriptStyleSchema } from './manuscriptStyle';
 
 /** Manuscript renditions the pipeline produces - every one in pure TypeScript, on any host. */
-export const ManuscriptFormatSchema = z.enum(['docx', 'md', 'txt', 'html', 'pdf', 'epub']);
+export const ManuscriptFormatSchema = z.enum([
+  'docx',
+  'md',
+  'txt',
+  'html',
+  'pdf',
+  'epub',
+  // A screenplay: the script as Fountain text, or paged as the industry sets it (Courier, indents).
+  'fountain',
+  'screenplay-pdf',
+]);
 export type ManuscriptFormat = z.infer<typeof ManuscriptFormatSchema>;
 
 /** Largest manuscript the pipeline emits: anything bigger must be split first. */
@@ -29,6 +39,8 @@ export const FORMAT_META: Record<ManuscriptFormat, { extension: string; mimeType
   html: { extension: 'html', mimeType: 'text/html' },
   pdf: { extension: 'pdf', mimeType: 'application/pdf' },
   epub: { extension: 'epub', mimeType: 'application/epub+zip' },
+  fountain: { extension: 'fountain', mimeType: 'text/plain' },
+  'screenplay-pdf': { extension: 'pdf', mimeType: 'application/pdf' },
 };
 
 const labelSchema = z.string().max(80);
@@ -59,6 +71,26 @@ export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   beginAt: 'Begin',
 };
 
+/** What only a screenplay needs: the paper it is paged on and what its title page and headings say. */
+export const ScreenplayOptionsSchema = z.object({
+  /** Letter or A4: the page count depends on it, so it is always stated. */
+  paper: z.enum(['letter', 'a4']).default('letter'),
+  /** `#1#`, `#2#`... on every scene heading, printed in both margins. */
+  numberScenes: z.boolean().default(false),
+  /** Writes `INT. PLACE` from a scene's location when its text has no heading of its own. */
+  generateHeadings: z.boolean().default(true),
+  /** One `=` synopsis per scene from its summary (Fountain only; never printed). */
+  includeSynopses: z.boolean().default(true),
+  /** One `#` section per chapter (Fountain only; never printed). */
+  includeSections: z.boolean().default(true),
+  /** Title page lines. All optional; the title and author come from the work and the options. */
+  credit: z.string().max(120).optional(),
+  source: z.string().max(200).optional(),
+  draftDate: z.string().max(60).optional(),
+  contact: z.string().max(400).optional(),
+});
+export type ScreenplayOptions = z.infer<typeof ScreenplayOptionsSchema>;
+
 /** Every default is the device export's own, so a publication and a local file agree. */
 export const ManuscriptOptionsSchema = z.object({
   format: ManuscriptFormatSchema,
@@ -88,6 +120,8 @@ export const ManuscriptOptionsSchema = z.object({
   identifier: z.string().max(200).optional(),
   /** Book metadata (EPUB): BCP 47 language of the text, e.g. `pt-BR`. */
   language: z.string().max(35).optional(),
+  /** Only for the `fountain` and `screenplay-pdf` formats. */
+  screenplay: ScreenplayOptionsSchema.optional(),
 });
 export type ManuscriptOptions = z.infer<typeof ManuscriptOptionsSchema>;
 export type ManuscriptOptionsInput = z.input<typeof ManuscriptOptionsSchema>;

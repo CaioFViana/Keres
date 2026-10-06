@@ -1,3 +1,5 @@
+import type { ArcMedium } from '../metadata/ArcMedium';
+
 /**
  * A public version of a story (a "publication"): an immutable, already-packaged bundle that the
  * Showcase offers for download.
@@ -8,6 +10,12 @@
 export interface StoryPublication {
   id: string;
   storyId: string;
+  /**
+   * The work (arc) this version releases, or `null` for a version of the whole universe. A release
+   * of one work carries a manuscript and/or the online reader of that work, never the story package.
+   * Absent from servers that predate it (a version of the universe).
+   */
+  arcId?: string | null;
   /** The story's owner at the moment of publication (`stories.userId`). */
   ownerUserId: string;
   /** The version name shown on the site. Its format depends on the chosen `PublicationLabelMode`. */
@@ -47,6 +55,17 @@ export interface StoryPublicationSnapshot {
    * flag existed - readers must treat a missing value as non-NSFW.
    */
   isNsfw?: boolean;
+  /** The work a release is about, frozen like the rest; absent on a version of the whole universe. */
+  arc?: StoryPublicationArcSnapshot;
+}
+
+/** A work (arc) as it stood when it was released. */
+export interface StoryPublicationArcSnapshot {
+  id: string;
+  title: string;
+  description: string | null;
+  author: string | null;
+  medium: ArcMedium;
 }
 
 /** How the owner wants the versions to be named. */

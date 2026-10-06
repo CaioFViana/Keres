@@ -30,6 +30,8 @@ const tierFields = {
   maxStorageBytesTotal: z.number().int().nonnegative().nullable().optional(),
   // Zero is a ceiling too: a tier that may not publish at all.
   maxPublicationsPerDay: z.number().int().nonnegative().nullable().optional(),
+  // Zero is a ceiling too: a tier that may not release a single work on its own.
+  maxPublishedArcs: z.number().int().nonnegative().nullable().optional(),
   // Zero silences the user; messages to the administrators have a fixed cap of their own.
   maxMessagesPerDay: z.number().int().nonnegative().nullable().optional(),
   /**
@@ -124,6 +126,8 @@ export const PublicTierSchema = z.object({
   maxStorageBytesPerStory: z.number().int().nonnegative().nullable(),
   maxStorageBytesTotal: z.number().int().nonnegative().nullable(),
   maxPublicationsPerDay: z.number().int().nonnegative().nullable(),
+  // A server predating the ceiling sells none; null reads as unlimited, as for every other ceiling.
+  maxPublishedArcs: z.number().int().nonnegative().nullable().default(null),
   /**
    * The store product ids that sell this tier on each period (`null` = not sold there). Catalog data,
    * not secrets: the app needs the id to open the purchase sheet, so it travels on the public tier.

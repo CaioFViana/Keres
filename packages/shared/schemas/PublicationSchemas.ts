@@ -1,8 +1,17 @@
 import { z } from 'zod';
+import { ArcMediumSchema } from './StoryArcSchemas';
 import { ManuscriptInfoSchema, ReaderInfoSchema } from '../manuscript/compile/manuscriptContracts';
 
 export const PublicationLabelModeSchema = z.enum(['version', 'date', 'both']);
 export const ShowcaseVisibilitySchema = z.enum(['public', 'password']);
+
+export const StoryPublicationArcSnapshotSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  author: z.string().nullable(),
+  medium: ArcMediumSchema,
+});
 
 export const StoryPublicationSnapshotSchema = z.object({
   title: z.string(),
@@ -14,11 +23,15 @@ export const StoryPublicationSnapshotSchema = z.object({
   theme: z.string().nullable(),
   // Absent on versions published before the flag existed; readers treat missing as non-NSFW.
   isNsfw: z.boolean().default(false),
+  // Only on a release of one work; absent on a version of the whole universe.
+  arc: StoryPublicationArcSnapshotSchema.optional(),
 });
 
 export const StoryPublicationSchema = z.object({
   id: z.string(),
   storyId: z.string(),
+  // Null for a version of the whole universe; absent from servers that predate releases of one work.
+  arcId: z.string().nullable().default(null),
   ownerUserId: z.string(),
   label: z.string(),
   operationVersion: z.number().int(),
@@ -41,6 +54,8 @@ export const CreatePublicationRequestSchema = z.object({
   labelMode: PublicationLabelModeSchema.default('both'),
   /** Publish the story package (.zip). May be off only when a manuscript or the online reader is published. */
   includePackage: z.boolean().default(true),
+  /** Releases this one work of the story: a manuscript and/or the online reader, never the package. */
+  arcId: z.string().optional(),
 });
 
 export const UpdateShowcaseVisibilityRequestSchema = z
@@ -63,6 +78,7 @@ export const ShowcaseOwnerSchema = z.object({
 
 export const ShowcaseVersionSchema = z.object({
   id: z.string(),
+  arc: StoryPublicationArcSnapshotSchema.nullable().default(null),
   label: z.string(),
   byteSize: z.number().int(),
   mediaIncluded: z.number().int(),

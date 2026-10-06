@@ -10,6 +10,8 @@ export interface Tier {
   maxStorageBytesTotal: number | null;
   /** Versions the user may publish to the showcase in any 24 hours. */
   maxPublicationsPerDay: number | null;
+  /** Works (arcs) of one story that may be on the showcase at once; `0` forbids releasing one. */
+  maxPublishedArcs: number | null;
   /** Messages the user may send to other users in any 24 hours (the cap for administrators is fixed). */
   maxMessagesPerDay: number | null;
   /** Monthly price in the system's currency minor units (`null` = not priced monthly). */

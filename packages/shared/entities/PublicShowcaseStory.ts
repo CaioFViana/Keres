@@ -1,5 +1,5 @@
 import type { ManuscriptInfo, ReaderInfo } from '../manuscript/compile/manuscriptContracts';
-import type { StoryPublicationSnapshot } from './StoryPublication';
+import type { StoryPublicationArcSnapshot, StoryPublicationSnapshot } from './StoryPublication';
 
 /** The author, as the anonymous site can see them: no email, no internal id beyond the public one. */
 export interface ShowcaseOwner {
@@ -12,6 +12,8 @@ export interface ShowcaseOwner {
 /** A downloadable version, as the site lists it. */
 export interface ShowcaseVersion {
   id: string;
+  /** The work this version releases, or `null` for a version of the whole universe. */
+  arc: StoryPublicationArcSnapshot | null;
   label: string;
   byteSize: number;
   mediaIncluded: number;

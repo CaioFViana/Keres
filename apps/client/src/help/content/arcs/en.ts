@@ -10,7 +10,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'What it is' },
     {
       type: 'paragraph',
-      text: 'An arc is a large section inside one story: a book in a series, a phase of a campaign, or a distinct movement in a long narrative. The story still has one shared cast, world, calendar and set of notes.',
+      text: 'A story is a universe, and an arc is one work inside it: a book, a film, an issue, a season or a campaign module. The story still has one shared cast, world, calendar and set of notes, so a character can live through every work.',
     },
     {
       type: 'callout',
@@ -55,12 +55,35 @@ const page: HelpPage = {
           note: 'Optional; it can help distinguish similar sections while planning.',
         },
         {
+          key: 'medium',
+          label: 'Form of the work',
+          whatToWrite:
+            'Choose what this work is: prose, screenplay, comic, storyboard or tabletop campaign.',
+          note: 'It picks friendlier terms and the right export for this arc. It never limits what you can add, and you can change it at any time.',
+        },
+        {
+          key: 'author',
+          label: 'Author of this work',
+          whatToWrite: "Who wrote this work, if it differs from the story's author.",
+          note: "Left empty, the story's author is used, and then your handle.",
+        },
+        {
+          key: 'coverGalleryId',
+          label: 'Cover',
+          whatToWrite: 'Pick an image from the gallery to stand for this work.',
+          note: 'Optional. It does not copy or move the image.',
+        },
+        {
           key: 'themeOverride',
           label: 'Theme',
           whatToWrite: 'Choose a theme for this arc, or leave it using the story theme.',
           note: 'The theme changes the appearance while this arc is selected; it does not change the story theme.',
         },
       ],
+    },
+    {
+      type: 'paragraph',
+      text: "While an arc is selected, the vocabulary screen edits that arc's own terms. A term left empty uses the story's term, and then the default for the arc's form of the work.",
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {

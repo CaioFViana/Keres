@@ -84,6 +84,30 @@ describe('pack bundles', () => {
     expect(bundle.attributeValues).toEqual([]);
   });
 
+  it('carries the one default arc in the chosen form of the work and puts the chapters in it', () => {
+    const bundle = buildStoryBundleFromPacks(
+      story,
+      [pack({ extras: extrasOf({ chapters: [{ id: 'ch-1', name: 'Setup' }] }) })],
+      true,
+      { arcMedium: 'comic' },
+    );
+
+    expect(bundle.storyArcs).toHaveLength(1);
+    const [arc] = bundle.storyArcs ?? [];
+    expect(arc).toMatchObject({
+      storyId: 'PACKSTORYPLACEHOLDER000000',
+      isDefault: true,
+      medium: 'comic',
+    });
+    expect(bundle.chapters.map((chapter) => chapter.arcId)).toEqual([arc?.id]);
+  });
+
+  it('starts the default arc generic when no form of the work is chosen', () => {
+    const bundle = buildStoryBundleFromPacks(story, [pack({})]);
+
+    expect(bundle.storyArcs?.[0]?.medium).toBe('generic');
+  });
+
   it('ignores extras unless asked', () => {
     const bundle = buildStoryBundleFromPacks(
       story,

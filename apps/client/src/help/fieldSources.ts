@@ -121,10 +121,21 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
   StoryArc: {
-    documented: ['title', 'description', 'themeOverride', 'createdAt', 'updatedAt'],
+    documented: [
+      'title',
+      'description',
+      'themeOverride',
+      'medium',
+      'author',
+      'coverGalleryId',
+      'createdAt',
+      'updatedAt',
+    ],
     invisible: [
       'id',
       'storyId',
+      // The vocabulary editor owns this configuration under Customization, like Story.vocabulary.
+      'vocabulary',
       'sortOrder',
       'color',
       'icon',
@@ -461,6 +472,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'completenessChecks',
       'statSystem',
       'statNotation',
+      'coverGalleryId',
       'createdAt',
       'updatedAt',
     ],

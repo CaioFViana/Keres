@@ -3,6 +3,7 @@ import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSw
 import { ScreenLoading } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import ArcMediumSelect from '@/src/components/features/arcs/ArcMediumSelect';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
@@ -106,6 +107,8 @@ const StoryFormScreen = () => {
     setSelectedPackIds,
     packsWithoutExtras,
     togglePackExtras,
+    arcMedium,
+    setArcMedium,
     loading,
     error,
     isEditing,
@@ -205,6 +208,21 @@ const StoryFormScreen = () => {
         favoriteBehaviorDisabled={!canManageStoryPolicy}
         editable={canEdit}
       />
+
+      {!isEditing && (
+        <View>
+          <Text style={[styles.sectionLabel, { color: colors.text }]}>
+            {t('story_form_arc_medium')}
+          </Text>
+          <ArcMediumSelect
+            value={arcMedium}
+            onChange={setArcMedium}
+            arcTerm={t('arc')}
+            hint={t('story_form_arc_medium_hint', { arc: t('arc') })}
+            disabled={!canEdit}
+          />
+        </View>
+      )}
 
       {!isEditing && (
         <View ref={packsAnchorRef} collapsable={false}>

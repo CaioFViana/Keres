@@ -1,4 +1,5 @@
 import { useStoryIdentityDraft } from '@/src/hooks/useStoryIdentityDraft';
+import { DEFAULT_ARC_MEDIUM, type ArcMedium } from '@keres/shared/metadata/ArcMedium';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +29,8 @@ export function useStoryFormState({
       return current.includes(packId) ? current : [...current, packId];
     });
   }, []);
+  // The form of the first work; only used while creating, when the story's first Arc is made.
+  const [arcMedium, setArcMedium] = useState<ArcMedium>(DEFAULT_ARC_MEDIUM);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isEditing = !!initialStoryId;
@@ -73,6 +76,8 @@ export function useStoryFormState({
     setSelectedPackIds,
     packsWithoutExtras,
     togglePackExtras,
+    arcMedium,
+    setArcMedium,
     loading,
     error,
     setError,

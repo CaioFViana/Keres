@@ -60,12 +60,13 @@ jest.mock('@/src/components/common', () => ({
     value: string;
     onChangeText: (value: string) => void;
     multiline?: boolean;
+    testID?: string;
     style?: StyleProp<TextStyle>;
   }) => {
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
     return react.createElement(native.TextInput, {
-      testID: props.multiline ? 'input-description' : 'input-title',
+      testID: props.testID ?? (props.multiline ? 'input-description' : 'input-title'),
       value: props.value,
       onChangeText: props.onChangeText,
       style: props.style,
@@ -161,6 +162,36 @@ jest.mock('@/src/hooks/useStoryArcs', () => ({
 jest.mock('@/src/hooks/useStoryRole', () => ({
   __esModule: true,
   useStoryRole: () => ({ canEdit: mockCanEdit }),
+}));
+jest.mock('@/src/components/features/arcs/ArcMediumSelect', () => ({
+  __esModule: true,
+  default: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.Text,
+      { testID: 'medium-pick', onPress: () => onChange('comic') },
+      `medium:${value}`,
+    );
+  },
+}));
+jest.mock('@/src/components/features/gallery/GalleryCoverField', () => ({
+  __esModule: true,
+  default: ({
+    value,
+    onChange,
+  }: {
+    value: string | null;
+    onChange: (value: string | null) => void;
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return react.createElement(
+      native.Text,
+      { testID: 'cover-pick', onPress: () => onChange('gallery-9') },
+      `cover:${value}`,
+    );
+  },
 }));
 jest.mock('@/src/vocabulary/useStoryVocabulary', () => ({
   __esModule: true,
@@ -328,6 +359,59 @@ it('creates an arc on save and goes back', async () => {
     ),
   );
   expect(mockGoBack).toHaveBeenCalled();
+});
+
+it('saves the form of the work, the author and the cover on create', async () => {
+  const view = await render(<StoryArcFormScreen />);
+
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Issue One');
+  await fireEvent.press(view.getByTestId('medium-pick'));
+  await fireEvent.press(view.getByTestId('cover-pick'));
+  await waitFor(() => expect(view.getByTestId('medium-pick').props.children).toBe('medium:comic'));
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockCreateArc).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({
+        title: 'Issue One',
+        medium: 'comic',
+        author: null,
+        coverGalleryId: 'gallery-9',
+      }),
+    ),
+  );
+});
+
+it('hydrates the form of the work and writes it back on update', async () => {
+  mockArcId = 'arc-1';
+  mockGetArcById.mockResolvedValue({
+    title: 'Pilot',
+    description: null,
+    icon: null,
+    themeOverride: null,
+    medium: 'screenplay',
+    author: 'A. Writer',
+    coverGalleryId: 'gallery-1',
+  });
+  const view = await render(<StoryArcFormScreen />);
+
+  await waitFor(() =>
+    expect(view.getByTestId('medium-pick').props.children).toBe('medium:screenplay'),
+  );
+  expect(view.getByTestId('cover-pick').props.children).toBe('cover:gallery-1');
+  await fireEvent.changeText(view.getByTestId('input-title'), 'Pilot II');
+  await fireEvent.press(view.getByTestId('btn-save'));
+  await waitFor(() =>
+    expect(mockUpdateArc).toHaveBeenCalledWith(
+      'user-1',
+      'arc-1',
+      expect.objectContaining({
+        medium: 'screenplay',
+        author: 'A. Writer',
+        coverGalleryId: 'gallery-1',
+      }),
+    ),
+  );
 });
 
 it('saves the picked icon on create', async () => {

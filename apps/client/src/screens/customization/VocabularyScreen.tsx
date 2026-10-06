@@ -6,7 +6,10 @@ import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
 import { useScreenTour } from '@/src/guides/useScreenTour';
+import { useStoryArcs } from '@/src/hooks/useStoryArcs';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
+import { createStoryArcService } from '@/src/services/storymanagement/StoryArcService';
+import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import type { CustomizationStackParamList } from '@/src/navigation/MainSystemStack';
 import { createStoryService } from '@/src/services/storymanagement/StoryService';
 import { useStoryStore } from '@/src/state/storyStore';
@@ -169,8 +172,15 @@ const VocabularyScreen = () => {
   const navigation = useNavigation<VocabularyNavigation>();
   const { selectedStory, setSelectedStory } = useStoryStore();
   const selectedStoryId = selectedStory?.id;
-  const selectedStoryVocabulary = selectedStory?.vocabulary ?? null;
-  const { canManageStoryPolicy } = useStoryRole(selectedStory?.id);
+  // Inside an Arc this screen edits that Arc's own terms; in the every-Arc view it edits the story's.
+  const { activeArc } = useStoryArcs();
+  const { userId } = useUserSettingsStore();
+  const arcScope = activeArc;
+  const selectedStoryVocabulary = arcScope
+    ? arcScope.vocabulary
+    : (selectedStory?.vocabulary ?? null);
+  const { canEdit, canManageStoryPolicy } = useStoryRole(selectedStory?.id);
+  const canEditTerms = arcScope ? canEdit : canManageStoryPolicy;
   const [language, setLanguage] = useState<'pt' | 'en'>(() => languageFamily(i18n.language));
   const [terms, setTerms] = useState<DraftTerms>(() => draftFromVocabulary(null));
   const [saving, setSaving] = useState(false);
@@ -187,17 +197,18 @@ const VocabularyScreen = () => {
       loadedDraftRef.current = null;
       return;
     }
-    const draftKey = `${selectedStoryId}:${vocabularySignature}`;
+    const draftKey = `${selectedStoryId}:${arcScope?.id ?? 'story'}:${vocabularySignature}`;
     if (loadedDraftRef.current === draftKey) return;
     loadedDraftRef.current = draftKey;
     setLanguage(selectedStoryVocabulary?.language ?? languageFamily(i18n.language));
     setTerms(draftFromVocabulary(selectedStoryVocabulary));
-  }, [i18n.language, selectedStoryId, selectedStoryVocabulary, vocabularySignature]);
+  }, [arcScope?.id, i18n.language, selectedStoryId, selectedStoryVocabulary, vocabularySignature]);
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 18 },
+        intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 12 },
+        scope: { color: colors.text, fontWeight: '700', lineHeight: 20, marginBottom: 18 },
         languageLabel: { color: colors.text, fontWeight: '700', marginBottom: 6 },
         languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 7 },
         // flexGrow only — `flex: 1` on the scroll content (via common.container) pins height to the
@@ -227,7 +238,7 @@ const VocabularyScreen = () => {
   );
 
   const handleSave = useCallback(async () => {
-    if (!selectedStory || !canManageStoryPolicy) return;
+    if (!selectedStory || !canEditTerms) return;
     const entries = STORY_VOCABULARY_ENTITY_TYPES.map((type) => [type, terms[type]] as const);
     if (entries.some(([, term]) => Boolean(term.singular.trim()) !== Boolean(term.plural.trim()))) {
       AppAlert.alert(t('error'), t('vocabulary_term_pair_required'));
@@ -246,10 +257,20 @@ const VocabularyScreen = () => {
       Object.keys(configured).length === 0 ? null : { version: 1, language, terms: configured };
     try {
       setSaving(true);
-      await createStoryService(drizzleDb).updateStory(selectedStory.userId, selectedStory.id, {
-        vocabulary,
-      });
-      setSelectedStory({ ...selectedStory, vocabulary });
+      if (arcScope) {
+        await createStoryArcService(drizzleDb).updateArc(
+          userId ?? selectedStory.userId,
+          arcScope.id,
+          {
+            vocabulary,
+          },
+        );
+      } else {
+        await createStoryService(drizzleDb).updateStory(selectedStory.userId, selectedStory.id, {
+          vocabulary,
+        });
+        setSelectedStory({ ...selectedStory, vocabulary });
+      }
       AppAlert.alert(t('success'), t('vocabulary_saved'));
       navigation.goBack();
     } catch (error) {
@@ -259,7 +280,8 @@ const VocabularyScreen = () => {
       setSaving(false);
     }
   }, [
-    canManageStoryPolicy,
+    arcScope,
+    canEditTerms,
     drizzleDb,
     language,
     navigation,
@@ -267,6 +289,7 @@ const VocabularyScreen = () => {
     setSelectedStory,
     t,
     terms,
+    userId,
   ]);
 
   const common = getCommonContainerStyles(colors);
@@ -276,6 +299,11 @@ const VocabularyScreen = () => {
     <KeyboardAwareScreen style={common.container} contentContainerStyle={styles.content}>
       <View ref={termsAnchorRef} collapsable={false}>
         <Text style={styles.intro}>{t('vocabulary_intro')}</Text>
+        <Text style={styles.scope} testID="vocabulary-scope">
+          {arcScope
+            ? t('vocabulary_scope_arc', { arc: arcScope.title })
+            : t('vocabulary_scope_story')}
+        </Text>
         <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
         <SingleSelectPill
           value={language}
@@ -284,7 +312,7 @@ const VocabularyScreen = () => {
             { value: 'pt', label: t('language_portuguese') },
             { value: 'en', label: t('language_english') },
           ]}
-          disabled={!canManageStoryPolicy}
+          disabled={!canEditTerms}
         />
         <Text style={styles.languageHint}>{t('vocabulary_language_hint')}</Text>
         {STORY_VOCABULARY_ENTITY_TYPES.map((type) => (
@@ -293,11 +321,11 @@ const VocabularyScreen = () => {
             type={type}
             term={terms[type]}
             language={language}
-            editable={canManageStoryPolicy}
+            editable={canEditTerms}
             onChange={setTerm}
           />
         ))}
-        {canManageStoryPolicy && (
+        {canEditTerms && (
           <FormActions stackOnCompact style={styles.formActions}>
             <Button
               style={styles.secondaryButton}

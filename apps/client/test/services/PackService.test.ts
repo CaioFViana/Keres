@@ -830,6 +830,35 @@ describe('applying packs at story creation', () => {
     });
   }
 
+  it('starts the default arc in the form of the work the author chose', async () => {
+    await seedStructure();
+    const service = createPackService(database.db);
+    const packId = await packFrom({ tags: true });
+
+    const storyId = await service.createStoryWithPacks(PACK_USER_ID, NEW_STORY, [packId], false, {
+      arcMedium: 'screenplay',
+    });
+
+    const arcs = await database.db.query.storyArcs.findMany({
+      where: (arc, { eq }) => eq(arc.storyId, storyId),
+    });
+    expect(arcs).toHaveLength(1);
+    expect(arcs[0]).toMatchObject({ isDefault: true, medium: 'screenplay' });
+  });
+
+  it('leaves the default arc generic when no form of the work is chosen', async () => {
+    await seedStructure();
+    const service = createPackService(database.db);
+    const packId = await packFrom({ tags: true });
+
+    const storyId = await service.createStoryWithPacks(PACK_USER_ID, NEW_STORY, [packId]);
+
+    const arcs = await database.db.query.storyArcs.findMany({
+      where: (arc, { eq }) => eq(arc.storyId, storyId),
+    });
+    expect(arcs.map((arc) => arc.medium)).toEqual(['generic']);
+  });
+
   it('creates a story carrying the pack, with ids of its own', async () => {
     await seedStructure();
     const service = createPackService(database.db);

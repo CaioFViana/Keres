@@ -1,5 +1,7 @@
 import {
+  type ArcMedium,
   CURRENT_STORY_FORMAT_VERSION,
+  DEFAULT_ARC_MEDIUM,
   DEFAULT_CHAPTER_TYPE,
   type FullStoryExportType,
   MAX_PRIMARY_STATS,
@@ -270,8 +272,12 @@ export function buildStoryBundleFromPacks(
   story: NewStoryData,
   contents: PackContentType[],
   includeExtras: boolean | readonly boolean[] = false,
+  options: { arcMedium?: ArcMedium } = {},
 ): FullStoryExportType {
   const now = new Date();
+  // The import writes no operations, so the story's one Arc travels in the bundle - in the form of
+  // the work the author chose - and every chapter a pack brings belongs to it.
+  const defaultArcId = createULID();
   const settings = contents.reduce(
     (applied, content) =>
       content.settings.statSystem || content.settings.vocabulary
@@ -325,7 +331,7 @@ export function buildStoryBundleFromPacks(
     const kind = row.chapter.type ?? DEFAULT_CHAPTER_TYPE;
     const index = nextIndexByKind.get(kind) ?? 1;
     nextIndexByKind.set(kind, index + 1);
-    return { ...row.chapter, name, index };
+    return { ...row.chapter, name, index, arcId: defaultArcId };
   });
 
   return {
@@ -340,6 +346,28 @@ export function buildStoryBundleFromPacks(
       isDeleted: false,
       deletedAt: null,
     },
+    storyArcs: [
+      {
+        id: defaultArcId,
+        storyId: PLACEHOLDER_STORY_ID,
+        title: 'Arc',
+        description: null,
+        sortOrder: 0,
+        color: null,
+        icon: null,
+        themeOverride: null,
+        medium: options.arcMedium ?? DEFAULT_ARC_MEDIUM,
+        vocabulary: null,
+        author: null,
+        coverGalleryId: null,
+        isDefault: true,
+        createdAt: now,
+        updatedAt: now,
+        version: 1,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    ],
     chapters,
     scenes: extras.flatMap((extra) => extra.scenes),
     choices: [],

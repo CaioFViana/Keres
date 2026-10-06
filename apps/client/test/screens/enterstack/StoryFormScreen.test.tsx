@@ -121,6 +121,10 @@ jest.mock('../../../src/services/storymanagement/PackService', () => ({
 
 // The real one runs an Animated interpolation that never settles under RNTL's async render. What
 // this file asserts is which value the screen passes, not the animation.
+jest.mock('../../../src/components/features/arcs/ArcMediumSelect', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { View } = jest.requireActual('react-native');
   return {
@@ -332,6 +336,7 @@ describe('StoryFormScreen', () => {
       expect.objectContaining({ title: 'Epic' }),
       ['pack-1'],
       [],
+      { arcMedium: 'generic' },
     );
   });
 
@@ -346,6 +351,7 @@ describe('StoryFormScreen', () => {
       expect(mockCreateStory).toHaveBeenCalledWith(
         'user-1',
         expect.objectContaining({ title: 'Epic', type: 'linear' }),
+        { arcMedium: 'generic' },
       ),
     );
     expect(mockGoBack).toHaveBeenCalled();

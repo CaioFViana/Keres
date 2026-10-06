@@ -3,6 +3,8 @@ import React from 'react';
 
 const mockUseScreenTour = jest.fn();
 const mockSetSelectedStory = jest.fn();
+const mockUpdateArc = jest.fn();
+let mockActiveArc: { id: string; title: string; vocabulary: null } | null = null;
 let mockSelectedStory: { id: string; vocabulary: null } | null = {
   id: 'story-1',
   vocabulary: null,
@@ -26,7 +28,19 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
 }));
 jest.mock('../../../src/hooks/useStoryRole', () => ({
   __esModule: true,
-  useStoryRole: () => ({ canManageStoryPolicy: true }),
+  useStoryRole: () => ({ canEdit: true, canManageStoryPolicy: true }),
+}));
+jest.mock('@/src/hooks/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({ activeArc: mockActiveArc }),
+}));
+jest.mock('@/src/services/storymanagement/StoryArcService', () => ({
+  __esModule: true,
+  createStoryArcService: () => ({ updateArc: mockUpdateArc }),
+}));
+jest.mock('@/src/state/userSettingsStore', () => ({
+  __esModule: true,
+  useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
 jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,

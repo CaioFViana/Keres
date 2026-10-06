@@ -5,6 +5,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
+import GalleryCoverField from '@/src/components/features/gallery/GalleryCoverField';
 import StoryCollaborationSection from '@/src/components/features/story/StoryCollaborationSection/StoryCollaborationSection';
 import StoryFieldsForm from '@/src/components/features/story/StoryFieldsForm/StoryFieldsForm';
 import { useAsyncOperation } from '@/src/hooks/useAsyncOperation';
@@ -54,6 +55,7 @@ const StorySettingsScreen = () => {
   const [allowReaderComments, setAllowReaderComments] = useState(false);
   const [autoLinkMentions, setAutoLinkMentions] = useState(false);
   const [isNsfw, setIsNsfw] = useState(false);
+  const [coverGalleryId, setCoverGalleryId] = useState<string | null>(null);
   const [initialIsNsfw, setInitialIsNsfw] = useState(false);
   const [loading, setLoading] = useState(true);
   const { pending: saving, run: runSave } = useAsyncOperation();
@@ -88,6 +90,7 @@ const StorySettingsScreen = () => {
         setAllowReaderComments(fetchedStory.allowReaderComments);
         setAutoLinkMentions(fetchedStory.autoLinkMentions);
         setIsNsfw(fetchedStory.isNsfw ?? false);
+        setCoverGalleryId(fetchedStory.coverGalleryId ?? null);
         setInitialIsNsfw(fetchedStory.isNsfw ?? false);
       } catch (err) {
         console.error('Failed to load story or servers:', err);
@@ -136,6 +139,7 @@ const StorySettingsScreen = () => {
         author: identity.author,
         isFavorite: identity.isFavorite,
         extraNotes: identity.extraNotes,
+        coverGalleryId,
         normalizeSceneTiming,
         autoLinkMentions,
         ...(canManageStoryPolicy
@@ -310,6 +314,14 @@ const StorySettingsScreen = () => {
         editable={canEdit}
       />
 
+      <Text style={[styles.coverLabel, { color: colors.text }]}>{t('cover')}</Text>
+      <GalleryCoverField
+        storyId={storyId}
+        value={coverGalleryId}
+        onChange={setCoverGalleryId}
+        editable={canEdit}
+      />
+
       <View
         style={[
           styles.preferencesCard,
@@ -417,6 +429,12 @@ const StorySettingsScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  coverLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    marginTop: 16,
+  },
   preferencesCard: {
     borderRadius: 8,
     borderWidth: 1,

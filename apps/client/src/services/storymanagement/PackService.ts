@@ -1,6 +1,7 @@
 import {
   CURRENT_PACK_FORMAT_VERSION,
   validatePackContent,
+  type ArcMedium,
   type PackContentType,
   type PackSelectionType,
   type PackVisibility,
@@ -132,6 +133,7 @@ export interface PackService {
     story: NewStoryData,
     packIds: string[],
     includeExtras?: boolean | readonly string[],
+    options?: { arcMedium?: ArcMedium },
   ): Promise<string>;
 }
 
@@ -618,6 +620,7 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
       story,
       packIds,
       includeExtras: boolean | readonly string[] = false,
+      options?: { arcMedium?: ArcMedium },
     ) {
       const contents = await loadContents(packIds);
       const conflicts = findPackConflicts(contents);
@@ -636,7 +639,7 @@ export const createPackService = (db: AppDrizzleClient): PackService => {
           : packIds.map((packId) => includeExtras.includes(packId));
       return createStoryService(db).importFullStory(
         userId,
-        buildStoryBundleFromPacks(story, contents, flags),
+        buildStoryBundleFromPacks(story, contents, flags, options),
         null,
       );
     },

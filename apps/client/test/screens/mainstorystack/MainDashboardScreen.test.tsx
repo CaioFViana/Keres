@@ -54,6 +54,10 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
     isLoading: false,
   }),
 }));
+jest.mock('../../../src/hooks/useStoryArcs', () => ({
+  __esModule: true,
+  useStoryArcs: () => ({ arcs: [] }),
+}));
 jest.mock('../../../src/hooks/useStoryReport', () => ({
   __esModule: true,
   useStoryReport: () => ({ canReport: mockCanReport, sending: false, report: mockReport }),

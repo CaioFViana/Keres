@@ -1,5 +1,7 @@
 import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
+import UniverseWorksSection from '@/src/components/features/arcs/UniverseWorksSection';
+import type { StoryArcSelect } from '@/src/db/schema';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
 import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
@@ -35,6 +37,9 @@ export type MainDashboardContentProps = {
   analysisIssueCount: number | undefined;
   onOpenAnalysis: () => void;
   onOpenOperationLog: () => void;
+  /** The story's works, when the screen can list and open them. */
+  arcs?: readonly StoryArcSelect[];
+  onOpenArcs?: () => void;
 };
 
 function themeLabelKey(themeName: string | null | undefined): string {
@@ -75,6 +80,8 @@ export function MainDashboardContent({
   analysisIssueCount,
   onOpenAnalysis,
   onOpenOperationLog,
+  arcs,
+  onOpenArcs,
 }: MainDashboardContentProps) {
   const { colors } = useTheme();
   const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
@@ -119,6 +126,10 @@ export function MainDashboardContent({
             />
           )}
         </ScreenSection>
+      )}
+
+      {!!story && !!arcs?.length && !!onOpenArcs && (
+        <UniverseWorksSection arcs={arcs} onOpenArcs={onOpenArcs} />
       )}
 
       <View ref={overviewAnchorRef} collapsable={false}>

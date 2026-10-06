@@ -127,6 +127,23 @@ jest.mock('../../../src/components/common', () => {
     ),
   };
 });
+jest.mock('../../../src/components/features/gallery/GalleryCoverField', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({
+      value,
+      onChange,
+    }: {
+      value: string | null;
+      onChange: (value: string | null) => void;
+    }) => (
+      <Text testID="cover-field" onPress={() => onChange('gallery-7')}>
+        {`cover:${value}`}
+      </Text>
+    ),
+  };
+});
 jest.mock('../../../src/components/common/controls/ThemedSwitch/ThemedSwitch', () => {
   const { Text } = require('react-native');
   return {
@@ -360,12 +377,14 @@ describe('StorySettingsScreen', () => {
     await fireEvent.press(view.getAllByTestId('themed-switch')[2]);
     await fireEvent.press(view.getByTestId('collab-toggle'));
     await fireEvent.press(view.getByTestId('favorite-behavior-change'));
+    await fireEvent.press(view.getByTestId('cover-field'));
     await fireEvent.press(view.getByTestId('btn-update_story'));
     await waitFor(() => expect(mockUpdateStory).toHaveBeenCalled());
     expect(mockUpdateStory).toHaveBeenCalledWith(
       'user-1',
       'story-1',
       expect.objectContaining({
+        coverGalleryId: 'gallery-7',
         title: 'My Story',
         normalizeSceneTiming: false,
         autoLinkMentions: false,

@@ -88,6 +88,13 @@ const page: HelpPage = {
           whatToWrite: 'Escolha a aparência visual usada enquanto essa história estiver aberta.',
           note: 'Não é o tema narrativo da obra.',
         },
+        {
+          key: 'coverGalleryId',
+          label: 'Capa',
+          whatToWrite:
+            'Escolha uma imagem da galeria desta história para representar o universo inteiro.',
+          note: 'Opcional. Aparece onde a história é apresentada, como na vitrine. Cada obra (arco) pode ter a sua própria capa.',
+        },
       ],
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },

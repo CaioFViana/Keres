@@ -9,7 +9,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'O que é' },
     {
       type: 'paragraph',
-      text: 'Um arco é uma seção grande dentro de uma história: um livro de uma série, uma fase de campanha ou um movimento distinto em uma narrativa longa. A história continua com o mesmo elenco, mundo, calendário e anotações compartilhados.',
+      text: 'Uma história é um universo, e um arco é uma obra dentro dele: um livro, um filme, uma edição, uma temporada ou um módulo de campanha. A história continua com o mesmo elenco, mundo, calendário e anotações compartilhados, então um personagem pode viver por todas as obras.',
     },
     {
       type: 'callout',
@@ -54,12 +54,35 @@ const page: HelpPage = {
           note: 'É opcional; pode ajudar a distinguir seções parecidas no planejamento.',
         },
         {
+          key: 'medium',
+          label: 'Forma da obra',
+          whatToWrite:
+            'Escolha o que é esta obra: prosa, roteiro, quadrinhos, storyboard ou campanha de mesa.',
+          note: 'Escolhe termos mais amigáveis e a exportação certa para este arco. Nunca limita o que você pode adicionar, e você pode mudar quando quiser.',
+        },
+        {
+          key: 'author',
+          label: 'Autor desta obra',
+          whatToWrite: 'Quem escreveu esta obra, se for diferente do autor da história.',
+          note: 'Vazio, usa o autor da história e, depois, o seu @handle.',
+        },
+        {
+          key: 'coverGalleryId',
+          label: 'Capa',
+          whatToWrite: 'Escolha uma imagem da galeria para representar esta obra.',
+          note: 'Opcional. Não copia nem move a imagem.',
+        },
+        {
           key: 'themeOverride',
           label: 'Tema',
           whatToWrite: 'Escolha um tema para este arco ou mantenha o tema da história.',
           note: 'O tema muda a aparência enquanto o arco está selecionado; não muda o tema da história.',
         },
       ],
+    },
+    {
+      type: 'paragraph',
+      text: 'Enquanto um arco está selecionado, a tela de vocabulário edita os termos desse arco. Um termo deixado vazio usa o da história e, depois, o padrão da forma da obra.',
     },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {

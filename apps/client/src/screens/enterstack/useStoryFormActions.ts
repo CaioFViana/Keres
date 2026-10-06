@@ -143,9 +143,12 @@ export function useStoryFormActions({
               storyData,
               state.selectedPackIds,
               state.selectedPackIds.filter((packId) => !state.packsWithoutExtras.includes(packId)),
+              { arcMedium: state.arcMedium },
             );
           } else {
-            await storyServiceRef.current.createStory(userId, storyData);
+            await storyServiceRef.current.createStory(userId, storyData, {
+              arcMedium: state.arcMedium,
+            });
           }
           AppAlert.alert(t('success'), t('story_created_successfully'));
         }

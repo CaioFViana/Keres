@@ -56,6 +56,8 @@ const createState = (overrides: Partial<StoryFormState> = {}): StoryFormState =>
     setSelectedPackIds: jest.fn(),
     packsWithoutExtras: [],
     togglePackExtras: jest.fn(),
+    arcMedium: 'generic',
+    setArcMedium: jest.fn(),
     loading: false,
     error: null,
     setError: jest.fn(),
@@ -122,6 +124,7 @@ it('coordinates persistence, success messaging and back navigation after creatio
   expect(storyService.createStory).toHaveBeenCalledWith(
     'user-1',
     expect.objectContaining({ title: 'Draft', type: 'linear', autoLinkMentions: true }),
+    { arcMedium: 'generic' },
   );
   expect(mockAlert).toHaveBeenCalledWith('success', 'story_created_successfully');
   expect(navigation.goBack).toHaveBeenCalled();
@@ -139,6 +142,7 @@ it('applies selected packs after conflict checks when creating', async () => {
     expect.objectContaining({ title: 'Draft' }),
     ['pack-1', 'pack-2'],
     ['pack-1', 'pack-2'],
+    { arcMedium: 'generic' },
   );
   expect(storyService.createStory).not.toHaveBeenCalled();
   expect(mockAlert).toHaveBeenCalledWith('success', 'story_created_successfully');
@@ -159,7 +163,18 @@ it('installs extras only for the packs the author left switched on', async () =>
     expect.objectContaining({ title: 'Draft' }),
     ['pack-1', 'pack-2'],
     ['pack-1'],
+    { arcMedium: 'generic' },
   );
+});
+
+it('creates the first work in the form the author chose', async () => {
+  const view = await renderActions(createState({ arcMedium: 'comic' }));
+
+  await act(async () => view.result.current.handleSave());
+
+  expect(storyService.createStory).toHaveBeenCalledWith('user-1', expect.anything(), {
+    arcMedium: 'comic',
+  });
 });
 
 it('stops creation when selected packs conflict', async () => {

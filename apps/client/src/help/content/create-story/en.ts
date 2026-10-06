@@ -87,6 +87,12 @@ const page: HelpPage = {
           whatToWrite: 'Choose the visual appearance used while the story is open.',
           note: 'This is not the narrative theme of the work.',
         },
+        {
+          key: 'coverGalleryId',
+          label: 'Cover',
+          whatToWrite: "Pick an image from this story's gallery to stand for the whole universe.",
+          note: 'Optional. It is shown where the story is presented, such as the showcase. Each work (arc) can have its own cover.',
+        },
       ],
     },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },

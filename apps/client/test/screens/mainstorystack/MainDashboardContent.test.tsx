@@ -54,6 +54,18 @@ jest.mock('../../../src/components/layout/ScreenSection/ScreenSection', () => {
   };
 });
 
+jest.mock('../../../src/components/features/arcs/UniverseWorksSection', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ arcs, onOpenArcs }: { arcs: unknown[]; onOpenArcs: () => void }) => (
+      <Text testID="universe-works" onPress={onOpenArcs}>
+        {`works:${arcs.length}`}
+      </Text>
+    ),
+  };
+});
+
 jest.mock('../../../src/components/common/display/SummaryCard/SummaryCard', () => {
   const { Text } = require('react-native');
   return {
@@ -196,6 +208,25 @@ function summaryJson(view: { getByTestId: (id: string) => { props: { children?: 
 describe('MainDashboardContent', () => {
   afterEach(() => {
     cleanup();
+  });
+
+  it('introduces the works of the universe when the screen can open them', async () => {
+    const onOpenArcs = jest.fn();
+    const arcs = [{ id: 'arc-1' }, { id: 'arc-2' }];
+    const view = await render(<MainDashboardContent {...baseProps({ arcs, onOpenArcs })} />);
+
+    expect(view.getByTestId('universe-works').props.children).toBe('works:2');
+    await fireEvent.press(view.getByTestId('universe-works'));
+    expect(onOpenArcs).toHaveBeenCalled();
+  });
+
+  it('shows no works section without arcs or without a way to open them', async () => {
+    const none = await render(
+      <MainDashboardContent {...baseProps({ arcs: [], onOpenArcs: jest.fn() })} />,
+    );
+    expect(none.queryByTestId('universe-works')).toBeNull();
+    const unwired = await render(<MainDashboardContent {...baseProps({ arcs: [{ id: 'a' }] })} />);
+    expect(unwired.queryByTestId('universe-works')).toBeNull();
   });
 
   it('renders the empty state without a story', async () => {

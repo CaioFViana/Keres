@@ -7,6 +7,7 @@ import { BackHandler, Platform } from 'react-native';
 
 import { useDrizzle } from '../../db';
 import { useScreenTour } from '../../guides/useScreenTour';
+import { useStoryArcs } from '../../hooks/useStoryArcs';
 import { useStoryReport } from '../../hooks/useStoryReport';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import ReportStoryModal from '../../components/features/story/ReportStoryModal/ReportStoryModal';
@@ -37,6 +38,7 @@ const MainDashboardScreen = () => {
   // Only a positively known non-owner reports: an unresolved role (or the owner's own) hides
   // the action, and local-only stories have no administrators to report to.
   const { role } = useStoryRole(selectedStory?.id);
+  const { arcs } = useStoryArcs();
   const storyReport = useStoryReport(selectedStory?.id);
   const showReportAction = role !== null && role !== 'owner' && storyReport.canReport;
 
@@ -246,6 +248,10 @@ const MainDashboardScreen = () => {
         }}
         onOpenOperationLog={() => {
           navigation.navigate('OperationLogStack', { screen: 'OperationLog' });
+        }}
+        arcs={arcs}
+        onOpenArcs={() => {
+          navigation.navigate('CustomizationStack', { screen: 'StoryArcList' });
         }}
       />
     </>

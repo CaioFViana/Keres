@@ -19,7 +19,14 @@ import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
 import { getCommonInputStyles } from '@/src/theme/commonStyles';
 import { resolveEffectiveTheme } from '@/src/utils/storyArcFilter';
-import { themeDisplayOptions } from '@keres/shared';
+import {
+  DEFAULT_ARC_MEDIUM,
+  isArcMedium,
+  themeDisplayOptions,
+  type ArcMedium,
+} from '@keres/shared';
+import ArcMediumSelect from '@/src/components/features/arcs/ArcMediumSelect';
+import GalleryCoverField from '@/src/components/features/gallery/GalleryCoverField';
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -35,6 +42,9 @@ type ArcFormDraftFields = {
   description: string;
   icon: string | null;
   themeOverride: string | null;
+  medium: ArcMedium;
+  author: string;
+  coverGalleryId: string | null;
 };
 
 const CREATE_PRISTINE: ArcFormDraftFields = {
@@ -42,13 +52,22 @@ const CREATE_PRISTINE: ArcFormDraftFields = {
   description: '',
   icon: null,
   themeOverride: null,
+  medium: DEFAULT_ARC_MEDIUM,
+  author: '',
+  coverGalleryId: null,
 };
 
 const isArcFormDraftFields = (fields: ArcFormDraftFields): boolean =>
   typeof fields.title === 'string' &&
   typeof fields.description === 'string' &&
   (fields.icon === null || typeof fields.icon === 'string') &&
-  (fields.themeOverride === null || typeof fields.themeOverride === 'string');
+  (fields.themeOverride === null || typeof fields.themeOverride === 'string') &&
+  // Drafts stored before these fields existed lack them; that is fine, not corrupt.
+  (fields.medium === undefined || isArcMedium(fields.medium)) &&
+  (fields.author === undefined || typeof fields.author === 'string') &&
+  (fields.coverGalleryId === undefined ||
+    fields.coverGalleryId === null ||
+    typeof fields.coverGalleryId === 'string');
 
 const StoryArcFormScreen = () => {
   useBackButtonHandler({ showWebBackButton: true });
@@ -69,6 +88,9 @@ const StoryArcFormScreen = () => {
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState<string | null>(null);
   const [themeOverride, setThemeOverride] = useState<string | null>(null);
+  const [medium, setMedium] = useState<ArcMedium>(DEFAULT_ARC_MEDIUM);
+  const [author, setAuthor] = useState('');
+  const [coverGalleryId, setCoverGalleryId] = useState<string | null>(null);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const isEditing = !!arcId;
@@ -94,11 +116,17 @@ const StoryArcFormScreen = () => {
         setDescription(arc.description ?? '');
         setIcon(arc.icon ?? null);
         setThemeOverride(arc.themeOverride);
+        setMedium(arc.medium);
+        setAuthor(arc.author ?? '');
+        setCoverGalleryId(arc.coverGalleryId);
         setLoadedPristine({
           title: arc.title,
           description: arc.description ?? '',
           icon: arc.icon ?? null,
           themeOverride: arc.themeOverride,
+          medium: arc.medium,
+          author: arc.author ?? '',
+          coverGalleryId: arc.coverGalleryId,
         });
         setLoadedUpdatedAt(arc.updatedAt?.toISOString?.() ?? null);
         setLoaded(true);
@@ -114,6 +142,9 @@ const StoryArcFormScreen = () => {
     setDescription(fields.description);
     setIcon(fields.icon);
     setThemeOverride(fields.themeOverride);
+    setMedium(fields.medium ?? DEFAULT_ARC_MEDIUM);
+    setAuthor(fields.author ?? '');
+    setCoverGalleryId(fields.coverGalleryId ?? null);
   }, []);
 
   const { clearFormDraft, deleteStoredDraft } = useDurableFormDraft<ArcFormDraftFields>({
@@ -121,7 +152,7 @@ const StoryArcFormScreen = () => {
     entityType: 'StoryArc',
     entityId: arcId,
     enabled: !!story?.id && loaded,
-    snapshot: { title, description, icon, themeOverride },
+    snapshot: { title, description, icon, themeOverride, medium, author, coverGalleryId },
     pristine: loadedPristine ?? CREATE_PRISTINE,
     baseUpdatedAt: arcId ? loadedUpdatedAt : undefined,
     onRestore: restoreDraftFields,
@@ -129,7 +160,8 @@ const StoryArcFormScreen = () => {
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
   const isDirty =
-    JSON.stringify({ title, description, icon, themeOverride }) !== JSON.stringify(pristineFields);
+    JSON.stringify({ title, description, icon, themeOverride, medium, author, coverGalleryId }) !==
+    JSON.stringify(pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -141,6 +173,9 @@ const StoryArcFormScreen = () => {
     setDescription(target.description);
     setIcon(target.icon);
     setThemeOverride(target.themeOverride);
+    setMedium(target.medium);
+    setAuthor(target.author);
+    setCoverGalleryId(target.coverGalleryId);
     await deleteStoredDraft();
   }, [loadedPristine, deleteStoredDraft]);
 
@@ -169,6 +204,9 @@ const StoryArcFormScreen = () => {
           description: description.trim() || null,
           icon,
           themeOverride,
+          medium,
+          author: author.trim() || null,
+          coverGalleryId,
         });
       else
         await service.createArc(userId, {
@@ -179,6 +217,10 @@ const StoryArcFormScreen = () => {
           color: null,
           icon,
           themeOverride,
+          medium,
+          vocabulary: null,
+          author: author.trim() || null,
+          coverGalleryId,
           isDefault: false,
         });
       await clearFormDraft();
@@ -240,6 +282,34 @@ const StoryArcFormScreen = () => {
             multiline
           />
         )}
+      </FormField>
+      <FormField label={t('arc_medium')}>
+        <ArcMediumSelect
+          value={medium}
+          onChange={setMedium}
+          arcTerm={vocab.term('Arc')}
+          disabled={!canEdit}
+        />
+      </FormField>
+      <FormField label={t('arc_author')}>
+        {(fieldAccessibility) => (
+          <TextInput
+            {...fieldAccessibility}
+            testID="input-author"
+            value={author}
+            onChangeText={setAuthor}
+            placeholder={t('arc_author_placeholder')}
+            editable={canEdit}
+          />
+        )}
+      </FormField>
+      <FormField label={t('cover')}>
+        <GalleryCoverField
+          storyId={story?.id}
+          value={coverGalleryId}
+          onChange={setCoverGalleryId}
+          editable={canEdit}
+        />
       </FormField>
       {canEdit ? (
         <FormField label={t('arc_icon')}>

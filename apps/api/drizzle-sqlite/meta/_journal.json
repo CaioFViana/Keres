@@ -351,6 +351,13 @@
       "when": 1791311190921,
       "tag": "0049_thick_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791312801528,
+      "tag": "0050_long_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

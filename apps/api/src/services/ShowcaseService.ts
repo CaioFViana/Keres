@@ -34,8 +34,11 @@ export class ShowcaseService {
   }
 
   private versionOf(row: typeof storyPublications.$inferSelect): ShowcaseVersion {
+    const snapshot = row.snapshot as StoryPublicationSnapshot;
     return {
       id: row.id,
+      // A release of one work names it as it stood then; null is a version of the whole universe.
+      arc: row.arcId ? (snapshot.arc ?? null) : null,
       label: row.label,
       byteSize: row.byteSize,
       mediaIncluded: row.mediaIncluded,

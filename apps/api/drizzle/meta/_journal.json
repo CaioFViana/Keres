@@ -449,6 +449,13 @@
       "when": 1791311189348,
       "tag": "0063_acoustic_zarek",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1791312800153,
+      "tag": "0064_oval_captain_cross",
+      "breakpoints": true
     }
   ]
 }

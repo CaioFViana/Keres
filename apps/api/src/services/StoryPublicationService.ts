@@ -1,20 +1,15 @@
 import {
   buildPublicationLabel,
-  compileStoryReader,
   CURRENT_STORY_FORMAT_VERSION,
   FORMAT_META,
-  ManuscriptOptionsSchema,
-  ReaderOptionsSchema,
   type FullStoryExportType,
-  type ManuscriptFormat,
-  type ManuscriptOptions,
   type ManuscriptOptionsInput,
   type PublicationLabelMode,
   type ReaderOptionsInput,
   type ShowcaseVisibility,
+  type StoryArcRowType,
   type StoryPublicationSnapshot,
 } from '@keres/shared';
-import { compileStoryManuscript } from '@keres/shared/manuscript/export';
 import { buildStoryZipBytes } from '@keres/shared/utils/storyZip';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { ulid } from 'ulid';
@@ -25,10 +20,16 @@ import { emitUserEvent } from '../modules/webSocket/webSocket.route';
 import { AppError } from '../utils/errors';
 import { createExclusiveGate } from '../utils/exclusive';
 import { mediaStorageService } from './MediaStorageService';
-import { publicationPdfFontMatrices } from './publicationPdfFonts';
 import { publicationStorageService } from './PublicationStorageService';
 import { showcaseSettingsService } from './ShowcaseSettingsService';
-import { compileInputOf } from './publicationCompileInput';
+import {
+  assertArcBelongs,
+  compileManuscript,
+  compileReader,
+  ownerHandleOf,
+  parseManuscriptOptions,
+  parseReaderOptions,
+} from './publicationCompile';
 import { TierLimitExceededError, tierEnforcementService } from './TierEnforcementService';
 import { StoryExportImportService } from './StoryExportImportService';
 
@@ -79,8 +80,22 @@ export class StoryPublicationService {
     return story;
   }
 
-  private snapshotOf(story: typeof stories.$inferSelect): StoryPublicationSnapshot {
+  private snapshotOf(
+    story: typeof stories.$inferSelect,
+    arc: StoryArcRowType | undefined,
+  ): StoryPublicationSnapshot {
     return {
+      ...(arc
+        ? {
+            arc: {
+              id: arc.id,
+              title: arc.title,
+              description: arc.description,
+              author: arc.author,
+              medium: arc.medium,
+            },
+          }
+        : {}),
       title: story.title,
       description: story.description,
       genre: story.genre,
@@ -133,99 +148,6 @@ export class StoryPublicationService {
     }
   }
 
-  /**
-   * Validates the requested manuscript options against the story, without compiling anything.
-   *
-   * A branching story is exported whole, as a gamebook, so it takes no route. The arc, when one is
-   * asked, must be one of this story's live ones, read from the same export the manuscript will be
-   * compiled from.
-   */
-  private parseManuscriptOptions(
-    storyExport: FullStoryExportType,
-    manuscript: ManuscriptOptionsInput,
-  ): ManuscriptOptions {
-    const parsed = ManuscriptOptionsSchema.safeParse(manuscript);
-    if (!parsed.success) {
-      const details = parsed.error.issues
-        .map((issue) => `${issue.path.join('.') || 'manuscript'}: ${issue.message}`)
-        .join('; ');
-      throw new AppError(400, `Invalid manuscript options: ${details}.`);
-    }
-    this.assertArcBelongs(storyExport, parsed.data.arcId);
-    return parsed.data;
-  }
-
-  /** The reader takes the manuscript's choices (arc, names, typography...) and its own words. */
-  private parseReaderOptions(
-    storyExport: FullStoryExportType,
-    reader: ReaderOptionsInput,
-  ): ReaderOptionsInput {
-    const parsed = ReaderOptionsSchema.safeParse(reader);
-    if (!parsed.success) {
-      const details = parsed.error.issues
-        .map((issue) => `${issue.path.join('.') || 'reader'}: ${issue.message}`)
-        .join('; ');
-      throw new AppError(400, `Invalid reader options: ${details}.`);
-    }
-    this.assertArcBelongs(storyExport, parsed.data.arcId);
-    return parsed.data;
-  }
-
-  private assertArcBelongs(storyExport: FullStoryExportType, arcId: string | undefined): void {
-    if (!arcId) return;
-    const belongs = (storyExport.storyArcs ?? []).some(
-      (arc) => arc.id === arcId && arc.storyId === storyExport.story.id && !arc.isDeleted,
-    );
-    if (!belongs) {
-      throw new AppError(400, `Arc "${arcId}" does not belong to this story.`);
-    }
-  }
-
-  /** Compiles the manuscript from the already-fetched export. Oversized output is the caller's fault. */
-  private async compileManuscript(
-    storyExport: FullStoryExportType,
-    options: ManuscriptOptions,
-  ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
-    try {
-      const compiled = await compileStoryManuscript(
-        compileInputOf(storyExport),
-        // The book's author defaults to the story's, as on the device.
-        {
-          ...options,
-          author: options.author === undefined ? storyExport.story.author : options.author,
-        },
-        // Serif matrices when the image carries them (undefined = Times, same bytes as ever).
-        await publicationPdfFontMatrices(),
-      );
-      return { bytes: compiled.bytes, format: options.format };
-    } catch (error) {
-      // The compiler throws a plain Error for input-caused failures (output past the
-      // byte cap). Those are 400s; anything else (a renderer bug) keeps bubbling as a 500.
-      if (error instanceof Error && /exceeds the .* limit/.test(error.message)) {
-        throw new AppError(400, error.message);
-      }
-      throw error;
-    }
-  }
-
-  /** Compiles the online reader page from the same export, with the same guarantees. */
-  private compileReader(
-    storyExport: FullStoryExportType,
-    options: ReaderOptionsInput,
-  ): { bytes: Uint8Array } {
-    try {
-      return compileStoryReader(compileInputOf(storyExport), {
-        ...options,
-        author: options.author === undefined ? storyExport.story.author : options.author,
-      });
-    } catch (error) {
-      if (error instanceof Error && /exceeds the .* limit/.test(error.message)) {
-        throw new AppError(400, error.message);
-      }
-      throw error;
-    }
-  }
-
   /** Removes a version's blobs: the .zip and, when they were published, the manuscript and reader siblings. */
   private async deleteVersionBlobs(
     storyId: string,
@@ -256,9 +178,29 @@ export class StoryPublicationService {
     manuscript?: ManuscriptOptionsInput,
     reader?: ReaderOptionsInput,
     includePackage = true,
+    arcId?: string,
   ) {
     await this.assertShowcaseEnabled();
     const story = await this.assertOwnership(userId, storyId);
+
+    // A release of one work carries its manuscript and/or the online reader, never the package: the
+    // package is the whole story, and publishing Book I must not hand over Book II.
+    if (arcId !== undefined) {
+      if (includePackage) {
+        throw new AppError(
+          400,
+          'A release of one work carries a manuscript and/or the online reader, never the story package.',
+        );
+      }
+      for (const options of [manuscript, reader]) {
+        if (options?.arcId !== undefined && options.arcId !== arcId) {
+          throw new AppError(
+            400,
+            'The manuscript and the reader must be of the work being released.',
+          );
+        }
+      }
+    }
 
     // The client also blocks the button, but the server decides: publishing a story with a pending local
     // change would produce a package matching what exists nowhere - not on the device, not here.
@@ -286,6 +228,9 @@ export class StoryPublicationService {
     // client already reads 403 as "the showcase is off".
     try {
       await tierEnforcementService.assertCanPublish(userId);
+      if (arcId !== undefined) {
+        await tierEnforcementService.assertCanPublishArc(userId, storyId, arcId);
+      }
     } catch (error) {
       if (error instanceof TierLimitExceededError) {
         throw new AppError(429, error.message);
@@ -306,15 +251,24 @@ export class StoryPublicationService {
     // Validated and compiled before any blob is written, so a refused manuscript leaves no litter -
     // the same guarantee the .zip gets from the rollback below. `includeLooseScenes` needs no
     // branching branch here: the route compiler ignores it by construction.
+    if (arcId !== undefined) assertArcBelongs(storyExport, arcId);
+    const arcRow = arcId
+      ? (storyExport.storyArcs ?? []).find((row) => row.id === arcId)
+      : undefined;
+    const ownerHandle = await ownerHandleOf(userId);
     const manuscriptOptions =
-      manuscript === undefined ? null : this.parseManuscriptOptions(storyExport, manuscript);
+      manuscript === undefined
+        ? null
+        : parseManuscriptOptions(storyExport, { ...manuscript, ...(arcId ? { arcId } : {}) });
     let compiledManuscript = manuscriptOptions
-      ? await compileGate(() => this.compileManuscript(storyExport!, manuscriptOptions))
+      ? await compileGate(() => compileManuscript(storyExport!, manuscriptOptions, ownerHandle))
       : null;
     const readerOptions =
-      reader === undefined ? null : this.parseReaderOptions(storyExport, reader);
+      reader === undefined
+        ? null
+        : parseReaderOptions(storyExport, { ...reader, ...(arcId ? { arcId } : {}) });
     let compiledReader = readerOptions
-      ? await compileGate(() => this.compileReader(storyExport!, readerOptions))
+      ? await compileGate(() => compileReader(storyExport!, readerOptions, ownerHandle))
       : null;
     // Explicit release between stages: the export fed every compile above and nothing below reads
     // it, so drop it now instead of carrying a whole book beside its compiled outputs.
@@ -373,6 +327,7 @@ export class StoryPublicationService {
         await tx.insert(storyPublications).values({
           id: publicationId,
           storyId,
+          arcId: arcId ?? null,
           ownerUserId: userId,
           label: buildPublicationLabel(
             labelMode,
@@ -389,20 +344,25 @@ export class StoryPublicationService {
           manuscriptFormat,
           manuscriptByteSize,
           readerByteSize,
-          snapshot: this.snapshotOf(story),
+          snapshot: this.snapshotOf(story, arcRow),
         });
 
         // The trimming is done here rather than in SQL because `OFFSET` without `LIMIT` is invalid on SQLite,
         // and there are at most six rows per story - not worth an artificial `LIMIT` just for that.
-        const existingIds = await tx
-          .select({
-            id: storyPublications.id,
-            manuscriptFormat: storyPublications.manuscriptFormat,
-            readerByteSize: storyPublications.readerByteSize,
-          })
-          .from(storyPublications)
-          .where(eq(storyPublications.storyId, storyId))
-          .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id));
+        const existingIds = (
+          await tx
+            .select({
+              id: storyPublications.id,
+              arcId: storyPublications.arcId,
+              manuscriptFormat: storyPublications.manuscriptFormat,
+              readerByteSize: storyPublications.readerByteSize,
+            })
+            .from(storyPublications)
+            .where(eq(storyPublications.storyId, storyId))
+            .orderBy(desc(storyPublications.createdAt), desc(storyPublications.id))
+        )
+          // Each work keeps its own five versions; the universe's versions are a group of their own.
+          .filter((row) => (row.arcId ?? null) === (arcId ?? null));
         const surplus = existingIds.slice(MAX_PUBLICATIONS_PER_STORY);
 
         if (surplus.length > 0) {

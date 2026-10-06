@@ -37,6 +37,12 @@ export const storyPublications = table(
     ownerUserId: text('owner_user_id')
       .notNull()
       .references(() => users.id),
+    /**
+     * The work (arc) this version releases, or null for a version of the whole universe. An arc
+     * release carries a manuscript and/or the online reader of that arc only - never the package,
+     * which is the whole story. No foreign key: the release outlives the arc it came from.
+     */
+    arcId: text('arc_id'),
     /** The version's name, in the style the owner chose (see `buildPublicationLabel`). */
     label: text('label').notNull(),
     /** `stories.lastOperationVersion` at the instant of publication. */

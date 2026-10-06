@@ -8,6 +8,7 @@ import { AppError } from '../../utils/errors';
 const PublicationResponseSchema = t.Object({
   id: t.String(),
   storyId: t.String(),
+  arcId: t.Nullable(t.String()),
   ownerUserId: t.String(),
   label: t.String(),
   operationVersion: t.Number(),
@@ -112,7 +113,9 @@ export const publicationRoutes = new Elysia()
         body.password,
         body.manuscript,
         body.reader,
-        body.includePackage ?? true,
+        // A release of one work never carries the package, so asking for none is implied.
+        body.includePackage ?? body.arcId === undefined,
+        body.arcId,
       ),
     {
       params: t.Object({ storyId: t.String() }),
@@ -134,6 +137,8 @@ export const publicationRoutes = new Elysia()
         reader: t.Optional(ReaderRequestSchema),
         /** Off only together with a manuscript and/or a reader; the server refuses a version with nothing in it. */
         includePackage: t.Optional(t.Boolean()),
+        /** Releases this one work (arc) of the story: manuscript and/or reader only, never the package. */
+        arcId: t.Optional(t.String()),
       }),
       detail: {
         summary: 'Publish a new public version of a story',

@@ -1,8 +1,16 @@
 import { getTierCountedEntityTypes, type StoryPlan } from '@keres/shared';
-import { and, count, eq, gte, lt, sql } from 'drizzle-orm';
+import { and, count, eq, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import { db } from '../db';
-import { galleries, mediaBlobs, publicationLog, stories, tiers, users } from '../db/schema';
+import {
+  galleries,
+  mediaBlobs,
+  publicationLog,
+  stories,
+  storyPublications,
+  tiers,
+  users,
+} from '../db/schema';
 import { effectiveDefaultTierId } from './defaultTier';
 import { entitledTierId } from './payments/entitlement';
 import { syncService } from './SyncService';
@@ -97,6 +105,31 @@ export class TierEnforcementService {
     if (total >= tier.maxPublicationsPerDay) {
       throw new TierLimitExceededError(
         `Publication limit reached for your plan (${tier.maxPublicationsPerDay} per day). Try again later.`,
+      );
+    }
+  }
+
+  /**
+   * Whether a story may put one more of its works (arcs) on the showcase. A work that already has a
+   * live version takes no new slot - publishing again is a new version of it, not another work - and
+   * deleting its last version gives the slot back. `maxPublishedArcs` is per story: a story is one
+   * universe, and the ceiling is how many works of it are on show at once.
+   */
+  async assertCanPublishArc(userId: string, storyId: string, arcId: string): Promise<void> {
+    const tier = await this.getEffectiveTier(userId);
+    if (!tier || tier.maxPublishedArcs === null) {
+      return;
+    }
+    const live = await db
+      .selectDistinct({ arcId: storyPublications.arcId })
+      .from(storyPublications)
+      .where(and(eq(storyPublications.storyId, storyId), isNotNull(storyPublications.arcId)));
+    if (live.some((row) => row.arcId === arcId)) {
+      return;
+    }
+    if (live.length >= tier.maxPublishedArcs) {
+      throw new TierLimitExceededError(
+        `Published works limit reached for your plan (${tier.maxPublishedArcs} per story). Remove a work's last version first.`,
       );
     }
   }

@@ -22,6 +22,14 @@ export const OwnerSchema = t.Object({
   avatarIcon: t.Nullable(t.String()),
 });
 
+export const ArcSnapshotSchema = t.Object({
+  id: t.String(),
+  title: t.String(),
+  description: t.Nullable(t.String()),
+  author: t.Nullable(t.String()),
+  medium: t.String(),
+});
+
 export const SnapshotSchema = t.Object({
   title: t.String(),
   description: t.Nullable(t.String()),
@@ -32,10 +40,14 @@ export const SnapshotSchema = t.Object({
   theme: t.Nullable(t.String()),
   // Absent on versions published before the flag existed.
   isNsfw: t.Optional(t.Boolean()),
+  // Only on a release of one work.
+  arc: t.Optional(ArcSnapshotSchema),
 });
 
 export const VersionSchema = t.Object({
   id: t.String(),
+  /** The work this version releases, or null for a version of the whole universe. */
+  arc: t.Nullable(ArcSnapshotSchema),
   label: t.String(),
   byteSize: t.Number(),
   mediaIncluded: t.Number(),

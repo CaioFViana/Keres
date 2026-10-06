@@ -17,6 +17,13 @@ const tierFns = vi.hoisted(() => ({
   assertCanPublish: vi.fn(async (_userId: string) => {}),
   recordPublication: vi.fn(async (_tx: unknown, _userId: string, _storyId: string) => {}),
 }));
+const compileFns = vi.hoisted(() => ({
+  compileManuscript: vi.fn(async () => ({
+    bytes: new Uint8Array([1, 2, 3]),
+    format: 'md' as const,
+  })),
+  compileReader: vi.fn(() => ({ bytes: new Uint8Array([4, 5]) })),
+}));
 const dbState = vi.hoisted(() => ({ failTransaction: false, inserts: [] as unknown[] }));
 
 vi.mock('../../src/services/PublicationStorageService', () => ({
@@ -25,6 +32,12 @@ vi.mock('../../src/services/PublicationStorageService', () => ({
 vi.mock('../../src/services/TierEnforcementService', () => ({
   tierEnforcementService: { ...tierFns },
   TierLimitExceededError: class TierLimitExceededError extends Error {},
+}));
+// Compiling a book is its own module's business; the rest of it (option parsing) stays real.
+vi.mock('../../src/services/publicationCompile', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../src/services/publicationCompile')>()),
+  ...compileFns,
+  ownerHandleOf: async () => '@ana',
 }));
 vi.mock('../../src/services/ShowcaseSettingsService', () => ({
   showcaseSettingsService: { isEnabled: async () => true },
@@ -85,22 +98,10 @@ const STORY_EXPORT = {
   galleryItems: [],
 };
 
-type PublishInternals = {
-  compileManuscript: (...args: never[]) => Promise<{ bytes: Uint8Array; format: 'md' }>;
-  compileReader: (...args: never[]) => { bytes: Uint8Array };
-};
-
 function makeService() {
-  const service = new StoryPublicationService({
+  return new StoryPublicationService({
     exportStory: async () => STORY_EXPORT,
   } as never);
-  const internals = service as unknown as PublishInternals;
-  vi.spyOn(internals, 'compileManuscript').mockResolvedValue({
-    bytes: new Uint8Array([1, 2, 3]),
-    format: 'md',
-  });
-  vi.spyOn(internals, 'compileReader').mockReturnValue({ bytes: new Uint8Array([4, 5]) });
-  return service;
 }
 
 function publishAll(service: StoryPublicationService) {

@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   listLogs: vi.fn(),
   listActivity: vi.fn(),
   paymentsSummary: vi.fn(),
+  paymentsHealth: vi.fn(),
   paymentsSubscriptions: vi.fn(),
   paymentsEvents: vi.fn(),
   activitySummary: vi.fn(),
@@ -82,6 +83,7 @@ vi.mock('../../src/api/LogsApiService', () => ({ LogsApiService: { list: mocks.l
 vi.mock('../../src/api/PaymentsApiService', () => ({
   PaymentsApiService: {
     summary: mocks.paymentsSummary,
+    health: mocks.paymentsHealth,
     subscriptions: mocks.paymentsSubscriptions,
     events: mocks.paymentsEvents,
   },
@@ -126,6 +128,7 @@ beforeEach(() => {
   mocks.listLogs.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.listActivity.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 50 });
   mocks.paymentsSummary.mockResolvedValue(null);
+  mocks.paymentsHealth.mockResolvedValue(null);
   mocks.paymentsSubscriptions.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.paymentsEvents.mockResolvedValue({ items: [], total: 0, page: 1, pageSize: 25 });
   mocks.activitySummary.mockResolvedValue(null);

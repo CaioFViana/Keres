@@ -354,10 +354,32 @@
       "subscription_canceled": "Subscription ended",
       "subscription_due": "Period ran out unpaid",
       "checkout_expired": "Attempt expired",
-      "gift_granted": "Plan given"
+      "gift_granted": "Plan given",
+      "payment_refunded": "Refunded"
     },
     "noDefaultTier": "This server has no default plan. When somebody’s paid period ends and no plan was assigned to them, they end up with no limits at all - more than a free plan gives. Create a free plan and mark it as the default: tick \"Default tier\" on the plan, or choose it in Registration (the two are the same setting).",
-    "giftProvider": "Gift (administrator)"
+    "giftProvider": "Gift (administrator)",
+    "refunded30": "Refunded, 30 days",
+    "warnings": {
+      "no-connector": "The server is set to use a payment connector but is not connected to it. Payments are off until it answers (the server keeps trying).",
+      "no-notice": "People are paid up but no notice has come from the provider for over a month. Check the provider’s webhooks and the connector.",
+      "reconcile-failing": "The safety net could not ask the provider about some subscriptions or attempts on its last run. Check the connector and the provider.",
+      "reconcile-found": "The safety net found payments in the last 7 days whose notice never arrived. The provider’s webhooks are not reaching the connector (or Keres) reliably.",
+      "overdue": "Some subscriptions are past their date and unpaid (due). They have lost their plan until they pay.",
+      "unmatched": "Notices arrived in the last 7 days about something this server never opened (another environment, a deleted attempt).",
+      "stale-attempts": "Many payment attempts have been open for over an hour. Check that payments can be completed."
+    },
+    "health": {
+      "title": "Are payments working?",
+      "connected": "Connector “{{id}}” is connected ({{capabilities}}).",
+      "noOptional": "no optional parts",
+      "notConnected": "No connector is connected.",
+      "lastNotice": "Last notice from a provider: {{when}}.",
+      "noNotice": "No notice from a provider yet.",
+      "safetyNet": "Safety net, last run since this server started: {{when}} - asked about {{subscriptions}} subscription(s) and {{attempts}} attempt(s), found {{found}} missed payment(s).",
+      "safetyNetNotYet": "Safety net: has not run since this server started (it runs every 15 minutes).",
+      "overdue": "Past their date: {{renewing}} still inside the margin for the renewal to arrive, {{due}} due."
+    }
   },
   "recovery": {
     "title": "Recovery",

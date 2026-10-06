@@ -1,5 +1,6 @@
 import type {
   AdminGiftCreate,
+  AdminPaymentHealth,
   AdminPaymentEventListQuery,
   AdminPaymentEventPage,
   AdminPaymentSummary,
@@ -19,6 +20,11 @@ export type SubscriptionFilters = Partial<AdminSubscriptionListQuery>;
 export const PaymentsApiService = {
   async summary(): Promise<AdminPaymentSummary> {
     const { data } = await apiClient.get('/admin/payments/summary');
+    return data;
+  },
+  /** Whether the money side is working: the connector, the notices, the safety net, what is stuck. */
+  async health(): Promise<AdminPaymentHealth> {
+    const { data } = await apiClient.get('/admin/payments/health');
     return data;
   },
   async subscriptions(filters: SubscriptionFilters): Promise<AdminSubscriptionPage> {

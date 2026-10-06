@@ -7,6 +7,7 @@ import { changeInput, click, flush, render, submit } from '../helpers/react';
 
 const mocks = vi.hoisted(() => ({
   summary: vi.fn(),
+  health: vi.fn(),
   subscriptions: vi.fn(),
   events: vi.fn(),
 }));
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../src/api/PaymentsApiService', () => ({
   PaymentsApiService: {
     summary: mocks.summary,
+    health: mocks.health,
     subscriptions: mocks.subscriptions,
     events: mocks.events,
   },
@@ -61,15 +63,34 @@ const summary = (over: Record<string, unknown> = {}) => ({
   currency: 'BRL',
   subscriptions: { active: 4, due: 2, canceled: 1 },
   endingSoon: 1,
-  last30Days: { payments: 6, failures: 2, amountCents: 11940 },
+  last30Days: { payments: 6, failures: 2, amountCents: 11940, refundedCents: 0 },
   monthlyRecurringCents: 7960,
   noDefaultTier: false,
+  ...over,
+});
+
+const health = (over: Record<string, unknown> = {}) => ({
+  connector: { connected: true, id: 'fakepay', capabilities: ['status', 'cancel', 'reconcile'] },
+  lastNoticeAt: '2026-03-03T10:00:00.000Z',
+  reconciliation: {
+    lastRunAt: '2026-03-03T11:00:00.000Z',
+    subscriptionsAsked: 2,
+    attemptsAsked: 1,
+    found: 0,
+    failures: 0,
+  },
+  foundByReconciliation7d: 0,
+  overdue: { renewing: 1, due: 0 },
+  staleAttempts: 0,
+  unmatched7d: 0,
+  warnings: [],
   ...over,
 });
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.summary.mockResolvedValue(summary());
+  mocks.health.mockResolvedValue(health());
   mocks.subscriptions.mockResolvedValue(page([subscription()]));
   mocks.events.mockResolvedValue(page([ledger()]));
 });
@@ -414,6 +435,90 @@ describe('payments page: the ledger', () => {
     const view = await openLedger();
 
     expect(view.container.querySelector('.error-text')?.textContent).toContain('ledger down');
+  });
+});
+
+describe('payments page: whether payments are working', () => {
+  it('says the connector is there, when the last notice came, what the safety net did and what is late', async () => {
+    const view = await renderPage();
+    await flush();
+
+    const panel = view.container.querySelector('[data-testid="payments-health"]') as HTMLElement;
+    expect(panel.textContent).toContain('fakepay');
+    expect(panel.textContent).toContain('status, cancel, reconcile');
+    expect(panel.textContent).toContain('Last notice from a provider');
+    expect(panel.textContent).toContain('asked about 2 subscription(s) and 1 attempt(s), found 0');
+    expect(panel.textContent).toContain('1 still inside the margin');
+    expect(
+      view.container.querySelector('[role="alert"][data-testid^="payments-warning"]'),
+    ).toBeNull();
+  });
+
+  it('says it in words when something is wrong', async () => {
+    mocks.health.mockResolvedValue(
+      health({
+        connector: { connected: false, id: null, capabilities: [] },
+        lastNoticeAt: null,
+        reconciliation: null,
+        warnings: ['no-connector', 'reconcile-found', 'overdue'],
+        overdue: { renewing: 0, due: 3 },
+      }),
+    );
+    const view = await renderPage();
+    await flush();
+
+    const panel = view.container.querySelector('[data-testid="payments-health"]') as HTMLElement;
+    expect(panel.textContent).toContain('No connector is connected.');
+    expect(panel.textContent).toContain('No notice from a provider yet.');
+    expect(panel.textContent).toContain('has not run since this server started');
+    expect(
+      view.container.querySelector('[data-testid="payments-warning-no-connector"]'),
+    ).not.toBeNull();
+    expect(
+      view.container.querySelector('[data-testid="payments-warning-reconcile-found"]')?.textContent,
+    ).toContain('webhooks');
+    expect(view.container.querySelector('[data-testid="payments-warning-overdue"]')).not.toBeNull();
+  });
+
+  it('is not missed when it cannot be read: the page carries on', async () => {
+    mocks.health.mockRejectedValue(new Error('down'));
+    const view = await renderPage();
+    await flush();
+
+    expect(view.container.querySelector('[data-testid="payments-health"]')).toBeNull();
+    expect(view.container.querySelector('table')).not.toBeNull();
+  });
+
+  it('shows what was refunded only when something was', async () => {
+    const quiet = await renderPage();
+    await flush();
+    expect(cards(quiet).some((entry) => entry?.includes('Refunded'))).toBe(false);
+    await quiet.unmount();
+
+    mocks.summary.mockResolvedValue(
+      summary({
+        last30Days: { payments: 6, failures: 0, amountCents: 11940, refundedCents: 1990 },
+      }),
+    );
+    const view = await renderPage();
+    await flush();
+
+    expect(
+      cards(view).some((entry) => entry?.includes('19.90') && entry.includes('Refunded')),
+    ).toBe(true);
+  });
+
+  it('names a refund on the ledger', async () => {
+    mocks.events.mockResolvedValue(page([ledger({ kind: 'payment_refunded', amountCents: 1990 })]));
+    const view = await renderPage();
+    await flush();
+    const tab = Array.from(view.container.querySelectorAll('[role="tab"]')).find((entry) =>
+      entry.textContent?.includes('Ledger'),
+    ) as HTMLButtonElement;
+    await click(tab);
+    await flush();
+
+    expect(view.container.querySelector('.ledger-payment_refunded')?.textContent).toBe('Refunded');
   });
 });
 

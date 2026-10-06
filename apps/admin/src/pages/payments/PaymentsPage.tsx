@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type {
   AdminPaymentEvent,
+  AdminPaymentHealth,
   AdminPaymentSummary,
   AdminPaymentUser,
   AdminSubscription,
@@ -61,6 +62,7 @@ export function PaymentsPage() {
   const { t, i18n } = useTranslation('admin');
   const [summary, setSummary] = useState<AdminPaymentSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [health, setHealth] = useState<AdminPaymentHealth | null>(null);
   const [view, setView] = useState<View>('subscriptions');
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
@@ -87,6 +89,21 @@ export function PaymentsPage() {
       })
       .catch((err) => {
         if (!ignore) setSummaryError(err.message);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [tick]);
+
+  // The health panel is a side note: if it cannot be read the page is still the page.
+  useEffect(() => {
+    let ignore = false;
+    PaymentsApiService.health()
+      .then((result) => {
+        if (!ignore) setHealth(result);
+      })
+      .catch(() => {
+        if (!ignore) setHealth(null);
       });
     return () => {
       ignore = true;
@@ -221,11 +238,65 @@ export function PaymentsPage() {
             value={summary.last30Days.failures}
             tone={summary.last30Days.failures > 0 ? 'bad' : undefined}
           />
+          {summary.last30Days.refundedCents > 0 && (
+            <SummaryCard
+              label={t('payments.refunded30')}
+              value={money(summary.last30Days.refundedCents, summary.currency)}
+              tone="warn"
+            />
+          )}
           <SummaryCard
             label={t('payments.monthlyRecurring')}
             value={money(summary.monthlyRecurringCents, summary.currency)}
           />
         </div>
+      )}
+
+      {health && (
+        <section
+          className="card"
+          data-testid="payments-health"
+          aria-label={t('payments.health.title')}
+        >
+          <h2>{t('payments.health.title')}</h2>
+          {health.warnings.map((code) => (
+            <p key={code} className="notice" role="alert" data-testid={`payments-warning-${code}`}>
+              {t(`payments.warnings.${code}`)}
+            </p>
+          ))}
+          <ul className="plain-list">
+            <li>
+              {health.connector.connected
+                ? t('payments.health.connected', {
+                    id: health.connector.id,
+                    capabilities:
+                      health.connector.capabilities.join(', ') || t('payments.health.noOptional'),
+                  })
+                : t('payments.health.notConnected')}
+            </li>
+            <li>
+              {health.lastNoticeAt
+                ? t('payments.health.lastNotice', { when: when(health.lastNoticeAt) })
+                : t('payments.health.noNotice')}
+            </li>
+            <li>
+              {health.reconciliation
+                ? t('payments.health.safetyNet', {
+                    when: when(health.reconciliation.lastRunAt),
+                    subscriptions: health.reconciliation.subscriptionsAsked,
+                    attempts: health.reconciliation.attemptsAsked,
+                    found: health.reconciliation.found,
+                  })
+                : t('payments.health.safetyNetNotYet')}
+            </li>
+            <li>
+              {t('payments.health.overdue', {
+                renewing: health.overdue.renewing,
+                due: health.overdue.due,
+              })}
+            </li>
+          </ul>
+        </section>
       )}
 
       <div className="tabs" role="tablist">

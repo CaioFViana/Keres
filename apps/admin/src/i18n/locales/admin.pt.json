@@ -354,10 +354,32 @@
       "subscription_canceled": "Assinatura encerrada",
       "subscription_due": "Período venceu sem pagamento",
       "checkout_expired": "Tentativa expirada",
-      "gift_granted": "Plano dado"
+      "gift_granted": "Plano dado",
+      "payment_refunded": "Reembolsado"
     },
     "noDefaultTier": "Este servidor não tem plano padrão. Quando o período pago de alguém termina e nenhum plano foi atribuído a essa pessoa, ela fica sem limite nenhum - mais do que um plano gratuito dá. Crie um plano gratuito e marque-o como padrão: marque \"Plano padrão\" no próprio plano, ou escolha-o em Cadastro (as duas coisas são a mesma configuração).",
-    "giftProvider": "Presente (administrador)"
+    "giftProvider": "Presente (administrador)",
+    "refunded30": "Reembolsado, 30 dias",
+    "warnings": {
+      "no-connector": "O servidor está configurado para usar um conector de pagamento, mas não está conectado a ele. Os pagamentos ficam desligados até ele responder (o servidor continua tentando).",
+      "no-notice": "Há gente em dia, mas nenhum aviso do provedor chegou há mais de um mês. Confira os webhooks do provedor e o conector.",
+      "reconcile-failing": "A rede de segurança não conseguiu perguntar ao provedor sobre algumas assinaturas ou tentativas na última rodada. Confira o conector e o provedor.",
+      "reconcile-found": "A rede de segurança achou, nos últimos 7 dias, pagamentos cujo aviso nunca chegou. Os webhooks do provedor não estão chegando ao conector (ou à Keres) com confiança.",
+      "overdue": "Há assinaturas com a data vencida e sem pagamento (em atraso). Elas perderam o plano até pagarem.",
+      "unmatched": "Chegaram, nos últimos 7 dias, avisos sobre algo que este servidor nunca abriu (outro ambiente, uma tentativa apagada).",
+      "stale-attempts": "Muitas tentativas de pagamento estão abertas há mais de uma hora. Confira se os pagamentos conseguem ser concluídos."
+    },
+    "health": {
+      "title": "Os pagamentos estão funcionando?",
+      "connected": "Conector “{{id}}” conectado ({{capabilities}}).",
+      "noOptional": "sem partes opcionais",
+      "notConnected": "Nenhum conector está conectado.",
+      "lastNotice": "Último aviso de um provedor: {{when}}.",
+      "noNotice": "Ainda nenhum aviso de um provedor.",
+      "safetyNet": "Rede de segurança, última rodada desde que este servidor iniciou: {{when}} - consultou {{subscriptions}} assinatura(s) e {{attempts}} tentativa(s), achou {{found}} pagamento(s) perdido(s).",
+      "safetyNetNotYet": "Rede de segurança: ainda não rodou desde que este servidor iniciou (roda a cada 15 minutos).",
+      "overdue": "Com a data vencida: {{renewing}} ainda na margem para a renovação chegar, {{due}} em atraso."
+    }
   },
   "recovery": {
     "title": "Recuperação",

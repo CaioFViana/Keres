@@ -221,6 +221,7 @@ export * from './manuscript/compile/export/manuscriptHtml';
 export * from './manuscript/compile/export/manuscriptPdf';
 export * from './manuscript/compile/manuscriptContracts';
 export * from './manuscript/compile/manuscriptStyle';
+export * from './manuscript/compile/manuscriptSize';
 export * from './manuscript/screenplay/fountain';
 export * from './manuscript/screenplay/fountainParser';
 export * from './manuscript/screenplay/screenplayLayout';

@@ -16,6 +16,7 @@ import {
   type Word,
 } from './manuscriptPdfLayout';
 import { loadPdfFontPack, type PdfFontMatrices, type PdfFontPack } from './manuscriptPdfFonts';
+import { assertWithinManuscriptLimit } from '../manuscriptSize';
 
 export type { ManuscriptPdfLabels } from './manuscriptPdfLayout';
 
@@ -72,6 +73,8 @@ class PdfWriter {
   private push(bytes: Uint8Array): void {
     this.chunks.push(bytes);
     this.length += bytes.length;
+    // A book already past the limit stops here, page by page, instead of finishing a file to throw away.
+    assertWithinManuscriptLimit(this.length);
   }
 
   private flush(): void {

@@ -92,6 +92,7 @@ export function useLocationFormActions({
         > = {
           name: state.name.trim(),
           description: state.description,
+          intExt: state.intExt,
           climate: state.climate,
           culture: state.culture,
           politics: state.politics,

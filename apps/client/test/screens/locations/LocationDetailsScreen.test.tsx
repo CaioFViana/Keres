@@ -177,6 +177,15 @@ jest.mock('../../../src/components/common/display/TagList/TagList', () => {
     ),
   };
 });
+jest.mock('../../../src/components/common/display/DetailField/DetailField', () => {
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ label, value }: { label: string; value: string }) => (
+      <Text testID={`detail-${label}`}>{`${label}:${value}`}</Text>
+    ),
+  };
+});
 jest.mock(
   '../../../src/components/features/comments/CommentableDetailField/CommentableDetailField',
   () => {
@@ -364,6 +373,7 @@ function makeLocation(overrides = {}) {
     storyId: 'story-1',
     name: 'Keep',
     description: 'A stronghold',
+    intExt: null,
     climate: null,
     culture: null,
     politics: null,
@@ -439,6 +449,7 @@ describe('LocationDetailsScreen', () => {
     expect(view.getByTestId('commentable-field_climate').props.children).toBe(
       'field_climate:common_na',
     );
+    expect(view.getByTestId('detail-field_intExt').props.children).toBe('field_intExt:common_na');
     expect(view.getByTestId('custom-attrs').props.children).toBe('loc-1');
     expect(view.getByTestId('gallery-marker').props.children).toBe('Location:loc-1');
     expect(jsonOf(view, 'relation-manager')).toEqual({

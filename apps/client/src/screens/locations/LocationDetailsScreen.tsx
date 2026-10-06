@@ -10,6 +10,7 @@ import {
   ScreenLoading,
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import CustomAttributeDetailFields from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeDetailFields';
+import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import CommentableDetailField from '@/src/components/features/comments/CommentableDetailField/CommentableDetailField';
 import FavoritedByList from '@/src/components/features/favorites/FavoritedByList/FavoritedByList';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
@@ -528,6 +529,10 @@ const LocationDetailsScreen = () => {
       <CommentableDetailField
         {...commentField('description', location.description || t('common_na'))}
         label={t('description')}
+      />
+      <DetailField
+        label={t('field_intExt')}
+        value={location.intExt ? t(`int_ext_${location.intExt}`) : t('common_na')}
       />
       <CommentableDetailField
         {...commentField('climate', location.climate || t('common_na'))}

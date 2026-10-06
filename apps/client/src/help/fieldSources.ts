@@ -314,6 +314,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: [
       'name',
       'description',
+      'intExt',
       'climate',
       'culture',
       'politics',

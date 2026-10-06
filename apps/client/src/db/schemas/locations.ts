@@ -1,4 +1,5 @@
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
+import type { LocationIntExt } from '@keres/shared';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const locations = sqliteTable('locations', {
@@ -9,6 +10,7 @@ export const locations = sqliteTable('locations', {
   climate: text('climate'),
   culture: text('culture'),
   politics: text('politics'),
+  intExt: text('int_ext').$type<LocationIntExt>(),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   extraNotes: text('extra_notes'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),

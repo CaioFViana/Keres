@@ -43,6 +43,12 @@ const page: HelpPage = {
           note: 'Fica disponível nos detalhes.',
         },
         {
+          key: 'intExt',
+          label: 'Interior ou exterior',
+          whatToWrite: 'Se o local é interno, externo ou os dois.',
+          note: 'Opcional. Só a exportação de roteiro lê isto, para escrever o cabeçalho da cena (INT., EXT. ou INT./EXT.).',
+        },
+        {
           key: 'climate',
           label: 'Clima',
           whatToWrite: 'Condições climáticas relevantes.',

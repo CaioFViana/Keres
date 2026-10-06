@@ -43,6 +43,12 @@ const page: HelpPage = {
           note: 'Available in details.',
         },
         {
+          key: 'intExt',
+          label: 'Interior or exterior',
+          whatToWrite: 'Whether the place is indoors, outdoors or both.',
+          note: 'Optional. Only the screenplay export reads it, to write the scene heading (INT., EXT. or INT./EXT.).',
+        },
+        {
           key: 'climate',
           label: 'Climate',
           whatToWrite: 'Relevant climate conditions.',

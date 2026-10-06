@@ -5,17 +5,20 @@ import CustomAttributeFields, {
 import EntityFormContainer from '@/src/components/common/forms/EntityFormContainer/EntityFormContainer';
 import FormField from '@/src/components/common/forms/FormField/FormField';
 import FormSwitchField from '@/src/components/common/forms/FormSwitchField/FormSwitchField';
-import MultiSelectPill from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import MultiSelectPill, {
+  SingleSelectPill,
+} from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import NoteManager from '@/src/components/features/notes/NoteManager';
 import LocationRelationManager from '@/src/components/features/relations/LocationRelationManager/LocationRelationManager';
 import SeeAlsoManager, {
   type SeeAlsoManagerHandle,
 } from '@/src/components/features/seealso/SeeAlsoManager/SeeAlsoManager';
+import { LOCATION_INT_EXT, type LocationIntExt } from '@keres/shared';
 import type { Note, NoteRelation } from '@keres/shared/entities/Note';
 import type { TFunction } from 'i18next';
 import { type Dispatch, type RefObject, type SetStateAction } from 'react';
-import { type StyleProp, type TextStyle, View, type ViewStyle } from 'react-native';
+import { type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 import type {
   LocationRelationSelect,
   LocationSelect,
@@ -39,12 +42,14 @@ export type LocationFormContentProps = {
   deleting: boolean;
   isEditing: boolean;
   handleDelete: () => void;
-  colors: { error: string; primaryContainer: string };
+  colors: { error: string; primaryContainer: string; textSecondary: string };
   t: TFunction;
   name: string;
   setName: (value: string) => void;
   description: string | null;
   setDescription: (value: string) => void;
+  intExt: LocationIntExt | null;
+  setIntExt: (value: LocationIntExt | null) => void;
   climate: string | null;
   setClimate: (value: string) => void;
   culture: string | null;
@@ -124,6 +129,8 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
     t,
     climate,
     culture,
+    intExt,
+    setIntExt,
     saveNoteRelation,
   } = props;
 
@@ -170,6 +177,19 @@ export const LocationFormContent = (props: LocationFormContentProps) => {
             multiline
           />
         )}
+      </FormField>
+      <FormField label={t('field_intExt')}>
+        <SingleSelectPill
+          options={LOCATION_INT_EXT.map((value) => ({
+            label: t(`int_ext_${value}`),
+            value,
+          }))}
+          value={intExt}
+          onValueChange={(value) => setIntExt((value as LocationIntExt | null) ?? null)}
+          placeholder={t('int_ext_placeholder')}
+          allowDeselect
+        />
+        <Text style={{ color: props.colors.textSecondary }}>{t('int_ext_hint')}</Text>
       </FormField>
       <FormField label={t('field_climate')}>
         {(fieldAccessibility) => (

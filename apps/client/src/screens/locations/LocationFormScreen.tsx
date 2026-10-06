@@ -71,6 +71,8 @@ const LocationFormScreen = () => {
     setName,
     description,
     setDescription,
+    intExt,
+    setIntExt,
     climate,
     setClimate,
     culture,
@@ -187,6 +189,8 @@ const LocationFormScreen = () => {
       allNotes={allNotes}
       availableTags={availableTags}
       climate={climate}
+      intExt={intExt}
+      setIntExt={setIntExt}
       colors={colors}
       commonInputStyles={commonInputStyles}
       copy={copy}

@@ -1,6 +1,6 @@
 import type { CustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
 import { getDefaultCustomAttributeValues } from '@/src/components/common/forms/CustomAttributeFields/CustomAttributeFields';
-import type { StorySchemaField } from '@keres/shared';
+import { LOCATION_INT_EXT, type LocationIntExt, type StorySchemaField } from '@keres/shared';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppDrizzleClient } from '../../db';
@@ -20,6 +20,7 @@ type UseLocationFormStateOptions = {
 export type LocationFormDraftFields = {
   name: string;
   description: string | null;
+  intExt: LocationIntExt | null;
   climate: string | null;
   culture: string | null;
   politics: string | null;
@@ -30,6 +31,7 @@ export type LocationFormDraftFields = {
 const CREATE_PRISTINE: LocationFormDraftFields = {
   name: '',
   description: null,
+  intExt: null,
   climate: null,
   culture: null,
   politics: null,
@@ -43,6 +45,10 @@ function isLocationFormDraftFields(value: unknown): value is LocationFormDraftFi
   return (
     typeof fields.name === 'string' &&
     (fields.description === null || typeof fields.description === 'string') &&
+    // Drafts stored before the field existed lack it; that is fine, not corrupt.
+    (fields.intExt === undefined ||
+      fields.intExt === null ||
+      (LOCATION_INT_EXT as readonly unknown[]).includes(fields.intExt)) &&
     (fields.climate === null || typeof fields.climate === 'string') &&
     (fields.culture === null || typeof fields.culture === 'string') &&
     (fields.politics === null || typeof fields.politics === 'string') &&
@@ -62,6 +68,7 @@ export function useLocationFormState({
   const [currentLocationId, setCurrentLocationId] = useState<string | undefined>(initialLocationId);
   const [name, setName] = useState('');
   const [description, setDescription] = useState<string | null>(null);
+  const [intExt, setIntExt] = useState<LocationIntExt | null>(null);
   const [climate, setClimate] = useState<string | null>(null);
   const [culture, setCulture] = useState<string | null>(null);
   const [politics, setPolitics] = useState<string | null>(null);
@@ -93,6 +100,7 @@ export function useLocationFormState({
           if (fetchedLocation) {
             setName(fetchedLocation.name);
             setDescription(fetchedLocation.description);
+            setIntExt(fetchedLocation.intExt ?? null);
             setClimate(fetchedLocation.climate);
             setCulture(fetchedLocation.culture);
             setPolitics(fetchedLocation.politics);
@@ -101,6 +109,7 @@ export function useLocationFormState({
             setLoadedPristine({
               name: fetchedLocation.name,
               description: fetchedLocation.description,
+              intExt: fetchedLocation.intExt ?? null,
               climate: fetchedLocation.climate,
               culture: fetchedLocation.culture,
               politics: fetchedLocation.politics,
@@ -149,6 +158,7 @@ export function useLocationFormState({
     }
     setName(fields.name);
     setDescription(fields.description);
+    setIntExt(fields.intExt ?? null);
     setClimate(fields.climate);
     setCulture(fields.culture);
     setPolitics(fields.politics);
@@ -164,7 +174,7 @@ export function useLocationFormState({
       entityType: 'Location',
       entityId: initialLocationId,
       enabled: !!storyId && !loading,
-      snapshot: { name, description, climate, culture, politics, isFavorite, extraNotes },
+      snapshot: { name, description, intExt, climate, culture, politics, isFavorite, extraNotes },
       pristine: loadedPristine ?? CREATE_PRISTINE,
       baseUpdatedAt: initialLocationId ? loadedUpdatedAt : undefined,
       onRestore: restoreDraftFields,
@@ -172,8 +182,16 @@ export function useLocationFormState({
 
   const pristineFields = loadedPristine ?? CREATE_PRISTINE;
   const isDirty =
-    JSON.stringify({ name, description, climate, culture, politics, isFavorite, extraNotes }) !==
-    JSON.stringify(pristineFields);
+    JSON.stringify({
+      name,
+      description,
+      intExt,
+      climate,
+      culture,
+      politics,
+      isFavorite,
+      extraNotes,
+    }) !== JSON.stringify(pristineFields);
 
   /**
    * Back to blanks (create) or saved values (edit), dropping the stored draft. Tracking stays
@@ -184,6 +202,7 @@ export function useLocationFormState({
     const target = loadedPristine ?? CREATE_PRISTINE;
     setName(target.name);
     setDescription(target.description);
+    setIntExt(target.intExt);
     setClimate(target.climate);
     setCulture(target.culture);
     setPolitics(target.politics);
@@ -199,6 +218,8 @@ export function useLocationFormState({
     setName,
     description,
     setDescription,
+    intExt,
+    setIntExt,
     climate,
     setClimate,
     culture,

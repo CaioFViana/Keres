@@ -51,6 +51,20 @@ const manuscriptShape = {
       beginAt: t.Optional(t.String({ maxLength: 80 })),
     }),
   ),
+  /** Only for the `fountain` and `screenplay-pdf` formats: paper, numbering, headings, title page. */
+  screenplay: t.Optional(
+    t.Object({
+      paper: t.Optional(t.Union([t.Literal('letter'), t.Literal('a4')])),
+      numberScenes: t.Optional(t.Boolean()),
+      generateHeadings: t.Optional(t.Boolean()),
+      includeSynopses: t.Optional(t.Boolean()),
+      includeSections: t.Optional(t.Boolean()),
+      credit: t.Optional(t.String({ maxLength: 120 })),
+      source: t.Optional(t.String({ maxLength: 200 })),
+      draftDate: t.Optional(t.String({ maxLength: 60 })),
+      contact: t.Optional(t.String({ maxLength: 400 })),
+    }),
+  ),
   /** Book metadata (EPUB). */
   author: t.Optional(t.Nullable(t.String({ maxLength: 200 }))),
   identifier: t.Optional(t.String({ maxLength: 200 })),
@@ -66,6 +80,8 @@ const ManuscriptRequestSchema = t.Object({
     t.Literal('html'),
     t.Literal('pdf'),
     t.Literal('epub'),
+    t.Literal('fountain'),
+    t.Literal('screenplay-pdf'),
   ]),
   ...manuscriptShape,
 });

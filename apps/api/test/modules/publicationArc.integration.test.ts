@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db';
 import {
   chapters,
+  locations,
   scenes,
   showcaseSettings,
   stories,
@@ -270,6 +271,87 @@ describe('releasing one work (arc)', () => {
       medium: 'comic',
     });
     expect(versions.find((version) => !version.arc)).toBeTruthy();
+  });
+});
+
+describe('releasing a screenplay', () => {
+  async function seedScript(storyId: string) {
+    const { bookOne } = await seedTwoWorks(storyId);
+    const kitchen = newId();
+    await db.insert(locations).values({
+      id: kitchen,
+      storyId,
+      name: 'Kitchen',
+      intExt: 'interior',
+    });
+    await db
+      .update(scenes)
+      .set({ locationId: kitchen, summary: 'They plan the job.' })
+      .where(eq(scenes.name, 'First'));
+    return bookOne;
+  }
+
+  it('writes the scene heading from the place, with the title page and the work only', async () => {
+    const story = await uploadTestStory(ana.token);
+    const bookOne = await seedScript(story.id);
+
+    const { status, data } = await publish(ana.token, story.id, {
+      arcId: bookOne,
+      manuscript: { format: 'fountain', author: 'Ana', screenplay: { numberScenes: true } },
+    });
+
+    expect(status).toBe(200);
+    expect(data.manuscriptFormat).toBe('fountain');
+    const files = await storedFiles(story.id);
+    const file = files.find((name) => name.startsWith(data.id) && name.endsWith('.fountain'));
+    expect(file).toBeTruthy();
+    const text = await readFile(
+      path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', story.id, file!),
+      'utf8',
+    );
+    expect(text).toContain('Title: Book One');
+    expect(text).toContain('Author: Ana');
+    expect(text).toContain('INT. KITCHEN #1#');
+    expect(text).toContain('= They plan the job.');
+    expect(text).toContain('BODY-OF-BOOK-ONE');
+    expect(text).not.toContain('BODY-OF-BOOK-TWO');
+  });
+
+  it('publishes the industry PDF and names its format', async () => {
+    const story = await uploadTestStory(ana.token);
+    const bookOne = await seedScript(story.id);
+
+    const { status, data } = await publish(ana.token, story.id, {
+      arcId: bookOne,
+      manuscript: { format: 'screenplay-pdf', screenplay: { paper: 'a4' } },
+    });
+
+    expect(status).toBe(200);
+    expect(data.manuscriptFormat).toBe('screenplay-pdf');
+    const file = (await storedFiles(story.id)).find(
+      (name) => name.startsWith(data.id) && name.endsWith('.pdf'),
+    );
+    expect(file).toBeTruthy();
+    const bytes = await readFile(
+      path.join(process.env.MEDIA_STORAGE_PATH!, 'publications', story.id, file!),
+    );
+    const raw = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+    expect(raw.startsWith('%PDF-1.4')).toBe(true);
+    expect(raw).toContain('/MediaBox [0 0 595.28 841.89]');
+    expect(raw).toContain('/BaseFont /Courier');
+  });
+
+  it('refuses a screenplay option the format does not have', async () => {
+    const story = await uploadTestStory(ana.token);
+    const bookOne = await seedScript(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      arcId: bookOne,
+      manuscript: { format: 'fountain', screenplay: { paper: 'legal' } },
+    });
+
+    expect(status).toBeGreaterThanOrEqual(400);
+    expect(await db.select().from(storyPublications)).toHaveLength(0);
   });
 });
 

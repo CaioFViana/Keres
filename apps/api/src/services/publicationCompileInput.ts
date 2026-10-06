@@ -22,6 +22,7 @@ export function compileInputOf(storyExport: FullStoryExportType): CompileStoryRe
       (storyExport.items ?? []).map((item) => [item.id, item.name]),
     ),
   });
+  const locationsById = new Map((storyExport.locations ?? []).map((row) => [row.id, row]));
   return {
     storyTitle: storyExport.story.title,
     storyType: storyExport.story.type,
@@ -40,6 +41,12 @@ export function compileInputOf(storyExport: FullStoryExportType): CompileStoryRe
       body: scene.body,
       isDeleted: scene.isDeleted,
       isStart: scene.isStart,
+      // What a screenplay writes from the scene beyond its text: its heading and its synopsis.
+      summary: scene.summary,
+      locationName: scene.locationId ? (locationsById.get(scene.locationId)?.name ?? null) : null,
+      locationIntExt: scene.locationId
+        ? (locationsById.get(scene.locationId)?.intExt ?? null)
+        : null,
     })),
     choices: (storyExport.choices ?? []).map((choice) => ({
       id: choice.id,

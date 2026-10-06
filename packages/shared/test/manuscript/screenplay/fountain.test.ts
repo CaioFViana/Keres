@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   compileFountain,
+  fountainFromBody,
   headingFromLocation,
+  looksLikeCue,
   isFountainSceneHeading,
   sceneHeadingPlan,
   startsWithSceneHeading,
@@ -154,7 +156,7 @@ describe('compileFountain', () => {
     expect(text).not.toContain('#3#');
   });
 
-  it("keeps the writer's text untouched and never doubles a heading", () => {
+  it("carries the writer's text as the editor stores it and never doubles a heading", () => {
     const { text, generatedHeadings } = compileFountain(
       {
         title: 'X',
@@ -171,7 +173,7 @@ describe('compileFountain', () => {
 
     expect(generatedHeadings).toBe(0);
     expect(text).toBe(
-      '# Act One\n\nINT. CELLAR\n\n  Indented action.\n\nSAM\n(whispering)\nHello.\n',
+      '# Act One\n\nINT. CELLAR\n\nIndented action.\n\nSAM\n(whispering)\nHello.\n',
     );
   });
 
@@ -246,5 +248,76 @@ describe('compileFountain', () => {
     );
 
     expect(text).toBe('EXT. KITCHEN\n');
+  });
+});
+
+describe('fountainFromBody', () => {
+  it("turns the editor's marks into Fountain's: bold, italic, underline, and no strikethrough", () => {
+    expect(fountainFromBody('**bold** *slant* __under__ ~~gone~~ plain')).toBe(
+      '**bold** *slant* _under_ gone plain',
+    );
+  });
+
+  it('keeps a literal asterisk or underscore literal', () => {
+    expect(fountainFromBody('2 \\* 3 and snake\\_case')).toBe('2 \\* 3 and snake\\_case');
+  });
+
+  it('keeps a speech with its cue: each Enter in the editor starts a paragraph', () => {
+    // Paragraphs are separated by a blank line in the stored text; the speech belongs under its cue.
+    expect(fountainFromBody('MOM\n\nBe careful.\n\nShe leaves.')).toBe(
+      'MOM\nBe careful.\n\nShe leaves.',
+    );
+  });
+
+  it('keeps parentheticals between the cue and the speech', () => {
+    expect(fountainFromBody('MOM\n\n(softly)\n\nBe careful.\n\nAction.')).toBe(
+      'MOM\n(softly)\nBe careful.\n\nAction.',
+    );
+  });
+
+  it('leaves a speech with soft line breaks as it is', () => {
+    expect(fountainFromBody('MOM\nBe careful.\nPlease.')).toBe('MOM\nBe careful.\nPlease.');
+  });
+
+  it('ends a speech at a blank paragraph, so the next one is action', () => {
+    expect(fountainFromBody('MOM\n\n\n\nShe leaves.')).toBe('MOM\n\nShe leaves.');
+  });
+
+  it('does not take a heading or a transition for a name', () => {
+    expect(fountainFromBody('INT. KITCHEN\n\nShe waits.')).toBe('INT. KITCHEN\n\nShe waits.');
+    expect(fountainFromBody('CUT TO:\n\nINT. ROOF')).toBe('CUT TO:\n\nINT. ROOF');
+  });
+
+  it('writes list paragraphs as they are and an empty body as nothing', () => {
+    expect(fountainFromBody('- one\n- two')).toBe('- one\n- two');
+    expect(fountainFromBody(null)).toBe('');
+    expect(fountainFromBody('  \n ')).toBe('');
+  });
+});
+
+describe('looksLikeCue', () => {
+  it('knows a name from a shout', () => {
+    for (const cue of [
+      'MOM',
+      'DR. SMITH',
+      'MOM (O.S.)',
+      'HANS (on the radio)',
+      'STEEL ^',
+      'JOSÉ',
+    ]) {
+      expect(looksLikeCue(cue), cue).toBe(true);
+    }
+    for (const notCue of [
+      'Mom',
+      'BANG!',
+      'FADE OUT.',
+      'CUT TO:',
+      'INT. KITCHEN',
+      '',
+      '123',
+      'WHO?',
+    ]) {
+      expect(looksLikeCue(notCue), notCue).toBe(false);
+    }
   });
 });

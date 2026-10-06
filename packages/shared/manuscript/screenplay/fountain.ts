@@ -1,4 +1,9 @@
 import type { LocationIntExt } from '../../entities/Location';
+import {
+  parseMarkdownToDocument,
+  type ManuscriptBlock,
+  type ManuscriptMark,
+} from '../ManuscriptDocument';
 import { withoutLooseSections } from '../compile/export/manuscriptCompiler';
 import {
   linearManuscriptSections,
@@ -80,9 +85,99 @@ export function isFountainSceneHeading(line: string): boolean {
   return SCENE_HEADING.test(line.trim());
 }
 
+type LineSegment = { text: string; marks: readonly ManuscriptMark[] };
+
+/** What Fountain writes around each mark; strikethrough has no Fountain form, so it is left plain. */
+const FOUNTAIN_MARKER: Partial<Record<ManuscriptMark, string>> = {
+  bold: '**',
+  italic: '*',
+  underline: '_',
+};
+
+function fountainLine(segments: LineSegment[]): string {
+  return segments
+    .map(({ text, marks }) => {
+      // A literal asterisk or underscore is escaped, as the editor stores one that would read as markup.
+      let out = text.replace(/[*_]/g, (char) => `\\${char}`);
+      for (const mark of ['italic', 'bold', 'underline'] as const) {
+        if (marks.includes(mark)) out = `${FOUNTAIN_MARKER[mark]}${out}${FOUNTAIN_MARKER[mark]}`;
+      }
+      return out;
+    })
+    .join('');
+}
+
+function blockToFountain(block: ManuscriptBlock): string {
+  const lines: LineSegment[][] = [[]];
+  for (const span of block.spans) {
+    span.text.split('\n').forEach((part, index) => {
+      if (index > 0) lines.push([]);
+      if (part !== '') lines[lines.length - 1].push({ text: part, marks: span.marks });
+    });
+  }
+  const text = lines.map(fountainLine).join('\n');
+  if (block.kind === 'bullet') return text ? `- ${text}` : '-';
+  if (block.kind === 'ordered') return text ? `${block.index}. ${text}` : `${block.index}.`;
+  return text;
+}
+
+/**
+ * A character cue as the editor can hold one: a single line in capitals (an extension in parentheses and a
+ * dual-dialogue caret allowed), not a scene heading and not a sentence - a line ending in a full stop, an
+ * exclamation or question mark, or a colon is action or a transition, never a name.
+ */
+export function looksLikeCue(line: string): boolean {
+  const text = line.trim();
+  if (!text || text.includes('\n') || isFountainSceneHeading(text)) return false;
+  const name = text.replace(/\s*\^\s*$/, '').replace(/\s*\([^()]*\)\s*$/, '');
+  if (!/\p{L}/u.test(name) || name !== name.toUpperCase()) return false;
+  return !/[.!?:;]$/.test(name) || /\)\s*\^?$/.test(text);
+}
+
+/**
+ * The scene's text, which the editor keeps as markdown with a blank line between paragraphs, as the
+ * Fountain it means. Marks become Fountain's (`__` underline is `_`, strikethrough is dropped). And a
+ * paragraph is not a Fountain line: in the editor each Enter starts a paragraph, so the paragraph after a
+ * character cue (and any parenthetical paragraphs between) is that cue's speech, kept together with it;
+ * leave a blank paragraph to end the speech.
+ */
+export function fountainFromBody(body: string | null | undefined): string {
+  const blocks = parseMarkdownToDocument(body ?? '').blocks;
+  const texts = blocks.map(blockToFountain);
+  const parts: string[] = [];
+  for (let at = 0; at < blocks.length; at += 1) {
+    const text = texts[at];
+    if (blocks[at].kind === 'paragraph' && looksLikeCue(text)) {
+      let group = text;
+      let next = at + 1;
+      const paragraphAt = (index: number) =>
+        index < blocks.length && blocks[index].kind === 'paragraph';
+      while (paragraphAt(next) && /^\(.*\)$/.test(texts[next].trim())) {
+        group += `\n${texts[next]}`;
+        next += 1;
+      }
+      if (
+        paragraphAt(next) &&
+        texts[next].trim() !== '' &&
+        !isFountainSceneHeading(texts[next].trim())
+      ) {
+        group += `\n${texts[next]}`;
+        next += 1;
+      }
+      parts.push(group);
+      at = next - 1;
+    } else if (text.trim() !== '') {
+      parts.push(text);
+    }
+  }
+  return parts.join('\n\n');
+}
+
 /** Whether the first line that says anything is already a scene heading. */
 export function startsWithSceneHeading(body: string | null | undefined): boolean {
-  const first = (body ?? '').split(/\r\n|\r|\n/).find((line) => line.trim() !== '');
+  const first = fountainFromBody(body)
+    .split('\n')
+    .find((line) => line.trim() !== '');
   return first !== undefined && isFountainSceneHeading(first);
 }
 
@@ -108,7 +203,9 @@ export function sceneHeadingPlan(scene: Pick<FountainScene, 'body' | 'location'>
   heading: string | null;
 } {
   if (startsWithSceneHeading(scene.body)) {
-    const first = (scene.body ?? '').split(/\r\n|\r|\n/).find((line) => line.trim() !== '');
+    const first = fountainFromBody(scene.body)
+      .split('\n')
+      .find((line) => line.trim() !== '');
     return { source: 'body', heading: first?.trim() ?? null };
   }
   const generated = headingFromLocation(scene.location);
@@ -197,7 +294,7 @@ export function compileFountain(
     if (section.kind !== 'scene') continue;
     const scene = scenesById.get(section.scene.id) as FountainScene;
     sceneCount += 1;
-    const body = normalizeNewlines(scene.body ?? '').trim();
+    const body = fountainFromBody(scene.body);
     const plan = sceneHeadingPlan(scene);
 
     let heading: string | null = null;

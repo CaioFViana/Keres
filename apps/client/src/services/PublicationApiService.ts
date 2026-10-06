@@ -46,7 +46,8 @@ export interface PublishManuscriptOptions {
   /** When set, only this arc ships, under its title. */
   arcId?: string;
   labels: ManuscriptLabels;
-  author: string | null;
+  /** Absent: the server credits the work's author, then the story's, then the owner's handle. */
+  author?: string | null;
   language: string;
 }
 
@@ -97,6 +98,7 @@ export class PublicationApiService {
     manuscript?: PublishManuscriptOptions,
     reader?: PublishReaderOptions,
     includePackage = true,
+    arcId?: string,
   ): Promise<StoryPublication> {
     const response = await this.clientFor(server).post(`/stories/${storyId}/publications`, {
       operationVersion,
@@ -106,6 +108,8 @@ export class PublicationApiService {
       manuscript,
       reader,
       includePackage,
+      // One work of the story: a manuscript and/or the reader of it, never the package.
+      ...(arcId ? { arcId } : {}),
     });
     return response.data;
   }

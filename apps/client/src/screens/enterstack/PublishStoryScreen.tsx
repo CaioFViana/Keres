@@ -67,6 +67,10 @@ export function buildStoryPublicUrl(serverUrl: string, storyId: string): string 
   return `${serverUrl.replace(/\/+$/, '')}/showcase/story/${storyId}`;
 }
 
+function workTitleOf(works: readonly { id: string; title: string }[], arcId: string) {
+  return works.find((work) => work.id === arcId)?.title;
+}
+
 const PublishStoryScreen = () => {
   const { t, i18n } = useTranslation();
   useScreenHeader({ target: 'self', title: t('publish_story_title') });
@@ -221,6 +225,7 @@ const PublishStoryScreen = () => {
           manuscriptOptions,
           readerOptions,
           manuscript.includePackage,
+          manuscript.releaseArcId ?? undefined,
         );
         // A server that predates these extras publishes the version and drops them without a word:
         // saying so beats a page that silently lacks the button.
@@ -253,8 +258,11 @@ const PublishStoryScreen = () => {
           // The server disagrees with our counter: synchronizing is the only way.
           showNotification(t('publish_blocked_not_synced'), 'error');
         } else if (status === 429) {
-          // The plan's daily number of publications is used up.
-          showNotification(t('publish_limit_reached'), 'error');
+          // The plan's daily number of publications is used up, or the works it may show at once.
+          showNotification(
+            t(manuscript.releaseArcId ? 'publish_works_limit_reached' : 'publish_limit_reached'),
+            'error',
+          );
         } else if (status === 403) {
           showNotification(t('publish_showcase_disabled'), 'error');
         } else if (isOfflineError(publishError)) {
@@ -583,11 +591,7 @@ const PublishStoryScreen = () => {
                     </>
                   )}
 
-                  <PublishManuscriptSection
-                    storyId={row.story.id}
-                    storyType={row.story.type}
-                    manuscript={manuscript}
-                  />
+                  <PublishManuscriptSection story={row.story} manuscript={manuscript} />
 
                   <TouchableOpacity
                     style={[
@@ -630,6 +634,9 @@ const PublishStoryScreen = () => {
                       <View style={styles.versionInfo}>
                         <Text style={styles.versionLabel}>{publication.label}</Text>
                         <Text style={styles.versionMeta}>
+                          {publication.arcId
+                            ? `${workTitleOf(manuscript.manuscriptArcs, publication.arcId) ?? t('publish_removed_work')} · `
+                            : ''}
                           {new Date(publication.createdAt).toLocaleDateString()} ·{' '}
                           {Math.max(1, Math.round(publication.byteSize / 1024))} KB
                         </Text>

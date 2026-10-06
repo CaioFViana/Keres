@@ -230,7 +230,6 @@ function manuscriptPayload(overrides: Record<string, unknown> = {}) {
     resetSceneNumbers: false,
     style: { placeholders: { year: expect.any(String), date: expect.any(String) } },
     labels: manuscriptLabels,
-    author: null,
     language: 'en',
     ...overrides,
   };
@@ -368,6 +367,7 @@ describe('PublishStoryScreen', () => {
         undefined,
         undefined,
         true,
+        undefined,
       ),
     );
     expect(mockSyncPubs).toHaveBeenCalledWith(server);
@@ -406,6 +406,7 @@ describe('PublishStoryScreen', () => {
         undefined,
         undefined,
         true,
+        undefined,
       ),
     );
   });
@@ -610,6 +611,7 @@ describe('PublishStoryScreen', () => {
         manuscriptPayload({ format: 'md' }),
         undefined,
         true,
+        undefined,
       ),
     );
     const sent = mockPublish.mock.calls[0][6];
@@ -656,6 +658,101 @@ describe('PublishStoryScreen', () => {
     });
   });
 
+  it('releases one work: no package, its own author, the arc in the request', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, author: 'Story Author' }]);
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'Issue One', author: 'Arc Author', medium: 'comic' },
+      { id: 'arc-2', title: 'Issue Two', author: null, medium: 'comic' },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+    expect(view.getByTestId('publish-package-switch-story-1')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('route-option-arc-1'));
+    // The package is the whole story: it is not offered for one work.
+    expect(view.queryByTestId('publish-package-switch-story-1')).toBeNull();
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    const call = mockPublish.mock.calls[0];
+    expect(call[8]).toBe(false);
+    expect(call[9]).toBe('arc-1');
+    expect(call[6]).toMatchObject({ arcId: 'arc-1', author: 'Arc Author' });
+  });
+
+  it('credits the story author when the released work has none', async () => {
+    mockFindStories.mockResolvedValue([{ ...story, author: 'Story Author' }]);
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'Issue One', author: 'Arc Author', medium: 'comic' },
+      { id: 'arc-2', title: 'Issue Two', author: null, medium: 'comic' },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('route-option-arc-2'));
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({ arcId: 'arc-2', author: 'Story Author' });
+  });
+
+  it('goes back to the whole universe, with the package on again', async () => {
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'One', author: null, medium: 'generic' },
+      { id: 'arc-2', title: 'Two', author: null, medium: 'generic' },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('route-option-arc-1'));
+    await fireEvent.press(view.getByTestId('route-option-universe'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][8]).toBe(true);
+    expect(mockPublish.mock.calls[0][9]).toBeUndefined();
+  });
+
+  it('does not offer to release a work in a story with a single one', async () => {
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'Only', author: null, medium: 'generic' },
+    ]);
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    expect(view.queryByTestId('publish-release-story-1')).toBeNull();
+  });
+
+  it('says the plan has no room for another work on a 429 of a release', async () => {
+    mockGetArcs.mockResolvedValue([
+      { id: 'arc-1', title: 'One', author: null, medium: 'generic' },
+      { id: 'arc-2', title: 'Two', author: null, medium: 'generic' },
+    ]);
+    mockPublish.mockRejectedValueOnce({ response: { status: 429 } });
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('route-option-arc-2'));
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() =>
+      expect(mockNotify).toHaveBeenCalledWith('publish_works_limit_reached', 'error'),
+    );
+  });
+
   it('offers a branching story its scene order instead of a route, discovery by default', async () => {
     mockFindStories.mockResolvedValue([{ ...story, type: 'branching' }]);
     const view = await render(<PublishStoryScreen />);
@@ -681,6 +778,7 @@ describe('PublishStoryScreen', () => {
         manuscriptPayload({ sceneOrder: 'discovery' }),
         undefined,
         true,
+        undefined,
       ),
     );
   });

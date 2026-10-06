@@ -419,6 +419,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: [],
     invisible: [
       'id',
+      'arc',
       'label',
       'byteSize',
       'mediaIncluded',
@@ -434,6 +435,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     invisible: [
       'id',
       'storyId',
+      'arcId',
       'ownerUserId',
       'label',
       'operationVersion',
@@ -449,7 +451,21 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
   },
   StoryPublicationSnapshot: {
     documented: [],
-    invisible: ['title', 'description', 'genre', 'language', 'author', 'type', 'theme', 'isNsfw'],
+    invisible: [
+      'title',
+      'description',
+      'genre',
+      'language',
+      'author',
+      'type',
+      'theme',
+      'isNsfw',
+      'arc',
+    ],
+  },
+  StoryPublicationArcSnapshot: {
+    documented: [],
+    invisible: ['id', 'title', 'description', 'author', 'medium'],
   },
   Story: {
     documented: [
@@ -528,6 +544,7 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
       'maxStorageBytesPerStory',
       'maxStorageBytesTotal',
       'maxPublicationsPerDay',
+      'maxPublishedArcs',
       'maxMessagesPerDay',
       'createdAt',
       'updatedAt',

@@ -52,6 +52,7 @@ function limitLines(
   const stories = tier.maxStories;
   const entities = tier.maxEntitiesTotal;
   const publications = tier.maxPublicationsPerDay;
+  const works = tier.maxPublishedArcs;
   return [
     stories === null
       ? t('plan_limit_stories_unlimited')
@@ -68,6 +69,9 @@ function limitLines(
       : t(publications === 1 ? 'plan_limit_publications_one' : 'plan_limit_publications_other', {
           count: publications,
         }),
+    works === null
+      ? t('plan_limit_works_unlimited')
+      : t(works === 1 ? 'plan_limit_works_one' : 'plan_limit_works_other', { count: works }),
   ];
 }
 

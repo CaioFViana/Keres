@@ -1,4 +1,4 @@
-import { isLooseScene, type ReaderLabels } from '@keres/shared';
+import { type ArcMedium, isLooseScene, type ReaderLabels } from '@keres/shared';
 import { useCallback, useState } from 'react';
 import {
   defaultExportSettings,
@@ -15,6 +15,14 @@ import type {
 import { createChapterService } from '../../services/storymanagement/ChapterService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { createStoryArcService } from '../../services/storymanagement/StoryArcService';
+
+/** A work of the story the person can release on its own. */
+export type PublishableArc = {
+  id: string;
+  title: string;
+  author: string | null;
+  medium: ArcMedium;
+};
 
 /** The words of the reader's own interface, in the publisher's language. */
 function readerLabelsOf(t: (key: string) => string): ReaderLabels {
@@ -63,7 +71,9 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   const [includePackage, setIncludePackage] = useState(true);
   const [settings, setSettings] = useState<ManuscriptExportSettings>(() => defaultExportSettings());
   const [manuscriptLooseCount, setManuscriptLooseCount] = useState(0);
-  const [manuscriptArcs, setManuscriptArcs] = useState<{ id: string; title: string }[]>([]);
+  const [manuscriptArcs, setManuscriptArcs] = useState<PublishableArc[]>([]);
+  // What goes out: `null` is the whole universe; an id is one work of it (manuscript and/or reader only).
+  const [releaseArcId, setReleaseArcIdState] = useState<string | null>(null);
 
   // What the manuscript section needs: linear counts its loose scenes the same way the
   // manuscript screen does; a branching story is exported whole, so it needs nothing.
@@ -75,10 +85,18 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
       setSettings(defaultExportSettings(story.author ?? ''));
       setManuscriptLooseCount(0);
       setManuscriptArcs([]);
+      setReleaseArcIdState(null);
       void (async () => {
         try {
           const arcs = await createStoryArcService(drizzleDb).getArcsForStory(story.id);
-          setManuscriptArcs(arcs.map((arc) => ({ id: arc.id, title: arc.title })));
+          setManuscriptArcs(
+            arcs.map((arc) => ({
+              id: arc.id,
+              title: arc.title,
+              author: arc.author,
+              medium: arc.medium,
+            })),
+          );
           if (story.type !== 'branching') {
             const [storyChapters, storyScenes] = await Promise.all([
               createChapterService(drizzleDb).getAllByStoryId(story.id, null),
@@ -96,6 +114,24 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
       })();
     },
     [drizzleDb],
+  );
+
+  /**
+   * Chooses the whole universe or one of its works. A work never carries the story file (that is
+   * the whole story), its manuscript is that work's alone, and it is credited to its own author.
+   */
+  const setReleaseArcId = useCallback(
+    (arcId: string | null, story: StorySelect) => {
+      setReleaseArcIdState(arcId);
+      const arc = arcId ? manuscriptArcs.find((row) => row.id === arcId) : undefined;
+      setIncludePackage(arcId === null);
+      setSettings((current) => ({
+        ...current,
+        arcId,
+        author: arc ? (arc.author ?? story.author ?? '') : (story.author ?? ''),
+      }));
+    },
+    [manuscriptArcs],
   );
 
   // What shapes the file, whichever of the two the server compiles: the manuscript and the online
@@ -135,7 +171,8 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
           chooseStart: t('export_manuscript_choose_start'),
           beginAt: t('export_manuscript_begin_at'),
         },
-        author: settings.author.trim() || null,
+        // Left out when empty so the server credits the work's author, the story's, then the handle.
+        ...(settings.author.trim() ? { author: settings.author.trim() } : {}),
         language,
       };
     },
@@ -182,6 +219,8 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     setSettings,
     manuscriptLooseCount,
     manuscriptArcs,
+    releaseArcId,
+    setReleaseArcId,
     resetForStory,
     buildOptions,
     buildReaderOptions,

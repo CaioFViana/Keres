@@ -1,5 +1,8 @@
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
+import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
+import type { StorySelect } from '@/src/db/schema';
 import { useTranslation } from 'react-i18next';
+import { useStoryVocabulary } from '../../vocabulary/useStoryVocabulary';
 import { StyleSheet, Text, View } from 'react-native';
 import ManuscriptExportOptions from '../../components/features/manuscript/ManuscriptExportOptions/ManuscriptExportOptions';
 import { SERVER_MANUSCRIPT_FORMATS } from '../../services/PublicationApiService';
@@ -12,14 +15,15 @@ import type { PublishManuscriptState } from './usePublishManuscript';
  * component, over the server's formats, shared by both because both are made from the same choices.
  */
 export function PublishManuscriptSection({
-  storyId,
-  storyType,
+  story,
   manuscript,
 }: {
-  storyId: string;
-  storyType: 'linear' | 'branching';
+  story: StorySelect;
   manuscript: PublishManuscriptState;
 }) {
+  const storyId = story.id;
+  const storyType = story.type;
+  const { term } = useStoryVocabulary();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = StyleSheet.create({
@@ -34,25 +38,50 @@ export function PublishManuscriptSection({
     selectOneMissing: { color: colors.error },
     hint: { fontSize: 12, color: colors.textSecondary, marginTop: -4, marginBottom: 12 },
     options: { marginBottom: 16 },
+    release: { marginBottom: 14 },
   });
 
   const branching = storyType === 'branching';
+  const works = manuscript.manuscriptArcs;
+  const releasingWork = manuscript.releaseArcId !== null;
   return (
     <>
+      {works.length > 1 && (
+        <View style={styles.release} testID={`publish-release-${storyId}`}>
+          <Text style={styles.label}>{t('publish_release_what')}</Text>
+          <SingleSelectPill
+            value={manuscript.releaseArcId ?? 'universe'}
+            onValueChange={(value) =>
+              manuscript.setReleaseArcId(value && value !== 'universe' ? value : null, story)
+            }
+            options={[
+              { value: 'universe', label: t('publish_release_universe') },
+              ...works.map((work) => ({
+                value: work.id,
+                label: `${term('Arc')}: ${work.title} (${t(`arc_medium_${work.medium}`)})`,
+              })),
+            ]}
+            placeholder={t('publish_release_what')}
+          />
+          {releasingWork && <Text style={styles.hint}>{t('publish_release_work_hint')}</Text>}
+        </View>
+      )}
       <Text
         style={[styles.selectOne, manuscript.nothingSelected && styles.selectOneMissing]}
         testID={`publish-select-one-${storyId}`}
       >
         {t('publish_select_one')}
       </Text>
-      <View style={styles.switchRow}>
-        <Text style={styles.label}>{t('publish_package_attach')}</Text>
-        <ThemedSwitch
-          value={manuscript.includePackage}
-          onValueChange={manuscript.setIncludePackage}
-          testID={`publish-package-switch-${storyId}`}
-        />
-      </View>
+      {!releasingWork && (
+        <View style={styles.switchRow}>
+          <Text style={styles.label}>{t('publish_package_attach')}</Text>
+          <ThemedSwitch
+            value={manuscript.includePackage}
+            onValueChange={manuscript.setIncludePackage}
+            testID={`publish-package-switch-${storyId}`}
+          />
+        </View>
+      )}
       <View style={styles.switchRow}>
         <Text style={styles.label}>{t('publish_manuscript_attach')}</Text>
         <ThemedSwitch
@@ -80,7 +109,8 @@ export function PublishManuscriptSection({
             showLooseSwitch={!branching && manuscript.manuscriptLooseCount > 0}
             looseCount={manuscript.manuscriptLooseCount}
             chapterNumberingAvailable={!branching}
-            arcs={manuscript.manuscriptArcs}
+            // A work is chosen above; the picker inside the options is for the whole universe only.
+            arcs={releasingWork ? [] : manuscript.manuscriptArcs}
             showFormat={manuscript.attachManuscript}
           />
         </View>

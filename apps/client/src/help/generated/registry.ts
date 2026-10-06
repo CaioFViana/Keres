@@ -93,6 +93,8 @@ import publishStory_en from '../content/publish-story/en';
 import publishStory_pt from '../content/publish-story/pt';
 import routes_en from '../content/routes/en';
 import routes_pt from '../content/routes/pt';
+import scenePages_en from '../content/scene-pages/en';
+import scenePages_pt from '../content/scene-pages/pt';
 import sceneTiming_en from '../content/scene-timing/en';
 import sceneTiming_pt from '../content/scene-timing/pt';
 import scenes_en from '../content/scenes/en';
@@ -191,6 +193,7 @@ export type GeneratedHelpPageId =
   | 'plots'
   | 'publish-story'
   | 'routes'
+  | 'scene-pages'
   | 'scene-timing'
   | 'scenes'
   | 'see-also'
@@ -401,6 +404,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   routes: {
     en: routes_en,
     pt: routes_pt,
+  },
+  'scene-pages': {
+    en: scenePages_en,
+    pt: scenePages_pt,
   },
   'scene-timing': {
     en: sceneTiming_en,

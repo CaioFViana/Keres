@@ -143,6 +143,7 @@ export * from './entity-solvers/entities/NoteEntityHandler';
 export * from './entity-solvers/entities/TagEntityHandler';
 export * from './entity-solvers/entities/BoardEntityHandler';
 export * from './entity-solvers/entities/SketchEntityHandler';
+export * from './entity-solvers/entities/ScenePageEntityHandler';
 export * from './entity-solvers/entities/GalleryEntityHandler';
 export * from './entity-solvers/entities/WorldRuleEntityHandler';
 export * from './entity-solvers/entities/ModeEntityHandler';

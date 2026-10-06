@@ -14,6 +14,7 @@ import {
   routeEntityHandler,
   routeStepEntityHandler,
   sceneEntityHandler,
+  scenePageEntityHandler,
   statEntityHandler,
   statRelationEntityHandler,
   statStrengthEntityHandler,
@@ -29,6 +30,7 @@ import {
 const chapterHelp = chapterEntityHandler.help!;
 const arcHelp = storyArcEntityHandler.help!;
 const sceneHelp = sceneEntityHandler.help!;
+const scenePageHelp = scenePageEntityHandler.help!;
 const choiceHelp = choiceEntityHandler.help!;
 const routeHelp = routeEntityHandler.help!;
 const routeStepHelp = routeStepEntityHandler.help!;
@@ -60,6 +62,7 @@ export const fieldSources: Record<string, string[]> = {
   characters: [...characterHelp.fields],
   chapters: [...chapterHelp.fields],
   scenes: [...sceneHelp.fields],
+  'scene-pages': [...scenePageHelp.fields],
   locations: [...locationHelp.fields],
   items: [...itemHelp.fields],
   'item-journeys': [...itemJourneyHelp.fields],

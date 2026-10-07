@@ -234,6 +234,7 @@ export * from './manuscript/compile/manuscriptStyle';
 export * from './manuscript/compile/manuscriptSize';
 export * from './manuscript/compile/pageFormat';
 export {
+  countSongsPrintedWhole,
   DEFAULT_SONG_PRINT,
   SONG_LANGUAGES,
   SONG_PLACEMENTS,

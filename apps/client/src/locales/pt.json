@@ -2221,6 +2221,8 @@
   "export_songs_section": "Canções",
   "export_songs_include": "Imprimir as canções cantadas na história",
   "export_songs_hint": "Só as palavras das canções que as pessoas da história cantam. Uma gravação ou um link da Galeria nunca faz parte de um manuscrito.",
+  "export_songs_printed_whole_one": "Uma canção sai inteira: toda parte que uma cena nomeia sumiu da letra.",
+  "export_songs_printed_whole_other": "{{count}} canções saem inteiras: toda parte que uma cena nomeia sumiu da letra.",
   "export_songs_placement": "Onde",
   "export_songs_placement_appendix": "Todas no fim",
   "export_songs_placement_after_scene": "Depois de cada cena",

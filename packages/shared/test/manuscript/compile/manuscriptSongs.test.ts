@@ -10,6 +10,7 @@ import type {
   ManuscriptSceneMusic,
   ManuscriptSong,
 } from '../../../manuscript/compile/manuscriptSections';
+import { countSongsPrintedWhole } from '../../../manuscript/compile/songPrint';
 import { presentedManuscriptOf } from '../../../manuscript/compile/presentedManuscript';
 import { compileScreenplayManuscript } from '../../../manuscript/screenplay/compileScreenplay';
 
@@ -56,6 +57,21 @@ const sung = (
   title: songValue.title,
   cue: null,
   song: songValue,
+});
+
+describe('countSongsPrintedWhole', () => {
+  it('counts a song once when every part a scene names is gone, however many scenes sing it', () => {
+    const orphan = song({ sections: ['Bridge'] });
+
+    expect(countSongsPrintedWhole([[sung(orphan)], [sung(orphan)]])).toBe(1);
+  });
+
+  it('leaves out a song whose named parts are there, a partly missing list, the whole song and a score', () => {
+    expect(countSongsPrintedWhole([[sung(song({ sections: ['Chorus'] }))]])).toBe(0);
+    expect(countSongsPrintedWhole([[sung(song({ sections: ['Chorus', 'Bridge'] }))]])).toBe(0);
+    expect(countSongsPrintedWhole([[sung(song())], undefined, []])).toBe(0);
+    expect(countSongsPrintedWhole([[sung(song({ sections: ['Bridge'] }), 'score')]])).toBe(0);
+  });
 });
 
 const chapters: ManuscriptChapter[] = [{ id: 'ch-1', name: 'One', index: 1, type: 'chapter' }];

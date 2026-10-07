@@ -179,4 +179,23 @@ export function sungSongsOf(music: readonly ManuscriptSceneMusic[] | undefined):
   );
 }
 
+/**
+ * How many songs a manuscript prints whole although a scene asked for parts of it: every part the
+ * scene names is gone from the words, so the whole song stands in (see `songExcerpt`). Counted by
+ * song, not by scene. The words of a song are parsed only when a scene names parts of it.
+ */
+export function countSongsPrintedWhole(
+  music: Iterable<readonly ManuscriptSceneMusic[] | undefined>,
+): number {
+  const whole = new Set<string>();
+  for (const scene of music) {
+    for (const song of sungSongsOf(scene)) {
+      if (whole.has(song.id) || !song.sections || song.sections.length === 0) continue;
+      const excerpt = songExcerpt(parseChordPro(song.lyrics), song.sections);
+      if (excerpt.wholeSong && excerpt.missing.length > 0) whole.add(song.id);
+    }
+  }
+  return whole.size;
+}
+
 export type { ParsedSong };

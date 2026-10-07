@@ -1162,6 +1162,31 @@ describe('ManuscriptExportScreen songs', () => {
     expect(JSON.stringify(blocks)).toContain('Light the lantern');
   });
 
+  it('says so when a song is printed whole because every part a scene names is gone', async () => {
+    const orphan = { ...lantern, sections: ['Bridge'] };
+    mockLoadManuscriptMusic.mockResolvedValue(new Map([['s-1', [{ ...sung[0], song: orphan }]]]));
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeSongs: true, songsPlacement: 'after-scene' });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockNotify).toHaveBeenCalledWith('export_songs_printed_whole:{"count":1}', 'warning');
+  });
+
+  it('stays silent when the parts a scene names are still there', async () => {
+    const kept = { ...lantern, sections: ['Verse 1'] };
+    mockLoadManuscriptMusic.mockResolvedValue(new Map([['s-1', [{ ...sung[0], song: kept }]]]));
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeSongs: true, songsPlacement: 'after-scene' });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockNotify).not.toHaveBeenCalledWith(
+      expect.stringContaining('export_songs_printed_whole'),
+      expect.anything(),
+    );
+  });
+
   it('writes the songs of a script as Fountain lyrics', async () => {
     mockEffectiveMedium = 'screenplay';
     mockManuscriptData = {

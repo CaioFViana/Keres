@@ -12,6 +12,7 @@ import {
   type ManuscriptScene,
 } from '@keres/shared';
 import {
+  countSongsPrintedWhole,
   type ManuscriptSizeAssessment,
   manuscriptSizeAssessment,
   utf8ByteLength,
@@ -307,6 +308,16 @@ export function useManuscriptExport() {
                   withSongs: settings.includeSongs,
                 })
               : null;
+          // The songs in the scenes print the parts they name; one whose parts are all gone prints whole
+          // instead, which the export says rather than leaves to be found in the book.
+          const wholeSongs =
+            sceneMusic && settings.includeSongs ? countSongsPrintedWhole(sceneMusic.values()) : 0;
+          if (
+            wholeSongs > 0 &&
+            (isScreenplayFormat(settings.format) || settings.songsPlacement === 'after-scene')
+          ) {
+            showNotification(t('export_songs_printed_whole', { count: wholeSongs }), 'warning');
+          }
           if (isScreenplayFormat(settings.format)) {
             const compiled = compileScreenplayManuscript(
               screenplayInputOf({

@@ -2221,6 +2221,8 @@
   "export_songs_section": "Songs",
   "export_songs_include": "Print the songs sung in the story",
   "export_songs_hint": "Only the words of the songs the people in the story sing. A recording or a link of the Gallery is never part of a manuscript.",
+  "export_songs_printed_whole_one": "A song is printed whole: every part a scene names is gone from its words.",
+  "export_songs_printed_whole_other": "{{count}} songs are printed whole: every part a scene names is gone from their words.",
   "export_songs_placement": "Where",
   "export_songs_placement_appendix": "All at the end",
   "export_songs_placement_after_scene": "After each scene",

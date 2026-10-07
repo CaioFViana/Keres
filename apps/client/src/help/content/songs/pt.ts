@@ -52,7 +52,7 @@ const page: HelpPage = {
       items: [
         'Abra as Canções pela Galeria e adicione uma canção com seu título.',
         'Escreva a letra. Ponha o acorde entre colchetes antes da sílaba em que cai: [G]A noite des[Em]ce.',
-        'Acrescente os versos e o refrão com os botões acima da letra. Cada seção recebe um nome; duas seções não podem ter o mesmo.',
+        'Acrescente os versos e o refrão com os botões acima da letra. Cada seção recebe um nome na língua da história, escrito no texto, então trocar a língua do app nunca a renomeia; duas seções não podem ter o mesmo.',
         'Passe para Cifra para ver os acordes sobre as palavras, e conte as sílabas se quiser conferir a métrica.',
         'Numa cena, abra sua música, adicione a canção e escolha quais seções a cena canta.',
       ],
@@ -122,7 +122,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'A melodia, e ouvi-la' },
     {
       type: 'paragraph',
-      text: 'Na aba Melodia você toca as notas num teclado ou as escreve como texto. O botão grande cantarola a melodia com uma voz sintética (um cantarolar, “ah” ou “lá”) enquanto a letra acompanha linha a linha; dá para somar um metrônomo, ou um instrumento — violão, harpa, piano ou violino — que toca as cifras da letra numa levada própria (valsa, balada, marcha, cantiga de ninar). Sem melodia, o instrumento toca só as cifras, um compasso para cada. Para cada seção, o painel diz quantas notas há para as sílabas; as sílabas são só estimadas, então uma diferença é um aviso, não um erro.',
+      text: 'Na aba Melodia, toque numa parte para escrever a melodia dela: peça uma sugestão feita a partir da letra, ou toque as notas num teclado (as notas também podem ser escritas como texto). O botão grande cantarola a melodia com uma voz sintética (um cantarolar, “ah” ou “lá”) enquanto a letra acompanha linha a linha; dá para somar um metrônomo, ou um instrumento — violão, harpa, piano ou violino — que toca as cifras da letra numa levada própria (valsa, balada, marcha, cantiga de ninar). Sem melodia, o instrumento toca só as cifras, um compasso para cada. Para cada seção, o painel diz quantas notas há para as sílabas; as sílabas são só estimadas, então uma diferença é um aviso, não um erro.',
     },
     {
       type: 'callout',

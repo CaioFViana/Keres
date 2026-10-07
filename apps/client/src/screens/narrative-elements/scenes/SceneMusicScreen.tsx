@@ -1,4 +1,4 @@
-import { parseMelody, type SceneMusicRole } from '@keres/shared';
+import { DEFAULT_SECTION_WORDS, parseMelody, type SceneMusicRole } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +21,6 @@ import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPaddi
 import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
 import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
 import { useSceneMusic } from '@/src/hooks/useSceneMusic';
-import { useSectionWords } from '@/src/hooks/useSectionWords';
 import { useSongPlayback } from '@/src/hooks/useSongPlayback';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
@@ -61,7 +60,6 @@ const SceneMusicScreen = () => {
   const { views, loading } = useSceneMusic(sceneId, scene?.storyId);
   const [pickerFor, setPickerFor] = useState<'add' | string | null>(null);
   const playback = useSongPlayback();
-  const words = useSectionWords();
   const openMedia = useOpenGalleryMediaViewer();
 
   useEffect(() => {
@@ -115,7 +113,7 @@ const SceneMusicScreen = () => {
               melody: song.melody ?? '',
               tempo: song.tempo,
               meter: song.meter,
-              words,
+              words: DEFAULT_SECTION_WORDS,
               language: i18n.language.toLowerCase().startsWith('pt') ? 'pt' : 'en',
             },
           },
@@ -125,7 +123,7 @@ const SceneMusicScreen = () => {
         showNotification(t('melody_play_failed'), 'error');
       }
     },
-    [db, i18n.language, playback, showNotification, t, words],
+    [db, i18n.language, playback, showNotification, t],
   );
 
   const wordKey = sceneMusicWordKey(medium);

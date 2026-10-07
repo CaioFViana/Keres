@@ -276,6 +276,7 @@ export * from './music/melody';
 export * from './music/midi';
 export * from './music/sections';
 export * from './music/songStats';
+export * from './music/suggest';
 export * from './music/syllables';
 export * from './music/timeline';
 export * from './music/voice';

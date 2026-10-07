@@ -26,6 +26,8 @@ interface SongLyricsEditorProps {
   onUndoTranspose?: () => void;
   editable: boolean;
   words: SectionWords;
+  /** The words that name a section when it is added; the text keeps the label that was written. */
+  newSectionWords?: SectionWords;
   syllableLanguage: SyllableLanguage;
   /** The line being sung while the tune plays, to follow on the sheet. */
   activeLine?: { sectionIndex: number; sourceIndex: number } | null;
@@ -48,6 +50,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
   onUndoTranspose,
   editable,
   words,
+  newSectionWords = words,
   syllableLanguage,
   activeLine = null,
 }) => {
@@ -62,7 +65,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
   const duplicates = useMemo(() => duplicateSectionLabels(value, words), [value, words]);
 
   const addSection = (kind: (typeof SECTION_KINDS)[number]) => {
-    const label = nextSectionLabel(kind, value, words);
+    const label = nextSectionLabel(kind, value, newSectionWords);
     const block = sectionBlock(kind, label);
     const at = selection.current.start;
     const next = insertBlockAt(value, at, block);

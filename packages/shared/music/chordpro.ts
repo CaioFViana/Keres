@@ -70,6 +70,21 @@ export const DEFAULT_SECTION_WORDS: SectionWords = {
   bridge: 'Bridge',
 };
 
+/**
+ * The words that name a section the writer adds, by the language of the work. A section is written out
+ * with its label, so changing the language of the app never renames a part of a song; this only picks
+ * the word for a new one.
+ */
+export const SECTION_WORDS: Record<'en' | 'pt', SectionWords> = {
+  en: DEFAULT_SECTION_WORDS,
+  pt: { verse: 'Verso', chorus: 'Refrão', bridge: 'Ponte' },
+};
+
+/** The words for the language of a work (`pt`, `pt-BR`, `en`...); English for any other. */
+export function sectionWordsFor(language: string | null | undefined): SectionWords {
+  return language?.toLowerCase().startsWith('pt') ? SECTION_WORDS.pt : SECTION_WORDS.en;
+}
+
 const START_KIND: Record<string, Exclude<SongSectionKind, 'none'>> = {
   start_of_verse: 'verse',
   sov: 'verse',

@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import type { SongSelect } from '../../../src/db/schema';
+import { useStoryStore } from '../../../src/state/storyStore';
 import SongEditorScreen, { songFileName } from '../../../src/screens/songs/SongEditorScreen';
 
 const mockGoBack = jest.fn();
@@ -21,6 +22,7 @@ let mockPlayback = {
 };
 
 let mockCanEdit = true;
+let mockAppLanguage = 'en';
 let mockSong: SongSelect | null | undefined;
 let mockUses: { sceneId: string; sceneName: string }[] = [];
 let mockHeader: {
@@ -34,7 +36,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
       options ? `${key}:${JSON.stringify(options)}` : key,
-    i18n: { language: 'en' },
+    i18n: { language: mockAppLanguage },
   }),
 }));
 jest.mock('@react-navigation/native', () => {
@@ -251,6 +253,63 @@ describe('SongEditorScreen', () => {
     expect(view.getByTestId('song-lyrics').props.value).toBe('[G]New words');
   });
 
+  describe('the words that name a section', () => {
+    const labelsAfterAdding = async (appLanguage: string, storyLanguage: string | null) => {
+      mockAppLanguage = appLanguage;
+      useStoryStore.setState({
+        selectedStory: storyLanguage ? ({ id: 'story-1', language: storyLanguage } as never) : null,
+      });
+      mockSong = { ...baseSong, lyrics: '' } as unknown as SongSelect;
+      const view = await render(<SongEditorScreen />);
+      await fireEvent.press(view.getByTestId('song-add-verse'));
+      await fireEvent.press(view.getByTestId('song-add-chorus'));
+      return view.getByTestId('song-lyrics').props.value as string;
+    };
+
+    afterEach(async () => {
+      await act(async () => {
+        mockAppLanguage = 'en';
+        useStoryStore.setState({ selectedStory: null });
+      });
+    });
+
+    it('are those of the language of the story, whatever language the app is in', async () => {
+      const text = await labelsAfterAdding('en', 'pt');
+
+      expect(text).toContain('{start_of_verse: Verso 1}');
+      expect(text).toContain('{start_of_chorus: Refrão}');
+    });
+
+    it('do not change when the app is switched to another language', async () => {
+      const inEnglish = await labelsAfterAdding('en', 'en');
+      await act(async () => cleanup());
+      const inPortuguese = await labelsAfterAdding('pt', 'en');
+
+      expect(inEnglish).toContain('{start_of_verse: Verse 1}');
+      expect(inPortuguese).toContain('{start_of_verse: Verse 1}');
+      expect(inPortuguese).toContain('{start_of_chorus: Chorus}');
+    });
+
+    it('are English for a story with no language, and for one in a language it has no words for', async () => {
+      expect(await labelsAfterAdding('pt', null)).toContain('{start_of_verse: Verse 1}');
+      await act(async () => cleanup());
+      expect(await labelsAfterAdding('pt', 'ja')).toContain('{start_of_verse: Verse 1}');
+    });
+
+    it('read a section with no label by one name, whatever the language of the app', async () => {
+      mockAppLanguage = 'pt';
+      mockSong = {
+        ...baseSong,
+        lyrics: '{start_of_verse}\nOne two\n{end_of_verse}',
+      } as unknown as SongSelect;
+      const view = await render(<SongEditorScreen />);
+      await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+      expect(view.getByText('Verse')).toBeTruthy();
+      expect(view.queryByText('Verso')).toBeNull();
+    });
+  });
+
   it('writes what is typed once the field is left, and only the field that changed', async () => {
     const view = await render(<SongEditorScreen />);
 
@@ -306,7 +365,7 @@ describe('SongEditorScreen', () => {
     expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
     expect(view.getByTestId('song-key').props.value).toBe('G');
     await fireEvent.press(view.getByTestId('song-tab-tune'));
-    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     expect(view.getByTestId('song-melody').props.value).toBe('P:Verse 1\nC D E2');
     expect(view.queryByTestId('song-transpose-undo')).toBeNull();
   });
@@ -358,7 +417,7 @@ describe('SongEditorScreen', () => {
     mockSong = { ...baseSong, melody: 'C D E' } as unknown as SongSelect;
     const view = await render(<SongEditorScreen />);
     await fireEvent.press(view.getByTestId('song-tab-tune'));
-    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
 
     expect(view.getByTestId('song-melody').props.value).toBe('C D E');
     await fireEvent.changeText(view.getByTestId('song-melody'), 'C D E F');
@@ -396,6 +455,7 @@ describe('SongEditorScreen', () => {
     const view = await render(<SongEditorScreen />);
     await fireEvent.press(view.getByTestId('song-tab-tune'));
 
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent.press(view.getByTestId('melody-export-midi'));
 
     await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
@@ -416,6 +476,7 @@ describe('SongEditorScreen', () => {
 
     await fireEvent.press(view.getByTestId('melody-options-toggle'));
     await fireEvent.press(view.getByTestId('melody-instrument-guitar'));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent.press(view.getByTestId('melody-export-midi'));
 
     await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
@@ -430,6 +491,7 @@ describe('SongEditorScreen', () => {
     const view = await render(<SongEditorScreen />);
     await fireEvent.press(view.getByTestId('song-tab-tune'));
 
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent.press(view.getByTestId('melody-export-midi'));
 
     await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
@@ -442,6 +504,7 @@ describe('SongEditorScreen', () => {
     const view = await render(<SongEditorScreen />);
     await fireEvent.press(view.getByTestId('song-tab-tune'));
 
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent.press(view.getByTestId('melody-export-abc'));
 
     await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
@@ -486,11 +549,12 @@ describe('SongEditorScreen', () => {
   it('asks the player to sound a key and writes the note it plays', async () => {
     const view = await render(<SongEditorScreen />);
     await fireEvent.press(view.getByTestId('song-tab-tune'));
-    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
+    await fireEvent.press(view.getByTestId('melody-part-0'));
 
     await fireEvent.press(view.getByTestId('piano-key-64'));
 
     expect(mockPlayTone).toHaveBeenCalledWith(64, 'hum');
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent(view.getByTestId('song-melody'), 'blur');
     await waitFor(() =>
       expect(mockUpdateSong).toHaveBeenCalledWith('user-1', 'song-1', {

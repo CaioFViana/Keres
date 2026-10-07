@@ -1,8 +1,15 @@
+import { parseMelody } from '@keres/shared';
 import { act, cleanup, fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import LeadSheetView from '../../src/components/features/songs/LeadSheetView';
 import MelodyPanel from '../../src/components/features/songs/MelodyPanel';
 
+const mockAlert = jest.fn();
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+jest.mock('../../src/utils/AppAlert', () => ({
+  __esModule: true,
+  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
+}));
 jest.mock('react-i18next', () => ({
   __esModule: true,
   useTranslation: () => ({
@@ -72,7 +79,8 @@ const settle = () =>
   });
 
 beforeEach(() => {
-  for (const mock of [onChange, onBlur, onPlay, onStop, onTone, onExport]) mock.mockReset();
+  for (const mock of [onChange, onBlur, onPlay, onStop, onTone, onExport, mockAlert])
+    mock.mockReset();
 });
 afterEach(async () => {
   await act(async () => cleanup());
@@ -220,8 +228,32 @@ describe('MelodyPanel parts', () => {
   });
 });
 
-describe('MelodyPanel writing', () => {
-  it('writes the note of a key into the part chosen, at the length chosen, and sounds it', async () => {
+describe('MelodyPanel writing a part', () => {
+  it('keeps the keyboard shut until a part is opened to be written', async () => {
+    const view = await render(panel());
+    await settle();
+
+    expect(view.queryByTestId('piano-keys')).toBeNull();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    expect(view.getByTestId('melody-editor-0')).toBeTruthy();
+    expect(view.getByTestId('piano-keys')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+    expect(view.queryByTestId('piano-keys')).toBeNull();
+  });
+
+  it('opens one part at a time', async () => {
+    const view = await render(panel());
+    await settle();
+
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+    await fireEvent.press(view.getByTestId('melody-part-1'));
+
+    expect(view.queryByTestId('melody-editor-0')).toBeNull();
+    expect(view.getByTestId('melody-editor-1')).toBeTruthy();
+  });
+
+  it('writes the note of a key into the part that is open, at the length chosen, and sounds it', async () => {
     const view = await render(panel({ melody: '', songKey: 'F' }));
     await settle();
 
@@ -234,18 +266,10 @@ describe('MelodyPanel writing', () => {
     expect(onTone).toHaveBeenCalledWith(70, 'hum');
   });
 
-  it('writes into the first named part until another is chosen, and says which', async () => {
-    const view = await render(panel({ melody: '' }));
-    await settle();
-
-    expect(view.getByText('melody_write_into:{"label":"Verse 1"}')).toBeTruthy();
-    await fireEvent.press(view.getByTestId('piano-key-60'));
-    expect(onChange).toHaveBeenLastCalledWith('P:Verse 1\nC');
-  });
-
-  it('writes a rest without sounding anything, and takes the last note back', async () => {
+  it('writes a rest without sounding anything, and takes the last note of that part back', async () => {
     const view = await render(panel({ melody: 'P:Verse 1\nC D' }));
     await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
 
     await fireEvent.press(view.getByTestId('melody-rest'));
     expect(onChange).toHaveBeenLastCalledWith('P:Verse 1\nC D z');
@@ -255,28 +279,119 @@ describe('MelodyPanel writing', () => {
     expect(onChange).toHaveBeenLastCalledWith('P:Verse 1\nC');
   });
 
-  it('moves the keyboard an octave when asked', async () => {
+  it('moves the keyboard an octave at a time, and stops at either end', async () => {
     const view = await render(panel());
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
 
-    expect(view.queryByTestId('piano-key-48')).toBeNull();
-    await fireEvent.press(view.getByTestId('melody-octave-48'));
+    expect(view.getByTestId('melody-range').props.children).toBe('C4 – C6');
+    await fireEvent.press(view.getByTestId('melody-octave-down'));
+    expect(view.getByTestId('melody-range').props.children).toBe('C3 – C5');
     expect(view.getByTestId('piano-key-48')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('melody-octave-down'));
+    expect(view.getByTestId('melody-range').props.children).toBe('C2 – C4');
+    expect(view.getByTestId('melody-octave-down').props.accessibilityState.disabled).toBe(true);
+    await fireEvent.press(view.getByTestId('melody-octave-up'));
+    await fireEvent.press(view.getByTestId('melody-octave-up'));
+    await fireEvent.press(view.getByTestId('melody-octave-up'));
+    expect(view.getByTestId('melody-range').props.children).toBe('C5 – C7');
+    expect(view.getByTestId('melody-octave-up').props.accessibilityState.disabled).toBe(true);
   });
 
-  it('offers no keyboard to someone who cannot edit, shows the notes as text, and still plays', async () => {
-    const view = await render(panel({ editable: false, melody: 'C D E F' }));
+  it('keeps the keys clear of the arrows above them', async () => {
+    const view = await render(panel());
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
 
+    const style = StyleSheet.flatten(view.getByTestId('melody-piano').props.style);
+    expect(style.marginTop).toBeGreaterThanOrEqual(8);
+  });
+
+  it('offers no keyboard and no way to open a part to someone who cannot edit, and still plays', async () => {
+    const view = await render(panel({ editable: false, melody: 'C D E F' }));
+    await settle();
+
+    await fireEvent.press(view.getByTestId('melody-part-0'));
     expect(view.queryByTestId('piano-keys')).toBeNull();
     expect(view.getByTestId('song-melody').props.editable).toBe(false);
     await fireEvent.press(view.getByTestId('melody-play'));
     expect(onPlay).toHaveBeenCalled();
   });
+});
 
-  it('keeps the notes as text folded for someone who can write, and unfolds them on request', async () => {
+describe('MelodyPanel suggesting a tune', () => {
+  it('writes a tune with a note for every syllable of the part when it has none', async () => {
+    const view = await render(panel({ songKey: 'G' }));
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    await fireEvent.press(view.getByTestId('melody-suggest'));
+
+    expect(mockAlert).not.toHaveBeenCalled();
+    const written = onChange.mock.calls[onChange.mock.calls.length - 1][0] as string;
+    expect(written.startsWith('P:Verse 1\n')).toBe(true);
+    expect(parseMelody(written).sections[0].syllables).toBe(4);
+  });
+
+  it('gives the next try another tune', async () => {
+    const view = await render(panel({ songKey: 'G' }));
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    await fireEvent.press(view.getByTestId('melody-suggest'));
+    const first = onChange.mock.calls[0][0];
+    await fireEvent.press(view.getByTestId('melody-suggest'));
+
+    expect(onChange.mock.calls[1][0]).not.toBe(first);
+  });
+
+  it('asks before it replaces a tune the writer has, and writes only if told to', async () => {
+    const view = await render(panel({ melody: 'P:Verse 1\nC D E F' }));
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    expect(view.getByText('melody_suggest_again')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('melody-suggest'));
+    expect(onChange).not.toHaveBeenCalled();
+    const buttons = mockAlert.mock.calls[0][2] as { text: string; onPress?: () => void }[];
+    expect(buttons.map((button) => button.text)).toEqual(['cancel', 'melody_suggest_again']);
+
+    await act(async () => buttons[1].onPress?.());
+    expect(parseMelody(onChange.mock.calls[0][0]).sections[0].syllables).toBe(4);
+  });
+
+  it('suggests for a part that only borrows a tune without asking, as it has none of its own', async () => {
+    const lyrics =
+      '{sov: Verse 1}\nOne two three four\n{eov}\n{sov: Verse 2}\nFive six nine ten\n{eov}';
+    const view = await render(panel({ lyrics, melody: 'P:Verse 1\nC D E F' }));
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-1'));
+
+    await fireEvent.press(view.getByTestId('melody-suggest'));
+
+    expect(mockAlert).not.toHaveBeenCalled();
+    expect(onChange.mock.calls[0][0]).toContain('P:Verse 2\n');
+    expect(onChange.mock.calls[0][0]).toContain('P:Verse 1\nC D E F');
+  });
+
+  it('puts the tune in the key of the song', async () => {
+    const view = await render(panel({ songKey: 'Bb' }));
+    await settle();
+    await fireEvent.press(view.getByTestId('melody-part-0'));
+
+    await fireEvent.press(view.getByTestId('melody-suggest'));
+
+    expect(onChange.mock.calls[0][0]).toMatch(/_[BE]/);
+  });
+});
+
+describe('MelodyPanel notes as text and files', () => {
+  it('keeps them folded for someone who can write, and unfolds them on request', async () => {
     const view = await render(panel({ melody: 'C D E F' }));
 
     expect(view.queryByTestId('song-melody')).toBeNull();
-    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
+    expect(view.queryByTestId('melody-export-midi')).toBeNull();
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent.changeText(view.getByTestId('song-melody'), 'C D');
     await fireEvent(view.getByTestId('song-melody'), 'blur');
 
@@ -284,8 +399,15 @@ describe('MelodyPanel writing', () => {
     expect(onBlur).toHaveBeenCalled();
   });
 
+  it('shows them from the start to someone who can only read', async () => {
+    const view = await render(panel({ editable: false, melody: 'C D' }));
+
+    expect(view.getByTestId('melody-export-midi')).toBeTruthy();
+  });
+
   it('exports the tune in either file', async () => {
     const view = await render(panel({ melody: 'C D E F' }));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
 
     await fireEvent.press(view.getByTestId('melody-export-midi'));
     await fireEvent.press(view.getByTestId('melody-export-abc'));
@@ -301,6 +423,7 @@ describe('MelodyPanel writing', () => {
 
     await fireEvent.press(view.getByTestId('melody-options-toggle'));
     await fireEvent.press(view.getByTestId('melody-instrument-piano'));
+    await fireEvent.press(view.getByTestId('melody-more-toggle'));
     await fireEvent.press(view.getByTestId('melody-export-midi'));
 
     expect(onExport).toHaveBeenLastCalledWith('midi', { ...VOICE, instrument: 'piano' });

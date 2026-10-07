@@ -43,7 +43,7 @@ const page: HelpPage = {
       items: [
         'Open Songs from the Gallery and add a song with its title.',
         'Write the lyrics. Put a chord in square brackets before the syllable it falls on: [G]Night de[Em]scends.',
-        'Add the verses and the chorus with the buttons above the lyrics. Each section gets a name; two sections cannot share one.',
+        'Add the verses and the chorus with the buttons above the lyrics. Each section gets a name in the language of the story, written into the text, so changing the language of the app never renames it; two sections cannot share one.',
         'Switch to Sheet to see the chords over the words, and count the syllables if you want a check on the meter.',
         'In a scene, open its music, add the song and choose which sections the scene sings.',
       ],
@@ -113,7 +113,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'The tune, and hearing it' },
     {
       type: 'paragraph',
-      text: 'In the Tune tab you play the notes on a keyboard or write them as text. The big button hums the tune with a synthetic voice (a hum, “ah” or “la”) while the words follow line by line; you can add a click, or an instrument — guitar, harp, piano or violin — that plays the chords of the lyrics in a feel of its own (waltz, ballad, march, lullaby). Without a tune, the instrument plays the chords alone, a bar to each. For each section the panel says how many notes there are for its syllables; syllables are only estimated, so a difference is a hint, not an error.',
+      text: 'In the Tune tab, tap a part to write its tune: have one suggested from its words, or play the notes on a keyboard (the notes can also be written as text). The big button hums the tune with a synthetic voice (a hum, “ah” or “la”) while the words follow line by line; you can add a click, or an instrument — guitar, harp, piano or violin — that plays the chords of the lyrics in a feel of its own (waltz, ballad, march, lullaby). Without a tune, the instrument plays the chords alone, a bar to each. For each section the panel says how many notes there are for its syllables; syllables are only estimated, so a difference is a hint, not an error.',
     },
     {
       type: 'callout',

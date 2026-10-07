@@ -1,5 +1,6 @@
 import {
   buildBacking,
+  DEFAULT_SECTION_WORDS,
   buildTimeline,
   defaultFeel,
   chordProFileOf,
@@ -40,7 +41,7 @@ import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useSong, useSongUses } from '../../hooks/useSongs';
 import { useSongDraft } from '../../hooks/useSongDraft';
-import { useSectionWords } from '../../hooks/useSectionWords';
+import { useNewSectionWords } from '../../hooks/useNewSectionWords';
 import { type PlaybackVoice, useSongPlayback } from '../../hooks/useSongPlayback';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SongStackParamList } from '../../navigation/MainSystemStacks';
@@ -81,7 +82,10 @@ const SongEditorScreen = () => {
   const draft = useSongDraft(song);
   const uses = useSongUses(songId, song?.storyId);
   const syllableLanguage = i18n.language.toLowerCase().startsWith('pt') ? 'pt' : 'en';
-  const words = useSectionWords();
+  // Sections are read by one set of words whatever language the app is in; the other set only names
+  // a section when it is added, and is written out in the text.
+  const words = DEFAULT_SECTION_WORDS;
+  const newSectionWords = useNewSectionWords();
   const [tab, setTab] = useState<SongTab>('words');
 
   const lyrics = draft.value('lyrics') ?? '';
@@ -310,6 +314,7 @@ const SongEditorScreen = () => {
             onUndoTranspose={undoTransposition}
             editable={editable}
             words={words}
+            newSectionWords={newSectionWords}
             syllableLanguage={syllableLanguage}
             activeLine={playback.active}
           />

@@ -1,33 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
-  appendNote,
-  FEELS,
-  type Feel,
-  formatDuration,
-  INSTRUMENTS,
-  type Instrument,
-  keyPrefersFlats,
+  lineSyllables,
   MAX_SONG_MELODY_LENGTH,
-  noteToken,
   parseChordPro,
   parseMelody,
-  removeLastNote,
+  replaceSection,
   resolveMelodies,
   type SectionWords,
   songSeconds,
+  suggestTune,
   type SyllableLanguage,
   type VoiceTimbre,
 } from '@keres/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import { useDebouncedValue } from '@/src/hooks/useDebouncedValue';
 import type {
@@ -38,7 +25,9 @@ import type {
   PlaybackVoice,
 } from '@/src/hooks/useSongPlayback';
 import { useTheme } from '@/src/theme';
-import PianoKeys from './PianoKeys';
+import { AppAlert } from '@/src/utils/AppAlert';
+import MelodyPlayerCard, { TOUCH, useMelodyVoice } from './MelodyPlayerCard';
+import PartTuneEditor from './PartTuneEditor';
 
 interface MelodyPanelProps {
   lyrics: string;
@@ -62,26 +51,12 @@ interface MelodyPanelProps {
   onExport: (kind: 'midi' | 'abc', voice: PlaybackVoice) => void;
 }
 
-/** Note lengths the keyboard offers, in quarter notes. */
-const LENGTHS = [
-  { beats: 0.25, label: '¼' },
-  { beats: 0.5, label: '½' },
-  { beats: 1, label: '1' },
-  { beats: 1.5, label: '1½' },
-  { beats: 2, label: '2' },
-  { beats: 4, label: '4' },
-] as const;
-const TIMBRES: readonly VoiceTimbre[] = ['hum', 'ah', 'la'];
-const BASE_PITCHES = [48, 60, 72] as const;
-/** The least a thing to touch should be, in points. */
-const TOUCH = 44;
-
 /**
- * The tune of a song, in the order a person uses it: hear it first (one big button; the sound
- * options keep to themselves until asked for), then the parts and how their notes meet their words,
- * then the keyboard that writes into the part chosen, and last the notes as text and the files.
- * Everything shown is worked out from the words and the tune after a pause in typing, and the sound is
- * made only when play is pressed - opening the song costs nothing of this.
+ * The tune of a song, as little as it takes: one big button to hear it; the parts, each with its own
+ * play button and a way to write it (a tune suggested from the words, or a keyboard); and, folded
+ * away, the sound options, the notes as text and the files. Everything shown is worked out from the
+ * words and the tune after a pause in typing, and the sound is made only when play is pressed -
+ * opening the song costs nothing of this.
  */
 const MelodyPanel: React.FC<MelodyPanelProps> = ({
   lyrics,
@@ -105,15 +80,12 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [timbre, setTimbre] = useState<VoiceTimbre>('hum');
-  const [click, setClick] = useState(false);
-  const [instrument, setInstrument] = useState<Instrument | null>(null);
-  const [feel, setFeel] = useState<Feel | 'auto'>('auto');
-  const [optionsOpen, setOptionsOpen] = useState(false);
-  const [notationOpen, setNotationOpen] = useState(!editable);
-  const [length, setLength] = useState<number>(1);
-  const [base, setBase] = useState<number>(60);
-  const [target, setTarget] = useState<string | null>(null);
+  const sound = useMelodyVoice();
+  const { voice } = sound;
+  const [moreOpen, setMoreOpen] = useState(!editable);
+  /** The part being written, by its place among the sections of the words. */
+  const [editing, setEditing] = useState<number | null>(null);
+  const [attempts, setAttempts] = useState<Record<number, number>>({});
 
   const settledLyrics = useDebouncedValue(lyrics);
   const settledMelody = useDebouncedValue(melody);
@@ -128,137 +100,37 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
     return { rows: resolveMelodies(song, parsed, language), errors: parsed.errors, total };
   }, [settledLyrics, settledMelody, words, language, tempo, meter]);
 
-  const labels = view.rows.flatMap((row) => (row.label ? [row.label] : []));
-  const writingInto = target && labels.includes(target) ? target : (labels[0] ?? null);
-  const flats = songKey ? keyPrefersFlats(songKey) : false;
-  const busy = phase === 'preparing';
-  const voice: PlaybackVoice = { timbre, click, instrument, feel };
   const tooLong = melody.length > MAX_SONG_MELODY_LENGTH * 0.9;
 
-  const press = (pitch: number | null) => {
-    onChange(appendNote(melody, writingInto, noteToken(pitch, length, flats)));
-    if (pitch !== null) onTone(pitch, timbre);
+  // A tune for the part from the syllables of its lines: written in one go, after asking if the part
+  // already has one, because that is the writer's work.
+  const suggest = (part: (typeof view.rows)[number]) => {
+    const section = parseChordPro(lyrics, words).sections[part.sectionIndex];
+    const counts = section ? lineSyllables(section, language) : [];
+    const attempt = (attempts[part.sectionIndex] ?? 0) + 1;
+    const write = () => {
+      setAttempts((current) => ({ ...current, [part.sectionIndex]: attempt }));
+      onChange(
+        replaceSection(
+          melody,
+          part.label,
+          suggestTune({ syllablesPerLine: counts, key: songKey, meter, attempt }),
+        ),
+      );
+    };
+    if (part.melody && part.melody.notes.length > 0 && !part.inheritedFrom) {
+      AppAlert.alert(
+        t('melody_suggest_confirm_title'),
+        t('melody_suggest_confirm_message', { label: part.label ?? '' }),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          { text: t('melody_suggest_again'), onPress: write },
+        ],
+      );
+      return;
+    }
+    write();
   };
-
-  const summary = [
-    t(`melody_voice_${timbre}`),
-    instrument
-      ? feel !== 'auto' && instrument !== 'violin'
-        ? `${t(`melody_instrument_${instrument}`)}, ${t(`melody_feel_${feel}`)}`
-        : t(`melody_instrument_${instrument}`)
-      : null,
-    click ? t('melody_click') : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-
-  const styles = StyleSheet.create({
-    card: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderRadius: 12,
-      borderWidth: 1,
-      gap: 10,
-      padding: 14,
-    },
-    playRow: { alignItems: 'center', flexDirection: 'row', gap: 14 },
-    play: {
-      alignItems: 'center',
-      backgroundColor: colors.primary,
-      borderRadius: 28,
-      height: 56,
-      justifyContent: 'center',
-      width: 56,
-    },
-    grow: { flexGrow: 1, flexShrink: 1 },
-    title: { color: colors.text, fontSize: 16, fontWeight: '700' },
-    small: { color: colors.textSecondary, fontSize: 13, lineHeight: 18 },
-    iconButton: {
-      alignItems: 'center',
-      height: TOUCH,
-      justifyContent: 'center',
-      minWidth: TOUCH,
-    },
-    bar: { backgroundColor: colors.border, borderRadius: 3, height: 6, overflow: 'hidden' },
-    barFill: { backgroundColor: colors.primary, height: 6 },
-    now: { color: colors.primary, fontSize: 18, fontStyle: 'italic', lineHeight: 24 },
-    error: { color: colors.error, fontSize: 13, lineHeight: 18 },
-    group: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    heading: {
-      color: colors.text,
-      fontSize: 15,
-      fontWeight: '700',
-      marginBottom: 6,
-      marginTop: 20,
-    },
-    chip: {
-      alignItems: 'center',
-      borderColor: colors.border,
-      borderRadius: 18,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 4,
-      minHeight: 36,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-    },
-    on: { backgroundColor: colors.primary, borderColor: colors.primary },
-    label: { color: colors.textSecondary, fontSize: 12, marginBottom: 4, marginTop: 4 },
-    part: {
-      alignItems: 'center',
-      borderColor: colors.border,
-      borderRadius: 10,
-      borderWidth: 1,
-      flexDirection: 'row',
-      marginBottom: 6,
-      minHeight: TOUCH + 8,
-    },
-    partTarget: { borderColor: colors.primary, borderWidth: 2 },
-    partMain: {
-      alignItems: 'center',
-      flexDirection: 'row',
-      flexGrow: 1,
-      flexShrink: 1,
-      gap: 10,
-      padding: 10,
-    },
-    input: {
-      fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-      fontSize: 14,
-      minHeight: 120,
-    },
-    actions: { alignItems: 'center', flexDirection: 'row', gap: 8, marginTop: 10 },
-    outline: {
-      alignItems: 'center',
-      borderColor: colors.primary,
-      borderRadius: 10,
-      borderWidth: 1,
-      flexDirection: 'row',
-      gap: 6,
-      minHeight: TOUCH,
-      paddingHorizontal: 14,
-    },
-  });
-
-  const chip = (
-    id: string,
-    text: string,
-    selected: boolean,
-    onPress: () => void,
-    disabled = false,
-  ) => (
-    <TouchableOpacity
-      key={id}
-      testID={id}
-      accessibilityRole="button"
-      accessibilityState={{ selected, disabled }}
-      disabled={disabled}
-      style={[styles.chip, selected && styles.on]}
-      onPress={onPress}
-    >
-      <Text style={{ color: selected ? colors.onPrimary : colors.text }}>{text}</Text>
-    </TouchableOpacity>
-  );
 
   const partDetail = (row: (typeof view.rows)[number]) => {
     if (row.alignment === 'none') return t('melody_part_none');
@@ -275,232 +147,109 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
 
   return (
     <View testID="melody-panel">
-      <View style={styles.card}>
-        <View style={styles.playRow}>
-          <TouchableOpacity
-            testID="melody-play"
-            accessibilityRole="button"
-            accessibilityLabel={t(phase === 'idle' ? 'melody_play' : 'melody_stop')}
-            style={styles.play}
-            onPress={() => (phase === 'idle' ? onPlay({ kind: 'song' }, voice) : onStop())}
-          >
-            {busy ? (
-              <ActivityIndicator color={colors.onPrimary} />
-            ) : (
-              <Ionicons
-                name={phase === 'idle' ? 'play' : 'stop'}
-                size={26}
-                color={colors.onPrimary}
-              />
-            )}
-          </TouchableOpacity>
-          <View style={styles.grow}>
-            <Text style={styles.title}>
-              {busy
-                ? t('melody_preparing', { percent: Math.round(progress * 100) })
-                : t(phase === 'playing' ? 'melody_playing' : 'melody_hear')}
-            </Text>
-            <Text style={styles.small} testID="melody-summary">
-              {summary}
-            </Text>
-            {view.total.seconds > 0 ? (
-              <Text style={styles.small} testID="melody-length">
-                {t(view.total.exact ? 'melody_length' : 'melody_length_estimated', {
-                  time: formatDuration(view.total.seconds),
-                })}
-              </Text>
-            ) : null}
-          </View>
-          <TouchableOpacity
-            testID="melody-options-toggle"
-            accessibilityRole="button"
-            accessibilityState={{ expanded: optionsOpen }}
-            accessibilityLabel={t('melody_options')}
-            style={styles.iconButton}
-            onPress={() => setOptionsOpen((open) => !open)}
-          >
-            <Ionicons
-              name={optionsOpen ? 'options' : 'options-outline'}
-              size={24}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
-        </View>
+      <MelodyPlayerCard
+        state={sound}
+        phase={phase}
+        progress={progress}
+        problem={problem}
+        active={active}
+        total={view.total}
+        onPlay={() => onPlay({ kind: 'song' }, voice)}
+        onStop={onStop}
+      />
 
-        {busy ? (
-          <View style={styles.bar}>
-            <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%` }]} />
-          </View>
-        ) : null}
-        {active ? (
-          <Text style={styles.now} testID="melody-now">
-            {`♪ ${active.text}`}
-          </Text>
-        ) : null}
-        {problem ? (
-          <Text style={styles.error} testID="melody-problem">
-            {t(problem === 'no-tune' ? 'melody_no_tune' : 'melody_play_failed')}
-          </Text>
-        ) : null}
-
-        {optionsOpen ? (
-          <View testID="melody-options">
-            <Text style={styles.label}>{t('melody_voice')}</Text>
-            <View style={styles.group}>
-              {TIMBRES.map((option) =>
-                chip(`melody-voice-${option}`, t(`melody_voice_${option}`), timbre === option, () =>
-                  setTimbre(option),
-                ),
-              )}
-              {chip('melody-click', t('melody_click'), click, () => setClick((on) => !on))}
-            </View>
-            <Text style={styles.label}>{t('melody_accompaniment')}</Text>
-            <View style={styles.group}>
-              {chip(
-                'melody-instrument-none',
-                t('melody_instrument_none'),
-                instrument === null,
-                () => setInstrument(null),
-              )}
-              {INSTRUMENTS.map((option) =>
-                chip(
-                  `melody-instrument-${option}`,
-                  t(`melody_instrument_${option}`),
-                  instrument === option,
-                  () => setInstrument(option),
-                ),
-              )}
-            </View>
-            {instrument && instrument !== 'violin' ? (
-              <>
-                <Text style={styles.label}>{t('melody_feel')}</Text>
-                <View style={styles.group}>
-                  {(['auto', ...FEELS] as const).map((option) =>
-                    chip(`melody-feel-${option}`, t(`melody_feel_${option}`), feel === option, () =>
-                      setFeel(option),
-                    ),
-                  )}
-                </View>
-              </>
-            ) : null}
-            <Text style={[styles.small, { marginTop: 8 }]}>{t('melody_backing_hint')}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      <Text style={styles.heading}>{t('melody_parts')}</Text>
+      <Text style={[styles.heading, { color: colors.text }]}>{t('melody_parts')}</Text>
       {view.rows.length === 0 ? (
-        <Text style={styles.small} testID="melody-parts-empty">
+        <Text style={[styles.small, { color: colors.textSecondary }]} testID="melody-parts-empty">
           {t('melody_parts_empty')}
         </Text>
       ) : (
         <View testID="melody-status">
           {view.rows.map((row) => {
             const off = row.alignment === 'short' || row.alignment === 'long';
-            const chosen = editable && row.label !== null && row.label === writingInto;
+            const open = editable && row.sectionIndex === editing;
             const name = row.label ?? t('melody_scope_unnamed', { number: row.sectionIndex + 1 });
             return (
-              <View key={row.sectionIndex} style={[styles.part, chosen && styles.partTarget]}>
-                <TouchableOpacity
-                  testID={`melody-part-${row.sectionIndex}`}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: chosen }}
-                  disabled={!editable || row.label === null}
-                  style={styles.partMain}
-                  onPress={() => row.label && setTarget(row.label)}
-                >
-                  <Ionicons
-                    name={
-                      row.alignment === 'match'
-                        ? 'checkmark-circle'
-                        : off
-                          ? 'alert-circle'
-                          : 'ellipse-outline'
-                    }
-                    size={22}
-                    color={
-                      row.alignment === 'match'
-                        ? colors.primary
-                        : off
-                          ? colors.error
-                          : colors.textSecondary
-                    }
+              <View
+                key={row.sectionIndex}
+                style={[
+                  styles.part,
+                  { borderColor: colors.border },
+                  open && { borderColor: colors.primary, borderWidth: 2 },
+                ]}
+              >
+                <View style={styles.partRow}>
+                  <TouchableOpacity
+                    testID={`melody-part-${row.sectionIndex}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: open }}
+                    accessibilityLabel={t('melody_edit_part', { label: name })}
+                    disabled={!editable}
+                    style={styles.partMain}
+                    onPress={() => setEditing(open ? null : row.sectionIndex)}
+                  >
+                    <Ionicons
+                      name={
+                        row.alignment === 'match'
+                          ? 'checkmark-circle'
+                          : off
+                            ? 'alert-circle'
+                            : 'ellipse-outline'
+                      }
+                      size={22}
+                      color={
+                        row.alignment === 'match'
+                          ? colors.primary
+                          : off
+                            ? colors.error
+                            : colors.textSecondary
+                      }
+                    />
+                    <View style={styles.grow}>
+                      <Text style={[styles.title, { color: colors.text }]}>{name}</Text>
+                      <Text
+                        style={[styles.small, { color: off ? colors.error : colors.textSecondary }]}
+                      >
+                        {partDetail(row)}
+                      </Text>
+                    </View>
+                    {editable ? (
+                      <Ionicons
+                        name={open ? 'chevron-up' : 'create-outline'}
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                    ) : null}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID={`melody-part-play-${row.sectionIndex}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('melody_part_play', { label: name })}
+                    style={styles.iconButton}
+                    onPress={() => onPlay({ kind: 'section', index: row.sectionIndex }, voice)}
+                  >
+                    <Ionicons name="play-circle-outline" size={28} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                {open ? (
+                  <PartTuneEditor
+                    part={row}
+                    melody={melody}
+                    songKey={songKey}
+                    timbre={voice.timbre}
+                    onChange={onChange}
+                    onTone={onTone}
+                    onSuggest={() => suggest(row)}
                   />
-                  <View style={styles.grow}>
-                    <Text style={styles.title}>{name}</Text>
-                    <Text style={[styles.small, off && { color: colors.error }]}>
-                      {partDetail(row)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  testID={`melody-part-play-${row.sectionIndex}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('melody_part_play', { label: name })}
-                  style={styles.iconButton}
-                  onPress={() => onPlay({ kind: 'section', index: row.sectionIndex }, voice)}
-                >
-                  <Ionicons name="play-circle-outline" size={28} color={colors.primary} />
-                </TouchableOpacity>
+                ) : null}
               </View>
             );
           })}
         </View>
       )}
 
-      {editable ? (
-        <>
-          <Text style={styles.heading}>
-            {writingInto
-              ? t('melody_write_into', { label: writingInto })
-              : t('melody_write_default')}
-          </Text>
-          <Text style={styles.label}>{t('melody_length_label')}</Text>
-          <View style={styles.group}>
-            {LENGTHS.map((option) =>
-              chip(`melody-length-${option.beats}`, option.label, length === option.beats, () =>
-                setLength(option.beats),
-              ),
-            )}
-          </View>
-          <Text style={styles.label}>{t('melody_range')}</Text>
-          <View style={styles.group}>
-            {BASE_PITCHES.map((pitch) =>
-              chip(
-                `melody-octave-${pitch}`,
-                `C${Math.floor(pitch / 12) - 1}–C${Math.floor(pitch / 12) + 1}`,
-                base === pitch,
-                () => setBase(pitch),
-              ),
-            )}
-          </View>
-          <PianoKeys firstPitch={base} onKey={press} />
-          <View style={styles.actions}>
-            <TouchableOpacity
-              testID="melody-rest"
-              accessibilityRole="button"
-              style={styles.outline}
-              onPress={() => press(null)}
-            >
-              <Ionicons name="pause-outline" size={18} color={colors.primary} />
-              <Text style={{ color: colors.primary }}>{t('melody_rest')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="melody-backspace"
-              accessibilityRole="button"
-              accessibilityLabel={t('melody_backspace')}
-              style={styles.outline}
-              onPress={() => onChange(removeLastNote(melody, writingInto))}
-            >
-              <Ionicons name="backspace-outline" size={18} color={colors.primary} />
-              <Text style={{ color: colors.primary }}>{t('melody_backspace_short')}</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      ) : null}
-
       {view.errors.length > 0 ? (
-        <Text style={[styles.error, { marginTop: 10 }]} testID="melody-errors">
+        <Text style={[styles.small, { color: colors.error, marginTop: 6 }]} testID="melody-errors">
           {t('melody_errors', {
             count: view.errors.length,
             line: view.errors[0].line,
@@ -510,22 +259,24 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
       ) : null}
 
       <TouchableOpacity
-        testID="melody-notation-toggle"
+        testID="melody-more-toggle"
         accessibilityRole="button"
-        accessibilityState={{ expanded: notationOpen }}
-        style={[styles.actions, { minHeight: TOUCH }]}
-        onPress={() => setNotationOpen((open) => !open)}
+        accessibilityState={{ expanded: moreOpen }}
+        style={styles.moreToggle}
+        onPress={() => setMoreOpen((open) => !open)}
       >
         <Ionicons
-          name={notationOpen ? 'chevron-down' : 'chevron-forward'}
+          name={moreOpen ? 'chevron-down' : 'chevron-forward'}
           size={18}
           color={colors.text}
         />
-        <Text style={styles.title}>{t('melody_text')}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('melody_more')}</Text>
       </TouchableOpacity>
-      {notationOpen ? (
-        <>
-          <Text style={styles.small}>{t('melody_text_hint')}</Text>
+      {moreOpen ? (
+        <View style={styles.more}>
+          <Text style={[styles.small, { color: colors.textSecondary }]}>
+            {t('melody_text_hint')}
+          </Text>
           <TextInput
             testID="song-melody"
             accessibilityLabel={t('melody_text')}
@@ -539,35 +290,68 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
             onChangeText={onChange}
             onBlur={onBlur}
           />
-          <Text style={[styles.small, tooLong && { color: colors.error }]}>
+          <Text style={[styles.small, { color: tooLong ? colors.error : colors.textSecondary }]}>
             {t('song_lyrics_count', { count: melody.length, max: MAX_SONG_MELODY_LENGTH })}
           </Text>
-        </>
+          <View style={styles.actions}>
+            {(['midi', 'abc'] as const).map((kind) => (
+              <TouchableOpacity
+                key={kind}
+                testID={`melody-export-${kind}`}
+                accessibilityRole="button"
+                style={[styles.outline, { borderColor: colors.primary }]}
+                onPress={() => onExport(kind, voice)}
+              >
+                <Ionicons name="share-outline" size={18} color={colors.primary} />
+                <Text style={{ color: colors.primary }}>{t(`melody_export_${kind}`)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       ) : null}
-
-      <Text style={styles.heading}>{t('melody_export')}</Text>
-      <View style={styles.actions}>
-        <TouchableOpacity
-          testID="melody-export-midi"
-          accessibilityRole="button"
-          style={styles.outline}
-          onPress={() => onExport('midi', voice)}
-        >
-          <Ionicons name="share-outline" size={18} color={colors.primary} />
-          <Text style={{ color: colors.primary }}>{t('melody_export_midi')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          testID="melody-export-abc"
-          accessibilityRole="button"
-          style={styles.outline}
-          onPress={() => onExport('abc', voice)}
-        >
-          <Ionicons name="share-outline" size={18} color={colors.primary} />
-          <Text style={{ color: colors.primary }}>{t('melody_export_abc')}</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  heading: { fontSize: 15, fontWeight: '700', marginBottom: 8, marginTop: 22 },
+  title: { fontSize: 16, fontWeight: '700' },
+  small: { fontSize: 13, lineHeight: 18 },
+  grow: { flexGrow: 1, flexShrink: 1 },
+  part: { borderRadius: 12, borderWidth: 1, marginBottom: 8, overflow: 'hidden' },
+  partRow: { alignItems: 'center', flexDirection: 'row', minHeight: TOUCH + 12 },
+  partMain: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexGrow: 1,
+    flexShrink: 1,
+    gap: 10,
+    padding: 10,
+  },
+  iconButton: { alignItems: 'center', height: TOUCH, justifyContent: 'center', minWidth: TOUCH },
+  moreToggle: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+    minHeight: TOUCH,
+  },
+  more: { gap: 8 },
+  input: {
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+    fontSize: 14,
+    minHeight: 120,
+  },
+  actions: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  outline: {
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    minHeight: TOUCH,
+    paddingHorizontal: 14,
+  },
+});
 
 export default MelodyPanel;

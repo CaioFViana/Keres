@@ -366,3 +366,26 @@ export function removeLastNote(text: string, label: string | null): string {
   }
   return text;
 }
+
+/**
+ * The text with the tune of a section replaced by `tune`: the notes under its `P:` line, or a new
+ * section when it is not there yet. What the keyboard cannot do in one touch - fill a part - goes here.
+ */
+export function replaceSection(text: string, label: string | null, tune: string): string {
+  const lines = text === '' ? [] : text.replace(/\r\n/g, '\n').split('\n');
+  const span = sectionSpan(lines, label);
+  if (!span) {
+    if (label === null) {
+      const firstMark = lines.findIndex((line) => SECTION_LINE.test(line));
+      lines.splice(firstMark < 0 ? lines.length : firstMark, 0, ...tune.split('\n'));
+      return lines.join('\n');
+    }
+    const body = lines.length > 0 && lines[lines.length - 1].trim() === '' ? lines.slice(0, -1) : lines;
+    return [...body, `P:${label}`, ...tune.split('\n')].join('\n');
+  }
+  const [from, to] = span;
+  // Field lines under the heading (a key, a tempo) stay; the notes and their comments go.
+  const kept = lines.slice(from, to).filter((line) => FIELD_LINE.test(line));
+  lines.splice(from, to - from, ...kept, ...tune.split('\n'));
+  return lines.join('\n');
+}

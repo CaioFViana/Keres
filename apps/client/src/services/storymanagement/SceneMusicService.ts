@@ -23,6 +23,8 @@ export interface SceneMusicService {
   /** Every live link of the story's live scenes, each scene's in order. */
   getMusicForStory(storyId: string): Promise<SceneMusicSelect[]>;
   getById(musicId: string): Promise<SceneMusicSelect | undefined>;
+  /** Every live link that sings the song, in any scene (those of a deleted scene included: the caller filters). */
+  getMusicForSong(songId: string): Promise<SceneMusicSelect[]>;
   /**
    * Adds music at the end of the scene's (or at `position`, counted from 0). The role is `in-world`
    * for a song and `score` for a medium of the Gallery unless said.
@@ -110,6 +112,15 @@ export const createSceneMusicService = (db: AppDrizzleClient): SceneMusicService
 
     async getById(musicId) {
       return db.query.sceneMusic.findFirst({ where: eq(sceneMusic.id, musicId) });
+    },
+
+    async getMusicForSong(songId) {
+      return db
+        .select()
+        .from(sceneMusic)
+        .where(and(eq(sceneMusic.songId, songId), eq(sceneMusic.isDeleted, false)))
+        .all()
+        .sort(compareRanked);
     },
 
     async addMusic(currentUserId, data) {

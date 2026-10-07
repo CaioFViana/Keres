@@ -153,6 +153,13 @@ const SceneMusicScreen = () => {
               'edit the role',
             )
           }
+          onSectionsChange={(sections) =>
+            userId &&
+            void attempt(
+              () => service.updateMusic(userId, view.music.id, { sections }),
+              'edit the sections',
+            )
+          }
           onMove={(delta) =>
             userId &&
             void attempt(() => service.moveMusic(userId, view.music.id, index + delta), 'move')
@@ -180,6 +187,16 @@ const SceneMusicScreen = () => {
         storyId={scene.storyId}
         onClose={() => setPickerFor(null)}
         onPick={pickTarget}
+        onOpenSongs={
+          canEdit
+            ? () => {
+                setPickerFor(null);
+                (
+                  navigation as unknown as { navigate: (stack: string, params: unknown) => void }
+                ).navigate('SongStack', { screen: 'SongList' });
+              }
+            : undefined
+        }
       />
     </KeyboardAwareScreen>
   );

@@ -105,6 +105,8 @@ import seeAlso_en from '../content/see-also/en';
 import seeAlso_pt from '../content/see-also/pt';
 import sketch_en from '../content/sketch/en';
 import sketch_pt from '../content/sketch/pt';
+import songs_en from '../content/songs/en';
+import songs_pt from '../content/songs/pt';
 import stats_en from '../content/stats/en';
 import stats_pt from '../content/stats/pt';
 import storyAnalysis_en from '../content/story-analysis/en';
@@ -201,6 +203,7 @@ export type GeneratedHelpPageId =
   | 'scenes'
   | 'see-also'
   | 'sketch'
+  | 'songs'
   | 'stats'
   | 'story-analysis'
   | 'story-dashboard'
@@ -431,6 +434,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   sketch: {
     en: sketch_en,
     pt: sketch_pt,
+  },
+  songs: {
+    en: songs_en,
+    pt: songs_pt,
   },
   stats: {
     en: stats_en,

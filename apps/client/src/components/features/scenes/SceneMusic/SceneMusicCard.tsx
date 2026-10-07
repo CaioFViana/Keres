@@ -14,6 +14,8 @@ interface SceneMusicCardProps {
   canEdit: boolean;
   onCueCommit: (cue: string) => void;
   onRoleChange: (role: SceneMusicRole) => void;
+  /** The sections of the song this scene sings; `null` is the whole song. */
+  onSectionsChange: (sections: string[] | null) => void;
   onMove: (delta: -1 | 1) => void;
   onReplace: () => void;
   onDelete: () => void;
@@ -33,6 +35,7 @@ const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
   canEdit,
   onCueCommit,
   onRoleChange,
+  onSectionsChange,
   onMove,
   onReplace,
   onDelete,
@@ -137,6 +140,52 @@ const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
       <Text style={[styles.roleHint, { color: colors.textSecondary }]}>
         {t(`scene_music_role_hint_${music.role === 'in-world' ? 'in_world' : 'score'}`)}
       </Text>
+      {view.targetKind === 'song' && view.songSections.length > 0 ? (
+        <View testID={`scene-music-sections-${music.id}`}>
+          <Text style={[styles.roleHint, { color: colors.textSecondary }]}>
+            {t('scene_music_sections_hint')}
+          </Text>
+          <View style={styles.roles}>
+            {[null, ...view.songSections].map((label) => {
+              const chosen = music.sections ?? [];
+              const active = label === null ? music.sections === null : chosen.includes(label);
+              return (
+                <TouchableOpacity
+                  key={label ?? 'whole'}
+                  testID={`scene-music-section-${label ?? 'whole'}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active, disabled: !canEdit }}
+                  disabled={!canEdit}
+                  style={[
+                    styles.role,
+                    { borderColor: colors.border },
+                    active && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
+                  onPress={() => {
+                    if (label === null) return onSectionsChange(null);
+                    const next = chosen.includes(label)
+                      ? chosen.filter((item) => item !== label)
+                      : [...chosen, label];
+                    onSectionsChange(next.length > 0 ? next : null);
+                  }}
+                >
+                  <Text style={{ color: active ? colors.onPrimary : colors.text, fontSize: 12 }}>
+                    {label ?? t('scene_music_sections_whole')}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+      {view.missingSections.length > 0 ? (
+        <Text
+          style={{ color: colors.error, fontSize: 12 }}
+          testID={`scene-music-missing-${music.id}`}
+        >
+          {t('scene_music_sections_missing', { labels: view.missingSections.join(', ') })}
+        </Text>
+      ) : null}
       <TextInput
         value={cue}
         onChangeText={(next) => setDraft({ base: music.cue, text: next })}

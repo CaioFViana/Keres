@@ -1,9 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
 import { useGalleryMedia } from '@/src/hooks/useGalleryMedia';
+import { useSongs } from '@/src/hooks/useSongs';
 import type { SceneMusicTarget } from '@/src/services/storymanagement/SceneMusicService';
 import { useTheme } from '@/src/theme';
 
@@ -12,20 +20,38 @@ interface SceneMusicTargetPickerProps {
   storyId: string | undefined;
   onClose: () => void;
   onPick: (target: SceneMusicTarget) => void;
+  /** Opens the story's songs, to write a new one; absent where that is not offered. */
+  onOpenSongs?: () => void;
 }
+
+type Tab = 'songs' | 'gallery';
 
 const REFERENCE_TYPES = ['audio', 'link'] as const;
 
-/** Chooses what a piece of music points at: an audio file or a link of the Gallery. */
+/**
+ * Chooses what a piece of music points at: a song of the story, or an audio file or a link of the
+ * Gallery. Each list is read only while its tab is the one in view.
+ */
 const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
   visible,
   storyId,
   onClose,
   onPick,
+  onOpenSongs,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { media, loading } = useGalleryMedia(storyId, visible, REFERENCE_TYPES);
+  const [tab, setTab] = useState<Tab>('songs');
+  const gallery = useGalleryMedia(storyId, visible && tab === 'gallery', REFERENCE_TYPES);
+  const { songs, loading: loadingSongs } = useSongs(
+    visible && tab === 'songs' ? storyId : undefined,
+  );
+
+  const tabStyle = (active: boolean) => [
+    styles.tab,
+    { borderColor: colors.border },
+    active && { backgroundColor: colors.primary, borderColor: colors.primary },
+  ];
 
   return (
     <ResponsiveModal
@@ -35,13 +61,67 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
       maxHeight="86%"
     >
       <Text style={[styles.title, { color: colors.text }]}>{t('scene_music_pick_title')}</Text>
-      {loading ? (
+      <View style={styles.tabs}>
+        {(['songs', 'gallery'] as const).map((name) => (
+          <TouchableOpacity
+            key={name}
+            testID={`scene-music-tab-${name}`}
+            accessibilityRole="button"
+            accessibilityState={{ selected: tab === name }}
+            style={tabStyle(tab === name)}
+            onPress={() => setTab(name)}
+          >
+            <Text style={{ color: tab === name ? colors.onPrimary : colors.text }}>
+              {t(`scene_music_pick_${name}`)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {tab === 'songs' ? (
+        loadingSongs ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : (
+          <>
+            {songs.length === 0 ? (
+              <Text style={{ color: colors.textSecondary }}>{t('scene_music_pick_no_songs')}</Text>
+            ) : (
+              <ScrollView style={styles.list}>
+                {songs.map((song) => (
+                  <TouchableOpacity
+                    key={song.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={song.title}
+                    style={[styles.row, { borderBottomColor: colors.border }]}
+                    onPress={() => onPick({ songId: song.id })}
+                  >
+                    <Ionicons name="musical-notes-outline" size={20} color={colors.textSecondary} />
+                    <Text style={[styles.rowName, { color: colors.text }]} numberOfLines={1}>
+                      {song.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            {onOpenSongs ? (
+              <TouchableOpacity
+                testID="scene-music-open-songs"
+                accessibilityRole="button"
+                onPress={onOpenSongs}
+                style={styles.manage}
+              >
+                <Text style={{ color: colors.primary }}>{t('scene_music_manage_songs')}</Text>
+              </TouchableOpacity>
+            ) : null}
+          </>
+        )
+      ) : gallery.loading ? (
         <ActivityIndicator color={colors.primary} />
-      ) : media.length === 0 ? (
+      ) : gallery.media.length === 0 ? (
         <Text style={{ color: colors.textSecondary }}>{t('scene_music_pick_none')}</Text>
       ) : (
         <ScrollView style={styles.list}>
-          {media.map((item) => (
+          {gallery.media.map((item) => (
             <TouchableOpacity
               key={item.id}
               accessibilityRole="button"
@@ -68,6 +148,8 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
 const styles = StyleSheet.create({
   sheet: { borderRadius: 10, padding: 20 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 12 },
+  tabs: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  tab: { borderRadius: 16, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },
   list: { maxHeight: 380 },
   row: {
     alignItems: 'center',
@@ -77,6 +159,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   rowName: { flex: 1, fontSize: 16 },
+  manage: { paddingTop: 12 },
 });
 
 export default SceneMusicTargetPicker;

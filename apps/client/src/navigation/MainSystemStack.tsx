@@ -67,6 +67,7 @@ import {
   OperationLogStackNavigator,
   PlotsStackNavigator,
   SketchStackNavigator,
+  SongStackNavigator,
   StoryAnalysisStackNavigator,
   TagStackNavigator,
   WorldRuleStackNavigator,
@@ -82,6 +83,7 @@ import {
   type OperationLogStackParamList,
   type PlotsStackParamList,
   type SketchStackParamList,
+  type SongStackParamList,
   type StoryAnalysisStackParamList,
   type TagsStackParamList,
   type WorldRulesStackParamList,
@@ -101,6 +103,7 @@ export type {
   OperationLogStackParamList,
   PlotsStackParamList,
   SketchStackParamList,
+  SongStackParamList,
   StoryAnalysisStackParamList,
   TagsStackParamList,
   WorldRulesStackParamList,
@@ -124,6 +127,7 @@ export type MainSystemDrawerParamList = {
   GalleryStack: NavigatorScreenParams<GalleryStackParamList> | undefined;
   BoardsStack: NavigatorScreenParams<BoardStackParamList> | undefined;
   SketchStack: NavigatorScreenParams<SketchStackParamList> | undefined;
+  SongStack: NavigatorScreenParams<SongStackParamList> | undefined;
   Settings: undefined;
   // Optional on purpose: the dashboard passes the story explicitly, but arriving straight
   // from the drawer navigates with no param at all (both screens read `selectedStory`).
@@ -449,6 +453,21 @@ const MainSystemNavigator = () => {
             drawerItemStyle: { height: 0, overflow: 'hidden' },
           }}
           listeners={drawerItemListeners('SketchStack', 'SketchList')}
+        />
+        <Drawer.Screen
+          name="SongStack"
+          component={SongStackNavigator}
+          options={{
+            title: t('songs_title'),
+            drawerLabel: t('songs_title'),
+            drawerIcon: drawerIcon(
+              getEntityAppearance('Song').icon as keyof typeof Ionicons.glyphMap,
+            ),
+            // Songs live inside Gallery (header button) and in a scene's music, not in the drawer
+            // menu: the route stays registered so they can navigate to it.
+            drawerItemStyle: { height: 0, overflow: 'hidden' },
+          }}
+          listeners={drawerItemListeners('SongStack', 'SongList')}
         />
         <Drawer.Screen
           name="CustomizationStack"

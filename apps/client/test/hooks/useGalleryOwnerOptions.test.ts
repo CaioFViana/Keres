@@ -20,6 +20,7 @@ const rows = [
   [{ id: 'scene-1', name: 'Prólogo' }],
   [{ id: 'item-1', name: 'Chave' }],
   [{ id: 'world-piece-1', name: 'Hidra', section: 'fauna' }],
+  [{ id: 'song-1', name: 'Canção do Farol' }],
 ];
 
 function queryFor(result: unknown) {
@@ -37,6 +38,7 @@ beforeEach(() => {
   db.select.mockImplementationOnce(() => queryFor(rows[3]));
   db.select.mockImplementationOnce(() => queryFor(rows[4]));
   db.select.mockImplementationOnce(() => queryFor(rows[5]));
+  db.select.mockImplementationOnce(() => queryFor(rows[6]));
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -68,6 +70,7 @@ it('loads every owner type and exposes both flat and grouped picker options', as
       value: 'WorldRule:world-piece-1',
       worldPieceSection: 'fauna',
     }),
+    expect.objectContaining({ label: 'song: Canção do Farol', value: 'Song:song-1' }),
   ]);
   expect(result.current.optionsByValue.get('Note:note-1')?.name).toBe('unnamed');
   expect(result.current.groupedOptions).toEqual(
@@ -106,5 +109,5 @@ it('does not query before a story is selected and can recover with reload after 
   db.select.mockReset();
   for (const row of rows) db.select.mockImplementationOnce(() => queryFor(row));
   await act(async () => failed.result.current.reload());
-  expect(failed.result.current.options).toHaveLength(6);
+  expect(failed.result.current.options).toHaveLength(7);
 });

@@ -6,6 +6,8 @@ import BoardCanvasScreen from '../screens/boards/BoardCanvasScreen';
 import BoardListScreen from '../screens/boards/BoardListScreen';
 import SketchCanvasScreen from '../screens/sketches/SketchCanvasScreen';
 import SketchListScreen from '../screens/sketches/SketchListScreen';
+import SongEditorScreen from '../screens/songs/SongEditorScreen';
+import SongListScreen from '../screens/songs/SongListScreen';
 import CharacterRelationGraphScreen from '../screens/characterrelations/CharacterRelationGraphScreen';
 import type { CharacterDetailScreenParamList } from '../screens/characters/CharacterDetailScreen';
 import CharacterDetailScreen from '../screens/characters/CharacterDetailScreen';
@@ -345,6 +347,25 @@ export const SketchStackNavigator = () => {
       <SketchStack.Screen name="SketchList" component={SketchListScreen} />
       <SketchStack.Screen name="SketchCanvas" component={SketchCanvasScreen} />
     </SketchStack.Navigator>
+  );
+};
+//#endregion
+//#region Songs
+
+const SongStack = createNativeStackNavigator<SongStackParamList>();
+
+export type SongStackParamList = {
+  SongList: undefined;
+  SongEditor: { songId: string };
+};
+
+export const SongStackNavigator = () => {
+  useBackButtonHandler();
+  return (
+    <SongStack.Navigator screenOptions={{ headerShown: false }}>
+      <SongStack.Screen name="SongList" component={SongListScreen} />
+      <SongStack.Screen name="SongEditor" component={SongEditorScreen} />
+    </SongStack.Navigator>
   );
 };
 //#endregion

@@ -168,6 +168,8 @@ const view = (id: string, overrides: Partial<SceneMusicView> = {}): SceneMusicVi
   targetKind: 'audio',
   targetName: `${id}.mp3`,
   targetGone: false,
+  songSections: [],
+  missingSections: [],
   ...overrides,
 });
 
@@ -295,6 +297,58 @@ describe('SceneMusicScreen', () => {
 
     expect(mockRetarget).toHaveBeenCalledWith('user-1', 'm1', { galleryId: 'g-9' });
     expect(mockAddMusic).not.toHaveBeenCalled();
+  });
+
+  describe('a song', () => {
+    const songView = (sections: string[] | null, missing: string[] = []) =>
+      view('m1', {
+        targetKind: 'song',
+        targetName: 'Tavern song',
+        songSections: ['Verse 1', 'Chorus'],
+        missingSections: missing,
+        music: { ...view('m1').music, songId: 's-1', galleryId: null, role: 'in-world', sections },
+      });
+
+    it('offers the sections of the song, and sings the whole of it unless some are chosen', async () => {
+      mockViews = [songView(null)];
+      const screen = await renderScreen();
+
+      expect(
+        screen.getByTestId('scene-music-section-whole').props.accessibilityState.selected,
+      ).toBe(true);
+      await fireEvent.press(screen.getByTestId('scene-music-section-Chorus'));
+
+      expect(mockUpdateMusic).toHaveBeenCalledWith('user-1', 'm1', { sections: ['Chorus'] });
+    });
+
+    it('adds a section to the ones chosen, takes one away, and goes back to the whole song with none', async () => {
+      mockViews = [songView(['Chorus'])];
+      const screen = await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('scene-music-section-Verse 1'));
+      expect(mockUpdateMusic).toHaveBeenLastCalledWith('user-1', 'm1', {
+        sections: ['Chorus', 'Verse 1'],
+      });
+
+      await fireEvent.press(screen.getByTestId('scene-music-section-Chorus'));
+      expect(mockUpdateMusic).toHaveBeenLastCalledWith('user-1', 'm1', { sections: null });
+
+      await fireEvent.press(screen.getByTestId('scene-music-section-whole'));
+      expect(mockUpdateMusic).toHaveBeenLastCalledWith('user-1', 'm1', { sections: null });
+    });
+
+    it('says which of the sections it names are no longer in the lyrics', async () => {
+      mockViews = [songView(['Coro', 'Chorus'], ['Coro'])];
+      const screen = await renderScreen();
+
+      expect(screen.getByTestId('scene-music-missing-m1')).toBeTruthy();
+    });
+
+    it('offers no sections for music that is not a song', async () => {
+      const screen = await renderScreen();
+
+      expect(screen.queryByTestId('scene-music-sections-m1')).toBeNull();
+    });
   });
 
   it('is read-only for someone who cannot edit', async () => {

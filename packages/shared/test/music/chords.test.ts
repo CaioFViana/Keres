@@ -6,6 +6,7 @@ import {
   pitchOfName,
   transposeChord,
   transposeKey,
+  transposedSpelling,
   transposeLyrics,
 } from '../../music/chords';
 
@@ -124,5 +125,21 @@ describe('chordIntervals', () => {
 
   it('takes a plain triad for a suffix it does not know', () => {
     expect(chordIntervals('xyz')).toEqual([0, 4, 7]);
+  });
+});
+
+describe('transposedSpelling', () => {
+  it('spells the new key the way it is usually written', () => {
+    expect(transposedSpelling('G', -2)).toEqual({ key: 'F', preferFlats: true });
+    expect(transposedSpelling('G', 2)).toEqual({ key: 'A', preferFlats: false });
+    expect(transposedSpelling('C', 10)).toEqual({ key: 'Bb', preferFlats: true });
+    expect(transposedSpelling('Em', 3)).toEqual({ key: 'Gm', preferFlats: true });
+    expect(transposedSpelling('Am', 6)).toEqual({ key: 'Ebm', preferFlats: true });
+  });
+
+  it('takes flats going down and sharps going up for a song with no key', () => {
+    expect(transposedSpelling(null, -1)).toEqual({ key: null, preferFlats: true });
+    expect(transposedSpelling(null, 1)).toEqual({ key: null, preferFlats: false });
+    expect(transposedSpelling('???', 1)).toEqual({ key: '???', preferFlats: false });
   });
 });

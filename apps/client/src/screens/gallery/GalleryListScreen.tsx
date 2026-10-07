@@ -172,6 +172,10 @@ const GalleryListScreen = () => {
     navigation.navigate('SketchStack', { screen: 'SketchList' });
   }, [navigation]);
 
+  const handleOpenSongs = useCallback(() => {
+    navigation.navigate('SongStack', { screen: 'SongList' });
+  }, [navigation]);
+
   useScreenHeader({
     target: 'parent',
     title: t('gallery_title'),
@@ -181,6 +185,13 @@ const GalleryListScreen = () => {
         icon: 'brush-outline',
         label: t('sketches_title'),
         onPress: handleOpenSketches,
+        visible: true,
+      },
+      {
+        id: 'songs',
+        icon: 'musical-note-outline',
+        label: t('songs_title'),
+        onPress: handleOpenSongs,
         visible: true,
       },
       {

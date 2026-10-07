@@ -25,6 +25,7 @@ import {
   tagEntityHandler,
   boardEntityHandler,
   sketchEntityHandler,
+  songEntityHandler,
   worldRuleEntityHandler,
 } from '@keres/shared';
 
@@ -33,6 +34,7 @@ const arcHelp = storyArcEntityHandler.help!;
 const sceneHelp = sceneEntityHandler.help!;
 const scenePageHelp = scenePageEntityHandler.help!;
 const sceneMusicHelp = sceneMusicEntityHandler.help!;
+const songHelp = songEntityHandler.help!;
 const choiceHelp = choiceEntityHandler.help!;
 const routeHelp = routeEntityHandler.help!;
 const routeStepHelp = routeStepEntityHandler.help!;
@@ -66,6 +68,7 @@ export const fieldSources: Record<string, string[]> = {
   scenes: [...sceneHelp.fields],
   'scene-pages': [...scenePageHelp.fields],
   'scene-music': [...sceneMusicHelp.fields],
+  songs: [...songHelp.fields],
   locations: [...locationHelp.fields],
   items: [...itemHelp.fields],
   'item-journeys': [...itemJourneyHelp.fields],
@@ -97,6 +100,7 @@ export const entityMetadataHelpPages = {
   Scene: 'scenes',
   Board: 'boards',
   Sketch: 'sketch',
+  Song: 'songs',
   Choice: 'choices',
   Mode: 'character-modes',
   Plot: 'plots',

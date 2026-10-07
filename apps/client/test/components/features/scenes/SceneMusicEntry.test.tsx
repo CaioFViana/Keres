@@ -18,9 +18,7 @@ jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
 }));
 jest.mock('../../../../src/hooks/useSceneMusic', () => ({
   __esModule: true,
-  useSceneMusic: () => ({
-    views: Array.from({ length: mockCount }, (_, index) => ({ music: { id: `m${index}` } })),
-  }),
+  useSceneMusicCount: () => mockCount,
 }));
 jest.mock('../../../../src/components/common/display/DetailField/DetailField', () => {
   const { Text } = require('react-native');

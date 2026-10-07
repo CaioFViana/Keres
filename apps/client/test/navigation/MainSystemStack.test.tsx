@@ -443,7 +443,7 @@ it('leaves the story on screen when its access is lost, and only that story', as
 async function renderDrawer() {
   await render(<MainSystemStack />);
   // Three entries (story schema, suggestions, stats) became one: the Customization drawer.
-  expect(mockDrawerScreens).toHaveLength(22);
+  expect(mockDrawerScreens).toHaveLength(23);
 }
 
 it('configures a compact, front drawer and preserves the current story as its dashboard title', async () => {
@@ -468,6 +468,10 @@ it('configures a compact, front drawer and preserves the current story as its da
   });
   // Sketches live inside Gallery, not in the drawer menu: registered but hidden.
   expect(drawerScreen('SketchStack')?.options).toMatchObject({
+    drawerItemStyle: { height: 0, overflow: 'hidden' },
+  });
+  // Songs live inside Gallery and a scene's music, likewise registered but hidden.
+  expect(drawerScreen('SongStack')?.options).toMatchObject({
     drawerItemStyle: { height: 0, overflow: 'hidden' },
   });
   expect(drawerScreen('ChoicesStack')).toBeUndefined();

@@ -153,3 +153,26 @@ export function chordIntervals(suffix: string): number[] {
   for (const [pattern, intervals] of table) if (pattern.test(s)) return intervals;
   return [0, 4, 7];
 }
+
+/** Whether the key whose tonic is `pitch` is conventionally spelled with flats (F, Bb, Eb, Ab, Db; Dm, Gm, Cm...). */
+function tonicPrefersFlats(pitch: number, minor: boolean): boolean {
+  return minor ? [2, 7, 0, 5, 10, 3, 8].includes(pitch) : [5, 10, 3, 8, 1].includes(pitch);
+}
+
+/**
+ * A song moved by `semitones`: the new key, spelled the way that key is usually written, and whether
+ * its chords are spelled with flats. A song with no key spells its chords with flats going down and
+ * sharps going up.
+ */
+export function transposedSpelling(
+  key: string | null,
+  semitones: number,
+): { key: string | null; preferFlats: boolean } {
+  const match = key ? /^([A-G][#b]?)(.*)$/.exec(key.trim()) : null;
+  const pitch = match ? pitchOfName(match[1]) : null;
+  if (!match || pitch === null) return { key: key ?? null, preferFlats: semitones < 0 };
+  const minor = /^(m|min|minor)$/.test(match[2]);
+  const moved = mod12(pitch + semitones);
+  const preferFlats = tonicPrefersFlats(moved, minor);
+  return { key: `${spell(moved, preferFlats)}${match[2]}`, preferFlats };
+}

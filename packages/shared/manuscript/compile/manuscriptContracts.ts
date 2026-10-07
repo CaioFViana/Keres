@@ -64,6 +64,8 @@ export const ManuscriptLabelsSchema = z.object({
   frameLabel: labelSchema,
   /** Said in place of a page's picture when the picture is gone. */
   mediaRemoved: labelSchema,
+  /** A scene's music is written as this and its title: "Music: Tavern song". */
+  musicLabel: labelSchema,
 });
 export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 
@@ -79,6 +81,7 @@ export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   pageLabel: 'Page',
   frameLabel: 'Frame',
   mediaRemoved: 'Image removed',
+  musicLabel: 'Music',
 };
 
 /** What only a screenplay needs: the paper it is paged on and what its title page and headings say. */
@@ -93,6 +96,8 @@ export const ScreenplayOptionsSchema = z.object({
   includeSynopses: z.boolean().default(true),
   /** One `#` section per chapter (Fountain only; never printed). */
   includeSections: z.boolean().default(true),
+  /** One `[[ ]]` note per piece of music of a scene (Fountain only; never printed). */
+  includeMusicNotes: z.boolean().default(false),
   /** Title page lines. All optional; the title and author come from the work and the options. */
   credit: z.string().max(120).optional(),
   source: z.string().max(200).optional(),
@@ -132,6 +137,8 @@ export const ManuscriptOptionsSchema = z.object({
   language: z.string().max(35).optional(),
   /** The frame a page's picture is shown in (`pageFormat.ts`); absent is the comic-book page's. */
   pageFormat: z.enum(PAGE_FORMATS).optional(),
+  /** Writes each scene's music under it, as a line of italic text: what it is and when it comes in. */
+  includeMusicCues: z.boolean().default(false),
   /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */
   pageNoun: z.enum(['page', 'frame']).default('page'),
   /** Only for the `fountain` and `screenplay-pdf` formats. */

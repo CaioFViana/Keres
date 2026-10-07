@@ -4,7 +4,7 @@ import {
   type ManuscriptBlock,
   type ManuscriptMark,
 } from '../ManuscriptDocument';
-import { withoutLooseSections } from '../compile/export/manuscriptCompiler';
+import { musicCueLine, withoutLooseSections } from '../compile/export/manuscriptCompiler';
 import {
   linearManuscriptSections,
   type ManuscriptChapter,
@@ -56,6 +56,10 @@ export type FountainOptions = {
   includeSections?: boolean;
   /** One `=` synopsis per scene from its summary (never printed). */
   includeSynopses?: boolean;
+  /** One `[[ ]]` note per piece of music of a scene, under its heading (never printed). */
+  includeMusicNotes?: boolean;
+  /** What the note says before the title: `Music`. */
+  musicLabel?: string;
   /** Numbers the headings `#1#`, `#2#`... in reading order. */
   numberScenes?: boolean;
   /** `false` leaves the title page out. */
@@ -270,6 +274,8 @@ export function compileFountain(
     generateHeadings = true,
     includeSections = true,
     includeSynopses = true,
+    includeMusicNotes = false,
+    musicLabel = 'Music',
     numberScenes = false,
     titlePage = {},
   } = options;
@@ -315,6 +321,13 @@ export function compileFountain(
     if (heading) blocks.push(heading);
     const synopsis = includeSynopses ? oneLine(scene.summary ?? '') : '';
     if (synopsis) blocks.push(`= ${synopsis}`);
+    if (includeMusicNotes) {
+      for (const music of scene.music ?? []) {
+        const line = musicCueLine(musicLabel, music);
+        // A note ends at `]]`: whatever the writer typed cannot end it early.
+        if (line) blocks.push(`[[${line.replace(/\]\]/g, '] ]')}]]`);
+      }
+    }
     if (text) blocks.push(text);
   }
 

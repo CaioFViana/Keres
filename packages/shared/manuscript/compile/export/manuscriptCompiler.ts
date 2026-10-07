@@ -151,8 +151,11 @@ type SectionsInput = {
   present?: BlockPresenter;
 };
 
-/** The words a page block carries: its caption ("Page") and the stand-in for a missing picture. */
-export type PageWords = { caption: string; removed: string };
+/**
+ * The words a scene's extras carry: a page's caption ("Page"), the stand-in for a missing picture,
+ * and, when set, the label the scene's music is written under (it is left out otherwise).
+ */
+export type PageWords = { caption: string; removed: string; musicLabel?: string };
 
 const DEFAULT_PAGE_WORDS: PageWords = { caption: 'Page', removed: 'Image removed' };
 
@@ -163,6 +166,17 @@ const plainSpan = (text: string): CompiledSpan => ({
   underline: false,
   strikethrough: false,
 });
+
+/** `Music: Title - cue`, or nothing for a link with neither a title nor a cue. */
+export function musicCueLine(
+  label: string,
+  music: { title: string | null; cue: string | null },
+): string {
+  const title = music.title?.trim() ?? '';
+  const cue = (music.cue ?? '').replace(/\s+/g, ' ').trim();
+  if (!title && !cue) return '';
+  return `${label}: ${[title, cue].filter(Boolean).join(' \u2014 ')}`;
+}
 
 function sectionsToBlocks({
   sections,
@@ -266,6 +280,12 @@ function sectionsToBlocks({
       // What goes with the page, a line at a time: a script's lines are not one paragraph.
       for (const line of (page.text ?? '').split(/\r?\n/)) {
         if (line.trim() !== '') emit({ kind: 'paragraph', spans: [plainSpan(line.trim())] });
+      }
+    }
+    if (pageWords.musicLabel) {
+      for (const music of section.scene.music ?? []) {
+        const line = musicCueLine(pageWords.musicLabel, music);
+        if (line) emit({ kind: 'paragraph', spans: [{ ...plainSpan(line), italic: true }] });
       }
     }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {

@@ -1,5 +1,6 @@
 import type { ManuscriptOptions } from '../compile/manuscriptContracts';
 import {
+  DEFAULT_MANUSCRIPT_LABELS,
   FORMAT_META,
   MAX_MANUSCRIPT_BYTES,
   ScreenplayOptionsSchema,
@@ -45,6 +46,8 @@ export function screenplayFountainOf(
       generateHeadings: screenplay.generateHeadings,
       includeSections: screenplay.includeSections,
       includeSynopses: screenplay.includeSynopses,
+      includeMusicNotes: screenplay.includeMusicNotes,
+      musicLabel: options.labels?.musicLabel ?? DEFAULT_MANUSCRIPT_LABELS.musicLabel,
       numberScenes: screenplay.numberScenes,
       titlePage: {
         title,

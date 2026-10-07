@@ -57,6 +57,7 @@ export function presentedManuscriptOf(
   const pageWords = {
     caption: parsed.pageNoun === 'frame' ? labels.frameLabel : labels.pageLabel,
     removed: labels.mediaRemoved,
+    ...(parsed.includeMusicCues ? { musicLabel: labels.musicLabel } : {}),
   };
   let blocks: CompiledBlock[];
   if (input.storyType === 'branching') {

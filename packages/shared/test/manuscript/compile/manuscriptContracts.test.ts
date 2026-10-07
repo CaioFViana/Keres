@@ -55,6 +55,7 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
       pageLabel: 'Page',
       frameLabel: 'Frame',
       mediaRemoved: 'Image removed',
+      musicLabel: 'Music',
     });
   });
 });
@@ -65,6 +66,7 @@ describe('ManuscriptOptionsSchema', () => {
     expect(ManuscriptOptionsSchema.parse({ format: 'md' })).toEqual({
       format: 'md',
       includeLooseScenes: false,
+      includeMusicCues: false,
       includeSceneNames: false,
       includeToc: false,
       pageNoun: 'page',

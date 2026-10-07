@@ -21,6 +21,16 @@ export interface ManuscriptPage {
   text: string | null;
 }
 
+/** A piece of music a scene has, as a manuscript can say it: what it is, who hears it, when it comes in. */
+export interface ManuscriptSceneMusic {
+  id: string;
+  /** `in-world`: the people in the story hear it. `score`: only whoever tells the story does. */
+  role: 'in-world' | 'score';
+  /** The song's title, or the name of the Gallery medium; `null` when what it pointed at is gone. */
+  title: string | null;
+  cue: string | null;
+}
+
 /** The minimum the pipeline needs to know about a scene. */
 export interface ManuscriptScene {
   id: string;
@@ -38,6 +48,8 @@ export interface ManuscriptScene {
   locationIntExt?: LocationIntExt | null;
   /** The scene's pages, in order: a comic or a storyboard. Absent when the caller has none. */
   pages?: ManuscriptPage[];
+  /** The scene's music, in order. Absent when the caller has none. */
+  music?: ManuscriptSceneMusic[];
 }
 
 /** The minimum the pipeline needs to know about a route step. */

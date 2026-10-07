@@ -21,6 +21,18 @@ export interface ManuscriptPage {
   text: string | null;
 }
 
+/** The words of a song a manuscript may print: what is sung, what it means, and which parts this scene sings. */
+export interface ManuscriptSong {
+  id: string;
+  title: string;
+  /** ChordPro text: the sung words, with their chords and sections. */
+  lyrics: string;
+  /** The same words in the reader's language, under the same section marks; `null` when there are none. */
+  lyricsTranslation: string | null;
+  /** The labels of the sections the scene sings; `null` is the whole song. */
+  sections: string[] | null;
+}
+
 /** A piece of music a scene has, as a manuscript can say it: what it is, who hears it, when it comes in. */
 export interface ManuscriptSceneMusic {
   id: string;
@@ -29,6 +41,8 @@ export interface ManuscriptSceneMusic {
   /** The song's title, or the name of the Gallery medium; `null` when what it pointed at is gone. */
   title: string | null;
   cue: string | null;
+  /** The song itself, carried only when the export prints songs. Never a Gallery reference. */
+  song?: ManuscriptSong;
 }
 
 /** The minimum the pipeline needs to know about a scene. */

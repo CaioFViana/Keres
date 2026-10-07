@@ -5,6 +5,7 @@ import {
   type ManuscriptMark,
 } from '../ManuscriptDocument';
 import { musicCueLine, withoutLooseSections } from '../compile/export/manuscriptCompiler';
+import { type PrintedSongs, type SongPrint, songBlocks, sungSongsOf } from '../compile/songPrint';
 import {
   linearManuscriptSections,
   type ManuscriptChapter,
@@ -60,6 +61,8 @@ export type FountainOptions = {
   includeMusicNotes?: boolean;
   /** What the note says before the title: `Music`. */
   musicLabel?: string;
+  /** Writes the songs a scene sings as Fountain lyrics (`~`), which a script prints. None when absent. */
+  songs?: SongPrint;
   /** Numbers the headings `#1#`, `#2#`... in reading order. */
   numberScenes?: boolean;
   /** `false` leaves the title page out. */
@@ -276,6 +279,7 @@ export function compileFountain(
     includeSynopses = true,
     includeMusicNotes = false,
     musicLabel = 'Music',
+    songs,
     numberScenes = false,
     titlePage = {},
   } = options;
@@ -292,6 +296,7 @@ export function compileFountain(
 
   let sceneCount = 0;
   let generatedHeadings = 0;
+  const printedSongs: PrintedSongs = new Set();
   for (const section of sections) {
     if (section.kind === 'container') {
       if (includeSections && section.name.trim()) blocks.push(`# ${oneLine(section.name)}`);
@@ -329,6 +334,23 @@ export function compileFountain(
       }
     }
     if (text) blocks.push(text);
+    if (songs) {
+      for (const song of sungSongsOf(scene.music)) {
+        const lyrics = songBlocks(song, song.sections, printedSongs, {
+          print: { ...songs, chords: false },
+          showLabels: false,
+          skipPrinted: songs.repeat === 'first-only',
+        });
+        for (const block of lyrics) {
+          if (block.kind !== 'paragraph') continue;
+          const lines = block.spans
+            .map((part) => part.text)
+            .join('')
+            .split('\n');
+          blocks.push(lines.map((line) => `~${line}`).join('\n'));
+        }
+      }
+    }
   }
 
   return { text: `${blocks.join('\n\n')}\n`, sceneCount, generatedHeadings };

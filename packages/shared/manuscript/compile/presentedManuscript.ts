@@ -8,6 +8,7 @@ import {
 import type { ManuscriptImage } from '../images/imageInfo';
 import type { ManuscriptLabels, ManuscriptOptions } from './manuscriptContracts';
 import { PAGE_FORMAT_ASPECT } from './pageFormat';
+import { DEFAULT_SONG_PRINT } from './songPrint';
 import { sceneMatchesArc } from './manuscriptSections';
 import type { ManuscriptChapter, ManuscriptScene } from './manuscriptSections';
 import {
@@ -58,6 +59,18 @@ export function presentedManuscriptOf(
     caption: parsed.pageNoun === 'frame' ? labels.frameLabel : labels.pageLabel,
     removed: labels.mediaRemoved,
     ...(parsed.includeMusicCues ? { musicLabel: labels.musicLabel } : {}),
+    ...(parsed.includeSongs
+      ? {
+          songs: {
+            ...DEFAULT_SONG_PRINT,
+            placement: parsed.songsPlacement,
+            language: parsed.songLanguage,
+            repeat: parsed.songRepeat,
+            chords: parsed.songChords,
+            heading: labels.songsHeading,
+          },
+        }
+      : {}),
   };
   let blocks: CompiledBlock[];
   if (input.storyType === 'branching') {

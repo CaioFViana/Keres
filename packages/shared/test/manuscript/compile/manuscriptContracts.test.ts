@@ -56,6 +56,7 @@ describe('DEFAULT_MANUSCRIPT_LABELS', () => {
       frameLabel: 'Frame',
       mediaRemoved: 'Image removed',
       musicLabel: 'Music',
+      songsHeading: 'Songs',
     });
   });
 });
@@ -68,10 +69,15 @@ describe('ManuscriptOptionsSchema', () => {
       includeLooseScenes: false,
       includeMusicCues: false,
       includeSceneNames: false,
+      includeSongs: false,
       includeToc: false,
       pageNoun: 'page',
       resetSceneNumbers: false,
       sceneOrder: 'discovery',
+      songChords: false,
+      songLanguage: 'sung',
+      songRepeat: 'first-only',
+      songsPlacement: 'appendix',
     });
   });
 

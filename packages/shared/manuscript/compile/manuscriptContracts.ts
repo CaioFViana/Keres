@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PAGE_FORMATS } from './pageFormat';
+import { SONG_LANGUAGES, SONG_PLACEMENTS, SONG_REPEATS } from './songPrint';
 import { ManuscriptStyleSchema } from './manuscriptStyle';
 
 /** Manuscript renditions the pipeline produces - every one in pure TypeScript, on any host. */
@@ -66,6 +67,8 @@ export const ManuscriptLabelsSchema = z.object({
   mediaRemoved: labelSchema,
   /** A scene's music is written as this and its title: "Music: Tavern song". */
   musicLabel: labelSchema,
+  /** The heading of the appendix of songs. */
+  songsHeading: labelSchema,
 });
 export type ManuscriptLabels = z.infer<typeof ManuscriptLabelsSchema>;
 
@@ -82,6 +85,7 @@ export const DEFAULT_MANUSCRIPT_LABELS: ManuscriptLabels = {
   frameLabel: 'Frame',
   mediaRemoved: 'Image removed',
   musicLabel: 'Music',
+  songsHeading: 'Songs',
 };
 
 /** What only a screenplay needs: the paper it is paged on and what its title page and headings say. */
@@ -139,6 +143,16 @@ export const ManuscriptOptionsSchema = z.object({
   pageFormat: z.enum(PAGE_FORMATS).optional(),
   /** Writes each scene's music under it, as a line of italic text: what it is and when it comes in. */
   includeMusicCues: z.boolean().default(false),
+  /** Prints the songs the scenes sing: the words, never a reference or a recording. Off unless asked. */
+  includeSongs: z.boolean().default(false),
+  /** Where they go: all together at the end, or each after the scene that sings it. */
+  songsPlacement: z.enum(SONG_PLACEMENTS).default('appendix'),
+  /** The sung words, their translation, or both. */
+  songLanguage: z.enum(SONG_LANGUAGES).default('sung'),
+  /** A part of a song a scene already printed: printed again (`every`) or only named (`first-only`). */
+  songRepeat: z.enum(SONG_REPEATS).default('first-only'),
+  /** The chords stay in the lines, in brackets. */
+  songChords: z.boolean().default(false),
   /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */
   pageNoun: z.enum(['page', 'frame']).default('page'),
   /** Only for the `fountain` and `screenplay-pdf` formats. */

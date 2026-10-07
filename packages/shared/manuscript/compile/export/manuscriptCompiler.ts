@@ -11,6 +11,16 @@ import {
 import type { ManuscriptImage } from '../../images/imageInfo';
 import { parseManuscriptMarkdown } from '../parseManuscriptMarkdown';
 import type { BlockPresenter } from '../manuscriptStyle';
+import type { ManuscriptSong } from '../manuscriptSections';
+import {
+  type PrintedSongs,
+  SONGS_BOOKMARK_ID,
+  type SongPrint,
+  songBlocks,
+  songMentionBlock,
+  songTitleBlock,
+  sungSongsOf,
+} from '../songPrint';
 
 /** The minimum the pipeline needs to know about a choice. */
 export interface ManuscriptChoice {
@@ -152,10 +162,16 @@ type SectionsInput = {
 };
 
 /**
- * The words a scene's extras carry: a page's caption ("Page"), the stand-in for a missing picture,
- * and, when set, the label the scene's music is written under (it is left out otherwise).
+ * The words and choices a scene's extras carry: a page's caption ("Page"), the stand-in for a
+ * missing picture, when set the label the scene's music is written under (it is left out
+ * otherwise) and, when set, how the songs the scenes sing are printed (none are otherwise).
  */
-export type PageWords = { caption: string; removed: string; musicLabel?: string };
+export type PageWords = {
+  caption: string;
+  removed: string;
+  musicLabel?: string;
+  songs?: SongPrint;
+};
 
 const DEFAULT_PAGE_WORDS: PageWords = { caption: 'Page', removed: 'Image removed' };
 
@@ -207,6 +223,9 @@ function sectionsToBlocks({
     }
   }
   const emitted = new Set<string>();
+  // What the songs have printed so far, and the songs an appendix will gather, in the order sung.
+  const printedSongs: PrintedSongs = new Set();
+  const appendixSongs = new Map<string, ManuscriptSong>();
   const blocks: CompiledBlock[] = [];
   const emit = (block: CompiledBlock): void => {
     blocks.push(present ? present(block) : block);
@@ -288,6 +307,23 @@ function sectionsToBlocks({
         if (line) emit({ kind: 'paragraph', spans: [{ ...plainSpan(line), italic: true }] });
       }
     }
+    if (pageWords.songs) {
+      for (const song of sungSongsOf(section.scene.music)) {
+        if (pageWords.songs.placement === 'appendix') {
+          if (!appendixSongs.has(song.id)) appendixSongs.set(song.id, song);
+          continue;
+        }
+        const once = pageWords.songs.repeat === 'first-only';
+        const printedHere = songBlocks(song, song.sections, printedSongs, {
+          print: pageWords.songs,
+          showLabels: false,
+          skipPrinted: once,
+        });
+        // A part sung before is not set again: the scene says which song it is, and no more.
+        if (printedHere.length > 0) for (const block of printedHere) emit(block);
+        else if (once) emit(songMentionBlock(song.title));
+      }
+    }
     for (const choice of choicesBySceneId.get(section.scene.id) ?? []) {
       if (gamebook) {
         const targetBookmarkId = bookmarkFor.get(choice.nextSceneId) ?? null;
@@ -320,6 +356,20 @@ function sectionsToBlocks({
         requirements: choice.requirements,
         effects: choice.effects,
       });
+    }
+  }
+  if (pageWords.songs && appendixSongs.size > 0) {
+    // The appendix is the work complete: every song once, whole, whatever each scene sang of it.
+    emit({ kind: 'loose-heading', label: pageWords.songs.heading, bookmarkId: SONGS_BOOKMARK_ID });
+    for (const song of appendixSongs.values()) {
+      emit(songTitleBlock(song.title));
+      for (const block of songBlocks(song, null, new Set(), {
+        print: pageWords.songs,
+        showLabels: true,
+        skipPrinted: false,
+      })) {
+        emit(block);
+      }
     }
   }
   return blocks;

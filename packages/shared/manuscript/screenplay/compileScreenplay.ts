@@ -6,6 +6,7 @@ import {
   ScreenplayOptionsSchema,
 } from '../compile/manuscriptContracts';
 import type { CompileStoryManuscriptInput } from '../compile/presentedManuscript';
+import { DEFAULT_SONG_PRINT } from '../compile/songPrint';
 import { compileFountain, type FountainScene } from './fountain';
 import { screenplayPdfFromFountain } from './screenplayPdf';
 
@@ -48,6 +49,16 @@ export function screenplayFountainOf(
       includeSynopses: screenplay.includeSynopses,
       includeMusicNotes: screenplay.includeMusicNotes,
       musicLabel: options.labels?.musicLabel ?? DEFAULT_MANUSCRIPT_LABELS.musicLabel,
+      songs: options.includeSongs
+        ? {
+            ...DEFAULT_SONG_PRINT,
+            // A script prints a song where it is sung: there is no appendix of songs in one.
+            placement: 'after-scene',
+            language: options.songLanguage,
+            repeat: options.songRepeat,
+            heading: options.labels?.songsHeading ?? DEFAULT_MANUSCRIPT_LABELS.songsHeading,
+          }
+        : undefined,
       numberScenes: screenplay.numberScenes,
       titlePage: {
         title,

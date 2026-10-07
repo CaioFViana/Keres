@@ -7,6 +7,7 @@ import SettingsGroup from '@/src/components/features/app/SettingsGroup';
 import SettingsRow from '@/src/components/features/app/SettingsRow';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
+import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -60,6 +61,7 @@ const SettingsScreen = () => {
   const commonContainerStyles = getCommonContainerStyles(colors);
   const commonInputStyles = getCommonInputStyles(colors);
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+  const { isCompact } = useResponsiveLayout();
   const drizzleClient = useDrizzle(); // Initialize useDrizzle
   const db = useSQLiteContext();
   const navigation = useNavigation<SettingsScreenNavigationProp>();
@@ -262,174 +264,186 @@ const SettingsScreen = () => {
           </View>
         </View>
 
-        <SettingsGroup title={t('settings_section_profile')}>
-          <SettingsRow
-            icon="person-outline"
-            label={t('username')}
-            below={
-              <>
-                <TextInput
-                  value={shownName}
-                  onChangeText={handleUsernameChange}
-                  onBlur={() => setUsernameDraft(null)}
-                  placeholder={t('enter_username')}
-                  style={[commonInputStyles.input, styles.input]}
-                />
-                {usernameInvalid && (
-                  <Text style={[styles.usernameError, { color: colors.error }]}>
-                    {t('username_required_error')}
-                  </Text>
-                )}
-              </>
-            }
-          />
-        </SettingsGroup>
-
-        <SettingsGroup title={t('settings_section_appearance')}>
-          <SettingsRow
-            icon="language-outline"
-            label={t('select_language')}
-            below={
-              <View style={styles.select}>
-                <SingleSelectPill
-                  options={languageOptions}
-                  value={language || 'en'}
-                  onValueChange={handleLanguageChange as (value: string | null) => void}
-                  placeholder={t('select_language')}
-                />
-              </View>
-            }
-          />
-          <SettingsRow
-            icon="moon-outline"
-            label={t('dark_mode')}
-            control={<ThemedSwitch value={darkMode} onValueChange={handleDarkModeToggle} />}
-          />
-          <SettingsRow
-            icon="time-outline"
-            label={t('use_24_hour_time')}
-            hint={use24HourTime ? t('use_24_hour_time_on') : t('use_24_hour_time_off')}
-            control={<ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />}
-          />
-          <SettingsRow
-            icon="calendar-outline"
-            label={t('date_display_format')}
-            hint={t('date_display_format_hint')}
-            below={
-              <View style={styles.select}>
-                <SingleSelectPill
-                  options={[
-                    { label: t('date_display_format_iso'), value: 'iso' },
-                    { label: t('date_display_format_dmy'), value: 'dmy' },
-                    { label: t('date_display_format_mdy'), value: 'mdy' },
-                  ]}
-                  value={dateDisplayFormat}
-                  onValueChange={handleDateDisplayFormatChange}
-                  placeholder={t('date_display_format')}
-                />
-              </View>
-            }
-          />
-          {SHOW_EXPORT_FORMAT_SETTING && (
-            <SettingsRow
-              icon="image-outline"
-              label={t('export_format')}
-              hint={t('export_format_hint')}
-              below={
-                <View style={styles.select}>
-                  <SingleSelectPill
-                    options={[
-                      { label: t('export_format_svg'), value: 'svg' },
-                      { label: t('export_format_png'), value: 'png' },
-                    ]}
-                    value={exportFormat}
-                    onValueChange={handleExportFormatChange}
-                    placeholder={t('export_format')}
-                  />
-                </View>
-              }
-            />
-          )}
-        </SettingsGroup>
-
-        <SettingsGroup title={t('settings_section_assistance')}>
-          <SettingsRow
-            icon="bulb-outline"
-            label={t('suggest_literary_devices')}
-            hint={
-              suggestLiteraryDevices
-                ? t('suggest_literary_devices_on')
-                : t('suggest_literary_devices_off')
-            }
-            control={
-              <ThemedSwitch
-                value={suggestLiteraryDevices}
-                onValueChange={handleLiteraryDevicesToggle}
+        <View style={[styles.columns, !isCompact && styles.columnsSideBySide]}>
+          <View style={!isCompact && styles.columnSideBySide}>
+            <SettingsGroup title={t('settings_section_profile')}>
+              <SettingsRow
+                icon="person-outline"
+                label={t('username')}
+                below={
+                  <>
+                    <TextInput
+                      value={shownName}
+                      onChangeText={handleUsernameChange}
+                      onBlur={() => setUsernameDraft(null)}
+                      placeholder={t('enter_username')}
+                      style={[commonInputStyles.input, styles.input]}
+                    />
+                    {usernameInvalid && (
+                      <Text style={[styles.usernameError, { color: colors.error }]}>
+                        {t('username_required_error')}
+                      </Text>
+                    )}
+                  </>
+                }
               />
-            }
-          />
-          <SettingsRow
-            icon="help-circle-outline"
-            label={t('show_contextual_help')}
-            hint={showContextualHelp ? t('show_contextual_help_on') : t('show_contextual_help_off')}
-            control={
-              <ThemedSwitch value={showContextualHelp} onValueChange={handleContextualHelpToggle} />
-            }
-          />
-          <SettingsRow
-            icon="school-outline"
-            label={t('show_tutorials')}
-            hint={showTutorials ? t('show_tutorials_on') : t('show_tutorials_off')}
-            control={
-              <ThemedSwitch value={showTutorials} onValueChange={handleShowTutorialsToggle} />
-            }
-          />
-          <SettingsRow
-            icon="card-outline"
-            label={t('warn_payment_due')}
-            hint={warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
-            control={
-              <ThemedSwitch value={warnPaymentDue} onValueChange={handleWarnPaymentDueToggle} />
-            }
-          />
-        </SettingsGroup>
+            </SettingsGroup>
 
-        <SettingsGroup title={t('settings_section_exports')}>
-          <SettingsRow
-            icon="text-outline"
-            label={t('settings_cjk_title')}
-            hint={
-              cjkPack === 'ready'
-                ? t('settings_cjk_installed', { size: CJK_PACK_SIZE_LABEL })
-                : t('settings_cjk_missing')
-            }
-            control={
-              cjkPack === 'ready' ? (
-                <Button onPress={handleCjkDelete}>{t('settings_cjk_delete')}</Button>
-              ) : (
-                <Button onPress={handleCjkInstall} disabled={cjkPack === 'working'}>
-                  {t('settings_cjk_install')}
-                </Button>
-              )
-            }
-          />
-        </SettingsGroup>
+            <SettingsGroup title={t('settings_section_appearance')}>
+              <SettingsRow
+                icon="language-outline"
+                label={t('select_language')}
+                below={
+                  <View style={styles.select}>
+                    <SingleSelectPill
+                      options={languageOptions}
+                      value={language || 'en'}
+                      onValueChange={handleLanguageChange as (value: string | null) => void}
+                      placeholder={t('select_language')}
+                    />
+                  </View>
+                }
+              />
+              <SettingsRow
+                icon="moon-outline"
+                label={t('dark_mode')}
+                control={<ThemedSwitch value={darkMode} onValueChange={handleDarkModeToggle} />}
+              />
+              <SettingsRow
+                icon="time-outline"
+                label={t('use_24_hour_time')}
+                hint={use24HourTime ? t('use_24_hour_time_on') : t('use_24_hour_time_off')}
+                control={
+                  <ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />
+                }
+              />
+              <SettingsRow
+                icon="calendar-outline"
+                label={t('date_display_format')}
+                hint={t('date_display_format_hint')}
+                below={
+                  <View style={styles.select}>
+                    <SingleSelectPill
+                      options={[
+                        { label: t('date_display_format_iso'), value: 'iso' },
+                        { label: t('date_display_format_dmy'), value: 'dmy' },
+                        { label: t('date_display_format_mdy'), value: 'mdy' },
+                      ]}
+                      value={dateDisplayFormat}
+                      onValueChange={handleDateDisplayFormatChange}
+                      placeholder={t('date_display_format')}
+                    />
+                  </View>
+                }
+              />
+              {SHOW_EXPORT_FORMAT_SETTING && (
+                <SettingsRow
+                  icon="image-outline"
+                  label={t('export_format')}
+                  hint={t('export_format_hint')}
+                  below={
+                    <View style={styles.select}>
+                      <SingleSelectPill
+                        options={[
+                          { label: t('export_format_svg'), value: 'svg' },
+                          { label: t('export_format_png'), value: 'png' },
+                        ]}
+                        value={exportFormat}
+                        onValueChange={handleExportFormatChange}
+                        placeholder={t('export_format')}
+                      />
+                    </View>
+                  }
+                />
+              )}
+            </SettingsGroup>
+          </View>
+          <View style={!isCompact && styles.columnSideBySide}>
+            <SettingsGroup title={t('settings_section_assistance')}>
+              <SettingsRow
+                icon="bulb-outline"
+                label={t('suggest_literary_devices')}
+                hint={
+                  suggestLiteraryDevices
+                    ? t('suggest_literary_devices_on')
+                    : t('suggest_literary_devices_off')
+                }
+                control={
+                  <ThemedSwitch
+                    value={suggestLiteraryDevices}
+                    onValueChange={handleLiteraryDevicesToggle}
+                  />
+                }
+              />
+              <SettingsRow
+                icon="help-circle-outline"
+                label={t('show_contextual_help')}
+                hint={
+                  showContextualHelp ? t('show_contextual_help_on') : t('show_contextual_help_off')
+                }
+                control={
+                  <ThemedSwitch
+                    value={showContextualHelp}
+                    onValueChange={handleContextualHelpToggle}
+                  />
+                }
+              />
+              <SettingsRow
+                icon="school-outline"
+                label={t('show_tutorials')}
+                hint={showTutorials ? t('show_tutorials_on') : t('show_tutorials_off')}
+                control={
+                  <ThemedSwitch value={showTutorials} onValueChange={handleShowTutorialsToggle} />
+                }
+              />
+              <SettingsRow
+                icon="card-outline"
+                label={t('warn_payment_due')}
+                hint={warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
+                control={
+                  <ThemedSwitch value={warnPaymentDue} onValueChange={handleWarnPaymentDueToggle} />
+                }
+              />
+            </SettingsGroup>
 
-        <SettingsGroup title={t('settings_section_data')}>
-          <SettingsRow
-            icon="refresh-outline"
-            label={t('reset_seen_tutorials')}
-            hint={t('settings_reset_tutorials_hint')}
-            onPress={handleResetSeenTutorials}
-          />
-          <SettingsRow
-            icon="trash-outline"
-            label={t('reset_application')}
-            hint={t('settings_reset_application_hint')}
-            destructive
-            onPress={handleResetApplication}
-          />
-        </SettingsGroup>
+            <SettingsGroup title={t('settings_section_exports')}>
+              <SettingsRow
+                icon="text-outline"
+                label={t('settings_cjk_title')}
+                hint={
+                  cjkPack === 'ready'
+                    ? t('settings_cjk_installed', { size: CJK_PACK_SIZE_LABEL })
+                    : t('settings_cjk_missing')
+                }
+                control={
+                  cjkPack === 'ready' ? (
+                    <Button onPress={handleCjkDelete}>{t('settings_cjk_delete')}</Button>
+                  ) : (
+                    <Button onPress={handleCjkInstall} disabled={cjkPack === 'working'}>
+                      {t('settings_cjk_install')}
+                    </Button>
+                  )
+                }
+              />
+            </SettingsGroup>
+
+            <SettingsGroup title={t('settings_section_data')}>
+              <SettingsRow
+                icon="refresh-outline"
+                label={t('reset_seen_tutorials')}
+                hint={t('settings_reset_tutorials_hint')}
+                onPress={handleResetSeenTutorials}
+              />
+              <SettingsRow
+                icon="trash-outline"
+                label={t('reset_application')}
+                hint={t('settings_reset_application_hint')}
+                destructive
+                onPress={handleResetApplication}
+              />
+            </SettingsGroup>
+          </View>
+        </View>
       </View>
 
       <View style={styles.branding}>
@@ -460,9 +474,14 @@ const styles = StyleSheet.create({
   settings: {
     alignSelf: 'center',
     flexShrink: 0,
-    maxWidth: 720,
+    maxWidth: 1280,
     width: '100%',
   },
+  // One column on a phone; from a tablet up two, filled top to bottom, so the sides are used instead
+  // of leaving a narrow strip of settings in the middle of the window.
+  columns: { flexDirection: 'column' },
+  columnsSideBySide: { alignItems: 'flex-start', flexDirection: 'row', gap: 20 },
+  columnSideBySide: { flexBasis: 0, flexGrow: 1, flexShrink: 1 },
   hero: { alignItems: 'center', paddingTop: 8 },
   avatar: {
     alignItems: 'center',

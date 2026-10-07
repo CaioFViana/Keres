@@ -43,6 +43,10 @@ const translationKey: Partial<Record<OperationLogEntityType, string>> = {
   [OperationLogEntityType.Stat]: 'stat',
   [OperationLogEntityType.Mode]: 'mode',
   [OperationLogEntityType.User]: 'user',
+  [OperationLogEntityType.Sketch]: 'sketch',
+  [OperationLogEntityType.ScenePage]: 'scene_page',
+  [OperationLogEntityType.SceneMusic]: 'scene_music',
+  [OperationLogEntityType.Song]: 'song',
 };
 
 /** Local records referenced by operation logs that are not story-sync entities. */

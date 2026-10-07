@@ -233,7 +233,7 @@ describe('MainDashboardContent', () => {
     const view = await render(<MainDashboardContent {...baseProps({ story: null })} />);
     expect(view.getByTestId('detail-title').props.children).toBe('no_story_selected');
     expect(view.queryByTestId('conflict-banner')).toBeNull();
-    expect(view.queryByTestId('section-story_details_section')).toBeNull();
+    expect(view.queryByLabelText('Linear')).toBeNull();
     expect(view.queryByTestId('oplog')).toBeNull();
     expect(summaryJson(view)).toMatchObject({ isBranching: false, analysisIssues: null });
     expect(view.getByTestId('conflict-sheet').props.children).toBe('sheet-closed');
@@ -245,7 +245,6 @@ describe('MainDashboardContent', () => {
         genre: 'Fantasy',
         author: 'Author',
         language: 'en',
-        theme: 'ocean',
         description: 'Desc',
         extraNotes: 'Notes',
         serverId: 'server-1',
@@ -258,7 +257,6 @@ describe('MainDashboardContent', () => {
     expect(view.getByText('Fantasy')).toBeTruthy();
     expect(view.getByText('Author')).toBeTruthy();
     expect(view.getByText('language_english')).toBeTruthy();
-    expect(view.getByText('theme_ocean_label')).toBeTruthy();
     expect(view.getByText('Desc')).toBeTruthy();
     expect(view.getByText('Notes')).toBeTruthy();
     expect(view.getByText('42')).toBeTruthy();
@@ -274,19 +272,30 @@ describe('MainDashboardContent', () => {
     const branching = await render(
       <MainDashboardContent {...baseProps({ story: makeStory({ type: 'branching' }) })} />,
     );
-    expect(branching.getByText('branching')).toBeTruthy();
+    expect(branching.getByLabelText('Branching')).toBeTruthy();
     expect(summaryJson(branching).isBranching).toBe(true);
     const linear = await render(<MainDashboardContent {...baseProps()} />);
-    expect(linear.getByText('linear')).toBeTruthy();
+    expect(linear.getByLabelText('Linear')).toBeTruthy();
   });
 
-  it('falls back for missing and unknown themes', async () => {
-    const missing = await render(<MainDashboardContent {...baseProps()} />);
-    expect(missing.getByText('theme_default_label')).toBeTruthy();
-    const unknown = await render(
-      <MainDashboardContent {...baseProps({ story: makeStory({ theme: 'bogus' }) })} />,
+  it('folds a long description to a few lines and opens it on request', async () => {
+    const long = 'A story that goes on. '.repeat(20);
+    const view = await render(
+      <MainDashboardContent {...baseProps({ story: makeStory({ description: long }) })} />,
     );
-    expect(unknown.getByText('theme_default_label')).toBeTruthy();
+    const text = view.getByText(long.trim());
+    expect(text.props.numberOfLines).toBe(3);
+
+    await fireEvent.press(view.getByText('Show more'));
+    expect(view.getByText(long.trim()).props.numberOfLines).toBeUndefined();
+    expect(view.getByText('Show less')).toBeTruthy();
+  });
+
+  it('leaves a short description whole, without a way to fold it', async () => {
+    const view = await render(
+      <MainDashboardContent {...baseProps({ story: makeStory({ description: 'Short.' }) })} />,
+    );
+    expect(view.queryByText('Show more')).toBeNull();
   });
 
   it('resolves the language label or echoes unknown codes', async () => {
@@ -306,7 +315,7 @@ describe('MainDashboardContent', () => {
         })}
       />,
     );
-    expect(view.queryByTestId('section-story_details_section')).toBeTruthy();
+    expect(view.getByLabelText('Linear')).toBeTruthy();
     expect(view.queryByText('genre')).toBeNull();
     expect(view.queryByText('author')).toBeNull();
   });

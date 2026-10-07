@@ -1,13 +1,12 @@
-import DetailField from '@/src/components/common/display/DetailField/DetailField';
 import SummaryCard from '@/src/components/common/display/SummaryCard/SummaryCard';
 import UniverseWorksSection from '@/src/components/features/arcs/UniverseWorksSection';
 import type { StoryArcSelect } from '@/src/db/schema';
 import OperationLogList from '@/src/components/features/operation-log/OperationLogList/OperationLogList';
 import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanner/SyncConflictBanner';
 import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
+import StoryIdentityCard from '@/src/components/features/story/StoryIdentityCard';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { themeDisplayOptions } from '@keres/shared';
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -41,13 +40,6 @@ export type MainDashboardContentProps = {
   arcs?: readonly StoryArcSelect[];
   onOpenArcs?: () => void;
 };
-
-function themeLabelKey(themeName: string | null | undefined): string {
-  return (
-    themeDisplayOptions.find((option) => option.value === (themeName || 'default'))?.labelKey ??
-    'theme_default_label'
-  );
-}
 
 function languageLabel(t: TFunction, language: string | null | undefined): string | null {
   if (!language) return null;
@@ -94,7 +86,6 @@ export function MainDashboardContent({
     },
   });
 
-  const typeLabel = story?.type === 'branching' ? t('branching') : t('linear');
   const resolvedLanguage = languageLabel(t, story?.language);
 
   return (
@@ -106,27 +97,15 @@ export function MainDashboardContent({
       {!!story?.id && <SyncConflictBanner count={conflictCount} onPress={onOpenConflictSheet} />}
 
       {!!story && (
-        <ScreenSection title={t('story_details_section')}>
-          <DetailField label={t('type')} value={typeLabel} />
-          {!!story.genre?.trim() && <DetailField label={t('genre')} value={story.genre.trim()} />}
-          {!!story.author?.trim() && (
-            <DetailField label={t('author')} value={story.author.trim()} />
-          )}
-          {!!resolvedLanguage && <DetailField label={t('language')} value={resolvedLanguage} />}
-          <DetailField label={t('theme')} value={t(themeLabelKey(story.theme))} />
-          {!!story.description?.trim() && (
-            <DetailField label={t('description')} value={story.description.trim()} />
-          )}
-          {!!story.extraNotes?.trim() && (
-            <DetailField label={t('extra_notes')} value={story.extraNotes.trim()} />
-          )}
-          {!!story.serverId && (
-            <DetailField
-              label={t('last_server_synced_log')}
-              value={String(story.lastServerSyncedLog || 0)}
-            />
-          )}
-        </ScreenSection>
+        <StoryIdentityCard
+          type={story.type === 'branching' ? 'branching' : 'linear'}
+          genre={story.genre}
+          author={story.author}
+          language={resolvedLanguage}
+          description={story.description}
+          extraNotes={story.extraNotes}
+          syncedLog={story.serverId ? story.lastServerSyncedLog : null}
+        />
       )}
 
       {!!story && !!arcs?.length && !!onOpenArcs && (

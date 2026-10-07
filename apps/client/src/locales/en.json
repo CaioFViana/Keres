@@ -2815,6 +2815,8 @@
   "story_settings_screen_description": "Configure the settings for your story, including synchronization options.",
   "story_settings_screen_title": "Story Settings",
   "story_settings_title": "Story Settings",
+  "story_summary_less": "Show less",
+  "story_summary_more": "Show more",
   "story_timeline_all_chapters": "All chapters",
   "story_timeline_branching_unavailable": "This timeline is available for linear stories.",
   "story_timeline_compressed": "spacing is compacted",

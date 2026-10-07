@@ -2815,6 +2815,8 @@
   "story_settings_screen_description": "Configure as definições da sua história, incluindo opções de sincronização.",
   "story_settings_screen_title": "Configurações da História",
   "story_settings_title": "Configurações da História",
+  "story_summary_less": "Mostrar menos",
+  "story_summary_more": "Mostrar mais",
   "story_timeline_all_chapters": "Todos os capítulos",
   "story_timeline_branching_unavailable": "Esta linha do tempo está disponível para histórias lineares.",
   "story_timeline_compressed": "espaçamento compactado",

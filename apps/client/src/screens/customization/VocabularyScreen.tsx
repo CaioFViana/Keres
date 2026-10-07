@@ -2,6 +2,7 @@ import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Button, SingleSelectPill, TextInput } from '@/src/components/common';
 import FormActions from '@/src/components/common/controls/FormActions/FormActions';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
+import ArcMediumChanges from '@/src/components/features/arcs/ArcMediumChanges';
 import { useDrizzle } from '@/src/db';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
@@ -208,6 +209,7 @@ const VocabularyScreen = () => {
     () =>
       StyleSheet.create({
         intro: { color: colors.textSecondary, lineHeight: 20, marginBottom: 12 },
+        medium: { marginBottom: 18 },
         scope: { color: colors.text, fontWeight: '700', lineHeight: 20, marginBottom: 18 },
         languageLabel: { color: colors.text, fontWeight: '700', marginBottom: 6 },
         languageHint: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 7 },
@@ -304,6 +306,22 @@ const VocabularyScreen = () => {
             ? t('vocabulary_scope_arc', { arc: arcScope.title })
             : t('vocabulary_scope_story')}
         </Text>
+        {arcScope ? (
+          <View style={styles.medium} testID="vocabulary-medium">
+            <Text style={styles.languageHint}>
+              {t('vocabulary_medium_arc', { medium: t(`arc_medium_${arcScope.medium}`) })}
+            </Text>
+            <ArcMediumChanges
+              medium={arcScope.medium}
+              language={languageFamily(i18n.language)}
+              termsOnly
+            />
+          </View>
+        ) : (
+          <Text style={styles.languageHint} testID="vocabulary-medium">
+            {t('vocabulary_medium_story')}
+          </Text>
+        )}
         <Text style={styles.languageLabel}>{t('vocabulary_language')}</Text>
         <SingleSelectPill
           value={language}

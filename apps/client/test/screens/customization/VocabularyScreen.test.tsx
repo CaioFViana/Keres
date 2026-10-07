@@ -4,7 +4,7 @@ import React from 'react';
 const mockUseScreenTour = jest.fn();
 const mockSetSelectedStory = jest.fn();
 const mockUpdateArc = jest.fn();
-let mockActiveArc: { id: string; title: string; vocabulary: null } | null = null;
+let mockActiveArc: { id: string; title: string; vocabulary: null; medium?: string } | null = null;
 let mockSelectedStory: { id: string; vocabulary: null } | null = {
   id: 'story-1',
   vocabulary: null,
@@ -98,6 +98,25 @@ import VocabularyScreen from '../../../src/screens/customization/VocabularyScree
 beforeEach(() => {
   jest.clearAllMocks();
   mockSelectedStory = { id: 'story-1', vocabulary: null };
+});
+
+beforeEach(() => {
+  mockActiveArc = null;
+});
+
+it('says what the form of the work brings, words and all, inside a work of that form', async () => {
+  mockActiveArc = { id: 'arc-1', title: 'Pilot', vocabulary: null, medium: 'screenplay' };
+  const view = await render(<VocabularyScreen />);
+
+  expect(view.getByTestId('vocabulary-medium')).toBeTruthy();
+  expect(view.getByTestId('arc-medium-terms').props.children).toBe('arc_medium_changes_words');
+  expect(view.queryByTestId('arc-medium-effects')).toBeNull();
+});
+
+it('tells the story-wide view that forms of work have words of their own', async () => {
+  const view = await render(<VocabularyScreen />);
+
+  expect(view.getByTestId('vocabulary-medium').props.children).toBe('vocabulary_medium_story');
 });
 
 it('requests its guided tour', async () => {

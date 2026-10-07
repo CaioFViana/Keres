@@ -1,9 +1,11 @@
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import { useTheme } from '@/src/theme';
+import { localeFamily } from '@/src/vocabulary/resolveStoryTerm';
 import { ARC_MEDIUMS, type ArcMedium } from '@keres/shared/metadata/ArcMedium';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import ArcMediumChanges from './ArcMediumChanges';
 
 interface ArcMediumSelectProps {
   value: ArcMedium;
@@ -23,7 +25,7 @@ const ArcMediumSelect: React.FC<ArcMediumSelectProps> = ({
   hint,
   disabled,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const options = ARC_MEDIUMS.map((medium) => ({
     label: t(`arc_medium_${medium}`),
@@ -45,6 +47,7 @@ const ArcMediumSelect: React.FC<ArcMediumSelectProps> = ({
       <Text style={[styles.hint, { color: colors.textSecondary }]}>
         {hint ?? t('arc_medium_hint', { arc: arcTerm })}
       </Text>
+      <ArcMediumChanges medium={value} language={localeFamily(i18n?.language)} />
     </View>
   );
 };

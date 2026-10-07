@@ -46,22 +46,15 @@ import { createTagRelationService } from '../../../services/storymanagement/TagR
 import { useStoryVocabulary } from '../../../vocabulary/useStoryVocabulary';
 import {
   createChapterListItemRenderer,
-  type AdvancedNarrativeMatches,
   scenesShownForChapter,
 } from './createChapterListItemRenderer';
+import { useAdvancedNarrativeMatches } from './useAdvancedNarrativeMatches';
 import { useVisibleChapters } from './useVisibleChapters';
 
 export type NarrativeElementsScreenNavigationProp = CompositeNavigationProp<
   DrawerNavigationProp<MainSystemDrawerParamList, 'NarrativeElementsStack'>,
   NativeStackNavigationProp<NarrativeElementsStackParamList, 'ChapterDetail'>
 >;
-
-const splitNarrativeCriteria = (criteria: Record<string, unknown>, prefix: string) =>
-  Object.fromEntries(
-    Object.entries(criteria)
-      .filter(([key, value]) => key.startsWith(`${prefix}:`) && value !== undefined && value !== '')
-      .map(([key, value]) => [key.slice(prefix.length + 1), value]),
-  );
 
 const NarrativeElementsListScreen = () => {
   useBackButtonHandler();
@@ -115,7 +108,6 @@ const NarrativeElementsListScreen = () => {
   const [tagsByChapterId, setTagsByChapterId] = useState<Map<string, TagSelect[]>>(new Map());
   const [tagsBySceneId, setTagsBySceneId] = useState<Map<string, TagSelect[]>>(new Map());
   const [activeTagIds, setActiveTagIds] = useState<string[]>([]);
-  const [advancedMatches, setAdvancedMatches] = useState<AdvancedNarrativeMatches | null>(null);
 
   const loadOutline = useCallback(async () => {
     if (!storyId) return;
@@ -135,83 +127,13 @@ const NarrativeElementsListScreen = () => {
     loadOutline();
   }, [loadOutline]);
 
-  const narrativeCriteria = useMemo(() => {
-    const chapterCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'chapter');
-    const sceneCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'scene');
-    const choiceCriteria = splitNarrativeCriteria(advancedSearchCriteria, 'choice');
-    const hasCriteria = [chapterCriteria, sceneCriteria, choiceCriteria].some(
-      (criteria) => Object.keys(criteria).length > 0,
-    );
-    return { chapterCriteria, sceneCriteria, choiceCriteria, hasCriteria };
-  }, [advancedSearchCriteria]);
-
-  const [prevStoryId, setPrevStoryId] = useState(storyId);
-  const [prevAdvancedSearchCriteria, setPrevAdvancedSearchCriteria] =
-    useState(advancedSearchCriteria);
-  if (storyId !== prevStoryId || advancedSearchCriteria !== prevAdvancedSearchCriteria) {
-    setPrevStoryId(storyId);
-    setPrevAdvancedSearchCriteria(advancedSearchCriteria);
-    if (!storyId || !narrativeCriteria.hasCriteria) {
-      setAdvancedMatches(null);
-    }
-  }
-
-  useEffect(() => {
-    if (!storyId) {
-      return;
-    }
-    const { chapterCriteria, sceneCriteria, choiceCriteria, hasCriteria } = narrativeCriteria;
-    if (!hasCriteria) {
-      return;
-    }
-
-    let cancelled = false;
-    const loadAdvancedMatches = async () => {
-      const [matchedChapters, matchedScenes, matchedChoices] = await Promise.all([
-        Object.keys(chapterCriteria).length
-          ? createChapterService(db).getChaptersByStoryId(
-              storyId,
-              undefined,
-              undefined,
-              undefined,
-              'all',
-              chapterCriteria,
-            )
-          : Promise.resolve(outlineChapters),
-        Object.keys(sceneCriteria).length
-          ? createSceneService(db).getScenesByStoryId(
-              storyId,
-              undefined,
-              undefined,
-              undefined,
-              'all',
-              sceneCriteria,
-            )
-          : Promise.resolve(scenes),
-        Object.keys(choiceCriteria).length
-          ? createChoiceService(db).getChoicesByStoryId(
-              storyId,
-              undefined,
-              undefined,
-              undefined,
-              'all',
-              choiceCriteria,
-            )
-          : Promise.resolve(choices),
-      ]);
-      if (!cancelled) {
-        setAdvancedMatches({
-          chapterIds: new Set(matchedChapters.map((chapter) => chapter.id)),
-          sceneIds: new Set(matchedScenes.map((scene) => scene.id)),
-          choiceSourceSceneIds: new Set(matchedChoices.map((choice) => choice.sceneId)),
-        });
-      }
-    };
-    loadAdvancedMatches();
-    return () => {
-      cancelled = true;
-    };
-  }, [narrativeCriteria, choices, db, outlineChapters, scenes, storyId]);
+  const advancedMatches = useAdvancedNarrativeMatches({
+    storyId,
+    advancedSearchCriteria,
+    outlineChapters,
+    scenes,
+    choices,
+  });
 
   const loadTags = useCallback(async () => {
     if (!storyId) {

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -10,11 +10,8 @@ import {
   View,
 } from 'react-native';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useDrizzle } from '@/src/db';
-import type { GallerySelect, SketchSelect } from '@/src/db/schema';
+import { useScenePageChoices } from '@/src/hooks/useGalleryMedia';
 import type { ScenePageMedia } from '@/src/services/storymanagement/ScenePageService';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
-import { createSketchService } from '@/src/services/storymanagement/SketchService';
 import { useTheme } from '@/src/theme';
 import ScenePageThumb from './ScenePageThumb';
 
@@ -36,40 +33,8 @@ const ScenePageMediaPicker: React.FC<ScenePageMediaPickerProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const db = useDrizzle();
   const [tab, setTab] = useState<Tab>('sketches');
-  const [sketches, setSketches] = useState<SketchSelect[]>([]);
-  const [images, setImages] = useState<GallerySelect[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!visible || !storyId) return;
-    let alive = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- the spinner shows while the choices load; everything else waits for `await`.
-    setLoading(true);
-    void Promise.all([
-      createSketchService(db).getSketchesForStory(storyId),
-      createGalleryService(db).getGalleriesByStoryId(storyId, { mediaTypes: ['image'] }),
-    ])
-      .then(([sketchRows, imageRows]) => {
-        if (!alive) return;
-        setSketches(sketchRows);
-        setImages(imageRows);
-      })
-      .catch((error) => {
-        console.log('ScenePageMediaPicker: failed to load the choices.', error);
-        if (alive) {
-          setSketches([]);
-          setImages([]);
-        }
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db, storyId, visible]);
+  const { sketches, images, loading } = useScenePageChoices(storyId, visible);
 
   const tabStyle = (active: boolean) => [
     styles.tab,

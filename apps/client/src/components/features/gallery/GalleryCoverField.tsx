@@ -1,13 +1,12 @@
 import Button from '@/src/components/common/controls/Button/Button';
 import ResponsiveModal from '@/src/components/layout/ResponsiveModal/ResponsiveModal';
-import { useDrizzle } from '@/src/db';
 import type { GallerySelect } from '@/src/db/schema';
+import { useGalleryImages, useGalleryRow } from '@/src/hooks/useGalleryMedia';
 import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { useTheme } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -64,43 +63,13 @@ const GalleryCoverField: React.FC<GalleryCoverFieldProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const db = useDrizzle();
-  const [current, setCurrent] = useState<GallerySelect | null>(null);
-  const [images, setImages] = useState<GallerySelect[]>([]);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const current = useGalleryRow(value);
+  const { images, loading } = useGalleryImages(storyId, open);
 
-  useEffect(() => {
-    let alive = true;
-    if (!value) {
-      setCurrent(null);
-      return;
-    }
-    void createGalleryService(db)
-      .getById(value)
-      .then((row) => {
-        if (alive) setCurrent(row && !row.isDeleted ? row : null);
-      })
-      .catch(() => {
-        if (alive) setCurrent(null);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db, value]);
+  const openPicker = () => setOpen(true);
 
-  const openPicker = () => {
-    setOpen(true);
-    if (!storyId) return;
-    setLoading(true);
-    void createGalleryService(db)
-      .getGalleriesByStoryId(storyId, { mediaTypes: ['image'] })
-      .then(setImages)
-      .catch(() => setImages([]))
-      .finally(() => setLoading(false));
-  };
-
-  const shown = value && current && current.id === value ? current : null;
+  const shown = current;
 
   return (
     <View style={styles.row}>

@@ -1,11 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useDrizzle } from '@/src/db';
-import type { GallerySelect } from '@/src/db/schema';
+import { useGalleryRow } from '@/src/hooks/useGalleryMedia';
 import { useResolvedMediaUri } from '@/src/hooks/useResolvedMediaUri';
-import { createGalleryService } from '@/src/services/storymanagement/GalleryService';
 import { useTheme } from '@/src/theme';
 
 interface ScenePageThumbProps {
@@ -29,26 +27,7 @@ const ScenePageThumb: React.FC<ScenePageThumbProps> = ({
   label,
 }) => {
   const { colors } = useTheme();
-  const db = useDrizzle();
-  const [row, setRow] = useState<GallerySelect | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    if (!galleryId) return;
-    void createGalleryService(db)
-      .getById(galleryId)
-      .then((found) => {
-        if (alive) setRow(found && !found.isDeleted ? found : null);
-      })
-      .catch(() => {
-        if (alive) setRow(null);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [db, galleryId]);
-
-  const shown = galleryId && row && row.id === galleryId ? row : null;
+  const shown = useGalleryRow(galleryId);
   const uri = useResolvedMediaUri(shown?.localPath);
   const frame = { width, height, borderRadius: 6, backgroundColor: colors.border };
 

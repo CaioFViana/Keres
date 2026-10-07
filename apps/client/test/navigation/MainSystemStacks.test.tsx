@@ -160,6 +160,18 @@ jest.mock('../../src/screens/narrative-elements/scenes/SceneDetailScreen', () =>
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/narrative-elements/scenes/ScenePagesScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/narrative-elements/scenes/NewSessionScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('../../src/screens/narrative-elements/scenes/FountainImportScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/scenes/SceneEditorScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -389,6 +401,9 @@ const stacks: Array<{
       'ChapterForm',
       'SceneDetail',
       'SceneEditor',
+      'ScenePages',
+      'NewSession',
+      'FountainImport',
       'Manuscript',
       'ManuscriptExport',
       'SceneForm',

@@ -173,3 +173,27 @@ antes de `ScenePage`):
 Teste de ciclo de vida com banco real e integração de API por entidade nova/coluna nova; paridade PG/SQLite nas
 migrações; teste de isolamento por Arco na publicação (versão de Arco nunca contém zip nem conteúdo de outro Arco,
 inclusive com `includeLooseScenes`).
+
+## Estado da implementação (out/2026)
+
+Feito, por fase: **1** medium, vocabulário, capa e autor no Arco, campo na História, onboarding; **2** lançamento por
+Arco e `maxPublishedArcs`; **3** `Location.intExt`, modo roteiro, Fountain (exportação e importação); **4** sistema de
+tamanho (estimar antes, abortar cedo), layout de PDF de roteiro, estimativa de páginas (roteiro e prosa); **5**
+`ScenePage` com compilação de imagens (HTML, EPUB, DOCX, PDF e leitor), `Sketch.coverSourceHash`, `Arco.pageFormat`;
+**6** campanha (pack, preset "crônica", "Nova sessão"); **7** importação Fountain.
+
+Desvios e pendências, ditos para não parecerem esquecimento:
+
+- **Pack e medium:** o schema de pack não carrega medium, então o pack `campaign` não marca o Arco (o medium é escolhido
+  no formulário da História) e não "avisa o que ligou". É só conveniência de conteúdo (data real, tags, notas).
+- **Nova sessão:** pede só a data e abre a primeira cena; "+ cena" é o da lista de elementos. Sem elenco marcável nela e
+  sem rascunho guardado. Sem o campo `session_date` (pack), a data vai no resumo do capítulo.
+- **Mídia removida (decisão 9):** a página fica de fora do manuscrito, sem número; a exportação diz quantas ficaram.
+- **DOCX:** não recorta; uma página com `cover` aparece inteira, dentro do quadro.
+- **Publicação:** o servidor só lê o que o cliente mandou. Um Sketch alterado é redesenhado no cliente antes de publicar,
+  e esse snapshot novo precisa sincronizar antes de uma nova tentativa.
+- **Busca (decisão 14):** "+N fora deste arco" em Personagens, Locais e Itens; a lista de Elementos Narrativos ainda não.
+- **Fontes (decisão 13):** não implementado (exige fontes OFL com sha256 no manifesto, matrizes e verificação visual).
+- **Cabeçalho de roteiro com hora:** não implementado; o cabeçalho sai sem hora, como a decisão 4 prevê sem calendário.
+- **FDX:** só se houver demanda.
+- Sem verificação em aparelho: snapshots de Sketch (Skia) e PDFs com imagens foram cobertos por testes, não vistos.

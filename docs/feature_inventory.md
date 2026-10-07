@@ -36,8 +36,18 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 
 - **Linear or branching** per story (`Story.type`), with **linear/branching
   conversion** (`docs/choice_mechanics.md`, `dynamic_story_structure.md`).
-- **Arcs**: optional editorial subdivision inside one story (default arc,
-  `chapters.arcId`, drawer arc switcher; lists/timeline follow the filter).
+- **Arcs**: a story is the universe and an arc is one *work* inside it (a book, a film,
+  an issue, a season, a campaign module): default arc, `chapters.arcId`, drawer arc
+  switcher; lists/timeline follow the filter, and a search says how many results it
+  found in other arcs (one tap shows them); global search names each result's arc.
+  Each arc has its own **medium** (`generic`, `screenplay`, `comic`, `storyboard`,
+  `campaign`: an output profile, never a rule about the data), its own optional
+  vocabulary (precedence arc > story > medium defaults > app), **author**
+  (falls back to `Story.author`, then the owner's `@handle`), **cover** (`coverGalleryId`,
+  also on `Story`) and **page format** (`a5`, `comic-us`, `b5`, `wide`; `null` takes the
+  medium's). The story form asks the medium of its first work. An arc can be released
+  alone (manuscript and/or online reader, never the zip) under the tier ceiling
+  `maxPublishedArcs` (`docs/arc_medium_plan.md`).
 - **Per-story vocabulary**: rename visible entity terms without duplicating the
   model (`customization/VocabularyScreen.tsx`).
 - **Appearance/theme**: per-story branding, light/dark palettes
@@ -52,6 +62,20 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 - **Chapters + Events**: chapters are display-ordered containers; events have
   their own order and can anchor in chronology; **unchaptered scenes are valid
   fragments** (list/detail/form screens, `NarrativeElementsListScreen`).
+- **Scene pages** (`ScenePage`, comic and storyboard): a scene holds ordered pages
+  (frames), each one image - a Sketch of the story (shown by its Gallery snapshot,
+  redrawn when the drawing changed: `Sketch.coverSourceHash`) or a Gallery image - plus
+  the text that goes with it and a `contain`/`cover` fit. A page outlives its image
+  ("media removed", offered a replacement, left out of manuscripts). Sync, export/import,
+  clone, tier entity limit; `ScenePagesScreen`, entry on the scene detail.
+- **Screenplay** (arc medium): `Scene.body` is Fountain; `Location.intExt` +
+  generated scene heading only when the text has none (explicit indicator on the
+  scene); Fountain and an industry-layout PDF (Courier, indents) export with a stated
+  page estimate; Fountain **import** offers places and characters, never creates them
+  unasked.
+- **Tabletop campaign** (arc medium): *New session* (real date, first scene waiting),
+  campaign pack (session date, tags, starter notes - never mandatory), *chronicle*
+  export preset.
 - **Scenes**: core units with detail/form, timing input (signed int capped at
   2^31−1), relative gap or calendar-coordinate override
   (`sceneTimingInput.ts`, `StoryTimelineScreen`).
@@ -191,7 +215,13 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   on the server alike. A branching story compiles as a whole **gamebook**
   (`compileGamebookManuscript`): every scene reachable from its start(s),
   numbered as met or shuffled by seed (`sceneOrder`), unreachable ones last,
-  an opening page to pick among several starts.
+  an opening page to pick among several starts. Comic/storyboard **pages** go in
+  (picture, then the page's text) in HTML, EPUB, DOCX, PDF and the reader - PNG and
+  JPEG only, framed by the arc's page format - and as caption + text in MD/TXT; a
+  screenplay compiles from Fountain, not blocks. The **size** is estimated before
+  compiling (`manuscriptSize.ts`, pictures counted from the Gallery's recorded sizes),
+  the PDF writer stops as soon as it passes the cap, and a prose PDF/DOCX can be
+  asked for its **page count** (the PDF's own layout, with the page it stands on).
 - **Online reader** (`packages/shared/manuscript/reader`): one self-contained
   HTML page per published version (linear: the manuscript page with contents,
   theme and text size; branching: one scene at a time over an engine that
@@ -291,16 +321,17 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
 | --- | --- | --- |
 | Client screens (TSX in `screens/`) | 109 | counted 2026-09-23 (note: `CLIENT_SCREEN_INVENTORY.md` still says 98 — drift) |
 | API route files | 18 | `apps/api/src/modules/**/*.route.ts` |
-| Shared entities | 42 | `packages/shared/entities/*.ts` |
+| Shared entities | 44 | `packages/shared/entities/*.ts` |
 | Sync push / pull batch caps | 200 / 500 | `SyncSchemas.ts` (`MAX_SYNC_BATCH_SIZE`, `MAX_SYNC_PULL_BATCH`) |
-| Help pages × languages | 68 × EN+PT | `apps/client/src/help/catalog.ts` |
+| Help pages × languages | 72 × EN+PT | `apps/client/src/help/catalog.ts` |
 | Story-device entries × languages | 54 × EN+PT | `apps/client/src/storyDevices/catalog.ts` |
 | Example stories × languages | 6 × EN+PT | `exampleStories/generated/registry.ts` |
-| Shipped packs × languages | 4 × EN+PT | `shippedPacks/generated/registry.ts` |
+| Shipped packs × languages | 5 × EN+PT | `shippedPacks/generated/registry.ts` |
 | Manuscript formats (+ client PDF) | docx/md/txt/html (+pdf) | `manuscriptContracts.ts`, `manuscriptPdf.ts` |
 | Kept publication versions | 5 | `publication.route.ts` |
 | Media transfers per sync cycle | 5 | `MediaSyncService.ts` |
-| Manuscript size cap | 50 MB | `MAX_MANUSCRIPT_BYTES` |
+| Manuscript size cap | 50 MB (pictures included, judged before compiling) | `MAX_MANUSCRIPT_BYTES`, `manuscriptSize.ts` |
+| Arc media / page formats | 5 / 4 | `ArcMedium.ts`, `pageFormat.ts` |
 | Custom-attribute entities / types | 7 / 6 | `StorySchemaEntityType`, `AttributeType` |
 
 ## Appendix B — deliberate non-goals (per `FEATURE_LANDSCAPE.md`)

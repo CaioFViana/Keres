@@ -38,3 +38,19 @@ separate guarantee that a location-map image and its gallery identifier survive 
 When a new entity, story field, or export collection is added, update this matrix, the example
 generator, and the catalogue test in the same change. A current-format bundled example must never
 depend on a legacy optional collection or an implicit schema default.
+
+## Sketches and scene pages
+
+The bundled examples carry `storySketches` and `scenePages` as empty collections. A sketch is drawing
+data and a scene page points at a sketch or at a gallery image; the bundled stories ship no bitmaps
+(see the media rule) and none of them is a comic or a storyboard, so there is nothing real to show.
+`cloneExampleStory` still maps both collections, and the API export/import round-trip fixture owns
+the guarantee that a scene page survives remapping, with a sketch and with a gallery image, and that
+a page whose image is gone keeps its text.
+
+## Arc medium
+
+Every example's default arc is a prose work (`medium: generic`, no vocabulary, author or cover of its
+own), so a bundled story reads exactly as it always has. The other forms of a work (screenplay, comic,
+storyboard, tabletop campaign) are demonstrated by the shipped packs and the help pages, not by
+bundled stories.

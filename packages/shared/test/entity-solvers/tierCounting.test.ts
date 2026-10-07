@@ -78,3 +78,11 @@ describe('which entities a plan counts', () => {
     }
   });
 });
+
+describe('scene pages and the plan', () => {
+  it('counts a scene page, as the plan counts what the writer creates', () => {
+    expect(getTierCountedEntityTypes()).toContain('ScenePage');
+    expect(getTierRelationalEntityTypes()).not.toContain('ScenePage');
+    expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('ScenePage');
+  });
+});

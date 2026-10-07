@@ -544,6 +544,9 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     storyCalendars,
     storyArcs,
     storyBoards,
+    // Sketches and scene pages are not part of the bundled stories (no bitmap to ship): present, empty.
+    storySketches: [],
+    scenePages: [],
     storyLocationMaps,
     stats,
     statStrengths: [...defaultLadder, ...customLadder],

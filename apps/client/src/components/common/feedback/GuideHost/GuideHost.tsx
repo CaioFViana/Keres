@@ -1,8 +1,17 @@
 import { DrawerActions } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import type { Guide, GuideRect } from '../../../../guides/types';
+import { cardPlacement } from '../../../../guides/cardPlacement';
 import GuideSpotlight from './GuideSpotlight';
 import { measureGuideAnchors, unionGuideRects } from '../../../../guides/anchorRegistry';
 import { useCanvasKitReady } from '../../../features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
@@ -22,6 +31,9 @@ const DRAWER_SETTLE_MS = 400;
 
 /** The longest a tour waits to know where its first hole goes (and for the canvas) before opening. */
 const REVEAL_TIMEOUT_MS = 1500;
+
+/** What the card is guessed to measure before its first layout, so it is placed right from the start. */
+const DEFAULT_CARD_HEIGHT = 230;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -52,6 +64,8 @@ const ActiveGuideOverlay: React.FC = () => {
   const { colors } = useTheme();
   const { isWide } = useResponsiveLayout();
   const insets = useSystemInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const [cardHeight, setCardHeight] = useState(DEFAULT_CARD_HEIGHT);
   const activeTour = useGuideStore((state) => state.activeTour);
   const nextStep = useGuideStore((state) => state.nextStep);
   const prevStep = useGuideStore((state) => state.prevStep);
@@ -179,6 +193,15 @@ const ActiveGuideOverlay: React.FC = () => {
       }
     : null;
 
+  // The card gives way to what it explains: at the top when the bottom would cover the target.
+  const placement = cardPlacement({
+    spot: padded,
+    windowHeight,
+    cardHeight,
+    topInset: insets.top,
+    bottomInset: insets.bottom,
+  });
+
   const styles = StyleSheet.create({
     root: {
       flex: 1,
@@ -187,8 +210,9 @@ const ActiveGuideOverlay: React.FC = () => {
     // link) needs room above the bar, not against it.
     cardWrap: {
       flex: 1,
-      justifyContent: 'flex-end',
+      justifyContent: placement === 'top' ? 'flex-start' : 'flex-end',
       padding: 20,
+      paddingTop: 20 + (placement === 'top' ? insets.top : 0),
       paddingBottom: 20 + insets.bottom,
     },
     card: {
@@ -290,7 +314,14 @@ const ActiveGuideOverlay: React.FC = () => {
         <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
         <GuideSpotlight rect={padded} borderColor={colors.primary} />
         <View testID="guide-card-wrap" style={styles.cardWrap} pointerEvents="box-none">
-          <View style={styles.card} testID="guide-card">
+          <View
+            style={styles.card}
+            testID="guide-card"
+            onLayout={(event) => {
+              const next = Math.round(event.nativeEvent.layout.height);
+              if (next > 0 && next !== cardHeight) setCardHeight(next);
+            }}
+          >
             <Text style={styles.title}>{t(step.titleKey)}</Text>
             <Text style={styles.message}>{t(step.bodyKey)}</Text>
             <View style={styles.buttonRow}>

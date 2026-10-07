@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { DrawerActions } from '@react-navigation/native';
 import GuideHost from '../../src/components/common/feedback/GuideHost/GuideHost';
 import { __resetGuideAnchorsForTests, registerGuideAnchor } from '../../src/guides/anchorRegistry';
@@ -328,6 +328,27 @@ describe('the tour card and the navigation bar', () => {
 
     const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
     expect(wrap.paddingBottom).toBe(54);
+  });
+
+  it('moves the card to the top when the bottom would cover what it explains', async () => {
+    registerGuideAnchor('low', async () => ({ x: 0, y: 1180, width: 300, height: 60 }));
+    registerGuideAnchor('high', async () => ({ x: 0, y: 100, width: 300, height: 60 }));
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [
+        { id: 's1', anchors: ['high'], titleKey: 't1', bodyKey: 'b1' },
+        { id: 's2', anchors: ['low'], titleKey: 't2', bodyKey: 'b2' },
+      ],
+    });
+    const screen = await render(<GuideHost />);
+    await screen.findByTestId('guide-spotlight');
+    const placed = () =>
+      StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style).justifyContent;
+    expect(placed()).toBe('flex-end');
+
+    await fireEvent.press(screen.getByTestId('guide-next'));
+    await waitFor(() => expect(placed()).toBe('flex-start'));
   });
 
   it('keeps its plain margin where no bar overlaps the window', async () => {

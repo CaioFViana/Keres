@@ -67,6 +67,27 @@ jest.mock('expo-clipboard', () => ({
   setStringAsync: jest.fn(async () => true),
 }));
 
+// `expo-audio` builds its player classes from the native module when it loads, which throws in Jest;
+// the song editor reaches it through `useSongPlayback`, so every suite that mounts the navigators
+// would fail. The suites that care (media players, song playback) register their own mocks.
+jest.mock('expo-audio', () => ({
+  setAudioModeAsync: jest.fn(async () => undefined),
+  useAudioPlayer: () => ({
+    play: () => {},
+    pause: () => {},
+    replace: () => {},
+    seekTo: async () => {},
+    remove: () => {},
+  }),
+  useAudioPlayerStatus: () => ({
+    playing: false,
+    isLoaded: false,
+    duration: 0,
+    currentTime: 0,
+    didJustFinish: false,
+  }),
+}));
+
 jest.mock('expo-video', () => ({
   createVideoPlayer: () => ({ generateThumbnailsAsync: async () => [], release: () => {} }),
   useVideoPlayer: () => null,

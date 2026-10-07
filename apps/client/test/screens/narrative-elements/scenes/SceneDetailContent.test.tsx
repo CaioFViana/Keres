@@ -34,6 +34,11 @@ jest.mock('../../../../src/components/features/scenes/ScenePages/ScenePagesEntry
   default: () => null,
 }));
 
+jest.mock('../../../../src/components/features/scenes/SceneMusic/SceneMusicEntry', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock('../../../../src/components/common/controls/Button/Button', () => {
   const { Text } = require('react-native');
   return {

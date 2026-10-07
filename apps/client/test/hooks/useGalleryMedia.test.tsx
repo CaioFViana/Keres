@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react-native';
 import {
   useGalleryImages,
+  useGalleryMedia,
   useGalleryRow,
   useScenePageChoices,
 } from '../../src/hooks/useGalleryMedia';
@@ -97,6 +98,39 @@ describe('useGalleryImages', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.images).toEqual([]);
+  });
+});
+
+describe('useGalleryMedia', () => {
+  it('reads the media of the kinds asked for, once enabled', async () => {
+    const { result, rerender } = await renderHook(
+      ({ on }: { on: boolean }) => useGalleryMedia('story-1', on, ['audio', 'link']),
+      { initialProps: { on: false } },
+    );
+    expect(mockGetImages).not.toHaveBeenCalled();
+
+    await rerender({ on: true });
+    await waitFor(() => expect(result.current.media).toHaveLength(2));
+    expect(mockGetImages).toHaveBeenCalledWith('story-1', { mediaTypes: ['audio', 'link'] });
+  });
+
+  it('does not read again for a new array of the same kinds', async () => {
+    const { result, rerender } = await renderHook(() =>
+      useGalleryMedia('story-1', true, ['audio', 'link']),
+    );
+    await waitFor(() => expect(result.current.media).toHaveLength(2));
+
+    await rerender({});
+
+    expect(mockGetImages).toHaveBeenCalledTimes(1);
+  });
+
+  it('comes back empty when the read fails', async () => {
+    mockGetImages.mockRejectedValue(new Error('boom'));
+    const { result } = await renderHook(() => useGalleryMedia('story-1', true, ['audio']));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.media).toEqual([]);
   });
 });
 

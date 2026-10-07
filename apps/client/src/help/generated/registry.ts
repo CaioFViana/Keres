@@ -93,6 +93,8 @@ import publishStory_en from '../content/publish-story/en';
 import publishStory_pt from '../content/publish-story/pt';
 import routes_en from '../content/routes/en';
 import routes_pt from '../content/routes/pt';
+import sceneMusic_en from '../content/scene-music/en';
+import sceneMusic_pt from '../content/scene-music/pt';
 import scenePages_en from '../content/scene-pages/en';
 import scenePages_pt from '../content/scene-pages/pt';
 import sceneTiming_en from '../content/scene-timing/en';
@@ -193,6 +195,7 @@ export type GeneratedHelpPageId =
   | 'plots'
   | 'publish-story'
   | 'routes'
+  | 'scene-music'
   | 'scene-pages'
   | 'scene-timing'
   | 'scenes'
@@ -404,6 +407,10 @@ export const helpRegistry: Record<GeneratedHelpPageId, Record<string, HelpPage>>
   routes: {
     en: routes_en,
     pt: routes_pt,
+  },
+  'scene-music': {
+    en: sceneMusic_en,
+    pt: sceneMusic_pt,
   },
   'scene-pages': {
     en: scenePages_en,

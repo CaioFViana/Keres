@@ -53,6 +53,10 @@ export const entityPropertyClassifications: Record<string, EntityPropertyClassif
     documented: ['name', 'description', 'content', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'version', 'isDeleted', 'deletedAt'],
   },
+  SceneMusic: {
+    documented: ['role', 'cue', 'songId', 'galleryId', 'sections', 'createdAt', 'updatedAt'],
+    invisible: ['id', 'storyId', 'sceneId', 'rank', 'version', 'isDeleted', 'deletedAt'],
+  },
   ScenePage: {
     documented: ['text', 'fit', 'sketchId', 'galleryId', 'createdAt', 'updatedAt'],
     invisible: ['id', 'storyId', 'sceneId', 'rank', 'version', 'isDeleted', 'deletedAt'],

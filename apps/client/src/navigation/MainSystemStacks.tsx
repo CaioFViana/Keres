@@ -44,6 +44,7 @@ import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailS
 import FountainImportScreen from '../screens/narrative-elements/scenes/FountainImportScreen';
 import NewSessionScreen from '../screens/narrative-elements/scenes/NewSessionScreen';
 import ScenePagesScreen from '../screens/narrative-elements/scenes/ScenePagesScreen';
+import SceneMusicScreen from '../screens/narrative-elements/scenes/SceneMusicScreen';
 import SceneEditorScreen from '../screens/narrative-elements/scenes/SceneEditorScreen';
 import SceneFormScreen from '../screens/narrative-elements/scenes/SceneFormScreen';
 import StoryTimelineScreen from '../screens/narrative-elements/timeline/StoryTimelineScreen';
@@ -186,6 +187,7 @@ export type NarrativeElementsStackParamList = {
   SceneDetail: { sceneId: string; occurrence?: OccurrenceTarget };
   SceneEditor: { sceneId: string };
   ScenePages: { sceneId: string };
+  SceneMusic: { sceneId: string };
   NewSession: undefined;
   FountainImport: undefined;
   Manuscript: { routeId?: string };
@@ -213,6 +215,7 @@ export const NarrativeElementsStackNavigator = () => {
       <NarrativeElementsStack.Screen name="SceneDetail" component={SceneDetailScreen} />
       <NarrativeElementsStack.Screen name="SceneEditor" component={SceneEditorScreen} />
       <NarrativeElementsStack.Screen name="ScenePages" component={ScenePagesScreen} />
+      <NarrativeElementsStack.Screen name="SceneMusic" component={SceneMusicScreen} />
       <NarrativeElementsStack.Screen name="NewSession" component={NewSessionScreen} />
       <NarrativeElementsStack.Screen name="FountainImport" component={FountainImportScreen} />
       <NarrativeElementsStack.Screen name="Manuscript" component={ManuscriptScreen} />

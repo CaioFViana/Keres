@@ -164,6 +164,10 @@ jest.mock('../../src/screens/narrative-elements/scenes/ScenePagesScreen', () => 
   __esModule: true,
   default: () => null,
 }));
+jest.mock('../../src/screens/narrative-elements/scenes/SceneMusicScreen', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('../../src/screens/narrative-elements/scenes/NewSessionScreen', () => ({
   __esModule: true,
   default: () => null,
@@ -402,6 +406,7 @@ const stacks: Array<{
       'SceneDetail',
       'SceneEditor',
       'ScenePages',
+      'SceneMusic',
       'NewSession',
       'FountainImport',
       'Manuscript',

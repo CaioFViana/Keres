@@ -9,6 +9,7 @@ const simple = createSimpleEntityHandler({
   conflictLabelKey: 'scene_music',
   displayField: 'cue',
   previewDetailsFields: ['cue'],
+  help: { source: 'scene-music', fields: ['role', 'cue'] },
   exportReferences: [
     { field: 'sceneId', targetEntityType: OperationLogEntityType.Scene, required: true },
     // The target may be gone while the link and its cue stay: the reference is optional.

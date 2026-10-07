@@ -49,6 +49,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   SceneDetail: 'scenes',
   SceneEditor: 'manuscript',
   ScenePages: 'scene-pages',
+  SceneMusic: 'scene-music',
   NewSession: 'chapters',
   FountainImport: 'manuscript',
   SceneForm: 'scenes',

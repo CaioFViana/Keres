@@ -15,6 +15,7 @@ import { getEntityTable } from '../entityTableRegistry';
 import type { OccurrenceTarget } from '../../utils/occurrenceTarget';
 import { truncate } from '../../utils/stringUtils';
 import { createFavoriteService } from './FavoriteService';
+import { createStoryArcService } from './StoryArcService';
 
 export interface GlobalSearchResult {
   entityType: GlobalSearchEntityType;
@@ -30,6 +31,11 @@ export interface GlobalSearchResult {
    * title itself (the header is already at the top) or a Mode (its owner's list).
    */
   occurrence?: OccurrenceTarget;
+  /**
+   * The work(s) the result belongs to, said only when the story has more than one: a global search
+   * looks everywhere, so each result names where it is.
+   */
+  arcTitle?: string;
 }
 
 export interface GlobalSearchService {
@@ -95,6 +101,68 @@ function findMatchingField(
     }
   }
   return null;
+}
+
+/**
+ * Names, on each result, the work it belongs to: a chapter by its own, a scene by its chapter's, and
+ * a character, place or item by the works of the scenes it appears in. Nothing is said in a story with
+ * a single work - there is nothing to tell apart.
+ */
+async function labelResultsWithArcs(
+  db: AppDrizzleClient,
+  storyId: string,
+  found: GlobalSearchResult[],
+): Promise<void> {
+  if (found.length === 0) return;
+  const arcService = createStoryArcService(db);
+  const arcs = (await arcService.getArcsForStory(storyId)).filter((arc) => !arc.isDeleted);
+  if (arcs.length < 2) return;
+  const titles = new Map(arcs.map((arc) => [arc.id, arc.title]));
+  const label = (ids: (string | null | undefined)[] | undefined) => {
+    const names = [...new Set((ids ?? []).flatMap((id) => (id ? [titles.get(id)] : [])))].filter(
+      (name): name is string => !!name,
+    );
+    return names.length > 0 ? names.join(', ') : undefined;
+  };
+
+  const idsOf = (entityType: GlobalSearchEntityType) =>
+    found.filter((result) => result.entityType === entityType).map((result) => result.id);
+  const chapterIds = idsOf('Chapter');
+  if (chapterIds.length > 0) {
+    const rows = await db
+      .select({ id: chapters.id, arcId: chapters.arcId })
+      .from(chapters)
+      .where(inArray(chapters.id, chapterIds))
+      .all();
+    const byId = new Map(rows.map((row) => [row.id, row.arcId]));
+    for (const result of found) {
+      if (result.entityType === 'Chapter') result.arcTitle = label([byId.get(result.id)]);
+    }
+  }
+  const sceneIds = idsOf('Scene');
+  if (sceneIds.length > 0) {
+    const rows = await db
+      .select({ id: scenes.id, arcId: chapters.arcId })
+      .from(scenes)
+      .innerJoin(chapters, eq(scenes.chapterId, chapters.id))
+      .where(inArray(scenes.id, sceneIds))
+      .all();
+    const byId = new Map(rows.map((row) => [row.id, row.arcId]));
+    for (const result of found) {
+      if (result.entityType === 'Scene') result.arcTitle = label([byId.get(result.id)]);
+    }
+  }
+  for (const [entityType, kind] of [
+    ['Character', 'character'],
+    ['Location', 'location'],
+    ['Item', 'item'],
+  ] as const) {
+    if (idsOf(entityType).length === 0) continue;
+    const arcIdsByEntity = await arcService.listEntityArcIds(storyId, kind);
+    for (const result of found) {
+      if (result.entityType === entityType) result.arcTitle = label(arcIdsByEntity.get(result.id));
+    }
+  }
 }
 
 export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchService => {
@@ -366,6 +434,8 @@ export const createGlobalSearchService = (db: AppDrizzleClient): GlobalSearchSer
           result.context = contextBySceneId.get(result.id);
         });
       }
+
+      await labelResultsWithArcs(db, storyId, Array.from(results.values()));
 
       const favoriteService = createFavoriteService(db);
       await Promise.all(

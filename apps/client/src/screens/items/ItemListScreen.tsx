@@ -26,6 +26,8 @@ import type { ItemSelect } from '../../db/schemas/items';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
+import { useArcSearchScope } from '../../hooks/useArcSearchScope';
 import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useOpenPresenceMatrixViewer } from '../../hooks/useOpenPresenceMatrixViewer';
@@ -180,18 +182,27 @@ const ItemListScreen = () => {
 
   const activeArcId = useStoryStore((state) => state.activeArcId);
   const arcIdsByItem = useEntityArcIds(storyId ?? '', 'item');
-  const itemsWithTags = useMemo(
+  const foundItems = useMemo(
     () =>
       (items as ItemSelect[])
         .map((item) => ({ ...item, tags: tagsByItemId.get(item.id) ?? [] }))
         .filter(
           (item) =>
-            (activeTagIds.length === 0 ||
-              item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id))) &&
-            entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
+            activeTagIds.length === 0 ||
+            item.tags.some((tag: TagSelect) => activeTagIds.includes(tag.id)),
         ),
-    [activeArcId, activeTagIds, arcIdsByItem, items, tagsByItemId],
+    [activeTagIds, items, tagsByItemId],
   );
+  const inActiveArc = useCallback(
+    (item: ItemSelect) => entityBelongsToActiveArc(arcIdsByItem.get(item.id), activeArcId),
+    [arcIdsByItem, activeArcId],
+  );
+  const {
+    data: itemsWithTags,
+    outsideCount,
+    expanded: showingOtherArcs,
+    toggle: toggleOtherArcs,
+  } = useArcSearchScope(foundItems, inActiveArc, listProps.currentSearchTerm);
 
   const handleViewDetails = useCallback(
     (itemId: string) => {
@@ -324,6 +335,13 @@ const ItemListScreen = () => {
         <GenericFilterSortList
           {...listProps}
           data={itemsWithTags}
+          resultsNotice={
+            <OutsideArcNotice
+              count={outsideCount}
+              expanded={showingOtherArcs}
+              onToggle={toggleOtherArcs}
+            />
+          }
           renderItem={memoizedItemListItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('vocabulary_search_entities', { entities: term('Item', true) })}

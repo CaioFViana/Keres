@@ -18,6 +18,8 @@ import type { TagSelect } from '../../db/schema';
 import { useScreenAnchor } from '../../guides/useGuideAnchor';
 import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
+import OutsideArcNotice from '../../components/features/arcs/OutsideArcNotice';
+import { useArcSearchScope } from '../../hooks/useArcSearchScope';
 import { useEntityArcIds } from '../../hooks/useEntityArcIds';
 import { useEntityListScreen } from '../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../hooks/useStoryRole';
@@ -66,13 +68,17 @@ const LocationsScreen = () => {
 
   const activeArcId = useStoryStore((state) => state.activeArcId);
   const arcIdsByLocation = useEntityArcIds(storyId ?? '', 'location');
-  const visibleLocations = useMemo(
-    () =>
-      locations.filter((location: LocationWithTags) =>
-        entityBelongsToActiveArc(arcIdsByLocation.get(location.id), activeArcId),
-      ),
-    [locations, arcIdsByLocation, activeArcId],
+  const inActiveArc = useCallback(
+    (location: LocationWithTags) =>
+      entityBelongsToActiveArc(arcIdsByLocation.get(location.id), activeArcId),
+    [arcIdsByLocation, activeArcId],
   );
+  const {
+    data: visibleLocations,
+    outsideCount,
+    expanded: showingOtherArcs,
+    toggle: toggleOtherArcs,
+  } = useArcSearchScope(locations as LocationWithTags[], inActiveArc, listProps.currentSearchTerm);
 
   const [allTags, setAllTags] = useState<TagSelect[]>([]);
   const [tagService] = useState(() => createTagService(drizzleDb));
@@ -188,6 +194,13 @@ const LocationsScreen = () => {
         <GenericFilterSortList
           {...listProps}
           data={visibleLocations}
+          resultsNotice={
+            <OutsideArcNotice
+              count={outsideCount}
+              expanded={showingOtherArcs}
+              onToggle={toggleOtherArcs}
+            />
+          }
           renderItem={memoizedRenderItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('search_entities', { entities: term('Location', true) })}

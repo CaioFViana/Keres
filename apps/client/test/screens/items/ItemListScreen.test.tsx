@@ -87,10 +87,33 @@ jest.mock('@/src/components/common/lists/GenericFilterSortList/GenericFilterSort
         { testID: 'filter-tags', onPress: () => props.onFilterChange(['tag-1']) },
         'filter',
       ),
+      (props as { resultsNotice?: React.ReactNode }).resultsNotice,
       props.data.map((item) =>
         react.createElement(react.Fragment, { key: item.id }, props.renderItem({ item })),
       ),
     );
+  },
+}));
+jest.mock('@/src/components/features/arcs/OutsideArcNotice', () => ({
+  __esModule: true,
+  default: ({
+    count,
+    expanded,
+    onToggle,
+  }: {
+    count: number;
+    expanded: boolean;
+    onToggle: () => void;
+  }) => {
+    const react = jest.requireActual('react') as typeof import('react');
+    const native = jest.requireActual('react-native') as typeof import('react-native');
+    return count > 0
+      ? react.createElement(
+          native.Text,
+          { testID: 'outside-arc', onPress: onToggle },
+          `${expanded ? 'hide' : 'show'}:${count}`,
+        )
+      : null;
   },
 }));
 jest.mock('@/src/components/common/feedback/ScreenState/ScreenState', () => ({
@@ -403,6 +426,48 @@ describe('ItemListScreen', () => {
     expect(mockOpenItemList).toHaveBeenCalled();
     mockHeaderConfig.current?.actions[1].onPress();
     expect(mockNavigate).toHaveBeenCalledWith('ItemForm', {});
+  });
+
+  it('counts what a search found in other arcs, and shows it on a tap', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(
+      new Map([
+        ['item-1', ['arc-1']],
+        ['item-2', ['arc-2']],
+      ]),
+    );
+    mockListState = {
+      ...freshListState(),
+      listProps: { currentSearchTerm: 'sw' },
+      items: [
+        { id: 'item-1', name: 'Sword' },
+        { id: 'item-2', name: 'Swan' },
+      ],
+    };
+    const view = await render(<ItemListScreen />);
+
+    await waitFor(() => expect(view.getByTestId('outside-arc').props.children).toBe('show:1'));
+    expect(mockListProps?.data.map((item) => item.id)).toEqual(['item-1']);
+    await fireEvent.press(view.getByTestId('outside-arc'));
+    await waitFor(() =>
+      expect(mockListProps?.data.map((item) => item.id)).toEqual(['item-1', 'item-2']),
+    );
+    expect(view.getByTestId('outside-arc').props.children).toBe('hide:1');
+  });
+
+  it('says nothing about other arcs when nothing is being searched', async () => {
+    mockStoryState = {
+      selectedStory: { id: 'story-1', type: 'linear' },
+      activeArcId: 'arc-1',
+    };
+    mockUseEntityArcIds.mockReturnValue(new Map([['item-2', ['arc-2']]]));
+    mockListState = { ...freshListState(), items: [{ id: 'item-2', name: 'Shield' }] };
+    const view = await render(<ItemListScreen />);
+
+    expect(view.queryByTestId('outside-arc')).toBeNull();
   });
 
   it('hides items from other arcs but keeps unlinked ones', async () => {

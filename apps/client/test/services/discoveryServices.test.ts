@@ -446,3 +446,109 @@ describe('global search attributes and scene context', () => {
     );
   });
 });
+
+describe('global search names the work of each result', () => {
+  const arcRow = (id: string, title: string, sortOrder: number) => ({
+    id,
+    storyId: TEST_STORY_ID,
+    title,
+    description: null,
+    sortOrder,
+    color: null,
+    icon: null,
+    themeOverride: null,
+    medium: 'generic' as const,
+    vocabulary: null,
+    author: null,
+    coverGalleryId: null,
+    pageFormat: null,
+    isDefault: sortOrder === 0,
+    ...entityBase,
+  });
+
+  async function seedTwoWorks() {
+    await database.db
+      .insert(schema.storyArcs)
+      .values([arcRow('arc-1', 'Book One', 0), arcRow('arc-2', 'Book Two', 1)]);
+    await database.db.insert(schema.chapters).values([
+      {
+        id: 'ch-1',
+        storyId: TEST_STORY_ID,
+        name: 'Lighthouse',
+        index: 1,
+        arcId: 'arc-1',
+        ...entityBase,
+      },
+      {
+        id: 'ch-2',
+        storyId: TEST_STORY_ID,
+        name: 'Harbor Two',
+        index: 2,
+        arcId: 'arc-2',
+        ...entityBase,
+      },
+    ]);
+    await database.db.insert(schema.scenes).values({
+      id: 'sc-1',
+      storyId: TEST_STORY_ID,
+      chapterId: 'ch-2',
+      name: 'Harbor arrival',
+      index: 1,
+      ...entityBase,
+    });
+    await database.db.insert(schema.characters).values({
+      id: 'harbormaster',
+      storyId: TEST_STORY_ID,
+      name: 'Harbormaster',
+      ...entityBase,
+    });
+    await database.db.insert(schema.characterScenes).values({
+      id: 'cs-1',
+      storyId: TEST_STORY_ID,
+      characterId: 'harbormaster',
+      sceneId: 'sc-1',
+      ...entityBase,
+    });
+  }
+
+  const search = (term: string) =>
+    createGlobalSearchService(database.db).searchAllEntities(TEST_STORY_ID, term, TEST_USER_ID);
+
+  it('says which work a chapter, a scene and a character belong to when there are several', async () => {
+    await seedTwoWorks();
+
+    const matches = await search('harbor');
+
+    const arcOf = (id: string) => matches.find((match) => match.id === id)?.arcTitle;
+    expect(arcOf('ch-2')).toBe('Book Two');
+    expect(arcOf('sc-1')).toBe('Book Two');
+    expect(arcOf('harbormaster')).toBe('Book Two');
+  });
+
+  it('says nothing when the story has a single work', async () => {
+    await seedTwoWorks();
+    await database.db
+      .update(schema.storyArcs)
+      .set({ isDeleted: true })
+      .where(eq(schema.storyArcs.id, 'arc-1'));
+
+    const matches = await search('harbor');
+
+    expect(matches.length).toBeGreaterThan(0);
+    expect(matches.every((match) => match.arcTitle === undefined)).toBe(true);
+  });
+
+  it('leaves out the label of a result that sits in no work', async () => {
+    await seedTwoWorks();
+    await database.db.insert(schema.characters).values({
+      id: 'lonely',
+      storyId: TEST_STORY_ID,
+      name: 'Harbor Ghost',
+      ...entityBase,
+    });
+
+    const matches = await search('harbor ghost');
+
+    expect(matches.find((match) => match.id === 'lonely')?.arcTitle).toBeUndefined();
+  });
+});

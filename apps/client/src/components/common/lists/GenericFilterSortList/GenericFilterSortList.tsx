@@ -77,6 +77,8 @@ interface GenericFilterSortListProps<T> {
   isLoading?: boolean;
   /** Contextual count supplied by composite lists, e.g. items nested under each result. */
   resultsMeta?: string;
+  /** Shown under the results count: what the search found beyond the list's scope, say. */
+  resultsNotice?: React.ReactNode;
   /**
    * The list's columns. The gallery shows thumbnails in a grid; the other screens are single-column
    * lists and pass nothing.
@@ -117,6 +119,7 @@ const GenericFilterSortList = <T,>({
   disableTagFilter = false,
   isLoading = false,
   resultsMeta,
+  resultsNotice,
   numColumns = 1,
   columnWrapperStyle,
 }: GenericFilterSortListProps<T>) => {
@@ -367,6 +370,7 @@ const GenericFilterSortList = <T,>({
           {resultsMeta ? ` (${resultsMeta})` : ''}
         </Text>
       </View>
+      {resultsNotice}
       <FlatList
         data={data}
         renderItem={renderItem}

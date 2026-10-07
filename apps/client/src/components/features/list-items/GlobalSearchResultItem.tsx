@@ -26,6 +26,16 @@ const GlobalSearchResultItem: React.FC<GlobalSearchResultItemProps> = ({ result,
         <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
           {result.title}
         </Text>
+        {!!result.arcTitle && (
+          <Text
+            style={styles.arc}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            testID="search-result-arc"
+          >
+            {result.arcTitle}
+          </Text>
+        )}
         {!!result.context && (
           <Text style={styles.context} numberOfLines={1} ellipsizeMode="tail">
             {result.context}
@@ -70,6 +80,7 @@ const createStyles = (colors: any) =>
       marginTop: 2,
     },
     context: { fontSize: 12, color: colors.primary, marginTop: 2 },
+    arc: { fontSize: 12, color: colors.textSecondary, fontStyle: 'italic', marginTop: 2 },
   });
 
 export default GlobalSearchResultItem;

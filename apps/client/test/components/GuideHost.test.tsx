@@ -164,6 +164,29 @@ describe('GuideHost', () => {
     expect(screen.queryByTestId('guide-dim')).toBeNull();
   });
 
+  it('keeps the card where it is while the next step is measured, instead of resting it elsewhere', async () => {
+    registerGuideAnchor('a', async () => ({ x: 10, y: 100, width: 200, height: 40 }));
+    registerGuideAnchor('b', () => new Promise(() => {}));
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [
+        { id: 's1', anchors: ['a'], titleKey: 't1', bodyKey: 'b1' },
+        { id: 's2', anchors: ['b'], titleKey: 't2', bodyKey: 'b2' },
+      ],
+    });
+    const screen = await render(<GuideHost />);
+    await screen.findByTestId('guide-spotlight');
+    const top = () => StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style).top;
+    const before = top();
+
+    await fireEvent.press(screen.getByTestId('guide-next'));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.getByText('t2')).toBeTruthy();
+    expect(top()).toBe(before);
+  });
+
   it('measures again a moment later, so the hole covers what laid out after the tour began', async () => {
     let calls = 0;
     registerGuideAnchor('late', async () => {
@@ -266,7 +289,7 @@ describe('GuideHost', () => {
       getScrollOffset: () => 0,
       measureScrollWindowY: async () => 0,
     });
-    registerGuideAnchor('item', async () => ({ x: 0, y: 400, width: 200, height: 40 }));
+    registerGuideAnchor('item', async () => ({ x: 0, y: 1400, width: 200, height: 40 }));
     useGuideStore.getState().startTour({
       id: 'TourScreen',
       drawerId: 'story-selection',
@@ -278,7 +301,29 @@ describe('GuideHost', () => {
 
     expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
     expect(dispatch).toHaveBeenCalledWith(DrawerActions.openDrawer());
-    expect(scrollTo).toHaveBeenCalledWith(400 - 96);
+    expect(scrollTo).toHaveBeenCalledWith(1400 - 96);
+  });
+
+  it('points at a group that is already in view without scrolling the drawer', async () => {
+    const scrollTo = jest.fn();
+    registerGuideDrawer('story-selection', {
+      navigation: { dispatch: jest.fn() } as never,
+      scrollTo,
+      getScrollOffset: () => 0,
+      measureScrollWindowY: async () => 0,
+    });
+    registerGuideAnchor('item', async () => ({ x: 16, y: 400, width: 200, height: 40 }));
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [
+        { id: 's1', drawerId: 'story-selection', anchors: ['item'], titleKey: 't', bodyKey: 'b' },
+      ],
+    });
+    const screen = await render(<GuideHost />);
+
+    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
   it('puts the drawer back when the tour that opened it ends', async () => {
@@ -428,7 +473,7 @@ describe('the tour card and the navigation bar', () => {
     );
 
     const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
-    expect(wrap.bottom).toBe(54);
+    expect(wrap.top).toBe(1334 - 34 - 20 - 230);
   });
 
   it('puts the card against its target, over it when the bottom is too tight, with an arrow toward it', async () => {
@@ -475,6 +520,6 @@ describe('the tour card and the navigation bar', () => {
     const screen = await render(<GuideHost />);
 
     const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
-    expect(wrap.bottom).toBe(20);
+    expect(wrap.top).toBe(1334 - 20 - 230);
   });
 });

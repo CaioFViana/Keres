@@ -3,7 +3,7 @@ import { AccessibilityInfo } from 'react-native';
 import type { GuideRect } from './types';
 
 /** How long the hole and the card take to slide to the next target. */
-export const SLIDE_MS = 280;
+export const SLIDE_MS = 220;
 
 const easeOutCubic = (progress: number) => 1 - (1 - progress) ** 3;
 

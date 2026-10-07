@@ -55,12 +55,7 @@ const GuideStepCard: React.FC<GuideStepCardProps> = ({
     <View
       testID="guide-card-wrap"
       pointerEvents="box-none"
-      style={[
-        styles.wrap,
-        { left: layout.left, width: layout.width },
-        layout.top !== undefined ? { top: layout.top } : null,
-        layout.bottom !== undefined ? { bottom: layout.bottom } : null,
-      ]}
+      style={[styles.wrap, { left: layout.left, width: layout.width }, { top: layout.top }]}
     >
       <View
         testID="guide-card"

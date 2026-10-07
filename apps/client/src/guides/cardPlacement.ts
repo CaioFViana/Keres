@@ -15,10 +15,8 @@ export interface CardLayout {
   mode: CardMode;
   width: number;
   left: number;
-  /** Distance from the top of the window; set for the modes that follow the target. */
-  top?: number;
-  /** Distance from the bottom of the window; set for the modes resting on an edge. */
-  bottom?: number;
+  /** Distance from the top of the window, for every mode: an edge is just a place the card rests. */
+  top: number;
   /** Where the arrow sits along the card's width, when the card points at the target. */
   arrowX?: number;
 }
@@ -65,6 +63,11 @@ export function cardMode({
   return coveredAtTop < coveredAtBottom ? 'top' : 'bottom';
 }
 
+/** Where the arrow sits along a card that starts at `left`, under the middle of the hole, kept off the corners. */
+export function arrowOffset(spot: GuideRect, left: number, width: number): number {
+  return Math.min(Math.max(spot.x + spot.width / 2 - left, ARROW_INSET), width - ARROW_INSET);
+}
+
 /**
  * Where the step card goes. It points at its target like a balloon - below it, or above when the
  * bottom is too tight - following the hole as it slides from one step to the next, and gives way
@@ -79,14 +82,19 @@ export function cardLayout(input: LayoutInput): CardLayout {
   if (!spot || mode === 'bottom' || mode === 'top') {
     return mode === 'top'
       ? { mode, width, left: centred, top: topInset + CARD_MARGIN }
-      : { mode: 'bottom', width, left: centred, bottom: bottomInset + CARD_MARGIN };
+      : {
+          mode: 'bottom',
+          width,
+          left: centred,
+          top: windowHeight - bottomInset - CARD_MARGIN - cardHeight,
+        };
   }
   const centreX = spot.x + spot.width / 2;
   const left = Math.min(
     Math.max(centreX - width / 2, CARD_MARGIN),
     windowWidth - CARD_MARGIN - width,
   );
-  const arrowX = Math.min(Math.max(centreX - left, ARROW_INSET), width - ARROW_INSET);
+  const arrowX = arrowOffset(spot, left, width);
   const wanted =
     mode === 'below' ? spot.y + spot.height + CARD_GAP : spot.y - CARD_GAP - cardHeight;
   // Always inside the window, even while the hole is still sliding in from somewhere else.

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { Guide, GuideRect } from '../../../../guides/types';
-import { cardLayout } from '../../../../guides/cardPlacement';
+import { arrowOffset, cardLayout } from '../../../../guides/cardPlacement';
 import { useTweenedRect } from '../../../../guides/useTweenedRect';
 import GuideSpotlight from './GuideSpotlight';
 import GuideStepCard from './GuideStepCard';
@@ -21,7 +21,7 @@ const SPOTLIGHT_PADDING = 8;
 /** How far below the drawer's top edge a scrolled-to group lands. */
 const DRAWER_SCROLL_MARGIN = 96;
 /** How often anchors are measured while waiting for them to hold still, and for how long at most. */
-const SETTLE_POLL_MS = 120;
+const SETTLE_POLL_MS = 50;
 const SETTLE_TIMEOUT_MS = 2000;
 
 /** The longest a tour waits to know where its first hole goes (and for the canvas) before opening. */
@@ -115,26 +115,17 @@ const ActiveGuideOverlay: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const [prevActiveTour, setPrevActiveTour] = useState(activeTour);
-  const [prevGuideStep, setPrevGuideStep] = useState(step);
-  const [prevIsWide, setPrevIsWide] = useState(isWide);
-  if (activeTour !== prevActiveTour || step !== prevGuideStep || isWide !== prevIsWide) {
-    setPrevActiveTour(activeTour);
-    setPrevGuideStep(step);
-    setPrevIsWide(isWide);
-    // A step that is quick to measure keeps the hole it had until its own arrives, so the dim never
-    // closes over the screen between two steps; one that waits on the drawer, or has no target,
-    // starts without a hole.
-    if (activeTour && step && (step.drawerId || (step.anchors?.length ?? 0) === 0)) {
-      setSpot(null);
-    }
-  }
+  // The hole and the card stay where they are while the next step is measured and then slide straight
+  // to it: nothing is reset to a default place in between. The window height is read at that moment.
+  const windowHeightRef = useRef(windowSize.height);
+  windowHeightRef.current = windowSize.height;
 
   useEffect(() => {
     if (!activeTour || !step) return;
     let cancelled = false;
     const anchors = step.anchors ?? [];
     if (anchors.length === 0) {
+      setSpot(null);
       setMeasured(true);
       return;
     }
@@ -154,11 +145,15 @@ const ActiveGuideOverlay: React.FC = () => {
         // The drawer slides in, then the group slides into view: each is measured where it comes to
         // rest, not at a guessed time after it starts.
         const target = await measure();
-        if (target) {
-          await scrollDrawerToRect(step.drawerId, target, DRAWER_SCROLL_MARGIN);
-        }
         if (cancelled) return;
-        const settled = await measure();
+        // Only a group that is not already in view is scrolled to; one that is, is pointed at now.
+        const visible =
+          !!target && target.y >= 0 && target.y + target.height <= windowHeightRef.current;
+        if (target && !visible) {
+          await scrollDrawerToRect(step.drawerId, target, DRAWER_SCROLL_MARGIN);
+          if (cancelled) return;
+        }
+        const settled = visible ? target : await measure();
         if (cancelled) return;
         setSpot(settled);
         setMeasured(true);
@@ -193,6 +188,24 @@ const ActiveGuideOverlay: React.FC = () => {
       }
     : null;
   const shownRect = useTweenedRect(padded);
+
+  // Where the card goes for this step, and the card as it is drawn: it slides there from wherever it
+  // was, edge or target, together with the hole.
+  const targetLayout = cardLayout({
+    spot: padded,
+    target: padded,
+    windowWidth: windowSize.width,
+    windowHeight: windowSize.height,
+    cardHeight,
+    topInset: insets.top,
+    bottomInset: insets.bottom,
+  });
+  const cardRect = useTweenedRect({
+    x: targetLayout.left,
+    y: targetLayout.top,
+    width: targetLayout.width,
+    height: 1,
+  });
 
   if (!guide || !step || !activeTour || !((measured && canvasReady) || waited)) {
     return null;
@@ -241,16 +254,14 @@ const ActiveGuideOverlay: React.FC = () => {
     handleSkip();
   };
 
-  const { width: windowWidth } = windowSize;
-  const layout = cardLayout({
-    spot: shownRect,
-    target: padded,
-    windowWidth,
-    windowHeight: windowSize.height,
-    cardHeight,
-    topInset: insets.top,
-    bottomInset: insets.bottom,
-  });
+  const layout = {
+    ...targetLayout,
+    ...(cardRect ? { left: cardRect.x, top: cardRect.y, width: cardRect.width } : null),
+    arrowX:
+      shownRect && cardRect
+        ? arrowOffset(shownRect, cardRect.x, cardRect.width)
+        : targetLayout.arrowX,
+  };
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={handleSkip}>

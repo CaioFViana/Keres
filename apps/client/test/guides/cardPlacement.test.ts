@@ -93,6 +93,6 @@ describe('cardLayout', () => {
   it('rests on the bottom edge above the system bar for a step without a target', () => {
     const layout = cardLayout({ ...window, bottomInset: 34, spot: null, target: null });
 
-    expect(layout).toMatchObject({ mode: 'bottom', bottom: 54, left: 20 });
+    expect(layout).toMatchObject({ mode: 'bottom', top: 800 - 34 - 20 - 220, left: 20 });
   });
 });

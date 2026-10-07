@@ -1,5 +1,7 @@
 import {
+  buildBacking,
   buildTimeline,
+  defaultFeel,
   chordProFileOf,
   MAX_SONG_NOTES_LENGTH,
   MAX_SONG_TITLE_LENGTH,
@@ -39,7 +41,7 @@ import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useSong, useSongUses } from '../../hooks/useSongs';
 import { useSongDraft } from '../../hooks/useSongDraft';
 import { useSectionWords } from '../../hooks/useSectionWords';
-import { useSongPlayback } from '../../hooks/useSongPlayback';
+import { type PlaybackVoice, useSongPlayback } from '../../hooks/useSongPlayback';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SongStackParamList } from '../../navigation/MainSystemStacks';
 import { createSongService } from '../../services/storymanagement/SongService';
@@ -155,7 +157,7 @@ const SongEditorScreen = () => {
   }, [draft, showNotification, song, t]);
 
   const exportTune = useCallback(
-    async (kind: 'midi' | 'abc') => {
+    async (kind: 'midi' | 'abc', voice?: PlaybackVoice) => {
       if (!song) return;
       try {
         await draft.flush();
@@ -167,10 +169,22 @@ const SongEditorScreen = () => {
           meter: draft.value('meter') ?? null,
           language: syllableLanguage,
         } as const;
+        // The accompaniment chosen goes into the MIDI file, for a player with better sounds than ours.
+        const timeline = buildTimeline(parsedSong, parsedTune, facts);
+        const instrument = voice?.instrument ?? null;
+        const backingNotes = instrument
+          ? buildBacking(timeline.chords, {
+              instrument,
+              feel: voice?.feel && voice.feel !== 'auto' ? voice.feel : defaultFeel(timeline.meter),
+              meter: timeline.meter,
+            })
+          : [];
+        const backing =
+          instrument && backingNotes.length > 0 ? { instrument, notes: backingNotes } : undefined;
         const result =
           kind === 'midi'
             ? await deliverFile(
-                writeMidi(buildTimeline(parsedSong, parsedTune, facts), { title: heading }),
+                writeMidi(timeline, { title: heading, ...(backing ? { backing } : {}) }),
                 songFileName(heading, 'mid'),
                 'audio/midi',
                 'public.midi-audio',
@@ -339,7 +353,7 @@ const SongEditorScreen = () => {
           onPlay={(scope, voice) => void playback.play(scope, voice)}
           onStop={playback.stop}
           onTone={(pitch, timbre) => void playback.playTone(pitch, timbre)}
-          onExport={(kind) => void exportTune(kind)}
+          onExport={(kind, voice) => void exportTune(kind, voice)}
         />
       ) : null}
 

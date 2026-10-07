@@ -184,6 +184,73 @@ function periodOf(samples: Float32Array, from: number, length: number, around: n
   return bestLag + (0.5 * (a - c)) / (a - 2 * b + c);
 }
 
+/**
+ * The level of each of the first harmonics of a note, in dB below the strongest, measured the long way
+ * over a stretch of the note after its attack. What these tests hold is that the instruments keep the
+ * upper harmonics that make them sound like themselves: a violin or a piano whose harmonics stop at
+ * the third or fourth is a flute, whatever else it does right. (It says nothing of how it sounds.)
+ */
+function harmonicsOf(instrument: (typeof INSTRUMENTS)[number], pitch: number, count = 12) {
+  const hertz = 440 * 2 ** ((pitch - 69) / 12);
+  const out = renderVoice(
+    {
+      notes: [],
+      beats: 4,
+      tempo: 60,
+      backing: { instrument, notes: [{ pitch, start: 0, duration: 3, velocity: 0.8 }] },
+    },
+    { timbre: 'hum' },
+  );
+  const from = Math.round(0.35 * SAMPLE_RATE);
+  const length = Math.round(0.4 * SAMPLE_RATE);
+  const powers = Array.from({ length: count }, (_, k) =>
+    powerAtHertz(out, from, length, hertz * (k + 1)),
+  );
+  const strongest = Math.max(...powers);
+  return powers.map((power) => 10 * Math.log10(power / strongest + 1e-12));
+}
+
+function powerAtHertz(samples: Float32Array, from: number, length: number, hertz: number) {
+  let re = 0;
+  let im = 0;
+  for (let i = 0; i < length; i += 1) {
+    const window = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / length);
+    re += samples[from + i] * window * Math.cos((2 * Math.PI * hertz * i) / SAMPLE_RATE);
+    im += samples[from + i] * window * Math.sin((2 * Math.PI * hertz * i) / SAMPLE_RATE);
+  }
+  return (re * re + im * im) / length;
+}
+
+describe('the harmonics of the instruments', () => {
+  it('gives a violin a bright, full spectrum: its harmonics do not stop at the fifth', () => {
+    const [, h2, h3, h4, h5, h6, h7, h8] = harmonicsOf('violin', 67);
+
+    for (const level of [h2, h3, h4, h5]) expect(level).toBeGreaterThan(-26);
+    expect(h6).toBeGreaterThan(-32);
+    expect(h7).toBeGreaterThan(-40);
+    expect(h8).toBeGreaterThan(-42);
+  });
+
+  it('gives a piano string the harmonics of a struck string, up past the seventh', () => {
+    const levels = harmonicsOf('piano', 60);
+
+    for (const level of levels.slice(1, 6)) expect(level).toBeGreaterThan(-28);
+    expect(levels[6]).toBeGreaterThan(-45);
+  });
+
+  it('gives a plucked guitar string harmonics to the seventh at least', () => {
+    const levels = harmonicsOf('guitar', 55);
+
+    for (const level of levels.slice(0, 7)) expect(level).toBeGreaterThan(-30);
+  });
+
+  it('gives a harp string its first six harmonics', () => {
+    const levels = harmonicsOf('harp', 60);
+
+    for (const level of levels.slice(0, 5)) expect(level).toBeGreaterThan(-40);
+  });
+});
+
 describe('the instruments', () => {
   const single = (instrument: (typeof INSTRUMENTS)[number], pitch = 60, seconds = 2) =>
     renderVoice(

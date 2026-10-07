@@ -58,7 +58,8 @@ interface MelodyPanelProps {
   onPlay: (scope: PlaybackScope, voice: PlaybackVoice) => void;
   onStop: () => void;
   onTone: (pitch: number, timbre: VoiceTimbre) => void;
-  onExport: (kind: 'midi' | 'abc') => void;
+  /** The file asked for, and the sound chosen: a MIDI file carries the accompaniment picked here. */
+  onExport: (kind: 'midi' | 'abc', voice: PlaybackVoice) => void;
 }
 
 /** Note lengths the keyboard offers, in quarter notes. */
@@ -550,7 +551,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           testID="melody-export-midi"
           accessibilityRole="button"
           style={styles.outline}
-          onPress={() => onExport('midi')}
+          onPress={() => onExport('midi', voice)}
         >
           <Ionicons name="share-outline" size={18} color={colors.primary} />
           <Text style={{ color: colors.primary }}>{t('melody_export_midi')}</Text>
@@ -559,7 +560,7 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           testID="melody-export-abc"
           accessibilityRole="button"
           style={styles.outline}
-          onPress={() => onExport('abc')}
+          onPress={() => onExport('abc', voice)}
         >
           <Ionicons name="share-outline" size={18} color={colors.primary} />
           <Text style={{ color: colors.primary }}>{t('melody_export_abc')}</Text>

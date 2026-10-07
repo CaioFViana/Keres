@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { writeAbc } from '../../music/abc';
 import { parseChordPro } from '../../music/chordpro';
 import { parseMelody } from '../../music/melody';
-import { writeMidi } from '../../music/midi';
+import { MIDI_PROGRAMS, writeMidi } from '../../music/midi';
 import { buildTimeline } from '../../music/timeline';
 
 const WORDS = '{sov: Verse 1}\nTwin·kle twin·kle\nLit·tle star\n{eov}';
@@ -97,6 +97,47 @@ describe('writeMidi', () => {
 
   it('writes the same bytes twice', () => {
     expect([...writeMidi(timeline, { title: 'Star' })]).toEqual([...bytes]);
+  });
+
+  it('leans on the first note of a bar and softens a slurred one', () => {
+    const slurred = writeMidi(
+      buildTimeline(
+        parseChordPro('{sov: V}\nOne two three four\n{eov}'),
+        parseMelody('C D (E F)'),
+        options,
+      ),
+      { title: 'x' },
+    );
+    const velocities = events(slurred)
+      .filter((e) => e.status === 0x90)
+      .map((e) => e.data[1]);
+
+    // C on the bar line, D off it, E starts a syllable, F rides on E's.
+    expect(velocities).toEqual([100, 88, 88, 72]);
+  });
+
+  it('puts the accompaniment on its own channel with the program of its instrument', () => {
+    const backing = {
+      instrument: 'harp' as const,
+      notes: [{ pitch: 43, start: 0, duration: 2, velocity: 0.5 }],
+    };
+    const found = events(writeMidi(timeline, { title: 'Star', backing }));
+
+    expect(
+      found.filter((e) => (e.status & 0xf0) === 0xc0).map((e) => [e.status, e.data[0]]),
+    ).toEqual([
+      [0xc0, 53],
+      [0xc1, 46],
+    ]);
+    const low = found.filter((e) => e.status === 0x91);
+    expect(low.map((e) => [e.tick, e.data[0], e.data[1]])).toEqual([[0, 43, 55]]);
+    expect(found.some((e) => e.status === 0x81 && e.tick === 960)).toBe(true);
+    // The voice stays on the first channel.
+    expect(found.filter((e) => e.status === 0x90)).toHaveLength(7);
+  });
+
+  it('asks a player for a section of strings for the violin, which holds chords', () => {
+    expect(MIDI_PROGRAMS).toEqual({ guitar: 24, harp: 46, piano: 0, violin: 48 });
   });
 
   it('writes a file for a song with no tune', () => {

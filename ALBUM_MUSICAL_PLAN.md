@@ -42,6 +42,15 @@ Fases 1, 2, 3a e 3b feitas; da fase 4 só a folha de música. Tudo em commits n�
   canções mostra tom, andamento e compasso, não a duração. **Sugerir a duração da cena a partir da
   canção não foi feito.**
 
+**Os instrumentos são matemática, não amostras, e nunca foram ouvidos.** A primeira versão tinha
+violino sem harmônicos acima do 6º, piano com 3 parciais e cordas dedilhadas apagando acima do 6º (medido);
+soava como flauta/órgão. A segunda (cordas de Karplus-Strong com martelo e desafinação de unísono para o
+piano, serra band-limited com ressonâncias de corpo e ponte para o violino) tem harmônicos até o 8º-10º
+medidos, mas isso só prova que não faltam harmônicos, não que soe como violino. Som de verdade pede
+amostras (PCM cru + créditos), que não entraram. O arquivo **MIDI** leva o acompanhamento num canal
+próprio com o programa General MIDI do instrumento (violão de nylon 24, harpa 46, piano 0, cordas 48), para
+o tocador usar os sons dele.
+
 **Não verificado** (só em aparelho ou na web): qualidade e naturalidade da voz e dos instrumentos
 (ouvidos não testados; verifiquei afinação e espectro por medida), latência do teclado, modo silencioso
 do iOS, `expo-audio` com `blob:` na web, tamanho real do cache em aparelho.

@@ -405,6 +405,38 @@ describe('SongEditorScreen', () => {
     expect(String.fromCharCode(...(contents as Uint8Array).slice(0, 4))).toBe('MThd');
   });
 
+  it('puts the accompaniment chosen into the MIDI file, on a channel and a program of its own', async () => {
+    mockSong = {
+      ...baseSong,
+      lyrics: '{start_of_verse: Verse 1}\n[G]Light the [Em]lantern\n{end_of_verse}',
+      melody: 'G A B c',
+    } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-options-toggle'));
+    await fireEvent.press(view.getByTestId('melody-instrument-guitar'));
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const bytes = Array.from(mockDeliverFile.mock.calls[0][0] as Uint8Array);
+    // Program change on the second channel, to the nylon guitar; and notes on that channel.
+    expect(bytes.join(',')).toContain('193,24');
+    expect(bytes).toContain(0x91);
+  });
+
+  it('leaves the MIDI file with the voice alone when no accompaniment is chosen', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const bytes = Array.from(mockDeliverFile.mock.calls[0][0] as Uint8Array);
+    expect(bytes).not.toContain(0xc1);
+  });
+
   it('hands the tune over as an ABC file with the words under the notes', async () => {
     mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
     const view = await render(<SongEditorScreen />);

@@ -290,7 +290,20 @@ describe('MelodyPanel writing', () => {
     await fireEvent.press(view.getByTestId('melody-export-midi'));
     await fireEvent.press(view.getByTestId('melody-export-abc'));
 
-    expect(onExport.mock.calls).toEqual([['midi'], ['abc']]);
+    expect(onExport.mock.calls).toEqual([
+      ['midi', VOICE],
+      ['abc', VOICE],
+    ]);
+  });
+
+  it('takes the accompaniment chosen into the file it hands over', async () => {
+    const view = await render(panel({ melody: 'C D E F' }));
+
+    await fireEvent.press(view.getByTestId('melody-options-toggle'));
+    await fireEvent.press(view.getByTestId('melody-instrument-piano'));
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    expect(onExport).toHaveBeenLastCalledWith('midi', { ...VOICE, instrument: 'piano' });
   });
 });
 

@@ -45,6 +45,11 @@ import { useDrizzle } from '../../../db';
 import type { LocationSelect } from '../../../db/schema';
 import { createLocationService } from '../../../services/storymanagement/LocationService';
 import {
+  loadManuscriptMusic,
+  storyHasMusic,
+  withManuscriptMusic,
+} from '../../../services/storymanagement/ManuscriptMusicService';
+import {
   estimateManuscriptPageBytes,
   loadManuscriptPages,
 } from '../../../services/storymanagement/ManuscriptPagesService';
@@ -102,6 +107,26 @@ export function useManuscriptExport() {
     return () => {
       alive = false;
       entityEventEmitter.off('location_changed', load);
+    };
+  }, [db, storyId]);
+
+  // Whether any scene has music: only then does the export offer to write it.
+  const [hasMusic, setHasMusic] = useState(false);
+  useEffect(() => {
+    if (!storyId) {
+      setHasMusic(false);
+      return;
+    }
+    let alive = true;
+    const load = () =>
+      void storyHasMusic(db, storyId)
+        .then((has) => alive && setHasMusic(has))
+        .catch(() => alive && setHasMusic(false));
+    load();
+    entityEventEmitter.on('scene_music_changed', load);
+    return () => {
+      alive = false;
+      entityEventEmitter.off('scene_music_changed', load);
     };
   }, [db, storyId]);
 
@@ -266,6 +291,10 @@ export function useManuscriptExport() {
             ? (arcs.find((arc) => arc.id === settings.arcId) ?? null)
             : null;
           const title = exportArc?.title ?? selectedStory?.title ?? '';
+          const sceneMusic =
+            settings.includeMusicCues && selectedStory?.id
+              ? await loadManuscriptMusic(db, selectedStory.id)
+              : null;
           if (isScreenplayFormat(settings.format)) {
             const compiled = compileScreenplayManuscript(
               screenplayInputOf({
@@ -274,8 +303,9 @@ export function useManuscriptExport() {
                 scenes,
                 locations,
                 arcs,
+                music: sceneMusic,
               }),
-              screenplayOptionsOf(settings, i18n.language),
+              screenplayOptionsOf(settings, i18n.language, t('export_manuscript_music_label')),
             );
             const delivered = await deliverScreenplay({
               storyTitle: title,
@@ -323,7 +353,7 @@ export function useManuscriptExport() {
                     : scene;
                 })
               : list;
-          const exportScenes = withPages(scenesInArc);
+          const exportScenes = withManuscriptMusic(withPages(scenesInArc), sceneMusic);
           const arcInEffect = settings.arcId
             ? exportArc
             : activeArcId
@@ -338,6 +368,9 @@ export function useManuscriptExport() {
                 : 'export_manuscript_page_label',
             ),
             removed: t('export_manuscript_media_removed'),
+            ...(settings.includeMusicCues
+              ? { musicLabel: t('export_manuscript_music_label') }
+              : {}),
           };
           const pageAspect =
             PAGE_FORMAT_ASPECT[
@@ -485,6 +518,9 @@ export function useManuscriptExport() {
       isBranching,
       chapters,
       locations,
+      db,
+      userId,
+      activeArcId,
       showNotification,
       promptCjkPack,
     ],
@@ -501,5 +537,6 @@ export function useManuscriptExport() {
     screenplayEstimate,
     estimatePages,
     sizeEstimate,
+    hasMusic,
   };
 }

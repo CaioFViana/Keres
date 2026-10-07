@@ -39,6 +39,8 @@ export type ManuscriptExportSettings = {
   format: ManuscriptFormat;
   includeSceneNames: boolean;
   includeLooseScenes: boolean;
+  /** Writes the music of each scene: a line under it in a book, a note in a script. */
+  includeMusicCues: boolean;
   resetSceneNumbers: boolean;
   includeIndex: boolean;
   /** Branching only: how the gamebook numbers its scenes. */
@@ -60,6 +62,7 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     format: 'docx',
     includeSceneNames: false,
     includeLooseScenes: false,
+    includeMusicCues: false,
     resetSceneNumbers: false,
     includeIndex: false,
     sceneOrder: 'discovery',

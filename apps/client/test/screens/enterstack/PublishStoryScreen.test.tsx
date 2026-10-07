@@ -230,6 +230,7 @@ const manuscriptLabels = {
   pageLabel: 'export_manuscript_page_label',
   frameLabel: 'export_manuscript_frame_label',
   mediaRemoved: 'export_manuscript_media_removed',
+  musicLabel: 'export_manuscript_music_label',
 };
 /** The device export's defaults, as the publish screen sends them. */
 function manuscriptPayload(overrides: Record<string, unknown> = {}) {

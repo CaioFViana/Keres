@@ -39,6 +39,7 @@ const ManuscriptExportScreen = () => {
     screenplayEstimate,
     estimatePages,
     sizeEstimate,
+    hasMusic,
   } = useManuscriptExport();
   const effectiveArc = useStoryStore((state) => state.effectiveArc);
   // A campaign starts from its chronicle: the record of what the table played, ready to read.
@@ -97,6 +98,7 @@ const ManuscriptExportScreen = () => {
         }
         pageEstimate={pageEstimate}
         sizeEstimate={sizeEstimate(settings)}
+        hasMusic={hasMusic}
         branching={isBranching}
         showLooseSwitch={!isBranching && looseCount > 0}
         looseCount={looseCount}

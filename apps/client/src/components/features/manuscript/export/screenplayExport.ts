@@ -1,5 +1,6 @@
 import {
   type CompileStoryManuscriptInput,
+  type ManuscriptSceneMusic,
   type ManuscriptOptions,
   ManuscriptOptionsSchema,
   type ScreenplayEstimate,
@@ -18,12 +19,15 @@ export function screenplayInputOf({
   scenes,
   locations,
   arcs,
+  music,
 }: {
   title: string;
   chapters: readonly ChapterSelect[];
   scenes: readonly SceneSelect[];
   locations: readonly LocationSelect[];
   arcs: readonly { id: string; title: string }[];
+  /** Each scene's music, when the export carries it. */
+  music?: ReadonlyMap<string, ManuscriptSceneMusic[]> | null;
 }): CompileStoryManuscriptInput {
   const locationsById = new Map(locations.map((row) => [row.id, row]));
   return {
@@ -48,6 +52,7 @@ export function screenplayInputOf({
         summary: scene.summary,
         locationName: place?.name ?? null,
         locationIntExt: place?.intExt ?? null,
+        ...(music?.has(scene.id) ? { music: music.get(scene.id) } : {}),
       };
     }),
     choices: [],
@@ -59,6 +64,8 @@ export function screenplayInputOf({
 export function screenplayOptionsOf(
   settings: ManuscriptExportSettings,
   language: string,
+  /** What a note says before the title of a piece of music; the default when absent. */
+  musicLabel?: string,
 ): ManuscriptOptions {
   return ManuscriptOptionsSchema.parse({
     format: settings.format,
@@ -70,7 +77,9 @@ export function screenplayOptionsOf(
       paper: settings.screenplay.paper,
       numberScenes: settings.screenplay.numberScenes,
       generateHeadings: settings.screenplay.generateHeadings,
+      includeMusicNotes: settings.includeMusicCues,
     },
+    ...(musicLabel ? { labels: { musicLabel } } : {}),
   });
 }
 

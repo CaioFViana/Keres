@@ -54,6 +54,8 @@ interface ManuscriptExportOptionsProps {
   pageEstimate?: ManuscriptPageEstimate | null;
   /** How big the file will be, and how that stands against the limit; shown before anything is compiled. */
   sizeEstimate?: ManuscriptSizeAssessment | null;
+  /** The story has music in its scenes: the export offers to write it. Absent where it cannot (a publication). */
+  hasMusic?: boolean;
 }
 
 /** `12.3 MB`: one decimal, and `< 0.1 MB` for what is not worth a figure. */
@@ -97,6 +99,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   onEstimatePages,
   pageEstimate = null,
   sizeEstimate = null,
+  hasMusic = false,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -235,6 +238,17 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
             onChange={(generateHeadings) => change({ screenplay: { generateHeadings } })}
           />
           <Text style={styles.note}>{t('export_screenplay_generate_headings_hint')}</Text>
+          {hasMusic ? (
+            <>
+              <SwitchRow
+                testID="export-music"
+                label={t('export_screenplay_music_notes')}
+                value={settings.includeMusicCues}
+                onChange={(includeMusicCues) => change({ includeMusicCues })}
+              />
+              <Text style={styles.note}>{t('export_screenplay_music_notes_hint')}</Text>
+            </>
+          ) : null}
           {showLooseSwitch ? (
             <SwitchRow
               testID="export-loose"
@@ -280,6 +294,14 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
               label={t('export_manuscript_include_loose', { count: looseCount })}
               value={settings.includeLooseScenes}
               onChange={(includeLooseScenes) => change({ includeLooseScenes })}
+            />
+          ) : null}
+          {hasMusic ? (
+            <SwitchRow
+              testID="export-music"
+              label={t('export_manuscript_include_music')}
+              value={settings.includeMusicCues}
+              onChange={(includeMusicCues) => change({ includeMusicCues })}
             />
           ) : null}
           {capabilities.index ? (

@@ -82,6 +82,20 @@ jest.mock('../../../../src/services/storymanagement/ManuscriptPagesService', () 
   loadManuscriptPages: (...args: unknown[]) => mockLoadManuscriptPages(...args),
   estimateManuscriptPageBytes: async () => mockPageBytes,
 }));
+let mockHasMusic = false;
+const mockLoadManuscriptMusic = jest.fn();
+jest.mock('../../../../src/services/storymanagement/ManuscriptMusicService', () => ({
+  __esModule: true,
+  loadManuscriptMusic: (...args: unknown[]) => mockLoadManuscriptMusic(...args),
+  storyHasMusic: async () => mockHasMusic,
+  withManuscriptMusic: (scenes: unknown[], music: Map<string, unknown[]> | null) =>
+    music
+      ? scenes.map((scene) => {
+          const list = music.get((scene as { id: string }).id);
+          return list ? { ...(scene as object), music: list } : scene;
+        })
+      : [...scenes],
+}));
 jest.mock('../../../../src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: () => ({ userId: 'user-1' }),
@@ -995,12 +1009,84 @@ describe('ManuscriptExportScreen page estimate', () => {
     mockManuscriptData = branchingData();
     await renderScreen();
     expect((mockOptionsProps as { onEstimatePages?: unknown }).onEstimatePages).toBeUndefined();
-    cleanup();
+    await act(async () => cleanup());
 
     mockStoryType = 'linear';
     mockManuscriptData = linearData();
     mockEffectiveMedium = 'comic';
     await renderScreen();
     expect((mockOptionsProps as { onEstimatePages?: unknown }).onEstimatePages).toBeUndefined();
+  });
+});
+
+describe('ManuscriptExportScreen music', () => {
+  const theme = [{ id: 'm1', role: 'score', title: 'Theme', cue: 'at the door' }];
+
+  beforeEach(() => {
+    mockHasMusic = false;
+    mockLoadManuscriptMusic.mockReset().mockResolvedValue(new Map([['s-1', theme]]));
+  });
+
+  it('offers the music when some scene has it', async () => {
+    mockHasMusic = true;
+    await renderScreen();
+    await waitFor(() => expect((mockOptionsProps as { hasMusic?: boolean }).hasMusic).toBe(true));
+  });
+
+  it('offers no music when no scene has it', async () => {
+    await renderScreen();
+    await act(async () => {});
+    expect((mockOptionsProps as { hasMusic?: boolean }).hasMusic).toBe(false);
+  });
+
+  it('reads no music unless the switch is on', async () => {
+    mockHasMusic = true;
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeMusicCues: false });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockLoadManuscriptMusic).not.toHaveBeenCalled();
+    expect(JSON.stringify(mockExportManuscript.mock.calls[0][0].manuscript.blocks)).not.toContain(
+      'Theme',
+    );
+  });
+
+  it('writes the music of each scene under it in a book, in italics', async () => {
+    mockHasMusic = true;
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeMusicCues: true });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const blocks = mockExportManuscript.mock.calls[0][0].manuscript.blocks as {
+      kind: string;
+      spans?: { text: string; italic: boolean }[];
+    }[];
+    const line = blocks.find((block) =>
+      block.spans?.[0]?.text.startsWith('export_manuscript_music_label'),
+    );
+    expect(line?.spans?.[0]).toMatchObject({
+      text: 'export_manuscript_music_label: Theme — at the door',
+      italic: true,
+    });
+  });
+
+  it('writes the music as notes in a script', async () => {
+    mockHasMusic = true;
+    mockEffectiveMedium = 'screenplay';
+    mockManuscriptData = {
+      chapters: [makeChapter({ id: 'ch-1', name: 'Act One' })],
+      scenes: [makeScene({ id: 's-1', chapterId: 'ch-1', body: 'Coffee goes cold.' })],
+      choices: [],
+      loading: false,
+    };
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'fountain', includeMusicCues: true });
+
+    await waitFor(() => expect(mockDeliverScreenplay).toHaveBeenCalledTimes(1));
+    const text = new TextDecoder().decode(mockDeliverScreenplay.mock.calls[0][0].bytes);
+    expect(text).toContain('[[export_manuscript_music_label: Theme — at the door]]');
   });
 });

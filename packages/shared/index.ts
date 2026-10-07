@@ -267,7 +267,10 @@ export {
 } from './manuscript/compile/parseManuscriptMarkdown';
 export * from './music/chordpro';
 export * from './music/chordProFile';
+export * from './music/abc';
 export * from './music/chords';
+export * from './music/melody';
+export * from './music/midi';
 export * from './music/sections';
 export * from './music/songStats';
 export * from './music/syllables';

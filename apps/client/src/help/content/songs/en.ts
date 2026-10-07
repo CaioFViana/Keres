@@ -113,7 +113,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'The tune, and hearing it' },
     {
       type: 'paragraph',
-      text: 'Under the lyrics, the Melody part lets you play the notes on a keyboard or write them as text. Play hums the tune with a synthetic voice (a hum, “ah” or “la”) while the words follow line by line; you can add a click, or an instrument — guitar, harp, piano or violin — that plays the chords of the lyrics in a feel of its own (waltz, ballad, march, lullaby). Without a tune, the instrument plays the chords alone, a bar to each. For each section the panel says how many notes there are for its syllables; syllables are only estimated, so a difference is a hint, not an error.',
+      text: 'In the Tune tab you play the notes on a keyboard or write them as text. The big button hums the tune with a synthetic voice (a hum, “ah” or “la”) while the words follow line by line; you can add a click, or an instrument — guitar, harp, piano or violin — that plays the chords of the lyrics in a feel of its own (waltz, ballad, march, lullaby). Without a tune, the instrument plays the chords alone, a bar to each. For each section the panel says how many notes there are for its syllables; syllables are only estimated, so a difference is a hint, not an error.',
     },
     {
       type: 'callout',

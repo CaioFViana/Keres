@@ -92,6 +92,17 @@ describe('the chords of a timeline', () => {
     expect(spans(lyrics, '', { onlySection: 1 })).toEqual([['C', 0, 4]]);
   });
 
+  it('keeps several sections when asked, from the start, in the order of the song', () => {
+    const lyrics =
+      '{sov: A}\n[G]One two\n{eov}\n{soc: B}\n[C]Three four\n{eoc}\n{sov: C}\n[D]Five six\n{eov}';
+
+    // The sections come out in the order the song has them, whatever order they were asked in.
+    expect(spans(lyrics, '', { onlySections: [2, 0] })).toEqual([
+      ['G', 0, 4],
+      ['D', 4, 8],
+    ]);
+  });
+
   it('cuts the chords with the time, the way it cuts the notes', () => {
     const lyrics = '{sov: A}\n[G]One [C]two [D]three [E]four\n{eov}';
     const result = timeline(lyrics, 'C D E F', { maxSeconds: 1 });

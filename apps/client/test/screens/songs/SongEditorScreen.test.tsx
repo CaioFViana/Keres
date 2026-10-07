@@ -212,9 +212,43 @@ describe('SongEditorScreen', () => {
     expect(view.getByTestId('song-tempo').props.value).toBe('90');
     expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
     expect(view.getByTestId('song-translation').props.value).toBe('Acende o lampião');
+    await fireEvent.press(view.getByTestId('song-tab-details'));
     expect(view.getByTestId('song-notes').props.value).toBe('Sung at the gate');
     expect(mockHeader?.title).toBe('The Lantern Song');
     expect(view.getByTestId('gallery-manager').props.children).toBe('Song');
+  });
+
+  it('shows the words first, and one part of the song at a time', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-lyrics')).toBeTruthy();
+    expect(view.queryByTestId('melody-panel')).toBeNull();
+    expect(view.queryByTestId('song-notes')).toBeNull();
+    // The title and the facts are the song's, whichever part is open.
+    expect(view.getByTestId('song-title')).toBeTruthy();
+    expect(view.getByTestId('song-key')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    expect(view.getByTestId('melody-panel')).toBeTruthy();
+    expect(view.queryByTestId('song-lyrics')).toBeNull();
+    expect(view.getByTestId('song-title')).toBeTruthy();
+
+    await fireEvent.press(view.getByTestId('song-tab-details'));
+    expect(view.getByTestId('song-notes')).toBeTruthy();
+    expect(view.queryByTestId('melody-panel')).toBeNull();
+
+    await fireEvent.press(view.getByTestId('song-tab-words'));
+    expect(view.getByTestId('song-lyrics')).toBeTruthy();
+  });
+
+  it('keeps what was typed when another part is opened and the first comes back', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.changeText(view.getByTestId('song-lyrics'), '[G]New words');
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('song-tab-words'));
+
+    expect(view.getByTestId('song-lyrics').props.value).toBe('[G]New words');
   });
 
   it('writes what is typed once the field is left, and only the field that changed', async () => {
@@ -271,6 +305,8 @@ describe('SongEditorScreen', () => {
 
     expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
     expect(view.getByTestId('song-key').props.value).toBe('G');
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
     expect(view.getByTestId('song-melody').props.value).toBe('P:Verse 1\nC D E2');
     expect(view.queryByTestId('song-transpose-undo')).toBeNull();
   });
@@ -321,6 +357,8 @@ describe('SongEditorScreen', () => {
   it('shows the tune, and writes it once the field is left', async () => {
     mockSong = { ...baseSong, melody: 'C D E' } as unknown as SongSelect;
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
 
     expect(view.getByTestId('song-melody').props.value).toBe('C D E');
     await fireEvent.changeText(view.getByTestId('song-melody'), 'C D E F');
@@ -356,6 +394,7 @@ describe('SongEditorScreen', () => {
   it('hands the tune over as a MIDI file named after the title', async () => {
     mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
 
     await fireEvent.press(view.getByTestId('melody-export-midi'));
 
@@ -369,6 +408,7 @@ describe('SongEditorScreen', () => {
   it('hands the tune over as an ABC file with the words under the notes', async () => {
     mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
 
     await fireEvent.press(view.getByTestId('melody-export-abc'));
 
@@ -385,6 +425,7 @@ describe('SongEditorScreen', () => {
   it('plays the song from the start, hummed, when play is pressed', async () => {
     mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
 
     await fireEvent.press(view.getByTestId('melody-play'));
 
@@ -402,6 +443,7 @@ describe('SongEditorScreen', () => {
   it('stops what plays when the button is pressed again', async () => {
     mockPlayback = { ...mockPlayback, phase: 'playing' };
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
 
     await fireEvent.press(view.getByTestId('melody-play'));
 
@@ -411,6 +453,8 @@ describe('SongEditorScreen', () => {
 
   it('asks the player to sound a key and writes the note it plays', async () => {
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    await fireEvent.press(view.getByTestId('melody-notation-toggle'));
 
     await fireEvent.press(view.getByTestId('piano-key-64'));
 
@@ -439,6 +483,7 @@ describe('SongEditorScreen', () => {
   it('lists the scenes that sing it, and opens one', async () => {
     mockUses = [{ sceneId: 'scene-9', sceneName: 'The tavern' }];
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-details'));
 
     await fireEvent.press(view.getByText('The tavern'));
 
@@ -450,6 +495,7 @@ describe('SongEditorScreen', () => {
 
   it('says so when no scene sings it', async () => {
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-details'));
 
     expect(view.getByText('song_scenes_none')).toBeTruthy();
   });
@@ -468,6 +514,7 @@ describe('SongEditorScreen', () => {
   it('is read-only for someone who cannot edit', async () => {
     mockCanEdit = false;
     const view = await render(<SongEditorScreen />);
+    await fireEvent.press(view.getByTestId('song-tab-details'));
 
     expect(view.getByTestId('song-title').props.editable).toBe(false);
     expect(view.getByTestId('song-notes').props.editable).toBe(false);

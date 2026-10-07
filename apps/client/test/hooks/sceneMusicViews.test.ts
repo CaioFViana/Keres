@@ -69,6 +69,7 @@ describe('sceneMusicViewOf', () => {
       targetGone: false,
       songSections: [],
       missingSections: [],
+      songFacts: null,
     });
   });
 
@@ -134,7 +135,22 @@ describe('sceneMusicViewOf for a song', () => {
       targetGone: false,
       songSections: ['Verse 1', 'Chorus'],
       missingSections: [],
+      songFacts: null,
     });
+  });
+
+  it('states the facts of a song in a line, the ones it has', async () => {
+    const song = await createSongService(database.db).createSong(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Hymn',
+      lyrics,
+      key: 'G',
+      tempo: 90,
+      meter: '3/4',
+    });
+    const music = await musicWith({ songId: song.id });
+
+    expect((await sceneMusicViewOf(database.db, music)).songFacts).toBe('G · 90 · 3/4');
   });
 
   it('says which of the sections the scene names are no longer in the lyrics', async () => {

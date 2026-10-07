@@ -73,6 +73,21 @@ const renderPicker = (props: { onOpenSongs?: () => void; visible?: boolean } = {
   );
 
 describe('SceneMusicTargetPicker', () => {
+  it('tells two songs apart by what each states, when it states anything', async () => {
+    mockUseSongs.mockReturnValue({
+      songs: [
+        { id: 's1', title: 'Tavern song', key: 'G', tempo: 90, meter: '3/4' },
+        { id: 's2', title: 'Lullaby', key: null, tempo: null, meter: null },
+      ],
+      loading: false,
+    });
+    const view = await renderPicker();
+
+    expect(view.getByText('G · 90 · 3/4')).toBeTruthy();
+    expect(view.getByText('Lullaby')).toBeTruthy();
+    expect(view.queryAllByText(/·/)).toHaveLength(1);
+  });
+
   it('opens on the songs of the story and picks one', async () => {
     const view = await renderPicker();
 

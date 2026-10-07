@@ -125,6 +125,8 @@ export interface TimelineOptions {
   meter: string | null;
   /** Play only this section of the lyrics (its index in `song.sections`). */
   onlySection?: number;
+  /** Play only these sections of the lyrics, in the order the song has them (a scene that sings some). */
+  onlySections?: readonly number[];
   /** Stop after this many seconds. */
   maxSeconds?: number;
 }
@@ -173,6 +175,7 @@ export function buildTimeline(
   /** Chords with the point past which they cannot run: the end of their section. */
   const placed: Array<{ symbol: string; start: number; limit: number; sectionIndex: number }> = [];
   let cursor = 0;
+  const only = options.onlySections ? new Set(options.onlySections) : null;
 
   const chorusRecall = (label: string | null) =>
     resolved.find((entry) => entry.kind === 'chorus' && (label === null || entry.label === label));
@@ -262,6 +265,7 @@ export function buildTimeline(
 
   for (const entry of resolved) {
     if (options.onlySection !== undefined && entry.sectionIndex !== options.onlySection) continue;
+    if (only && !only.has(entry.sectionIndex)) continue;
     if (cursor >= maxBeats) break;
     cursor = play(entry, cursor);
     // `{chorus}` after a section sings that chorus again.

@@ -1,11 +1,12 @@
-import { SCENE_MUSIC_ROLES, type SceneMusicRole } from '@keres/shared';
 import { Ionicons } from '@expo/vector-icons';
+import { SCENE_MUSIC_ROLES, type SceneMusicRole } from '@keres/shared';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import type { SceneMusicView } from '@/src/hooks/useSceneMusic';
 import { useTheme } from '@/src/theme';
+import { AppAlert } from '@/src/utils/AppAlert';
 
 interface SceneMusicCardProps {
   view: SceneMusicView;
@@ -19,6 +20,12 @@ interface SceneMusicCardProps {
   onMove: (delta: -1 | 1) => void;
   onReplace: () => void;
   onDelete: () => void;
+  /** Opens what it points at: the song to edit, or the medium to look at. */
+  onOpen: () => void;
+  /** Plays what this scene sings of the song; absent for anything that is not a song. */
+  onListen?: () => void;
+  /** This piece is the one playing (or being prepared). */
+  listening?: boolean;
 }
 
 const KIND_ICON = {
@@ -26,8 +33,15 @@ const KIND_ICON = {
   audio: 'volume-medium-outline',
   link: 'link-outline',
 } as const;
+/** The least a thing to touch should be, in points. */
+const TOUCH = 44;
 
-/** One piece of music: what it is, whether the story hears it, when it comes in, and its place. */
+/**
+ * One piece of music of a scene. What it is comes first, as something to open and, for a song, to
+ * hear as this scene sings it; whether the story hears it is a two-way choice; the rest (which parts,
+ * when it comes in) is below. Moving, replacing and removing are rare, so they sit behind one button
+ * instead of four icons of the same weight beside the name.
+ */
 const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
   view,
   isFirst,
@@ -39,6 +53,9 @@ const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
   onMove,
   onReplace,
   onDelete,
+  onOpen,
+  onListen,
+  listening = false,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -48,8 +65,39 @@ const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
   const [draft, setDraft] = useState<{ base: string | null; text: string } | null>(null);
   const cue = draft && draft.base === music.cue ? draft.text : (music.cue ?? '');
 
-  const icon = (name: keyof typeof Ionicons.glyphMap, color = colors.textSecondary) => (
-    <Ionicons name={name} size={21} color={color} />
+  const openMenu = () =>
+    AppAlert.alert(view.targetName ?? t('scene_music_removed'), undefined, [
+      ...(isFirst ? [] : [{ text: t('scene_music_move_up'), onPress: () => onMove(-1) }]),
+      ...(isLast ? [] : [{ text: t('scene_music_move_down'), onPress: () => onMove(1) }]),
+      { text: t('scene_music_change'), onPress: onReplace },
+      { text: t('delete'), style: 'destructive' as const, onPress: onDelete },
+      { text: t('cancel'), style: 'cancel' as const },
+    ]);
+
+  const subtitle = view.targetGone
+    ? null
+    : view.targetKind === 'song'
+      ? [view.songFacts, music.sections ? music.sections.join(', ') : null]
+          .filter(Boolean)
+          .join(' · ') || t('scene_music_kind_song')
+      : t(`scene_music_kind_${view.targetKind ?? 'audio'}`);
+
+  const choice = (label: string, active: boolean, onPress: () => void, id?: string) => (
+    <TouchableOpacity
+      key={label}
+      testID={id}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active, disabled: !canEdit }}
+      disabled={!canEdit}
+      style={[
+        styles.choice,
+        { borderColor: colors.border },
+        active && { backgroundColor: colors.primary, borderColor: colors.primary },
+      ]}
+      onPress={onPress}
+    >
+      <Text style={{ color: active ? colors.onPrimary : colors.text, fontSize: 13 }}>{label}</Text>
+    </TouchableOpacity>
   );
 
   return (
@@ -58,121 +106,109 @@ const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
       testID={`scene-music-${music.id}`}
     >
       <View style={styles.header}>
-        {view.targetKind ? icon(KIND_ICON[view.targetKind]) : null}
-        {view.targetGone ? (
-          <Text style={[styles.name, { color: colors.error }]} numberOfLines={1}>
-            {t('scene_music_removed')}
-          </Text>
-        ) : (
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-            {view.targetName}
-          </Text>
-        )}
+        <TouchableOpacity
+          testID={`scene-music-open-${music.id}`}
+          accessibilityRole="button"
+          accessibilityLabel={view.targetName ?? t('scene_music_removed')}
+          disabled={view.targetGone}
+          style={styles.title}
+          onPress={onOpen}
+        >
+          {view.targetKind ? (
+            <Ionicons name={KIND_ICON[view.targetKind]} size={22} color={colors.primary} />
+          ) : (
+            <Ionicons name="alert-circle-outline" size={22} color={colors.error} />
+          )}
+          <View style={styles.grow}>
+            <Text
+              style={[styles.name, { color: view.targetGone ? colors.error : colors.text }]}
+              numberOfLines={1}
+            >
+              {view.targetGone ? t('scene_music_removed') : view.targetName}
+            </Text>
+            {subtitle ? (
+              <Text style={[styles.small, { color: colors.textSecondary }]} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+        {onListen && !view.targetGone ? (
+          <TouchableOpacity
+            testID={`scene-music-listen-${music.id}`}
+            accessibilityRole="button"
+            accessibilityLabel={t(listening ? 'melody_stop' : 'scene_music_listen')}
+            style={styles.iconButton}
+            onPress={onListen}
+          >
+            <Ionicons
+              name={listening ? 'stop-circle-outline' : 'play-circle-outline'}
+              size={32}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+        ) : null}
         {canEdit ? (
-          <>
-            <TouchableOpacity
-              accessibilityLabel={t('scene_music_move_up')}
-              disabled={isFirst}
-              style={[styles.iconButton, isFirst && styles.disabled]}
-              onPress={() => onMove(-1)}
-            >
-              {icon('arrow-up-outline')}
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityLabel={t('scene_music_move_down')}
-              disabled={isLast}
-              style={[styles.iconButton, isLast && styles.disabled]}
-              onPress={() => onMove(1)}
-            >
-              {icon('arrow-down-outline')}
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityLabel={t('scene_music_change')}
-              style={styles.iconButton}
-              onPress={onReplace}
-            >
-              {icon('swap-horizontal-outline')}
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityLabel={t('delete')}
-              style={styles.iconButton}
-              onPress={onDelete}
-            >
-              {icon('trash-outline', colors.error)}
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            testID={`scene-music-menu-${music.id}`}
+            accessibilityRole="button"
+            accessibilityLabel={t('scene_music_more')}
+            style={styles.iconButton}
+            onPress={openMenu}
+          >
+            <Ionicons name="ellipsis-horizontal" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         ) : null}
       </View>
+
       {view.targetGone ? (
         <TouchableOpacity
           accessibilityRole="button"
           onPress={canEdit ? onReplace : undefined}
           style={[styles.removed, { borderColor: colors.error }]}
         >
-          <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+          <Text style={[styles.small, { color: colors.textSecondary }]}>
             {t('scene_music_removed_hint')}
           </Text>
         </TouchableOpacity>
       ) : null}
-      <View style={styles.roles}>
-        {SCENE_MUSIC_ROLES.map((role) => {
-          const active = music.role === role;
-          return (
-            <TouchableOpacity
-              key={role}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active, disabled: !canEdit }}
-              disabled={!canEdit}
-              style={[
-                styles.role,
-                { borderColor: colors.border },
-                active && { backgroundColor: colors.primary, borderColor: colors.primary },
-              ]}
-              onPress={() => onRoleChange(role)}
-            >
-              <Text style={{ color: active ? colors.onPrimary : colors.text, fontSize: 12 }}>
-                {t(`scene_music_role_${role === 'in-world' ? 'in_world' : 'score'}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+
+      <View>
+        <View style={styles.segmented}>
+          {SCENE_MUSIC_ROLES.map((role) =>
+            choice(
+              t(`scene_music_role_${role === 'in-world' ? 'in_world' : 'score'}`),
+              music.role === role,
+              () => onRoleChange(role),
+              `scene-music-role-${music.id}-${role}`,
+            ),
+          )}
+        </View>
+        <Text style={[styles.small, styles.hint, { color: colors.textSecondary }]}>
+          {t(`scene_music_role_hint_${music.role === 'in-world' ? 'in_world' : 'score'}`)}
+        </Text>
       </View>
-      <Text style={[styles.roleHint, { color: colors.textSecondary }]}>
-        {t(`scene_music_role_hint_${music.role === 'in-world' ? 'in_world' : 'score'}`)}
-      </Text>
+
       {view.targetKind === 'song' && view.songSections.length > 0 ? (
         <View testID={`scene-music-sections-${music.id}`}>
-          <Text style={[styles.roleHint, { color: colors.textSecondary }]}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
             {t('scene_music_sections_hint')}
           </Text>
-          <View style={styles.roles}>
+          <View style={styles.chips}>
             {[null, ...view.songSections].map((label) => {
               const chosen = music.sections ?? [];
               const active = label === null ? music.sections === null : chosen.includes(label);
-              return (
-                <TouchableOpacity
-                  key={label ?? 'whole'}
-                  testID={`scene-music-section-${label ?? 'whole'}`}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active, disabled: !canEdit }}
-                  disabled={!canEdit}
-                  style={[
-                    styles.role,
-                    { borderColor: colors.border },
-                    active && { backgroundColor: colors.primary, borderColor: colors.primary },
-                  ]}
-                  onPress={() => {
-                    if (label === null) return onSectionsChange(null);
-                    const next = chosen.includes(label)
-                      ? chosen.filter((item) => item !== label)
-                      : [...chosen, label];
-                    onSectionsChange(next.length > 0 ? next : null);
-                  }}
-                >
-                  <Text style={{ color: active ? colors.onPrimary : colors.text, fontSize: 12 }}>
-                    {label ?? t('scene_music_sections_whole')}
-                  </Text>
-                </TouchableOpacity>
+              return choice(
+                label ?? t('scene_music_sections_whole'),
+                active,
+                () => {
+                  if (label === null) return onSectionsChange(null);
+                  const next = chosen.includes(label)
+                    ? chosen.filter((item) => item !== label)
+                    : [...chosen, label];
+                  onSectionsChange(next.length > 0 ? next : null);
+                },
+                `scene-music-section-${label ?? 'whole'}`,
               );
             })}
           </View>
@@ -180,38 +216,63 @@ const SceneMusicCard: React.FC<SceneMusicCardProps> = ({
       ) : null}
       {view.missingSections.length > 0 ? (
         <Text
-          style={{ color: colors.error, fontSize: 12 }}
+          style={[styles.small, { color: colors.error }]}
           testID={`scene-music-missing-${music.id}`}
         >
           {t('scene_music_sections_missing', { labels: view.missingSections.join(', ') })}
         </Text>
       ) : null}
-      <TextInput
-        value={cue}
-        onChangeText={(next) => setDraft({ base: music.cue, text: next })}
-        onBlur={() => {
-          if (cue !== (music.cue ?? '')) onCueCommit(cue);
-        }}
-        editable={canEdit}
-        multiline
-        numberOfLines={2}
-        placeholder={t('scene_music_cue_placeholder')}
-        accessibilityLabel={t('scene_music_cue_placeholder')}
-      />
+
+      <View>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>
+          {t('scene_music_cue_label')}
+        </Text>
+        <TextInput
+          value={cue}
+          onChangeText={(next) => setDraft({ base: music.cue, text: next })}
+          onBlur={() => {
+            if (cue !== (music.cue ?? '')) onCueCommit(cue);
+          }}
+          editable={canEdit}
+          multiline
+          numberOfLines={2}
+          placeholder={t('scene_music_cue_placeholder')}
+          accessibilityLabel={t('scene_music_cue_label')}
+        />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 10, borderWidth: 1, gap: 8, marginBottom: 12, padding: 12 },
-  header: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  name: { flexGrow: 1, flexShrink: 1, fontSize: 16, fontWeight: '700' },
-  iconButton: { padding: 6 },
-  disabled: { opacity: 0.3 },
+  card: { borderRadius: 12, borderWidth: 1, gap: 12, marginBottom: 14, padding: 14 },
+  header: { alignItems: 'center', flexDirection: 'row', gap: 4 },
+  title: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexGrow: 1,
+    flexShrink: 1,
+    gap: 10,
+    minHeight: TOUCH,
+  },
+  grow: { flexGrow: 1, flexShrink: 1 },
+  name: { fontSize: 16, fontWeight: '700' },
+  small: { fontSize: 12, lineHeight: 16 },
+  hint: { marginTop: 6 },
+  label: { fontSize: 12, marginBottom: 6 },
+  iconButton: { alignItems: 'center', height: TOUCH, justifyContent: 'center', width: TOUCH },
   removed: { borderRadius: 6, borderStyle: 'dashed', borderWidth: 1, padding: 8 },
-  roles: { flexDirection: 'row', gap: 6 },
-  role: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4 },
-  roleHint: { fontSize: 12, lineHeight: 16 },
+  segmented: { flexDirection: 'row', gap: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  choice: {
+    alignItems: 'center',
+    borderRadius: 18,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 36,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
 });
 
 export default SceneMusicCard;

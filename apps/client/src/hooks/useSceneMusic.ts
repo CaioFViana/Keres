@@ -21,6 +21,8 @@ export interface SceneMusicView {
   songSections: string[];
   /** For a song: the sections this scene names that the lyrics no longer have. */
   missingSections: string[];
+  /** For a song: `G · 90 · 3/4`, the facts it states; `null` when it states none. */
+  songFacts: string | null;
 }
 
 export async function sceneMusicViewOf(
@@ -37,6 +39,7 @@ export async function sceneMusicViewOf(
       targetGone: !alive,
       songSections: [],
       missingSections: [],
+      songFacts: null,
     };
   }
   if (music.songId) {
@@ -53,6 +56,11 @@ export async function sceneMusicViewOf(
       missingSections: alive
         ? (music.sections ?? []).filter((label) => !labels.includes(label))
         : [],
+      songFacts: alive
+        ? [song.key, song.tempo ? String(song.tempo) : null, song.meter]
+            .filter(Boolean)
+            .join(' · ') || null
+        : null,
     };
   }
   return {
@@ -62,6 +70,7 @@ export async function sceneMusicViewOf(
     targetGone: true,
     songSections: [],
     missingSections: [],
+    songFacts: null,
   };
 }
 

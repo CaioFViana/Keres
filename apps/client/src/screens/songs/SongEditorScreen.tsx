@@ -6,16 +6,16 @@ import {
   MAX_SONG_TRANSLATION_LENGTH,
   parseChordPro,
   parseMelody,
-  type SectionWords,
   transposedSpelling,
   transposeLyrics,
   transposeMelody,
   writeAbc,
   writeMidi,
 } from '@keres/shared';
+import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -25,6 +25,7 @@ import {
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
 import MelodyPanel from '@/src/components/features/songs/MelodyPanel';
+import SongTabs, { type SongTab } from '@/src/components/features/songs/SongTabs';
 import SongFactsFields from '@/src/components/features/songs/SongFactsFields';
 import SongLyricsEditor from '@/src/components/features/songs/SongLyricsEditor';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -37,6 +38,7 @@ import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useSong, useSongUses } from '../../hooks/useSongs';
 import { useSongDraft } from '../../hooks/useSongDraft';
+import { useSectionWords } from '../../hooks/useSectionWords';
 import { useSongPlayback } from '../../hooks/useSongPlayback';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SongStackParamList } from '../../navigation/MainSystemStacks';
@@ -77,15 +79,8 @@ const SongEditorScreen = () => {
   const draft = useSongDraft(song);
   const uses = useSongUses(songId, song?.storyId);
   const syllableLanguage = i18n.language.toLowerCase().startsWith('pt') ? 'pt' : 'en';
-  // The words an unlabelled section goes by: one object, so the sheet is not drawn again for nothing.
-  const words = useMemo<SectionWords>(
-    () => ({
-      verse: t('song_section_verse'),
-      chorus: t('song_section_chorus'),
-      bridge: t('song_section_bridge'),
-    }),
-    [t],
-  );
+  const words = useSectionWords();
+  const [tab, setTab] = useState<SongTab>('words');
 
   const lyrics = draft.value('lyrics') ?? '';
   const title = draft.value('title') ?? '';
@@ -245,8 +240,20 @@ const SongEditorScreen = () => {
     label: { color: colors.text, fontSize: 15, marginBottom: 6, marginTop: 14 },
     hint: { color: colors.textSecondary, fontSize: 12, marginBottom: 6 },
     error: { color: colors.error, marginTop: 8 },
-    use: { color: colors.primary, paddingVertical: 4 },
+    use: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      minHeight: 44,
+    },
+    useName: { color: colors.primary, fontSize: 15 },
   });
+
+  const openScene = (sceneId: string) =>
+    (navigation as unknown as { navigate: (stack: string, params: unknown) => void }).navigate(
+      'NarrativeElementsStack',
+      { screen: 'SceneDetail', params: { sceneId } },
+    );
 
   return (
     <KeyboardAwareScreen
@@ -274,113 +281,118 @@ const SongEditorScreen = () => {
         onMeterChange={(next) => draft.setField('meter', next)}
       />
 
-      <ScreenSection title={t('song_lyrics')} />
-      <SongLyricsEditor
-        value={lyrics}
-        onChange={(next) => {
-          forgetTransposition();
-          draft.setField('lyrics', next);
-        }}
-        onTranspose={transpose}
-        canUndoTranspose={undoDepth > 0}
-        onUndoTranspose={undoTransposition}
-        editable={editable}
-        words={words}
-        syllableLanguage={syllableLanguage}
-        activeLine={playback.active}
-      />
+      <SongTabs value={tab} onChange={setTab} />
 
-      <ScreenSection title={t('melody_title')} />
-      <MelodyPanel
-        lyrics={lyrics}
-        melody={melody}
-        songKey={draft.value('key') ?? null}
-        tempo={draft.value('tempo') ?? null}
-        meter={draft.value('meter') ?? null}
-        editable={editable}
-        words={words}
-        language={syllableLanguage}
-        onChange={(next) => {
-          forgetTransposition();
-          draft.setField('melody', next);
-        }}
-        onBlur={() => void draft.flush()}
-        phase={playback.phase}
-        progress={playback.progress}
-        problem={playback.problem}
-        active={playback.active}
-        onPlay={(scope, voice) => void playback.play(scope, voice)}
-        onStop={playback.stop}
-        onTone={(pitch, timbre) => void playback.playTone(pitch, timbre)}
-        onExport={(kind) => void exportTune(kind)}
-      />
+      {tab === 'words' ? (
+        <>
+          <SongLyricsEditor
+            value={lyrics}
+            onChange={(next) => {
+              forgetTransposition();
+              draft.setField('lyrics', next);
+            }}
+            onTranspose={transpose}
+            canUndoTranspose={undoDepth > 0}
+            onUndoTranspose={undoTransposition}
+            editable={editable}
+            words={words}
+            syllableLanguage={syllableLanguage}
+            activeLine={playback.active}
+          />
 
-      <Text style={styles.label}>{t('song_translation')}</Text>
-      <Text style={styles.hint}>{t('song_translation_hint')}</Text>
-      <TextInput
-        testID="song-translation"
-        accessibilityLabel={t('song_translation')}
-        value={draft.value('lyricsTranslation') ?? ''}
-        editable={editable}
-        multiline
-        numberOfLines={5}
-        maxLength={MAX_SONG_TRANSLATION_LENGTH}
-        autoCorrect={false}
-        onChangeText={(next) => draft.setField('lyricsTranslation', next)}
-        onBlur={() => void draft.flush()}
-      />
+          <Text style={styles.label}>{t('song_translation')}</Text>
+          <Text style={styles.hint}>{t('song_translation_hint')}</Text>
+          <TextInput
+            testID="song-translation"
+            accessibilityLabel={t('song_translation')}
+            value={draft.value('lyricsTranslation') ?? ''}
+            editable={editable}
+            multiline
+            numberOfLines={5}
+            maxLength={MAX_SONG_TRANSLATION_LENGTH}
+            autoCorrect={false}
+            onChangeText={(next) => draft.setField('lyricsTranslation', next)}
+            onBlur={() => void draft.flush()}
+          />
+        </>
+      ) : null}
 
-      <Text style={styles.label}>{t('song_notes')}</Text>
-      <Text style={styles.hint}>{t('song_notes_hint')}</Text>
-      <TextInput
-        testID="song-notes"
-        accessibilityLabel={t('song_notes')}
-        value={draft.value('notes') ?? ''}
-        editable={editable}
-        multiline
-        numberOfLines={4}
-        maxLength={MAX_SONG_NOTES_LENGTH}
-        onChangeText={(next) => draft.setField('notes', next)}
-        onBlur={() => void draft.flush()}
-      />
+      {tab === 'tune' ? (
+        <MelodyPanel
+          lyrics={lyrics}
+          melody={melody}
+          songKey={draft.value('key') ?? null}
+          tempo={draft.value('tempo') ?? null}
+          meter={draft.value('meter') ?? null}
+          editable={editable}
+          words={words}
+          language={syllableLanguage}
+          onChange={(next) => {
+            forgetTransposition();
+            draft.setField('melody', next);
+          }}
+          onBlur={() => void draft.flush()}
+          phase={playback.phase}
+          progress={playback.progress}
+          problem={playback.problem}
+          active={playback.active}
+          onPlay={(scope, voice) => void playback.play(scope, voice)}
+          onStop={playback.stop}
+          onTone={(pitch, timbre) => void playback.playTone(pitch, timbre)}
+          onExport={(kind) => void exportTune(kind)}
+        />
+      ) : null}
+
+      {tab === 'details' ? (
+        <>
+          <Text style={styles.label}>{t('song_notes')}</Text>
+          <Text style={styles.hint}>{t('song_notes_hint')}</Text>
+          <TextInput
+            testID="song-notes"
+            accessibilityLabel={t('song_notes')}
+            value={draft.value('notes') ?? ''}
+            editable={editable}
+            multiline
+            numberOfLines={4}
+            maxLength={MAX_SONG_NOTES_LENGTH}
+            onChangeText={(next) => draft.setField('notes', next)}
+            onBlur={() => void draft.flush()}
+          />
+
+          <ScreenSection title={t('song_scenes')} />
+          {uses.length === 0 ? (
+            <Text style={styles.hint}>{t('song_scenes_none')}</Text>
+          ) : (
+            <View>
+              {uses.map((use) => (
+                <TouchableOpacity
+                  key={use.sceneId}
+                  accessibilityRole="button"
+                  style={styles.use}
+                  onPress={() => openScene(use.sceneId)}
+                >
+                  <Text style={styles.useName}>{use.sceneName}</Text>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <ScreenSection title={t('media_section_title')} />
+          <EntityGalleryManager
+            ownerId={songId}
+            ownerType="Song"
+            onPressMedia={openMedia}
+            editable={editable}
+          />
+        </>
+      ) : null}
 
       {draft.error ? (
         <Text style={styles.error} testID="song-save-error">
           {t('song_save_failed')}
         </Text>
       ) : null}
-
-      <ScreenSection title={t('song_scenes')} />
-      {uses.length === 0 ? (
-        <Text style={styles.hint}>{t('song_scenes_none')}</Text>
-      ) : (
-        <View>
-          {uses.map((use) => (
-            <TouchableOpacity
-              key={use.sceneId}
-              accessibilityRole="button"
-              onPress={() =>
-                (
-                  navigation as unknown as { navigate: (stack: string, params: unknown) => void }
-                ).navigate('NarrativeElementsStack', {
-                  screen: 'SceneDetail',
-                  params: { sceneId: use.sceneId },
-                })
-              }
-            >
-              <Text style={styles.use}>{use.sceneName}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      <ScreenSection title={t('media_section_title')} />
-      <EntityGalleryManager
-        ownerId={songId}
-        ownerType="Song"
-        onPressMedia={openMedia}
-        editable={editable}
-      />
     </KeyboardAwareScreen>
   );
 };

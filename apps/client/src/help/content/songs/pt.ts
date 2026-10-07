@@ -122,7 +122,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'A melodia, e ouvi-la' },
     {
       type: 'paragraph',
-      text: 'Sob a letra, a parte Melodia deixa tocar as notas num teclado ou escrevê-las como texto. Tocar cantarola a melodia com uma voz sintética (um cantarolar, “ah” ou “lá”) enquanto a letra acompanha linha a linha; dá para somar um metrônomo, ou um instrumento — violão, harpa, piano ou violino — que toca as cifras da letra numa levada própria (valsa, balada, marcha, cantiga de ninar). Sem melodia, o instrumento toca só as cifras, um compasso para cada. Para cada seção, o painel diz quantas notas há para as sílabas; as sílabas são só estimadas, então uma diferença é um aviso, não um erro.',
+      text: 'Na aba Melodia você toca as notas num teclado ou as escreve como texto. O botão grande cantarola a melodia com uma voz sintética (um cantarolar, “ah” ou “lá”) enquanto a letra acompanha linha a linha; dá para somar um metrônomo, ou um instrumento — violão, harpa, piano ou violino — que toca as cifras da letra numa levada própria (valsa, balada, marcha, cantiga de ninar). Sem melodia, o instrumento toca só as cifras, um compasso para cada. Para cada seção, o painel diz quantas notas há para as sílabas; as sílabas são só estimadas, então uma diferença é um aviso, não um erro.',
     },
     {
       type: 'callout',

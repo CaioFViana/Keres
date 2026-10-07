@@ -12,6 +12,17 @@ const mockDeleteMusic = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockShowNotification = jest.fn();
 const mockGetScene = jest.fn();
+const mockGetSong = jest.fn();
+const mockNavigate = jest.fn();
+const mockOpenMedia = jest.fn();
+const mockAlert = jest.fn();
+const mockPlay = jest.fn();
+const mockStop = jest.fn();
+let mockPlayback: { phase: string; tag: string | null; problem: string | null } = {
+  phase: 'idle',
+  tag: null,
+  problem: null,
+};
 
 let mockCanEdit = true;
 let mockMedium: string | null = 'comic';
@@ -20,12 +31,15 @@ let mockHeader: { title: string; actions?: { id: string; onPress: () => void }[]
 
 jest.mock('@react-navigation/native', () => {
   const route = { params: { sceneId: 'scene-1' } };
-  const navigation = { goBack: () => mockGoBack() };
+  const navigation = {
+    goBack: () => mockGoBack(),
+    navigate: (...args: unknown[]) => mockNavigate(...args),
+  };
   return { __esModule: true, useNavigation: () => navigation, useRoute: () => route };
 });
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('../../../../src/theme', () => ({
@@ -77,6 +91,22 @@ jest.mock('../../../../src/hooks/useSceneArcMedium', () => ({
 jest.mock('../../../../src/hooks/useSceneMusic', () => ({
   __esModule: true,
   useSceneMusic: () => ({ views: mockViews, loading: false, reload: jest.fn() }),
+}));
+jest.mock('../../../../src/hooks/useSongPlayback', () => ({
+  __esModule: true,
+  useSongPlayback: () => ({ ...mockPlayback, play: mockPlay, stop: mockStop }),
+}));
+jest.mock('../../../../src/hooks/useOpenGalleryMediaViewer', () => ({
+  __esModule: true,
+  useOpenGalleryMediaViewer: () => mockOpenMedia,
+}));
+jest.mock('../../../../src/utils/AppAlert', () => ({
+  __esModule: true,
+  AppAlert: { alert: (...args: unknown[]) => mockAlert(...args) },
+}));
+jest.mock('../../../../src/services/storymanagement/SongService', () => ({
+  __esModule: true,
+  createSongService: () => ({ getById: mockGetSong }),
 }));
 jest.mock('../../../../src/hooks/useConfirmDelete', () => ({
   __esModule: true,
@@ -170,8 +200,25 @@ const view = (id: string, overrides: Partial<SceneMusicView> = {}): SceneMusicVi
   targetGone: false,
   songSections: [],
   missingSections: [],
+  songFacts: null,
   ...overrides,
 });
+
+/** Opens the menu of a piece and presses one of its buttons, as a person would. */
+const pressInMenu = async (
+  screen: Awaited<ReturnType<typeof render>>,
+  id: string,
+  text: string,
+) => {
+  await fireEvent.press(screen.getByTestId(`scene-music-menu-${id}`));
+  const buttons = mockAlert.mock.calls[mockAlert.mock.calls.length - 1][2] as {
+    text: string;
+    onPress?: () => void;
+  }[];
+  const button = buttons.find((item) => item.text === text);
+  expect(button).toBeDefined();
+  await act(async () => button?.onPress?.());
+};
 
 const renderScreen = async () => {
   const utils = await render(<SceneMusicScreen />);
@@ -201,6 +248,20 @@ beforeEach(() => {
   }
   mockConfirmDelete.mockReset();
   mockShowNotification.mockReset();
+  mockNavigate.mockReset();
+  mockOpenMedia.mockReset();
+  mockAlert.mockReset();
+  mockPlay.mockReset().mockResolvedValue(undefined);
+  mockStop.mockReset();
+  mockPlayback = { phase: 'idle', tag: null, problem: null };
+  mockGetSong.mockReset().mockResolvedValue({
+    id: 's-1',
+    isDeleted: false,
+    lyrics: '{sov: Verse 1}\nOne two\n{eov}\n{soc: Chorus}\nLa la\n{eoc}',
+    melody: null,
+    tempo: 100,
+    meter: '4/4',
+  });
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -225,6 +286,8 @@ describe('SceneMusicScreen', () => {
     const screen = await renderScreen();
 
     expect(screen.getByText('scene_music_empty')).toBeTruthy();
+    // The one button to add is in the empty state; with music there is the one in the header.
+    expect(screen.getAllByText('scene_music_add')).toHaveLength(1);
   });
 
   it('adds music from the picker, at the end of the scene', async () => {
@@ -242,23 +305,28 @@ describe('SceneMusicScreen', () => {
     expect(screen.queryByTestId('picker-open')).toBeNull();
   });
 
-  it('moves a piece to the place it lands on, and offers no move past either end', async () => {
+  it('moves a piece from its menu, and offers no move past either end', async () => {
     const screen = await renderScreen();
 
-    const down = screen.getAllByLabelText('scene_music_move_down');
-    await fireEvent.press(down[0]);
+    await pressInMenu(screen, 'm1', 'scene_music_move_down');
     expect(mockMoveMusic).toHaveBeenCalledWith('user-1', 'm1', 1);
 
-    const up = screen.getAllByLabelText('scene_music_move_up');
-    await fireEvent.press(up[2]);
+    await pressInMenu(screen, 'm3', 'scene_music_move_up');
     expect(mockMoveMusic).toHaveBeenLastCalledWith('user-1', 'm3', 1);
-    expect(up[0].props.accessibilityState?.disabled).toBe(true);
-    expect(down[2].props.accessibilityState?.disabled).toBe(true);
+
+    const texts = (id: string) => {
+      const call = mockAlert.mock.calls.find(
+        (item) => (item[2] as { text: string }[]).length > 0 && item[0] === `${id}.mp3`,
+      );
+      return (call?.[2] as { text: string }[]).map((item) => item.text);
+    };
+    expect(texts('m1')).not.toContain('scene_music_move_up');
+    expect(texts('m3')).not.toContain('scene_music_move_down');
   });
 
   it('saves the cue when the field is left, and only if it changed', async () => {
     const screen = await renderScreen();
-    const field = screen.getAllByLabelText('scene_music_cue_placeholder')[0];
+    const field = screen.getAllByLabelText('scene_music_cue_label')[0];
 
     await fireEvent(field, 'blur');
     expect(mockUpdateMusic).not.toHaveBeenCalled();
@@ -271,7 +339,7 @@ describe('SceneMusicScreen', () => {
   it('changes whether the people in the story hear it', async () => {
     const screen = await renderScreen();
 
-    await fireEvent.press(screen.getAllByText('scene_music_role_in_world')[1]);
+    await fireEvent.press(screen.getByTestId('scene-music-role-m2-in-world'));
 
     expect(mockUpdateMusic).toHaveBeenCalledWith('user-1', 'm2', { role: 'in-world' });
   });
@@ -279,7 +347,7 @@ describe('SceneMusicScreen', () => {
   it('asks before deleting, and deletes once confirmed', async () => {
     const screen = await renderScreen();
 
-    await fireEvent.press(screen.getAllByLabelText('delete')[1]);
+    await pressInMenu(screen, 'm2', 'delete');
     const options = mockConfirmDelete.mock.calls[0][0];
     expect(options.titleKey).toBe('scene_music_delete_title');
     expect(mockDeleteMusic).not.toHaveBeenCalled();
@@ -344,6 +412,88 @@ describe('SceneMusicScreen', () => {
       expect(screen.getByTestId('scene-music-missing-m1')).toBeTruthy();
     });
 
+    it('plays the parts the scene sings, hummed, from the button on the piece', async () => {
+      mockViews = [songView(['Chorus'])];
+      const screen = await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('scene-music-listen-m1'));
+
+      await waitFor(() => expect(mockPlay).toHaveBeenCalledTimes(1));
+      const [scope, voice, options] = mockPlay.mock.calls[0];
+      expect(scope).toEqual({ kind: 'parts', labels: ['Chorus'] });
+      // A song with chords or words and no tune yet is heard on a piano.
+      expect(voice).toEqual({ timbre: 'hum', click: false, instrument: 'piano' });
+      expect(options.tag).toBe('m1');
+      expect(options.input).toMatchObject({ tempo: 100, meter: '4/4', language: 'en', melody: '' });
+    });
+
+    it('hums the tune alone when the song has one', async () => {
+      mockGetSong.mockResolvedValue({
+        id: 's-1',
+        isDeleted: false,
+        lyrics: '{sov: Verse 1}\nOne two\n{eov}',
+        melody: 'C D',
+        tempo: null,
+        meter: null,
+      });
+      mockViews = [songView(null)];
+      const screen = await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('scene-music-listen-m1'));
+
+      await waitFor(() => expect(mockPlay).toHaveBeenCalled());
+      expect(mockPlay.mock.calls[0][0]).toEqual({ kind: 'parts', labels: null });
+      expect(mockPlay.mock.calls[0][1].instrument).toBeNull();
+    });
+
+    it('stops when the piece that plays is pressed again, and shows it plays', async () => {
+      mockViews = [songView(null)];
+      mockPlayback = { phase: 'playing', tag: 'm1', problem: null };
+      const screen = await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('scene-music-listen-m1'));
+
+      expect(mockStop).toHaveBeenCalled();
+      expect(mockPlay).not.toHaveBeenCalled();
+    });
+
+    it('says when there is nothing to play, and when playing fails', async () => {
+      mockViews = [songView(null)];
+      mockPlayback = { phase: 'idle', tag: null, problem: 'no-tune' };
+      const none = await renderScreen();
+      expect(none.getByTestId('scene-music-listen-problem').props.children).toBe(
+        'scene_music_listen_none',
+      );
+      await none.unmount();
+
+      mockPlayback = { phase: 'idle', tag: null, problem: null };
+      mockGetSong.mockRejectedValue(new Error('gone'));
+      const failed = await renderScreen();
+      await fireEvent.press(failed.getByTestId('scene-music-listen-m1'));
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith('melody_play_failed', 'error'),
+      );
+    });
+
+    it('opens the song to edit when its name is pressed', async () => {
+      mockViews = [songView(null)];
+      const screen = await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('scene-music-open-m1'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('SongStack', {
+        screen: 'SongEditor',
+        params: { songId: 's-1' },
+      });
+    });
+
+    it('says what the song states in a line under its name', async () => {
+      mockViews = [{ ...songView(['Chorus']), songFacts: 'G · 90 · 3/4' }];
+      const screen = await renderScreen();
+
+      expect(screen.getByText('G · 90 · 3/4 · Chorus')).toBeTruthy();
+    });
+
     it('offers no sections for music that is not a song', async () => {
       const screen = await renderScreen();
 
@@ -351,12 +501,30 @@ describe('SceneMusicScreen', () => {
     });
   });
 
+  it('looks at a medium of the Gallery when its name is pressed, and has nothing to hear', async () => {
+    const screen = await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('scene-music-open-m1'));
+
+    expect(mockOpenMedia).toHaveBeenCalledWith('g');
+    expect(screen.queryByTestId('scene-music-listen-m1')).toBeNull();
+  });
+
+  it('does not open music whose target is gone', async () => {
+    mockViews = [view('m1', { targetGone: true, targetKind: null, targetName: null })];
+    const screen = await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('scene-music-open-m1'));
+
+    expect(mockOpenMedia).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it('is read-only for someone who cannot edit', async () => {
     mockCanEdit = false;
     const screen = await renderScreen();
 
-    expect(screen.queryAllByLabelText('delete')).toHaveLength(0);
-    expect(screen.queryAllByLabelText('scene_music_move_up')).toHaveLength(0);
+    expect(screen.queryByTestId('scene-music-menu-m1')).toBeNull();
     expect(screen.queryByText('scene_music_add')).toBeNull();
     expect(mockHeader?.actions?.[0]).toMatchObject({ visible: false });
   });
@@ -365,7 +533,7 @@ describe('SceneMusicScreen', () => {
     mockMoveMusic.mockRejectedValue(new Error('boom'));
     const screen = await renderScreen();
 
-    await fireEvent.press(screen.getAllByLabelText('scene_music_move_down')[0]);
+    await pressInMenu(screen, 'm1', 'scene_music_move_down');
 
     expect(mockShowNotification).toHaveBeenCalledWith('scene_music_save_failed', 'error');
   });

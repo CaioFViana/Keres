@@ -1,5 +1,6 @@
 import {
   buildBacking,
+  type ParsedSong,
   buildTimeline,
   defaultFeel,
   type Feel,
@@ -20,7 +21,11 @@ import { PREVIEW_MAX_SECONDS } from '../utils/songPlayback';
 
 export type PlaybackPhase = 'idle' | 'preparing' | 'playing';
 
-export type PlaybackScope = { kind: 'song' } | { kind: 'section'; index: number };
+export type PlaybackScope =
+  | { kind: 'song' }
+  | { kind: 'section'; index: number }
+  /** The sections of the song a scene sings, by label; `null` is the whole song. */
+  | { kind: 'parts'; labels: readonly string[] | null };
 
 export interface PlaybackVoice {
   timbre: VoiceTimbre;
@@ -50,6 +55,16 @@ export interface ActiveLine {
 
 export type PlaybackProblem = 'no-tune' | 'failed';
 
+/** The place in the song of each section a scene names; one the lyrics no longer have is left out. */
+function partIndexes(song: ParsedSong, labels: readonly string[]): number[] {
+  const wanted = new Set(labels);
+  const found = song.sections.flatMap((section, index) =>
+    section.label && wanted.has(section.label) ? [index] : [],
+  );
+  // Nothing named is left: the whole song stands in, as it does in print.
+  return found.length > 0 ? found : song.sections.map((_, index) => index);
+}
+
 /** The line sung at `beat`, held through the short rests between lines but not past the next gap. */
 export function lineAt(lines: readonly TimelineLine[], beat: number): TimelineLine | null {
   let found: TimelineLine | null = null;
@@ -65,7 +80,7 @@ export function lineAt(lines: readonly TimelineLine[], beat: number): TimelineLi
  * renders it in slices and plays the file, following the words as it goes. Nothing is parsed or
  * rendered until the person asks to hear it; a tune already heard is not rendered again.
  */
-export function useSongPlayback(input: SongPlaybackInput) {
+export function useSongPlayback(defaults?: SongPlaybackInput) {
   const player = useAudioPlayer(undefined, { updateInterval: 120 });
   const tonePlayer = useAudioPlayer(undefined);
   const status = useAudioPlayerStatus(player);
@@ -74,6 +89,8 @@ export function useSongPlayback(input: SongPlaybackInput) {
   const [progress, setProgress] = useState(0);
   const [problem, setProblem] = useState<PlaybackProblem | null>(null);
   const [active, setActive] = useState<ActiveLine | null>(null);
+  /** What the person asked to hear (`play`'s `tag`), so a list of things to hear can say which one sounds. */
+  const [tag, setTag] = useState<string | null>(null);
   const timeline = useRef<Timeline | null>(null);
   const run = useRef(0);
   const toneRun = useRef(0);
@@ -93,6 +110,7 @@ export function useSongPlayback(input: SongPlaybackInput) {
     setPhase('idle');
     setProgress(0);
     setActive(null);
+    setTag(null);
   }, [player]);
 
   useEffect(
@@ -104,27 +122,33 @@ export function useSongPlayback(input: SongPlaybackInput) {
   );
 
   const play = useCallback(
-    async (scope: PlaybackScope, voice: PlaybackVoice) => {
+    async (
+      scope: PlaybackScope,
+      voice: PlaybackVoice,
+      options: { input?: SongPlaybackInput; tag?: string } = {},
+    ) => {
+      const input = options.input ?? defaults;
+      if (!input) return;
       const mine = ++run.current;
       setProblem(null);
       setActive(null);
+      setTag(options.tag ?? null);
       try {
         player.pause();
       } catch {
         // Nothing playing yet.
       }
-      const built = buildTimeline(
-        parseChordPro(input.lyrics, input.words),
-        parseMelody(input.melody),
-        {
-          language: input.language,
-          tempo: input.tempo,
-          meter: input.meter,
-          ...(scope.kind === 'section'
-            ? { onlySection: scope.index }
+      const parsed = parseChordPro(input.lyrics, input.words);
+      const built = buildTimeline(parsed, parseMelody(input.melody), {
+        language: input.language,
+        tempo: input.tempo,
+        meter: input.meter,
+        ...(scope.kind === 'section'
+          ? { onlySection: scope.index }
+          : scope.kind === 'parts' && scope.labels && scope.labels.length > 0
+            ? { onlySections: partIndexes(parsed, scope.labels), maxSeconds: PREVIEW_MAX_SECONDS }
             : { maxSeconds: PREVIEW_MAX_SECONDS }),
-        },
-      );
+      });
       const instrument = voice.instrument ?? null;
       const backingNotes = instrument
         ? buildBacking(built.chords, {
@@ -137,6 +161,7 @@ export function useSongPlayback(input: SongPlaybackInput) {
       if (built.notes.length === 0 && backingNotes.length === 0) {
         setProblem('no-tune');
         setPhase('idle');
+        setTag(null);
         return;
       }
       timeline.current = built;
@@ -172,19 +197,11 @@ export function useSongPlayback(input: SongPlaybackInput) {
         if (run.current === mine) {
           setProblem('failed');
           setPhase('idle');
+          setTag(null);
         }
       }
     },
-    [
-      input.language,
-      input.lyrics,
-      input.melody,
-      input.meter,
-      input.tempo,
-      input.words,
-      player,
-      service,
-    ],
+    [defaults, player, service],
   );
 
   // The words follow the sound: the line is found from the player's clock, a few times a second.
@@ -224,5 +241,5 @@ export function useSongPlayback(input: SongPlaybackInput) {
     [service, tonePlayer],
   );
 
-  return { phase, progress, problem, active, play, stop, playTone };
+  return { phase, progress, problem, active, tag, play, stop, playTone };
 }

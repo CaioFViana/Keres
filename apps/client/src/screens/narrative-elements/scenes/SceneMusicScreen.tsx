@@ -1,6 +1,7 @@
-import type { SceneMusicRole } from '@keres/shared';
+import { parseMelody, type SceneMusicRole } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -18,7 +19,10 @@ import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
 import { useSceneArcMedium } from '@/src/hooks/useSceneArcMedium';
+import { useOpenGalleryMediaViewer } from '@/src/hooks/useOpenGalleryMediaViewer';
 import { useSceneMusic } from '@/src/hooks/useSceneMusic';
+import { useSectionWords } from '@/src/hooks/useSectionWords';
+import { useSongPlayback } from '@/src/hooks/useSongPlayback';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { useStoryRole } from '@/src/hooks/useStoryRole';
 import type { NarrativeElementsStackParamList } from '@/src/navigation/MainSystemStack';
@@ -27,6 +31,7 @@ import {
   type SceneMusicTarget,
 } from '@/src/services/storymanagement/SceneMusicService';
 import { createSceneService } from '@/src/services/storymanagement/SceneService';
+import { createSongService } from '@/src/services/storymanagement/SongService';
 import { useNotificationStore } from '@/src/state/notificationStore';
 import { useUserSettingsStore } from '@/src/state/userSettingsStore';
 import { useTheme } from '@/src/theme';
@@ -41,7 +46,7 @@ type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
  */
 const SceneMusicScreen = () => {
   useBackButtonHandler();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
   const { sceneId } = useRoute<RouteProps>().params;
@@ -55,6 +60,9 @@ const SceneMusicScreen = () => {
   const medium = useSceneArcMedium(scene ?? { chapterId: null });
   const { views, loading } = useSceneMusic(sceneId, scene?.storyId);
   const [pickerFor, setPickerFor] = useState<'add' | string | null>(null);
+  const playback = useSongPlayback();
+  const words = useSectionWords();
+  const openMedia = useOpenGalleryMediaViewer();
 
   useEffect(() => {
     let alive = true;
@@ -82,6 +90,42 @@ const SceneMusicScreen = () => {
       }
     },
     [showNotification, t],
+  );
+
+  // Hears a song the way this scene sings it: the parts it names, hummed, or on a piano when the
+  // song has chords and no tune yet.
+  const listen = useCallback(
+    async (view: (typeof views)[number]) => {
+      if (playback.tag === view.music.id && playback.phase !== 'idle') {
+        playback.stop();
+        return;
+      }
+      if (!view.music.songId) return;
+      try {
+        const song = await createSongService(db).getById(view.music.songId);
+        if (!song || song.isDeleted) return;
+        const hasTune = parseMelody(song.melody ?? '').sections.length > 0;
+        await playback.play(
+          { kind: 'parts', labels: view.music.sections },
+          { timbre: 'hum', click: false, instrument: hasTune ? null : 'piano' },
+          {
+            tag: view.music.id,
+            input: {
+              lyrics: song.lyrics,
+              melody: song.melody ?? '',
+              tempo: song.tempo,
+              meter: song.meter,
+              words,
+              language: i18n.language.toLowerCase().startsWith('pt') ? 'pt' : 'en',
+            },
+          },
+        );
+      } catch (error) {
+        console.log('SceneMusicScreen: failed to play the song.', error);
+        showNotification(t('melody_play_failed'), 'error');
+      }
+    },
+    [db, i18n.language, playback, showNotification, t, words],
   );
 
   const wordKey = sceneMusicWordKey(medium);
@@ -130,10 +174,21 @@ const SceneMusicScreen = () => {
       <Text style={[styles.notice, { color: colors.textSecondary }]}>
         {t('scene_music_notice')}
       </Text>
-      {views.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.textSecondary }]}>
-          {t('scene_music_empty')}
+      {playback.problem ? (
+        <Text style={[styles.notice, { color: colors.error }]} testID="scene-music-listen-problem">
+          {t(playback.problem === 'no-tune' ? 'scene_music_listen_none' : 'melody_play_failed')}
         </Text>
+      ) : null}
+      {views.length === 0 ? (
+        <View style={styles.emptyBox} testID="scene-music-empty">
+          <Ionicons name="musical-notes-outline" size={40} color={colors.textSecondary} />
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>
+            {t('scene_music_empty')}
+          </Text>
+          {canEdit ? (
+            <Button onPress={() => setPickerFor('add')}>{t('scene_music_add')}</Button>
+          ) : null}
+        </View>
       ) : null}
       {views.map((view, index) => (
         <SceneMusicCard
@@ -165,6 +220,18 @@ const SceneMusicScreen = () => {
             void attempt(() => service.moveMusic(userId, view.music.id, index + delta), 'move')
           }
           onReplace={() => setPickerFor(view.music.id)}
+          onOpen={() =>
+            view.music.songId
+              ? (
+                  navigation as unknown as { navigate: (stack: string, params: unknown) => void }
+                ).navigate('SongStack', {
+                  screen: 'SongEditor',
+                  params: { songId: view.music.songId },
+                })
+              : view.music.galleryId && openMedia(view.music.galleryId)
+          }
+          onListen={view.targetKind === 'song' ? () => void listen(view) : undefined}
+          listening={playback.tag === view.music.id && playback.phase !== 'idle'}
           onDelete={() =>
             confirmDelete({
               titleKey: 'scene_music_delete_title',
@@ -177,7 +244,7 @@ const SceneMusicScreen = () => {
           }
         />
       ))}
-      {canEdit ? (
+      {canEdit && views.length > 0 ? (
         <View style={styles.add}>
           <Button onPress={() => setPickerFor('add')}>{t('scene_music_add')}</Button>
         </View>
@@ -205,7 +272,8 @@ const SceneMusicScreen = () => {
 const styles = StyleSheet.create({
   sceneName: { fontSize: 20, fontWeight: 'bold', marginBottom: 6 },
   notice: { fontSize: 13, lineHeight: 18, marginBottom: 14 },
-  empty: { marginVertical: 24, textAlign: 'center' },
+  emptyBox: { alignItems: 'center', gap: 14, marginVertical: 32 },
+  empty: { textAlign: 'center' },
   add: { marginTop: 4 },
 });
 

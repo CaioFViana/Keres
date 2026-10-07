@@ -93,6 +93,72 @@ describe('useSongPlayback', () => {
     expect(result.current.phase).toBe('playing');
   });
 
+  it('plays only the parts a scene names, in the order of the song', async () => {
+    const { result } = await renderHook(() => useSongPlayback(input()));
+
+    await act(async () => result.current.play({ kind: 'parts', labels: ['Chorus'] }, voice));
+
+    const [score] = mockRender.mock.calls[0];
+    expect(score.notes.map((n: { pitch: number }) => n.pitch)).toEqual([79, 81]);
+  });
+
+  it('plays the whole song when every part a scene names is gone, as it prints', async () => {
+    const { result } = await renderHook(() => useSongPlayback(input()));
+
+    await act(async () => result.current.play({ kind: 'parts', labels: ['Bridge'] }, voice));
+
+    const [score] = mockRender.mock.calls[0];
+    expect(score.notes).toHaveLength(6);
+  });
+
+  it('plays the whole song for parts of none', async () => {
+    const { result } = await renderHook(() => useSongPlayback(input()));
+
+    await act(async () => result.current.play({ kind: 'parts', labels: null }, voice));
+
+    expect(mockRender.mock.calls[0][0].notes).toHaveLength(6);
+  });
+
+  it('plays a song other than the one the hook was given, and says which, until it stops', async () => {
+    const { result } = await renderHook(() => useSongPlayback());
+
+    await act(async () =>
+      result.current.play({ kind: 'song' }, voice, {
+        tag: 'cue-1',
+        input: input({ melody: 'C D', lyrics: '{sov: V}\nOne two\n{eov}' }),
+      }),
+    );
+
+    expect(mockRender.mock.calls[0][0].notes.map((n: { pitch: number }) => n.pitch)).toEqual([
+      60, 62,
+    ]);
+    expect(result.current.tag).toBe('cue-1');
+    await act(async () => result.current.stop());
+    expect(result.current.tag).toBeNull();
+  });
+
+  it('plays nothing when it was given no song at all', async () => {
+    const { result } = await renderHook(() => useSongPlayback());
+
+    await act(async () => result.current.play({ kind: 'song' }, voice));
+
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
+  it('forgets what it was playing when there is nothing to play or it fails', async () => {
+    const { result } = await renderHook(() => useSongPlayback());
+    await act(async () =>
+      result.current.play({ kind: 'song' }, voice, { tag: 'a', input: input({ melody: '' }) }),
+    );
+    expect(result.current.tag).toBeNull();
+
+    mockRender.mockRejectedValue(new Error('x'));
+    await act(async () =>
+      result.current.play({ kind: 'song' }, voice, { tag: 'b', input: input() }),
+    );
+    expect(result.current.tag).toBeNull();
+  });
+
   it('adds what an instrument plays under the voice, and renders it as the same file', async () => {
     const lyrics = '{sov: Verse 1}\n[G]One two [C]three four\n{eov}';
     const { result } = await renderHook(() =>

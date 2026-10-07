@@ -26,6 +26,10 @@ interface SceneMusicTargetPickerProps {
 
 type Tab = 'songs' | 'gallery';
 
+/** `G · 90 · 3/4`: the facts a song states, to tell two songs apart in a list. */
+const songFacts = (song: { key: string | null; tempo: number | null; meter: string | null }) =>
+  [song.key, song.tempo ? String(song.tempo) : null, song.meter].filter(Boolean).join(' · ');
+
 const REFERENCE_TYPES = ['audio', 'link'] as const;
 
 /**
@@ -96,9 +100,16 @@ const SceneMusicTargetPicker: React.FC<SceneMusicTargetPickerProps> = ({
                     onPress={() => onPick({ songId: song.id })}
                   >
                     <Ionicons name="musical-notes-outline" size={20} color={colors.textSecondary} />
-                    <Text style={[styles.rowName, { color: colors.text }]} numberOfLines={1}>
-                      {song.title}
-                    </Text>
+                    <View style={styles.rowText}>
+                      <Text style={[styles.rowName, { color: colors.text }]} numberOfLines={1}>
+                        {song.title}
+                      </Text>
+                      {songFacts(song) ? (
+                        <Text style={[styles.rowFacts, { color: colors.textSecondary }]}>
+                          {songFacts(song)}
+                        </Text>
+                      ) : null}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -156,9 +167,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     gap: 12,
-    paddingVertical: 12,
+    minHeight: 48,
+    paddingVertical: 10,
   },
-  rowName: { flex: 1, fontSize: 16 },
+  rowText: { flex: 1 },
+  rowName: { fontSize: 16 },
+  rowFacts: { fontSize: 12, marginTop: 2 },
   manage: { paddingTop: 12 },
 });
 

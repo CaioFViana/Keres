@@ -160,6 +160,8 @@
   "tour_scenemusic_notice_title": "Para que serve a música",
   "universe_works_title": "{{arcs}} deste universo",
   "universe_works_manage": "Gerenciar {{arcs}}",
+  "universe_works_manage_short": "Gerenciar",
+  "universe_works_add": "Adicionar {{arc}}",
   "universe_works_intro": "Uma história é um universo: o mundo, o calendário e o elenco são compartilhados. Cada {{arc}} é uma obra dentro dele, como um livro, um filme, uma edição ou uma temporada.",
   "arc_medium": "Forma da obra",
   "arc_medium_hint": "Escolhe termos mais amigáveis e a exportação certa para {{arc}}. Tudo continua disponível, qualquer que seja a escolha, e você pode mudar quando quiser.",

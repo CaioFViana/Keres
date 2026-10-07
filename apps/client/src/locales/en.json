@@ -160,6 +160,8 @@
   "tour_scenemusic_notice_title": "What the music is for",
   "universe_works_title": "This universe's {{arcs}}",
   "universe_works_manage": "Manage {{arcs}}",
+  "universe_works_manage_short": "Manage",
+  "universe_works_add": "Add {{arc}}",
   "universe_works_intro": "A story is a universe: its world, calendar and cast are shared. Each {{arc}} is one work inside it, such as a book, a film, an issue or a season.",
   "arc_medium": "Form of the work",
   "arc_medium_hint": "Picks friendlier terms and the right export for this {{arc}}. Everything stays available whichever you choose, and you can change it at any time.",

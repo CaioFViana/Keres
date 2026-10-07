@@ -37,7 +37,7 @@ const MainDashboardScreen = () => {
   const [reportOpen, setReportOpen] = useState(false);
   // Only a positively known non-owner reports: an unresolved role (or the owner's own) hides
   // the action, and local-only stories have no administrators to report to.
-  const { role } = useStoryRole(selectedStory?.id);
+  const { role, canEdit } = useStoryRole(selectedStory?.id);
   const { arcs } = useStoryArcs();
   const storyReport = useStoryReport(selectedStory?.id);
   const showReportAction = role !== null && role !== 'owner' && storyReport.canReport;
@@ -253,6 +253,15 @@ const MainDashboardScreen = () => {
         onOpenArcs={() => {
           navigation.navigate('CustomizationStack', { screen: 'StoryArcList' });
         }}
+        onOpenArc={(arcId) => {
+          navigation.navigate('CustomizationStack', { screen: 'StoryArcForm', params: { arcId } });
+        }}
+        onAddArc={
+          canEdit
+            ? () =>
+                navigation.navigate('CustomizationStack', { screen: 'StoryArcForm', params: {} })
+            : undefined
+        }
       />
     </>
   );

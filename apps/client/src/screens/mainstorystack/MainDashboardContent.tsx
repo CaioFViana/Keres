@@ -39,6 +39,9 @@ export type MainDashboardContentProps = {
   /** The story's works, when the screen can list and open them. */
   arcs?: readonly StoryArcSelect[];
   onOpenArcs?: () => void;
+  /** Opens one work, and starts a new one (only for those who can edit). */
+  onOpenArc?: (arcId: string) => void;
+  onAddArc?: () => void;
 };
 
 function languageLabel(t: TFunction, language: string | null | undefined): string | null {
@@ -74,6 +77,8 @@ export function MainDashboardContent({
   onOpenOperationLog,
   arcs,
   onOpenArcs,
+  onOpenArc,
+  onAddArc,
 }: MainDashboardContentProps) {
   const { colors } = useTheme();
   const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
@@ -110,7 +115,12 @@ export function MainDashboardContent({
 
       {!!story && !!arcs?.length && !!onOpenArcs && (
         <View ref={worksAnchorRef} collapsable={false}>
-          <UniverseWorksSection arcs={arcs} onOpenArcs={onOpenArcs} />
+          <UniverseWorksSection
+            arcs={arcs}
+            onOpenArcs={onOpenArcs}
+            onOpenArc={onOpenArc}
+            onAddArc={onAddArc}
+          />
         </View>
       )}
 

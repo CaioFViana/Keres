@@ -360,7 +360,15 @@ describe('SongEditorScreen', () => {
 
     await fireEvent.press(view.getByTestId('melody-play'));
 
-    expect(mockPlay).toHaveBeenCalledWith({ kind: 'song' }, { timbre: 'hum', click: false });
+    expect(mockPlay).toHaveBeenCalledWith(
+      { kind: 'song' },
+      {
+        timbre: 'hum',
+        click: false,
+        instrument: null,
+        feel: 'auto',
+      },
+    );
   });
 
   it('stops what plays when the button is pressed again', async () => {

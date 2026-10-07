@@ -1,5 +1,9 @@
 import {
+  buildBacking,
   buildTimeline,
+  defaultFeel,
+  type Feel,
+  type Instrument,
   parseChordPro,
   parseMelody,
   quarterBeatsPerBar,
@@ -22,6 +26,10 @@ export interface PlaybackVoice {
   timbre: VoiceTimbre;
   /** A click on each beat, mixed into the audio. */
   click: boolean;
+  /** What plays the chords under the voice; none leaves the voice alone. */
+  instrument?: Instrument | null;
+  /** The way it plays them; `auto` takes it from the meter. */
+  feel?: Feel | 'auto';
 }
 
 export interface SongPlaybackInput {
@@ -117,7 +125,16 @@ export function useSongPlayback(input: SongPlaybackInput) {
             : { maxSeconds: PREVIEW_MAX_SECONDS }),
         },
       );
-      if (built.notes.length === 0) {
+      const instrument = voice.instrument ?? null;
+      const backingNotes = instrument
+        ? buildBacking(built.chords, {
+            instrument,
+            feel: voice.feel && voice.feel !== 'auto' ? voice.feel : defaultFeel(built.meter),
+            meter: built.meter,
+          })
+        : [];
+      // Chords alone are a song to hear too: a tune is not needed when an instrument has something to play.
+      if (built.notes.length === 0 && backingNotes.length === 0) {
         setProblem('no-tune');
         setPhase('idle');
         return;
@@ -127,7 +144,14 @@ export function useSongPlayback(input: SongPlaybackInput) {
       setProgress(0);
       try {
         const rendered = await service.render(
-          { notes: built.notes, beats: built.beats, tempo: built.tempo },
+          {
+            notes: built.notes,
+            beats: built.beats,
+            tempo: built.tempo,
+            ...(instrument && backingNotes.length > 0
+              ? { backing: { instrument, notes: backingNotes } }
+              : {}),
+          },
           {
             timbre: voice.timbre,
             ...(voice.click ? { clickBeatsPerBar: quarterBeatsPerBar(built.meter) } : {}),

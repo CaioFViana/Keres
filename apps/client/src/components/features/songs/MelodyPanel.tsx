@@ -1,6 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import {
   appendNote,
+  FEELS,
+  type Feel,
+  INSTRUMENTS,
+  type Instrument,
   MAX_SONG_MELODY_LENGTH,
   noteToken,
   parseChordPro,
@@ -40,7 +44,15 @@ interface MelodyPanelProps {
   progress: number;
   problem: PlaybackProblem | null;
   active: ActiveLine | null;
-  onPlay: (scope: PlaybackScope, voice: { timbre: VoiceTimbre; click: boolean }) => void;
+  onPlay: (
+    scope: PlaybackScope,
+    voice: {
+      timbre: VoiceTimbre;
+      click: boolean;
+      instrument: Instrument | null;
+      feel: Feel | 'auto';
+    },
+  ) => void;
   onStop: () => void;
   onTone: (pitch: number, timbre: VoiceTimbre) => void;
   onExport: (kind: 'midi' | 'abc') => void;
@@ -85,6 +97,8 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
   const { colors } = useTheme();
   const [timbre, setTimbre] = useState<VoiceTimbre>('hum');
   const [click, setClick] = useState(false);
+  const [instrument, setInstrument] = useState<Instrument | null>(null);
+  const [feel, setFeel] = useState<Feel | 'auto'>('auto');
   const [scope, setScope] = useState<PlaybackScope>({ kind: 'song' });
   const [length, setLength] = useState<number>(1);
   const [base, setBase] = useState<number>(60);
@@ -164,7 +178,9 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           accessibilityRole="button"
           accessibilityLabel={t(phase === 'idle' ? 'melody_play' : 'melody_stop')}
           style={[styles.chip, styles.on]}
-          onPress={() => (phase === 'idle' ? onPlay(scope, { timbre, click }) : onStop())}
+          onPress={() =>
+            phase === 'idle' ? onPlay(scope, { timbre, click, instrument, feel }) : onStop()
+          }
         >
           <Ionicons name={phase === 'idle' ? 'play' : 'stop'} size={16} color={colors.onPrimary} />
           <Text style={{ color: colors.onPrimary }}>
@@ -200,6 +216,30 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
           ),
         )}
       </View>
+
+      <Text style={styles.hint}>{t('melody_backing_hint')}</Text>
+      <View style={styles.group}>
+        {chip('melody-instrument-none', t('melody_instrument_none'), instrument === null, () =>
+          setInstrument(null),
+        )}
+        {INSTRUMENTS.map((option) =>
+          chip(
+            `melody-instrument-${option}`,
+            t(`melody_instrument_${option}`),
+            instrument === option,
+            () => setInstrument(option),
+          ),
+        )}
+      </View>
+      {instrument && instrument !== 'violin' ? (
+        <View style={styles.group}>
+          {(['auto', ...FEELS] as const).map((option) =>
+            chip(`melody-feel-${option}`, t(`melody_feel_${option}`), feel === option, () =>
+              setFeel(option),
+            ),
+          )}
+        </View>
+      ) : null}
 
       {active ? (
         <Text style={styles.now} testID="melody-now">

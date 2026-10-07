@@ -51,8 +51,13 @@ export function hashText(text: string): string {
 export function songAudioKey(score: VoiceScore, options: VoiceOptions): string {
   const notes = score.notes.map((n) => `${n.pitch}:${n.start}:${n.duration}`).join(',');
   const click = options.clickBeatsPerBar ?? 0;
+  const backing = score.backing
+    ? `${score.backing.instrument}:${score.backing.notes
+        .map((n) => `${n.pitch}:${n.start}:${n.duration}:${n.velocity}`)
+        .join(',')}`
+    : '';
   return hashText(
-    `${VOICE_VERSION}|${options.timbre}|${click}|${score.tempo}|${score.beats}|${notes}`,
+    `${VOICE_VERSION}|${options.timbre}|${click}|${score.tempo}|${score.beats}|${notes}|${backing}`,
   );
 }
 

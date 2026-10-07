@@ -57,6 +57,23 @@ describe('songAudioKey', () => {
   });
 });
 
+describe('songAudioKey with an accompaniment', () => {
+  const withBacking = (instrument: 'guitar' | 'harp', pitch = 43): VoiceScore => ({
+    ...score([60, 62]),
+    backing: { instrument, notes: [{ pitch, start: 0, duration: 2, velocity: 0.8 }] },
+  });
+
+  it('differs from the voice alone, and follows the instrument and what it plays', () => {
+    const alone = songAudioKey(score([60, 62]), { timbre: 'hum' });
+    const guitar = songAudioKey(withBacking('guitar'), { timbre: 'hum' });
+
+    expect(guitar).not.toBe(alone);
+    expect(songAudioKey(withBacking('harp'), { timbre: 'hum' })).not.toBe(guitar);
+    expect(songAudioKey(withBacking('guitar', 45), { timbre: 'hum' })).not.toBe(guitar);
+    expect(songAudioKey(withBacking('guitar'), { timbre: 'hum' })).toBe(guitar);
+  });
+});
+
 describe('createSongAudioService', () => {
   const make = () => {
     const kept = memoryStore();

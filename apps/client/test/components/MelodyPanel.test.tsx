@@ -95,12 +95,41 @@ describe('MelodyPanel', () => {
     const view = await render(panel({ melody: 'C D E F' }));
 
     await fireEvent.press(view.getByTestId('melody-play'));
-    expect(onPlay).toHaveBeenLastCalledWith({ kind: 'song' }, { timbre: 'hum', click: false });
+    expect(onPlay).toHaveBeenLastCalledWith(
+      { kind: 'song' },
+      { timbre: 'hum', click: false, instrument: null, feel: 'auto' },
+    );
 
     await fireEvent.press(view.getByTestId('melody-voice-la'));
     await fireEvent.press(view.getByTestId('melody-click'));
     await fireEvent.press(view.getByTestId('melody-play'));
-    expect(onPlay).toHaveBeenLastCalledWith({ kind: 'song' }, { timbre: 'la', click: true });
+    expect(onPlay).toHaveBeenLastCalledWith(
+      { kind: 'song' },
+      { timbre: 'la', click: true, instrument: null, feel: 'auto' },
+    );
+  });
+
+  it('asks for an instrument under the voice, and for a feel only when one can use it', async () => {
+    const view = await render(panel({ melody: 'C D E F' }));
+
+    expect(view.queryByTestId('melody-feel-waltz')).toBeNull();
+    await fireEvent.press(view.getByTestId('melody-instrument-guitar'));
+    expect(view.getByTestId('melody-feel-waltz')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('melody-feel-waltz'));
+    await fireEvent.press(view.getByTestId('melody-play'));
+    expect(onPlay).toHaveBeenLastCalledWith(
+      { kind: 'song' },
+      { timbre: 'hum', click: false, instrument: 'guitar', feel: 'waltz' },
+    );
+
+    await fireEvent.press(view.getByTestId('melody-instrument-violin'));
+    expect(view.queryByTestId('melody-feel-waltz')).toBeNull();
+    await fireEvent.press(view.getByTestId('melody-instrument-none'));
+    await fireEvent.press(view.getByTestId('melody-play'));
+    expect(onPlay).toHaveBeenLastCalledWith(
+      { kind: 'song' },
+      { timbre: 'hum', click: false, instrument: null, feel: 'waltz' },
+    );
   });
 
   it('plays one part when it is chosen', async () => {
@@ -114,7 +143,7 @@ describe('MelodyPanel', () => {
 
     expect(onPlay).toHaveBeenLastCalledWith(
       { kind: 'section', index: 1 },
-      { timbre: 'hum', click: false },
+      { timbre: 'hum', click: false, instrument: null, feel: 'auto' },
     );
   });
 

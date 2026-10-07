@@ -93,6 +93,81 @@ describe('useSongPlayback', () => {
     expect(result.current.phase).toBe('playing');
   });
 
+  it('adds what an instrument plays under the voice, and renders it as the same file', async () => {
+    const lyrics = '{sov: Verse 1}\n[G]One two [C]three four\n{eov}';
+    const { result } = await renderHook(() =>
+      useSongPlayback(input({ lyrics, melody: 'C D E F', meter: '3/4' })),
+    );
+
+    await act(async () =>
+      result.current.play(
+        { kind: 'song' },
+        { timbre: 'hum', click: false, instrument: 'piano', feel: 'auto' },
+      ),
+    );
+
+    const [score] = mockRender.mock.calls[0];
+    expect(score.backing.instrument).toBe('piano');
+    // Three beats to the bar, so the feel taken from the meter is a waltz: a bass on the first beat of the chord.
+    expect(score.backing.notes[0]).toMatchObject({ pitch: 43, start: 0 });
+    expect(score.backing.notes.some((n: { pitch: number }) => n.pitch === 60)).toBe(true);
+  });
+
+  it('uses the feel it is told to, whatever the meter', async () => {
+    const lyrics = '{sov: Verse 1}\n[C]One two three four\n{eov}';
+    const { result } = await renderHook(() =>
+      useSongPlayback(input({ lyrics, melody: 'C D E F' })),
+    );
+
+    await act(async () =>
+      result.current.play(
+        { kind: 'song' },
+        { timbre: 'hum', click: false, instrument: 'harp', feel: 'march' },
+      ),
+    );
+
+    const [score] = mockRender.mock.calls[0];
+    const bass = score.backing.notes.filter((n: { pitch: number }) => n.pitch < 50);
+    expect(bass.map((n: { pitch: number; start: number }) => [n.start, n.pitch])).toEqual([
+      [0, 36],
+      [2, 43],
+    ]);
+  });
+
+  it('plays the chords alone when there is no tune but an instrument is chosen', async () => {
+    const lyrics = '{sov: Verse 1}\n[G]One two\n[C]Three four\n{eov}';
+    const { result } = await renderHook(() => useSongPlayback(input({ lyrics, melody: '' })));
+
+    await act(async () =>
+      result.current.play(
+        { kind: 'song' },
+        { timbre: 'hum', click: false, instrument: 'guitar', feel: 'auto' },
+      ),
+    );
+
+    const [score] = mockRender.mock.calls[0];
+    expect(score.notes).toEqual([]);
+    expect(score.beats).toBe(8);
+    expect(score.backing.notes.length).toBeGreaterThan(0);
+    expect(result.current.problem).toBeNull();
+  });
+
+  it('still says there is nothing to play when there is neither a tune nor a chord', async () => {
+    const { result } = await renderHook(() =>
+      useSongPlayback(input({ lyrics: '{sov: V}\nOne two\n{eov}', melody: '' })),
+    );
+
+    await act(async () =>
+      result.current.play(
+        { kind: 'song' },
+        { timbre: 'hum', click: false, instrument: 'piano', feel: 'auto' },
+      ),
+    );
+
+    expect(result.current.problem).toBe('no-tune');
+    expect(mockRender).not.toHaveBeenCalled();
+  });
+
   it('plays one section alone, with a click on the beat if asked', async () => {
     const { result } = await renderHook(() => useSongPlayback(input({ meter: '3/4' })));
 

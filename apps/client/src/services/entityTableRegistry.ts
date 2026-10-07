@@ -14,6 +14,7 @@ export const ENTITY_TABLES = {
   Board: schema.boards,
   Sketch: schema.sketches,
   ScenePage: schema.scenePages,
+  SceneMusic: schema.sceneMusic,
   Chapter: schema.chapters,
   Character: schema.characters,
   ChapterAnchor: schema.chapterAnchors,

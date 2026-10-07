@@ -34,6 +34,7 @@ export * from './scenes';
 export * from './seeAlsoRelations';
 export * from './sketches';
 export * from './scenePages';
+export * from './sceneMusic';
 export * from './serverPayments';
 export * from './servers';
 export * from './stats';

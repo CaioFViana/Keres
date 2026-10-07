@@ -6,6 +6,7 @@ import { ChapterAnchorClientSyncHandler } from '../entity-sync-handlers/ChapterA
 import { BoardClientSyncHandler } from '../entity-sync-handlers/BoardClientSyncHandler';
 import { SketchClientSyncHandler } from '../entity-sync-handlers/SketchClientSyncHandler';
 import { ScenePageClientSyncHandler } from '../entity-sync-handlers/ScenePageClientSyncHandler';
+import { SceneMusicClientSyncHandler } from '../entity-sync-handlers/SceneMusicClientSyncHandler';
 import { StoryCalendarClientSyncHandler } from '../entity-sync-handlers/StoryCalendarClientSyncHandler';
 import { StoryArcClientSyncHandler } from '../entity-sync-handlers/StoryArcClientSyncHandler';
 import { CharacterRelationClientSyncHandler } from '../entity-sync-handlers/CharacterRelationClientSyncHandler';
@@ -61,6 +62,7 @@ export function registerClientSyncHandlers(): Map<string, ClientSyncEntityHandle
     new BoardClientSyncHandler(),
     new SketchClientSyncHandler(),
     new ScenePageClientSyncHandler(),
+    new SceneMusicClientSyncHandler(),
     new CharacterRelationClientSyncHandler(),
     new LocationClientSyncHandler(),
     new LocationMapClientSyncHandler(),

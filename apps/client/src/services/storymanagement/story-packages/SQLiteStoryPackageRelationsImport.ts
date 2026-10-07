@@ -5,6 +5,7 @@ import type {
   PlotSceneInsert,
   RouteInsert,
   RouteStepInsert,
+  SceneMusicInsert,
   ScenePageInsert,
   TagRelationInsert,
 } from '../../../db/schema';
@@ -15,6 +16,7 @@ import {
   plots,
   routes,
   routeSteps,
+  sceneMusic,
   scenePages,
   tagRelations,
 } from '../../../db/schema';
@@ -110,6 +112,17 @@ export async function importStoryPackageRelations(
       deletedAt: null,
     };
     await tx.insert(scenePages).values(row).run();
+  }
+  // Music keeps its cue even when its target is not in the package; the ids are the package's own here.
+  for (const music of fullStory.sceneMusic ?? []) {
+    const row: SceneMusicInsert = {
+      ...music,
+      createdAt: new Date(music.createdAt),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    };
+    await tx.insert(sceneMusic).values(row).run();
   }
 
   for (const relation of fullStory.tagRelations ?? []) {

@@ -20,6 +20,7 @@ import type {
   PublishReaderOptions,
 } from '../../services/PublicationApiService';
 import { createChapterService } from '../../services/storymanagement/ChapterService';
+import { storyMusicFacts } from '../../services/storymanagement/ManuscriptMusicService';
 import { createSceneService } from '../../services/storymanagement/SceneService';
 import { createStoryArcService } from '../../services/storymanagement/StoryArcService';
 
@@ -79,6 +80,8 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
   const [includePackage, setIncludePackage] = useState(true);
   const [settings, setSettings] = useState<ManuscriptExportSettings>(() => defaultExportSettings());
   const [manuscriptLooseCount, setManuscriptLooseCount] = useState(0);
+  // A song is sung somewhere in the story: only then does the publication offer to print songs.
+  const [hasSungSongs, setHasSungSongs] = useState(false);
   const [manuscriptArcs, setManuscriptArcs] = useState<PublishableArc[]>([]);
   // What goes out: `null` is the whole universe; an id is one work of it (manuscript and/or reader only).
   const [releaseArcId, setReleaseArcIdState] = useState<string | null>(null);
@@ -92,6 +95,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
       setIncludePackage(true);
       setSettings(defaultExportSettings(story.author ?? ''));
       setManuscriptLooseCount(0);
+      setHasSungSongs(false);
       setManuscriptArcs([]);
       setReleaseArcIdState(null);
       void (async () => {
@@ -106,6 +110,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
               pageFormat: arc.pageFormat,
             })),
           );
+          setHasSungSongs((await storyMusicFacts(drizzleDb, story.id)).hasSungSongs);
           if (story.type !== 'branching') {
             const [storyChapters, storyScenes] = await Promise.all([
               createChapterService(drizzleDb).getAllByStoryId(story.id, null),
@@ -190,6 +195,16 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
         ...(branching ? { sceneOrder: settings.sceneOrder } : {}),
         ...(settings.arcId ? { arcId: settings.arcId } : {}),
         ...(isScreenplayFormat(format) ? { screenplay: { ...settings.screenplay } } : {}),
+        // Only the words of the songs sung in the story go out, never a recording or a link.
+        ...(settings.includeSongs
+          ? {
+              includeSongs: true,
+              songsPlacement: settings.songsPlacement,
+              songLanguage: settings.songLanguage,
+              songRepeat: settings.songRepeat,
+              songChords: settings.songChords,
+            }
+          : {}),
         labels: {
           goToPage: t('export_manuscript_go_to_page'),
           goToScene: t('export_manuscript_go_to_scene'),
@@ -202,6 +217,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
           frameLabel: t('export_manuscript_frame_label'),
           mediaRemoved: t('export_manuscript_media_removed'),
           musicLabel: t('export_manuscript_music_label'),
+          songsHeading: t('export_manuscript_songs_heading'),
         },
         // Left out when empty so the server credits the work's author, the story's, then the handle.
         ...(settings.author.trim() ? { author: settings.author.trim() } : {}),
@@ -250,6 +266,7 @@ export function usePublishManuscript(drizzleDb: AppDrizzleClient) {
     settings,
     setSettings,
     manuscriptLooseCount,
+    hasSungSongs,
     manuscriptArcs,
     releaseArcId,
     setReleaseArcId,

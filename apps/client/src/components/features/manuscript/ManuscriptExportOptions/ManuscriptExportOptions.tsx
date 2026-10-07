@@ -20,6 +20,7 @@ import {
 } from '../export/manuscriptExportSettings';
 import { OptionPills, OptionRow, OptionSection, SwitchRow } from './ExportOptionRows';
 import ProsePageEstimateCard from './ProsePageEstimateCard';
+import SongsOptions from './SongsOptions';
 import ScreenplayEstimateCard from './ScreenplayEstimateCard';
 
 /** The minimum the arc selector needs to know about an arc. */
@@ -56,6 +57,8 @@ interface ManuscriptExportOptionsProps {
   sizeEstimate?: ManuscriptSizeAssessment | null;
   /** The story has music in its scenes: the export offers to write it. Absent where it cannot (a publication). */
   hasMusic?: boolean;
+  /** A song is sung in the story: the export offers to print it. */
+  hasSongs?: boolean;
 }
 
 /** `12.3 MB`: one decimal, and `< 0.1 MB` for what is not worth a figure. */
@@ -100,6 +103,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   pageEstimate = null,
   sizeEstimate = null,
   hasMusic = false,
+  hasSongs = false,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -238,6 +242,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
             onChange={(generateHeadings) => change({ screenplay: { generateHeadings } })}
           />
           <Text style={styles.note}>{t('export_screenplay_generate_headings_hint')}</Text>
+          {hasSongs ? <SongsOptions settings={settings} change={change} script /> : null}
           {hasMusic ? (
             <>
               <SwitchRow
@@ -296,6 +301,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
               onChange={(includeLooseScenes) => change({ includeLooseScenes })}
             />
           ) : null}
+          {hasSongs ? <SongsOptions settings={settings} change={change} script={false} /> : null}
           {hasMusic ? (
             <SwitchRow
               testID="export-music"

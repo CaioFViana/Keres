@@ -128,6 +128,7 @@ export function PublishManuscriptSection({
             // A work is chosen above; the picker inside the options is for the whole universe only.
             arcs={releasingWork ? [] : manuscript.manuscriptArcs}
             showFormat={manuscript.attachManuscript}
+            hasSongs={manuscript.hasSungSongs}
           />
         </View>
       )}

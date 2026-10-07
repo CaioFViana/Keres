@@ -1,5 +1,8 @@
 import {
   MANUSCRIPT_PRESET_SETTINGS,
+  type SongLanguage,
+  type SongPlacement,
+  type SongRepeat,
   type ManuscriptFormat,
   type ManuscriptPreset,
   type ManuscriptStyle,
@@ -41,6 +44,16 @@ export type ManuscriptExportSettings = {
   includeLooseScenes: boolean;
   /** Writes the music of each scene: a line under it in a book, a note in a script. */
   includeMusicCues: boolean;
+  /** Prints the songs the scenes sing (their words only). */
+  includeSongs: boolean;
+  /** Where: all at the end, or after the scene that sings each. A script always puts them in the scene. */
+  songsPlacement: SongPlacement;
+  /** The sung words, their translation, or both. */
+  songLanguage: SongLanguage;
+  /** A part of a song already printed: printed again, or only named. */
+  songRepeat: SongRepeat;
+  /** The chords stay in the lines, in brackets. */
+  songChords: boolean;
   resetSceneNumbers: boolean;
   includeIndex: boolean;
   /** Branching only: how the gamebook numbers its scenes. */
@@ -63,6 +76,11 @@ export function defaultExportSettings(author = ''): ManuscriptExportSettings {
     includeSceneNames: false,
     includeLooseScenes: false,
     includeMusicCues: false,
+    includeSongs: false,
+    songsPlacement: 'appendix',
+    songLanguage: 'sung',
+    songRepeat: 'first-only',
+    songChords: false,
     resetSceneNumbers: false,
     includeIndex: false,
     sceneOrder: 'discovery',

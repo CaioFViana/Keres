@@ -234,11 +234,13 @@ export * from './manuscript/compile/manuscriptStyle';
 export * from './manuscript/compile/manuscriptSize';
 export * from './manuscript/compile/pageFormat';
 export {
+  DEFAULT_SONG_PRINT,
   SONG_LANGUAGES,
   SONG_PLACEMENTS,
   SONG_REPEATS,
   type SongLanguage,
   type SongPlacement,
+  type SongPrint,
   type SongRepeat,
 } from './manuscript/compile/songPrint';
 export * from './manuscript/images/imageInfo';

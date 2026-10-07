@@ -7,9 +7,11 @@ import { createGalleryService } from '../../src/services/storymanagement/Gallery
 import {
   loadManuscriptMusic,
   storyHasMusic,
+  storyMusicFacts,
   withManuscriptMusic,
 } from '../../src/services/storymanagement/ManuscriptMusicService';
 import { createSceneMusicService } from '../../src/services/storymanagement/SceneMusicService';
+import { createSongService } from '../../src/services/storymanagement/SongService';
 import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
 
@@ -97,7 +99,9 @@ describe('loadManuscriptMusic', () => {
     await add('scene-1', medium.id);
     await add('scene-2', medium.id);
 
-    const music = await loadManuscriptMusic(database.db, TEST_STORY_ID, new Set(['scene-2']));
+    const music = await loadManuscriptMusic(database.db, TEST_STORY_ID, {
+      sceneIds: new Set(['scene-2']),
+    });
 
     expect([...music.keys()]).toEqual(['scene-2']);
   });
@@ -127,5 +131,106 @@ describe('storyHasMusic', () => {
     const medium = await newMedium('a.mp3', 'A');
     await add('scene-1', medium.id);
     expect(await storyHasMusic(database.db, TEST_STORY_ID)).toBe(true);
+  });
+});
+
+describe('loadManuscriptMusic for a song', () => {
+  const newSong = (title: string, rest = {}) =>
+    createSongService(database.db).createSong(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title,
+      lyrics: '{soc: Chorus}\nHome',
+      lyricsTranslation: '{soc: Chorus}\nCasa',
+      ...rest,
+    });
+  const sing = (sceneId: string, songId: string, rest = {}) =>
+    createSceneMusicService(database.db).addMusic(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      sceneId,
+      target: { songId },
+      ...rest,
+    });
+
+  it('names the music by the title of the song, and carries no words unless asked', async () => {
+    const song = await newSong('The Lantern Song');
+    await sing('scene-1', song.id, { cue: 'as she sings' });
+
+    const music = await loadManuscriptMusic(database.db, TEST_STORY_ID);
+
+    expect(music.get('scene-1')).toEqual([
+      expect.objectContaining({ title: 'The Lantern Song', role: 'in-world', cue: 'as she sings' }),
+    ]);
+    expect(music.get('scene-1')?.[0].song).toBeUndefined();
+  });
+
+  it('carries the words of a song sung in the story, with the sections the scene names', async () => {
+    const song = await newSong('The Lantern Song');
+    await sing('scene-1', song.id, { sections: ['Chorus'] });
+
+    const music = await loadManuscriptMusic(database.db, TEST_STORY_ID, { withSongs: true });
+
+    expect(music.get('scene-1')?.[0].song).toEqual({
+      id: song.id,
+      title: 'The Lantern Song',
+      lyrics: '{soc: Chorus}\nHome',
+      lyricsTranslation: '{soc: Chorus}\nCasa',
+      sections: ['Chorus'],
+    });
+  });
+
+  it('carries no words for a song that only plays under the scene', async () => {
+    const song = await newSong('Theme');
+    await sing('scene-1', song.id, { role: 'score' });
+
+    const music = await loadManuscriptMusic(database.db, TEST_STORY_ID, { withSongs: true });
+
+    expect(music.get('scene-1')?.[0]).toMatchObject({ role: 'score', title: 'Theme' });
+    expect(music.get('scene-1')?.[0].song).toBeUndefined();
+  });
+
+  it('leaves the title and the words out where the song was deleted', async () => {
+    const song = await newSong('Gone');
+    await sing('scene-1', song.id);
+    await createSongService(database.db).deleteSong(TEST_USER_ID, song.id);
+
+    const music = await loadManuscriptMusic(database.db, TEST_STORY_ID, { withSongs: true });
+
+    expect(music.get('scene-1')?.[0].title).toBeNull();
+    expect(music.get('scene-1')?.[0].song).toBeUndefined();
+  });
+});
+
+describe('storyMusicFacts', () => {
+  it('knows whether a song is sung in the story, apart from whether there is any music', async () => {
+    expect(await storyMusicFacts(database.db, TEST_STORY_ID)).toEqual({
+      hasMusic: false,
+      hasSungSongs: false,
+    });
+
+    const medium = await newMedium('a.mp3', 'A');
+    await add('scene-1', medium.id);
+    expect(await storyMusicFacts(database.db, TEST_STORY_ID)).toEqual({
+      hasMusic: true,
+      hasSungSongs: false,
+    });
+
+    const song = await createSongService(database.db).createSong(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'S',
+    });
+    await createSceneMusicService(database.db).addMusic(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      sceneId: 'scene-1',
+      target: { songId: song.id },
+      role: 'score',
+    });
+    expect((await storyMusicFacts(database.db, TEST_STORY_ID)).hasSungSongs).toBe(false);
+
+    await createSceneMusicService(database.db).addMusic(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      sceneId: 'scene-2',
+      target: { songId: song.id },
+    });
+    expect((await storyMusicFacts(database.db, TEST_STORY_ID)).hasSungSongs).toBe(true);
   });
 });

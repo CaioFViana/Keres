@@ -83,11 +83,12 @@ jest.mock('../../../../src/services/storymanagement/ManuscriptPagesService', () 
   estimateManuscriptPageBytes: async () => mockPageBytes,
 }));
 let mockHasMusic = false;
+let mockHasSongs = false;
 const mockLoadManuscriptMusic = jest.fn();
 jest.mock('../../../../src/services/storymanagement/ManuscriptMusicService', () => ({
   __esModule: true,
   loadManuscriptMusic: (...args: unknown[]) => mockLoadManuscriptMusic(...args),
-  storyHasMusic: async () => mockHasMusic,
+  storyMusicFacts: async () => ({ hasMusic: mockHasMusic, hasSungSongs: mockHasSongs }),
   withManuscriptMusic: (scenes: unknown[], music: Map<string, unknown[]> | null) =>
     music
       ? scenes.map((scene) => {
@@ -1024,6 +1025,7 @@ describe('ManuscriptExportScreen music', () => {
 
   beforeEach(() => {
     mockHasMusic = false;
+    mockHasSongs = false;
     mockLoadManuscriptMusic.mockReset().mockResolvedValue(new Map([['s-1', theme]]));
   });
 
@@ -1088,5 +1090,92 @@ describe('ManuscriptExportScreen music', () => {
     await waitFor(() => expect(mockDeliverScreenplay).toHaveBeenCalledTimes(1));
     const text = new TextDecoder().decode(mockDeliverScreenplay.mock.calls[0][0].bytes);
     expect(text).toContain('[[export_manuscript_music_label: Theme — at the door]]');
+  });
+});
+
+describe('ManuscriptExportScreen songs', () => {
+  const lantern = {
+    id: 'song-1',
+    title: 'The Lantern Song',
+    lyrics: '{sov: Verse 1}\nLight the lantern\n{eov}',
+    lyricsTranslation: null,
+    sections: null,
+  };
+  const sung = [
+    { id: 'm1', role: 'in-world', title: 'The Lantern Song', cue: null, song: lantern },
+  ];
+
+  beforeEach(() => {
+    mockHasMusic = true;
+    mockHasSongs = true;
+    mockLoadManuscriptMusic.mockReset().mockResolvedValue(new Map([['s-1', sung]]));
+  });
+
+  it('offers the songs only where one is sung in the story', async () => {
+    mockHasSongs = false;
+    await renderScreen();
+    await act(async () => {});
+    expect((mockOptionsProps as { hasSongs?: boolean }).hasSongs).toBe(false);
+    await act(async () => cleanup());
+
+    mockHasSongs = true;
+    await renderScreen();
+    await waitFor(() => expect((mockOptionsProps as { hasSongs?: boolean }).hasSongs).toBe(true));
+  });
+
+  it('reads the words of the songs only for an export that prints them', async () => {
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeSongs: false });
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockLoadManuscriptMusic).not.toHaveBeenCalled();
+  });
+
+  it('prints the songs in an appendix under the heading, with their words', async () => {
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeSongs: true, songsPlacement: 'appendix' });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    expect(mockLoadManuscriptMusic.mock.calls[0][2]).toEqual({ withSongs: true });
+    const blocks = mockExportManuscript.mock.calls[0][0].manuscript.blocks as {
+      kind: string;
+      label?: string;
+      spans?: { text: string }[];
+    }[];
+    expect(
+      blocks.some(
+        (b) => b.kind === 'loose-heading' && b.label === 'export_manuscript_songs_heading',
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(blocks)).toContain('Light the lantern');
+  });
+
+  it('prints a song after the scene when asked', async () => {
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'md', includeSongs: true, songsPlacement: 'after-scene' });
+
+    await waitFor(() => expect(mockExportManuscript).toHaveBeenCalledTimes(1));
+    const blocks = mockExportManuscript.mock.calls[0][0].manuscript.blocks as { kind: string }[];
+    expect(blocks.some((block) => block.kind === 'loose-heading')).toBe(false);
+    expect(JSON.stringify(blocks)).toContain('Light the lantern');
+  });
+
+  it('writes the songs of a script as Fountain lyrics', async () => {
+    mockEffectiveMedium = 'screenplay';
+    mockManuscriptData = {
+      chapters: [makeChapter({ id: 'ch-1', name: 'Act One' })],
+      scenes: [makeScene({ id: 's-1', chapterId: 'ch-1', body: 'Coffee goes cold.' })],
+      choices: [],
+      loading: false,
+    };
+    const view = await renderScreen();
+
+    await exportWith(view, { format: 'fountain', includeSongs: true });
+
+    await waitFor(() => expect(mockDeliverScreenplay).toHaveBeenCalledTimes(1));
+    const text = new TextDecoder().decode(mockDeliverScreenplay.mock.calls[0][0].bytes);
+    expect(text).toContain('~Light the lantern');
   });
 });

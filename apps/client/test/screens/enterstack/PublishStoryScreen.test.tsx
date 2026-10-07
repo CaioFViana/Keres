@@ -194,6 +194,10 @@ const mockRefreshSnapshots = jest.fn();
 jest.mock('../../../src/services/storymanagement/ManuscriptPagesService', () => ({
   refreshStaleSketchSnapshots: (...args: unknown[]) => mockRefreshSnapshots(...args),
 }));
+let mockSungSongs = false;
+jest.mock('../../../src/services/storymanagement/ManuscriptMusicService', () => ({
+  storyMusicFacts: async () => ({ hasMusic: mockSungSongs, hasSungSongs: mockSungSongs }),
+}));
 jest.mock('../../../src/state/userSettingsStore', () => ({
   useUserSettingsStore: () => ({ userId: 'user-1' }),
 }));
@@ -231,6 +235,7 @@ const manuscriptLabels = {
   frameLabel: 'export_manuscript_frame_label',
   mediaRemoved: 'export_manuscript_media_removed',
   musicLabel: 'export_manuscript_music_label',
+  songsHeading: 'export_manuscript_songs_heading',
 };
 /** The device export's defaults, as the publish screen sends them. */
 function manuscriptPayload(overrides: Record<string, unknown> = {}) {
@@ -684,6 +689,46 @@ describe('PublishStoryScreen', () => {
       frontMatter: ['export_manuscript_title_page_by', 'export_manuscript_title_page_copyright'],
       placeholders: { author: 'Ana' },
     });
+  });
+
+  it('offers the songs only where one is sung, and sends the choices for them', async () => {
+    mockSungSongs = true;
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    await fireEvent(await view.findByTestId('export-songs'), 'valueChange', true);
+    await fireEvent.press(view.getByTestId('export-songs-placement-after-scene'));
+    await fireEvent.press(view.getByTestId('export-songs-language-both'));
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(mockPublish.mock.calls[0][6]).toMatchObject({
+      includeSongs: true,
+      songsPlacement: 'after-scene',
+      songLanguage: 'both',
+      songRepeat: 'first-only',
+      songChords: false,
+    });
+    mockSungSongs = false;
+  });
+
+  it('asks nothing about songs where none is sung', async () => {
+    const view = await render(<PublishStoryScreen />);
+    await view.findByText('Epic');
+    await fireEvent.press(view.getByText('Epic'));
+    await view.findByText('publish_create_version');
+
+    await fireEvent.press(view.getByTestId('publish-manuscript-switch-story-1'));
+    await view.findByTestId('publish-manuscript-options-story-1');
+    await fireEvent.press(view.getByText('publish_create_version'));
+
+    await waitFor(() => expect(mockPublish).toHaveBeenCalledTimes(1));
+    expect(view.queryByTestId('export-songs')).toBeNull();
+    expect(mockPublish.mock.calls[0][6]).not.toHaveProperty('includeSongs');
   });
 
   it('releases one work: no package, its own author, the arc in the request', async () => {

@@ -66,6 +66,7 @@ export function screenplayOptionsOf(
   language: string,
   /** What a note says before the title of a piece of music; the default when absent. */
   musicLabel?: string,
+  songsHeading?: string,
 ): ManuscriptOptions {
   return ManuscriptOptionsSchema.parse({
     format: settings.format,
@@ -79,7 +80,17 @@ export function screenplayOptionsOf(
       generateHeadings: settings.screenplay.generateHeadings,
       includeMusicNotes: settings.includeMusicCues,
     },
-    ...(musicLabel ? { labels: { musicLabel } } : {}),
+    includeSongs: settings.includeSongs,
+    songLanguage: settings.songLanguage,
+    songRepeat: settings.songRepeat,
+    ...(musicLabel || songsHeading
+      ? {
+          labels: {
+            ...(musicLabel ? { musicLabel } : {}),
+            ...(songsHeading ? { songsHeading } : {}),
+          },
+        }
+      : {}),
   });
 }
 

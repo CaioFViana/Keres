@@ -252,6 +252,7 @@ describe('server-bound API services', () => {
         frameLabel: 'Frame',
         mediaRemoved: 'Image removed',
         musicLabel: 'Music',
+        songsHeading: 'Songs',
       },
       author: null,
       language: 'en',

@@ -46,13 +46,14 @@ import type { LocationSelect } from '../../../db/schema';
 import { createLocationService } from '../../../services/storymanagement/LocationService';
 import {
   loadManuscriptMusic,
-  storyHasMusic,
+  storyMusicFacts,
   withManuscriptMusic,
 } from '../../../services/storymanagement/ManuscriptMusicService';
 import {
   estimateManuscriptPageBytes,
   loadManuscriptPages,
 } from '../../../services/storymanagement/ManuscriptPagesService';
+import { songPrintOf } from '../../../components/features/manuscript/export/songPrintOf';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
 import { useAsyncOperation } from '../../../hooks/useAsyncOperation';
@@ -110,18 +111,25 @@ export function useManuscriptExport() {
     };
   }, [db, storyId]);
 
-  // Whether any scene has music: only then does the export offer to write it.
-  const [hasMusic, setHasMusic] = useState(false);
+  // What the music of the scenes offers the export: only with some does it offer to write it, and
+  // only where a song is sung does it offer to print the song.
+  const [musicFacts, setMusicFacts] = useState({ hasMusic: false, hasSungSongs: false });
   useEffect(() => {
+    const none = { hasMusic: false, hasSungSongs: false };
+    // The same facts keep the same state: a new object each time would draw the screen again for nothing.
+    const keep = (next: typeof none) => (current: typeof none) =>
+      current.hasMusic === next.hasMusic && current.hasSungSongs === next.hasSungSongs
+        ? current
+        : next;
     if (!storyId) {
-      setHasMusic(false);
+      setMusicFacts(keep(none));
       return;
     }
     let alive = true;
     const load = () =>
-      void storyHasMusic(db, storyId)
-        .then((has) => alive && setHasMusic(has))
-        .catch(() => alive && setHasMusic(false));
+      void storyMusicFacts(db, storyId)
+        .then((facts) => alive && setMusicFacts(keep(facts)))
+        .catch(() => alive && setMusicFacts(keep(none)));
     load();
     entityEventEmitter.on('scene_music_changed', load);
     return () => {
@@ -291,9 +299,13 @@ export function useManuscriptExport() {
             ? (arcs.find((arc) => arc.id === settings.arcId) ?? null)
             : null;
           const title = exportArc?.title ?? selectedStory?.title ?? '';
+          // The music is read only for an export that writes it, and the words of a song only for one
+          // that prints songs.
           const sceneMusic =
-            settings.includeMusicCues && selectedStory?.id
-              ? await loadManuscriptMusic(db, selectedStory.id)
+            (settings.includeMusicCues || settings.includeSongs) && selectedStory?.id
+              ? await loadManuscriptMusic(db, selectedStory.id, {
+                  withSongs: settings.includeSongs,
+                })
               : null;
           if (isScreenplayFormat(settings.format)) {
             const compiled = compileScreenplayManuscript(
@@ -305,7 +317,12 @@ export function useManuscriptExport() {
                 arcs,
                 music: sceneMusic,
               }),
-              screenplayOptionsOf(settings, i18n.language, t('export_manuscript_music_label')),
+              screenplayOptionsOf(
+                settings,
+                i18n.language,
+                t('export_manuscript_music_label'),
+                t('export_manuscript_songs_heading'),
+              ),
             );
             const delivered = await deliverScreenplay({
               storyTitle: title,
@@ -370,6 +387,9 @@ export function useManuscriptExport() {
             removed: t('export_manuscript_media_removed'),
             ...(settings.includeMusicCues
               ? { musicLabel: t('export_manuscript_music_label') }
+              : {}),
+            ...(settings.includeSongs
+              ? { songs: songPrintOf(settings, t('export_manuscript_songs_heading')) }
               : {}),
           };
           const pageAspect =
@@ -537,6 +557,7 @@ export function useManuscriptExport() {
     screenplayEstimate,
     estimatePages,
     sizeEstimate,
-    hasMusic,
+    hasMusic: musicFacts.hasMusic,
+    hasSongs: musicFacts.hasSungSongs,
   };
 }

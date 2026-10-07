@@ -4,15 +4,14 @@ import {
   abcNoteName,
   appendNote,
   removeLastNote,
-  buildTimeline,
   lengthToken,
   noteToken,
   parseLength,
   parseMelody,
   pitchLabel,
-  resolveMelodies,
   transposeMelody,
 } from '../../music/melody';
+import { buildTimeline, resolveMelodies } from '../../music/timeline';
 
 const pitches = (text: string) => parseMelody(text).sections[0].notes.map((note) => note.pitch);
 

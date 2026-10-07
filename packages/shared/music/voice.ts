@@ -1,4 +1,4 @@
-import type { PlayNote } from './melody';
+import type { PlayNote } from './timeline';
 
 /**
  * A singing voice made of arithmetic: a glottal pulse train pushed through three resonators, the

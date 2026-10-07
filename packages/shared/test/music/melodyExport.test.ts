@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { writeAbc } from '../../music/abc';
 import { parseChordPro } from '../../music/chordpro';
-import { buildTimeline, parseMelody } from '../../music/melody';
+import { parseMelody } from '../../music/melody';
 import { writeMidi } from '../../music/midi';
+import { buildTimeline } from '../../music/timeline';
 
 const WORDS = '{sov: Verse 1}\nTwin·kle twin·kle\nLit·tle star\n{eov}';
 const song = () => parseChordPro(WORDS);

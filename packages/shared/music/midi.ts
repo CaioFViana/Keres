@@ -1,5 +1,5 @@
 import { parseMeter } from './songStats';
-import type { Timeline } from './melody';
+import type { Timeline } from './timeline';
 
 /** Ticks in a quarter note: fine enough for a sixteenth triplet to land on a whole tick. */
 const TICKS_PER_QUARTER = 480;

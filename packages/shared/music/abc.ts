@@ -1,7 +1,8 @@
 import { type ParsedSong, lyricText, SYLLABLE_MARK } from './chordpro';
-import { lineSyllables, type Melody, type MelodyNote, noteToken, resolveMelodies } from './melody';
+import { type Melody, type MelodyNote, noteToken } from './melody';
 import { quarterBeatsPerBar } from './songStats';
 import type { SyllableLanguage } from './syllables';
+import { lineSyllables, resolveMelodies } from './timeline';
 
 export interface AbcOptions {
   title: string;

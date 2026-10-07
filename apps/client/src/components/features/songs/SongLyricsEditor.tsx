@@ -21,6 +21,9 @@ interface SongLyricsEditorProps {
   onChange: (lyrics: string) => void;
   /** Moves every chord (and the key) by this many semitones; the screen owns the song's other facts. */
   onTranspose: (semitones: number) => void;
+  /** Whether a transposition can be taken back, and the way to do it. */
+  canUndoTranspose?: boolean;
+  onUndoTranspose?: () => void;
   editable: boolean;
   words: SectionWords;
   syllableLanguage: SyllableLanguage;
@@ -41,6 +44,8 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
   value,
   onChange,
   onTranspose,
+  canUndoTranspose = false,
+  onUndoTranspose,
   editable,
   words,
   syllableLanguage,
@@ -149,6 +154,17 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
                   <Text style={{ color: colors.text }}>{t('song_transpose')}</Text>
                 </TouchableOpacity>
               ))}
+              {canUndoTranspose ? (
+                <TouchableOpacity
+                  testID="song-transpose-undo"
+                  accessibilityRole="button"
+                  style={styles.button}
+                  onPress={onUndoTranspose}
+                >
+                  <Ionicons name="arrow-undo-outline" size={14} color={colors.text} />
+                  <Text style={{ color: colors.text }}>{t('song_transpose_undo')}</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
           {duplicates.length > 0 ? (

@@ -2247,6 +2247,7 @@
   "song_section_bridge": "Ponte",
   "song_transpose": "Transpor",
   "song_transpose_up": "Transpor um semitom para cima",
+  "song_transpose_undo": "Desfazer transposição",
   "song_transpose_down": "Transpor um semitom para baixo",
   "song_duplicate_sections": "Estas seções têm o mesmo nome, e uma cena não consegue distingui-las: {{labels}}.",
   "song_number_duplicates": "Numerar",

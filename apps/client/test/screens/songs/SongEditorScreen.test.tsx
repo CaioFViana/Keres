@@ -257,6 +257,34 @@ describe('SongEditorScreen', () => {
     expect(changes.lyrics).toContain('[F]Light the [Dm]lantern');
   });
 
+  it('takes a transposition back: the chords, the key and the tune return together', async () => {
+    mockSong = { ...baseSong, melody: 'P:Verse 1\nC D E2' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.queryByTestId('song-transpose-undo')).toBeNull();
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    expect(view.getByTestId('song-lyrics').props.value).not.toContain('[G]Light');
+
+    await fireEvent.press(view.getByTestId('song-transpose-undo'));
+    await fireEvent.press(view.getByTestId('song-transpose-undo'));
+
+    expect(view.getByTestId('song-lyrics').props.value).toContain('[G]Light the [Em]lantern');
+    expect(view.getByTestId('song-key').props.value).toBe('G');
+    expect(view.getByTestId('song-melody').props.value).toBe('P:Verse 1\nC D E2');
+    expect(view.queryByTestId('song-transpose-undo')).toBeNull();
+  });
+
+  it('forgets what could be taken back once the words are written by hand', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    expect(view.getByTestId('song-transpose-undo')).toBeTruthy();
+    await fireEvent.changeText(view.getByTestId('song-lyrics'), '[G]New words');
+
+    expect(view.queryByTestId('song-transpose-undo')).toBeNull();
+  });
+
   it('hands the song over as a ChordPro file named after its title', async () => {
     await render(<SongEditorScreen />);
 

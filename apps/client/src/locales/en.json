@@ -2247,6 +2247,7 @@
   "song_section_bridge": "Bridge",
   "song_transpose": "Transpose",
   "song_transpose_up": "Transpose up one semitone",
+  "song_transpose_undo": "Undo transposition",
   "song_transpose_down": "Transpose down one semitone",
   "song_duplicate_sections": "These sections share a name, so a scene cannot tell them apart: {{labels}}.",
   "song_number_duplicates": "Number them",

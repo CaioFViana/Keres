@@ -15,7 +15,7 @@ import {
 } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -99,8 +99,20 @@ const SongEditorScreen = () => {
     language: syllableLanguage,
   });
 
+  // What the song was before each transposition, so a step too far can be taken back. Anything
+  // written by hand afterwards ends it: restoring would erase that writing.
+  const undoStack = useRef<{ lyrics: string; melody: string; key: string | null }[]>([]);
+  const [undoDepth, setUndoDepth] = useState(0);
+  const forgetTransposition = useCallback(() => {
+    if (undoStack.current.length === 0) return;
+    undoStack.current = [];
+    setUndoDepth(0);
+  }, []);
+
   const transpose = useCallback(
     (semitones: number) => {
+      undoStack.current.push({ lyrics, melody, key: draft.value('key') ?? null });
+      setUndoDepth(undoStack.current.length);
       const spelling = transposedSpelling(draft.value('key') ?? null, semitones);
       draft.setField('lyrics', transposeLyrics(lyrics, semitones, spelling.preferFlats));
       // The tune moves with the chords, or they would no longer fit it.
@@ -111,6 +123,15 @@ const SongEditorScreen = () => {
     },
     [draft, lyrics, melody],
   );
+
+  const undoTransposition = useCallback(() => {
+    const before = undoStack.current.pop();
+    setUndoDepth(undoStack.current.length);
+    if (!before) return;
+    draft.setField('lyrics', before.lyrics);
+    draft.setField('melody', before.melody === '' ? null : before.melody);
+    draft.setField('key', before.key);
+  }, [draft]);
 
   const exportFile = useCallback(async () => {
     if (!song) return;
@@ -256,8 +277,13 @@ const SongEditorScreen = () => {
       <ScreenSection title={t('song_lyrics')} />
       <SongLyricsEditor
         value={lyrics}
-        onChange={(next) => draft.setField('lyrics', next)}
+        onChange={(next) => {
+          forgetTransposition();
+          draft.setField('lyrics', next);
+        }}
         onTranspose={transpose}
+        canUndoTranspose={undoDepth > 0}
+        onUndoTranspose={undoTransposition}
         editable={editable}
         words={words}
         syllableLanguage={syllableLanguage}
@@ -272,7 +298,10 @@ const SongEditorScreen = () => {
         editable={editable}
         words={words}
         language={syllableLanguage}
-        onChange={(next) => draft.setField('melody', next)}
+        onChange={(next) => {
+          forgetTransposition();
+          draft.setField('melody', next);
+        }}
         onBlur={() => void draft.flush()}
         phase={playback.phase}
         progress={playback.progress}

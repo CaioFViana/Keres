@@ -814,6 +814,7 @@
   "export_manuscript_paragraphs_block": "Blocos espaçados",
   "export_manuscript_paragraphs_indent": "Recuo na primeira linha",
   "export_manuscript_preset": "Começar de",
+  "export_manuscript_preset_chronicle": "Crônica",
   "export_manuscript_preset_custom": "Personalizado",
   "export_manuscript_preset_ebook": "E-book",
   "export_manuscript_preset_hint": "Um modelo preenche as opções abaixo; qualquer mudança o torna personalizado.",

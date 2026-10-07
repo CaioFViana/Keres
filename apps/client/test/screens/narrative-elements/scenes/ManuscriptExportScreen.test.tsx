@@ -12,6 +12,7 @@ let mockLocations: Partial<LocationSelect>[] = [];
 let mockEffectiveMedium: string | null = null;
 
 type OptionsProps = {
+  chronicle?: boolean;
   settings: ManuscriptExportSettings;
   onChange: (settings: ManuscriptExportSettings) => void;
   formats: readonly string[];
@@ -946,5 +947,28 @@ describe('ManuscriptExportScreen pages', () => {
         'warning',
       ),
     );
+  });
+});
+
+describe('ManuscriptExportScreen chronicle', () => {
+  it('starts a campaign from its chronicle, and offers the preset only there', async () => {
+    mockEffectiveMedium = 'campaign';
+    await renderScreen();
+
+    expect(mockOptionsProps?.settings).toMatchObject({
+      preset: 'chronicle',
+      format: 'pdf',
+      includeIndex: true,
+      includeSceneNames: true,
+    });
+    expect(mockOptionsProps?.chronicle).toBe(true);
+  });
+
+  it('keeps every other work on the plain defaults, without the preset on offer', async () => {
+    mockEffectiveMedium = 'comic';
+    await renderScreen();
+
+    expect(mockOptionsProps?.settings.preset).toBe('custom');
+    expect(mockOptionsProps?.chronicle).toBe(false);
   });
 });

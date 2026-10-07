@@ -9,7 +9,10 @@ import {
   MANUSCRIPT_EXPORT_FORMATS,
   SCREENPLAY_EXPORT_FORMATS,
 } from '../../../components/features/manuscript/export/manuscriptExport';
-import { defaultExportSettings } from '../../../components/features/manuscript/export/manuscriptExportSettings';
+import {
+  applyPreset,
+  defaultExportSettings,
+} from '../../../components/features/manuscript/export/manuscriptExportSettings';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
 import { useStoryStore } from '../../../state/storyStore';
@@ -37,7 +40,12 @@ const ManuscriptExportScreen = () => {
     sizeEstimate,
   } = useManuscriptExport();
   const effectiveArc = useStoryStore((state) => state.effectiveArc);
-  const [settings, setSettings] = useState(() => defaultExportSettings(storyAuthor));
+  // A campaign starts from its chronicle: the record of what the table played, ready to read.
+  const [settings, setSettings] = useState(() =>
+    effectiveArc?.medium === 'campaign'
+      ? applyPreset(defaultExportSettings(storyAuthor), 'chronicle')
+      : defaultExportSettings(storyAuthor),
+  );
   useScreenHeader({ target: 'parent', title: t('export_manuscript_title') });
 
   // A screenplay's own formats are offered where the work is one: the selected work (or the one the
@@ -81,6 +89,7 @@ const ManuscriptExportScreen = () => {
         looseCount={looseCount}
         chapterNumberingAvailable={!isBranching}
         arcs={arcs}
+        chronicle={medium === 'campaign'}
       />
     </EntityFormContainer>
   );

@@ -814,6 +814,7 @@
   "export_manuscript_paragraphs_block": "Spaced blocks",
   "export_manuscript_paragraphs_indent": "First-line indent",
   "export_manuscript_preset": "Start from",
+  "export_manuscript_preset_chronicle": "Chronicle",
   "export_manuscript_preset_custom": "Custom",
   "export_manuscript_preset_ebook": "E-book",
   "export_manuscript_preset_hint": "A preset fills in the options below; any change makes it custom.",

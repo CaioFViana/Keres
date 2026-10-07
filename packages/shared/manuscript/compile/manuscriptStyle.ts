@@ -33,7 +33,7 @@ export const ManuscriptStyleSchema = z.object({
 });
 export type ManuscriptStyle = z.infer<typeof ManuscriptStyleSchema>;
 
-export const MANUSCRIPT_PRESETS = ['ebook', 'paperback', 'submission'] as const;
+export const MANUSCRIPT_PRESETS = ['ebook', 'paperback', 'submission', 'chronicle'] as const;
 export type ManuscriptPreset = (typeof MANUSCRIPT_PRESETS)[number];
 
 /** A preset: a format and the settings its destination expects, each one overridable. */
@@ -87,6 +87,19 @@ export const MANUSCRIPT_PRESET_SETTINGS: Record<ManuscriptPreset, ManuscriptPres
       lineSpacing: 2,
       paragraphStyle: 'indent',
       sceneSeparator: 'hash',
+      collapseSpaces: true,
+    },
+  },
+  // The record of a tabletop campaign, for the table to read: every session a heading in the index,
+  // each scene named, plain paragraphs and a rule between scenes. Offered where the work is a campaign.
+  chronicle: {
+    format: 'pdf',
+    includeToc: true,
+    includeSceneNames: true,
+    titlePage: false,
+    style: {
+      paragraphStyle: 'block',
+      sceneSeparator: 'rule',
       collapseSpaces: true,
     },
   },

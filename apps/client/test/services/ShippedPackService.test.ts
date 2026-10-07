@@ -571,7 +571,7 @@ describe('the campaign pack', () => {
       expect(content.tags.length).toBeGreaterThanOrEqual(4);
       expect(content.extras.notes).toHaveLength(3);
       expect(content.settings.statSystem).toBe(false);
-      expect(content.settings.vocabulary?.terms.Chapter.singular).toBe(
+      expect(content.settings.vocabulary?.terms.Chapter?.singular).toBe(
         language === 'pt' ? 'Sessão' : 'Session',
       );
     },

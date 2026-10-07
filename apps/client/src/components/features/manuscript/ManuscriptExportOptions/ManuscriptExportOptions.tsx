@@ -42,6 +42,8 @@ interface ManuscriptExportOptionsProps {
   arcs: ManuscriptExportArc[];
   /** False when no file is made (only the online reader): the format is not asked. */
   showFormat?: boolean;
+  /** Offers the chronicle preset: the work is a tabletop campaign. */
+  chronicle?: boolean;
   /** For a screenplay format: how long the script is, and what that number stands on. */
   screenplayEstimate?: ScreenplayEstimate | null;
   /** How big the file will be, and how that stands against the limit; shown before anything is compiled. */
@@ -84,6 +86,7 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   chapterNumberingAvailable,
   arcs,
   showFormat = true,
+  chronicle = false,
   screenplayEstimate = null,
   sizeEstimate = null,
 }) => {
@@ -112,8 +115,10 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
               if (preset !== 'custom') onChange(applyPreset(settings, preset));
             }}
             options={[
-              ...MANUSCRIPT_PRESETS.filter((preset) =>
-                formats.includes(applyPreset(settings, preset).format),
+              ...MANUSCRIPT_PRESETS.filter(
+                (preset) =>
+                  (preset !== 'chronicle' || chronicle) &&
+                  formats.includes(applyPreset(settings, preset).format),
               ).map((preset) => ({
                 value: preset,
                 label: t(`export_manuscript_preset_${preset}`),

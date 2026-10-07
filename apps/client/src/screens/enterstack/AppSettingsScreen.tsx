@@ -3,6 +3,8 @@ import Button from '@/src/components/common/controls/Button/Button';
 import ThemedSwitch from '@/src/components/common/controls/ThemedSwitch/ThemedSwitch';
 import { SingleSelectPill } from '@/src/components/common/inputs/MultiSelectPill/MultiSelectPill';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
+import SettingsGroup from '@/src/components/features/app/SettingsGroup';
+import SettingsRow from '@/src/components/features/app/SettingsRow';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { StackActions, useNavigation } from '@react-navigation/native'; // Import useNavigation and StackActions
@@ -245,6 +247,8 @@ const SettingsScreen = () => {
     Math.max(Math.min(screenWidth * 0.44, screenHeight * 0.28), 132),
     256,
   );
+  const shownName = usernameDraft ?? (username || 'Keres User');
+  const initial = (normalizeLocalUsername(shownName) ?? username ?? 'K').charAt(0).toUpperCase();
 
   return (
     <KeyboardAwareScreen
@@ -252,191 +256,180 @@ const SettingsScreen = () => {
       contentContainerStyle={styles.content}
     >
       <View style={styles.settings}>
-        <View style={styles.settingItem}>
-          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('username')}</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              value={usernameDraft ?? (username || 'Keres User')}
-              onChangeText={handleUsernameChange}
-              onBlur={() => setUsernameDraft(null)}
-              placeholder={t('enter_username')}
-              style={[commonInputStyles.input, styles.input]}
+        <View style={styles.hero}>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.avatarLetter, { color: colors.onPrimary }]}>{initial}</Text>
+          </View>
+        </View>
+
+        <SettingsGroup title={t('settings_section_profile')}>
+          <SettingsRow
+            icon="person-outline"
+            label={t('username')}
+            below={
+              <>
+                <TextInput
+                  value={shownName}
+                  onChangeText={handleUsernameChange}
+                  onBlur={() => setUsernameDraft(null)}
+                  placeholder={t('enter_username')}
+                  style={[commonInputStyles.input, styles.input]}
+                />
+                {usernameInvalid && (
+                  <Text style={[styles.usernameError, { color: colors.error }]}>
+                    {t('username_required_error')}
+                  </Text>
+                )}
+              </>
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title={t('settings_section_appearance')}>
+          <SettingsRow
+            icon="language-outline"
+            label={t('select_language')}
+            below={
+              <View style={styles.select}>
+                <SingleSelectPill
+                  options={languageOptions}
+                  value={language || 'en'}
+                  onValueChange={handleLanguageChange as (value: string | null) => void}
+                  placeholder={t('select_language')}
+                />
+              </View>
+            }
+          />
+          <SettingsRow
+            icon="moon-outline"
+            label={t('dark_mode')}
+            control={<ThemedSwitch value={darkMode} onValueChange={handleDarkModeToggle} />}
+          />
+          <SettingsRow
+            icon="time-outline"
+            label={t('use_24_hour_time')}
+            hint={use24HourTime ? t('use_24_hour_time_on') : t('use_24_hour_time_off')}
+            control={<ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />}
+          />
+          <SettingsRow
+            icon="calendar-outline"
+            label={t('date_display_format')}
+            hint={t('date_display_format_hint')}
+            below={
+              <View style={styles.select}>
+                <SingleSelectPill
+                  options={[
+                    { label: t('date_display_format_iso'), value: 'iso' },
+                    { label: t('date_display_format_dmy'), value: 'dmy' },
+                    { label: t('date_display_format_mdy'), value: 'mdy' },
+                  ]}
+                  value={dateDisplayFormat}
+                  onValueChange={handleDateDisplayFormatChange}
+                  placeholder={t('date_display_format')}
+                />
+              </View>
+            }
+          />
+          {SHOW_EXPORT_FORMAT_SETTING && (
+            <SettingsRow
+              icon="image-outline"
+              label={t('export_format')}
+              hint={t('export_format_hint')}
+              below={
+                <View style={styles.select}>
+                  <SingleSelectPill
+                    options={[
+                      { label: t('export_format_svg'), value: 'svg' },
+                      { label: t('export_format_png'), value: 'png' },
+                    ]}
+                    value={exportFormat}
+                    onValueChange={handleExportFormatChange}
+                    placeholder={t('export_format')}
+                  />
+                </View>
+              }
             />
-            {usernameInvalid && (
-              <Text style={[styles.usernameError, { color: colors.error }]}>
-                {t('username_required_error')}
-              </Text>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.settingItem}>
-          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('select_language')}</Text>
-          <View style={styles.selectWrapper}>
-            <SingleSelectPill
-              options={languageOptions}
-              value={language || 'en'}
-              onValueChange={handleLanguageChange as (value: string | null) => void}
-              placeholder={t('select_language')}
-            />
-          </View>
-        </View>
-
-        <View style={styles.settingItem}>
-          <Text style={[styles.settingLabel, { color: colors.text }]}>{t('dark_mode')}</Text>
-          <ThemedSwitch value={darkMode} onValueChange={handleDarkModeToggle} />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('use_24_hour_time')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {use24HourTime ? t('use_24_hour_time_on') : t('use_24_hour_time_off')}
-            </Text>
-          </View>
-          <ThemedSwitch value={use24HourTime} onValueChange={handleTimeFormatToggle} />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('date_display_format')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {t('date_display_format_hint')}
-            </Text>
-          </View>
-          <View style={styles.dateFormatSelectWrapper}>
-            <SingleSelectPill
-              options={[
-                { label: t('date_display_format_iso'), value: 'iso' },
-                { label: t('date_display_format_dmy'), value: 'dmy' },
-                { label: t('date_display_format_mdy'), value: 'mdy' },
-              ]}
-              value={dateDisplayFormat}
-              onValueChange={handleDateDisplayFormatChange}
-              placeholder={t('date_display_format')}
-            />
-          </View>
-        </View>
-
-        {SHOW_EXPORT_FORMAT_SETTING && (
-          <View style={styles.settingItem}>
-            <View style={styles.settingTextWrap}>
-              <Text style={[styles.settingLabel, { color: colors.text }]}>
-                {t('export_format')}
-              </Text>
-              <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-                {t('export_format_hint')}
-              </Text>
-            </View>
-            <View style={styles.dateFormatSelectWrapper}>
-              <SingleSelectPill
-                options={[
-                  { label: t('export_format_svg'), value: 'svg' },
-                  { label: t('export_format_png'), value: 'png' },
-                ]}
-                value={exportFormat}
-                onValueChange={handleExportFormatChange}
-                placeholder={t('export_format')}
-              />
-            </View>
-          </View>
-        )}
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('suggest_literary_devices')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {suggestLiteraryDevices
-                ? t('suggest_literary_devices_on')
-                : t('suggest_literary_devices_off')}
-            </Text>
-          </View>
-          <ThemedSwitch
-            value={suggestLiteraryDevices}
-            onValueChange={handleLiteraryDevicesToggle}
-            style={styles.contextualHelpSwitch}
-          />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('show_contextual_help')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {showContextualHelp ? t('show_contextual_help_on') : t('show_contextual_help_off')}
-            </Text>
-          </View>
-          <ThemedSwitch
-            value={showContextualHelp}
-            onValueChange={handleContextualHelpToggle}
-            style={styles.contextualHelpSwitch}
-          />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>{t('show_tutorials')}</Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {showTutorials ? t('show_tutorials_on') : t('show_tutorials_off')}
-            </Text>
-          </View>
-          <ThemedSwitch
-            value={showTutorials}
-            onValueChange={handleShowTutorialsToggle}
-            style={styles.contextualHelpSwitch}
-          />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('warn_payment_due')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
-            </Text>
-          </View>
-          <ThemedSwitch
-            value={warnPaymentDue}
-            onValueChange={handleWarnPaymentDueToggle}
-            style={styles.contextualHelpSwitch}
-          />
-        </View>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingTextWrap}>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('settings_cjk_title')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {cjkPack === 'ready'
-                ? t('settings_cjk_installed', { size: CJK_PACK_SIZE_LABEL })
-                : t('settings_cjk_missing')}
-            </Text>
-          </View>
-          {cjkPack === 'ready' ? (
-            <Button onPress={handleCjkDelete}>{t('settings_cjk_delete')}</Button>
-          ) : (
-            <Button onPress={handleCjkInstall} disabled={cjkPack === 'working'}>
-              {t('settings_cjk_install')}
-            </Button>
           )}
-        </View>
+        </SettingsGroup>
 
-        <Button onPress={handleResetSeenTutorials} style={{ marginTop: 10 }}>
-          {t('reset_seen_tutorials')}
-        </Button>
+        <SettingsGroup title={t('settings_section_assistance')}>
+          <SettingsRow
+            icon="bulb-outline"
+            label={t('suggest_literary_devices')}
+            hint={
+              suggestLiteraryDevices
+                ? t('suggest_literary_devices_on')
+                : t('suggest_literary_devices_off')
+            }
+            control={
+              <ThemedSwitch
+                value={suggestLiteraryDevices}
+                onValueChange={handleLiteraryDevicesToggle}
+              />
+            }
+          />
+          <SettingsRow
+            icon="help-circle-outline"
+            label={t('show_contextual_help')}
+            hint={showContextualHelp ? t('show_contextual_help_on') : t('show_contextual_help_off')}
+            control={
+              <ThemedSwitch value={showContextualHelp} onValueChange={handleContextualHelpToggle} />
+            }
+          />
+          <SettingsRow
+            icon="school-outline"
+            label={t('show_tutorials')}
+            hint={showTutorials ? t('show_tutorials_on') : t('show_tutorials_off')}
+            control={
+              <ThemedSwitch value={showTutorials} onValueChange={handleShowTutorialsToggle} />
+            }
+          />
+          <SettingsRow
+            icon="card-outline"
+            label={t('warn_payment_due')}
+            hint={warnPaymentDue ? t('warn_payment_due_on') : t('warn_payment_due_off')}
+            control={
+              <ThemedSwitch value={warnPaymentDue} onValueChange={handleWarnPaymentDueToggle} />
+            }
+          />
+        </SettingsGroup>
 
-        <Button onPress={handleResetApplication} style={{ marginTop: 10 }}>
-          {t('reset_application')}
-        </Button>
+        <SettingsGroup title={t('settings_section_exports')}>
+          <SettingsRow
+            icon="text-outline"
+            label={t('settings_cjk_title')}
+            hint={
+              cjkPack === 'ready'
+                ? t('settings_cjk_installed', { size: CJK_PACK_SIZE_LABEL })
+                : t('settings_cjk_missing')
+            }
+            control={
+              cjkPack === 'ready' ? (
+                <Button onPress={handleCjkDelete}>{t('settings_cjk_delete')}</Button>
+              ) : (
+                <Button onPress={handleCjkInstall} disabled={cjkPack === 'working'}>
+                  {t('settings_cjk_install')}
+                </Button>
+              )
+            }
+          />
+        </SettingsGroup>
+
+        <SettingsGroup title={t('settings_section_data')}>
+          <SettingsRow
+            icon="refresh-outline"
+            label={t('reset_seen_tutorials')}
+            hint={t('settings_reset_tutorials_hint')}
+            onPress={handleResetSeenTutorials}
+          />
+          <SettingsRow
+            icon="trash-outline"
+            label={t('reset_application')}
+            hint={t('settings_reset_application_hint')}
+            destructive
+            onPress={handleResetApplication}
+          />
+        </SettingsGroup>
       </View>
 
       <View style={styles.branding}>
@@ -465,51 +458,23 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   settings: {
+    alignSelf: 'center',
     flexShrink: 0,
+    maxWidth: 720,
+    width: '100%',
   },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  hero: { alignItems: 'center', paddingTop: 8 },
+  avatar: {
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc', // Placeholder, will use theme colors
+    borderRadius: 36,
+    height: 72,
+    justifyContent: 'center',
+    width: 72,
   },
-  settingLabel: {
-    fontSize: 18, // Increased font size
-    fontWeight: 'bold', // Made font bold
-  },
-  settingTextWrap: {
-    flexShrink: 1,
-    paddingRight: 10,
-  },
-  settingHint: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  contextualHelpSwitch: {
-    marginLeft: 10,
-  },
-  input: {
-    marginBottom: 0,
-  },
+  avatarLetter: { fontSize: 32, fontWeight: '700' },
+  select: { height: 50 },
+  input: { marginBottom: 0 },
   usernameError: { fontSize: 13, marginTop: 4 },
-  inputWrapper: {
-    flex: 2,
-    width: '80%',
-    marginLeft: 10,
-    alignItems: 'flex-end', // Align children (TextInput) to the right
-  },
-  selectWrapper: {
-    width: 150, // Fixed width for the select component
-    marginLeft: 10, // Add margin to separate from label
-    height: 50, // Explicitly set height to match TextInput
-  },
-  dateFormatSelectWrapper: {
-    width: 250,
-    marginLeft: 10,
-    height: 50,
-  },
   branding: {
     alignItems: 'center',
     flexGrow: 1,

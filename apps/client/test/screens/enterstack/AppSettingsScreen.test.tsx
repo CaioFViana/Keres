@@ -248,6 +248,21 @@ describe('AppSettingsScreen', () => {
     expect(view.getByTestId('pill-select_language').props.children).toBe('select_language:en');
   });
 
+  it('groups the settings under titles, the destructive ones last', async () => {
+    const view = await render(<SettingsScreen />);
+    await view.findByText('username');
+
+    const titles = view.getAllByRole('header').map((node) => node.props.children);
+    expect(titles).toEqual([
+      'settings_section_profile',
+      'settings_section_appearance',
+      'settings_section_assistance',
+      'settings_section_exports',
+      'settings_section_data',
+    ]);
+    expect(view.getByText('settings_reset_application_hint')).toBeTruthy();
+  });
+
   it('opens the credits screen from the Keres emblem', async () => {
     const view = await render(<SettingsScreen />);
     await view.findByLabelText('credits_open_credits');

@@ -2174,6 +2174,8 @@
   "song_export": "Exportar como ChordPro",
   "song_export_failed": "Não foi possível exportar a canção.",
   "melody_title": "Melodia",
+  "melody_length": "Duração: {{time}}",
+  "melody_length_estimated": "Duração: cerca de {{time}}, estimada pelas cifras ou pelos versos (escreva a melodia para medir).",
   "melody_hint": "As notas encontram as sílabas na ordem, uma nota para cada. Toque nas teclas ou escreva as notas abaixo, e ouça cantarolada.",
   "melody_play": "Tocar",
   "melody_stop": "Parar",

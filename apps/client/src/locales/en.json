@@ -2174,6 +2174,8 @@
   "song_export": "Export as ChordPro",
   "song_export_failed": "Could not export the song.",
   "melody_title": "Melody",
+  "melody_length": "Length: {{time}}",
+  "melody_length_estimated": "Length: about {{time}}, guessed from the chords or the lines (write the tune to measure it).",
   "melody_hint": "Notes meet syllables in order, one note for each. Tap the keys or write the notes below, then play it hummed.",
   "melody_play": "Play",
   "melody_stop": "Stop",

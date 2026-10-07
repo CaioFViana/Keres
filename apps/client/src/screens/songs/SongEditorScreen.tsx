@@ -295,6 +295,8 @@ const SongEditorScreen = () => {
         lyrics={lyrics}
         melody={melody}
         songKey={draft.value('key') ?? null}
+        tempo={draft.value('tempo') ?? null}
+        meter={draft.value('meter') ?? null}
         editable={editable}
         words={words}
         language={syllableLanguage}

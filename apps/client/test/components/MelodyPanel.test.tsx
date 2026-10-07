@@ -45,6 +45,8 @@ const panel = (props: Partial<React.ComponentProps<typeof MelodyPanel>> = {}) =>
     lyrics={LYRICS}
     melody=""
     songKey={null}
+    tempo={120}
+    meter={'4/4'}
     editable
     words={words}
     language="en"
@@ -79,6 +81,29 @@ describe('MelodyPanel', () => {
 
     expect(view.getByText(/melody_status_short.*"label":"Verse 1".*"difference":1/)).toBeTruthy();
     expect(view.getByText(/melody_status_match.*"label":"Chorus"/)).toBeTruthy();
+  });
+
+  it('says how long the song runs: measured by its tune, guessed without one', async () => {
+    const guessed = await render(
+      panel({ lyrics: '{sov: V}\n[G]One two [C]three four\n{eov}', melody: '' }),
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+    expect(guessed.getByTestId('melody-length').props.children).toBe(
+      'melody_length_estimated:{"time":"0:04"}',
+    );
+    await guessed.unmount();
+
+    const measured = await render(
+      panel({ lyrics: '{sov: V}\nOne two three four\n{eov}', melody: 'C D E F' }),
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+    expect(measured.getByTestId('melody-length').props.children).toBe(
+      'melody_length:{"time":"0:02"}',
+    );
   });
 
   it('lists the notes it did not understand', async () => {

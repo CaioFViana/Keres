@@ -79,6 +79,14 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   repeated section names, translations out of step and (with completeness checks) unused songs;
   global search reads the lyrics. Sync, export/import, clone, purge, tier entity limit;
   `SceneMusicScreen`, `SongListScreen`, `SongEditorScreen`.
+  **Tune and hearing it** (`Song.melody`, `MelodyPanel`): a closed ABC subset, one tune per
+  section with inheritance (a ballad is written once), notes met to syllables by order with a
+  per-section count; keyboard or text entry; transposing moves chords, key and tune together and
+  can be undone. Play hums the tune with a synthetic voice (hum / "ah" / "la", rendered in JS in
+  slices, cached by hash, played by `expo-audio`) while the words follow line by line; an
+  optional click; an optional accompaniment of the chords (guitar, harp, piano, violin; waltz,
+  ballad, march, lullaby), alone when there is no tune. MIDI and ABC files out. A music cue
+  sheet (CSV / Markdown) of every scene's music, with references, key, length and words sung.
 - **Screenplay** (arc medium): `Scene.body` is Fountain; `Location.intExt` +
   generated scene heading only when the text has none (explicit indicator on the
   scene); Fountain and an industry-layout PDF (Courier, indents) export with a stated

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   appendNote,
   FEELS,
+  formatDuration,
   type Feel,
   INSTRUMENTS,
   type Instrument,
@@ -12,6 +13,7 @@ import {
   keyPrefersFlats,
   removeLastNote,
   resolveMelodies,
+  songSeconds,
   type SectionWords,
   type SyllableLanguage,
   type VoiceTimbre,
@@ -35,6 +37,8 @@ interface MelodyPanelProps {
   lyrics: string;
   melody: string;
   songKey: string | null;
+  tempo: number | null;
+  meter: string | null;
   editable: boolean;
   words: SectionWords;
   language: SyllableLanguage;
@@ -79,6 +83,8 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
   lyrics,
   melody,
   songKey,
+  tempo,
+  meter,
   editable,
   words,
   language,
@@ -109,8 +115,13 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
   const view = useMemo(() => {
     const song = parseChordPro(settledLyrics, words);
     const parsed = parseMelody(settledMelody);
-    return { rows: resolveMelodies(song, parsed, language), errors: parsed.errors };
-  }, [settledLyrics, settledMelody, words, language]);
+    const length = songSeconds(
+      { lyrics: settledLyrics, melody: settledMelody || null, tempo, meter },
+      null,
+      language,
+    );
+    return { rows: resolveMelodies(song, parsed, language), errors: parsed.errors, length };
+  }, [settledLyrics, settledMelody, words, language, tempo, meter]);
 
   const labels = view.rows.flatMap((row) => (row.label ? [row.label] : []));
   const writingInto = target && labels.includes(target) ? target : (labels[0] ?? null);
@@ -249,6 +260,14 @@ const MelodyPanel: React.FC<MelodyPanelProps> = ({
       {problem ? (
         <Text style={styles.error} testID="melody-problem">
           {t(problem === 'no-tune' ? 'melody_no_tune' : 'melody_play_failed')}
+        </Text>
+      ) : null}
+
+      {view.length.seconds > 0 ? (
+        <Text style={styles.hint} testID="melody-length">
+          {t(view.length.exact ? 'melody_length' : 'melody_length_estimated', {
+            time: formatDuration(view.length.seconds),
+          })}
         </Text>
       ) : null}
 

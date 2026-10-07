@@ -9,6 +9,43 @@
 > Levantamento sem alterar código. Fatos do repo conferidos em out/2026; o que não foi conferido
 > está marcado.
 
+## Estado da implementação (out/2026)
+
+Fases 1, 2, 3a e 3b feitas; da fase 4 só a folha de música. Tudo em commits não assinados, com testes.
+
+| Parte | Estado | Onde |
+|---|---|---|
+| Fase 1: `SceneMusic` (vínculo com mídia da Galeria), role, deixa, achados de integridade | feita | `SceneMusicScreen`, `useSceneMusic` |
+| Fase 2: `Song` (lead sheet ChordPro, seções, transpor com desfazer, contagem de sílabas, tradução, importar/exportar ChordPro), `sections` no vínculo, busca global na letra, Galeria dona de `Song`, publicação (adendo ou após a cena; roteiro como letra Fountain), Story Analysis (alvo apagado, seção sumida, canção inteira por seção sumida, rótulo repetido, tradução que não casa, canção sem uso), aviso do export de canções impressas inteiras, exemplo em Alice | feita | `SongEditorScreen`, `musicChecks.ts`, `songPrint.ts` |
+| Fase 3a: melodia (subconjunto fechado de ABC, uma por seção com herança), alinhamento com as sílabas, teclado de 2 oitavas, voz sintética (cantarolar, "ah", "lá"), WAV em fatias com cache por hash (20 MB), karaokê, MIDI e ABC | feita | `melody.ts`, `timeline.ts`, `voice.ts`, `SongAudioService.ts`, `MelodyPanel.tsx` |
+| Fase 3b: acompanhamento por acordes (violão, harpa, piano, violino; valsa, balada, marcha, ninar), sozinho quando não há melodia | feita | `accompaniment.ts`, `instruments.ts` |
+| Fase 4: folha de música (CSV e Markdown) | feita | `cueSheet.ts`, `CueSheetService.ts` |
+| Fase 4: pauta em Skia com Bravura; ligar a canção a quem a canta | **não feita** | depende de demanda (ver abaixo) |
+
+**Spike (decisão 15), medido em bun, não em aparelho.** 30 s de melodia hummed:
+- com JIT: ~6 ms; com o JIT desligado (`BUN_JSC_useJIT=0`, proxy de um interpretador): ~210 ms;
+- com acompanhamento (30 s, 120 notas de fundo): ~10 ms com JIT, 0,45–0,55 s sem JIT (violão, harpa,
+  piano, violino);
+- a régua é 2 s num aparelho intermediário; a margem é de ~4× sobre o proxy. **Hermes não foi
+  medido** (não há VM do Hermes no repo, só o compilador) e o aparelho intermediário também não.
+
+**Desvios do plano**
+- Rota A (JS + `expo-audio`); a rota B (`react-native-audio-api`) não foi avaliada, porque a A passou.
+- O preview não toca um "pequeno conjunto de players" para o teclado: usa um player só, que troca de
+  arquivo a cada tecla (cada tom é um WAV curto em cache). Latência da tecla não medida.
+- O cache descarta o mais antigo escrito (não o menos usado): o expo-file-system não expõe último
+  acesso.
+- `import()` dinâmico para carregar a síntese só ao tocar **não foi feito** (não conferi o suporte em
+  Metro/Hermes); o módulo é pequeno e nada roda até apertar tocar.
+- Karaokê: o relógio do player é lido a cada 120 ms; a linha só re-renderiza ao mudar.
+- A duração da canção aparece no editor (medida pela melodia, ou estimada pelas cifras); a lista de
+  canções mostra tom, andamento e compasso, não a duração. **Sugerir a duração da cena a partir da
+  canção não foi feito.**
+
+**Não verificado** (só em aparelho ou na web): qualidade e naturalidade da voz e dos instrumentos
+(ouvidos não testados; verifiquei afinação e espectro por medida), latência do teclado, modo silencioso
+do iOS, `expo-audio` com `blob:` na web, tamanho real do cache em aparelho.
+
 ## Decidido
 
 1. **Publicação:** adendo "Canções" no fim **ou** a letra no fim da cena em que é cantada; o escritor

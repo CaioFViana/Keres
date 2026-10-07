@@ -10,6 +10,11 @@ export function screenAnchorId(screen: string, part: string): string {
   return `screen:${screen}:${part}`;
 }
 
+/** Anchor id of a header action, by its icon (`header:add`): the actions' own ids are positions, not names. */
+export function headerAnchorId(icon: string): string {
+  return `header:${icon}`;
+}
+
 /**
  * Measurable tour targets, by anchor id. Entries hold a measure closure rather than a rect:
  * window coordinates are only valid at read time (the drawer scrolls, the keyboard opens), so

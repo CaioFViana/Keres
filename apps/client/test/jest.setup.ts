@@ -257,3 +257,11 @@ jest.mock('react-native-enriched-html', () => {
     },
   };
 });
+
+// A screen's tour hook reads the navigation container's focus. Screens are rendered here without
+// one, and the tours have their own suites, so by default the hook does nothing; a suite that tests
+// it (or a screen's wiring of it) says so with its own mock or `jest.unmock`.
+jest.mock('../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: () => undefined,
+}));

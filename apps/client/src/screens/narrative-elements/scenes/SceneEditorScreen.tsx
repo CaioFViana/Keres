@@ -29,6 +29,8 @@ import {
   useEntityInitialLoad,
 } from '../../../hooks/useEntityRefreshLifecycle';
 import { useSceneBodyDraft } from '../../../hooks/useSceneBodyDraft';
+import { useScreenAnchor } from '../../../guides/useGuideAnchor';
+import { useScreenTour } from '../../../guides/useScreenTour';
 import { useScreenHeader } from '../../../hooks/useScreenHeader';
 import { useStoryRole } from '../../../hooks/useStoryRole';
 import { useWebSelectionClip } from '../../../hooks/useWebSelectionClip';
@@ -70,6 +72,9 @@ function SceneEditorContent({
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  useScreenTour('SceneEditor');
+  const toolbarAnchorRef = useScreenAnchor('SceneEditor', 'toolbar');
+  const footerAnchorRef = useScreenAnchor('SceneEditor', 'footer');
   // Write/read/review state machine: write owns the toolbar, the native editor and the save
   // footer; read and review render the live serialized doc (unsaved typing included), with
   // review adding the prose-comments entry. Mode switches never touch the doc.
@@ -226,17 +231,19 @@ function SceneEditorContent({
         />
       ) : null}
       {mode === 'write' && (
-        <SceneBodyToolbar
-          testID="scene-body-toolbar"
-          onAction={handleToolbarAction}
-          disabled={!canEdit || saving}
-          active={{
-            bold: activeMarks.includes('bold'),
-            italic: activeMarks.includes('italic'),
-            underline: activeMarks.includes('underline'),
-            strikethrough: activeMarks.includes('strikethrough'),
-          }}
-        />
+        <View ref={toolbarAnchorRef} collapsable={false}>
+          <SceneBodyToolbar
+            testID="scene-body-toolbar"
+            onAction={handleToolbarAction}
+            disabled={!canEdit || saving}
+            active={{
+              bold: activeMarks.includes('bold'),
+              italic: activeMarks.includes('italic'),
+              underline: activeMarks.includes('underline'),
+              strikethrough: activeMarks.includes('strikethrough'),
+            }}
+          />
+        </View>
       )}
       <ScrollView
         ref={scrollRef}
@@ -284,17 +291,19 @@ function SceneEditorContent({
         </View>
       )}
       {mode === 'write' && (
-        <SceneBodyFooter
-          testID="scene-body-footer"
-          wordCount={wordCount}
-          charCount={charCount}
-          sizeStatus={sizeStatus}
-          overLimit={overLimit}
-          canSave={canSave && canEdit}
-          saving={saving}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSave={() => void save()}
-        />
+        <View ref={footerAnchorRef} collapsable={false}>
+          <SceneBodyFooter
+            testID="scene-body-footer"
+            wordCount={wordCount}
+            charCount={charCount}
+            sizeStatus={sizeStatus}
+            overLimit={overLimit}
+            canSave={canSave && canEdit}
+            saving={saving}
+            hasUnsavedChanges={hasUnsavedChanges}
+            onSave={() => void save()}
+          />
+        </View>
       )}
       <CommentThreadModal
         visible={commentsOpen}

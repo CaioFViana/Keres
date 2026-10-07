@@ -9,6 +9,8 @@ import EntityGalleryManager from '@/src/components/features/gallery/GalleryManag
 import EntityMetadata from '@/src/components/features/mentions/EntityMetadataWithBacklinks';
 import ItemSceneManager from '@/src/components/features/items/ItemManager/ItemSceneManager';
 import NoteRelationManager from '@/src/components/features/notes/NoteManager/NoteRelationManager';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import SceneMusicEntry from '@/src/components/features/scenes/SceneMusic/SceneMusicEntry';
 import ScenePagesEntry from '@/src/components/features/scenes/ScenePages/ScenePagesEntry';
 import SceneNavigationControls from '@/src/components/features/scenes/SceneNavigationControls/SceneNavigationControls';
@@ -99,6 +101,9 @@ export interface SceneDetailContentProps {
 }
 
 export function SceneDetailContent(props: SceneDetailContentProps) {
+  useScreenTour('SceneDetail');
+  const pagesAnchorRef = useScreenAnchor('SceneDetail', 'pages');
+  const musicAnchorRef = useScreenAnchor('SceneDetail', 'music');
   const {
     scene,
     navigation,
@@ -171,14 +176,18 @@ export function SceneDetailContent(props: SceneDetailContentProps) {
           {t('manuscript_unsaved_draft')}
         </Text>
       )}
-      <ScenePagesEntry
-        scene={scene}
-        onOpen={() => navigation.navigate('ScenePages', { sceneId })}
-      />
-      <SceneMusicEntry
-        scene={scene}
-        onOpen={() => navigation.navigate('SceneMusic', { sceneId })}
-      />
+      <View ref={pagesAnchorRef} collapsable={false}>
+        <ScenePagesEntry
+          scene={scene}
+          onOpen={() => navigation.navigate('ScenePages', { sceneId })}
+        />
+      </View>
+      <View ref={musicAnchorRef} collapsable={false}>
+        <SceneMusicEntry
+          scene={scene}
+          onOpen={() => navigation.navigate('SceneMusic', { sceneId })}
+        />
+      </View>
       {dateForScene(scene) && (
         <DetailField label={t('calendar_scene_date')} value={dateForScene(scene)!.date} />
       )}

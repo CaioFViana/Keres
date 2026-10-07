@@ -1,3 +1,4 @@
+jest.unmock('../../src/guides/useScreenTour');
 import { renderHook } from '@testing-library/react-native';
 import { useScreenTour } from '../../src/guides/useScreenTour';
 import { useGuideStore } from '../../src/state/guideStore';

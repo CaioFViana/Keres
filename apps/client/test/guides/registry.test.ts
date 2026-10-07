@@ -9,6 +9,7 @@ describe('screenGuides', () => {
       'CharactersStack',
       'CommentsStack',
       'CustomizationStack',
+      'EntityForm',
       'ExampleStories',
       'GalleryStack',
       'GlobalSearch',
@@ -23,6 +24,9 @@ describe('screenGuides', () => {
       'OperationLogStack',
       'PackList',
       'PlotsStack',
+      'SceneDetail',
+      'SceneEditor',
+      'SceneMusic',
       'SketchCanvas',
       'SketchStack',
       'SongEditor',
@@ -67,7 +71,7 @@ describe('screenGuides', () => {
     }
   });
 
-  it('addresses drawer steps at the guide drawer and screen steps at screen regions', () => {
+  it('addresses drawer steps at the guide drawer, and other steps at screen regions or header actions', () => {
     for (const guide of Object.values(screenGuides)) {
       for (const step of guide.steps) {
         expect(step.anchors?.length ?? 0).toBeGreaterThan(0);
@@ -76,7 +80,7 @@ describe('screenGuides', () => {
             expect(step.drawerId).toBe(guide.drawerId);
             expect(anchor.startsWith(`drawer:${guide.drawerId}:`)).toBe(true);
           } else {
-            expect(anchor.startsWith('screen:')).toBe(true);
+            expect(/^(screen|header):/.test(anchor)).toBe(true);
           }
         }
       }

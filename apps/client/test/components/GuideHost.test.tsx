@@ -1,4 +1,5 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
 import GuideHost from '../../src/components/common/feedback/GuideHost/GuideHost';
 import { __resetGuideAnchorsForTests, registerGuideAnchor } from '../../src/guides/anchorRegistry';
@@ -163,6 +164,28 @@ describe('GuideHost', () => {
     expect(screen.queryByTestId('guide-dim')).toBeNull();
   });
 
+  it('measures again a moment later, so the hole covers what laid out after the tour began', async () => {
+    let calls = 0;
+    registerGuideAnchor('late', async () => {
+      calls += 1;
+      return calls === 1
+        ? { x: 10, y: 300, width: 200, height: 40 }
+        : { x: 10, y: 100, width: 200, height: 240 };
+    });
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [{ id: 's1', anchors: ['late'], titleKey: 't', bodyKey: 'b' }],
+    });
+    const screen = await render(<GuideHost />);
+    await screen.findByTestId('guide-spotlight');
+
+    // Once it has measured again the card sits under the taller hole, not the first, shorter one.
+    await waitFor(() => expect(calls).toBeGreaterThan(1), { timeout: 2000 });
+    const wrap = () => StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
+    await waitFor(() => expect(wrap().top).toBe(100 - 8 + 240 + 16 + 14), { timeout: 2000 });
+  });
+
   it('opens card-only when the measurement never answers', async () => {
     jest.useFakeTimers();
     try {
@@ -258,6 +281,84 @@ describe('GuideHost', () => {
     expect(scrollTo).toHaveBeenCalledWith(400 - 96);
   });
 
+  it('puts the drawer back when the tour that opened it ends', async () => {
+    const dispatch = jest.fn();
+    registerGuideDrawer('story-selection', {
+      navigation: { dispatch } as never,
+      scrollTo: jest.fn(),
+      getScrollOffset: () => 0,
+      measureScrollWindowY: async () => 0,
+    });
+    registerGuideAnchor('item', async () => ({ x: 0, y: 400, width: 200, height: 40 }));
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [
+        { id: 's1', drawerId: 'story-selection', anchors: ['item'], titleKey: 't', bodyKey: 'b' },
+      ],
+    });
+    const screen = await render(<GuideHost />);
+    await screen.findByTestId('guide-spotlight');
+
+    await fireEvent.press(screen.getByTestId('guide-finish'));
+
+    expect(dispatch).toHaveBeenCalledWith(DrawerActions.closeDrawer());
+  });
+
+  it('leaves the drawer alone when the tour never opened it', async () => {
+    const dispatch = jest.fn();
+    registerGuideDrawer('story-selection', {
+      navigation: { dispatch } as never,
+      scrollTo: jest.fn(),
+      getScrollOffset: () => 0,
+      measureScrollWindowY: async () => 0,
+    });
+    useGuideStore.getState().startTour(twoStepGuide);
+    const screen = await render(<GuideHost />);
+
+    await fireEvent.press(screen.getByTestId('guide-skip'));
+
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('waits for a sliding drawer to come to rest before it points at anything in it', async () => {
+    registerGuideDrawer('story-selection', {
+      navigation: { dispatch: jest.fn() } as never,
+      scrollTo: jest.fn(),
+      getScrollOffset: () => 0,
+      measureScrollWindowY: async () => 0,
+    });
+    // The group is off to the left while the drawer opens, then in place.
+    const xs = [-268, -150, 16, 16, 16, 16, 16];
+    let call = 0;
+    registerGuideAnchor('item', async () => ({
+      x: xs[Math.min(call++, xs.length - 1)],
+      y: 100,
+      width: 236,
+      height: 60,
+    }));
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [
+        { id: 's1', drawerId: 'story-selection', anchors: ['item'], titleKey: 't', bodyKey: 'b' },
+      ],
+    });
+    const screen = await render(<GuideHost />);
+
+    await screen.findByTestId('guide-spotlight', {}, { timeout: 3000 });
+    const arrow = () => screen.getByTestId('guide-arrow');
+    // The arrow is over the middle of the group where it came to rest (x 16..252), not the first guess.
+    await waitFor(
+      () => {
+        const left = StyleSheet.flatten(arrow().props.style).left as number;
+        const card = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
+        expect((card.left as number) + left + 8).toBeCloseTo(16 + 236 / 2, -1);
+      },
+      { timeout: 3000 },
+    );
+  });
+
   it('does not open permanent drawers on wide layouts', async () => {
     mockResponsiveLayout.isWide = true;
     const dispatch = jest.fn();
@@ -327,10 +428,10 @@ describe('the tour card and the navigation bar', () => {
     );
 
     const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
-    expect(wrap.paddingBottom).toBe(54);
+    expect(wrap.bottom).toBe(54);
   });
 
-  it('moves the card to the top when the bottom would cover what it explains', async () => {
+  it('puts the card against its target, over it when the bottom is too tight, with an arrow toward it', async () => {
     registerGuideAnchor('low', async () => ({ x: 0, y: 1180, width: 300, height: 60 }));
     registerGuideAnchor('high', async () => ({ x: 0, y: 100, width: 300, height: 60 }));
     useGuideStore.getState().startTour({
@@ -343,12 +444,30 @@ describe('the tour card and the navigation bar', () => {
     });
     const screen = await render(<GuideHost />);
     await screen.findByTestId('guide-spotlight');
-    const placed = () =>
-      StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style).justifyContent;
-    expect(placed()).toBe('flex-end');
+    const placed = () => StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style).top;
+    expect(placed()).toBe(100 - 8 + 60 + 16 + 14 - 0);
 
     await fireEvent.press(screen.getByTestId('guide-next'));
-    await waitFor(() => expect(placed()).toBe('flex-start'));
+    await waitFor(() => expect(placed()).toBe(1180 - 8 - 14 - 230));
+  });
+
+  it('says where the person is in the tour', async () => {
+    useGuideStore.getState().startTour(twoStepGuide);
+    const screen = await render(<GuideHost />);
+
+    expect(screen.getByText('guide_progress')).toBeTruthy();
+    expect(screen.getByTestId('guide-progress').children).toHaveLength(2);
+  });
+
+  it('has no progress to show in a tour of one step', async () => {
+    useGuideStore.getState().startTour({
+      id: 'Single',
+      drawerId: 'story-selection',
+      steps: [{ id: 's1', titleKey: 't', bodyKey: 'b' }],
+    });
+    const screen = await render(<GuideHost />);
+
+    expect(screen.queryByTestId('guide-progress')).toBeNull();
   });
 
   it('keeps its plain margin where no bar overlaps the window', async () => {
@@ -356,6 +475,6 @@ describe('the tour card and the navigation bar', () => {
     const screen = await render(<GuideHost />);
 
     const wrap = StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style);
-    expect(wrap.paddingBottom).toBe(20);
+    expect(wrap.bottom).toBe(20);
   });
 });

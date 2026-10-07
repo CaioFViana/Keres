@@ -8,7 +8,7 @@ interface MeasurableNode {
   ) => void;
 }
 
-function measureNode(node: unknown): Promise<GuideRect | null> {
+export function measureGuideNode(node: unknown): Promise<GuideRect | null> {
   const measure = (node as MeasurableNode | null)?.measureInWindow;
   if (typeof measure !== 'function') return Promise.resolve(null);
   return new Promise((resolve) => {
@@ -35,7 +35,7 @@ export function useGuideAnchor(id: string): (node: unknown) => void {
         unregisterGuideAnchor(id);
         return;
       }
-      registerGuideAnchor(id, () => measureNode(node));
+      registerGuideAnchor(id, () => measureGuideNode(node));
     },
     [id],
   );

@@ -15,6 +15,8 @@ import SceneMusicTargetPicker from '@/src/components/features/scenes/SceneMusic/
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import { useDrizzle } from '@/src/db';
 import type { SceneSelect } from '@/src/db/schema';
+import { useScreenAnchor } from '@/src/guides/useGuideAnchor';
+import { useScreenTour } from '@/src/guides/useScreenTour';
 import { useBackButtonHandler } from '@/src/hooks/useBackButtonHandler';
 import { useConfirmDelete } from '@/src/hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '@/src/hooks/useFormScrollBottomPadding';
@@ -45,6 +47,9 @@ type RouteProps = RouteProp<NarrativeElementsStackParamList, 'SceneMusic'>;
  */
 const SceneMusicScreen = () => {
   useBackButtonHandler();
+  useScreenTour('SceneMusic');
+  const noticeAnchorRef = useScreenAnchor('SceneMusic', 'notice');
+  const cardsAnchorRef = useScreenAnchor('SceneMusic', 'cards');
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
@@ -169,79 +174,86 @@ const SceneMusicScreen = () => {
       contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
     >
       <Text style={[styles.sceneName, { color: colors.text }]}>{scene.name}</Text>
-      <Text style={[styles.notice, { color: colors.textSecondary }]}>
-        {t('scene_music_notice')}
-      </Text>
+      <View ref={noticeAnchorRef} collapsable={false}>
+        <Text style={[styles.notice, { color: colors.textSecondary }]}>
+          {t('scene_music_notice')}
+        </Text>
+      </View>
       {playback.problem ? (
         <Text style={[styles.notice, { color: colors.error }]} testID="scene-music-listen-problem">
           {t(playback.problem === 'no-tune' ? 'scene_music_listen_none' : 'melody_play_failed')}
         </Text>
       ) : null}
-      {views.length === 0 ? (
-        <View style={styles.emptyBox} testID="scene-music-empty">
-          <Ionicons name="musical-notes-outline" size={40} color={colors.textSecondary} />
-          <Text style={[styles.empty, { color: colors.textSecondary }]}>
-            {t('scene_music_empty')}
-          </Text>
-          {canEdit ? (
-            <Button onPress={() => setPickerFor('add')}>{t('scene_music_add')}</Button>
-          ) : null}
-        </View>
-      ) : null}
-      {views.map((view, index) => (
-        <SceneMusicCard
-          key={view.music.id}
-          view={view}
-          isFirst={index === 0}
-          isLast={index === views.length - 1}
-          canEdit={!!canEdit}
-          onCueCommit={(cue) =>
-            userId &&
-            void attempt(() => service.updateMusic(userId, view.music.id, { cue }), 'edit the cue')
-          }
-          onRoleChange={(role: SceneMusicRole) =>
-            userId &&
-            void attempt(
-              () => service.updateMusic(userId, view.music.id, { role }),
-              'edit the role',
-            )
-          }
-          onSectionsChange={(sections) =>
-            userId &&
-            void attempt(
-              () => service.updateMusic(userId, view.music.id, { sections }),
-              'edit the sections',
-            )
-          }
-          onMove={(delta) =>
-            userId &&
-            void attempt(() => service.moveMusic(userId, view.music.id, index + delta), 'move')
-          }
-          onReplace={() => setPickerFor(view.music.id)}
-          onOpen={() =>
-            view.music.songId
-              ? (
-                  navigation as unknown as { navigate: (stack: string, params: unknown) => void }
-                ).navigate('SongStack', {
-                  screen: 'SongEditor',
-                  params: { songId: view.music.songId },
-                })
-              : view.music.galleryId && openMedia(view.music.galleryId)
-          }
-          onListen={view.targetKind === 'song' ? () => void listen(view) : undefined}
-          listening={playback.tag === view.music.id && playback.phase !== 'idle'}
-          onDelete={() =>
-            confirmDelete({
-              titleKey: 'scene_music_delete_title',
-              messageKey: 'scene_music_delete_message',
-              onConfirm: async () => {
-                if (userId) await service.deleteMusic(userId, view.music.id);
-              },
-              failureKey: 'scene_music_save_failed',
-            })
-          }
-        />
-      ))}
+      <View ref={cardsAnchorRef} collapsable={false}>
+        {views.length === 0 ? (
+          <View style={styles.emptyBox} testID="scene-music-empty">
+            <Ionicons name="musical-notes-outline" size={40} color={colors.textSecondary} />
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>
+              {t('scene_music_empty')}
+            </Text>
+            {canEdit ? (
+              <Button onPress={() => setPickerFor('add')}>{t('scene_music_add')}</Button>
+            ) : null}
+          </View>
+        ) : null}
+        {views.map((view, index) => (
+          <SceneMusicCard
+            key={view.music.id}
+            view={view}
+            isFirst={index === 0}
+            isLast={index === views.length - 1}
+            canEdit={!!canEdit}
+            onCueCommit={(cue) =>
+              userId &&
+              void attempt(
+                () => service.updateMusic(userId, view.music.id, { cue }),
+                'edit the cue',
+              )
+            }
+            onRoleChange={(role: SceneMusicRole) =>
+              userId &&
+              void attempt(
+                () => service.updateMusic(userId, view.music.id, { role }),
+                'edit the role',
+              )
+            }
+            onSectionsChange={(sections) =>
+              userId &&
+              void attempt(
+                () => service.updateMusic(userId, view.music.id, { sections }),
+                'edit the sections',
+              )
+            }
+            onMove={(delta) =>
+              userId &&
+              void attempt(() => service.moveMusic(userId, view.music.id, index + delta), 'move')
+            }
+            onReplace={() => setPickerFor(view.music.id)}
+            onOpen={() =>
+              view.music.songId
+                ? (
+                    navigation as unknown as { navigate: (stack: string, params: unknown) => void }
+                  ).navigate('SongStack', {
+                    screen: 'SongEditor',
+                    params: { songId: view.music.songId },
+                  })
+                : view.music.galleryId && openMedia(view.music.galleryId)
+            }
+            onListen={view.targetKind === 'song' ? () => void listen(view) : undefined}
+            listening={playback.tag === view.music.id && playback.phase !== 'idle'}
+            onDelete={() =>
+              confirmDelete({
+                titleKey: 'scene_music_delete_title',
+                messageKey: 'scene_music_delete_message',
+                onConfirm: async () => {
+                  if (userId) await service.deleteMusic(userId, view.music.id);
+                },
+                failureKey: 'scene_music_save_failed',
+              })
+            }
+          />
+        ))}
+      </View>
       {canEdit && views.length > 0 ? (
         <View style={styles.add}>
           <Button onPress={() => setPickerFor('add')}>{t('scene_music_add')}</Button>

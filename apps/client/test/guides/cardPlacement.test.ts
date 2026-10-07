@@ -1,34 +1,98 @@
 /** @jest-environment node */
-import { cardPlacement } from '../../src/guides/cardPlacement';
+import { cardLayout, cardMode } from '../../src/guides/cardPlacement';
 
-const base = { windowHeight: 800, cardHeight: 220, topInset: 24, bottomInset: 0 };
+const window = {
+  windowWidth: 400,
+  windowHeight: 800,
+  cardHeight: 220,
+  topInset: 24,
+  bottomInset: 0,
+};
+const at = (y: number, height: number, x = 100, width = 200) => ({ x, y, width, height });
 
-describe('cardPlacement', () => {
+describe('cardMode', () => {
   it('rests at the bottom without a target', () => {
-    expect(cardPlacement({ ...base, spot: null })).toBe('bottom');
+    expect(cardMode({ ...window, target: null })).toBe('bottom');
   });
 
-  it('stays at the bottom while the target is above the card', () => {
-    expect(cardPlacement({ ...base, spot: { x: 0, y: 100, width: 300, height: 60 } })).toBe(
-      'bottom',
-    );
+  it('sits below the target while there is room under it', () => {
+    expect(cardMode({ ...window, target: at(100, 60) })).toBe('below');
   });
 
-  it('moves to the top when the bottom would cover the target, as the last group of a menu', () => {
-    expect(cardPlacement({ ...base, spot: { x: 0, y: 640, width: 300, height: 90 } })).toBe('top');
+  it('sits above the target when the bottom is too tight, as the last group of a menu', () => {
+    expect(cardMode({ ...window, target: at(640, 90) })).toBe('above');
   });
 
   it('counts the system bar under the card', () => {
-    const spot = { x: 0, y: 500, width: 300, height: 40 };
-    expect(cardPlacement({ ...base, spot })).toBe('bottom');
-    expect(cardPlacement({ ...base, bottomInset: 60, spot })).toBe('top');
+    const target = at(480, 40);
+    expect(cardMode({ ...window, target })).toBe('below');
+    expect(cardMode({ ...window, bottomInset: 80, target })).toBe('above');
   });
 
-  it('takes the side it covers less when it fits on neither', () => {
-    // A tall target from the top edge to near the bottom: the card overlaps whichever way.
-    const tall = { x: 0, y: 40, width: 300, height: 620 };
-    expect(cardPlacement({ ...base, spot: tall })).toBe('bottom');
-    const lowerTall = { x: 0, y: 250, width: 300, height: 540 };
-    expect(cardPlacement({ ...base, spot: lowerTall })).toBe('top');
+  it('rests at the bottom for a target scrolled out of the window, so the card stays readable', () => {
+    expect(cardMode({ ...window, target: at(900, 60) })).toBe('bottom');
+    expect(cardMode({ ...window, target: at(-200, 60) })).toBe('bottom');
+  });
+
+  it('rests on the edge that covers a large target less', () => {
+    expect(cardMode({ ...window, target: at(40, 620) })).toBe('bottom');
+    expect(cardMode({ ...window, target: at(250, 540) })).toBe('top');
+  });
+});
+
+describe('cardLayout', () => {
+  it('puts the card under the target, with the arrow at the target centre', () => {
+    const target = at(100, 60);
+    const layout = cardLayout({ ...window, spot: target, target });
+
+    expect(layout.mode).toBe('below');
+    expect(layout.top).toBe(100 + 60 + 14);
+    expect(layout.width).toBe(360);
+    // The target is centred on x=200, the card is 360 wide from x=20: the arrow is at its middle.
+    expect(layout.left).toBe(20);
+    expect(layout.arrowX).toBe(180);
+  });
+
+  it('puts the card over the target when it points down', () => {
+    const target = at(640, 90);
+    const layout = cardLayout({ ...window, spot: target, target });
+
+    expect(layout.mode).toBe('above');
+    expect(layout.top).toBe(640 - 14 - 220);
+  });
+
+  it('keeps the card inside the window and the arrow on the card for a target at the edge', () => {
+    const target = at(100, 40, 0, 40);
+    const layout = cardLayout({ ...window, spot: target, target });
+
+    expect(layout.left).toBe(20);
+    expect(layout.arrowX).toBe(28);
+    const far = at(100, 40, 360, 40);
+    const right = cardLayout({ ...window, spot: far, target: far });
+    expect(right.left + right.width).toBe(380);
+    expect(right.arrowX).toBe(right.width - 28);
+  });
+
+  it('follows the hole as it slides but keeps the side chosen for where it is going', () => {
+    const target = at(100, 60);
+    const sliding = at(400, 60);
+    const layout = cardLayout({ ...window, spot: sliding, target });
+
+    expect(layout.mode).toBe('below');
+    expect(layout.top).toBe(400 + 60 + 14);
+  });
+
+  it('never leaves the window, even while the hole slides in from far away', () => {
+    const target = at(100, 60);
+    const far = at(790, 60);
+    const layout = cardLayout({ ...window, spot: far, target });
+
+    expect(layout.top).toBe(800 - 0 - 20 - 220);
+  });
+
+  it('rests on the bottom edge above the system bar for a step without a target', () => {
+    const layout = cardLayout({ ...window, bottomInset: 34, spot: null, target: null });
+
+    expect(layout).toMatchObject({ mode: 'bottom', bottom: 54, left: 20 });
   });
 });

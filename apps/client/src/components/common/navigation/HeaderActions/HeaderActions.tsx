@@ -1,7 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  headerAnchorId,
+  registerGuideAnchor,
+  unregisterGuideAnchor,
+} from '@/src/guides/anchorRegistry';
+import { measureGuideNode, useGuideAnchor } from '@/src/guides/useGuideAnchor';
 import { useResponsiveLayout } from '@/src/hooks/useResponsiveLayout';
 import { useSystemInsets } from '@/src/hooks/useSystemInsets';
 import { useTheme } from '@/src/theme';
@@ -52,6 +58,16 @@ function withBadge(icon: React.ReactElement, badge: boolean | undefined, testID:
   );
 }
 
+/** Makes one header action a tour target, by its icon. */
+function AnchoredAction({ icon, children }: { icon: string; children: React.ReactNode }) {
+  const anchorRef = useGuideAnchor(headerAnchorId(icon));
+  return (
+    <View ref={anchorRef} collapsable={false}>
+      {children}
+    </View>
+  );
+}
+
 export default function HeaderActions({ actions }: { actions: readonly HeaderAction[] }) {
   const { colors } = useTheme();
   const { isCompact } = useResponsiveLayout();
@@ -65,35 +81,36 @@ export default function HeaderActions({ actions }: { actions: readonly HeaderAct
   return (
     <View style={styles.row}>
       {visible.map((action) => (
-        <Pressable
-          key={action.id}
-          accessibilityRole="button"
-          accessibilityLabel={action.label}
-          accessibilityState={{
-            disabled: !!(action.disabled || action.busy),
-            busy: !!action.busy,
-          }}
-          disabled={action.disabled || action.busy}
-          onPress={action.onPress}
-          style={({ pressed }) => [
-            styles.action,
-            { opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1 },
-          ]}
-        >
-          {action.busy ? (
-            <ActivityIndicator color={colors.text} />
-          ) : (
-            withBadge(
-              <Ionicons
-                name={action.icon}
-                size={24}
-                color={action.active ? colors.primary : colors.text}
-              />,
-              action.badge,
-              `header-action-badge-${action.id}`,
-            )
-          )}
-        </Pressable>
+        <AnchoredAction key={action.id} icon={action.icon}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={action.label}
+            accessibilityState={{
+              disabled: !!(action.disabled || action.busy),
+              busy: !!action.busy,
+            }}
+            disabled={action.disabled || action.busy}
+            onPress={action.onPress}
+            style={({ pressed }) => [
+              styles.action,
+              { opacity: action.disabled ? 0.4 : pressed ? 0.6 : 1 },
+            ]}
+          >
+            {action.busy ? (
+              <ActivityIndicator color={colors.text} />
+            ) : (
+              withBadge(
+                <Ionicons
+                  name={action.icon}
+                  size={24}
+                  color={action.active ? colors.primary : colors.text}
+                />,
+                action.badge,
+                `header-action-badge-${action.id}`,
+              )
+            )}
+          </Pressable>
+        </AnchoredAction>
       ))}
     </View>
   );
@@ -105,9 +122,19 @@ function HeaderOverflowMenu({ actions }: { actions: readonly HeaderAction[] }) {
   const { t } = useTranslation();
   const insets = useSystemInsets();
   const [open, setOpen] = useState(false);
+  // Every action hides behind the one burger, so a tour pointing at one points at the burger.
+  const burgerRef = useRef<View>(null);
+  const icons = actions.map((action) => action.icon).join('|');
+  useEffect(() => {
+    const ids = icons.split('|').map(headerAnchorId);
+    for (const id of ids) registerGuideAnchor(id, () => measureGuideNode(burgerRef.current));
+    return () => ids.forEach(unregisterGuideAnchor);
+  }, [icons]);
   return (
     <View style={styles.row}>
       <Pressable
+        ref={burgerRef}
+        collapsable={false}
         testID="header-actions-menu"
         accessibilityRole="button"
         accessibilityLabel={t('header_actions_menu')}

@@ -1,5 +1,7 @@
 import { drawerAnchorId, screenAnchorId } from './anchorRegistry';
+import { entityListGuides } from './entityListGuides';
 import { songGuides } from './songGuides';
+import { writingGuides } from './writingGuides';
 import type { Guide, GuideDrawerId } from './types';
 import { isServerless } from '../utils/clientFlavor';
 
@@ -26,6 +28,8 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  */
 export const screenGuides: Record<string, Guide> = {
   ...songGuides,
+  ...entityListGuides,
+  ...writingGuides,
   StorySelectionMain: {
     id: 'StorySelectionMain',
     drawerId: 'story-selection',
@@ -102,45 +106,6 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
-  CharactersStack: {
-    id: 'CharactersStack',
-    drawerId: 'main-system',
-    helpPageId: 'characters',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Characters', 'list')],
-        titleKey: 'tour_characters_start_title',
-        bodyKey: 'tour_characters_start_body',
-      },
-    ],
-  },
-  NarrativeElementsStack: {
-    id: 'NarrativeElementsStack',
-    drawerId: 'main-system',
-    helpPageId: 'narrative-elements',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('NarrativeElements', 'list')],
-        titleKey: 'tour_narrative_start_title',
-        bodyKey: 'tour_narrative_start_body',
-      },
-    ],
-  },
-  ItemsStack: {
-    id: 'ItemsStack',
-    drawerId: 'main-system',
-    helpPageId: 'items',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Items', 'list')],
-        titleKey: 'tour_items_start_title',
-        bodyKey: 'tour_items_start_body',
-      },
-    ],
-  },
   Manuscript: {
     id: 'Manuscript',
     drawerId: 'main-system',
@@ -173,45 +138,6 @@ export const screenGuides: Record<string, Guide> = {
       },
     ],
   },
-  PlotsStack: {
-    id: 'PlotsStack',
-    drawerId: 'main-system',
-    helpPageId: 'plots',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Plots', 'list')],
-        titleKey: 'tour_plots_start_title',
-        bodyKey: 'tour_plots_start_body',
-      },
-    ],
-  },
-  LocationsStack: {
-    id: 'LocationsStack',
-    drawerId: 'main-system',
-    helpPageId: 'locations',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Locations', 'list')],
-        titleKey: 'tour_locations_start_title',
-        bodyKey: 'tour_locations_start_body',
-      },
-    ],
-  },
-  TagsStack: {
-    id: 'TagsStack',
-    drawerId: 'main-system',
-    helpPageId: 'tags',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Tags', 'list')],
-        titleKey: 'tour_tags_start_title',
-        bodyKey: 'tour_tags_start_body',
-      },
-    ],
-  },
   WorldRulesStack: {
     id: 'WorldRulesStack',
     drawerId: 'main-system',
@@ -222,58 +148,6 @@ export const screenGuides: Record<string, Guide> = {
         anchors: [screenAnchorId('WorldIndex', 'sections')],
         titleKey: 'tour_world_start_title',
         bodyKey: 'tour_world_start_body',
-      },
-    ],
-  },
-  NotesStack: {
-    id: 'NotesStack',
-    drawerId: 'main-system',
-    helpPageId: 'notes',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Notes', 'list')],
-        titleKey: 'tour_notes_start_title',
-        bodyKey: 'tour_notes_start_body',
-      },
-    ],
-  },
-  GalleryStack: {
-    id: 'GalleryStack',
-    drawerId: 'main-system',
-    helpPageId: 'gallery',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Gallery', 'list')],
-        titleKey: 'tour_gallery_start_title',
-        bodyKey: 'tour_gallery_start_body',
-      },
-    ],
-  },
-  BoardsStack: {
-    id: 'BoardsStack',
-    drawerId: 'main-system',
-    helpPageId: 'boards',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Boards', 'list')],
-        titleKey: 'tour_boards_start_title',
-        bodyKey: 'tour_boards_start_body',
-      },
-    ],
-  },
-  SketchStack: {
-    id: 'SketchStack',
-    drawerId: 'main-system',
-    helpPageId: 'sketch',
-    steps: [
-      {
-        id: 'list',
-        anchors: [screenAnchorId('Sketches', 'list')],
-        titleKey: 'tour_sketch_start_title',
-        bodyKey: 'tour_sketch_start_body',
       },
     ],
   },

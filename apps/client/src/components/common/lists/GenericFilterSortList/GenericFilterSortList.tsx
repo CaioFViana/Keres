@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useScreenAnchor } from '../../../../guides/useGuideAnchor';
 import { useTheme } from '../../../../theme';
 import Button from '@/src/components/common/controls/Button/Button';
 import AdvancedSearchModal from '@/src/components/common/modals/AdvancedSearchModal/AdvancedSearchModal';
@@ -256,11 +257,15 @@ const GenericFilterSortList = <T,>({
     [onAdvancedSearch],
   );
 
+  // The search and the filter and sort controls are tour targets, named by the kind of list.
+  const searchAnchorRef = useScreenAnchor(entityName ?? 'List', 'search');
+  const controlsAnchorRef = useScreenAnchor(entityName ?? 'List', 'controls');
+
   const usesColoredFilterOptions = !!filterOptions?.some((option) => !!option.color);
 
   return (
     <View style={styles(colors).container}>
-      <View style={styles(colors).searchContainer}>
+      <View ref={searchAnchorRef} collapsable={false} style={styles(colors).searchContainer}>
         <TextInput
           placeholder={searchPlaceholder || t('search')}
           value={currentSearchTerm || ''}
@@ -273,7 +278,11 @@ const GenericFilterSortList = <T,>({
 
       {filterComponent}
 
-      <View style={styles(colors).filterSortControlsWrapper}>
+      <View
+        ref={controlsAnchorRef}
+        collapsable={false}
+        style={styles(colors).filterSortControlsWrapper}
+      >
         <View style={styles(colors).filterSortRow}>
           <View style={[styles(colors).selectContainer, { flex: 1 }]}>
             {usesColoredFilterOptions ? (

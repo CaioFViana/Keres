@@ -91,6 +91,11 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Enquanto um arco está selecionado, a tela de vocabulário edita os termos desse arco. Um termo deixado vazio usa o da história e, depois, o padrão da forma da obra.',
     },
+    { type: 'heading', level: 2, text: 'Quadrinhos, storyboards e campanhas' },
+    {
+      type: 'paragraph',
+      text: 'Em quadrinhos ou storyboard, cada cena pode ter páginas (ou quadros) com uma imagem e seu texto, e o arco define o quadro em que as imagens aparecem. Numa campanha de mesa, o botão Nova sessão na tela de capítulos pede apenas a data real e abre a sessão com a primeira cena pronta. O pacote Campanha acrescenta um campo de data, etiquetas e notas iniciais se você quiser; nada exige isso, e uma campanha exporta como crônica por padrão.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',
@@ -101,7 +106,7 @@ const page: HelpPage = {
       tone: 'warning',
       text: 'O arco padrão não pode ser removido. Ele é o destino seguro dos capítulos quando outro arco é removido.',
     },
-    { type: 'seeAlso', pages: ['chapters', 'appearance', 'story-settings'] },
+    { type: 'seeAlso', pages: ['chapters', 'scene-pages', 'appearance', 'story-settings'] },
   ],
 };
 

@@ -70,6 +70,7 @@ const NarrativeElementsListScreen = () => {
   const db = useDrizzle();
   const selectedStory = useStoryStore((state) => state.selectedStory);
   const activeArcId = useStoryStore((state) => state.activeArcId);
+  const effectiveArc = useStoryStore((state) => state.effectiveArc);
   const navigation = useNavigation<NarrativeElementsScreenNavigationProp>();
 
   const {
@@ -529,6 +530,19 @@ const NarrativeElementsListScreen = () => {
         onPress: () => navigation.navigate('Manuscript', {}),
         visible: !!selectedStory,
       },
+      // A campaign opens its next session in one step: the real date, and the first scene waiting.
+      // Other works do not even carry the action.
+      ...(effectiveArc?.medium === 'campaign'
+        ? [
+            {
+              id: 'new-session',
+              icon: 'play-circle-outline' as const,
+              label: t('new_session_title', { session: term('Chapter') }),
+              onPress: () => navigation.navigate('NewSession'),
+              visible: !!canEdit,
+            },
+          ]
+        : []),
       {
         id: 'action-3',
         icon: 'add',

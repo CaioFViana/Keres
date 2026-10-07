@@ -92,6 +92,11 @@ const page: HelpPage = {
       type: 'paragraph',
       text: "While an arc is selected, the vocabulary screen edits that arc's own terms. A term left empty uses the story's term, and then the default for the arc's form of the work.",
     },
+    { type: 'heading', level: 2, text: 'Comics, storyboards and campaigns' },
+    {
+      type: 'paragraph',
+      text: 'In a comic or a storyboard, each scene can hold pages (or frames) with a picture and their text, and the arc sets the frame the pictures are shown in. In a tabletop campaign, the New session button on the chapters screen asks only for the real date and opens the session with its first scene ready. The campaign pack adds a date field, tags and starter notes if you want them; nothing requires it, and a campaign exports as a chronicle by default.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',
@@ -102,7 +107,7 @@ const page: HelpPage = {
       tone: 'warning',
       text: 'The default arc cannot be removed. It is the safe destination for chapters when another arc is removed.',
     },
-    { type: 'seeAlso', pages: ['chapters', 'appearance', 'story-settings'] },
+    { type: 'seeAlso', pages: ['chapters', 'scene-pages', 'appearance', 'story-settings'] },
   ],
 };
 

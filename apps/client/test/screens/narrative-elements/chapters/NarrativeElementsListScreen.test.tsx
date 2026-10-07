@@ -51,6 +51,7 @@ const mockAlert: jest.Mock = jest.fn(
 
 let mockSelectedStory: { id: string; type: string } | null = { id: 'story-1', type: 'linear' };
 let mockActiveArcId: string | null = null;
+let mockEffectiveMedium: string | null = null;
 let mockCanEdit = true;
 let mockStoredScenes: { id: string; isFavorite: boolean }[] = [];
 let mockLoading = false;
@@ -125,7 +126,11 @@ jest.mock('../../../../src/hooks/useStoryRole', () => ({
 jest.mock('../../../../src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: object) => unknown) =>
-    selector({ selectedStory: mockSelectedStory, activeArcId: mockActiveArcId }),
+    selector({
+      selectedStory: mockSelectedStory,
+      activeArcId: mockActiveArcId,
+      effectiveArc: mockEffectiveMedium ? { id: 'arc-x', medium: mockEffectiveMedium } : null,
+    }),
 }));
 
 jest.mock('../../../../src/state/sceneStore', () => ({
@@ -579,6 +584,7 @@ beforeEach(() => {
   mockAlertButtons = [];
   mockSelectedStory = { id: 'story-1', type: 'linear' };
   mockActiveArcId = null;
+  mockEffectiveMedium = null;
   mockCanEdit = true;
   mockStoredScenes = [];
   mockLoading = false;
@@ -897,6 +903,25 @@ describe('NarrativeElementsListScreen', () => {
       actions[4].onPress();
     });
     expect(mockNavigate).toHaveBeenCalledWith('ChapterForm', { chapterId: undefined });
+  });
+
+  it('opens a new session in one step, only in a campaign', async () => {
+    mockEffectiveMedium = 'campaign';
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId(`rowname-ch-1`);
+    const action = (mockHeaderArgs?.actions ?? []).find((row) => row.id === 'new-session');
+    expect(action?.visible).toBe(true);
+    await act(async () => {
+      action?.onPress();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith('NewSession');
+  });
+
+  it('does not carry the new-session action for any other work', async () => {
+    mockEffectiveMedium = 'comic';
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId(`rowname-ch-1`);
+    expect((mockHeaderArgs?.actions ?? []).some((row) => row.id === 'new-session')).toBe(false);
   });
 
   it('labels the map action and hides the timeline for branching stories', async () => {

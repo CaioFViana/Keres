@@ -15,6 +15,7 @@ export enum OperationLogEntityType {
   Sketch = 'Sketch',
   Scene = 'Scene',
   ScenePage = 'ScenePage',
+  SceneMusic = 'SceneMusic',
   Choice = 'Choice',
   Gallery = 'Gallery',
   GalleryRelation = 'GalleryRelation',

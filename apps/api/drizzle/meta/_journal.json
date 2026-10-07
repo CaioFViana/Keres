@@ -484,6 +484,13 @@
       "when": 1791319424771,
       "tag": "0068_deep_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1791337808377,
+      "tag": "0069_swift_proemial_gods",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ export * from './schema/tables/attributeValues';
 export * from './schema/tables/boards';
 export * from './schema/tables/sketches';
 export * from './schema/tables/scenePages';
+export * from './schema/tables/sceneMusic';
 export * from './schema/tables/chapters';
 export * from './schema/tables/chapterAnchors';
 export * from './schema/tables/characterRelations';

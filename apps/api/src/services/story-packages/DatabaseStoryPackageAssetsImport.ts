@@ -239,6 +239,37 @@ export async function importStoryAssets(context: DatabaseStoryPackageImportConte
     await insertPortableCollection(context, OperationLogEntityType.ScenePage, newScenePagesData);
   }
 
+  /*
+   * The music of a scene points at a scene (narrative phase), and at a Song or a Gallery medium (both
+   * written before this): every id is in the map by now. A link whose target the package does not
+   * carry keeps its cue and waits for another target, as it does live.
+   */
+  const newSceneMusicData = (validatedFullStory.sceneMusic ?? []).flatMap((original) => {
+    const sceneId = idMap.get(original.sceneId);
+    // Music of a scene the package lacks has nothing to belong to: it goes, as dangling rows do.
+    if (!sceneId) return [];
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return [
+      {
+        ...original,
+        id: newId,
+        storyId: targetStoryId,
+        sceneId,
+        songId: original.songId ? (idMap.get(original.songId) ?? null) : null,
+        galleryId: original.galleryId ? (idMap.get(original.galleryId) ?? null) : null,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+        isDeleted: false,
+        deletedAt: null,
+      },
+    ];
+  });
+  if (newSceneMusicData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.SceneMusic, newSceneMusicData);
+  }
+
   await relinkCoverGalleryIds(context);
 }
 

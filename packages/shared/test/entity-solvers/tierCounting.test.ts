@@ -86,3 +86,11 @@ describe('scene pages and the plan', () => {
     expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('ScenePage');
   });
 });
+
+describe('the music of a scene and the plan', () => {
+  it('counts the link of a scene to its music, as it counts a scene page', () => {
+    expect(getTierCountedEntityTypes()).toContain('SceneMusic');
+    expect(getTierRelationalEntityTypes()).not.toContain('SceneMusic');
+    expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('SceneMusic');
+  });
+});

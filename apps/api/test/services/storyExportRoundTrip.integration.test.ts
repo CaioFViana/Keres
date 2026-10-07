@@ -32,6 +32,7 @@ import {
   scenes,
   sketches,
   scenePages,
+  sceneMusic,
   routes,
   routeSteps,
   seeAlsoRelations,
@@ -72,6 +73,7 @@ const id = {
   board: '',
   sketch: '',
   scenePage: '',
+  sceneMusic: '',
   locationMap: '',
   location: '',
   otherLocation: '',
@@ -425,6 +427,18 @@ beforeEach(async () => {
     fit: 'cover',
     text: 'Panel 1: the lantern.',
   } as never);
+  // The music of a scene: it points at the scene and at a medium of the Gallery.
+  await db.insert(sceneMusic).values({
+    id: id.sceneMusic,
+    storyId,
+    sceneId: id.sceneA,
+    rank: 'a0',
+    songId: null,
+    galleryId: id.gallery,
+    role: 'in-world',
+    cue: 'as the lantern is lit',
+    sections: ['Chorus'],
+  } as never);
   // Map content uses foreign ids too, so the export/import path has to carry and rewrite it.
   await db.insert(locationMaps).values({
     id: id.locationMap,
@@ -636,6 +650,7 @@ async function childrenOf(storyId: string) {
     storyBoards: await rows(boards),
     storySketches: await rows(sketches),
     scenePages: await rows(scenePages),
+    sceneMusic: await rows(sceneMusic),
     storyLocationMaps: await rows(locationMaps),
     plots: await rows(plots),
     plotScenes: await rows(plotScenes),
@@ -803,6 +818,15 @@ describe('import of a package with one row of every kind', () => {
       sketchId: id.sketch,
       fit: 'cover',
       text: 'Panel 1: the lantern.',
+    });
+    // Music keeps its role, cue and sections, and follows its scene and its medium to their ids.
+    expect(after.sceneMusic[0]).toMatchObject({
+      id: id.sceneMusic,
+      sceneId: id.sceneA,
+      galleryId: id.gallery,
+      role: 'in-world',
+      cue: 'as the lantern is lit',
+      sections: ['Chorus'],
     });
     expect(
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')

@@ -1,6 +1,7 @@
 import {
   MANUSCRIPT_PRESETS,
   type ManuscriptFormat,
+  type ManuscriptPageEstimate,
   type ManuscriptSizeAssessment,
   type ManuscriptStyle,
   type ScreenplayEstimate,
@@ -18,6 +19,7 @@ import {
   withChange,
 } from '../export/manuscriptExportSettings';
 import { OptionPills, OptionRow, OptionSection, SwitchRow } from './ExportOptionRows';
+import ProsePageEstimateCard from './ProsePageEstimateCard';
 import ScreenplayEstimateCard from './ScreenplayEstimateCard';
 
 /** The minimum the arc selector needs to know about an arc. */
@@ -46,6 +48,10 @@ interface ManuscriptExportOptionsProps {
   chronicle?: boolean;
   /** For a screenplay format: how long the script is, and what that number stands on. */
   screenplayEstimate?: ScreenplayEstimate | null;
+  /** For a PDF or a Word file of prose: asks for the page count; absent where it makes no sense. */
+  onEstimatePages?: () => void;
+  /** The page count for the settings as they are now, once asked for. */
+  pageEstimate?: ManuscriptPageEstimate | null;
   /** How big the file will be, and how that stands against the limit; shown before anything is compiled. */
   sizeEstimate?: ManuscriptSizeAssessment | null;
 }
@@ -88,6 +94,8 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
   showFormat = true,
   chronicle = false,
   screenplayEstimate = null,
+  onEstimatePages,
+  pageEstimate = null,
   sizeEstimate = null,
 }) => {
   const { t } = useTranslation();
@@ -175,6 +183,14 @@ const ManuscriptExportOptions: React.FC<ManuscriptExportOptionsProps> = ({
             />
           ))}
         </>
+      ) : null}
+
+      {onEstimatePages && (settings.format === 'pdf' || settings.format === 'docx') ? (
+        <ProsePageEstimateCard
+          estimate={pageEstimate}
+          onEstimate={onEstimatePages}
+          isDocx={settings.format === 'docx'}
+        />
       ) : null}
 
       {branching ? (

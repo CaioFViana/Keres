@@ -37,6 +37,7 @@ const ManuscriptExportScreen = () => {
     storyAuthor,
     exportWith,
     screenplayEstimate,
+    estimatePages,
     sizeEstimate,
   } = useManuscriptExport();
   const effectiveArc = useStoryStore((state) => state.effectiveArc);
@@ -46,6 +47,12 @@ const ManuscriptExportScreen = () => {
       ? applyPreset(defaultExportSettings(storyAuthor), 'chronicle')
       : defaultExportSettings(storyAuthor),
   );
+  // The page count asked for, tied to the settings it was counted with: change one and it is gone.
+  const [counted, setCounted] = useState<{
+    settings: typeof settings;
+    result: ReturnType<typeof estimatePages>;
+  } | null>(null);
+  const pageEstimate = counted && counted.settings === settings ? counted.result : null;
   useScreenHeader({ target: 'parent', title: t('export_manuscript_title') });
 
   // A screenplay's own formats are offered where the work is one: the selected work (or the one the
@@ -83,6 +90,12 @@ const ManuscriptExportScreen = () => {
         onChange={setSettings}
         formats={formats}
         screenplayEstimate={screenplayEstimate(settings)}
+        onEstimatePages={
+          isBranching || medium === 'comic' || medium === 'storyboard'
+            ? undefined
+            : () => setCounted({ settings, result: estimatePages(settings) })
+        }
+        pageEstimate={pageEstimate}
         sizeEstimate={sizeEstimate(settings)}
         branching={isBranching}
         showLooseSwitch={!isBranching && looseCount > 0}

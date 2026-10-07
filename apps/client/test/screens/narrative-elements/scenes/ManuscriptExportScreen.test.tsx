@@ -972,3 +972,35 @@ describe('ManuscriptExportScreen chronicle', () => {
     expect(mockOptionsProps?.chronicle).toBe(false);
   });
 });
+
+describe('ManuscriptExportScreen page estimate', () => {
+  it('counts the pages only when asked, and forgets the count once a setting changes', async () => {
+    await renderScreen();
+    const props = () =>
+      mockOptionsProps as OptionsProps & {
+        onEstimatePages?: () => void;
+        pageEstimate?: { pages: number } | null;
+      };
+
+    expect(props().pageEstimate).toBeNull();
+    await act(async () => props().onEstimatePages?.());
+    expect(props().pageEstimate?.pages).toBeGreaterThan(0);
+
+    await act(async () => props().onChange({ ...props().settings, includeSceneNames: true }));
+    expect(props().pageEstimate).toBeNull();
+  });
+
+  it('offers no count for a branching story or for pages of a comic', async () => {
+    mockStoryType = 'branching';
+    mockManuscriptData = branchingData();
+    await renderScreen();
+    expect((mockOptionsProps as { onEstimatePages?: unknown }).onEstimatePages).toBeUndefined();
+    cleanup();
+
+    mockStoryType = 'linear';
+    mockManuscriptData = linearData();
+    mockEffectiveMedium = 'comic';
+    await renderScreen();
+    expect((mockOptionsProps as { onEstimatePages?: unknown }).onEstimatePages).toBeUndefined();
+  });
+});

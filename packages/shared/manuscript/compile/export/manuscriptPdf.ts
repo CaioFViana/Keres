@@ -673,3 +673,43 @@ export async function buildManuscriptPdfAsync(
   imagePlan.write(writer);
   return writer.finish(catalogId, infoId);
 }
+
+/** How long a manuscript is on the page, and the page it was counted on - so the number can be read honestly. */
+export type ManuscriptPageEstimate = {
+  pages: number;
+  pageSize: 'a4' | '6x9';
+  /** Body size in points. */
+  fontSize: number;
+  /** Line height as a multiple of the body size. */
+  lineSpacing: number;
+  /** Margin on every side, in points. */
+  marginPt: number;
+  /** First-line indent in points; `0` for block paragraphs. */
+  firstLineIndentPt: number;
+};
+
+/**
+ * The page count of the PDF this manuscript would make, found by the very layout that makes it
+ * (every line wrapped and placed, nothing written). Pictures are not drawn, so a book of pages is
+ * counted as its text alone; Word re-flows its own way and may differ by a little.
+ */
+export function estimateManuscriptPages(
+  manuscript: CompiledManuscript,
+  labels: ManuscriptPdfLabels,
+  options: ManuscriptRenderOptions = {},
+): ManuscriptPageEstimate {
+  const geometry = pdfGeometry(options);
+  const { pageCount } = paginateStream(
+    iterateRuns(manuscript, labels, new Map(), options),
+    geometry,
+    () => undefined,
+  );
+  return {
+    pages: pageCount,
+    pageSize: options.pageSize ?? 'a4',
+    fontSize: geometry.bodySize,
+    lineSpacing: options.lineSpacing ?? 1.5,
+    marginPt: geometry.margin,
+    firstLineIndentPt: geometry.firstLineIndent,
+  };
+}

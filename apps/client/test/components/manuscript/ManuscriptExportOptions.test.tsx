@@ -316,3 +316,88 @@ describe('ManuscriptExportOptions', () => {
     expect(latest?.sceneOrder).toBe('discovery');
   });
 });
+
+describe('ManuscriptExportOptions page estimate for prose', () => {
+  const estimate = {
+    pages: 42,
+    pageSize: 'a4' as const,
+    fontSize: 12,
+    lineSpacing: 2,
+    marginPt: 56.7,
+    firstLineIndentPt: 22,
+  };
+
+  function PagesHarness({
+    onEstimate,
+    pageEstimate = null,
+    format = 'pdf' as const,
+  }: {
+    onEstimate?: () => void;
+    pageEstimate?: typeof estimate | null;
+    format?: 'pdf' | 'docx' | 'epub';
+  }) {
+    const [settings, setSettings] = useState<ManuscriptExportSettings>(() => ({
+      ...defaultExportSettings('Ana'),
+      format,
+    }));
+    return (
+      <ManuscriptExportOptions
+        settings={settings}
+        onChange={setSettings}
+        formats={ALL_FORMATS}
+        branching={false}
+        showLooseSwitch
+        looseCount={2}
+        chapterNumberingAvailable
+        arcs={[]}
+        onEstimatePages={onEstimate}
+        pageEstimate={pageEstimate}
+      />
+    );
+  }
+
+  it('offers to count the pages of a PDF, and asks only when pressed', async () => {
+    const onEstimate = jest.fn();
+    const view = await render(<PagesHarness onEstimate={onEstimate} />);
+
+    expect(onEstimate).not.toHaveBeenCalled();
+    await fireEvent.press(view.getByTestId('prose-estimate-run'));
+    expect(onEstimate).toHaveBeenCalledTimes(1);
+    expect(view.queryByTestId('prose-estimate-pages')).toBeNull();
+  });
+
+  it('says the count with the page, the font, the spacing and the margins it stands on', async () => {
+    const view = await render(
+      <PagesHarness onEstimate={() => undefined} pageEstimate={estimate} />,
+    );
+
+    expect(view.getByTestId('prose-estimate-pages').props.children).toBe(
+      'export_prose_estimate_pages:{"count":42}',
+    );
+    const how = view.getByTestId('prose-estimate-how').props.children as string;
+    expect(how).toContain('export_prose_how_font:{"size":12,"spacing":2}');
+    expect(how).toContain('export_prose_how_margins:{"margin":"2"}');
+    expect(how).toContain('export_prose_how_indent');
+    expect(how).toContain('export_prose_how_note');
+    expect(how).not.toContain('docx');
+  });
+
+  it('says it is the PDF count when the file is a Word one, and offers no count for other formats', async () => {
+    const word = await render(
+      <PagesHarness format="docx" onEstimate={() => undefined} pageEstimate={estimate} />,
+    );
+    expect(word.getByTestId('prose-estimate-how').props.children).toContain(
+      'export_prose_how_note_docx',
+    );
+    await word.unmount();
+
+    const epub = await render(<PagesHarness format="epub" onEstimate={() => undefined} />);
+    expect(epub.queryByTestId('prose-estimate')).toBeNull();
+  });
+
+  it('is not offered where the screen gives no way to count', async () => {
+    const view = await render(<PagesHarness />);
+
+    expect(view.queryByTestId('prose-estimate')).toBeNull();
+  });
+});

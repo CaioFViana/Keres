@@ -2,8 +2,12 @@ import {
   compileLinearManuscript,
   compileGamebookManuscript,
   isLooseScene,
+  estimateManuscriptPages,
+  type ManuscriptPageEstimate,
   PAGE_FORMAT_ASPECT,
   pageFormatFor,
+  presentManuscript,
+  renderOptionsOf,
   sceneSeparatorText,
   type ManuscriptScene,
 } from '@keres/shared';
@@ -179,6 +183,52 @@ export function useManuscriptExport() {
       return manuscriptSizeAssessment({ format: settings.format, textBytes, imageBytes });
     },
     [scenes, chaptersById, isBranching, pageBytes],
+  );
+
+  /**
+   * How many pages the PDF would have under the settings, counted by the layout that draws it. Asked for
+   * on demand: laying out a whole book is work, and the number only means something for the settings it
+   * was counted with. Pictures are not drawn, and a branching story has no page count worth giving.
+   */
+  const estimatePages = useCallback(
+    (settings: ManuscriptExportSettings): ManuscriptPageEstimate | null => {
+      if (isBranching || isScreenplayFormat(settings.format)) return null;
+      const arc = settings.arcId ? (arcs.find((row) => row.id === settings.arcId) ?? null) : null;
+      const title = arc?.title ?? selectedStory?.title ?? '';
+      const inArc = settings.arcId
+        ? scenes.filter((scene) => sceneBelongsToActiveArc(scene, chaptersById, settings.arcId))
+        : scenes;
+      const manuscript = compileLinearManuscript({
+        title,
+        chapters,
+        scenes: inArc,
+        choices,
+        includeLooseScenes: settings.includeLooseScenes,
+        looseHeadingLabel: t('export_manuscript_loose_heading'),
+        includeSceneNames: settings.includeSceneNames,
+        resetSceneNumbersPerChapter: settings.resetSceneNumbers,
+        arcId: settings.arcId,
+        sceneSeparator: sceneSeparatorText(settings.style),
+      });
+      const style = styleForExport(
+        settings,
+        {
+          byLine: t('export_manuscript_title_page_by'),
+          copyright: t('export_manuscript_title_page_copyright'),
+        },
+        new Date(),
+      );
+      const presented = presentManuscript(manuscript, style, i18n.language === 'pt' ? 'pt' : 'en');
+      return estimateManuscriptPages(
+        presented,
+        {
+          goToPage: t('export_manuscript_go_to_page'),
+          tocHeading: t('export_manuscript_index_heading'),
+        },
+        { ...renderOptionsOf(style), includeToc: settings.includeIndex },
+      );
+    },
+    [isBranching, arcs, selectedStory, scenes, chaptersById, chapters, choices, t, i18n.language],
   );
 
   const promptCjkPack = useCallback(
@@ -449,6 +499,7 @@ export function useManuscriptExport() {
     storyAuthor: selectedStory?.author ?? '',
     exportWith,
     screenplayEstimate,
+    estimatePages,
     sizeEstimate,
   };
 }

@@ -75,7 +75,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'When the image is gone' },
     {
       type: 'paragraph',
-      text: 'If the Sketch or the Gallery image is deleted, the page is not lost. It stays with its text and shows “media removed”. Choose a replacement image and the page is whole again.',
+      text: 'If the Sketch or the Gallery image is deleted, the page is not lost. It stays with its text and shows “media removed”. Choose a replacement image and the page is whole again. Until then it is left out of any manuscript you make, and you are told how many pages were.',
     },
     {
       type: 'callout',

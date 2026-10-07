@@ -79,7 +79,7 @@ const page: HelpPage = {
     { type: 'heading', level: 2, text: 'Quando a imagem some' },
     {
       type: 'paragraph',
-      text: 'Se o Esboço ou a imagem da Galeria for apagado, a página não se perde. Ela fica com o texto e mostra “mídia removida”. Escolha uma imagem para substituir e a página volta a ficar inteira.',
+      text: 'Se o Esboço ou a imagem da Galeria for apagado, a página não se perde. Ela fica com o texto e mostra “mídia removida”. Escolha uma imagem para substituir e a página volta a ficar inteira. Até lá, ela fica de fora de qualquer manuscrito que você gerar, e você é avisado de quantas páginas foram.',
     },
     {
       type: 'callout',

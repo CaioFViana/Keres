@@ -252,6 +252,9 @@ function sectionsToBlocks({
       }
     }
     for (const page of section.scene.pages ?? []) {
+      // A page whose picture is gone stays in the story, waiting for another, but is not in the
+      // manuscript: no number, no caption, and its text stays with it.
+      if (!page.mediaId) continue;
       pageNumber += 1;
       emit({
         kind: 'page',

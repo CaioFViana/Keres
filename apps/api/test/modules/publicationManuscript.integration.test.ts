@@ -522,7 +522,7 @@ async function storedManuscriptBytes(storyId: string): Promise<Buffer> {
 }
 
 describe('publishing the pages of a comic', () => {
-  it('puts the stored pictures and the page texts in an HTML manuscript, and a note where one is gone', async () => {
+  it('puts the stored pictures and the page texts in an HTML manuscript, leaving out the page whose picture is gone', async () => {
     const story = await uploadTestStory(ana.token);
     await seedComicContent(story.id);
 
@@ -533,8 +533,8 @@ describe('publishing the pages of a comic', () => {
     expect(html).toContain('<figcaption>Page 1</figcaption>');
     expect(html).toContain('data:image/png;base64,');
     expect(html).toContain('First panel');
-    expect(html).toContain('Lost art');
-    expect(html).toContain('<p class="missing">Image removed</p>');
+    expect(html).not.toContain('Lost art');
+    expect(html).not.toContain('Page 2');
   });
 
   it('embeds the picture in a PDF, in a frame the arc chose', async () => {
@@ -561,7 +561,8 @@ describe('publishing the pages of a comic', () => {
     const md = (await storedManuscriptBytes(story.id)).toString('utf8');
     expect(md).toContain('**Page 1**');
     expect(md).toContain('First panel');
-    expect(md).toContain('*Image removed*');
+    expect(md).not.toContain('Lost art');
+    expect(md).not.toContain('Image removed');
     expect(md).not.toContain('data:image');
   });
 

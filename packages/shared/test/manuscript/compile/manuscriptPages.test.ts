@@ -100,21 +100,33 @@ describe('page blocks', () => {
       'p:He looks up.',
       'p:THE KID: Hey!',
       'page:Page 2',
-      'page:Page 3',
-      'p:Lost art',
     ]);
   });
 
   it('captions frames in a storyboard', () => {
     const labels = compile({ pageNoun: 'frame' }).blocks.filter((block) => block.kind === 'page');
 
-    expect(labels.map((block) => block.label)).toEqual(['Frame 1', 'Frame 2', 'Frame 3']);
+    expect(labels.map((block) => block.label)).toEqual(['Frame 1', 'Frame 2']);
   });
 
-  it('turns a page whose picture is gone into a placeholder, keeping its text', () => {
-    const gone = compile().blocks.find((block) => block.kind === 'page' && block.id === 'p3');
+  it('leaves a page whose picture is gone out of the manuscript, unnumbered, with its text', () => {
+    const blocks = compile().blocks;
 
-    expect(gone).toMatchObject({ image: null, placeholder: 'Image removed' });
+    expect(blocks.some((block) => block.kind === 'page' && block.id === 'p3')).toBe(false);
+    expect(JSON.stringify(blocks)).not.toContain('Lost art');
+  });
+
+  it('keeps a page whose picture is named but missing from the table, as a placeholder', () => {
+    const blocks = presentedManuscriptOf(
+      input({}, [scene('s1', 1, [page('p1', 'nowhere', 'text')])]),
+      ManuscriptOptionsSchema.parse({ format: 'html' }),
+      DEFAULT_MANUSCRIPT_LABELS,
+    ).blocks;
+
+    expect(blocks.find((block) => block.kind === 'page')).toMatchObject({
+      image: { mediaId: 'nowhere' },
+      placeholder: 'Image removed',
+    });
   });
 
   it('carries the pictures and the frame the pages are shown in', () => {
@@ -146,7 +158,8 @@ describe('pages in the renderers', () => {
     expect(html.match(/<img src="data:image\/png;base64,/g)).toHaveLength(3);
     expect(html).toContain('class="frame" style="aspect-ratio: 0.6463"');
     expect(html.match(/class="frame"/g)).toHaveLength(1);
-    expect(html).toContain('<p class="missing">Image removed</p>');
+    expect(html).not.toContain('Image removed');
+    expect(html).not.toContain('Lost');
     expect(html).toContain('<p>Caption one</p>');
     expect(html).toContain('figure.page');
   });
@@ -185,7 +198,7 @@ describe('pages in the renderers', () => {
     expect(Array.from(stored)).toEqual(Array.from(media.a.bytes));
   });
 
-  it('puts the pictures in the DOCX as media, and a note where one is gone', async () => {
+  it('puts the pictures in the DOCX as media', async () => {
     const { bytes } = await compile({ format: 'docx' });
     const zip = await JSZip.loadAsync(bytes);
     const media = Object.keys(zip.files).filter((name) => name.startsWith('word/media/'));
@@ -193,7 +206,7 @@ describe('pages in the renderers', () => {
 
     expect(media.length).toBeGreaterThanOrEqual(1);
     expect(document).toContain('Page 1');
-    expect(document).toContain('Image removed');
+    expect(document).not.toContain('Image removed');
     expect(document).toContain('<w:drawing>');
   });
 
@@ -223,14 +236,14 @@ describe('pages in the renderers', () => {
     expect(pdf).toContain(latin1(jpeg.bytes));
   });
 
-  it('says in markdown and text what the picture cannot', async () => {
+  it('says in markdown and text only the caption and the text of a page, never a picture', async () => {
     const md = decode((await compile({ format: 'md' })).bytes);
     const txt = decode((await compile({ format: 'txt' })).bytes);
 
     expect(md).toContain('**Page 1**');
-    expect(md).toContain('*Image removed*');
+    expect(md).not.toContain('Image removed');
     expect(txt).toContain('Page 1');
-    expect(txt).toContain('(Image removed)');
+    expect(txt).not.toContain('Image removed');
     expect(md).not.toContain('data:image');
   });
 
@@ -274,7 +287,7 @@ describe('pages in the online reader', () => {
     expect(html).toContain('<figcaption>Page 1</figcaption>');
     expect(html).toContain('data:image/png;base64,');
     expect(html).toContain('figure.page');
-    expect(html).toContain('Image removed');
+    expect(html).not.toContain('Image removed');
   });
 
   it('carries the pages of a branching story in the scene they belong to', () => {

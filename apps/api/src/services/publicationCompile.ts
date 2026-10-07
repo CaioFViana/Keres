@@ -15,6 +15,7 @@ import { users } from '../db/schema';
 import { AppError } from '../utils/errors';
 import { compileInputOf } from './publicationCompileInput';
 import { withScenePages, type ReadMediaBytes } from './publicationPages';
+import { withSceneSongs } from './publicationSongs';
 import { mediaStorageService } from './MediaStorageService';
 import { publicationPdfFontMatrices } from './publicationPdfFonts';
 
@@ -43,7 +44,22 @@ export function parseManuscriptOptions(
     throw new AppError(400, `Invalid manuscript options: ${details}.`);
   }
   assertArcBelongs(storyExport, parsed.data.arcId);
-  return parsed.data;
+  return withoutProducerNotes(parsed.data);
+}
+
+/**
+ * A publication carries the story to its readers, not the writer's own notes about it: the music of a
+ * scene written as cues or as Fountain notes names references from the Gallery and says how a piece
+ * comes in, so a publication never writes either, whatever the request says.
+ */
+function withoutProducerNotes<T extends { screenplay?: object }>(options: T): T {
+  return {
+    ...options,
+    includeMusicCues: false,
+    ...(options.screenplay
+      ? { screenplay: { ...options.screenplay, includeMusicNotes: false } }
+      : {}),
+  };
 }
 
 /** The reader takes the manuscript's choices (arc, names, typography...) and its own words. */
@@ -59,7 +75,7 @@ export function parseReaderOptions(
     throw new AppError(400, `Invalid reader options: ${details}.`);
   }
   assertArcBelongs(storyExport, parsed.data.arcId);
-  return parsed.data;
+  return withoutProducerNotes(parsed.data);
 }
 
 export function assertArcBelongs(
@@ -119,11 +135,15 @@ export async function compileManuscript(
 ): Promise<{ bytes: Uint8Array; format: ManuscriptFormat }> {
   try {
     const compiled = await compileStoryManuscript(
-      await withScenePages(
-        compileInputOf(storyExport),
+      withSceneSongs(
+        await withScenePages(
+          compileInputOf(storyExport),
+          storyExport,
+          { format: options.format, arcId: options.arcId },
+          readMedia,
+        ),
         storyExport,
-        { format: options.format, arcId: options.arcId },
-        readMedia,
+        options,
       ),
       // The book's author defaults to the work's, then the story's, as on the device.
       {
@@ -155,11 +175,15 @@ export async function compileReader(
   readMedia: ReadMediaBytes = readStoredMedia,
 ): Promise<{ bytes: Uint8Array }> {
   try {
-    const input = await withScenePages(
-      compileInputOf(storyExport),
+    const input = withSceneSongs(
+      await withScenePages(
+        compileInputOf(storyExport),
+        storyExport,
+        { format: 'reader', arcId: options.arcId },
+        readMedia,
+      ),
       storyExport,
-      { format: 'reader', arcId: options.arcId },
-      readMedia,
+      options,
     );
     return compileStoryReader(input, {
       ...options,

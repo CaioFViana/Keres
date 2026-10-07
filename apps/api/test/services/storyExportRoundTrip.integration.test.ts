@@ -863,9 +863,9 @@ describe('import of a package with one row of every kind', () => {
       tempo: 96,
       meter: '6/8',
     });
-    expect(after.sceneMusic.find((row: { id: string }) => row.id === id.songMusic)).toMatchObject({
-      songId: id.song,
-    });
+    expect(
+      after.sceneMusic.find((row: Record<string, unknown>) => row.id === id.songMusic),
+    ).toMatchObject({ songId: id.song });
     expect(
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')
         .entityId,

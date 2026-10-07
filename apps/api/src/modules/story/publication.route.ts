@@ -1,5 +1,12 @@
 import { Elysia, t } from 'elysia';
-import type { PublicationLabelMode, ShowcaseVisibility } from '@keres/shared';
+import {
+  PAGE_FORMATS,
+  SONG_LANGUAGES,
+  SONG_PLACEMENTS,
+  SONG_REPEATS,
+  type PublicationLabelMode,
+  type ShowcaseVisibility,
+} from '@keres/shared';
 import type { JWTPayload } from '../../index';
 import { storyPublicationService } from '../../services/StoryPublicationService';
 import { AppError } from '../../utils/errors';
@@ -27,11 +34,25 @@ const PublicationResponseSchema = t.Object({
  * What shapes a manuscript, shared by the manuscript rendition and the online reader (which is made
  * from the same choices). Mirrors shared `ManuscriptOptionsSchema`, minus the file format.
  */
+/** One of a closed list of words, as the request schema wants it. */
+const oneOf = <T extends readonly string[]>(values: T) =>
+  t.Union(values.map((value) => t.Literal(value)) as never);
+
 const manuscriptShape = {
   includeLooseScenes: t.Optional(t.Boolean()),
   includeSceneNames: t.Optional(t.Boolean()),
   includeToc: t.Optional(t.Boolean()),
   resetSceneNumbers: t.Optional(t.Boolean()),
+  /** The frame a page's picture is shown in (a comic or a storyboard). */
+  pageFormat: t.Optional(oneOf(PAGE_FORMATS)),
+  /** Pages are captioned "Page 3", or "Frame 3" in a storyboard. */
+  pageNoun: t.Optional(t.Union([t.Literal('page'), t.Literal('frame')])),
+  /** Writes the songs the scenes sing: the words only, never a Gallery reference. */
+  includeSongs: t.Optional(t.Boolean()),
+  songsPlacement: t.Optional(oneOf(SONG_PLACEMENTS)),
+  songLanguage: t.Optional(oneOf(SONG_LANGUAGES)),
+  songRepeat: t.Optional(oneOf(SONG_REPEATS)),
+  songChords: t.Optional(t.Boolean()),
   /** Typography and presentation; its fields are validated by the shared `ManuscriptStyleSchema`. */
   style: t.Optional(t.Record(t.String(), t.Unknown())),
   /** Branching stories: how the gamebook numbers its scenes. */
@@ -49,6 +70,10 @@ const manuscriptShape = {
       endOfExcerpt: t.Optional(t.String({ maxLength: 80 })),
       chooseStart: t.Optional(t.String({ maxLength: 80 })),
       beginAt: t.Optional(t.String({ maxLength: 80 })),
+      pageLabel: t.Optional(t.String({ maxLength: 80 })),
+      frameLabel: t.Optional(t.String({ maxLength: 80 })),
+      mediaRemoved: t.Optional(t.String({ maxLength: 80 })),
+      songsHeading: t.Optional(t.String({ maxLength: 80 })),
     }),
   ),
   /** Only for the `fountain` and `screenplay-pdf` formats: paper, numbering, headings, title page. */

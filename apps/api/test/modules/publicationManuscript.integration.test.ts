@@ -14,8 +14,10 @@ import {
   galleries,
   items,
   scenePages,
+  sceneMusic,
   scenes,
   showcaseSettings,
+  songs,
   storyArcs,
   storyPublications,
 } from '../../src/db/schema';
@@ -537,6 +539,24 @@ describe('publishing the pages of a comic', () => {
     expect(html).not.toContain('Page 2');
   });
 
+  it('captions the pages in the words and the noun the publisher sent', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedComicContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'html',
+        pageNoun: 'frame',
+        labels: { frameLabel: 'Quadro', mediaRemoved: 'Imagem removida' },
+      },
+    });
+
+    expect(status).toBe(200);
+    const html = (await storedManuscriptBytes(story.id)).toString('utf8');
+    expect(html).toContain('<figcaption>Quadro 1</figcaption>');
+    expect(html).not.toContain('Frame 1');
+  });
+
   it('embeds the picture in a PDF, in a frame the arc chose', async () => {
     const story = await uploadTestStory(ana.token);
     await seedComicContent(story.id);
@@ -579,5 +599,165 @@ describe('publishing the pages of a comic', () => {
     expect(status).toBe(400);
     expect(data.message).toMatch(/exceeds the .* limit/);
     expect(await storedPublicationFiles(story.id)).toEqual([]);
+  });
+});
+
+/**
+ * A tavern scene sung to a song with a chorus, an audio reference of the Gallery that plays under it,
+ * and a second scene that sings only the chorus again.
+ */
+async function seedSongContent(storyId: string): Promise<void> {
+  const chapterId = newId();
+  await db.insert(chapters).values({ id: chapterId, storyId, name: 'One', index: 1 });
+  const tavern = newId();
+  const funeral = newId();
+  await db.insert(scenes).values([
+    { id: tavern, storyId, chapterId, name: 'Tavern', index: 1, body: 'The bard stands.' },
+    { id: funeral, storyId, chapterId, name: 'Funeral', index: 2, body: 'They bury him.' },
+  ]);
+  const songId = newId();
+  await db.insert(songs).values({
+    id: songId,
+    storyId,
+    title: 'The Lantern Song',
+    lyrics: '{sov: Verse 1}\n[G]Light the lantern\n{eov}\n{soc: Chorus}\nHome, home, home\n{eoc}',
+    lyricsTranslation: '{sov: Verse 1}\nAcende o lampião\n{eov}',
+  });
+  const referenceId = newId();
+  await db.insert(galleries).values({
+    id: referenceId,
+    storyId,
+    mediaType: 'audio',
+    mimeType: 'audio/mpeg',
+    fileName: 'secret-reference.mp3',
+    hash: createHash('md5').update('secret-reference').digest('hex'),
+    sizeBytes: 1,
+  });
+  await db.insert(sceneMusic).values([
+    {
+      id: newId(),
+      storyId,
+      sceneId: tavern,
+      rank: 'a0',
+      songId,
+      galleryId: null,
+      role: 'in-world',
+      cue: 'as the bard begins',
+      sections: null,
+    },
+    {
+      id: newId(),
+      storyId,
+      sceneId: tavern,
+      rank: 'a1',
+      songId: null,
+      galleryId: referenceId,
+      role: 'score',
+      cue: 'comes in under the song',
+      sections: null,
+    },
+    {
+      id: newId(),
+      storyId,
+      sceneId: funeral,
+      rank: 'a0',
+      songId,
+      galleryId: null,
+      role: 'in-world',
+      cue: null,
+      sections: ['Chorus'],
+    },
+  ]);
+}
+
+describe('publishing the songs of a story', () => {
+  it('leaves the songs out unless the publication asks for them', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, { manuscript: { format: 'md' } });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md).toContain('The bard stands.');
+    expect(md).not.toContain('Light the lantern');
+  });
+
+  it('gathers the songs in an appendix, each once and whole', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true },
+    });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md).toContain('Songs');
+    expect(md).toContain('The Lantern Song');
+    expect(md).toContain('Light the lantern');
+    expect(md.match(/Home, home, home/g)).toHaveLength(1);
+  });
+
+  it('prints each part of a song after the scene that sings it, and names it where it was sung before', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true, songsPlacement: 'after-scene' },
+    });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md.indexOf('Light the lantern')).toBeGreaterThan(md.indexOf('The bard stands.'));
+    expect(md.indexOf('Light the lantern')).toBeLessThan(md.indexOf('They bury him.'));
+    expect(md.match(/Home, home, home/g)).toHaveLength(1);
+    expect(md).toContain('The Lantern Song');
+  });
+
+  it('prints the translation when asked to', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true, songLanguage: 'both' },
+    });
+
+    expect(status).toBe(200);
+    expect(await storedManuscript(story.id)).toContain('Acende o lampião');
+  });
+
+  it('never publishes a reference of the Gallery, the score or the cues, whatever the request says', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: { format: 'md', includeSongs: true, includeMusicCues: true },
+    });
+
+    expect(status).toBe(200);
+    const md = await storedManuscript(story.id);
+    expect(md).not.toContain('secret-reference');
+    expect(md).not.toContain('comes in under the song');
+    expect(md).not.toContain('as the bard begins');
+    expect(md).not.toContain('Music:');
+  });
+
+  it('writes the songs of a script as Fountain lyrics and no notes', async () => {
+    const story = await uploadTestStory(ana.token);
+    await seedSongContent(story.id);
+
+    const { status } = await publish(ana.token, story.id, {
+      manuscript: {
+        format: 'fountain',
+        includeSongs: true,
+        screenplay: { includeMusicNotes: true },
+      },
+    });
+
+    expect(status).toBe(200);
+    const text = await storedManuscript(story.id);
+    expect(text).toContain('~Light the lantern');
+    expect(text).not.toContain('[[');
   });
 });

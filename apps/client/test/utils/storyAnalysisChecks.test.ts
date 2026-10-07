@@ -586,6 +586,7 @@ describe('completeness checks', () => {
       { id: 'location', name: 'Location' },
       { id: 'unvisited', name: 'Unvisited' },
     ],
+    songs: [{ id: 'unsung', title: 'Unsung' }],
   });
 
   /** Which *kinds* of finding appear, not how many - two locations both lack connections. */
@@ -614,6 +615,7 @@ describe('completeness checks', () => {
         'analysis_item_unused',
         'analysis_location_no_connections',
         'analysis_location_unused',
+        'analysis_song_unused',
         'analysis_tag_unused',
       ].sort(),
     );

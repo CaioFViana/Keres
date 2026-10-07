@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { createGalleryService } from '../../src/services/storymanagement/GalleryService';
 import { createSceneMusicService } from '../../src/services/storymanagement/SceneMusicService';
+import { createSongService } from '../../src/services/storymanagement/SongService';
 import { createStoryAnalysisService } from '../../src/services/storymanagement/StoryAnalysisService';
 import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -100,5 +101,59 @@ describe('Story Analysis of the music of a scene', () => {
     await music.deleteMusic(TEST_USER_ID, link.id);
 
     expect(await musicFindings()).toEqual([]);
+  });
+});
+
+describe('Story Analysis of the songs sung in the scenes', () => {
+  const newSong = (title: string, rest: Record<string, unknown> = {}) =>
+    createSongService(database.db).createSong(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title,
+      ...rest,
+    });
+  const sing = (songId: string, sections?: string[]) =>
+    createSceneMusicService(database.db).addMusic(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      sceneId: 'scene-1',
+      target: { songId },
+      sections,
+    });
+  const lyrics = '{sov: Verse 1}\nOne\n{eov}\n{soc: Chorus}\nTwo\n{eoc}';
+
+  it('finds nothing wrong with a song that is there and the sections it names', async () => {
+    const song = await newSong('Lantern', { lyrics });
+    await sing(song.id, ['Chorus']);
+
+    expect(await musicFindings()).toEqual([]);
+  });
+
+  it('finds the link whose song was deleted', async () => {
+    const song = await newSong('Lantern', { lyrics });
+    await sing(song.id);
+    await createSongService(database.db).deleteSong(TEST_USER_ID, song.id);
+
+    expect((await musicFindings()).map((f) => f.messageKey)).toEqual([
+      'analysis_music_target_gone',
+    ]);
+  });
+
+  it('reads the sections from the words as they stand now', async () => {
+    const song = await newSong('Lantern', { lyrics });
+    await sing(song.id, ['Chorus', 'Bridge']);
+
+    const [finding] = await musicFindings();
+
+    expect(finding).toMatchObject({
+      messageKey: 'analysis_music_sections_gone',
+      messageParams: { song: 'Lantern', sections: 'Bridge' },
+    });
+  });
+
+  it('compares the translation with the words', async () => {
+    await newSong('Lantern', { lyrics, lyricsTranslation: '{sov: Verso 1}\nUm\n{eov}' });
+
+    const keys = (await musicFindings()).map((f) => f.messageKey);
+
+    expect(keys).toEqual(['analysis_song_translation_mismatch']);
   });
 });

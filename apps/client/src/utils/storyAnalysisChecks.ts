@@ -22,7 +22,7 @@ import {
   checkStorySchema,
   checkTags,
 } from './storyAnalysis/completenessChecks';
-import { checkSceneMusic } from './storyAnalysis/musicChecks';
+import { checkSceneMusic, checkSongs, checkUnusedSongs } from './storyAnalysis/musicChecks';
 import {
   checkAnchorsRunForwards,
   checkNarrativeIndexes,
@@ -48,6 +48,7 @@ export {
   type AnalysisRoute,
   type AnalysisRouteStep,
   type AnalysisSceneMusic,
+  type AnalysisSong,
   type AnalysisScene,
   type AnalysisStorySchemaField,
   type ChoiceCheckCombinator,
@@ -81,6 +82,7 @@ export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): Stor
         ...checkLocations(input),
         ...checkItems(input),
         ...checkTags(input),
+        ...checkUnusedSongs(input),
       ]
     : [];
 
@@ -95,6 +97,7 @@ export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): Stor
     ...(input.storyType === 'branching' ? checkChoices(input) : []),
     ...checkStorySchema(input),
     ...checkSceneMusic(input),
+    ...checkSongs(input),
   ];
 }
 

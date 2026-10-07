@@ -1,4 +1,5 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { sectionLabels } from '@keres/shared';
+import { and, eq, inArray, isNotNull, or } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import type {
@@ -68,6 +69,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       routes,
       routeSteps,
       sceneMusic,
+      songs,
     ] = await Promise.all([
       db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) }),
       db
@@ -244,9 +246,14 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
           sceneId: schema.sceneMusic.sceneId,
           songId: schema.sceneMusic.songId,
           galleryId: schema.sceneMusic.galleryId,
+          sections: schema.sceneMusic.sections,
         })
         .from(schema.sceneMusic)
         .where(belongsToStory(schema.sceneMusic)),
+      db
+        .select({ id: schema.songs.id, title: schema.songs.title })
+        .from(schema.songs)
+        .where(belongsToStory(schema.songs)),
     ]);
 
     if (!story) {
@@ -272,6 +279,39 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
               )
           ).map((row) => row.id),
     );
+
+    // The words are parsed only for the songs a check could say something about: those a scene
+    // names sections of, and those with a translation. The rest are never read.
+    const namedSongIds = [
+      ...new Set(
+        sceneMusic.flatMap((music) =>
+          music.songId && music.sections && music.sections.length > 0 ? [music.songId] : [],
+        ),
+      ),
+    ];
+    const wordsOf =
+      songs.length === 0
+        ? []
+        : await db
+            .select({
+              id: schema.songs.id,
+              lyrics: schema.songs.lyrics,
+              lyricsTranslation: schema.songs.lyricsTranslation,
+            })
+            .from(schema.songs)
+            .where(
+              and(
+                belongsToStory(schema.songs),
+                namedSongIds.length > 0
+                  ? or(
+                      inArray(schema.songs.id, namedSongIds),
+                      isNotNull(schema.songs.lyricsTranslation),
+                    )
+                  : isNotNull(schema.songs.lyricsTranslation),
+              ),
+            );
+    const wordsById = new Map(wordsOf.map((row) => [row.id, row]));
+    const aliveSongIds = new Set(songs.map((song) => song.id));
 
     return {
       storyType: story.type,
@@ -300,9 +340,22 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       routeSteps,
       sceneMusic: sceneMusic.map((music) => ({
         ...music,
-        // A Song is resolved with the songs themselves; until they exist, none points at one.
-        targetAlive: music.galleryId ? aliveGalleryIds.has(music.galleryId) : false,
+        targetAlive: music.galleryId
+          ? aliveGalleryIds.has(music.galleryId)
+          : music.songId
+            ? aliveSongIds.has(music.songId)
+            : false,
       })),
+      songs: songs.map((song) => {
+        const words = wordsById.get(song.id);
+        return {
+          ...song,
+          sectionLabels: words ? sectionLabels(words.lyrics ?? '') : null,
+          translationLabels: words?.lyricsTranslation
+            ? sectionLabels(words.lyricsTranslation)
+            : null,
+        };
+      }),
     };
   };
 

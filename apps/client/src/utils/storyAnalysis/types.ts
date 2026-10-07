@@ -35,6 +35,7 @@ export const COMPLETENESS_FINDING_KEYS = [
   'analysis_location_no_connections',
   'analysis_item_unused',
   'analysis_tag_unused',
+  'analysis_song_unused',
 ] as const;
 
 export type CompletenessFindingKey = (typeof COMPLETENESS_FINDING_KEYS)[number];
@@ -102,6 +103,22 @@ export interface AnalysisSceneMusic {
   galleryId: string | null;
   /** The Song or Gallery medium it points at exists and is not deleted. */
   targetAlive: boolean;
+  /** The sections of the song the scene sings, by label; `null` is the whole song. */
+  sections?: string[] | null;
+}
+
+/**
+ * A song, as far as the checks need it. The service parses the words only of the songs that a check
+ * could say something about (a scene names sections of it, or it has a translation), so the labels
+ * are `null` when they were not read.
+ */
+export interface AnalysisSong {
+  id: string;
+  title: string;
+  /** Labels of the sections the lyrics give, in order, repeats included; `null` when not read. */
+  sectionLabels?: string[] | null;
+  /** The same for the translation; `null` when the song has none. */
+  translationLabels?: string[] | null;
 }
 
 export interface AnalysisChoice {
@@ -187,6 +204,8 @@ export interface StoryAnalysisInput {
   routeSteps?: AnalysisRouteStep[];
   /** Optional so a caller predating the music of a scene keeps working; absent means none. */
   sceneMusic?: AnalysisSceneMusic[];
+  /** Optional like `sceneMusic`: absent means none. */
+  songs?: AnalysisSong[];
   choiceCheckGroups: AnalysisChoiceCheckGroup[];
   choiceChecks: AnalysisChoiceCheck[];
   effects: AnalysisEffect[];

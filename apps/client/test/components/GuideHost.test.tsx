@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { DrawerActions } from '@react-navigation/native';
 import GuideHost from '../../src/components/common/feedback/GuideHost/GuideHost';
 import { __resetGuideAnchorsForTests, registerGuideAnchor } from '../../src/guides/anchorRegistry';
@@ -132,9 +132,92 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    // The card never waits for the measurement.
-    expect(screen.getByTestId('guide-card')).toBeTruthy();
     expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(screen.getByTestId('guide-card')).toBeTruthy();
+  });
+
+  it('draws nothing until the first hole is measured, so the dim never shows without it', async () => {
+    let resolve: (rect: { x: number; y: number; width: number; height: number }) => void = () => {};
+    registerGuideAnchor(
+      'target',
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [{ id: 's1', anchors: ['target'], titleKey: 't', bodyKey: 'b' }],
+    });
+    const screen = await render(<GuideHost />);
+
+    expect(screen.queryByTestId('guide-card')).toBeNull();
+    expect(screen.queryByTestId('guide-dim')).toBeNull();
+    expect(screen.queryByTestId('guide-spotlight')).toBeNull();
+
+    await act(async () => resolve({ x: 10, y: 100, width: 200, height: 40 }));
+
+    expect(screen.getByTestId('guide-card')).toBeTruthy();
+    expect(screen.getByTestId('guide-spotlight')).toBeTruthy();
+    expect(screen.queryByTestId('guide-dim')).toBeNull();
+  });
+
+  it('opens card-only when the measurement never answers', async () => {
+    jest.useFakeTimers();
+    try {
+      registerGuideAnchor('target', () => new Promise(() => {}));
+      useGuideStore.getState().startTour({
+        id: 'TourScreen',
+        drawerId: 'story-selection',
+        steps: [{ id: 's1', anchors: ['target'], titleKey: 't', bodyKey: 'b' }],
+      });
+      const screen = await render(<GuideHost />);
+      expect(screen.queryByTestId('guide-card')).toBeNull();
+
+      await act(async () => {
+        jest.advanceTimersByTime(1600);
+      });
+
+      expect(screen.getByTestId('guide-card')).toBeTruthy();
+      expect(screen.getByTestId('guide-dim')).toBeTruthy();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('dims through one canvas for every step, hole or none, and keeps the hole while the next is measured', async () => {
+    registerGuideAnchor('a', async () => ({ x: 10, y: 100, width: 200, height: 40 }));
+    let resolve: (rect: { x: number; y: number; width: number; height: number }) => void = () => {};
+    registerGuideAnchor(
+      'b',
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    useGuideStore.getState().startTour({
+      id: 'TourScreen',
+      drawerId: 'story-selection',
+      steps: [
+        { id: 's1', anchors: ['a'], titleKey: 't1', bodyKey: 'b1' },
+        { id: 's2', anchors: ['b'], titleKey: 't2', bodyKey: 'b2' },
+        { id: 's3', titleKey: 't3', bodyKey: 'b3' },
+      ],
+    });
+    const screen = await render(<GuideHost />);
+    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('guide-next'));
+    // Step two is still being measured: the hole of step one stays, nothing closes over the screen.
+    expect(screen.getByText('t2')).toBeTruthy();
+    expect(screen.getByTestId('guide-spotlight')).toBeTruthy();
+    expect(screen.queryByTestId('guide-dim')).toBeNull();
+
+    await act(async () => resolve({ x: 0, y: 300, width: 100, height: 40 }));
+    await fireEvent.press(screen.getByTestId('guide-next'));
+    expect(screen.getByTestId('guide-dim')).toBeTruthy();
+    expect(screen.queryByTestId('guide-spotlight')).toBeNull();
   });
 
   it('stays card-only when anchors cannot be measured', async () => {
@@ -146,8 +229,9 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    expect(screen.getByTestId('guide-card')).toBeTruthy();
+    expect(await screen.findByTestId('guide-card')).toBeTruthy();
     expect(screen.queryByTestId('guide-spotlight')).toBeNull();
+    expect(screen.getByTestId('guide-dim')).toBeTruthy();
   });
 
   it('opens the drawer and scrolls to a drawer step', async () => {

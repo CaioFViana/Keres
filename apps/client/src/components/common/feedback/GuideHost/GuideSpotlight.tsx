@@ -10,8 +10,8 @@ const SPOTLIGHT_BORDER_WIDTH = 2;
 const DIM_COLOR = 'rgba(0, 0, 0, 0.6)';
 
 interface GuideSpotlightProps {
-  /** The padded hole in window coordinates, as the host computed it. */
-  rect: GuideRect;
+  /** The padded hole in window coordinates, as the host computed it; none dims the whole window. */
+  rect: GuideRect | null;
   borderColor: string;
   testID?: string;
 }
@@ -40,17 +40,20 @@ export function roundedRectSvg(rect: GuideRect, radius: number): string {
 export function spotlightDimSvg(
   windowWidth: number,
   windowHeight: number,
-  rect: GuideRect,
+  rect: GuideRect | null,
   radius: number,
 ): string {
-  return `M0 0H${format(windowWidth)}V${format(windowHeight)}H0Z ${roundedRectSvg(rect, radius)}`;
+  const whole = `M0 0H${format(windowWidth)}V${format(windowHeight)}H0Z`;
+  return rect ? `${whole} ${roundedRectSvg(rect, radius)}` : whole;
 }
 
 /**
  * The tour spotlight: a dimmed window with a rounded hole over the target and a matching
  * border. One Skia canvas draws both from the same geometry, so the hole and the border
- * can never disagree the way stacked rectangular views did. Before CanvasKit is ready
- * (web boot), square legacy views keep the tour usable.
+ * can never disagree the way stacked rectangular views did. It is the same canvas at every step -
+ * a step with no target just has no hole - so moving between steps never swaps what draws the dim:
+ * a swap is a frame with no dim at all, seen as a flash. Before CanvasKit is ready (web boot),
+ * square legacy views keep the tour usable; the host waits for it, so that is only a fallback.
  */
 const GuideSpotlight: React.FC<GuideSpotlightProps> = ({
   rect,
@@ -61,6 +64,15 @@ const GuideSpotlight: React.FC<GuideSpotlightProps> = ({
   const { width, height } = useWindowDimensions();
 
   if (!ready) {
+    if (!rect) {
+      return (
+        <View
+          pointerEvents="none"
+          testID="guide-dim"
+          style={[styles.dim, StyleSheet.absoluteFill]}
+        />
+      );
+    }
     const square = { left: rect.x, top: rect.y, width: rect.width, height: rect.height };
     return (
       <>
@@ -93,29 +105,37 @@ const GuideSpotlight: React.FC<GuideSpotlightProps> = ({
   }
 
   const half = SPOTLIGHT_BORDER_WIDTH / 2;
-  const borderPath = roundedRectSvg(
-    {
-      x: rect.x + half,
-      y: rect.y + half,
-      width: rect.width - half * 2,
-      height: rect.height - half * 2,
-    },
-    SPOTLIGHT_RADIUS - half,
-  );
+  const borderPath = rect
+    ? roundedRectSvg(
+        {
+          x: rect.x + half,
+          y: rect.y + half,
+          width: rect.width - half * 2,
+          height: rect.height - half * 2,
+        },
+        SPOTLIGHT_RADIUS - half,
+      )
+    : null;
 
   return (
-    <Canvas style={StyleSheet.absoluteFill} pointerEvents="none" testID={testID}>
+    <Canvas
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+      testID={rect ? testID : 'guide-dim'}
+    >
       <Path
         path={spotlightDimSvg(width, height, rect, SPOTLIGHT_RADIUS)}
         fillType="evenOdd"
         color={DIM_COLOR}
       />
-      <Path
-        path={borderPath}
-        style="stroke"
-        strokeWidth={SPOTLIGHT_BORDER_WIDTH}
-        color={borderColor}
-      />
+      {borderPath ? (
+        <Path
+          path={borderPath}
+          style="stroke"
+          strokeWidth={SPOTLIGHT_BORDER_WIDTH}
+          color={borderColor}
+        />
+      ) : null}
     </Canvas>
   );
 };

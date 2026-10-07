@@ -5,6 +5,7 @@ import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'reac
 import type { Guide, GuideRect } from '../../../../guides/types';
 import GuideSpotlight from './GuideSpotlight';
 import { measureGuideAnchors, unionGuideRects } from '../../../../guides/anchorRegistry';
+import { useCanvasKitReady } from '../../../features/graphs/SkiaEdgeCanvas/useCanvasKitReady';
 import { useGuidePersistence } from '../../../../hooks/useGuidePersistence';
 import { useResponsiveLayout } from '../../../../hooks/useResponsiveLayout';
 import { useSystemInsets } from '../../../../hooks/useSystemInsets';
@@ -18,6 +19,9 @@ const SPOTLIGHT_PADDING = 8;
 const DRAWER_SCROLL_MARGIN = 96;
 /** Grace for the drawer open/scroll animation before anchors are measured. */
 const DRAWER_SETTLE_MS = 400;
+
+/** The longest a tour waits to know where its first hole goes (and for the canvas) before opening. */
+const REVEAL_TIMEOUT_MS = 1500;
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -55,10 +59,21 @@ const ActiveGuideOverlay: React.FC = () => {
   const completeTour = useGuideStore((state) => state.completeTour);
   const snoozeTour = useGuideStore((state) => state.snoozeTour);
   const recordSeen = useGuidePersistence();
+  const canvasReady = useCanvasKitReady();
   const [spot, setSpot] = useState<GuideRect | null>(null);
 
   const guide: Guide | null = activeTour?.guide ?? null;
   const step = guide && activeTour ? guide.steps[activeTour.stepIndex] : undefined;
+
+  // Nothing is drawn until the first step knows where its hole goes, and the canvas that draws it
+  // can: showing the dim first and the hole after is the flash a person sees when a tour starts.
+  // `waited` is the way out when either never comes - the tour then opens with what it has.
+  const [measured, setMeasured] = useState(() => (step?.anchors?.length ?? 0) === 0);
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setWaited(true), REVEAL_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [prevActiveTour, setPrevActiveTour] = useState(activeTour);
   const [prevGuideStep, setPrevGuideStep] = useState(step);
@@ -67,7 +82,10 @@ const ActiveGuideOverlay: React.FC = () => {
     setPrevActiveTour(activeTour);
     setPrevGuideStep(step);
     setPrevIsWide(isWide);
-    if (activeTour && step) {
+    // A step that is quick to measure keeps the hole it had until its own arrives, so the dim never
+    // closes over the screen between two steps; one that waits on the drawer, or has no target,
+    // starts without a hole.
+    if (activeTour && step && (step.drawerId || (step.anchors?.length ?? 0) === 0)) {
       setSpot(null);
     }
   }
@@ -76,11 +94,17 @@ const ActiveGuideOverlay: React.FC = () => {
     if (!activeTour || !step) return;
     let cancelled = false;
     const anchors = step.anchors ?? [];
-    if (anchors.length === 0) return;
+    if (anchors.length === 0) {
+      setMeasured(true);
+      return;
+    }
     (async () => {
       if (step.drawerId) {
         const handle = getGuideDrawer(step.drawerId);
-        if (!handle) return;
+        if (!handle) {
+          setMeasured(true);
+          return;
+        }
         // Opening an already-open drawer is a no-op router-side; permanent drawers need no open.
         if (!isWide) handle.navigation.dispatch(DrawerActions.openDrawer());
         const target = unionGuideRects(await measureGuideAnchors(anchors));
@@ -92,16 +116,20 @@ const ActiveGuideOverlay: React.FC = () => {
       }
       if (cancelled) return;
       setSpot(unionGuideRects(await measureGuideAnchors(anchors)));
+      setMeasured(true);
     })().catch(() => {
       // Measuring must never break the tour; the card alone is the fallback.
-      if (!cancelled) setSpot(null);
+      if (!cancelled) {
+        setSpot(null);
+        setMeasured(true);
+      }
     });
     return () => {
       cancelled = true;
     };
   }, [activeTour, step, isWide]);
 
-  if (!guide || !step || !activeTour) {
+  if (!guide || !step || !activeTour || !((measured && canvasReady) || waited)) {
     return null;
   }
 
@@ -154,10 +182,6 @@ const ActiveGuideOverlay: React.FC = () => {
   const styles = StyleSheet.create({
     root: {
       flex: 1,
-    },
-    dim: {
-      position: 'absolute',
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     // The card sits at the foot of a window the navigation bar draws over: its last row (the help
     // link) needs room above the bar, not against it.
@@ -264,11 +288,7 @@ const ActiveGuideOverlay: React.FC = () => {
       <View style={styles.root}>
         {/* Eats every touch outside the card; the visuals below it are pointer-transparent. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} />
-        {padded ? (
-          <GuideSpotlight rect={padded} borderColor={colors.primary} />
-        ) : (
-          <View pointerEvents="none" style={[styles.dim, StyleSheet.absoluteFill]} />
-        )}
+        <GuideSpotlight rect={padded} borderColor={colors.primary} />
         <View testID="guide-card-wrap" style={styles.cardWrap} pointerEvents="box-none">
           <View style={styles.card} testID="guide-card">
             <Text style={styles.title}>{t(step.titleKey)}</Text>

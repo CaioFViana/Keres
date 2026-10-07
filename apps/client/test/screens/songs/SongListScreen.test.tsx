@@ -1,11 +1,16 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { SongSelect } from '../../../src/db/schema';
-import SongListScreen, { songFactsLine } from '../../../src/screens/songs/SongListScreen';
+import SongListScreen, {
+  cueSheetFileName,
+  songFactsLine,
+} from '../../../src/screens/songs/SongListScreen';
 
 const mockNavigate = jest.fn();
 const mockCreateSong = jest.fn();
 const mockShowNotification = jest.fn();
 const mockPickTextFile = jest.fn();
+const mockDeliverFile = jest.fn();
+const mockLoadCueSheet = jest.fn();
 
 let mockCanEdit = true;
 let mockLoading = false;
@@ -19,6 +24,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
       options ? `${key}:${JSON.stringify(options)}` : key,
+    i18n: { language: 'en' },
   }),
 }));
 jest.mock('@react-navigation/native', () => ({
@@ -65,7 +71,7 @@ jest.mock('../../../src/hooks/useSongs', () => ({
 jest.mock('../../../src/state/storyStore', () => ({
   __esModule: true,
   useStoryStore: (selector: (state: unknown) => unknown) =>
-    selector({ selectedStory: { id: 'story-1' } }),
+    selector({ selectedStory: { id: 'story-1', title: 'The Old Road' } }),
 }));
 jest.mock('../../../src/state/userSettingsStore', () => ({
   __esModule: true,
@@ -82,6 +88,11 @@ jest.mock('../../../src/services/storymanagement/SongService', () => ({
 jest.mock('../../../src/utils/storyTransfer', () => ({
   __esModule: true,
   pickTextFile: () => mockPickTextFile(),
+  deliverFile: (...args: unknown[]) => mockDeliverFile(...args),
+}));
+jest.mock('../../../src/services/storymanagement/CueSheetService', () => ({
+  __esModule: true,
+  loadCueSheet: (...args: unknown[]) => mockLoadCueSheet(...args),
 }));
 jest.mock('../../../src/components/common/feedback/ScreenState/ScreenState', () => {
   const { Text } = require('react-native');
@@ -115,6 +126,8 @@ beforeEach(() => {
   mockNavigate.mockReset();
   mockCreateSong.mockReset().mockResolvedValue({ id: 'new-song', title: 'The Lantern Song' });
   mockPickTextFile.mockReset();
+  mockDeliverFile.mockReset().mockResolvedValue({ delivered: true, fileName: 'x' });
+  mockLoadCueSheet.mockReset().mockResolvedValue([]);
   mockShowNotification.mockReset();
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -239,6 +252,119 @@ describe('SongListScreen', () => {
     mockCanEdit = false;
     await render(<SongListScreen />);
 
-    expect(mockHeader?.actions?.every((action) => action.visible === false)).toBe(true);
+    const writing = mockHeader?.actions?.filter((action) => !action.id.startsWith('cue-sheet'));
+    expect(writing?.length).toBe(2);
+    expect(writing?.every((action) => action.visible === false)).toBe(true);
+  });
+});
+
+const cue = {
+  scene: 'The tavern',
+  chapter: 'One',
+  cue: 'as the door opens',
+  role: 'in-world',
+  music: 'The Lantern Song',
+  kind: 'song',
+  reference: null,
+  key: 'G',
+  tempo: 90,
+  meter: '4/4',
+  seconds: 65,
+  sections: null,
+  lyrics: 'One two',
+};
+
+describe('cueSheetFileName', () => {
+  it('makes a name of the letters and digits of the title', () => {
+    expect(cueSheetFileName('The Old Road', 'csv')).toBe('The-Old-Road-cue-sheet.csv');
+    expect(cueSheetFileName('???', 'md')).toBe('story-cue-sheet.md');
+  });
+});
+
+describe('SongListScreen cue sheet', () => {
+  const press = (id: string) =>
+    act(async () => mockHeader?.actions?.find((action) => action.id === id)?.onPress());
+
+  it('offers the cue sheet to everyone who can read the story, not only to editors', async () => {
+    mockCanEdit = false;
+    await render(<SongListScreen />);
+
+    const visible = (id: string) =>
+      mockHeader?.actions?.find((action) => action.id === id)?.visible;
+    expect(visible('cue-sheet-csv')).toBe(true);
+    expect(visible('cue-sheet-md')).toBe(true);
+    expect(visible('add-song')).toBe(false);
+  });
+
+  it('hands over the music of the story as a CSV named after it', async () => {
+    mockLoadCueSheet.mockResolvedValue([cue]);
+    await render(<SongListScreen />);
+
+    await press('cue-sheet-csv');
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    expect(mockLoadCueSheet).toHaveBeenCalledWith(expect.anything(), 'story-1', 'en');
+    const [contents, name, mime] = mockDeliverFile.mock.calls[0];
+    expect(name).toBe('The-Old-Road-cue-sheet.csv');
+    expect(mime).toBe('text/csv');
+    expect(contents).toContain('cue_sheet_scene,cue_sheet_chapter,cue_sheet_cue');
+    expect(contents).toContain(
+      'The tavern,One,as the door opens,scene_music_role_in_world,The Lantern Song',
+    );
+  });
+
+  it('hands it over as Markdown too', async () => {
+    mockLoadCueSheet.mockResolvedValue([cue]);
+    await render(<SongListScreen />);
+
+    await press('cue-sheet-md');
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const [contents, name, mime] = mockDeliverFile.mock.calls[0];
+    expect(name).toBe('The-Old-Road-cue-sheet.md');
+    expect(mime).toBe('text/markdown');
+    expect(contents).toContain('# cue_sheet_title');
+    expect(contents).toContain('> One two');
+  });
+
+  it('says so when no scene has music, and delivers nothing', async () => {
+    await render(<SongListScreen />);
+
+    await press('cue-sheet-csv');
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith('cue_sheet_empty', 'info'),
+    );
+    expect(mockDeliverFile).not.toHaveBeenCalled();
+  });
+
+  it('says where the file is when there is nothing to share it with', async () => {
+    mockLoadCueSheet.mockResolvedValue([cue]);
+    mockDeliverFile.mockResolvedValue({
+      delivered: false,
+      uri: 'file:///cache/x.csv',
+      fileName: 'x',
+    });
+    await render(<SongListScreen />);
+
+    await press('cue-sheet-csv');
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.stringContaining('export_story_no_share_target'),
+        'warning',
+      ),
+    );
+  });
+
+  it('reports a failure instead of throwing', async () => {
+    mockLoadCueSheet.mockRejectedValue(new Error('disk'));
+    await render(<SongListScreen />);
+
+    await press('cue-sheet-csv');
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith('cue_sheet_failed', 'error'),
+    );
   });
 });

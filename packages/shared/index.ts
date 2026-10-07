@@ -267,6 +267,7 @@ export {
 } from './manuscript/compile/parseManuscriptMarkdown';
 export * from './music/chordpro';
 export * from './music/chordProFile';
+export * from './music/cueSheet';
 export * from './music/abc';
 export * from './music/accompaniment';
 export * from './music/chords';

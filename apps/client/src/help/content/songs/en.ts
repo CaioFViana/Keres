@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'songs',
   title: 'Songs',
   summary:
-    'Write the songs of your story as lead sheets: the lyrics with their chords, in sections, with a translation if it is sung in another language. A scene can sing a whole song or only its chorus.',
+    'Write the songs of your story as lead sheets: the lyrics with their chords, in sections, with a translation if it is sung in another language. A scene can sing a whole song or only its chorus. You can also write its tune and hear it hummed.',
   keywords: [
     'song',
     'songs',
@@ -74,8 +74,9 @@ const page: HelpPage = {
         {
           key: 'melody',
           label: 'Melody',
-          whatToWrite: 'The notes of the tune. See the melody help once you start writing it.',
-          note: 'Optional.',
+          whatToWrite:
+            'The notes of the tune, in ABC notation: C D E2 z, a lowercase letter for the octave above, ^ for a sharp, _ for a flat, /2 for half the length, z for a rest. P:Verse 1 starts the tune of a section.',
+          note: 'Optional. One note for each syllable, in order. A section with no tune of its own sings the tune of the section of its kind before it, so a ballad of many verses is written once. Up to 8,000 characters.',
         },
         {
           key: 'notes',
@@ -109,10 +110,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'A scene names the sections it sings by their labels. If you rename or delete a section afterwards, the scene prints what is still there; if nothing it named is left, it prints the whole song, and Story Analysis tells you. Two sections with the same name cannot be told apart, so the editor offers to number them.',
     },
+    { type: 'heading', level: 2, text: 'The tune, and hearing it' },
+    {
+      type: 'paragraph',
+      text: 'Under the lyrics, the Melody part lets you play the notes on a keyboard or write them as text. Play hums the tune with a synthetic voice (a hum, “ah” or “la”) while the words follow line by line; you can add a click, or an instrument — guitar, harp, piano or violin — that plays the chords of the lyrics in a feel of its own (waltz, ballad, march, lullaby). Without a tune, the instrument plays the chords alone, a bar to each. For each section the panel says how many notes there are for its syllables; syllables are only estimated, so a difference is a hint, not an error.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'The sound is made on your device when you press play, and kept for next time. It is a sketch to hear a tune by, not a recording: it sings no words. You can also take the tune out as a MIDI file or an ABC file (with the words under the notes).',
+    },
     { type: 'heading', level: 2, text: 'Moving it to another key' },
     {
       type: 'paragraph',
-      text: 'Transpose moves every chord, and the key, by a semitone at a time. The words are never touched.',
+      text: 'Transpose moves every chord, the key and the notes of the tune, by a semitone at a time. The words are never touched.',
     },
     {
       type: 'callout',

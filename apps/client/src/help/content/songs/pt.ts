@@ -3,7 +3,7 @@ const page: HelpPage = {
   id: 'songs',
   title: 'Canções',
   summary:
-    'Escreva as canções da sua história como cifras: a letra com seus acordes, em seções, e uma tradução se for cantada em outra língua. Uma cena pode cantar a canção toda ou só o refrão.',
+    'Escreva as canções da sua história como cifras: a letra com seus acordes, em seções, e uma tradução se for cantada em outra língua. Uma cena pode cantar a canção toda ou só o refrão. Você também pode escrever a melodia e ouvi-la cantarolada.',
   keywords: [
     'canção',
     'cancao',
@@ -83,8 +83,9 @@ const page: HelpPage = {
         {
           key: 'melody',
           label: 'Melodia',
-          whatToWrite: 'As notas da música. Veja a ajuda da melodia quando começar a escrevê-la.',
-          note: 'Opcional.',
+          whatToWrite:
+            'As notas da melodia, em notação ABC: C D E2 z, letra minúscula para a oitava acima, ^ para sustenido, _ para bemol, /2 para metade da duração, z para pausa. P:Verso 1 começa a melodia de uma seção.',
+          note: 'Opcional. Uma nota para cada sílaba, na ordem. Uma seção sem melodia própria canta a da seção do mesmo tipo antes dela, então uma balada de muitos versos se escreve uma vez. Até 8.000 caracteres.',
         },
         {
           key: 'notes',
@@ -118,10 +119,20 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'Uma cena nomeia as seções que canta pelos rótulos. Se você renomear ou apagar uma seção depois, a cena imprime o que ainda existe; se nada do que ela nomeou sobrou, imprime a canção inteira, e a Análise da História avisa. Duas seções com o mesmo nome não se distinguem, então o editor oferece numerá-las.',
     },
+    { type: 'heading', level: 2, text: 'A melodia, e ouvi-la' },
+    {
+      type: 'paragraph',
+      text: 'Sob a letra, a parte Melodia deixa tocar as notas num teclado ou escrevê-las como texto. Tocar cantarola a melodia com uma voz sintética (um cantarolar, “ah” ou “lá”) enquanto a letra acompanha linha a linha; dá para somar um metrônomo, ou um instrumento — violão, harpa, piano ou violino — que toca as cifras da letra numa levada própria (valsa, balada, marcha, cantiga de ninar). Sem melodia, o instrumento toca só as cifras, um compasso para cada. Para cada seção, o painel diz quantas notas há para as sílabas; as sílabas são só estimadas, então uma diferença é um aviso, não um erro.',
+    },
+    {
+      type: 'callout',
+      tone: 'info',
+      text: 'O som é feito no seu aparelho quando você toca, e guardado para a próxima vez. É um rascunho para ouvir a melodia, não uma gravação: não canta palavras. Você também pode tirar a melodia em arquivo MIDI ou ABC (com a letra sob as notas).',
+    },
     { type: 'heading', level: 2, text: 'Mudar de tom' },
     {
       type: 'paragraph',
-      text: 'Transpor move todos os acordes, e o tom, um semitom por vez. As palavras nunca são tocadas.',
+      text: 'Transpor move todos os acordes, o tom e as notas da melodia, um semitom por vez. As palavras nunca são tocadas.',
     },
     {
       type: 'callout',

@@ -24,6 +24,8 @@ interface SongLyricsEditorProps {
   editable: boolean;
   words: SectionWords;
   syllableLanguage: SyllableLanguage;
+  /** The line being sung while the tune plays, to follow on the sheet. */
+  activeLine?: { sectionIndex: number; sourceIndex: number } | null;
 }
 
 type Mode = 'write' | 'sheet';
@@ -42,6 +44,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
   editable,
   words,
   syllableLanguage,
+  activeLine = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -210,6 +213,7 @@ const SongLyricsEditor: React.FC<SongLyricsEditorProps> = ({
             lyrics={value}
             words={words}
             syllableLanguage={showSyllables ? syllableLanguage : undefined}
+            activeLine={activeLine}
           />
         </>
       )}

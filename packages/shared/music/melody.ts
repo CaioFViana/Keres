@@ -386,6 +386,8 @@ export interface TimelineLine {
   sectionIndex: number;
   /** The lyric line within its section, counting only lines with words. */
   lineIndex: number;
+  /** The same line's place among all the lines of its section (blank lines and comments count). */
+  sourceIndex: number;
   text: string;
   start: number;
   end: number;
@@ -437,6 +439,7 @@ export function buildTimeline(
     if (!tune) return offset;
     const counts = lineSyllables(section, options.language);
     const spans = lyricLinesOf(section);
+    const sourceIndexes = new Map(section.lines.map((line, index) => [line, index]));
     // Each note of the tune is placed; lines take their span from the syllables they hold.
     const firstOfSyllable = new Map<number, MelodyNote>();
     const lastEndOfSyllable = new Map<number, number>();
@@ -465,6 +468,7 @@ export function buildTimeline(
       lines.push({
         sectionIndex: entry.sectionIndex,
         lineIndex,
+        sourceIndex: sourceIndexes.get(line) ?? lineIndex,
         text: lyricText(line.segments),
         start: offset + head.start,
         end: offset + tail,
@@ -498,4 +502,72 @@ export function buildTimeline(
     meter,
     seconds: (beats * 60) / tempo,
   };
+}
+
+const SECTION_LINE = /^\s*P:\s*(.*?)\s*$/;
+const FIELD_LINE = /^\s*[MQKLPTX]:/;
+
+/** Where the section of a label begins and ends among the lines of the text (`null`: not there). */
+function sectionSpan(lines: readonly string[], label: string | null): [number, number] | null {
+  const marks = lines.flatMap((line, index) => {
+    const match = SECTION_LINE.exec(line);
+    return match ? [{ index, label: match[1] === '' ? null : match[1] }] : [];
+  });
+  if (label === null) {
+    // The tune with no label is whatever stands before the first `P:` line.
+    const end = marks.length > 0 ? marks[0].index : lines.length;
+    const hasMusic = lines.slice(0, end).some((line) => line.trim() !== '' && !FIELD_LINE.test(line));
+    return hasMusic || marks.length === 0 ? [0, end] : null;
+  }
+  const at = marks.findIndex((mark) => mark.label === label);
+  if (at < 0) return null;
+  return [marks[at].index + 1, at + 1 < marks.length ? marks[at + 1].index : lines.length];
+}
+
+/**
+ * The text with a note (or rest) token added at the end of the section's tune, as the keyboard does.
+ * A section that is not in the text yet gets its `P:` line.
+ */
+export function appendNote(text: string, label: string | null, token: string): string {
+  const lines = text === '' ? [] : text.replace(/\r\n/g, '\n').split('\n');
+  const span = sectionSpan(lines, label);
+  if (!span && label === null) {
+    // The tune with no label goes before the first labelled one, or it would join the last of them.
+    const firstMark = lines.findIndex((line) => SECTION_LINE.test(line));
+    lines.splice(firstMark < 0 ? lines.length : firstMark, 0, token);
+    return lines.join('\n');
+  }
+  if (!span) {
+    const head = label === null ? [] : [`P:${label}`];
+    const body = lines.length > 0 && lines[lines.length - 1].trim() === '' ? lines.slice(0, -1) : lines;
+    return [...body, ...head, token].join('\n');
+  }
+  const [from, to] = span;
+  for (let index = to - 1; index >= from; index -= 1) {
+    const line = lines[index];
+    if (line.trim() === '' || FIELD_LINE.test(line) || /^\s*%/.test(line)) continue;
+    lines[index] = `${line.replace(/\s+$/, '')} ${token}`;
+    return lines.join('\n');
+  }
+  lines.splice(to, 0, token);
+  return lines.join('\n');
+}
+
+/** The text without the last note, rest or slur mark of the section's tune: the keyboard's backspace. */
+export function removeLastNote(text: string, label: string | null): string {
+  const lines = text.replace(/\r\n/g, '\n').split('\n');
+  const span = sectionSpan(lines, label);
+  if (!span) return text;
+  const [from, to] = span;
+  for (let index = to - 1; index >= from; index -= 1) {
+    const line = lines[index];
+    if (line.trim() === '' || FIELD_LINE.test(line) || /^\s*%/.test(line)) continue;
+    const tokens = line.trim().split(/\s+/);
+    while (tokens.length > 0 && /^(\||\|\]|\|\||\[\||:\||\|:)$/.test(tokens[tokens.length - 1])) tokens.pop();
+    tokens.pop();
+    if (tokens.length === 0) lines.splice(index, 1);
+    else lines[index] = tokens.join(' ');
+    return lines.join('\n');
+  }
+  return text;
 }

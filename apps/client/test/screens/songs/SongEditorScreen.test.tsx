@@ -10,6 +10,15 @@ const mockDeleteSong = jest.fn();
 const mockConfirmDelete = jest.fn();
 const mockDeliverFile = jest.fn();
 const mockShowNotification = jest.fn();
+const mockPlay = jest.fn();
+const mockStop = jest.fn();
+const mockPlayTone = jest.fn();
+let mockPlayback = {
+  phase: 'idle',
+  progress: 0,
+  problem: null,
+  active: null as { sectionIndex: number; sourceIndex: number; text: string } | null,
+};
 
 let mockCanEdit = true;
 let mockSong: SongSelect | null | undefined;
@@ -90,6 +99,15 @@ jest.mock('../../../src/hooks/useSongs', () => ({
   useSong: () => mockSong,
   useSongUses: () => mockUses,
 }));
+jest.mock('../../../src/hooks/useSongPlayback', () => ({
+  __esModule: true,
+  useSongPlayback: () => ({
+    ...mockPlayback,
+    play: mockPlay,
+    stop: mockStop,
+    playTone: mockPlayTone,
+  }),
+}));
 jest.mock('../../../src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector?: (state: { userId: string }) => unknown) =>
@@ -165,6 +183,10 @@ beforeEach(() => {
   mockConfirmDelete.mockReset();
   mockDeliverFile.mockReset().mockResolvedValue({ delivered: true, fileName: 'x.cho' });
   mockShowNotification.mockReset();
+  mockPlay.mockReset();
+  mockStop.mockReset();
+  mockPlayTone.mockReset();
+  mockPlayback = { phase: 'idle', progress: 0, problem: null, active: null };
   jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -265,6 +287,103 @@ describe('SongEditorScreen', () => {
         expect.stringContaining('export_story_no_share_target'),
         'warning',
       ),
+    );
+  });
+
+  it('shows the tune, and writes it once the field is left', async () => {
+    mockSong = { ...baseSong, melody: 'C D E' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    expect(view.getByTestId('song-melody').props.value).toBe('C D E');
+    await fireEvent.changeText(view.getByTestId('song-melody'), 'C D E F');
+    await fireEvent(view.getByTestId('song-melody'), 'blur');
+
+    await waitFor(() =>
+      expect(mockUpdateSong).toHaveBeenCalledWith('user-1', 'song-1', { melody: 'C D E F' }),
+    );
+  });
+
+  it('moves the tune with the chords when transposed', async () => {
+    mockSong = { ...baseSong, melody: 'P:Verse 1\nC D E2' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    // G up a semitone is Ab: the notes are spelled in its flats, and keep their lengths.
+    expect(mockUpdateSong.mock.calls[0][2].melody).toBe('P:Verse 1\n_D _E F2');
+  });
+
+  it('leaves an empty tune empty when transposed', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('song-transpose-up'));
+    await act(async () => mockHeader?.actions?.find((a) => a.id === 'export-song')?.onPress());
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect('melody' in mockUpdateSong.mock.calls[0][2]).toBe(false);
+  });
+
+  it('hands the tune over as a MIDI file named after the title', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('melody-export-midi'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const [contents, fileName, mimeType] = mockDeliverFile.mock.calls[0];
+    expect(fileName).toBe('The-Lantern-Song.mid');
+    expect(mimeType).toBe('audio/midi');
+    expect(String.fromCharCode(...(contents as Uint8Array).slice(0, 4))).toBe('MThd');
+  });
+
+  it('hands the tune over as an ABC file with the words under the notes', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('melody-export-abc'));
+
+    await waitFor(() => expect(mockDeliverFile).toHaveBeenCalledTimes(1));
+    const [contents, fileName, mimeType] = mockDeliverFile.mock.calls[0];
+    expect(fileName).toBe('The-Lantern-Song.abc');
+    expect(mimeType).toBe('text/vnd.abc');
+    expect(contents).toContain('T:The Lantern Song');
+    expect(contents).toContain('M:3/4');
+    expect(contents).toContain('K:G');
+    expect(contents).toContain('w: Light the lantern');
+  });
+
+  it('plays the song from the start, hummed, when play is pressed', async () => {
+    mockSong = { ...baseSong, melody: 'G A B c' } as unknown as SongSelect;
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('melody-play'));
+
+    expect(mockPlay).toHaveBeenCalledWith({ kind: 'song' }, { timbre: 'hum', click: false });
+  });
+
+  it('stops what plays when the button is pressed again', async () => {
+    mockPlayback = { ...mockPlayback, phase: 'playing' };
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('melody-play'));
+
+    expect(mockStop).toHaveBeenCalled();
+    expect(mockPlay).not.toHaveBeenCalled();
+  });
+
+  it('asks the player to sound a key and writes the note it plays', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    await fireEvent.press(view.getByTestId('piano-key-64'));
+
+    expect(mockPlayTone).toHaveBeenCalledWith(64, 'hum');
+    await fireEvent(view.getByTestId('song-melody'), 'blur');
+    await waitFor(() =>
+      expect(mockUpdateSong).toHaveBeenCalledWith('user-1', 'song-1', {
+        melody: 'P:Verse 1\nE',
+      }),
     );
   });
 

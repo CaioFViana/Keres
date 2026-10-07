@@ -1,11 +1,17 @@
 import {
+  buildTimeline,
   chordProFileOf,
   MAX_SONG_NOTES_LENGTH,
   MAX_SONG_TITLE_LENGTH,
   MAX_SONG_TRANSLATION_LENGTH,
+  parseChordPro,
+  parseMelody,
   type SectionWords,
   transposedSpelling,
   transposeLyrics,
+  transposeMelody,
+  writeAbc,
+  writeMidi,
 } from '@keres/shared';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -18,6 +24,7 @@ import {
 } from '@/src/components/common/feedback/ScreenState/ScreenState';
 import TextInput from '@/src/components/common/inputs/TextInput/TextInput';
 import EntityGalleryManager from '@/src/components/features/gallery/GalleryManager/EntityGalleryManager';
+import MelodyPanel from '@/src/components/features/songs/MelodyPanel';
 import SongFactsFields from '@/src/components/features/songs/SongFactsFields';
 import SongLyricsEditor from '@/src/components/features/songs/SongLyricsEditor';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
@@ -30,6 +37,7 @@ import { useOpenGalleryMediaViewer } from '../../hooks/useOpenGalleryMediaViewer
 import { useScreenHeader } from '../../hooks/useScreenHeader';
 import { useSong, useSongUses } from '../../hooks/useSongs';
 import { useSongDraft } from '../../hooks/useSongDraft';
+import { useSongPlayback } from '../../hooks/useSongPlayback';
 import { useStoryRole } from '../../hooks/useStoryRole';
 import type { SongStackParamList } from '../../navigation/MainSystemStacks';
 import { createSongService } from '../../services/storymanagement/SongService';
@@ -42,9 +50,9 @@ import { deliverFile } from '../../utils/storyTransfer';
 type RouteProps = RouteProp<SongStackParamList, 'SongEditor'>;
 
 /** A file name from a title: its letters and digits, joined by dashes. */
-export function songFileName(title: string): string {
+export function songFileName(title: string, extension = 'cho'): string {
   const base = title.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
-  return `${base || 'song'}.cho`;
+  return `${base || 'song'}.${extension}`;
 }
 
 /**
@@ -81,14 +89,27 @@ const SongEditorScreen = () => {
 
   const lyrics = draft.value('lyrics') ?? '';
   const title = draft.value('title') ?? '';
+  const melody = draft.value('melody') ?? '';
+  const playback = useSongPlayback({
+    lyrics,
+    melody,
+    tempo: draft.value('tempo') ?? null,
+    meter: draft.value('meter') ?? null,
+    words,
+    language: syllableLanguage,
+  });
 
   const transpose = useCallback(
     (semitones: number) => {
       const spelling = transposedSpelling(draft.value('key') ?? null, semitones);
       draft.setField('lyrics', transposeLyrics(lyrics, semitones, spelling.preferFlats));
+      // The tune moves with the chords, or they would no longer fit it.
+      if (melody !== '') {
+        draft.setField('melody', transposeMelody(melody, semitones, spelling.preferFlats));
+      }
       if (spelling.key) draft.setField('key', spelling.key);
     },
-    [draft, lyrics],
+    [draft, lyrics, melody],
   );
 
   const exportFile = useCallback(async () => {
@@ -116,6 +137,49 @@ const SongEditorScreen = () => {
       showNotification(t('song_export_failed'), 'error');
     }
   }, [draft, showNotification, song, t]);
+
+  const exportTune = useCallback(
+    async (kind: 'midi' | 'abc') => {
+      if (!song) return;
+      try {
+        await draft.flush();
+        const parsedSong = parseChordPro(lyrics, words);
+        const parsedTune = parseMelody(melody);
+        const heading = draft.value('title') ?? song.title;
+        const facts = {
+          tempo: draft.value('tempo') ?? null,
+          meter: draft.value('meter') ?? null,
+          language: syllableLanguage,
+        } as const;
+        const result =
+          kind === 'midi'
+            ? await deliverFile(
+                writeMidi(buildTimeline(parsedSong, parsedTune, facts), { title: heading }),
+                songFileName(heading, 'mid'),
+                'audio/midi',
+                'public.midi-audio',
+              )
+            : await deliverFile(
+                writeAbc(parsedSong, parsedTune, {
+                  ...facts,
+                  title: heading,
+                  key: draft.value('key') ?? null,
+                  preferFlats: transposedSpelling(draft.value('key') ?? null, 0).preferFlats,
+                }),
+                songFileName(heading, 'abc'),
+                'text/vnd.abc',
+                'public.plain-text',
+              );
+        if (!result.delivered) {
+          showNotification(t('export_story_no_share_target', { path: result.uri }), 'warning');
+        }
+      } catch (error) {
+        console.log('SongEditorScreen: failed to export the tune.', error);
+        showNotification(t('song_export_failed'), 'error');
+      }
+    },
+    [draft, lyrics, melody, showNotification, song, syllableLanguage, t, words],
+  );
 
   useScreenHeader({
     target: 'parent',
@@ -197,6 +261,27 @@ const SongEditorScreen = () => {
         editable={editable}
         words={words}
         syllableLanguage={syllableLanguage}
+        activeLine={playback.active}
+      />
+
+      <ScreenSection title={t('melody_title')} />
+      <MelodyPanel
+        lyrics={lyrics}
+        melody={melody}
+        songKey={draft.value('key') ?? null}
+        editable={editable}
+        words={words}
+        language={syllableLanguage}
+        onChange={(next) => draft.setField('melody', next)}
+        onBlur={() => void draft.flush()}
+        phase={playback.phase}
+        progress={playback.progress}
+        problem={playback.problem}
+        active={playback.active}
+        onPlay={(scope, voice) => void playback.play(scope, voice)}
+        onStop={playback.stop}
+        onTone={(pitch, timbre) => void playback.playTone(pitch, timbre)}
+        onExport={(kind) => void exportTune(kind)}
       />
 
       <Text style={styles.label}>{t('song_translation')}</Text>

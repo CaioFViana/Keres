@@ -19,6 +19,8 @@ interface LeadSheetViewProps {
   syllableLanguage?: SyllableLanguage | undefined;
   /** How many rows are drawn before the rest waits behind a button; a long ballad is hundreds. */
   firstRows?: number;
+  /** The line being sung, while the tune plays: its section and its place among that section's lines. */
+  activeLine?: { sectionIndex: number; sourceIndex: number } | null;
 }
 
 type Row =
@@ -42,9 +44,11 @@ function rowsOf(lyrics: string, words: SectionWords): Row[] {
 const SheetLine = React.memo(function SheetLine({
   line,
   syllableLanguage,
+  active,
 }: {
   line: SongLine;
   syllableLanguage: SyllableLanguage | undefined;
+  active: boolean;
 }) {
   const { colors } = useTheme();
   if (line.kind === 'blank') return <View style={styles.gap} />;
@@ -72,7 +76,10 @@ const SheetLine = React.memo(function SheetLine({
       ? null
       : countLineSyllables(lyricText(line.segments, true), syllableLanguage);
   return (
-    <View style={styles.lineRow} testID="lead-sheet-line">
+    <View
+      style={[styles.lineRow, active && { backgroundColor: colors.primaryContainer }]}
+      testID={active ? 'lead-sheet-line-active' : 'lead-sheet-line'}
+    >
       {hasChords ? (
         // One stack per chord: the chord over the words up to the next one, never one per syllable.
         <View style={styles.segments}>
@@ -109,6 +116,7 @@ const LeadSheetView: React.FC<LeadSheetViewProps> = ({
   words,
   syllableLanguage,
   firstRows = 80,
+  activeLine = null,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -131,7 +139,15 @@ const LeadSheetView: React.FC<LeadSheetViewProps> = ({
             {row.label}
           </Text>
         ) : (
-          <SheetLine key={row.key} line={row.line} syllableLanguage={syllableLanguage} />
+          <SheetLine
+            key={row.key}
+            line={row.line}
+            syllableLanguage={syllableLanguage}
+            active={
+              activeLine !== null &&
+              row.key === `l${activeLine.sectionIndex}-${activeLine.sourceIndex}`
+            }
+          />
         ),
       )}
       {rows.length > shown.length ? (

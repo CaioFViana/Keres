@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { parseChordPro } from '../../music/chordpro';
 import {
   abcNoteName,
+  appendNote,
+  removeLastNote,
   buildTimeline,
   lengthToken,
   noteToken,
@@ -314,5 +316,66 @@ describe('buildTimeline', () => {
     const { notes } = buildTimeline(parsed, parseMelody('(C D) E'), options);
 
     expect(notes.map((n) => n.sung)).toEqual([true, false, true]);
+  });
+});
+
+describe('the keyboard writing into the text', () => {
+  it('starts a section when the text has none, and adds to the end of the tune after that', () => {
+    let text = appendNote('', null, 'C');
+    text = appendNote(text, null, 'D2');
+
+    expect(text).toBe('C D2');
+    expect(parseMelody(text).sections[0].notes.map((n) => n.pitch)).toEqual([60, 62]);
+  });
+
+  it('adds a P: line for a section that is not there yet', () => {
+    const text = appendNote(appendNote('', 'Verse 1', 'C'), 'Chorus', 'g');
+
+    expect(text).toBe('P:Verse 1\nC\nP:Chorus\ng');
+  });
+
+  it('adds to the right section, not the last', () => {
+    const text = appendNote('P:A\nC D\nP:B\nE', 'A', 'F');
+
+    expect(text).toBe('P:A\nC D F\nP:B\nE');
+  });
+
+  it('puts the unlabelled tune before the first labelled one', () => {
+    expect(appendNote('P:A\nC', null, 'G')).toBe('G\nP:A\nC');
+    expect(appendNote('K:G\nP:A\nC', null, 'G')).toBe('K:G\nG\nP:A\nC');
+  });
+
+  it('adds to an empty section under its P: line', () => {
+    expect(appendNote('P:A\nP:B\nE', 'A', 'F')).toBe('P:A\nF\nP:B\nE');
+  });
+
+  it('removes the last note of a section, and the line when it was the only one', () => {
+    expect(removeLastNote('P:A\nC D E | \nP:B\nE', 'A')).toBe('P:A\nC D\nP:B\nE');
+    expect(removeLastNote('P:A\nC\nP:B\nE', 'A')).toBe('P:A\nP:B\nE');
+    expect(removeLastNote('P:A\nC', 'Z')).toBe('P:A\nC');
+    expect(removeLastNote('', null)).toBe('');
+  });
+
+  it('writes back what the parser reads', () => {
+    let text = '';
+    for (const token of ['C', 'D', 'z', 'E2']) text = appendNote(text, 'Verse 1', token);
+
+    expect(parseMelody(text).sections[0].notes.map((n) => n.pitch)).toEqual([60, 62, null, 64]);
+  });
+});
+
+describe('timeline lines and the sheet', () => {
+  it('names the line by its place among all the lines of the section, blank ones included', () => {
+    const parsed = parseChordPro('{sov: Verse 1}\nOne two\n\n{comment: slow}\nThree four\n{eov}');
+    const { lines } = buildTimeline(parsed, parseMelody('C D E F'), {
+      language: 'en',
+      tempo: 120,
+      meter: '4/4',
+    });
+
+    expect(lines.map((l) => [l.lineIndex, l.sourceIndex])).toEqual([
+      [0, 0],
+      [1, 3],
+    ]);
   });
 });

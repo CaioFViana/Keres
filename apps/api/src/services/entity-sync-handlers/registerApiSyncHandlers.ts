@@ -5,6 +5,7 @@ import { BoardSyncHandler } from './BoardSyncHandler';
 import { SketchSyncHandler } from './SketchSyncHandler';
 import { ScenePageSyncHandler } from './ScenePageSyncHandler';
 import { SceneMusicSyncHandler } from './SceneMusicSyncHandler';
+import { SongSyncHandler } from './SongSyncHandler';
 import { ChapterAnchorSyncHandler } from './ChapterAnchorSyncHandler';
 import { ChapterSyncHandler } from './ChapterSyncHandler';
 import { CharacterRelationSyncHandler } from './CharacterRelationSyncHandler';
@@ -57,6 +58,7 @@ export function registerApiSyncHandlers(): Map<string, SyncEntityHandler> {
     () => new SceneSyncHandler(),
     () => new ScenePageSyncHandler(),
     () => new SceneMusicSyncHandler(),
+    () => new SongSyncHandler(),
     () => new GallerySyncHandler(),
     () => new GalleryRelationSyncHandler(),
     () => new NoteSyncHandler(),

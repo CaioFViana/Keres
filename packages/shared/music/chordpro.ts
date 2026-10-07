@@ -79,14 +79,7 @@ const START_KIND: Record<string, Exclude<SongSectionKind, 'none'>> = {
   sob: 'bridge',
 };
 
-const END_NAMES = new Set([
-  'end_of_verse',
-  'eov',
-  'end_of_chorus',
-  'eoc',
-  'end_of_bridge',
-  'eob',
-]);
+const END_NAMES = new Set(['end_of_verse', 'eov', 'end_of_chorus', 'eoc', 'end_of_bridge', 'eob']);
 
 const DIRECTIVE = /^\{\s*([a-z_]+)\s*(?:[:\s]\s*([^}]*?))?\s*\}$/i;
 const CHORD_TOKEN = /\[([^\]]*)\]/g;
@@ -159,7 +152,10 @@ export function parseChordPro(
 
   const closeOutside = () => {
     if (outside.some((line) => line.kind !== 'blank')) {
-      raw.push({ section: { label: null, kind: 'none', lines: trimBlank(outside) }, pending: null });
+      raw.push({
+        section: { label: null, kind: 'none', lines: trimBlank(outside) },
+        pending: null,
+      });
     }
     outside = [];
   };

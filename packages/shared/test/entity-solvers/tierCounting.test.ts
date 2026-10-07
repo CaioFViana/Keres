@@ -93,4 +93,10 @@ describe('the music of a scene and the plan', () => {
     expect(getTierRelationalEntityTypes()).not.toContain('SceneMusic');
     expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('SceneMusic');
   });
+
+  it('counts a song, as it counts what the writer creates', () => {
+    expect(getTierCountedEntityTypes()).toContain('Song');
+    expect(getTierRelationalEntityTypes()).not.toContain('Song');
+    expect(TIER_EXEMPT_ENTITY_TYPES).not.toContain('Song');
+  });
 });

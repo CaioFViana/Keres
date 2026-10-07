@@ -16,6 +16,7 @@ import {
   locations,
   notes,
   scenes,
+  songs,
   worldRules,
 } from '../../db/schema';
 import { BaseSyncEntityHandler, SyncConflictError, duplicateOf } from './BaseSyncEntityHandler';
@@ -123,6 +124,13 @@ export class GalleryRelationSyncHandler extends BaseSyncEntityHandler<
           ),
         });
         ownerExists = !!worldRule;
+        break;
+      }
+      case 'Song': {
+        const song = await database.query.songs.findFirst({
+          where: and(eq(songs.id, ownerId), eq(songs.storyId, storyId), eq(songs.isDeleted, false)),
+        });
+        ownerExists = !!song;
         break;
       }
       default:

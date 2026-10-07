@@ -9,10 +9,7 @@ import {
 } from './chordpro';
 
 /** The labels the lyrics give their sections, in the order written (text outside any section has none). */
-export function sectionLabels(
-  text: string,
-  words: SectionWords = DEFAULT_SECTION_WORDS,
-): string[] {
+export function sectionLabels(text: string, words: SectionWords = DEFAULT_SECTION_WORDS): string[] {
   return parseChordPro(text, words).sections.flatMap((section) =>
     section.label ? [section.label] : [],
   );

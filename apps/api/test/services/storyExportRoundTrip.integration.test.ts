@@ -33,6 +33,7 @@ import {
   sketches,
   scenePages,
   sceneMusic,
+  songs,
   routes,
   routeSteps,
   seeAlsoRelations,
@@ -74,6 +75,8 @@ const id = {
   sketch: '',
   scenePage: '',
   sceneMusic: '',
+  song: '',
+  songMusic: '',
   locationMap: '',
   location: '',
   otherLocation: '',
@@ -439,6 +442,29 @@ beforeEach(async () => {
     cue: 'as the lantern is lit',
     sections: ['Chorus'],
   } as never);
+  // A song, sung in a scene: the link points at it by id, which an import has to follow.
+  await db.insert(songs).values({
+    id: id.song,
+    storyId,
+    title: 'The lantern song',
+    notes: 'Sung at the gate',
+    lyrics: '{soc: Chorus}\n[G]Light the lantern\n{eoc}',
+    lyricsTranslation: 'Acende o lampião',
+    key: 'G',
+    tempo: 96,
+    meter: '6/8',
+  } as never);
+  await db.insert(sceneMusic).values({
+    id: id.songMusic,
+    storyId,
+    sceneId: id.sceneA,
+    rank: 'a1',
+    songId: id.song,
+    galleryId: null,
+    role: 'in-world',
+    cue: null,
+    sections: null,
+  } as never);
   // Map content uses foreign ids too, so the export/import path has to carry and rewrite it.
   await db.insert(locationMaps).values({
     id: id.locationMap,
@@ -651,6 +677,7 @@ async function childrenOf(storyId: string) {
     storySketches: await rows(sketches),
     scenePages: await rows(scenePages),
     sceneMusic: await rows(sceneMusic),
+    songs: await rows(songs),
     storyLocationMaps: await rows(locationMaps),
     plots: await rows(plots),
     plotScenes: await rows(plotScenes),
@@ -827,6 +854,17 @@ describe('import of a package with one row of every kind', () => {
       role: 'in-world',
       cue: 'as the lantern is lit',
       sections: ['Chorus'],
+    });
+    // A song keeps all its fields, and the link that sings it still points at it.
+    expect(after.songs[0]).toMatchObject({
+      id: id.song,
+      title: 'The lantern song',
+      lyricsTranslation: 'Acende o lampião',
+      tempo: 96,
+      meter: '6/8',
+    });
+    expect(after.sceneMusic.find((row: { id: string }) => row.id === id.songMusic)).toMatchObject({
+      songId: id.song,
     });
     expect(
       after.storyBoards[0].content.nodes.find((node: { kind: string }) => node.kind === 'entity')

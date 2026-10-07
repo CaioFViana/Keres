@@ -240,6 +240,28 @@ export async function importStoryAssets(context: DatabaseStoryPackageImportConte
   }
 
   /*
+   * Songs stand alone (they point at nothing but the story), so they are written before the music
+   * of the scenes that sing them, and before any gallery link whose owner is one.
+   */
+  const newSongsData = (validatedFullStory.songs ?? []).map((original) => {
+    const newId = nextId(original.id);
+    idMap.set(original.id, newId);
+    return {
+      ...original,
+      id: newId,
+      storyId: targetStoryId,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+      isDeleted: false,
+      deletedAt: null,
+    };
+  });
+  if (newSongsData.length > 0) {
+    await insertPortableCollection(context, OperationLogEntityType.Song, newSongsData);
+  }
+
+  /*
    * The music of a scene points at a scene (narrative phase), and at a Song or a Gallery medium (both
    * written before this): every id is in the map by now. A link whose target the package does not
    * carry keeps its cue and waits for another target, as it does live.

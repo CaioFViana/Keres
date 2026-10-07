@@ -59,7 +59,10 @@ export function syllableCounts(
       if (line.kind !== 'lyric') continue;
       const text = lyricText(line.segments, true);
       if (text.trim() === '') continue;
-      result.push({ text: lyricText(line.segments), syllables: countLineSyllables(text, language) });
+      result.push({
+        text: lyricText(line.segments),
+        syllables: countLineSyllables(text, language),
+      });
     }
   }
   return result;

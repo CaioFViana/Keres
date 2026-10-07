@@ -13,6 +13,7 @@ export const GALLERY_OWNER_ENTITIES = [
   'Scene',
   'Item',
   'WorldRule',
+  'Song',
 ] as const;
 export type GalleryOwnerEntity = (typeof GALLERY_OWNER_ENTITIES)[number];
 

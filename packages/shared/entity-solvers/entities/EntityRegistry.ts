@@ -25,6 +25,7 @@ import { boardEntityHandler } from './BoardEntityHandler';
 import { sketchEntityHandler } from './SketchEntityHandler';
 import { scenePageEntityHandler } from './ScenePageEntityHandler';
 import { sceneMusicEntityHandler } from './SceneMusicEntityHandler';
+import { songEntityHandler } from './SongEntityHandler';
 import { storyEntityHandler } from './StoryEntityHandler';
 import { locationMapEntityHandler } from './LocationMapEntityHandler';
 import { statEntityHandler } from './StatEntityHandler';
@@ -75,6 +76,7 @@ const ENTITY_HANDLERS: ReadonlyMap<OperationLogEntityType, EntityDomainHandler> 
   [sketchEntityHandler.entityType, sketchEntityHandler],
   [scenePageEntityHandler.entityType, scenePageEntityHandler],
   [sceneMusicEntityHandler.entityType, sceneMusicEntityHandler],
+  [songEntityHandler.entityType, songEntityHandler],
   [storyEntityHandler.entityType, storyEntityHandler],
   [locationMapEntityHandler.entityType, locationMapEntityHandler],
   [statEntityHandler.entityType, statEntityHandler],

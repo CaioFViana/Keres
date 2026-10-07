@@ -1,8 +1,34 @@
 import { readDirective } from './chordpro';
 
 /** The twelve pitch classes, spelled with sharps and with flats. */
-export const NOTE_NAMES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
-export const NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
+export const NOTE_NAMES_SHARP = [
+  'C',
+  'C#',
+  'D',
+  'D#',
+  'E',
+  'F',
+  'F#',
+  'G',
+  'G#',
+  'A',
+  'A#',
+  'B',
+] as const;
+export const NOTE_NAMES_FLAT = [
+  'C',
+  'Db',
+  'D',
+  'Eb',
+  'E',
+  'F',
+  'Gb',
+  'G',
+  'Ab',
+  'A',
+  'Bb',
+  'B',
+] as const;
 
 const NATURAL: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
@@ -55,9 +81,7 @@ export function keyPrefersFlats(key: string): boolean {
   if (match[2] === 'b') return true;
   if (match[2] === '#') return false;
   const minor = Boolean(match[3]);
-  return minor
-    ? ['D', 'G', 'C', 'F'].includes(match[1])
-    : match[1] === 'F';
+  return minor ? ['D', 'G', 'C', 'F'].includes(match[1]) : match[1] === 'F';
 }
 
 /** The chord moved by `semitones`; a symbol that is not a chord comes back as it was. */
@@ -65,7 +89,8 @@ export function transposeChord(symbol: string, semitones: number, preferFlats: b
   const chord = parseChord(symbol);
   if (!chord) return symbol;
   const root = spell(chord.rootPitch + semitones, preferFlats);
-  const bass = chord.bassPitch === null ? '' : `/${spell(chord.bassPitch + semitones, preferFlats)}`;
+  const bass =
+    chord.bassPitch === null ? '' : `/${spell(chord.bassPitch + semitones, preferFlats)}`;
   return `${root}${chord.suffix}${bass}`;
 }
 

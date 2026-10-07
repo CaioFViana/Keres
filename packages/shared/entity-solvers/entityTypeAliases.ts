@@ -25,6 +25,7 @@ const LEGACY_IDENTIFIER_ENTITY_TYPES = new Set<OperationLogEntityType>([
   OperationLogEntityType.Sketch,
   OperationLogEntityType.ScenePage,
   OperationLogEntityType.SceneMusic,
+  OperationLogEntityType.Song,
   OperationLogEntityType.LocationMap,
   OperationLogEntityType.Chapter,
   OperationLogEntityType.Character,

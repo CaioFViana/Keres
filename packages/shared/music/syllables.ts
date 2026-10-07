@@ -69,6 +69,10 @@ export function countLineSyllables(line: string, language: SyllableLanguage): nu
       .reduce((sum, word) => sum + word.split(SYLLABLE_MARK).filter(Boolean).length, 0);
   }
   const counter =
-    language === 'pt' ? portugueseSyllables : language === 'en' ? englishSyllables : genericSyllables;
+    language === 'pt'
+      ? portugueseSyllables
+      : language === 'en'
+        ? englishSyllables
+        : genericSyllables;
   return words(line).reduce((sum, word) => sum + counter(word.replace(/['’-]/g, '')), 0);
 }

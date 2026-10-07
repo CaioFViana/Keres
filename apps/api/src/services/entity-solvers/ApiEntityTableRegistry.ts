@@ -14,6 +14,7 @@ export const API_ENTITY_TABLES = {
   [OperationLogEntityType.Sketch]: schema.sketches,
   [OperationLogEntityType.ScenePage]: schema.scenePages,
   [OperationLogEntityType.SceneMusic]: schema.sceneMusic,
+  [OperationLogEntityType.Song]: schema.songs,
   [OperationLogEntityType.Chapter]: schema.chapters,
   [OperationLogEntityType.ChapterAnchor]: schema.chapterAnchors,
   [OperationLogEntityType.Character]: schema.characters,

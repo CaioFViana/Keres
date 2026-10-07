@@ -48,12 +48,15 @@ describe('parseLyricLine', () => {
   });
 
   it('ignores an empty pair of brackets', () => {
-    expect(parseLyricLine('A[]b')).toEqual([{ chord: null, text: 'A' }, { chord: null, text: 'b' }]);
+    expect(parseLyricLine('A[]b')).toEqual([
+      { chord: null, text: 'A' },
+      { chord: null, text: 'b' },
+    ]);
   });
 });
 
 describe('lyricText', () => {
-  it('is the words with no chords, and without the writer\'s syllable marks unless asked', () => {
+  it("is the words with no chords, and without the writer's syllable marks unless asked", () => {
     const segments = parseLyricLine('No·[G]ite');
 
     expect(lyricText(segments)).toBe('Noite');
@@ -161,7 +164,7 @@ describe('parseChordPro', () => {
     expect(parseChordPro('{soc: Chorus}\nSing').sections).toHaveLength(1);
   });
 
-  it('skips a directive it does not know, and a comment line of the writer\'s own', () => {
+  it("skips a directive it does not know, and a comment line of the writer's own", () => {
     const parsed = parseChordPro('{define: Am base-fret 1}\n# private\nWords');
 
     expect(parsed.sections[0].lines).toEqual([

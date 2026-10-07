@@ -3398,8 +3398,76 @@
   "storyLocationMaps": [],
   "storySketches": [],
   "scenePages": [],
-  "sceneMusic": [],
-  "songs": [],
+  "sceneMusic": [
+    {
+      "id": "4BX8Q2NMVWW8WGY3FQ7MXA3R6K",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "rank": "a0",
+      "songId": "0P079EPEGJ9TD9Z0H6QZRD4EKN",
+      "galleryId": null,
+      "role": "in-world",
+      "cue": "Alice tenta dizer de cor, e as palavras saem erradas.",
+      "sections": ["Verso 1"]
+    },
+    {
+      "id": "279WFX032YXQHPAS2ZJCJNQ8GR",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
+      "rank": "a0",
+      "songId": "03E64V92Y8HB4GBJ2SRFG9ZSQ0",
+      "galleryId": null,
+      "role": "in-world",
+      "cue": "O Chapeleiro, no banco, conta como a cantou no concerto da Rainha.",
+      "sections": null
+    }
+  ],
+  "songs": [
+    {
+      "id": "0P079EPEGJ9TD9Z0H6QZRD4EKN",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Como Faz o Pequeno Crocodilo",
+      "notes": "Paródia de Carroll de “How doth the little busy bee”, de Isaac Watts. Alice a recita e troca as palavras. Domínio público (1865); a letra é uma versão livre feita para este catálogo.",
+      "lyrics": "{sov: Verso 1}\nComo faz o pequeno crocodilo\nPara lustrar a cauda a reluzir,\nE derramar as águas do Nilo\nEm cada escama de ouro a luzir!\n{eov}\n{sov: Verso 2}\nQue alegre parece sorrir,\nCom que esmero abre as garras,\nE acolhe os peixinhos a entrar\nCom suaves mandíbulas risonhas!\n{eov}",
+      "lyricsTranslation": null,
+      "melody": null,
+      "key": null,
+      "tempo": null,
+      "meter": null
+    },
+    {
+      "id": "03E64V92Y8HB4GBJ2SRFG9ZSQ0",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Brilha, Brilha, Morceguão",
+      "notes": "A canção do Chapeleiro, cantada na melodia de “Twinkle, Twinkle, Little Star”. A Rainha diz que ele está assassinando o tempo. Domínio público (1865); a letra é uma versão livre feita para este catálogo.",
+      "lyrics": "{sov: Verso 1}\n[C]Brilha, brilha, [F]morce[C]gão!\nQue [F]fará, não [C]sei, en[G]tão!\n[C]Lá no alto a es[F]voa[C]çar,\nBan[G]deja de chá no [C]ar.\n{eov}",
+      "lyricsTranslation": null,
+      "melody": null,
+      "key": "C",
+      "tempo": 100,
+      "meter": "4/4"
+    }
+  ],
   "routes": [
     {
       "id": "3HY70B8BSSYJC4FS2Z3S5WR4VS",

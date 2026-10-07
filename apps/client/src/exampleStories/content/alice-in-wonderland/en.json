@@ -3398,8 +3398,76 @@
   "storyLocationMaps": [],
   "storySketches": [],
   "scenePages": [],
-  "sceneMusic": [],
-  "songs": [],
+  "sceneMusic": [
+    {
+      "id": "4BX8Q2NMVWW8WGY3FQ7MXA3R6K",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "sceneId": "01KYXBHD0BV57YSDKQAR1T1764",
+      "rank": "a0",
+      "songId": "0P079EPEGJ9TD9Z0H6QZRD4EKN",
+      "galleryId": null,
+      "role": "in-world",
+      "cue": "Alice tries to say it by heart, and the words come out wrong.",
+      "sections": ["Verse 1"]
+    },
+    {
+      "id": "279WFX032YXQHPAS2ZJCJNQ8GR",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "sceneId": "6J1MHZ2S6YJSNV7D5YCA8EXMK3",
+      "rank": "a0",
+      "songId": "03E64V92Y8HB4GBJ2SRFG9ZSQ0",
+      "galleryId": null,
+      "role": "in-world",
+      "cue": "The Hatter, on the stand, tells how he sang it at the Queen’s concert.",
+      "sections": null
+    }
+  ],
+  "songs": [
+    {
+      "id": "0P079EPEGJ9TD9Z0H6QZRD4EKN",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "How Doth the Little Crocodile",
+      "notes": "Carroll’s parody of Isaac Watts’s “How doth the little busy bee”. Alice recites it and gets the words wrong. Public domain (1865).",
+      "lyrics": "{sov: Verse 1}\nHow doth the little crocodile\nImprove his shining tail,\nAnd pour the waters of the Nile\nOn every golden scale!\n{eov}\n{sov: Verse 2}\nHow cheerfully he seems to grin,\nHow neatly spreads his claws,\nAnd welcomes little fishes in,\nWith gently smiling jaws!\n{eov}",
+      "lyricsTranslation": null,
+      "melody": null,
+      "key": null,
+      "tempo": null,
+      "meter": null
+    },
+    {
+      "id": "03E64V92Y8HB4GBJ2SRFG9ZSQ0",
+      "storyId": "01KYXBHD0B9D8J4CNXNRAG7CJS",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z",
+      "version": 1,
+      "isDeleted": false,
+      "deletedAt": null,
+      "title": "Twinkle, Twinkle, Little Bat",
+      "notes": "The Hatter’s song, sung to the tune of “Twinkle, Twinkle, Little Star”. The Queen says he is murdering the time. Public domain (1865).",
+      "lyrics": "{sov: Verse 1}\n[C]Twinkle, twinkle, [F]little [C]bat!\nHow I [F]wonder [C]what you’re [G]at!\n[C]Up above the [F]world you [C]fly,\nLike a [G]tea-tray in the [C]sky.\n{eov}",
+      "lyricsTranslation": null,
+      "melody": null,
+      "key": "C",
+      "tempo": 100,
+      "meter": "4/4"
+    }
+  ],
   "routes": [
     {
       "id": "3HY70B8BSSYJC4FS2Z3S5WR4VS",

@@ -19,7 +19,7 @@ applicable. English and Portuguese copies keep the same identifiers and graph st
 
 | Story | Narrative type | Features deliberately demonstrated |
 | --- | --- | --- |
-| Alice in Wonderland | Branching | Choice graph, AND/OR conditions, effects, and a board that connects characters, scenes, items and an editorial note. |
+| Alice in Wonderland | Branching | Choice graph, AND/OR conditions, effects, and a board that connects characters, scenes, items and an editorial note. Two public-domain songs the characters sing (`songs`, `sceneMusic`): Alice recites part of one (a named section), the Hatter sings the other whole, with chords, key, tempo and meter. |
 | Beauty and the Beast | Branching | Choice graph and a location map of the castle, with location pins and the story's containment/connection relations. |
 | Cinderella | Linear | Primary custom calendar, starting date and time, chapter anchors, calendar-aware scene timing, and a `story_date` custom attribute. |
 | Goldilocks and the Three Bears | Linear | The normal Gregorian timeline: explicit epoch day/time with no custom calendar, keeping normal-date behavior visible. |
@@ -47,6 +47,14 @@ data and a scene page points at a sketch or at a gallery image; the bundled stor
 `cloneExampleStory` still maps both collections, and the API export/import round-trip fixture owns
 the guarantee that a scene page survives remapping, with a sketch and with a gallery image, and that
 a page whose image is gone keeps its text.
+
+## Songs
+
+`songs` and `sceneMusic` are filled for Alice only (`scripts/lib/buildExampleStorySongs.ts`): "How Doth
+the Little Crocodile" and "Twinkle, Twinkle, Little Bat" (Carroll, 1865), each sung in a scene, the
+first only in part. The Portuguese words are a free rendering written for the catalogue. The other
+stories carry the collections empty; a link to a recording would need a Gallery medium, and the
+bundled stories ship no audio (see the media rule). `cloneExampleStory` maps both collections.
 
 ## Arc medium
 

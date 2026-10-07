@@ -68,6 +68,17 @@ Monorepo (`package.json`, v1.8.0, MPL-2.0):
   the text that goes with it and a `contain`/`cover` fit. A page outlives its image
   ("media removed", offered a replacement, left out of manuscripts). Sync, export/import,
   clone, tier entity limit; `ScenePagesScreen`, entry on the scene detail.
+- **Music in scenes** (`Song`, `SceneMusic`; `ALBUM_MUSICAL_PLAN.md`): a scene has any number of
+  pieces of music, each a `Song` of the story or a Gallery medium (audio/link), `in-world`
+  (someone sings it: its words may print) or `score` (never printed). A Song is a lead sheet in a
+  ChordPro subset (chords, sections, `{chorus}` recall), optional translation, key/tempo/meter;
+  the editor transposes, counts syllables and exports ChordPro. A link names which sections the
+  scene sings. Export and publication print the sung words after the scene or in an appendix
+  (each part once; a script sets them as Fountain lyrics); recordings, links and cues are never
+  published. Story Analysis reports links to what is gone, sections that no longer exist,
+  repeated section names, translations out of step and (with completeness checks) unused songs;
+  global search reads the lyrics. Sync, export/import, clone, purge, tier entity limit;
+  `SceneMusicScreen`, `SongListScreen`, `SongEditorScreen`.
 - **Screenplay** (arc medium): `Scene.body` is Fountain; `Location.intExt` +
   generated scene heading only when the text has none (explicit indicator on the
   scene); Fountain and an industry-layout PDF (Courier, indents) export with a stated

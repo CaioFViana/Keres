@@ -8,6 +8,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyNarrative } from './lib/applyExampleNarrative';
 import { buildExampleStoryMetadata } from './lib/buildExampleStoryMetadata';
+import { buildExampleStorySongs } from './lib/buildExampleStorySongs';
 import { buildExampleStoryShowcase } from './lib/buildExampleStoryShowcase';
 import { exampleStoryLocalizedText } from './lib/exampleStoryLocalizedText';
 import {
@@ -490,6 +491,14 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     locations,
     items,
   });
+  const { songs, sceneMusic } = buildExampleStorySongs({
+    slug,
+    language,
+    storyId,
+    id,
+    base,
+    scenes,
+  });
   return {
     ...source,
     // The constant, not a literal: pinned by hand it silently falls behind the format, and the
@@ -547,8 +556,9 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     // Sketches and scene pages are not part of the bundled stories (no bitmap to ship): present, empty.
     storySketches: [],
     scenePages: [],
-    sceneMusic: [],
-    songs: [],
+    // Songs have no bitmap or recording to ship, so Alice sings a few (see `buildExampleStorySongs`).
+    sceneMusic,
+    songs,
     storyLocationMaps,
     stats,
     statStrengths: [...defaultLadder, ...customLadder],

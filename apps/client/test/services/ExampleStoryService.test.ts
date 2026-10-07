@@ -9,6 +9,7 @@ import {
   FullStoryExportSchema,
   parseManuscriptMarkdown,
   reviveDates,
+  sectionLabels,
   StorySchema,
 } from '@keres/shared';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -201,6 +202,26 @@ it('uses the documented current-feature showcase matrix', () => {
   expect(alice.storyBoards).toHaveLength(1);
   expect(alice.storyBoards[0].content.nodes.some((node: any) => node.kind === 'note')).toBe(true);
   expect(alice.storyBoards[0].content.nodes.some((node: any) => node.kind === 'entity')).toBe(true);
+
+  // Alice sings: one song in part, one whole, in both languages, each part named by a label that exists.
+  for (const language of ['en', 'pt']) {
+    const entry = loadedRegistry.find((candidate) => candidate.slug === 'alice-in-wonderland');
+    const story = reviveDates(
+      entry!.languages.find((candidate) => candidate.language === language)!.story,
+    ) as any;
+    expect(story.songs).toHaveLength(2);
+    expect(story.sceneMusic).toHaveLength(2);
+    for (const link of story.sceneMusic) {
+      const song = story.songs.find((candidate: any) => candidate.id === link.songId);
+      expect(song).toBeDefined();
+      expect(story.scenes.some((scene: any) => scene.id === link.sceneId)).toBe(true);
+      expect(link.role).toBe('in-world');
+      for (const label of link.sections ?? []) {
+        expect(sectionLabels(song.lyrics)).toContain(label);
+      }
+    }
+    expect(story.sceneMusic.filter((link: any) => link.sections).length).toBe(1);
+  }
 
   const beauty = packageFor('beauty-and-the-beast');
   const mermaid = packageFor('little-mermaid');

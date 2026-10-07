@@ -326,12 +326,14 @@ jest.mock(
       storyId: string;
       advancedSearchScopes: unknown[];
       resultsMeta: string;
+      resultsNotice?: React.ReactNode;
     }) => {
       const React = require('react');
       const { Text } = require('react-native');
       mockListProps = props as never;
       return (
         <>
+          {props.resultsNotice}
           <Text testID="list-meta">{props.resultsMeta}</Text>
           <Text testID="list-search">{props.searchPlaceholder}</Text>
           <Text testID="list-filters">
@@ -692,6 +694,46 @@ describe('NarrativeElementsListScreen', () => {
     const view = await render(<NarrativeElementsListScreen />);
     await view.findByTestId(`rowname-ch-1`);
     expect(rowNames(view)).toEqual(['Arrival']);
+  });
+
+  describe('with an active arc', () => {
+    beforeEach(() => {
+      mockActiveArcId = 'arc-1';
+      mockGetAllChapters.mockResolvedValue([
+        makeChapter('ch-1', { arcId: 'arc-1' }),
+        makeChapter('ch-2', { arcId: 'arc-2' }),
+      ]);
+    });
+
+    it('lists only the arc while nothing is searched, with no notice', async () => {
+      const view = await render(<NarrativeElementsListScreen />);
+      await view.findByTestId('rowname-ch-1');
+      expect(rowNames(view)).toEqual(['Arrival', 'unchaptered_scenes']);
+      expect(view.queryByTestId('outside-arc-notice')).toBeNull();
+    });
+
+    it('counts what a search found in other arcs, and shows it on one tap', async () => {
+      mockSearchQuery = 'a';
+      const view = await render(<NarrativeElementsListScreen />);
+      await view.findByTestId('rowname-ch-1');
+      expect(rowNames(view)).toEqual(['Arrival']);
+      expect(view.getByText('search_outside_arc')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('outside-arc-notice'));
+      expect(rowNames(view)).toEqual(['Arrival', 'Later']);
+      expect(view.getByText('search_outside_arc_hide')).toBeTruthy();
+
+      await fireEvent.press(view.getByTestId('outside-arc-notice'));
+      expect(rowNames(view)).toEqual(['Arrival']);
+    });
+
+    it('shows no notice when the search finds nothing in other arcs', async () => {
+      mockSearchQuery = 'harbor';
+      const view = await render(<NarrativeElementsListScreen />);
+      await view.findByTestId('rowname-ch-1');
+      expect(rowNames(view)).toEqual(['Arrival']);
+      expect(view.queryByTestId('outside-arc-notice')).toBeNull();
+    });
   });
 
   it('renders no rows when nothing matches', async () => {

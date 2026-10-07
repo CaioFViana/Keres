@@ -21,6 +21,9 @@ import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../
 import { AppAlert } from '../../../utils/AppAlert';
 import { useScreenAnchor } from '../../../guides/useGuideAnchor';
 import { useScreenTour } from '../../../guides/useScreenTour';
+import OutsideArcNotice from '../../../components/features/arcs/OutsideArcNotice';
+import { useArcSearchScope } from '../../../hooks/useArcSearchScope';
+import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
 import { useBackButtonHandler } from '../../../hooks/useBackButtonHandler';
 import { useEntityListScreen } from '../../../hooks/useEntityListScreen';
 import { useStoryRole } from '../../../hooks/useStoryRole';
@@ -34,7 +37,7 @@ import { useStoryStore } from '../../../state/storyStore';
 import { useUserSettingsStore } from '../../../state/userSettingsStore';
 import { useTheme } from '../../../theme';
 import { entityEventEmitter } from '../../../utils/EventEmitter';
-import { isUnchapteredGroup } from '../../../utils/narrativeSceneOrder';
+import { isUnchapteredGroup, UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
 import { createChoiceService } from '../../../services/storymanagement/ChoiceService';
 import { createSceneService } from '../../../services/storymanagement/SceneService';
 import { createChapterService } from '../../../services/storymanagement/ChapterService';
@@ -366,7 +369,7 @@ const NarrativeElementsListScreen = () => {
     }));
   }, [scenes, storedScenes]);
 
-  const visibleChapters = useVisibleChapters({
+  const allVisibleChapters = useVisibleChapters({
     outlineChapters,
     scenes: scenesWithFavoriteState,
     choices,
@@ -375,7 +378,6 @@ const NarrativeElementsListScreen = () => {
     activeTagIds,
     advancedMatches,
     favoriteFilterState,
-    activeArcId,
     searchQuery,
     activeSort,
     sortDirection,
@@ -383,6 +385,18 @@ const NarrativeElementsListScreen = () => {
     storyId,
     t,
   });
+  // The outline is the active arc's; a search also counts what it found in the others.
+  const inActiveArc = useCallback(
+    (chapter: ChapterSelect) =>
+      chapter.id === UNCHAPTERED_GROUP_ID || chapterBelongsToArc(chapter, activeArcId),
+    [activeArcId],
+  );
+  const {
+    data: visibleChapters,
+    outsideCount,
+    expanded: showingOtherArcs,
+    toggle: toggleOtherArcs,
+  } = useArcSearchScope(allVisibleChapters, inActiveArc, searchQuery);
 
   const memoizedChapterListItem = useMemo(
     () =>
@@ -586,6 +600,13 @@ const NarrativeElementsListScreen = () => {
         <GenericFilterSortList
           {...listProps}
           data={visibleChapters}
+          resultsNotice={
+            <OutsideArcNotice
+              count={outsideCount}
+              expanded={showingOtherArcs}
+              onToggle={toggleOtherArcs}
+            />
+          }
           renderItem={memoizedChapterListItem}
           keyExtractor={(item) => item.id}
           searchPlaceholder={t('chapter_outline_search_placeholder', {

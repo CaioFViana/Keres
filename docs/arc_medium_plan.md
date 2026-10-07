@@ -192,7 +192,7 @@ Desvios e pendências, ditos para não parecerem esquecimento:
 - **DOCX:** não recorta; uma página com `cover` aparece inteira, dentro do quadro.
 - **Publicação:** o servidor só lê o que o cliente mandou. Um Sketch alterado é redesenhado no cliente antes de publicar,
   e esse snapshot novo precisa sincronizar antes de uma nova tentativa.
-- **Busca (decisão 14):** "+N fora deste arco" em Personagens, Locais e Itens; a lista de Elementos Narrativos ainda não.
+- **Busca (decisão 14):** "+N fora deste arco" em Personagens, Locais, Itens e na lista de Elementos Narrativos (capítulos achados pela busca em outros arcos).
 - **Fontes (decisão 13):** não implementado (exige fontes OFL com sha256 no manifesto, matrizes e verificação visual).
 - **Cabeçalho de roteiro com hora:** não implementado; o cabeçalho sai sem hora, como a decisão 4 prevê sem calendário.
 - **FDX:** só se houver demanda.

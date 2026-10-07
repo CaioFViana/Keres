@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import type { ChapterSelect, ChoiceSelect, SceneSelect, TagSelect } from '../../../db/schema';
 import type { FavoriteFilterState, SortDirection } from '../../../types/entityFilters';
 import { UNCHAPTERED_GROUP_ID } from '../../../utils/narrativeSceneOrder';
-import { chapterBelongsToArc } from '../../../utils/storyArcFilter';
 import {
   type AdvancedNarrativeMatches,
   matchesChoiceQuery,
@@ -18,7 +17,6 @@ export interface VisibleChaptersInput {
   activeTagIds: string[];
   advancedMatches: AdvancedNarrativeMatches | null;
   favoriteFilterState: FavoriteFilterState;
-  activeArcId: string | null;
   searchQuery: string;
   activeSort: string | null;
   sortDirection: SortDirection;
@@ -28,8 +26,9 @@ export interface VisibleChaptersInput {
 }
 
 /**
- * The chapter outline as the list shows it: arc/tag/favorite/advanced/text filters, the
- * requested sort, and the synthetic "Unchaptered" group appended last. The empty drop target
+ * The chapter outline as the list shows it, across every arc: tag/favorite/advanced/text filters,
+ * the requested sort, and the synthetic "Unchaptered" group appended last (the screen narrows it
+ * to the active arc, see `useArcSearchScope`). The empty drop target
  * only joins once chapters exist, so a truly empty story renders the guided empty state
  * instead of an empty group.
  */
@@ -43,7 +42,6 @@ export function useVisibleChapters(input: VisibleChaptersInput): ChapterSelect[]
     activeTagIds,
     advancedMatches,
     favoriteFilterState,
-    activeArcId,
     searchQuery,
     activeSort,
     sortDirection,
@@ -55,7 +53,6 @@ export function useVisibleChapters(input: VisibleChaptersInput): ChapterSelect[]
   return useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
     const filtered = outlineChapters.filter((chapter) => {
-      if (!chapterBelongsToArc(chapter, activeArcId)) return false;
       const chapterScenes = scenes.filter((scene) => scene.chapterId === chapter.id);
       const hasFavorite = chapter.isFavorite || chapterScenes.some((scene) => scene.isFavorite);
       if (favoriteFilterState === 'favorite' && !hasFavorite) return false;
@@ -167,7 +164,6 @@ export function useVisibleChapters(input: VisibleChaptersInput): ChapterSelect[]
     advancedMatches,
     choices,
     favoriteFilterState,
-    activeArcId,
     outlineChapters,
     scenes,
     searchQuery,

@@ -1,4 +1,5 @@
 import { drawerAnchorId, screenAnchorId } from './anchorRegistry';
+import { songGuides } from './songGuides';
 import type { Guide, GuideDrawerId } from './types';
 import { isServerless } from '../utils/clientFlavor';
 
@@ -24,6 +25,7 @@ const drawerGroup = (drawerId: GuideDrawerId, routes: readonly string[]): string
  * group, then the mode toggles and how they switch each other off.
  */
 export const screenGuides: Record<string, Guide> = {
+  ...songGuides,
   StorySelectionMain: {
     id: 'StorySelectionMain',
     drawerId: 'story-selection',
@@ -551,7 +553,10 @@ export const screenGuides: Record<string, Guide> = {
     steps: [
       {
         id: 'overview',
-        anchors: [screenAnchorId('MainDashboard', 'overview')],
+        anchors: [
+          screenAnchorId('MainDashboard', 'works'),
+          screenAnchorId('MainDashboard', 'overview'),
+        ],
         titleKey: 'tour_dashboard_start_title',
         bodyKey: 'tour_dashboard_start_body',
       },

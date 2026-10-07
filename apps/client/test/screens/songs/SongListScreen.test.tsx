@@ -50,6 +50,10 @@ jest.mock('../../../src/db', () => {
   const db = {};
   return { __esModule: true, useDrizzle: () => db };
 });
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: () => undefined,
+}));
 jest.mock('../../../src/hooks/useBackButtonHandler', () => ({
   __esModule: true,
   useBackButtonHandler: () => undefined,

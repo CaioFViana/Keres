@@ -85,6 +85,7 @@ export function MainDashboardContent({
 }: MainDashboardContentProps) {
   const { colors } = useTheme();
   const overviewAnchorRef = useScreenAnchor('MainDashboard', 'overview');
+  const worksAnchorRef = useScreenAnchor('MainDashboard', 'works');
   const styles = StyleSheet.create({
     sectionLink: {
       color: colors.primary,
@@ -129,7 +130,9 @@ export function MainDashboardContent({
       )}
 
       {!!story && !!arcs?.length && !!onOpenArcs && (
-        <UniverseWorksSection arcs={arcs} onOpenArcs={onOpenArcs} />
+        <View ref={worksAnchorRef} collapsable={false}>
+          <UniverseWorksSection arcs={arcs} onOpenArcs={onOpenArcs} />
+        </View>
       )}
 
       <View ref={overviewAnchorRef} collapsable={false}>

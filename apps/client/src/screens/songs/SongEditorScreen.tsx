@@ -34,6 +34,8 @@ import SongLyricsEditor from '@/src/components/features/songs/SongLyricsEditor';
 import KeyboardAwareScreen from '@/src/components/layout/KeyboardAwareScreen/KeyboardAwareScreen';
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
 import { useDrizzle } from '../../db';
+import { useScreenAnchor } from '../../guides/useGuideAnchor';
+import { useScreenTour } from '../../guides/useScreenTour';
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useConfirmDelete } from '../../hooks/useConfirmDelete';
 import { useFormScrollBottomPadding } from '../../hooks/useFormScrollBottomPadding';
@@ -87,6 +89,11 @@ const SongEditorScreen = () => {
   const words = DEFAULT_SECTION_WORDS;
   const newSectionWords = useNewSectionWords();
   const [tab, setTab] = useState<SongTab>('words');
+  useScreenTour('SongEditor', canEdit);
+  // The tune has its own tour, opened the first time the tab is: that is where the sound is.
+  useScreenTour('SongTune', tab === 'tune');
+  const tabsAnchorRef = useScreenAnchor('SongEditor', 'tabs');
+  const wordsAnchorRef = useScreenAnchor('SongEditor', 'words');
 
   const lyrics = draft.value('lyrics') ?? '';
   const title = draft.value('title') ?? '';
@@ -299,25 +306,29 @@ const SongEditorScreen = () => {
         onMeterChange={(next) => draft.setField('meter', next)}
       />
 
-      <SongTabs value={tab} onChange={setTab} />
+      <View ref={tabsAnchorRef} collapsable={false}>
+        <SongTabs value={tab} onChange={setTab} />
+      </View>
 
       {tab === 'words' ? (
         <>
-          <SongLyricsEditor
-            value={lyrics}
-            onChange={(next) => {
-              forgetTransposition();
-              draft.setField('lyrics', next);
-            }}
-            onTranspose={transpose}
-            canUndoTranspose={undoDepth > 0}
-            onUndoTranspose={undoTransposition}
-            editable={editable}
-            words={words}
-            newSectionWords={newSectionWords}
-            syllableLanguage={syllableLanguage}
-            activeLine={playback.active}
-          />
+          <View ref={wordsAnchorRef} collapsable={false}>
+            <SongLyricsEditor
+              value={lyrics}
+              onChange={(next) => {
+                forgetTransposition();
+                draft.setField('lyrics', next);
+              }}
+              onTranspose={transpose}
+              canUndoTranspose={undoDepth > 0}
+              onUndoTranspose={undoTransposition}
+              editable={editable}
+              words={words}
+              newSectionWords={newSectionWords}
+              syllableLanguage={syllableLanguage}
+              activeLine={playback.active}
+            />
+          </View>
 
           <Text style={styles.label}>{t('song_translation')}</Text>
           <Text style={styles.hint}>{t('song_translation_hint')}</Text>

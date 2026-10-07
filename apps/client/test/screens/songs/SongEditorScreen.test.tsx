@@ -4,6 +4,7 @@ import type { SongSelect } from '../../../src/db/schema';
 import { useStoryStore } from '../../../src/state/storyStore';
 import SongEditorScreen, { songFileName } from '../../../src/screens/songs/SongEditorScreen';
 
+const mockUseScreenTour = jest.fn();
 const mockGoBack = jest.fn();
 const mockNavigate = jest.fn();
 const mockUpdateSong = jest.fn();
@@ -38,6 +39,10 @@ jest.mock('react-i18next', () => ({
       options ? `${key}:${JSON.stringify(options)}` : key,
     i18n: { language: mockAppLanguage },
   }),
+}));
+jest.mock('../../../src/guides/useScreenTour', () => ({
+  __esModule: true,
+  useScreenTour: (...args: unknown[]) => mockUseScreenTour(...args),
 }));
 jest.mock('@react-navigation/native', () => {
   const route = { params: { songId: 'song-1' } };
@@ -178,6 +183,7 @@ beforeEach(() => {
   mockSong = baseSong;
   mockUses = [];
   mockHeader = null;
+  mockUseScreenTour.mockReset();
   mockGoBack.mockReset();
   mockNavigate.mockReset();
   mockUpdateSong.mockReset().mockResolvedValue(undefined);
@@ -206,6 +212,17 @@ describe('songFileName', () => {
 });
 
 describe('SongEditorScreen', () => {
+  it('tours the screen for those who can edit, and the tune only once its tab is open', async () => {
+    const view = await render(<SongEditorScreen />);
+
+    expect(mockUseScreenTour).toHaveBeenCalledWith('SongEditor', true);
+    expect(mockUseScreenTour).toHaveBeenCalledWith('SongTune', false);
+    expect(mockUseScreenTour).not.toHaveBeenCalledWith('SongTune', true);
+
+    await fireEvent.press(view.getByTestId('song-tab-tune'));
+    expect(mockUseScreenTour).toHaveBeenCalledWith('SongTune', true);
+  });
+
   it('shows the song as it is saved', async () => {
     const view = await render(<SongEditorScreen />);
 

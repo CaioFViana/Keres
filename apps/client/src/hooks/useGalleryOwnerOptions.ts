@@ -67,7 +67,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
 
     setLoading(true);
     try {
-      const [characters, locations, notes, scenes, items, worldRules] = await Promise.all([
+      const [characters, locations, notes, scenes, items, worldRules, songs] = await Promise.all([
         db
           .select({ id: schema.characters.id, name: schema.characters.name })
           .from(schema.characters)
@@ -101,6 +101,10 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
           .where(
             and(eq(schema.worldRules.storyId, storyId), eq(schema.worldRules.isDeleted, false)),
           ),
+        db
+          .select({ id: schema.songs.id, name: schema.songs.title })
+          .from(schema.songs)
+          .where(and(eq(schema.songs.storyId, storyId), eq(schema.songs.isDeleted, false))),
       ]);
 
       const byType: Record<
@@ -113,6 +117,7 @@ export function useGalleryOwnerOptions(storyId: string | undefined) {
         Scene: scenes,
         Item: items,
         WorldRule: worldRules,
+        Song: songs,
       };
 
       const collected: GalleryOwnerOption[] = [];

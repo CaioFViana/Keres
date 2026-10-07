@@ -7,6 +7,7 @@ export const SYNC_ENTITY_EVENTS: Record<string, string> = {
   Sketch: 'sketch_changed',
   ScenePage: 'scene_page_changed',
   SceneMusic: 'scene_music_changed',
+  Song: 'song_changed',
   StoryCalendar: 'story_calendar_changed',
   CharacterRelation: 'character_relation_changed',
   CharacterScene: 'character_scene_changed',

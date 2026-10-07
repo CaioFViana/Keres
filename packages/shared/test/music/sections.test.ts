@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { parseChordPro } from '../../music/chordpro';
 import {
   duplicateSectionLabels,
+  insertBlockAt,
+  nextSectionLabel,
   numberDuplicateSections,
   plainLines,
+  sectionBlock,
   sectionLabels,
   songExcerpt,
 } from '../../music/sections';
@@ -122,5 +125,49 @@ describe('plainLines', () => {
     const [section] = parseChordPro('{sov: V}\nNo·ite\n{eov}').sections;
 
     expect(plainLines(section, () => '', true)).toEqual(['No·ite']);
+  });
+});
+
+describe('nextSectionLabel', () => {
+  const words = { verse: 'Verse', chorus: 'Chorus', bridge: 'Bridge' };
+
+  it('numbers verses from the first, and past the ones already there', () => {
+    expect(nextSectionLabel('verse', '', words)).toBe('Verse 1');
+    expect(nextSectionLabel('verse', '{sov: Verse 1}\na\n{eov}', words)).toBe('Verse 2');
+    expect(nextSectionLabel('verse', '{sov: Verse 2}\na\n{eov}', words)).toBe('Verse 1');
+  });
+
+  it('keeps a first chorus or bridge plain, and numbers a second', () => {
+    expect(nextSectionLabel('chorus', '', words)).toBe('Chorus');
+    expect(nextSectionLabel('chorus', '{soc: Chorus}\na\n{eoc}', words)).toBe('Chorus 1');
+    expect(nextSectionLabel('bridge', '', words)).toBe('Bridge');
+  });
+
+  it('uses the words it is given', () => {
+    expect(nextSectionLabel('verse', '', { ...words, verse: 'Verso' })).toBe('Verso 1');
+  });
+});
+
+describe('sectionBlock', () => {
+  it('writes the label out, so it is the same in every language', () => {
+    expect(sectionBlock('chorus', 'Refrão')).toBe('{start_of_chorus: Refrão}\n\n{end_of_chorus}\n');
+  });
+});
+
+describe('insertBlockAt', () => {
+  it('puts the block on a line of its own, with a blank line before it', () => {
+    expect(insertBlockAt('One', 3, 'B\n')).toBe('One\n\nB\n');
+    expect(insertBlockAt('One\n', 4, 'B\n')).toBe('One\n\nB\n');
+    expect(insertBlockAt('One\n\n', 5, 'B\n')).toBe('One\n\nB\n');
+  });
+
+  it('puts it at the start of an empty text, and in the middle of one', () => {
+    expect(insertBlockAt('', 0, 'B\n')).toBe('B\n');
+    expect(insertBlockAt('One\nTwo', 4, 'B\n')).toBe('One\n\nB\n\nTwo');
+  });
+
+  it('keeps an index off either end inside the text', () => {
+    expect(insertBlockAt('One', 99, 'B\n')).toBe('One\n\nB\n');
+    expect(insertBlockAt('One', -4, 'B\n')).toBe('B\n\nOne');
   });
 });

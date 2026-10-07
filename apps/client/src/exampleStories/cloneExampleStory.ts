@@ -50,6 +50,7 @@ export function cloneExampleStoryForInstall(
   registerAll(example.storySketches);
   registerAll(example.scenePages);
   registerAll(example.sceneMusic);
+  registerAll(example.songs);
   registerAll(example.storyLocationMaps);
   registerAll(example.characterRelations);
   registerAll(example.characterScenes);
@@ -240,6 +241,7 @@ export function cloneExampleStoryForInstall(
       sketchId: remapNullableId(page.sketchId),
       galleryId: remapNullableId(page.galleryId),
     })),
+    songs: example.songs?.map((song) => ({ ...cloneEntity(song), storyId })),
     sceneMusic: example.sceneMusic?.map((music) => ({
       ...cloneEntity(music),
       storyId,

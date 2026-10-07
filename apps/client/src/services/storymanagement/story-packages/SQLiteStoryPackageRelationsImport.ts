@@ -7,6 +7,7 @@ import type {
   RouteStepInsert,
   SceneMusicInsert,
   ScenePageInsert,
+  SongInsert,
   TagRelationInsert,
 } from '../../../db/schema';
 import {
@@ -18,6 +19,7 @@ import {
   routeSteps,
   sceneMusic,
   scenePages,
+  songs,
   tagRelations,
 } from '../../../db/schema';
 import type { SQLiteStoryPackageImportContext } from './SQLiteStoryPackageImportContext';
@@ -101,6 +103,17 @@ export async function importStoryPackageRelations(
       deletedAt: null,
     };
     await tx.insert(routeSteps).values(row).run();
+  }
+  // A song stands alone; the ids are the package's own here, and the music that sings it follows them.
+  for (const song of fullStory.songs ?? []) {
+    const row: SongInsert = {
+      ...song,
+      createdAt: new Date(song.createdAt),
+      updatedAt: new Date(),
+      isDeleted: false,
+      deletedAt: null,
+    };
+    await tx.insert(songs).values(row).run();
   }
   // A page keeps its text even when its image is not in the package; the ids are the package's own here.
   for (const page of fullStory.scenePages ?? []) {

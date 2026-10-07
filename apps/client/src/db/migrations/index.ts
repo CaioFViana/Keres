@@ -58,6 +58,7 @@ import migration_54 from './0053_lyrical_mockingbird';
 import migration_55 from './0054_soft_turbo';
 import migration_56 from './0055_flawless_nightmare';
 import migration_57 from './0056_stiff_galactus';
+import migration_58 from './0057_colorful_warbound';
 
 const migrations = [
   { id: 1, name: '0000_curly_mockingbird', run: migration_1 },
@@ -117,6 +118,7 @@ const migrations = [
   { id: 55, name: '0054_soft_turbo', run: migration_55 },
   { id: 56, name: '0055_flawless_nightmare', run: migration_56 },
   { id: 57, name: '0056_stiff_galactus', run: migration_57 },
+  { id: 58, name: '0057_colorful_warbound', run: migration_58 },
 ];
 
 export default migrations;

@@ -36,6 +36,7 @@ import {
   scenes,
   seeAlsoRelations,
   sketches,
+  songs,
   statRelations,
   stats,
   statStrengths,
@@ -93,6 +94,7 @@ export const STORY_CHILD_TABLES = [
   scenes,
   seeAlsoRelations,
   sketches,
+  songs,
   // Server cache, like publications: the next sync brings back whatever still stands.
   storyInvitations,
   storyPermissions,

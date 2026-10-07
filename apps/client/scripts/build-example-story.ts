@@ -548,6 +548,7 @@ function buildStory(slug: string, language: Language, source: StoryDocument): St
     storySketches: [],
     scenePages: [],
     sceneMusic: [],
+    songs: [],
     storyLocationMaps,
     stats,
     statStrengths: [...defaultLadder, ...customLadder],

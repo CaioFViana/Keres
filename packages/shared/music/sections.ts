@@ -118,3 +118,37 @@ export function plainLines(
     return text === null ? [] : [text];
   });
 }
+
+/** What a section is called when it is added: its kind's word, numbered past the ones already there. */
+export function nextSectionLabel(
+  kind: 'verse' | 'chorus' | 'bridge',
+  text: string,
+  words: SectionWords = DEFAULT_SECTION_WORDS,
+): string {
+  const taken = new Set(sectionLabels(text, words));
+  const word = words[kind];
+  // A chorus or a bridge is usually one: it keeps its plain word until a second needs telling apart.
+  if (kind !== 'verse' && !taken.has(word)) return word;
+  let ordinal = 1;
+  while (taken.has(`${word} ${ordinal}`)) ordinal += 1;
+  return `${word} ${ordinal}`;
+}
+
+/** The text of an empty section of a kind, with its label written out so it never depends on a language. */
+export function sectionBlock(kind: 'verse' | 'chorus' | 'bridge', label: string): string {
+  return `{start_of_${kind}: ${label}}\n\n{end_of_${kind}}\n`;
+}
+
+/**
+ * The text with `insert` put in at `index`, on a line of its own: a blank line before it when what
+ * comes before does not end one, and a line break after it.
+ */
+export function insertBlockAt(text: string, index: number, insert: string): string {
+  const at = Math.min(Math.max(index, 0), text.length);
+  const before = text.slice(0, at);
+  const after = text.slice(at);
+  const lead =
+    before === '' || before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
+  const tail = after === '' || after.startsWith('\n') ? '' : '\n';
+  return `${before}${lead}${insert}${tail}${after}`;
+}

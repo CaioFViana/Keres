@@ -1,3 +1,5 @@
+import type { BackingNote, Instrument } from './accompaniment';
+import { renderInstrumentNote } from './instruments';
 import type { PlayNote } from './timeline';
 
 /**
@@ -51,8 +53,16 @@ export interface VoiceOptions {
   clickBeatsPerBar?: number;
 }
 
+/** What an instrument plays under the voice. */
+export interface Backing {
+  instrument: Instrument;
+  notes: readonly BackingNote[];
+}
+
 export interface VoiceScore {
   notes: readonly PlayNote[];
+  /** The accompaniment, rendered with the voice into the same samples. */
+  backing?: Backing;
   /** Quarter notes in all. */
   beats: number;
   tempo: number;
@@ -291,18 +301,56 @@ const secondsOf = (note: PlayNote, tempo: number) => ({
   duration: (note.duration * 60) / tempo,
 });
 
-/** Renders the score in one go. For a long one prefer `renderVoiceSliced`, which lets the screen breathe. */
-export function renderVoice(score: VoiceScore, options: VoiceOptions): Float32Array {
-  const context = newContext(options);
-  const out = new Float32Array(renderLength(score, context.sampleRate));
+/**
+ * The work of a render, one note at a time: the voice first, then the accompaniment, then the click.
+ * Each step yields the fraction done, so a caller can run it to the end or stop between notes.
+ */
+function* steps(
+  score: VoiceScore,
+  options: VoiceOptions,
+  out: Float32Array,
+  context: RenderContext,
+): Generator<number> {
+  const backing = score.backing;
+  const total = Math.max(1, score.notes.length + (backing?.notes.length ?? 0));
+  let done = 0;
   let previous: { pitch: number; end: number } | null = null;
   for (const note of score.notes) {
     const timed = secondsOf(note, score.tempo);
     renderNote(out, timed, previous, context);
     previous = { pitch: timed.pitch, end: timed.start + timed.duration };
+    done += 1;
+    yield done / total;
+  }
+  if (backing) {
+    const instrumentContext = { sampleRate: context.sampleRate, seed: 0x2545f491 };
+    for (const note of backing.notes) {
+      renderInstrumentNote(
+        out,
+        backing.instrument,
+        {
+          pitch: note.pitch,
+          start: (note.start * 60) / score.tempo,
+          duration: (note.duration * 60) / score.tempo,
+          velocity: note.velocity,
+        },
+        instrumentContext,
+      );
+      done += 1;
+      yield done / total;
+    }
   }
   if (options.clickBeatsPerBar) {
     addClicks(out, score, options.clickBeatsPerBar, context.sampleRate);
+  }
+}
+
+/** Renders the score in one go. For a long one prefer `renderVoiceSliced`, which lets the screen breathe. */
+export function renderVoice(score: VoiceScore, options: VoiceOptions): Float32Array {
+  const context = newContext(options);
+  const out = new Float32Array(renderLength(score, context.sampleRate));
+  for (const _ of steps(score, options, out, context)) {
+    // Nothing to do between notes.
   }
   return finish(out);
 }
@@ -332,22 +380,15 @@ export async function renderVoiceSliced(
   const now = hooks.now ?? (() => Date.now());
   const budget = hooks.sliceMs ?? 12;
   const out = new Float32Array(renderLength(score, context.sampleRate));
-  let previous: { pitch: number; end: number } | null = null;
   let sliceStart = now();
 
-  for (let index = 0; index < score.notes.length; index += 1) {
-    const timed = secondsOf(score.notes[index], score.tempo);
-    renderNote(out, timed, previous, context);
-    previous = { pitch: timed.pitch, end: timed.start + timed.duration };
+  for (const fraction of steps(score, options, out, context)) {
     if (now() - sliceStart >= budget) {
-      hooks.onProgress?.((index + 1) / score.notes.length);
+      hooks.onProgress?.(fraction);
       await hooks.yieldToUi();
       if (hooks.isCancelled?.()) return null;
       sliceStart = now();
     }
-  }
-  if (options.clickBeatsPerBar) {
-    addClicks(out, score, options.clickBeatsPerBar, context.sampleRate);
   }
   hooks.onProgress?.(1);
   return finish(out);

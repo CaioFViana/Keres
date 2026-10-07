@@ -98,9 +98,20 @@ export interface TimelineLine {
   end: number;
 }
 
+/** A chord and the stretch it holds: from the syllable it is written on to the next chord. */
+export interface TimelineChord {
+  symbol: string;
+  /** Quarter notes from the start of the song. */
+  start: number;
+  end: number;
+  sectionIndex: number;
+}
+
 export interface Timeline {
   notes: PlayNote[];
   lines: TimelineLine[];
+  /** The chords written in the words, placed in time; empty for a song with none. */
+  chords: TimelineChord[];
   /** Quarter notes in all. */
   beats: number;
   tempo: number;
@@ -118,7 +129,33 @@ export interface TimelineOptions {
   maxSeconds?: number;
 }
 
-/** What the song plays: its sections one after another, each starting on a bar line. */
+interface ChordAt {
+  symbol: string;
+  /** The syllable of its section the chord falls on (the n-th, counting from 0). */
+  syllable: number;
+}
+
+/** The chords of a section, each with the syllable it is written over. */
+function chordsOfSection(section: SongSection, language: SyllableLanguage): ChordAt[] {
+  const found: ChordAt[] = [];
+  let syllable = 0;
+  for (const line of section.lines) {
+    if (line.kind !== 'lyric') continue;
+    for (const segment of line.segments) {
+      if (segment.chord) found.push({ symbol: segment.chord, syllable });
+      syllable += countLineSyllables(lyricText([segment], true), language);
+    }
+  }
+  return found;
+}
+
+/**
+ * What the song plays: its sections one after another, each starting on a bar line.
+ *
+ * A section with a tune is laid out by its notes, and its chords fall on the syllables they are
+ * written over. A section with chords and no tune is laid out by the chords alone, one bar each, which
+ * is the rule when there is nothing finer to follow. Words with neither are not played.
+ */
 export function buildTimeline(
   song: ParsedSong,
   melody: Melody,
@@ -133,6 +170,8 @@ export function buildTimeline(
   const resolved = resolveMelodies(song, melody, options.language);
   const notes: PlayNote[] = [];
   const lines: TimelineLine[] = [];
+  /** Chords with the point past which they cannot run: the end of their section. */
+  const placed: Array<{ symbol: string; start: number; limit: number; sectionIndex: number }> = [];
   let cursor = 0;
 
   const chorusRecall = (label: string | null) =>
@@ -141,10 +180,37 @@ export function buildTimeline(
   const play = (entry: ResolvedMelody, offset: number) => {
     const section = song.sections[entry.sectionIndex];
     const tune = entry.melody;
-    if (!tune) return offset;
     const counts = lineSyllables(section, options.language);
     const spans = lyricLinesOf(section);
     const sourceIndexes = new Map(section.lines.map((line, index) => [line, index]));
+    const written = chordsOfSection(section, options.language);
+    if (!tune) {
+      if (written.length === 0) return offset;
+      const length = written.length * barBeats;
+      written.forEach((chord, index) => {
+        placed.push({
+          symbol: chord.symbol,
+          start: offset + index * barBeats,
+          limit: offset + length,
+          sectionIndex: entry.sectionIndex,
+        });
+      });
+      // The lines share the bars equally: with no notes there is no better clock to follow.
+      const sung = spans.flatMap((line, lineIndex) =>
+        counts[lineIndex] > 0 ? [{ line, lineIndex }] : [],
+      );
+      sung.forEach(({ line, lineIndex }, order) => {
+        lines.push({
+          sectionIndex: entry.sectionIndex,
+          lineIndex,
+          sourceIndex: sourceIndexes.get(line) ?? lineIndex,
+          text: lyricText(line.segments),
+          start: offset + (length * order) / sung.length,
+          end: offset + (length * (order + 1)) / sung.length,
+        });
+      });
+      return offset + length;
+    }
     // Each note of the tune is placed; lines take their span from the syllables they hold.
     const firstOfSyllable = new Map<number, MelodyNote>();
     const lastEndOfSyllable = new Map<number, number>();
@@ -179,8 +245,19 @@ export function buildTimeline(
         end: offset + tail,
       });
     });
-    const end = offset + tune.length;
-    return Math.ceil(end / barBeats - 1e-9) * barBeats;
+    const end = Math.ceil((offset + tune.length) / barBeats - 1e-9) * barBeats;
+    for (const chord of written) {
+      // A chord past the last syllable of a tune that is short of its words has no note to fall on.
+      const on = firstOfSyllable.get(chord.syllable);
+      if (!on) continue;
+      placed.push({
+        symbol: chord.symbol,
+        start: offset + on.start,
+        limit: end,
+        sectionIndex: entry.sectionIndex,
+      });
+    }
+    return end;
   };
 
   for (const entry of resolved) {
@@ -199,8 +276,30 @@ export function buildTimeline(
 
   const clipped = notes.filter((note) => note.start < maxBeats);
   const beats = Math.min(cursor, maxBeats);
+  placed.sort((a, b) => a.start - b.start);
+  const chords: TimelineChord[] = [];
+  placed.forEach((chord, index) => {
+    if (chord.start >= maxBeats) return;
+    const next = placed[index + 1];
+    const end = Math.min(
+      chord.limit,
+      next && next.start > chord.start ? next.start : chord.limit,
+      maxBeats,
+    );
+    // Two chords on one syllable: only the last is sounded.
+    if (next && next.start === chord.start) return;
+    if (end > chord.start) {
+      chords.push({
+        symbol: chord.symbol,
+        start: chord.start,
+        end,
+        sectionIndex: chord.sectionIndex,
+      });
+    }
+  });
   return {
     notes: clipped,
+    chords,
     lines: lines.filter((line) => line.start < maxBeats),
     beats,
     tempo,

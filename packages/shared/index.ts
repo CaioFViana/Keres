@@ -268,7 +268,9 @@ export {
 export * from './music/chordpro';
 export * from './music/chordProFile';
 export * from './music/abc';
+export * from './music/accompaniment';
 export * from './music/chords';
+export * from './music/instruments';
 export * from './music/melody';
 export * from './music/midi';
 export * from './music/sections';

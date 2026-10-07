@@ -307,7 +307,9 @@ function sectionSpan(lines: readonly string[], label: string | null): [number, n
   if (label === null) {
     // The tune with no label is whatever stands before the first `P:` line.
     const end = marks.length > 0 ? marks[0].index : lines.length;
-    const hasMusic = lines.slice(0, end).some((line) => line.trim() !== '' && !FIELD_LINE.test(line));
+    const hasMusic = lines
+      .slice(0, end)
+      .some((line) => line.trim() !== '' && !FIELD_LINE.test(line));
     return hasMusic || marks.length === 0 ? [0, end] : null;
   }
   const at = marks.findIndex((mark) => mark.label === label);
@@ -330,7 +332,8 @@ export function appendNote(text: string, label: string | null, token: string): s
   }
   if (!span) {
     const head = label === null ? [] : [`P:${label}`];
-    const body = lines.length > 0 && lines[lines.length - 1].trim() === '' ? lines.slice(0, -1) : lines;
+    const body =
+      lines.length > 0 && lines[lines.length - 1].trim() === '' ? lines.slice(0, -1) : lines;
     return [...body, ...head, token].join('\n');
   }
   const [from, to] = span;
@@ -354,7 +357,8 @@ export function removeLastNote(text: string, label: string | null): string {
     const line = lines[index];
     if (line.trim() === '' || FIELD_LINE.test(line) || /^\s*%/.test(line)) continue;
     const tokens = line.trim().split(/\s+/);
-    while (tokens.length > 0 && /^(\||\|\]|\|\||\[\||:\||\|:)$/.test(tokens[tokens.length - 1])) tokens.pop();
+    while (tokens.length > 0 && /^(\||\|\]|\|\||\[\||:\||\|:)$/.test(tokens[tokens.length - 1]))
+      tokens.pop();
     tokens.pop();
     if (tokens.length === 0) lines.splice(index, 1);
     else lines[index] = tokens.join(' ');

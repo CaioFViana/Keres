@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDrizzleClient } from '../../db';
 import * as schema from '../../db/schema';
 import type {
@@ -67,6 +67,7 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       attributeValues,
       routes,
       routeSteps,
+      sceneMusic,
     ] = await Promise.all([
       db.query.stories.findFirst({ where: eq(schema.stories.id, storyId) }),
       db
@@ -237,11 +238,40 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
         })
         .from(schema.routeSteps)
         .where(belongsToStory(schema.routeSteps)),
+      db
+        .select({
+          id: schema.sceneMusic.id,
+          sceneId: schema.sceneMusic.sceneId,
+          songId: schema.sceneMusic.songId,
+          galleryId: schema.sceneMusic.galleryId,
+        })
+        .from(schema.sceneMusic)
+        .where(belongsToStory(schema.sceneMusic)),
     ]);
 
     if (!story) {
       throw new Error(`Story with ID ${storyId} not found for analysis.`);
     }
+
+    // What the music points at is read only for the media it names: no table is walked for it.
+    const galleryIds = [
+      ...new Set(sceneMusic.flatMap((music) => (music.galleryId ? [music.galleryId] : []))),
+    ];
+    const aliveGalleryIds = new Set(
+      galleryIds.length === 0
+        ? []
+        : (
+            await db
+              .select({ id: schema.galleries.id })
+              .from(schema.galleries)
+              .where(
+                and(
+                  inArray(schema.galleries.id, galleryIds),
+                  eq(schema.galleries.isDeleted, false),
+                ),
+              )
+          ).map((row) => row.id),
+    );
 
     return {
       storyType: story.type,
@@ -268,6 +298,11 @@ export const createStoryAnalysisService = (db: AppDrizzleClient): StoryAnalysisS
       attributeValues,
       routes,
       routeSteps,
+      sceneMusic: sceneMusic.map((music) => ({
+        ...music,
+        // A Song is resolved with the songs themselves; until they exist, none points at one.
+        targetAlive: music.galleryId ? aliveGalleryIds.has(music.galleryId) : false,
+      })),
     };
   };
 

@@ -9,6 +9,7 @@ export type StoryAnalysisCategory =
   | 'scenes'
   | 'choices'
   | 'routes'
+  | 'music'
   | 'storySchema';
 export type StoryAnalysisSeverity = 'warning' | 'error';
 
@@ -88,6 +89,19 @@ export interface AnalysisChapter {
    * events means the spine.
    */
   type?: ChapterType;
+}
+
+/**
+ * A piece of music a scene has, with the one thing the analysis cannot know from the row: whether
+ * what it points at is still there. The service resolves that from the ids it holds.
+ */
+export interface AnalysisSceneMusic {
+  id: string;
+  sceneId: string;
+  songId: string | null;
+  galleryId: string | null;
+  /** The Song or Gallery medium it points at exists and is not deleted. */
+  targetAlive: boolean;
 }
 
 export interface AnalysisChoice {
@@ -171,6 +185,8 @@ export interface StoryAnalysisInput {
   choices: AnalysisChoice[];
   routes?: AnalysisRoute[];
   routeSteps?: AnalysisRouteStep[];
+  /** Optional so a caller predating the music of a scene keeps working; absent means none. */
+  sceneMusic?: AnalysisSceneMusic[];
   choiceCheckGroups: AnalysisChoiceCheckGroup[];
   choiceChecks: AnalysisChoiceCheck[];
   effects: AnalysisEffect[];

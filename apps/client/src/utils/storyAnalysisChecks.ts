@@ -22,6 +22,7 @@ import {
   checkStorySchema,
   checkTags,
 } from './storyAnalysis/completenessChecks';
+import { checkSceneMusic } from './storyAnalysis/musicChecks';
 import {
   checkAnchorsRunForwards,
   checkNarrativeIndexes,
@@ -46,6 +47,7 @@ export {
   type AnalysisEntityRef,
   type AnalysisRoute,
   type AnalysisRouteStep,
+  type AnalysisSceneMusic,
   type AnalysisScene,
   type AnalysisStorySchemaField,
   type ChoiceCheckCombinator,
@@ -92,6 +94,7 @@ export function buildCheapStoryAnalysisFindings(input: StoryAnalysisInput): Stor
     // are cheap to find, unlike reachability/satisfiability.
     ...(input.storyType === 'branching' ? checkChoices(input) : []),
     ...checkStorySchema(input),
+    ...checkSceneMusic(input),
   ];
 }
 

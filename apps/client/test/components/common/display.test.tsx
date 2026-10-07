@@ -305,6 +305,9 @@ describe('SummaryCard', () => {
     );
 
     expect(screen.getByText(/total_stories_summary/)).toBeTruthy();
+    // Folded at first: the tiles are only drawn once the card is opened.
+    expect(screen.queryByText('Characters')).toBeNull();
+    await fireEvent.press(screen.getByText(/total_stories_summary/));
     expect(screen.getByText('Characters')).toBeTruthy();
     const tile = screen.getByText('Characters').parent!;
     const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
@@ -337,6 +340,7 @@ describe('SummaryCard', () => {
       <SummaryCard title="Story" isBranchingStory branchingStoryForkCount={2} choiceCount={9} />,
     );
 
+    await fireEvent.press(screen.getByText('Story'));
     expect(screen.getByText('forks')).toBeTruthy();
     expect(screen.getByText('Choices')).toBeTruthy();
     const tile = screen.getByText('Choices').parent!;

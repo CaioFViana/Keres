@@ -291,26 +291,6 @@ const StorySelectionScreen = () => {
 
   return (
     <View style={commonContainerStyles.container}>
-      {summary && <SummaryCard {...summary} title={t('global_summary')} />}
-
-      <Text style={styles.title}>{t('your_stories')}</Text>
-      {showTrailCta && (
-        <View style={styles.trailBanner} testID="first-story-banner">
-          <Text style={styles.trailText}>{t('first_story_choice_message')}</Text>
-          <View style={styles.trailActions}>
-            <Button onPress={handleFirstStoryCta} testID="first-story-cta">
-              {t('first_story_cta')}
-            </Button>
-            <TouchableOpacity
-              style={styles.trailLater}
-              onPress={handleTrailLater}
-              testID="first-story-later"
-            >
-              <Text style={styles.trailLaterText}>{t('first_story_choice_later')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
       <View ref={listAnchorRef} collapsable={false} style={styles.list}>
         <FlatList
           data={stories}
@@ -324,6 +304,30 @@ const StorySelectionScreen = () => {
             />
           )}
           keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <>
+              {summary && <SummaryCard {...summary} title={t('global_summary')} />}
+
+              <Text style={styles.title}>{t('your_stories')}</Text>
+              {showTrailCta && (
+                <View style={styles.trailBanner} testID="first-story-banner">
+                  <Text style={styles.trailText}>{t('first_story_choice_message')}</Text>
+                  <View style={styles.trailActions}>
+                    <Button onPress={handleFirstStoryCta} testID="first-story-cta">
+                      {t('first_story_cta')}
+                    </Button>
+                    <TouchableOpacity
+                      style={styles.trailLater}
+                      onPress={handleTrailLater}
+                      testID="first-story-later"
+                    >
+                      <Text style={styles.trailLaterText}>{t('first_story_choice_later')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </>
+          }
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <View style={styles.emptyIconWrap}>

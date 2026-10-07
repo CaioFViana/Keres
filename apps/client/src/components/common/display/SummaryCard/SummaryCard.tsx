@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../../theme';
 import { useStoryVocabulary } from '../../../../vocabulary/useStoryVocabulary';
-import CollapsibleCard from '@/src/components/common/display/CollapsibleCard/CollapsibleCard'; // Import CollapsibleCard
-import ResponsiveGrid from '@/src/components/layout/ResponsiveGrid/ResponsiveGrid';
 
 interface AnalysisSummaryBannerProps {
   issueCount: number;
@@ -58,52 +56,29 @@ const AnalysisSummaryBanner: React.FC<AnalysisSummaryBannerProps> = ({ issueCoun
 };
 
 interface SummaryTileProps {
-  iconName: keyof typeof Ionicons.glyphMap; // Type for icon names
+  iconName: keyof typeof Ionicons.glyphMap;
   label: string;
   count: number | string | undefined;
-  backgroundColor: string;
-  textColor: string;
+  /** The colour of the kind of thing counted, used on the icon only. */
+  accent: string;
 }
 
-const SummaryTile: React.FC<SummaryTileProps> = ({
-  iconName,
-  label,
-  count,
-  backgroundColor,
-  textColor,
-}) => {
-  const { t } = useTranslation(); // Add useTranslation here
-  const styles = StyleSheet.create({
-    tile: {
-      padding: 10,
-      marginVertical: 5,
-      borderRadius: 8,
-      backgroundColor,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    tileText: {
-      fontSize: 14,
-      lineHeight: 18,
-      minHeight: 36,
-      fontWeight: 'bold',
-      color: textColor,
-      marginTop: 5,
-      textAlign: 'center',
-      textAlignVertical: 'center',
-    },
-    tileCount: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: textColor,
-    },
-  });
-
+/** One count on one line: a small coloured icon, the number and what it counts. Never taller than a finger. */
+const SummaryTile: React.FC<SummaryTileProps> = ({ iconName, label, count, accent }) => {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const onAccent = getContrastTextColor(accent);
   return (
-    <View style={styles.tile}>
-      <Ionicons name={iconName} size={24} color={textColor} />
-      <Text style={styles.tileCount}>{count !== undefined ? count : t('common_na')}</Text>
-      <Text style={styles.tileText}>{label}</Text>
+    <View style={[styles.tile, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.tileIcon, { backgroundColor: accent }]}>
+        <Ionicons name={iconName} size={16} color={onAccent} />
+      </View>
+      <Text style={[styles.tileCount, { color: colors.text }]}>
+        {count !== undefined ? count : t('common_na')}
+      </Text>
+      <Text style={[styles.tileLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+        {label}
+      </Text>
     </View>
   );
 };
@@ -149,7 +124,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   analysisSummary,
 }) => {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { term } = useStoryVocabulary();
+  const [expanded, setExpanded] = React.useState(false);
 
   const tilesData = [
     { label: term('Chapter', true), count: chapterCount, ...getEntityAppearance('Chapter') },
@@ -191,34 +168,77 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
           onPress={analysisSummary.onPress}
         />
       )}
-      <CollapsibleCard
-        title={
-          totalStories !== undefined
-            ? `${t('total_stories_summary', { totalStories })} - ${t('branching_summary', { count: branchingStories || 0 })}`
-            : title || t('summary')
-        }
-        initialExpanded={false}
-      >
-        <ResponsiveGrid compactColumns={2} mediumColumns={3} wideColumns={5} gap={10}>
-          {tilesData.map((data, index) => {
-            if (data.count !== undefined) {
-              return (
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          style={styles.header}
+          onPress={() => setExpanded((open) => !open)}
+        >
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+            {totalStories !== undefined
+              ? `${t('total_stories_summary', { totalStories })} - ${t('branching_summary', { count: branchingStories || 0 })}`
+              : title || t('summary')}
+          </Text>
+          <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={22} color={colors.text} />
+        </TouchableOpacity>
+        {expanded ? (
+          <View style={styles.tiles}>
+            {tilesData.map((data, index) =>
+              data.count !== undefined ? (
                 <SummaryTile
                   key={index}
                   iconName={data.icon as keyof typeof Ionicons.glyphMap}
                   label={data.label}
                   count={data.count}
-                  backgroundColor={data.color}
-                  textColor={getContrastTextColor(data.color)}
+                  accent={data.color}
                 />
-              );
-            }
-            return null;
-          })}
-        </ResponsiveGrid>
-      </CollapsibleCard>
+              ) : null,
+            )}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 };
+
+// Tiles wrap by their own width instead of a fixed number of columns: two on a phone, more as the room
+// grows, and never wider than the card - there is nothing to push the screen sideways.
+const styles = StyleSheet.create({
+  card: { borderRadius: 12, borderWidth: 1, marginBottom: 10, overflow: 'hidden' },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+    minHeight: 48,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  title: { flexShrink: 1, fontSize: 16, fontWeight: '700' },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, padding: 12, paddingTop: 0 },
+  tile: {
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexBasis: 140,
+    flexDirection: 'row',
+    flexGrow: 1,
+    flexShrink: 1,
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  tileIcon: {
+    alignItems: 'center',
+    borderRadius: 7,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  tileCount: { fontSize: 16, fontWeight: '700' },
+  tileLabel: { flexShrink: 1, fontSize: 13 },
+});
 
 export default SummaryCard;

@@ -24,9 +24,8 @@ const relativeOf = (path: string) => relative(SOURCE_ROOT, path).replace(/\\/g, 
  * `toEqual` refuses both a new file and a name that stays listed after the exception ends.
  */
 const COLLAPSIBLE_CARDS_WITHOUT_ENTITY_ROWS = [
-  // Not a list of entities: metadata, dashboard totals, the stat editor, analysis findings.
+  // Not a list of entities: metadata, the stat editor, analysis findings.
   'components/common/display/EntityMetadata/EntityMetadata.tsx',
-  'components/common/display/SummaryCard/SummaryCard.tsx',
   'components/features/stats/CharacterStatValuesEditor/CharacterStatValuesEditor.tsx',
   'screens/mainstorystack/StoryAnalysisScreen.tsx',
 ];

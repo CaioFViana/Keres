@@ -251,3 +251,9 @@ export {
   type ManuscriptInline,
   type ManuscriptSizeStatus,
 } from './manuscript/compile/parseManuscriptMarkdown';
+export * from './music/chordpro';
+export * from './music/chordProFile';
+export * from './music/chords';
+export * from './music/sections';
+export * from './music/songStats';
+export * from './music/syllables';

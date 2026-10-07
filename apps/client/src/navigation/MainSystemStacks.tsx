@@ -41,6 +41,7 @@ import ChoiceViewScreen from '../screens/narrative-elements/choices/ChoiceViewSc
 import ManuscriptExportScreen from '../screens/narrative-elements/scenes/ManuscriptExportScreen';
 import ManuscriptScreen from '../screens/narrative-elements/scenes/ManuscriptScreen';
 import SceneDetailScreen from '../screens/narrative-elements/scenes/SceneDetailScreen';
+import FountainImportScreen from '../screens/narrative-elements/scenes/FountainImportScreen';
 import NewSessionScreen from '../screens/narrative-elements/scenes/NewSessionScreen';
 import ScenePagesScreen from '../screens/narrative-elements/scenes/ScenePagesScreen';
 import SceneEditorScreen from '../screens/narrative-elements/scenes/SceneEditorScreen';
@@ -186,6 +187,7 @@ export type NarrativeElementsStackParamList = {
   SceneEditor: { sceneId: string };
   ScenePages: { sceneId: string };
   NewSession: undefined;
+  FountainImport: undefined;
   Manuscript: { routeId?: string };
   ManuscriptExport: undefined;
   SceneForm: { sceneId?: string; chapterId?: string };
@@ -212,6 +214,7 @@ export const NarrativeElementsStackNavigator = () => {
       <NarrativeElementsStack.Screen name="SceneEditor" component={SceneEditorScreen} />
       <NarrativeElementsStack.Screen name="ScenePages" component={ScenePagesScreen} />
       <NarrativeElementsStack.Screen name="NewSession" component={NewSessionScreen} />
+      <NarrativeElementsStack.Screen name="FountainImport" component={FountainImportScreen} />
       <NarrativeElementsStack.Screen name="Manuscript" component={ManuscriptScreen} />
       <NarrativeElementsStack.Screen name="ManuscriptExport" component={ManuscriptExportScreen} />
       <NarrativeElementsStack.Screen name="SceneForm" component={SceneFormScreen} />

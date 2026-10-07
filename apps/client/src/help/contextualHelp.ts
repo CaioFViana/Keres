@@ -50,6 +50,7 @@ export const screenHelpPage: Record<string, HelpPageId> = {
   SceneEditor: 'manuscript',
   ScenePages: 'scene-pages',
   NewSession: 'chapters',
+  FountainImport: 'manuscript',
   SceneForm: 'scenes',
   ChoiceDetail: 'choices',
   ChoiceForm: 'choices',

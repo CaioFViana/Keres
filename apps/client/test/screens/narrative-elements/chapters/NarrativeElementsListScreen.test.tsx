@@ -917,6 +917,19 @@ describe('NarrativeElementsListScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('NewSession');
   });
 
+  it('offers the script import only to a screenplay', async () => {
+    mockEffectiveMedium = 'screenplay';
+    const view = await render(<NarrativeElementsListScreen />);
+    await view.findByTestId(`rowname-ch-1`);
+    const action = (mockHeaderArgs?.actions ?? []).find((row) => row.id === 'import-fountain');
+    expect(action?.visible).toBe(true);
+    await act(async () => {
+      action?.onPress();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith('FountainImport');
+    expect((mockHeaderArgs?.actions ?? []).some((row) => row.id === 'new-session')).toBe(false);
+  });
+
   it('does not carry the new-session action for any other work', async () => {
     mockEffectiveMedium = 'comic';
     const view = await render(<NarrativeElementsListScreen />);

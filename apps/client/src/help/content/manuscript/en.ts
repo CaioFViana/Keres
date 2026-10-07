@@ -60,6 +60,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'The export screen shows how long the script is and, beside it, the paper, the font, the margins and the indents that number stands on. The PDF is set with the same values, so the same paper gives the same pages; other programs break pages by slightly different rules, and their count may differ by a little.',
     },
+    {
+      type: 'paragraph',
+      text: 'A script written elsewhere comes in through Import a script, on the chapters screen of a screenplay: choose a Fountain file and Keres reads it first. Each section becomes a chapter and each scene heading a scene, with the script exactly as written, so it exports back as the same script. The places and the characters it names are only offered, switched off: turn on the ones worth an entry of their own. Places and characters you already have are linked by name either way, and nothing else is created.',
+    },
     { type: 'heading', level: 2, text: 'What it affects elsewhere' },
     {
       type: 'paragraph',

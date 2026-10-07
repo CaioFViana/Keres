@@ -230,6 +230,7 @@ export * from './manuscript/compile/pageFormat';
 export * from './manuscript/images/imageInfo';
 export * from './manuscript/screenplay/fountain';
 export * from './manuscript/screenplay/fountainParser';
+export * from './manuscript/screenplay/fountainImport';
 export * from './manuscript/screenplay/screenplayLayout';
 export * from './manuscript/screenplay/screenplayPdf';
 export * from './manuscript/screenplay/compileScreenplay';

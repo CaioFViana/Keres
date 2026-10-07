@@ -60,6 +60,10 @@ const page: HelpPage = {
       type: 'paragraph',
       text: 'A tela de exportação mostra o tamanho do roteiro e, ao lado, o papel, a fonte, as margens e os recuos em que esse número se apoia. O PDF é montado com os mesmos valores, então o mesmo papel dá as mesmas páginas; outros programas quebram páginas por regras um pouco diferentes, e a contagem deles pode variar um pouco.',
     },
+    {
+      type: 'paragraph',
+      text: 'Um roteiro escrito em outro lugar entra por Importar roteiro, na tela de capítulos de um roteiro: escolha um arquivo Fountain e o Keres o lê primeiro. Cada seção vira um capítulo e cada cabeçalho de cena uma cena, com o roteiro exatamente como foi escrito, então ele exporta de volta como o mesmo roteiro. Os locais e os personagens que ele cita são apenas oferecidos, desligados: ligue os que merecem uma ficha própria. Locais e personagens que você já tem são ligados pelo nome de qualquer forma, e nada mais é criado.',
+    },
     { type: 'heading', level: 2, text: 'O que isso afeta em outros lugares' },
     {
       type: 'paragraph',

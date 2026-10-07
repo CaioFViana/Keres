@@ -426,3 +426,24 @@ export async function pickStoryExportFile(): Promise<StoryImportPayload | null> 
 
   return { story: validation.data, media: [] };
 }
+
+/** A text file the person picks (a script, say), read whole; `null` when they cancel. */
+export async function pickTextFile(): Promise<{ name: string; text: string } | null> {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: '*/*',
+    // Off for the same sandbox reason as `pickStoryExportFile`.
+    copyToCacheDirectory: false,
+    multiple: false,
+  });
+  if (result.canceled || !result.assets?.length) return null;
+  const asset = result.assets[0];
+  try {
+    const text = asset.file ? await asset.file.text() : await readPickedText(asset.uri);
+    return { name: asset.name ?? 'script', text: stripUtf8Bom(text) };
+  } catch (error) {
+    throw new StoryImportError(
+      'unreadable',
+      `Could not read ${asset.name}: ${(error as Error)?.message}`,
+    );
+  }
+}

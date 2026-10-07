@@ -543,6 +543,18 @@ const NarrativeElementsListScreen = () => {
             },
           ]
         : []),
+      // A screenplay can be brought in from a Fountain file; no other work carries the action.
+      ...(effectiveArc?.medium === 'screenplay'
+        ? [
+            {
+              id: 'import-fountain',
+              icon: 'document-attach-outline' as const,
+              label: t('fountain_import_title'),
+              onPress: () => navigation.navigate('FountainImport'),
+              visible: !!canEdit,
+            },
+          ]
+        : []),
       {
         id: 'action-3',
         icon: 'add',

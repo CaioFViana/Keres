@@ -28,7 +28,7 @@ import { isNamedListType, isWorldPieceSuggestionType, suggestionFieldId } from '
 
 export type SuggestionType = string;
 export type SuggestionUsageEntityType =
-  | Exclude<GlobalSearchEntityType, 'Plot'>
+  | Exclude<GlobalSearchEntityType, 'Plot' | 'Song'>
   | 'CharacterRelation';
 export interface SuggestionUsage {
   entityType: SuggestionUsageEntityType;
@@ -122,7 +122,7 @@ export function createSuggestionUsageService(db: AppDrizzleClient) {
       });
       return matching.flatMap((row) => {
         const entityType = row.entityType as GlobalSearchEntityType;
-        if (entityType === 'Plot') return [];
+        if (entityType === 'Plot' || entityType === 'Song') return [];
         const title = titles.get(`${entityType}:${row.entityId}`);
         return title === undefined
           ? []

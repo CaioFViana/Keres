@@ -22,7 +22,8 @@ export type GlobalSearchEntityType =
   | 'WorldRule'
   | 'Mode'
   | 'Plot'
-  | 'Route';
+  | 'Route'
+  | 'Song';
 
 export interface GlobalSearchFieldConfig {
   /** Column used as the result's display title. */
@@ -108,5 +109,10 @@ export const globalSearchFieldConfig: Record<GlobalSearchEntityType, GlobalSearc
   Route: {
     titleField: 'name',
     searchFields: ['name', 'details'],
+  },
+  // The lyrics are searched too: a line half remembered finds the song it belongs to.
+  Song: {
+    titleField: 'title',
+    searchFields: ['title', 'notes', 'lyrics', 'lyricsTranslation'],
   },
 };

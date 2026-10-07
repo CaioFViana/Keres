@@ -20,7 +20,8 @@ export type NavigableEntityType =
   | 'WorldRule'
   | 'Mode'
   | 'Plot'
-  | 'Route';
+  | 'Route'
+  | 'Song';
 
 interface EntityRoute {
   stack: keyof MainSystemDrawerParamList;
@@ -53,6 +54,7 @@ const ENTITY_ROUTES: Record<NavigableEntityType, EntityRoute> = {
   Mode: { stack: 'CharactersStack', screen: 'CharacterDetail', paramKey: 'characterId' },
   Plot: { stack: 'PlotsStack', screen: 'PlotDetail', paramKey: 'plotId' },
   Route: { stack: 'PlotsStack', screen: 'RouteDetail', paramKey: 'routeId' },
+  Song: { stack: 'SongStack', screen: 'SongEditor', paramKey: 'songId' },
 };
 
 /**

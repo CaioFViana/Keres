@@ -15,6 +15,7 @@ const ENTITY_TYPES: NavigableEntityType[] = [
   'WorldRule',
   'Plot',
   'Route',
+  'Song',
   // Modo abre o detalhe do personagem dono - ver ENTITY_ROUTES.Mode.
   'Mode',
 ];
@@ -24,7 +25,9 @@ const ENTITY_TYPES: NavigableEntityType[] = [
  * of the owning character, and opening it leads to that character's detail. That is why it stays out of the
  * naming convention check below, but remains inside the parity check with the global search.
  */
-const OWN_SCREEN_ENTITY_TYPES = ENTITY_TYPES.filter((entityType) => entityType !== 'Mode');
+const OWN_SCREEN_ENTITY_TYPES = ENTITY_TYPES.filter(
+  (entityType) => entityType !== 'Mode' && entityType !== 'Song',
+);
 
 function fakeDrawer() {
   const navigate = jest.fn();
@@ -64,6 +67,17 @@ describe('navigateToEntityDetail', () => {
     );
     expect(params.screen).toBe(`${entityType}Detail`);
     expect(Object.values(params.params)).toEqual(['id-1']);
+  });
+
+  it('opens a song in its editor: a song has no separate detail screen', () => {
+    const { navigate, drawer } = fakeDrawer();
+
+    navigateToEntityDetail(drawer, 'Song', 'song-1');
+
+    expect(navigate).toHaveBeenCalledWith('SongStack', {
+      screen: 'SongEditor',
+      params: { songId: 'song-1' },
+    });
   });
 
   it('names the id param after the entity, which is what each Detail screen reads', () => {

@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import * as schema from '../../src/db/schema';
 import { AttributeType } from '@keres/shared';
 import { createGlobalSearchService } from '../../src/services/storymanagement/GlobalSearchService';
+import { createSongService } from '../../src/services/storymanagement/SongService';
 import { createStoryAnalysisService } from '../../src/services/storymanagement/StoryAnalysisService';
 import { entityBase, seedLocalStory, TEST_STORY_ID, TEST_USER_ID } from '../helpers/storyTestData';
 import { createTestDatabase, type TestDatabase } from '../helpers/testDb';
@@ -125,6 +126,33 @@ describe('discovery services', () => {
     await expect(
       createStoryAnalysisService(database.db).analyzeStoryFull('missing'),
     ).rejects.toThrow('not found for analysis');
+  });
+});
+
+describe('global search finds songs', () => {
+  it('finds a song by a half-remembered line of its words, and leaves out a deleted one', async () => {
+    const songs = createSongService(database.db);
+    const lantern = await songs.createSong(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'The Lantern Song',
+      lyrics: '{sov: Verse 1}\nLight the [G]lantern, keep it burning\n{eov}',
+    });
+    const gone = await songs.createSong(TEST_USER_ID, {
+      storyId: TEST_STORY_ID,
+      title: 'Burning Bridges',
+      lyrics: 'Keep it burning',
+    });
+    await songs.deleteSong(TEST_USER_ID, gone.id);
+
+    const matches = await createGlobalSearchService(database.db).searchAllEntities(
+      TEST_STORY_ID,
+      'keep it burning',
+      TEST_USER_ID,
+    );
+
+    expect(matches.filter((match) => match.entityType === 'Song')).toEqual([
+      expect.objectContaining({ id: lantern.id, title: 'The Lantern Song' }),
+    ]);
   });
 });
 

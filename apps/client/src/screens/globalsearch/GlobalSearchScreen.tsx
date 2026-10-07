@@ -51,6 +51,7 @@ const SECTION_ORDER: { entityType: GlobalSearchEntityType; titleKey: string }[] 
   { entityType: 'WorldRule', titleKey: 'world_rules_title' },
   { entityType: 'Plot', titleKey: 'plots_title' },
   { entityType: 'Route', titleKey: 'routes_title' },
+  { entityType: 'Song', titleKey: 'songs_title' },
 ];
 
 const SEARCH_DEBOUNCE_MS = 400;

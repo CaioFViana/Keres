@@ -6,7 +6,7 @@ import SyncConflictBanner from '@/src/components/features/sync/SyncConflictBanne
 import SyncConflictReviewSheet from '@/src/components/features/sync/SyncConflictReviewSheet/SyncConflictReviewSheet';
 import StoryIdentityCard from '@/src/components/features/story/StoryIdentityCard';
 import DetailContainer from '@/src/components/layout/DetailContainer/DetailContainer';
-import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { Story } from '@keres/shared/entities/Story';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -126,6 +126,7 @@ export function MainDashboardContent({
 
       <View ref={overviewAnchorRef} collapsable={false}>
         <SummaryCard
+          layout="section"
           title={t('story_overview')}
           characterCount={characterCount}
           locationCount={locationCount}
@@ -152,9 +153,9 @@ export function MainDashboardContent({
       </View>
 
       {!!story?.id && (
-        <ScreenSection
+        <DashboardSection
           title={t('recent_operations')}
-          actions={
+          action={
             <TouchableOpacity
               onPress={onOpenOperationLog}
               accessibilityRole="button"
@@ -165,7 +166,7 @@ export function MainDashboardContent({
           }
         >
           <OperationLogList storyId={story.id} limit={5} />
-        </ScreenSection>
+        </DashboardSection>
       )}
 
       <SyncConflictReviewSheet visible={conflictSheetOpen} onClose={onCloseConflictSheet} />

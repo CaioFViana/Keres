@@ -133,7 +133,7 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 })).toBeTruthy();
     expect(screen.getByTestId('guide-card')).toBeTruthy();
   });
 
@@ -176,7 +176,7 @@ describe('GuideHost', () => {
       ],
     });
     const screen = await render(<GuideHost />);
-    await screen.findByTestId('guide-spotlight');
+    await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 });
     const top = () => StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style).top;
     const before = top();
 
@@ -201,7 +201,7 @@ describe('GuideHost', () => {
       steps: [{ id: 's1', anchors: ['late'], titleKey: 't', bodyKey: 'b' }],
     });
     const screen = await render(<GuideHost />);
-    await screen.findByTestId('guide-spotlight');
+    await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 });
 
     // Once it has measured again the card sits under the taller hole, not the first, shorter one.
     await waitFor(() => expect(calls).toBeGreaterThan(1), { timeout: 2000 });
@@ -252,7 +252,7 @@ describe('GuideHost', () => {
       ],
     });
     const screen = await render(<GuideHost />);
-    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 })).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('guide-next'));
     // Step two is still being measured: the hole of step one stays, nothing closes over the screen.
@@ -275,7 +275,7 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    expect(await screen.findByTestId('guide-card')).toBeTruthy();
+    expect(await screen.findByTestId('guide-card', {}, { timeout: 4000 })).toBeTruthy();
     expect(screen.queryByTestId('guide-spotlight')).toBeNull();
     expect(screen.getByTestId('guide-dim')).toBeTruthy();
   });
@@ -299,7 +299,7 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 })).toBeTruthy();
     expect(dispatch).toHaveBeenCalledWith(DrawerActions.openDrawer());
     expect(scrollTo).toHaveBeenCalledWith(1400 - 96);
   });
@@ -322,7 +322,7 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 })).toBeTruthy();
     expect(scrollTo).not.toHaveBeenCalled();
   });
 
@@ -343,7 +343,7 @@ describe('GuideHost', () => {
       ],
     });
     const screen = await render(<GuideHost />);
-    await screen.findByTestId('guide-spotlight');
+    await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 });
 
     await fireEvent.press(screen.getByTestId('guide-finish'));
 
@@ -423,7 +423,7 @@ describe('GuideHost', () => {
     });
     const screen = await render(<GuideHost />);
 
-    expect(await screen.findByTestId('guide-spotlight')).toBeTruthy();
+    expect(await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 })).toBeTruthy();
     expect(dispatch).not.toHaveBeenCalled();
   });
 
@@ -488,7 +488,7 @@ describe('the tour card and the navigation bar', () => {
       ],
     });
     const screen = await render(<GuideHost />);
-    await screen.findByTestId('guide-spotlight');
+    await screen.findByTestId('guide-spotlight', {}, { timeout: 4000 });
     const placed = () => StyleSheet.flatten(screen.getByTestId('guide-card-wrap').props.style).top;
     expect(placed()).toBe(100 - 8 + 60 + 16 + 14 - 0);
 

@@ -3,7 +3,7 @@ import type { ArcMedium } from '@keres/shared/metadata/ArcMedium';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
+import DashboardSection from '@/src/components/layout/DashboardSection/DashboardSection';
 import type { StoryArcSelect } from '@/src/db/schema';
 import { useTheme } from '@/src/theme';
 import { useStoryVocabulary } from '@/src/vocabulary/useStoryVocabulary';
@@ -46,9 +46,9 @@ const UniverseWorksSection: React.FC<UniverseWorksSectionProps> = ({
   const arcsPlural = term('Arc', true);
 
   return (
-    <ScreenSection
+    <DashboardSection
       title={t('universe_works_title', { arcs: arcsPlural })}
-      actions={
+      action={
         <TouchableOpacity
           onPress={onOpenArcs}
           accessibilityRole="button"
@@ -113,14 +113,14 @@ const UniverseWorksSection: React.FC<UniverseWorksSectionProps> = ({
           </TouchableOpacity>
         ) : null}
       </View>
-    </ScreenSection>
+    </DashboardSection>
   );
 };
 
 // The cards wrap by their own width, like the overview tiles: one column on a phone, more as the room
 // grows, never wider than the screen.
 const styles = StyleSheet.create({
-  intro: { lineHeight: 20, marginBottom: 10 },
+  intro: { fontSize: 13, lineHeight: 18, marginBottom: 10, marginHorizontal: 2 },
   manage: { alignItems: 'center', flexDirection: 'row', gap: 2, minHeight: 32 },
   link: { fontSize: 14, fontWeight: '600' },
   cards: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

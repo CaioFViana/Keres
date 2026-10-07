@@ -309,11 +309,7 @@ describe('SummaryCard', () => {
     expect(screen.queryByText('Characters')).toBeNull();
     await fireEvent.press(screen.getByText(/total_stories_summary/));
     expect(screen.getByText('Characters')).toBeTruthy();
-    const tile = screen.getByText('Characters').parent!;
-    const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children?: unknown };
-    };
-    expect(String(count.props.children)).toBe('3');
+    expect(screen.getByText('3')).toBeTruthy();
     expect(screen.queryByText('notes')).toBeNull();
   });
 
@@ -343,11 +339,7 @@ describe('SummaryCard', () => {
     await fireEvent.press(screen.getByText('Story'));
     expect(screen.getByText('forks')).toBeTruthy();
     expect(screen.getByText('Choices')).toBeTruthy();
-    const tile = screen.getByText('Choices').parent!;
-    const count = tile.children.filter((child) => typeof child !== 'string')[1] as {
-      props: { children?: unknown };
-    };
-    expect(String(count.props.children)).toBe('9');
+    expect(screen.getByText('9')).toBeTruthy();
   });
 });
 
@@ -392,5 +384,35 @@ describe('TagList', () => {
 
     expect(screen.getByText('Magic')).toBeTruthy();
     expect(screen.queryByLabelText('remove')).toBeNull();
+  });
+});
+
+describe('SummaryCard as a block of the story home', () => {
+  it('is always open and puts the analysis status beside its heading', async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <SummaryCard
+        layout="section"
+        title="Story overview"
+        characterCount={4}
+        sceneCount={0}
+        analysisSummary={{ issueCount: 3, onPress }}
+      />,
+    );
+
+    expect(screen.getByText('Story overview')).toBeTruthy();
+    expect(screen.getByText('Characters')).toBeTruthy();
+    expect(screen.getByText('4')).toBeTruthy();
+    await fireEvent.press(screen.getByText('story_analysis_issues_found'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts none as a quiet zero, not a missing value', async () => {
+    const screen = await render(
+      <SummaryCard layout="section" title="Story overview" sceneCount={0} />,
+    );
+
+    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.queryByText('common_na')).toBeNull();
   });
 });

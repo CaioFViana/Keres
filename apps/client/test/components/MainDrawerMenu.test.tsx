@@ -1,7 +1,9 @@
-import { cleanup, fireEvent, render } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
 const mockOpenLeaf = jest.fn();
+let mockBadges: Record<string, unknown> = {};
 let mockFocused: { route: string; focus: { screen?: string; params?: Record<string, unknown> } } = {
   route: 'MainDashboard',
   focus: {},
@@ -12,11 +14,13 @@ jest.mock('@react-navigation/drawer', () => ({
   __esModule: true,
   DrawerItem: ({
     label,
+    accessibilityLabel,
     focused,
     onPress,
     testID,
   }: {
-    label: string;
+    label: (props: { color: string }) => React.ReactNode;
+    accessibilityLabel: string;
     focused: boolean;
     onPress: () => void;
     testID: string;
@@ -24,9 +28,14 @@ jest.mock('@react-navigation/drawer', () => ({
     const react = jest.requireActual('react') as typeof import('react');
     const native = jest.requireActual('react-native') as typeof import('react-native');
     return react.createElement(
-      native.Text,
-      { testID, onPress },
-      `${label}${focused ? ':focused' : ''}`,
+      react.Fragment,
+      null,
+      react.createElement(
+        native.Text,
+        { testID, onPress },
+        `${accessibilityLabel}${focused ? ':focused' : ''}`,
+      ),
+      label({ color: '#111' }),
     );
   },
 }));
@@ -37,7 +46,14 @@ jest.mock('react-i18next', () => ({
 jest.mock('../../src/theme', () => ({
   __esModule: true,
   useTheme: () => ({
-    colors: { text: '#111', textSecondary: '#666', primary: '#00f', border: '#ddd' },
+    colors: {
+      text: '#111',
+      textSecondary: '#666',
+      primary: '#00f',
+      border: '#ddd',
+      error: '#f00',
+      onPrimary: '#fff',
+    },
   }),
 }));
 jest.mock('../../src/vocabulary/useStoryVocabulary', () => ({
@@ -48,6 +64,15 @@ jest.mock('../../src/state/userSettingsStore', () => ({
   __esModule: true,
   useUserSettingsStore: (selector: (state: unknown) => unknown) =>
     selector({ suggestLiteraryDevices: false }),
+}));
+jest.mock('../../src/state/storyStore', () => ({
+  __esModule: true,
+  useStoryStore: (selector: (state: unknown) => unknown) =>
+    selector({ selectedStory: { id: 'story-1' } }),
+}));
+jest.mock('../../src/hooks/useStoryMenuBadges', () => ({
+  __esModule: true,
+  useStoryMenuBadges: () => mockBadges,
 }));
 jest.mock('../../src/guides/useGuideAnchor', () => ({
   __esModule: true,
@@ -71,9 +96,11 @@ const renderMenu = (props: Partial<React.ComponentProps<typeof MainDrawerMenu>> 
     />,
   );
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks();
   mockFocused = { route: 'MainDashboard', focus: {} };
+  mockBadges = {};
+  await AsyncStorage.clear();
 });
 
 afterEach(() => {
@@ -164,5 +191,88 @@ describe('MainDrawerMenu', () => {
     expect(view.getByTestId('drawer-item-StorySettings')).toBeTruthy();
     expect(view.getByTestId('drawer-item-HelpDrawer')).toBeTruthy();
     expect(view.getByTestId('drawer-item-StorySelection')).toBeTruthy();
+  });
+
+  it('puts the search at the top, out of the groups', async () => {
+    const view = await renderMenu();
+
+    await fireEvent.press(view.getByTestId('drawer-item-GlobalSearch'));
+
+    expect(mockOpenLeaf.mock.calls[0][2]).toMatchObject({
+      id: 'GlobalSearch',
+      route: 'GlobalSearch',
+    });
+    await fireEvent.press(view.getByTestId('drawer-group-review'));
+    expect(view.getAllByTestId('drawer-item-GlobalSearch')).toHaveLength(1);
+  });
+
+  it('says what is behind an entry without opening it', async () => {
+    mockBadges = { OperationLogStack: { kind: 'count', value: 3 } };
+    const view = await renderMenu();
+    await fireEvent.press(view.getByTestId('drawer-group-review'));
+
+    expect(view.getByTestId('drawer-badge-OperationLogStack')).toBeTruthy();
+    expect(view.getByText('3')).toBeTruthy();
+  });
+
+  it('marks a shut group while something inside it asks for attention', async () => {
+    mockBadges = { OperationLogStack: { kind: 'count', value: 2, attention: true } };
+    const view = await renderMenu();
+
+    expect(view.getByTestId('drawer-group-dot-review')).toBeTruthy();
+    await fireEvent.press(view.getByTestId('drawer-group-review'));
+    expect(view.queryByTestId('drawer-group-dot-review')).toBeNull();
+  });
+
+  it('does not mark a shut group for a badge that only informs', async () => {
+    mockBadges = { OperationLogStack: { kind: 'count', value: 2 } };
+    const view = await renderMenu();
+
+    expect(view.queryByTestId('drawer-group-dot-review')).toBeNull();
+  });
+
+  it('keeps what the person opened or shut, story by story', async () => {
+    const view = await renderMenu();
+    await fireEvent.press(view.getByTestId('drawer-group-world'));
+    await fireEvent.press(view.getByTestId('drawer-group-material'));
+
+    await waitFor(async () =>
+      expect(
+        JSON.parse((await AsyncStorage.getItem('@keres/drawer-groups/story-1')) ?? '{}'),
+      ).toEqual({
+        world: true,
+        material: false,
+      }),
+    );
+  });
+
+  it('brings the groups back as they were left', async () => {
+    await AsyncStorage.setItem(
+      '@keres/drawer-groups/story-1',
+      JSON.stringify({ world: true, material: false }),
+    );
+    const view = await renderMenu();
+
+    await waitFor(() => expect(view.getByTestId('drawer-item-CalendarsStack')).toBeTruthy());
+    expect(view.queryByTestId('drawer-item-GalleryStack')).toBeNull();
+  });
+
+  it('reads a corrupt record as nothing chosen', async () => {
+    await AsyncStorage.setItem('@keres/drawer-groups/story-1', '{nope');
+    const view = await renderMenu();
+    await act(async () => {});
+
+    expect(view.getByTestId('drawer-item-GalleryStack')).toBeTruthy();
+    expect(view.queryByTestId('drawer-item-CalendarsStack')).toBeNull();
+  });
+
+  it('never hides the screen on show behind a group left shut', async () => {
+    await AsyncStorage.setItem('@keres/drawer-groups/story-1', JSON.stringify({ write: false }));
+    const view = await renderMenu();
+    await act(async () => {});
+
+    expect(view.getByTestId('drawer-item-MainDashboard').props.children).toBe(
+      'dashboard_title:focused',
+    );
   });
 });

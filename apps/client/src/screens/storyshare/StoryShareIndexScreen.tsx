@@ -1,5 +1,4 @@
 import ScreenSection from '@/src/components/layout/ScreenSection/ScreenSection';
-import { useNavigateAcrossStacks } from '@/src/hooks/useNavigateAcrossStacks';
 import { useScreenHeader } from '@/src/hooks/useScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -9,6 +8,7 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { useBackButtonHandler } from '../../hooks/useBackButtonHandler';
 import { useStoryBackupExport } from '../../hooks/useStoryBackupExport';
 import type { StoryShareStackParamList } from '../../navigation/StoryShareStack';
+import { useStoryRole } from '../../hooks/useStoryRole';
 import { useStoryStore } from '../../state/storyStore';
 import { useTheme } from '../../theme';
 import { commonScreenStyleDefs } from '../../theme/commonStyles';
@@ -24,9 +24,11 @@ const StoryShareIndexScreen = () => {
   const { colors } = useTheme();
   const navigation =
     useNavigation<NativeStackNavigationProp<StoryShareStackParamList, 'StoryShareIndex'>>();
-  const navigateAcross = useNavigateAcrossStacks();
   const story = useStoryStore((state) => state.selectedStory);
   const backup = useStoryBackupExport(story ? { id: story.id, title: story.title } : null);
+  // Only the owner publishes: for anyone else the entry says so instead of opening a screen that refuses.
+  const { canManageStoryPolicy, loading: roleLoading } = useStoryRole(story?.id);
+  const canPublish = roleLoading || canManageStoryPolicy;
 
   useScreenHeader({ target: 'parent', title: t('story_share_title') });
 
@@ -42,6 +44,7 @@ const StoryShareIndexScreen = () => {
       marginBottom: 12,
       padding: 14,
     },
+    cardDisabled: { opacity: 0.6 },
     cardRow: { alignItems: 'center', flexDirection: 'row', gap: 12 },
     cardBody: { flex: 1 },
     cardTitle: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
@@ -62,7 +65,14 @@ const StoryShareIndexScreen = () => {
     note: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 8 },
   });
 
-  const entries = [
+  const entries: {
+    id: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    description: string;
+    disabled?: boolean;
+    open: () => void;
+  }[] = [
     ...(isServerless()
       ? []
       : [
@@ -70,7 +80,10 @@ const StoryShareIndexScreen = () => {
             id: 'publish',
             icon: 'cloud-upload-outline' as const,
             title: t('story_share_publish_title'),
-            description: t('story_share_publish_description'),
+            description: t(
+              canPublish ? 'story_share_publish_description' : 'story_share_publish_owner_only',
+            ),
+            disabled: !canPublish,
             open: () => navigation.navigate('StoryPublish'),
           },
         ]),
@@ -79,7 +92,7 @@ const StoryShareIndexScreen = () => {
       icon: 'document-text-outline' as const,
       title: t('export_manuscript_title'),
       description: t('story_share_manuscript_description'),
-      open: () => navigateAcross('NarrativeElementsStack', 'ManuscriptExport'),
+      open: () => navigation.navigate('ManuscriptExport'),
     },
   ];
 
@@ -90,9 +103,11 @@ const StoryShareIndexScreen = () => {
       {entries.map((entry) => (
         <TouchableOpacity
           key={entry.id}
-          style={styles.card}
+          style={[styles.card, entry.disabled && styles.cardDisabled]}
           testID={`story-share-${entry.id}`}
           accessibilityRole="button"
+          accessibilityState={{ disabled: !!entry.disabled }}
+          disabled={entry.disabled}
           onPress={entry.open}
         >
           <View style={styles.cardRow}>

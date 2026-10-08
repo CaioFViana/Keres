@@ -1,45 +1,18 @@
-import type { Ionicons } from '@expo/vector-icons';
 import { getEntityAppearance } from '@keres/shared';
 import type { WorldPieceSection } from '@keres/shared/entities/WorldRule';
-import type { MainSystemDrawerParamList } from './MainSystemStack';
+import type { MenuGroup, MenuIconName, MenuLeaf } from './drawerMenuModel';
 
-type IconName = keyof typeof Ionicons.glyphMap;
+type IconName = MenuIconName;
 
-/** Where the focused drawer entry's own navigator is: its screen name and that screen's params. */
-export interface NestedFocus {
-  screen?: string;
-  params?: Record<string, unknown>;
-}
-
-export interface MenuLeaf {
-  /** The tour anchor and test id: the route name, unless several entries share one route. */
-  id: string;
-  route: keyof MainSystemDrawerParamList;
-  label: string;
-  icon: IconName;
-  /**
-   * Opens this screen as the stack's only one, so back and the menu behave the same whatever the stack held
-   * before. Absent: the stack's list screen, through the drawer entry's own press listener.
-   */
-  target?: { screen: string; params?: object };
-  /** Whether this entry is the one on screen, given where its route's navigator is. */
-  active?: (focus: NestedFocus) => boolean;
-}
+export type { MenuGroup, MenuLeaf, NestedFocus } from './drawerMenuModel';
+export { isLeafActive } from './drawerMenuModel';
 
 export type MenuGroupId = 'write' | 'components' | 'world' | 'material' | 'review';
 
-export interface MenuGroup {
-  id: MenuGroupId;
-  labelKey: string;
-  /** Stands for the group when its entries are folded away. */
-  icon: IconName;
-  leaves: MenuLeaf[];
-  /** Open on a fresh start; the group with the screen on show opens regardless. */
-  defaultOpen: boolean;
-}
-
 export interface MainDrawerMenuModel {
-  groups: MenuGroup[];
+  groups: MenuGroup<MenuGroupId>[];
+  /** Entries that stand above the groups: the search. */
+  top: MenuLeaf[];
   footer: MenuLeaf[];
 }
 
@@ -80,7 +53,7 @@ export function buildMainDrawerMenu({
   term,
   showLiteraryDevices,
 }: MainDrawerMenuInput): MainDrawerMenuModel {
-  const groups: MenuGroup[] = [
+  const groups: MenuGroup<MenuGroupId>[] = [
     {
       id: 'write',
       labelKey: 'drawer_group_write',
@@ -222,12 +195,6 @@ export function buildMainDrawerMenu({
       defaultOpen: false,
       leaves: [
         {
-          id: 'GlobalSearch',
-          route: 'GlobalSearch',
-          label: t('global_search_title'),
-          icon: 'search-outline',
-        },
-        {
           id: 'NotesStack',
           route: 'NotesStack',
           label: t('notes_title'),
@@ -282,11 +249,14 @@ export function buildMainDrawerMenu({
     },
   ];
 
-  return { groups, footer };
-}
+  const top: MenuLeaf[] = [
+    {
+      id: 'GlobalSearch',
+      route: 'GlobalSearch',
+      label: t('global_search_title'),
+      icon: 'search-outline',
+    },
+  ];
 
-/** Whether `leaf` is the entry on screen. Entries without a rule are on screen whenever their route is. */
-export function isLeafActive(leaf: MenuLeaf, focusedRoute: string, focus: NestedFocus): boolean {
-  if (leaf.route !== focusedRoute) return false;
-  return leaf.active ? leaf.active(focus) : true;
+  return { groups, top, footer };
 }

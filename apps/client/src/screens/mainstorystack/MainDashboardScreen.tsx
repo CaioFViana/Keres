@@ -41,7 +41,7 @@ const MainDashboardScreen = () => {
   const [reportOpen, setReportOpen] = useState(false);
   // Only a positively known non-owner reports: an unresolved role (or the owner's own) hides
   // the action, and local-only stories have no administrators to report to.
-  const { role, canEdit } = useStoryRole(selectedStory?.id);
+  const { role, canEdit, canManageStoryPolicy } = useStoryRole(selectedStory?.id);
   const { arcs } = useStoryArcs();
   const resumeScene = useResumeScene(selectedStory?.id);
   const storyReport = useStoryReport(selectedStory?.id);
@@ -280,7 +280,8 @@ const MainDashboardScreen = () => {
           onOpenManuscript: () => navigateAcross('NarrativeElementsStack', 'Manuscript', {}),
           onExportManuscript: () => navigateAcross('NarrativeElementsStack', 'ManuscriptExport'),
           onPublishManuscript:
-            canEdit && !isServerless()
+            // Only the owner publishes: a writer sees the story, not the door to put it on the public page.
+            canManageStoryPolicy && !isServerless()
               ? () => navigateAcross('StoryShare', 'StoryPublish')
               : undefined,
         }}

@@ -66,6 +66,15 @@ describe('the story menu model', () => {
     ]);
   });
 
+  it('puts the search above the groups and nowhere inside them', () => {
+    const menu = build(true);
+
+    expect(menu.top.map((leaf) => leaf.id)).toEqual(['GlobalSearch']);
+    expect(menu.groups.flatMap((group) => group.leaves.map((leaf) => leaf.id))).not.toContain(
+      'GlobalSearch',
+    );
+  });
+
   it('names the characters, places and items the way the story does', () => {
     const labels = build()
       .groups.find((group) => group.id === 'components')!
@@ -100,7 +109,7 @@ describe('the story menu model', () => {
       Array.from(source.matchAll(/<Drawer\.Screen\s+name="([^"]+)"/g), (match) => match[1]),
     );
     const menu = build(true);
-    const named = [...menu.groups.flatMap((group) => group.leaves), ...menu.footer];
+    const named = [...menu.top, ...menu.groups.flatMap((group) => group.leaves), ...menu.footer];
 
     expect(named.filter((leaf) => !registered.has(leaf.route)).map((leaf) => leaf.id)).toEqual([]);
   });

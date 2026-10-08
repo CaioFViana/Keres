@@ -1,6 +1,6 @@
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { CommonActions } from '@react-navigation/native';
-import type { MenuLeaf, NestedFocus } from './mainDrawerMenu';
+import type { MenuLeaf, NestedFocus } from './drawerMenuModel';
 
 type DrawerNavigation = DrawerContentComponentProps['navigation'];
 type DrawerState = DrawerContentComponentProps['state'];
@@ -16,11 +16,17 @@ export function nestedFocusOf(state: DrawerState): { route: string; focus: Neste
   if (focused) {
     return {
       route: route.name,
-      focus: { screen: focused.name, params: focused.params as Record<string, unknown> | undefined },
+      focus: {
+        screen: focused.name,
+        params: focused.params as Record<string, unknown> | undefined,
+      },
     };
   }
   // A navigator that has not drawn yet knows only the screen it was asked to open.
-  return { route: route.name, focus: { screen: route.params?.screen, params: route.params?.params } };
+  return {
+    route: route.name,
+    focus: { screen: route.params?.screen, params: route.params?.params },
+  };
 }
 
 /**
@@ -42,7 +48,11 @@ export function openMenuLeaf(
 
   if (!leaf.target) {
     const event = drawerRoute
-      ? navigation.emit({ type: 'drawerItemPress', target: drawerRoute.key, canPreventDefault: true })
+      ? navigation.emit({
+          type: 'drawerItemPress',
+          target: drawerRoute.key,
+          canPreventDefault: true,
+        })
       : undefined;
     if (!event?.defaultPrevented) {
       navigation.navigate(leaf.route as never);

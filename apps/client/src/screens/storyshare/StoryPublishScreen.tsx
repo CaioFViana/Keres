@@ -129,7 +129,6 @@ const StoryPublishScreen = () => {
     const noServer = publishing.blocker !== 'not-owner';
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <ScreenSection title={t('publish_story_title')} />
         <View style={styles.card}>
           <View style={styles.statusRow}>
             <Ionicons
@@ -195,7 +194,10 @@ const StoryPublishScreen = () => {
         {reason ? <Text style={styles.blocked}>{reason}</Text> : null}
       </View>
 
-      <ScreenSection title={t('story_publish_new_version')} />
+      <ScreenSection title={t('story_publish_step_what')} />
+      <PublishManuscriptSection story={story} manuscript={manuscript} />
+
+      <ScreenSection title={t('story_publish_step_who')} />
       <Text style={styles.label}>{t('publish_label_style')}</Text>
       <View style={styles.modeRow}>
         {LABEL_MODES.map((mode) => (
@@ -243,8 +245,6 @@ const StoryPublishScreen = () => {
           )}
         </>
       )}
-
-      <PublishManuscriptSection story={story} manuscript={manuscript} />
 
       <TouchableOpacity
         style={[styles.primaryButton, cannotPublish && styles.primaryButtonDisabled]}

@@ -43,6 +43,7 @@ jest.mock('../../../src/hooks/useScreenHeader', () => ({
   useScreenHeader: (config: unknown) => mockUseScreenHeader(config),
 }));
 let mockRole: string | null = 'owner';
+let mockCanManage = true;
 let mockCanReport = false;
 const mockReport = jest.fn();
 jest.mock('../../../src/hooks/useStoryRole', () => ({
@@ -50,7 +51,7 @@ jest.mock('../../../src/hooks/useStoryRole', () => ({
   useStoryRole: () => ({
     role: mockRole,
     canEdit: true,
-    canManageStoryPolicy: true,
+    canManageStoryPolicy: mockCanManage,
     isLoading: false,
   }),
 }));
@@ -130,6 +131,7 @@ jest.mock('../../../src/screens/mainstorystack/MainDashboardContent', () => ({
       onNewNote: () => void;
       onOpenManuscript: () => void;
       onExportManuscript: () => void;
+      onPublishManuscript?: () => void;
     };
   }) => {
     const react = jest.requireActual('react') as typeof import('react');
@@ -202,6 +204,13 @@ jest.mock('../../../src/screens/mainstorystack/MainDashboardContent', () => ({
         { testID: 'writing-export', onPress: props.writing?.onExportManuscript },
         'export',
       ),
+      props.writing?.onPublishManuscript
+        ? react.createElement(
+            native.Text,
+            { testID: 'writing-publish', onPress: props.writing.onPublishManuscript },
+            'publish',
+          )
+        : null,
       react.createElement(
         native.Text,
         { testID: 'open-oplog', onPress: props.onOpenOperationLog },
@@ -248,6 +257,7 @@ describe('MainDashboardScreen', () => {
     mockSelectedStory = { id: 'story-1', title: 'My Story' };
     mockConflicts = [{ id: 'c-1' }, { id: 'c-2' }];
     mockRole = 'owner';
+    mockCanManage = true;
     mockCanReport = false;
     mockGetContentCounts.mockResolvedValue(fullCounts);
     mockAnalyzeStoryCheap.mockResolvedValue({ findings: [{ id: 'f-1' }, { id: 'f-2' }] });
@@ -370,6 +380,25 @@ describe('MainDashboardScreen', () => {
     expect(mockNavigate).toHaveBeenLastCalledWith('NarrativeElementsStack', {
       screen: 'ManuscriptExport',
     });
+  });
+
+  it('offers the owner to publish the manuscript', async () => {
+    const view = await render(<MainDashboardScreen />);
+
+    await fireEvent.press(await view.findByTestId('writing-publish'));
+
+    expect(mockNavigate).toHaveBeenLastCalledWith('StoryShare', {
+      screen: 'StoryPublish',
+      params: undefined,
+    });
+  });
+
+  it('does not offer a writer to publish the manuscript', async () => {
+    mockCanManage = false;
+    const view = await render(<MainDashboardScreen />);
+
+    await view.findByTestId('writing-resume');
+    expect(view.queryByTestId('writing-publish')).toBeNull();
   });
 
   it('warns when opening settings without a story', async () => {
